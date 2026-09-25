@@ -8,6 +8,7 @@ import { Button, Drawer, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { RuleDefinitionSection } from 'app/features/alerting/unified/components/RuleDefinitionSection';
+import { useDispatch } from 'app/types/store';
 
 import {
   logError,
@@ -16,6 +17,7 @@ import {
   trackCreateRuleFromPanelDrawerRuleCreated,
 } from '../Analytics';
 import { isCloudGroupUpdatedResponse, isGrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
+import { alertingApi } from '../api/alertingApi';
 import { shouldUseRulesAPIV2 } from '../featureToggles';
 import { useAddRuleToRuleGroup } from '../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useUpsertUngroupedGrafanaRule } from '../hooks/useUpsertUngroupedGrafanaRule';
@@ -26,6 +28,7 @@ import { getRuleGroupLocationFromFormValues } from '../utils/rules';
 
 import { RuleConditionSection } from './RuleConditionSection';
 import { RuleNotificationSection } from './RuleNotificationSection';
+import { legacyRuleCacheTagsForUid } from './rule-editor/alert-rule-form/formValuesToAppPlatform';
 
 function getDrawerDefaultValues(prefill?: Partial<RuleFormValues>): RuleFormValues {
   // The drawer never exposes a pending period input, so we pin it to 0s (immediate firing).
@@ -53,6 +56,7 @@ export function AlertRuleDrawerForm({
     defaultValues: getDrawerDefaultValues(prefill),
   });
   const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const upsertUngroupedGrafanaRule = useUpsertUngroupedGrafanaRule();
   const notifyApp = useAppNotification();
@@ -84,10 +88,14 @@ export function AlertRuleDrawerForm({
     try {
       if (useRuleAPIV2) {
         // Force ungrouped so this can't be misrouted by a stale prefill.
-        await upsertUngroupedGrafanaRule({
+        const savedUid = await upsertUngroupedGrafanaRule({
           values: { ...values, isUngroupedRuleGroup: true },
           existingUid: undefined,
         });
+
+        // The app-platform mutations live on a separate cache slice, so invalidate the legacy tags
+        // the panel alerts list relies on; otherwise it stays stale until the next poll.
+        dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(savedUid)));
 
         ruleCreatedRef.current = true;
         trackCreateRuleFromPanelDrawerRuleCreated();

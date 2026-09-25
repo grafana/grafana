@@ -109,7 +109,9 @@ export function RichHistoryContainer(props: Props) {
       richHistorySearchFilters={richHistorySearchFilters}
       updateHistorySettings={updateHistorySettings}
       updateHistorySearchFilters={updateHistorySearchFilters}
-      loadRichHistory={loadRichHistory}
+      loadRichHistory={async () => {
+        await loadRichHistory();
+      }}
       loadMoreRichHistory={loadMoreRichHistory}
       clearRichHistoryResults={clearRichHistoryResults}
     />

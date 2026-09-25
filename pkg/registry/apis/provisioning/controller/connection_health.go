@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -68,6 +69,12 @@ func (hc *ConnectionHealthChecker) ShouldCheckHealth(conn *provisioning.Connecti
 		return true
 	}
 
+	// A token written after the last health check (e.g. by the authorize endpoint)
+	// invalidates it; recheck instead of waiting out the unhealthy cooldown.
+	if conn.Status.Token.LastUpdated > conn.Status.Health.Checked {
+		return true
+	}
+
 	// Check general timing for health checks
 	return !hc.hasRecentHealthCheck(conn.Status.Health)
 }
@@ -91,7 +98,7 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 		return true
 	}
 
-	if len(old.Message) != len(new.Message) {
+	if !slices.Equal(old.Message, new.Message) {
 		return true
 	}
 
@@ -103,18 +110,13 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 		return true
 	}
 
-	for i, oldMsg := range old.Message {
-		if i >= len(new.Message) || oldMsg != new.Message[i] {
-			return true
-		}
-	}
-
 	return false
 }
 
-// classifyConnectionError determines the appropriate Ready condition reason based on test results.
+// classifyTestResultReason determines the appropriate Ready condition reason based on test results.
+// Shared by Repository and Connection health checks.
 // Returns one of: Available, InvalidSpec, AuthenticationFailed, or ServiceUnavailable.
-func classifyConnectionError(testResults *provisioning.TestResults) string {
+func classifyTestResultReason(testResults *provisioning.TestResults) string {
 	if testResults.Success {
 		return provisioning.ReasonAvailable
 	}
@@ -122,14 +124,22 @@ func classifyConnectionError(testResults *provisioning.TestResults) string {
 	// Map HTTP status codes to condition reasons
 	// We only map status codes that connections actually return
 	switch testResults.Code {
-	case 401, 403: // Authentication/authorization failed
+	case 401:
 		return provisioning.ReasonAuthenticationFailed
+	case 403:
+		// A write-permission-denied 403 leaves the repository accessible
+		// (isRepositoryAccessible special-cases it) -- the credentials work, so
+		// it's not an auth failure, just a configuration gap. Fall through to the
+		// default case below instead of over-classifying it.
+		if !isRepositoryAccessible(testResults) {
+			return provisioning.ReasonAuthenticationFailed
+		}
 	case 503: // Service unavailable
 		return provisioning.ReasonServiceUnavailable
-	default:
-		// All other errors (404, 422, 500, etc.) are spec/configuration issues
-		return provisioning.ReasonInvalidSpec
 	}
+
+	// All other errors (400, 404, 422, 500, etc.) are spec/configuration issues
+	return provisioning.ReasonInvalidSpec
 }
 
 // RefreshHealthWithPatchOps performs a health check on an existing connection
@@ -155,7 +165,7 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 	return ConnectionHealthResultWithPatchOps{
 		TestResults:    testResults,
 		HealthStatus:   newHealthStatus,
-		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyConnectionError(testResults)),
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyTestResultReason(testResults)),
 		PatchOps:       patchOps,
 	}, nil
 }

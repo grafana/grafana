@@ -124,6 +124,82 @@ describe('ImportDashboardFormV2', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('renders the original datasource name on the field label when label and name differ', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+        },
+        {
+          name: 'mysql-2',
+          label: 'mysql-2 (Reports MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Reports MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    expect(screen.getByText('mysql-1 (Production MySQL)')).toBeInTheDocument();
+    expect(screen.getByText('mysql-2 (Reports MySQL)')).toBeInTheDocument();
+  });
+
+  it('pre-selects the datasource picker when a matching datasource exists on the instance', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+          matchedDatasource: { uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' },
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    const picker = screen.getByTestId('datasource-picker-mysql') as HTMLInputElement;
+    expect(picker.value).toBe('ds-prod');
+  });
+
+  it('leaves the datasource picker empty when no matching datasource exists', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    const picker = screen.getByTestId('datasource-picker-mysql') as HTMLInputElement;
+    expect(picker.value).toBe('');
+  });
+
   it('renders UID field as read-only first and enables editing after clicking change uid', async () => {
     const user = userEvent.setup();
     renderForm(false, mockInputs, 'existing-uid');
@@ -159,5 +235,37 @@ describe('ImportDashboardFormV2', () => {
     await user.type(folderPicker, 'some-folder');
 
     expect(folderPicker).toHaveValue('some-folder');
+  });
+
+  it('renders section constant with scope description and scoped form key', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [],
+      constants: [
+        {
+          name: 'environment',
+          label: 'Environment',
+          info: 'Specify a string constant',
+          value: 'production',
+          type: InputType.Constant,
+        },
+        {
+          name: 'environment',
+          label: 'Environment',
+          info: 'Specify a string constant',
+          value: 'staging',
+          type: InputType.Constant,
+          path: '/rows/0',
+          scopeLabel: 'Row: Servers',
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    expect(screen.getAllByText('Environment')).toHaveLength(2);
+    expect(screen.getByText('Row: Servers')).toBeInTheDocument();
+    expect(document.querySelector('input[name="constant-dashboard-environment"]')).toBeInTheDocument();
+    expect(document.querySelector('input[name="constant-_rows_0-environment"]')).toBeInTheDocument();
   });
 });

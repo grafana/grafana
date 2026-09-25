@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { DataLinkButton, Icon, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { type FieldDef } from '../logParser';
@@ -55,8 +56,8 @@ interface LogLineDetailsFieldProps {
   log: LogListModel;
 }
 
-export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
-  const { onPinLine, pinLineButtonTooltipTitle, prettifyJSON } = useLogListContext();
+const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
+  const { app, noInteractions, onPinLine, pinLineButtonTooltipTitle, prettifyJSON } = useLogListContext();
   const { closeDetails } = useLogDetailsContext();
 
   const styles = useStyles2(getFieldStyles);
@@ -78,6 +79,17 @@ export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) =>
     ),
     [field.values, singleValue, styles.value, styles.valueContainer, prettifyJSON]
   );
+
+  const reportLinkClick = useCallback(() => {
+    if (noInteractions) {
+      return;
+    }
+    reportInteraction('logs_log_line_details_derived_link_clicked', {
+      app,
+      fieldKey: field.keys[0],
+      datasourceType: log.datasourceType,
+    });
+  }, [app, field.keys, log.datasourceType, noInteractions]);
 
   return (
     <>
@@ -116,6 +128,7 @@ export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) =>
                       : undefined,
                   variant: 'secondary',
                   fill: 'outline',
+                  onClick: () => reportLinkClick(),
                 }}
                 link={link}
               />

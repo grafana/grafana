@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -16,13 +17,17 @@ import (
 
 // countedKinds is the explicit "group/resource" list passed to GetStats.
 // Without it, the search server enumerates every kind in the namespace first
-// (very expensive on KV-backed storage). The set matches what the browse-
-// dashboards UI consumes in normalizeDescendantCounts.
+// (very expensive on KV-backed storage). Each consumer of this stats response
+// (e.g. the browse-dashboards UI, validateOnDelete) keeps its own allow-list
+// of which of these kinds it actually uses, so adding a kind here does not by
+// itself change behavior anywhere else.
 var countedKinds = []string{
 	"folder.grafana.app/folders",
 	"dashboard.grafana.app/dashboards",
+	"dashboard.grafana.app/variables",
 	"dashboard.grafana.app/librarypanels",
 	"rules.alerting.grafana.app/alertrules",
+	"rules.alerting.grafana.app/recordingrules",
 }
 
 type subCountREST struct {
@@ -74,12 +79,9 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			Kinds:     countedKinds,
 			Folder:    []string{name},
 		})
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(stats.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to get folder descendant counts", "namespace", ns.Value, "folder", name, "error", err)
 			responder.Error(err)
-			return
-		}
-		if stats.Error != nil {
-			responder.Error(resource.GetError(stats.Error))
 			return
 		}
 		rsp := &folders.DescendantCounts{

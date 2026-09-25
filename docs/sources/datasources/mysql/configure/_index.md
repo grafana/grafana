@@ -15,6 +15,7 @@ labels:
 menuTitle: Configure
 title: Configure the MySQL data source
 weight: 10
+review_date: 2026-08-10
 ---
 
 # Configure the MySQL data source
@@ -25,9 +26,9 @@ This document provides instructions for configuring the MySQL data source and ex
 
 Before configuring the MySQL data source, ensure you have the following:
 
-- **Grafana permissions:** You must have the `Organization administrator` role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
+- **Grafana permissions:** You must have the Organization administrator role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
-- **A running MySQL instance:** MySQL 5.7 or newer, MariaDB 10.2 or newer, or a compatible MySQL-based database such as Percona Server.
+- **A running MySQL instance:** MySQL 5.7 or newer, MariaDB 10.5 or newer, or a compatible MySQL-based database such as Percona Server.
 
 - **Network access:** Grafana must be able to reach your MySQL server. The default port is `3306`.
 
@@ -36,11 +37,11 @@ Before configuring the MySQL data source, ensure you have the following:
 - **Security certificates:** If using encrypted connections, gather any necessary TLS/SSL certificates.
 
 {{< admonition type="note" >}}
-Grafana ships with a built-in MySQL data source plugin. No additional installation is required.
+The MySQL data source plugin is preinstalled in Grafana, so no additional installation is required. As of Grafana 13.2, it's packaged as a standalone plugin that updates independently of Grafana releases. Refer to [Plugin updates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/#plugin-updates) for details.
 {{< /admonition >}}
 
 {{< admonition type="tip" >}}
-**Grafana Cloud users:** If your MySQL server is in a private network, you can configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to establish connectivity.
+**Grafana Cloud users:** Grafana Cloud doesn't provide static outbound IP addresses for data source connections, so IP allowlisting isn't a supported connectivity method. If your MySQL server is in a private network, configure [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to establish a secure connection without exposing your database to the public internet.
 {{< /admonition >}}
 
 ### Database user permissions
@@ -65,7 +66,7 @@ To add the MySQL data source complete the following steps:
 1. Select the **MySQL data source** option.
 1. Click **Add new data source** in the upper right.
 
-You are taken to the **Settings** tab where you will configure the data source.
+You are taken to the **Settings** tab where you configure the data source.
 
 ## MySQL configuration options
 
@@ -77,12 +78,14 @@ Following is a list of MySQL configuration options:
 
 **Connection:**
 
-- **Host URL** - Enter the IP address/hostname and optional port of your MySQL instance. If the port is omitted the default `3306` port will be used.
+- **Host URL** - Enter the IP address/hostname and optional port of your MySQL instance. If the port is omitted, Grafana uses the default `3306` port.
 - **Database** - Enter the name of your MySQL database.
 
 **Authentication:**
 
-- **Username**- Enter the username used to connect to your MySQL database.
+The MySQL data source supports username and password authentication, with optional TLS for encrypted connections. Kerberos, gMSA, and other external authentication mechanisms aren't supported. Create a dedicated MySQL user for Grafana instead.
+
+- **Username** - Enter the username used to connect to your MySQL database.
 - **Password** - Enter the password used to connect to the MySQL database.
 - **Use TLS Client Auth** - Toggle to enable TLS authentication using the client certificate specified in the secure JSON configuration. Refer to [Using TLS Connections](https://dev.mysql.com/doc/refman/8.4/en/mysql-cluster-tls-using.html) and [Configuring MySQL to Use Encrypted Connections](https://dev.mysql.com/doc/refman/8.4/en/using-encrypted-connections.html) for more information regarding TLS and configuring encrypted connections in MySQL. Provide the client certificate under **TLS/SSL Client Certificate**. Provide the key under **TLS/SSL Client Key**.
 - **With CA Cert** - Toggle to authenticate using a CA certificate. Required for verifying self-signed TLS Certs. Follow the instructions of your CA (Certificate Authority) to download the certificate file. Provide the root certificate under **TLS/SSL Root Certificate** if TLS/SSL mode requires it.
@@ -95,7 +98,7 @@ The following are additional MySQL settings.
 
 **MySQL options:**
 
-- **Session Timezone** - Specifies the timezone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set this to `+00:00` so Grafana can handle times properly. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, the timezone will not be updated. For more information, refer to [MySQL Server Time Zone Support](https://dev.mysql.com/doc/en/time-zone-support.html).
+- **Session Timezone** - Specifies the timezone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set this to `+00:00` so Grafana can handle times properly. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, the timezone isn't updated. For more information, refer to [MySQL Server Time Zone Support](https://dev.mysql.com/doc/en/time-zone-support.html).
 - **Min time interval** - Defines a lower limit for the [`$__interval`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval) and [`$__interval_ms`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms) variables. Grafana recommends aligning this setting with the data write frequency. For example, set it to `1m` if your data is written every minute. Refer to [Min time interval](#min-time-interval) for format examples.
 
 **Connection limits:**
@@ -111,7 +114,15 @@ The following are additional MySQL settings.
 
 Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
 
-Once you have added your MySQL connection settings, click **Save & test** to test and save the data source connection.
+**Secure SOCKS proxy:**
+
+{{< admonition type="note" >}}
+This section is only visible when the Grafana server has the secure SOCKS proxy feature enabled.
+{{< /admonition >}}
+
+- **Enabled** - Toggle to route requests to the MySQL instance through a secure SOCKS proxy.
+
+After you have added your MySQL connection settings, click **Save & test** to test and save the data source connection.
 
 ### Min time interval
 

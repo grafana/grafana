@@ -42,6 +42,13 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	})
 }
 
+// QueryChunkedData intentionally bypasses the cache. The caching service operates on
+// fully materialized QueryDataResponse objects, which do not exist in the streaming
+// chunked path, so chunked queries are always executed against the plugin.
+func (m *CachingMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
 // CallResource receives a resource request and attempts to access results already stored in the cache for that request.
 // If data is found, it will return it immediately. Otherwise, it will perform the request as usual. The caller of CallResource is expected to explicitly update the cache with any responses.
 // If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.

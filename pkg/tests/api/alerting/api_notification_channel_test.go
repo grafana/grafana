@@ -34,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/secrets"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -742,7 +741,7 @@ const alertmanagerConfig = `
             "name": "email_test",
             "type": "email",
             "settings": {
-              "addresses": "test@email.com",
+              "addresses": "test@example.com",
               "singleEmail": true
             }
           }
@@ -1254,16 +1253,15 @@ var expAlertmanagerConfigFromAPI = `
     },
     "receivers": [
       {
-        "name": "email_recv",
+        "name": "alertmanager_recv",
         "grafana_managed_receiver_configs": [
           {
             "uid": "",
-            "name": "email_test",
-            "type": "email",
+            "name": "alertmanager_test",
+            "type": "prometheus-alertmanager",
             "disableResolveMessage": false,
             "settings": {
-              "addresses": "test@email.com",
-              "singleEmail": true
+              "url": "http://CHANNEL_ADDR/alertmanager_recv/alertmanager_test"
             },
             "secureFields": {}
           }
@@ -1278,7 +1276,9 @@ var expAlertmanagerConfigFromAPI = `
             "type": "dingding",
             "disableResolveMessage": false,
             "settings": {},
-            "secureFields": {"url": true}
+            "secureFields": {
+              "url": true
+            }
           }
         ]
       },
@@ -1291,7 +1291,25 @@ var expAlertmanagerConfigFromAPI = `
             "type": "discord",
             "disableResolveMessage": false,
             "settings": {},
-            "secureFields": {"url": true}
+            "secureFields": {
+              "url": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "email_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "",
+            "name": "email_test",
+            "type": "email",
+            "disableResolveMessage": false,
+            "settings": {
+              "addresses": "test@example.com",
+              "singleEmail": true
+            },
+            "secureFields": {}
           }
         ]
       },
@@ -1304,7 +1322,9 @@ var expAlertmanagerConfigFromAPI = `
             "type": "googlechat",
             "disableResolveMessage": false,
             "settings": {},
-            "secureFields": {"url": true}
+            "secureFields": {
+              "url": true
+            }
           }
         ]
       },
@@ -1325,49 +1345,71 @@ var expAlertmanagerConfigFromAPI = `
         ]
       },
       {
-        "name": "victorops_recv",
+        "name": "line_recv",
         "grafana_managed_receiver_configs": [
           {
             "uid": "",
-            "name": "victorops_test",
-            "type": "victorops",
+            "name": "line_test",
+            "type": "LINE",
             "disableResolveMessage": false,
             "settings": {},
-            "secureFields": {"url": true}
+            "secureFields": {
+              "token": true
+            }
           }
         ]
       },
       {
-        "name": "teams_recv",
+        "name": "opsgenie_recv",
         "grafana_managed_receiver_configs": [
           {
             "uid": "",
-            "name": "teams_test",
-            "type": "teams",
+            "name": "opsgenie_test",
+            "type": "opsgenie",
             "disableResolveMessage": false,
             "settings": {
-              "url": "http://CHANNEL_ADDR/teams_recv/teams_test"
-            },
-            "secureFields": {}
-          }
-        ]
-      },
-      {
-        "name": "webhook_recv",
-        "grafana_managed_receiver_configs": [
-          {
-            "uid": "",
-            "name": "webhook_test",
-            "type": "webhook",
-            "disableResolveMessage": false,
-            "settings": {
-              "url": "http://CHANNEL_ADDR/webhook_recv/webhook_test",
-              "username": "my_username",
-              "httpMethod": "POST",
-              "maxAlerts": "5"
+              "apiUrl": "http://CHANNEL_ADDR/opsgenie_recv/opsgenie_test"
             },
             "secureFields": {
-              "password": true
+              "apiKey": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "pagerduty_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "",
+            "name": "pagerduty_test",
+            "type": "pagerduty",
+            "disableResolveMessage": false,
+            "settings": {
+              "class": "testclass",
+              "component": "Integration Test",
+              "group": "testgroup",
+              "severity": "warning",
+              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}",
+              "url": "http://CHANNEL_ADDR/pagerduty_recvX/pagerduty_testX"
+            },
+            "secureFields": {
+              "integrationKey": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "pushover_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "",
+            "name": "pushover_test",
+            "type": "pushover",
+            "disableResolveMessage": false,
+            "settings": {},
+            "secureFields": {
+              "userKey": true,
+              "apiToken": true
             }
           }
         ]
@@ -1391,30 +1433,36 @@ var expAlertmanagerConfigFromAPI = `
         ]
       },
       {
-        "name": "pushover_recv",
+        "name": "slack_failed_recv",
         "grafana_managed_receiver_configs": [
           {
             "uid": "",
-            "name": "pushover_test",
-            "type": "pushover",
+            "name": "slack_failed_test",
+            "type": "slack",
             "disableResolveMessage": false,
-            "settings": {},
+            "settings": {
+              "recipient": "#test-channel",
+              "username": "test",
+              "text": "Integration Test"
+            },
             "secureFields": {
-              "userKey": true,
-              "apiToken": true
+              "url": true
             }
           }
         ]
       },
       {
-        "name": "line_recv",
+        "name": "slack_inactive_recv",
         "grafana_managed_receiver_configs": [
           {
             "uid": "",
-            "name": "line_test",
-            "type": "LINE",
+            "name": "inactive",
+            "type": "slack",
             "disableResolveMessage": false,
-            "settings": {},
+            "settings": {
+              "recipient": "#inactive-channel",
+              "username": "Integration Test"
+            },
             "secureFields": {
               "token": true
             }
@@ -1422,73 +1470,6 @@ var expAlertmanagerConfigFromAPI = `
         ]
       },
       {
-        "name": "threema_recv",
-        "grafana_managed_receiver_configs": [
-          {
-            "uid": "",
-            "name": "threema_test",
-            "type": "threema",
-            "disableResolveMessage": false,
-            "settings": {
-              "gateway_id": "*1234567",
-              "recipient_id": "abcdefgh"
-            },
-            "secureFields": {
-              "api_secret": true
-            }
-          }
-        ]
-      },
-      {
-        "name": "opsgenie_recv",
-        "grafana_managed_receiver_configs": [
-          {
-            "uid": "",
-            "name": "opsgenie_test",
-            "type": "opsgenie",
-            "disableResolveMessage": false,
-            "settings": {
-              "apiUrl": "http://CHANNEL_ADDR/opsgenie_recv/opsgenie_test"
-            },
-            "secureFields": {
-              "apiKey": true
-            }
-          }
-        ]
-      },
-      {
-        "name": "alertmanager_recv",
-        "grafana_managed_receiver_configs": [
-          {
-            "uid": "",
-            "name": "alertmanager_test",
-            "type": "prometheus-alertmanager",
-            "disableResolveMessage": false,
-            "settings": {
-              "url": "http://CHANNEL_ADDR/alertmanager_recv/alertmanager_test"
-            },
-            "secureFields": {}
-          }
-        ]
-      },
-      {
-        "name": "telegram_recv",
-        "grafana_managed_receiver_configs": [
-          {
-            "uid": "",
-            "name": "telegram_test",
-            "type": "telegram",
-            "disableResolveMessage": false,
-            "settings": {
-              "chatid": "telegram_chat_id"
-            },
-            "secureFields": {
-              "bottoken": true
-            }
-          }
-        ]
-      },
-	  {
         "name": "slack_recv1",
         "grafana_managed_receiver_configs": [
           {
@@ -1533,61 +1514,87 @@ var expAlertmanagerConfigFromAPI = `
           }
         ]
       },
-	  {
-		"name": "slack_failed_recv",
-		"grafana_managed_receiver_configs": [
-		  {
-            "uid": "",
-            "name": "slack_failed_test",
-            "type": "slack",
-            "disableResolveMessage": false,
-            "settings": {
-              "recipient": "#test-channel",
-              "username": "test",
-			  "text": "Integration Test"
-            },
-            "secureFields": {
-			  "url": true
-            }
-          }
-		]
-	  },
-	  {
-		"name": "slack_inactive_recv",
-		"grafana_managed_receiver_configs": [
-		  {
-            "uid": "",
-            "name": "inactive",
-            "type": "slack",
-            "disableResolveMessage": false,
-            "settings": {
-              "recipient": "#inactive-channel",
-			  "username": "Integration Test"
-            },
-            "secureFields": {
-			  "token": true
-            }
-          }
-		]
-	  },
       {
-        "name": "pagerduty_recv",
+        "name": "teams_recv",
         "grafana_managed_receiver_configs": [
           {
             "uid": "",
-            "name": "pagerduty_test",
-            "type": "pagerduty",
+            "name": "teams_test",
+            "type": "teams",
             "disableResolveMessage": false,
             "settings": {
-              "class": "testclass",
-              "component": "Integration Test",
-              "group": "testgroup",
-              "severity": "warning",
-              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}",
-              "url": "http://CHANNEL_ADDR/pagerduty_recvX/pagerduty_testX"
+              "url": "http://CHANNEL_ADDR/teams_recv/teams_test"
+            },
+            "secureFields": {}
+          }
+        ]
+      },
+      {
+        "name": "telegram_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "",
+            "name": "telegram_test",
+            "type": "telegram",
+            "disableResolveMessage": false,
+            "settings": {
+              "chatid": "telegram_chat_id"
             },
             "secureFields": {
-              "integrationKey": true
+              "bottoken": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "threema_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "",
+            "name": "threema_test",
+            "type": "threema",
+            "disableResolveMessage": false,
+            "settings": {
+              "gateway_id": "*1234567",
+              "recipient_id": "abcdefgh"
+            },
+            "secureFields": {
+              "api_secret": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "victorops_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "",
+            "name": "victorops_test",
+            "type": "victorops",
+            "disableResolveMessage": false,
+            "settings": {},
+            "secureFields": {
+              "url": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "webhook_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "",
+            "name": "webhook_test",
+            "type": "webhook",
+            "disableResolveMessage": false,
+            "settings": {
+              "url": "http://CHANNEL_ADDR/webhook_recv/webhook_test",
+              "username": "my_username",
+              "httpMethod": "POST",
+              "maxAlerts": "5"
+            },
+            "secureFields": {
+              "password": true
             }
           }
         ]
@@ -1600,7 +1607,7 @@ var expAlertmanagerConfigFromAPI = `
 var expEmailNotifications = []*notifications.SendEmailCommandSync{
 	{
 		SendEmailCommand: notifications.SendEmailCommand{
-			To:          []string{"test@email.com"},
+			To:          []string{"test@example.com"},
 			SingleEmail: true,
 			Template:    "ng_alert_notification",
 			Subject:     "[FIRING:1] EmailAlert (default)",
@@ -1985,7 +1992,7 @@ func saveAndApplyAlertmanagerConfiguration(t *testing.T, env *server.TestEnv, or
 	config, err := notifier.Load([]byte(rawConfig))
 	require.NoError(t, err)
 
-	err = notifier.EncryptReceiverConfigs(config.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(config.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
@@ -2008,7 +2015,7 @@ func saveAndApplyAlertmanagerConfiguration(t *testing.T, env *server.TestEnv, or
 }
 
 func isAutogenRoute(route *apimodels.Route) bool {
-	return notifier.IsAutogeneratedRoot(v1.RouteToModel(route))
+	return notifier.IsAutogeneratedRoot(route)
 }
 
 func removeAutogenConfigIfExists(route *apimodels.Route) {

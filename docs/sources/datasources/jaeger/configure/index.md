@@ -16,7 +16,7 @@ labels:
 menuTitle: Configure
 title: Configure the Jaeger data source
 weight: 100
-review_date: 2026-03-03
+review_date: 2026-08-11
 ---
 
 # Configure the Jaeger data source

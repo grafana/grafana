@@ -14,9 +14,10 @@ import { useImportProvisionedSave, type ImportProvisionedSaveParams } from './us
 
 setupProvisioningMswServer();
 
-const mockUseProvisionedRequestHandler = jest.fn();
-jest.mock('./useProvisionedRequestHandler', () => ({
-  useProvisionedRequestHandler: (...args: unknown[]) => mockUseProvisionedRequestHandler(...args),
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useNavigate: () => mockNavigate,
 }));
 
 const repository: RepositoryView = {
@@ -159,7 +160,7 @@ describe('useImportProvisionedSave', () => {
     });
 
     const req = requireCapturedRequest();
-    expect(req.url.searchParams.get('message')).toBe('New dashboard: My Dash');
+    expect(req.url.searchParams.get('message')).toBe('Create dashboard: My Dash');
   });
 
   it('trims whitespace-only comment and falls back to default', async () => {
@@ -179,7 +180,7 @@ describe('useImportProvisionedSave', () => {
     });
 
     const req = requireCapturedRequest();
-    expect(req.url.searchParams.get('message')).toBe('New dashboard: My Dash');
+    expect(req.url.searchParams.get('message')).toBe('Create dashboard: My Dash');
   });
 
   it('honors repository commit template when comment is empty', async () => {
@@ -226,42 +227,157 @@ describe('useImportProvisionedSave', () => {
     expect(body.apiVersion).toBe('dashboard.grafana.app/v1beta1');
   });
 
-  describe('useProvisionedRequestHandler wiring', () => {
-    it('passes resourceType and handler functions on initial render', () => {
-      renderImportSaveHook(repository);
+  describe('save outcomes', () => {
+    it('navigates to the new dashboard after a write-workflow save', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-dash-uid' } } } })
+        )
+      );
 
-      expect(mockUseProvisionedRequestHandler).toHaveBeenCalled();
-      const config = mockUseProvisionedRequestHandler.mock.calls[0][0];
-
-      expect(config.resourceType).toBe('dashboard');
-      expect(config.repository).toBe(repository);
-      expect(typeof config.handlers.onWriteSuccess).toBe('function');
-      expect(typeof config.handlers.onBranchSuccess).toBe('function');
-      expect(typeof config.handlers.onError).toBe('function');
-    });
-
-    it('passes workflow, folderUID, and selectedBranch from save form', async () => {
       const { result } = renderImportSaveHook(repository);
 
       await act(async () => {
         await result.current.save(
           makeSaveParams({
-            folderUid: 'target-folder',
-            form: { ref: 'my-branch', path: 'dash.json', workflow: 'branch' },
+            title: 'My Dashboard',
+            form: { ref: 'main', path: 'dash.json', workflow: 'write' },
           })
         );
       });
 
       await waitFor(() => {
-        const lastCall =
-          mockUseProvisionedRequestHandler.mock.calls[mockUseProvisionedRequestHandler.mock.calls.length - 1][0];
-        expect(lastCall.workflow).toBe('branch');
+        expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/d/new-dash-uid/my-dashboard'));
+      });
+      expect(result.current.error).toBeUndefined();
+    });
+
+    it('falls back to the folder view when write-workflow save returns no dashboard uid', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ resource: { upsert: {} } }))
+      );
+
+      const { result } = renderImportSaveHook(repository);
+
+      await act(async () => {
+        await result.current.save(
+          makeSaveParams({
+            folderUid: 'folder-abc',
+            form: { ref: 'main', path: 'dash.json', workflow: 'write' },
+          })
+        );
       });
 
-      const lastCall =
-        mockUseProvisionedRequestHandler.mock.calls[mockUseProvisionedRequestHandler.mock.calls.length - 1][0];
-      expect(lastCall.folderUID).toBe('target-folder');
-      expect(lastCall.selectedBranch).toBe('my-branch');
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/dashboards/f/folder-abc/');
+      });
+      expect(result.current.error).toBeUndefined();
+    });
+
+    it('navigates to the preview page after a branch-workflow save', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({ ref: 'feat-branch', path: 'dash.json', resource: { upsert: {} } })
+        )
+      );
+
+      const { result } = renderImportSaveHook(repository);
+
+      await act(async () => {
+        await result.current.save(
+          makeSaveParams({
+            form: { ref: 'feat-branch', path: 'dash.json', workflow: 'branch' },
+          })
+        );
+      });
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(
+          '/dashboard/provisioning/my-repo/preview/dash.json?ref=feat-branch&repo_type=github'
+        );
+      });
+      expect(result.current.error).toBeUndefined();
+    });
+
+    it('does not navigate when branch-workflow response is missing the ref', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({ path: 'dash.json', resource: { upsert: {} } })
+        )
+      );
+
+      const { result } = renderImportSaveHook(repository);
+
+      await act(async () => {
+        await result.current.save(
+          makeSaveParams({
+            form: { ref: 'feat-branch', path: 'dash.json', workflow: 'branch' },
+          })
+        );
+      });
+
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(result.current.error).toBeUndefined();
+    });
+
+    it('exposes the API error message when the create-file request fails', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({ message: 'failed to push to remote' }, { status: 500 })
+        )
+      );
+
+      const { result } = renderImportSaveHook(repository);
+
+      await act(async () => {
+        await result.current.save(makeSaveParams());
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('failed to push to remote');
+      });
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the HTTP status text when the failure body has no message', async () => {
+      server.use(http.post(`${BASE}/repositories/:name/files/*`, () => new HttpResponse(null, { status: 500 })));
+
+      const { result } = renderImportSaveHook(repository);
+
+      await act(async () => {
+        await result.current.save(makeSaveParams());
+      });
+
+      await waitFor(() => {
+        // backendSrv fills in the status text when the error body has no message
+        expect(result.current.error).toBe('Internal Server Error');
+      });
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('clears a previous error on the next save attempt', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ message: 'boom' }, { status: 500 }), {
+          once: true,
+        })
+      );
+
+      const { result } = renderImportSaveHook(repository);
+
+      await act(async () => {
+        await result.current.save(makeSaveParams());
+      });
+      await waitFor(() => {
+        expect(result.current.error).toBe('boom');
+      });
+
+      // Second save hits the default success handler from beforeEach
+      await act(async () => {
+        await result.current.save(makeSaveParams());
+      });
+      await waitFor(() => {
+        expect(result.current.error).toBeUndefined();
+      });
     });
   });
 });

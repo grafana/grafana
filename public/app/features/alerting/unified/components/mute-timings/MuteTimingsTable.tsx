@@ -10,8 +10,9 @@ import {
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
-import { Authorize } from '../../components/Authorize';
-import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
+import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
+import { TimeIntervalAction } from '../../hooks/abilities/types';
 import { makeAMLink } from '../../utils/misc';
 import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
@@ -44,11 +45,8 @@ export const TimeIntervalsTable = () => {
     });
   }, [data]);
 
-  const [_, allowedToCreateMuteTiming] = useAlertmanagerAbility(AlertmanagerAction.CreateTimeInterval);
-
-  const [exportMuteTimingsSupported, exportMuteTimingsAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.ExportTimeIntervals
-  );
+  const createAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Create });
+  const exportAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Export });
   const columns = useColumns(alertManagerSourceName, hideActions);
 
   if (isLoading) {
@@ -79,23 +77,21 @@ export const TimeIntervalsTable = () => {
           </Trans>
         </Text>
         <Spacer />
-        {!hideActions && items.length > 0 && (
-          <Authorize actions={[AlertmanagerAction.CreateTimeInterval]}>
-            <LinkButton
-              icon="plus"
-              variant="primary"
-              href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-            >
-              <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
-            </LinkButton>
-          </Authorize>
+        {!hideActions && items.length > 0 && isGranted(createAbility) && (
+          <LinkButton
+            icon="plus"
+            variant="primary"
+            href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+          >
+            <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
+          </LinkButton>
         )}
-        {exportMuteTimingsSupported && (
+        {isSupported(exportAbility) && (
           <>
             <Button
               icon="download-alt"
               variant="secondary"
-              disabled={!exportMuteTimingsAllowed}
+              disabled={!exportAbility.granted}
               onClick={() => showExportAllDrawer(ALL_MUTE_TIMINGS)}
             >
               <Trans i18nKey="alerting.common.export-all">Export all</Trans>
@@ -117,7 +113,7 @@ export const TimeIntervalsTable = () => {
               buttonIcon="plus"
               buttonSize="lg"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-              showButton={allowedToCreateMuteTiming}
+              showButton={createAbility.granted}
             />
           ) : (
             <EmptyAreaWithCTA
@@ -136,11 +132,11 @@ export const TimeIntervalsTable = () => {
 };
 
 function useColumns(alertManagerSourceName: string, hideActions = false) {
-  const [[_editSupported, allowedToEdit], [_deleteSupported, allowedToDelete]] = useAlertmanagerAbilities([
-    AlertmanagerAction.UpdateTimeInterval,
-    AlertmanagerAction.DeleteTimeInterval,
-  ]);
-  const showActions = !hideActions && (allowedToEdit || allowedToDelete);
+  // Context-free RBAC check — decides whether the actions column is shown at all.
+  // Per-entity checks (provisioning) are applied inside MuteTimingActionsButtons.
+  const editAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Update });
+  const deleteAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Delete });
+  const showActions = !hideActions && (editAbility.granted || deleteAbility.granted);
 
   return useMemo((): Array<DynamicTableColumnProps<MuteTiming>> => {
     const columns: Array<DynamicTableColumnProps<MuteTiming>> = [

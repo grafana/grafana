@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apiserver/pkg/admission"
 
+	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -35,6 +36,10 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return nil
 	}
 
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)mutate
+	}
+
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return fmt.Errorf("expected repository configuration, got %T", obj)
@@ -45,6 +50,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		if len(r.Finalizers) == 0 {
 			r.Finalizers = []string{
 				RemoveOrphanResourcesFinalizer,
+				RemovePendingJobsFinalizer,
 				CleanFinalizer,
 			}
 		}
@@ -63,7 +69,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	}
 
 	// Extra mutators from factory
-	if err := m.factory.Mutate(ctx, r); err != nil {
+	if err := m.factory.Mutate(ctx, r, a.GetOldObject()); err != nil {
 		return fmt.Errorf("failed to mutate repository: %w", err)
 	}
 
@@ -81,6 +87,9 @@ func CopySecureValues(new, old *provisioning.Repository) {
 	}
 	if new.Secure.WebhookSecret.IsZero() {
 		new.Secure.WebhookSecret = old.Secure.WebhookSecret
+	}
+	if new.Secure.CommitSigningKey.IsZero() {
+		new.Secure.CommitSigningKey = old.Secure.CommitSigningKey
 	}
 }
 

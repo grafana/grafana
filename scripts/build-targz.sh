@@ -16,6 +16,10 @@ set -euo pipefail
 : "${ARCH:?ARCH is required}"
 : "${GO:=go}"
 
+# Keep macOS tar from adding AppleDouble (._*) entries; extracting those on
+# Linux plants extra files inside plugin dirs, breaking signature validation.
+export COPYFILE_DISABLE=1
+
 REPO_ROOT="$(pwd)"
 # Match pkg/build/daggerbuild/packages.FileName: arm variants use arch labels like arm-6, arm-7.
 ARCH_LABEL="${ARCH}"
@@ -47,6 +51,8 @@ mkdir -p "${DIR}/data"
 if [[ -d "${REPO_ROOT}/data/plugins-bundled" ]]; then
   cp -a "${REPO_ROOT}/data/plugins-bundled" "${DIR}/data/"
   find "${DIR}/data/plugins-bundled" -type d -name node_modules -print0 2>/dev/null | xargs -0 rm -rf || true
+  # Drop the local make cache stamp so it doesn't ship in packages
+  rm -f "${DIR}/data/plugins-bundled/".platform-*.stamp
 else
   mkdir -p "${DIR}/data/plugins-bundled"
 fi

@@ -3,7 +3,6 @@
 package v1beta1
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -16,7 +15,6 @@ import (
 // TestIntegrationV1Beta1RepositoryCRUD tests basic CRUD operations on the v1beta1 Repository resource
 func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-v1beta1-repo"
 
@@ -54,7 +52,7 @@ func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
 			AbsPath("/apis/provisioning.grafana.app/v1beta1/namespaces/default/repositories").
 			Body(repoBytes).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should be able to create repository via v1beta1")
 
@@ -70,7 +68,7 @@ func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
 	t.Run("get repository via v1beta1", func(t *testing.T) {
 		result := helper.AdminREST.Get().
 			AbsPath("/apis/provisioning.grafana.app/v1beta1/namespaces/default/repositories/" + repoName).
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should be able to get repository via v1beta1")
 
@@ -90,7 +88,7 @@ func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
 	t.Run("list repositories via v1beta1", func(t *testing.T) {
 		result := helper.AdminREST.Get().
 			AbsPath("/apis/provisioning.grafana.app/v1beta1/namespaces/default/repositories").
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should be able to list repositories via v1beta1")
 
@@ -109,7 +107,7 @@ func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
 	t.Run("delete repository via v1beta1", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
 			AbsPath("/apis/provisioning.grafana.app/v1beta1/namespaces/default/repositories/" + repoName).
-			Do(ctx)
+			Do(t.Context())
 
 		require.NoError(t, result.Error(), "should be able to delete repository via v1beta1")
 
@@ -117,7 +115,7 @@ func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
 		require.Eventually(t, func() bool {
 			result := helper.AdminREST.Get().
 				AbsPath("/apis/provisioning.grafana.app/v1beta1/namespaces/default/repositories/" + repoName).
-				Do(ctx)
+				Do(t.Context())
 			return result.Error() != nil
 		}, 10*time.Second, 100*time.Millisecond, "repository should be deleted")
 

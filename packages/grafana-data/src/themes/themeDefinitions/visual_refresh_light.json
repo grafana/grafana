@@ -1,0 +1,269 @@
+{
+  "name": "Visual Refresh (Light)",
+  "id": "visual_refresh_light",
+  "colors": {
+    "mode": "light",
+    "background": {
+      "canvas": "palette.white",
+      "page": "palette.neutral50",
+      "primary": "palette.white",
+      "secondary": "palette.neutral150",
+      "elevated": "palette.white"
+    },
+    "primary": {
+      "main": "palette.neutral950",
+      "background": "palette.neutral950",
+      "subtleBackground": "palette.neutral200",
+      "border": "palette.neutral600",
+      "subtleBorder": "palette.neutral300"
+    },
+    "secondary": {
+      "main": "palette.neutral200",
+      "background": "palette.neutral200",
+      "shade": "palette.neutral300",
+      "backgroundEmphasis": "palette.neutral300",
+      "border": "palette.neutral400",
+      "borderEmphasis": "palette.neutral450",
+      "subtleBackground": "palette.neutral150",
+      "subtleBorder": "palette.neutral300",
+      "text": "palette.neutral800",
+      "contrastText": "palette.neutral800"
+    },
+    "tertiary": {
+      "main": "palette.violet500",
+      "mainEmphasis": "palette.violet600",
+      "text": "palette.violet700",
+      "textEmphasis": "palette.violet800",
+      "background": "palette.violet600",
+      "backgroundEmphasis": "palette.violet700",
+      "border": "palette.violet300",
+      "borderEmphasis": "palette.violet400",
+      "subtleBackground": "palette.violet50",
+      "subtleBorder": "palette.violet100"
+    },
+    "accent": {
+      "main": "palette.orange500",
+      "mainEmphasis": "palette.orange600",
+      "text": "palette.orange700",
+      "textEmphasis": "palette.orange800",
+      "background": "palette.orange700",
+      "backgroundEmphasis": "palette.orange800",
+      "border": "palette.orange300",
+      "borderEmphasis": "palette.orange400",
+      "subtleBackground": "palette.orange50",
+      "subtleBorder": "palette.orange100",
+      "contrastText": "palette.white"
+    },
+    "error": {
+      "main": "palette.red500",
+      "mainEmphasis": "palette.red600",
+      "text": "palette.red600",
+      "textEmphasis": "palette.red800",
+      "background": "palette.red600",
+      "backgroundEmphasis": "palette.red700",
+      "border": "palette.red300",
+      "borderEmphasis": "palette.red400",
+      "subtleBackground": "palette.red50",
+      "subtleBorder": "palette.red100"
+    },
+    "warning": {
+      "main": "palette.amber500",
+      "mainEmphasis": "palette.amber600",
+      "text": "palette.amber700",
+      "textEmphasis": "palette.amber800",
+      "background": "palette.amber600",
+      "backgroundEmphasis": "palette.amber700",
+      "border": "palette.amber300",
+      "borderEmphasis": "palette.amber400",
+      "subtleBackground": "palette.amber50",
+      "subtleBorder": "palette.amber100"
+    },
+    "success": {
+      "main": "palette.sage500",
+      "mainEmphasis": "palette.sage600",
+      "text": "palette.sage600",
+      "textEmphasis": "palette.sage800",
+      "background": "palette.sage600",
+      "backgroundEmphasis": "palette.sage700",
+      "border": "palette.sage300",
+      "borderEmphasis": "palette.sage400",
+      "subtleBackground": "palette.sage50",
+      "subtleBorder": "palette.sage100"
+    },
+    "info": {
+      "main": "palette.blue500",
+      "mainEmphasis": "palette.blue600",
+      "text": "palette.blue700",
+      "textEmphasis": "palette.blue800",
+      "background": "palette.blue600",
+      "backgroundEmphasis": "palette.blue700",
+      "border": "palette.blue300",
+      "borderEmphasis": "palette.blue400",
+      "subtleBackground": "palette.blue50",
+      "subtleBorder": "palette.blue100"
+    },
+    "text": {
+      "primary": "palette.neutral800",
+      "secondary": "palette.neutral650",
+      "disabled": "palette.neutral600",
+      "link": "palette.blue600"
+    },
+    "border": {
+      "weak": "palette.neutral200",
+      "medium": "palette.neutral300",
+      "strong": "palette.neutral400"
+    },
+    "gradients": {
+      "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
+      "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
+    },
+    "contrastThreshold": 3,
+    "action": {
+      "selected": "hsl(from palette.neutral900 h s l / 0.12)",
+      "hover": "hsl(from palette.neutral900 h s l / 0.08)",
+      "focus": "hsl(from palette.neutral900 h s l / 0.08)",
+      "selectedBorder": "palette.orange500"
+    }
+  },
+  "shape": {
+    "borderRadiusSm": 4,
+    "borderRadius": 8,
+    "borderRadiusLg": 12
+  },
+  "shadows": {
+    "z1": "0px 1px 2px hsl(from palette.neutral350 h s l / 0.75)",
+    "z2": "0px 4px 8px hsl(from palette.neutral350 h s l / 0.75)",
+    "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
+  },
+  "components": {
+    "table": {
+      "headerBackground": "palette.neutral150",
+      "border": "palette.neutral250",
+      "rowStripedBackground": "palette.neutral100",
+      "rowHoverBackground": "palette.neutral250",
+      "rowSelectedBackground": "palette.amber50"
+    },
+    "card": {
+      "background": "palette.white",
+      "borderColor": "palette.neutral200"
+    },
+    "checkbox": {
+      "activeBackground": "palette.orange700",
+      "activeBackgroundHover": "palette.orange800"
+    },
+    "drawer": {
+      "background": "palette.neutral50",
+      "borderColor": "palette.neutral200"
+    },
+    "modal": {
+      "background": "palette.neutral50",
+      "borderColor": "palette.neutral200"
+    },
+    "overlay": {
+      "background": "hsl(from palette.neutral400 h s l / 0.5)"
+    },
+    "dropdown": {
+      "borderColor": "palette.neutral200"
+    },
+    "switch": {
+      "activeBackground": "palette.orange700",
+      "activeBackgroundHover": "palette.orange800"
+    },
+    "tooltip": {
+      "borderColor": "palette.neutral200"
+    },
+    "codeEditor": {
+      "keyword": "palette.blue700",
+      "controlKeyword": "palette.violet700",
+      "variable": "palette.sky700",
+      "type": "palette.teal700",
+      "function": "palette.amber700",
+      "number": "palette.orange700",
+      "string": "palette.sage700",
+      "operator": "palette.neutral650",
+      "regexp": "palette.rose700",
+      "comment": "palette.neutral600",
+      "heading": "palette.blue700",
+      "link": "palette.blue700",
+      "invalid": "palette.red700"
+    },
+    "tag": {
+      "colors": [
+        { "background": "palette.red50", "text": "palette.red800" },
+        { "background": "palette.orange50", "text": "palette.orange800" },
+        { "background": "palette.amber50", "text": "palette.amber800" },
+        { "background": "palette.lime50", "text": "palette.lime800" },
+        { "background": "palette.sage50", "text": "palette.sage800" },
+        { "background": "palette.teal50", "text": "palette.teal800" },
+        { "background": "palette.sky50", "text": "palette.sky800" },
+        { "background": "palette.blue50", "text": "palette.blue800" },
+        { "background": "palette.violet50", "text": "palette.violet800" },
+        { "background": "palette.lavender50", "text": "palette.lavender800" },
+        { "background": "palette.rose50", "text": "palette.rose800" }
+      ]
+    },
+    "textHighlight": {
+      "background": "palette.amber600"
+    },
+    "input": {
+      "background": "palette.white"
+    },
+    "home": {
+      "background": {
+        "fade": "palette.violet100",
+        "highlight": "palette.violet200",
+        "right": "palette.orange200",
+        "left": "palette.blue200"
+      }
+    },
+    "badge": {
+      "blue": {
+        "text": "palette.blue800",
+        "background": "palette.blue50",
+        "border": "palette.blue200"
+      },
+      "red": {
+        "text": "palette.red800",
+        "background": "palette.red50",
+        "border": "palette.red200"
+      },
+      "green": {
+        "text": "palette.sage800",
+        "background": "palette.sage50",
+        "border": "palette.sage200"
+      },
+      "orange": {
+        "text": "palette.orange800",
+        "background": "palette.orange50",
+        "border": "palette.orange200"
+      },
+      "purple": {
+        "text": "palette.violet800",
+        "background": "palette.violet50",
+        "border": "palette.violet200"
+      },
+      "darkgrey": {
+        "text": "palette.neutral800",
+        "background": "palette.neutral50",
+        "border": "palette.neutral200"
+      }
+    }
+  },
+  "typography": {
+    "fontWeightBold": 600,
+    "xxl": { "fontWeight": 600, "fontSize": 24, "lineHeight": 34, "letterSpacing": 0.3 },
+    "xl": { "fontWeight": 600, "fontSize": 22, "lineHeight": 30, "letterSpacing": -0.2 },
+    "lg": { "fontWeight": 500, "fontSize": 20, "lineHeight": 26, "letterSpacing": 0 },
+    "md": { "fontWeight": 500, "fontSize": 16, "lineHeight": 22, "letterSpacing": 0 },
+    "base": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
+    "sm": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 },
+    "h1": { "fontWeight": 600, "fontSize": 24, "lineHeight": 34, "letterSpacing": 0.3 },
+    "h2": { "fontWeight": 600, "fontSize": 22, "lineHeight": 30, "letterSpacing": -0.2 },
+    "h3": { "fontWeight": 500, "fontSize": 20, "lineHeight": 26, "letterSpacing": 0 },
+    "h4": { "fontWeight": 500, "fontSize": 16, "lineHeight": 22, "letterSpacing": 0 },
+    "h5": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
+    "h6": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 },
+    "body": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
+    "bodySmall": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 }
+  }
+}

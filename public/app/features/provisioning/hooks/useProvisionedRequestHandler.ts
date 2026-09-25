@@ -1,28 +1,26 @@
-import { createElement, useEffect, useRef } from 'react';
+import { createElement } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import {
-  type DeleteRepositoryFilesWithPathApiResponse,
-  type GetRepositoryFilesWithPathApiResponse,
-  type RepositoryView,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { type Resource } from 'app/features/apiserver/types';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
+import { type AppDispatch } from 'app/store/configureStore';
 import { useDispatch } from 'app/types/store';
 
 import { ensureFolderPathTrailingSlash } from '../components/utils/path';
 import { getRepoFileUrl } from '../utils/git';
+import { type ResourceKindKey } from '../utils/resourceKinds';
 
 import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
-type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
+type ResourceType = ResourceKindKey;
 
 // Information object that gets passed to all handlers
 interface ProvisionedOperationInfo {
@@ -35,152 +33,150 @@ interface RequestHandlers<T> {
   onBranchSuccess?: (
     data: { ref: string; path: string; urls?: Record<string, string> },
     info: ProvisionedOperationInfo,
-    resource: Resource<T>
+    resource: Resource<T>,
+    wrapper: ResourceWrapper
   ) => void;
-  onWriteSuccess?: (resource: Resource<T>) => void;
-  onError?: (error: unknown, info: ProvisionedOperationInfo) => void;
+  onWriteSuccess?: (resource: Resource<T>, wrapper: ResourceWrapper) => void;
   onDismiss?: () => void;
 }
 
-interface ProvisionedRequest {
-  isError: boolean;
-  isSuccess: boolean;
-  isLoading?: boolean;
-  error?: unknown;
-  data?: DeleteRepositoryFilesWithPathApiResponse | GetRepositoryFilesWithPathApiResponse;
-}
-
-// Resource-specific configuration for different resource types
-interface ResourceConfig {
-  defaultSuccessMessage: string;
-  supportedWorkflows: string[];
-}
-
-interface Props<T> {
-  request: ProvisionedRequest;
-  folderUID?: string | undefined; // this is used to refetch folder items
+interface ProvisionedHandlerOptions<T> {
+  folderUID?: string; // this is used to refetch folder items
   workflow?: string;
-  handlers: RequestHandlers<T>;
-  successMessage?: string;
   repository?: RepositoryView;
   resourceType?: ResourceType;
   selectedBranch?: string; // The branch selected by the user in the form
+  successMessage?: string;
+  handlers?: RequestHandlers<T>;
+}
+
+interface BranchContext {
+  workflow?: string;
+  ref?: string; // ref returned in the response data
+  selectedBranch?: string;
+  repository?: RepositoryView;
+}
+
+function resolveLastBranchToSave({ workflow, ref, selectedBranch, repository }: BranchContext): string | undefined {
+  if (workflow === 'branch') {
+    // For branch workflow, save the ref from the response
+    return ref;
+  }
+  if (workflow === 'write') {
+    // For write workflow, save the selectedBranch or fall back to repository branch
+    return selectedBranch || repository?.branch;
+  }
+  return undefined;
+}
+
+function notifySaveSuccess(
+  {
+    workflow,
+    ref,
+    selectedBranch,
+    repository,
+    urls,
+    successMessage,
+  }: BranchContext & {
+    urls?: Record<string, string>;
+    successMessage?: string;
+  },
+  dispatch: AppDispatch
+) {
+  // Only show success alert for write workflow (not branch workflow,
+  // which navigates to a preview page with its own PR banner)
+  if (workflow === 'branch') {
+    return;
+  }
+
+  const branch = ref || selectedBranch || repository?.branch;
+  // Link to the configured path (e.g. /tree/main/dashboards) so users
+  // land where their resources live, not the repo root.
+  const repoFileUrl = repository?.path
+    ? getRepoFileUrl({
+        repoType: repository.type,
+        url: repository.url,
+        branch,
+        filePath: ensureFolderPathTrailingSlash(repository.path),
+      })
+    : undefined;
+  const linkUrl = repoFileUrl || urls?.repositoryURL || repository?.url;
+
+  if (branch) {
+    // Uses dispatch(notifyApp(...)) instead of getAppEvents().publish() because AlertPayload only accepts strings
+    // and notifyApp supports a React component for rendering the branch name as a clickable link.
+    const component = createElement(PushSuccessMessage, { branch, url: linkUrl });
+    dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
+  } else {
+    const message = successMessage || t('provisioned-request.saved-success', 'Changes saved successfully');
+    getAppEvents().publish({
+      type: AppEvents.alertSuccess.name,
+      payload: [message],
+    });
+  }
 }
 
 /**
- * Generic hook for handling provisioned resource operations across any resource type and repository provider.
+ * Generic handler for the result of provisioned resource mutations, across any
+ * resource type and repository provider.
  *
- * This hook is intentionally decoupled from specific components (like DashboardScene) to promote reusability.
- * Components are responsible for their own state management through specific workflow handlers.
+ * Call the returned function from the submit path; handle failures in the caller's catch:
+ *
+ *   const { handleSuccess } = useProvisionedRequestHandler({ repository, workflow, handlers });
+ *   try {
+ *     const data = await mutation(args).unwrap();
+ *     handleSuccess(data);
+ *   } catch (error) {
+ *     showError(error);
+ *   }
+ *
+ * Per-call `overrides` shallow-merge over the hook options, for values only
+ * known at submit time (e.g. the branch entered in the form).
  */
-export function useProvisionedRequestHandler<T>({
-  folderUID,
-  request,
-  workflow,
-  handlers,
-  successMessage,
-  repository,
-  resourceType,
-  selectedBranch,
-}: Props<T>) {
+export function useProvisionedRequestHandler<T>(options: ProvisionedHandlerOptions<T> = {}) {
   const dispatch = useDispatch();
-  // useRef to ensure handlers are only called once per request
-  const hasHandled = useRef(false);
   const { setLastBranch } = useLastBranch();
 
-  useEffect(() => {
-    const repoType = repository?.type || 'git';
+  const handleSuccess = (data: ResourceWrapper, overrides?: Partial<ProvisionedHandlerOptions<T>>) => {
+    const { folderUID, workflow, repository, resourceType, selectedBranch, successMessage, handlers } = {
+      ...options,
+      ...overrides,
+    };
     const info: ProvisionedOperationInfo = {
-      repoType,
+      repoType: repository?.type || 'git',
       resourceType,
       workflow,
     };
 
-    // Reset handler guard when a new request starts loading
-    if (request.isLoading) {
-      hasHandled.current = false;
+    const { ref, path, urls, resource } = data;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const resourceData = resource.upsert as Resource<T>;
+
+    const lastBranch = resolveLastBranchToSave({ workflow, ref, selectedBranch, repository });
+    if (lastBranch) {
+      setLastBranch(repository?.name, lastBranch);
     }
 
-    if (request.isError) {
-      hasHandled.current = true;
-      handlers.onError?.(request.error, info);
-      return;
+    notifySaveSuccess({ workflow, ref, selectedBranch, repository, urls, successMessage }, dispatch);
+
+    // Branch workflow
+    if (workflow === 'branch' && handlers?.onBranchSuccess && ref && path) {
+      handlers.onBranchSuccess({ ref, path, urls }, info, resourceData, data);
     }
 
-    if (request.isSuccess && request.data && !hasHandled.current) {
-      hasHandled.current = true;
-      const { ref, path, urls, resource } = request.data;
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const resourceData = resource.upsert as Resource<T>;
-
-      // Save the last used branch to local storage
-      if (workflow === 'branch' && ref) {
-        // For branch workflow, save the ref from the response
-        setLastBranch(repository?.name, ref);
-      } else if (workflow === 'write') {
-        // For write workflow, save the selectedBranch or fall back to repository branch
-        setLastBranch(repository?.name, selectedBranch || repository?.branch);
+    // Write workflow
+    if (workflow === 'write' && handlers?.onWriteSuccess) {
+      if (folderUID) {
+        // refetch folder items after success if folderUID is passed in
+        dispatch(refetchChildren({ parentUID: folderUID, pageSize: PAGE_SIZE }));
       }
-
-      // Only show success alert for write workflow (not branch workflow,
-      // which navigates to a preview page with its own PR banner)
-      if (workflow !== 'branch') {
-        const branch = ref || selectedBranch || repository?.branch;
-        // Link to the configured path (e.g. /tree/main/dashboards) so users
-        // land where their resources live, not the repo root.
-        const repoFileUrl = repository?.path
-          ? getRepoFileUrl({
-              repoType: repository.type,
-              url: repository.url,
-              branch,
-              filePath: ensureFolderPathTrailingSlash(repository.path),
-            })
-          : undefined;
-        const linkUrl = repoFileUrl || urls?.repositoryURL || repository?.url;
-
-        if (branch) {
-          // Uses dispatch(notifyApp(...)) instead of getAppEvents().publish() because AlertPayload only accepts strings
-          // and notifyApp supports a React component for rendering the branch name as a clickable link.
-          const component = createElement(PushSuccessMessage, { branch, url: linkUrl });
-          dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
-        } else {
-          const message = successMessage || t('provisioned-request.saved-success', 'Changes saved successfully');
-          getAppEvents().publish({
-            type: AppEvents.alertSuccess.name,
-            payload: [message],
-          });
-        }
-      }
-
-      // Branch workflow
-      if (workflow === 'branch' && handlers.onBranchSuccess && ref && path) {
-        const branchData = { ref, path, urls };
-        handlers.onBranchSuccess?.(branchData, info, resourceData);
-      }
-
-      // Write workflow
-      if (workflow === 'write' && handlers.onWriteSuccess) {
-        if (folderUID) {
-          // refetch folder items after success if folderUID is passed in
-          dispatch(refetchChildren({ parentUID: folderUID || repository?.name, pageSize: PAGE_SIZE }));
-        }
-        handlers.onWriteSuccess(resourceData);
-      }
-
-      handlers.onDismiss?.();
+      handlers.onWriteSuccess(resourceData, data);
     }
-  }, [
-    request,
-    workflow,
-    handlers,
-    successMessage,
-    repository,
-    resourceType,
-    folderUID,
-    dispatch,
-    selectedBranch,
-    setLastBranch,
-  ]);
+
+    handlers?.onDismiss?.();
+  };
+
+  return { handleSuccess };
 }
 
-export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };
+export type { ProvisionedOperationInfo, RequestHandlers };

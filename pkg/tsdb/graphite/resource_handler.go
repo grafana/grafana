@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -55,8 +56,17 @@ func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw 
 
 		var parsedBody *T
 		if req.Body != nil {
+			// Bound the inbound request body so an oversized payload cannot force
+			// unbounded heap allocation; an overflow surfaces as HTTP 413.
+			maxBytes := s.caps.resourceRequest()
+			req.Body = http.MaxBytesReader(rw, req.Body, maxBytes)
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
+				if maxErr, ok := errors.AsType[*http.MaxBytesError](err); ok {
+					s.logger.Warn("Graphite resource request body exceeded the configured cap", "max_bytes", maxBytes)
+					writeErrorResponse(rw, http.StatusRequestEntityTooLarge, fmt.Sprintf("request body exceeded %d bytes", maxErr.Limit))
+					return
+				}
 				s.logger.Error("Failed to read request body", "error", err)
 				writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 				return
@@ -105,7 +115,7 @@ func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, even
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create events request %v", err)
 	}
 
-	events, _, statusCode, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, dsInfo, s.logger, req, false)
+	events, _, statusCode, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, dsInfo, s.logger, req, false, s.caps.resourceResponse())
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("events request failed: %v", err)
 	}
@@ -148,7 +158,7 @@ func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo,
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create metrics find request %v", err)
 	}
 
-	metrics, _, statusCode, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, s.logger, req, false)
+	metrics, _, statusCode, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, s.logger, req, false, s.caps.resourceResponse())
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("metrics find request failed: %v", err)
 	}
@@ -184,7 +194,7 @@ func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInf
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create metrics expand request %v", err)
 	}
 
-	metrics, _, statusCode, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, s.logger, req, false)
+	metrics, _, statusCode, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, s.logger, req, false, s.caps.resourceResponse())
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("metrics expand request failed: %v", err)
 	}
@@ -219,7 +229,7 @@ func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasource
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create tags autocomplete request %v", err)
 	}
 
-	tags, _, statusCode, err := doGraphiteRequest[[]string](ctx, dsInfo, s.logger, req, false)
+	tags, _, statusCode, err := doGraphiteRequest[[]string](ctx, dsInfo, s.logger, req, false, s.caps.resourceResponse())
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("tags autocomplete request failed: %v", err)
 	}
@@ -250,7 +260,7 @@ func (s *Service) handleTagValuesAutocomplete(ctx context.Context, dsInfo *datas
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create tag values autocomplete request %v", err)
 	}
 
-	tagValues, _, statusCode, err := doGraphiteRequest[[]string](ctx, dsInfo, s.logger, req, false)
+	tagValues, _, statusCode, err := doGraphiteRequest[[]string](ctx, dsInfo, s.logger, req, false, s.caps.resourceResponse())
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("tag values autocomplete request failed: %v", err)
 	}
@@ -271,7 +281,7 @@ func (s *Service) handleVersion(ctx context.Context, dsInfo *datasourceInfo, _ *
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create version request %v", err)
 	}
 
-	version, _, statusCode, err := doGraphiteRequest[string](ctx, dsInfo, s.logger, req, false)
+	version, _, statusCode, err := doGraphiteRequest[string](ctx, dsInfo, s.logger, req, false, s.caps.resourceResponse())
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("version request failed: %v", err)
 	}
@@ -292,7 +302,7 @@ func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo, _
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create functions request %v", err)
 	}
 
-	_, rawBody, statusCode, err := doGraphiteRequest[map[string]any](ctx, dsInfo, s.logger, req, true)
+	_, rawBody, statusCode, err := doGraphiteRequest[map[string]any](ctx, dsInfo, s.logger, req, true, s.caps.resourceResponse())
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("functions request failed: %v", err)
 	}
@@ -311,7 +321,7 @@ func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo, _
 	return rawBodyReplaced, statusCode, nil
 }
 
-func doGraphiteRequest[T any](ctx context.Context, dsInfo *datasourceInfo, logger log.Logger, req *http.Request, isRaw bool) (*T, *[]byte, int, error) {
+func doGraphiteRequest[T any](ctx context.Context, dsInfo *datasourceInfo, logger log.Logger, req *http.Request, isRaw bool, maxResponseBytes int64) (*T, *[]byte, int, error) {
 	_, span := tracing.DefaultTracer().Start(ctx, "graphite request")
 	defer span.End()
 	span.SetAttributes(
@@ -333,7 +343,7 @@ func doGraphiteRequest[T any](ctx context.Context, dsInfo *datasourceInfo, logge
 		}
 	}()
 
-	parsedResponse, rawBody, err := parseResponse[T](res, isRaw, logger)
+	parsedResponse, rawBody, err := parseResponse[T](res, isRaw, logger, maxResponseBytes)
 	if err != nil {
 		return nil, nil, http.StatusInternalServerError, fmt.Errorf("failed to parse response: %v", err)
 	}
@@ -351,9 +361,9 @@ func parseRequestBody[V any](requestBody []byte, logger log.Logger) (*V, error) 
 	return requestJson, nil
 }
 
-func parseResponse[V any](res *http.Response, isRaw bool, logger log.Logger) (*V, *[]byte, error) {
+func parseResponse[V any](res *http.Response, isRaw bool, logger log.Logger, maxBytes int64) (*V, *[]byte, error) {
 	encoding := res.Header.Get("Content-Encoding")
-	body, err := decode(encoding, res.Body)
+	body, err := decode(encoding, res.Body, maxBytes)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read response: %v", err)
 	}

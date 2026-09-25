@@ -48,7 +48,7 @@ func ValidatePath(path string) error {
 		return ErrPathTooLong
 	}
 
-	for _, part := range strings.Split(strings.TrimPrefix(path, Delimiter), Delimiter) {
+	for part := range strings.SplitSeq(strings.TrimPrefix(path, Delimiter), Delimiter) {
 		if strings.TrimSpace(part) == "" {
 			return ErrEmptyPathPart
 		}

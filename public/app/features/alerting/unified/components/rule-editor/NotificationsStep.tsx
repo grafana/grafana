@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
@@ -12,8 +13,9 @@ import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
+import { arrayToRecord } from '../../utils/misc';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
-import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
+import { resolveNamedPolicyName } from '../notification-policies/useNotificationPolicyRoute';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -186,7 +188,9 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
     <Stack direction="column" gap={2}>
       <Stack direction="column">
         <RadioButtonGroup
-          data-testid={manualRouting ? 'routing-options-contact-point' : 'routing-options-notification-policy'}
+          data-testid={selectors.components.AlertRules.routingOptions(
+            manualRouting ? 'contact-point' : 'notification-policy'
+          )}
           options={routingOptions}
           value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
           onChange={onRoutingOptionChange}
@@ -242,16 +246,16 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   ]);
   const selectedPolicy = watch('selectedPolicy');
 
-  const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
-
-  // Prefer the policy field (notification_settings.policy — canonical and honored by the backend
-  // in both toggle states), falling back to the legacy __grafana_managed_route__ label, so the
-  // notification preview fetches the correct routing tree instead of always defaulting to root.
-  const policyNameForPreview = selectedPolicy || labels.find((l) => l.key === NAMED_ROOT_LABEL_NAME)?.value;
+  // Forwards the active policy to the preview so it fetches the correct routing tree instead of
+  // always defaulting to root.
+  const policyNameForPreview = resolveNamedPolicyName(
+    selectedPolicy ? { policy: selectedPolicy } : undefined,
+    arrayToRecord(labels)
+  );
 
   return (
     <Stack direction="column" gap={2}>
-      {multiplePoliciesEnabled && <PolicyTreeSelector />}
+      <PolicyTreeSelector />
       <NotificationPreview
         alertQueries={queries}
         customLabels={labels}
@@ -328,7 +332,7 @@ interface NotificationsStepDescriptionProps {
   manualRouting: boolean;
 }
 
-export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
+const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
   return (
     <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">

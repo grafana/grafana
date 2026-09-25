@@ -18,13 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -32,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,6 +50,8 @@ var (
 	ErrSilenceInternal      = errutil.Internal("alerting.notifications.silences.internal")
 	ErrSilenceLimitExceeded = errutil.TooManyRequests("alerting.notifications.silences.limitExceeded", errutil.WithPublicMessage("Maximum number of silences has been reached. Delete some silences before creating new ones."))
 	ErrSilenceSizeExceeded  = errutil.BadRequest("alerting.notifications.silences.sizeExceeded", errutil.WithPublicMessage("Silence size exceeds the maximum allowed size."))
+
+	ErrReceiverStatusesInternal = errutil.Internal("alerting.notifications.receivers.internal")
 )
 
 //go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
@@ -159,10 +159,7 @@ func NewMultiOrgAlertmanager(
 	featureManager featuremgmt.FeatureToggles,
 	notificationHistorian nfstatus.NotificationHistorian,
 	skipClustering bool,
-	adminConfigStore store.AdminConfigurationStore,
-	datasourceService datasources.DataSourceService,
-	httpClientProvider httpclient.Provider,
-	requestValidator validations.DataSourceRequestValidator,
+	externalAMSyncer *ExternalAMSyncer,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -182,18 +179,10 @@ func NewMultiOrgAlertmanager(
 		metrics:                     m,
 		ns:                          ns,
 		peer:                        &NilPeer{},
+		// Fetch responsibilities live on ExternalAMSyncer; MOA drives it per-org inside
+		// SyncAlertmanagersForOrgs and owns the save+apply via SaveAndApplyExtraConfiguration.
+		externalAMSyncer: externalAMSyncer,
 	}
-	// Fetch responsibilities live on ExternalAMSyncer; MOA drives it per-org inside
-	// SyncAlertmanagersForOrgs and owns the save+apply via SaveAndApplyExtraConfiguration.
-	moa.externalAMSyncer = NewExternalAMSyncer(
-		adminConfigStore,
-		datasourceService,
-		httpClientProvider,
-		requestValidator,
-		cfg,
-		m,
-		l,
-	)
 
 	if skipClustering {
 		moa.logger.Info("Not setting up clustering for the multi-org Alertmanager")
@@ -408,6 +397,10 @@ func (syncBypassAuthz) AuthorizeDelete(context.Context, identity.Requester, stri
 	return nil
 }
 
+func (syncBypassAuthz) AuthorizePromote(context.Context, identity.Requester, merge.MergeResult) error {
+	return nil
+}
+
 // syncExternalAMConfigForOrgs runs the external Alertmanager fetch for each
 // non-disabled org whose Alertmanager instance has already been created, and
 // persists any changed configs via SaveAndApplyExtraConfiguration.
@@ -441,13 +434,17 @@ func (moa *MultiOrgAlertmanager) syncExternalAMConfigForOrgs(ctx context.Context
 		// External sync is system-driven, so we use a service identity and a no-op
 		// authz: there is no end-user request to authorize against.
 		svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
-		if _, err := moa.SaveAndApplyExtraConfiguration(svcCtx, orgID, svcUser, syncBypassAuthz{}, *ec, false /*replace*/, false /*dryRun*/); err != nil {
-			reason := classifySyncError(err)
-			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", reason, "error", err)
-			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(fmt.Sprintf("%d", orgID), reason).Inc()
+		if _, err := moa.SaveAndApplyExtraConfiguration(svcCtx, orgID, svcUser, syncBypassAuthz{}, *ec, false /*replace*/, false /*dryRun*/, false /*promote*/); err != nil {
+			// Classify once: the *SyncError flows to both the metric label and
+			// the status condition reason via reasonOf, so the two namespaces
+			// can't drift.
+			syncErr := ClassifySaveError(err)
+			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", err)
+			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(fmt.Sprintf("%d", orgID), syncErr.Reason.Label()).Inc()
+			moa.externalAMSyncer.MarkFailed(ctx, orgID, syncErr)
 			continue
 		}
-		moa.externalAMSyncer.MarkSaved(orgID, hash)
+		moa.externalAMSyncer.MarkSaved(ctx, orgID, hash)
 	}
 }
 
@@ -609,8 +606,8 @@ func (moa *MultiOrgAlertmanager) Peer() alertingNotify.ClusterPeer {
 // Thin wrapper around ExternalAMSyncer.IsConfiguredForOrg kept here so the
 // Alertmanager interface used by the convert API does not need to know about
 // ExternalAMSyncer.
-func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(_ context.Context, orgID int64) (bool, error) {
-	return moa.externalAMSyncer.IsConfiguredForOrg(orgID)
+func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(ctx context.Context, orgID int64) (bool, error) {
+	return moa.externalAMSyncer.IsConfiguredForOrg(ctx, orgID)
 }
 
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.
@@ -690,6 +687,24 @@ func (moa *MultiOrgAlertmanager) GetSilence(ctx context.Context, orgID int64, id
 	}
 
 	return GettableSilenceToSilence(s), nil
+}
+
+// GetReceiverStatuses returns the receiver statuses (active state and per-integration notification
+// info) for the org provided. Currently, this is a pass-through to the Alertmanager.
+func (moa *MultiOrgAlertmanager) GetReceiverStatuses(ctx context.Context, orgID int64) ([]alertingModels.ReceiverStatus, error) {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, err := moa.alertmanagerForOrg(orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	statuses, err := orgAM.GetReceivers(ctx)
+	if err != nil {
+		return nil, WithPublicError(ErrReceiverStatusesInternal.Errorf("failed to get receiver statuses: %w", err))
+	}
+	return statuses, nil
 }
 
 // CreateSilence creates a silence in the Alertmanager for the organization provided, returning the silence ID. It will

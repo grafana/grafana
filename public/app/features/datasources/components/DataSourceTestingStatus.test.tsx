@@ -449,6 +449,7 @@ describe('<DataSourceTestingStatus />', () => {
       expect(DashboardLibraryInteractions.entryPointClicked).toHaveBeenCalledWith({
         entryPoint: 'datasource_page_success_banner',
         contentKind: 'suggested_dashboards',
+        contentKinds: ['suggested_dashboards'],
       });
     });
 

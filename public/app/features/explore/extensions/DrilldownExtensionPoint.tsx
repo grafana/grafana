@@ -26,12 +26,15 @@ const QUERYLESS_APPS = [
 ];
 
 /**
- * Renders a button to open queryless drilldown apps.
- * Only displays when at least one queryless app extension is available.
+ * Exposes the queryless-app drilldown availability + click behavior so it can be rendered in different
+ * shapes (a button, a menu item, etc.). Returns `isAvailable: false` when no queryless app extension is
+ * registered for the given queries.
  */
-export function DrilldownExtensionPoint(props: Props): ReactElement | null {
-  const { onExtensionClick, compact } = props;
-  const context = useExtensionPointContext(props);
+export function useDrilldownExtension(
+  queries: DataQuery[],
+  onExtensionClick?: () => void
+): { isAvailable: boolean; onClick: () => void } {
+  const context = useExtensionPointContext(queries);
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
     context: context,
@@ -47,7 +50,17 @@ export function DrilldownExtensionPoint(props: Props): ReactElement | null {
     global.open(locationUtil.assureBaseUrl(firstLink.path), '_blank');
   }, [querylessLinks, onExtensionClick]);
 
-  if (!querylessLinks.length) {
+  return { isAvailable: querylessLinks.length > 0, onClick };
+}
+
+/**
+ * Renders a button to open queryless drilldown apps.
+ * Only displays when at least one queryless app extension is available.
+ */
+export function DrilldownExtensionPoint({ queries, onExtensionClick, compact }: Props): ReactElement | null {
+  const { isAvailable, onClick } = useDrilldownExtension(queries, onExtensionClick);
+
+  if (!isAvailable) {
     return null;
   }
 
@@ -58,13 +71,13 @@ export function DrilldownExtensionPoint(props: Props): ReactElement | null {
   );
 }
 
-export type PluginExtensionExploreContext = {
+type PluginExtensionExploreContext = {
   targets: DataQuery[];
   timeRange: RawTimeRange;
   timeZone: TimeZone;
 };
 
-function useExtensionPointContext({ queries }: Props): PluginExtensionExploreContext {
+function useExtensionPointContext(queries: DataQuery[]): PluginExtensionExploreContext {
   return useMemo(() => {
     const range = getDefaultTimeRange();
     return {

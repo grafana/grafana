@@ -2,6 +2,13 @@ export interface Threshold {
   value: number;
   color: string;
   /**
+   *  Optional dashboard-variable expression (e.g. `$myVar`) resolved during
+   *  `applyFieldOverrides`; the numeric `value` is the fallback used when the
+   *  expression cannot be resolved to a single finite number. Resolved
+   *  (runtime) configs never carry this property.
+   */
+  valueExpr?: string;
+  /**
    *  Warning, Error, LowLow, Low, OK, High, HighHigh etc
    */
   state?: string;

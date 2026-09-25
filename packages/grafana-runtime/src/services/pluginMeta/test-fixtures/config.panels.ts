@@ -249,7 +249,7 @@ export const panels: PanelPluginMetas = structuredClone({
   annolist: {
     id: 'annolist',
     name: 'Annotations list',
-    aliasIds: ['ryantxu-annolist-panel'],
+    aliasIDs: ['ryantxu-annolist-panel'],
     info: {
       author: {
         name: 'Grafana Labs',
@@ -631,41 +631,6 @@ export const panels: PanelPluginMetas = structuredClone({
     baseUrl: 'app/plugins/panel/geomap',
     signature: PluginSignatureStatus.internal,
     module: 'core:plugin/geomap',
-    angular: { detected: false } as AngularMeta,
-    loadingStrategy: PluginLoadingStrategy.script,
-    type: PluginType.panel,
-  },
-  gettingstarted: {
-    id: 'gettingstarted',
-    name: 'Getting Started',
-    info: {
-      author: {
-        name: 'Grafana Labs',
-        url: 'https://grafana.com',
-      },
-      description: '',
-      links: [
-        {
-          name: 'Raise issue',
-          url: 'https://github.com/grafana/grafana/issues/new',
-        },
-      ],
-      logos: {
-        small: 'app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg',
-        large: 'app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg',
-      },
-      build: {},
-      screenshots: [],
-      version: '',
-      updated: '',
-      keywords: [],
-    },
-    hideFromList: true,
-    sort: 100,
-    skipDataQuery: true,
-    baseUrl: 'app/plugins/panel/gettingstarted',
-    signature: PluginSignatureStatus.internal,
-    module: 'core:plugin/gettingstarted',
     angular: { detected: false } as AngularMeta,
     loadingStrategy: PluginLoadingStrategy.script,
     type: PluginType.panel,
@@ -1214,41 +1179,6 @@ export const panels: PanelPluginMetas = structuredClone({
     baseUrl: 'app/plugins/panel/trend',
     signature: PluginSignatureStatus.internal,
     module: 'core:plugin/trend',
-    angular: { detected: false } as AngularMeta,
-    loadingStrategy: PluginLoadingStrategy.script,
-    type: PluginType.panel,
-  },
-  welcome: {
-    id: 'welcome',
-    name: 'Welcome',
-    info: {
-      author: {
-        name: 'Grafana Labs',
-        url: 'https://grafana.com',
-      },
-      description: '',
-      links: [
-        {
-          name: 'Raise issue',
-          url: 'https://github.com/grafana/grafana/issues/new',
-        },
-      ],
-      logos: {
-        small: 'app/plugins/panel/welcome/img/icn-dashlist-panel.svg',
-        large: 'app/plugins/panel/welcome/img/icn-dashlist-panel.svg',
-      },
-      build: {},
-      screenshots: [],
-      version: '',
-      updated: '',
-      keywords: [],
-    },
-    hideFromList: true,
-    sort: 100,
-    skipDataQuery: true,
-    baseUrl: 'app/plugins/panel/welcome',
-    signature: PluginSignatureStatus.internal,
-    module: 'core:plugin/welcome',
     angular: { detected: false } as AngularMeta,
     loadingStrategy: PluginLoadingStrategy.script,
     type: PluginType.panel,

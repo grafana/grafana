@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type FetchError, isFetchError } from '@grafana/runtime';
 import { type LibraryPanel } from '@grafana/schema';
-import { Button, Field, Input, Modal, Stack } from '@grafana/ui';
+import { Button, Field, Input, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import { type PanelModel } from '../../../dashboard/state/PanelModel';
@@ -72,6 +73,7 @@ export const AddLibraryPanelContents = ({
       >
         <Input
           id="share-panel-library-panel-name-input"
+          data-testid={selectors.components.Drawer.NewLibraryPanelDrawer.nameInput}
           name="name"
           value={panelName}
           onChange={(e) => setPanelName(e.currentTarget.value)}
@@ -87,7 +89,11 @@ export const AddLibraryPanelContents = ({
         <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
       </Field>
       <Stack gap={1} justifyContent={'start'}>
-        <Button onClick={onCreate} disabled={invalidInput}>
+        <Button
+          onClick={onCreate}
+          disabled={invalidInput}
+          data-testid={selectors.components.Drawer.NewLibraryPanelDrawer.createButton}
+        >
           <Trans i18nKey="share-panel.new-library-panel.create-button">Create library panel</Trans>
         </Button>
         <Button variant="secondary" onClick={onDismiss} fill="outline">
@@ -95,21 +101,5 @@ export const AddLibraryPanelContents = ({
         </Button>
       </Stack>
     </>
-  );
-};
-
-interface Props extends AddLibraryPanelContentsProps {
-  isOpen?: boolean;
-}
-
-export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderUid, ...props }: Props) => {
-  return (
-    <Modal
-      title={t('library-panels.add-library-panel-modal.title-create-library-panel', 'Create library panel')}
-      isOpen={isOpen}
-      onDismiss={props.onDismiss}
-    >
-      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={props.onDismiss} />
-    </Modal>
   );
 };

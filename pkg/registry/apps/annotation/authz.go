@@ -6,10 +6,13 @@ import (
 	"strconv"
 
 	authtypes "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // DashboardFolderResolver returns the parent folder UID for a dashboard, or "" if not found.
@@ -34,11 +37,11 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 
 // canAccessAnnotation checks that the caller has permission to perform verb on anno,
 // using the legacy annotation authorization model (dashboard-scoped or org-scoped).
-func canAccessAnnotation(ctx context.Context, accessClient authtypes.AccessClient, folderResolver DashboardFolderResolver, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
+func canAccessAnnotation(ctx context.Context, tracer trace.Tracer, accessClient authtypes.AccessClient, folderResolver DashboardFolderResolver, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
 	if anno == nil {
 		return false, apierrors.NewBadRequest("annotation must not be nil")
 	}
-	allowed, err := canAccessAnnotations(ctx, accessClient, folderResolver, namespace, []annotationV0.Annotation{*anno}, verb)
+	allowed, err := canAccessAnnotations(ctx, tracer, accessClient, folderResolver, namespace, []annotationV0.Annotation{*anno}, verb)
 	if err != nil {
 		return false, err
 	}
@@ -47,7 +50,12 @@ func canAccessAnnotation(ctx context.Context, accessClient authtypes.AccessClien
 
 // canAccessAnnotations checks permissions for a batch of annotations,
 // returning a boolean slice aligned with the input items slice
-func canAccessAnnotations(ctx context.Context, accessClient authtypes.AccessClient, folderResolver DashboardFolderResolver, namespace string, items []annotationV0.Annotation, verb string) ([]bool, error) {
+func canAccessAnnotations(ctx context.Context, tracer trace.Tracer, accessClient authtypes.AccessClient, folderResolver DashboardFolderResolver, namespace string, items []annotationV0.Annotation, verb string) ([]bool, error) {
+	ctx, span := tracer.Start(ctx, "annotation.authz.canAccessAnnotations", trace.WithAttributes(
+		attribute.Int("item_count", len(items)),
+	))
+	defer span.End()
+
 	if len(items) == 0 {
 		return nil, nil
 	}
@@ -57,7 +65,7 @@ func canAccessAnnotations(ctx context.Context, accessClient authtypes.AccessClie
 		return nil, apierrors.NewUnauthorized("no identity found for request")
 	}
 
-	folderByDash, err := resolveDashboardFolders(ctx, folderResolver, namespace, items)
+	folderByDash, err := resolveDashboardFolders(ctx, tracer, folderResolver, namespace, items)
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +112,10 @@ func canAccessAnnotations(ctx context.Context, accessClient authtypes.AccessClie
 }
 
 // resolveDashboardFolders maps dashboard UID -> parent folder UID for unique dashboards in items.
-// TODO: cache results (TTL LRU by namespace+UID) and run lookups in parallel. Folder rarely changes.
-func resolveDashboardFolders(ctx context.Context, folderResolver DashboardFolderResolver, namespace string, items []annotationV0.Annotation) (map[string]string, error) {
+func resolveDashboardFolders(ctx context.Context, tracer trace.Tracer, folderResolver DashboardFolderResolver, namespace string, items []annotationV0.Annotation) (map[string]string, error) {
+	ctx, span := tracer.Start(ctx, "annotation.authz.resolveDashboardFolders")
+	defer span.End()
+
 	uids := make(map[string]struct{})
 	for _, anno := range items {
 		if anno.Spec.DashboardUID != nil && *anno.Spec.DashboardUID != "" {
@@ -127,4 +137,27 @@ func resolveDashboardFolders(ctx context.Context, folderResolver DashboardFolder
 		out[uid] = folder
 	}
 	return out, nil
+}
+
+// authorizeReadOrganizationAnnotations gates organization-wide annotation reads such as the tags aggregate.
+func authorizeReadOrganizationAnnotations(ctx context.Context, accessClient authtypes.AccessClient, namespace string) error {
+	authInfo, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewUnauthorized("no identity found for request")
+	}
+
+	resp, err := accessClient.Check(ctx, authInfo, authtypes.CheckRequest{
+		Namespace: namespace,
+		Group:     "annotation.grafana.app",
+		Resource:  "annotations",
+		Name:      "organization",
+		Verb:      utils.VerbList,
+	}, "") // organization-scoped annotations have no parent folder
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("annotation authz check failed: %w", err))
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(annotationGR, "tags", fmt.Errorf("requires the annotations:read permission with the organization scope"))
+	}
+	return nil
 }

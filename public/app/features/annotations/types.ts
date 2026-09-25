@@ -21,7 +21,7 @@ export interface AnnotationQueryResponse {
   panelData?: PanelData;
 }
 
-export interface AnnotationTag {
+interface AnnotationTag {
   /**
    * The tag name
    */

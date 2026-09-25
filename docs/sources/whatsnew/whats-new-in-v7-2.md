@@ -128,9 +128,9 @@ These features are included in the Grafana Enterprise edition software.
 
 ### Report and export dashboards in grid layout
 
-A new layout option is available when rendering reports: the grid layout. With this option, your report uses the panel layout from your dashboard, so that what you see is what you get. Learn more about the [grid layout](../../dashboards/share-dashboards-panels/#layout-and-orientation) in the documentation.
+A new layout option is available when rendering reports: the grid layout. With this option, your report uses the panel layout from your dashboard, so that what you see is what you get. Learn more about the [grid layout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/create-reports/#5-attachments) in the documentation.
 
-The grid layout is also available for the [Export dashboard as PDF](../../dashboards/share-dashboards-panels/#export-dashboard-as-pdf) feature.
+The grid layout is also available for the [Export dashboard as PDF](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-a-dashboard-as-pdf) feature.
 
 {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Report in grid layout" >}}
 

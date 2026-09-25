@@ -1,6 +1,9 @@
+import { VizPanel } from '@grafana/scenes';
 import {
   defaultDataQueryKind,
+  defaultFieldConfigSource,
   defaultPanelSpec,
+  type FieldConfigSource,
   type PanelKind,
   type PanelQueryKind,
   type QueryOptionsSpec,
@@ -9,6 +12,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 
 import { buildVizPanel, ensureUniqueRefIds, getPanelDataSource, getRuntimePanelDataSource } from './utils';
 
@@ -439,6 +443,24 @@ describe('buildVizPanel', () => {
     });
   });
 
+  it('preserves timeCompare through v2 save and load', () => {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      $timeRange: new PanelTimeRange({ compareWith: '1w' }),
+    });
+
+    const saved = vizPanelToSchemaV2(panel, undefined, false);
+    expect(saved.kind).toBe('Panel');
+
+    const panelKind = saved as PanelKind;
+    expect(panelKind.spec.data.spec.queryOptions.timeCompare).toBe('1w');
+
+    const reloaded = getPanelTimeRange(panelKind);
+    expect(reloaded.state.compareWith).toBe('1w');
+  });
+
   it('does not create $timeRange when only hideTimeOverride is set', () => {
     // hideTimeOverride alone is not one of the three trigger fields (timeFrom/timeShift/timeCompare).
     const viz = buildVizPanel(buildPanelWithQueryOptions({ hideTimeOverride: true }));
@@ -454,7 +476,7 @@ describe('buildVizPanel', () => {
 
   describe('hoverHeader interaction with time range', () => {
     // hoverHeader is shown only when there's no title AND no visible time override.
-    // timeOverrideShown = (timeFrom || timeShift) && !hideTimeOverride — note timeCompare is NOT included.
+    // timeOverrideShown = (timeFrom || timeShift || timeCompare) && !hideTimeOverride.
 
     it('shows hoverHeader when there is no title and no time fields', () => {
       const viz = buildVizPanel(buildPanelWithQueryOptions({}, ''));
@@ -480,16 +502,80 @@ describe('buildVizPanel', () => {
       expect(viz.state.hoverHeader).toBe(true);
     });
 
-    it('shows hoverHeader when only timeCompare is set (timeCompare is not a visible time override)', () => {
+    it('hides hoverHeader when only timeCompare is set', () => {
       const viz = buildVizPanel(buildPanelWithQueryOptions({ timeCompare: '1d' }, ''));
 
-      expect(viz.state.hoverHeader).toBe(true);
+      expect(viz.state.hoverHeader).toBe(false);
     });
 
     it('hides hoverHeader when the panel has a title, regardless of time fields', () => {
       const viz = buildVizPanel(buildPanelWithQueryOptions({ timeFrom: '2h', hideTimeOverride: true }, 'My Panel'));
 
       expect(viz.state.hoverHeader).toBe(false);
+    });
+  });
+
+  describe('withoutQueries (plan placeholders)', () => {
+    // A 'timeseries' sample always sets legend.showLegend: false and infers a unit from the
+    // title (see planningSampleData.ts). Picking planned values that disagree with both makes
+    // any leak from the sample into the panel state visible in the assertions below.
+    function buildPlannedPanel(
+      options: Record<string, unknown>,
+      fieldConfig: FieldConfigSource,
+      group = 'timeseries'
+    ): PanelKind {
+      const base = defaultPanelSpec();
+      return {
+        kind: 'Panel',
+        spec: {
+          ...base,
+          title: 'p99 latency',
+          vizConfig: {
+            ...base.vizConfig,
+            group,
+            spec: { options, fieldConfig },
+          },
+        },
+      };
+    }
+
+    it('keeps the planned spec options/fieldConfig instead of the sample defaults', () => {
+      const panel = buildPlannedPanel(
+        { legend: { showLegend: true } },
+        { ...defaultFieldConfigSource(), defaults: { ...defaultFieldConfigSource().defaults, unit: 'bytes' } }
+      );
+
+      const viz = buildVizPanel(panel, undefined, { withoutQueries: true });
+
+      expect(viz.state.options).toEqual({ legend: { showLegend: true } });
+      expect(viz.state.fieldConfig.defaults.unit).toBe('bytes');
+    });
+
+    it('still attaches a sample $data series so the query-less placeholder renders something', () => {
+      const panel = buildPlannedPanel(
+        { legend: { showLegend: true } },
+        { ...defaultFieldConfigSource(), defaults: { ...defaultFieldConfigSource().defaults, unit: 'bytes' } }
+      );
+
+      const viz = buildVizPanel(panel, undefined, { withoutQueries: true });
+
+      expect(viz.state.$data).toBeDefined();
+    });
+
+    it('keeps planned text-panel content instead of the sample placeholder note', () => {
+      // getPlanningPanelData's 'text' branch (planningSampleData.ts) returns { mode: 'markdown',
+      // content: '_Notes for this section._' } as its sample options — the spread order in
+      // buildVizPanelState has to put that before the spec's own options/fieldConfig, or this
+      // sample would clobber a planned text panel's real markdown.
+      const panel = buildPlannedPanel(
+        { mode: 'markdown', content: 'Real planned note' },
+        defaultFieldConfigSource(),
+        'text'
+      );
+
+      const viz = buildVizPanel(panel, undefined, { withoutQueries: true });
+
+      expect(viz.state.options).toEqual({ mode: 'markdown', content: 'Real planned note' });
     });
   });
 });

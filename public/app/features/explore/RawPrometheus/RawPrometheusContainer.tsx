@@ -77,7 +77,4 @@ const ExploreRawPrometheusContainer = memo(
 
 ExploreRawPrometheusContainer.displayName = 'ExploreRawPrometheusContainer';
 
-// Keep the old export name for backwards compatibility
-export const RawPrometheusContainer = ExploreRawPrometheusContainer;
-
 export default connector(ExploreRawPrometheusContainer);

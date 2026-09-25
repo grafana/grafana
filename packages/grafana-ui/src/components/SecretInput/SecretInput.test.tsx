@@ -62,4 +62,99 @@ describe('<SecretInput />', () => {
     expect(onChange).toHaveBeenCalled();
     expect(input).toHaveValue('Foo');
   });
+
+  it('should not render a visibility toggle by default', () => {
+    render(<SecretInput isConfigured={false} onChange={() => {}} onReset={() => {}} placeholder={PLACEHOLDER_TEXT} />);
+
+    expect(screen.getByPlaceholderText(PLACEHOLDER_TEXT)).toHaveAttribute('type', 'password');
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
+  it('should toggle the visibility of the secret between password and text', async () => {
+    render(
+      <SecretInput
+        revealable={true}
+        isConfigured={false}
+        onChange={() => {}}
+        onReset={() => {}}
+        placeholder={PLACEHOLDER_TEXT}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(PLACEHOLDER_TEXT);
+
+    // The secret should be masked by default
+    expect(input).toHaveAttribute('type', 'password');
+
+    const toggle = screen.getByRole('switch');
+    expect(toggle).not.toBeChecked();
+
+    // Reveal the secret
+    await userEvent.click(toggle);
+    expect(input).toHaveAttribute('type', 'text');
+    expect(toggle).toBeChecked();
+
+    // Hide the secret again
+    await userEvent.click(toggle);
+    expect(input).toHaveAttribute('type', 'password');
+    expect(toggle).not.toBeChecked();
+  });
+
+  it('should show the loading spinner instead of the visibility toggle while loading', () => {
+    render(
+      <SecretInput
+        revealable={true}
+        loading={true}
+        isConfigured={false}
+        onChange={() => {}}
+        onReset={() => {}}
+        placeholder={PLACEHOLDER_TEXT}
+      />
+    );
+
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
+  it('should not render a visibility toggle when the secret is configured', () => {
+    render(
+      <SecretInput
+        revealable={true}
+        isConfigured={true}
+        onChange={() => {}}
+        onReset={() => {}}
+        placeholder={PLACEHOLDER_TEXT}
+      />
+    );
+
+    expect(screen.getByPlaceholderText(PLACEHOLDER_TEXT)).toBeDisabled();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
+  it('should allow pasting a value after the secret is revealed', async () => {
+    const onChange = jest.fn();
+
+    render(
+      <SecretInput
+        revealable={true}
+        isConfigured={false}
+        onChange={onChange}
+        onReset={() => {}}
+        placeholder={PLACEHOLDER_TEXT}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(PLACEHOLDER_TEXT);
+
+    // Reveal the secret so it becomes a real text input
+    await userEvent.click(screen.getByRole('switch'));
+    expect(input).toHaveAttribute('type', 'text');
+
+    // Paste a value into the revealed field
+    input.focus();
+    await userEvent.paste('pasted-secret');
+
+    expect(onChange).toHaveBeenCalled();
+    expect(input).toHaveValue('pasted-secret');
+  });
 });

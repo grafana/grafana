@@ -1,13 +1,29 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
-import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import {
+  CoreApp,
+  type DataQueryRequest,
+  type DataSourceApi,
+  dateTime,
+  LoadingState,
+  type PanelData,
+  toDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { filterPanelDataToQuery, type Props, QueryEditorRow } from './QueryEditorRow';
+import { pinScrollIntoView } from './pinScrollIntoView';
+
+// Spy on the pin helper while keeping its real behavior, so tests can assert how often a pin starts.
+jest.mock('./pinScrollIntoView', () => {
+  const actual = jest.requireActual('./pinScrollIntoView');
+  return { ...actual, pinScrollIntoView: jest.fn(actual.pinScrollIntoView) };
+});
 
 const mockDS = mockDataSource({
   name: 'test',
@@ -42,13 +58,31 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn(),
 }));
 
+const mockGet = jest.fn((..._args: unknown[]) => Promise.resolve(mockDS));
+const mockGetInstanceSettings = jest.fn((..._args: unknown[]) => mockDS);
+const mockReportInteraction = jest.fn();
+const mockReplace = jest.fn((target?: string) => target ?? '');
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    get: () => Promise.resolve(mockDS),
+    get: mockGet,
     getList: () => {},
-    getInstanceSettings: () => mockDS,
+    getInstanceSettings: mockGetInstanceSettings,
   }),
+  getTemplateSrv: () => ({
+    replace: (target?: string) => mockReplace(target),
+    getVariables: () => [],
+    containsTemplate: () => false,
+    updateTimeRange: () => {},
+  }),
+  reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn((...args: unknown[]) => mockGet(...args)),
+  getDataSourceInstanceSettings: jest.fn((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args))),
 }));
 
 // Draggable fails to render in tests, so we mock it out
@@ -386,6 +420,23 @@ describe('QueryEditorRow', () => {
     index: 0,
     range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });
+  it('forwards scopedVars when resolving a query datasource variable', async () => {
+    jest.mocked(getDataSourceInstanceSettings).mockClear();
+    const data = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    // A section-scoped (row/tab) datasource variable can only be resolved with the panel's scene
+    // scope, so QueryEditorRow must forward scopedVars to getInstanceSettings.
+    const scopedVars = { __sceneObject: { value: {} } };
+    const query = { refId: 'B', datasource: { uid: '${ds_var}', type: 'prometheus' } };
+    render(<QueryEditorRow {...props(data)} query={query} scopedVars={scopedVars} />);
+
+    await waitFor(() => {
+      expect(getDataSourceInstanceSettings).toHaveBeenCalledWith(query.datasource, scopedVars);
+    });
+  });
   it('should display error message in corresponding panel', async () => {
     const data = {
       state: LoadingState.Error,
@@ -420,14 +471,274 @@ describe('QueryEditorRow', () => {
     });
   });
 
+  describe('scroll into view', () => {
+    let scrollIntoViewSpy: jest.Mock;
+    let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
+
+    const data: PanelData = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    beforeEach(() => {
+      // jsdom doesn't implement scrollIntoView, so patch the prototype rather than spy on it.
+      originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+      scrollIntoViewSpy = jest.fn();
+      HTMLElement.prototype.scrollIntoView = scrollIntoViewSpy;
+      jest.mocked(pinScrollIntoView).mockClear();
+    });
+
+    afterEach(() => {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    it('scrolls the row into view once it renders', async () => {
+      render(<QueryEditorRow {...props(data)} scrollIntoView />);
+
+      // The jest-setup ResizeObserver mock may fire an extra re-pin, so assert on the first
+      // (deliberate) call rather than the total count.
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(screen.getByTestId(selectors.components.QueryEditorRows.rows));
+      expect(scrollIntoViewSpy).toHaveBeenNthCalledWith(1, { behavior: 'smooth', block: 'start' });
+    });
+
+    it('keeps pinning after the scroll and reports back when the user takes over', async () => {
+      const onScrollIntoView = jest.fn();
+      render(<QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />);
+
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      // The row stays pinned until the layout settles or the user scrolls, so the flag isn't
+      // cleared right after the first scroll.
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+
+      fireEvent.wheel(window);
+
+      expect(onScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts the pin only once, even as the row keeps re-rendering', async () => {
+      const initialProps = props(data);
+      const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView data={{ ...data }} />);
+
+      expect(pinScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('cancels the pin when the scroll is retargeted at another row', async () => {
+      const onScrollIntoView = jest.fn();
+      const initialProps = props(data);
+      const { rerender } = render(
+        <QueryEditorRow {...initialProps} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} onScrollIntoView={onScrollIntoView} />);
+      fireEvent.wheel(window);
+
+      // The pin is gone, so the row neither re-scrolls nor reports back — reporting would clear the
+      // owner's new scroll target.
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('pins again if the row is retargeted later', async () => {
+      const initialProps = props(data);
+      const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} />);
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView />);
+
+      expect(pinScrollIntoView).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not scroll when the flag is not set', async () => {
+      render(<QueryEditorRow {...props(data)} />);
+
+      await waitFor(() => expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument());
+
+      expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('plugin editor while datasource changes', () => {
+    let editorQueryIds: string[];
+
+    function FakeQueryEditor({ query }: { query: DataQuery }) {
+      editorQueryIds.push(query.datasource?.uid ?? 'none');
+      return <div data-testid="fake-query-editor">{query.datasource?.uid ?? 'none'}</div>;
+    }
+
+    const data: PanelData = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    beforeEach(() => {
+      editorQueryIds = [];
+      mockGet.mockImplementation((..._args: unknown[]) =>
+        Promise.resolve({
+          ...mockDS,
+          components: { QueryEditor: FakeQueryEditor },
+        })
+      );
+    });
+
+    afterEach(() => {
+      mockGet.mockImplementation((..._args: unknown[]) => Promise.resolve(mockDS));
+      mockReplace.mockImplementation((target?: string) => target ?? '');
+      jest
+        .mocked(getDataSourceInstance)
+        .mockImplementation((...args: unknown[]) => mockGet(...args) as unknown as Promise<DataSourceApi>);
+      jest
+        .mocked(getDataSourceInstanceSettings)
+        .mockImplementation((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args)));
+    });
+
+    it('hides the plugin editor immediately when the query datasource changes', async () => {
+      const initialProps = props(data);
+      const { rerender } = render(<QueryEditorRow {...initialProps} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('none');
+      const rendersBeforeChange = editorQueryIds.length;
+
+      rerender(
+        <QueryEditorRow
+          {...initialProps}
+          query={{ refId: 'B', datasource: { uid: 'other-ds', type: 'loki' } }}
+          queries={[{ refId: 'B', datasource: { uid: 'other-ds', type: 'loki' } }]}
+        />
+      );
+
+      // The previous plugin editor must not paint against the new query while the next
+      // datasource is still loading. `queryByTestId` can miss that paint if a later
+      // setState unmounts it in the same RTL flush.
+      expect(editorQueryIds.slice(rendersBeforeChange)).toEqual([]);
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('other-ds');
+    });
+
+    it('hides the plugin editor immediately when a datasource variable interpolates to a new uid', async () => {
+      let interpolatedUid = 'prom-uid';
+      mockReplace.mockImplementation((target?: string) => (target === '${ds}' ? interpolatedUid : (target ?? '')));
+
+      const query = { refId: 'B', datasource: { uid: '${ds}', type: 'prometheus' } };
+      const initialProps = { ...props(data), query, queries: [query] };
+      const { rerender } = render(<QueryEditorRow {...initialProps} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('${ds}');
+      const rendersBeforeChange = editorQueryIds.length;
+
+      interpolatedUid = 'loki-uid';
+      rerender(<QueryEditorRow {...initialProps} data={{ ...data }} />);
+
+      expect(editorQueryIds.slice(rendersBeforeChange)).toEqual([]);
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('${ds}');
+    });
+
+    it('does not keep the previous plugin editor mounted when both instance lookups fail', async () => {
+      const onDataSourceLoaded = jest.fn();
+      jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        return uid === 'gone' ? undefined : mockDS;
+      });
+      jest.mocked(getDataSourceInstance).mockImplementation(async (uid) => {
+        if (uid === 'gone' || uid == null) {
+          throw new Error('unavailable');
+        }
+        return {
+          ...mockDS,
+          components: { QueryEditor: FakeQueryEditor },
+        } as unknown as DataSourceApi;
+      });
+
+      const initialProps = { ...props(data), onDataSourceLoaded };
+      const { rerender } = render(<QueryEditorRow {...initialProps} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+      expect(onDataSourceLoaded).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <QueryEditorRow
+          {...initialProps}
+          query={{ refId: 'B', datasource: { uid: 'gone', type: 'prometheus' } }}
+          queries={[{ refId: 'B', datasource: { uid: 'gone', type: 'prometheus' } }]}
+        />
+      );
+
+      // Wait until the default-instance fallback has also rejected. State is
+      // left untouched (same as main on throw), so the row stays mounted but
+      // isWaiting hides the stale plugin editor against the new query.
+      await waitFor(() => {
+        expect(jest.mocked(getDataSourceInstance).mock.calls.some((call) => call[0] == null)).toBe(true);
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      expect(onDataSourceLoaded).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries loading after both instance lookups fail when the query datasource changes', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        return uid === 'gone' ? undefined : mockDS;
+      });
+      jest.mocked(getDataSourceInstance).mockImplementation(async (uid) => {
+        if (uid == null) {
+          throw new Error('unavailable');
+        }
+        return {
+          ...mockDS,
+          components: { QueryEditor: FakeQueryEditor },
+        } as unknown as DataSourceApi;
+      });
+
+      const initialProps = props(data);
+      const { rerender } = render(
+        <QueryEditorRow {...initialProps} query={{ refId: 'B', datasource: { uid: 'gone', type: 'prometheus' } }} />
+      );
+
+      await waitFor(() => {
+        expect(jest.mocked(getDataSourceInstance).mock.calls.some((call) => call[0] == null)).toBe(true);
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      // First load never produced an instance, so the row stays unmounted
+      // (same as main's `if (!datasource) return null`).
+      expect(screen.queryByTestId(selectors.components.QueryEditorRows.rows)).not.toBeInTheDocument();
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+
+      rerender(
+        <QueryEditorRow
+          {...initialProps}
+          query={{ refId: 'B', datasource: { uid: 'recovered-ds', type: 'prometheus' } }}
+          queries={[{ refId: 'B', datasource: { uid: 'recovered-ds', type: 'prometheus' } }]}
+        />
+      );
+
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+    });
+  });
+
   describe('Query Library Integration', () => {
     let testData: PanelData;
-    let mockOnCancelEdit: jest.MockedFunction<() => void>;
+    let mockOnExitEdit: jest.MockedFunction<() => void>;
 
     beforeEach(() => {
       jest.clearAllMocks();
       mockQueryLibraryContext.renderQueryLibraryEditingHeader.mockReturnValue(null);
-      mockOnCancelEdit = jest.fn();
+      mockOnExitEdit = jest.fn();
 
       // Standard test data for QueryEditorRow
       testData = {
@@ -437,9 +748,9 @@ describe('QueryEditorRow', () => {
       };
     });
 
-    it('should render query library editing header when queryLibraryRef is provided', async () => {
+    it('should render query library editing header when editSavedQueryRef is provided', async () => {
       render(
-        <QueryEditorRow {...props(testData)} queryLibraryRef="test-ref" onCancelQueryLibraryEdit={mockOnCancelEdit} />
+        <QueryEditorRow {...props(testData)} editSavedQueryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
       );
 
       // Wait for async datasource loading and component rendering
@@ -447,15 +758,59 @@ describe('QueryEditorRow', () => {
         expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
           expect.objectContaining({ refId: 'B' }),
           undefined, // app
-          'test-ref', // queryLibraryRef
-          mockOnCancelEdit, // onCancelEdit
+          'test-ref', // editSavedQueryRef
+          expect.any(Function), // onCancelEdit
           expect.any(Function), // onUpdateSuccess
-          expect.any(Function) // onSelectQuery
+          expect.any(Function), // onSelectQuery
+          'edit' // mode
         );
       });
     });
 
-    it('should not render query library editing header when queryLibraryRef is not provided', async () => {
+    it('routes both cancelling and saving to the single exit callback', async () => {
+      render(
+        <QueryEditorRow {...props(testData)} editSavedQueryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
+      );
+
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalled();
+      });
+
+      const [, , , onCancelEdit, onUpdateSuccess] =
+        mockQueryLibraryContext.renderQueryLibraryEditingHeader.mock.calls[0];
+
+      onUpdateSuccess();
+      expect(mockOnExitEdit).toHaveBeenCalledTimes(1);
+
+      onCancelEdit();
+      expect(mockOnExitEdit).toHaveBeenCalledTimes(2);
+
+      // The cancelled event now comes from the editing header, which dispatches it through the Query
+      // Library context so it picks up the app/is_v2 stamping this raw call was missing.
+      expect(mockReportInteraction).not.toHaveBeenCalledWith(
+        'query_library-update_query_from_explore_cancelled',
+        expect.anything()
+      );
+    });
+
+    it('should render the add-mode header when addingSavedQuery is set without an editSavedQueryRef', async () => {
+      const mockOnCancelAdd = jest.fn();
+      render(<QueryEditorRow {...props(testData)} addingSavedQuery={true} onCancelAddSavedQuery={mockOnCancelAdd} />);
+
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
+          expect.objectContaining({ refId: 'B' }),
+          undefined, // app
+          undefined, // editSavedQueryRef (none for a brand-new query)
+          mockOnCancelAdd, // onCancelEdit → exits add mode
+          expect.any(Function), // onUpdateSuccess
+          expect.any(Function), // onSelectQuery
+          'add' // mode
+        );
+      });
+    });
+
+    it('should not render query library editing header when editSavedQueryRef is not provided', async () => {
       render(<QueryEditorRow {...props(testData)} />);
 
       await waitFor(() => {

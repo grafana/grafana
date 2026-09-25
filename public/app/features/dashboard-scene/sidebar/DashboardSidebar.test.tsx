@@ -1,0 +1,1089 @@
+import { getPanelPlugin } from '@grafana/data/test';
+import { config, setPluginImportUtils } from '@grafana/runtime';
+import {
+  ConstantVariable,
+  CustomVariable,
+  type MultiValueVariable,
+  type SceneObject,
+  SceneGridLayout,
+  SceneTimeRange,
+  SceneVariableSet,
+  StateCommittedEvent,
+  TestVariable,
+  VizPanel,
+} from '@grafana/scenes';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
+
+import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
+import { endBatch, startBatch } from '../actions/utils/batch';
+import { edit } from '../actions/utils/edit';
+import { changeVariableName } from '../actions/variable/changeVariableName';
+import { changeVariableType } from '../actions/variable/changeVariableType';
+import { removeVariable } from '../actions/variable/removeVariable';
+import { DashboardScene } from '../scene/DashboardScene';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { performRowRepeats } from '../scene/layout-rows/RowItemRepeater';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { performTabRepeats } from '../scene/layout-tabs/TabItemRepeater';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { toControlSourceRef } from '../utils/predefinedVariables';
+import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
+
+import { DashboardStateChangedEvent } from './events';
+import { DashboardOutline } from './outline/DashboardOutline';
+import { type DashboardSidebarLike } from './types';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getInstanceSettings: (_uid: string | null) => ({ uid: 'ds1' }),
+  }),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+}));
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
+
+describe('DashboardSidebar', () => {
+  describe('Pending pane requests', () => {
+    let dashboard: DashboardScene;
+    let sidebar: DashboardSidebarLike;
+    let deactivate: () => void;
+
+    beforeEach(() => {
+      dashboard = new DashboardScene({ isEditing: true });
+      sidebar = dashboard.state.sidebar;
+      deactivate = sidebar.activate();
+    });
+
+    afterEach(() => deactivate());
+
+    it('keeps loading a newer pane when an older request finishes', async () => {
+      const older = createDeferred<void>();
+      const newer = createDeferred<void>();
+      const first = sidebar.runPaneRequest(() => older.promise);
+      const second = sidebar.runPaneRequest(() => newer.promise);
+      expect(sidebar.state.isLoading).toBe(true);
+
+      older.resolve();
+      await first;
+      expect(sidebar.state.isLoading).toBe(true);
+
+      newer.resolve();
+      await second;
+      expect(sidebar.state.isLoading).toBe(false);
+    });
+
+    it('clears loading after a failed request and permits retry', async () => {
+      const pending = createDeferred<void>();
+      const opening = sidebar.runPaneRequest(() => pending.promise);
+      expect(sidebar.state.isLoading).toBe(true);
+      const rejected = expect(opening).rejects.toThrow('Chunk failed');
+      pending.reject(new Error('Chunk failed'));
+      await rejected;
+      expect(sidebar.state.isLoading).toBe(false);
+
+      const pane = new DashboardOutline({});
+      await sidebar.runPaneRequest(async () => sidebar.openPane(pane));
+      expect(sidebar.state.openPane).toBe(pane);
+      expect(sidebar.state.isLoading).toBe(false);
+    });
+
+    it('aborts the previous request when a new request starts', () => {
+      const older = sidebar.beginPaneRequest();
+      expect(older.aborted).toBe(false);
+      const newer = sidebar.beginPaneRequest();
+      expect(older.aborted).toBe(true);
+      expect(newer.aborted).toBe(false);
+    });
+
+    it.each(['select', 'open', 'close', 'clear', 'back', 'disable', 'leave edit mode', 'view panel'])(
+      'invalidates a pending request on %s',
+      (navigation) => {
+        const request = sidebar.beginPaneRequest();
+        expect(sidebar.state.isLoading).toBe(true);
+        switch (navigation) {
+          case 'select':
+            sidebar.selectObject(dashboard);
+            break;
+          case 'open':
+            sidebar.openPane(new DashboardOutline({}));
+            break;
+          case 'close':
+            sidebar.closePane();
+            break;
+          case 'clear':
+            sidebar.clearSelection();
+            break;
+          case 'back':
+            sidebar.goBackToPrevious();
+            break;
+          case 'disable':
+            sidebar.disableSelection();
+            break;
+          case 'leave edit mode':
+            dashboard.setState({ isEditing: false });
+            break;
+          case 'view panel':
+            dashboard.setState({ viewPanel: 'panel-1' });
+            break;
+        }
+        expect(request.aborted).toBe(true);
+        expect(sidebar.state.isLoading).toBe(false);
+      }
+    );
+
+    it('does not revive a request after deactivation and reactivation', () => {
+      const request = sidebar.beginPaneRequest();
+      deactivate();
+      deactivate = sidebar.activate();
+      expect(sidebar.isActive).toBe(true);
+      expect(request.aborted).toBe(true);
+    });
+
+    it('preserves requests across unrelated state changes', () => {
+      const request = sidebar.beginPaneRequest();
+      sidebar.setState({ isDocked: true });
+      dashboard.setState({ title: 'Renamed dashboard' });
+
+      expect(request.aborted).toBe(false);
+    });
+
+    it('cancels before a view transition commits and allows a later pane request', async () => {
+      const pending = createDeferred<void>();
+      const stalePane = new DashboardOutline({});
+      const opening = sidebar.runPaneRequest(async (signal) => {
+        await pending.promise;
+        if (!signal.aborted) {
+          sidebar.openPane(stalePane);
+        }
+      });
+      expect(sidebar.state.isLoading).toBe(true);
+
+      dashboard.cancelPendingViews();
+      expect(sidebar.state.isLoading).toBe(false);
+      pending.resolve();
+      await opening;
+      expect(sidebar.state.openPane).toBeUndefined();
+
+      const nextPane = new DashboardOutline({});
+      await sidebar.runPaneRequest(async () => sidebar.openPane(nextPane));
+      expect(sidebar.state.openPane).toBe(nextPane);
+    });
+
+    it('cancels a pending pane when a drawer starts loading', async () => {
+      const request = sidebar.beginPaneRequest();
+      const pending = createDeferred<undefined>();
+      const opening = dashboard.showModalAsync(() => pending.promise);
+      expect(request.aborted).toBe(true);
+      expect(sidebar.state.isLoading).toBe(false);
+      pending.resolve(undefined);
+      await opening;
+    });
+  });
+
+  describe('Selection', () => {
+    it('Can select dashboard', () => {
+      const scene = buildTestScene();
+      scene.state.sidebar.state.selectionContext.onSelect({ id: scene.state.key! }, {});
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+    });
+
+    it('single panel and multi panel selection', async () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const panel1 = await scene.onCreateNewPanel();
+
+      expect(sidebar.getSelectedObject()).toBe(panel1);
+
+      // Selecting same object should clear selection
+      sidebar.selectObject(panel1);
+
+      expect(sidebar.getSelectedObject()).toBeUndefined();
+
+      const panel2 = await scene.onCreateNewPanel();
+      sidebar.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
+
+      expect(sidebar.state.selectionContext.selected).toHaveLength(2);
+
+      // Selecting one that is already selected should remove it
+      sidebar.state.selectionContext.onSelect({ id: panel2.state.key! }, { multi: true });
+
+      expect(sidebar.state.selectionContext.selected).toHaveLength(1);
+      expect(sidebar.getSelectedObject()).toBe(panel1);
+    });
+
+    it('selects the newly created group after grouping panels', () => {
+      const panel1 = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+      const panel2 = new VizPanel({ key: 'panel-2', pluginId: 'text', title: 'P2' });
+      const layout = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({
+          children: [new AutoGridItem({ body: panel1 }), new AutoGridItem({ body: panel2 })],
+        }),
+      });
+      const dashboard = new DashboardScene({ isEditing: true, body: layout });
+      config.featureToggles.dashboardNewLayouts = true;
+      activateFullSceneTree(dashboard);
+
+      const sidebar = dashboard.state.sidebar;
+      sidebar.selectObject(panel1, { force: true });
+      sidebar.selectObject(panel2, { multi: true });
+
+      groupSelectionInto({ source: dashboard, items: [panel1, panel2], target: 'tab' });
+
+      const selectedObject = sidebar.getSelectedObject();
+      expect(selectedObject).toBeInstanceOf(TabItem);
+      expect(sidebar.state.selectionContext.selected).toHaveLength(1);
+      expect(sidebar.state.isNewElement).toBe(true);
+
+      if (!(selectedObject instanceof TabItem)) {
+        throw new Error('expected tab item');
+      }
+
+      // The selected group is the tab wrapping the grouped panels (the very instances).
+      const groupedPanels = selectedObject.getLayout().getVizPanels();
+      expect(groupedPanels[0] === panel1).toBe(true);
+      expect(groupedPanels[1] === panel2).toBe(true);
+
+      // Undoing the grouping clears the selection of the (now removed) group.
+      sidebar.undoAction();
+      expect(sidebar.state.selectionContext.selected).toHaveLength(0);
+    });
+
+    it('Clear selection should select dashboard when docked', async () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      const panel = await scene.onCreateNewPanel();
+      sidebar.clearSelection();
+
+      expect(sidebar.getSelectedObject()).toBeUndefined();
+
+      sidebar.setState({ isDocked: true });
+      sidebar.selectObject(panel);
+      sidebar.clearSelection();
+
+      expect(sidebar.getSelectedObject()).toBe(scene);
+    });
+
+    it('Force selecting should keep selecting if already selected', async () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      // This selects panel
+      const panel = await scene.onCreateNewPanel();
+
+      // Force select
+      sidebar.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: false, force: true });
+
+      expect(sidebar.getSelectedObject()).toBe(panel);
+      expect(sidebar.state.selectionContext.selected).toHaveLength(1);
+
+      // Force select with multi
+      sidebar.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: true, force: true });
+
+      // Still only 1 item selected
+      expect(sidebar.state.selectionContext.selected).toHaveLength(1);
+    });
+
+    it('Selecting when none element pane is open should not toggle selection', async () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      const panel = await scene.onCreateNewPanel();
+
+      sidebar.openPane(new DashboardOutline({}));
+
+      expect(sidebar.getSelectedObject()).toBe(panel);
+
+      // Select panel again (when it is still selected)
+      sidebar.state.selectionContext.onSelect({ id: panel.state.key! }, { force: false });
+
+      // Should still be selected
+      expect(sidebar.getSelectedObject()).toBe(panel);
+    });
+
+    it('Selecting tab with closed sidebar should not select tab', () => {
+      const { sidebar, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed sidebar should not select tab
+      sidebar.selectObject(tab1);
+      expect(sidebar.getSelectedObject()).toBeUndefined();
+    });
+
+    it('Selecting tab with open sidebar should select tab', () => {
+      const { sidebar, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed sidebar should not select tab
+      sidebar.openPane(new DashboardOutline({}));
+      sidebar.selectObject(tab1);
+      expect(sidebar.getSelectedObject()).toBe(tab1);
+    });
+
+    it('Removing a panel that is not selected', async () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      const panel1 = await scene.onCreateNewPanel();
+      const panel2 = await scene.onCreateNewPanel();
+
+      scene.removePanel(panel1);
+
+      expect(sidebar.getSelectedObject()).toBe(panel2);
+    });
+
+    it('Force selecting tab should always select it', () => {
+      const { sidebar, tab1 } = setupWithTwoTabs();
+
+      sidebar.selectObject(tab1, { force: true });
+      expect(sidebar.getSelectedObject()).toBe(tab1);
+    });
+  });
+
+  it('Handles edit action events that adds objects', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+
+    await scene.onCreateNewPanel();
+
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    // Should select object
+    expect(sidebar.getSelectedObject()).toBeDefined();
+
+    sidebar.undoAction();
+
+    expect(sidebar.state.undoStack).toHaveLength(0);
+
+    // should clear selection
+    expect(sidebar.getSelectedObject()).toBeUndefined();
+  });
+
+  it('when new action comes in clears redo stack', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+
+    await scene.onCreateNewPanel();
+
+    sidebar.undoAction();
+
+    expect(sidebar.state.redoStack).toHaveLength(1);
+
+    await scene.onCreateNewPanel();
+
+    expect(sidebar.state.redoStack).toHaveLength(0);
+  });
+
+  it('clone should not include undo/redo history', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+
+    await scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
+
+    sidebar.undoAction();
+
+    expect(sidebar.state.redoStack).toHaveLength(1);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    const cloned = sidebar.clone({});
+
+    expect(cloned.state.redoStack).toHaveLength(0);
+    expect(cloned.state.undoStack).toHaveLength(0);
+  });
+
+  describe('batching', () => {
+    function fakeAction(calls: string[], name: string) {
+      return {
+        perform: jest.fn(() => calls.push(`perform-${name}`)),
+        undo: jest.fn(() => calls.push(`undo-${name}`)),
+      };
+    }
+
+    it('aggregates edit actions performed between startBatch/endBatch into a single undo/redo entry', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const calls: string[] = [];
+      const action1 = fakeAction(calls, '1');
+      const action2 = fakeAction(calls, '2');
+
+      startBatch(scene, 'Remove things (2)');
+      edit({ source: scene, perform: action1.perform, undo: action1.undo });
+      edit({ source: scene, perform: action2.perform, undo: action2.undo });
+      endBatch(scene);
+
+      // Both actions are performed immediately as they're collected, in the order they came in.
+      expect(calls).toEqual(['perform-1', 'perform-2']);
+      // But they're aggregated into a single undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].source).toBe(scene);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove things (2)');
+
+      calls.length = 0;
+      sidebar.undoAction();
+
+      // A single undo reverts both actions, last-performed first.
+      expect(calls).toEqual(['undo-2', 'undo-1']);
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      calls.length = 0;
+      sidebar.redoAction();
+
+      // A single redo replays both actions again, in their original order.
+      expect(calls).toEqual(['perform-1', 'perform-2']);
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+
+    it('clears the redo stack when a batch starts, same as a regular action', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
+      sidebar.undoAction();
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      startBatch(scene, 'A batch');
+      expect(sidebar.state.redoStack).toHaveLength(0);
+
+      endBatch(scene);
+    });
+
+    it('does not push an undo entry for a batch with no actions', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      startBatch(scene, 'Empty batch');
+      endBatch(scene);
+
+      expect(sidebar.state.undoStack).toHaveLength(0);
+    });
+
+    it('routes a multi-row delete through RowItems and batches it into a single undo entry', () => {
+      const { sidebar, row1, row2 } = setupWithTwoRows();
+
+      row1.createMultiSelectedElement([row1, row2]).onDelete();
+
+      // Two row deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove rows (2)');
+    });
+
+    it('routes a multi-tab delete through TabItems and batches it into a single undo entry', () => {
+      const { sidebar, tab1, tab2 } = setupWithTwoTabs();
+
+      tab1.createMultiSelectedElement([tab1, tab2]).onDelete();
+
+      // Two tab deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove tabs (2)');
+    });
+  });
+
+  it('clone should preserve the outline collapsed state', () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+    const outlinePane = sidebar.state.outlinePane!;
+
+    outlinePane.setNodeCollapsed('some-key', false);
+    outlinePane.setNodeCollapsed('another-key', true);
+
+    const cloned = sidebar.clone({});
+    const clonedOutline = cloned.state.outlinePane!;
+
+    expect(clonedOutline.isNodeCollapsed('some-key', true)).toBe(false);
+    expect(clonedOutline.isNodeCollapsed('another-key', false)).toBe(true);
+
+    clonedOutline.setNodeCollapsed('new-key', false);
+    expect(outlinePane.isNodeCollapsed('new-key', true)).toBe(false);
+  });
+
+  it('keeps the variable selected when undoing and redoing variable type changes', () => {
+    const variable = new TestVariable({
+      name: 'service',
+      delayMs: 0,
+      value: 'prod',
+      text: 'prod',
+      optionsToReturn: [{ label: 'prod', value: 'prod' }],
+    });
+    const variableSet = new SceneVariableSet({ variables: [variable] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    const sidebar = dashboard.state.sidebar;
+    sidebar.selectObject(variable, { force: true });
+
+    const changedVariable = new ConstantVariable({ name: 'service' });
+    changeVariableType({
+      source: variableSet,
+      oldVariable: variable,
+      newVariable: changedVariable,
+    });
+
+    expect(variableSet.state.variables[0]).toBe(changedVariable);
+    expect(sidebar.getSelectedObject()).toBe(changedVariable);
+
+    sidebar.undoAction();
+
+    expect(variableSet.state.variables[0]).toBe(variable);
+    expect(sidebar.getSelectedObject()).toBe(variable);
+
+    sidebar.redoAction();
+
+    expect(variableSet.state.variables[0]).toBe(changedVariable);
+    expect(sidebar.getSelectedObject()).toBe(changedVariable);
+  });
+
+  it('restores dropped predefined variables when undoing a shadowing rename', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+
+    expect(local.state.name).toBe('env');
+    expect(variableSet.state.variables).toEqual([local]);
+
+    dashboard.state.sidebar.undoAction();
+
+    expect(local.state.name).toBe('localVar');
+    expect(variableSet.state.variables).toEqual([predefined, local]);
+  });
+
+  it('re-injects predefined variables when a shadowing local is renamed away', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+    expect(variableSet.state.variables).toEqual([local]);
+
+    changeVariableName({
+      source: local,
+      oldValue: 'env',
+      newValue: 'localVar',
+    });
+
+    expect(local.state.name).toBe('localVar');
+    expect(variableSet.state.variables).toEqual([predefined, local]);
+  });
+
+  it('re-injects predefined variables when a shadowing local is deleted', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+    expect(variableSet.state.variables).toEqual([local]);
+
+    removeVariable({
+      source: variableSet,
+      removedObject: local,
+    });
+
+    expect(variableSet.state.variables).toEqual([predefined]);
+  });
+
+  describe('StateCommittedEvent', () => {
+    it('publishes DashboardStateChangedEvent with the committed source', () => {
+      const { dashboard, source } = buildTestScene();
+      const onStateChanged = jest.fn();
+      dashboard.subscribeToEvent(DashboardStateChangedEvent, onStateChanged);
+
+      stateCommited(source, 'Some change', jest.fn(), jest.fn());
+
+      expect(onStateChanged).toHaveBeenCalledTimes(1);
+      expect(onStateChanged).toHaveBeenCalledWith(new DashboardStateChangedEvent({ source }));
+    });
+
+    function buildTestScene() {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+      const gridItem = new AutoGridItem({ body: panel });
+      const layoutManager = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: [gridItem] }),
+      });
+      const dashboard = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        isEditing: true,
+        body: layoutManager,
+      });
+      activateFullSceneTree(dashboard);
+
+      return { dashboard, sidebar: dashboard.state.sidebar, source: panel };
+    }
+
+    function stateCommited(source: SceneObject, description: string, replay: () => void, revert: () => void) {
+      source.publishEvent(new StateCommittedEvent({ source, description, replay, revert }), true);
+    }
+
+    it('records new entry on the undo stack without performing it again', () => {
+      const { sidebar, source } = buildTestScene();
+      const replay = jest.fn();
+      const revert = jest.fn();
+
+      stateCommited(source, 'Some change', replay, revert);
+
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toEqual('Some change');
+      expect(replay).not.toHaveBeenCalled();
+      expect(revert).not.toHaveBeenCalled();
+    });
+
+    it('undo reverts the change and redo re-applies it', () => {
+      const { sidebar, source } = buildTestScene();
+      const replay = jest.fn();
+      const revert = jest.fn();
+
+      stateCommited(source, 'Some change', replay, revert);
+      sidebar.undoAction();
+
+      expect(revert).toHaveBeenCalledTimes(1);
+      expect(replay).not.toHaveBeenCalled();
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      sidebar.redoAction();
+
+      expect(replay).toHaveBeenCalledTimes(1);
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+
+    it('clears the redo stack when a new transaction is committed', () => {
+      const { sidebar, source } = buildTestScene();
+
+      stateCommited(source, 'Change 1', jest.fn(), jest.fn());
+      sidebar.undoAction();
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      stateCommited(source, 'Change 2', jest.fn(), jest.fn());
+
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+  });
+
+  describe('Selecting repeated elements', () => {
+    it('Selecting a repeated panel selects the source panel', () => {
+      const layoutManager = new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              variableName: 'env',
+              repeatedPanels: [],
+              body: new VizPanel({
+                key: 'panel-1',
+                title: 'Panel $env',
+                pluginId: 'table',
+              }),
+            }),
+          ],
+        }),
+      });
+
+      const { sidebar } = buildTestSceneWithRepeat(layoutManager);
+      sidebar.enableSelection();
+
+      const gridItems = layoutManager.state.grid.state.children as DashboardGridItem[];
+      const sourcePanel = gridItems[0].state.body;
+      // DashboardGridItem performs repeats during activation, so repeatedPanels is already populated
+      const [clonePanel] = gridItems[0].state.repeatedPanels!;
+
+      expect(clonePanel.state.repeatSourceKey).toBe(sourcePanel.state.key);
+
+      sidebar.state.selectionContext.onSelect({ id: clonePanel.state.key! }, {});
+
+      expect(sidebar.getSelectedObject()).toBe(sourcePanel);
+    });
+
+    it('Selecting a repeated tab inside a repeated row selects the source tab', () => {
+      const layoutManager = new RowsLayoutManager({
+        rows: [
+          new RowItem({
+            key: 'row-1',
+            title: 'Row $env',
+            repeatByVariable: 'env',
+            layout: new TabsLayoutManager({
+              tabs: [
+                new TabItem({
+                  key: 'tab-1',
+                  title: 'Tab $region',
+                  repeatByVariable: 'region',
+                }),
+              ],
+            }),
+          }),
+        ],
+      });
+      const { scene, sidebar, variables } = buildTestSceneWithRepeat(layoutManager);
+      sidebar.enableSelection();
+      sidebar.selectObject(scene);
+
+      const [sourceRow] = layoutManager.state.rows;
+      const [sourceTab] = (sourceRow.state.layout as TabsLayoutManager).state.tabs;
+
+      // unlike DashboardGridItem which repeats during activation, row/tab repeats
+      // are triggered by React useEffect in RowItemRepeater/TabItemRepeater
+      // since this test activates the scene tree without rendering, we call them manually
+      performRowRepeats(variables[0], sourceRow, false);
+      const [clonedRow] = sourceRow.state.repeatedRows!;
+      expect(clonedRow.state.repeatSourceKey).toBe(sourceRow.state.key);
+
+      performTabRepeats(variables[1], sourceTab, false);
+      const [clonedTabInSourceRow] = sourceTab.state.repeatedTabs!;
+      expect(clonedTabInSourceRow.state.repeatSourceKey).toBe(sourceTab.state.key);
+
+      const clonedRowTabsLayout = clonedRow.state.layout as TabsLayoutManager;
+      const [tabInClonedRow] = clonedRowTabsLayout.state.tabs;
+
+      performTabRepeats(variables[1], tabInClonedRow, false);
+      const [clonedTabInClonedRow] = tabInClonedRow.state.repeatedTabs!;
+      expect(clonedTabInClonedRow.state.repeatSourceKey).toBe(sourceTab.state.key);
+
+      sidebar.state.selectionContext.onSelect({ id: clonedTabInClonedRow.state.key! }, {});
+
+      expect(sidebar.getSelectedObject()).toBe(sourceTab);
+    });
+  });
+
+  describe('addNewPanel', () => {
+    it('adds panel to the correct tab layout when target is first tab', async () => {
+      const { tab1, tab2, sidebar } = setupWithTwoTabs();
+      await sidebar.addNewPanel(tab1);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds panel to the correct tab layout when target is second tab', async () => {
+      const { tab1, tab2, sidebar } = setupWithTwoTabs();
+      await sidebar.addNewPanel(tab2);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(1);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('adds panel to the correct row layout when target is first row', async () => {
+      const { row1, row2, sidebar } = setupWithTwoRows();
+      await sidebar.addNewPanel(row1);
+      expect(row1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds panel to the correct row layout when target is second row', async () => {
+      const { row1, row2, sidebar } = setupWithTwoRows();
+      await sidebar.addNewPanel(row2);
+      expect(row1.getLayout().getVizPanels()).toHaveLength(1);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('adds panel to the first element in the dashboard when target is the dashboard itself', async () => {
+      const { dashboard, tab1, tab2, sidebar } = setupWithTwoTabs();
+      await sidebar.addNewPanel(dashboard);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds panel to the first element in the dashboard when target is undefined', async () => {
+      const { tab1, tab2, sidebar } = setupWithTwoTabs();
+      await sidebar.addNewPanel(undefined);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds panel to the dashboard when dashboard is empty', async () => {
+      const { dashboard, sidebar } = setupEmptyDashboard();
+      await sidebar.addNewPanel(undefined);
+      expect(dashboard.getLayout().getVizPanels()).toHaveLength(1);
+    });
+  });
+
+  describe('pastePanel', () => {
+    it('adds pasted panel to the correct tab layout when target is first tab', () => {
+      const { dashboard, tab1, tab2, tab1Viz, sidebar } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1Viz);
+      sidebar.pastePanel(tab1);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds pasted panel to the correct tab layout when target is second tab', () => {
+      const { dashboard, tab1, tab2, tab1Viz, sidebar } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1Viz);
+      sidebar.pastePanel(tab2);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(1);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('adds pasted panel to the correct row layout when target is first row', () => {
+      const { dashboard, row1, row2, row1Viz, sidebar } = setupWithTwoRows();
+      dashboard.copyPanel(row1Viz);
+      sidebar.pastePanel(row1);
+      expect(row1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds pasted panel to the correct row layout when target is second row', () => {
+      const { dashboard, row1, row2, row1Viz, sidebar } = setupWithTwoRows();
+      dashboard.copyPanel(row1Viz);
+      sidebar.pastePanel(row2);
+      expect(row1.getLayout().getVizPanels()).toHaveLength(1);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('adds pasted panel to the first element in the dashboard when target is the dashboard itself', () => {
+      const { dashboard, tab1, tab2, sidebar } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1.getLayout().getVizPanels()[0]);
+      sidebar.pastePanel(dashboard);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds pasted panel to the first element in the dashboard when target is undefined', () => {
+      const { dashboard, tab1, tab2, sidebar } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1.getLayout().getVizPanels()[0]);
+      sidebar.pastePanel(undefined);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('preserves the source panel config when pasting with target undefined into a RowsLayout dashboard', () => {
+      const { dashboard, row1, row2, row1Viz, sidebar } = setupWithTwoRows();
+      dashboard.copyPanel(row1Viz);
+
+      sidebar.pastePanel(undefined);
+
+      const row1Panels = row1.getLayout().getVizPanels();
+      expect(row1Panels).toHaveLength(2);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(0);
+
+      const pastedPanel = row1Panels[row1Panels.length - 1];
+      expect(pastedPanel.state.pluginId).toBe(row1Viz.state.pluginId);
+      expect(pastedPanel.state.title).toBe(row1Viz.state.title);
+    });
+
+    it('preserves the source panel config when pasting with target undefined into a TabsLayout dashboard', () => {
+      const { dashboard, tab1, tab2, tab1Viz, sidebar } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1Viz);
+
+      sidebar.pastePanel(undefined);
+
+      const tab1Panels = tab1.getLayout().getVizPanels();
+      expect(tab1Panels).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+
+      const pastedPanel = tab1Panels[tab1Panels.length - 1];
+      expect(pastedPanel.state.pluginId).toBe(tab1Viz.state.pluginId);
+      expect(pastedPanel.state.title).toBe(tab1Viz.state.title);
+    });
+
+    it('adds pasted panel to the dashboard when dashboard is empty', () => {
+      const { dashboard, sidebar } = setupEmptyDashboard();
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+      const gridItem = new AutoGridItem({ body: panel });
+      const layoutWithPanel = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: [gridItem] }),
+      });
+      const tabWithPanel = new TabItem({ title: 'Source', layout: layoutWithPanel });
+      const sourceDashboard = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        isEditing: true,
+        body: new TabsLayoutManager({ tabs: [tabWithPanel] }),
+      });
+      config.featureToggles.dashboardNewLayouts = true;
+      activateFullSceneTree(sourceDashboard);
+      sourceDashboard.copyPanel(panel);
+
+      sidebar.pastePanel(dashboard);
+      expect(dashboard.getLayout().getVizPanels()).toHaveLength(1);
+    });
+  });
+});
+
+function buildTestScene() {
+  const scene = new DashboardScene({
+    title: 'hello',
+    uid: 'dash-1',
+    description: 'hello description',
+    tags: ['tag1', 'tag2'],
+    editable: true,
+  });
+  config.featureToggles.dashboardNewLayouts = true;
+  activateFullSceneTree(scene);
+
+  return scene;
+}
+
+function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
+  const variables = [
+    new TestVariable({
+      name: 'env',
+      query: 'A.*',
+      value: ALL_VARIABLE_VALUE,
+      text: ALL_VARIABLE_TEXT,
+      isMulti: true,
+      includeAll: true,
+      delayMs: 0,
+      optionsToReturn: [
+        { label: 'test', value: 'test' },
+        { label: 'production', value: 'production' },
+      ],
+    }),
+    new TestVariable({
+      name: 'region',
+      query: 'A.*',
+      value: ALL_VARIABLE_VALUE,
+      text: ALL_VARIABLE_TEXT,
+      isMulti: true,
+      includeAll: true,
+      delayMs: 0,
+      optionsToReturn: [
+        { label: 'us', value: 'us' },
+        { label: 'eu', value: 'eu' },
+      ],
+    }),
+  ] as unknown as MultiValueVariable[];
+
+  const scene = new DashboardScene({
+    title: 'hello',
+    uid: 'dash-1',
+    editable: true,
+    $variables: new SceneVariableSet({ variables }),
+    body: layoutManager,
+  });
+
+  activateFullSceneTree(scene);
+
+  return {
+    variables,
+    sidebar: scene.state.sidebar,
+    scene,
+  };
+}
+
+function setupEmptyDashboard(): {
+  dashboard: DashboardScene;
+  sidebar: DashboardSidebarLike;
+} {
+  const dashboard = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    isEditing: true,
+    body: AutoGridLayoutManager.createEmpty(),
+  });
+  config.featureToggles.dashboardNewLayouts = true;
+  activateFullSceneTree(dashboard);
+  return { dashboard, sidebar: dashboard.state.sidebar };
+}
+
+function setupWithTwoTabs(): {
+  dashboard: DashboardScene;
+  tab1: TabItem;
+  tab2: TabItem;
+  tab1Viz: VizPanel;
+  sidebar: DashboardSidebarLike;
+} {
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+  const gridItem = new AutoGridItem({ body: panel });
+  const layoutWithPanel = new AutoGridLayoutManager({
+    layout: new AutoGridLayout({ children: [gridItem] }),
+  });
+  const tab1 = new TabItem({ title: 'Tab 1', layout: layoutWithPanel });
+  const tab2 = new TabItem({ title: 'Tab 2' });
+  const dashboard = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    isEditing: true,
+    body: new TabsLayoutManager({ tabs: [tab1, tab2] }),
+  });
+  config.featureToggles.dashboardNewLayouts = true;
+  activateFullSceneTree(dashboard);
+  return { dashboard, tab1, tab2, tab1Viz: panel, sidebar: dashboard.state.sidebar };
+}
+
+function setupWithTwoRows(): {
+  dashboard: DashboardScene;
+  row1: RowItem;
+  row2: RowItem;
+  row1Viz: VizPanel;
+  sidebar: DashboardSidebarLike;
+} {
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+  const gridItem = new AutoGridItem({ body: panel });
+  const layoutWithPanel = new AutoGridLayoutManager({
+    layout: new AutoGridLayout({ children: [gridItem] }),
+  });
+  const row1 = new RowItem({ title: 'Row 1', layout: layoutWithPanel });
+  const row2 = new RowItem({ title: 'Row 2' });
+  const dashboard = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    isEditing: true,
+    body: new RowsLayoutManager({ rows: [row1, row2] }),
+  });
+  config.featureToggles.dashboardNewLayouts = true;
+  activateFullSceneTree(dashboard);
+  return { dashboard, row1, row2, row1Viz: panel, sidebar: dashboard.state.sidebar };
+}

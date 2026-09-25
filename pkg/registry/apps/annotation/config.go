@@ -12,9 +12,15 @@ import (
 const (
 	// cleanupInterval is how often the background cleanup runs
 	cleanupInterval = 24 * time.Hour
-	// defaultRetentionTTL is the default retention period for annotations
-	// TODO: determine appropriate default TTL
-	defaultRetentionTTL = 90 * 24 * time.Hour
+	// defaultRetentionTTL is the default retention period for annotations.
+	// 0 disables cleanup and retention-based write validation; a positive
+	// value opts in to both.
+	defaultRetentionTTL = 0
+	// defaultMaxScopeCount caps how many scopes can be attached to a single
+	// annotation. 0 means no scopes are allowed.
+	defaultMaxScopeCount = 5
+	// defaultFolderCacheTTL is how long a resolved dashboard->folder mapping is cached.
+	defaultFolderCacheTTL = 30 * time.Second
 )
 
 // Config holds the store backend configuration for the annotation app.
@@ -38,6 +44,20 @@ type Config struct {
 	PostgresTagCacheTTL      time.Duration
 	PostgresTagCacheSize     int
 
+	// EnableLegacyID controls whether a grafana.app/legacyID label is generated
+	// for new annotations and persisted in the store.
+	EnableLegacyID bool
+
+	// MaxScopeCount caps how many scopes can be attached to a single
+	// annotation. 0 means no scopes are allowed. Negative values are
+	// rejected by the settings loader.
+	MaxScopeCount int
+
+	// FolderCacheEnabled controls whether resolved dashboard->folder mappings are cached.
+	FolderCacheEnabled bool
+	// FolderCacheTTL is how long a resolved dashboard->folder mapping is cached.
+	FolderCacheTTL time.Duration
+
 	// CleanupSettings configures annotation pruning for the SQL backend's LifecycleManager.
 	// Zero value (all limits unset) disables cleanup. Not used by memory or gRPC backends.
 	CleanupSettings annotations.CleanupSettings
@@ -46,9 +66,15 @@ type Config struct {
 func (c *Config) AddFlags(flags *pflag.FlagSet) {
 	// TODO: add cleanup flags when the SQL backend is supported in MT.
 	flags.StringVar(&c.StoreBackend, "annotation.store-backend", "memory", "Annotation store backend: memory, grpc, postgres, legacy-sql")
+	flags.BoolVar(&c.EnableLegacyID, "annotation.enable-legacy-id", false, "Generate and persist grafana.app/legacyID labels for legacy API compatibility")
 
 	// General lifecycle flags
 	flags.DurationVar(&c.RetentionTTL, "annotation.retention-ttl", defaultRetentionTTL, "Retention TTL for annotations (old data will be cleaned up)")
+
+	flags.IntVar(&c.MaxScopeCount, "annotation.max-scope-count", defaultMaxScopeCount, "Maximum number of scopes that can be attached to a single annotation")
+
+	flags.BoolVar(&c.FolderCacheEnabled, "annotation.folder-cache-enabled", true, "Cache resolved dashboard->folder mappings on the annotation authz read path")
+	flags.DurationVar(&c.FolderCacheTTL, "annotation.folder-cache-ttl", defaultFolderCacheTTL, "TTL for cached dashboard->folder mappings")
 
 	// gRPC flags
 	flags.StringVar(&c.GRPCAddress, "annotation.grpc-address", "", "gRPC server address for the annotation store")
@@ -66,14 +92,14 @@ func (c *Config) AddFlags(flags *pflag.FlagSet) {
 }
 
 func newConfigFromSettings(cfg *setting.Cfg) Config {
-	retentionTTL := cfg.AnnotationAppPlatform.RetentionTTL
-	if retentionTTL == 0 {
-		retentionTTL = defaultRetentionTTL
-	}
-
 	return Config{
-		StoreBackend: cfg.AnnotationAppPlatform.StoreBackend,
-		RetentionTTL: retentionTTL,
+		StoreBackend:   cfg.AnnotationAppPlatform.StoreBackend,
+		RetentionTTL:   cfg.AnnotationAppPlatform.RetentionTTL,
+		EnableLegacyID: cfg.AnnotationAppPlatform.EnableLegacyID,
+		MaxScopeCount:  cfg.AnnotationAppPlatform.MaxScopeCount,
+
+		FolderCacheEnabled: cfg.AnnotationAppPlatform.FolderCacheEnabled,
+		FolderCacheTTL:     cfg.AnnotationAppPlatform.FolderCacheTTL,
 
 		GRPCAddress:       cfg.AnnotationAppPlatform.GRPCAddress,
 		GRPCUseTLS:        cfg.AnnotationAppPlatform.GRPCUseTLS,

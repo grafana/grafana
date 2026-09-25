@@ -53,3 +53,59 @@ export function validateNoUserInfoInUrl(value: string | undefined): string | tru
 
   return true;
 }
+
+/**
+ * react-hook-form `validate` function.
+ * Requires a parseable absolute http(s) URL. Empty values pass (pair with `required`).
+ */
+export function validateHttpUrl(value: string | undefined): string | true {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return true;
+  }
+  const message = t(
+    'provisioning.validation.invalid-url',
+    'Enter a valid URL including the scheme, e.g. https://ghe.example.com'
+  );
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? true : message;
+  } catch {
+    return message;
+  }
+}
+
+const notEmpty = (value: string | undefined): boolean => typeof value === 'string' && value.trim().length > 0;
+
+/**
+ * Builds a react-hook-form `validate` function for the commit signer name/email fields.
+ * Both are required once commit signing is enabled.
+ */
+export function validateSigner(signingEnabled: boolean) {
+  return (value: string | undefined): string | true =>
+    !signingEnabled ||
+    notEmpty(value) ||
+    t('provisioning.commit-options.signer-required', 'Required when commit signing is enabled.');
+}
+
+/**
+ * Builds a react-hook-form `validate` function for the signing key field.
+ * Required only when signing is enabled and no key has been configured yet.
+ */
+export function validateSigningKey(signingRequired: boolean) {
+  return (value: string | undefined): string | true =>
+    !signingRequired ||
+    notEmpty(value) ||
+    t('provisioning.commit-options.signing-key-required', 'Signing key is required');
+}
+
+/**
+ * Builds a react-hook-form `validate` function for the S/MIME certificate field.
+ * Required only when the selected signing method is S/MIME.
+ */
+export function validateSmimeCertificate(signingMethod: string | undefined) {
+  return (value: string | undefined): string | true =>
+    signingMethod !== 'smime' ||
+    notEmpty(value) ||
+    t('provisioning.commit-options.smime-certificate-required', 'Certificate is required');
+}

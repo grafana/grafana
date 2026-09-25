@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	dsconverter "github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // getK8sDataSourceByUIDHandler returns a handler that redirects GET /api/datasources/uid/:uid
@@ -180,6 +182,14 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 
 		conn := conns.Items[0]
 		pluginType := pluginTypeFromConnection(conn)
+
+		if forceLocal, reason := hs.datasourceRequiresSTPaths(ctx, dsUID, c.SignedInUser, c.SkipDSCache); forceLocal {
+			c.Logger.Debug("forcing legacy path for resource request", "reason", reason, "uid", dsUID)
+			hs.dsEndpointRedirects.WithLabelValues("resources", pluginType, "legacy").Inc()
+			hs.CallDatasourceResourceWithUID(c)
+			return
+		}
+
 		hs.dsEndpointRedirects.WithLabelValues("resources", pluginType, "remote").Inc()
 
 		namespace := hs.namespacer(c.GetOrgID())
@@ -198,7 +208,8 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 
 func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 	return func(c *contextmodel.ReqContext) {
-		flagEnabled, _ := openfeature.NewDefaultClient().BooleanValue(c.Req.Context(), featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, false, openfeature.TransactionContext(c.Req.Context()))
+		ctx := c.Req.Context()
+		flagEnabled, _ := openfeature.NewDefaultClient().BooleanValue(ctx, featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, false, openfeature.TransactionContext(ctx))
 
 		if !flagEnabled {
 			hs.dsEndpointRedirects.WithLabelValues("health", "", "legacy").Inc()
@@ -227,12 +238,60 @@ func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 			return
 		}
 
+		if len(conns.Items) == 0 {
+			response.Error(http.StatusNotFound, "Data source not found", nil).WriteTo(c)
+			return
+		}
+
 		conn := conns.Items[0]
+
+		if forceLocal, reason := hs.datasourceRequiresSTPaths(ctx, dsUID, c.SignedInUser, c.SkipDSCache); forceLocal {
+			c.Logger.Debug("forcing legacy path for health request", "reason", reason, "uid", dsUID)
+			hs.dsEndpointRedirects.WithLabelValues("health", pluginTypeFromConnection(conn), "legacy").Inc()
+			hs.CheckDatasourceHealthWithUID(c).WriteTo(c)
+			return
+		}
+
 		namespace := hs.namespacer(c.GetOrgID())
 		c.Req.URL.Path = fmt.Sprintf("/apis/%s/%s/namespaces/%s/datasources/%s/health", conn.APIGroup, conn.APIVersion, namespace, conn.Name)
 		hs.dsEndpointRedirects.WithLabelValues("health", pluginTypeFromConnection(conn), "remote").Inc()
 		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
 	}
+}
+
+// datasourceRequiresSTPaths returns true (and a reason) when the datasource has
+// properties that are not yet supported in the Multi Tenant flow.
+//   - IP-range access control is enabled globally
+//   - datasource has oauthPassThru enabled
+//   - datasource has LBAC team HTTP headers configured
+func (hs *HTTPServer) datasourceRequiresSTPaths(ctx context.Context, dsUID string, user identity.Requester, skipCache bool) (bool, string) {
+	if hs.Cfg.IPRangeACEnabled {
+		return true, "ip-range-access-control"
+	}
+
+	// The built-in "-- Grafana --" datasource (UID "grafana") has no row in the
+	// datasource table and is not yet supported in the MT path.
+	if dsUID == "grafana" {
+		return true, "builtin-grafana-datasource"
+	}
+
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(ctx, dsUID, user, skipCache)
+	if err != nil {
+		// If we can't look up the datasource we can't confirm it's safe to redirect,
+		// so stay on the legacy path.
+		return true, "datasource-lookup-failed"
+	}
+
+	if ds.JsonData != nil {
+		if oauthPassThru, _ := ds.JsonData.Get("oauthPassThru").Bool(); oauthPassThru {
+			return true, "oauth-passthru"
+		}
+		if _, hasLBAC := ds.JsonData.CheckGet("teamHttpHeaders"); hasLBAC {
+			return true, "lbac"
+		}
+	}
+
+	return false, ""
 }
 
 // pluginTypeFromConnection extracts the plugin type identifier from a DataSourceConnection.

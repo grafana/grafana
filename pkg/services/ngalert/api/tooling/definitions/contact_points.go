@@ -36,11 +36,12 @@ type DingdingIntegration struct {
 type DiscordIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	WebhookURL         Secret  `json:"url" yaml:"url" hcl:"url"`
-	Title              *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	Message            *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	AvatarURL          *string `json:"avatar_url,omitempty" yaml:"avatar_url,omitempty" hcl:"avatar_url"`
-	UseDiscordUsername *bool   `json:"use_discord_username,omitempty" yaml:"use_discord_username,omitempty" hcl:"use_discord_username"`
+	WebhookURL          Secret  `json:"url" yaml:"url" hcl:"url"`
+	Title               *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	Message             *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	AvatarURL           *string `json:"avatar_url,omitempty" yaml:"avatar_url,omitempty" hcl:"avatar_url"`
+	UseDiscordUsername  *bool   `json:"use_discord_username,omitempty" yaml:"use_discord_username,omitempty" hcl:"use_discord_username"`
+	UseEmbedDescription *bool   `json:"use_embed_description,omitempty" yaml:"use_embed_description,omitempty" hcl:"use_embed_description"`
 }
 
 type EmailIntegration struct {
@@ -256,6 +257,7 @@ type SlackIntegration struct {
 	MentionUsers   *string `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty" hcl:"mention_users"`
 	MentionGroups  *string `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty" hcl:"mention_groups"`
 	Color          *string `json:"color,omitempty" yaml:"color,omitempty" hcl:"color"`
+	Footer         *string `json:"footer,omitempty" yaml:"footer,omitempty" hcl:"footer"`
 }
 
 type TelegramIntegration struct {
@@ -387,14 +389,15 @@ type OAuth2Config struct {
 type WecomIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	URL     *Secret `json:"url,omitempty" yaml:"url,omitempty" hcl:"url"`
-	Secret  *Secret `json:"secret,omitempty" yaml:"secret,omitempty" hcl:"secret"`
-	AgentID *string `json:"agent_id,omitempty" yaml:"agent_id,omitempty" hcl:"agent_id"`
-	CorpID  *string `json:"corp_id,omitempty" yaml:"corp_id,omitempty" hcl:"corp_id"`
-	Message *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	Title   *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	MsgType *string `json:"msgtype,omitempty" yaml:"msgtype,omitempty" hcl:"msg_type"`
-	ToUser  *string `json:"touser,omitempty" yaml:"touser,omitempty" hcl:"to_user"`
+	EndpointURL *string `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty" hcl:"endpoint_url"`
+	URL         *Secret `json:"url,omitempty" yaml:"url,omitempty" hcl:"url"`
+	Secret      *Secret `json:"secret,omitempty" yaml:"secret,omitempty" hcl:"secret"`
+	AgentID     *string `json:"agent_id,omitempty" yaml:"agent_id,omitempty" hcl:"agent_id"`
+	CorpID      *string `json:"corp_id,omitempty" yaml:"corp_id,omitempty" hcl:"corp_id"`
+	Message     *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	MsgType     *string `json:"msgtype,omitempty" yaml:"msgtype,omitempty" hcl:"msg_type"`
+	ToUser      *string `json:"touser,omitempty" yaml:"touser,omitempty" hcl:"to_user"`
 }
 
 type ContactPoint struct {

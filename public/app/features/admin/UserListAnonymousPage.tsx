@@ -97,14 +97,6 @@ const UserListAnonymousDevicesPageUnConnected = ({
 
 export const UserListAnonymousDevicesPageContent = connector(UserListAnonymousDevicesPageUnConnected);
 
-export function UserListAnonymousDevicesPage() {
-  return (
-    <Page navId="anonymous-users">
-      <UserListAnonymousDevicesPageContent />
-    </Page>
-  );
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     filter: css({
@@ -137,5 +129,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-export default UserListAnonymousDevicesPage;

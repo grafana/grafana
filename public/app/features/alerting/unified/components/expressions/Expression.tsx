@@ -228,7 +228,7 @@ interface ExpressionResultProps {
   isAlertCondition?: boolean;
   isRecordingRule?: boolean;
 }
-export const PAGE_SIZE = 20;
+const PAGE_SIZE = 20;
 export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition, isRecordingRule = false }) => {
   const { pageItems, previousPage, nextPage, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
@@ -306,7 +306,7 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
   );
 };
 
-export const PreviewSummary: FC<{ firing: number; normal: number; isCondition: boolean; seriesCount: number }> = ({
+const PreviewSummary: FC<{ firing: number; normal: number; isCondition: boolean; seriesCount: number }> = ({
   firing,
   normal,
   isCondition,

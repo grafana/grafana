@@ -1,0 +1,229 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { ComponentProps } from 'react';
+
+import { getLocalStorageProvider } from '@grafana/runtime/internal';
+import { mockComboboxRect } from '@grafana/test-utils';
+import type { CodeMirrorEditor } from '@grafana/ui/unstable';
+
+import { FeatureControlFlag, type FeatureControlFlagProps } from './FeatureControlFlag';
+
+type CodeMirrorEditorProps = ComponentProps<typeof CodeMirrorEditor>;
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  FlagKeys: {
+    FeatureControlFlagTestOnly: 'feature-gamma',
+  },
+  getOFREPWebProvider: jest.fn().mockReturnValue({
+    flagCache: {
+      'feature-alpha': { value: true, reason: 'DEFAULT' },
+      'feature-beta': { value: false, reason: 'TARGETING_MATCH' },
+      'feature-object': { value: { enabled: true, cohort: 'staff' }, reason: 'STATIC' },
+      'feature-error': { errorCode: 'FLAG_NOT_FOUND', errorDetails: 'No provider result found for this flag.' },
+    } as Record<string, unknown>,
+    events: { addHandler: jest.fn(), removeHandler: jest.fn() },
+  } as never),
+}));
+
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: ({ value, onChange, 'aria-label': ariaLabel }: CodeMirrorEditorProps) => (
+    <textarea aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />
+  ),
+}));
+
+type Flag = NonNullable<FeatureControlFlagProps['flag']>;
+
+const renderComponent = (flag?: Flag) => render(<FeatureControlFlag flag={flag} />);
+
+const getStorageKey = (flagName: string) => `grafana.openfeature.${flagName}`;
+
+const expandFlag = async (flagName: string) => {
+  await userEvent.click(screen.getByText(flagName));
+
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: 'Save' })).toBeVisible();
+  });
+};
+
+const changeType = async (type: string) => {
+  await userEvent.click(screen.getByRole('combobox', { name: 'Flag type' }));
+  await userEvent.click(screen.getByRole('option', { name: type }));
+};
+
+const changeValue = async (input: string, type: string) => {
+  if (type === 'boolean') {
+    await userEvent.click(screen.getByRole('radio', { name: input }));
+  } else {
+    const elm = screen.getByRole(type === 'number' ? 'spinbutton' : 'textbox', { name: 'Flag value' });
+    await userEvent.clear(elm);
+    await userEvent.type(elm, input);
+  }
+};
+
+describe('FeatureControlFlag', () => {
+  beforeAll(() => {
+    mockComboboxRect();
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    window.localStorage.clear();
+    getLocalStorageProvider().clearFlags();
+  });
+
+  [
+    { type: 'boolean', before: { storage: 'true', expected: 'true' }, after: { input: 'true', expected: 'true' } },
+    { type: 'number', before: { storage: '42', expected: '42' }, after: { input: '42', expected: '42' } },
+    {
+      type: 'string',
+      before: { storage: 'hello world', expected: 'hello world' },
+      after: { input: 'hello world', expected: 'hello world' },
+    },
+    {
+      type: 'object',
+      before: { storage: '{"key":"value"}', expected: '{\n  "key": "value"\n}' },
+      after: { input: '{{"key": "value"}}', expected: '{"key":"value"}' },
+    },
+  ].map(({ type, before, after }) => {
+    describe(`${type} flags`, () => {
+      it('adds a new flag', async () => {
+        expect(window.localStorage.getItem(getStorageKey('alpha'))).toBeNull();
+
+        renderComponent();
+        await expandFlag('new-flag-override');
+
+        await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'alpha[Enter]');
+        await changeType(type);
+        await changeValue(after.input, type);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await waitFor(() => {
+          expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe(after.expected);
+        });
+      });
+
+      it('updates an existing flag', async () => {
+        getLocalStorageProvider().setFlags({ alpha: before.storage });
+
+        renderComponent({ key: 'alpha', value: before.storage });
+        await expandFlag('alpha');
+
+        expect(screen.getByRole('combobox', { name: 'Flag type' })).toHaveValue(type);
+
+        if (type === 'boolean') {
+          expect(screen.getByRole('radio', { name: before.expected })).toBeChecked();
+          expect(screen.getByRole('radio', { name: before.expected === 'true' ? 'false' : 'true' })).not.toBeChecked();
+        } else {
+          expect(screen.getByRole(type === 'number' ? 'spinbutton' : 'textbox', { name: 'Flag value' })).toHaveValue(
+            type === 'number' ? Number(before.expected) : before.expected
+          );
+        }
+
+        await changeValue(after.input, type);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await waitFor(() => {
+          expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe(after.expected);
+        });
+      });
+    });
+  });
+
+  it('saves the latest JSON immediately after typing', async () => {
+    const user = userEvent.setup();
+    renderComponent({ key: 'alpha', value: '{"count":1}' });
+    await user.click(screen.getByText('alpha'));
+
+    const editor = screen.getByRole('textbox', { name: 'Flag value' });
+    await user.clear(editor);
+    await user.type(editor, '{{"count":2}');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('{"count":2}');
+  });
+
+  it('keeps invalid JSON drafts and the last valid value, then clears the error when corrected', async () => {
+    const user = userEvent.setup();
+    renderComponent({ key: 'alpha', value: '{"count":1}' });
+    await user.click(screen.getByText('alpha'));
+
+    const editor = screen.getByRole('textbox', { name: 'Flag value' });
+    await user.clear(editor);
+    await user.type(editor, '{{"count":2}');
+    await user.type(editor, 'x');
+
+    expect(editor).toHaveValue('{"count":2}x');
+    expect(screen.getByRole('alert')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('{"count":2}');
+
+    await user.click(editor);
+    await user.keyboard('{End}{Backspace}');
+    expect(editor).toHaveValue('{"count":2}');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('removes an existing flag', async () => {
+    getLocalStorageProvider().setFlags({ alpha: true });
+
+    renderComponent({ key: 'alpha', value: 'true' });
+    await expandFlag('alpha');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await waitFor(() => {
+      expect(window.localStorage.getItem(getStorageKey('alpha'))).toBeNull();
+    });
+  });
+
+  it('shows known flag names in the flag key combobox', async () => {
+    renderComponent();
+    await expandFlag('new-flag-override');
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Flag key' }));
+    expect(screen.getByRole('option', { name: 'feature-alpha' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'feature-beta' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'feature-gamma' })).toBeInTheDocument();
+  });
+
+  it('shows the OFREP evaluation when selecting a new flag key', async () => {
+    renderComponent();
+    await expandFlag('new-flag-override');
+
+    await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'feature-alpha[Enter]');
+
+    expect(screen.getByText('OFREP evaluation')).toBeInTheDocument();
+    expect(screen.getAllByText('true')).toHaveLength(2);
+  });
+
+  it('shows the OFREP evaluation value and reason for an existing flag', async () => {
+    renderComponent({ key: 'feature-alpha', value: 'false' });
+    await expandFlag('feature-alpha');
+
+    expect(screen.getByText('OFREP evaluation')).toBeInTheDocument();
+    expect(screen.getAllByText('true')).toHaveLength(2);
+
+    await userEvent.hover(screen.getByTestId('icon-info-circle'));
+    expect(await screen.findByText('DEFAULT')).toBeInTheDocument();
+  });
+
+  it('shows the full OFREP object value in the badge tooltip', async () => {
+    renderComponent({ key: 'feature-object', value: 'false' });
+    await expandFlag('feature-object');
+
+    await userEvent.hover(screen.getByText('{...}'));
+    expect(await screen.findByText('{"enabled":true,"cohort":"staff"}')).toBeInTheDocument();
+  });
+
+  it('shows OFREP error details separately from the error badge', async () => {
+    renderComponent({ key: 'feature-error', value: 'true' });
+    await expandFlag('feature-error');
+
+    expect(screen.getByText('FLAG_NOT_FOUND')).toBeInTheDocument();
+
+    await userEvent.hover(screen.getByTestId('icon-info-circle'));
+    expect(await screen.findByText('No provider result found for this flag.')).toBeInTheDocument();
+  });
+});

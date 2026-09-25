@@ -53,8 +53,8 @@ func makeAlertRuleSpec(t *testing.T, folder, title string) *v0alpha1.AlertRule {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 }
@@ -325,8 +325,9 @@ func TestIntegrationListTrash(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  "cross-type-recording-trash",
-				Metric: v0alpha1.RecordingRuleMetricName(recRule.Record.Metric),
+				Title:               "cross-type-recording-trash",
+				Metric:              v0alpha1.RecordingRuleMetricName(recRule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(recRule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new("query"),

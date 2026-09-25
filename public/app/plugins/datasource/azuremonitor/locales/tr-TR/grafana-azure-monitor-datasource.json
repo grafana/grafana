@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "yapılandırılmış",
       "reset-symbol-client-secret": "Sıfırla"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} ham sorgusu",
       "aria-label-use-query": "Bu sorgu düğmesini kullanın",
@@ -78,6 +83,11 @@
       "description-basic-logs": "Bu özelliğin etkinleştirilmesi, <2>Temel Günlükler</2> için yapılandırılmış tabloları sorgulayan pano panellerinde Azure Monitor sorgu başına maliyetlerinin oluşmasına neden olur.",
       "label-enable-basic-logs": "Temel Günlükleri Etkinleştir"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "Batch API",
+      "description-batch-api": "Tek bir istekte birden çok kaynağı sorgulayarak büyük panolarda performansı artırır. <6>metrics.monitor.azure.com</6> üzerinde abonelik kapsamında <2>Monitoring Reader</2> rolü gerekir. Ücretsiz katmanın üzerinde ek <9>ücretler uygulanabilir</9>.",
+      "label-enable-batch-api": "Batch API'yi etkinleştir"
+    },
     "config-editor": {
       "description-additional-settings": "Ek ayarlar, veri kaynağınız üzerinde daha fazla denetim sağlamak için yapılandırabileceğiniz isteğe bağlı seçeneklerdir. Buna Secure SOCKS Proxy, istek zaman aşımı ve iletilen çerezler dâhildir.",
       "title-additional-settings": "Ek ayarlar"
@@ -100,7 +110,11 @@
       "load-subscriptions": "Abonelikleri Yükle"
     },
     "dimension-fields": {
-      "aria-label-remove": "Kaldır",
+      "aria-label-field": "Boyut {{position}} alanı",
+      "aria-label-operator": "Boyut {{position}} işleci",
+      "aria-label-remove": "{{position}} boyutunu kaldır",
+      "aria-label-value": "Boyut {{position}} değeri",
+      "aria-label-values": "Boyut {{position}} değerleri",
       "label-dimensions": "Boyutlar",
       "placeholder-field": "Alan",
       "placeholder-operation": "Çalıştırma",
@@ -173,25 +187,60 @@
       "tooltip-limit": "Döndürülen satır sayısını kısıtlayın (varsayılan 1000'dir)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Temel Günlüklere geçmek istediğinizden emin misiniz?",
       "confirmText-confirm": "Onayla",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Temel Günlük sorguları, taranan veri miktarına bağlı olarak maliyet doğurur.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Günlük kayıtları",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Temel Günlük Sorguları",
-      "tooltip-logs": "Temel veya Analitik Günlükleri sorgusunun çalıştırılıp çalıştırılmayacağını belirtir."
+      "tooltip-logs": "Temel veya Analitik Günlükleri sorgusunun çalıştırılıp çalıştırılmayacağını belirtir.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Kaynak başarıyla yüklendi ancak herhangi bir tablo yok"
     },
     "logs-query-editor": {
       "learn-more": "Daha Fazla Bilgi Edinin",
-      "view-query": "Sorguyu Azure Portal'da görüntüleyin"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Sorguyu Azure Portal'da görüntüleyin",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrik"
     },
     "metric-namespace-field": {
       "label-metric-namespace": "Metrik ad alanı"
+    },
+    "metrics-query-editor": {
+      "selection-notice-batch": "Abonelikler ve bölgeler genelinde aynı kaynak türündeki ögeleri seçebilirsiniz. Farklı aboneliklerdeki veya bölgelerdeki kaynaklar ayrı isteklerle sorgulanır ve bir isteğin başarısız olması diğerlerini etkilemez. Farklı bir kaynak türündeki kaynakları seçmek için önce mevcut seçiminizdeki işareti kaldırın.",
+      "selection-notice-standard": "Aynı kaynak türündeki ve konumdaki ögeleri seçebilirsiniz. Farklı bir kaynak türündeki veya konumdaki kaynakları seçmek için önce mevcut seçiminizdeki işareti kaldırın."
+    },
+    "monitor-config": {
+      "title-features": "Özellikler"
     },
     "nested-row": {
       "text-loading": "Yükleniyor..."
@@ -204,6 +253,10 @@
       "label-by": "ÖLÇÜT",
       "label-order-by": "Sıralama Ölçütü",
       "tooltip-order-by": "Sonuçları bir veya daha fazla sütuna göre artan veya azalan düzende sıralayın."
+    },
+    "pagination": {
+      "results-truncated-message": "{{maxPages}} sayfadan sonra yükleme durduruldu; bazı sonuçlar gösterilmeyebilir.",
+      "results-truncated-title": "Azure İzleyici"
     },
     "query-editor": {
       "alert-error-occurred": "Azure Monitor'dan meta veriler istenirken bir hata oluştu"

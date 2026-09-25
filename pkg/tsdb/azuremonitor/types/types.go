@@ -19,6 +19,17 @@ var (
 	LegendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
+// Route name constants shared across the azuremonitor package and its subpackages.
+const (
+	RouteAzureMonitor             = "Azure Monitor"
+	RouteAzureLogAnalytics        = "Azure Log Analytics"
+	RouteAzureResourceGraph       = "Azure Resource Graph"
+	RouteAzureTraces              = "Azure Traces"
+	RouteAzurePortal              = "Azure Portal"
+	RouteTraceExemplar            = "traceql"
+	RouteAzureMonitorBatchMetrics = "Azure Monitor Batch Metrics"
+)
+
 type AzRoute struct {
 	URL     string
 	Scopes  []string
@@ -29,6 +40,7 @@ type AzureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
+	BatchAPIEnabled              bool   `json:"batchAPIEnabled"`
 }
 
 // AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
@@ -75,39 +87,51 @@ type AzureMonitorQuery struct {
 	GrafanaSql bool
 }
 
+// AzureMetricName holds the name and localized name of an Azure Monitor metric or dimension.
+type AzureMetricName struct {
+	Value          string `json:"value"`
+	LocalizedValue string `json:"localizedValue"`
+}
+
+// AzureMetricMetadataValue is a single dimension label on a timeseries.
+type AzureMetricMetadataValue struct {
+	Name  AzureMetricName `json:"name"`
+	Value string          `json:"value"`
+}
+
+// AzureMetricTimeseriesData is a single data point within a timeseries.
+type AzureMetricTimeseriesData struct {
+	TimeStamp time.Time `json:"timeStamp"`
+	Average   *float64  `json:"average,omitempty"`
+	Total     *float64  `json:"total,omitempty"`
+	Count     *float64  `json:"count,omitempty"`
+	Maximum   *float64  `json:"maximum,omitempty"`
+	Minimum   *float64  `json:"minimum,omitempty"`
+}
+
+// AzureMetricTimeseries is one labelled timeseries within a metric value.
+type AzureMetricTimeseries struct {
+	Metadatavalues []AzureMetricMetadataValue  `json:"metadatavalues"`
+	Data           []AzureMetricTimeseriesData `json:"data"`
+}
+
+// AzureMetricValue is a single metric in an Azure Monitor API response.
+type AzureMetricValue struct {
+	ID         string                  `json:"id"`
+	Type       string                  `json:"type"`
+	Name       AzureMetricName         `json:"name"`
+	Unit       string                  `json:"unit"`
+	Timeseries []AzureMetricTimeseries `json:"timeseries"`
+}
+
 // AzureMonitorResponse is the json response from the Azure Monitor API
 type AzureMonitorResponse struct {
-	Cost     int    `json:"cost"`
-	Timespan string `json:"timespan"`
-	Interval string `json:"interval"`
-	Value    []struct {
-		ID   string `json:"id"`
-		Type string `json:"type"`
-		Name struct {
-			Value          string `json:"value"`
-			LocalizedValue string `json:"localizedValue"`
-		} `json:"name"`
-		Unit       string `json:"unit"`
-		Timeseries []struct {
-			Metadatavalues []struct {
-				Name struct {
-					Value          string `json:"value"`
-					LocalizedValue string `json:"localizedValue"`
-				} `json:"name"`
-				Value string `json:"value"`
-			} `json:"metadatavalues"`
-			Data []struct {
-				TimeStamp time.Time `json:"timeStamp"`
-				Average   *float64  `json:"average,omitempty"`
-				Total     *float64  `json:"total,omitempty"`
-				Count     *float64  `json:"count,omitempty"`
-				Maximum   *float64  `json:"maximum,omitempty"`
-				Minimum   *float64  `json:"minimum,omitempty"`
-			} `json:"data"`
-		} `json:"timeseries"`
-	} `json:"value"`
-	Namespace      string `json:"namespace"`
-	Resourceregion string `json:"resourceregion"`
+	Cost           int                `json:"cost"`
+	Timespan       string             `json:"timespan"`
+	Interval       string             `json:"interval"`
+	Value          []AzureMetricValue `json:"value"`
+	Namespace      string             `json:"namespace"`
+	Resourceregion string             `json:"resourceregion"`
 }
 
 // AzureResponseTable is the table format for Azure responses

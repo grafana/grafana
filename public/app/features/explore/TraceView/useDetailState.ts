@@ -29,6 +29,19 @@ export function useDetailState(frame: DataFrame) {
     [detailStates]
   );
 
+  // Callers that navigate to a span (e.g. "Go to span") must end up with the detail open,
+  // so this opens rather than toggles and is a no-op when the detail is already open.
+  const openDetail = useCallback(function openDetail(spanID: string) {
+    setDetailStates((currentDetailStates) => {
+      if (currentDetailStates.has(spanID)) {
+        return currentDetailStates;
+      }
+      const newDetailStates = new Map(currentDetailStates);
+      newDetailStates.set(spanID, new DetailState());
+      return newDetailStates;
+    });
+  }, []);
+
   const detailLogItemToggle = useCallback(
     function detailLogItemToggle(spanID: string, log: TraceLog) {
       const old = detailStates.get(spanID);
@@ -60,6 +73,7 @@ export function useDetailState(frame: DataFrame) {
   return {
     detailStates,
     toggleDetail,
+    openDetail,
     detailLogItemToggle,
     detailLogsToggle: useCallback(
       (spanID: string) => makeDetailSubsectionToggle('logs', detailStates, setDetailStates)(spanID),
@@ -86,11 +100,15 @@ export function useDetailState(frame: DataFrame) {
       (spanID: string) => makeDetailSubsectionToggle('tags', detailStates, setDetailStates)(spanID),
       [detailStates]
     ),
+    detailSummaryAttributesToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('summaryAttributes', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
   };
 }
 
 function makeDetailSubsectionToggle(
-  subSection: 'tags' | 'process' | 'logs' | 'warnings' | 'references' | 'stackTraces',
+  subSection: 'tags' | 'process' | 'summaryAttributes' | 'logs' | 'warnings' | 'references' | 'stackTraces',
   detailStates: Map<string, DetailState>,
   setDetailStates: (detailStates: Map<string, DetailState>) => void
 ) {
@@ -104,14 +122,20 @@ function makeDetailSubsectionToggle(
       detailState = old.toggleTags();
     } else if (subSection === 'process') {
       detailState = old.toggleProcess();
+    } else if (subSection === 'summaryAttributes') {
+      detailState = old.toggleSummaryAttributes();
     } else if (subSection === 'warnings') {
       detailState = old.toggleWarnings();
     } else if (subSection === 'references') {
       detailState = old.toggleReferences();
     } else if (subSection === 'stackTraces') {
       detailState = old.toggleStackTraces();
-    } else {
+    } else if (subSection === 'logs') {
       detailState = old.toggleLogs();
+    } else {
+      // Exhaustive: every subsection is handled above. Bail rather than fall through to a
+      // default toggle if a new subsection is added without its own branch.
+      return;
     }
     const newDetailStates = new Map(detailStates);
     newDetailStates.set(spanID, detailState);

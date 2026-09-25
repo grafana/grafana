@@ -52,6 +52,19 @@ func (session *Session) str2Time(col *core.Column, data string) (outTime time.Ti
 			x, err = time.ParseInLocation("2006-01-02 15:04:05.9999999 Z07:00", sdata, parseLoc)
 			//session.engine.logger.Debugf("time(3) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
 		}
+		if err != nil {
+			legacyTime := sdata
+			if monotonicClock := strings.Index(legacyTime, " m="); monotonicClock >= 0 {
+				legacyTime = legacyTime[:monotonicClock]
+			}
+			x, err = time.ParseInLocation("2006-01-02 15:04:05.999999999 -0700 MST", legacyTime, parseLoc)
+			if err != nil {
+				parts := strings.Fields(legacyTime)
+				if len(parts) == 4 && parts[2] == parts[3] {
+					x, err = time.ParseInLocation("2006-01-02 15:04:05.999999999 -0700", strings.Join(parts[:3], " "), parseLoc)
+				}
+			}
+		}
 	} else if len(sdata) == 19 && strings.Contains(sdata, "-") {
 		x, err = time.ParseInLocation("2006-01-02 15:04:05", sdata, parseLoc)
 		//session.engine.logger.Debugf("time(4) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
@@ -89,12 +102,12 @@ func (session *Session) byte2Time(col *core.Column, data []byte) (outTime time.T
 }
 
 var (
-	nullFloatType = reflect.TypeOf(sql.NullFloat64{})
+	nullFloatType = reflect.TypeFor[sql.NullFloat64]()
 )
 
 // convert a db data([]byte) to a field value
 func (session *Session) bytes2Value(col *core.Column, fieldValue *reflect.Value, data []byte) error {
-	if structConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+	if structConvert, ok := reflect.TypeAssert[core.Conversion](fieldValue.Addr()); ok {
 		return structConvert.FromDB(data)
 	}
 
@@ -198,7 +211,7 @@ func (session *Session) bytes2Value(col *core.Column, fieldValue *reflect.Value,
 	//Currently only support Time type
 	case reflect.Struct:
 		// !<winxxp>! 增加支持sql.Scanner接口的结构，如sql.NullString
-		if nulVal, ok := fieldValue.Addr().Interface().(sql.Scanner); ok {
+		if nulVal, ok := reflect.TypeAssert[sql.Scanner](fieldValue.Addr()); ok {
 			if err := nulVal.Scan(data); err != nil {
 				return fmt.Errorf("sql.Scan(%v) failed: %s ", data, err.Error())
 			}
@@ -473,7 +486,7 @@ func (session *Session) bytes2Value(col *core.Column, fieldValue *reflect.Value,
 // convert a field value of a struct to interface for put into db
 func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Value) (any, error) {
 	if fieldValue.CanAddr() {
-		if fieldConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+		if fieldConvert, ok := reflect.TypeAssert[core.Conversion](fieldValue.Addr()); ok {
 			data, err := fieldConvert.ToDB()
 			if err != nil {
 				return 0, err
@@ -485,7 +498,7 @@ func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Val
 		}
 	}
 
-	if fieldConvert, ok := fieldValue.Interface().(core.Conversion); ok {
+	if fieldConvert, ok := reflect.TypeAssert[core.Conversion](fieldValue); ok {
 		data, err := fieldConvert.ToDB()
 		if err != nil {
 			return 0, err
@@ -532,7 +545,7 @@ func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Val
 
 		if !col.SQLType.IsJson() {
 			// !<winxxp>! 增加支持driver.Valuer接口的结构，如sql.NullString
-			if v, ok := fieldValue.Interface().(driver.Valuer); ok {
+			if v, ok := reflect.TypeAssert[driver.Valuer](fieldValue); ok {
 				return v.Value()
 			}
 

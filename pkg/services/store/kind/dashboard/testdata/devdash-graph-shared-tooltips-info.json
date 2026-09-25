@@ -13,10 +13,9 @@
   ],
   "panels": [
     {
-      "id": 4,
-      "title": "two units",
+      "id": 0,
+      "title": "flot panel (no units)",
       "type": "timeseries",
-      "pluginVersion": "7.5.0-pre",
       "datasource": [
         {
           "uid": "default.uid",
@@ -25,62 +24,9 @@
       ]
     },
     {
-      "id": 13,
-      "title": "Speed vs Temperature (XY)",
-      "type": "xychart",
-      "pluginVersion": "7.5.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ],
-      "transformer": [
-        "seriesToColumns",
-        "organize"
-      ]
-    },
-    {
-      "id": 2,
-      "title": "Cursor info",
-      "type": "debug",
-      "pluginVersion": "7.5.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 5,
-      "title": "Only temperature",
-      "type": "timeseries",
-      "pluginVersion": "7.5.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 9,
-      "title": "Only Speed",
-      "type": "timeseries",
-      "pluginVersion": "7.5.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 11,
+      "id": 0,
       "title": "Panel Title",
       "type": "timeseries",
-      "pluginVersion": "7.5.0-pre",
       "datasource": [
         {
           "uid": "default.uid",
@@ -89,10 +35,53 @@
       ]
     },
     {
-      "id": 8,
+      "id": 0,
+      "title": "Speed vs Temperature (XY)",
+      "type": "xychart",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Cursor info",
+      "type": "debug",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "two units",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Only temperature",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
       "title": "flot panel (temperature)",
-      "type": "graph",
-      "pluginVersion": "7.5.0-pre",
+      "type": "timeseries",
       "datasource": [
         {
           "uid": "default.uid",
@@ -101,10 +90,9 @@
       ]
     },
     {
-      "id": 10,
-      "title": "flot panel (no units)",
-      "type": "graph",
-      "pluginVersion": "7.5.0-pre",
+      "id": 0,
+      "title": "Only Speed",
+      "type": "timeseries",
       "datasource": [
         {
           "uid": "default.uid",
@@ -113,9 +101,9 @@
       ]
     }
   ],
-  "schemaVersion": 28,
+  "schemaVersion": 0,
   "linkCount": 0,
-  "timeFrom": "2020-09-14T16:13:20.000Z",
-  "timeTo": "2020-09-15T20:00:00.000Z",
+  "timeFrom": "",
+  "timeTo": "",
   "timezone": ""
 }

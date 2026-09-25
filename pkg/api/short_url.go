@@ -16,110 +16,52 @@ import (
 
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// shortURLReplacementCollectionPath is the app-platform resource collection
+// that replaces legacy /api/short-urls creation. Its GET verb is "list" and
+// is admin-only (see apps/shorturl/pkg/app/authorizer.go), so it must not be
+// advertised as the replacement for the get-by-uid handler.
+const shortURLReplacementCollectionPath = "/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls"
+
+// shortURLReplacementItemPath returns the single-resource path that replaces
+// the legacy get-by-uid endpoint; its GET verb is "get", open to any role.
+func shortURLReplacementItemPath(uid string) string {
+	return shortURLReplacementCollectionPath + "/" + uid
+}
+
+// setShortURLDeprecationHeaders marks a legacy short-url response as
+// deprecated per the API deprecation checklist. Update
+// X-API-Deprecation-Date if the announcement date changes.
+func setShortURLDeprecationHeaders(c *contextmodel.ReqContext, replacement string) {
+	c.Resp.Header().Set("Warning", `299 - "Deprecated API: use the Grafana App Platform Short URL API instead."`)
+	c.Resp.Header().Set("X-API-Deprecation-Date", "2026-09-14")
+	c.Resp.Header().Set("X-API-Replacement", replacement)
+}
+
 func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 	reqSignedIn := middleware.ReqSignedIn
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
-		handler := newShortURLK8sHandler(hs)
-		apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
-		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, handler.getKubernetesShortURLsHandler)
-		apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
-	} else {
-		apiRoute.Post("/api/short-urls", reqSignedIn, hs.createShortURL)
-		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, hs.getShortURL)
-		apiRoute.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
-	}
-}
+	handler := newShortURLK8sHandler(hs)
 
-// createShortURL handles requests to create short URLs.
-func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Response {
-	cmd := &dtos.CreateShortURLCmd{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("bad request data: %w", err))
-	}
-	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
-	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd)
-	if err != nil {
-		return response.Err(err)
-	}
+	// Deprecated: use /apis/shorturl.grafana.app/ instead
+	apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
+	// Deprecated: use /apis/shorturl.grafana.app/ instead
+	apiRoute.Get("/api/short-urls/:uid", reqSignedIn, handler.getKubernetesShortURLsHandler)
 
-	shortURLDTO := hs.ShortURLService.ConvertShortURLToDTO(shortURL, hs.Cfg.AppURL)
-	c.Logger.Debug("Created short URL", "url", shortURLDTO.URL)
-
-	return response.JSON(http.StatusOK, shortURLDTO)
-}
-
-func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
-	shortURLUID := web.Params(c.Req)[":uid"]
-
-	if !util.IsValidShortUID(shortURLUID) {
-		return
-	}
-
-	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
-	if err != nil {
-		// If we didn't get the URL for whatever reason, we redirect to the
-		// main page, otherwise we get into an endless loops of redirects, as
-		// we would try to redirect again.
-		if shorturls.ErrShortURLNotFound.Is(err) {
-			hs.log.Debug("Not redirecting short URL since not found", "uid", shortURLUID)
-			c.Redirect(hs.Cfg.AppURL, http.StatusPermanentRedirect)
-			return
-		}
-		hs.log.Error("Short URL redirection error", "err", err)
-		c.Redirect(hs.Cfg.AppURL, http.StatusTemporaryRedirect)
-		return
-	}
-
-	// Failure to update LastSeenAt should still allow to redirect
-	if err := hs.ShortURLService.UpdateLastSeenAt(c.Req.Context(), shortURL); err != nil {
-		hs.log.Error("Failed to update short URL last seen at", "error", err)
-	}
-
-	// Safety net: validate stored path before redirecting to prevent open redirects
-	if err := shorturls.ValidateRelativePath(shortURL.Path); err != nil {
-		hs.log.Error("Short URL has invalid path, refusing to redirect", "path", shortURL.Path, "err", err)
-		c.Redirect(hs.Cfg.AppURL, http.StatusFound)
-		return
-	}
-
-	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
-	c.Redirect(setting.ToAbsUrl(shortURL.Path), http.StatusFound)
-}
-
-// getShortURL handles requests to get short URLs.
-func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response {
-	shortURLUID := web.Params(c.Req)[":uid"]
-
-	if !util.IsValidShortUID(shortURLUID) {
-		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("invalid uid"))
-	}
-
-	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
-	if err != nil {
-		if shorturls.ErrShortURLNotFound.Is(err) {
-			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
-		}
-		return response.Err(shorturls.ErrShortURLInternal.Errorf("failed to get short URL: %w", err))
-	}
-
-	return response.JSON(http.StatusOK, shortURL)
+	// Not deprecated: this is the public redirect link end users click when
+	// they open a shared short URL, not an API integration point.
+	apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
 }
 
 type shortURLK8sHandler struct {
@@ -139,12 +81,14 @@ func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
 }
 
 func (sk8s *shortURLK8sHandler) getKubernetesShortURLsHandler(c *contextmodel.ReqContext) {
+	shortURLUID := web.Params(c.Req)[":uid"]
+	setShortURLDeprecationHeaders(c, shortURLReplacementItemPath(shortURLUID))
+
 	client, ok := sk8s.getClient(c)
 	if !ok {
 		return
 	}
 
-	shortURLUID := web.Params(c.Req)[":uid"]
 	if !util.IsValidShortUID(shortURLUID) {
 		c.JsonApiErr(http.StatusBadRequest, "Invalid short URL UID format", fmt.Errorf("invalid short URL UID: %s", shortURLUID))
 		return
@@ -157,7 +101,13 @@ func (sk8s *shortURLK8sHandler) getKubernetesShortURLsHandler(c *contextmodel.Re
 		return
 	}
 
-	c.JSON(http.StatusOK, shorturl.UnstructuredToLegacyShortURL(*out))
+	legacyShortURL, err := shorturl.UnstructuredToLegacyShortURL(*out)
+	if err != nil {
+		sk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, legacyShortURL)
 }
 
 func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmodel.ReqContext) {
@@ -252,6 +202,8 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 }
 
 func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel.ReqContext) {
+	setShortURLDeprecationHeaders(c, shortURLReplacementCollectionPath)
+
 	client, ok := sk8s.getClient(c)
 	if !ok {
 		return

@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -155,6 +156,40 @@ func TestCheckQuota(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A missing ref surfaces from the git layer as ErrRefNotFound wrapped by fmt.Errorf
+// (a *fmt.wrapError, not an APIStatus). The directory-listing handler must unwrap it so
+// the client gets a 404 instead of a 500 + UnhandledError log.
+func TestHandleDirectoryListing_RefNotFoundMapsTo404(t *testing.T) {
+	mockAccess := auth.NewMockAccessChecker(t)
+	mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	wrappedErr := fmt.Errorf("ref not found: %s: %w", "refs/heads/test-panel", repository.ErrRefNotFound)
+	mockReadWriter := repository.NewMockReaderWriter(t)
+	mockReadWriter.EXPECT().ReadTree(mock.Anything, "test-panel").Return([]repository.FileTreeEntry(nil), wrappedErr)
+
+	connector := &filesConnector{access: mockAccess}
+	responder := &fakeResponder{}
+
+	connector.handleDirectoryListing(
+		context.Background(),
+		"test-repo",
+		resources.DualWriteOptions{Path: "", Ref: "test-panel"},
+		mockReadWriter,
+		responder,
+	)
+
+	require.Error(t, responder.err)
+	// The responder must receive a concrete *StatusError (an APIStatus), not a wrapped
+	// error — the apiserver's ErrorToAPIStatus maps via a non-unwrapping type assertion,
+	// so a wrapped error becomes 500 + UnhandledError. A deliberate type assertion (not
+	// errors.As) is what mirrors that behavior here; errors.As would unwrap and pass even
+	// for the wrapped error that causes the 500.
+	//nolint:errorlint // intentional: assert the concrete type the responder receives, matching the apiserver's non-unwrapping mapping
+	statusErr, ok := responder.err.(*apierrors.StatusError)
+	require.True(t, ok, "responder must receive a *StatusError, got %T", responder.err)
+	require.True(t, apierrors.IsNotFound(statusErr), "expected a 404 NotFound, got %#v", statusErr)
 }
 
 func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
@@ -424,6 +459,27 @@ func TestParseRequestOptionsPathValidation(t *testing.T) {
 	}
 }
 
+// TestParseRequestOptionsPathWithSpace verifies the /files endpoint accepts a
+// path whose folder segment contains a space (e.g. a folder titled "My Group").
+// The apiserver decodes %20 into r.URL.Path before we extract the file path, and
+// IsSafe explicitly allows spaces, so the path is served as-is.
+func TestParseRequestOptionsPathWithSpace(t *testing.T) {
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(&provisioningapi.Repository{
+		Spec: provisioningapi.RepositorySpec{
+			Title: "test-repo",
+		},
+	}).Maybe()
+
+	connector := &filesConnector{}
+	// The space is percent-encoded on the wire; the server decodes it into URL.Path.
+	r := httptest.NewRequest(http.MethodGet, "/test-repo/files/My%20Group/dashboard.json", nil)
+
+	opts, err := connector.parseRequestOptions(r, "test-repo", mockRepo)
+	require.NoError(t, err)
+	require.Equal(t, "My Group/dashboard.json", opts.Path)
+}
+
 func TestParseRequestOptionsRefValidation(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -581,66 +637,6 @@ func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 		require.Error(t, err)
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 	})
-}
-
-func TestHandleGetRawFile_MaxFileSize(t *testing.T) {
-	const path = "README.md"
-	repo := &provisioningapi.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec: provisioningapi.RepositorySpec{
-			Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
-		},
-	}
-
-	tests := []struct {
-		name        string
-		maxFileSize int64
-		dataSize    int
-		wantTooBig  bool
-	}{
-		{name: "under limit", maxFileSize: 1024, dataSize: 512},
-		{name: "exactly at limit", maxFileSize: 1024, dataSize: 1024},
-		{name: "over limit", maxFileSize: 1024, dataSize: 2048, wantTooBig: true},
-		{name: "zero disables limit", maxFileSize: 0, dataSize: 10 * 1024 * 1024},
-		{name: "negative disables limit", maxFileSize: -1, dataSize: 10 * 1024 * 1024},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			mockReadWriter := repository.NewMockReaderWriter(t)
-			mockAccess := auth.NewMockAccessChecker(t)
-			mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-
-			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
-			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), false)
-
-			mockReadWriter.EXPECT().Read(mock.Anything, path, "").Return(&repository.FileInfo{
-				Path: path,
-				Data: make([]byte, tc.dataSize),
-				Ref:  "main",
-			}, nil)
-
-			connector := &filesConnector{access: mockAccess, maxFileSize: tc.maxFileSize}
-			// handleRequest wraps readWriter with the size limiter at the
-			// connector boundary. Mirror that here so the unit test exercises
-			// the same enforcement point as production.
-			limited := repository.NewSizeLimitedReaderWriter(mockReadWriter, connector.maxFileSize)
-
-			_, err := connector.handleGetRawFile(
-				context.Background(),
-				resources.DualWriteOptions{Path: path},
-				limited,
-				authorizer,
-			)
-
-			if tc.wantTooBig {
-				require.Error(t, err)
-				assert.True(t, apierrors.IsRequestEntityTooLargeError(err), "expected 413 RequestEntityTooLarge, got %v", err)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
 }
 
 func TestIsRawFileIntegration(t *testing.T) {

@@ -1,48 +1,12 @@
 import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import tinycolor from 'tinycolor2';
 
-import { colorManipulator, type GrafanaTheme2, LogLevel } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
-
-export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
-  let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
-  switch (logLevel) {
-    case LogLevel.crit:
-    case LogLevel.critical:
-      logColor = '#705da0';
-      break;
-    case LogLevel.error:
-    case LogLevel.err:
-      logColor = '#e24d42';
-      break;
-    case LogLevel.warning:
-    case LogLevel.warn:
-      logColor = theme.colors.warning.main;
-      break;
-    case LogLevel.info:
-      logColor = '#7eb26d';
-      break;
-    case LogLevel.debug:
-      logColor = '#1f78c1';
-      break;
-    case LogLevel.trace:
-      logColor = '#6ed0e0';
-      break;
-  }
-
-  return {
-    logsRowLevelColor: css({
-      '&::after': {
-        backgroundColor: logColor,
-      },
-    }),
-  };
-};
 
 export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
-  const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
+  const contextOutlineColor = `rgb(from ${theme.components.dashboard.background} r g b / 0.7)`;
   return {
     logsRowLevel: css({
       label: 'logs-row__level',
@@ -92,7 +56,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       contain: 'strict',
     }),
     highlightBackground: css({
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: `rgb(from ${theme.colors.info.transparent} r g b / 0.25)`,
     }),
     logsRow: css({
       label: 'logs-row',
@@ -293,7 +257,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       top: 0,
       bottom: 'auto',
       background: theme.colors.background.primary,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       padding: theme.spacing(0.5, 1, 0.5, 1),
       zIndex: 100,
       gap: theme.spacing(0.5),
@@ -356,5 +320,3 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     }),
   };
 });
-
-export type LogRowStyles = ReturnType<typeof getLogRowStyles>;

@@ -70,7 +70,11 @@ func ProvideAppInstaller(
 	}
 	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
-	i, err := pluginsapp.NewPluginsAppInstaller(logger, authorizer, metaProviderManager)
+	i, err := pluginsapp.NewPluginsAppInstaller(pluginsapp.PluginAppInstallerConfig{
+		Logger:              logger,
+		Authorizer:          authorizer,
+		MetaProviderManager: metaProviderManager,
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -25,6 +25,11 @@ func TestParseGroupVersionSetting(t *testing.T) {
 
 	_, err = ParseGroupVersionSetting("/v1")
 	require.Error(t, err)
+
+	// The error names the offending setting when one is passed.
+	_, err = ParseGroupVersionSetting("bad", "max_allowed_api_version")
+	require.ErrorContains(t, err, "max_allowed_api_version")
+	require.NotContains(t, err.Error(), "preferred_api_version")
 }
 
 func TestApplyPreferredForGroup_ReordersVersions(t *testing.T) {

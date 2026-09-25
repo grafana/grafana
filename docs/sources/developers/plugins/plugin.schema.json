@@ -19,7 +19,7 @@
     },
     "info": {
       "type": "object",
-      "description": "Metadata for the plugin. Some fields are used on the plugins page in Grafana and others on grafana.com if the plugin is published.",
+      "description": "Metadata for the plugin. **Some fields are mandatory**, since they're used on the plugins page in Grafana and/or on grafana.com if the plugin is published. Read the [info section](#info) in detail.",
       "required": ["logos", "version", "updated", "keywords"],
       "additionalProperties": false,
       "properties": {
@@ -46,7 +46,7 @@
         },
         "build": {
           "type": "object",
-          "description": "Build information",
+          "description": "Build information.",
           "additionalProperties": false,
           "properties": {
             "time": {
@@ -93,7 +93,7 @@
         },
         "links": {
           "type": "array",
-          "description": "An array of link objects to be displayed on this plugin's project page in the form `{name: 'foo', url: 'http://example.com'}`",
+          "description": "An array of link objects to be displayed on this plugin's project page in the form `{name: 'foo', url: 'http://example.com'}`. **This field is mandatory**. If you leave this field blank, you'll be asked to submit your plugin again.",
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -133,7 +133,7 @@
         },
         "screenshots": {
           "type": "array",
-          "description": "An array of screenshot objects in the form `{name: 'bar', path: 'img/screenshot.png'}`",
+          "description": "An array of screenshot objects in the form `{name: 'bar', path: 'img/screenshot.png'}`.",
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -255,7 +255,7 @@
     },
     "enterpriseFeatures": {
       "type": "object",
-      "description": "Grafana Enterprise specific features",
+      "description": "Features specific to Grafana Enterprise.",
       "additionalProperties": true,
       "properties": {
         "healthDiagnosticsErrors": {
@@ -732,7 +732,7 @@
     },
     "languages": {
       "type": "array",
-      "description": "The list of languages supported by the plugin. Each entry should be a locale identifier in the format `language-COUNTRY` (for example `en-US`, `es-ES`, `de-DE`).",
+      "description": "The list of languages supported by the plugin. Each entry should be a locale identifier in the format `language-COUNTRY`, for example `en-US`, `es-ES`, or `de-DE`.",
       "items": {
         "type": "string"
       }

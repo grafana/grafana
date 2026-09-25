@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type TimeZoneInfo } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
+import { type TimeZoneDisplayInfo } from './timeZoneUtils';
+
 interface Props {
-  info?: TimeZoneInfo;
+  info?: Pick<TimeZoneDisplayInfo, 'abbreviation'>;
 }
 
 export const TimeZoneDescription = ({ info }: Props) => {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -13,19 +14,25 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/keepalive"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/leaderelection/kvlease"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -60,6 +67,8 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 			TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 			TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
 			ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
+			KeepaliveTime:    cfg.ZanzanaClient.KeepaliveTime,
+			CallTimeout:      cfg.ZanzanaClient.CallTimeout,
 		}
 		return NewRemoteZanzanaClient(zanzanaConfig, reg)
 
@@ -106,12 +115,34 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 		return nil, fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs, elector)
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs, elector,
+		newReconcilerState(kvstore.ProvideService(db)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
 	return srv, nil
+}
+
+// newReconcilerState points the MT reconciler at Grafana's kv_store table, so
+// the record of what it has reconciled outlives the process and survives a
+// rebuild of the Zanzana store.
+func newReconcilerState(kvStore kvstore.KVStore) reconciler.StateStore {
+	return kvstore.WithNamespace(kvStore, reconciler.StateKVOrgID, reconciler.StateKVNamespace)
+}
+
+// ProvideZanzanaReconcilerState supplies the standalone zanzana module with the
+// same reconciliation records the embedded server keeps.
+func ProvideZanzanaReconcilerState(kvStore kvstore.KVStore) reconciler.StateStore {
+	return newReconcilerState(kvStore)
+}
+
+// ProvideDeferredZanzanaReconcilerState leaves the state store to the OSS
+// module server, whose graph has no SQL store: it builds one from its own
+// injector when the zanzana module starts, so that targets which need no
+// database don't open one.
+func ProvideDeferredZanzanaReconcilerState() reconciler.StateStore {
+	return nil
 }
 
 // ProvideEmbeddedZanzanaElector builds the leader-election Elector for the
@@ -134,7 +165,7 @@ func ProvideEmbeddedZanzanaElector(cfg *setting.Cfg, features featuremgmt.Featur
 		return nil, fmt.Errorf("KV lease leader election requires unified storage KV backend")
 	}
 
-	le, err := kvlease.New(kvStore, cfg.ZanzanaReconciler.LeaderElection, log.New("zanzana.mt-reconciler"), reg)
+	le, err := kvlease.New(kvStore, cfg.ZanzanaReconciler.LeaderElection, "zanzana_reconciler", log.New("zanzana.mt-reconciler"), reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KV lease elector: %w", err)
 	}
@@ -237,6 +268,8 @@ func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.Featu
 		TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 		TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
 		ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
+		KeepaliveTime:    cfg.ZanzanaClient.KeepaliveTime,
+		CallTimeout:      cfg.ZanzanaClient.CallTimeout,
 	}
 
 	return NewRemoteZanzanaClient(zanzanaConfig, reg)
@@ -248,6 +281,36 @@ type ZanzanaClientConfig struct {
 	TokenExchangeURL string
 	TokenNamespace   string
 	ServerCertFile   string
+	KeepaliveTime    time.Duration
+	CallTimeout      time.Duration
+}
+
+// unaryDefaultTimeout applies a deadline to calls whose context carries no deadline, plus a
+// per-attempt cap so all retries fit within it. Callers that bring their own deadline sized
+// their budget deliberately and keep it untouched — one attempt may use it in full.
+func unaryDefaultTimeout(timeout time.Duration) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, timeout)
+			defer cancel()
+			// A quarter of the deadline per attempt leaves room for three attempts plus backoff.
+			opts = append(opts, grpc_retry.WithPerRetryTimeout(timeout/4))
+		}
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
+// unaryRetryInstrument counts retried attempts, identified by the retry attempt metadata
+// the retry interceptor sets on each re-invocation.
+func unaryRetryInstrument(metric *prometheus.CounterVec) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		attempt, err := strconv.Atoi(metautils.ExtractOutgoing(ctx).Get(grpc_retry.AttemptMetadataKey))
+		if err == nil && attempt > 0 {
+			metric.WithLabelValues(method).Inc()
+		}
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
 }
 
 // NewRemoteZanzanaClient creates a new Zanzana client that connects to remote Zanzana server.
@@ -275,15 +338,59 @@ func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) 
 		NativeHistogramMaxBucketNumber:  160,
 		NativeHistogramMinResetDuration: time.Hour,
 	}, []string{"operation", "status_code"})
+	authzRequestRetries := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		Name: "authz_zanzana_grpc_client_request_retries_total",
+		Help: "Total number of retries for requests to zanzana server.",
+	}, []string{"operation"})
 	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
+
+	// Retry transient failures so in-flight calls survive server pod restarts (e.g. GOAWAY on
+	// shutdown). Per-attempt timeouts are attached per call by unaryDefaultTimeout, which
+	// knows each call's actual deadline.
+	retryInterceptor := grpc_retry.UnaryClientInterceptor(
+		grpc_retry.WithMax(3),
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+	)
+
+	// Metrics/tracing outermost so a retried call records one duration entry, then the
+	// default deadline spanning all attempts, then retry, then the per-attempt retry counter.
+	unaryChain := unaryInterceptors
+	if cfg.CallTimeout > 0 {
+		// Background callers (reconcilers, hooks) may pass contexts without deadlines; a default
+		// deadline prevents calls from blocking indefinitely on an unresponsive connection.
+		unaryChain = append(unaryChain, unaryDefaultTimeout(cfg.CallTimeout))
+	}
+	unaryChain = append(unaryChain, retryInterceptor, unaryRetryInstrument(authzRequestRetries))
 
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCredentials),
 		grpc.WithPerRPCCredentials(
 			NewGRPCTokenAuth(AuthzServiceAudience, cfg.TokenNamespace, tokenClient),
 		),
-		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
+		grpc.WithChainUnaryInterceptor(unaryChain...),
 		grpc.WithChainStreamInterceptor(streamInterceptors...),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
+		// Fast connection backoff for quicker recovery from transient failures (e.g. during pod
+		// restarts). Default gRPC backoff waits up to 120s between reconnect attempts.
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoff.Config{
+				BaseDelay:  100 * time.Millisecond,
+				Multiplier: 1.6,
+				Jitter:     0.2,
+				MaxDelay:   10 * time.Second,
+			},
+			MinConnectTimeout: 5 * time.Second,
+		}),
+	}
+
+	// Keepalive pings detect silently dead connections (e.g. an unresponsive server pod)
+	// that would otherwise block calls until the peer is torn down externally.
+	if cfg.KeepaliveTime > 0 {
+		dialOptions = append(dialOptions, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:    cfg.KeepaliveTime,
+			Timeout: 10 * time.Second,
+		}))
 	}
 
 	conn, err := grpc.NewClient(cfg.Addr, dialOptions...)
@@ -306,7 +413,7 @@ type ZanzanaService interface {
 var _ ZanzanaService = (*Zanzana)(nil)
 
 // ProvideZanzanaService is used to register zanzana as a module so we can run it separately from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource) (*Zanzana, error) {
+func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource, reconcilerState reconciler.StateStore) (*Zanzana, error) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide config: %w", err)
@@ -324,12 +431,13 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 	}
 
 	s := &Zanzana{
-		cfg:           cfg,
-		logger:        log.New("zanzana.server"),
-		reg:           reg,
-		tracer:        tracer,
-		storeProvider: storeProvider,
-		reconcileCRDs: reconcileCRDs,
+		cfg:             cfg,
+		logger:          log.New("zanzana.server"),
+		reg:             reg,
+		tracer:          tracer,
+		storeProvider:   storeProvider,
+		reconcileCRDs:   reconcileCRDs,
+		reconcilerState: reconcilerState,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -340,14 +448,15 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 type Zanzana struct {
 	*services.BasicService
 
-	cfg           *setting.Cfg
-	zanzanaServer zanzana.ServerInternal
-	logger        log.Logger
-	tracer        tracing.Tracer
-	handle        grpcserver.Provider
-	reg           prometheus.Registerer
-	storeProvider zStore.StoreProvider
-	reconcileCRDs []schema.GroupVersionResource
+	cfg             *setting.Cfg
+	zanzanaServer   zanzana.ServerInternal
+	logger          log.Logger
+	tracer          tracing.Tracer
+	handle          grpcserver.Provider
+	reg             prometheus.Registerer
+	storeProvider   zStore.StoreProvider
+	reconcileCRDs   []schema.GroupVersionResource
+	reconcilerState reconciler.StateStore
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
@@ -361,7 +470,8 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return err
 	}
 
-	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs, elector)
+	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs, elector,
+		z.reconcilerState)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}

@@ -1,16 +1,17 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
-import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
+import { dateTime, usePluginContext, PluginLoadingStrategy, type PluginMeta } from '@grafana/data';
 import { config, type AppPluginConfig } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { deepFreeze } from './deepFreeze';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import {
-  deepFreeze,
   handleErrorsInFn,
   getReadOnlyProxy,
   createOpenModalFunction,
@@ -22,6 +23,7 @@ import {
   getMutationObserverProxy,
   writableProxy,
   isMutationObserverProxy,
+  isReadOnlyProxy,
 } from './utils';
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -389,6 +391,42 @@ describe('Plugin Extensions / Utils', () => {
       expect(source.isSame(proxy.a)).toBe(true);
       expect(source).not.toBe(proxy.a);
     });
+
+    describe('when React element props are enabled', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.pluginExtensionReactElementProps': true });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('keeps React elements in context by reference', () => {
+        const element = <div>hello</div>;
+        const proxy = getReadOnlyProxy({ element });
+
+        expect(proxy.element).toBe(element);
+        expect(isReadOnlyProxy(proxy.element)).toBe(false);
+      });
+    });
+
+    describe('when React element props are disabled', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.pluginExtensionReactElementProps': false });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('keeps React elements in context read-only', () => {
+        const element = <div>hello</div>;
+        const proxy = getReadOnlyProxy({ element });
+
+        expect(proxy.element).not.toBe(element);
+        expect(isReadOnlyProxy(proxy.element)).toBe(true);
+      });
+    });
   });
 
   describe('getMutationObserverProxy()', () => {
@@ -617,6 +655,52 @@ describe('Plugin Extensions / Utils', () => {
           stack: expect.any(String),
         }
       );
+    });
+
+    describe('when React element props are enabled', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.pluginExtensionReactElementProps': true });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('returns React elements untouched', () => {
+        const element = <div>hello</div>;
+
+        expect(writableProxy(element)).toBe(element);
+      });
+
+      it('keeps React elements inside props by reference', () => {
+        const child = <span>hello</span>;
+        const props = { children: child, extra: { label: 'a' } };
+
+        const copy = writableProxy(props);
+
+        expect(copy).not.toBe(props);
+        expect(copy.children).toBe(child);
+        expect(copy.extra).not.toBe(props.extra);
+        expect(copy.extra.label).toBe('a');
+      });
+    });
+
+    describe('when React element props are disabled', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.pluginExtensionReactElementProps': false });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('clones and proxies React elements', () => {
+        const element = <div>hello</div>;
+        const copy = writableProxy(element);
+
+        expect(copy).not.toBe(element);
+        expect(isMutationObserverProxy(copy)).toBe(true);
+      });
     });
   });
 
@@ -880,6 +964,25 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(await screen.findByText('Hello Grafana!')).toBeVisible();
       expect(screen.getByText('Version: 1.0.0')).toBeVisible();
+    });
+
+    it('should render synchronously (no loading frame) when the plugin meta is provided', () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const pluginMeta = { id: pluginId, info: { version: '2.0.0' } } as PluginMeta;
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+        pluginMeta,
+      });
+
+      render(<Component a={{ b: { c: 'Grafana' } }} />);
+
+      // No `await` — the wrapped component must be there in the very first commit,
+      // and it must use the provided meta (version 2.0.0) instead of fetching it (1.0.0)
+      expect(screen.getByText('Hello Grafana!')).toBeVisible();
+      expect(screen.getByText('Version: 2.0.0')).toBeVisible();
     });
 
     it('should not be possible to mutate the props in development mode, but it logs an error', async () => {

@@ -53,6 +53,14 @@ func New(cfg app.Config) (app.App, error) {
 				}] = annotationConfig.SearchHandler
 			}
 
+			if annotationConfig.GraphiteHandler != nil {
+				routes[simple.AppVersionRoute{
+					Namespaced: true,
+					Path:       "graphite",
+					Method:     "POST",
+				}] = annotationConfig.GraphiteHandler
+			}
+
 			if len(routes) > 0 {
 				simpleConfig.VersionedCustomRoutes = map[string]simple.AppVersionRouteHandlers{
 					"v0alpha1": routes,

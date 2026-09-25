@@ -23,19 +23,6 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
   return newPanel.id;
 }
 
-export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {
-  const newPanel: Partial<PanelModel> = {
-    type: widgetType,
-    title: t('dashboard.on-create-new-widget-panel.new-panel.title.widget-title', 'Widget title'),
-    gridPos: calculateNewPanelGridPos(dashboard),
-    datasource: null,
-    isNew: true,
-  };
-
-  dashboard.addPanel(newPanel);
-  return newPanel.id;
-}
-
 export function onCreateNewRow(dashboard: DashboardModel) {
   const newRow = {
     type: 'row',

@@ -11,6 +11,10 @@ const XSSWL = Object.keys(xss.whiteList).reduce<xss.IWhiteList>((acc, element) =
 // We don't allow the sandbox attribute, since it can be overridden, instead we add it below.
 XSSWL.iframe = ['src', 'width', 'height'];
 
+// Allow button elements with safe presentational attributes.
+// Event handlers (onclick etc.) are stripped by the xss library automatically.
+XSSWL.button = ['class', 'style', 'type', 'disabled'];
+
 const sanitizeTextPanelWhitelist = new xss.FilterXSS({
   // Add sandbox attribute to iframe tags if an attribute is allowed.
   onTagAttr(tag, name, value, isWhiteAttr) {

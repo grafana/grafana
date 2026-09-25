@@ -32,7 +32,7 @@ export interface ConvertFieldTypeOptions {
    */
   joinWith?: string;
   /**
-   * When converting a date to a string an option timezone.
+   * The timezone used when parsing or formatting a date.
    */
   timezone?: TimeZone;
   /**
@@ -103,7 +103,7 @@ export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, f
 export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): Field {
   switch (opts.destinationType) {
     case FieldType.time:
-      return ensureTimeField(field, opts.dateFormat);
+      return ensureTimeFieldWithTimeZone(field, opts.dateFormat, opts.timezone);
     case FieldType.number:
       return fieldToNumberField(field);
     case FieldType.string:
@@ -126,7 +126,11 @@ const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]
  * @internal
  */
 export function fieldToTimeField(field: Field, dateFormat?: string): Field {
-  let opts = dateFormat ? { format: dateFormat } : undefined;
+  return fieldToTimeFieldWithTimeZone(field, dateFormat);
+}
+
+function fieldToTimeFieldWithTimeZone(field: Field, dateFormat?: string, timeZone?: TimeZone): Field {
+  const opts = dateFormat || timeZone ? { format: dateFormat || undefined, timeZone } : undefined;
 
   const timeValues = field.values.slice();
 
@@ -265,6 +269,10 @@ function fieldToComplexField(field: Field): Field {
  * @public
  */
 export function ensureTimeField(field: Field, dateFormat?: string): Field {
+  return ensureTimeFieldWithTimeZone(field, dateFormat);
+}
+
+function ensureTimeFieldWithTimeZone(field: Field, dateFormat?: string, timeZone?: TimeZone): Field {
   const firstValueTypeIsNumber = typeof field.values[0] === 'number';
   // if the format is unix seconds, we don't want to skip formatting
   const isUnixSecondsFormat = dateFormat === 'X';
@@ -278,7 +286,7 @@ export function ensureTimeField(field: Field, dateFormat?: string): Field {
       type: FieldType.time, //assumes it should be time
     };
   }
-  return fieldToTimeField(field, dateFormat);
+  return fieldToTimeFieldWithTimeZone(field, dateFormat, timeZone);
 }
 
 function fieldToEnumField(field: Field, config?: EnumFieldConfig): Field {

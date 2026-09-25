@@ -27,7 +27,7 @@ describe('usePendingTransformation', () => {
   });
 
   describe('setPendingTransformation', () => {
-    it('should set pending transformation and deselect cards', () => {
+    it('should set pending transformation without touching card selection', () => {
       const { result, options } = setup();
 
       act(() => {
@@ -35,7 +35,9 @@ describe('usePendingTransformation', () => {
       });
 
       expect(result.current.pendingTransformation).toEqual({ insertAfter: 'reduce-0' });
-      expect(options.onCardSelectionChange).toHaveBeenCalledWith(null, null);
+      // Opening the picker must not deselect cards: doing so would wipe the bulk
+      // selection while leaving multi-select mode on.
+      expect(options.onCardSelectionChange).not.toHaveBeenCalled();
     });
 
     it('should not deselect cards when clearing pending transformation', () => {

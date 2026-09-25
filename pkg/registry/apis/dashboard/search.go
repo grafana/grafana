@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
@@ -23,7 +25,10 @@ import (
 	claims "github.com/grafana/authlib/types"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -32,6 +37,7 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
+	searchsort "github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -59,7 +65,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 	searchResults := defs[dashboardv0alpha1.SearchResults{}.OpenAPIModelName()].Schema
 	sortableFields := defs[dashboardv0alpha1.SortableFields{}.OpenAPIModelName()].Schema
 
-	return &builder.APIRoutes{
+	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "search",
@@ -329,6 +335,180 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 			},
 		},
 	}
+
+	// Semantic (vector) search is still experimental, so it's only registered —
+	// and therefore only present in the OpenAPI spec — when the feature toggle
+	// is enabled.
+	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagDashboardVectorSearch) { // nolint:staticcheck
+		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+			Path: "search/vector",
+			Spec: &spec3.PathProps{
+				Get: &spec3.Operation{
+					OperationProps: spec3.OperationProps{
+						Tags:        []string{"Search"},
+						OperationId: "vectorSearchDashboards",
+						Description: "Semantic (vector) search for dashboards, ranked by meaning rather than keyword match",
+						Parameters: []*spec3.Parameter{
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "namespace",
+									In:          "path",
+									Required:    true,
+									Example:     "default",
+									Description: "workspace",
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "query",
+									In:          "query",
+									Description: "natural language query string",
+									Required:    true,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "folder",
+									In:          "query",
+									Description: "restrict results to a folder (not recursive)",
+									Required:    false,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "limit",
+									In:          "query",
+									Description: "maximum number of results to return (default 50, max 200)",
+									Required:    false,
+									Schema:      spec.Int64Property(),
+								},
+							},
+						},
+						Responses: &spec3.Responses{
+							ResponsesProps: spec3.ResponsesProps{
+								StatusCodeResponses: map[int]*spec3.Response{
+									200: {
+										ResponseProps: spec3.ResponseProps{
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &searchResults,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Handler: s.DoVectorSearch,
+		})
+
+		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+			Path: "search/hybrid",
+			Spec: &spec3.PathProps{
+				Get: &spec3.Operation{
+					OperationProps: spec3.OperationProps{
+						Tags:        []string{"Search"},
+						OperationId: "hybridSearchDashboards",
+						Description: "Hybrid search for dashboards: lexical and semantic legs fused server-side. Top-k contract; scores are opaque (higher = better) and results are one row per dashboard",
+						Parameters: []*spec3.Parameter{
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "namespace",
+									In:          "path",
+									Required:    true,
+									Example:     "default",
+									Description: "workspace",
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "query",
+									In:          "query",
+									Description: "query string, used for both search legs",
+									Required:    true,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "semanticQuery",
+									In:          "query",
+									Description: "optional richer phrasing embedded for the semantic leg instead of query",
+									Required:    false,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "folder",
+									In:          "query",
+									Description: "restrict results to a folder (not recursive)",
+									Required:    false,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "limit",
+									In:          "query",
+									Description: "maximum number of results to return (default 50, max 200)",
+									Required:    false,
+									Schema:      spec.Int64Property(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "minRelevance",
+									In:          "query",
+									Description: "minimum reranker relevance a result must reach: lowest, low, medium, high, or highest. Empty keeps every result. Best-effort: ignored when the backend has no reranker configured. Cannot be combined with skipRerank",
+									Required:    false,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "skipRerank",
+									In:          "query",
+									Description: "skip the reranking stage and return RRF-fused ordering directly, trading result quality for latency",
+									Required:    false,
+									Schema:      spec.BooleanProperty(),
+								},
+							},
+						},
+						Responses: &spec3.Responses{
+							ResponsesProps: spec3.ResponsesProps{
+								StatusCodeResponses: map[int]*spec3.Response{
+									200: {
+										ResponseProps: spec3.ResponseProps{
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &searchResults,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Handler: s.DoHybridSearch,
+		})
+	}
+
+	return routes
 }
 
 func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
@@ -346,6 +526,11 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 }
 
 var errEmptyResults = fmt.Errorf("empty results")
+
+// errVectorSearchNotConfigured is returned (HTTP 501) when the vector search
+// endpoint is enabled by feature toggle but the unified storage backend has no
+// embedder/vector store configured.
+var errVectorSearchNotConfigured = errutil.NotImplemented("dashboard.vectorSearchNotConfigured")
 
 func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
 	switch p {
@@ -403,8 +588,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagDashboardSearchFieldValueResults) { // nolint:staticcheck
+		searchRequest.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
@@ -428,6 +617,216 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.write(w, parsedResults)
+}
+
+// DoVectorSearch serves the semantic (vector) search endpoint. It is registered
+// only when the dashboardVectorSearch feature toggle is enabled. Unlike lexical
+// search it does not fall back: if the vector backend isn't configured the
+// underlying call returns Unimplemented, which we surface as 501.
+func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
+	ctx, span := s.tracer.Start(r.Context(), "dashboard.vectorSearch")
+	defer span.End()
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	queryParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	key, err := asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	limit := 50
+	if queryParams.Has("limit") {
+		if l, parseErr := strconv.Atoi(queryParams.Get("limit")); parseErr == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	req := &resourcepb.VectorSearchRequest{
+		Key:   key,
+		Query: queryParams.Get("query"),
+		Limit: int64(limit),
+	}
+	if folder := queryParams.Get("folder"); folder != "" {
+		folder = foldermodel.ToLegacyFolderUID(folder)
+		req.Filters = append(req.Filters, &resourcepb.Requirement{
+			Key:      "folder",
+			Operator: string(selection.Equals),
+			Values:   []string{folder},
+		})
+	}
+
+	result, err := s.client.VectorSearch(ctx, req)
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
+			return
+		}
+		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		return
+	}
+	if result.GetError() != nil {
+		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
+		return
+	}
+
+	s.write(w, vectorSearchResultsToSearchResults(result))
+}
+
+// Map each matched panel to its dashboard. Dashboards are not deduplicated. Attaches embedded panel content to each result.
+//
+// Results are kept in backend order: Score is the cosine distance (lower = closer),
+// so the first hit is the best match.
+func vectorSearchResultsToSearchResults(result *resourcepb.VectorSearchResponse) *dashboardv0alpha1.SearchResults {
+	hits := make([]dashboardv0alpha1.DashboardHit, 0, len(result.GetResults()))
+	for _, r := range result.GetResults() {
+		field := &commonv0.Unstructured{}
+		field.Set("subresource", r.GetSubresource())
+		field.Set("score", r.GetScore())
+		field.Set("snippet", r.GetContent())
+
+		hits = append(hits, dashboardv0alpha1.DashboardHit{
+			Resource: dashboardv0alpha1.DASHBOARD_RESOURCE,
+			Name:     r.GetName(),
+			Title:    r.GetTitle(),
+			Folder:   r.GetFolder(),
+			Score:    r.GetScore(),
+			Field:    field,
+		})
+	}
+
+	out := &dashboardv0alpha1.SearchResults{Hits: hits, TotalHits: int64(len(hits))}
+	if len(hits) > 0 {
+		out.MaxScore = hits[0].Score
+	}
+	return out
+}
+
+// errHybridSearchNotConfigured is returned (HTTP 501) when the hybrid search
+// endpoint is enabled by feature toggle but the unified storage backend has no
+// embedder/vector store configured (or predates the HybridSearch RPC).
+var errHybridSearchNotConfigured = errutil.NotImplemented("dashboard.hybridSearchNotConfigured")
+
+// DoHybridSearch serves the hybrid (lexical + semantic, RRF-fused) search
+// endpoint. Registered only when the dashboardVectorSearch feature toggle is
+// enabled. Like DoVectorSearch it does not fall back on Unimplemented.
+func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
+	ctx, span := s.tracer.Start(r.Context(), "dashboard.hybridSearch")
+	defer span.End()
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	queryParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	key, err := asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	limit := 50
+	if queryParams.Has("limit") {
+		if l, parseErr := strconv.Atoi(queryParams.Get("limit")); parseErr == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	req := &resourcepb.HybridSearchRequest{
+		Key:           key,
+		Query:         queryParams.Get("query"),
+		SemanticQuery: queryParams.Get("semanticQuery"),
+		Limit:         int64(limit),
+		// Both validated server-side; an unknown min_relevance or the
+		// min_relevance+skip_rerank combination surfaces as InvalidArgument.
+		MinRelevance: queryParams.Get("minRelevance"),
+		SkipRerank:   queryParams.Get("skipRerank") == "true",
+	}
+	if folder := queryParams.Get("folder"); folder != "" {
+		folder = foldermodel.ToLegacyFolderUID(folder)
+		req.Filters = append(req.Filters, &resourcepb.Requirement{
+			Key:      "folder",
+			Operator: string(selection.In),
+			Values:   []string{folder},
+		})
+	}
+
+	result, err := s.client.HybridSearch(ctx, req)
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			errhttp.Write(ctx, errHybridSearchNotConfigured.Errorf("hybrid search is not configured on this instance"), w)
+			return
+		}
+		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		return
+	}
+
+	s.write(w, hybridSearchResultsToSearchResults(result))
+}
+
+// One hit per dashboard, in fused order. Score is opaque (higher = better),
+// unlike the vector endpoint's cosine distance. The best chunk's content is
+// surfaced as "snippet"/"subresource" for parity with the vector endpoint;
+// the full chunk list rides along under "chunks".
+func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchResponse) *dashboardv0alpha1.SearchResults {
+	results := response.GetResults()
+	hits := make([]dashboardv0alpha1.DashboardHit, 0, len(results))
+	for _, r := range results {
+		field := &commonv0.Unstructured{}
+		field.Set("score", r.GetScore())
+		resultChunks := r.GetChunks()
+		chunks := make([]any, 0, len(resultChunks))
+		for _, c := range resultChunks {
+			chunks = append(chunks, map[string]any{
+				"subresource": c.GetSubresource(),
+				"snippet":     c.GetContent(),
+			})
+		}
+		field.Set("chunks", chunks)
+		if len(resultChunks) > 0 {
+			field.Set("subresource", resultChunks[0].GetSubresource())
+			field.Set("snippet", resultChunks[0].GetContent())
+		}
+		if r.GetFolderTitle() != "" {
+			field.Set("folderTitle", r.GetFolderTitle())
+		}
+
+		hits = append(hits, dashboardv0alpha1.DashboardHit{
+			Resource: dashboardv0alpha1.DASHBOARD_RESOURCE,
+			Name:     r.GetKey().GetName(),
+			Title:    r.GetTitle(),
+			Folder:   r.GetFolder(),
+			Score:    r.GetScore(),
+			ManagedBy: dashboardv0alpha1.ManagedBy{
+				Kind: utils.ManagerKind(r.GetManagedByKind()),
+				ID:   r.GetManagedById(),
+			},
+			Field: field,
+		})
+	}
+
+	out := &dashboardv0alpha1.SearchResults{Hits: hits, TotalHits: int64(len(hits))}
+	if len(hits) > 0 {
+		out.MaxScore = hits[0].Score
+	}
+	return out
 }
 
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
@@ -497,18 +896,18 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		return nil, err
 	}
 
-	// Add sorting
+	// Add sorting. Index field names reach the backend unchanged, the other
+	// spellings clients still send are translated first (see parseSortParam).
 	if queryParams.Has("sort") {
-		for _, sort := range queryParams["sort"] {
-			if slices.Contains(builders.DashboardFields(), sort) {
-				sort = resource.SEARCH_FIELD_PREFIX + sort
+		for _, raw := range queryParams["sort"] {
+			field, desc := parseSortParam(raw)
+			if field == "" {
+				continue
 			}
-			s := &resourcepb.ResourceSearchRequest_Sort{Field: sort}
-			if strings.HasPrefix(sort, "-") {
-				s.Desc = true
-				s.Field = s.Field[1:]
-			}
-			searchRequest.SortBy = append(searchRequest.SortBy, s)
+			searchRequest.SortBy = append(searchRequest.SortBy, &resourcepb.ResourceSearchRequest_Sort{
+				Field: field,
+				Desc:  desc,
+			})
 		}
 	}
 
@@ -521,6 +920,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 		searchRequest.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
 		for _, v := range facets {
+			if v != resource.SEARCH_FIELD_TAGS {
+				return nil, apierrors.NewBadRequest(fmt.Sprintf("faceting is not supported for field %q", v))
+			}
 			searchRequest.Facet[v] = &resourcepb.ResourceSearchRequest_Facet{
 				Field: v,
 				Limit: int64(facetLimit),
@@ -538,7 +940,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	if v, ok := queryParams["panelType"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TYPES,
+			Key:      builders.DASHBOARD_PANEL_TYPES,
 			Operator: "=",
 			Values:   v,
 		})
@@ -546,7 +948,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	if v, ok := queryParams["dataSourceType"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_DS_TYPES,
+			Key:      builders.DASHBOARD_DS_TYPES,
 			Operator: "=",
 			Values:   v,
 		})
@@ -594,27 +996,15 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	if searchRequest.Query == "*" {
 		searchRequest.Query = "" // will match everything
 	} else if searchRequest.Query != "" {
-		// Explicitly configure the query for dashboard+folder matching.
+		// Name the title field once. The server picks which stored form of the
+		// title to query, and how to weight each one.
 		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
-			{
-				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
-				Type:  resourcepb.QueryFieldType_KEYWORD,
-				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 2, // standard analyzer (word-level matching)
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 1, // ngram analyzer (partial/prefix matching)
-			},
+			{Name: resource.SEARCH_FIELD_TITLE},
 		}
 
 		if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
 			searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
-				Name:  resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE, // fields.panel_title
-				Type:  resourcepb.QueryFieldType_TEXT,
+				Name:  builders.DASHBOARD_PANEL_TITLE,
 				Boost: 5,
 			})
 		}
@@ -637,12 +1027,16 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// hijacks the "name" query param to only search for shared dashboard UIDs
 		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
-		// root folder is empty in the search index; collapse the canonical
-		// "general" sentinel to "" before querying.
+		// Collapse the canonical "general" root sentinel to the legacy empty
+		// value before querying. A search backend on the same version expands
+		// "" back to both root sentinels, but the backend is deployed separately
+		// and may lag this API server; an un-upgraded backend only matches the
+		// "" that root-parented resources are still indexed with, so normalizing
+		// here keeps root search working across the rollout skew.
 		folder = foldermodel.ToLegacyFolderUID(folder)
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
-			Operator: "=",
+			Operator: string(selection.Equals),
 			Values:   []string{folder},
 		})
 	}
@@ -655,6 +1049,37 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		})
 	}
 	return searchRequest, nil
+}
+
+// uiSortAliases maps a sort value the Grafana UI has used to the field the index
+// actually holds it under. Grafana keeps the selected sort in browser storage
+// and in the page URL, so these names keep arriving from browsers and bookmarks
+// long after the UI itself stopped sending them.
+var uiSortAliases = map[string]string{
+	"name_sort": resource.SEARCH_FIELD_TITLE,
+}
+
+// parseSortParam turns one "sort" query parameter into the index field to sort on
+// and whether the order is descending.
+//
+// Three spellings reach this endpoint. An index field name, optionally prefixed
+// with "-" for descending, such as "-views_total". A name the UI used for a field
+// the index calls something else, such as "name_sort". And a sort name of the
+// older /api/search endpoint, which carries its direction as a suffix, such as
+// "viewed-recently-desc". The last two name no index field, so without
+// translation they sort on nothing and results come back in an arbitrary order.
+func parseSortParam(raw string) (string, bool) {
+	field, desc := strings.CutPrefix(raw, "-")
+	if field == "" {
+		return "", false
+	}
+	if alias, ok := uiSortAliases[field]; ok {
+		return alias, desc
+	}
+	if mapped, mappedDesc, err := searchsort.ParseSortName(field); err == nil && mapped != "" {
+		return mapped, mappedDesc
+	}
+	return field, desc
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
@@ -714,10 +1139,11 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Federated:  []*resourcepb.ResourceKey{folderKey},
-		Fields:     []string{"folder"},
-		Limit:      int64(len(dashboardUids)),
-		Permission: int64(requestedPermission),
+		Federated:    []*resourcepb.ResourceKey{folderKey},
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(dashboardUids)),
+		Permission:   int64(requestedPermission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{{
@@ -729,34 +1155,33 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(dashboardResult.GetError(), err); err != nil {
 		return sharedDashboards, err
 	}
 
-	folderUidIdx := -1
-	for i, col := range dashboardResult.Results.Columns {
-		if col.Name == "folder" {
-			folderUidIdx = i
-		}
+	dashboardResults, err := dashboardsearch.ParseResults(dashboardResult, 0)
+	if err != nil {
+		return sharedDashboards, err
 	}
-
-	if folderUidIdx == -1 {
+	if !searchResponseHasField(dashboardResult, resource.SEARCH_FIELD_FOLDER) {
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
-	// populate list of unique folder UIDs in the list of dashboards user has read permissions
+	// populate list of unique folder UIDs in the list of dashboards user has read permissions.
+	// Root-parented dashboards have no parent folder to check, and the apistore may report root
+	// as either the legacy "" or the canonical "general" sentinel, so skip both.
 	allFolders := make([]string, 0)
-	for _, dash := range dashboardResult.Results.Rows {
-		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(allFolders, folderUid) {
-			allFolders = append(allFolders, folderUid)
+	for _, dash := range dashboardResults.Hits {
+		if !foldermodel.IsRootFolderUID(dash.Folder) && !slices.Contains(allFolders, dash.Folder) {
+			allFolders = append(allFolders, dash.Folder)
 		}
 	}
 
 	folderSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields:     []string{"folder"},
-		Limit:      int64(len(allFolders)),
-		Permission: int64(requestedPermission),
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(allFolders)),
+		Permission:   int64(requestedPermission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: folderKey,
 			Fields: []*resourcepb.Requirement{{
@@ -768,22 +1193,36 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(foldersResult.GetError(), err); err != nil {
 		return sharedDashboards, err
 	}
 
-	foldersWithAccess := make([]string, 0, len(foldersResult.Results.Rows))
-	for _, fold := range foldersResult.Results.Rows {
-		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
+	folderResults, err := dashboardsearch.ParseResults(foldersResult, 0)
+	if err != nil {
+		return sharedDashboards, err
+	}
+	foldersWithAccess := make([]string, 0, len(folderResults.Hits))
+	for _, fold := range folderResults.Hits {
+		foldersWithAccess = append(foldersWithAccess, fold.Name)
 	}
 
-	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
-	for _, dash := range dashboardResult.Results.Rows {
-		dashboardUid := dash.Key.Name
-		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(foldersWithAccess, folderUid) {
-			sharedDashboards = append(sharedDashboards, dashboardUid)
+	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder.
+	// Root-parented dashboards (reported as "" or "general") have no parent folder, so skip both sentinels.
+	for _, dash := range dashboardResults.Hits {
+		if !foldermodel.IsRootFolderUID(dash.Folder) && !slices.Contains(foldersWithAccess, dash.Folder) {
+			sharedDashboards = append(sharedDashboards, dash.Name)
 		}
 	}
 	return sharedDashboards, nil
+}
+
+func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
+	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		return slices.ContainsFunc(response.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
+			return field.GetName() == name
+		})
+	}
+	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
+		return field.GetName() == name
+	})
 }

@@ -1,11 +1,11 @@
 import { isEmpty } from 'lodash';
 
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import {
   API_GROUP as DASHBOARD_API_GROUP,
   BASE_URL as v0alphaBaseURL,
   type ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import {
   arrayToDataFrame,
   type DataFrame,
@@ -18,8 +18,9 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
+import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
 import { isRootFolderUID } from '../constants';
@@ -33,7 +34,7 @@ import {
   type SearchQuery,
   type SearchResultMeta,
 } from './types';
-import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
+import { appendFrame, replaceCurrentFolderQuery } from './utils';
 
 const searchURI = `${v0alphaBaseURL}/search`;
 
@@ -41,6 +42,7 @@ export type SearchHit = {
   resource: string; // dashboards | folders
   name: string;
   title: string;
+  description?: string;
   folder: string;
   tags: string[];
 
@@ -84,25 +86,18 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    // get the starred dashboards
-    let starsIds: string[] | undefined = [];
-    if (config.featureToggles.starsFromAPIServer) {
-      const name = `user-${contextSrv.user.uid}`;
-      const result: { data: ListStarsApiResponse } = await dispatch(
-        generatedAPI.endpoints.listStars.initiate({
-          fieldSelector: `metadata.name=${name}`,
-        })
-      );
-      const items = result.data.items;
-      starsIds = items?.length
-        ? items[0].spec.resource.find(({ group, kind }) => group === DASHBOARD_API_GROUP && kind === 'Dashboard')
-            ?.names || []
-        : [];
-    } else {
-      starsIds = await dispatch(legacyUserAPI.endpoints.getStars.initiate()).unwrap();
+    // get the starred items — dashboards, plus folders when starred folders are enabled
+    const result: { data: ListStarsApiResponse } = await dispatch(
+      generatedAPI.endpoints.listStars.initiate({
+        fieldSelector: userStarsFieldSelector(),
+      })
+    );
+    let starsIds = findStarredNames(result.data, DASHBOARD_API_GROUP, 'Dashboard');
+    if (starredFoldersEnabled()) {
+      starsIds = [...new Set([...starsIds, ...findStarredNames(result.data, FOLDER_API_GROUP, 'Folder')])];
     }
 
-    if (starsIds?.length) {
+    if (starsIds.length) {
       return this.doSearchQuery({
         ...query,
         name: starsIds,
@@ -150,8 +145,9 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let rsp: SearchAPIResponse;
 
     if (query.deleted) {
-      const data = await deletedDashboardsCache.get();
-      const results = filterSearchResults(data, query);
+      // Both the filtering and the sorting happen behind this call: in the browser today,
+      // on the server once the trash endpoint is switched on.
+      const results = await deletedDashboardsCache.search(query);
       rsp = { hits: results, totalHits: results.length };
     } else {
       rsp = await this.fetchResponse(uri);
@@ -343,7 +339,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (query.sort) {
-      const sort = query.sort.replace('_sort', '').replace('name', 'title');
+      const sort = toSortParam(query.sort);
       uri += `&sort=${sort}`;
       const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
 
@@ -375,6 +371,30 @@ export class UnifiedSearcher implements GrafanaSearcher {
 }
 
 const pageSize = 50;
+
+// Sort values the search UI has used over time, mapped to the index field the backend
+// sorts on, with "-" for descending. "name_sort" is this searcher's own option value;
+// the rest are the sort names of the older /api/search endpoint. Both keep arriving
+// because the selected sort is kept in browser storage and in the page URL.
+const uiSortValues: Record<string, string> = {
+  name_sort: 'title',
+  '-name_sort': '-title',
+  'alpha-asc': 'title',
+  'alpha-desc': '-title',
+  'viewed-recently-asc': 'views_last_30_days',
+  'viewed-recently-desc': '-views_last_30_days',
+  'viewed-asc': 'views_total',
+  'viewed-desc': '-views_total',
+  'errors-recently-asc': 'errors_last_30_days',
+  'errors-recently-desc': '-errors_last_30_days',
+  'errors-asc': 'errors_total',
+  'errors-desc': '-errors_total',
+};
+
+/** Translates a sort value into the index field name the search API expects. */
+function toSortParam(sort: string): string {
+  return uiSortValues[sort] ?? sort;
+}
 
 // Enterprise only sort field values for dashboards
 const sortFields = [
@@ -431,6 +451,10 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations
       tags: (hit.tags || []).sort(),
+      // The backend omits description when empty. arrayToDataFrame derives the frame's
+      // fields from the first row's keys, so without an explicit value here the column
+      // would be missing whenever the first hit has no description.
+      description: hit.description ?? '',
       folder,
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
@@ -489,7 +513,7 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
   return rsp;
 }
 
-function toURL(resource: string, name: string, title: string): string {
+export function toURL(resource: string, name: string, title: string): string {
   if (resource === 'folders') {
     return `${config.appSubUrl}/dashboards/f/${name}`;
   }

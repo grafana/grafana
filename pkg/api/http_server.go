@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -42,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
@@ -51,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsapi"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -66,6 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/services/diagnostics"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -103,7 +107,6 @@ import (
 	secretsKV "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	spm "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/star"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -155,7 +158,6 @@ type HTTPServer struct {
 	pluginAssets                 *pluginassets.Service
 	pluginPreinstall             pluginchecker.Preinstall
 	SearchService                search.Service
-	ShortURLService              shorturls.Service
 	QueryHistoryService          queryhistory.Service
 	CorrelationsService          correlations.Service
 	Live                         *live.GrafanaLive
@@ -179,6 +181,7 @@ type HTTPServer struct {
 	pluginsUpdateChecker         *updatemanager.PluginsService
 	searchUsersService           searchusers.Service
 	queryDataService             query.Service
+	diagnosticsMetrics           *diagnostics.Metrics
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
 	NotificationService          notifications.Service
@@ -248,7 +251,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
+	cleanUpService *cleanup.CleanUpService, queryHistoryService queryhistory.Service,
 	correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	accessControl accesscontrol.AccessControl, dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
@@ -266,10 +269,11 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	preferenceK8sHandler *prefapi.K8sHandler,
+	annotationMigrationProxy *annotationsapi.MigrationProxy,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
-	apiKeyService apikey.Service, kvStore kvstore.KVStore,
+	apiKeyService apikey.Service, kvStore kvstore.KVStore, usageStats usagestats.Service,
 	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
@@ -285,6 +289,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	web.Env = cfg.Env
 	m := web.New()
 
+	var diagnosticsMetrics *diagnostics.Metrics
+	if cfg.StackID == "" {
+		diagnosticsMetrics = diagnostics.NewMetrics(sqlStore, usageStats, promRegister)
+	}
 	hs := &HTTPServer{
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
@@ -310,7 +318,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DataSourceCache:              dataSourceCache,
 		AuthTokenService:             userTokenService,
 		cleanUpService:               cleanUpService,
-		ShortURLService:              shortURLService,
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
 		Features:                     features, // a read only view of the managers state
@@ -340,6 +347,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		queryDataService:             queryDataService,
+		diagnosticsMetrics:           diagnosticsMetrics,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
 		NotificationService:          notificationService,
@@ -368,7 +376,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		TeamService:                  teamService,
 		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
-		annotationsRepo:              annotationRepo,
+		annotationsRepo:              annotationsapi.NewMigrationRepository(annotationRepo, annotationMigrationProxy, cfg, userService),
 		tagService:                   tagService,
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
@@ -494,17 +502,14 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
 
 	// handle http shutdown on server context done
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		<-ctx.Done()
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
-	}()
+	})
 
 	errg, _ := errgroup.WithContext(ctx)
 
@@ -691,7 +696,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, webassets.BuildDir, "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")

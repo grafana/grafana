@@ -52,6 +52,9 @@ export function ScopesDashboardsTree({
       {regularFolders.map(([subFolderId, subFolder]) => (
         <ScopesDashboardsTreeFolderItem
           key={subFolderId}
+          // Inherit parent subScope so dashboards under group folders still write nav_scope_path.
+          subScope={subScope}
+          subScopePath={subScopePath}
           folder={subFolder}
           folders={folder.folders}
           folderPath={[...folderPath, subFolderId]}

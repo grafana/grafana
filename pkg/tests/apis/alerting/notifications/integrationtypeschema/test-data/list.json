@@ -271,6 +271,22 @@
                   "is": ""
                 },
                 "validationRule": ""
+              },
+              {
+                "dependsOn": "",
+                "description": "Show the message inside the embed instead of above it. Note: mentions (@ or \u003c@ID\u003e) in the message will not trigger Discord notifications when this is enabled, as Discord only pings for mentions in the main message content.",
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Show Message in Embed",
+                "placeholder": "",
+                "propertyName": "use_embed_description",
+                "required": false,
+                "secure": false,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
               }
             ],
             "version": "v1"
@@ -1822,7 +1838,7 @@
                 "inputType": "",
                 "label": "Fields",
                 "placeholder": "",
-                "propertyName": "fields",
+                "propertyName": "custom_fields",
                 "required": false,
                 "secure": false,
                 "showWhen": {
@@ -4439,7 +4455,7 @@
                     "inputType": "text",
                     "label": "Source",
                     "placeholder": "",
-                    "propertyName": "source",
+                    "propertyName": "src",
                     "required": false,
                     "secure": false,
                     "showWhen": {
@@ -5674,6 +5690,22 @@
                     "value": "none"
                   }
                 ],
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
+                "description": "Upload an image with the notification.",
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Upload image",
+                "placeholder": "",
+                "propertyName": "uploadImage",
+                "required": false,
+                "secure": false,
                 "showWhen": {
                   "field": "",
                   "is": ""
@@ -10489,9 +10521,9 @@
                 "description": "Sends the message silently. Users will receive a notification with no sound.",
                 "element": "checkbox",
                 "inputType": "",
-                "label": "Disable Notification",
+                "label": "Disable Notifications",
                 "placeholder": "",
-                "propertyName": "disable_notification",
+                "propertyName": "disable_notifications",
                 "required": false,
                 "secure": false,
                 "showWhen": {
@@ -10545,7 +10577,7 @@
                 "inputType": "text",
                 "label": "Chat ID",
                 "placeholder": "",
-                "propertyName": "chat_id",
+                "propertyName": "chat",
                 "required": true,
                 "secure": false,
                 "showWhen": {
@@ -14950,6 +14982,23 @@
                 "label": "To User",
                 "placeholder": "@all",
                 "propertyName": "touser",
+                "required": false,
+                "secure": false,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
+                "description": "Override the default WeCom API endpoint",
+                "element": "input",
+                "inputType": "text",
+                "label": "Endpoint URL",
+                "placeholder": "https://qyapi.weixin.qq.com",
+                "propertyName": "endpointUrl",
+                "protected": true,
                 "required": false,
                 "secure": false,
                 "showWhen": {

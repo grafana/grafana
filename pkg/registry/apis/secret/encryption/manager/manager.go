@@ -172,8 +172,10 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.
 
 	// We want only one request fetching current data key at time to
 	// avoid the creation of multiple ones in case there's no one existing.
+	span.AddEvent("will acquire mutex")
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
+	span.AddEvent("mutex acquired")
 
 	// We try to fetch the data key, either from cache or database
 	id, dataKey, err := s.dataKeyByLabel(ctx, namespace.String(), label, skipCache)

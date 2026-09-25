@@ -72,6 +72,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
 
   const config: FieldConfig<GraphFieldConfig> = {
     color: field.config.color,
+    thresholds: field.config.thresholds,
     custom: {
       ...defaultSparklineCellConfig,
       ...cellOptions,

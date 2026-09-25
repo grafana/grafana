@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+const collator = new Intl.Collator();
+
 export function localeStringComparator(itemA: string, itemB: string) {
-  return itemA.localeCompare(itemB);
+  return collator.compare(itemA, itemB);
 }
 
 export function classNameForSortDir(dir: number) {

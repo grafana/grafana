@@ -94,7 +94,7 @@ export const panelWithQueriesOnly = {
   type: 'timeseries',
 };
 
-export const repeatedPanel = {
+const repeatedPanel = {
   datasource: {
     type: 'grafana-testdata-datasource',
     uid: 'gdev-testdata',
@@ -263,7 +263,7 @@ export const panelWithTransformations = {
   type: 'table',
 };
 
-export const panelWithDashboardQuery = {
+const panelWithDashboardQuery = {
   datasource: {
     type: 'datasource',
     uid: '-- Dashboard --',
@@ -355,7 +355,7 @@ export const panelWithDashboardQuery = {
   type: 'timeseries',
 };
 
-export const panelWithDashboardQueryAndTransformations = {
+const panelWithDashboardQueryAndTransformations = {
   datasource: {
     type: 'datasource',
     uid: '-- Dashboard --',
@@ -427,7 +427,7 @@ export const panelWithDashboardQueryAndTransformations = {
   type: 'table',
 };
 
-export const panelWithNoDataSource = {
+const panelWithNoDataSource = {
   fieldConfig: {
     defaults: {
       color: {
@@ -510,7 +510,7 @@ export const panelWithNoDataSource = {
   type: 'timeseries',
 };
 
-export const panelWithDataSourceNotFound = {
+const panelWithDataSourceNotFound = {
   datasource: {
     type: 'datasource',
     uid: 'abc',
@@ -597,7 +597,7 @@ export const panelWithDataSourceNotFound = {
   type: 'timeseries',
 };
 
-export const panelWithQueriesAndMixedDatasource = {
+const panelWithQueriesAndMixedDatasource = {
   datasource: {
     type: 'datasource',
     uid: '-- Mixed --',

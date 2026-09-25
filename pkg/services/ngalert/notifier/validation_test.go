@@ -3,7 +3,6 @@ package notifier
 import (
 	"testing"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -18,10 +17,10 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: "default"},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{Receiver: definition.Receiver{Name: "default"}},
-				},
 			},
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+				{Name: "default"},
+			}),
 		}
 	}
 
@@ -40,7 +39,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "managed route is available",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{"custom-route": nil}
+				cfg.ManagedRoutes = map[string]*v1.Route{"custom-route": nil}
 			},
 			policy:      "custom-route",
 			expectError: false,
@@ -48,7 +47,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "second managed route is available",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{
+				cfg.ManagedRoutes = map[string]*v1.Route{
 					"route-a": nil,
 					"route-b": nil,
 				}
@@ -93,7 +92,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "managed route available alongside extra config",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{"managed-1": nil}
+				cfg.ManagedRoutes = map[string]*v1.Route{"managed-1": nil}
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}
@@ -104,7 +103,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "extra config route available alongside managed routes",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{"managed-1": nil}
+				cfg.ManagedRoutes = map[string]*v1.Route{"managed-1": nil}
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}
@@ -115,7 +114,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "unknown route fails even when other sources exist",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{"managed-1": nil}
+				cfg.ManagedRoutes = map[string]*v1.Route{"managed-1": nil}
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}

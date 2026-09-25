@@ -2,7 +2,7 @@
 /* eslint no-restricted-syntax: ["error", "SpreadElement"] */
 
 import { debounce } from 'lodash';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -34,7 +34,18 @@ export function useOptions<T extends string | number>(
 ) {
   const isAsync = typeof rawOptions === 'function';
 
-  const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
+  // Read `options` through a ref so the debounced loader keeps a stable identity even when
+  // consumers pass a new function on every render.
+  // TODO: switch to useEffectEvent once React stabilises it.
+  const rawOptionsRef = useRef(rawOptions);
+  rawOptionsRef.current = rawOptions;
+
+  const stableRawOptions = useCallback((searchTerm: string) => {
+    const currentRawOptions = rawOptionsRef.current;
+    return typeof currentRawOptions === 'function' ? currentRawOptions(searchTerm) : asyncNoop();
+  }, []);
+
+  const loadOptions = useLatestAsyncCall(stableRawOptions);
 
   const debouncedLoadOptions = useMemo(
     () =>
@@ -58,6 +69,10 @@ export function useOptions<T extends string | number>(
       }, DEBOUNCE_TIME_MS),
     [loadOptions]
   );
+
+  // Runs only on unmount (debouncedLoadOptions is stable): cancels a pending debounce timer
+  // so it can't fire after unmount. In-flight requests are handled by useLatestAsyncCall.
+  useEffect(() => () => debouncedLoadOptions.cancel(), [debouncedLoadOptions]);
 
   const [asyncOptions, setAsyncOptions] = useState<Array<ComboboxOption<T>>>([]);
   const [asyncLoading, setAsyncLoading] = useState(false);

@@ -28,7 +28,7 @@ export function mockPromRulesApiResponse(server: SetupServer, result: PromRulesR
 export const grafanaRulerGroupName = 'grafana-group-1';
 export const grafanaRulerGroupName2 = 'grafana-group-2';
 export const grafanaRulerNamespace = { name: 'test-folder-1', uid: 'uuid020c61ef' };
-export const grafanaRulerNamespace2 = { name: 'test-folder-2', uid: '6abdb25bc1eb' };
+const grafanaRulerNamespace2 = { name: 'test-folder-2', uid: '6abdb25bc1eb' };
 
 export const grafanaRulerRule: RulerGrafanaRuleDTO = {
   for: '5m',
@@ -125,7 +125,7 @@ interface GrafanaNamespace {
   uid: string;
 }
 
-export class RulerTestDb {
+class RulerTestDb {
   private namespaces = new Map<string, string>(); // UID -> Name
   private groupsByNamespaceUid = new Map<string, RulerRuleGroupDTO[]>();
 

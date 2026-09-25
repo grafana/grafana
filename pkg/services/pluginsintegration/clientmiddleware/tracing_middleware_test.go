@@ -44,6 +44,15 @@ func TestTracingMiddleware(t *testing.T) {
 			expSpanName: "PluginClient.queryData",
 		},
 		{
+			name: "QueryChunkedData",
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				return cdt.MiddlewareHandler.QueryChunkedData(context.Background(), &backend.QueryChunkedDataRequest{
+					PluginContext: pluginCtx,
+				}, nopChunkedWriter{})
+			},
+			expSpanName: "PluginClient.queryChunkedData",
+		},
+		{
 			name: "CallResource",
 			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
 				return cdt.MiddlewareHandler.CallResource(context.Background(), &backend.CallResourceRequest{

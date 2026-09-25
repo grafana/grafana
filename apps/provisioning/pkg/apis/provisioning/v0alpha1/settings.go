@@ -21,6 +21,9 @@ type RepositoryViewList struct {
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 
+	// AvailableConnectionTypes is the list of connection types supported in this instance
+	AvailableConnectionTypes []ConnectionType `json:"availableConnectionTypes,omitempty"`
+
 	// AvailableResources is the list of resource types declared for provisioning in this
 	// instance, including disabled ones (see SupportedResource.Disabled).
 	AvailableResources []SupportedResource `json:"availableResources,omitempty"`
@@ -79,6 +82,14 @@ type RepositoryView struct {
 
 	// Commit message options. Mirrors the same-named field on the repository spec.
 	Commit *CommitOptions `json:"commit,omitempty"`
+
+	// Branch naming options. Mirrors spec.branch. Exposed under `branchOptions`
+	// rather than `branch` because the view already uses `branch` for the git
+	// target branch name.
+	BranchOptions *BranchOptions `json:"branchOptions,omitempty"`
+
+	// Pull request options. Mirrors the same-named field on the repository spec.
+	PullRequest *PullRequestOptions `json:"pullRequest,omitempty"`
 }
 
 func (RepositoryView) OpenAPIModelName() string {

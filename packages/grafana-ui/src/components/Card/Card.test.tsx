@@ -110,8 +110,8 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('radio')).toBeInTheDocument();
-      expect(screen.getByRole('radio')).toBeChecked();
+      expect(screen.getByRole('radio', { name: 'My Option' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'My Option' })).toBeChecked();
 
       rerender(
         <Card noMargin isSelected={false}>
@@ -119,8 +119,8 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('radio')).toBeInTheDocument();
-      expect(screen.getByRole('radio')).not.toBeChecked();
+      expect(screen.getByRole('radio', { name: 'My Option' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'My Option' })).not.toBeChecked();
 
       rerender(
         <Card noMargin>
@@ -129,6 +129,12 @@ describe('Card', () => {
       );
 
       expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    });
+
+    it('Should fall back to a generic name for selectable cards without heading content', () => {
+      render(<Card noMargin isSelected={false} />);
+
+      expect(screen.getByRole('radio', { name: 'option' })).toBeInTheDocument();
     });
   });
 });

@@ -1,4 +1,5 @@
 import { type ComponentType, type ReactNode, type JSX } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 

@@ -24,7 +24,11 @@ export function getFieldDisplayValuesProxy(options: {
   return new Proxy(
     {},
     {
-      get: (obj, key): DisplayValue | undefined => {
+      get: (obj, key): DisplayValue | undefined | (() => string) => {
+        if (key === Symbol.toPrimitive) {
+          return () => '';
+        }
+
         // 1. Match the name
         let field = options.frame.fields.find((f) => key === f.name);
         if (!field) {

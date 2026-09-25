@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
@@ -52,70 +52,11 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
   const navigate = useNavigate();
   const [error, setError] = useState<string | undefined>();
 
-  // Per-save context for the request handler effect.
-  // State values are useProvisionedRequestHandler effect deps; ref values are
-  // only read inside handler callbacks at invocation time.
-  const [saveState, setSaveState] = useState<{
-    workflow?: string;
-    folderUID?: string;
-    selectedBranch?: string;
-  }>({});
-  const saveRef = useRef<{ title: string; activeRepo: RepositoryView | undefined }>({
-    title: '',
-    activeRepo: undefined,
-  });
-
   const [createFile, request] = useCreateOrUpdateRepositoryFile();
 
-  useProvisionedRequestHandler({
-    ...saveState,
-    request,
+  const { handleSuccess } = useProvisionedRequestHandler({
     resourceType: 'dashboard',
     repository,
-    handlers: {
-      onWriteSuccess: (upsert) => {
-        // Sync-disabled repositories can return success without creating a
-        // Grafana k8s resource. Fall back to the folder view when we don't
-        // have a dashboard uid to navigate to.
-        const uid = upsert?.metadata?.name;
-        if (!uid) {
-          navigate(
-            locationUtil.assureBaseUrl(saveState.folderUID ? `/dashboards/f/${saveState.folderUID}/` : '/dashboards')
-          );
-          return;
-        }
-        const url = locationUtil.assureBaseUrl(
-          getDashboardUrl({
-            uid,
-            slug: kbn.slugifyForUrl(saveRef.current.title),
-            currentQueryParams: window.location.search,
-          })
-        );
-        navigate(url);
-      },
-      onBranchSuccess: ({ ref, path }, info) => {
-        const repo = saveRef.current.activeRepo;
-        if (!repo) {
-          return;
-        }
-        const url = buildResourceBranchRedirectUrl({
-          baseUrl: `${PROVISIONING_PREVIEW_URL}/${repo.name}/preview/${path}`,
-          paramName: 'ref',
-          paramValue: ref,
-          repoType: info.repoType,
-        });
-        navigate(url);
-      },
-      onError: (err) => {
-        setError(
-          getProvisionedRequestError(
-            err,
-            'dashboard',
-            t('provisioning.import.error', 'An error occurred while importing the dashboard.')
-          )
-        );
-      },
-    },
   });
 
   const save = useCallback(
@@ -123,9 +64,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
       if (!repository) {
         return;
       }
-      saveRef.current = { title, activeRepo: repository };
       setError(undefined);
-      setSaveState({ workflow: form.workflow, folderUID: targetFolderUid, selectedBranch: form.ref });
 
       // Ensure version negotiation has run; getV1/getV2 fall back to beta otherwise.
       const versions = await dashboardAPIVersionResolver.resolve();
@@ -141,22 +80,68 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         spec,
       };
 
-      createFile({
-        name: repository.name,
-        path: form.path,
-        ref: form.ref === repository.branch ? undefined : form.ref,
-        message: getSingleResourceCommitMessage({
-          comment: form.comment,
-          repository,
-          action: 'create',
-          resourceKind: 'dashboard',
-          resourceID: uid ?? '',
-          title,
-        }),
-        body,
-      });
+      try {
+        const data = await createFile({
+          name: repository.name,
+          path: form.path,
+          ref: form.ref === repository.branch ? undefined : form.ref,
+          message: getSingleResourceCommitMessage({
+            comment: form.comment,
+            repository,
+            action: 'create',
+            resourceKind: 'dashboard',
+            resourceID: uid ?? '',
+            title,
+          }),
+          body,
+        }).unwrap();
+
+        handleSuccess(data, {
+          workflow: form.workflow,
+          folderUID: targetFolderUid,
+          selectedBranch: form.ref,
+          handlers: {
+            onWriteSuccess: (upsert) => {
+              // Sync-disabled repositories can return success without creating a
+              // Grafana k8s resource. Fall back to the folder view when we don't
+              // have a dashboard uid to navigate to.
+              const dashboardUid = upsert?.metadata?.name;
+              if (!dashboardUid) {
+                navigate(
+                  locationUtil.assureBaseUrl(targetFolderUid ? `/dashboards/f/${targetFolderUid}/` : '/dashboards')
+                );
+                return;
+              }
+              const url = locationUtil.assureBaseUrl(
+                getDashboardUrl({
+                  uid: dashboardUid,
+                  slug: kbn.slugifyForUrl(title),
+                  currentQueryParams: window.location.search,
+                })
+              );
+              navigate(url);
+            },
+            onBranchSuccess: ({ ref, path }, info) => {
+              const url = buildResourceBranchRedirectUrl({
+                baseUrl: `${PROVISIONING_PREVIEW_URL}/${repository.name}/preview/${path}`,
+                paramName: 'ref',
+                paramValue: ref,
+                repoType: info.repoType,
+              });
+              navigate(url);
+            },
+          },
+        });
+      } catch (err) {
+        setError(
+          getProvisionedRequestError(
+            err,
+            t('provisioning.import.error', 'An error occurred while importing the dashboard.')
+          )
+        );
+      }
     },
-    [repository, createFile]
+    [repository, createFile, handleSuccess, navigate]
   );
 
   return { save, isLoading: request.isLoading ?? false, error };

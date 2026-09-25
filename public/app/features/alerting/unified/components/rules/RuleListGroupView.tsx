@@ -15,14 +15,16 @@ interface Props {
   expandAll: boolean;
 }
 
+const collator = new Intl.Collator();
+
 export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
   const [grafanaNamespaces, cloudNamespaces] = useMemo(() => {
     const sorted = namespaces
       .map((namespace) => ({
         ...namespace,
-        groups: namespace.groups.sort((a, b) => a.name.localeCompare(b.name)),
+        groups: namespace.groups.sort((a, b) => collator.compare(a.name, b.name)),
       }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => collator.compare(a.name, b.name));
     return [
       sorted.filter((ns) => isGrafanaRulesSource(ns.rulesSource)),
       sorted.filter((ns) => isCloudRulesSource(ns.rulesSource)),

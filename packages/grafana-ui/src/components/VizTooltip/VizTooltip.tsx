@@ -57,7 +57,7 @@ interface VizTooltipProps {
 }
 
 /**
- * @public
+ * @alpha
  */
 export const VizTooltip = ({ content, position, offset }: VizTooltipProps) => {
   const styles = useStyles2(getStyles);

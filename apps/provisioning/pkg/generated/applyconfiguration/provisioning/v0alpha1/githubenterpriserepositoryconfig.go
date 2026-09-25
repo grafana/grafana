@@ -16,8 +16,6 @@ type GitHubEnterpriseRepositoryConfigApplyConfiguration struct {
 	URL *string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch *string `json:"branch,omitempty"`
-	// Whether we should show dashboard previews for pull requests.
-	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
 	// Path is the subdirectory for the Grafana data inside the repository.
 	Path *string `json:"path,omitempty"`
 }
@@ -49,14 +47,6 @@ func (b *GitHubEnterpriseRepositoryConfigApplyConfiguration) WithURL(value strin
 // If called multiple times, the Branch field is set to the value of the last call.
 func (b *GitHubEnterpriseRepositoryConfigApplyConfiguration) WithBranch(value string) *GitHubEnterpriseRepositoryConfigApplyConfiguration {
 	b.Branch = &value
-	return b
-}
-
-// WithGenerateDashboardPreviews sets the GenerateDashboardPreviews field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the GenerateDashboardPreviews field is set to the value of the last call.
-func (b *GitHubEnterpriseRepositoryConfigApplyConfiguration) WithGenerateDashboardPreviews(value bool) *GitHubEnterpriseRepositoryConfigApplyConfiguration {
-	b.GenerateDashboardPreviews = &value
 	return b
 }
 

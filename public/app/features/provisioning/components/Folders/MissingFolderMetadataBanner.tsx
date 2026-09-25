@@ -78,7 +78,7 @@ interface FolderPermissionsProps {
 export function FolderPermissions({ folderUID, canSetPermissions, isProvisionedFolder }: FolderPermissionsProps) {
   const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
-  if (!isProvisionedFolder || !config.featureToggles.provisioning || !provisioningFolderMetadataEnabled) {
+  if (!isProvisionedFolder || !config.provisioningEnabled || !provisioningFolderMetadataEnabled) {
     return <Permissions resource="folders" resourceId={folderUID} canSetPermissions={canSetPermissions} />;
   }
 

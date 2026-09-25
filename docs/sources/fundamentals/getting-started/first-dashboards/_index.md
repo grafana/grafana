@@ -68,10 +68,10 @@ To create your first dashboard using the built-in `-- Grafana --` data source:
 1. Click **Refresh** to query the data source.
 1. When you've finished editing your panel, click **Save**.
 
-   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save** when you're ready.
+   Alternatively, click **Back** if you want to see your changes applied to the dashboard first. Then click **Save** when you're ready.
 
 1. Add a descriptive title for the dashboard, or have Grafana create one using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards), and then click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 Congratulations, you have created your first dashboard and it's displaying results.
 
@@ -93,3 +93,22 @@ The following topics are of interest to Grafana server admin users:
 - [User permissions and roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/)
 - [Provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/)
 - [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/cli/)
+
+## Frequently asked questions
+
+{{< qa-list >}}
+{{< qa question="What do I need before I create a Grafana dashboard?" >}}
+Before creating a dashboard, you'll need access to a Grafana instance and, in most cases, a data source that contains the data you want to visualize.
+If you're following this getting started guide, you can use the built-in Grafana data source to learn the dashboard creation workflow before connecting your own data.
+{{< /qa >}}
+{{< qa question="Do I need to configure a data source before creating a dashboard?" >}}
+Not necessarily.
+If you're following this getting started guide, you can use the built-in Grafana data source to create your first dashboard without connecting an external data source.
+For production dashboards, you'll typically connect a supported data source such as Prometheus, Loki, MySQL, or another supported integration.
+{{< /qa >}}
+{{< qa question="Can I edit my dashboard after I save it?" >}}
+Yes.
+Dashboards are designed to be updated over time.
+After saving a dashboard, you can reopen it in edit mode to add or remove panels, change queries, switch visualization types, update panel settings, or rename the dashboard whenever needed.
+{{< /qa >}}
+{{< /qa-list >}}

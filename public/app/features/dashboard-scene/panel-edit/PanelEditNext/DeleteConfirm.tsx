@@ -69,7 +69,8 @@ export function DeleteConfirm({ confirmStyle, description, onConfirm, onCancel }
           size="sm"
           fill="text"
           variant="destructive"
-          icon="check"
+          icon="trash-alt"
+          className={styles.iconButton}
           aria-label={confirmDeleteAria}
           aria-description={description}
           onClick={handleConfirmClick}
@@ -85,6 +86,7 @@ export function DeleteConfirm({ confirmStyle, description, onConfirm, onCancel }
         fill="text"
         variant="secondary"
         icon="times"
+        className={confirmStyle === ConfirmationStyle.compact ? styles.iconButton : undefined}
         aria-label={cancelDeleteAria}
         onClick={handleCancelClick}
         tooltip={cancelDeleteAria}
@@ -108,5 +110,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     [theme.transitions.handleMotion('no-preference')]: {
       animation: `${slideIn} ${theme.transitions.duration.shorter}ms ${theme.transitions.easing.easeOut}`,
     },
+  }),
+  iconButton: css({
+    minWidth: theme.spacing(3.5),
+    justifyContent: 'center',
   }),
 });

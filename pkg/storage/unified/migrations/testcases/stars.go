@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
@@ -79,12 +82,18 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 		})
 		require.NoError(t, err)
 
-		res, err := stars.GetByUser(context.Background(), &star.GetUserStarsQuery{
-			UserID: userID,
-		})
-		require.NoError(t, err)
-		require.NotNil(t, res)
-		require.Len(t, res.UserStars, 2)
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			res, err := stars.GetByUser(context.Background(), &star.GetUserStarsQuery{
+				UserID: userID,
+			})
+			if !assert.NoError(c, err) {
+				return
+			}
+			if !assert.NotNil(c, res) {
+				return
+			}
+			assert.Len(c, res.UserStars, 2)
+		}, 5*time.Second, 100*time.Millisecond)
 	}
 
 	return true // will exist in mode0
@@ -116,12 +125,18 @@ func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, should
 			GVR:       collectionsV1.GroupVersion.WithResource("stars"),
 		})
 
-		found, err := client.Resource.Get(ctx, "user-"+id, v1.GetOptions{})
 		if !shouldExist {
+			_, err := client.Resource.Get(ctx, "user-"+id, v1.GetOptions{})
 			require.Error(t, err, "should not get star for user %s", user)
 			continue
 		}
-		require.NoError(t, err)
+
+		var found *unstructured.Unstructured
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			var err error
+			found, err = client.Resource.Get(ctx, "user-"+id, v1.GetOptions{})
+			assert.NoError(c, err)
+		}, 5*time.Second, 100*time.Millisecond)
 
 		tmp, err := found.MarshalJSON()
 		require.NoError(t, err)

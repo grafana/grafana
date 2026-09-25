@@ -1,16 +1,15 @@
 import { type AnyAction, createAction } from '@reduxjs/toolkit';
-import { cloneDeep } from 'lodash';
 
 import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
-import config from 'app/core/config';
 
+import { getInitialNavTree } from '../navtree/buildStaticNavTree';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 export const HOME_NAV_ID = 'home';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = cloneDeep(config.bootData.navTree);
+  const rootNodes = getInitialNavTree();
   const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
   const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
 
@@ -67,15 +66,19 @@ function buildWarningNav(text: string, subTitle?: string): NavModel {
   };
 }
 
-export const initialState: NavIndex = {};
+const initialState: NavIndex = {};
 
 export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavIndex');
+// Rebuilds the index from the current permissions. The frontend service loads
+// permissions asynchronously after the store is configured, so the index built
+// at store-init sees an empty permission set and must be rebuilt once they land.
+export const navIndexInitialized = createAction('navIndex/navIndexInitialized');
 // Since the configuration subtitle includes the organization name, we include this action to update the org name if it changes.
 export const updateConfigurationSubtitle = createAction<string>('navIndex/updateConfigurationSubtitle');
 
-export const removeNavIndex = createAction<string>('navIndex/removeNavIndex');
+const removeNavIndex = createAction<string>('navIndex/removeNavIndex');
 
-export const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
+const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
   ...item,
   parentItem: {
     ...item.parentItem,
@@ -90,7 +93,9 @@ export const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): Na
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const navIndexReducer = (state: NavIndex = initialState, action: AnyAction): NavIndex => {
-  if (updateNavIndex.match(action)) {
+  if (navIndexInitialized.match(action)) {
+    return buildInitialState();
+  } else if (updateNavIndex.match(action)) {
     const newPages: NavIndex = {};
     const payload = action.payload;
 
@@ -112,17 +117,21 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
     return { ...state, ...newPages };
   } else if (updateConfigurationSubtitle.match(action)) {
     const subTitle = `Organization: ${action.payload}`;
+    const next = { ...state };
 
-    return {
-      ...state,
-      cfg: { ...state.cfg, subTitle },
-      datasources: getItemWithNewSubTitle(state.datasources, subTitle),
-      correlations: getItemWithNewSubTitle(state.correlations, subTitle),
-      users: getItemWithNewSubTitle(state.users, subTitle),
-      teams: getItemWithNewSubTitle(state.teams, subTitle),
-      plugins: getItemWithNewSubTitle(state.plugins, subTitle),
-      'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
-    };
+    if (next.cfg) {
+      next.cfg = { ...next.cfg, subTitle };
+    }
+
+    // Which of these entries exist varies by permissions, features and deployment;
+    // a missing one must not crash the dispatch (it would abort the org-switch reload).
+    for (const id of ['datasources', 'correlations', 'users', 'teams', 'plugins', 'org-settings']) {
+      if (next[id]) {
+        next[id] = getItemWithNewSubTitle(next[id], subTitle);
+      }
+    }
+
+    return next;
   } else if (removeNavIndex.match(action)) {
     delete state[action.payload];
   }

@@ -8,8 +8,6 @@ import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import TileSource from 'ol/source/Tile';
 import VectorSource from 'ol/source/Vector';
 
-import { getTemplateSrv } from '@grafana/runtime';
-
 // Mock the config module to avoid undefined panels error
 jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: jest.fn(),
@@ -34,7 +32,18 @@ jest.mock('app/plugins/datasource/grafana/datasource', () => ({
   getGrafanaDatasource: jest.fn(),
 }));
 
-import { hasVariableDependencies, hasLayerData, isSegmentVisible } from './utils';
+import { createTheme } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { getColorDimension } from 'app/features/dimensions/color';
+import { getScalarDimension } from 'app/features/dimensions/scalar';
+import { getScaledDimension } from 'app/features/dimensions/scale';
+import { getTextDimension } from 'app/features/dimensions/text';
+
+import { type GeomapPanel } from '../GeomapPanel';
+import { defaultStyleConfig, type StyleConfig, type StyleConfigState } from '../style/types';
+import { type MapLayerState } from '../types';
+
+import { hasVariableDependencies, hasLayerData, isSegmentVisible, getNextLayerName, getStyleDimension } from './utils';
 
 // Test fixtures
 const createTestFeature = () => new Feature(new Point([0, 0]));
@@ -187,6 +196,39 @@ describe('hasLayerData', () => {
   });
 });
 
+describe('getNextLayerName', () => {
+  function panelWith(layerCount: number, takenNames: string[] = []): GeomapPanel {
+    const byName = new Map<string, MapLayerState>();
+    for (const n of takenNames) {
+      byName.set(n, {} as MapLayerState);
+    }
+    return { layers: new Array(layerCount).fill({}), byName } as unknown as GeomapPanel;
+  }
+
+  it('returns the first available name starting at panel.layers.length', () => {
+    const name = getNextLayerName(panelWith(0));
+    // i18n in jest returns the fallback template with interpolation: "Layer 0".
+    expect(name).toMatch(/\b0\b/);
+  });
+
+  it('skips a name that is already present in byName', () => {
+    const occupied = getNextLayerName(panelWith(1));
+    const second = getNextLayerName(panelWith(1, [occupied]));
+    expect(second).not.toBe(occupied);
+    expect(second).toMatch(/\b2\b/);
+  });
+
+  it('falls back to a Date.now()-based name once 100 layers exist', () => {
+    const before = Date.now();
+    const name = getNextLayerName(panelWith(100));
+    const after = Date.now();
+    // The numeric portion of the returned name should be the timestamp captured during the call.
+    const numeric = Number(name.match(/\d+/)?.[0] ?? NaN);
+    expect(numeric).toBeGreaterThanOrEqual(before);
+    expect(numeric).toBeLessThanOrEqual(after);
+  });
+});
+
 describe('isSegmentVisible', () => {
   const map = {
     getPixelFromCoordinate: (coord: number[]) => coord,
@@ -209,5 +251,62 @@ describe('isSegmentVisible', () => {
     },
   ])('$name', ({ pixelTolerance, start, end, expected }) => {
     expect(isSegmentVisible(map, pixelTolerance, start, end)).toBe(expected);
+  });
+});
+
+describe('getStyleDimension', () => {
+  const theme = createTheme();
+  const frame = undefined;
+
+  // getStyleDimension only reads style.config and style.fields
+  const styleState = (fields?: StyleConfigState['fields']): StyleConfigState =>
+    ({ config: defaultStyleConfig, fields }) as unknown as StyleConfigState;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('builds color, size and rotation (but not text) from a custom style config', () => {
+    const custom = { color: defaultStyleConfig.color } as StyleConfig;
+
+    const dims = getStyleDimension(frame, styleState(), theme, custom);
+
+    expect(getColorDimension).toHaveBeenCalledTimes(1);
+    expect(getScaledDimension).toHaveBeenCalledTimes(1);
+    expect(getScalarDimension).toHaveBeenCalledTimes(1);
+    expect(getTextDimension).not.toHaveBeenCalled();
+    expect(dims.text).toBeUndefined();
+  });
+
+  it.each([
+    { desc: 'fixed value', text: { fixed: 'hi' }, called: true },
+    { desc: 'field binding', text: { field: 'label' }, called: true },
+    { desc: 'neither field nor fixed', text: {}, called: false },
+  ])('includes a text dimension for a custom config only with a $desc', ({ text, called }) => {
+    const custom = { color: defaultStyleConfig.color, text } as unknown as StyleConfig;
+
+    getStyleDimension(frame, styleState(), theme, custom);
+
+    expect(getTextDimension).toHaveBeenCalledTimes(called ? 1 : 0);
+  });
+
+  it('builds only the dimensions flagged in style.fields when there is no custom config', () => {
+    // StyleConfigFields values are the driving field names (truthy strings), not booleans
+    getStyleDimension(frame, styleState({ color: 'metric', rotation: 'metric' }), theme);
+
+    expect(getColorDimension).toHaveBeenCalledTimes(1);
+    expect(getScalarDimension).toHaveBeenCalledTimes(1);
+    expect(getScaledDimension).not.toHaveBeenCalled();
+    expect(getTextDimension).not.toHaveBeenCalled();
+  });
+
+  it('builds no dimensions when style.fields is undefined and there is no custom config', () => {
+    const dims = getStyleDimension(frame, styleState(undefined), theme);
+
+    expect(getColorDimension).not.toHaveBeenCalled();
+    expect(getScaledDimension).not.toHaveBeenCalled();
+    expect(getScalarDimension).not.toHaveBeenCalled();
+    expect(getTextDimension).not.toHaveBeenCalled();
+    expect(dims).toEqual({});
   });
 });

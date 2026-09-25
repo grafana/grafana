@@ -20,9 +20,9 @@ import (
 
 func newSearchHandler(
 	store Store,
+	tracer trace.Tracer,
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
-	tracer trace.Tracer,
 	metrics *Metrics,
 	logger log.Logger,
 ) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
@@ -44,7 +44,7 @@ func newSearchHandler(
 			return err
 		}
 
-		allowed, err := canAccessAnnotations(ctx, accessClient, folderResolver, namespace, result.Items, utils.VerbList)
+		allowed, err := canAccessAnnotations(ctx, tracer, accessClient, folderResolver, namespace, result.Items, utils.VerbList)
 		if err != nil {
 			return err
 		}
@@ -120,6 +120,8 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 		opts.Scopes = scopes
 	}
 
+	// Scopes default to matching any of the requested values to align with other scope-based filtering in Grafana.
+	opts.ScopesMatchAny = true
 	if v := queryParams.Get("scopesMatchAny"); v != "" {
 		if matchAny, err := strconv.ParseBool(v); err == nil {
 			opts.ScopesMatchAny = matchAny
@@ -129,6 +131,21 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 	// createdBy accepts a user uid
 	if v := queryParams.Get("createdBy"); v != "" {
 		opts.CreatedBy = v
+	}
+
+	if v := queryParams.Get("legacyID"); v != "" {
+		if id, err := strconv.ParseInt(v, 10, 64); err == nil && id > 0 {
+			opts.LegacyID = id
+		}
+	}
+
+	switch queryParams.Get("deleted") {
+	case "include":
+		opts.Deleted = DeletedInclude
+	case "only":
+		opts.Deleted = DeletedOnly
+	default:
+		opts.Deleted = DeletedExclude
 	}
 
 	return opts

@@ -107,7 +107,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 	}
 	manager := state.NewManager(cfg, state.NewNoopPersister())
 	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
-	transitions := manager.ProcessEvalResults(
+	transitions, err := manager.ProcessEvalResults(
 		c.Req.Context(),
 		now,
 		rule,
@@ -115,6 +115,9 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		state.GetRuleExtraLabels(log.New("testing"), rule, folder.Fullpath, includeFolder, srv.featureManager),
 		nil,
 	)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "Failed to process evaluation results")
+	}
 
 	alerts := make([]*amv2.PostableAlert, 0, len(transitions))
 	for _, alertState := range transitions {

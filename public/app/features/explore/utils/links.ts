@@ -249,7 +249,7 @@ export const getFieldLinksForExplore = (options: {
 /**
  * @internal
  */
-export function getTitleFromHref(href: string): string {
+function getTitleFromHref(href: string): string {
   // The URL constructor needs the url to have protocol
   if (href.indexOf('://') < 0) {
     // Doesn't really matter what protocol we use.

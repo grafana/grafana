@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,8 +17,9 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -85,6 +87,12 @@ type APIGroupRouteProvider interface {
 	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
 }
 
+// APIGroupResourceProvider lets a builder advertise the resources it serves to
+// hosts that discover per-kind routes from manifests.
+type APIGroupResourceProvider interface {
+	GetResourceInfos(gv schema.GroupVersion) []utils.ResourceInfo
+}
+
 type APIGroupPostStartHookProvider interface {
 	// GetPostStartHooks returns a list of functions that will be called after the server has started
 	GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error)
@@ -99,6 +107,32 @@ type APIGroupOptions struct {
 	StorageOpts         *options.StorageOptions
 }
 
+// StorageOptsGetter returns a RESTOptionsGetter that builds the next store with
+// storageOpts, for use in place of OptsGetter.
+//
+// Prefer it to StorageOptsRegister, which is keyed by GroupResource and so is
+// shared by every version serving a resource: whichever version registers last
+// decides for the rest. This scopes the options to the single
+// group+version+resource being installed, so versions can differ.
+func (o APIGroupOptions) StorageOptsGetter(storageOpts apistore.StorageOptions) generic.RESTOptionsGetter {
+	// Tests and the noop getter do not support scoping; they ignore storage
+	// options entirely, so falling back leaves them no worse off.
+	if getter, ok := o.OptsGetter.(apistore.StorageOptionsGetter); ok {
+		return getter.WithStorageOptions(storageOpts)
+	}
+	return o.OptsGetter
+}
+
+// StorageOptsGetterFor is [APIGroupOptions.StorageOptsGetter] with the kind's
+// identity taken from info, which a caller building a store already holds. It
+// keeps GVK in step with the version whose store is being installed.
+func (o APIGroupOptions) StorageOptsGetterFor(info utils.ResourceInfo, storageOpts apistore.StorageOptions) generic.RESTOptionsGetter {
+	if storageOpts.GVK.Empty() {
+		storageOpts.GVK = info.GroupVersionKind()
+	}
+	return o.StorageOptsGetter(storageOpts)
+}
+
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly
 type OpenAPIPostProcessor interface {
 	PostProcessOpenAPI(*spec3.OpenAPI) (*spec3.OpenAPI, error)
@@ -109,6 +143,17 @@ type APIRouteHandler struct {
 	Path    string           // added to the appropriate level
 	Spec    *spec3.PathProps // Exposed in the open api service discovery
 	Handler http.HandlerFunc // when Level = resource, the resource will be available in context
+
+	// Schemas are components the Spec references. A route whose types belong to
+	// another group must bring them: each group version's spec is self-contained.
+	Schemas map[string]spec.Schema
+}
+
+// GroupVersionRoutes are routes the caller mounts itself, for an endpoint that
+// belongs to no single builder.
+type GroupVersionRoutes struct {
+	GroupVersion schema.GroupVersion
+	Routes       *APIRoutes
 }
 
 // APIRoutes define explicit HTTP handlers in an apiserver
@@ -126,15 +171,6 @@ type APIRegistrar interface {
 	RegisterAppInstaller(installer appsdkapiserver.AppInstaller)
 }
 
-// HTTPRouteRegistrar can be implemented by builders that need to register
-// routes directly on Grafana's HTTP router (not the k8s apiserver's GoRestful
-// container). This is useful for cluster-global endpoints that don't fit the
-// k8s namespace model. RegisterHTTPRoutes is called automatically by
-// service.RegisterAPI when a builder implements this interface.
-type HTTPRouteRegistrar interface {
-	RegisterHTTPRoutes(rr routing.RouteRegister)
-}
-
 func getGroup(builder APIGroupBuilder) (string, error) {
 	if v, ok := builder.(APIGroupVersionProvider); ok {
 		return v.GetGroupVersion().Group, nil
@@ -149,6 +185,63 @@ func getGroup(builder APIGroupBuilder) (string, error) {
 	}
 
 	return "", fmt.Errorf("unable to get group: builder does not implement APIGroupVersionProvider or APIGroupVersionsProvider")
+}
+
+// ServedGroupVersions reports which group versions this process actually serves.
+// Builders and app installers are the two ways a kind reaches the apiserver, and
+// a manifest describes kinds a given deployment may not serve at all.
+func ServedGroupVersions(
+	builders []APIGroupBuilder,
+	installers []appsdkapiserver.AppInstaller,
+) map[schema.GroupVersion]bool {
+	served := map[schema.GroupVersion]bool{}
+	for _, b := range builders {
+		for _, gv := range GetGroupVersions(b) {
+			served[gv] = true
+		}
+	}
+	for _, i := range installers {
+		for _, gv := range i.GroupVersions() {
+			served[gv] = true
+		}
+	}
+	return served
+}
+
+// ManifestsFromBuilders synthesizes manifests for resources that builders
+// advertise directly, so manifest-driven per-kind routes can discover them.
+func ManifestsFromBuilders(builders []APIGroupBuilder) []*app.ManifestData {
+	var manifests []*app.ManifestData
+	for _, b := range builders {
+		provider, ok := b.(APIGroupResourceProvider)
+		if !ok {
+			continue
+		}
+		for _, gv := range GetGroupVersions(b) {
+			kinds := make([]app.ManifestVersionKind, 0)
+			for _, info := range provider.GetResourceInfos(gv) {
+				scope := "Namespaced"
+				if info.IsClusterScoped() {
+					scope = "Cluster"
+				}
+				kinds = append(kinds, app.ManifestVersionKind{
+					Kind:   info.GroupVersionKind().Kind,
+					Plural: info.GetName(),
+					Scope:  scope,
+				})
+			}
+			manifests = append(manifests, &app.ManifestData{
+				Group:            gv.Group,
+				PreferredVersion: gv.Version,
+				Versions: []app.ManifestVersion{{
+					Name:   gv.Version,
+					Served: true,
+					Kinds:  kinds,
+				}},
+			})
+		}
+	}
+	return manifests
 }
 
 func GetGroupVersions(builder APIGroupBuilder) []schema.GroupVersion {

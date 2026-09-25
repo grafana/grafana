@@ -122,7 +122,7 @@ This approach is more efficient than writing separate queries for each series, s
 
 ## Apply annotations
 
-[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs. You can add annotation queries in the dashboard menu's **Annotations** view.
+[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs. You can add annotation queries by clicking the **Add new element** icon (blue plus sign) in the dashboard toolbar and selecting **Annotation query**.
 
 Graphite supports two ways to query annotations:
 

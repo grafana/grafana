@@ -1,10 +1,9 @@
 import { groupBy } from 'lodash';
 
 import { t } from '@grafana/i18n';
-import { Alert, Box, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { Alert, Box, LoadingPlaceholder, Stack, withErrorBoundary } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
-import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { type Labels } from '../../../../../../types/unified-alerting-dto';
 import { type AlertManagerDataSource } from '../../../utils/datasource';
 

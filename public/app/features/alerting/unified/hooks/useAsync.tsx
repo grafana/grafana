@@ -5,8 +5,6 @@ import { useMemo, useRef, useState } from 'react';
 
 import { stringifyErrorLike } from '../utils/misc';
 
-export type AsyncStatus = 'loading' | 'success' | 'error' | 'not-executed';
-
 export type AsyncState<Result> =
   | AsyncStateUninitialized<Result>
   | AsyncStateFulfilled<Result>
@@ -169,7 +167,7 @@ export function isError<T>(state: AsyncState<unknown>): state is AsyncStateWithE
   return state.status === 'error';
 }
 
-export function isSuccess<T>(state: AsyncState<T>): state is AsyncStateFulfilled<T> {
+function isSuccess<T>(state: AsyncState<T>): state is AsyncStateFulfilled<T> {
   return state.status === 'success';
 }
 

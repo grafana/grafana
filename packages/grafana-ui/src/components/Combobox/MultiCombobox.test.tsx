@@ -51,7 +51,7 @@ describe('MultiCombobox', () => {
     ];
     render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
     const input = screen.getByRole('combobox');
-    user.click(input);
+    await user.click(input);
     expect(await screen.findByText('A')).toBeInTheDocument();
     expect(screen.getByText('B')).toBeInTheDocument();
     expect(screen.getByText('C')).toBeInTheDocument();
@@ -251,6 +251,21 @@ describe('MultiCombobox', () => {
     const clearAllButton = await screen.findByTitle('Clear all');
     await user.click(clearAllButton);
     expect(onChange).toHaveBeenCalledWith([]);
+  });
+
+  it('should open the menu when clicking the toggle button', async () => {
+    const options = [
+      { label: 'Option 1', value: 'a' },
+      { label: 'Option 2', value: 'b' },
+      { label: 'Option 3', value: 'c' },
+    ];
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+
+    const toggleIcon = screen.getByTestId('icon-angle-down'); // the input element is the interactive element in the a11y tree - this is just decoration
+    await userEvent.click(toggleIcon);
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
   });
 
   describe('all option', () => {

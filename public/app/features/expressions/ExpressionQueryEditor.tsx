@@ -1,9 +1,17 @@
 import { css } from '@emotion/css';
-import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useId, useRef } from 'react';
 
 import { type DataSourceApi, FeatureState, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { Button, FeatureBadge, IconButton, InlineField, type PopoverContent, useStyles2 } from '@grafana/ui';
+import { Trans } from '@grafana/i18n';
+import {
+  Button,
+  FeatureBadge,
+  IconButton,
+  InlineField,
+  InlineLabel,
+  type PopoverContent,
+  useStyles2,
+} from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
@@ -97,6 +105,7 @@ function useExpressionsCache() {
 export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
   const { query, queries, onRunQuery, onChange, app } = props;
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
+  const labelId = useId();
 
   const styles = useStyles2(getStyles);
 
@@ -155,11 +164,20 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
     <div>
       <div className={styles.operationRow}>
         <InlineField
-          label={t('expressions.expression-query-editor.label-operation', 'Operation')}
-          labelWidth={labelWidth}
+          label={
+            <InlineLabel width={labelWidth} id={labelId}>
+              <Trans i18nKey="expressions.expression-query-editor.label-operation">Operation</Trans>
+            </InlineLabel>
+          }
         >
           <ExpressionTypeDropdown handleOnSelect={onSelectExpressionType}>
-            <Button fill="outline" icon="angle-down" iconPlacement="right" variant="secondary">
+            <Button
+              aria-describedby={labelId}
+              fill="outline"
+              icon="angle-down"
+              iconPlacement="right"
+              variant="secondary"
+            >
               {expressionTypes.find(({ value }) => value === query.type)?.label}
             </Button>
           </ExpressionTypeDropdown>

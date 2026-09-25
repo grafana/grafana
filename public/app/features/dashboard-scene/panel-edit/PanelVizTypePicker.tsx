@@ -162,6 +162,7 @@ export function PanelVizTypePicker({
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+              data-testid={selectors.components.PanelEditor.VizTypePicker.searchInput}
             />
           </Stack>
         </Field>

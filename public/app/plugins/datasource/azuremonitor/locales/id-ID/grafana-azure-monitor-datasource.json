@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "dikonfigurasi",
       "reset-symbol-client-secret": "Atur ulang"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "kueri {{queryDisplayName}} mentah",
       "aria-label-use-query": "Gunakan tombol kueri ini",
@@ -78,6 +83,11 @@
       "description-basic-logs": "Jika Anda mengaktifkan fitur ini, Azure Monitor akan dikenakan biaya per kueri untuk panel dasbor yang melakukan kueri pada tabel yang dikonfigurasi untuk <2>Log Dasar</2>.",
       "label-enable-basic-logs": "Aktifkan Log Dasar"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "API Batch",
+      "description-batch-api": "Menjalankan kueri pada beberapa sumber daya dalam satu permintaan, meningkatkan kinerja untuk dasbor besar. Memerlukan peran <2>Monitoring Reader</2> pada lingkup langganan di <6>metrics.monitor.azure.com</6>. <9>Biaya tambahan mungkin berlaku</9> di luar tier gratis.",
+      "label-enable-batch-api": "Aktifkan API Batch"
+    },
     "config-editor": {
       "description-additional-settings": "Pengaturan tambahan adalah pengaturan opsional yang dapat dikonfigurasi agar memiliki kendali lebih besar atas sumber data Anda. Ini termasuk Secure Socks Proxy, batas waktu permintaan, dan cookie yang diteruskan.",
       "title-additional-settings": "Pengaturan tambahan"
@@ -100,7 +110,11 @@
       "load-subscriptions": "Muat Langganan"
     },
     "dimension-fields": {
-      "aria-label-remove": "Hapus",
+      "aria-label-field": "Kolom {{position}} dimensi",
+      "aria-label-operator": "Operator {{position}} dimensi",
+      "aria-label-remove": "Hapus {{position}} dimensi",
+      "aria-label-value": "Nilai {{position}} dimensi",
+      "aria-label-values": "Nilai {{position}} dimensi",
       "label-dimensions": "Dimensi",
       "placeholder-field": "Bidang",
       "placeholder-operation": "Pengoperasian",
@@ -173,25 +187,60 @@
       "tooltip-limit": "Batasi jumlah baris yang dikembalikan (default-nya adalah 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Yakin ingin beralih ke Log Dasar?",
       "confirmText-confirm": "Konfirmasi",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Kueri Log Dasar dikenakan biaya berdasarkan jumlah data yang dipindai.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Log",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Kueri Log Dasar",
-      "tooltip-logs": "Menentukan apakah akan menjalankan kueri Log Dasar atau Analitik."
+      "tooltip-logs": "Menentukan apakah akan menjalankan kueri Log Dasar atau Analitik.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Sumber daya berhasil dimuat tetapi tanpa tabel"
     },
     "logs-query-editor": {
       "learn-more": "Pelajari Lebih Lanjut",
-      "view-query": "Lihat kueri di Portal Azure"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Lihat kueri di Portal Azure",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrik"
     },
     "metric-namespace-field": {
       "label-metric-namespace": "Namespace metrik"
+    },
+    "metrics-query-editor": {
+      "selection-notice-batch": "Anda dapat memilih item dengan jenis sumber daya yang sama di berbagai langganan dan wilayah. Sumber daya di langganan atau wilayah yang berbeda akan dikueri melalui request terpisah, sehingga kegagalan pada satu request tidak memengaruhi request lainnya. Untuk memilih sumber daya dari jenis yang berbeda, hapus centang pada pilihan saat ini terlebih dahulu.",
+      "selection-notice-standard": "Anda dapat memilih item dengan jenis sumber daya dan lokasi yang sama. Untuk memilih sumber daya dari jenis atau lokasi yang berbeda, hapus centang pada pilihan saat ini terlebih dahulu."
+    },
+    "monitor-config": {
+      "title-features": "Fitur"
     },
     "nested-row": {
       "text-loading": "Memuat..."
@@ -204,6 +253,10 @@
       "label-by": "BERDASARKAN",
       "label-order-by": "Urutkan Berdasarkan",
       "tooltip-order-by": "Urutkan hasil berdasarkan satu atau beberapa kolom dalam urutan naik atau turun."
+    },
+    "pagination": {
+      "results-truncated-message": "Berhenti memuat setelah {{maxPages}} halaman; beberapa hasil mungkin dihilangkan.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Terjadi kesalahan saat meminta metadata dari Azure Monitor"

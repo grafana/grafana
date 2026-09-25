@@ -93,6 +93,26 @@ const getFolderHandler = () =>
     });
   });
 
+const getFolderByIdHandler = () =>
+  http.get('/api/folders/id/:id', ({ params }) => {
+    const id = Number(params.id);
+    // ids aren't stored in the tree fixture, so match by deriving them the same way listFoldersHandler does
+    const folder = mockTree.find(
+      (v) => v.item.kind === 'folder' && Chance(v.item.uid).integer({ min: 1, max: 1000 }) === id
+    );
+
+    if (!folder) {
+      return HttpResponse.json({ message: 'folder not found', status: 'not-found' }, { status: 404 });
+    }
+
+    return HttpResponse.json({
+      id,
+      title: folder.item.title,
+      uid: folder.item.uid,
+      ...additionalProperties,
+    });
+  });
+
 const createFolderHandler = () =>
   http.post<never, { title: string; parentUid?: string }>('/api/folders', async ({ request }) => {
     const body = await request.json();
@@ -169,6 +189,7 @@ export const customCreateFolderHandler = (resolver: HttpResponseResolver) => htt
 
 const handlers = [
   listFoldersHandler(),
+  getFolderByIdHandler(),
   getFolderHandler(),
   createFolderHandler(),
   saveFolderHandler(),

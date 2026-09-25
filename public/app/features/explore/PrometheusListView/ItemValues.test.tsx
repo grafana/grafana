@@ -35,6 +35,7 @@ describe('ItemValues', () => {
     const itemValues = render(<ItemValues {...defaultProps} />);
     expect(screen.getByText(value1)).toBeVisible();
     expect(screen.getByText(value2)).toBeVisible();
+    expect(screen.getByText(value1).parentElement).toHaveStyle({ minWidth: '80px' });
     expect(itemValues?.baseElement?.children?.item(0)?.children?.item(0)?.children.length).toBe(3);
   });
 

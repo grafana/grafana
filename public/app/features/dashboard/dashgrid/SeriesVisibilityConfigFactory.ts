@@ -184,7 +184,11 @@ const getNamesOfHiddenFields = (overrides: ConfigOverrideRule[], data: DataFrame
     const property = override.properties.find((p) => p.id === 'custom.hideFrom');
 
     if (property !== undefined && property.value?.legend === true) {
-      const info = fieldMatchers.get(override.matcher.id);
+      // Unknown matcher ids never apply at runtime (see fieldOverrides), so they hide nothing
+      const info = fieldMatchers.getIfExists(override.matcher.id);
+      if (!info) {
+        continue;
+      }
       const matcher = info.get(override.matcher.options);
 
       for (const frame of data) {

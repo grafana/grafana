@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,9 +29,9 @@ import (
 )
 
 var (
-	_ dynamic.ResourceInterface = (*mockDynamicClient)(nil)
-	_ repository.Repository     = (*mockRepo)(nil)
-	_ repository.Hooks          = (*mockRepo)(nil)
+	_ dynamic.ResourceInterface    = (*mockDynamicClient)(nil)
+	_ repository.Repository        = (*mockRepo)(nil)
+	_ repository.WebhookRepository = (*mockRepo)(nil)
 )
 
 type mockDynamicClient struct {
@@ -93,26 +95,14 @@ type mockRepo struct {
 	onDeleteFunc func(ctx context.Context) error
 }
 
-func (m mockRepo) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
-	panic("not needed for testing")
-}
-
-func (m mockRepo) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
-	panic("not needed for testing")
-}
-
-func (m mockRepo) OnDelete(ctx context.Context) error {
-	if m.onDeleteFunc != nil {
-		return m.onDeleteFunc(ctx)
-	}
-	return nil
-}
-
 func (m mockRepo) Config() *provisioning.Repository {
 	return &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.name,
 			Namespace: m.namespace,
+		},
+		Status: provisioning.RepositoryStatus{
+			Webhook: &provisioning.WebhookStatus{ID: 1},
 		},
 	}
 }
@@ -123,6 +113,49 @@ func (m mockRepo) Validate() field.ErrorList {
 
 func (m mockRepo) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	panic("not needed for testing")
+}
+
+func (m mockRepo) Slug() string { return "" }
+
+func (m mockRepo) VerifyRequest(*http.Request) (*repository.VerifiedWebhookRequest, error) {
+	panic("not needed for testing")
+}
+
+func (m mockRepo) ProcessRequest(context.Context, *repository.VerifiedWebhookRequest) (repository.WebhookEvent, error) {
+	panic("not needed for testing")
+}
+
+func (m mockRepo) WebhookClient() repository.WebhookClient {
+	return mockWebhookClient{onDeleteFunc: m.onDeleteFunc}
+}
+
+func (m mockRepo) WebhookURL() string { return "" }
+
+func (m mockRepo) SubscribedEvents() []string { return nil }
+
+// mockWebhookClient routes DeleteWebhook to the repo's onDeleteFunc so the
+// cleanup finalizer's deletion path can be exercised.
+type mockWebhookClient struct {
+	onDeleteFunc func(ctx context.Context) error
+}
+
+func (m mockWebhookClient) CreateWebhook(context.Context, string, []string, string) (repository.WebhookConfig, error) {
+	panic("not needed for testing")
+}
+
+func (m mockWebhookClient) GetWebhook(context.Context, repository.WebhookID) (repository.WebhookConfig, error) {
+	panic("not needed for testing")
+}
+
+func (m mockWebhookClient) EditWebhook(context.Context, repository.WebhookConfig) error {
+	panic("not needed for testing")
+}
+
+func (m mockWebhookClient) DeleteWebhook(ctx context.Context, _ repository.WebhookID) error {
+	if m.onDeleteFunc != nil {
+		return m.onDeleteFunc(ctx)
+	}
+	return nil
 }
 
 func TestFinalizer_process(t *testing.T) {
@@ -473,9 +506,7 @@ func TestFinalizer_process(t *testing.T) {
 			expectedErr: "release resources",
 		},
 		{
-			name:          "Error deleting hooks",
-			lister:        nil,
-			clientFactory: nil,
+			name: "Error deleting hooks",
 			repo: mockRepo{
 				name:      "my-repo",
 				namespace: "default",
@@ -484,23 +515,31 @@ func TestFinalizer_process(t *testing.T) {
 				},
 			},
 			finalizers: []string{
-				repository.RemoveOrphanResourcesFinalizer,
 				repository.CleanFinalizer,
 			},
-			expectedErr: "execute deletion hooks: " + assert.AnError.Error(),
+			expectedErr: "execute deletion hooks: delete webhook: " + assert.AnError.Error(),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+			// The cleanup finalizer builds the repository via the factory; return
+			// the case's repo so its webhook client drives the deletion hook.
+			factory := repository.NewMockFactory(t)
+			factory.On("Build", mock.Anything, mock.Anything).Return(tc.repo, nil).Maybe()
 			f := &finalizer{
-				lister:           tc.lister,
-				clientFactory:    tc.clientFactory,
-				metrics:          &metrics,
-				folderAPIVersion: "v1",
+				lister:        tc.lister,
+				clientFactory: tc.clientFactory,
+				repoFactory:   factory,
+				metrics:       &metrics,
 			}
-			err := f.process(context.Background(), tc.repo, tc.finalizers)
+			cfg := &provisioning.Repository{}
+			if tc.repo != nil {
+				cfg = tc.repo.Config()
+			}
+			cfg.Finalizers = tc.finalizers
+			err := f.process(context.Background(), cfg)
 			if tc.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {
@@ -682,15 +721,13 @@ func TestDeleteExistingItems_ResourcesBeforeFolders(t *testing.T) {
 	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
 		Group:    "folder.grafana.app",
 		Resource: "folders",
-		Version:  "v1",
 	}).Return(client, schema.GroupVersionKind{}, nil).Twice()
 
 	f := &finalizer{
-		lister:           resourceLister,
-		clientFactory:    clientFactory,
-		metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
-		maxWorkers:       1,
-		folderAPIVersion: "v1",
+		lister:        resourceLister,
+		clientFactory: clientFactory,
+		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:    1,
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
@@ -702,6 +739,55 @@ func TestDeleteExistingItems_ResourcesBeforeFolders(t *testing.T) {
 	// folders. The two dashboards should come first, then folders deepest-first.
 	assert.Equal(t, []string{"dash-1", "dash-2"}, order[:2], "non-folder resources should be deleted first")
 	assert.Equal(t, []string{"folder-nested", "folder-root"}, order[2:], "folders should be deleted deepest first")
+}
+
+func TestDeleteExistingItems_ReportsFirstNonEmptyFolder(t *testing.T) {
+	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{
+		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "shared-folder", Title: "Shared folder", Path: "shared"},
+		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "nested-folder", Title: "Nested folder", Path: "shared/nested", Folder: "shared-folder"},
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "managed-dashboard", Path: "shared/nested/dashboard.json", Folder: "nested-folder"},
+	}}
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	var deleted []string
+	client := &mockDynamicClient{
+		deleteFunc: func(_ context.Context, name string, _ metav1.DeleteOptions, _ ...string) error {
+			deleted = append(deleted, name)
+			if name == "managed-dashboard" {
+				return nil
+			}
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code: http.StatusBadRequest, Details: &metav1.StatusDetails{UID: "folder.not-empty"},
+			}}
+		},
+	}
+	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+		Group: folders.GroupVersion.Group, Resource: "folders",
+	}).Return(client, schema.GroupVersionKind{}, nil).Twice()
+	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+		Group: "dashboard.grafana.app", Resource: "dashboards",
+	}).Return(client, schema.GroupVersionKind{}, nil).Once()
+
+	f := &finalizer{
+		lister: resourceLister, clientFactory: clientFactory,
+		metrics:    func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers: 1,
+	}
+	count, err := f.deleteExistingItems(context.Background(), &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, 1, count)
+	assert.Equal(t, []string{"managed-dashboard", "nested-folder", "shared-folder"}, deleted)
+	assert.ErrorContains(t, err, `"Nested folder" (UID: nested-folder)`)
+	assert.NotContains(t, err.Error(), "shared-folder")
+	assert.ErrorContains(t, err, "Grafana will retry automatically")
 }
 
 func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
@@ -739,15 +825,13 @@ func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
 	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
 		Group:    "folder.grafana.app",
 		Resource: "folders",
-		Version:  "v1",
 	}).Return(client, schema.GroupVersionKind{}, nil).Twice()
 
 	f := &finalizer{
-		lister:           resourceLister,
-		clientFactory:    clientFactory,
-		metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
-		maxWorkers:       1,
-		folderAPIVersion: "v1",
+		lister:        resourceLister,
+		clientFactory: clientFactory,
+		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:    1,
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
@@ -760,125 +844,112 @@ func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
 	assert.Equal(t, []string{"dash-2", "dash-1"}, order[2:], "non-folder resources should be released after folders")
 }
 
-func TestFinalizer_FolderAPIVersion_RoutesFolderItemsToFolderClient(t *testing.T) {
-	testCases := []struct {
-		name             string
-		folderAPIVersion string
-	}{
-		{name: "v1beta1 folder client (cloud default)", folderAPIVersion: "v1beta1"},
-		{name: "v1 folder client (on-prem default)", folderAPIVersion: "v1"},
-	}
+func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
+	// The finalizer no longer pins a folder version: every item (folders included)
+	// is resolved with an empty version so the client picks the server's preferred
+	// version via discovery.
+	t.Run("release path", func(t *testing.T) {
+		items := provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-a", Path: "a"},
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a", Path: "dash.json"},
+			},
+		}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Run("release path", func(t *testing.T) {
-				items := provisioning.ResourceList{
-					Items: []provisioning.ResourceListItem{
-						{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-a", Path: "a"},
-						{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a", Path: "dash.json"},
-					},
-				}
+		resourceLister := resources.NewMockResourceLister(t)
+		resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
 
-				resourceLister := resources.NewMockResourceLister(t)
-				resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+		clientFactory := resources.NewMockClientFactory(t)
+		clients := resources.NewMockResourceClients(t)
+		clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
-				clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+		folderClient := &mockDynamicClient{
+			patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+				return nil, nil
+			},
+		}
+		dashboardClient := &mockDynamicClient{
+			patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+				return nil, nil
+			},
+		}
 
-				folderClient := &mockDynamicClient{
-					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-						return nil, nil
-					},
-				}
-				dashboardClient := &mockDynamicClient{
-					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-						return nil, nil
-					},
-				}
+		clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+			Group:    "folder.grafana.app",
+			Resource: "folders",
+		}).Return(folderClient, schema.GroupVersionKind{}, nil).Once()
+		clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+			Group:    "dashboard.grafana.app",
+			Resource: "dashboards",
+		}).Return(dashboardClient, schema.GroupVersionKind{}, nil).Once()
 
-				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
-					Group:    "folder.grafana.app",
-					Resource: "folders",
-					Version:  tc.folderAPIVersion,
-				}).Return(folderClient, schema.GroupVersionKind{}, nil).Once()
-				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
-					Group:    "dashboard.grafana.app",
-					Resource: "dashboards",
-				}).Return(dashboardClient, schema.GroupVersionKind{}, nil).Once()
+		f := &finalizer{
+			lister:        resourceLister,
+			clientFactory: clientFactory,
+			metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+			maxWorkers:    1,
+		}
 
-				f := &finalizer{
-					lister:           resourceLister,
-					clientFactory:    clientFactory,
-					metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
-					maxWorkers:       1,
-					folderAPIVersion: tc.folderAPIVersion,
-				}
+		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+		count, err := f.releaseExistingItems(context.Background(), repo)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, count)
+		clients.AssertExpectations(t)
+	})
 
-				repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-				count, err := f.releaseExistingItems(context.Background(), repo)
-				assert.NoError(t, err)
-				assert.Equal(t, 2, count)
-				clients.AssertExpectations(t)
-			})
+	t.Run("delete path", func(t *testing.T) {
+		items := provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-a", Path: "a"},
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a", Path: "dash.json"},
+			},
+		}
 
-			t.Run("delete path", func(t *testing.T) {
-				items := provisioning.ResourceList{
-					Items: []provisioning.ResourceListItem{
-						{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-a", Path: "a"},
-						{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a", Path: "dash.json"},
-					},
-				}
+		resourceLister := resources.NewMockResourceLister(t)
+		resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
 
-				resourceLister := resources.NewMockResourceLister(t)
-				resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+		clientFactory := resources.NewMockClientFactory(t)
+		clients := resources.NewMockResourceClients(t)
+		clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
-				clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+		folderClient := &mockDynamicClient{
+			deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+				return nil
+			},
+		}
+		dashboardClient := &mockDynamicClient{
+			deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+				return nil
+			},
+		}
 
-				folderClient := &mockDynamicClient{
-					deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
-						return nil
-					},
-				}
-				dashboardClient := &mockDynamicClient{
-					deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
-						return nil
-					},
-				}
+		clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+			Group:    "folder.grafana.app",
+			Resource: "folders",
+		}).Return(folderClient, schema.GroupVersionKind{}, nil).Once()
+		clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+			Group:    "dashboard.grafana.app",
+			Resource: "dashboards",
+		}).Return(dashboardClient, schema.GroupVersionKind{}, nil).Once()
 
-				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
-					Group:    "folder.grafana.app",
-					Resource: "folders",
-					Version:  tc.folderAPIVersion,
-				}).Return(folderClient, schema.GroupVersionKind{}, nil).Once()
-				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
-					Group:    "dashboard.grafana.app",
-					Resource: "dashboards",
-				}).Return(dashboardClient, schema.GroupVersionKind{}, nil).Once()
+		f := &finalizer{
+			lister:        resourceLister,
+			clientFactory: clientFactory,
+			metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+			maxWorkers:    1,
+		}
 
-				f := &finalizer{
-					lister:           resourceLister,
-					clientFactory:    clientFactory,
-					metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
-					maxWorkers:       1,
-					folderAPIVersion: tc.folderAPIVersion,
-				}
-
-				repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-				count, err := f.deleteExistingItems(context.Background(), repo)
-				assert.NoError(t, err)
-				assert.Equal(t, 2, count)
-				clients.AssertExpectations(t)
-			})
-		})
-	}
+		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+		count, err := f.deleteExistingItems(context.Background(), repo)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, count)
+		clients.AssertExpectations(t)
+	})
 }
 
 func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 	var (
-		concurrentCount int64
+		concurrentCount atomic.Int64
 		maxConcurrent   int64
 		mu              sync.Mutex
 	)
@@ -902,8 +973,8 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 
 	client := &mockDynamicClient{
 		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-			current := atomic.AddInt64(&concurrentCount, 1)
-			defer atomic.AddInt64(&concurrentCount, -1)
+			current := concurrentCount.Add(1)
+			defer concurrentCount.Add(-1)
 			mu.Lock()
 			if current > maxConcurrent {
 				maxConcurrent = current
@@ -916,11 +987,10 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
 
 	f := &finalizer{
-		lister:           resourceLister,
-		clientFactory:    clientFactory,
-		metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
-		maxWorkers:       5,
-		folderAPIVersion: "v1",
+		lister:        resourceLister,
+		clientFactory: clientFactory,
+		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:    5,
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
@@ -973,7 +1043,7 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Will be used to track concurrent executions
 			var (
-				concurrentCount int64
+				concurrentCount atomic.Int64
 				maxConcurrent   int64
 				mu              sync.Mutex
 			)
@@ -1007,8 +1077,8 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 			client := &mockDynamicClient{
 				deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
 					// Track concurrent executions
-					current := atomic.AddInt64(&concurrentCount, 1)
-					defer atomic.AddInt64(&concurrentCount, -1)
+					current := concurrentCount.Add(1)
+					defer concurrentCount.Add(-1)
 
 					mu.Lock()
 					if current > maxConcurrent {
@@ -1031,18 +1101,13 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 				On("ForResource", mock.Anything, mock.Anything).
 				Return(client, schema.GroupVersionKind{}, nil).
 				Maybe()
-			clients.
-				On("Folder", mock.Anything, "v1").
-				Return(client, schema.GroupVersionKind{}, nil).
-				Maybe()
 
 			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 			f := &finalizer{
-				lister:           resourceLister,
-				clientFactory:    clientFactory,
-				metrics:          &metrics,
-				maxWorkers:       tc.maxWorkers,
-				folderAPIVersion: "v1",
+				lister:        resourceLister,
+				clientFactory: clientFactory,
+				metrics:       &metrics,
+				maxWorkers:    tc.maxWorkers,
 			}
 
 			repo := &provisioning.Repository{
@@ -1092,10 +1157,10 @@ func TestReleaseExistingItems_RetriesOnConflict(t *testing.T) {
 	clients := resources.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
-	var calls int32
+	var calls atomic.Int32
 	client := &mockDynamicClient{
 		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-			n := atomic.AddInt32(&calls, 1)
+			n := calls.Add(1)
 			if n == 1 {
 				// Mirror the error returned by the unified storage backend when
 				// a Write is rejected because of RV mismatch.
@@ -1111,18 +1176,17 @@ func TestReleaseExistingItems_RetriesOnConflict(t *testing.T) {
 	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
 
 	f := &finalizer{
-		lister:           resourceLister,
-		clientFactory:    clientFactory,
-		metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
-		maxWorkers:       1,
-		folderAPIVersion: "v1",
+		lister:        resourceLister,
+		clientFactory: clientFactory,
+		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:    1,
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
 	count, err := f.releaseExistingItems(context.Background(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
-	assert.Equal(t, int32(2), atomic.LoadInt32(&calls), "patch should have been retried once after the initial conflict")
+	assert.Equal(t, int32(2), calls.Load(), "patch should have been retried once after the initial conflict")
 }
 
 // TestDeleteExistingItems_RetriesOnConflict mirrors the release-path test for
@@ -1141,10 +1205,10 @@ func TestDeleteExistingItems_RetriesOnConflict(t *testing.T) {
 	clients := resources.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
-	var calls int32
+	var calls atomic.Int32
 	client := &mockDynamicClient{
 		deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
-			n := atomic.AddInt32(&calls, 1)
+			n := calls.Add(1)
 			if n == 1 {
 				return apierrors.NewConflict(
 					schema.GroupResource{Group: folders.GroupVersion.Group, Resource: "folders"},
@@ -1158,18 +1222,17 @@ func TestDeleteExistingItems_RetriesOnConflict(t *testing.T) {
 	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
 
 	f := &finalizer{
-		lister:           resourceLister,
-		clientFactory:    clientFactory,
-		metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
-		maxWorkers:       1,
-		folderAPIVersion: "v1",
+		lister:        resourceLister,
+		clientFactory: clientFactory,
+		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:    1,
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
 	count, err := f.deleteExistingItems(context.Background(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
-	assert.Equal(t, int32(2), atomic.LoadInt32(&calls), "delete should have been retried once after the initial conflict")
+	assert.Equal(t, int32(2), calls.Load(), "delete should have been retried once after the initial conflict")
 }
 
 // TestReleaseExistingItems_ReturnsErrorWhenConflictPersists ensures the retry
@@ -1189,10 +1252,10 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	clients := resources.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
-	var calls int32
+	var calls atomic.Int32
 	client := &mockDynamicClient{
 		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-			atomic.AddInt32(&calls, 1)
+			calls.Add(1)
 			return nil, apierrors.NewConflict(
 				schema.GroupResource{Group: folders.GroupVersion.Group, Resource: "folders"},
 				name,
@@ -1203,15 +1266,103 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
 
 	f := &finalizer{
-		lister:           resourceLister,
-		clientFactory:    clientFactory,
-		metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
-		maxWorkers:       1,
-		folderAPIVersion: "v1",
+		lister:        resourceLister,
+		clientFactory: clientFactory,
+		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:    1,
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
 	_, err := f.releaseExistingItems(context.Background(), repo)
 	assert.Error(t, err)
-	assert.Greater(t, atomic.LoadInt32(&calls), int32(1), "finalizer should have retried at least once before giving up")
+	assert.Greater(t, calls.Load(), int32(1), "finalizer should have retried at least once before giving up")
+}
+
+// TestProcess_RemovePendingJobsFinalizer verifies that the remove-pending-jobs finalizer clears
+// the repository's job queue via the job queue cleaner.
+func TestProcess_RemovePendingJobsFinalizer(t *testing.T) {
+	jobs := NewMockJobQueueCleaner(t)
+	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(3, nil)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{
+		jobs:    jobs,
+		metrics: &metrics,
+	}
+
+	repo := mockRepo{name: "my-repo", namespace: "default"}
+	cfg := repo.Config()
+	cfg.Finalizers = []string{repository.RemovePendingJobsFinalizer}
+	err := f.process(context.Background(), cfg)
+	assert.NoError(t, err)
+}
+
+// TestProcess_RemovePendingJobsFinalizer_Error verifies that a failure clearing the
+// queue is surfaced as a finalizer error.
+func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
+	jobs := NewMockJobQueueCleaner(t)
+	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(0, assert.AnError)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{
+		jobs:    jobs,
+		metrics: &metrics,
+	}
+
+	repo := mockRepo{name: "my-repo", namespace: "default"}
+	cfg := repo.Config()
+	cfg.Finalizers = []string{repository.RemovePendingJobsFinalizer}
+	err := f.process(context.Background(), cfg)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "clear job queue")
+}
+
+// TestProcess_CleanFinalizer_BuildFailureBlocks verifies that when the cleanup
+// finalizer can't build the repository (e.g. expired credentials), process fails
+// so deletion is blocked — forcing it is done by removing the cleanup finalizer.
+func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
+	factory := repository.NewMockFactory(t)
+	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, assert.AnError)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{repoFactory: factory, metrics: &metrics}
+
+	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}}
+
+	err := f.process(t.Context(), cfg)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "create repository from configuration")
+
+	// The failure names the blocked finalizer so status.deletion can point the
+	// user at the finalizer to force-remove.
+	var fe *finalizerError
+	if assert.ErrorAs(t, err, &fe) {
+		assert.Equal(t, repository.CleanFinalizer, fe.finalizer)
+	}
+}
+
+// TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable verifies the
+// cleanup finalizer is a no-op when the built repository has no webhook client.
+func TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable(t *testing.T) {
+	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}}
+
+	factory := repository.NewMockFactory(t)
+	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nonWebhookRepo{cfg: cfg}, nil)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{repoFactory: factory, metrics: &metrics}
+
+	err := f.process(t.Context(), cfg)
+	assert.NoError(t, err)
+}
+
+// nonWebhookRepo implements only repository.Repository (not WebhookRepository),
+// standing in for a built repository that isn't webhook-capable.
+type nonWebhookRepo struct {
+	cfg *provisioning.Repository
+}
+
+func (r nonWebhookRepo) Config() *provisioning.Repository { return r.cfg }
+func (r nonWebhookRepo) Test(context.Context) (*provisioning.TestResults, error) {
+	panic("not needed for testing")
 }

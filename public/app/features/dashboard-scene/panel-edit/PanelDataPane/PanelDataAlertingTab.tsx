@@ -17,7 +17,8 @@ import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePa
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 
 import { ScenesNewRuleFromPanelButton } from './NewAlertRuleButton';
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';

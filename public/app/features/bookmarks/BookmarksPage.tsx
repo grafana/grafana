@@ -11,7 +11,7 @@ import { useSelector } from 'app/types/store';
 
 export function BookmarksPage() {
   const styles = useStyles2(getStyles);
-  const pinnedItems = usePinnedItems();
+  const { pinnedItems } = usePinnedItems();
   const navTree = useSelector((state) => state.navBarTree);
 
   const validItems = pinnedItems.reduce((acc: NavModelItem[], url) => {

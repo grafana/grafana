@@ -7,6 +7,8 @@ import { useSelector } from 'app/types/store';
 
 import { shouldAllowRecoveringDeletedRules } from '../featureToggles';
 
+import { useAlertRulesExtensionTabs } from './extensions';
+
 /**
  * Returns the correct navId for alerting pages based on the alertingNavigationV2 feature toggle.
  * Use this for pages that need to reference the Alert rules navigation.
@@ -18,6 +20,7 @@ export function getAlertRulesNavId(): string {
 export function useAlertRulesNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
+  const extensionTabs = useAlertRulesExtensionTabs();
 
   // Check if V2 navigation is enabled
   const useV2Nav = config.featureToggles.alertingNavigationV2;
@@ -48,6 +51,7 @@ export function useAlertRulesNav() {
       active: location.pathname === '/alerting/list',
       parentItem: alertRulesNav,
     },
+    ...extensionTabs,
   ];
 
   // Add Recently deleted tab if user has permission

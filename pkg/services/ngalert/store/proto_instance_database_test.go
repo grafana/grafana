@@ -293,7 +293,7 @@ func TestModelAlertInstanceMatchesProtobuf(t *testing.T) {
 	// If the AlertInstance model changes, review the protobuf and the test
 	// and update them accordingly.
 	t.Run("when AlertInstance model changes", func(t *testing.T) {
-		modelType := reflect.TypeOf(models.AlertInstance{})
+		modelType := reflect.TypeFor[models.AlertInstance]()
 		require.Equal(t, 15, modelType.NumField(), "AlertInstance model has changed, update the protobuf")
 	})
 }

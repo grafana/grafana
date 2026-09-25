@@ -42,8 +42,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 				// Dashboard inside a folder that intentionally has no _folder.json
 				"../testdata/all-panels.json": "myfolder/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -83,8 +82,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 				"../testdata/all-panels.json":    "folderA/dashboard1.json",
 				"../testdata/timeline-demo.json": "folderB/dashboard2.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -130,8 +128,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 				// Invalid dashboard at root → ResourceInvalid
 				"../testdata/dashboard-missing-name.json": "bad-dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -211,8 +208,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-team/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -233,8 +229,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "reports/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -252,8 +247,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "analytics/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -274,8 +268,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -296,8 +289,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "old-dir/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		// First sync creates the folder with "My Team" title.
@@ -325,8 +317,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 				// Folder has no _folder.json — title defaults to directory name.
 				"../testdata/all-panels.json": "old-name/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		// First sync: folder title should equal the directory name "old-name".
@@ -387,8 +378,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -407,8 +397,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "plain-folder/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -452,8 +441,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -480,8 +468,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -511,8 +498,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -543,12 +529,19 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "My Folder")
+
+		// Wait until the dashboard is parented and visible before the second
+		// sync. The second sync's compare diffs against the managed-resources
+		// index; if the dashboard has not been indexed yet, the folder UID
+		// change cannot re-parent it and the old-folder cleanup deletes it.
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"my-folder/dashboard.json": "original-uid",
+		})
 
 		// Change UID in _folder.json, keep title the same.
 		updatedContent := folderMetadataJSON("new-uid", "My Folder")
@@ -602,8 +595,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -647,8 +639,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -689,8 +680,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "root-folder/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 
 		helper.SyncAndWait(t, repo, nil)
@@ -733,8 +723,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 		common.RequireFolderState(t, helper.Folders, "stable-uid", "Custom Title", "my-folder", repo)
@@ -789,8 +778,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 		common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
@@ -850,8 +838,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 		common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)

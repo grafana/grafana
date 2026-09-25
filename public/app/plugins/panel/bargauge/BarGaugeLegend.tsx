@@ -50,6 +50,7 @@ export const BarGaugeLegend = memo(
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
           isSortable={true}
+          overflow={vizLayoutLegendProps.overflow}
         />
       </VizLayout.Legend>
     );

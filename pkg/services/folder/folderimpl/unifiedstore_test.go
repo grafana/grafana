@@ -73,7 +73,10 @@ func TestComputeFullPath(t *testing.T) {
 			wantPathUIDs: "grandparent-uid/parent-uid/Element-uid",
 		},
 		{
-			name: "should handle special characters in titles",
+			// Slashes in a title must be escaped so the title is not mistaken
+			// for a path separator. Consumers (backend SplitFullpath, the
+			// alerting frontend) rely on this to match a rule's folder.
+			name: "should escape slashes in titles",
 			parents: []*folder.Folder{
 				{
 					Title: "Parent/With/Slashes",
@@ -84,7 +87,7 @@ func TestComputeFullPath(t *testing.T) {
 					UID:   "Element-uid",
 				},
 			},
-			wantPath:     "Parent/With/Slashes/Element With Spaces",
+			wantPath:     "Parent\\/With\\/Slashes/Element With Spaces",
 			wantPathUIDs: "parent-uid/Element-uid",
 		},
 	}
@@ -94,6 +97,67 @@ func TestComputeFullPath(t *testing.T) {
 			gotPath, gotPathUIDs := computeFullPath(tc.parents)
 			require.Equal(t, tc.wantPath, gotPath)
 			require.Equal(t, tc.wantPathUIDs, gotPathUIDs)
+		})
+	}
+}
+
+func TestToFolderLegacyCounts(t *testing.T) {
+	counts := func(stats ...map[string]interface{}) *unstructured.Unstructured {
+		items := make([]interface{}, 0, len(stats))
+		for _, s := range stats {
+			items = append(items, s)
+		}
+		return &unstructured.Unstructured{Object: map[string]interface{}{"counts": items}}
+	}
+	stat := func(group, res string, count int64) map[string]interface{} {
+		return map[string]interface{}{"group": group, "resource": res, "count": count}
+	}
+
+	testCases := []struct {
+		name  string
+		input *unstructured.Unstructured
+		want  folder.DescendantCounts
+	}{
+		{
+			name: "resources still living in the single-tenant tables are counted",
+			input: counts(
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+				stat("sql-fallback", "alertrules", 3),
+			),
+			want: folder.DescendantCounts{"alertrules": 3},
+		},
+		{
+			name: "unified storage counts win over the single-tenant tables",
+			input: counts(
+				stat("rules.alerting.grafana.app", "alertrules", 5),
+				stat("sql-fallback", "alertrules", 3),
+			),
+			want: folder.DescendantCounts{"alertrules": 5},
+		},
+		{
+			name: "order of the entries does not matter",
+			input: counts(
+				stat("sql-fallback", "alertrules", 3),
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+			),
+			want: folder.DescendantCounts{"alertrules": 3},
+		},
+		{
+			name: "empty folder stays empty",
+			input: counts(
+				stat("dashboard.grafana.app", "dashboards", 0),
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+				stat("sql-fallback", "alertrules", 0),
+			),
+			want: folder.DescendantCounts{"dashboards": 0, "alertrules": 0},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := toFolderLegacyCounts(tc.input)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, *got)
 		})
 	}
 }
@@ -210,6 +274,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should be able to find children folders, and set defaults for pages", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -227,19 +292,18 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
 			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key:    &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"folder1"}}},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
-					},
-					{
-						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
-					},
+				{
+					Key:    &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"folder1"}}},
 				},
 			},
 			TotalHits: 1,
@@ -273,6 +337,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should return an error if the folder is not found", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -318,6 +383,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("pages should be able to be set, general folder should be turned to empty string, and folder uids should be passed in", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -451,6 +517,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should not do get requests for the children if RefOnly is true", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -1061,6 +1128,33 @@ func TestBuildFolderFullPaths(t *testing.T) {
 			},
 		},
 		{
+			name: "should escape slashes in folder and parent titles",
+			args: args{
+				f: &folder.Folder{
+					Title:     "Child/With/Slashes",
+					UID:       "child-uid",
+					ParentUID: "parent-uid",
+				},
+				relations: map[string]string{
+					"child-uid":  "parent-uid",
+					"parent-uid": "",
+				},
+				folderMap: map[string]*folder.Folder{
+					"parent-uid": {
+						Title: "Parent/With/Slashes",
+						UID:   "parent-uid",
+					},
+				},
+			},
+			want: &folder.Folder{
+				Title:        "Child/With/Slashes",
+				UID:          "child-uid",
+				ParentUID:    "parent-uid",
+				Fullpath:     "Parent\\/With\\/Slashes/Child\\/With\\/Slashes",
+				FullpathUIDs: "parent-uid/child-uid",
+			},
+		},
+		{
 			name: "should build full path for a folder with no parents in the map",
 			args: args{
 				f: &folder.Folder{
@@ -1460,4 +1554,120 @@ func TestList(t *testing.T) {
 			require.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// searchRow builds a single-hit row for the folder search index with the
+// title/folder columns getFoldersMetadata relies on.
+func searchRow(uid, title, parentUID string) *resourcepb.ResourceTableRow {
+	return &resourcepb.ResourceTableRow{
+		Key:   &resourcepb.ResourceKey{Name: uid, Resource: "folder"},
+		Cells: [][]byte{[]byte(title), []byte(parentUID)},
+	}
+}
+
+func TestGetFoldersMetadata(t *testing.T) {
+	tracer := noop.NewTracerProvider().Tracer("TestGetFoldersMetadata")
+	orgID := int64(1)
+	ctx := context.Background()
+
+	// A -> B -> C tree; getFoldersMetadata must build full paths from the search
+	// hits alone, never reading a full folder object (no List/BatchGet/Get).
+	newStore := func(t *testing.T) (*FolderUnifiedStoreImpl, *client.MockK8sHandler) {
+		mockCli := new(client.MockK8sHandler)
+		return &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      tracer,
+			maxDepth:    8,
+		}, mockCli
+	}
+
+	searchResponse := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: []*resourcepb.ResourceTableRow{
+				searchRow("a", "A", ""),
+				searchRow("b", "B", "a"),
+				searchRow("c", "C", "b"),
+			},
+		},
+		TotalHits: 3,
+	}
+
+	emptyResponse := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: searchResponse.Results.Columns,
+		},
+	}
+
+	expectSearchAll := func(mockCli *client.MockK8sHandler) {
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Options:      &resourcepb.ListOptions{},
+			Limit:        searchPageSize,
+			Offset:       0,
+		}).Return(searchResponse, nil).Once()
+		// searchAllFolders pages until an empty page, so it issues a trailing
+		// Search past the last hit (offset = number of hits returned above).
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Options:      &resourcepb.ListOptions{},
+			Limit:        searchPageSize,
+			Offset:       int64(len(searchResponse.Results.Rows)),
+		}).Return(emptyResponse, nil).Once()
+	}
+
+	t.Run("builds full paths from the search index without reading full objects", func(t *testing.T) {
+		store, mockCli := newStore(t)
+		expectSearchAll(mockCli)
+
+		got, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{
+			GetFoldersQuery: folder.GetFoldersQuery{
+				OrgID:            orgID,
+				MetadataOnly:     true,
+				WithFullpath:     true,
+				WithFullpathUIDs: true,
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, got, 3)
+
+		byUID := map[string]*folder.Folder{}
+		for _, f := range got {
+			byUID[f.UID] = f
+		}
+		require.Equal(t, "A/B/C", byUID["c"].Fullpath)
+		require.Equal(t, "a/b/c", byUID["c"].FullpathUIDs)
+		require.Equal(t, "A/B", byUID["b"].Fullpath)
+		require.Equal(t, "A", byUID["a"].Fullpath)
+		require.Equal(t, orgID, byUID["a"].OrgID)
+
+		// The whole point of Option A: no full-object reads.
+		mockCli.AssertNotCalled(t, "List", mock.Anything, mock.Anything, mock.Anything)
+		mockCli.AssertNotCalled(t, "Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		mockCli.AssertExpectations(t)
+	})
+
+	t.Run("UID filter returns only requested folders but full paths use all ancestors", func(t *testing.T) {
+		store, mockCli := newStore(t)
+		expectSearchAll(mockCli)
+
+		got, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{
+			GetFoldersQuery: folder.GetFoldersQuery{
+				OrgID:        orgID,
+				UIDs:         []string{"c"},
+				MetadataOnly: true,
+				WithFullpath: true,
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		require.Equal(t, "c", got[0].UID)
+		// Ancestors A and B aren't in the result set but are still resolved for the path.
+		require.Equal(t, "A/B/C", got[0].Fullpath)
+		mockCli.AssertExpectations(t)
+	})
 }

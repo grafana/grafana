@@ -99,9 +99,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#span-idroute-get-contactpoints-exportspan-export-all-contact-points-in-provisioning-file-format-_routegetcontactpointsexport_
   multi-notification-policies:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
-    - pattern: /docs/grafana-cloud/## Manage-multiple-notification-policies
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy## Manage-multiple-notification-policies
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
 ---
 
 # Export alerting resources
@@ -214,7 +214,7 @@ To export the notification policy tree from the Grafana UI, complete the followi
 
 4. Click **Copy Code** or **Download**.
 
-When the [`alertingMultiplePolicies` feature flag is enabled](ref:multi-notification-policies), you can export individual named routing trees.
+You can also export individual [named routing trees](ref:multi-notification-policies).
 
 1. Click **Alerts & IRM** -> **Notification policies**.
 1. Find the routing tree you want to export in the list.

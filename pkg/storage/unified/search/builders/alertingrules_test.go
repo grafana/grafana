@@ -1,0 +1,442 @@
+package builders
+
+import (
+	"context"
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+)
+
+// rulesManifestData is the rule kinds' manifest; the tests derive the rule
+// search fields from it the way the shared registry does in production.
+var rulesManifestData = rulesmanifest.LocalManifest().ManifestData
+
+var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifestData)
+
+// Field names as declared in apps/alerting/rules/kinds/{alertRule,recordingRule}.cue.
+// Only type, labels, annotations and datasourceUIDs remain as Go constants in
+// the builder (they are computed); the rest live only in the manifest, so the
+// tests reference them here by name.
+const (
+	testFieldInterval            = "interval"
+	testFieldPaused              = "paused"
+	testFieldFor                 = "for"
+	testFieldKeepFiringFor       = "keepFiringFor"
+	testFieldDashboardUID        = "dashboardUID"
+	testFieldPanelID             = "panelID"
+	testFieldReceiver            = "receiver"
+	testFieldNotificationType    = "notificationType"
+	testFieldRoutingTree         = "routingTree"
+	testFieldMetric              = "metric"
+	testFieldTargetDatasourceUID = "targetDatasourceUID"
+	testFieldHealth              = "health"
+	testFieldLastEvaluationTime  = "lastEvaluationTime"
+	testFieldEvaluationDuration  = "evaluationDuration"
+	testFieldLastError           = "lastError"
+	testFieldState               = "state"
+	testFieldStateReason         = "stateReason"
+)
+
+func alertRuleKey(name string) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "rules.alerting.grafana.app",
+		Resource:  "alertrules",
+		Name:      name,
+	}
+}
+
+func recordingRuleKey(name string) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "rules.alerting.grafana.app",
+		Resource:  "recordingrules",
+		Name:      name,
+	}
+}
+
+// rulesTestRegistry seeds a registry with the rule kinds' fields so the
+// registry-backed builders extract them, as they do in production.
+func rulesTestRegistry(t *testing.T) *resource.SearchFieldsRegistry {
+	t.Helper()
+	sel, hashes, providers, err := resource.SearchFieldsForManifests(rulesManifestData)
+	require.NoError(t, err)
+	return resource.NewSearchFieldsRegistry(sel, hashes, providers)
+}
+
+func buildAlertRuleDoc(t *testing.T, value string) *resource.IndexableDocument {
+	t.Helper()
+	info, err := GetAlertRuleSearchBuilder(rulesTestRegistry(t))
+	require.NoError(t, err)
+	doc, err := info.Builder.BuildDocument(context.Background(), alertRuleKey("r1"), 1, []byte(value))
+	require.NoError(t, err)
+	return doc
+}
+
+func buildRecordingRuleDoc(t *testing.T, value string) *resource.IndexableDocument {
+	t.Helper()
+	info, err := GetRecordingRuleSearchBuilder(rulesTestRegistry(t))
+	require.NoError(t, err)
+	doc, err := info.Builder.BuildDocument(context.Background(), recordingRuleKey("r1"), 1, []byte(value))
+	require.NoError(t, err)
+	return doc
+}
+
+func TestAlertRuleBuilder_extracts_declared_path_fields(t *testing.T) {
+	doc := buildAlertRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "AlertRule",
+		"metadata": {"name": "r1"},
+		"spec": {
+			"trigger": {"interval": "1m"},
+			"paused": true,
+			"for": "5m",
+			"keepFiringFor": "2m",
+			"panelRef": {"dashboardUID": "dash-1", "panelID": 42},
+			"notificationSettings": {"type": "SimplifiedRouting", "receiver": "team-a"},
+			"expressions": {},
+			"title": "My rule"
+		}
+	}`)
+
+	assert.Equal(t, "1m", doc.Fields[testFieldInterval])
+	assert.Equal(t, true, doc.Fields[testFieldPaused])
+	assert.Equal(t, "5m", doc.Fields[testFieldFor])
+	assert.Equal(t, "2m", doc.Fields[testFieldKeepFiringFor])
+	assert.Equal(t, "dash-1", doc.Fields[testFieldDashboardUID])
+	assert.Equal(t, int64(42), doc.Fields[testFieldPanelID])
+	assert.Equal(t, "team-a", doc.Fields[testFieldReceiver])
+}
+
+func TestAlertRuleBuilder_computes_type_and_extracts_notification_type(t *testing.T) {
+	simplified := buildAlertRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "AlertRule",
+		"metadata": {"name": "r1"},
+		"spec": {"trigger": {"interval": "1m"}, "expressions": {},
+			"notificationSettings": {"type": "SimplifiedRouting", "receiver": "team-a"}}
+	}`)
+	assert.Equal(t, "alertrule", simplified.Fields[ruleSearchType])
+	assert.Equal(t, "SimplifiedRouting", simplified.Fields[testFieldNotificationType])
+	assert.Equal(t, "team-a", simplified.Fields[testFieldReceiver])
+	assert.NotContains(t, simplified.Fields, testFieldRoutingTree)
+
+	named := buildAlertRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "AlertRule",
+		"metadata": {"name": "r1"},
+		"spec": {"trigger": {"interval": "1m"}, "expressions": {},
+			"notificationSettings": {"type": "NamedRoutingTree", "routingTree": "tree-1"}}
+	}`)
+	assert.Equal(t, "NamedRoutingTree", named.Fields[testFieldNotificationType])
+	assert.Equal(t, "tree-1", named.Fields[testFieldRoutingTree])
+	assert.NotContains(t, named.Fields, testFieldReceiver)
+}
+
+func TestAlertRuleBuilder_omits_absent_optional_fields(t *testing.T) {
+	doc := buildAlertRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "AlertRule",
+		"metadata": {"name": "r1"},
+		"spec": {"trigger": {"interval": "1m"}, "expressions": {}}
+	}`)
+
+	// paused does not declare emitZeroIfAbsent, so a missing value leaves the
+	// field absent rather than indexing a spurious false.
+	assert.NotContains(t, doc.Fields, testFieldPaused)
+	assert.NotContains(t, doc.Fields, testFieldFor)
+	assert.NotContains(t, doc.Fields, testFieldKeepFiringFor)
+	assert.NotContains(t, doc.Fields, testFieldDashboardUID)
+	assert.NotContains(t, doc.Fields, testFieldPanelID)
+	assert.NotContains(t, doc.Fields, testFieldReceiver)
+	assert.NotContains(t, doc.Fields, testFieldNotificationType)
+	assert.NotContains(t, doc.Fields, ruleSearchAnnotations)
+	assert.NotContains(t, doc.Fields, ruleSearchLabels)
+	assert.NotContains(t, doc.Fields, ruleSearchDatasourceUIDs)
+}
+
+func TestAlertRuleBuilder_flattens_labels(t *testing.T) {
+	doc := buildAlertRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "AlertRule",
+		"metadata": {"name": "r1"},
+		"spec": {"trigger": {"interval": "1m"}, "expressions": {},
+			"labels": {"severity": "critical"}}
+	}`)
+
+	labels, ok := doc.Fields[ruleSearchLabels].([]string)
+	require.True(t, ok, "labels should be []string, got %T", doc.Fields[ruleSearchLabels])
+	assert.ElementsMatch(t, []string{"severity", "severity=critical"}, labels)
+}
+
+func TestAlertRuleBuilder_encodes_annotations_as_json(t *testing.T) {
+	doc := buildAlertRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "AlertRule",
+		"metadata": {"name": "r1"},
+		"spec": {"trigger": {"interval": "1m"}, "expressions": {},
+			"annotations": {"summary": "boom"}}
+	}`)
+
+	assert.JSONEq(t, `{"summary":"boom"}`, doc.Fields[ruleSearchAnnotations].(string))
+}
+
+func TestAlertRuleBuilder_datasourceUIDs_excludes_expression_ds_and_dedups(t *testing.T) {
+	doc := buildAlertRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "AlertRule",
+		"metadata": {"name": "r1"},
+		"spec": {"trigger": {"interval": "1m"}, "expressions": {
+			"A": {"datasourceUID": "ds-prom", "model": {}},
+			"B": {"datasourceUID": "ds-loki", "model": {}},
+			"C": {"datasourceUID": "ds-prom", "model": {}},
+			"D": {"datasourceUID": "`+expr.DatasourceUID+`", "model": {}}
+		}}
+	}`)
+
+	uids, ok := doc.Fields[ruleSearchDatasourceUIDs].([]string)
+	require.True(t, ok, "datasourceUIDs should be []string, got %T", doc.Fields[ruleSearchDatasourceUIDs])
+	// ds-prom is deduplicated, the expression datasource is excluded, and the
+	// result is sorted for a stable index document.
+	assert.Equal(t, []string{"ds-loki", "ds-prom"}, uids)
+}
+
+func TestRecordingRuleBuilder_extracts_and_computes_fields(t *testing.T) {
+	doc := buildRecordingRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "RecordingRule",
+		"metadata": {"name": "r1"},
+		"spec": {
+			"trigger": {"interval": "30s"},
+			"paused": false,
+			"metric": "my_metric",
+			"targetDatasourceUID": "ds-target",
+			"labels": {"team": "obs"},
+			"expressions": {
+				"A": {"datasourceUID": "ds-prom", "model": {}},
+				"B": {"datasourceUID": "`+expr.OldDatasourceUID+`", "model": {}}
+			}
+		}
+	}`)
+
+	assert.Equal(t, "recordingrule", doc.Fields[ruleSearchType])
+	assert.Equal(t, "30s", doc.Fields[testFieldInterval])
+	assert.Equal(t, false, doc.Fields[testFieldPaused])
+	assert.Equal(t, "my_metric", doc.Fields[testFieldMetric])
+	assert.Equal(t, "ds-target", doc.Fields[testFieldTargetDatasourceUID])
+	assert.Equal(t, []string{"ds-prom"}, doc.Fields[ruleSearchDatasourceUIDs])
+	assert.ElementsMatch(t, []string{"team", "team=obs"}, doc.Fields[ruleSearchLabels])
+}
+
+// TestRuleSearchFields_derivedFromManifest verifies the rule kinds' manifest
+// declares the search fields and that the column-definition view derived from
+// them (the same view the search backend uses) matches the declared types and
+// capabilities.
+func TestRuleSearchFields_derivedFromManifest(t *testing.T) {
+	info, err := GetAlertRuleSearchBuilder(nil)
+	require.NoError(t, err)
+
+	gvr := schema.GroupVersionResource{
+		Group:    info.GroupResource.Group,
+		Version:  rulesv0alpha1.AlertRuleKind().GroupVersionResource().Version,
+		Resource: info.GroupResource.Resource,
+	}
+	fields := rulesSearchFieldsProvider.Fields(gvr)
+	require.NotEmpty(t, fields, "alert rule search fields should be declared in the manifest")
+
+	cols := resource.SearchFieldDefinitionsToTableColumns(fields)
+	byName := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
+	for _, c := range cols {
+		byName[c.Name] = c
+	}
+
+	// A path-declared string filter field.
+	interval := byName[testFieldInterval]
+	require.NotNil(t, interval)
+	assert.Equal(t, resourcepb.ResourceTableColumnDefinition_STRING, interval.Type)
+
+	// Boolean field.
+	paused := byName[testFieldPaused]
+	require.NotNil(t, paused)
+	assert.Equal(t, resourcepb.ResourceTableColumnDefinition_BOOLEAN, paused.Type)
+
+	// Int64 field.
+	panelID := byName[testFieldPanelID]
+	require.NotNil(t, panelID)
+	assert.Equal(t, resourcepb.ResourceTableColumnDefinition_INT64, panelID.Type)
+
+	// Array field carries IsArray.
+	labels := byName[ruleSearchLabels]
+	require.NotNil(t, labels)
+	assert.True(t, labels.IsArray)
+}
+
+// TestRuleSearchFields_hashDiffersPerKind verifies the manifest declares a
+// non-empty search-fields hash for each rule kind and that the two kinds differ.
+func TestRuleSearchFields_hashDiffersPerKind(t *testing.T) {
+	alertInfo, err := GetAlertRuleSearchBuilder(nil)
+	require.NoError(t, err)
+
+	recordingInfo, err := GetRecordingRuleSearchBuilder(nil)
+	require.NoError(t, err)
+
+	alertHash := rulesSearchFieldsProvider.IndexAffectingHash(alertInfo.GroupResource.Group, alertInfo.GroupResource.Resource)
+	recordingHash := rulesSearchFieldsProvider.IndexAffectingHash(recordingInfo.GroupResource.Group, recordingInfo.GroupResource.Resource)
+	assert.NotEmpty(t, alertHash)
+	assert.NotEmpty(t, recordingHash)
+
+	// The two kinds declare different fields, so their hashes must differ.
+	assert.NotEqual(t, alertHash, recordingHash)
+}
+
+func TestRuleBuilders_extract_status_fields(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		build       func(*testing.T, string) *resource.IndexableDocument
+		kind        string
+		duration    float64
+		alertStatus string
+	}{
+		{
+			name:     "alert rule preserves fractional duration",
+			build:    buildAlertRuleDoc,
+			kind:     "AlertRule",
+			duration: 0.125,
+			alertStatus: `,
+				"state": "Alerting",
+				"stateReason": "threshold exceeded"`,
+		},
+		{
+			name:     "recording rule preserves zero duration",
+			build:    buildRecordingRuleDoc,
+			kind:     "RecordingRule",
+			duration: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			status := fmt.Sprintf(`{
+				"health": "ok",
+				"lastEvaluationTime": "2026-09-17T12:34:56Z",
+				"evaluationDuration": %v,
+				"lastError": "query timed out"%s
+			}`, tc.duration, tc.alertStatus)
+
+			doc := tc.build(t, fmt.Sprintf(`{
+				"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+				"kind": %q,
+				"metadata": {"name": "r1"},
+				"spec": {"trigger": {"interval": "1m"}, "expressions": {}},
+				"status": %s
+			}`, tc.kind, status))
+
+			assert.Equal(t, "ok", doc.Fields[testFieldHealth])
+			assert.Equal(t, "2026-09-17T12:34:56Z", doc.Fields[testFieldLastEvaluationTime])
+			assert.Equal(t, tc.duration, doc.Fields[testFieldEvaluationDuration])
+			assert.Equal(t, "query timed out", doc.Fields[testFieldLastError])
+			if tc.alertStatus != "" {
+				assert.Equal(t, "Alerting", doc.Fields[testFieldState])
+				assert.Equal(t, "threshold exceeded", doc.Fields[testFieldStateReason])
+			}
+		})
+	}
+}
+
+func TestRuleBuilders_omit_missing_status_fields(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		build func(*testing.T, string) *resource.IndexableDocument
+		kind  string
+	}{
+		{name: "alert rule", build: buildAlertRuleDoc, kind: "AlertRule"},
+		{name: "recording rule", build: buildRecordingRuleDoc, kind: "RecordingRule"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc := tc.build(t, fmt.Sprintf(`{
+				"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+				"kind": %q,
+				"metadata": {"name": "r1"},
+				"spec": {"trigger": {"interval": "1m"}, "expressions": {}}
+			}`, tc.kind))
+
+			assert.NotContains(t, doc.Fields, testFieldHealth)
+			assert.NotContains(t, doc.Fields, testFieldLastEvaluationTime)
+			assert.NotContains(t, doc.Fields, testFieldEvaluationDuration)
+			assert.NotContains(t, doc.Fields, testFieldLastError)
+		})
+	}
+}
+
+func TestRecordingRuleBuilder_omits_alert_only_status_fields(t *testing.T) {
+	doc := buildRecordingRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "RecordingRule",
+		"metadata": {"name": "r1"},
+		"spec": {"trigger": {"interval": "1m"}, "expressions": {}},
+		"status": {"state": "Alerting", "stateReason": "threshold exceeded"}
+	}`)
+
+	assert.NotContains(t, doc.Fields, testFieldState)
+	assert.NotContains(t, doc.Fields, testFieldStateReason)
+}
+
+func TestRuleSearchFields_status_fields_are_retrieve_only(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		gvr  schema.GroupVersionResource
+	}{
+		{
+			name: "alert rule",
+			gvr:  rulesv0alpha1.AlertRuleKind().GroupVersionResource(),
+		},
+		{
+			name: "recording rule",
+			gvr:  rulesv0alpha1.RecordingRuleKind().GroupVersionResource(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			byName := make(map[string]resource.SearchFieldDefinition)
+			for _, field := range rulesSearchFieldsProvider.Fields(tc.gvr) {
+				byName[field.Name] = field
+			}
+
+			for _, name := range []string{testFieldHealth, testFieldLastEvaluationTime, testFieldLastError} {
+				field, ok := byName[name]
+				require.True(t, ok, "%s should be declared", name)
+				assert.Equal(t, resource.SearchFieldTypeString, field.Type)
+				assert.Equal(t, []resource.SearchCapability{resource.SearchCapabilityRetrieve}, field.Capabilities)
+			}
+
+			duration, ok := byName[testFieldEvaluationDuration]
+			require.True(t, ok, "evaluationDuration should be declared")
+			assert.Equal(t, resource.SearchFieldTypeDouble, duration.Type)
+			assert.Equal(t, []resource.SearchCapability{resource.SearchCapabilityRetrieve}, duration.Capabilities)
+		})
+	}
+}

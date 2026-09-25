@@ -1,4 +1,4 @@
-import { type DataFrame, type FieldWithIndex, getFieldDisplayName } from '@grafana/data';
+import { type DataFrame, type FieldWithIndex } from '@grafana/data';
 import { type FieldNameMeta, type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 
@@ -42,7 +42,7 @@ export const buildColumnsWithMeta = (
   if (dataFrame.fields.length && numberOfLogLines) {
     // Iterate through all of fields
     dataFrame.fields.forEach((field) => {
-      const fieldName = getFieldDisplayName(field);
+      const fieldName = field.name;
       // Count the valid values
       const countOfValues = field.values.reduce((acc: number, value) => {
         if (value !== undefined && value !== null) {
@@ -72,7 +72,7 @@ export const buildColumnsWithMeta = (
 
   // Normalize the other fields
   otherFields.forEach((field) => {
-    const fieldName = getFieldDisplayName(field);
+    const fieldName = field.name;
     const isActive = pendingLabelState[fieldName]?.active;
     const index = pendingLabelState[fieldName]?.index;
     if (isActive && index !== undefined) {
@@ -101,8 +101,8 @@ export const buildColumnsWithMeta = (
       pendingLabelState[fieldName].active = true;
       pendingLabelState[fieldName].index = idx;
     } else if (fieldName === LOG_LINE_BODY_FIELD_NAME && logsFrameFields?.bodyField?.name) {
-      pendingLabelState[logsFrameFields.bodyField?.name].active = true;
-      pendingLabelState[logsFrameFields.bodyField?.name].index = idx;
+      pendingLabelState[logsFrameFields.bodyField.name].active = true;
+      pendingLabelState[logsFrameFields.bodyField.name].index = idx;
     } else {
       console.error(`Unknown field ${fieldName}`, { pendingLabelState, displayedFields });
     }

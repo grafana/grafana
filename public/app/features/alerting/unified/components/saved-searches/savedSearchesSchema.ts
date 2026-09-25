@@ -12,7 +12,7 @@
  * - Alert Activity: URL parameters (e.g., "var-filters=...&var-groupBy=...&from=...&to=...")
  */
 
-import z from 'zod';
+import * as z from 'zod';
 
 import { t } from '@grafana/i18n';
 

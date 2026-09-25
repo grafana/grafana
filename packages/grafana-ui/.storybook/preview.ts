@@ -1,4 +1,4 @@
-import { Preview } from '@storybook/react-webpack5';
+import { Preview } from '@storybook/react';
 import { initialize, mswLoader } from 'msw-storybook-addon';
 
 import 'jquery';
@@ -42,6 +42,8 @@ if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('gloom');
   allowedExtraThemes.push('sapphiredusk');
   allowedExtraThemes.push('tron');
+  allowedExtraThemes.push('visual_refresh_dark');
+  allowedExtraThemes.push('visual_refresh_light');
 }
 
 /*

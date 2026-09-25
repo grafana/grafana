@@ -2,26 +2,34 @@ package user
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
+	iamapis "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 func TestSearchFallback(t *testing.T) {
@@ -41,7 +49,11 @@ func TestSearchFallback(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := &MockClient{}
-			mockLegacyClient := &MockClient{}
+			legacyService := orgtest.NewMockService(t)
+			if !tt.expectUnified {
+				legacyService.On("SearchOrgUsers", mock.Anything, mock.Anything).
+					Return(&org.SearchOrgUsersQueryResult{}, nil).Once()
+			}
 
 			cfg := &setting.Cfg{
 				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
@@ -50,8 +62,10 @@ func TestSearchFallback(t *testing.T) {
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
 
-			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg, nil)
+			searchClient := dualwrite.NewSelector[SearchBackend](dual, iamv0.UserResourceInfo.GroupResource(),
+				NewUserLegacySearchClient(legacyService, tracing.NewNoopTracerService(), cfg),
+				NewUnifiedSearchClient(mockClient, cfg))
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/searchUsers", nil)
@@ -60,15 +74,128 @@ func TestSearchFallback(t *testing.T) {
 
 			searchHandler.DoSearch(rr, req)
 
-			if tt.expectUnified {
-				if mockClient.LastSearchRequest == nil {
-					t.Fatalf("expected Unified Search to be called, but it was not")
-				}
-			} else {
-				if mockLegacyClient.LastSearchRequest == nil {
-					t.Fatalf("expected Legacy Search to be called, but it was not")
-				}
+			require.Equal(t, 200, rr.Code)
+			if !tt.expectUnified {
+				require.Nil(t, mockClient.LastSearchRequest, "legacy search must not call the index")
+				return
 			}
+			legacyService.AssertNotCalled(t, "SearchOrgUsers", mock.Anything, mock.Anything)
+			searchRequest := mockClient.LastSearchRequest
+			require.NotNil(t, searchRequest, "expected Unified Search to be called")
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchRequest.ResultFormat)
+			require.Equal(t, []string{
+				resource.SEARCH_FIELD_TITLE,
+				builders.USER_EMAIL,
+				builders.USER_LOGIN,
+				builders.USER_LAST_SEEN_AT,
+				builders.USER_ROLE,
+				builders.USER_DISABLED,
+				builders.USER_EXTERNAL_AUTH_MODULES,
+				resource.SEARCH_FIELD_CREATED,
+				resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+			}, searchRequest.Fields)
+		})
+	}
+}
+
+func selectorForBackend(backend SearchBackend) *dualwrite.Selector[SearchBackend] {
+	return dualwrite.NewSelector[SearchBackend](dualwrite.ProvideServiceForTests(&setting.Cfg{}),
+		iamv0.UserResourceInfo.GroupResource(), backend, nil)
+}
+
+func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
+	manifest := iamapis.LocalManifest()
+	providers, err := resource.SearchFieldProviders(manifest.ManifestData)
+	require.NoError(t, err)
+
+	backend, err := unifiedsearch.NewBleveBackend(unifiedsearch.BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: 100,
+		SearchFields:  resource.NewSearchFieldsRegistry(nil, nil, providers),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	userGR := iamv0.UserResourceInfo.GroupResource()
+	key := resource.NamespacedResource{Namespace: "test", Group: userGR.Group, Resource: userGR.Resource}
+	index, err := backend.BuildIndex(t.Context(), key, 0, "test", func(resource.ResourceIndex) (int64, error) {
+		return 0, nil
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	const (
+		lastSeenAt = int64(1_700_000_000)
+		createdAt  = int64(1_700_000_000_000)
+	)
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+		Action: resource.ActionIndex,
+		Doc: &resource.IndexableDocument{
+			RV:      1,
+			Name:    "user-1",
+			Title:   "User One",
+			Created: createdAt,
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Name:      "user-1",
+			},
+			Labels: map[string]string{resource.SEARCH_FIELD_LEGACY_ID: "42"},
+			Fields: map[string]any{
+				builders.USER_EMAIL:                 "user@example.com",
+				builders.USER_LOGIN:                 "user-one",
+				builders.USER_LAST_SEEN_AT:          lastSeenAt,
+				builders.USER_ROLE:                  "Admin",
+				builders.USER_DISABLED:              true,
+				builders.USER_EXTERNAL_AUTH_MODULES: []string{"oauth", "saml"},
+			},
+		},
+	}}}))
+
+	fields := []string{
+		resource.SEARCH_FIELD_TITLE,
+		builders.USER_EMAIL,
+		builders.USER_LOGIN,
+		builders.USER_LAST_SEEN_AT,
+		builders.USER_ROLE,
+		builders.USER_DISABLED,
+		builders.USER_EXTERNAL_AUTH_MODULES,
+		resource.SEARCH_FIELD_CREATED,
+		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+	}
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			response, err := index.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				}},
+				Fields:       fields,
+				Limit:        1,
+				ResultFormat: format,
+			}, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, response.GetError())
+			require.Equal(t, format, response.GetResultFormat())
+
+			parsed, err := parseResults(response)
+			require.NoError(t, err)
+			require.Len(t, parsed.Hits, 1)
+			hit := parsed.Hits[0]
+			require.Equal(t, "user-1", hit.Name)
+			require.Equal(t, "User One", hit.Title)
+			require.Equal(t, "user@example.com", hit.Email)
+			require.Equal(t, "user-one", hit.Login)
+			require.Equal(t, lastSeenAt, hit.LastSeenAt)
+			require.Equal(t, "Admin", hit.Role)
+			require.True(t, hit.Disabled)
+			require.Equal(t, []string{"oauth", "saml"}, hit.ExternalAuthModules)
+			require.Equal(t, createdAt, hit.Created)
+			require.Equal(t, int64(42), hit.InternalId)
 		})
 	}
 }
@@ -110,6 +237,12 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	return nil, nil
 }
+func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (resourcepb.ResourceStats_GetResourceDailyStatsClient, error) {
+	return nil, nil
+}
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
 	return nil, nil
 }
@@ -138,6 +271,10 @@ func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts 
 	return nil, nil
 }
 func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	return nil, nil
+}
+
+func (m *MockClient) ListStoredResources(ctx context.Context, in *resourcepb.ListStoredResourcesRequest, opts ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error) {
 	return nil, nil
 }
 func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
@@ -173,13 +310,83 @@ func mockClientWithHits() *MockClient {
 	}
 }
 
+func TestSearchSort(t *testing.T) {
+	loginField := builders.USER_LOGIN
+	emailField := builders.USER_EMAIL
+
+	tests := []struct {
+		name     string
+		url      string
+		expected []*resourcepb.ResourceSearchRequest_Sort
+	}{
+		{
+			name:     "no sort param defaults to login ascending",
+			url:      "/searchUsers",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: loginField, Desc: false}},
+		},
+		{
+			name:     "explicit ascending sort is respected",
+			url:      "/searchUsers?sort=email",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: emailField, Desc: false}},
+		},
+		{
+			name:     "explicit descending sort is respected",
+			url:      "/searchUsers?sort=-login",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: loginField, Desc: true}},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockClient := mockClientWithHits()
+			searchHandler := NewSearchHandler(
+				tracing.NewNoopTracerService(),
+				selectorForBackend(NewUnifiedSearchClient(mockClient, &setting.Cfg{})),
+				authlib.FixedAccessClient(true),
+			)
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", tc.url, nil)
+			req.Header.Add("content-type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "default"}))
+
+			searchHandler.DoSearch(rr, req)
+
+			require.Equal(t, 200, rr.Code)
+			require.NotNil(t, mockClient.LastSearchRequest)
+			require.Equal(t, tc.expected, mockClient.LastSearchRequest.SortBy)
+		})
+	}
+}
+
+// The authz model's "user" type defines only get/update/delete relations
+// (schema_core.fga). A check whose verb maps to any other relation fails the
+// whole batch check at the authz server, blanking out all metadata, so guard
+// against re-adding one for the "users" resource.
+func TestUserAccessControlChecksUseSupportedVerbs(t *testing.T) {
+	supportedUserVerbs := map[string]bool{
+		utils.VerbGet:    true,
+		utils.VerbList:   true,
+		utils.VerbWatch:  true,
+		utils.VerbUpdate: true,
+		utils.VerbPatch:  true,
+		utils.VerbDelete: true,
+	}
+	for _, c := range userAccessControlChecks {
+		if c.resource != "users" {
+			continue
+		}
+		assert.True(t, supportedUserVerbs[c.verb],
+			"check %q uses verb %q whose relation is not defined on the authz \"user\" type", c.action, c.verb)
+	}
+}
+
 func TestAccessControl(t *testing.T) {
 	partialClient := &mockAccessClient{
 		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 			allowed := map[string]bool{
-				"org.users:read":         true,
-				"users.permissions:read": true,
-				"users.roles:read":       true,
+				"org.users:read":   true,
+				"users.roles:read": true,
 			}
 			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 			for _, check := range req.Checks {
@@ -281,9 +488,7 @@ func TestAccessControl(t *testing.T) {
 				for _, hit := range hits {
 					require.NotNil(t, hit.AccessControl)
 					assert.True(t, hit.AccessControl["org.users:read"])
-					assert.True(t, hit.AccessControl["users.permissions:read"])
 					assert.True(t, hit.AccessControl["users.roles:read"])
-					assert.False(t, hit.AccessControl["org.users:add"])
 					assert.False(t, hit.AccessControl["org.users:remove"])
 					assert.False(t, hit.AccessControl["org.users:write"])
 				}
@@ -325,9 +530,7 @@ func TestAccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			searchHandler := NewSearchHandler(
 				tracing.NewNoopTracerService(),
-				mockClientWithHits(),
-				featuremgmt.WithFeatures(),
-				&setting.Cfg{},
+				selectorForBackend(NewUnifiedSearchClient(mockClientWithHits(), &setting.Cfg{})),
 				tc.client,
 			)
 
@@ -389,4 +592,226 @@ func TestEscapeBleveQuery(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParseResults(t *testing.T) {
+	i64 := func(v int64) []byte {
+		b := make([]byte, 8)
+		binary.BigEndian.PutUint64(b, uint64(v))
+		return b
+	}
+
+	// Columns in the order the search handler requests them.
+	allColumns := []*resourcepb.ResourceTableColumnDefinition{
+		{Name: resource.SEARCH_FIELD_TITLE},
+		{Name: builders.USER_EMAIL},
+		{Name: builders.USER_LOGIN},
+		{Name: builders.USER_LAST_SEEN_AT},
+		{Name: builders.USER_ROLE},
+		{Name: builders.USER_DISABLED},
+		{Name: builders.USER_EXTERNAL_AUTH_MODULES},
+		{Name: resource.SEARCH_FIELD_CREATED},
+		{Name: legacyIDField},
+	}
+	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli()
+	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC).Unix()
+
+	t.Run("nil response returns empty result", func(t *testing.T) {
+		sr, err := parseResults(nil)
+		require.NoError(t, err)
+		assert.Empty(t, sr.Hits)
+		assert.Zero(t, sr.TotalHits)
+	})
+
+	t.Run("error in response is propagated", func(t *testing.T) {
+		_, err := parseResults(&resourcepb.ResourceSearchResponse{
+			Error: &resourcepb.ErrorResult{Code: 500, Message: "boom"},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("missing rows preserve totals and scores", func(t *testing.T) {
+		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+			resourcepb.ResourceSearchRequest_UNSPECIFIED,
+			resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		} {
+			t.Run(format.String(), func(t *testing.T) {
+				sr, err := parseResults(&resourcepb.ResourceSearchResponse{
+					ResultFormat: format, TotalHits: 5, QueryCost: 1.5, MaxScore: 2.5,
+				})
+				require.NoError(t, err)
+				assert.Empty(t, sr.Hits)
+				assert.NotNil(t, sr.Hits)
+				assert.Equal(t, int64(5), sr.TotalHits)
+				assert.Equal(t, 1.5, sr.QueryCost)
+				assert.Equal(t, 2.5, sr.MaxScore)
+			})
+		}
+	})
+
+	t.Run("column/cell count mismatch errors", func(t *testing.T) {
+		_, err := parseResults(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: allColumns,
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid-1"}, Cells: [][]byte{[]byte("only one cell")}},
+				},
+			},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("maps all columns and carries totals/score", func(t *testing.T) {
+		resp := &resourcepb.ResourceSearchResponse{
+			TotalHits: 2,
+			QueryCost: 1.5,
+			MaxScore:  2.5,
+			Results: &resourcepb.ResourceTable{
+				Columns: allColumns,
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{Name: "uid-1"},
+						Cells: [][]byte{
+							[]byte("John Doe"),
+							[]byte("jdoe@example.com"),
+							[]byte("jdoe"),
+							i64(lastSeen),
+							[]byte("Admin"),
+							{1},
+							[]byte(`["authproxy","ldap"]`),
+							i64(created),
+							[]byte("42"),
+						},
+					},
+					// Second row exercises zero/empty cells -> fields keep zero values.
+					{
+						Key:   &resourcepb.ResourceKey{Name: "uid-2"},
+						Cells: [][]byte{[]byte("Jane"), nil, []byte("jane"), nil, []byte("Viewer"), {0}, nil, nil, nil},
+					},
+				},
+			},
+		}
+
+		sr, err := parseResults(resp)
+		require.NoError(t, err)
+		require.Len(t, sr.Hits, 2)
+		assert.Equal(t, int64(2), sr.TotalHits)
+		assert.Equal(t, 1.5, sr.QueryCost)
+		assert.Equal(t, 2.5, sr.MaxScore)
+
+		full := sr.Hits[0]
+		assert.Equal(t, "uid-1", full.Name)
+		assert.Equal(t, "John Doe", full.Title)
+		assert.Equal(t, "jdoe@example.com", full.Email)
+		assert.Equal(t, "jdoe", full.Login)
+		assert.Equal(t, "Admin", full.Role)
+		assert.Equal(t, lastSeen, full.LastSeenAt)
+		assert.NotEmpty(t, full.LastSeenAtAge)
+		assert.True(t, full.Disabled)
+		assert.Equal(t, []string{"authproxy", "ldap"}, full.ExternalAuthModules)
+		assert.Equal(t, created, full.Created)
+		assert.Equal(t, int64(42), full.InternalId)
+
+		sparse := sr.Hits[1]
+		assert.Equal(t, "uid-2", sparse.Name)
+		assert.Equal(t, "Jane", sparse.Title)
+		assert.Equal(t, "jane", sparse.Login)
+		assert.Equal(t, "Viewer", sparse.Role)
+		assert.Empty(t, sparse.Email)
+		assert.Zero(t, sparse.LastSeenAt)
+		assert.Empty(t, sparse.LastSeenAtAge)
+		assert.False(t, sparse.Disabled)
+		assert.Empty(t, sparse.ExternalAuthModules)
+		assert.Zero(t, sparse.Created)
+		assert.Zero(t, sparse.InternalId)
+	})
+
+	t.Run("maps all field-value results and carries totals/score", func(t *testing.T) {
+		resp := &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    1,
+			QueryCost:    1.5,
+			MaxScore:     2.5,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: builders.USER_EMAIL, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: builders.USER_LOGIN, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: builders.USER_LAST_SEEN_AT, Type: resourcepb.ResourceSearchField_INT64},
+				{Name: builders.USER_ROLE, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: builders.USER_DISABLED, Type: resourcepb.ResourceSearchField_BOOLEAN},
+				{Name: builders.USER_EXTERNAL_AUTH_MODULES, Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+				{Name: resource.SEARCH_FIELD_CREATED, Type: resourcepb.ResourceSearchField_INT64},
+				{Name: legacyIDField, Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{{
+				Key: &resourcepb.ResourceKey{Name: "uid-1"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"John Doe"}},
+					{FieldIndex: 1, StringValues: []string{"jdoe@example.com"}},
+					{FieldIndex: 2, StringValues: []string{"jdoe"}},
+					{FieldIndex: 3, Int64Values: []int64{lastSeen}},
+					{FieldIndex: 4, StringValues: []string{"Admin"}},
+					{FieldIndex: 5, BooleanValues: []bool{true}},
+					{FieldIndex: 6, StringValues: []string{"authproxy", "ldap"}},
+					{FieldIndex: 7, Int64Values: []int64{created}},
+					{FieldIndex: 8, StringValues: []string{"42"}},
+				},
+			}},
+		}
+
+		sr, err := parseResults(resp)
+		require.NoError(t, err)
+		require.Len(t, sr.Hits, 1)
+		assert.Equal(t, int64(1), sr.TotalHits)
+		assert.Equal(t, 1.5, sr.QueryCost)
+		assert.Equal(t, 2.5, sr.MaxScore)
+
+		hit := sr.Hits[0]
+		assert.Equal(t, "uid-1", hit.Name)
+		assert.Equal(t, "John Doe", hit.Title)
+		assert.Equal(t, "jdoe@example.com", hit.Email)
+		assert.Equal(t, "jdoe", hit.Login)
+		assert.Equal(t, "Admin", hit.Role)
+		assert.Equal(t, lastSeen, hit.LastSeenAt)
+		assert.NotEmpty(t, hit.LastSeenAtAge)
+		assert.True(t, hit.Disabled)
+		assert.Equal(t, []string{"authproxy", "ldap"}, hit.ExternalAuthModules)
+		assert.Equal(t, created, hit.Created)
+		assert.Equal(t, int64(42), hit.InternalId)
+	})
+
+	t.Run("only requested columns are populated", func(t *testing.T) {
+		sr, err := parseResults(&resourcepb.ResourceSearchResponse{
+			TotalHits: 1,
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: builders.USER_LOGIN}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid-3"}, Cells: [][]byte{[]byte("viewer")}},
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, sr.Hits, 1)
+		assert.Equal(t, "uid-3", sr.Hits[0].Name)
+		assert.Equal(t, "viewer", sr.Hits[0].Login)
+		assert.Empty(t, sr.Hits[0].Role)
+		assert.Zero(t, sr.Hits[0].InternalId)
+	})
+
+	t.Run("ignores lastSeenAt cell with unexpected length", func(t *testing.T) {
+		sr, err := parseResults(&resourcepb.ResourceSearchResponse{
+			TotalHits: 1,
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: builders.USER_LAST_SEEN_AT}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid-4"}, Cells: [][]byte{[]byte("not-8-bytes")}},
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, sr.Hits, 1)
+		assert.Zero(t, sr.Hits[0].LastSeenAt)
+		assert.Empty(t, sr.Hits[0].LastSeenAtAge)
+	})
 }

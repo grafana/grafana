@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -38,7 +39,6 @@ type SignedInUser struct {
 	IsGrafanaAdmin   bool
 	IsAnonymous      bool
 	IsDisabled       bool
-	HelpFlags1       HelpFlags1
 	LastSeenAt       time.Time
 	// Deprecated: use TeamUIDs instead
 	TeamIDs  []int64
@@ -316,12 +316,7 @@ func (u *SignedInUser) GetAuthenticatedBy() string {
 }
 
 func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
-	for _, p := range providers {
-		if u.AuthenticatedBy == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(providers, u.AuthenticatedBy)
 }
 
 // FIXME: remove this method once all services are using an interface

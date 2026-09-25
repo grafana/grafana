@@ -56,6 +56,65 @@ func TestV35(t *testing.T) {
 			},
 		},
 		{
+			name: "applies x-axis visibility override for panels nested in collapsed rows",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type": "timeseries",
+								"fieldConfig": map[string]interface{}{
+									"defaults": map[string]interface{}{
+										"custom": map[string]interface{}{
+											"axisPlacement": "hidden",
+										},
+									},
+									"overrides": []interface{}{},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(35),
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type": "timeseries",
+								"fieldConfig": map[string]interface{}{
+									"defaults": map[string]interface{}{
+										"custom": map[string]interface{}{
+											"axisPlacement": "hidden",
+										},
+									},
+									"overrides": []interface{}{
+										map[string]interface{}{
+											"matcher": map[string]interface{}{
+												"id":      "byType",
+												"options": "time",
+											},
+											"properties": []interface{}{
+												map[string]interface{}{
+													"id":    "custom.axisPlacement",
+													"value": "auto",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "appends to existing overrides for timeseries with hidden axes",
 			input: map[string]interface{}{
 				"panels": []interface{}{

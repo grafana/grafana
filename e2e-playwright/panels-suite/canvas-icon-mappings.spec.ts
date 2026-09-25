@@ -37,16 +37,15 @@ test.describe('Canvas Panel - Icon Mappings', () => {
       });
     });
 
-    await test.step('Navigate to dashboard and wait for SVGs to load', async () => {
+    await test.step('Navigate to dashboard', async () => {
       await gotoDashboardPage({ uid: DASHBOARD_UID });
-      await page.waitForSelector('svg:not([aria-hidden="true"])', { timeout: 10000 });
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
     });
 
     await test.step('Verify at least 5 visible SVG icons are rendered (3 mapped + 2 fixed)', async () => {
       const visibleSvgs = page.locator('[data-testid="data-testid panel content"] svg:not([aria-hidden="true"])');
-      const svgCount = await visibleSvgs.count();
-      expect(svgCount).toBeGreaterThanOrEqual(5);
+      // Icons render via react-inlinesvg, which fetches each source and inlines the <svg> on a
+      // later tick, so the count settles asynchronously. Poll instead of sampling a single frame.
+      await expect.poll(() => visibleSvgs.count(), { timeout: 10000 }).toBeGreaterThanOrEqual(5);
     });
 
     await test.step('Verify visible SVG icons have content', async () => {

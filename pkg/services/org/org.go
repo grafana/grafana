@@ -25,7 +25,6 @@ type Service interface {
 	// SearchOrgUsersByEmails returns org members whose emails match the given list.
 	// Email matching is case-insensitive. Service accounts are excluded from results.
 	SearchOrgUsersByEmails(context.Context, *SearchOrgUsersByEmailsQuery) ([]*OrgUserDTO, error)
-	RegisterDelete(query string)
 }
 
 type DeletionService interface {

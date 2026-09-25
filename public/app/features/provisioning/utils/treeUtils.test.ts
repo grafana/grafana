@@ -2,7 +2,17 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type TreeItem } from '../types';
 
-import { buildTree, filterTree, flattenTree, getItemType, getStatus, mergeFilesAndResources } from './treeUtils';
+import {
+  buildTree,
+  filterByStatusCategories,
+  filterTree,
+  flattenTree,
+  getIconName,
+  getItemType,
+  getStatus,
+  getStatusCategory,
+  mergeFilesAndResources,
+} from './treeUtils';
 
 // Mock data
 const mockFileDetails = {
@@ -29,6 +39,16 @@ const mockFolderResource: ResourceListItem = {
   hash: 'xyz789',
   folder: '',
   group: 'folder.grafana.app',
+};
+
+const mockPlaylistResource: ResourceListItem = {
+  path: 'my-playlist.json',
+  name: 'playlist-uid',
+  title: 'My Playlist',
+  resource: 'playlists',
+  hash: 'pl123',
+  folder: '',
+  group: 'playlist.grafana.app',
 };
 
 describe('mergeFilesAndResources', () => {
@@ -164,6 +184,12 @@ describe('getItemType', () => {
     expect(result).toBe('Folder');
   });
 
+  it('should return Playlist for playlist resources', () => {
+    const result = getItemType('my-playlist.json', mockPlaylistResource);
+
+    expect(result).toBe('Playlist');
+  });
+
   it('should return File for unsynced files regardless of extension', () => {
     const result = getItemType('some/path/file.json', undefined);
 
@@ -185,6 +211,21 @@ describe('getItemType', () => {
     const result = getItemType('some/path', unknownResource);
 
     expect(result).toBe('File');
+  });
+});
+
+describe('getIconName', () => {
+  it('should return the icon for a known resource-backed item type', () => {
+    expect(getIconName('Dashboard')).toBe('apps');
+    expect(getIconName('Folder')).toBe('folder');
+  });
+
+  it('should return the icon for a playlist item type', () => {
+    expect(getIconName('Playlist')).toBe('presentation-play');
+  });
+
+  it('should fall back to the file icon for the non-resource File type', () => {
+    expect(getIconName('File')).toBe('file-alt');
   });
 });
 
@@ -281,6 +322,20 @@ describe('buildTree', () => {
     expect(result[0].title).toBe('apple.json');
     expect(result[1].title).toBe('mango.json');
     expect(result[2].title).toBe('zebra.json');
+  });
+
+  it('should treat a nested item as a root when its parent folder is absent', () => {
+    // buildTree does not infer parent folders (mergeFilesAndResources does); given a nested
+    // path whose parent is not in the merged set, the node falls back to a root.
+    const mergedItems = [
+      { path: 'orphans/dashboard.json', file: { path: 'orphans/dashboard.json', size: '100', hash: 'h1' } },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('orphans/dashboard.json');
+    expect(result[0].children).toHaveLength(0);
   });
 
   it('should handle root-level items', () => {
@@ -395,6 +450,36 @@ describe('buildTree', () => {
 
     const result = buildTree(mergedItems);
 
+    expect(result[0].status).toBe('pending');
+  });
+
+  it('should set synced status for a playlist when file and resource hashes match', () => {
+    const mergedItems = [
+      {
+        path: 'my-playlist.json',
+        file: { path: 'my-playlist.json', size: '100', hash: 'pl123' },
+        resource: mockPlaylistResource, // mockPlaylistResource has hash: 'pl123'
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Playlist');
+    expect(result[0].status).toBe('synced');
+  });
+
+  it('should set pending status for a playlist when file and resource hashes differ', () => {
+    const mergedItems = [
+      {
+        path: 'my-playlist.json',
+        file: { path: 'my-playlist.json', size: '100', hash: 'different-hash' },
+        resource: mockPlaylistResource,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Playlist');
     expect(result[0].status).toBe('pending');
   });
 
@@ -983,6 +1068,76 @@ describe('flattenTree', () => {
 
     expect(result).toHaveLength(0);
   });
+
+  it('should mark folders expandable and expand everything when no expanded set is given', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        children: [{ path: 'folder/file.json', title: 'file.json', type: 'File', level: 0, children: [] }],
+      },
+    ];
+
+    const result = flattenTree(tree);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].isExpandable).toBe(true);
+    expect(result[0].isExpanded).toBe(true);
+    expect(result[1].isExpandable).toBe(false);
+    expect(result[1].isExpanded).toBe(false);
+  });
+
+  it('should hide children of folders that are not in the expanded set', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        children: [{ path: 'folder/file.json', title: 'file.json', type: 'File', level: 0, children: [] }],
+      },
+    ];
+
+    const result = flattenTree(tree, new Set());
+
+    expect(result).toHaveLength(1);
+    expect(result[0].item.path).toBe('folder');
+    expect(result[0].isExpandable).toBe(true);
+    expect(result[0].isExpanded).toBe(false);
+  });
+
+  it('should show children only for expanded folders', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        children: [
+          {
+            path: 'folder/subfolder',
+            title: 'Subfolder',
+            type: 'Folder',
+            level: 0,
+            children: [
+              { path: 'folder/subfolder/file.json', title: 'file.json', type: 'File', level: 0, children: [] },
+            ],
+          },
+        ],
+      },
+    ];
+
+    // Only the top folder is expanded, so its child folder shows but the grandchild file stays hidden.
+    const result = flattenTree(tree, new Set(['folder']));
+
+    expect(result).toHaveLength(2);
+    expect(result[0].item.path).toBe('folder');
+    expect(result[0].isExpanded).toBe(true);
+    expect(result[1].item.path).toBe('folder/subfolder');
+    expect(result[1].isExpanded).toBe(false);
+  });
 });
 
 describe('filterTree', () => {
@@ -1071,5 +1226,148 @@ describe('filterTree', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('config.json');
+  });
+});
+
+describe('getStatusCategory', () => {
+  const item = (overrides: Partial<TreeItem>): TreeItem => ({
+    path: 'a.json',
+    title: 'a',
+    type: 'Dashboard',
+    level: 0,
+    children: [],
+    ...overrides,
+  });
+
+  it('should return the sync status when there is no warning', () => {
+    expect(getStatusCategory(item({ status: 'synced' }), true)).toBe('synced');
+    expect(getStatusCategory(item({ status: 'pending' }), true)).toBe('pending');
+  });
+
+  it('should return undefined when there is no status', () => {
+    expect(getStatusCategory(item({ status: undefined }), true)).toBeUndefined();
+  });
+
+  it('should return warning when missing folder metadata and warnings are included', () => {
+    expect(getStatusCategory(item({ status: 'pending', missingFolderMetadata: true }), true)).toBe('warning');
+  });
+
+  it('should ignore missing folder metadata when warnings are not included', () => {
+    expect(getStatusCategory(item({ status: 'pending', missingFolderMetadata: true }), false)).toBe('pending');
+  });
+});
+
+describe('filterByStatusCategories', () => {
+  const sampleTree: TreeItem[] = [
+    {
+      path: 'dashboards',
+      title: 'Dashboards',
+      type: 'Folder',
+      level: 0,
+      status: 'pending',
+      children: [
+        {
+          path: 'dashboards/monitoring.json',
+          title: 'System Monitoring',
+          type: 'Dashboard',
+          level: 0,
+          status: 'synced',
+          children: [],
+        },
+        {
+          path: 'dashboards/sales.json',
+          title: 'Sales Report',
+          type: 'Dashboard',
+          level: 0,
+          status: 'pending',
+          children: [],
+        },
+      ],
+    },
+    {
+      path: 'reports',
+      title: 'Reports',
+      type: 'Folder',
+      level: 0,
+      status: 'synced',
+      children: [
+        {
+          path: 'reports/weekly.json',
+          title: 'Weekly',
+          type: 'Dashboard',
+          level: 0,
+          status: 'synced',
+          children: [],
+        },
+      ],
+    },
+  ];
+
+  it('should return all items when no categories are selected', () => {
+    expect(filterByStatusCategories(sampleTree, [])).toEqual(sampleTree);
+  });
+
+  it('should keep only pending items and their ancestor folders', () => {
+    const result = filterByStatusCategories(sampleTree, ['pending']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('dashboards');
+    expect(result[0].children).toHaveLength(1);
+    expect(result[0].children[0].path).toBe('dashboards/sales.json');
+  });
+
+  it('should keep only synced items and their ancestor folders', () => {
+    const result = filterByStatusCategories(sampleTree, ['synced']);
+
+    // Both folders have a synced descendant, and the synced 'reports' folder matches itself too.
+    expect(result).toHaveLength(2);
+    expect(result[0].path).toBe('dashboards');
+    expect(result[0].children).toHaveLength(1);
+    expect(result[0].children[0].path).toBe('dashboards/monitoring.json');
+    expect(result[1].path).toBe('reports');
+  });
+
+  it('should combine multiple categories', () => {
+    const result = filterByStatusCategories(sampleTree, ['synced', 'pending']);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].children).toHaveLength(2);
+  });
+
+  it('should keep a folder that matches itself even without matching children', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        status: 'pending',
+        children: [{ path: 'folder/a.json', title: 'a', type: 'Dashboard', level: 0, status: 'synced', children: [] }],
+      },
+    ];
+
+    const result = filterByStatusCategories(tree, ['pending']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('folder');
+    expect(result[0].children).toHaveLength(0);
+  });
+
+  it('should match the warning category only when warnings are included', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        status: 'pending',
+        missingFolderMetadata: true,
+        children: [],
+      },
+    ];
+
+    expect(filterByStatusCategories(tree, ['warning'], true)).toHaveLength(1);
+    // Without warnings included the item is categorized as pending, so 'warning' does not match.
+    expect(filterByStatusCategories(tree, ['warning'], false)).toHaveLength(0);
   });
 });

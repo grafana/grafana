@@ -28,6 +28,23 @@ title: Data source HTTP API
 
 If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
+## Endpoints
+
+| Method | URI                                    | Summary                                                                                        |
+| ------ | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| GET    | /api/datasources                       | [Get all data sources](#get-all-data-sources)                                                  |
+| GET    | /api/datasources/uid/:uid              | [Get a single data source by uid](#get-a-single-data-source-by-uid)                            |
+| GET    | /api/datasources/name/:name            | [Get a single data source by name](#get-a-single-data-source-by-name) (deprecated)             |
+| GET    | /api/datasources/id/:name              | [Get data source Id by name](#get-data-source-id-by-name) (deprecated)                         |
+| POST   | /api/datasources                       | [Create a data source](#create-a-data-source)                                                  |
+| PUT    | /api/datasources/uid/:uid              | [Update an existing data source](#update-an-existing-data-source)                              |
+| DELETE | /api/datasources/uid/:uid              | [Delete an existing data source by uid](#delete-an-existing-data-source-by-uid)                |
+| DELETE | /api/datasources/name/:datasourceName  | [Delete an existing data source by name](#delete-an-existing-data-source-by-name) (deprecated) |
+| GET    | /api/datasources/proxy/uid/:uid/\*     | [Data source proxy calls](#data-source-proxy-calls)                                            |
+| GET    | /api/datasources/uid/:uid/health       | [Check data source health](#check-data-source-health)                                          |
+| GET    | /api/datasources/uid/:uid/resources/\* | [Fetch data source resources](#fetch-data-source-resources)                                    |
+| POST   | /api/ds/query                          | [Query a data source](#query-a-data-source)                                                    |
+
 ## Get all data sources
 
 `GET /api/datasources`
@@ -52,7 +69,7 @@ See note in the [introduction](#data-source-api) for an explanation.
 GET /api/datasources HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -107,7 +124,7 @@ See note in the [introduction](#data-source-api) for an explanation.
 GET /api/datasources/uid/kLtEtcRGk HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -167,7 +184,7 @@ See note in the [introduction](#data-source-api) for an explanation.
 GET /api/datasources/name/test_datasource HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -227,7 +244,7 @@ See note in the [introduction](#data-source-api) for an explanation.
 GET /api/datasources/id/test_datasource HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -261,7 +278,7 @@ See note in the [introduction](#data-source-api) for an explanation.
 POST /api/datasources HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "name":"test_datasource",
@@ -316,7 +333,7 @@ By defining `password` and `basicAuthPassword` under `secureJsonData` Grafana en
 POST /api/datasources HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "name": "test_datasource",
@@ -373,7 +390,7 @@ Content-Type: application/json
 POST /api/datasources HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "name": "test_datasource",
@@ -411,7 +428,7 @@ See note in the [introduction](#data-source-api) for an explanation.
 PUT /api/datasources/uid/kLtEtcRGk HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "id":1,
@@ -497,7 +514,7 @@ See note in the [introduction](#data-source-api) for an explanation.
 DELETE /api/datasources/uid/kLtEtcRGk HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response**:
@@ -536,7 +553,7 @@ See note in the [introduction](#data-source-api) for an explanation.
 DELETE /api/datasources/name/test_datasource HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -571,7 +588,7 @@ Makes a call to the health endpoint of data source identified by the given `uid`
 GET api/datasources/uid/P8045C56BDA891CB2/health HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -600,7 +617,7 @@ Makes a call to the resources endpoint of data source identified by the given `u
 GET api/datasources/uid/P8045C56BDA891CB2/resources/dimension-keys?region=us-east-2&namespace=AWS%2FEC2&dimensionFilters=%7B%7D&metricName=CPUUtilization HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

@@ -59,7 +59,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
 	cfg.DisablePruner = db.IsTestDbSQLite()
 	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t)                //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
 		dbSection.Key("high_availability").SetValue("true")
@@ -71,7 +71,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	}
 	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -125,7 +125,7 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx, unitest.SQLKVBackendModeRVManager)
+		return unitest.NewTestSqlKvBackend(t, ctx, true)
 	}
 
 	opts := &unitest.TestOptions{
@@ -171,8 +171,7 @@ func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBacke
 	}
 
 	// Create search options
-	features := featuremgmt.WithFeatures()
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Create ResourceServer with search enabled
@@ -209,13 +208,40 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	unitest.RunTestSearchAndStorage(t, ctx, storage, searchBackend)
 }
 
+// TestIntegrationSearchBackedList runs the search-backed LIST contract against
+// each backend. It uses an isolated backend + index per subtest (the runner
+// builds indexes over everything the backend holds, so it must hold only the
+// resources under test). Batch-read assertions apply only to KV backends; the
+// legacy SQL backend takes the per-resource fallback.
+func TestIntegrationSearchBackedList(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	newBleve := func(t *testing.T) resource.SearchBackend {
+		sb, err := search.NewBleveBackend(search.BleveOptions{FileThreshold: 0, Root: t.TempDir()}, nil)
+		require.NoError(t, err)
+		t.Cleanup(sb.Stop)
+		return sb
+	}
+
+	t.Run("kv backend (batched reads)", func(t *testing.T) {
+		ctx := context.Background()
+		backend, _ := unitest.NewTestSqlKvBackend(t, ctx, true)
+		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true})
+	})
+
+	t.Run("sql backend (per-resource fallback)", func(t *testing.T) {
+		ctx := context.Background()
+		unitest.RunTestSearchBackedList(t, ctx, newTestBackend(t, false, 0, 0), newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: false})
+	})
+}
+
 func TestClientServer(t *testing.T) {
 	if db.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address
@@ -227,7 +253,7 @@ func TestClientServer(t *testing.T) {
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
 	require.NoError(t, err)
 
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
@@ -237,7 +263,7 @@ func TestClientServer(t *testing.T) {
 		_ = services.StopAndAwaitTerminated(ctx, grpcService)
 	})
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, grpcService,
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
 			return auth.Authenticate(ctx)
@@ -316,7 +342,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address
@@ -339,7 +365,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)
@@ -348,7 +374,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, grpcService,
+	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
 			return auth.Authenticate(ctx)

@@ -1089,8 +1089,8 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	panel["title"] = spec.Title
 	panel["pluginVersion"] = spec.VizConfig.Spec.PluginVersion
 
-	if spec.Description != "" {
-		panel["description"] = spec.Description
+	if spec.Description != nil && *spec.Description != "" {
+		panel["description"] = *spec.Description
 	}
 
 	// Convert vizConfig - use the plugin ID from VizConfig.Kind, not PanelKind.Kind
@@ -1148,6 +1148,10 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 				"id":      t.Spec.Id,
 				"options": t.Spec.Options,
 			}
+			// Add the static refId if set
+			if t.Spec.RefId != nil {
+				transformation["refId"] = *t.Spec.RefId
+			}
 			// Add disabled if set
 			if t.Spec.Disabled != nil {
 				transformation["disabled"] = *t.Spec.Disabled
@@ -1183,6 +1187,9 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	}
 	if queryOptions.TimeShift != nil {
 		panel["timeShift"] = *queryOptions.TimeShift
+	}
+	if queryOptions.TimeCompare != nil {
+		panel["timeCompare"] = *queryOptions.TimeCompare
 	}
 
 	// Convert transparent
@@ -2298,6 +2305,9 @@ func convertThresholdsToV1(thresholds *dashv2alpha1.DashboardThresholdsConfig) m
 			stepMap["value"] = *step.Value
 		} else {
 			stepMap["value"] = nil
+		}
+		if step.ValueExpr != nil {
+			stepMap["valueExpr"] = *step.ValueExpr
 		}
 		thresholdsMap["steps"] = append(thresholdsMap["steps"].([]map[string]interface{}), stepMap)
 	}

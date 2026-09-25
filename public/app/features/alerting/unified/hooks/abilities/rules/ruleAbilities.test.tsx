@@ -54,8 +54,10 @@ describe('useRuleAdministrationAbility', () => {
 
   it('grants update and delete when user has permissions and ruler is available', async () => {
     setFolderAccessControl({
+      'alert.rules:read': true,
       'alert.rules:write': true,
       'alert.rules:delete': true,
+      'folders:read': true,
     });
 
     const rule = getGrafanaRule();
@@ -71,8 +73,10 @@ describe('useRuleAdministrationAbility', () => {
 
   it('matches snapshot for a Grafana rule with all permissions granted', async () => {
     setFolderAccessControl({
+      'alert.rules:read': true,
       'alert.rules:write': true,
       'alert.rules:delete': true,
+      'folders:read': true,
     });
     grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
 
@@ -146,7 +150,7 @@ describe('useRuleAdministrationAbility', () => {
   });
 
   it('is editable (not IS_PLUGIN_MANAGED) when plugin origin label references a non-existent plugin', async () => {
-    setFolderAccessControl({ 'alert.rules:write': true });
+    setFolderAccessControl({ 'alert.rules:read': true, 'alert.rules:write': true, 'folders:read': true });
 
     const rule = getGrafanaRule({
       labels: { __grafana_origin: 'plugin/non-existent-plugin' },
@@ -193,7 +197,7 @@ describe('useRuleAdministrationAbility', () => {
   });
 
   it('grants restore and pause for Grafana-managed rules with edit permission', async () => {
-    setFolderAccessControl({ 'alert.rules:write': true });
+    setFolderAccessControl({ 'alert.rules:read': true, 'alert.rules:write': true, 'folders:read': true });
 
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
@@ -238,7 +242,12 @@ describe('useRuleAdministrationAbility', () => {
 
   it('returns INSUFFICIENT_PERMISSIONS for deletePermanently when user has delete permission but is not admin', async () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
-    setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
+    setFolderAccessControl({
+      'alert.rules:read': true,
+      'alert.rules:write': true,
+      'alert.rules:delete': true,
+      'folders:read': true,
+    });
 
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
@@ -257,7 +266,12 @@ describe('useRuleAdministrationAbility', () => {
 
   it('grants deletePermanently when user has delete permission and is admin', async () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
-    setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
+    setFolderAccessControl({
+      'alert.rules:read': true,
+      'alert.rules:write': true,
+      'alert.rules:delete': true,
+      'folders:read': true,
+    });
 
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);

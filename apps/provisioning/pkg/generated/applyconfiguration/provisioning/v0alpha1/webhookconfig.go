@@ -13,6 +13,11 @@ type WebhookConfigApplyConfiguration struct {
 	// and resource name are appended automatically. Trailing slashes are stripped.
 	// Must be a valid HTTP or HTTPS URL.
 	BaseURL *string `json:"baseUrl,omitempty"`
+	// Disabled turns off webhook integration for this repository. When true,
+	// Grafana will not register or receive webhook events from the Git provider
+	// and will poll the repository on an interval instead. Use this when Grafana
+	// is not reachable from the public internet.
+	Disabled *bool `json:"disabled,omitempty"`
 }
 
 // WebhookConfigApplyConfiguration constructs a declarative configuration of the WebhookConfig type for use with
@@ -26,5 +31,13 @@ func WebhookConfig() *WebhookConfigApplyConfiguration {
 // If called multiple times, the BaseURL field is set to the value of the last call.
 func (b *WebhookConfigApplyConfiguration) WithBaseURL(value string) *WebhookConfigApplyConfiguration {
 	b.BaseURL = &value
+	return b
+}
+
+// WithDisabled sets the Disabled field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Disabled field is set to the value of the last call.
+func (b *WebhookConfigApplyConfiguration) WithDisabled(value bool) *WebhookConfigApplyConfiguration {
+	b.Disabled = &value
 	return b
 }

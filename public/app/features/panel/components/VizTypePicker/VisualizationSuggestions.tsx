@@ -12,7 +12,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
-import { Alert, Button, EmptySearchResult, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
@@ -22,6 +22,7 @@ import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
 import { VisualizationCardGrid, type VisualizationCardGridGroup } from './VisualizationCardGrid';
+import { VizTypePicker } from './VizTypePicker';
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
 import { type VizTypeChangeDetails } from './types';
@@ -189,14 +190,10 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     return <NoDataPanelList searchQuery={searchQuery} panel={panel} onChange={onChange} />;
   }
 
+  // When the search matches no suggestions, fall back to the full panel list
+  // so users can still find and pick any visualization type.
   if (suggestions && suggestions.length === 0 && searchQuery) {
-    return (
-      <EmptySearchResult>
-        <Trans i18nKey="panel.viz-type-picker.could-anything-matching-query">
-          Could not find anything matching your query
-        </Trans>
-      </EmptySearchResult>
-    );
+    return <VizTypePicker pluginId={panel?.type ?? ''} searchQuery={searchQuery} onChange={onChange} />;
   }
 
   return (
@@ -240,6 +237,12 @@ function NoDataPanelList({ searchQuery, panel, onChange }: NoDataPanelListProps)
     const panels = meta.filter((p) => panelsWithoutData.has(p.id));
     return filterPluginList(panels, searchQuery ?? '', panel?.type);
   }, [searchQuery, panel?.type, meta]);
+
+  // When searching and no no-data panels match, fall back to the full panel list
+  // so users can still find and pick any visualization type.
+  if (searchQuery && noDataPanels.length === 0) {
+    return <VizTypePicker pluginId={panel?.type ?? ''} searchQuery={searchQuery} onChange={onChange} />;
+  }
 
   return (
     <>

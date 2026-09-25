@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -23,7 +22,6 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	teamapi "github.com/grafana/grafana/pkg/registry/apis/iam/team"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -45,15 +43,13 @@ type UserTeamREST struct {
 	client     resourcepb.ResourceIndexClient
 	teamGetter rest.Getter
 	tracer     trace.Tracer
-	features   featuremgmt.FeatureToggles
 }
 
-func NewUserTeamREST(client resourcepb.ResourceIndexClient, teamGetter rest.Getter, tracer trace.Tracer, features featuremgmt.FeatureToggles) *UserTeamREST {
+func NewUserTeamREST(client resourcepb.ResourceIndexClient, teamGetter rest.Getter, tracer trace.Tracer) *UserTeamREST {
 	return &UserTeamREST{
 		client:     client,
 		teamGetter: teamGetter,
 		tracer:     tracer,
-		features:   features,
 	}
 }
 
@@ -78,13 +74,6 @@ func (s *UserTeamREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//nolint:staticcheck // not migrated to OpenFeature
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsApi) {
-			responder.Error(apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
-				name, errors.New("functionality not available")))
-			return
-		}
-
 		ctx, span := s.tracer.Start(r.Context(), "user.teams")
 		defer span.End()
 
@@ -145,12 +134,14 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 					Namespace: requester.GetNamespace(),
 				},
 				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_MEMBERS,
+					Key:      builders.TEAM_SEARCH_MEMBERS,
 					Operator: string(selection.Equals),
 					Values:   []string{name},
 				}},
 			},
-			Limit: int64(limit),
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
+			Limit:        int64(limit),
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: resource.SEARCH_FIELD_NAME},
 			},
@@ -159,24 +150,23 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 		}
 
 		result, err := s.client.Search(ctx, searchRequest)
+		if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
+			responder.Error(err)
+			return
+		}
+		rows, err := decodeUserTeamSearchRows(result)
 		if err != nil {
 			responder.Error(apierrors.NewInternalError(err))
 			return
 		}
-		if result != nil && result.Error != nil {
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)))
-			return
-		}
-		if result == nil || result.Results == nil || len(result.Results.Rows) == 0 {
+		if len(rows) == 0 {
 			responder.Object(http.StatusOK, &iamv0alpha1.GetUserTeamsResponse{})
 			return
 		}
 
-		rows := result.Results.Rows
-		permIdx, externalIdx := cellIndexes(result.Results.Columns)
-		items, err := s.buildItems(common.WithSubresourceNamespace(ctx), rows, name, permIdx, externalIdx)
+		items, err := s.buildItems(common.WithSubresourceNamespace(ctx), rows, name)
 		if err != nil {
-			responder.Error(apierrors.NewInternalError(err))
+			responder.Error(err)
 			return
 		}
 
@@ -188,7 +178,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 		// last row's sort_fields, which the search backend will resolve
 		// into a "name > lastSeen" cursor on the next request.
 		if int64(len(rows)) >= int64(limit) {
-			lastSort := rows[len(rows)-1].GetSortFields()
+			lastSort := rows[len(rows)-1].sortFields
 			if len(lastSort) > 0 {
 				token, err := resource.NewSearchContinueToken(lastSort, result.ResourceVersion)
 				if err != nil {
@@ -202,24 +192,74 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 	}), nil
 }
 
-// buildItems projects search-result rows to UserTeam items. When the row
-// carries permission and external as inline cells (legacy-adapter path) we
-// build directly from them; otherwise we fan out parallel Team Gets to
-// extract the user's member entry from spec.members (unified path).
-func (s *UserTeamREST) buildItems(ctx context.Context, rows []*resourcepb.ResourceTableRow, userName string, permIdx, externalIdx int) ([]iamv0alpha1.GetUserTeamsUserTeam, error) {
-	items := make([]iamv0alpha1.GetUserTeamsUserTeam, len(rows))
-	hasInlineCells := permIdx >= 0 && externalIdx >= 0
+type userTeamSearchRow struct {
+	key        *resourcepb.ResourceKey
+	sortFields []string
+	permission string
+	external   bool
+	inline     bool
+}
 
-	if hasInlineCells {
+func decodeUserTeamSearchRows(result *resourcepb.ResourceSearchResponse) ([]userTeamSearchRow, error) {
+	if result == nil {
+		return nil, nil
+	}
+
+	switch result.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		table := result.GetResults()
+		if table == nil {
+			return nil, nil
+		}
+		permissionIdx, externalIdx := cellIndexes(table.Columns)
+		hasInlineCells := permissionIdx >= 0 && externalIdx >= 0
+		rows := make([]userTeamSearchRow, 0, len(table.Rows))
+		for _, row := range table.Rows {
+			if row == nil {
+				continue
+			}
+			rows = append(rows, userTeamSearchRow{
+				key:        row.Key,
+				sortFields: row.SortFields,
+				permission: cellString(row, permissionIdx),
+				external:   cellBool(row, externalIdx),
+				inline:     hasInlineCells,
+			})
+		}
+		return rows, nil
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		rows := make([]userTeamSearchRow, 0, len(result.Rows))
+		for i, row := range result.Rows {
+			if row == nil || row.Key == nil {
+				return nil, fmt.Errorf("field-value user team search result row %d has no resource key", i)
+			}
+			rows = append(rows, userTeamSearchRow{key: row.Key, sortFields: row.SortFields})
+		}
+		return rows, nil
+	default:
+		return nil, fmt.Errorf("unsupported search result format %d", result.GetResultFormat())
+	}
+}
+
+// buildItems projects search-result rows to UserTeam items. When the row
+// carries permission and external from the legacy adapter, we build directly
+// from them; otherwise we fan out parallel Team Gets to extract the user's
+// member entry from spec.members.
+func (s *UserTeamREST) buildItems(ctx context.Context, rows []userTeamSearchRow, userName string) ([]iamv0alpha1.GetUserTeamsUserTeam, error) {
+	if len(rows) == 0 {
+		return nil, nil
+	}
+	items := make([]iamv0alpha1.GetUserTeamsUserTeam, len(rows))
+	if rows[0].inline {
 		for i, row := range rows {
-			if row.Key == nil {
+			if row.key == nil {
 				continue
 			}
 			items[i] = iamv0alpha1.GetUserTeamsUserTeam{
 				User:       userName,
-				Team:       row.Key.Name,
-				Permission: cellString(row, permIdx),
-				External:   cellBool(row, externalIdx),
+				Team:       row.key.Name,
+				Permission: row.permission,
+				External:   row.external,
 			}
 		}
 		return compact(items), nil
@@ -234,11 +274,11 @@ func (s *UserTeamREST) buildItems(ctx context.Context, rows []*resourcepb.Resour
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(userTeamsGetParallelism)
 	for i, row := range rows {
-		if row.Key == nil {
+		if row.key == nil {
 			continue
 		}
 		g.Go(func() error {
-			teamObj, err := s.teamGetter.Get(gctx, row.Key.Name, &metav1.GetOptions{})
+			teamObj, err := s.teamGetter.Get(gctx, row.key.Name, &metav1.GetOptions{})
 			if apierrors.IsNotFound(err) {
 				return nil // team disappeared mid-flight; skip
 			}
@@ -255,7 +295,7 @@ func (s *UserTeamREST) buildItems(ctx context.Context, rows []*resourcepb.Resour
 			}
 			items[i] = iamv0alpha1.GetUserTeamsUserTeam{
 				User:       userName,
-				Team:       row.Key.Name,
+				Team:       row.key.Name,
 				Permission: string(m.Permission),
 				External:   m.External,
 			}

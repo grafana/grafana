@@ -69,6 +69,30 @@ var VariableResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
+var NotebookResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"notebooks", "notebook", "Notebook",
+	func() runtime.Object { return &Notebook{} },
+	func() runtime.Object { return &NotebookList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string", Description: "The notebook name"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			notebook, ok := obj.(*Notebook)
+			if ok && notebook != nil {
+				return []interface{}{
+					notebook.Name,
+					notebook.Spec.Title,
+					notebook.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			}
+			return nil, fmt.Errorf("expected notebook")
+		},
+	},
+)
+
 var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
@@ -88,6 +112,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&DashboardWithAccessInfo{},
 		&Variable{},
 		&VariableList{},
+		&Notebook{},
+		&NotebookList{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)

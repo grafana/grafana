@@ -38,11 +38,11 @@ const (
 var SocialBaseUrl = "/login/"
 
 type Service interface {
-	GetOAuthProviders() map[string]bool
-	GetOAuthHttpClient(string) (*http.Client, error)
-	GetConnector(string) (SocialConnector, error)
-	GetOAuthInfoProvider(string) *OAuthInfo
-	GetOAuthInfoProviders() map[string]*OAuthInfo
+	GetOAuthProviders(context.Context) (map[string]bool, error)
+	GetOAuthHttpClient(context.Context, string) (*http.Client, error)
+	GetConnector(context.Context, string) (SocialConnector, error)
+	GetOAuthInfoProvider(context.Context, string) (*OAuthInfo, error)
+	GetOAuthInfoProviders(context.Context) (map[string]*OAuthInfo, error)
 }
 
 //go:generate mockery --name SocialConnector --structname MockSocialConnector --outpkg socialtest --filename social_connector_mock.go --output ./socialtest/
@@ -97,6 +97,7 @@ type OAuthInfo struct {
 	TlsClientKey                string            `mapstructure:"tls_client_key" toml:"tls_client_key"`
 	TlsSkipVerify               bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure"`
 	TokenUrl                    string            `mapstructure:"token_url" toml:"token_url"`
+	TokenExchangeTimeout        int               `mapstructure:"token_exchange_timeout" toml:"token_exchange_timeout"`
 	UsePKCE                     bool              `mapstructure:"use_pkce" toml:"use_pkce"`
 	UseRefreshToken             bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
 	LoginPrompt                 string            `mapstructure:"login_prompt" toml:"login_prompt"`

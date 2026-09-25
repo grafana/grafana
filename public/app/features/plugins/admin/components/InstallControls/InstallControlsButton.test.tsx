@@ -259,9 +259,10 @@ describe('InstallControlsButton', () => {
       expect(link).toHaveTextContent(/contact us/i);
       expect(link).toHaveAttribute('href', expect.stringContaining('/plugins/test-plugin?tab=installation'));
       expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('aria-disabled', 'false');
     });
 
-    it('should render a disabled install button with a spinner when entitlement is loading', () => {
+    it('should render a disabled contact us link with a spinner when entitlement is loading', () => {
       render(
         <TestProvider>
           <InstallControlsButton
@@ -271,11 +272,11 @@ describe('InstallControlsButton', () => {
           />
         </TestProvider>
       );
-      const button = screen.getByRole('button');
-      expect(button).toHaveTextContent(/install/i);
-      expect(button).toBeDisabled();
-      expect(button.querySelector('svg')).toBeInTheDocument();
-      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+      const link = screen.getByRole('link');
+      expect(link).toHaveTextContent(/contact us/i);
+      expect(link).toHaveAttribute('aria-disabled', 'true');
+      expect(link.querySelector('svg')).toBeInTheDocument();
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
     it('should render the normal install button when the org is entitled', () => {

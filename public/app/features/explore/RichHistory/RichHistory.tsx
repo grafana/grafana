@@ -1,11 +1,11 @@
 import { debounce } from 'lodash';
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useRef } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { TabbedContainer, type TabConfig } from '@grafana/ui';
-import { createDatasourcesList } from 'app/core/utils/richHistory';
 import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
@@ -33,7 +33,7 @@ export interface RichHistoryProps {
   richHistorySearchFilters?: RichHistorySearchFilters;
   updateHistorySettings: (settings: RichHistorySettings) => void;
   updateHistorySearchFilters: (filters: RichHistorySearchFilters) => void;
-  loadRichHistory: () => void;
+  loadRichHistory: () => Promise<void>;
   loadMoreRichHistory: () => void;
   clearRichHistoryResults: () => void;
   deleteRichHistory: () => void;
@@ -46,6 +46,7 @@ export function RichHistory(props: RichHistoryProps) {
   const { richHistory, richHistoryTotal, height, deleteRichHistory, onClose, firstTab } = props;
 
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });
@@ -61,9 +62,28 @@ export function RichHistory(props: RichHistoryProps) {
     loadRichHistory();
   };
 
+  // Sequences concurrent loads so a stale resolution can't overwrite state that
+  // belongs to a newer request: an older rejection settling after a newer load,
+  // or an older success clearing an error raised by the latest filter change.
+  const latestLoadId = useRef(0);
+
   const loadRichHistory = debounce(() => {
-    props.loadRichHistory();
+    const loadId = ++latestLoadId.current;
     setLoading(true);
+    setLoadError(false);
+    props.loadRichHistory().then(
+      () => {
+        if (loadId === latestLoadId.current) {
+          setLoading(false);
+        }
+      },
+      () => {
+        if (loadId === latestLoadId.current) {
+          setLoading(false);
+          setLoadError(true);
+        }
+      }
+    );
   }, 300);
 
   const onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
@@ -78,12 +98,16 @@ export function RichHistory(props: RichHistoryProps) {
   const toggleActiveDatasourcesOnly = () =>
     updateSettings({ activeDatasourcesOnly: !props.richHistorySettings.activeDatasourcesOnly });
 
-  useEffect(() => {
-    setLoading(false);
-  }, [richHistory]);
-
   const exploreActiveDS = useSelector(selectExploreDSMaps);
-  const listOfDatasources = createDatasourcesList();
+  const {
+    items: dataSourceItems,
+    isLoading: isLoadingDatasources,
+    error: dsListError,
+  } = useDataSourceInstanceList({ mixed: true });
+  const listOfDatasources = useMemo(
+    () => dataSourceItems.map((ds) => ({ name: ds.name, uid: ds.uid })),
+    [dataSourceItems]
+  );
   const activeDatasources = exploreActiveDS.dsToExplore
     .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
     .filter((name): name is string => !!name);
@@ -96,6 +120,7 @@ export function RichHistory(props: RichHistoryProps) {
         queries={richHistory}
         totalQueries={richHistoryTotal || 0}
         loading={loading}
+        loadError={loadError}
         updateFilters={updateFilters}
         clearRichHistoryResults={() => props.clearRichHistoryResults()}
         loadMoreRichHistory={() => props.loadMoreRichHistory()}
@@ -104,6 +129,8 @@ export function RichHistory(props: RichHistoryProps) {
         height={height}
         activeDatasources={activeDatasources}
         listOfDatasources={listOfDatasources}
+        isLoadingDatasources={isLoadingDatasources}
+        dsListError={!!dsListError}
       />
     ),
     icon: 'history',
@@ -117,11 +144,16 @@ export function RichHistory(props: RichHistoryProps) {
         queries={richHistory}
         totalQueries={richHistoryTotal || 0}
         loading={loading}
+        loadError={loadError}
         updateFilters={updateFilters}
         clearRichHistoryResults={() => props.clearRichHistoryResults()}
         loadMoreRichHistory={() => props.loadMoreRichHistory()}
         richHistorySettings={props.richHistorySettings}
         richHistorySearchFilters={props.richHistorySearchFilters}
+        activeDatasources={activeDatasources}
+        listOfDatasources={listOfDatasources}
+        isLoadingDatasources={isLoadingDatasources}
+        dsListError={!!dsListError}
       />
     ),
     icon: 'star',

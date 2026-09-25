@@ -208,14 +208,25 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 		})
 
-		t.Run("are missing, PUT returns 404", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			cp := createInvalidContactPoint()
+		t.Run("are missing", func(t *testing.T) {
+			t.Run("PUT returns 404", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				cp := createInvalidContactPoint()
 
-			response := sut.RoutePutContactPoint(&rc, cp, "does not exist")
+				response := sut.RoutePutContactPoint(&rc, cp, "does not exist")
 
-			require.Equal(t, 404, response.Status())
+				require.Equal(t, 404, response.Status())
+			})
+
+			t.Run("DELETE is idempotent", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteDeleteContactPoint(&rc, "does not exist")
+
+				require.Equal(t, 202, response.Status())
+			})
 		})
 	})
 
@@ -1847,7 +1858,7 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
-			expectedRedactedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@email.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"[REDACTED]","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"[REDACTED]","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"[REDACTED]"},"disableResolveMessage":true}]}]}`
+			expectedRedactedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@example.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"[REDACTED]","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"[REDACTED]","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"[REDACTED]"},"disableResolveMessage":true}]}]}`
 			t.Run("decrypt false", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createProvisioningSrvSutFromEnv(t, &env)
@@ -1886,7 +1897,7 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
-				expectedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@email.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"some key","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"some secure slack webhook"},"disableResolveMessage":true}]}]}`
+				expectedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@example.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"some key","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"some secure slack webhook"},"disableResolveMessage":true}]}]}`
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
@@ -1907,7 +1918,7 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("yaml body content is as expected", func(t *testing.T) {
-			expectedRedactedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@email.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: '[REDACTED]'\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: '[REDACTED]'\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: '[REDACTED]'\n          disableResolveMessage: true\n"
+			expectedRedactedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@example.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: '[REDACTED]'\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: '[REDACTED]'\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: '[REDACTED]'\n          disableResolveMessage: true\n"
 			t.Run("decrypt false", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createProvisioningSrvSutFromEnv(t, &env)
@@ -1946,7 +1957,7 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
-				expectedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@email.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: testpass\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: some url\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: some key\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: some secure slack webhook\n          disableResolveMessage: true\n"
+				expectedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@example.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: testpass\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: some url\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: some key\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: some secure slack webhook\n          disableResolveMessage: true\n"
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
@@ -1987,8 +1998,8 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 						Receiver: postableReceiver.Name,
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{postableReceiver},
 			},
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{&postableReceiver}),
 		}
 
 		amConfig, err := legacy_storage.SerializeAlertmanagerConfig(postable)
@@ -2084,9 +2095,8 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 }
 
 func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
-	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies.
+	// These tests are focused on exports of named notification policies.
 	env := createTestEnv(t, testConfig) // testConfig should be unused here, we're overriding the policy service.
-	env.features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 
 	sut := createProvisioningSrvSutFromEnv(t, &env)
 	rev := legacy_storage.ConfigRevision{
@@ -2095,7 +2105,7 @@ func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 	p := newFakeNotificationPolicyService(rev)
 	sut.policies = p
 
-	policies := []string{legacy_storage.UserDefinedRoutingTreeName} //nolint:prealloc
+	policies := []string{models.DefaultRoutingTreeName} //nolint:prealloc
 	for policy := range policy_exports.Config().ManagedRoutes {
 		policies = append(policies, policy)
 	}
@@ -2149,12 +2159,12 @@ func TestApiGetSnapshots(t *testing.T) {
 	cfg := policy_exports.Config()
 
 	// Route
-	cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
+	cfg.AlertmanagerConfig.Route = v1.RouteToModel(legacy_storage.WithManagedRoutes(cfg))
 
 	// Templates
-	t1 := v1.NewTemplateGroup("templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
-	t2 := v1.NewTemplateGroup("templateB", "{{ define \"templateB\" }}B{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
-	t3 := v1.NewTemplateGroup("templateC", "{{ define \"templateC\" }}C{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t1 := v1.NewTemplateGroup("", "templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t2 := v1.NewTemplateGroup("", "templateB", "{{ define \"templateB\" }}B{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t3 := v1.NewTemplateGroup("", "templateC", "{{ define \"templateC\" }}C{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
 	cfg.Templates = map[v1.ResourceUID]v1.TemplateGroup{
 		t1.UID: t1,
 		t2.UID: t2,
@@ -2177,7 +2187,10 @@ func TestApiGetSnapshots(t *testing.T) {
 	receiver := models.ReceiverGen(models.ReceiverMuts.WithName(allIntegrationsName), models.ReceiverMuts.WithIntegrations(allIntegrations...))()
 	postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&receiver)
 	require.NoError(t, err)
-	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, postableReceiver)
+	if cfg.Receivers == nil {
+		cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
+	}
+	cfg.Receivers[v1.ReceiverUID(postableReceiver.Name)] = postableReceiver
 
 	// Mute Timings
 	location, err := time.LoadLocation("America/Montreal")
@@ -2209,34 +2222,16 @@ func TestApiGetSnapshots(t *testing.T) {
 			Location: &timeinterval.Location{Location: location},
 		}
 	}
-	cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals,
-		v1.MuteTimeInterval{
-			Name: "MuteTimeIntervalA",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-		v1.MuteTimeInterval{
-			Name: "MuteTimeIntervalB",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-	)
-	cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals,
-		v1.TimeInterval{
-			Name: "TimeIntervalA",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-		v1.TimeInterval{
-			Name: "TimeIntervalB",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-	)
+	// Add to the intervals already present in the base config (referenced by routes) rather than
+	// replacing the map, otherwise the route references become dangling and validation fails.
+	for _, interval := range []v1.TimeInterval{
+		v1.NewTimeInterval("MuteTimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval("MuteTimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval("TimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval("TimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+	} {
+		cfg.TimeIntervals[interval.UID] = interval
+	}
 
 	amConfig, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
 	require.NoError(t, err)
@@ -2307,7 +2302,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	// Encrypt secure settings.
 	c, err := notifier.Load([]byte(testConfig))
 	require.NoError(t, err)
-	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(c.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
@@ -2316,7 +2311,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	require.NoError(t, err)
 
 	log := log.NewNopLogger()
-	sqlStore, _ := db.InitTestDBWithCfg(t)
+	sqlStore, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -2435,7 +2430,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	tracer := tracing.InitializeTracerForTest()
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(&env.store, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
-	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
+	routeAccess := ac.NewRouteAccess[*v1.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
 	rs := routes.NewService(configStore, env.store, env.xact, env.settings, env.features, env.log, validation.ValidateProvenanceRelaxed, tracer, routeAccess)
 
 	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](env.ac, true)
@@ -2454,6 +2449,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		false,
 		nil,
 		&notifier.NoopOrgEmailValidator{},
+		notifier.NoopReceiverStatusFetcher{},
 	)
 	provisionRouteService := routes.NewService(
 		configStore,
@@ -2472,7 +2468,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs, validation.ValidateProvenanceRelaxed),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz, provisioning.NoopRuleMutationValidator{}),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
 	}
@@ -2518,7 +2514,7 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error) {
 	return routes.NewFakeService(f.config).GetManagedRoute(ctx, orgID, name, user)
 }
 
@@ -2769,7 +2765,7 @@ var testConfig = `
 				"name": "email receiver",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@email.com>"
+					"addresses": "<example@example.com>"
 				}
 			}]
 		}],
@@ -2831,7 +2827,7 @@ var testContactPointConfig = `
             "type":"email",
             "disableResolveMessage":false,
             "settings":{
-               "addresses":"<example@email.com>"
+               "addresses":"<example@example.com>"
             },
             "secureSettings":{}
          }

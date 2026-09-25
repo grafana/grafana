@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -160,5 +161,5 @@ func (f *FakeOrgStore) Count(ctx context.Context, _ *quota.ScopeParameters) (*qu
 	return nil, nil
 }
 
-func (f *FakeOrgStore) RegisterDelete(query string) {
+func (f *FakeOrgStore) RegisterDelete(renderer orgdelete.Renderer) {
 }

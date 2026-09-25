@@ -6,7 +6,7 @@ import { type Observable } from 'rxjs';
 import { type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 import { type GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
 
-export const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
+const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
 
 /**
  * Stores the uid of the last 5 data sources selected by the user. The last UID is the one most recently used.

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -140,13 +141,31 @@ func TestService_ReportSummary(t *testing.T) {
 	}
 }
 
+func TestService_ReportSummary_SetsServiceIdentity(t *testing.T) {
+	client := &mockClient{}
+	service := &Service{
+		cfg:             &setting.Cfg{StackID: "test-stack"},
+		namespace:       "stacks-0",
+		clientGenerator: func(ctx context.Context) (resource.Client, error) { return client, nil },
+	}
+
+	_, err := service.ReportSummary(context.Background())
+	assert.NoError(t, err)
+
+	requester, err := identity.GetRequester(client.listCtx)
+	assert.NoError(t, err, "expected a requester on the context passed to List")
+	assert.NotNil(t, requester)
+}
+
 type mockClient struct {
 	resource.Client
 	listItems []resource.Object
 	listErr   error
+	listCtx   context.Context
 }
 
 func (m *mockClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error) {
+	m.listCtx = ctx
 	if m.listErr != nil {
 		return nil, m.listErr
 	}

@@ -442,6 +442,8 @@ lineage: schemas: [{
 			// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 			// Nulls currently appear here when serializing -Infinity to JSON.
 			value: number | null @grafanamaturity(NeedsExpertReview)
+			// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+			valueExpr?: string
 			// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 			color: string @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
@@ -538,6 +540,8 @@ lineage: schemas: [{
 		#DataTransformerConfig: {
 			// Unique identifier of transformer
 			id: string
+			// Unique identifier of the instance of the transformer
+			refId?: string
 			// Disabled transformations are skipped
 			disabled?: bool
 			// Optional frame matcher. When missing it will be applied to all results

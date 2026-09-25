@@ -29,6 +29,7 @@ import (
 
 type UnifiedStorageGrpcService interface {
 	services.NamedService
+	grpcserver.HealthProbe
 }
 
 var (
@@ -98,6 +99,24 @@ type distributorServer struct {
 	tracing        trace.Tracer
 }
 
+// Search servers register as JOINING and become ACTIVE only after building
+// their indexes. Requiring an ACTIVE entry would keep distributors unready
+// during a cold start or full search-server rollout.
+func (ds *distributorServer) ringPopulated() error {
+	if state := ds.ring.State(); state != services.Running {
+		return fmt.Errorf("ring is not running: state=%s", state)
+	}
+	if ds.ring.InstancesCount() == 0 {
+		return errors.New("search server ring has no instances")
+	}
+	return nil
+}
+
+func (ds *distributorServer) CheckHealth(_ context.Context) (bool, error) {
+	err := ds.ringPopulated()
+	return err == nil, err
+}
+
 func newSearchRingReadOp(extendReplicaSet bool) ring.Operation {
 	// The distributor routes search-related requests only to ACTIVE instances.
 	// Replica-set extension is configurable to avoid forcing replacement pods to open large local indexes during rollouts.
@@ -151,8 +170,30 @@ func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.Vec
 	if r.Key != nil {
 		ns = r.Key.Namespace
 	}
-	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, metadata.MD{}), ns)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = make(metadata.MD)
+	}
+	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), ns)
 	return client.(*RingClient).Client.VectorSearch(ctx, r)
+}
+
+// HybridSearch needs the namespace's local bleve index for its lexical
+// leg, so it routes namespace-sticky like Search — not random like
+// VectorSearch (pgvector is reachable from any pod).
+func (ds *distributorServer) HybridSearch(ctx context.Context, r *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.HybridSearch")
+	defer span.End()
+
+	var ns string
+	if r.Key != nil {
+		ns = r.Key.Namespace
+	}
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, ns, "HybridSearch")
+	if err != nil {
+		return nil, err
+	}
+	return client.HybridSearch(ctx, r)
 }
 
 func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
@@ -192,10 +233,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	errorCh := make(chan error, expectedInstances)
 
 	for _, inst := range rs.Instances {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			client, err := ds.clientPool.GetClientForInstance(inst)
 			if err != nil {
 				errorCh <- fmt.Errorf("instance %s: failed to get client, %w", inst.Id, err)
@@ -203,13 +241,8 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
-			if err != nil {
-				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
-				return
-			}
-
-			if rsp.Error != nil {
-				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, rsp.Error.Message)
+			if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %w", inst.Id, err)
 				return
 			}
 
@@ -219,7 +252,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			responseCh <- rsp
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -335,7 +368,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	if ds.ring.State() == services.Running {
+	if err := ds.ringPopulated(); err == nil {
 		return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 	}
 

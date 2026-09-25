@@ -22,6 +22,7 @@ var _ resource.StatsGetter = &backend{}
 // GetStats implements resource.ResourceIndexServer.
 // This will use the SQL index to count values
 func (b *backend) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	b.logCall("GetStats")
 	ctx, span := tracer.Start(ctx, "sql.backend.GetStats")
 	defer span.End()
 

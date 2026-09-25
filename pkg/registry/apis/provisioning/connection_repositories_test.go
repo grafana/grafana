@@ -19,37 +19,9 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-// mockConnectionGetter implements ConnectionGetter for testing
-type mockConnectionGetter struct {
-	conn connection.Connection
-	err  error
-}
-
-func (m *mockConnectionGetter) GetConnection(ctx context.Context, name string) (connection.Connection, error) {
-	return m.conn, m.err
-}
-
-// mockConnection implements connection.Connection for testing
-type mockConnection struct {
-	repos []provisioning.ExternalRepository
-	err   error
-}
-
-func (m *mockConnection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*connection.ExpirableSecureValue, error) {
-	return nil, connection.ErrNotImplemented
-}
-
-func (m *mockConnection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
-	return m.repos, m.err
-}
-
-func (m *mockConnection) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	return nil, connection.ErrNotImplemented
-}
-
 func TestConnectionRepositoriesConnector(t *testing.T) {
-	mockGetter := &mockConnectionGetter{}
-	connector := NewConnectionRepositoriesConnector(mockGetter)
+	access := NewMockConnectionRepositoriesAccess(t)
+	connector := NewConnectionRepositoriesConnector(access)
 
 	t.Run("New returns ExternalRepositoryList", func(t *testing.T) {
 		obj := connector.New()
@@ -100,8 +72,10 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 		ctx := context.Background()
 		responder := &mockResponder{}
 
-		mockGetter.conn = nil
-		mockGetter.err = apierrors.NewNotFound(provisioning.ConnectionResourceInfo.GroupResource(), "test-connection")
+		access.EXPECT().
+			GetConnection(mock.Anything, "test-connection").
+			Return(nil, apierrors.NewNotFound(provisioning.ConnectionResourceInfo.GroupResource(), "test-connection")).
+			Once()
 
 		handler, err := connector.Connect(ctx, "test-connection", nil, responder)
 		require.NoError(t, err)
@@ -125,8 +99,9 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 			{Name: "repo2", Owner: "owner2", URL: "https://github.com/owner2/repo2"},
 		}
 
-		mockGetter.conn = &mockConnection{repos: expectedRepos}
-		mockGetter.err = nil
+		conn := connection.NewMockConnection(t)
+		conn.EXPECT().ListRepositories(mock.Anything).Return(expectedRepos, nil).Once()
+		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(conn, nil).Once()
 
 		handler, err := connector.Connect(ctx, "test-connection", nil, responder)
 		require.NoError(t, err)
@@ -151,8 +126,34 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 		ctx := context.Background()
 		responder := &mockResponder{}
 
-		mockGetter.conn = &mockConnection{err: errors.New("github API error")}
-		mockGetter.err = nil
+		conn := connection.NewMockConnection(t)
+		conn.EXPECT().ListRepositories(mock.Anything).Return(nil, errors.New("github API error")).Once()
+		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(conn, nil).Once()
+
+		handler, err := connector.Connect(ctx, "test-connection", nil, responder)
+		require.NoError(t, err)
+		require.NotNil(t, handler)
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		require.True(t, responder.called)
+		require.NotNil(t, responder.err)
+		require.True(t, apierrors.IsInternalError(responder.err))
+	})
+
+	t.Run("Connect invalidates connection health on authentication failure", func(t *testing.T) {
+		ctx := context.Background()
+		responder := &mockResponder{}
+
+		conn := connection.NewMockConnection(t)
+		conn.EXPECT().ListRepositories(mock.Anything).Return(nil, connection.ErrAuthentication).Once()
+		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(conn, nil).Once()
+		access.EXPECT().
+			GetConnectionSpec(mock.Anything, "test-connection").
+			Return(nil, errors.New("not found")).
+			Once()
 
 		handler, err := connector.Connect(ctx, "test-connection", nil, responder)
 		require.NoError(t, err)
@@ -223,11 +224,11 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		}
 
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("test-token")).
-			Return(mockClient)
+			New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).
+			Return(mockClient, nil)
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("someToken")).
-			Return(mockClient)
+			New(mock.Anything, common.RawSecureValue("someToken"), mock.Anything).
+			Return(mockClient, nil)
 		mockClient.EXPECT().
 			CreateInstallationAccessToken(mock.Anything, "789012", "").
 			Return(github.InstallationToken{Token: "someToken"}, nil)
@@ -244,13 +245,10 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 			},
 		)
 
-		// Setup connection getter
-		mockGetter := &mockConnectionGetter{
-			conn: &ghConn,
-			err:  nil,
-		}
+		access := NewMockConnectionRepositoriesAccess(t)
+		access.EXPECT().GetConnection(mock.Anything, "test-github-connection").Return(&ghConn, nil).Once()
 
-		connector := NewConnectionRepositoriesConnector(mockGetter)
+		connector := NewConnectionRepositoriesConnector(access)
 
 		// Test the endpoint
 		handler, err := connector.Connect(ctx, "test-github-connection", nil, responder)
@@ -310,11 +308,11 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		mockClient := github.NewMockClient(t)
 
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("test-token")).
-			Return(mockClient)
+			New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).
+			Return(mockClient, nil)
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("someToken")).
-			Return(mockClient)
+			New(mock.Anything, common.RawSecureValue("someToken"), mock.Anything).
+			Return(mockClient, nil)
 		mockClient.EXPECT().
 			CreateInstallationAccessToken(mock.Anything, "789012", "").
 			Return(github.InstallationToken{Token: "someToken"}, nil)
@@ -331,13 +329,10 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 			},
 		)
 
-		// Setup connection getter
-		mockGetter := &mockConnectionGetter{
-			conn: &ghConn,
-			err:  nil,
-		}
+		access := NewMockConnectionRepositoriesAccess(t)
+		access.EXPECT().GetConnection(mock.Anything, "test-github-connection").Return(&ghConn, nil).Once()
 
-		connector := NewConnectionRepositoriesConnector(mockGetter)
+		connector := NewConnectionRepositoriesConnector(access)
 
 		// Test the endpoint
 		handler, err := connector.Connect(ctx, "test-github-connection", nil, responder)
@@ -358,13 +353,12 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		ctx := context.Background()
 		responder := &mockResponder{}
 
-		// Create a mock connection that returns ErrNotImplemented
-		mockGetter := &mockConnectionGetter{
-			conn: &mockConnection{err: connection.ErrNotImplemented},
-			err:  nil,
-		}
+		conn := connection.NewMockConnection(t)
+		conn.EXPECT().ListRepositories(mock.Anything).Return(nil, connection.ErrNotImplemented).Once()
+		access := NewMockConnectionRepositoriesAccess(t)
+		access.EXPECT().GetConnection(mock.Anything, "test-gitlab-connection").Return(conn, nil).Once()
 
-		connector := NewConnectionRepositoriesConnector(mockGetter)
+		connector := NewConnectionRepositoriesConnector(access)
 
 		handler, err := connector.Connect(ctx, "test-gitlab-connection", nil, responder)
 		require.NoError(t, err)

@@ -6,7 +6,8 @@ import {
   type CorrelationSpec,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { type DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-import { config, type CorrelationData, type CorrelationsData, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { config, type CorrelationData, type CorrelationsData, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';
@@ -134,7 +135,7 @@ export const createCorrelation = async (
 
 const getDSInstanceForPane = async (pane: ExploreItemState) => {
   if (pane.datasourceInstance?.meta.mixed) {
-    return await getDataSourceSrv().get(pane.queries[0].datasource);
+    return await getDataSourceInstance(pane.queries[0].datasource);
   } else {
     return pane.datasourceInstance;
   }
@@ -182,11 +183,10 @@ export const generatePartialEditSpec = (data: EditFormDTO, correlation: Correlat
 };
 
 export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> => {
-  const dsSrv = getDataSourceSrv();
-  const sourceDs = await dsSrv.get(data.sourceUID);
+  const sourceDs = await getDataSourceInstance(data.sourceUID);
   let targetDs;
   if ('targetUID' in data && data.targetUID !== undefined) {
-    targetDs = await dsSrv.get(data.targetUID!);
+    targetDs = await getDataSourceInstance(data.targetUID!);
   }
 
   return {
@@ -204,6 +204,7 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
 };
 
 // legacy just needs uid for lookup, remote storage needs name/group
+// this is just for retrieving in explore, so pagination features are not needed
 export const getCorrelationsFromStorage = async (
   dispatch: ThunkDispatch,
   queries: DataQuery[],
@@ -224,8 +225,7 @@ export const getCorrelationsFromStorage = async (
             array.findIndex((ref2) => ref2?.uid === ref?.uid && ref2?.type === ref?.type) === index
         );
     } else {
-      const dataSourceSrv = getDataSourceSrv();
-      const instanceDS = await dataSourceSrv.get(instanceUid);
+      const instanceDS = await getDataSourceInstance(instanceUid);
       const instanceDSRef = instanceDS.getRef();
       queryDSRefList = [instanceDSRef];
     }
@@ -246,9 +246,9 @@ export const getCorrelationsFromStorage = async (
       })
     );
     // this is just for retrieving in explore, so pagination features are not needed
-    const enrichedCorr = (data?.items ?? [])
-      .map((item) => toEnrichedCorrelationDataK8s(item))
-      .filter((i) => i !== undefined);
+    const enrichedCorr = (
+      await Promise.all((data?.items ?? []).map((item) => toEnrichedCorrelationDataK8s(item)))
+    ).filter((i) => i !== undefined);
     correlations = {
       correlations: enrichedCorr,
       page: 0,

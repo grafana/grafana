@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -10,31 +10,19 @@ test.use({
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 
 test.describe('Mobile sidebar', { tag: ['@dashboards'] }, () => {
-  test('hides sidebar by default in view mode', async ({ gotoDashboardPage, selectors, page }) => {
+  test('can show and hide the sidebar on-demand (hidden by default)', async ({ gotoDashboardPage, sidebar }) => {
     await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    await expect(sidebar.getContainer()).not.toBeVisible();
+    await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
 
-    await expect(page.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeVisible();
-    await expect(page.getByTestId(selectors.components.Sidebar.container)).not.toBeVisible();
-  });
+    await sidebar.toolbar.getVisibilityToggle().click();
 
-  test('can show the sidebar and dock toggle is absent', async ({ gotoDashboardPage, selectors, page }) => {
-    await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    await expect(sidebar.getContainer()).toBeVisible();
+    await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
 
-    await page.getByTestId(selectors.components.Sidebar.showHideToggle).click();
+    await sidebar.toolbar.getVisibilityToggle().click();
 
-    await expect(page.getByTestId(selectors.components.Sidebar.container)).toBeVisible();
-    await expect(page.getByTestId(selectors.components.Sidebar.dockToggle)).not.toBeVisible();
-  });
-
-  test('can hide the sidebar again after showing it', async ({ gotoDashboardPage, selectors, page }) => {
-    await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-
-    await page.getByTestId(selectors.components.Sidebar.showHideToggle).click();
-    await expect(page.getByTestId(selectors.components.Sidebar.container)).toBeVisible();
-
-    await page.getByTestId(selectors.components.Sidebar.showHideToggle).click();
-
-    await expect(page.getByTestId(selectors.components.Sidebar.container)).not.toBeVisible();
-    await expect(page.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeVisible();
+    await expect(sidebar.getContainer()).not.toBeVisible();
+    await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
   });
 });

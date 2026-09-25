@@ -12,7 +12,7 @@ import (
 type ImportedConfigRevision struct {
 	identifier     string
 	rev            *ConfigRevision
-	importedConfig *v1.PostableApiAlertingConfig
+	importedConfig *v1.ExtraAlertmanagerConfig
 }
 
 func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
@@ -37,71 +37,64 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	if e.importedConfig == nil {
 		return nil, nil
 	}
-	original := e.rev.Config.AlertmanagerConfig.GetReceivers()
-	merged, _ := merge.Receivers(original, e.importedConfig.GetReceivers(), e.identifier)
+	imported, err := e.importedConfig.ToGrafanaReceivers()
+	if err != nil {
+		return nil, err
+	}
+	merged, _, added := merge.Receivers(e.rev.Config.Receivers, imported, e.identifier)
 
 	capacity := len(uids)
 	if capacity == 0 {
-		capacity = len(e.importedConfig.Receivers)
+		capacity = len(added)
 	}
 	result := make([]*models.Receiver, 0, capacity)
-	// merged config contains all receivers from both. We only want the ones from the staged config. However, we need to rename them if necessary.
-	for _, r := range merged[len(original):] {
-		uid := NameToUid(r.Name)
-		if len(uids) > 0 && !slices.Contains(uids, uid) {
+	// added contains only the UIDs of the receivers from the staged config, renamed if necessary.
+	for _, uid := range added {
+		if len(uids) > 0 && !slices.Contains(uids, string(uid)) {
 			continue
 		}
-		recv, err := PostableApiReceiverToReceiver(r, models.ProvenanceConvertedPrometheus, models.ResourceOriginImported)
+		r, ok := merged[uid]
+		if !ok {
+			continue
+		}
+		recv, err := PostableApiReceiverToReceiver(r, models.ResourceOriginImported)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
+
+		recv.Provenance = models.ProvenanceConvertedPrometheus
 		result = append(result, recv)
 	}
 	return result, nil
 }
 
-func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, error) {
+func (e ImportedConfigRevision) GetTimeIntervals() ([]v1.TimeInterval, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
 
 	// Get original imported intervals (before deduplication)
-	importedMute := e.importedConfig.GetMuteTimeIntervals()
-	importedTime := e.importedConfig.GetTimeIntervals()
-
-	if len(importedMute) == 0 && len(importedTime) == 0 {
+	imported := e.importedConfig.ToGrafanaTimeIntervals()
+	if len(imported) == 0 {
 		return nil, nil
 	}
 
-	// Get Grafana time intervals for merge
-	grafanaMute := e.rev.Config.AlertmanagerConfig.MuteTimeIntervals
-	grafanaTime := e.rev.Config.AlertmanagerConfig.TimeIntervals
-
 	// Merge to get the renames map (only renamed if name collision occurs)
-	_, renames := merge.TimeIntervals(
-		grafanaMute,
-		grafanaTime,
-		importedMute,
-		importedTime,
+	timeIntervals, _, added := merge.TimeIntervals(
+		e.rev.Config.TimeIntervals,
+		imported,
 		e.identifier,
 	)
 
-	// Apply renames to imported intervals
-	result := make([]v1.MuteTimeInterval, 0, len(importedTime)+len(importedMute))
-
-	pushRenamed := func(mt v1.MuteTimeInterval) {
-		if newName, renamed := renames[mt.Name]; renamed {
-			mt.Name = newName
+	result := make([]v1.TimeInterval, 0, len(added))
+	for _, uid := range added {
+		ti, ok := timeIntervals[uid]
+		if !ok {
+			continue
 		}
-		result = append(result, mt)
-	}
 
-	for _, ti := range importedTime {
-		pushRenamed(v1.MuteTimeInterval(ti))
-	}
-
-	for _, mti := range importedMute {
-		pushRenamed(mti)
+		ti.Provenance = models.ProvenanceConvertedPrometheus
+		result = append(result, ti)
 	}
 
 	return result, nil
@@ -113,8 +106,8 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 		return nil
 	}
 	m := make(map[string]int)
-	receiverUseCounts([]*v1.Route{e.importedConfig.Route}, m)
-	_, renames := merge.Receivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.identifier)
+	receiverUseCounts([]*v1.Route{e.importedConfig.ToGrafanaRoute()}, m)
+	_, renames, _ := merge.Receivers(e.rev.Config.Receivers, e.importedConfig.ReceiverNameStubs(), e.identifier)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
 			delete(m, original)
@@ -124,22 +117,24 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 	return m
 }
 
-func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
+func (e ImportedConfigRevision) GetManagedRoute() (*v1.ManagedRoute, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
 
-	renamed := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.identifier)
+	route := e.importedConfig.ToGrafanaRoute()
 
-	merge.RenameResourceUsagesInRoutes([]*v1.Route{e.importedConfig.Route}, renamed)
+	renamed := merge.DeduplicateResources(*e.rev.Config, *e.importedConfig, e.identifier)
 
-	mr := NewManagedRoute(e.identifier, e.importedConfig.Route)
+	merge.RenameResourceUsagesInRoutes([]*v1.Route{route}, renamed)
+
+	mr := v1.NewManagedRoute(e.identifier, route)
 	mr.Provenance = models.ProvenanceConvertedPrometheus
 	mr.Origin = models.ResourceOriginImported
 	return mr, nil
 }
 
-func (e ImportedConfigRevision) GetInhibitRules() (v1.ManagedInhibitionRules, error) {
+func (e ImportedConfigRevision) GetInhibitRules() (map[v1.ResourceUID]v1.InhibitionRule, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -149,5 +144,19 @@ func (e ImportedConfigRevision) GetInhibitRules() (v1.ManagedInhibitionRules, er
 		return nil, nil
 	}
 
-	return merge.BuildManagedInhibitionRules(e.identifier, importedRules)
+	// provide the existing inhibition rules from the config so the merged resources names are stable
+	merged, addedUIOs, err := merge.MergeInhibitionRules(e.rev.Config.InhibitionRules, importedRules, e.identifier)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[v1.ResourceUID]v1.InhibitionRule, len(addedUIOs))
+	for _, uio := range addedUIOs {
+		m, ok := merged[v1.ResourceUID(uio)]
+		if !ok {
+			continue
+		}
+		m.Provenance = models.ProvenanceConvertedPrometheus
+		result[v1.ResourceUID(uio)] = m
+	}
+	return result, nil
 }

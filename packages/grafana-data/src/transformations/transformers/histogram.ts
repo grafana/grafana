@@ -389,7 +389,7 @@ export function buildHistogram(
           if (!Number.isNaN(noValue)) {
             field = nullToValueField(field, noValue);
           } else {
-            field = { ...field, values: field.values.filter((v) => v != null) };
+            field = { ...field, values: field.values.filter((v) => Number.isFinite(v)) };
           }
         }
 

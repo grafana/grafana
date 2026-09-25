@@ -14,7 +14,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-GRAFANA_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+GRAFANA_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 
 # Source and destination directories for the generated API client
 ENTERPRISE_SCOPE_API_DIR="$GRAFANA_ROOT/public/app/extensions/api/clients/scope/v0alpha1"
@@ -30,7 +30,7 @@ if [ ! -f "data/openapi/scope.grafana.app-v0alpha1.json" ]; then
 fi
 
 echo "Step 1: Generating Enterprise API client from OpenAPI spec..."
-yarn workspace @grafana/api-clients process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts
+yarn workspace @grafana/openapi process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts
 
 if [ ! -f "$ENTERPRISE_SCOPE_API_DIR/endpoints.gen.ts" ]; then
   echo "Error: Enterprise endpoints.gen.ts not found after generation"

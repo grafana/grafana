@@ -1,4 +1,4 @@
-SELECT p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
+SELECT{{ if not .Query.Action }} p.action,{{ end }} p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
 INNER JOIN (
   SELECT role_id FROM {{ .Ident .BuiltinRoleTable }} as br WHERE (br.role = {{ .Arg .Query.Role }} AND (br.org_id = {{ .Arg .Query.OrgID }} OR br.org_id = 0))
     {{ if .Query.IsServerAdmin }}
@@ -13,9 +13,11 @@ INNER JOIN (
   SELECT role_id FROM {{ .Ident .TeamRoleTable }} as tr WHERE tr.team_id IN ({{ .ArgList .Query.TeamIDs }}) AND tr.org_id = {{ .Arg .Query.OrgID }}
   {{ end }}
 ) as roles ON p.role_id = roles.role_id
+{{ if .Query.Action }}
 WHERE
   {{ if .Query.ActionSets }}
   p.action IN ({{ .ArgList .Query.ActionSets }}, {{ .Arg .Query.Action }})
   {{ else }}
   p.action = {{ .Arg .Query.Action }}
   {{ end }}
+{{ end }}

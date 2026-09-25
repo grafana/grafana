@@ -125,7 +125,7 @@ export interface NotifierDTO<T = NotifierType> {
   deprecated?: boolean;
 }
 
-export interface NotificationChannelType {
+interface NotificationChannelType {
   value: string;
   label: string;
   description: string;
@@ -135,30 +135,7 @@ export interface NotificationChannelType {
   info?: string;
 }
 
-export interface NotificationChannelDTO {
-  [key: string]: string | boolean | number | SelectableValue<string>;
-  id: number;
-  name: string;
-  type: SelectableValue<string>;
-  sendReminder: boolean;
-  disableResolveMessage: boolean;
-  frequency: string;
-  settings: ChannelTypeSettings;
-  secureSettings: NotificationChannelSecureSettings;
-  secureFields: NotificationChannelSecureFields;
-  isDefault: boolean;
-}
-
-export type NotificationChannelSecureSettings = Record<string, string | number>;
 export type NotificationChannelSecureFields = Record<string, boolean | ''>;
-
-export interface ChannelTypeSettings {
-  [key: string]: any;
-  autoResolve: true;
-  httpMethod: string;
-  severity: string;
-  uploadImage: boolean;
-}
 
 export interface OptionMeta {
   required?: string | ValidationRule<boolean>;
@@ -241,32 +218,4 @@ export interface AlertRulesState {
   items: AlertRule[];
   searchQuery: string;
   isLoading: boolean;
-}
-
-export interface AlertNotification {
-  isDefault: boolean;
-  name: string;
-  id: number;
-  type: string;
-}
-
-export interface AnnotationItemDTO {
-  id: number;
-  alertId: number;
-  alertName: string;
-  dashboardId: number;
-  panelId: number;
-  userId: number;
-  newState: string;
-  prevState: string;
-  created: number;
-  updated: number;
-  time: number;
-  timeEnd: number;
-  text: string;
-  tags: string[];
-  login: string;
-  email: string;
-  avatarUrl: string;
-  data: any;
 }

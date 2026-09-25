@@ -19,10 +19,11 @@ import {
   type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
+  type TableResponse,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
+import { removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardDataDTO, type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
@@ -37,7 +38,7 @@ import {
   type ListDashboardHistoryOptions,
   type ListDeletedDashboardsOptions,
 } from './types';
-import { buildRestorePayload, isV2StoredVersion } from './utils';
+import { buildRestorePayload, fetchDeletedDashboard, isV2StoredVersion } from './utils';
 
 export function getK8sV1DashboardApiConfig() {
   return {
@@ -190,11 +191,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
       }
 
-      // Inject source link for repo-managed dashboards
-      const sourceLink = await buildSourceLink(annotations);
-      if (sourceLink) {
-        const linksWithoutSource = removeExistingSourceLinks(result.dashboard.links);
-        result.dashboard.links = [sourceLink, ...linksWithoutSource];
+      // Strip runtime-injected source links that older Grafana versions committed to the
+      // dashboard JSON. Source links now live in the managed badge and are never persisted.
+      if (managerKind === ManagerKind.Repo && result.dashboard.links?.length) {
+        result.dashboard.links = removeExistingSourceLinks(result.dashboard.links);
       }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
@@ -307,8 +307,16 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     });
   }
 
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions) {
-    return await this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
+    return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  async getDeletedDashboard(name: string): Promise<Resource<DashboardDataDTO> | undefined> {
+    return fetchDeletedDashboard(this.client, name);
+  }
+
+  async getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<DashboardDataDTO>> {
+    return this.client.get(name, params);
   }
 
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {

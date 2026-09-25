@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
@@ -5,6 +6,7 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import {
   setupAlertmanagerConfigMapDefaultState,
@@ -13,6 +15,7 @@ import {
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { resetHistorianState } from 'app/features/alerting/unified/mocks/server/handlers/historian';
 import { resetUserStorage } from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
+import { resetAppPluginMetas } from 'app/features/alerting/unified/testSetup/plugins';
 import { type DashboardDTO } from 'app/types/dashboard';
 import { type FolderDTO } from 'app/types/folders';
 import {
@@ -275,10 +278,7 @@ export function mockDashboardApi(server: SetupServer) {
         (hit, index, hits) => hits.findIndex((candidate) => candidate.name === hit.name) === index
       );
 
-      server.use(
-        http.get(`/api/search`, () => HttpResponse.json(results)),
-        getCustomSearchHandler([...folderHits, ...dashboards])
-      );
+      server.use(getCustomSearchHandler([...folderHits, ...dashboards]));
     },
     dashboard: (response: DashboardDTO) => {
       const k8sResponse = {
@@ -317,6 +317,23 @@ export function setupMswServer() {
     setupBackendSrv();
   });
 
+  // Rule permissions and the rule editor's folder picker read folders through the facades in
+  // app/api/clients/folder, which default to the app platform API. Only the legacy /api/folders
+  // handlers exist here, so pin the flag off.
+  // TODO: add app platform folder fixtures (folders/:name plus its access and parents
+  // subresources) and drop this, so these tests cover the API that production actually uses.
+  beforeEach(() => {
+    setTestFlags({ foldersAppPlatformAPI: false });
+  });
+
+  afterEach(async () => {
+    // The act wrap is needed because clearing the flag fires OpenFeature events while components
+    // are still mounted.
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
   afterEach(() => {
     // Reset any other necessary mock entities/state
     setupAlertmanagerConfigMapDefaultState();
@@ -324,6 +341,7 @@ export function setupMswServer() {
     resetRoutingTreeMap();
     resetUserStorage();
     resetHistorianState();
+    resetAppPluginMetas();
   });
 
   return server;

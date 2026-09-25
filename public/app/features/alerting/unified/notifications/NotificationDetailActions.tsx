@@ -7,7 +7,10 @@ import { appEvents } from 'app/core/app_events';
 
 import MoreButton from '../components/MoreButton';
 import { DeclareIncidentMenuItem } from '../components/bridges/DeclareIncidentButton';
-import { useCanCreateSilences, useCanViewContactPoints } from '../hooks/useAbilities';
+import { isGranted } from '../hooks/abilities/abilityUtils';
+import { useGlobalContactPointAbility } from '../hooks/abilities/alertmanager/useContactPointAbility';
+import { useGlobalSilenceAbility } from '../hooks/abilities/alertmanager/useSilenceAbility';
+import { ContactPointAction, SilenceAction } from '../hooks/abilities/types';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../utils/misc';
 import { createRelativeUrl } from '../utils/url';
 
@@ -19,8 +22,8 @@ interface NotificationActionsMenuProps {
 
 export function NotificationActionsMenu({ notification }: NotificationActionsMenuProps) {
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
-  const canViewContactPoint = useCanViewContactPoints();
-  const canSilence = useCanCreateSilences();
+  const canViewContactPoint = useGlobalContactPointAbility(ContactPointAction.View).granted;
+  const canSilence = isGranted(useGlobalSilenceAbility({ action: SilenceAction.Create }));
 
   const shouldShowDeclareIncident = !isOpenSourceEdition() || isLocalDevEnv();
 

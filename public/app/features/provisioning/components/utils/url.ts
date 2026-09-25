@@ -9,6 +9,7 @@ export const getBranchUrl = (baseUrl: string, branch: string, repoType?: string)
   const cleanBaseUrl = buildCleanBaseUrl(baseUrl);
 
   switch (repoType) {
+    case 'githubEnterprise':
     case 'github':
       return `${cleanBaseUrl}/tree/${branch}`;
     case 'gitlab':

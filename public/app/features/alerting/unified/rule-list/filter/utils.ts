@@ -3,43 +3,6 @@ import { type RulesFilter, buildRoutingFilter } from '../../search/rulesSearchPa
 
 import { type AdvancedFilters } from './types';
 
-export function formAdvancedFiltersToRuleFilter(
-  values: AdvancedFilters,
-  existingFreeFormWords: string[] = []
-): RulesFilter {
-  return {
-    freeFormWords: existingFreeFormWords,
-    ruleName: values.ruleName || undefined,
-    namespace: values.namespace || undefined,
-    groupName: values.groupName || undefined,
-    dataSourceNames: values.dataSourceNames ?? [],
-    labels: values.labels ?? [],
-    dashboardUid: values.dashboardUid || undefined,
-    ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
-    ruleState: values.ruleState === '*' ? undefined : values.ruleState,
-    ruleType: values.ruleType === '*' ? undefined : values.ruleType,
-    plugins: values.plugins === 'show' ? undefined : 'hide',
-    ruleSource: values.ruleSource ?? undefined,
-    ...buildRoutingFilter(values.contactPoint || undefined, values.policy || undefined),
-  };
-}
-
-export const emptyAdvancedFilters: AdvancedFilters = {
-  namespace: null,
-  groupName: null,
-  ruleName: '',
-  ruleType: '*',
-  ruleState: '*',
-  dataSourceNames: [],
-  labels: [],
-  ruleHealth: '*',
-  dashboardUid: undefined,
-  plugins: 'show',
-  contactPoint: null,
-  ruleSource: null,
-  policy: null,
-};
-
 export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWords: string[] = []): RulesFilter {
   return {
     freeFormWords,

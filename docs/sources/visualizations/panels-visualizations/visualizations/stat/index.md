@@ -121,7 +121,7 @@ Use the following options to refine how your visualization displays its values:
 | ------ | ----------- |
 | Show | Display a single value per column or series, or show values for each row. Choose from: <ul><li>**Calculate** - Display a calculated value based on all rows.</li><li>**All values** - Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.</li> |
 | Calculation | This option is displayed when you select **Calculate** as your **Show** option. Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
-| Limit | This option is displayed when you select **All values** as your **Show** option. Set the maximum number of rows to display. Default is 5,000. |
+| Limit | This option is displayed when you select **All values** as your **Show** option. Set the maximum number of rows to display. The default is 25 and the maximum is 5,000. |
 | Fields | Select the fields displayed in the visualization. |
 
 <!-- prettier-ignore-end -->
@@ -133,11 +133,11 @@ The stat visualization automatically adjusts the layout depending on available w
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Orientation | Select a stacking direction. Choose from: <ul><li>**Auto** - Grafana selects the ideal orientation.</li><li>**Horizontal** - Bars stretch horizontally, left to right.</li><li>**Vertical** - Bars stretch vertically, top to bottom.</li></ul> |
+| Orientation | Select the stat tile layout. Choose from: <ul><li>**Auto** - Grafana selects the ideal orientation.</li><li>**Horizontal** - Stat tiles are arranged left to right.</li><li>**Vertical** - Stat tiles are arranged top to bottom.</li></ul> |
 | [Text mode](#text-mode) | You can use the **Text mode** option to control what text the visualization renders. If the value is not important, only the name and color is, then change the **Text mode** to **Name**. The value will still be used to determine color and is displayed in a tooltip. |
 | [Wide layout](#wide-layout) | Set whether wide layout is enabled or not. Wide layout is enabled by default. This option is only applicable when **Text mode** is set to **Value and name**. |
 | Color mode | Select a color mode. Choose from: <ul><li>**None** - No color applied to the value.</li><li>**Value** - Applies color to the value and graph area.</li><li>**Background Gradient** - Applies color to the value, graph area, and background, with a slight background gradient.</li><li>**Background Solid** - Applies color to the value, graph area, and background, with a solid background color.</li></ul> |
-| Graph mode | Select a graph sparkline mode. Choose from: <ul><li>**None** - Hides the graph sparkline and only shows the value.</li><li>**Area** - Shows the graph sparkline below the value. This requires that your query returns a time column.</li></ul> The graph sparkline is automatically hidden if the panel becomes too small.|
+| Graph mode | Select a graph sparkline mode. Choose from: <ul><li>**None** - Hides the graph sparkline and only shows the value.</li><li>**Area** - Shows the graph sparkline in the background of the value. This requires that your query returns a time column.</li></ul> The graph sparkline is automatically hidden if the panel becomes too small.|
 | Text alignment | Select an alignment mode. Choose from: <ul><li>**Auto** - If only a single value is shown (no repeat), then the value is centered. If multiple series or rows are shown, then the value is left-aligned.</li><li>**Center** - Stat value is centered.</li></ul> |
 | Show percent change | Set whether percent change is displayed or not. Disabled by default. This option is applicable when the **Show** setting, under **Value options**, is set to **Calculate**. |
 | Percent change color mode | This option is only displayed when **Show percent change** is enabled. Choose from: <ul><li>**Standard** - Green if the percent change is positive, red if the percent change is negative.</li><li>**Inverted** - Red if the percent change is positive, green if the percent change is negative.</li><li>**Same as Value** - Use the same color as the value.</li></ul> |
@@ -147,7 +147,7 @@ The stat visualization automatically adjusts the layout depending on available w
 
 You can use the Text mode option to control what text the visualization renders. If the value is not important, only the name and color is, then change the **Text mode** to **Name**. The value will still be used to determine color and is displayed in a tooltip.
 
-- **Auto** - If the data contains multiple series or fields, show both name and value.
+- **Auto** - If the data contains multiple series or fields, show both name and value. Grafana also shows both name and value when the panel has no title or the field has a display name.
 - **Value** - Show only value, never name. Name is displayed in the hover tooltip instead.
 - **Value and name** - Always show value and name.
 - **Name** - Show name instead of value. Value is displayed in the hover tooltip.
@@ -164,10 +164,11 @@ This option is only applicable when **Text mode** is set to **Value and name**. 
 
 ### Text size
 
-Adjust the sizes of the gauge text.
+Adjust the sizes of the stat text.
 
-- **Title** - Enter a numeric value for the gauge title size.
-- **Value** - Enter a numeric value for the gauge value size.
+- **Title** - Enter a numeric value for the stat title size.
+- **Value** - Enter a numeric value for the stat value size.
+- **Percent change** - Enter a numeric value for the percent change size when **Show percent change** is enabled.
 
 ### Standard options
 

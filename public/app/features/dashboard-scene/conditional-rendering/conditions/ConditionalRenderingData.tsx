@@ -1,6 +1,7 @@
 import { type ReactElement, useMemo } from 'react';
 
 import { LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   type CancelActivationHandler,
@@ -14,7 +15,7 @@ import {
 import { type ConditionalRenderingDataKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { edit } from '../../actions/utils/edit';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
@@ -192,10 +193,11 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
       ruleId="data"
     >
       <Combobox
+        data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.data.select}
         options={enableConditionOptions}
         value={enableConditionOption}
         onChange={({ value: newValue }) => {
-          dashboardEditActions.edit({
+          edit({
             description: t('dashboard.edit-actions.edit-query-result-rule', 'Change query result rule'),
             source: model,
             perform: () => model.changeValue(Boolean(newValue)),

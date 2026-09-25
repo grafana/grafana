@@ -1,1 +1,0 @@
-{"results":[{"statement_id":0,"series":[{"name":"cpu","columns":["time","mean_usage_guest","mean_usage_nice","mean_usage_idle"],"values":[[1697984400000,1111,1112,1113],[1697984700000,2221,2222,2223],[1697985000000,3331,3332,3333],[1697985300000,4441,4442,4443]]}]}]}

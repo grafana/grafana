@@ -23,132 +23,144 @@ description: Learn about the features of a Grafana dashboard
 weight: 100
 image_maps:
   - key: annotated-dashboard
-    src: /media/docs/grafana/dashboards/screenshot-ann-dashboards-v12.4.png
+    src: /media/docs/grafana/dashboards/screenshot-dashboard-image-map-v13.1.png
     alt: An annotated image of a Grafana dashboard
     points:
       - x_coord: 8
-        y_coord: 5
+        y_coord: 4
         content: |
           **Dashboard folder**
 
           Click the dashboard folder name to access the folder and perform other [folder management tasks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/).
       - x_coord: 17
-        y_coord: 5
+        y_coord: 4
         content: |
           **Dashboard title**
 
           Create your own dashboard titles or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
-      - x_coord: 23
-        y_coord: 5
+      - x_coord: 22.5
+        y_coord: 4
         content: |
           **Mark as favorite**
 
           Mark the dashboard as one of your favorites to include it in your list of **Starred** dashboards in the main menu.
       - x_coord: 27
-        y_coord: 5
+        y_coord: 4
         content: |
           **Public label**
 
           [Externally shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/shared-dashboards/), it's marked with the **Public** label.
-      - x_coord: 84
-        y_coord: 5
+      - x_coord: 85
+        y_coord: 4
         content: |
           **Grafana Assistant**
 
           [Grafana Assistant](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/introduction/) combines large language models with Grafana-integrated tools.
-      - x_coord: 89
-        y_coord: 5
+      - x_coord: 90
+        y_coord: 4
         content: |
           **Invite new users**
 
           Invite new users to join your Grafana organization.
-      - x_coord: 32
-        y_coord: 23
+      - x_coord: 35
+        y_coord: 21
         content: |
-          **Variables**
+          **Variables and filters**
 
-          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/), including filters, to create more interactive and dynamic dashboards.
-      - x_coord: 45
-        y_coord: 23
+          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/) and [filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/), to create more interactive and dynamic dashboards.
+      - x_coord: 48
+        y_coord: 21
         content: |
           **Dashboard links**
 
           Link to other dashboards, panels, and external websites. Learn more about [dashboard links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/).
-      - x_coord: 59
-        y_coord: 29
+      - x_coord: 62.5
+        y_coord: 27.5
         content: |
           **Current dashboard time range and time picker**
 
           Select [relative time range](#relative-time-range) options or set custom [absolute time ranges](#absolute-time-range).
           You can also change the **Timezone** and **Fiscal year** settings by clicking the **Change time settings** button.
-      - x_coord: 67
-        y_coord: 29
+      - x_coord: 73
+        y_coord: 27.5
         content: |
           **Time range zoom out**
 
           Click to zoom out the time range. Learn more about [common time range controls](#common-time-range-controls).
-      - x_coord: 73
-        y_coord: 29
+      - x_coord: 78
+        y_coord: 27.5
         content: |
           **Refresh dashboard**
 
           Trigger queries and refresh dashboard data.
-      - x_coord: 78
-        y_coord: 29
+      - x_coord: 83
+        y_coord: 27.5
         content: |
           **Auto refresh control**
 
           Select a dashboard auto refresh time interval.
-      - x_coord: 85
-        y_coord: 29
+      - x_coord: 87.5
+        y_coord: 27.5
         content: |
           **Share dashboard**
 
           Access [dashboard sharing](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/) options.
       - x_coord: 98
-        y_coord: 22.5
+        y_coord: 20
         content: |
           **Edit**
 
           Enter edit mode, so you can make changes and access dashboard settings.
       - x_coord: 98
-        y_coord: 31
+        y_coord: 27
         content: |
           **Export**
 
           Access [dashboard exporting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
       - x_coord: 98
-        y_coord: 39
+        y_coord: 34
         content: |
           **Content outline**
 
           The outline provides a tree-like structure that lets you quickly navigate the dashboard.
       - x_coord: 98
-        y_coord: 47
+        y_coord: 41
+        content: |
+          **Filters overview**
+
+          Open the [filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/) overview drawer.
+      - x_coord: 98
+        y_coord: 48
         content: |
           **Dashboard insights**
 
           View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, query counts.
-      - x_coord: 93.5
-        y_coord: 75
+      - x_coord: 98
+        y_coord: 58
+        content: |
+          **Hide**
+
+          Click to hide the sidebar and toolbar.
+      - x_coord: 94
+        y_coord: 85
         content: |
           **Toolbar**
 
-          A dashboard toolbar.
-      - x_coord: 11.5
-        y_coord: 30
+          The dashboard toolbar.
+      - x_coord: 11
+        y_coord: 28.5
         content: |
           **Row title**
 
           A row is one way you can [group panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-groupings) in a dashboard.
-      - x_coord: 20
-        y_coord: 36
+      - x_coord: 19
+        y_coord: 34
         content: |
           **Tab title**
 
           A tab is one way you can [group panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-groupings) in a dashboard.
-      - x_coord: 21
-        y_coord: 45
+      - x_coord: 20
+        y_coord: 44
         content: |
           **Panel title**
 
@@ -159,8 +171,8 @@ image_maps:
           **Dashboard panel**
 
           The [panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-overview/) is the primary building block of a dashboard.
-      - x_coord: 19.5
-        y_coord: 91
+      - x_coord: 10
+        y_coord: 89
         content: |
           **Panel legend**
 
@@ -200,7 +212,7 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 - `e`: Toggle panel edit view
 - `v`: Toggle panel full screen view
-- `pu`: Open share panel link configuration
+- `pu`: Copy panel share link
 - `pe`: Open share panel embed configuration
 - `ps`: Open share panel snapshot configuration
 - `pd`: Duplicate panel
@@ -358,29 +370,9 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 
 ## Filter dashboard data
 
-After you've [added a filter](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
+Filters help you narrow the data displayed in a dashboard.
+
+After you've added a filter in the dashboard settings, you can create label/value filter pairs on the dashboard.
 These filters are applied to all metric queries that use the specified data source and to all panels on the dashboard.
 
-To filter dashboard data, follow these steps:
-
-1. On the dashboard, click in the filter field.
-1. Select a label, operator, and value.
-
-   To add multiple values for one label, choose one of the multi-select operators, **One of** (`=|`) or **Not one of** (`!=|`). These operators only appear if the filter data source supports it.
-
-1. Repeat this process as needed until you have all the filters you need.
-
-   ![Filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
-
-### Edit or delete filters
-
-To edit or delete filters, follow these steps:
-
-1. On the dashboard, click anywhere on the filter you want to change.
-1. Do one of the following:
-   - To edit the operator or value of a filter, click anywhere on the filter and update it.
-
-     ![Editing a filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
-
-   - To change the filter label, you must delete the filter and create a new one.
-   - To delete a filter, click the **X** next to it.
+To learn more, refer to the [Filter and Group by documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).

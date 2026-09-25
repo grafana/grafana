@@ -1,11 +1,19 @@
 import { useMemo } from 'react';
 
 import { getContactPointInUseRoutes, getContactPointInUseRules } from '@grafana/alerting/unstable';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
-import { notificationsPermissions } from '../../../utils/access-control';
-import { type EntityToCheck, canDeleteEntity, canEditEntity, shouldUseK8sApi } from '../../../utils/k8s/utils';
+import {
+  externalContactPointPermissions as EXTERNAL_AM_PERMISSIONS,
+  grafanaContactPointPermissions as PERMISSIONS,
+} from '../../../utils/alertmanagerPermissions';
+import {
+  type EntityToCheck,
+  canDeleteEntity,
+  canEditEntity,
+  canTestEntity,
+  shouldUseK8sApi,
+} from '../../../utils/k8s/utils';
 import { makeAbility, makeScopedAbility } from '../abilityUtils';
 import { type Ability, ContactPointAction, Granted, InUse, InsufficientPermissions } from '../types';
 
@@ -15,31 +23,8 @@ export type ContactPointAbilityParam =
   | { action: ContactPointAction.BulkExport }
   | { action: ContactPointAction.Update; context?: EntityToCheck }
   | { action: ContactPointAction.Delete; context: EntityToCheck }
-  | { action: ContactPointAction.Export; context: EntityToCheck };
-
-/** Permissions for the Grafana-managed alertmanager (internal k8s API). */
-const PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
-  [ContactPointAction.View]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
-  [ContactPointAction.Create]: [notificationsPermissions.create.grafana, AccessControlAction.AlertingReceiversCreate],
-  [ContactPointAction.Update]: [notificationsPermissions.update.grafana, AccessControlAction.AlertingReceiversWrite],
-  [ContactPointAction.Delete]: [notificationsPermissions.delete.grafana, AccessControlAction.AlertingReceiversDelete],
-  [ContactPointAction.Export]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
-  [ContactPointAction.BulkExport]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
-};
-
-/** Permissions for external alertmanagers (Mimir, Cortex, Vanilla Alertmanager, etc.). */
-const EXTERNAL_AM_PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
-  [ContactPointAction.View]: [notificationsPermissions.read.external],
-  [ContactPointAction.Create]: [notificationsPermissions.create.external],
-  [ContactPointAction.Update]: [notificationsPermissions.update.external],
-  [ContactPointAction.Delete]: [notificationsPermissions.delete.external],
-  [ContactPointAction.Export]: [notificationsPermissions.read.external],
-  [ContactPointAction.BulkExport]: [], // Not applicable — gated by isGrafanaAlertmanager
-};
-
-export const PERMISSIONS_CONTACT_POINTS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
-  (permissions) => permissions
-);
+  | { action: ContactPointAction.Export; context: EntityToCheck }
+  | { action: ContactPointAction.Test; context?: EntityToCheck };
 
 /**
  * Global (unscoped) contact point ability check.
@@ -111,6 +96,23 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
           return makeAbility(hasConfigurationAPI, permissions[ContactPointAction.Export]);
         }
         return makeScopedAbility(hasConfigurationAPI, permissions[ContactPointAction.Export], payload.context);
+
+      case ContactPointAction.Test:
+        // The k8s integration-test endpoint exists only on the Grafana AM.
+        if (!isGrafanaAlertmanager || !hasConfigurationAPI) {
+          return makeAbility(false, PERMISSIONS[ContactPointAction.Test]);
+        }
+        // When we have a context (existing contact point), defer to the server-set canTest
+        // annotation. Deliberately bypass makeScopedAbility: provisioned contact points CAN
+        // still be tested when the user holds the test:create RBAC action, so we must not
+        // apply the provisioning guard that makeScopedAbility adds for Update/Delete.
+        if (usingK8sApi && payload.context !== undefined) {
+          return canTestEntity(payload.context)
+            ? Granted
+            : InsufficientPermissions(PERMISSIONS[ContactPointAction.Test]);
+        }
+        // New contact point (no context yet) — fall back to pure RBAC.
+        return makeAbility(true, PERMISSIONS[ContactPointAction.Test]);
     }
   }, [payload, hasConfigurationAPI, isGrafanaAlertmanager, selectedAlertmanager]);
 }

@@ -2,8 +2,9 @@ import memoizeOne from 'memoize-one';
 
 import { type AbsoluteTimeRange, type LogRowModel, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getBackendSrv, config, locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
+import { copyTextToClipboard } from '@grafana/ui';
 import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -15,7 +16,7 @@ import { extractErrorMessage } from '../../api/utils';
 import { type ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 import { notifyApp } from '../reducers/appNotification';
 
-import { copyStringToClipboard } from './explore';
+import { isOnPrem } from './isOnPrem';
 
 function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
@@ -23,9 +24,16 @@ function buildHostUrl() {
 
 export function buildShortUrl(k8sShortUrl: ShortURL) {
   const key = k8sShortUrl.metadata.name;
-  const orgId = k8sShortUrl.metadata.namespace;
   const hostUrl = buildHostUrl();
-  return `${hostUrl}/goto/${key}?orgId=${orgId}`;
+  // The resource namespace is not the org ID — it is `default`, `org-<id>` or
+  // `stacks-<id>`. On-prem is multi-org, so carry the current user's org ID in
+  // the query param; Cloud doesn't support multi-org, so the param would just
+  // be noise (`orgId=1`) and is omitted.
+  if (isOnPrem()) {
+    const orgId = config.bootData.user.orgId;
+    return `${hostUrl}/goto/${key}?orgId=${orgId}`;
+  }
+  return `${hostUrl}/goto/${key}`;
 }
 
 function getRelativeURLPath(url: string) {
@@ -33,45 +41,33 @@ function getRelativeURLPath(url: string) {
   return path.startsWith('/') ? path.substring(1, path.length) : path;
 }
 
-const createShortLinkLegacy = async (path: string): Promise<string> => {
-  const shortLink = await getBackendSrv().post(`/api/short-urls`, {
-    path: getRelativeURLPath(path),
-  });
-  return shortLink.url;
-};
-
 // Memoized API call, to not re-execute the same request multiple times
-// this function creates a shortURL using the legacy or the new k8s api depending on the feature toggle
 export const createShortLink = memoizeOne(async (path: string): Promise<string> => {
   try {
-    if (config.featureToggles.useKubernetesShortURLsAPI) {
-      // Use RTK API - it handles caching/failures/retries automatically
-      const result = await dispatch(
-        shortURLAPIv1beta1.endpoints.createShortUrl.initiate({
-          shortUrl: {
-            apiVersion: 'shorturl.grafana.app/v1beta1',
-            kind: 'ShortURL',
-            metadata: {},
-            spec: {
-              path: getRelativeURLPath(path),
-            },
+    // Use RTK API - it handles caching/failures/retries automatically
+    const result = await dispatch(
+      shortURLAPIv1beta1.endpoints.createShortUrl.initiate({
+        shortUrl: {
+          apiVersion: 'shorturl.grafana.app/v1beta1',
+          kind: 'ShortURL',
+          metadata: {},
+          spec: {
+            path: getRelativeURLPath(path),
           },
-        })
-      );
+        },
+      })
+    );
 
-      if ('data' in result && result.data) {
-        return buildShortUrl(result.data);
-      }
-
-      if ('error' in result) {
-        const errorMessage = extractErrorMessage(result.error);
-        throw new Error(errorMessage || 'Failed to create short URL');
-      }
-
-      throw new Error('Failed to create short URL');
-    } else {
-      return await createShortLinkLegacy(path);
+    if ('data' in result && result.data) {
+      return buildShortUrl(result.data);
     }
+
+    if ('error' in result) {
+      const errorMessage = extractErrorMessage(result.error);
+      throw new Error(errorMessage || 'Failed to create short URL');
+    }
+
+    throw new Error('Failed to create short URL');
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
@@ -80,28 +76,10 @@ export const createShortLink = memoizeOne(async (path: string): Promise<string> 
   }
 });
 
-/**
- * Creates a ClipboardItem for the shortened link. This is used due to clipboard issues in Safari after making async calls.
- * See https://github.com/grafana/grafana/issues/106889
- * @param path - The long path to share.
- * @returns A ClipboardItem for the shortened link.
- */
-export const createShortLinkClipboardItem = (path: string) => {
-  return new ClipboardItem({
-    'text/plain': createShortLink(path),
-  });
-};
-
 export const createAndCopyShortLink = async (path: string) => {
   try {
-    if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
-      await navigator.clipboard.write([createShortLinkClipboardItem(path)]);
-      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
-    } else {
-      const shortLink = await createShortLink(path);
-      copyStringToClipboard(shortLink);
-      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
-    }
+    await copyTextToClipboard(createShortLink(path));
+    dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
   } catch (error) {
     // createShortLink already handles error notifications, just log
     console.error('Error in createAndCopyShortLink:', error);
@@ -117,8 +95,12 @@ export const createAndCopyShareDashboardLink = async (
   if (opts.useShortUrl) {
     return await createAndCopyShortLink(shareUrl);
   } else {
-    copyStringToClipboard(shareUrl);
-    dispatch(notifyApp(createSuccessNotification(t('link.share.copy-to-clipboard', 'Link copied to clipboard'))));
+    try {
+      await copyTextToClipboard(shareUrl);
+      dispatch(notifyApp(createSuccessNotification(t('link.share.copy-to-clipboard', 'Link copied to clipboard'))));
+    } catch (error) {
+      console.error('Error in createAndCopyShareDashboardLink:', error);
+    }
   }
 };
 

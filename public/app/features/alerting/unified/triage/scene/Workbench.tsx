@@ -1,6 +1,6 @@
 import { useEffect, useState, useTransition } from 'react';
 
-import { type DataFrame } from '@grafana/data';
+import { type DataFrame, LoadingState } from '@grafana/data';
 import {
   AdHocFiltersVariable,
   SceneObjectBase,
@@ -21,7 +21,7 @@ export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
   public static Component = WorkbenchRenderer;
 }
 
-export function WorkbenchRenderer() {
+function WorkbenchRenderer() {
   const [timeRange] = useTimeRange();
   const domain = convertTimeRangeToDomain(timeRange);
 
@@ -81,6 +81,9 @@ export function WorkbenchRenderer() {
     return () => subscription.unsubscribe();
   }, [runner]);
 
+  // Only surfaced when there are no rows to show — see Workbench.
+  const queryError = data?.state === LoadingState.Error ? (data.errors?.at(0) ?? data.error) : undefined;
+
   const isDataLoading = data?.state === 'Loading' || data?.state === 'NotStarted' || data === undefined;
   const isInitialLoading = (isDataLoading || isPending) && rows.length === 0;
   const isRefreshing = isDataLoading && rows.length > 0;
@@ -94,6 +97,7 @@ export function WorkbenchRenderer() {
       isInitialLoading={isInitialLoading}
       isRefreshing={isRefreshing}
       hasActiveFilters={hasFiltersApplied}
+      error={queryError}
     />
   );
 }

@@ -17,7 +17,7 @@ interface OwnProps {
   invitee: Invitee;
 }
 
-export type Props = OwnProps & ConnectedProps<typeof connector>;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 const InviteeRow = memo<Props>(({ invitee, revokeInvite }) => {
   return (

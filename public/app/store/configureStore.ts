@@ -1,11 +1,15 @@
-import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
+import {
+  configureStore as reduxConfigureStore,
+  createListenerMiddleware,
+  type ReducersMapObject,
+} from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { type Middleware } from 'redux';
 
 import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
+import { generatedAPI as preferencesAPI, type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -18,7 +22,7 @@ import { alertingApi } from '../features/alerting/unified/api/alertingApi';
 
 import { setStore } from './store';
 
-export function addRootReducer(reducers: any) {
+export function addRootReducer(reducers: ReducersMapObject) {
   // this is ok now because we add reducers before configureStore is called
   // in the future if we want to add reducers during runtime
   // we'll have to solve this in a more dynamic way
@@ -32,7 +36,14 @@ export function addExtraMiddleware(middleware: Middleware) {
   extraMiddleware.push(middleware);
 }
 
-export function configureStore(initialState?: Partial<StoreState>) {
+export interface ConfigureStoreOptions {
+  // Preferences fetched during boot (see initPreferences). Seeded into the RTK
+  // Query cache so useMergedPreferencesQuery serves the cached entry instead of
+  // issuing a duplicate preferences/merged request.
+  mergedPreferences?: Preferences;
+}
+
+export function configureStore(initialState?: Partial<StoreState>, options?: ConfigureStoreOptions) {
   const store = reduxConfigureStore({
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
@@ -52,7 +63,6 @@ export function configureStore(initialState?: Partial<StoreState>) {
         legacyAPI.middleware,
         migrateToCloudAPI.middleware,
         preferencesUserAPI.middleware,
-        legacyUserAPI.middleware,
 
         // Enterprise API clients from the api-clients package
         scopeAPIv0alpha1.middleware,
@@ -72,6 +82,10 @@ export function configureStore(initialState?: Partial<StoreState>) {
 
   // this enables "refetchOnFocus" and "refetchOnReconnect" for RTK Query
   setupListeners(store.dispatch);
+
+  if (options?.mergedPreferences) {
+    store.dispatch(preferencesAPI.util.upsertQueryData('mergedPreferences', undefined, options.mergedPreferences));
+  }
 
   setStore(store);
   return store;

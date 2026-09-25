@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to Grafana! We welcome all people who want to contribute in a healthy and constructive manner within our community. To help us create a safe and positive community experience for all, we require all participants to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program]([https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement](https://grafana.com/community/champions/) as you start to contribute. It's designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
+This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program](https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement) as you start to contribute. It's designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
 
 > **Help us improve!** We'd love to hear about your contributor experience. Take a moment to share your feedback in our [Open Source Contributor Experience Survey](https://gra.fan/ome). Your input helps us make contributing to Grafana better for everyone.
 
@@ -40,7 +40,7 @@ Use the right place to ask questions, report problems, and propose changes.
 
 We welcome your technical contributions! You can contribute in several ways:
 
-### Contribute Code to Grafana
+### Contribute code to Grafana
 
 **What you will need:**
 
@@ -54,6 +54,12 @@ We welcome your technical contributions! You can contribute in several ways:
 1. Prepare a clear, descriptive pull request ([how-to guide](contribute/create-pull-request.md)).
 1. Ensure you include and run the appropriate tests as part of your pull request.
 1. Commit and push your changes. If you encounter merge conflicts, you may rebase your branch onto the main branch.
+
+## Submit a pull request
+
+Effective June 22, 2026, all Grafana Labs repositories [require signed commits](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-signed-commits). To learn how to enable commit verification, refer to [about commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification) and refer to this page to learn about [checking your commit signature verification status](https://docs.github.com/en/authentication/troubleshooting-commit-signature-verification/checking-your-commit-and-tag-signature-verification-status).
+
+**NOTE** Unsigned commits and pull requests will be rejected and closed. This includes pull requests that have been authored by Agents.
 
 ### Develop a Plugin
 

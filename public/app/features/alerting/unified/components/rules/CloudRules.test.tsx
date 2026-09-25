@@ -1,16 +1,15 @@
 import { Provider } from 'react-redux';
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, grantUserRole, mockUnifiedAlertingStore } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
-import { setupAdminConfigGet } from '../../mocks/server/configure/admin_config';
+import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { CloudRules } from './CloudRules';
 
@@ -38,7 +37,7 @@ function renderWithCloudResults() {
   );
 }
 
-describe('CloudRules — Mimir AM auto-sync gate', () => {
+describe('CloudRules — Mimir AM auto-sync', () => {
   beforeEach(() => {
     grantUserRole(OrgRole.Admin);
     grantUserPermissions([
@@ -47,52 +46,26 @@ describe('CloudRules — Mimir AM auto-sync gate', () => {
       // Both grafana-managed perms are required to enable canMigrateToGMA.
       AccessControlAction.AlertingRuleCreate,
       AccessControlAction.AlertingProvisioningSetStatus,
+      // Read access to the sync Config, so a reinstated gate would resolve rather than fail open.
+      AccessControlAction.ActionAlertingNotificationsConfigRead,
     ]);
   });
 
   describe('with alertingMigrationUI and alerting.syncExternalAlertmanager enabled', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationUI', 'alerting.syncExternalAlertmanager'] });
 
-    it('disables the data source import button with a tooltip when Mimir AM auto-sync is configured', async () => {
-      setupAdminConfigGet(server, {
-        alertmanagersChoice: AlertmanagerChoice.Internal,
-        external_alertmanager_uid: 'mimir-uid',
-      });
-
-      const { user } = renderWithCloudResults();
-
-      // Re-query each tick — the LinkButton re-mounts as `disabled` flips, so a single captured
-      // reference can become stale.
-      await waitFor(() => {
-        expect(ui.migrateButton.get()).toHaveAttribute('aria-disabled', 'true');
-      });
-
-      // The disabled `<a>` has `pointer-events: none`; the tooltip handlers attach to the wrapping
-      // span. Hover that ancestor so the floating-ui hover registers in jsdom.
-      // eslint-disable-next-line testing-library/no-node-access
-      const tooltipTarget = ui.migrateButton.get().parentElement!;
-      await user.hover(tooltipTarget);
-      expect(await screen.findByRole('tooltip', { name: /auto-sync/i })).toBeInTheDocument();
-    });
-
-    it('enables the data source import button when Mimir AM auto-sync is not configured', async () => {
-      setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    // Auto-sync mirrors only the Alertmanager configuration, and the rule convert endpoints have no
+    // sync check, so this rules-only button must not consult the sync state at all. Asserting the
+    // Config query never fires is what makes this fail if the gate is reinstated — the button starts
+    // enabled either way.
+    it('keeps the data source import button enabled while Mimir AM auto-sync is configured', async () => {
+      const { requestSpy } = setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
       renderWithCloudResults();
 
       const btn = await ui.migrateButton.find();
       expect(btn).not.toHaveAttribute('aria-disabled', 'true');
-    });
-  });
-
-  describe('with alerting.syncExternalAlertmanager feature flag off', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationUI'] });
-
-    it('enables the data source import button regardless of admin_config state', async () => {
-      renderWithCloudResults();
-
-      const btn = await ui.migrateButton.find();
-      expect(btn).not.toHaveAttribute('aria-disabled', 'true');
+      expect(requestSpy).not.toHaveBeenCalled();
     });
   });
 });

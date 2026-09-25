@@ -128,6 +128,16 @@ describe('Get y range', () => {
     config: {},
     state: { range: { min: 0.0053, max: 0.0094, delta: 0.0041 } },
   };
+  // Below 1e-6 JavaScript stringifies to exponential notation. A single-digit
+  // mantissa such as 1e-7 has no '.' at all, so guessDecimals used to return 0,
+  // both ends rounded to 0, and the range collapsed to [0, 1].
+  const subMicroYField: Field = {
+    name: 'y',
+    values: [1e-7, 2e-7, 3e-7, 2e-7, 1e-7],
+    type: FieldType.number,
+    config: {},
+    state: { range: { min: 1e-7, max: 3e-7, delta: 2e-7 } },
+  };
   const xField: Field = {
     name: 'x',
     values: [1000, 2000, 3000, 4000, 5000],
@@ -194,6 +204,11 @@ describe('Get y range', () => {
       description: 'decimal values which are not close to equal should not be rounded out',
       field: decimalsNotCloseYField,
       expected: [0.0053, 0.0094],
+    },
+    {
+      description: 'values below 1e-6, which stringify to exponential notation',
+      field: subMicroYField,
+      expected: [1e-7, 3e-7],
     },
   ])(`should return correct range for $description`, ({ field, expected }) => {
     const actual = getYRange(getAlignedFrame(field));

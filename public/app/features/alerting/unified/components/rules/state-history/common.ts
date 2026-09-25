@@ -3,7 +3,7 @@ import { isEqual, uniqBy } from 'lodash';
 import { type DataFrameJSON } from '@grafana/data';
 import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
-export interface Line {
+interface Line {
   previous: GrafanaAlertStateWithReason;
   current: GrafanaAlertStateWithReason;
   values?: Record<string, number>;
@@ -68,10 +68,10 @@ export function historyDataFrameToLogRecords(stateHistory?: DataFrameJSON): LogR
   return logRecords;
 }
 
-export function isNumbers(value: unknown[]): value is number[] {
+function isNumbers(value: unknown[]): value is number[] {
   return value.every((v) => typeof v === 'number');
 }
 
-export function isLine(value: unknown): value is Line {
+function isLine(value: unknown): value is Line {
   return typeof value === 'object' && value !== null && 'current' in value && 'previous' in value;
 }

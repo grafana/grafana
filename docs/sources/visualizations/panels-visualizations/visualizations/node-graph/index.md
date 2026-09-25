@@ -94,7 +94,7 @@ Both nodes and edges can have associated metadata or statistics. The data source
 #### Nodes
 
 {{< admonition type="note" >}}
-Node graphs can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+Node graphs show up to 200 visible nodes by default. If the graph has more nodes, Grafana shows a warning at the top of the panel and hides some nodes for performance reasons. You can expand hidden parts of the graph by clicking the "Hidden nodes" markers in the graph.
 {{< /admonition >}}
 
 Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
@@ -180,6 +180,10 @@ Choose how the visualization layout is generated:
 
   For more information about using the graph in grid layout, refer to [Switch layouts](#switch-layouts).
 
+{{< admonition type="note" >}}
+Layered layout can be slow when the graph has more than 500 nodes. For large graphs, use **Force** layout.
+{{< /admonition >}}
+
 ### Nodes options
 
 The **Nodes** options section provides configurations for node behaviors.
@@ -211,9 +215,9 @@ In node graphs, some data fields may have pre-configured data links. To add a di
 
 ## Data API
 
-This visualization needs a specific shape of the data to be returned from the data source in order to correctly display it.
+This visualization needs a specific shape of the data to be returned from the data source to correctly display it.
 
-Node graphs, at minimum, require a data frame describing the edges of the graph. By default, node graphs will compute the nodes and any stats based on this data frame. Optionally a second data frame describing the nodes can be sent in case there is need to show more node specific metadata. You have to set `frame.meta.preferredVisualisationType = 'nodeGraph'` on both data frames or name them `nodes` and `edges` respectively for the node graph to render.
+Node graphs, at minimum, require a data frame describing the edges of the graph. By default, node graphs compute the nodes and any stats based on this data frame. Optionally a second data frame describing the nodes can be sent when you need to show more node-specific metadata. Grafana recognizes node graph frames when `frame.meta.preferredVisualisationType = 'nodeGraph'`, when the frame name or `refId` is `nodes` or `edges`, or when a frame contains an `id` field.
 
 ### Edges data frame structure
 
@@ -265,3 +269,7 @@ Optional fields:
 | icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview) are allowed.                                                                                                                                                      |
 | nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
 | highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |
+| fixedX        | number        | Fixed x-coordinate for the node. If you use `fixedX`, all nodes must provide a value.                                                                                                                                                                                                                                                                                    |
+| fixedY        | number        | Fixed y-coordinate for the node. If you use `fixedY`, all nodes must provide a value.                                                                                                                                                                                                                                                                                    |
+
+<!-- `isInstrumented` is not included here as it's only used internally at this time -->

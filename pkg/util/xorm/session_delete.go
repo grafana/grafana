@@ -16,6 +16,8 @@ func (session *Session) Delete(bean any) (int64, error) {
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	if session.statement.lastError != nil {
 		return 0, session.statement.lastError
 	}

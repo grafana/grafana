@@ -126,6 +126,34 @@ func TestMoveWorker_ProcessInvalidTargetPath(t *testing.T) {
 	require.EqualError(t, err, "target path must be a directory (should end with '/')")
 }
 
+func TestMoveWorker_CommitMessageFromJobSpec(t *testing.T) {
+	job := provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Spec: provisioning.JobSpec{
+			Action:  provisioning.JobActionMove,
+			Message: "custom move message",
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"test/path"},
+				TargetPath: "new/location/",
+			},
+		},
+	}
+
+	mockRepo := repository.NewMockRepository(t)
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		return opts.CommitOnlyOnceMessage == "custom move message"
+	}), mock.Anything).Return(errors.New("expected stop"))
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.EqualError(t, err, "move files in repository: expected stop")
+}
+
 func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{

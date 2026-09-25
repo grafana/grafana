@@ -1,9 +1,16 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame, type DataFrame, DataFrameType, EventBusSrv, FieldType, type PanelProps } from '@grafana/data';
+import {
+  createDataFrame,
+  type DataFrame,
+  DataFrameType,
+  EventBusSrv,
+  FieldType,
+  getDefaultTimeRange,
+  type PanelProps,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
 
@@ -149,18 +156,28 @@ describe('TimeSeriesPanel', () => {
     expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
   });
 
+  describe('null values in the time field (#130379)', () => {
+    // A frame whose time field carries null cells must route to the error view
+    // instead of reaching the chart, where zoom-to-data would propagate a null
+    // timestamp into the dashboard time range and crash range parsing.
+    const frameWithNullTime = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, null, 3000], config: {} },
+        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: { custom: {} } },
+      ],
+    });
+
+    it('renders the error view instead of the chart when a time cell is null', () => {
+      renderPanel(undefined, [frameWithNullTime]);
+
+      expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
+      expect(screen.getByText(/Unable to render data/)).toBeVisible();
+      expect(screen.getByText(/query A returned a time field with null values/i)).toBeVisible();
+    });
+  });
+
   describe('faceted filter pin-to-sidebar persistence', () => {
-    let originalVizLegendFacetedFilter: boolean | undefined;
-
-    beforeEach(() => {
-      originalVizLegendFacetedFilter = config.featureToggles.vizLegendFacetedFilter;
-      config.featureToggles.vizLegendFacetedFilter = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.vizLegendFacetedFilter = originalVizLegendFacetedFilter;
-    });
-
     it('calls onOptionsChange with facetedFilterPinned: true when "Pin to sidebar" is clicked', async () => {
       const { onOptionsChange, props } = renderPanelWithFacetedFilter();
 
@@ -191,6 +208,88 @@ describe('TimeSeriesPanel', () => {
         ...props.options,
         legend: { ...props.options.legend, facetedFilterPinned: false },
       });
+    });
+  });
+
+  describe('TimeComparison high cardinality (#126181)', () => {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    function makePodFrame(pod: string, opts: { compare?: boolean; times?: number[] } = {}) {
+      return createDataFrame({
+        refId: opts.compare ? 'A-compare' : 'A',
+        meta: opts.compare ? { timeCompare: { isTimeShiftQuery: true, diffMs: -DAY_MS } } : undefined,
+        fields: [
+          { name: 'time', type: FieldType.time, values: opts.times ?? [1000, 2000, 3000], config: {} },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [1, 2, 3],
+            labels: { pod },
+            config: { custom: {} },
+          },
+        ],
+      });
+    }
+
+    it('renders compare legend names for reordered high-cardinality series', () => {
+      // Current: a, b. Compare window: b, a (reordered) — the #126181 mismatch scenario.
+      // Color pairing is covered in utils.test.ts; here we lock the visible legend contract:
+      // names stay tied to labels (with " (comparison)"), and compare series use dashed icons.
+      renderPanel(undefined, [
+        makePodFrame('a'),
+        makePodFrame('b'),
+        makePodFrame('b', { compare: true }),
+        makePodFrame('a', { compare: true }),
+      ]);
+
+      expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeInTheDocument();
+
+      for (const label of ['a', 'b', 'a (comparison)', 'b (comparison)']) {
+        expect(screen.getByTestId(selectors.components.VizLegend.seriesName(label))).toBeInTheDocument();
+      }
+
+      const currentIcon = within(screen.getByTestId(selectors.components.VizLegend.seriesName('a'))).getByTestId(
+        'series-icon'
+      );
+      const compareIcon = within(
+        screen.getByTestId(selectors.components.VizLegend.seriesName('a (comparison)'))
+      ).getByTestId('series-icon');
+
+      // Solid current-period icon vs dashed compare icon (lineStyle from alignTimeRangeCompareData).
+      expect(currentIcon.style.borderRadius).toBeTruthy();
+      expect(compareIcon.style.backgroundSize).toBe('6px 4px');
+    });
+
+    it('renders compare series that have no current-period counterpart inside the range (#132370)', async () => {
+      // The current period returned nothing, so the compare frames arrive on their own, still sitting
+      // a day back. Unshifted they fall outside the panel range and the panel renders the outside-range
+      // fallback instead of the series - the symptom users report. The frames are built one comparison
+      // period behind the range getPanelProps renders with, so shifting them lands inside it; fixed
+      // timestamps would sit outside the range whether or not the shift happened.
+      const { from, to } = getDefaultTimeRange();
+      const comparePeriod = [from.valueOf(), (from.valueOf() + to.valueOf()) / 2, to.valueOf()].map(
+        (time) => time - DAY_MS
+      );
+
+      renderPanel(undefined, [
+        makePodFrame('a', { compare: true, times: comparePeriod }),
+        makePodFrame('b', { compare: true, times: comparePeriod }),
+      ]);
+
+      // The fallback only appears once uPlot has drawn and reported its x scale, so asserting its
+      // absence before that would pass no matter what the panel did.
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
+      );
+      expect(screen.queryByText('Data outside time range')).not.toBeInTheDocument();
+
+      // Shifted, but still identifiable as comparison data rather than the current period.
+      for (const label of ['a (comparison)', 'b (comparison)']) {
+        const icon = within(screen.getByTestId(selectors.components.VizLegend.seriesName(label))).getByTestId(
+          'series-icon'
+        );
+        expect(icon.style.backgroundSize).toBe('6px 4px');
+      }
     });
   });
 });

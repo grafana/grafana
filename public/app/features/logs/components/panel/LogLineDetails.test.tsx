@@ -6,6 +6,7 @@ import {
   createDataFrame,
   type DataFrame,
   DataFrameType,
+  type DataSourceApi,
   dateTime,
   type Field,
   FieldType,
@@ -16,9 +17,10 @@ import {
   type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
-import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
-import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
+import { setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import * as logsUtils from '../../utils';
@@ -30,9 +32,25 @@ import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from 
 import { LogLineDetails, type Props } from './LogLineDetails';
 import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
+import { createTempoDatasource } from './__mocks__/createTempoDatasource';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  const getFlagValue = (flag: string, defaultValue: boolean) =>
+    Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => getFlagValue(flag, defaultValue));
+  useFlagMock.mockImplementation((flag: string, defaultValue: boolean) => ({
+    value: getFlagValue(flag, defaultValue),
+  }));
+};
 
 jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+  useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
 jest.mock('../fieldSelector/FieldSelector');
@@ -53,8 +71,12 @@ jest.mock('@grafana/assistant', () => {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
   usePluginLinks: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
 jest.mock('./LogListContext');
@@ -136,25 +158,22 @@ const setup = async (
 
 describe('LogLineDetails', () => {
   beforeEach(() => {
+    setBooleanFlags({});
     lokiDS = createLokiDatasource(undefined, { uid: 'loki-ds' });
     tempoDS = createTempoDatasource(undefined, { uid: 'tempo-ds' });
     jest.mocked(usePluginLinks).mockReturnValue({
       links: [],
       isLoading: false,
     });
-    jest.mocked(getDataSourceSrv).mockImplementation(
-      () =>
-        ({
-          get: (uid: string) => {
-            if (uid === 'loki-ds') {
-              return Promise.resolve(lokiDS);
-            } else if (uid === 'tempo-ds') {
-              return Promise.resolve(tempoDS);
-            }
-            return Promise.resolve(null);
-          },
-        }) as unknown as DataSourceSrv
-    );
+    jest.mocked(getDataSourceInstance).mockImplementation((ref) => {
+      const uid = typeof ref === 'string' ? ref : ref?.uid;
+      if (uid === 'loki-ds') {
+        return Promise.resolve(lokiDS as unknown as DataSourceApi);
+      } else if (uid === 'tempo-ds') {
+        return Promise.resolve(tempoDS as unknown as DataSourceApi);
+      }
+      return Promise.resolve(null as unknown as DataSourceApi);
+    });
   });
 
   test('Copy log as JSON from header copies structured JSON from the log', async () => {
@@ -240,6 +259,53 @@ describe('LogLineDetails', () => {
       );
     });
   });
+  describe('Filtering by log line string', () => {
+    test('calls onClickFilterString with the log line and refId', async () => {
+      const onClickFilterString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter for this log line'));
+
+      expect(onClickFilterString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('calls onClickFilterOutString with the log line and refId', async () => {
+      const onClickFilterOutString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterOutString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter out this log line'));
+
+      expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterOutString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('does not render the filter buttons when the callbacks are not provided', async () => {
+      await setup(undefined, { labels: { key1: 'label1' } });
+
+      await userEvent.click(screen.getByText('Log line'));
+
+      expect(screen.queryByLabelText('Filter for this log line')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Filter out this log line')).not.toBeInTheDocument();
+    });
+  });
+
   describe('when fields are present', () => {
     test('should render the fields and the log line', async () => {
       await setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
@@ -263,6 +329,9 @@ describe('LogLineDetails', () => {
         { displayedFields: ['key1'], onClickShowField, onClickHideField: jest.fn() }
       );
       expect(screen.getByText('key1')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Log line'));
+
       expect(screen.getByLabelText('Show log line')).toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText('Show log line'));
@@ -278,6 +347,9 @@ describe('LogLineDetails', () => {
         { displayedFields: ['key1', LOG_LINE_BODY_FIELD_NAME], onClickHideField, onClickShowField: jest.fn() }
       );
       expect(screen.getByText('key1')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Log line'));
+
       expect(screen.getByLabelText('Hide log line')).toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText('Hide log line'));
@@ -287,6 +359,9 @@ describe('LogLineDetails', () => {
     test('should not show an option to display the log line when displayed fields are not used', async () => {
       await setup(undefined, { labels: { key1: 'label1' } }, { displayedFields: [] });
       expect(screen.getByText('key1')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Log line'));
+
       expect(screen.queryByLabelText('Show log line')).not.toBeInTheDocument();
     });
     test('should render the filter controls when the callbacks are provided', async () => {
@@ -592,9 +667,7 @@ describe('LogLineDetails', () => {
       });
 
       test('should fallback to a single group of Fields if not supported', async () => {
-        jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
-          get: (uid: string) => Promise.reject(null),
-        }));
+        jest.mocked(getDataSourceInstance).mockImplementation(() => Promise.reject(null));
 
         await setup(
           undefined,
@@ -669,6 +742,7 @@ describe('LogLineDetails', () => {
       });
 
       test('Shows displayed fields controls if required props are present', async () => {
+        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
         const setDisplayedFields = jest.fn();
         const onClickHideField = jest.fn();
         await setup(
@@ -722,7 +796,105 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/value2/)).toBeInTheDocument();
       });
 
+      test('Shows a prettify switch for JSON log lines when the log line section is open', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+
+        expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.getByRole('switch', { name: 'Prettify' })).toBeInTheDocument();
+      });
+
+      test('Does not show a prettify switch for non-JSON log lines', async () => {
+        await setup(undefined, { entry: 'plain log line', labels: { key1: 'label1' } });
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+      });
+
+      test('Toggling the prettify switch calls setPrettifyDetailsJSON', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+        const setPrettifyDetailsJSON = jest.fn();
+
+        await setup({ logs: [log] }, undefined, undefined, {
+          showDetails: [log],
+          currentLog: log,
+          prettifyDetailsJSON: true,
+          setPrettifyDetailsJSON,
+        });
+
+        await userEvent.click(screen.getByText('Log line'));
+        await userEvent.click(screen.getByRole('switch', { name: 'Prettify' }));
+
+        expect(setPrettifyDetailsJSON).toHaveBeenCalledWith(false);
+      });
+
+      test('Renders a compact JSON log line when prettifyDetailsJSON is false', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup(
+          { logs: [log] },
+          undefined,
+          { syntaxHighlighting: false },
+          { showDetails: [log], currentLog: log, prettifyDetailsJSON: false }
+        );
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.getByText(jsonEntry)).toBeInTheDocument();
+      });
+
+      test('Renders a prettified JSON log line when prettifyDetailsJSON is true', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup(
+          { logs: [log] },
+          undefined,
+          { syntaxHighlighting: false },
+          { showDetails: [log], currentLog: log, prettifyDetailsJSON: true }
+        );
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.queryByText(jsonEntry)).not.toBeInTheDocument();
+        expect(screen.getByText(/"key"/)).toBeInTheDocument();
+        expect(screen.getByText(/"value"/)).toBeInTheDocument();
+      });
+
       test('Exposes buttons to reorder displayed fields', async () => {
+        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
         const setDisplayedFields = jest.fn();
         const onClickHideField = jest.fn();
         await setup(

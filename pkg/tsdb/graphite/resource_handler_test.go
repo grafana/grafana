@@ -1021,7 +1021,7 @@ func TestDoGraphiteRequest(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			result, _, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.dsInfo, svc.logger, req, false)
+			result, _, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.dsInfo, svc.logger, req, false, defaultResourceResponseMaxBytes)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1080,7 +1080,7 @@ func TestDoGraphiteRequestGenericTypes(t *testing.T) {
 				})
 				assert.NoError(t, err)
 
-				result, _, status, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, svc.logger, req, false)
+				result, _, status, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, svc.logger, req, false, defaultResourceResponseMaxBytes)
 
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
@@ -1108,7 +1108,7 @@ func TestDoGraphiteRequestGenericTypes(t *testing.T) {
 				})
 				assert.NoError(t, err)
 
-				result, _, status, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, svc.logger, req, false)
+				result, _, status, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, svc.logger, req, false, defaultResourceResponseMaxBytes)
 
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
@@ -1252,7 +1252,7 @@ func TestParseResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, _, err := parseResponse[[]GraphiteEventsResponse](tt.response, false, log.NewNullLogger())
+			result, _, err := parseResponse[[]GraphiteEventsResponse](tt.response, false, log.NewNullLogger(), defaultResourceResponseMaxBytes)
 
 			if tt.expectError {
 				assert.Error(t, err)

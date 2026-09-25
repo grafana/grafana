@@ -1,10 +1,11 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { ManagerKind } from 'app/features/apiserver/types';
-import { findItem } from 'app/features/browse-dashboards/state/utils';
+import { ancestorsOf } from 'app/features/browse-dashboards/state/utils';
 import { type BrowseDashboardsState } from 'app/features/browse-dashboards/types';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { type RepoWorkflows } from '../types';
+
+import { isItemManagedByRepository } from './managedResource';
 
 export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
   // Repository is considered read-only if it has no workflows defined (workflows are required for write operations)
@@ -29,23 +30,14 @@ export function getItemRepositoryUid(
   childrenByParentUID: BrowseDashboardsState['childrenByParentUID']
 ): string {
   // For root provisioned folders, the UID is the repository name
-  if (item.managedBy === ManagerKind.Repo && !item.parentUID && item.kind === 'folder') {
+  if (isItemManagedByRepository(item) && !item.parentUID && item.kind === 'folder') {
     return item.uid;
   }
 
-  // Traverse up the tree to find the root provisioned folder
-  let currentItem = item;
-  while (currentItem.parentUID) {
-    const parent = findItem(rootItems, childrenByParentUID, currentItem.parentUID);
-    if (!parent) {
-      break;
+  for (const ancestor of ancestorsOf(item, rootItems, childrenByParentUID)) {
+    if (isItemManagedByRepository(ancestor) && !ancestor.parentUID) {
+      return ancestor.uid;
     }
-
-    if (parent.managedBy === ManagerKind.Repo && !parent.parentUID) {
-      return currentItem.parentUID;
-    }
-
-    currentItem = parent;
   }
 
   return 'non_provisioned';

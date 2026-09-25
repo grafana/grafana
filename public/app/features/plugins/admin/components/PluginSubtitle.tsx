@@ -61,6 +61,6 @@ export const PluginSubtitle = ({ plugin }: Props) => {
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return { subtitle: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1) }) };
 };

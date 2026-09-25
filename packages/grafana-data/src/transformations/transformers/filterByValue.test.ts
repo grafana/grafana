@@ -93,6 +93,41 @@ describe('FilterByValue transformer', () => {
     });
   });
 
+  it('should not include null values when matching by regex', async () => {
+    const seriesWithNulls = toDataFrame({
+      name: 'A',
+      length: 4,
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+        { name: 'names', type: FieldType.string, values: ['a', null, 'b', undefined] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.all,
+        filters: [
+          {
+            fieldName: 'names',
+            config: {
+              id: ValueMatcherID.regex,
+              options: { value: '.*' },
+            },
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesWithNulls])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed[0].fields[0].values).toEqual([1000, 3000]);
+      expect(processed[0].fields[1].values).toEqual(['a', 'b']);
+    });
+  });
+
   it('should not cross frame boundaries when equals 0', async () => {
     const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
       id: DataTransformerID.filterByValue,

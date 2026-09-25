@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -50,18 +51,20 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 	namespace := r.GetNamespace()
 	checkCount := len(r.GetChecks())
 
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", r.GetSubject(),
+		"namespace", namespace,
+		"check_count", checkCount,
+	)
+
 	defer func() {
 		duration := time.Since(start)
 		s.metrics.requestDurationSeconds.WithLabelValues("BatchCheck").Observe(duration.Seconds())
+		ctxLogger.Debug("BatchCheck execution time", "duration", duration.Milliseconds())
 
 		// Log slow batch checks for debugging (>1s is concerning)
 		if duration > time.Second {
-			s.logger.Debug("slow batch check detected",
-				"namespace", namespace,
-				"subject", r.GetSubject(),
-				"check_count", checkCount,
-				"duration_ms", duration.Milliseconds(),
-			)
+			ctxLogger.Debug("slow batch check detected", "duration_ms", duration.Milliseconds())
 		}
 	}()
 
@@ -868,17 +871,12 @@ func (s *Server) doOpenFGABatchCheck(
 	// Split into sub-batches
 	allResults := make(map[string]*openfgav1.BatchCheckSingleResult, len(checks))
 	for i := 0; i < len(checks); i += maxChecks {
-		end := i + maxChecks
-		if end > len(checks) {
-			end = len(checks)
-		}
+		end := min(i+maxChecks, len(checks))
 		results, err := s.executeBatchCheck(ctx, store, checks[i:end])
 		if err != nil {
 			return nil, err
 		}
-		for k, v := range results {
-			allResults[k] = v
-		}
+		maps.Copy(allResults, results)
 	}
 
 	return allResults, nil

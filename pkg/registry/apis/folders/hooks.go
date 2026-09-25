@@ -91,9 +91,14 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 		}
 	}
 
-	if b.resourcePermissionsSvc != nil {
+	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
+	if err != nil {
+		log.Error("failed to get resource permissions client", "error", err)
+		return
+	}
+	if resourcePermissionsSvc != nil {
 		log.Debug("deleting folder permissions", "uid", meta.GetName(), "namespace", meta.GetNamespace())
-		client := (*b.resourcePermissionsSvc).Namespace(meta.GetNamespace())
+		client := (*resourcePermissionsSvc).Namespace(meta.GetNamespace())
 		err := client.Delete(ctx, fmt.Sprintf("%s-%s-%s", folders.FolderResourceInfo.GroupVersionResource().Group, folders.FolderResourceInfo.GroupVersionResource().Resource, meta.GetName()), metav1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("failed to delete folder permissions", "error", err)

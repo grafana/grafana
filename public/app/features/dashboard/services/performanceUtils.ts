@@ -27,7 +27,7 @@ export interface PerformanceMemory {
 /**
  * Extended Performance interface with Chrome's memory property
  */
-export interface PerformanceWithMemory extends Performance {
+interface PerformanceWithMemory extends Performance {
   memory?: PerformanceMemory;
 }
 

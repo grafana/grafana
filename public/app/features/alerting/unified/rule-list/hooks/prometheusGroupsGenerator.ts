@@ -60,7 +60,7 @@ interface GrafanaFetchGroupsOptions extends GroupsNextPageOptions {
 
 export type GrafanaFetchGroupsLimit = MergeExclusive<{ groupLimit: number }, { ruleLimit: number }>;
 
-export type DataSourceFetchGroupsLimit = { groupLimit: number };
+type DataSourceFetchGroupsLimit = { groupLimit: number };
 
 export interface FetchGroupsLimitOptions {
   grafanaManagedLimit: GrafanaFetchGroupsLimit;

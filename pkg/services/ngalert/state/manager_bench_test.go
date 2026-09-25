@@ -46,7 +46,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	b.ResetTimer()
 
 	for range b.N {
-		ans = sut.ProcessEvalResults(context.Background(), now, &rule, results, labels, nil)
+		ans, _ = sut.ProcessEvalResults(context.Background(), now, &rule, results, labels, nil)
 	}
 
 	b.StopTimer()
@@ -97,7 +97,7 @@ func makeBenchResults(count int) eval.Results {
 	}
 	one := 1.0
 	results := make([]eval.Result, 0, count)
-	for i := 0; i < count; i++ {
+	for range count {
 		results = append(results, eval.Result{
 			Instance:           labels,
 			State:              eval.Alerting,

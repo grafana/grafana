@@ -1,3 +1,5 @@
+import saveAs from 'file-saver';
+
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import {
@@ -5,6 +7,12 @@ import {
   defaultQueryGroupKind,
   defaultVizConfigSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  AnnoKeyFolder,
+  AnnoKeyFolderTitle,
+  AnnoKeyFolderUrl,
+  AnnoKeyGrantPermissions,
+} from 'app/features/apiserver/types';
 import * as dashboardApiModule from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -15,6 +23,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { ShareExportTab } from './ShareExportTab';
 
+jest.mock('file-saver', () => jest.fn());
 jest.mock('app/features/dashboard/api/dashboard_api');
 
 const mockV1Spec: DashboardDataDTO = {
@@ -210,6 +219,58 @@ describe('ShareExportTab', () => {
       }
     });
 
+    it('should strip folder annotations when sharing externally is off', async () => {
+      mockGetDashboardAPI(mockV1Spec, {
+        ...mockV2ResourceResponse,
+        metadata: {
+          ...mockV2ResourceResponse.metadata,
+          annotations: {
+            [AnnoKeyFolder]: 'folder-uid',
+            [AnnoKeyFolderTitle]: 'My Folder',
+            [AnnoKeyFolderUrl]: '/dashboards/f/my-folder',
+            [AnnoKeyGrantPermissions]: 'default',
+          },
+        },
+      });
+
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource, isSharingExternally: false });
+
+      const result = await tab.getExportableDashboardJson();
+
+      expect('metadata' in result.json && result.json.metadata?.annotations).toEqual({
+        [AnnoKeyGrantPermissions]: 'default',
+      });
+    });
+
+    it('should strip folder annotations when sharing externally is on', async () => {
+      mockGetDashboardAPI(mockV1Spec, {
+        ...mockV2ResourceResponse,
+        metadata: {
+          ...mockV2ResourceResponse.metadata,
+          annotations: {
+            [AnnoKeyFolder]: 'folder-uid',
+            [AnnoKeyFolderTitle]: 'My Folder',
+            [AnnoKeyFolderUrl]: '/dashboards/f/my-folder',
+            [AnnoKeyGrantPermissions]: 'default',
+          },
+        },
+      });
+
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource, isSharingExternally: true });
+
+      const result = await tab.getExportableDashboardJson();
+
+      if ('metadata' in result.json) {
+        const annotations = result.json.metadata?.annotations ?? {};
+        expect(annotations[AnnoKeyFolder]).toBeUndefined();
+        expect(annotations[AnnoKeyFolderTitle]).toBeUndefined();
+        expect(annotations[AnnoKeyFolderUrl]).toBeUndefined();
+        expect(annotations[AnnoKeyGrantPermissions]).toBeUndefined();
+      }
+    });
+
     it('should fetch V2 resource for V1 dashboard (server converts)', async () => {
       const tab = buildV1DashboardScenario();
       tab.setState({ exportFormat: ExportFormat.V2Resource });
@@ -323,6 +384,35 @@ describe('ShareExportTab', () => {
 
       const result = await tab.getExportableDashboardJson();
       expect(result.json).toHaveProperty('error');
+    });
+  });
+
+  describe('onSaveAsFile filename', () => {
+    afterEach(() => {
+      jest.mocked(saveAs).mockClear();
+    });
+
+    it('should use dashboard title for classic export filename', async () => {
+      const tab = buildV1DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.Classic });
+
+      await tab.onSaveAsFile();
+
+      expect(saveAs).toHaveBeenCalledTimes(1);
+      const [, filename] = jest.mocked(saveAs).mock.calls[0];
+      expect(filename).toMatch(/^Test Dashboard V1-\d+\.json$/);
+    });
+
+    it('should use dashboard title from spec for v2 resource export filename', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource });
+
+      await tab.onSaveAsFile();
+
+      expect(saveAs).toHaveBeenCalledTimes(1);
+      const [, filename] = jest.mocked(saveAs).mock.calls[0];
+      expect(filename).toMatch(/^Test Dashboard V2-\d+\.json$/);
     });
   });
 

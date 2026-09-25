@@ -5,9 +5,14 @@ import { isRootFolderUID } from 'app/features/search/constants';
 
 import { type RestoreNotificationData } from '../types';
 
+/** Fetch-step failure sentinel: the recently-deleted listing had no visible item for the uid. */
+export const RESTORE_FETCH_NOT_FOUND = 'not_found';
+
 interface RestoreFailure {
   uid: string;
   error: string;
+  status?: number;
+  step?: 'fetch' | 'create';
 }
 
 export function getRestoreNotificationData(
@@ -52,14 +57,32 @@ export function getRestoreNotificationData(
     defaultValue_other: '{{count}} dashboard restored successfully',
   });
 
-  // Helper to append first error message if present
+  // Failures the user can act on get guidance instead of the raw API error.
+  // Create beats fetch: picking another folder is the action the user can take.
+  const hasCreatePermissionFailure = failed.some((f) => f.step === 'create' && f.status === 403);
+  const hasFetchFailure = failed.some(
+    (f) => f.step === 'fetch' && (f.status === 403 || f.error === RESTORE_FETCH_NOT_FOUND)
+  );
+
   const firstError = failed[0]?.error;
-  const appendError = (msg: string) => {
-    if (!firstError) {
+  const guidance = hasCreatePermissionFailure
+    ? t(
+        'browse-dashboards.restore.failed-create-permission',
+        "You don't have permission to add dashboards to the selected folder. Choose a folder where you have edit permissions, or ask an administrator to restore the dashboards."
+      )
+    : hasFetchFailure
+      ? t(
+          'browse-dashboards.restore.failed-fetch',
+          "The dashboards could no longer be found or you don't have permission to restore them. Ask an administrator to restore them."
+        )
+      : firstError;
+
+  const appendGuidance = (msg: string) => {
+    if (!guidance) {
       return msg;
     }
     const separator = msg.endsWith('.') ? ' ' : '. ';
-    return `${msg}${separator}${firstError}`;
+    return `${msg}${separator}${guidance}`;
   };
 
   // Partial success case
@@ -73,7 +96,7 @@ export function getRestoreNotificationData(
       kind: 'event',
       data: {
         alertType: AppEvents.alertWarning.name,
-        message: appendError(`${successMessage}. ${failedMessage}.`),
+        message: appendGuidance(`${successMessage}. ${failedMessage}.`),
       },
     };
   }
@@ -83,7 +106,7 @@ export function getRestoreNotificationData(
     kind: 'event',
     data: {
       alertType: AppEvents.alertError.name,
-      message: appendError(
+      message: appendGuidance(
         t('browse-dashboards.restore.all-failed', '', {
           count: failedCount,
           defaultValue_one: 'Failed to restore {{count}} dashboard.',

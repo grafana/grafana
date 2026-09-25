@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
-import { config } from '@grafana/runtime';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
@@ -13,15 +12,15 @@ import {
   type DashboardViewItemWithUIItems,
   type UIDashboardViewItem,
 } from '../types';
-import { isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
+import { isVirtualStarredFolder, isVirtualTeamFolder, starredFoldersEnabled } from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
 import { getPaginationPlaceholders } from './utils';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
-export const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
-export const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
+const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
+const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
 
 const flatTreeSelector = createSelector(
   rootItemsSelector,
@@ -140,33 +139,24 @@ export function useLoadNextChildrenPage(
  * @param openFolders Object of UID to whether that item is expanded or not
  * @param level level of item in the tree. Only to be specified when called recursively.
  */
-export function createFlatTree(
+function createFlatTree(
   folderUID: string | undefined,
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
-  level = 0,
-  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = [],
-  excludeUIDs: string[] = []
+  level = 0
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    if (excludeKinds.includes(item.kind) || excludeUIDs.includes(item.uid)) {
-      return [];
+    // Only folders have children
+    if (item.kind !== 'folder') {
+      return [{ item, parentUID, level, isOpen: false }];
     }
 
-    const mappedChildren = createFlatTree(
-      item.uid,
-      rootCollection,
-      childrenByUID,
-      openFolders,
-      level + 1,
-      excludeKinds,
-      excludeUIDs
-    );
+    const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
 
     const isOpen = Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder && !excludeKinds.includes('empty-folder')) {
+    if (isOpen && emptyFolder) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
@@ -184,10 +174,10 @@ export function createFlatTree(
 
     const items = [thisItem, ...mappedChildren];
 
-    // Add a divider after the last virtual folder (shared with me / team folders)
+    // Add a divider after the last virtual folder (shared with me / team folders / starred folders)
+    const starredOn = starredFoldersEnabled();
     const isLastVirtualFolder =
-      isVirtualTeamFolder(thisItem.item.uid) ||
-      (isSharedWithMe(thisItem.item.uid) && !config.featureToggles.teamFolders);
+      isVirtualStarredFolder(thisItem.item.uid) || (isVirtualTeamFolder(thisItem.item.uid) && !starredOn);
 
     if (isLastVirtualFolder) {
       items.push({
@@ -217,14 +207,7 @@ export function createFlatTree(
     return mapItem(item, folderUID, level);
   });
 
-  // this is very custom to the folder picker right now
-  // we exclude dashboards, but if you have more than 1 page of dashboards collection.isFullyLoaded is false
-  // so we need to check that we're ignoring dashboards and we've fetched all the folders
-  // TODO generalize this properly (e.g. split state by kind?)
-  const isConsideredLoaded = excludeKinds.includes('dashboard') && collection?.lastFetchedKind === 'dashboard';
-
-  const showPlaceholders =
-    (level === 0 && !collection) || (isOpen && collection && !(collection.isFullyLoaded || isConsideredLoaded));
+  const showPlaceholders = (level === 0 && !collection) || (isOpen && collection && !collection.isFullyLoaded);
 
   if (showPlaceholders) {
     children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));

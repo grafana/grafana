@@ -45,6 +45,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          community_api_key: ${{ env.GRAFANABOT_FORUM_KEY }}
+          community_api_key: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANABOT_FORUM_KEY }}
           community_api_username: grafanabot
           dry_run: ${{ inputs.dry_run }}

@@ -3,7 +3,6 @@ import type React from 'react';
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, logWarning } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   type SceneObjectState,
@@ -19,12 +18,12 @@ import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { removeRepeatLocalVariableFromSet } from '../../utils/clone';
+import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor, getSlugForRowOrTab, interpolateSectionTitle } from '../../utils/utils';
@@ -32,7 +31,6 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -43,7 +41,7 @@ import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { type LayoutParent } from '../types/LayoutParent';
 
-import { useEditOptions } from './TabItemEditor';
+import { useSidebarOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
 import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -100,7 +98,7 @@ export class TabItem
   public getEditableElementInfo(): EditableDashboardElementInfo {
     const isHidden = !this.state.conditionalRendering?.state.result;
     return {
-      typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
+      typeName: t('dashboard.sidebar.elements.tab', 'Tab'),
       instanceName: interpolateSectionTitle(this, this.state.title),
       icon: 'layers',
       isHidden,
@@ -116,16 +114,7 @@ export class TabItem
 
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
-    if (
-      isEditing &&
-      // OpenFeature is not initialized for anonymous users, so fall back to
-      // the static feature toggle to ensure section variables work without auth.
-      getFeatureFlagClient().getBooleanValue(
-        FlagKeys.DashboardSectionVariables,
-        Boolean(config.featureToggles.dashboardSectionVariables)
-      ) &&
-      this.state.$variables
-    ) {
+    if (isEditing && this.state.$variables) {
       return [
         ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
         this.state.$variables,
@@ -149,16 +138,23 @@ export class TabItem
     return parentLayout.state.currentTabSlug === this.getSlug();
   }
 
-  public switchLayout(layout: DashboardLayoutManager) {
+  public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.layout;
 
-    dashboardEditActions.edit({
+    const perform = () => {
+      this.setState({ layout });
+      this.publishEvent(new NewSceneObjectAddedEvent(this), true);
+    };
+
+    if (skipUndo) {
+      perform();
+      return;
+    }
+
+    edit({
       description: t('dashboard.edit-actions.switch-layout-tab', 'Switch layout'),
       source: this,
-      perform: () => {
-        this.setState({ layout });
-        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
-      },
+      perform,
       undo: () => {
         this.setState({ layout: currentLayout });
         this.publishEvent(new NewSceneObjectAddedEvent(this), true);
@@ -166,7 +162,7 @@ export class TabItem
     });
   }
 
-  public useEditPaneOptions = useEditOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDelete() {
     const layout = this.getParentLayout();
@@ -205,7 +201,10 @@ export class TabItem
   }
 
   public createMultiSelectedElement(items: SceneObject[]): TabItems {
-    return new TabItems(items.filter((item) => item instanceof TabItem));
+    return new TabItems(
+      items.filter((item) => item instanceof TabItem),
+      getDashboardSceneFor(this)
+    );
   }
 
   public onDuplicate(): void {
@@ -215,7 +214,11 @@ export class TabItem
   // panelIdGenerator is a shared sequential counter created by the parent layout
   // we forward id to ensure sibling tabs never produce duplicate panel IDs
   public duplicate(panelIdGenerator?: PanelIdGenerator): TabItem {
-    return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
+    return this.clone({
+      key: undefined,
+      layout: this.getLayout().duplicate(panelIdGenerator),
+      $variables: cloneSectionVariableSet(this.state.$variables),
+    });
   }
 
   public onChangeTitle(title: string) {
@@ -291,48 +294,6 @@ export class TabItem
     }
     this.setIsDropTarget(false);
 
-    const parentLayout = this.getParentLayout();
-    if (parentLayout.state.currentTabSlug !== this.getSlug()) {
-      parentLayout.setState({ currentTabSlug: this.getSlug() });
-    }
-  }
-
-  /**
-   * Accept a dropped row into this tab.
-   * If the tab doesn't have a RowsLayoutManager, convert the layout first.
-   */
-  public acceptDroppedRow(row: RowItem): void {
-    const currentLayout = this.getLayout();
-
-    // Clear the parent reference from the row before adding to new layout
-    row.clearParent();
-
-    if (currentLayout instanceof RowsLayoutManager) {
-      // Already has a RowsLayoutManager, just add the row
-      currentLayout.addNewRow(row);
-    } else {
-      // Need to convert the layout to RowsLayoutManager
-      let rowsLayout: RowsLayoutManager;
-
-      // If the current layout is empty, just create a new RowsLayoutManager with only the dropped row
-      if (currentLayout.getVizPanels().length === 0) {
-        rowsLayout = new RowsLayoutManager({ rows: [row] });
-      } else {
-        // Convert existing layout and add the dropped row
-        // Use direct state update instead of addNewRow because the rowsLayout
-        // isn't connected to the scene yet, so dashboardEditActions won't work
-        rowsLayout = RowsLayoutManager.createFromLayout(currentLayout);
-        rowsLayout.setState({ rows: [...rowsLayout.state.rows, row] });
-      }
-
-      // Clear the parent reference from the old layout
-      currentLayout.clearParent();
-
-      // Switch to the new rows layout
-      this.setState({ layout: rowsLayout });
-    }
-
-    // Ensure this tab is active after the drop
     const parentLayout = this.getParentLayout();
     if (parentLayout.state.currentTabSlug !== this.getSlug()) {
       parentLayout.setState({ currentTabSlug: this.getSlug() });

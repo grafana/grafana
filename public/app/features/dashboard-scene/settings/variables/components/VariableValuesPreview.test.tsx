@@ -5,16 +5,6 @@ import { type VariableValueOption } from '@grafana/scenes';
 
 import { VariableValuesPreview, type VariableValuesPreviewProps } from './VariableValuesPreview';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      multiPropsVariables: true,
-    },
-  },
-}));
-
 function renderPreview(props: VariableValuesPreviewProps) {
   const renderResult = render(<VariableValuesPreview options={props.options} staticOptions={props.staticOptions} />);
 
@@ -25,14 +15,14 @@ function renderPreview(props: VariableValuesPreviewProps) {
         // the <InteractiveTable /> is wrapped in a div because it does not allow a data-testid attribute
         within(
           renderResult.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.previewTable)
-        ).getByRole('table') as HTMLTableElement,
+        ).findByRole<HTMLTableElement>('table'),
     },
   };
 }
 
 describe('VariableValuesPreview', () => {
   describe('multiple properties preview', () => {
-    test('renders the options in a table', () => {
+    test('renders the options in a table', async () => {
       const options: VariableValueOption[] = [
         { label: 'Development', value: 'dev', properties: { region: 'eu' } },
         { label: 'Production', value: 'prod', properties: { region: 'us' } },
@@ -40,7 +30,7 @@ describe('VariableValuesPreview', () => {
       ];
       const { elements } = renderPreview({ options, staticOptions: [] });
 
-      const table = elements.multiPropsPreviewTable();
+      const table = await elements.multiPropsPreviewTable();
 
       const expectedHeaders = ['value', 'text', 'region'];
       const headerCells = within(table).getAllByRole('columnheader');
@@ -65,7 +55,7 @@ describe('VariableValuesPreview', () => {
     });
 
     describe('if several options have the same value', () => {
-      test('renders properly all the options in a table', () => {
+      test('renders properly all the options in a table', async () => {
         const options: VariableValueOption[] = [
           { label: 'Development', value: 'env', properties: { region: 'eu' } },
           { label: 'Production', value: 'env', properties: { region: 'us' } },
@@ -73,7 +63,7 @@ describe('VariableValuesPreview', () => {
         ];
         const { elements } = renderPreview({ options, staticOptions: [] });
 
-        const table = elements.multiPropsPreviewTable();
+        const table = await elements.multiPropsPreviewTable();
 
         const expectedHeaders = ['value', 'text', 'region'];
         const headerCells = within(table).getAllByRole('columnheader');

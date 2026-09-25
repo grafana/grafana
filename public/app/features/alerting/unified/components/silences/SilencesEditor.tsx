@@ -33,7 +33,8 @@ import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/ale
 import { MatcherOperator, type SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
 import { contextSrv } from '../../../../../core/services/context_srv';
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
+import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
@@ -131,7 +132,6 @@ type SilencesEditorProps = {
   onSilenceCreated?: (response: SilenceCreatedResponse) => void;
   onCancel?: () => void;
   ruleUid?: string;
-  showCancelButton?: boolean;
 };
 
 /**
@@ -144,15 +144,11 @@ export const SilencesEditor = ({
   onSilenceCreated,
   onCancel,
   ruleUid,
-  showCancelButton = true,
 }: SilencesEditorProps) => {
-  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.PreviewSilencedInstances
-  );
-  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+  const { granted: canPreview } = useSilenceAbility({ action: SilenceAction.Preview });
 
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
-  const formAPI = useForm<SilenceFormFields>({ defaultValues: formValues });
+  const formAPI = useForm({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
 
   const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
@@ -300,11 +296,9 @@ export const SilencesEditor = ({
               <Trans i18nKey="alerting.silences-editor.save-silence">Save silence</Trans>
             </Button>
           )}
-          {showCancelButton && (
-            <LinkButton onClick={onCancelHandler} variant={'secondary'}>
-              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-            </LinkButton>
-          )}
+          <LinkButton onClick={onCancelHandler} variant={'secondary'}>
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+          </LinkButton>
         </Stack>
       </form>
     </FormProvider>

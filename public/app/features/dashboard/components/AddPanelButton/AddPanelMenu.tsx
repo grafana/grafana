@@ -18,7 +18,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../../state/reducers';
 
-export interface Props {
+interface Props {
   dashboard: DashboardModel;
 }
 

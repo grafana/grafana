@@ -158,7 +158,7 @@ function useLazyLoadRulerRules(rules: CombinedRule[]) {
   return state;
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapperMargin: css({
     [theme.breakpoints.up('md')]: {
       marginLeft: '36px',

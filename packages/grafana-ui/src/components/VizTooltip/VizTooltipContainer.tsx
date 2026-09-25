@@ -11,7 +11,7 @@ import { getTooltipContainerStyles } from '../../themes/mixins';
 import { calculateTooltipPosition } from './utils';
 
 /**
- * @public
+ * @alpha
  */
 export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement> {
   position: { x: number; y: number };
@@ -21,7 +21,7 @@ export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement>
 }
 
 /**
- * @public
+ * @alpha
  */
 export const VizTooltipContainer = ({
   position: { x: positionX, y: positionY },

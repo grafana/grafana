@@ -2,23 +2,17 @@ package user
 
 import (
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
-	"slices"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"k8s.io/apimachinery/pkg/selection"
 	k8scommon "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -29,12 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -49,31 +38,30 @@ type accessControlCheck struct {
 	name     string // user UID of the resource being checked
 }
 
+// Only verbs whose relation is defined on the authz model's "user" type may be
+// checked here. A check for a relation the type lacks fails the whole batch
+// (e.g. "relation 'user#create' not found"), blanking out all access control
+// metadata. The "user" type defines only get/update/delete, so VerbCreate
+// (org.users:add) and VerbGetPermissions (users.permissions:read) are omitted.
 var userAccessControlChecks = []accessControlCheck{
 	{action: "org.users:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbList},
-	{action: "org.users:add", group: iamv0.GROUP, resource: "users", verb: utils.VerbCreate},
 	{action: "org.users:remove", group: iamv0.GROUP, resource: "users", verb: utils.VerbDelete},
 	{action: "org.users:write", group: iamv0.GROUP, resource: "users", verb: utils.VerbUpdate},
-	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions},
 	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
 }
 
 type SearchHandler struct {
 	log          log.Logger
-	client       resourcepb.ResourceIndexClient
+	client       *dualwrite.Selector[SearchBackend]
 	tracer       trace.Tracer
-	features     featuremgmt.FeatureToggles
-	cfg          *setting.Cfg
 	accessClient authlib.AccessClient
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg, accessClient authlib.AccessClient) *SearchHandler {
+func NewSearchHandler(tracer trace.Tracer, searchClient *dualwrite.Selector[SearchBackend], accessClient authlib.AccessClient) *SearchHandler {
 	return &SearchHandler{
 		client:       searchClient,
 		log:          log.New("grafana-apiserver.users.search"),
 		tracer:       tracer,
-		features:     features,
-		cfg:          cfg,
 		accessClient: accessClient,
 	}
 }
@@ -281,90 +269,34 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		limit = common.DefaultListLimit
 	}
 
-	// Escape characters that are used by bleve wildcard search to be literal strings.
-	rawQuery := escapeBleveQuery(queryParams.Get("query"))
-
-	searchQuery := fmt.Sprintf(`*%s*`, rawQuery)
-
-	userGvr := iamv0.UserResourceInfo.GroupResource()
-	request := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Group:     userGvr.Group,
-				Resource:  userGvr.Resource,
-				Namespace: requester.GetNamespace(),
-			},
-		},
-		Query:  searchQuery,
-		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole},
-		// The query is a wildcard (*...*), so only Name is used from each
-		// QueryField to specify which fields to search in (Type and Boost
-		// are ignored for wildcard queries).
-		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
-			{Name: resource.SEARCH_FIELD_TITLE},
-			{Name: fieldEmail},
-			{Name: fieldLogin},
-		},
-		Limit:  int64(limit),
-		Page:   int64(page),
-		Offset: int64(offset),
+	query := SearchQuery{
+		Namespace: requester.GetNamespace(),
+		Query:     queryParams.Get("query"),
+		Limit:     int64(limit),
+		Page:      int64(page),
+		Offset:    int64(offset),
+		Sort:      queryParams["sort"],
+	}
+	if !queryParams.Has("sort") {
+		query.Sort = []string{"login"}
 	}
 
 	span.SetAttributes(attribute.Int("limit", limit),
 		attribute.Int("page", page),
 		attribute.Int("offset", offset),
-		attribute.String("query", searchQuery))
+		attribute.String("query", query.Query))
 
-	if !requester.GetIsGrafanaAdmin() {
-		// FIXME: Use the new config service instead of the legacy one
-		hiddenUsers := []string{}
-		for user := range s.cfg.HiddenUsers {
-			if user != requester.GetUsername() {
-				hiddenUsers = append(hiddenUsers, user)
-			}
-		}
-		if len(hiddenUsers) > 0 {
-			request.Options.Fields = append(request.Options.Fields, &resourcepb.Requirement{
-				Key:      fieldLogin,
-				Operator: string(selection.NotIn),
-				Values:   hiddenUsers,
-			})
-		}
-	}
-
-	if queryParams.Has("sort") {
-		for _, sort := range queryParams["sort"] {
-			currField := sort
-			desc := false
-			if strings.HasPrefix(sort, "-") {
-				currField = sort[1:]
-				desc = true
-			}
-			if slices.Contains(builders.UserSortableExtraFields, currField) {
-				sort = resource.SEARCH_FIELD_PREFIX + currField
-			} else {
-				sort = currField
-			}
-			s := &resourcepb.ResourceSearchRequest_Sort{
-				Field: sort,
-				Desc:  desc,
-			}
-			request.SortBy = append(request.SortBy, s)
-		}
-	}
-
-	resp, err := s.client.Search(ctx, request)
+	backend, err := s.client.Resolve(ctx)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "user search failed")
 		errhttp.Write(ctx, err, w)
 		return
 	}
-
-	result, err := ParseResults(resp)
+	result, err := backend.Search(ctx, query)
 	if err != nil {
 		span.RecordError(err)
-		span.SetStatus(codes.Error, "user search parse results failed")
+		span.SetStatus(codes.Error, "user search failed")
 		errhttp.Write(ctx, err, w)
 		return
 	}
@@ -428,86 +360,4 @@ func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		s.log.Error("failed to encode JSON response", "error", err)
 	}
-}
-
-func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsersResponse, error) {
-	if result == nil {
-		return iamv0.NewGetSearchUsersResponse(), nil
-	} else if result.Error != nil {
-		return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
-	} else if result.Results == nil {
-		return iamv0.NewGetSearchUsersResponse(), nil
-	}
-
-	titleIDX := -1
-	emailIDX := -1
-	loginIDX := -1
-	lastSeenAtIDX := -1
-	roleIDX := -1
-
-	for i, v := range result.Results.Columns {
-		switch v.Name {
-		case resource.SEARCH_FIELD_TITLE:
-			titleIDX = i
-		case builders.USER_EMAIL:
-			emailIDX = i
-		case builders.USER_LOGIN:
-			loginIDX = i
-		case builders.USER_LAST_SEEN_AT:
-			lastSeenAtIDX = i
-		case builders.USER_ROLE:
-			roleIDX = i
-		}
-	}
-
-	sr := iamv0.NewGetSearchUsersResponse()
-	sr.TotalHits = result.TotalHits
-	sr.QueryCost = result.QueryCost
-	sr.MaxScore = result.MaxScore
-	sr.Hits = make([]iamv0.GetSearchUsersUserHit, 0, len(result.Results.Rows))
-
-	for _, row := range result.Results.Rows {
-		if len(row.Cells) != len(result.Results.Columns) {
-			return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("error parsing user search response: mismatch number of columns and cells")
-		}
-
-		var login string
-		if loginIDX >= 0 && row.Cells[loginIDX] != nil {
-			login = string(row.Cells[loginIDX])
-		}
-
-		hit := iamv0.GetSearchUsersUserHit{
-			Name:  row.Key.Name,
-			Login: login,
-		}
-
-		if titleIDX >= 0 && row.Cells[titleIDX] != nil {
-			hit.Title = string(row.Cells[titleIDX])
-		}
-
-		if emailIDX >= 0 && row.Cells[emailIDX] != nil {
-			hit.Email = string(row.Cells[emailIDX])
-		}
-
-		if roleIDX >= 0 && row.Cells[roleIDX] != nil {
-			hit.Role = string(row.Cells[roleIDX])
-		}
-
-		if lastSeenAtIDX >= 0 && row.Cells[lastSeenAtIDX] != nil {
-			if len(row.Cells[lastSeenAtIDX]) == 8 {
-				hit.LastSeenAt = int64(binary.BigEndian.Uint64(row.Cells[lastSeenAtIDX]))
-				hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
-			}
-		}
-
-		sr.Hits = append(sr.Hits, hit)
-	}
-
-	return sr, nil
-}
-
-var bleveEscapeRegex = regexp.MustCompile(`([\\*?])`)
-
-func escapeBleveQuery(query string) string {
-	return bleveEscapeRegex.ReplaceAllString(query, `\$1`)
 }

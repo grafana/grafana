@@ -1,18 +1,16 @@
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { MoveModal, type Props } from './MoveModal';
 
-const [_, { folderA, folderB }] = getFolderFixtures();
+const [_, { folderA }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
 setupMockServer();
-
-const originalToggles = { ...config.featureToggles };
 
 describe('browse-dashboards MoveModal', () => {
   const mockOnDismiss = jest.fn();
@@ -69,10 +67,13 @@ describe('browse-dashboards MoveModal', () => {
         props.selectedItems.folder = {
           [folderA.item.uid]: true,
         };
-        config.featureToggles.foldersAppPlatformAPI = toggle;
+        setTestFlags({ foldersAppPlatformAPI: toggle });
       });
-      afterEach(() => {
-        config.featureToggles = originalToggles;
+      // The act wrap is needed because resetting fires OpenFeature events while the modal is mounted.
+      afterEach(async () => {
+        await act(async () => {
+          setTestFlags({});
+        });
       });
 
       it('displays a warning about permissions if a folder is selected', async () => {
@@ -83,26 +84,12 @@ describe('browse-dashboards MoveModal', () => {
         ).toBeInTheDocument();
       });
 
-      it('displays summary of affected items', async () => {
+      it('warns that the selected folder contains resources', async () => {
         render(<MoveModal {...props} />);
 
-        expect(await screen.findByText(/This action will move the folder/i)).toBeInTheDocument();
-
-        expect(await screen.findByText(/5 item/)).toBeInTheDocument();
-        expect(screen.getByText(/2 folder/)).toBeInTheDocument();
-        expect(screen.getByText(/1 dashboard/)).toBeInTheDocument();
-        expect(screen.getByText(/1 library panel/)).toBeInTheDocument();
-        expect(screen.getByText(/1 alert rule/)).toBeInTheDocument();
-      });
-
-      it('shows an error if one of the folder counts cannot be fetched', async () => {
-        props.selectedItems.folder = {
-          [folderA.item.uid]: true,
-          [folderB.item.uid]: true,
-        };
-        render(<MoveModal {...props} />);
-
-        expect(await screen.findByRole('alert', { name: /unable to retrieve/i })).toBeInTheDocument();
+        expect(
+          await screen.findByRole('alert', { name: /contains resources that will be moved/i })
+        ).toBeInTheDocument();
       });
     });
   });

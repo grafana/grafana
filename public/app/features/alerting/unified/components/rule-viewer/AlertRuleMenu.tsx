@@ -17,14 +17,20 @@ import {
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import {
-  AlertRuleAction,
-  EnrichmentAction,
-  skipToken,
-  useEnrichmentAbility,
-  useGrafanaPromRuleAbilities,
-  useRulerRuleAbilities,
-} from '../../hooks/useAbilities';
+  usePromRuleAdministrationAbility,
+  usePromRuleExportAbility,
+  usePromRuleSilenceAbility,
+} from '../../hooks/abilities/rules/promRuleAbilities';
+import { skipToken } from '../../hooks/abilities/rules/ruleAbilities.utils';
+import {
+  useRuleAdministrationAbility,
+  useRuleExportAbility,
+  useRuleSilenceAbility,
+} from '../../hooks/abilities/rules/rulerRuleAbilities';
+import { EnrichmentAction } from '../../hooks/abilities/types';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import {
@@ -72,56 +78,27 @@ const AlertRuleMenu = ({
   fill,
 }: Props) => {
   // check all abilities and permissions using rulerRule
-  const [rulerPauseAbility, rulerDeleteAbility, rulerDuplicateAbility, rulerSilenceAbility, rulerExportAbility] =
-    useRulerRuleAbilities(rulerRule, groupIdentifier, [
-      AlertRuleAction.Pause,
-      AlertRuleAction.Delete,
-      AlertRuleAction.Duplicate,
-      AlertRuleAction.Silence,
-      AlertRuleAction.ModifyExport,
-    ]);
+  const rulerAbilities = useRuleAdministrationAbility(rulerRule, groupIdentifier);
+  const rulerSilenceAbility = useRuleSilenceAbility(rulerRule);
+  const rulerExportAbility = useRuleExportAbility(rulerRule);
 
-  // check all abilities and permissions using promRule
-  const [
-    grafanaPauseAbility,
-    grafanaDeleteAbility,
-    grafanaDuplicateAbility,
-    grafanaSilenceAbility,
-    grafanaExportAbility,
-  ] = useGrafanaPromRuleAbilities(prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken, [
-    AlertRuleAction.Pause,
-    AlertRuleAction.Delete,
-    AlertRuleAction.Duplicate,
-    AlertRuleAction.Silence,
-    AlertRuleAction.ModifyExport,
-  ]);
+  // check all abilities and permissions using promRule (for list view without ruler)
+  const grafanaPromRule = prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken;
+  const grafanaAbilities = usePromRuleAdministrationAbility(grafanaPromRule);
+  const grafanaSilenceAbility = usePromRuleSilenceAbility(grafanaPromRule);
+  const grafanaExportAbility = usePromRuleExportAbility(grafanaPromRule);
 
-  const [pauseSupported, pauseAllowed] = rulerPauseAbility;
-  const [grafanaPauseSupported, grafanaPauseAllowed] = grafanaPauseAbility;
-  const canPause = (pauseSupported && pauseAllowed) || (grafanaPauseSupported && grafanaPauseAllowed);
-
-  const [deleteSupported, deleteAllowed] = rulerDeleteAbility;
-  const [grafanaDeleteSupported, grafanaDeleteAllowed] = grafanaDeleteAbility;
-  const canDelete = (deleteSupported && deleteAllowed) || (grafanaDeleteSupported && grafanaDeleteAllowed);
-
-  const [duplicateSupported, duplicateAllowed] = rulerDuplicateAbility;
-  const [grafanaDuplicateSupported, grafanaDuplicateAllowed] = grafanaDuplicateAbility;
-  const canDuplicate =
-    (duplicateSupported && duplicateAllowed) || (grafanaDuplicateSupported && grafanaDuplicateAllowed);
-
-  const [silenceSupported, silenceAllowed] = rulerSilenceAbility;
-  const [grafanaSilenceSupported, grafanaSilenceAllowed] = grafanaSilenceAbility;
-  const canSilence = (silenceSupported && silenceAllowed) || (grafanaSilenceSupported && grafanaSilenceAllowed);
-
-  const [exportSupported, exportAllowed] = rulerExportAbility;
-  const [grafanaExportSupported, grafanaExportAllowed] = grafanaExportAbility;
-  const canExport = (exportSupported && exportAllowed) || (grafanaExportSupported && grafanaExportAllowed);
+  const canPause = isGranted(rulerAbilities.pause) || isGranted(grafanaAbilities.pause);
+  const canDelete = isGranted(rulerAbilities.delete) || isGranted(grafanaAbilities.delete);
+  const canDuplicate = isGranted(rulerAbilities.duplicate) || isGranted(grafanaAbilities.duplicate);
+  const canSilence = isGranted(rulerSilenceAbility) || isGranted(grafanaSilenceAbility);
+  const canExport = isGranted(rulerExportAbility) || isGranted(grafanaExportAbility);
 
   const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
-  const [enrichmentReadSupported, enrichmentReadAllowed] = useEnrichmentAbility(EnrichmentAction.Read);
+  const enrichmentReadAbility = useEnrichmentAbility(EnrichmentAction.Read);
 
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
@@ -153,8 +130,7 @@ const AlertRuleMenu = ({
     ruleUid &&
     handleManageEnrichments &&
     config.featureToggles.alertingEnrichmentPerRule &&
-    enrichmentReadSupported &&
-    enrichmentReadAllowed;
+    isGranted(enrichmentReadAbility);
 
   const menuItems = (
     <>

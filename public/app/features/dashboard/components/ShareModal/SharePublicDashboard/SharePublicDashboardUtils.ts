@@ -1,7 +1,6 @@
-import { type TypedVariableModel } from '@grafana/data';
 import { config, DataSourceWithBackend, featureEnabled } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { getConfig } from 'app/core/config';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { type PanelModel } from '../../../state/PanelModel';
 import { shareDashboardType } from '../utils';
@@ -42,15 +41,6 @@ export interface SessionUser {
   totalDashboards: number;
 }
 
-// Instance methods
-export const dashboardHasTemplateVariables = (variables: TypedVariableModel[]): boolean => {
-  return variables.length > 0;
-};
-
-export const publicDashboardPersisted = (publicDashboard?: PublicDashboard): boolean => {
-  return publicDashboard?.uid !== '' && publicDashboard?.uid !== undefined;
-};
-
 /**
  * Get unique datasource names from all panels that are not currently supported by public dashboards.
  */
@@ -64,7 +54,7 @@ export const getUnsupportedDashboardDatasources = async (panels: PanelModel[]): 
         if (!supportedDatasources.has(dsType)) {
           unsupportedDS.add(dsType);
         } else {
-          const ds = await getDatasourceSrv().get(target.datasource);
+          const ds = await getDataSourceInstance(target.datasource);
           if (!(ds instanceof DataSourceWithBackend)) {
             unsupportedDS.add(dsType);
           }

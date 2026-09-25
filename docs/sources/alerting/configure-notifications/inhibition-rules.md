@@ -42,10 +42,6 @@ refs:
 
 {{< admonition type="note" >}}
 Available in Grafana 13 or higher.
-
-Inhibition rules require the `alertingMultiplePolicies` feature toggle, which is experimental. Without it, you can create, read, update, and delete rules through the API, but Alertmanager doesn't apply them during alert evaluation, so it doesn't inhibit any alerts.
-
-On Grafana Cloud, contact your account team or support to enable this feature toggle. On self-hosted Grafana, enable the toggle in the `[feature_toggles]` section of your Grafana configuration.
 {{< /admonition >}}
 
 An inhibition rule suppresses notifications for target alerts when source alerts with matching label values are already firing. This lets you reduce noise when a root-cause alert makes dependent alerts redundant.
@@ -145,7 +141,7 @@ In this example:
 
 ## Inhibition rules and managed routes
 
-When the `alertingMultiplePolicies` feature toggle is enabled, an Alertmanager can serve multiple routing trees: the default Grafana-managed route and any routes imported from Prometheus Alertmanager or Mimir configurations. Inhibition rules behave differently depending on how each rule is created:
+An Alertmanager can serve multiple routing trees: the default Grafana-managed route and any routes imported from Prometheus Alertmanager or Mimir configurations. Inhibition rules behave differently depending on how each rule is created:
 
 - **Grafana-managed rules** are created through the API and apply across the entire Alertmanager. They can match alerts handled by any route, including imported routes.
 - **Imported rules** come from an imported Alertmanager configuration and are scoped to the alerts handled by their imported route. Grafana adds an internal label matcher that limits each imported rule to its own imported route, so an imported rule can't suppress alerts that flow through other routes.

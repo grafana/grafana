@@ -1,13 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { type QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { MetricEditorMode, MetricQueryType, LogsQueryLanguage } from '../../dataquery.gen';
 import { type CloudWatchDatasource } from '../../datasource';
-import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../defaultQueries';
+import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_PPL_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../defaultQueries';
 import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
 import {
   validLogsQuery,
@@ -16,6 +15,7 @@ import {
   validMetricSearchBuilderQuery,
   validMetricSearchCodeQuery,
 } from '../../mocks/queries';
+import { selectOptionInTest } from '../../test/helpers/selectOptionInTest';
 import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
 import { QueryEditor } from './QueryEditor';
@@ -391,6 +391,16 @@ describe('LogsQueryEditor', () => {
         ...logsProps.query,
         queryLanguage: LogsQueryLanguage.SQL,
         expression: DEFAULT_SQL_QUERY_STRING,
+      });
+    });
+    it('should set the correct default PPL expression if query is new', async () => {
+      const emptyQuery = { ...logsProps.query, expression: '' };
+      render(<QueryEditor {...logsProps} query={emptyQuery} />);
+      await selectOptionInTest(screen.getByLabelText(/Query language/), 'OpenSearch PPL');
+      expect(mockOnChange).toHaveBeenCalledWith({
+        ...logsProps.query,
+        queryLanguage: LogsQueryLanguage.PPL,
+        expression: DEFAULT_PPL_QUERY_STRING,
       });
     });
   });

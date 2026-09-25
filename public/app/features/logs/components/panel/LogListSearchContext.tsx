@@ -23,11 +23,6 @@ export const LogListSearchContext = createContext<LogListSearchContextData>({
   toggleFilterLogs: () => {},
 });
 
-export const useLogListSearchContextData = (key: keyof LogListSearchContextData) => {
-  const data: LogListSearchContextData = useContext(LogListSearchContext);
-  return data[key];
-};
-
 export const useLogListSearchContext = (): LogListSearchContextData => {
   return useContext(LogListSearchContext);
 };

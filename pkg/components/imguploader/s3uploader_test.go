@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana/pkg/ifaces/s3ifaces"
 	"github.com/grafana/grafana/pkg/mocks/mock_s3ifaces"
@@ -35,11 +37,42 @@ func TestUploadToS3(t *testing.T) {
 	})
 }
 
+func TestNormalizeEndpoint(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		endpoint string
+		want     string
+	}{
+		{"bare host gets https scheme", "s3.example.de", "https://s3.example.de"},
+		{"https is preserved", "https://s3.example.de", "https://s3.example.de"},
+		{"http is preserved", "http://s3.example.de", "http://s3.example.de"},
+		{"empty stays empty", "", ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, normalizeEndpoint(tt.endpoint))
+		})
+	}
+}
+
+func TestBuildAWSConfig(t *testing.T) {
+	t.Setenv("AWS_REQUEST_CHECKSUM_CALCULATION", "")
+	t.Setenv("AWS_RESPONSE_CHECKSUM_VALIDATION", "")
+	t.Setenv("AWS_PROFILE", "")
+	t.Setenv("AWS_CONFIG_FILE", filepath.Join(t.TempDir(), "config"))
+	t.Setenv("AWS_SHARED_CREDENTIALS_FILE", filepath.Join(t.TempDir(), "credentials"))
+
+	cfg, err := buildAWSConfig(t.Context(), S3UploaderOptions{Region: "us-east-1"})
+	require.NoError(t, err)
+
+	assert.Equal(t, aws.RequestChecksumCalculationWhenRequired, cfg.RequestChecksumCalculation)
+	assert.Equal(t, aws.ResponseChecksumValidationWhenRequired, cfg.ResponseChecksumValidation)
+}
+
 func stubS3Client(t *testing.T, mock s3ifaces.S3Client) {
 	t.Helper()
 	orig := newS3Client
 	t.Cleanup(func() { newS3Client = orig })
-	newS3Client = func(_ *aws.Config) (s3ifaces.S3Client, error) {
+	newS3Client = func(_ aws.Config, _ S3UploaderOptions) (s3ifaces.S3Client, error) {
 		return mock, nil
 	}
 }
@@ -63,12 +96,11 @@ func TestS3Upload(t *testing.T) {
 		m := mock_s3ifaces.NewMockS3Client(ctrl)
 		m.EXPECT().
 			Upload(gomock.Eq(ctx), gomock.Any()).
-			DoAndReturn(func(_ context.Context, input *s3manager.UploadInput) (*s3manager.UploadOutput, error) {
-				assert.Equal(t, bucket, aws.StringValue(input.Bucket))
-				assert.Equal(t, "image/png", aws.StringValue(input.ContentType))
-				assert.NotNil(t, input.ACL, "ACL should be set when presigned URLs are disabled")
-				assert.Equal(t, "public-read", aws.StringValue(input.ACL))
-				return &s3manager.UploadOutput{Location: publicURL}, nil
+			DoAndReturn(func(_ context.Context, input *s3.PutObjectInput) (*manager.UploadOutput, error) {
+				assert.Equal(t, bucket, aws.ToString(input.Bucket))
+				assert.Equal(t, "image/png", aws.ToString(input.ContentType))
+				assert.Equal(t, types.ObjectCannedACL("public-read"), input.ACL, "ACL should be set when presigned URLs are disabled")
+				return &manager.UploadOutput{Location: publicURL}, nil
 			})
 
 		stubS3Client(t, m)
@@ -96,13 +128,13 @@ func TestS3Upload(t *testing.T) {
 		m := mock_s3ifaces.NewMockS3Client(ctrl)
 		m.EXPECT().
 			Upload(gomock.Eq(ctx), gomock.Any()).
-			DoAndReturn(func(_ context.Context, input *s3manager.UploadInput) (*s3manager.UploadOutput, error) {
-				assert.Equal(t, bucket, aws.StringValue(input.Bucket))
-				assert.Nil(t, input.ACL, "ACL should not be set when presigned URLs are enabled")
-				return &s3manager.UploadOutput{Location: publicURL}, nil
+			DoAndReturn(func(_ context.Context, input *s3.PutObjectInput) (*manager.UploadOutput, error) {
+				assert.Equal(t, bucket, aws.ToString(input.Bucket))
+				assert.Empty(t, input.ACL, "ACL should not be set when presigned URLs are enabled")
+				return &manager.UploadOutput{Location: publicURL}, nil
 			})
 		m.EXPECT().
-			PresignGetObject(gomock.Eq(bucket), gomock.Any(), gomock.Eq(expiration)).
+			PresignGetObject(gomock.Eq(ctx), gomock.Eq(bucket), gomock.Any(), gomock.Eq(expiration)).
 			Return(presignedURL, nil)
 
 		stubS3Client(t, m)

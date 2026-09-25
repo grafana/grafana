@@ -31,6 +31,8 @@ interface WizardStepProps {
   onBack?: () => void;
   /** Disable the next button */
   disableNext?: boolean;
+  /** Tooltip shown on the next button while it is disabled, explaining why */
+  disabledNextTooltip?: string;
   /** Handler called when the wizard is cancelled */
   onCancel?: () => void;
 }
@@ -55,6 +57,7 @@ export const WizardStep = ({
   onSkip,
   onBack,
   disableNext = false,
+  disabledNextTooltip,
   onCancel,
 }: WizardStepProps) => {
   const styles = useStyles2(getStyles);
@@ -103,6 +106,7 @@ export const WizardStep = ({
             skipLabel={skipLabel}
             onSkip={handleSkip}
             disabled={disableNext}
+            disabledTooltip={disabledNextTooltip}
           />
         </Stack>
         <CancelButton onCancel={onCancel} />

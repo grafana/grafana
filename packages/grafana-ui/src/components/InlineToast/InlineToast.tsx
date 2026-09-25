@@ -62,7 +62,7 @@ export function InlineToast({ referenceElement, children, suffixIcon, placement 
 
   return (
     <Portal>
-      <div style={{ display: 'inline-block', ...floatingStyles }} ref={refs.setFloating} aria-live="polite">
+      <div role="alert" style={{ display: 'inline-block', ...floatingStyles }} ref={refs.setFloating}>
         <span className={cx(styles.root)} style={placementStyles}>
           {children && <span>{children}</span>}
           {suffixIcon && <Icon name={suffixIcon} />}

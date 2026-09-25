@@ -1,7 +1,12 @@
 import { set, get as lodashGet } from 'lodash';
 
-import { type StandardEditorContext, type TransformerUIProps, PanelOptionsEditorBuilder } from '@grafana/data';
-import { type NestedValueAccess, type PanelOptionsSupplier } from '@grafana/data/internal';
+import {
+  type NestedValueAccess,
+  type PanelOptionsSupplier,
+  type StandardEditorContext,
+  type TransformerUIProps,
+  PanelOptionsEditorBuilder,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';

@@ -60,6 +60,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/#timing-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/#timing-options
+  terraform-multiple-notification-policy-trees:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/#enable-multiple-notification-policy-trees
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning/#enable-multiple-notification-policy-trees
 ---
 
 # Configure notification policies
@@ -83,6 +88,8 @@ The default notification policy and its child policies are assigned to a [specif
 {{< /admonition >}}
 
 ## Edit the default notification policy
+
+You can change the contact point, grouping, and timing options for this policy. Mute timings and active time intervals aren't available on the root policy. Add them on a [child policy](#add-a-child-policy) instead.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification configuration**, then select the **Notification policies** tab.
@@ -114,6 +121,7 @@ If you want to choose where to position your policy, see the section on **Add a 
 1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. If enabled, multiple policies can handle the same alert.
 1. Optionally, enable **Override grouping** to set different [grouping](ref:policy-grouping) than the parent policy. If disabled, the grouping of the parent policy is [inherited](ref:policy-inheritance).
 1. Optionally, enable **Override general timings** to set different [timing options](ref:policy-timing-options) than the parent policy. If disabled, the timing options of the parent policy are [inherited](ref:policy-inheritance).
+1. Optionally, in **Mute timings** and **Active timings**, select time intervals that apply to this policy. These fields aren't available on the root policy.
 1. Click **Save policy** to save your changes.
 
 ## Add a sibling policy
@@ -144,19 +152,19 @@ It is important to note that all matched policies are **exact** matches. Grafana
 
 ## Mute timings
 
-Mute timings are not inherited from a parent notification policy, and they have to be configured on each level. For instructions, refer to [Configure mute timings](ref:configure-mute-timings).
+Mute timings pause notifications during a recurring period. Active time intervals allow notifications only during a recurring period.
 
-## Manage multiple notification policies
+You can assign them only on child notification policies, not on the root policy. They aren't inherited from a parent notification policy. For instructions, refer to [Configure mute timings](ref:configure-mute-timings).
 
-{{< admonition type="note" >}}
-Multiple notification policies require the `alertingMultiplePolicies` feature flag, which is in public preview. When the flag is disabled, the system uses a single notification policy tree as described above.
-{{< /admonition >}}
+## Manage multiple notification policy trees
 
-By default, Grafana uses a single notification policy tree for all alert routing. As organizations grow in size and complexity, managing a single global tree can become difficult. Multiple notification policies allow you to split routing logic into separate, independently managed routing trees.
+By default, Grafana uses a single notification policy tree for all alert routing. As organizations grow in size and complexity, managing a single global tree can become difficult. Multiple notification policy trees allow you to split routing logic into separate, independently managed routing trees.
 
-Each notification policy contains a routing tree with its own name, root policy, and child policies which function similar to the default policy. You can create additional routing trees to organize routing logic by team, service, or domain.
+Each notification policy tree has its own name, root policy, and child policies which function similarly to the default policy tree. You can create additional routing trees to organize routing logic by team, service, or domain.
 
 The Default Policy can't be deleted. You can, however, reset the policy to clear it.
+
+For provisioning instructions, refer to [Enable multiple notification policy trees via Terraform](ref:terraform-multiple-notification-policy-trees).
 
 ## Example
 

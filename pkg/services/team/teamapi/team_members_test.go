@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -49,7 +50,9 @@ func SetupAPITestServer(t *testing.T, teamService team.Service, opts ...func(a *
 		nil, // preferenceK8sHandler not needed for these tests
 		dashboards.NewFakeDashboardService(t),
 		featuremgmt.WithFeatures(),
+		nil, // resource client not needed by default; deletion tests inject a folder searcher
 		nil, // teamBindingClient not needed for these tests
+		iamapi.Features{},
 	)
 	for _, o := range opts {
 		o(a)
@@ -428,7 +431,9 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 				nil, // preferenceK8sHandler not needed for these tests
 				dashboards.NewFakeDashboardService(t),
 				featuremgmt.WithFeatures(),
+				nil, // resource client not needed for this test
 				nil, // teamBindingClient not needed for these tests
+				iamapi.Features{},
 			)
 
 			user := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {"users:id:*"}}}}

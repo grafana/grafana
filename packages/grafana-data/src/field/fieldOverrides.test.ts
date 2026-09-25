@@ -350,6 +350,58 @@ describe('applyFieldOverrides', () => {
       expect(withOverrides[0].fields[1].values[0].fields[1].config.max).toBe(30);
     });
 
+    it('will not write the panel config onto the frames it was given', () => {
+      // The "Time series to table" transformation builds its sparkline frames out of the source
+      // query's own field objects, so the nested frame's config is the same object the query
+      // runner still holds. Applying this panel's config must not reach back into it.
+      const sourceFrame = createDataFrame({
+        name: 'source',
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1752170223000, 1752170224000] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+      const nested: DataFrame = {
+        name: 'nested',
+        length: 2,
+        fields: sourceFrame.fields.map((field) => ({ ...field })),
+      };
+
+      const f0 = createDataFrame({
+        name: 'A',
+        fields: [
+          { name: 'message', type: FieldType.string, values: ['foo'] },
+          { name: 'frame', type: FieldType.frame, values: [nested] },
+        ],
+      });
+
+      const withOverrides = applyFieldOverrides({
+        data: [f0],
+        fieldConfig: {
+          defaults: { unit: 'percent' },
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.byName, options: 'frame' },
+              properties: [{ id: 'displayName', value: 'Trend' }],
+            },
+          ],
+        },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      });
+
+      // the config still reaches the fields inside the frame
+      expect(withOverrides[0].fields[1].values[0].fields[1].config).toMatchObject({
+        unit: 'percent',
+        displayName: 'Trend',
+      });
+      // ...without touching the frames handed in
+      expect(nested.fields[1].config).toEqual({});
+      expect(sourceFrame.fields[1].config).toEqual({});
+    });
+
     it('will not crash when some of the nested frames are undefined', () => {
       const f0 = createDataFrame({
         name: 'A',
@@ -445,6 +497,56 @@ describe('applyFieldOverrides', () => {
 
     // The override applied
     expect(config.decimals).toEqual(1);
+  });
+
+  it('resolves threshold valueExpr steps from defaults into a sorted numeric config', () => {
+    const variables: Record<string, unknown> = { warn: '25', multi: ['1', '2'] };
+    // mimics the function-format convention of sceneGraph.interpolate/templateSrv.replace:
+    // the custom format function receives the raw variable value (an array when multi-value)
+    const replaceVariables: InterpolateFunction = (value, _scopedVars, format) => {
+      return value.replace(/\$(\w+)/g, (match, name) => {
+        if (!(name in variables)) {
+          return match;
+        }
+        if (typeof format === 'function') {
+          return format(variables[name]);
+        }
+        return String(variables[name]);
+      });
+    };
+
+    const data = applyFieldOverrides({
+      data: [f0],
+      fieldConfig: {
+        defaults: {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 80, color: 'red' },
+              { value: 50, valueExpr: '$warn', color: 'orange' },
+              { value: 90, valueExpr: '$multi', color: 'blue' },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      replaceVariables,
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    // resolved ($warn -> 25), fallen back ($multi has 2 values selected -> 90),
+    // sorted ascending with the base step first, and no valueExpr left anywhere
+    expect(data.fields[1].config.thresholds).toEqual({
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 25, color: 'orange' },
+        { value: 80, color: 'red' },
+        { value: 90, color: 'blue' },
+      ],
+    });
   });
 
   it('should skip overrides with unknown matcher ids', () => {
@@ -923,6 +1025,41 @@ describe('setFieldConfigDefaults', () => {
     setFieldConfigDefaults(config, defaultConfig, context);
 
     expect(config.thresholds).toMatchSnapshot();
+  });
+
+  it('normalizes a datasource base threshold serialized as null', () => {
+    const defaultConfig: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: 'blue' }],
+      },
+    };
+
+    const config: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: null as unknown as number, color: 'red' },
+          { value: 9, color: 'green' },
+          { value: 15, color: 'red' },
+        ],
+      },
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    setFieldConfigDefaults(config, defaultConfig, context);
+
+    expect(config.thresholds?.steps).toEqual([
+      { value: -Infinity, color: 'red' },
+      { value: 9, color: 'green' },
+      { value: 15, color: 'red' },
+    ]);
   });
 });
 

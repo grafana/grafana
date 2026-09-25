@@ -40,6 +40,21 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 	nL := alertState.Labels.Copy()
 	nA := data.Labels(alertState.Annotations).Copy()
 
+	// Drop labels and annotations with an empty name or empty value. An empty name makes the
+	// Alertmanager reject the alert ("invalid label set: invalid name"); an empty value is
+	// equivalent to the label being absent. The namespace UID label is kept here - it is
+	// propagated into an annotation below.
+	for k, v := range nL {
+		if len(k) == 0 || len(v) == 0 {
+			delete(nL, k)
+		}
+	}
+	for k, v := range nA {
+		if len(k) == 0 || len(v) == 0 {
+			delete(nA, k)
+		}
+	}
+
 	// encode the values as JSON where it will be expanded later
 	if len(alertState.Values) > 0 {
 		if b, err := json.Marshal(alertState.Values); err == nil {

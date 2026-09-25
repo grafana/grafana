@@ -17,8 +17,8 @@ import { shareDashboardType } from 'app/features/dashboard/components/ShareModal
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 
 import { contextSrv } from '../../../../../core/services/context_srv';
-import * as sharePublicDashboardUtils from '../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene, type DashboardSceneState } from '../../../scene/DashboardScene';
+import { DashboardScene } from '../../../scene/DashboardScene';
+import { type DashboardSceneState } from '../../../scene/types/dashboard';
 import { activateFullSceneTree } from '../../../utils/test-utils';
 import { ShareDrawer } from '../../ShareDrawer/ShareDrawer';
 
@@ -52,8 +52,6 @@ describe('Alerts', () => {
     expect(screen.queryByTestId(selectors.NoUpsertPermissionsWarningAlert)).toBeInTheDocument();
   });
   it('when dashboard has template variables, warning is shown', async () => {
-    jest.spyOn(sharePublicDashboardUtils, 'dashboardHasTemplateVariables').mockReturnValue(true);
-
     await buildAndRenderScenario({
       overrides: {
         $variables: new SceneVariableSet({

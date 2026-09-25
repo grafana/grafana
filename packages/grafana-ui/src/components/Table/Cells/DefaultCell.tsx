@@ -9,14 +9,14 @@ import { CellActions } from '../CellActions';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { type TableStyles } from '../TableRT/styles';
-import { type TableCellProps, type CustomCellRendererProps, type TableCellOptions } from '../types';
 import {
   type DataLinksActionsTooltipCoords,
   getCellColors,
   getCellOptions,
   getDataLinksActionsTooltipUtils,
   tooltipOnClickHandler,
-} from '../utils';
+} from '../cellUtils';
+import { type TableCellProps, type CustomCellRendererProps, type TableCellOptions } from '../types';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;

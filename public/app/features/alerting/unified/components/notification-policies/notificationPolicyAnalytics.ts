@@ -8,14 +8,6 @@ export function trackNotificationPolicyCreateError(payload: { error: string }) {
   reportInteraction('grafana_alerting_notification_policy_create_error', payload);
 }
 
-export function trackNotificationPolicyDeleted() {
-  reportInteraction('grafana_alerting_notification_policy_deleted');
-}
-
-export function trackNotificationPolicyDeleteError(payload: { error: string }) {
-  reportInteraction('grafana_alerting_notification_policy_delete_error', payload);
-}
-
 export function trackNotificationPolicyReset() {
   reportInteraction('grafana_alerting_notification_policy_reset');
 }
@@ -26,10 +18,6 @@ export function trackNotificationPolicyResetError(payload: { error: string }) {
 
 export function trackNotificationPolicyExported(payload: { isDefaultPolicy: boolean }) {
   reportInteraction('grafana_alerting_notification_policy_exported', payload);
-}
-
-export function trackNotificationPolicySelectorChanged(payload: { fromDefault: boolean; toDefault: boolean }) {
-  reportInteraction('grafana_alerting_notification_policy_selector_changed', payload);
 }
 
 export function trackNotificationPoliciesToggledAll(payload: {

@@ -92,7 +92,7 @@ func (b *bleveBackend) runDiskCleanup(ctx context.Context) {
 	root, err := os.OpenRoot(b.opts.Root)
 	if err != nil {
 		span.RecordError(err)
-		b.recordDiskCleanupRun(diskCleanupOutcomeError)
+		b.indexMetrics.IndexDiskCleanupRuns.WithLabelValues(diskCleanupOutcomeError).Inc()
 		b.log.Warn("Disk index cleanup failed: opening root", "root", b.opts.Root, "err", err)
 		return
 	}
@@ -103,7 +103,7 @@ func (b *bleveBackend) runDiskCleanup(ctx context.Context) {
 	if err != nil {
 		stats.errors++
 		span.RecordError(err)
-		b.recordDiskCleanupRun(diskCleanupOutcomeError)
+		b.indexMetrics.IndexDiskCleanupRuns.WithLabelValues(diskCleanupOutcomeError).Inc()
 		b.log.Warn("Disk index cleanup failed: reading root", "root", b.opts.Root, "err", err)
 		return
 	}
@@ -126,7 +126,7 @@ func (b *bleveBackend) runDiskCleanup(ctx context.Context) {
 	if stats.errors > 0 {
 		outcome = diskCleanupOutcomeError
 	}
-	b.recordDiskCleanupRun(outcome)
+	b.indexMetrics.IndexDiskCleanupRuns.WithLabelValues(outcome).Inc()
 	span.SetAttributes(
 		attribute.String("outcome", outcome),
 		attribute.Int("dirs_scanned", stats.scanned),
@@ -217,13 +217,13 @@ func (b *bleveBackend) tryRemoveCandidate(root *os.Root, rel, kind string, grace
 	}
 	if err := root.RemoveAll(rel); err != nil {
 		b.log.Warn("Disk index cleanup: removing dir", "kind", kind, "dir", abs, "err", err)
-		b.recordDiskCleanupDirsDeleted(kind, diskCleanupOutcomeError)
+		b.indexMetrics.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, diskCleanupOutcomeError).Inc()
 		stats.deleteFailures++
 		stats.errors++
 		return
 	}
 	b.log.Info("Disk index cleanup: removed dir", "kind", kind, "dir", abs)
-	b.recordDiskCleanupDirsDeleted(kind, diskCleanupOutcomeSuccess)
+	b.indexMetrics.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, diskCleanupOutcomeSuccess).Inc()
 	switch kind {
 	case diskCleanupKindIndex:
 		stats.deletedIndex++
@@ -271,7 +271,15 @@ func splitResourceGroup(name string) (string, string, bool) {
 // sweepResource dispatches each timestamp directory inside one resource
 // folder into one of three buckets:
 //
-//   - active index (owned + currently cached): always kept, no gate.
+//   - active index (currently cached): always kept, no gate. Ownership is
+//     deliberately not consulted here: the cache can hold an index this pod
+//     no longer owns (the ring reshuffled but runEvictExpiredOrUnownedIndexes
+//     has not yet evicted it, e.g. because traffic keeps refreshing
+//     lastFetchedFromCache). Deleting that directory while bleve still has
+//     it open causes the live scorch persister to fail on its next segment
+//     write with "persist err: ... no such file or directory". Unowned
+//     cached indexes are closed by runEvictExpiredOrUnownedIndexes once
+//     they go idle past IndexCacheTTL.
 //   - newest sibling we own but haven't opened: gated with the longer
 //     unopened-grace so a later BuildIndex can reuse it on cold start.
 //   - everything else (older siblings, anything under an unowned resource):
@@ -318,7 +326,10 @@ func (b *bleveBackend) sweepResource(ctx context.Context, root *os.Root, resourc
 
 		// Active index: the directory we currently have open. Keep
 		// unconditionally — deleting it would close-and-lose the live index.
-		if owned && cachedName != "" && name == cachedName {
+		// Intentionally not gated on `owned`: see the comment block on
+		// sweepResource for why an unowned index can still be cached and in
+		// use.
+		if cachedName != "" && name == cachedName {
 			stats.keptActive++
 			continue
 		}
@@ -472,18 +483,4 @@ func (b *bleveBackend) tryRemoveIfEmpty(root *os.Root, rel string, stats *diskCl
 // (which keys on absolute paths) rely on that precondition.
 func joinRoot(root *os.Root, rel string) string {
 	return filepath.Join(root.Name(), filepath.FromSlash(rel))
-}
-
-func (b *bleveBackend) recordDiskCleanupRun(outcome string) {
-	if b.indexMetrics == nil {
-		return
-	}
-	b.indexMetrics.IndexDiskCleanupRuns.WithLabelValues(outcome).Inc()
-}
-
-func (b *bleveBackend) recordDiskCleanupDirsDeleted(kind, outcome string) {
-	if b.indexMetrics == nil {
-		return
-	}
-	b.indexMetrics.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, outcome).Inc()
 }

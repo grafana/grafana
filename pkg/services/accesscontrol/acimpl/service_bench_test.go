@@ -29,7 +29,7 @@ import (
 // - each managed role will have 3 permissions {"resources:action2", "resources:id:x"} where x belongs to [1, 3]
 func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.Service, *user.SignedInUser) {
 	now := time.Now()
-	sqlStore := db.InitTestDB(b)
+	sqlStore := db.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideService(sqlStore)
 	acService := &Service{
 		cfg:            setting.NewCfg(),
@@ -285,7 +285,7 @@ func BenchmarkSearchUserWithAction_1K_1k(b *testing.B) { benchSearchUserWithActi
 func setupBenchManyTeams(b *testing.B, teamCount int) (*Service, *user.SignedInUser) {
 	b.Helper()
 	now := time.Now()
-	sqlStore := db.InitTestDB(b)
+	sqlStore := db.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideService(sqlStore)
 	cfg := setting.NewCfg()
 	cfg.RBAC.PermissionCache = true
@@ -322,7 +322,7 @@ func setupBenchManyTeams(b *testing.B, teamCount int) (*Service, *user.SignedInU
 	roles := make([]accesscontrol.Role, teamCount)
 	teamRoles := make([]accesscontrol.TeamRole, teamCount)
 	permissions := make([]accesscontrol.Permission, teamCount)
-	for i := 0; i < teamCount; i++ {
+	for i := range teamCount {
 		teamIDs[i] = int64(i + 1)
 		roles[i] = accesscontrol.Role{
 			ID: teamIDs[i], UID: fmt.Sprintf("managed_teams_%d_permissions", teamIDs[i]),
@@ -377,7 +377,7 @@ func benchGetUserPermissionsManyTeamsConcurrent(b *testing.B, teamCount, concurr
 
 		var wg sync.WaitGroup
 		wg.Add(concurrency)
-		for i := 0; i < concurrency; i++ {
+		for range concurrency {
 			go func() {
 				defer wg.Done()
 				_, err := acService.GetUserPermissions(context.Background(), signedInUser, accesscontrol.Options{})

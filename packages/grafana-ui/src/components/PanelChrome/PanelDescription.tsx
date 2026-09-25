@@ -2,9 +2,11 @@ import { css, cx } from '@emotion/css';
 import type { JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
+import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TitleItem } from './TitleItem';
@@ -12,9 +14,10 @@ import { TitleItem } from './TitleItem';
 interface Props {
   description: string | (() => string);
   className?: string;
+  inSubHeader?: boolean;
 }
 
-export function PanelDescription({ description, className }: Props) {
+export function PanelDescription({ description, className, inSubHeader }: Props) {
   const styles = useStyles2(getStyles);
 
   const getDescriptionContent = (): JSX.Element => {
@@ -27,6 +30,14 @@ export function PanelDescription({ description, className }: Props) {
       </div>
     );
   };
+
+  if (inSubHeader) {
+    return (
+      <Text variant="bodySmall" color="secondary" data-testid={selectors.components.Panels.Panel.subtitle}>
+        {getDescriptionContent()}
+      </Text>
+    );
+  }
 
   return description !== '' ? (
     <Tooltip interactive content={getDescriptionContent}>

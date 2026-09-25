@@ -29,6 +29,7 @@ const (
 
 	// GrafanaAPIServer is the module name for the embedded Grafana API server service.
 	GrafanaAPIServer = modules.GrafanaAPIServer
+	Router           = modules.Router
 
 	// BackgroundServices is the module name for the background services module.
 	// This module is an alias for any background service that is not explicitly listed in the dependency map.
@@ -46,17 +47,12 @@ const (
 	// graph resolves; enterprise overwrites it with the real implementation.
 	IAMRolesSyncer = accesscontrol.IAMRolesSyncerServiceName
 
-	// GlobalRoleSeeder is the module name for the GlobalRole seeder service.
-	// OSS registers an always-disabled noop; enterprise overwrites it with
-	// the real implementation. The basic-role aggregator depends on it.
+	// GlobalRoleSeeder is the module name for the GlobalRole management
+	// service. OSS registers an always-disabled noop; enterprise overwrites it
+	// with the real implementation, which (when elected leader) seeds the
+	// fixed-role GlobalRoles and then aggregates the basic roles under a single
+	// lease.
 	GlobalRoleSeeder = accesscontrol.GlobalRoleSeederServiceName
-
-	// BasicRoleAggregator is the module name for the basic-role aggregator
-	// service. OSS registers an always-disabled noop; enterprise overwrites
-	// it with the real implementation. It depends on GlobalRoleSeeder so its
-	// single aggregation pass runs only after the fixed-role GlobalRoles it
-	// aggregates from have been seeded.
-	BasicRoleAggregator = accesscontrol.BasicRoleAggregatorServiceName
 
 	// SQLStore is the module name for the SQLStore background service.
 	// It is the root of the dependency graph so that the database engine is
@@ -70,17 +66,18 @@ const (
 // unless they are explicitly listed in this map.
 func dependencyMap() map[string][]string {
 	return map[string][]string{
-		SQLStore:            {},
-		Tracing:             {SQLStore},
-		GrafanaAPIServer:    {Tracing},
-		PluginStore:         {GrafanaAPIServer},
-		PluginInstaller:     {PluginStore},
-		IAMRolesSyncer:      {GrafanaAPIServer},
-		FixedRolesLoader:    {PluginInstaller, IAMRolesSyncer},
-		Provisioning:        {PluginStore, PluginInstaller, FixedRolesLoader},
-		InstallSync:         {Provisioning},
-		Core:                {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync},
-		BasicRoleAggregator: {Core, GlobalRoleSeeder},
-		BackgroundServices:  {Core, BasicRoleAggregator},
+		SQLStore:           {},
+		Tracing:            {SQLStore},
+		GrafanaAPIServer:   {Tracing},
+		Router:             {GrafanaAPIServer},
+		PluginStore:        {GrafanaAPIServer},
+		PluginInstaller:    {PluginStore},
+		IAMRolesSyncer:     {GrafanaAPIServer},
+		FixedRolesLoader:   {PluginInstaller, IAMRolesSyncer},
+		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
+		InstallSync:        {Provisioning},
+		GlobalRoleSeeder:   {GrafanaAPIServer},
+		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync, GlobalRoleSeeder},
+		BackgroundServices: {Core, Router},
 	}
 }

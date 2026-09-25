@@ -39,7 +39,7 @@ export const mapPanelChangedHandler: PanelTypeChangedHandler = (panel, prevPlugi
   return {};
 };
 
-export function worldmapToGeomapOptions(angular: any): {
+function worldmapToGeomapOptions(angular: any): {
   fieldConfig: FieldConfigSource;
   options: Options;
   xform?: DataTransformerConfig;

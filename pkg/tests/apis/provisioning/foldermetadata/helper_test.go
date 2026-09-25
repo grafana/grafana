@@ -7,7 +7,7 @@ import (
 )
 
 var env = common.NewSharedGitEnv(
-	common.WithRepositoryTypes([]string{"git", "local"}),
+	common.WithRepositoryTypes([]string{"git", "github", "local"}),
 )
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {

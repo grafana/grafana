@@ -1,3 +1,4 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -6,6 +7,7 @@ import { Provider } from 'react-redux';
 import {
   type AbsoluteTimeRange,
   CoreApp,
+  type DataQueryRequest,
   type EventBus,
   EventBusSrv,
   type FieldConfigSource,
@@ -16,9 +18,12 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { defaultTableOptions } from '@grafana/schema';
+import { mockClientSize } from '@grafana/test-utils';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
+import { DownloadFormat, downloadLogs } from 'app/features/logs/utils';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { configureStore } from 'app/store/configureStore';
 
@@ -29,8 +34,9 @@ import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
 
-jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+jest.mock('app/features/logs/utils', () => ({
+  ...jest.requireActual('app/features/logs/utils'),
+  downloadLogs: jest.fn(),
 }));
 
 const fieldConfig: FieldConfigSource = {
@@ -46,16 +52,10 @@ const mockEventBus: EventBus = {
   newScopedBus: jest.fn(),
 };
 
-// Mock TableNG to disable virtualization, otherwise the lack of viewport in our testing env will cause the table to only render a single column
-jest.mock('@grafana/ui/unstable', () => {
-  const actual = jest.requireActual('@grafana/ui/unstable');
-  const MockTableNG = actual.TableNG;
-  return {
-    ...actual,
-    TableNG: (props: React.ComponentProps<typeof MockTableNG>) => (
-      <MockTableNG {...props} enableVirtualization={false} />
-    ),
-  };
+// react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
+// this the table only renders a single column.
+beforeAll(() => {
+  mockClientSize({ width: 800, height: 600 });
 });
 
 const publishMockFn = jest.fn();
@@ -77,7 +77,8 @@ const setUp = (
   props?: Partial<React.ComponentProps<typeof LogsTable>>,
   options?: Partial<Options>,
   app = CoreApp.Dashboard,
-  panelContext?: Partial<PanelContext>
+  panelContext?: Partial<PanelContext>,
+  flagValueMap: Record<string, boolean> = {}
 ) => {
   const store = configureStore();
   return render(
@@ -122,23 +123,25 @@ const setUp = (
         {...props}
       />
     </PanelContextProvider>,
-    { wrapper: ({ children }) => <Provider store={store}>{children}</Provider> }
+    {
+      wrapper: ({ children }) => (
+        <Provider store={store}>
+          <OpenFeatureTestProvider flagValueMap={flagValueMap}>{children}</OpenFeatureTestProvider>
+        </Provider>
+      ),
+    }
   );
 };
 
 describe('LogsTable', () => {
   let origResizeObserver = global.ResizeObserver;
-  let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
-  let jestScrollIntoView = jest.fn();
 
   beforeAll(() => {
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
   });
 
   beforeEach(() => {
-    jestScrollIntoView = jest.fn();
     origResizeObserver = global.ResizeObserver;
-    origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
       callback: unknown;
@@ -149,13 +152,10 @@ describe('LogsTable', () => {
       unobserve() {}
       disconnect() {}
     };
-
-    window.HTMLElement.prototype.scrollIntoView = jestScrollIntoView;
   });
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
-    window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
   });
 
   it('should render', async () => {
@@ -170,6 +170,33 @@ describe('LogsTable', () => {
     expect(headers[1].textContent).toEqual('level');
     expect(headers[2].textContent).toEqual('body');
   });
+
+  it.each([CoreApp.Dashboard, CoreApp.Explore])(
+    'keeps JSON fields plain in %s with new table features enabled',
+    async (app) => {
+      const data = getPanelData();
+      const frame = toDataFrame({
+        ...data.series[0],
+        fields: [
+          ...data.series[0].fields,
+          { name: 'payload', type: FieldType.other, config: {}, values: [{ count: 42 }, [1, 2, 3]] },
+        ],
+      });
+      setUp(
+        { data: getPanelData({ series: [frame] }) },
+        { displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'payload'], showControls: false },
+        app,
+        undefined,
+        { [FlagKeys.TableRefreshNewFeatures]: true }
+      );
+      const objectCell = await screen.findByRole('gridcell', { name: /count/ });
+      const arrayCell = await screen.findByRole('gridcell', { name: /\[\s*1,\s*2,\s*3\s*\]/ });
+      expect(objectCell).toHaveTextContent(/\{\s*"count":\s*42\s*\}/);
+      expect(arrayCell).toHaveTextContent(/\[\s*1,\s*2,\s*3\s*\]/);
+      expect(objectCell.querySelector('span[style*="color"]')).not.toBeInTheDocument();
+      expect(arrayCell.querySelector('span[style*="color"]')).not.toBeInTheDocument();
+    }
+  );
 
   describe('Panel controls', () => {
     it('should display', async () => {
@@ -196,6 +223,37 @@ describe('LogsTable', () => {
           order: LogsSortOrder.Ascending,
         })
       );
+    });
+
+    it('downloads from the raw frame when displayed fields exclude the log body', async () => {
+      // Regression: organizeFields removes body from data.series for display. Download must use the
+      // raw frame — dataFrameToLogsModel needs body — or the export is empty.
+      const downloadLogsMock = jest.mocked(downloadLogs);
+      downloadLogsMock.mockClear();
+
+      const { container } = setUp(undefined, {
+        showControls: true,
+        allowDownload: true,
+        displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level'],
+      });
+
+      await waitFor(() => expect(screen.getByLabelText('Download logs')).toBeInTheDocument());
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(Array.from(headers).map((h) => h.textContent)).toEqual(['timestamp', 'level']);
+
+      await userEvent.click(screen.getByLabelText('Download logs'));
+      await userEvent.click(await screen.findByText('json'));
+
+      expect(downloadLogsMock).toHaveBeenCalledTimes(1);
+      expect(downloadLogsMock).toHaveBeenCalledWith(DownloadFormat.Json, expect.any(Array), expect.anything(), [
+        LOGS_DATAPLANE_TIMESTAMP_NAME,
+        'level',
+      ]);
+
+      const rows = downloadLogsMock.mock.calls[0][1];
+      expect(rows.map((row) => row.entry)).toEqual(['log 1', 'log 2']);
+      expect(rows[0].dataFrame.fields.some((field) => field.name === LOGS_DATAPLANE_BODY_NAME)).toBe(true);
     });
   });
 
@@ -390,6 +448,43 @@ describe('LogsTable', () => {
       });
 
       expect(await screen.findByText('Data is missing a time field')).toBeInTheDocument();
+    });
+  });
+
+  describe('Loki time column tooltip', () => {
+    const lokiTooltip =
+      "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right.";
+
+    it('shows a tooltip on the timestamp column when the query uses Loki', async () => {
+      const { container } = setUp({
+        data: getPanelData({
+          request: {
+            targets: [{ refId: 'A', datasource: { type: 'loki' } }],
+          } as DataQueryRequest,
+        }),
+      });
+
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.getByRole('button', { name: lokiTooltip })).toBeInTheDocument();
+      const timestampHeader = Array.from(container.querySelectorAll('[role="columnheader"]')).find((header) =>
+        header.textContent?.includes('timestamp')
+      );
+      expect(timestampHeader).toContainElement(screen.getByRole('button', { name: lokiTooltip }));
+    });
+
+    it('does not show a timestamp tooltip for other data sources', async () => {
+      setUp({
+        data: getPanelData({
+          request: {
+            targets: [{ refId: 'A', datasource: { type: 'elasticsearch' } }],
+          } as DataQueryRequest,
+        }),
+      });
+
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.queryByRole('button', { name: lokiTooltip })).not.toBeInTheDocument();
     });
   });
 });

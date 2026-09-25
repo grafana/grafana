@@ -2,6 +2,7 @@ package setting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,5 +87,75 @@ folder.grafana.app/folders = 2.0
 `))
 		require.NoError(t, err)
 		assert.Empty(t, cfg.ZanzanaRollout.ResourcePercentages)
+	})
+}
+
+func TestReadZanzanaSettings_OpenFGAExperimentals(t *testing.T) {
+	t.Run("disabled by default", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(nil)
+		require.NoError(t, err)
+		assert.Empty(t, cfg.ZanzanaServer.OpenFgaServerSettings.Experimentals)
+	})
+
+	t.Run("reads experimentals from config", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[openfga]
+experimentals = enable-check-optimizations,weighted_graph_check
+`))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"enable-check-optimizations", "weighted_graph_check"}, cfg.ZanzanaServer.OpenFgaServerSettings.Experimentals)
+	})
+
+	t.Run("environment overrides config", func(t *testing.T) {
+		t.Setenv("GF_OPENFGA_EXPERIMENTALS", "weighted_graph_check")
+		cfg, err := NewCfgFromBytes([]byte(`
+[openfga]
+experimentals = enable-check-optimizations
+`))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"weighted_graph_check"}, cfg.ZanzanaServer.OpenFgaServerSettings.Experimentals)
+	})
+}
+
+func TestReadZanzanaSettings_ClientKeepalive(t *testing.T) {
+	t.Run("defaults to 6m", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(nil)
+		require.NoError(t, err)
+		assert.Equal(t, 6*time.Minute, cfg.ZanzanaClient.KeepaliveTime)
+	})
+
+	t.Run("reads keepalive time from config", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[zanzana.client]
+grpc_client_keepalive_time = 30s
+`))
+		require.NoError(t, err)
+		assert.Equal(t, 30*time.Second, cfg.ZanzanaClient.KeepaliveTime)
+	})
+
+	t.Run("zero disables keepalive", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[zanzana.client]
+grpc_client_keepalive_time = 0
+`))
+		require.NoError(t, err)
+		assert.Equal(t, time.Duration(0), cfg.ZanzanaClient.KeepaliveTime)
+	})
+}
+
+func TestReadZanzanaSettings_ClientCallTimeout(t *testing.T) {
+	t.Run("defaults to 30s", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(nil)
+		require.NoError(t, err)
+		assert.Equal(t, 30*time.Second, cfg.ZanzanaClient.CallTimeout)
+	})
+
+	t.Run("reads timeout from config", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[zanzana.client]
+grpc_client_timeout = 10s
+`))
+		require.NoError(t, err)
+		assert.Equal(t, 10*time.Second, cfg.ZanzanaClient.CallTimeout)
 	})
 }

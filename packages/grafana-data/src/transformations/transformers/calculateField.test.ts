@@ -1,23 +1,7 @@
-import {
-  SceneDataNode,
-  SceneDataTransformer,
-  type SceneDeactivationHandler,
-  SceneFlexItem,
-  SceneFlexLayout,
-  sceneGraph,
-  type SceneObject,
-  SceneObjectBase,
-  type SceneVariable,
-  SceneVariableSet,
-  TestVariable,
-} from '@grafana/scenes';
-import { type DataTransformerConfig, LoadingState } from '@grafana/schema';
-
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { cacheFieldDisplayNames } from '../../field/fieldState';
-import { type DataFrame, FieldType } from '../../types/dataFrame';
-import { getDefaultTimeRange } from '../../types/time';
+import { FieldType } from '../../types/dataFrame';
 import { BinaryOperationID } from '../../utils/binaryOperators';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { UnaryOperationID } from '../../utils/unaryOperators';
@@ -854,40 +838,6 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('uses template variable substituion', async () => {
-    const cfg = {
-      id: DataTransformerID.calculateField,
-      options: {
-        alias: '$var1',
-        mode: CalculateFieldMode.BinaryOperation,
-        binary: {
-          left: 'A',
-          operator: BinaryOperationID.Add,
-          right: '$var2',
-        },
-        replaceFields: true,
-      },
-    };
-
-    const data = await setupTransformationScene(seriesA, cfg, [
-      new TestVariable({ name: 'var1', value: 'Test' }),
-      new TestVariable({ name: 'var2', value: 5 }),
-    ]);
-
-    const filtered = data[0];
-    const rows = new DataFrameView(filtered).toArray();
-    expect(rows).toEqual([
-      {
-        Test: 6,
-        TheTime: 1000,
-      },
-      {
-        Test: 105,
-        TheTime: 2000,
-      },
-    ]);
-  });
-
   it('calculates centered moving average on odd window size', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
@@ -1597,69 +1547,3 @@ describe('getNameFromOptions', () => {
     expect(getNameFromOptions(options)).toBe('math');
   });
 });
-
-function activateFullSceneTree(scene: SceneObject): SceneDeactivationHandler {
-  const deactivationHandlers: SceneDeactivationHandler[] = [];
-
-  // Important that variables are activated before other children
-  if (scene.state.$variables) {
-    deactivationHandlers.push(activateFullSceneTree(scene.state.$variables));
-  }
-
-  scene.forEachChild((child) => {
-    // For query runners which by default use the container width for maxDataPoints calculation we are setting a width.
-    // In real life this is done by the React component when VizPanel is rendered.
-    if ('setContainerWidth' in child) {
-      // @ts-expect-error
-      child.setContainerWidth(500);
-    }
-    deactivationHandlers.push(activateFullSceneTree(child));
-  });
-
-  deactivationHandlers.push(scene.activate());
-
-  return () => {
-    for (const handler of deactivationHandlers) {
-      handler();
-    }
-  };
-}
-
-function setupTransformationScene(
-  inputData: DataFrame,
-  cfg: DataTransformerConfig,
-  variables: SceneVariable[]
-): Promise<DataFrame[]> {
-  class TestSceneObject extends SceneObjectBase<{}> {}
-  const dataNode = new SceneDataNode({
-    data: {
-      state: LoadingState.Loading,
-      timeRange: getDefaultTimeRange(),
-      series: [inputData],
-    },
-  });
-
-  const transformationNode = new SceneDataTransformer({
-    transformations: [cfg],
-  });
-
-  const consumer = new TestSceneObject({
-    $data: transformationNode,
-  });
-
-  const scene = new SceneFlexLayout({
-    $data: dataNode,
-    $variables: new SceneVariableSet({ variables }),
-    children: [new SceneFlexItem({ body: consumer })],
-  });
-
-  activateFullSceneTree(scene);
-
-  return new Promise<DataFrame[]>((resolve) => {
-    const dataProvider = sceneGraph.getData(consumer);
-    const sub = dataProvider.subscribeToState((state) => {
-      sub.unsubscribe();
-      resolve(state.data?.series ?? []);
-    });
-  });
-}

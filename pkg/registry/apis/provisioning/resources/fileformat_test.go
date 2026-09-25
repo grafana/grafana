@@ -3,8 +3,6 @@ package resources
 import (
 	"bytes"
 	"context"
-	"os"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -88,12 +86,18 @@ spec:
 	})
 
 	t.Run("lint dashboard", func(t *testing.T) {
-		var err error
+		// Use an inline classic (v1) dashboard rather than reading a devenv file, which
+		// avoids a cross-package file dependency and stays a classic dashboard regardless
+		// of how the gdev dashboards are stored.
 		info := &repository.FileInfo{
-			Path: "devenv/dev-dashboards/panel-timeline/timeline-demo.json",
+			Path: "dashboard.json",
+			Data: []byte(`{
+				"uid": "test-dashboard",
+				"schemaVersion": 7,
+				"panels": [],
+				"tags": []
+			}`),
 		}
-		info.Data, err = os.ReadFile(path.Join("../../../../..", info.Path))
-		require.NoError(t, err)
 
 		parser := &parser{
 			repo: provisioning.ResourceRepositoryInfo{

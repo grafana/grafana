@@ -9,6 +9,11 @@ import (
 	"path/filepath"
 	"sync"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -23,6 +28,7 @@ type Calculator struct {
 	cdn       *pluginscdn.Service
 	signature *signature.Signature
 	log       log.Logger
+	tracer    trace.Tracer
 
 	moduleHashCache sync.Map
 }
@@ -34,6 +40,7 @@ func NewCalculator(cfg *config.PluginManagementCfg, reg registry.Service, cdn *p
 		cdn:       cdn,
 		signature: signature,
 		log:       log.New("modulehash"),
+		tracer:    otel.Tracer("github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"),
 	}
 }
 
@@ -49,12 +56,23 @@ func (c *Calculator) ModuleHash(ctx context.Context, pluginID, pluginVersion str
 		return ""
 	}
 	k := c.moduleHashCacheKey(pluginID, pluginVersion)
-	cachedValue, ok := c.moduleHashCache.Load(k)
-	if ok {
+	if cachedValue, ok := c.moduleHashCache.Load(k); ok {
 		return cachedValue.(string)
 	}
+
+	// Only cache misses reach the manifest read below. Cache hits are not traced
+	// so span volume stays proportional to real work, even though ModuleHash is
+	// called once per plugin on every index/bootdata request.
+	ctx, span := c.tracer.Start(ctx, "modulehash.compute", trace.WithAttributes(
+		attribute.String("plugin.id", pluginID),
+		attribute.String("plugin.version", pluginVersion),
+	))
+	defer span.End()
+
 	mh, err := c.moduleHash(ctx, p, "")
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		c.log.Error("Failed to calculate module hash", "pluginId", p.ID, "error", err)
 	}
 	c.moduleHashCache.Store(k, mh)

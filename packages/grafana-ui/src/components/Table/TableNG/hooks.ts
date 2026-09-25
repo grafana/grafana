@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import {
   useState,
@@ -10,7 +11,16 @@ import {
   useEffect,
 } from 'react';
 
-import { type DataFrame, type Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
+import {
+  createDataFrame,
+  type DataFrame,
+  type Field,
+  FieldType,
+  formattedValueToString,
+  type GrafanaTheme2,
+  reduceField,
+  ReducerID,
+} from '@grafana/data';
 import {
   type Column,
   type ColumnWidths,
@@ -20,12 +30,23 @@ import {
 } from '@grafana/react-data-grid';
 import { type MatcherScope } from '@grafana/schema';
 
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { TABLE } from './constants';
+import {
+  CELL_HORIZONTAL_CHROME,
+  FIRST_COLUMN_EXTRA_PADDING,
+  getPaginationChromeHeight,
+  NESTED_TABLE_VERTICAL_PADDING,
+  REFRESHED_NESTED_TABLE_VERTICAL_PADDING,
+  SCROLL_SHADOW_THRESHOLD,
+  TABLE,
+} from './constants';
+import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
   type FooterFieldState,
+  type GetActionsFunctionLocal,
   type NestedRowEntry,
   type SortByBehavior,
   type TableRow,
@@ -35,16 +56,19 @@ import {
 } from './types';
 import {
   getDisplayName,
+  getHeaderAffordanceWidth,
   applySort,
   getColumnTypes,
   getRowHeight,
   computeColWidths,
+  computeContentAwareColWidths,
   buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
-  IS_SAFARI_26,
   applyFilter,
   compileFrameToRecords,
+  createTypographyContext,
+  extractPixelValue,
 } from './utils';
 
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
@@ -57,7 +81,7 @@ export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFram
 }
 
 export interface SortedRowsOptions {
-  hasNestedFrames: boolean;
+  hasNestedFrames?: boolean;
   initialSortBy?: TableSortByFieldState[];
 }
 
@@ -123,7 +147,48 @@ export function useSortedRows(
   };
 }
 
+/**
+ * Notify when the table's filtered + sorted parent-row order changes.
+ */
+export function useNotifyDisplayedRowIndices(
+  sortedRows: TableRow[],
+  onDisplayedRowIndicesChange?: (rowIndices: number[]) => void
+) {
+  const callbackRef = useRef(onDisplayedRowIndicesChange);
+  callbackRef.current = onDisplayedRowIndicesChange;
+  const prevIndicesRef = useRef<number[] | undefined>(undefined);
+
+  useEffect(() => {
+    const callback = callbackRef.current;
+    if (!callback) {
+      return;
+    }
+
+    const indices: number[] = [];
+    let hasDifferences = !prevIndicesRef.current;
+    for (let i = 0; i < sortedRows.length; i++) {
+      const row = sortedRows[i];
+      if (row.__depth === 0) {
+        if (!hasDifferences && prevIndicesRef.current?.[indices.length] !== row.__index) {
+          hasDifferences = true;
+        }
+        indices.push(row.__index);
+      }
+    }
+    if (!hasDifferences && prevIndicesRef.current?.length !== indices.length) {
+      hasDifferences = true;
+    }
+    if (!hasDifferences) {
+      return;
+    }
+
+    prevIndicesRef.current = indices;
+    callback(indices);
+  }, [sortedRows]);
+}
+
 export interface PaginatedRowsOptions {
+  tableRefreshEnabled?: boolean;
   height: number;
   width: number;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
@@ -132,6 +197,10 @@ export interface PaginatedRowsOptions {
   paginationHeight?: number;
   enabled: boolean;
   hasNestedFrames?: boolean;
+  /** Whether the panel has dropped its own padding — the pagination controls then need their own bottom margin. */
+  noPanelPadding?: boolean;
+  /** When set to a positive value, fixes the number of rows per page instead of deriving it from the panel height. */
+  pageSize?: number;
 }
 
 export interface PaginatedRowsResult {
@@ -146,12 +215,20 @@ export interface PaginatedRowsResult {
   smallPagination: boolean;
 }
 
-// hand-measured. pagination height is 30px, plus 8px top margin
-const PAGINATION_HEIGHT = 38;
-
 export function usePaginatedRows(
   rows: TableRow[],
-  { height, width, headerHeight, footerHeight, rowHeight, enabled, hasNestedFrames }: PaginatedRowsOptions
+  {
+    height,
+    width,
+    headerHeight,
+    footerHeight,
+    rowHeight,
+    enabled,
+    hasNestedFrames,
+    pageSize,
+    noPanelPadding,
+    tableRefreshEnabled = false,
+  }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
   const [page, setPage] = useState(0);
@@ -201,11 +278,19 @@ export function usePaginatedRows(
       return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows };
     }
 
-    // calculate number of rowsPerPage based on height stack
-    const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_HEIGHT;
-    const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
-    // ensure at least one row per page is displayed
-    let rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
+    // a user-configured page size takes precedence; otherwise derive rowsPerPage from the height stack
+    let rowsPerPage: number;
+    if (pageSize != null && pageSize > 0) {
+      // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
+      rowsPerPage = Math.max(1, Math.floor(pageSize));
+    } else {
+      const frameHeight = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+      const rowAreaHeight =
+        height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding) - frameHeight;
+      const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
+      // ensure at least one row per page is displayed
+      rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
+    }
 
     // calculate row range for pagination summary display
     const pageRangeStart = page * rowsPerPage + 1;
@@ -221,7 +306,18 @@ export function usePaginatedRows(
       pageRangeStart,
       pageRangeEnd,
     };
-  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
+  }, [
+    height,
+    headerHeight,
+    footerHeight,
+    avgRowHeight,
+    enabled,
+    numRows,
+    page,
+    pageSize,
+    noPanelPadding,
+    tableRefreshEnabled,
+  ]);
 
   // safeguard against page overflow on panel resize or other factors
   useLayoutEffect(() => {
@@ -229,9 +325,10 @@ export function usePaginatedRows(
       return;
     }
 
-    if (page > numPages) {
-      // resets pagination to end
-      setPage(numPages - 1);
+    // valid page indices are 0..numPages-1, so anything at or past numPages overflows
+    if (page > numPages - 1) {
+      // resets pagination to the last valid page
+      setPage(Math.max(0, numPages - 1));
     }
   }, [numPages, enabled, page, setPage]);
 
@@ -274,6 +371,15 @@ export function usePaginatedRows(
   };
 }
 
+export const useRowCompiler = (dataFrame: DataFrame, nestedFramesFieldName?: string) => {
+  const orderedFieldNames = useMemo(() => dataFrame.fields.map(getDisplayName), [dataFrame]);
+  const stringified = useMemo(() => JSON.stringify(orderedFieldNames), [orderedFieldNames]);
+  return useMemo(
+    () => compileFrameToRecords(orderedFieldNames, nestedFramesFieldName),
+    [stringified, nestedFramesFieldName] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+};
+
 export const useNestedRows = (
   rows: TableRow[],
   nestedData: DataFrame[] | undefined,
@@ -282,12 +388,7 @@ export const useNestedRows = (
   filter: FilterType,
   sortColumns: SortColumn[]
 ): NestedRowEntry[] => {
-  const frameToRecords = useMemo(() => {
-    if (!hasNestedFrames || !nestedFramesFieldName || !nestedData?.[0]) {
-      return;
-    }
-    return compileFrameToRecords(nestedData[0]);
-  }, [hasNestedFrames, nestedFramesFieldName, nestedData]);
+  const frameToRecords = useRowCompiler(nestedData?.[0] ?? createDataFrame({ fields: [] }));
 
   return useMemo(() => {
     const result: NestedRowEntry[] = [];
@@ -317,29 +418,37 @@ export const useNestedRows = (
   }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter, frameToRecords, nestedData]);
 };
 
-const ICON_WIDTH = 16;
-const ICON_GAP = 4;
-
 interface UseHeaderHeightOptions {
+  lastColumnExtraPadding?: number;
   enabled: boolean;
   fields: Field[];
   columnWidths: number[];
-  sortColumns: SortColumn[];
+  /**
+   * Measures the header label. Must be the medium-weight context (see `useHeaderTypographyCtx`) —
+   * the label renders at `fontWeightMedium`, so measuring it with the body context wraps it later
+   * than the browser does and the header comes out a line short.
+   */
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  noPanelPadding?: boolean;
+  tableRefreshEnabled?: boolean;
+  /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
+  filter?: FilterType;
 }
 
 export function useHeaderHeight({
   fields,
   enabled,
   columnWidths,
-  sortColumns,
   typographyCtx,
   showTypeIcons = false,
+  noPanelPadding = false,
+  tableRefreshEnabled = false,
+  filter,
+  lastColumnExtraPadding = 0,
 }: UseHeaderHeightOptions): number {
-  const perIconSpace = ICON_WIDTH + ICON_GAP;
-
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
+  const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
 
   const columnAvailableWidths = useMemo(
     () =>
@@ -348,25 +457,22 @@ export function useHeaderHeight({
           return 0; // no width available for this column yet
         }
 
-        let width = c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT;
         const field = fields[idx];
-
-        // filtering icon
-        if (field.config?.custom?.filterable) {
-          width -= perIconSpace;
+        let width = c - CELL_HORIZONTAL_CHROME;
+        if (idx === fields.length - 1) {
+          width -= lastColumnExtraPadding;
         }
-        // sorting icon
-        if (sortColumns.some((col) => col.columnKey === getDisplayName(field))) {
-          width -= perIconSpace;
+        if (noPanelPadding && idx === 0) {
+          width -= FIRST_COLUMN_EXTRA_PADDING;
         }
-        // type icon
-        if (showTypeIcons) {
-          width -= perIconSpace;
-        }
-        // sadly, the math for this is off by exactly 1 pixel. shrug.
-        return Math.floor(width) - 1;
+        width -= getHeaderAffordanceWidth(field, {
+          showTypeIcons,
+          tableRefreshEnabled,
+          isFiltered: filteredKeys.has(getDisplayName(field)),
+        });
+        return Math.floor(width);
       }),
-    [fields, columnWidths, sortColumns, showTypeIcons, perIconSpace]
+    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshEnabled, filteredKeys, lastColumnExtraPadding]
   );
 
   const headerHeight = useMemo(() => {
@@ -379,8 +485,9 @@ export function useHeaderHeight({
       columnAvailableWidths,
       TABLE.HEADER_HEIGHT,
       measurers,
-      TABLE.LINE_HEIGHT,
-      TABLE.CELL_PADDING
+      // the header label's own line box, and the cell's padding on *both* block edges
+      TABLE.HEADER_LINE_HEIGHT,
+      TABLE.CELL_PADDING * 2
     );
   }, [fields, enabled, columnAvailableWidths, measurers]);
 
@@ -388,6 +495,7 @@ export function useHeaderHeight({
 }
 
 interface UseRowHeightOptions {
+  lastColumnExtraPadding?: number;
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
@@ -401,9 +509,17 @@ interface UseRowHeightOptions {
   nestedFields: Field[];
   nestedColWidths: number[];
   nestedFooterHeight?: number;
+  tableRefreshEnabled?: boolean;
 }
 
-const getTrueColWidths = (cw: number[]): number[] => cw.map((c) => c - (2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT));
+const getTrueColWidths = (cw: number[], noPanelPadding = false, lastColumnExtraPadding = 0): number[] =>
+  cw.map(
+    (c, i) =>
+      c -
+      CELL_HORIZONTAL_CHROME -
+      (noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0) -
+      (i === cw.length - 1 ? lastColumnExtraPadding : 0)
+  );
 
 // TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
 export function useRowHeight({
@@ -420,10 +536,13 @@ export function useRowHeight({
   nestedColWidths,
   visibleNestedRowCounts,
   nestedFooterHeight = 0,
+  lastColumnExtraPadding = 0,
+  tableRefreshEnabled = false,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const theme = useTheme2();
   const nestedMeasurers = useMemo(
-    () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight),
-    [nestedFields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight),
+    [nestedFields, typographyCtx, maxHeight, theme]
   );
 
   const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
@@ -469,8 +588,8 @@ export function useRowHeight({
   }, [nestedFields, nestedColWidths, defaultNestedHeight, nestedMeasurers, visibleNestedRowCounts]);
 
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
-    [fields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
+    [fields, typographyCtx, maxHeight, theme]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -483,7 +602,7 @@ export function useRowHeight({
       return () => defaultHeight;
     }
 
-    const trueColWidths = getTrueColWidths(columnWidths);
+    const trueColWidths = getTrueColWidths(columnWidths, false, lastColumnExtraPadding);
     const cache: Array<number | undefined> = Array(fields[0].values.length);
     return (row: TableRow) => {
       let result = cache[row.__index];
@@ -492,7 +611,7 @@ export function useRowHeight({
       }
       return result;
     };
-  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols]);
+  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols, lastColumnExtraPadding]);
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
@@ -524,7 +643,12 @@ export function useRowHeight({
           0
         );
         const scrollbarHeight = nestedHasOverflow ? TABLE.SCROLLBAR_AFFORDANCE : 0;
-        return nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + TABLE.CELL_PADDING * 2 + scrollbarHeight;
+        const nestedTableVerticalPadding = tableRefreshEnabled
+          ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING
+          : NESTED_TABLE_VERTICAL_PADDING;
+        return (
+          nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + nestedTableVerticalPadding + scrollbarHeight
+        );
       }
 
       return row.__parentIndex != null ? getNestedRowHeightWithCache(row) : getRowHeightWithCache(row);
@@ -540,10 +664,56 @@ export function useRowHeight({
     nestedHasOverflow,
     nestedRows,
     nestedData,
+    tableRefreshEnabled,
     visibleNestedRowCounts,
   ]);
 
   return rowHeight;
+}
+
+interface UseFlatRowHeightOptions {
+  columnWidths: number[];
+  fields: Field[];
+  defaultHeight: NonNullable<CSSProperties['height']>;
+  typographyCtx: TypographyCtx;
+  maxHeight?: number;
+  noPanelPadding?: boolean;
+}
+
+/**
+ * Simplified row height hook for flat (non-nested) tables.
+ * Unlike `useRowHeight`, this does not handle nested frame rows.
+ */
+export function useFlatRowHeight({
+  columnWidths,
+  fields,
+  defaultHeight,
+  typographyCtx,
+  maxHeight,
+  noPanelPadding = false,
+}: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const theme = useTheme2();
+  const measurers = useMemo(
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
+    [fields, typographyCtx, maxHeight, theme]
+  );
+  const hasWrappedCols = (measurers?.length ?? 0) > 0;
+
+  return useMemo(() => {
+    if (typeof defaultHeight === 'string' || !hasWrappedCols) {
+      return defaultHeight;
+    }
+
+    const trueColWidths = getTrueColWidths(columnWidths, noPanelPadding);
+    const cache: Array<number | undefined> = Array(fields[0]?.values.length ?? 0);
+    return (row: TableRow) => {
+      let result = cache[row.__index];
+      if (result == null) {
+        result = cache[row.__index] = getRowHeight(fields, row, trueColWidths, defaultHeight, measurers);
+      }
+      return result;
+    };
+  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols, noPanelPadding]);
 }
 
 /**
@@ -656,10 +826,205 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
   return scrollbarWidth;
 }
 
+/**
+ * Fades a shadow in at the top or bottom edge of the grid's scroll viewport while rows are scrolled
+ * out of view in that direction, the same cue `ScrollContainer`'s `showScrollIndicators` gives:
+ * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
+ * scrolls, so nothing otherwise tells them more rows exist.
+ *
+ * React state updates only when shadow visibility or horizontal scrollbar height changes.
+ */
+export function useScrollShadows(
+  ref: RefObject<DataGridHandle | null>,
+  enabled: boolean,
+  { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
+) {
+  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0 });
+  const visibilityRef = useRef(visibility);
+  const styles = useStyles2(getScrollShadowStyles);
+  const offsetStyles = useStyles2(getScrollShadowOffsetStyles, topOffset, bottomOffset + visibility.scrollbarHeight);
+
+  const sync = useCallback(() => {
+    const el = ref.current?.element;
+    if (!enabled || !el) {
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight, offsetHeight } = el;
+    // A horizontal scrollbar takes its space out of the bottom of the grid's padding box, below
+    // both the rows and the sticky footer, so the bottom shadow has to clear it or it sits on the
+    // scrollbar instead of on the last visible row. The grid draws no border (see `getGridStyles`),
+    // so the difference between the two heights is the scrollbar alone.
+    const scrollbarHeight = offsetHeight - clientHeight;
+    const scrollBottom = scrollHeight - clientHeight - scrollTop;
+    const top = scrollTop > SCROLL_SHADOW_THRESHOLD;
+    const bottom = scrollBottom > SCROLL_SHADOW_THRESHOLD;
+    if (
+      visibilityRef.current.top !== top ||
+      visibilityRef.current.bottom !== bottom ||
+      visibilityRef.current.scrollbarHeight !== scrollbarHeight
+    ) {
+      const nextVisibility = { top, bottom, scrollbarHeight };
+      visibilityRef.current = nextVisibility;
+      setVisibility(nextVisibility);
+    }
+  }, [ref, enabled]);
+
+  // Content height changes arrive through a render: rows change, nested rows expand, or resized
+  // columns re-wrap their cells. Measure after every commit so those changes do not need their own
+  // invalidation signal. A passive effect keeps the geometry reads out of React's commit phase.
+  useEffect(sync);
+
+  useEffect(() => {
+    const el = ref.current?.element;
+    if (!enabled || !el) {
+      return;
+    }
+
+    // Panel resizing changes what fits without moving the scroll position.
+    const resizeObserver = new ResizeObserver(sync);
+    resizeObserver.observe(el);
+    return () => resizeObserver.disconnect();
+  }, [ref, enabled, sync]);
+
+  return {
+    className: enabled
+      ? css(
+          styles.scrollShadows,
+          offsetStyles,
+          visibility.top && styles.scrollShadowTop,
+          visibility.bottom && styles.scrollShadowBottom
+        )
+      : '',
+    top: enabled && visibility.top,
+    bottom: enabled && visibility.bottom,
+    scrollbarHeight: enabled ? visibility.scrollbarHeight : 0,
+    onScroll: sync,
+  };
+}
+
+/**
+ * When present, columns without a configured width are sized to fit their content
+ * ({@link computeContentAwareColWidths}) rather than sharing the leftover space evenly. Gated by
+ * the `table.autoColumnWidths` feature toggle and threaded down as a prop.
+ */
+export interface ContentAwareWidths {
+  typographyCtx: TypographyCtx;
+  headerTypographyCtx: TypographyCtx;
+  theme: GrafanaTheme2;
+  showTypeIcons?: boolean;
+  /** Whether the table renders a header row; when it doesn't, header labels don't bound the columns. */
+  hasHeader?: boolean;
+  getActions?: GetActionsFunctionLocal;
+  tableRefreshEnabled?: boolean;
+  filter?: FilterType;
+  noPanelPadding?: boolean;
+  preventHorizontalOverflow?: boolean;
+}
+
+const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
+  contentAware ? computeContentAwareColWidths(fields, availWidth, contentAware) : computeColWidths(fields, availWidth);
+
+/**
+ * Builds the typography context the table uses to measure text (row heights, header heights). Shared
+ * by the flat and nested tables so the memoization lives in one place.
+ */
+export function useTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
+  return useMemo(
+    () =>
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize
+      ),
+    [theme]
+  );
+}
+
+/**
+ * Builds the typography context header labels are measured with. They render at `fontWeightMedium`,
+ * wider than the body text `useTypographyCtx` measures, so both the width path (how wide an auto
+ * column must be) and the height path (how many lines a wrapped label takes) measure with this one.
+ */
+export function useHeaderTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
+  return useMemo(
+    () =>
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
+        theme.typography.fontWeightMedium
+      ),
+    [theme]
+  );
+}
+
+interface UseContentAwareWidthsOptions {
+  enabled: boolean;
+  typographyCtx: TypographyCtx;
+  showTypeIcons?: boolean;
+  hasHeader?: boolean;
+  getActions?: GetActionsFunctionLocal;
+  tableRefreshEnabled?: boolean;
+  filter?: FilterType;
+  noPanelPadding?: boolean;
+  preventHorizontalOverflow?: boolean;
+}
+
+/**
+ * Assembles the {@link ContentAwareWidths} options for the column width hooks, or `undefined` when
+ * content-aware widths are disabled. Header labels render at medium weight, so they are measured
+ * with a separate typography context.
+ */
+export function useContentAwareWidths({
+  enabled,
+  typographyCtx,
+  showTypeIcons = false,
+  hasHeader = true,
+  getActions,
+  tableRefreshEnabled = false,
+  filter,
+  noPanelPadding = false,
+  preventHorizontalOverflow = false,
+}: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
+  const theme = useTheme2();
+  const headerTypographyCtx = useHeaderTypographyCtx(theme);
+  return useMemo(
+    () =>
+      enabled
+        ? {
+            typographyCtx,
+            headerTypographyCtx,
+            theme,
+            showTypeIcons,
+            hasHeader,
+            getActions,
+            tableRefreshEnabled,
+            filter,
+            noPanelPadding,
+            preventHorizontalOverflow,
+          }
+        : undefined,
+    [
+      enabled,
+      typographyCtx,
+      headerTypographyCtx,
+      showTypeIcons,
+      hasHeader,
+      getActions,
+      filter,
+      tableRefreshEnabled,
+      theme,
+      noPanelPadding,
+      preventHorizontalOverflow,
+    ]
+  );
+}
+
 interface UseNestedColWidthsOptions {
   nestedVisibleFields: Field[];
   availableWidth: number;
   structureRev?: number;
+  contentAware?: ContentAwareWidths;
 }
 
 interface UseNestedColWidthsResult {
@@ -675,35 +1040,41 @@ export function useNestedColWidths({
   nestedVisibleFields,
   availableWidth,
   structureRev,
+  contentAware,
 }: UseNestedColWidthsOptions): UseNestedColWidthsResult {
   // before we do anything, figure out what the widths are based on the panel configuration.
   const configuredWidths = useMemo(
-    () => computeColWidths(nestedVisibleFields, availableWidth),
-    [nestedVisibleFields, availableWidth]
+    () => pickColWidths(nestedVisibleFields, availableWidth, contentAware),
+    [nestedVisibleFields, availableWidth, contentAware]
   );
 
   const [nestedFieldWidths, setNestedFieldWidths] = useState(() => configuredWidths);
+  // Previous config-derived widths, so we can tell which columns actually changed upstream.
+  const prevConfiguredWidths = useRef(configuredWidths);
 
-  // on structureRev change, sync the widths from config and check whether we ought to dispatch an update.
+  // Re-sync from config-derived widths whenever they change — structure changes and, crucially,
+  // panel resize (availableWidth feeds configuredWidths), so content-aware auto columns re-flow to
+  // the new width. We adopt a column's new width only when its *config-derived* width changed; a
+  // column that changed only locally (an in-progress manual drag, which persists to field config
+  // later on pointer-up) keeps its local width, so an interleaved resize doesn't clobber the drag.
   useEffect(() => {
-    const newWidths = computeColWidths(nestedVisibleFields, availableWidth);
-    let hasChanges = false;
-    if (nestedFieldWidths.length !== newWidths.length) {
-      // if we have fewer columns than the new widths, we have changes
-      hasChanges = true;
-    }
-    for (let i = 0; i < newWidths.length; i++) {
-      if (nestedFieldWidths[i] !== newWidths[i]) {
-        hasChanges = true;
-        break;
+    const prevConfigured = prevConfiguredWidths.current;
+    prevConfiguredWidths.current = configuredWidths;
+    setNestedFieldWidths((current) => {
+      if (current.length !== configuredWidths.length) {
+        return configuredWidths;
       }
-    }
-
-    if (hasChanges) {
-      setNestedFieldWidths(newWidths);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [structureRev]);
+      let changed = false;
+      const next = current.map((width, i) => {
+        if (configuredWidths[i] !== prevConfigured[i]) {
+          changed = changed || width !== configuredWidths[i];
+          return configuredWidths[i];
+        }
+        return width;
+      });
+      return changed ? next : current;
+    });
+  }, [configuredWidths, structureRev]);
 
   // this is the representation that react-data-grid wants, which we derive from the source of truth (nestedFieldWidths) on every render
   const nestedColWidths = useMemo(
@@ -730,9 +1101,16 @@ export function useNestedColWidths({
 export function useColWidths(
   visibleFields: Field[],
   availableWidth: number,
-  frozenColumns?: number
+  frozenColumns?: number,
+  resetKey?: Symbol,
+  contentAware?: ContentAwareWidths
 ): [number[], number] {
-  const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
+  const widths = useMemo(
+    () => pickColWidths(visibleFields, availableWidth, contentAware),
+    // Width override removals can mutate width config onto existing field objects.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [visibleFields, availableWidth, resetKey, contentAware]
+  );
 
   // this is to avoid buggy situations where all visible columns are frozen
   const numFrozenColsFullyInView = useMemo(() => {

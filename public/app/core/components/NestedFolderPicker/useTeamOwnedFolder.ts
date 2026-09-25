@@ -20,8 +20,8 @@ type UseGetTeamFoldersResult = {
 /**
  * Returns folders owned by teams the current user belongs to.
  */
-export function useGetTeamFolders(options?: { skip: boolean }): UseGetTeamFoldersResult {
-  const { data: teams, error: teamError, isLoading: teamsLoading } = useTeams(options);
+export function useGetTeamFolders(): UseGetTeamFoldersResult {
+  const { data: teams, error: teamError, isLoading: teamsLoading } = useTeams();
 
   const ownerReferences = teams?.map(teamOwnerRef);
   const shouldSkipSearch = !ownerReferences?.length;
@@ -78,8 +78,8 @@ function mapTeamsToFolders(teams: TeamDto[] | undefined, folders: DashboardHit[]
 /**
  * Returns all the teams user is part of.
  */
-function useTeams(options?: { skip: boolean }) {
-  const { data, error, isLoading } = useGetSignedInUserTeamListQuery(undefined, { skip: options?.skip });
+function useTeams() {
+  const { data, error, isLoading } = useGetSignedInUserTeamListQuery();
   return {
     data,
     isLoading,

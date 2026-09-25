@@ -25,7 +25,6 @@ Before you begin, ensure you have the following:
 - A Grafana Cloud account, as shown in [Get started](/docs/grafana-cloud/get-started/)
 - [Terraform](https://www.terraform.io/downloads) installed on your machine
 - The Grafana Terraform provider configured, as shown in [Get started with Terraform for Knowledge Graph](../getting-started/)
-- [Knowledge Graph enabled](/docs/grafana-cloud/knowledge-graph/get-started/) on your Grafana Cloud stack
 - A Cloud Access Policy with the following scopes: `stacks:read`, `metrics:read`, `metrics:write`
 
 ## Dataset types

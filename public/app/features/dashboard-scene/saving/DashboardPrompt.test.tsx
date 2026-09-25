@@ -5,8 +5,9 @@ import { type ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
 import { ignoreChanges, isEmptyDashboard } from './DashboardPrompt';

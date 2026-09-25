@@ -8,33 +8,37 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/services/team/teamk8s"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type Service struct {
-	legacyService     team.Service
+	legacyService     *LegacyService
 	k8sService        team.Service
 	openFeatureClient *openfeature.Client
+	iamFeatures       iamapi.Features
 	logger            log.Logger
 	tracer            tracing.Tracer
 }
 
 var _ team.Service = (*Service)(nil)
+var _ teamdelete.Registrar = (*Service)(nil)
 
 func (s *Service) LegacySearchService() team.Service {
 	return s.legacyService
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
-	legacyService, err := NewLegacyService(db, cfg, tracer)
+func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features) (*Service, error) {
+	legacyService, err := NewLegacyService(sql, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +49,14 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configPro
 		legacyService:     legacyService,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
+		iamFeatures:       iamFeatures,
 		logger:            log.New("team"),
 		tracer:            tracer,
 	}, nil
+}
+
+func ProvideDeleteRegistrar(service *Service) teamdelete.Registrar {
+	return service
 }
 
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
@@ -184,13 +193,10 @@ func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembers
 	return s.legacyService.GetTeamMembers(ctx, query)
 }
 
-func (s *Service) RegisterDelete(query string) {
-	// Always register with legacy service since it manages SQL cleanup queries.
-	// The k8s service implementation is a no-op (k8s handles cascading deletes
-	// via its own mechanisms), so there is no need to gate on the feature flag.
-	// This is called at init time (Wire providers) where no request context
-	// exists, making feature flag evaluation with context.Background() unreliable.
-	s.legacyService.RegisterDelete(query)
+func (s *Service) RegisterDelete(renderer teamdelete.Renderer) {
+	// Delete renderers only apply to legacy SQL cleanup. Kubernetes handles
+	// cascading deletes independently and does not implement teamdelete.Registrar.
+	s.legacyService.RegisterDelete(renderer)
 }
 
 // isK8sRedirectEnabled gates team operations on the k8s apiserver path.
@@ -199,11 +205,10 @@ func (s *Service) isK8sRedirectEnabled(ctx context.Context) bool {
 	if s.openFeatureClient == nil {
 		return false
 	}
-	txCtx := openfeature.TransactionContext(ctx)
-	if !s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, txCtx) {
+	if !s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
 		return false
 	}
-	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, txCtx)
+	return s.iamFeatures.UsersAPI
 }
 
 // shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.

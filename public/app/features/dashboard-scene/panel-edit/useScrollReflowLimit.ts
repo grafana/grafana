@@ -8,7 +8,10 @@ import { useMedia } from 'react-use';
 export const scrollReflowMediaCondition = '(max-height: 540px)';
 
 /**
- * @returns {boolean} true when the screen is small enough to need zoom reflow handling
+ * @returns {boolean} true when the screen is small enough to need zoom reflow handling.
+ *
+ * Shares the same media condition as the CSS reflow switch (scrollReflowMediaCondition) so the JS
+ * splitter behaviour and the CSS grid layout always agree.
  */
 export function useScrollReflowLimit(): boolean {
   return useMedia(scrollReflowMediaCondition);

@@ -34,6 +34,11 @@ type SecureValues struct {
 
 	// Some webhooks (including github) require a secret key value
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+
+	// Private key used to sign commits the repository writes back. The format
+	// is selected by spec.commit.signingMethod. When unset, commits are
+	// unsigned.
+	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -41,7 +46,7 @@ func (SecureValues) OpenAPIModelName() string {
 }
 
 func (v SecureValues) IsZero() bool {
-	return v.Token.IsZero() && v.WebhookSecret.IsZero()
+	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.CommitSigningKey.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -72,6 +77,7 @@ type GitHubRepositoryConfig struct {
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
+	// TODO: deprecate this field in favor of PullRequestOptions.GenerateDashboardPreviews once all Github repositories have been backfilled.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
@@ -97,9 +103,6 @@ type GitHubEnterpriseRepositoryConfig struct {
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
-
-	// Whether we should show dashboard previews for pull requests.
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
 	// Path is the subdirectory for the Grafana data inside the repository.
 	Path string `json:"path,omitempty"`
@@ -135,6 +138,8 @@ type BitbucketRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
+	// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
+	Email string `json:"email,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -158,6 +163,12 @@ type GitLabRepositoryConfig struct {
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
 	Path string `json:"path,omitempty"`
+
+	// RepoID is the GitLab project's immutable numeric ID. Resolved and set
+	// automatically whenever URL is set or changed; it survives a project
+	// transfer/move even if the project's path changes. Read-only: it is
+	// always system-derived and never taken from client-supplied input.
+	RepoID string `json:"repoID,omitempty"`
 }
 
 func (GitLabRepositoryConfig) OpenAPIModelName() string {
@@ -189,6 +200,11 @@ const (
 // IsGit returns true if the repository type is git or github
 func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
+}
+
+// GitHub || GitHubEnterprise
+func (r RepositoryType) IsGitHub() bool {
+	return r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType
 }
 
 // Branch returns the branch for git-based repositories
@@ -224,6 +240,35 @@ func (r *Repository) Branch() string {
 	}
 
 	return ""
+}
+
+// SetBranch writes branch to the provider-specific spec field for git-based repositories,
+// mirroring Branch(). It is a no-op for non-git types or when the provider config is absent.
+func (r *Repository) SetBranch(branch string) {
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			r.Spec.GitHub.Branch = branch
+		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			r.Spec.GitHubEnterprise.Branch = branch
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			r.Spec.Git.Branch = branch
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			r.Spec.Bitbucket.Branch = branch
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			r.Spec.GitLab.Branch = branch
+		}
+	default:
+		// do nothing
+	}
 }
 
 // URL returns the URL for git-based repositories
@@ -294,6 +339,15 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+func (r *Repository) ShouldGenerateDashboardPreviews() bool {
+	// GitHub keeps this on its own config until existing repositories are backfilled
+	// onto PullRequest options. Every other provider reads it from PullRequest.
+	if r.Spec.Type == GitHubRepositoryType {
+		return r.Spec.GitHub != nil && r.Spec.GitHub.GenerateDashboardPreviews
+	}
+	return r.Spec.PullRequest != nil && r.Spec.PullRequest.GenerateDashboardPreviews
+}
+
 // ConnectionName returns the name of the connection referenced by this repository,
 // or an empty string if the repository does not use a connection.
 func (r *Repository) ConnectionName() string {
@@ -301,6 +355,11 @@ func (r *Repository) ConnectionName() string {
 		return r.Spec.Connection.Name
 	}
 	return ""
+}
+
+// HasConnection reports whether this repository authenticates through a connection.
+func (r *Repository) HasConnection() bool {
+	return r.ConnectionName() != ""
 }
 
 type ConnectionInfo struct {
@@ -321,10 +380,50 @@ type CommitOptions struct {
 	SingleResourceMessageTemplate string `json:"singleResourceMessageTemplate,omitempty"`
 
 	// When true, the Comment field in Save drawers is pre-filled from
-	// SingleResourceMessageTemplate and rendered read-only. The
-	// Grafana-saved-by trailer is always appended regardless of this setting.
+	// SingleResourceMessageTemplate and rendered read-only.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+
+	// Name used as the commit author instead of the user who triggered the
+	// commit. Only valid when signingMethod is unset.
+	AuthorName string `json:"authorName,omitempty"`
+
+	// Email used as the commit author instead of the user who triggered the
+	// commit. Only valid when signingMethod is unset.
+	AuthorEmail string `json:"authorEmail,omitempty"`
+
+	// Name used as the commit signer. Required for the signing key's identity
+	// to match the commit, which providers need to mark commits as Verified. When
+	// empty, defaults to "Grafana".
+	SignerName string `json:"signerName,omitempty"`
+
+	// Email used as the commit signer. Must match the signing key's identity
+	// and a verified email on the account where the matching public key is
+	// registered. When empty, defaults to "noreply@grafana.com".
+	SignerEmail string `json:"signerEmail,omitempty"`
+
+	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
+	// When empty, commits are not signed.
+	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
+
+	// When true, commits are authored by the signer identity
+	// (signerName/signerEmail).
+	SignerIsAuthor bool `json:"signerIsAuthor,omitempty"`
+
+	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
+	// signingMethod is "smime". This is public (not a secret) and is embedded
+	// in the commit signature. Unused for the gpg and ssh formats.
+	SMIMECertificate string `json:"smimeCertificate,omitempty"`
 }
+
+// SigningMethod selects how commits are signed.
+// +enum
+type SigningMethod string
+
+const (
+	GPGSigningMethod   SigningMethod = "gpg"
+	SSHSigningMethod   SigningMethod = "ssh"
+	SMIMESigningMethod SigningMethod = "smime"
+)
 
 func (CommitOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "CommitOptions"
@@ -357,6 +456,10 @@ type PullRequestOptions struct {
 
 	// When true, the PR title field in Save drawers is read-only.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+
+	// Whether we should show dashboard previews for pull requests.
+	// By default, this is false (i.e. we will not create previews).
+	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
 func (PullRequestOptions) OpenAPIModelName() string {
@@ -453,10 +556,6 @@ const (
 	// repository path root become top-level resources and subdirectories become
 	// top-level folders. Ownership is tracked per-resource via manager
 	// annotations rather than by folder containment.
-	//
-	// NOTE: The folderless target is not fully implemented yet. It is gated by
-	// the provisioning `allowed_targets` setting (which defaults to `folder`),
-	// so it must be explicitly enabled, and its behavior may still change.
 	SyncTargetTypeFolderless SyncTargetType = "folderless"
 )
 
@@ -488,6 +587,12 @@ type WebhookConfig struct {
 	// and resource name are appended automatically. Trailing slashes are stripped.
 	// Must be a valid HTTP or HTTPS URL.
 	BaseURL string `json:"baseUrl,omitempty"`
+
+	// Disabled turns off webhook integration for this repository. When true,
+	// Grafana will not register or receive webhook events from the Git provider
+	// and will poll the repository on an interval instead. Use this when Grafana
+	// is not reachable from the public internet.
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 func (WebhookConfig) OpenAPIModelName() string {
@@ -529,8 +634,15 @@ type RepositoryStatus struct {
 	// Token will get updated with current token information
 	Token TokenStatus `json:"token,omitempty"`
 
-	// Error information during repository deletion (if any)
+	// Error information during repository deletion (if any).
+	// Deprecated: prefer the structured Deletion field. Retained for
+	// backwards compatibility with clients that read the concise string.
 	DeleteError string `json:"deleteError,omitempty"`
+
+	// Deletion reports the progress of an in-progress deletion and the problem
+	// blocking it, so a client can explain the holdup and force-remove the
+	// blocking finalizer. Populated only while the repository is Terminating.
+	Deletion *DeletionStatus `json:"deletion,omitempty"`
 
 	// Quota contains the configured quota limits for this repository
 	Quota QuotaStatus `json:"quota,omitempty"`
@@ -572,7 +684,10 @@ func (SyncStatus) OpenAPIModelName() string {
 }
 
 type WebhookStatus struct {
-	ID               int64    `json:"id,omitempty"`
+	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
+	ID   int64  `json:"id,omitempty"`
+	UUID string `json:"uuid,omitempty"`
+
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
@@ -593,7 +708,6 @@ func (TokenStatus) OpenAPIModelName() string {
 }
 
 // QuotaStatus represents the quota limits configured for this repository.
-// These values come from static configuration and are read-only.
 type QuotaStatus struct {
 	// MaxRepositories is the maximum number of repositories allowed.
 	// 0 means unlimited.
@@ -602,6 +716,10 @@ type QuotaStatus struct {
 	// MaxResourcesPerRepository is the maximum number of resources allowed per repository.
 	// 0 means unlimited.
 	MaxResourcesPerRepository int64 `json:"maxResourcesPerRepository,omitempty"`
+
+	// UpdatedAt is when the controller last successfully refreshed these quota limits.
+	// It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.
+	UpdatedAt int64 `json:"updatedAt,omitempty"`
 }
 
 func (QuotaStatus) OpenAPIModelName() string {
@@ -926,6 +1044,51 @@ func (in *ErrorDetails) DeepCopyInto(out *ErrorDetails) {
 
 func (ErrorDetails) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ErrorDetails"
+}
+
+// DeletionState is the phase of an in-progress repository deletion.
+// +enum
+type DeletionState string
+
+func (DeletionState) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionState"
+}
+
+const (
+	// DeletionStateBlocked indicates the latest finalizer pass failed and deletion
+	// did not complete. The controller keeps retrying, so a transient failure
+	// (a brief outage, an API conflict) may still clear on its own; a persistent
+	// one (credentials expired, a webhook that cannot be removed) needs the user
+	// to force-remove the blocking finalizer. Finalizer is the finalizer that
+	// failed on that pass.
+	//
+	// This is the only state the controller emits: status.deletion is written
+	// only when a pass fails. While finalizers are still running, status.deletion
+	// is absent, which (together with a set deletionTimestamp) is itself the
+	// "in progress" signal — so no separate Working state is needed.
+	DeletionStateBlocked DeletionState = "Blocked"
+)
+
+// DeletionStatus reports the progress of an in-progress deletion and the problem
+// blocking it. It is populated while the repository is Terminating and its
+// finalizers run, so a client can explain the holdup and force-remove the
+// blocking finalizer.
+type DeletionStatus struct {
+	// State is the phase of the deletion.
+	State DeletionState `json:"state,omitempty"`
+
+	// Finalizer names the finalizer whose teardown is blocking deletion, i.e.
+	// which deletion step failed. A client force-removing deletion removes exactly
+	// this finalizer.
+	Finalizer string `json:"finalizer,omitempty"`
+
+	// Message is a human-readable explanation of what went wrong, suitable for
+	// showing to users.
+	Message string `json:"message,omitempty"`
+}
+
+func (DeletionStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionStatus"
 }
 
 // HistoryList is a list of versions of a resource

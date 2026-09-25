@@ -1,0 +1,801 @@
+import { createMemoryHistory } from 'history';
+import { BehaviorSubject } from 'rxjs';
+import { act, render, screen } from 'test/test-utils';
+
+import { CoreApp, type Scope, dateTime } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
+import {
+  config,
+  HistoryWrapper,
+  locationService,
+  onInteraction,
+  ScopesContext,
+  type ScopesContextValue,
+  setEchoSrv,
+  setLocationService,
+  setPluginImportUtils,
+} from '@grafana/runtime';
+import {
+  sceneGraph,
+  SceneRefreshPicker,
+  SceneTimePicker,
+  SceneTimeRange,
+  ScopesVariable,
+  VizPanel,
+} from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
+import { contextSrv } from 'app/core/services/context_srv';
+import { Echo } from 'app/core/services/echo/Echo';
+import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
+
+import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
+import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
+
+import { NotebookScene } from './NotebookScene';
+import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
+import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
+import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
+
+// Rendering a cell activates its VizPanel, which loads its plugin.
+setPluginImportUtils({
+  importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: () => undefined,
+});
+
+// See CodeCell.test.tsx — the real editor does not run in jsdom, and is a lazily loaded chunk that
+// would otherwise resolve outside of this file's act() calls.
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: ({
+    value,
+    readOnly,
+    onChange,
+    'aria-label': ariaLabel,
+  }: {
+    value: string;
+    readOnly?: boolean;
+    onChange: (value: string) => void;
+    'aria-label'?: string;
+  }) => (
+    <textarea aria-label={ariaLabel} value={value} readOnly={readOnly} onChange={(e) => onChange(e.target.value)} />
+  ),
+}));
+
+function buildScene(hideTimeControls: boolean, uid?: string) {
+  return new NotebookScene({
+    title: 'My notebook',
+    uid,
+    body: new NotebookLayoutManager({
+      cells: [
+        new NotebookCellItem({
+          elementName: 'md1',
+          source: 'assistant',
+          content: { kind: 'Markdown', spec: { text: 'Hello' } },
+        }),
+      ],
+    }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({ refresh: '10s', intervals: ['10s', '1m'] }),
+    hideTimeControls,
+  });
+}
+
+function buildSceneWithPanel() {
+  const panel = new VizPanel({ key: 'panel-4', title: 'Checkout latency', pluginId: 'timeseries' });
+  const scene = new NotebookScene({
+    title: 'My notebook',
+    body: new NotebookLayoutManager({
+      cells: [new NotebookCellItem({ elementName: 'latency', source: 'user', body: panel })],
+    }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({}),
+  });
+
+  return { scene, panel };
+}
+
+// activate() registers the scene on window.__grafanaSceneContext; leaving it registered leaks into
+// later tests in this file.
+const deactivators: Array<() => void> = [];
+function activate(scene: NotebookScene) {
+  deactivators.push(scene.activate());
+}
+
+describe('NotebookScene', () => {
+  afterEach(() => {
+    deactivators.splice(0).forEach((deactivate) => deactivate());
+  });
+
+  // activate() only propagates to $timeRange/$variables/$data/$behaviors; the pickers are plain
+  // state and are otherwise activated by their renderers. With the controls row hidden nothing
+  // renders the refresh picker, so without an explicit activation its interval never starts and the
+  // spec's autoRefresh silently does nothing.
+  it('activates the refresh picker when the time controls are hidden', () => {
+    const scene = buildScene(true);
+
+    const deactivate = scene.activate();
+
+    expect(scene.state.refreshPicker.isActive).toBe(true);
+
+    deactivate();
+    expect(scene.state.refreshPicker.isActive).toBe(false);
+  });
+
+  it('leaves the refresh picker to its renderer when the time controls are shown', () => {
+    const scene = buildScene(false);
+
+    activate(scene);
+
+    expect(scene.state.refreshPicker.isActive).toBe(false);
+  });
+
+  describe('edit mode', () => {
+    const originalLocationService = locationService;
+
+    beforeEach(() => {
+      // A memory history keeps the url assertions independent of whatever jsdom's location is.
+      setLocationService(new HistoryWrapper(createMemoryHistory({ initialEntries: ['/notebooks/nb1'] })));
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      setLocationService(originalLocationService);
+      jest.restoreAllMocks();
+    });
+
+    it('starts in view mode', () => {
+      expect(buildScene(false).state.isEditing).toBeUndefined();
+    });
+
+    it('enters edit mode and tells the layout', () => {
+      const scene = buildScene(false);
+
+      scene.onEnterEditMode();
+
+      expect(scene.state.isEditing).toBe(true);
+      // Asserted through the layout's own state rather than a spy, so the propagation is real.
+      expect(scene.state.body.state.isEditing).toBe(true);
+    });
+
+    // Reflecting the mode in the url is NotebookSceneUrlSync's job, not these methods' — covered by
+    // its own tests and by the page test that mounts the sync provider.
+    it('refuses a user without edit permission, whatever the caller', () => {
+      // NotebookSceneUrlSync calls this directly, so the guard cannot live only in the toggle.
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      const scene = buildScene(false);
+
+      scene.onEnterEditMode();
+
+      expect(scene.state.isEditing).toBeUndefined();
+      expect(scene.state.body.state.isEditing).toBeUndefined();
+    });
+
+    it('leaves edit mode again, clearing the layout too', () => {
+      const scene = buildScene(false);
+      scene.onEnterEditMode();
+
+      scene.onExitEditMode();
+
+      expect(scene.state.isEditing).toBe(false);
+      expect(scene.state.body.state.isEditing).toBe(false);
+    });
+
+    it('commits an active content edit before leaving edit mode', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      scene.onEnterEditMode();
+      scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
+
+      scene.onExitEditMode();
+      scene.editHistory.undo();
+
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
+
+    it('commits an active query edit before leaving edit mode, so a later edit is a separate undo step', () => {
+      const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
+      const runner = getQueryRunnerFor(panel)!;
+      const before = runner.state.queries;
+      const midway = [{ ...before[0], expr: 'up' } as DataQuery];
+      const after = [{ ...before[0], expr: 'up | limit 10' } as DataQuery];
+      const cell = new NotebookCellItem({ elementName: 'query1', source: 'user', body: panel });
+      const scene = new NotebookScene({
+        title: 'My notebook',
+        body: new NotebookLayoutManager({ cells: [cell] }),
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+        refreshPicker: new SceneRefreshPicker({}),
+      });
+      scene.onEnterEditMode();
+      scene.state.body.setCellQueries(cell, midway);
+
+      scene.onExitEditMode();
+      scene.onEnterEditMode();
+      scene.state.body.setCellQueries(cell, after);
+
+      scene.editHistory.undo();
+      expect(runner.state.queries).toEqual(midway);
+
+      scene.editHistory.undo();
+      expect(runner.state.queries).toEqual(before);
+    });
+
+    describe('edit session analytics', () => {
+      let started: Array<Record<string, unknown>>;
+      let unsubscribe: () => void;
+
+      beforeEach(() => {
+        setEchoSrv(new Echo());
+        started = [];
+        unsubscribe = onInteraction('grafana_notebook_edit_session_started', (properties) => started.push(properties));
+      });
+
+      afterEach(() => {
+        unsubscribe();
+      });
+
+      it('reports a toggle when the Edit control turns edit mode on', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onEnterEditMode();
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+      });
+
+      it('reports a navigation when the url brought the reader into edit mode', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onEnterEditMode(NOTEBOOK_EDIT_SESSION_SOURCE.NAVIGATION);
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+      });
+
+      // The blank route opens in edit mode before autosave creates the notebook, so there is no uid yet.
+      it('reports a new notebook while it has no uid, whichever control opened it', () => {
+        const scene = buildScene(false);
+
+        scene.onEnterEditMode();
+
+        expect(started).toEqual([{ notebookUid: '', source: 'new' }]);
+      });
+
+      it('reports one session when edit mode is entered again while already editing', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onEnterEditMode();
+        scene.onEnterEditMode();
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+      });
+
+      it('counts nothing from the previous session when edit mode is entered again', () => {
+        const scene = buildScene(false, 'nb1');
+        const cell = scene.state.body.state.cells[0];
+        scene.onEnterEditMode();
+        scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
+        scene.onExitEditMode();
+
+        scene.onEnterEditMode();
+
+        expect(scene.editSession.end().editCount).toBe(0);
+      });
+    });
+
+    describe('edit session ended', () => {
+      let ended: Array<Record<string, unknown>>;
+      let unsubscribe: () => void;
+
+      beforeEach(() => {
+        setEchoSrv(new Echo());
+        ended = [];
+        unsubscribe = onInteraction('grafana_notebook_edit_session_ended', (properties) => ended.push(properties));
+      });
+
+      afterEach(() => {
+        unsubscribe();
+      });
+
+      it('reports the session totals and the notebook shape when the toggle turns edit mode off', () => {
+        const scene = buildScene(false, 'nb1');
+        const cell = scene.state.body.state.cells[0];
+        scene.onEnterEditMode();
+        scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
+
+        scene.onExitEditMode();
+
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({
+          notebookUid: 'nb1',
+          editCount: 1,
+          endReason: 'toggle',
+          cellCount: 1,
+          nonEmptyCellCount: 1,
+        });
+        expect(typeof ended[0].durationMs).toBe('number');
+      });
+
+      it('reports what the session did to the cells', () => {
+        const scene = buildScene(false, 'nb1');
+        const body = scene.state.body;
+        scene.onEnterEditMode();
+
+        body.addCell('code', 1);
+        body.addCell('paragraph', 2);
+        body.removeCell(body.state.cells[0]);
+        body.moveCell(0, 1);
+
+        scene.onExitEditMode();
+
+        expect(ended[0]).toMatchObject({ cellsAdded: 2, cellsRemoved: 1, cellsMoved: 1 });
+      });
+
+      it('reports a time range moved during the session', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        scene.state.$timeRange.onTimeRangeChange({
+          from: dateTime('2026-09-01T00:00:00Z'),
+          to: dateTime('2026-09-02T00:00:00Z'),
+          raw: { from: 'now-24h', to: 'now' },
+        });
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended[0]).toMatchObject({ timeRangeChanged: true });
+      });
+
+      // The time picker belongs to whoever is reading, and the notebook does not keep what they set.
+      // Between two sessions is where this matters: `start()` clears the flag on the way in, so only
+      // the isEditing guard stops a reader's change landing on the session that comes after it.
+      it('does not report a time range a reader moved between two sessions', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        scene.onExitEditMode();
+
+        scene.state.$timeRange.onTimeRangeChange({
+          from: dateTime('2026-09-01T00:00:00Z'),
+          to: dateTime('2026-09-02T00:00:00Z'),
+          raw: { from: 'now-24h', to: 'now' },
+        });
+
+        scene.onEnterEditMode();
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended).toHaveLength(2);
+        expect(ended[1]).toMatchObject({ timeRangeChanged: false });
+      });
+
+      it('does not fire when the notebook was already in view mode', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onExitEditMode();
+
+        expect(ended).toEqual([]);
+      });
+
+      it('reports a navigation end reason when the notebook deactivates mid-edit', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        deactivate();
+
+        expect(ended).toEqual([expect.objectContaining({ notebookUid: 'nb1', endReason: 'navigation' })]);
+      });
+
+      // Typing is one coalescing undo step that stays open until it is committed, and only
+      // onExitEditMode commits it. Leaving the page mid-word has to count that typing anyway.
+      it('counts typing that was still open when the notebook deactivated', () => {
+        const scene = buildScene(false, 'nb1');
+        const cell = scene.state.body.state.cells[0];
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Half a sen' } });
+
+        deactivate();
+
+        expect(ended).toEqual([expect.objectContaining({ endReason: 'navigation', editCount: 1 })]);
+      });
+
+      // The page keeps its scenes in a module-level cache, so this same scene comes back on the next
+      // visit. A scene left mid-session reported a second end for a visit that only read it.
+      it('leaves edit mode with the session, so reopening to read reports nothing more', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        deactivate();
+        // Reopened by its title, so the url carries no edit param.
+        new NotebookSceneUrlSync(scene).updateFromUrl({ edit: null });
+
+        expect(ended).toEqual([expect.objectContaining({ endReason: 'navigation' })]);
+      });
+
+      it('reports a fresh session when a cached notebook is reopened in edit mode', () => {
+        const started: Array<Record<string, unknown>> = [];
+        const unsubscribeStarted = onInteraction('grafana_notebook_edit_session_started', (properties) =>
+          started.push(properties)
+        );
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        deactivate();
+        started.length = 0;
+
+        // The list's Edit action again, on a scene the previous visit left behind.
+        new NotebookSceneUrlSync(scene).updateFromUrl({ edit: 'true' });
+        unsubscribeStarted();
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('does not fire on deactivation when the notebook was never editing', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+
+        deactivate();
+
+        expect(ended).toEqual([]);
+      });
+
+      it('does not double-fire when a toggle-off is followed by a deactivation', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({ endReason: 'toggle' });
+      });
+    });
+
+    it('clears history when the notebook body is replaced', () => {
+      const scene = buildScene(false);
+      activate(scene);
+      scene.state.body.addCell('code', 1);
+      const replacement = new NotebookLayoutManager({ cells: [] });
+
+      scene.setState({ body: replacement });
+
+      expect(scene.editHistory.state.canUndo).toBe(false);
+      replacement.addCell('code', 0);
+      expect(scene.editHistory.state.canUndo).toBe(true);
+    });
+
+    // Awaited because entering edit mode also mounts the header's tag picker, whose dropdown measures
+    // itself once mounted. That lands after the act above, so a synchronous assertion here leaves an
+    // unwrapped update behind and the console guard fails the test.
+    it('offers the history controls only in edit mode', async () => {
+      const scene = buildScene(false);
+      activate(scene);
+      render(<scene.Component model={scene} />);
+
+      expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
+
+      act(() => scene.onEnterEditMode());
+
+      expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument();
+    });
+
+    // The assistant writes without entering edit mode, so gating the status on `isEditing` would hide a
+    // failed save from the only person who could retry it.
+    it('reports a save outside edit mode, where the assistant writes', () => {
+      const scene = buildScene(false);
+      activate(scene);
+      render(<scene.Component model={scene} />);
+
+      expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
+
+      act(() =>
+        scene.autosave.setState({ status: 'error', errorMessage: 'The notebook was changed by someone else.' })
+      );
+
+      expect(scene.state.isEditing).toBeUndefined();
+      expect(screen.getByText('Save failed')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    });
+
+    it('records history for a body replaced before activation', () => {
+      const scene = buildScene(false);
+      const replacement = new NotebookLayoutManager({ cells: [] });
+      scene.setState({ body: replacement });
+
+      activate(scene);
+      replacement.addCell('code', 0);
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+    });
+
+    it('keeps history across a deactivation and activation', () => {
+      const scene = buildScene(false);
+      const deactivate = scene.activate();
+      scene.state.body.addCell('code', 1);
+
+      deactivate();
+      activate(scene);
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      scene.editHistory.undo();
+      expect(scene.state.body.state.cells).toHaveLength(1);
+    });
+  });
+
+  describe('enrichDataRequest', () => {
+    // Notebook queries have to be attributable. CoreApp.Unknown cannot be told apart from a
+    // genuinely unattributed query, and CoreApp.Dashboard is a behavioural branch (SqlDatasource
+    // skips grafana_sql_query_executed for it), not just a label.
+    it('attributes queries to the notebook app', () => {
+      const { scene, panel } = buildSceneWithPanel();
+
+      expect(scene.enrichDataRequest(panel).app).toBe(CoreApp.Notebook);
+    });
+
+    // Root-agnostic: getClosestVizPanel/getPanelIdForVizPanel only walk parents, so there is no
+    // reason for a notebook to drop the per-panel attribution a dashboard sends. panelId in
+    // particular feeds per-panel query caching.
+    it('carries the panel identity', () => {
+      const { scene, panel } = buildSceneWithPanel();
+
+      expect(scene.enrichDataRequest(panel)).toMatchObject({
+        panelId: 4,
+        panelName: 'Checkout latency',
+        panelPluginId: 'timeseries',
+      });
+    });
+
+    // dashboardUID is deliberately absent — a notebook is not a dashboard, and sending its uid
+    // there would misattribute the query in datasource-side telemetry.
+    it('does not send a dashboardUID', () => {
+      const { scene, panel } = buildSceneWithPanel();
+
+      expect(scene.enrichDataRequest(panel)).not.toHaveProperty('dashboardUID');
+    });
+  });
+
+  describe('scopes', () => {
+    const scope: Scope = {
+      metadata: { name: 'cluster-1' },
+      spec: { title: 'Cluster 1', filters: [{ key: 'cluster', value: 'cluster-1', operator: 'equals' }] },
+    };
+
+    afterEach(() => {
+      config.featureToggles.scopeFilters = false;
+    });
+
+    function buildScopesContext(value: Scope[]): ScopesContextValue {
+      const state = { drawerOpened: false, enabled: false, loading: false, readOnly: false, value };
+      const stateObservable = new BehaviorSubject(state);
+
+      return {
+        get state() {
+          return stateObservable.getValue();
+        },
+        stateObservable,
+        changeScopes: jest.fn(),
+        setReadOnly: jest.fn(),
+        setEnabled: jest.fn((enabled: boolean) => stateObservable.next({ ...stateObservable.getValue(), enabled })),
+      };
+    }
+
+    it('has no scopes variable when scopeFilters is off', () => {
+      config.featureToggles.scopeFilters = false;
+
+      expect(buildScene(false).state.$variables).toBeUndefined();
+    });
+
+    it('adds the scopes variable when scopeFilters is on', () => {
+      config.featureToggles.scopeFilters = true;
+
+      const variables = buildScene(false).state.$variables?.state.variables;
+
+      expect(variables).toHaveLength(1);
+      expect(variables?.[0]).toBeInstanceOf(ScopesVariable);
+    });
+
+    // The whole point: SceneQueryRunner reads scopes off the graph via lookupVariable('__scopes'),
+    // so this resolving is what makes a notebook cell's query carry the selected scopes.
+    it('resolves the selected scopes for a panel in a cell', async () => {
+      config.featureToggles.scopeFilters = true;
+      const { scene, panel } = buildSceneWithPanel();
+
+      activate(scene);
+      // act: rendering the cell activates its VizPanel, which loads its plugin asynchronously.
+      await act(async () => {
+        render(
+          <ScopesContext.Provider value={buildScopesContext([scope])}>
+            <scene.Component model={scene} />
+          </ScopesContext.Provider>
+        );
+      });
+
+      expect(sceneGraph.getScopes(panel)).toEqual([scope]);
+    });
+
+    // ScopesVariable starts with `loading: true` and only clears it once its renderer has handed it
+    // the context. If the renderer stops mounting hidden variables, every query runner that depends
+    // on it (SceneQueryRunner sets dependsOnScopes) waits forever and no cell ever loads. This
+    // asserts the variable is settled, which is the condition query runners actually wait on.
+    it('settles the scopes variable so query runners are not blocked', () => {
+      config.featureToggles.scopeFilters = true;
+      const scene = buildScene(false);
+      const variable = scene.state.$variables!.state.variables[0];
+
+      activate(scene);
+      expect(variable.state.loading).toBe(true);
+
+      render(
+        <ScopesContext.Provider value={buildScopesContext([scope])}>
+          <scene.Component model={scene} />
+        </ScopesContext.Provider>
+      );
+
+      expect(variable.state.loading).toBe(false);
+      expect(sceneGraph.hasVariableDependencyInLoadingState(scene.state.body.state.cells[0])).toBe(false);
+    });
+
+    // The variable is also what turns the selector on, so a notebook page has to enable scopes the
+    // same way a dashboard does rather than inheriting whatever the previous route left behind.
+    it('enables scopes while the notebook is mounted', () => {
+      config.featureToggles.scopeFilters = true;
+      const scene = buildScene(false);
+      const context = buildScopesContext([scope]);
+
+      activate(scene);
+      render(
+        <ScopesContext.Provider value={context}>
+          <scene.Component model={scene} />
+        </ScopesContext.Provider>
+      );
+
+      expect(context.setEnabled).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe('tags', () => {
+    it('is the single writer, and refreshes the copy the header renders', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['latency', 'slo']));
+
+      // Both, deliberately: the scene's copy is what the save model reads, the layout manager's is
+      // what the document header renders, and the whole point of pushing is that they cannot drift.
+      expect(scene.state.tags).toEqual(['latency', 'slo']);
+      expect(scene.state.body.state.tags).toEqual(['latency', 'slo']);
+    });
+
+    it('reaches the save model, so an export or a future save sees the edit', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['incident']));
+
+      expect(transformNotebookSceneToSaveModel(scene).tags).toEqual(['incident']);
+    });
+
+    // The mirror is pushed from a state subscription rather than from onTagsChange, so a whole-state
+    // swap (what APPLY_NOTEBOOK_SPEC does) reaches the header too.
+    it('survives the body being replaced wholesale', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() =>
+        scene.setState({
+          tags: ['rebuilt'],
+          body: new NotebookLayoutManager({ cells: [] }),
+        })
+      );
+
+      expect(scene.state.body.state.tags).toEqual(['rebuilt']);
+    });
+
+    it('records a tag change so it can be undone', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Add tag');
+
+      act(() => scene.editHistory.undo());
+
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.state.body.state.tags).toEqual([]);
+    });
+
+    it('labels removing a tag distinctly, and supports redo', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTagsChange(['latency', 'slo']));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.undoLabel).toBe('Remove tag');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual(['latency', 'slo']);
+
+      act(() => scene.editHistory.redo());
+      expect(scene.state.tags).toEqual(['latency']);
+    });
+
+    it('does not record a no-op tag change', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTagsChange(['latency']));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      // A single undo should clear the one real change, not a second no-op entry.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits an active content edit first, so it lands as its own undo step under the tag change', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      act(() => scene.activate());
+      act(() => scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } }));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+
+      act(() => scene.editHistory.undo());
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
+  });
+
+  describe('title', () => {
+    it('is the single writer, and refreshes the copy the header renders', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      // Both, for the same reason as tags: the scene's copy is what the save model reads, the layout
+      // manager's is what the header renders, and pushing is what stops the two drifting.
+      expect(scene.state.title).toBe('Q3 latency regression');
+      expect(scene.state.body.state.title).toBe('Q3 latency regression');
+    });
+
+    it('reaches the save model, so autosave writes the rename', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(transformNotebookSceneToSaveModel(scene).title).toBe('Q3 latency regression');
+    });
+
+    // Pushed from the state subscription rather than from onTitleChange, so an APPLY_NOTEBOOK_SPEC
+    // swap reaches the header too.
+    it('survives the body being replaced wholesale', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() =>
+        scene.setState({
+          title: 'Rebuilt',
+          body: new NotebookLayoutManager({ cells: [] }),
+        })
+      );
+
+      expect(scene.state.body.state.title).toBe('Rebuilt');
+    });
+  });
+});

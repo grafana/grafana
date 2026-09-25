@@ -275,6 +275,20 @@ describe('parsePromQLStyleMatcherLooseSafe', () => {
       { name: 'baz-bar.foo', value: 'bazz', isEqual: true, isRegex: false },
     ]);
   });
+
+  it.each([
+    'state:firing',
+    'state:nodata',
+    'High CPU Usage',
+    'Payment Gateway Errors',
+    'auth.service.SessionTimeout',
+    'prod/api-gateway',
+    'eu-west/em-processor',
+    'k8s-cluster-alerts',
+    'PaymentService-Prod',
+  ])('should return empty array for non-matcher legacy queryString input "%s"', (input) => {
+    expect(parsePromQLStyleMatcherLooseSafe(input)).toEqual([]);
+  });
 });
 
 describe('parsePromQLStyleMatcherLoose', () => {

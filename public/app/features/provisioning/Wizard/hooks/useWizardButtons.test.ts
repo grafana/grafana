@@ -115,6 +115,42 @@ describe('useWizardButtons', () => {
       expect(result.current.isNextDisabled).toBe(false);
     });
 
+    it('should disable next on authType step when creating a new GitHub App connection', () => {
+      const { result } = setup({
+        activeStep: 'authType',
+        githubAuthType: 'github-app',
+        githubAppMode: 'new',
+      });
+      expect(result.current.isNextDisabled).toBe(true);
+    });
+
+    it('should disable next on authType step when creating a new OAuth app connection', () => {
+      const { result } = setup({
+        activeStep: 'authType',
+        githubAuthType: 'oauth-app',
+        githubAppMode: 'new',
+      });
+      expect(result.current.isNextDisabled).toBe(true);
+    });
+
+    it('should enable next on authType step when using an existing OAuth app connection', () => {
+      const { result } = setup({
+        activeStep: 'authType',
+        githubAuthType: 'oauth-app',
+        githubAppMode: 'existing',
+      });
+      expect(result.current.isNextDisabled).toBe(false);
+    });
+
+    it('should enable next on authType step for PAT even in new connection mode', () => {
+      const { result } = setup({
+        activeStep: 'authType',
+        githubAuthType: 'pat',
+        githubAppMode: 'new',
+      });
+      expect(result.current.isNextDisabled).toBe(false);
+    });
+
     it('should disable next when hasStepError on non-connection steps', () => {
       const { result } = setup({
         activeStep: 'bootstrap',

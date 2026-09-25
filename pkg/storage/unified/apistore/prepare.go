@@ -1,27 +1,26 @@
 package apistore
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	authlib "github.com/grafana/authlib/types"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -29,12 +28,13 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type objectForStorage struct {
 	// The value to save in unistore
-	raw bytes.Buffer
+	raw json.RawMessage
 
 	// Reference to the owner object
 	ref common.ObjectReference
@@ -84,27 +84,60 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	return nil
 }
 
-// verifyFolder enforces the folder-annotation contract on write. When folder
-// support is disabled, any folder annotation is a validation error (422): the
-// resource does not live in the folder tree at all. When folder support is
-// enabled, the annotation is accepted as-is.
+// verifyFolder enforces the folder-annotation contract on write.
+//
+//   - EnableFolderSupport=false: the resource does not live in the folder tree
+//     at all; reject any write that sets the folder annotation.
+//   - EnableFolderSupport=true and RequireFolder=false: any folder value is
+//     accepted (including empty / root).
+//   - EnableFolderSupport=true and RequireFolder=true: the folder annotation
+//     must be present and non-root; resources of this kind must live in a real
+//     folder.
 func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
-	if s.opts.EnableFolderSupport {
+	folderUID := obj.GetFolder()
+	if !s.opts.EnableFolderSupport {
+		if folderUID == "" {
+			return nil
+		}
+		return apierrors.NewInvalid(
+			obj.GetGroupVersionKind().GroupKind(),
+			obj.GetName(),
+			field.ErrorList{
+				field.Forbidden(
+					field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+					fmt.Sprintf("folders are not supported for %s", s.gr.String()),
+				),
+			},
+		)
+	}
+	if !s.opts.RequireFolder {
 		return nil
 	}
-	if obj.GetFolder() == "" {
-		return nil
+	if folderUID == "" {
+		return apierrors.NewInvalid(
+			obj.GetGroupVersionKind().GroupKind(),
+			obj.GetName(),
+			field.ErrorList{
+				field.Required(
+					field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+					fmt.Sprintf("folder is required for %s", s.gr.String()),
+				),
+			},
+		)
 	}
-	return apierrors.NewInvalid(
-		obj.GetGroupVersionKind().GroupKind(),
-		obj.GetName(),
-		field.ErrorList{
-			field.Forbidden(
-				field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
-				fmt.Sprintf("folders are not supported for %s", s.gr.String()),
-			),
-		},
-	)
+	if folder.IsRootFolderUID(folderUID) {
+		return apierrors.NewInvalid(
+			obj.GetGroupVersionKind().GroupKind(),
+			obj.GetName(),
+			field.ErrorList{
+				field.Forbidden(
+					field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+					fmt.Sprintf("%s cannot be created in the root folder", s.gr.String()),
+				),
+			},
+		)
+	}
+	return nil
 }
 
 // Called on create
@@ -114,9 +147,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if !ok {
 		return v, errors.New("missing auth info")
 	}
-	if err := s.checkGVK(newObject); err != nil {
-		return v, err
-	}
+	s.checkGVK(newObject)
 
 	obj, err := utils.MetaAccessor(newObject)
 	if err != nil {
@@ -187,7 +218,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, err
 	}
 
-	err = s.encode(newObject, &v.raw)
+	v.raw, err = s.encode(ctx, newObject, true)
 	return v, err
 }
 
@@ -204,6 +235,9 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 	}
 	rsp, err := s.opts.Index.Search(ctx, &resourcepb.ResourceSearchRequest{
 		Limit: 1, // we only need to know if any match exists
+		// An empty projection returns every field; name keeps this key-only.
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Group:     s.gr.Group,
@@ -217,14 +251,33 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 			}},
 		},
 	})
+	// A failed search returns no rows, which would otherwise pass as "the ID is free".
+	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		return err
+	}
+	hasResults, err := searchResponseHasRows(rsp)
 	if err != nil {
 		return err
 	}
-	if rsp.Results != nil && len(rsp.Results.Rows) > 0 {
+	if hasResults {
 		return apierrors.NewConflict(s.gr, obj.GetName(),
 			fmt.Errorf("deprecatedInternalID=%d is already in use", id))
 	}
 	return nil
+}
+
+func searchResponseHasRows(rsp *resourcepb.ResourceSearchResponse) (bool, error) {
+	if rsp == nil {
+		return false, errors.New("nil search response")
+	}
+	switch rsp.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		return len(rsp.GetResults().GetRows()) > 0, nil
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		return len(rsp.GetRows()) > 0, nil
+	default:
+		return false, fmt.Errorf("unsupported search result format %d", rsp.GetResultFormat())
+	}
 }
 
 // Called on update
@@ -234,9 +287,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if !ok {
 		return v, errors.New("missing auth info")
 	}
-	if err := s.checkGVK(updateObject); err != nil {
-		return v, err
-	}
+	s.checkGVK(updateObject)
 
 	obj, err := utils.MetaAccessor(updateObject)
 	if err != nil {
@@ -332,7 +383,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	}
 
-	err = s.encode(updateObject, &v.raw)
+	// Enforce the cap on updates too, so an object stored above the cap cannot keep being mutated — except
+	// for deletion. A soft delete sets the deletionTimestamp (and finalizer/status writes run while it is
+	// set); exempt those so an already-over-cap object stays removable. Net: over-cap objects are drain-only.
+	deleting := obj.GetDeletionTimestamp() != nil || previous.GetDeletionTimestamp() != nil
+	v.raw, err = s.encode(ctx, updateObject, !deleting)
 	return v, err
 }
 
@@ -373,46 +428,83 @@ func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAcce
 	return utils.MetaAccessor(raw)
 }
 
-func (s *Storage) checkGVK(obj runtime.Object) error {
-	if s.opts.Scheme == nil {
-		return nil // we can not do anything
-	}
-
-	// Ensure group+version+kind are configured
+// checkGVK completes obj's group+version+kind from [StorageOptions.GVK] when the
+// object does not carry a full one of its own. Serializers that do not infer the
+// GVK from a scheme need it populated to persist an apiVersion and kind.
+//
+// A resource that declares no GVK is left alone here for the serializer.
+func (s *Storage) checkGVK(obj runtime.Object) {
 	info := obj.GetObjectKind()
 	gvk := info.GroupVersionKind()
-	if gvk.Group == "" || gvk.Kind == "" || gvk.Version == "" {
-		gvks, _, err := s.opts.Scheme.ObjectKinds(obj)
-		if err != nil {
-			return fmt.Errorf("unknown object kind %w", err)
-		}
-		for _, v := range gvks {
-			if v.Group != s.gr.Group {
-				continue // skip values not in this group
-			}
-			gvk.Group = v.Group
-			gvk.Kind = v.Kind
-			if gvk.Version == "" {
-				gvk.Version = v.Version
-			}
-			info.SetGroupVersionKind(gvk)
-			return nil
-		}
+	if gvk.Group != "" && gvk.Kind != "" && gvk.Version != "" {
+		return
 	}
-	return nil
+	if s.opts.GVK.Empty() {
+		return
+	}
+
+	gvk.Group = s.opts.GVK.Group
+	gvk.Kind = s.opts.GVK.Kind
+	if gvk.Version == "" {
+		gvk.Version = s.opts.GVK.Version
+	}
+	info.SetGroupVersionKind(gvk)
 }
 
-func (s *Storage) encode(obj runtime.Object, w io.Writer) error {
-	// The standard encoder is fine when only one type maps to a group
-	if s.opts.Scheme == nil {
-		return s.codec.Encode(obj, w)
-	}
-	if err := s.checkGVK(obj); err != nil {
-		return err
+// encode returns the JSON representation of obj. enforceCap applies the group's maxAllowedVersion ceiling. Callers pass
+// true on create and on non-deletion updates; deletion-related updates pass false so an object already
+// stored above the cap stays removable (its deletion, finalizer and status writes all go through here).
+func (s *Storage) encode(ctx context.Context, obj runtime.Object, enforceCap bool) (json.RawMessage, error) {
+	s.checkGVK(obj)
+
+	raw, err := s.serializer.Encode(ctx, obj)
+	if err != nil {
+		return nil, err
 	}
 
-	// This will always write the saved GVK, unlike:
-	// https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
-	// that picks an arbitrary GVK that may not match the same group!
-	return json.NewEncoder(w).Encode(obj)
+	if !enforceCap || s.opts.VersionPolicy == nil || !s.opts.VersionPolicy.HasMaxAllowed(s.gr.Group) {
+		return raw, nil
+	}
+
+	gv := persistedVersion(raw, obj)
+	// A custom serializer may pick a GVK outside this resource's group. Such a version cannot be ranked
+	// against the group's cap (it would look unregistered and slip through), so reject rather than store it.
+	if gv.Group != s.gr.Group {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf(
+			"%s: encoded apiVersion group %q does not match resource group %q", s.gr.String(), gv.Group, s.gr.Group))
+	}
+	if err := s.enforceMaxAllowedVersion(gv.Version); err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
+
+// enforceMaxAllowedVersion rejects (never rewrites) a write whose version outranks the group's configured maxAllowedVersion.
+// This is a REST-write-path check in apistore.encode: it does not cover writes that bypass apistore (bulk
+// import via BulkStore, direct ResourceClient callers, migrations), and under legacy-primary dual-write an
+// over-cap write still lands in legacy while only the background unified copy is rejected.
+func (s *Storage) enforceMaxAllowedVersion(version string) error {
+	if s.opts.VersionPolicy == nil {
+		return nil
+	}
+	allowed, maxAllowed := s.opts.VersionPolicy.IsVersionAllowed(s.gr.Group, version)
+	if allowed {
+		return nil
+	}
+	return apierrors.NewBadRequest(fmt.Sprintf(
+		"%s: version %q exceeds the configured maximum version %s for group %s",
+		s.gr.String(), version, maxAllowed, s.gr.Group))
+}
+
+// persistedVersion reads the group/version actually written by the serializer, so the cap is enforced against
+// the stored version. It falls back to the object's declared GVK if the encoded form has no parseable
+// TypeMeta, so it never silently skips the cap.
+func persistedVersion(encoded []byte, obj runtime.Object) schema.GroupVersion {
+	var tm metav1.TypeMeta
+	if json.Unmarshal(encoded, &tm) == nil && tm.APIVersion != "" {
+		if gv, err := schema.ParseGroupVersion(tm.APIVersion); err == nil {
+			return gv
+		}
+	}
+	return obj.GetObjectKind().GroupVersionKind().GroupVersion()
 }

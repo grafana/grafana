@@ -1,14 +1,14 @@
 import { useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
-import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
+import { Button, Field, FieldSet, Input, Stack, Text } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
-import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
+
+import { SharedPreferences } from '../../core/components/SharedPreferences/SharedPreferences';
 
 import { useUpdateTeam } from './hooks';
 
@@ -45,8 +45,7 @@ const TeamSettings = ({ team }: Props) => {
       },
     });
   };
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
-  const teamResourceUri = newPrefsEnabled ? `team-${team.uid}` : `teams/${team.id}`;
+  const teamResourceUri = `team-${team.uid}`;
 
   return (
     <Stack direction={'column'} gap={3}>
@@ -89,7 +88,7 @@ const TeamSettings = ({ team }: Props) => {
               <Input
                 {...register('email')}
                 // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                placeholder="team@email.com"
+                placeholder="team@example.com"
                 type="email"
                 id="email-input"
               />
@@ -100,7 +99,16 @@ const TeamSettings = ({ team }: Props) => {
           <Trans i18nKey="teams.team-settings.save">Save team details</Trans>
         </Button>
       </form>
-      <SharedPreferences resourceUri={teamResourceUri} disabled={!canWriteTeamSettings} preferenceType="team" />
+      <SharedPreferences
+        legend={
+          <Text element="h2" variant="h2">
+            {t('shared-preferences.title', 'Preferences')}
+          </Text>
+        }
+        resourceUri={teamResourceUri}
+        disabled={!canWriteTeamSettings}
+        preferenceType="team"
+      />
     </Stack>
   );
 };

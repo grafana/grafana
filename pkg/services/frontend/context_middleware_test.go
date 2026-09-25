@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	gokitlog "github.com/go-kit/log"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -49,7 +50,7 @@ func TestSetRequestContext(t *testing.T) {
 		req.Header.Set("baggage", "namespace=stacks-123")
 		rec := httptest.NewRecorder()
 
-		ctx := setRequestContext(req.Context(), rec, req)
+		ctx := setRequestContext(req.Context(), rec, req, nil)
 
 		namespace, ok := request.NamespaceFrom(ctx)
 		assert.True(t, ok, "Namespace should be present in context")
@@ -61,7 +62,7 @@ func TestSetRequestContext(t *testing.T) {
 		req.Header.Set("baggage", "trace-id=abc123,namespace=tenant-456,user-id=xyz")
 		rec := httptest.NewRecorder()
 
-		ctx := setRequestContext(req.Context(), rec, req)
+		ctx := setRequestContext(req.Context(), rec, req, nil)
 
 		namespace, ok := request.NamespaceFrom(ctx)
 		assert.True(t, ok, "Namespace should be present in context")
@@ -72,7 +73,7 @@ func TestSetRequestContext(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 
-		ctx := setRequestContext(req.Context(), rec, req)
+		ctx := setRequestContext(req.Context(), rec, req, nil)
 
 		namespace, ok := request.NamespaceFrom(ctx)
 		assert.False(t, ok, "Namespace should not be present in context")
@@ -84,7 +85,7 @@ func TestSetRequestContext(t *testing.T) {
 		req.Header.Set("baggage", "invalid-baggage-format;;;")
 		rec := httptest.NewRecorder()
 
-		ctx := setRequestContext(req.Context(), rec, req)
+		ctx := setRequestContext(req.Context(), rec, req, nil)
 
 		namespace, ok := request.NamespaceFrom(ctx)
 		assert.False(t, ok, "Namespace should not be present in context")
@@ -96,11 +97,67 @@ func TestSetRequestContext(t *testing.T) {
 		req.Header.Set("baggage", "other-key=other-value")
 		rec := httptest.NewRecorder()
 
-		ctx := setRequestContext(req.Context(), rec, req)
+		ctx := setRequestContext(req.Context(), rec, req, nil)
 
 		namespace, ok := request.NamespaceFrom(ctx)
 		assert.False(t, ok, "Namespace should not be present in context")
 		assert.Empty(t, namespace, "Namespace should be empty when namespace member not in baggage")
+	})
+}
+
+func TestSetRequestContextBaggageEvalContext(t *testing.T) {
+	t.Run("copies configured baggage members into the evaluation context", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("baggage", "namespace=tenant-1,org_id=42,region=eu,ignored=nope")
+		rec := httptest.NewRecorder()
+
+		ctx := setRequestContext(req.Context(), rec, req, []string{"org_id", "region"})
+
+		attrs := openfeature.TransactionContext(ctx).Attributes()
+		assert.Equal(t, "tenant-1", attrs["namespace"])
+		assert.Equal(t, "42", attrs["org_id"])
+		assert.Equal(t, "eu", attrs["region"])
+		assert.NotContains(t, attrs, "ignored", "members not in the configured list should not be copied")
+	})
+
+	t.Run("omits configured members that are absent from the baggage header", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("baggage", "namespace=tenant-1")
+		rec := httptest.NewRecorder()
+
+		ctx := setRequestContext(req.Context(), rec, req, []string{"org_id"})
+
+		attrs := openfeature.TransactionContext(ctx).Attributes()
+		assert.NotContains(t, attrs, "org_id", "absent baggage members should not be added")
+	})
+
+	t.Run("keeps default namespace and hostname when no keys are configured", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Host = "example.com"
+		rec := httptest.NewRecorder()
+
+		ctx := setRequestContext(req.Context(), rec, req, nil)
+
+		attrs := openfeature.TransactionContext(ctx).Attributes()
+		assert.Equal(t, "default", attrs["namespace"])
+		assert.Equal(t, "example.com", attrs["hostname"])
+	})
+}
+
+func TestReadBaggageEvalContextKeys(t *testing.T) {
+	t.Run("returns configured keys", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		sec, err := cfg.Raw.NewSection("frontend_service")
+		assert.NoError(t, err)
+		_, err = sec.NewKey("baggage_eval_context_keys", "org_id region")
+		assert.NoError(t, err)
+
+		assert.Equal(t, []string{"org_id", "region"}, readBaggageEvalContextKeys(cfg))
+	})
+
+	t.Run("returns empty list when not configured", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		assert.Empty(t, readBaggageEvalContextKeys(cfg))
 	})
 }
 

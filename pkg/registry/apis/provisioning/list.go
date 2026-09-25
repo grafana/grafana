@@ -2,9 +2,7 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -18,6 +16,10 @@ import (
 type listConnector struct {
 	getter RepoGetter
 	lister resources.ResourceLister
+}
+
+func NewListConnector(getter RepoGetter, lister resources.ResourceLister) *listConnector {
+	return &listConnector{getter: getter, lister: lister}
 }
 
 func (*listConnector) New() runtime.Object {
@@ -43,12 +45,8 @@ func (*listConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ns, ok := request.NamespaceFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing namespace")
-	}
-
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ns := request.NamespaceValue(ctx)
 		// TODO: Add pagination to resource lister
 		rsp, err := s.lister.List(ctx, ns, name)
 		if err != nil {
@@ -56,7 +54,7 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 		} else {
 			responder.Object(200, rsp)
 		}
-	}), 30*time.Second), nil
+	}), nil
 }
 
 var (

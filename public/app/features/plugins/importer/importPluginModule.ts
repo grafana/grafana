@@ -7,7 +7,6 @@ import builtInPlugins, { isBuiltinPluginPath } from '../built_in_plugins';
 import { registerPluginInfoInCache } from '../loader/pluginInfoCache';
 import { SystemJS } from '../loader/systemjs';
 import { resolveModulePath } from '../loader/utils';
-import { importPluginModuleInSandbox } from '../sandbox/sandboxPluginLoader';
 import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandboxPluginLoaderRegistry';
 
 import { addTranslationsToI18n } from './addTranslationsToI18n';
@@ -65,6 +64,11 @@ export async function importPluginModule({
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
   if (await shouldLoadPluginInFrontendSandbox({ pluginId })) {
+    // Loaded on demand: the near-membrane runtime behind this is large and most installs
+    // never sandbox a plugin, so it should not be in the initial bundle.
+    const { importPluginModuleInSandbox } = await import(
+      /* webpackChunkName: "pluginSandbox" */ '../sandbox/sandboxPluginLoader'
+    );
     return importPluginModuleInSandbox({ pluginId });
   }
 

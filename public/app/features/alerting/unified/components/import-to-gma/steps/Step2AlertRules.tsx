@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -34,7 +35,7 @@ import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';
 import { type ImportFormValues } from '../ImportToGMA';
-import { getRulesSourceOptions } from '../Wizard/constants';
+import { getRulesSourceOptions } from '../Wizard/steps';
 import { useGetRulesThatMightBeOverwritten } from '../hooks';
 import { filterRulerRulesConfig } from '../useImport';
 import { useRoutingTrees } from '../useRoutingTrees';
@@ -233,6 +234,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                     placeholder={t('alerting.import-to-gma.step2.select-policy', 'Select a policy tree')}
                     loading={isLoadingRoutingTrees}
                     width={50}
+                    data-testid={selectors.pages.Alerting.ImportToGMA.policyTreeInput}
                   />
                 )}
                 control={control}
@@ -331,6 +333,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                             loading={isLoadingNamespaces}
                             disabled={isLoadingNamespaces || !rulesDatasourceName}
                             isClearable
+                            data-testid={selectors.pages.Alerting.ImportToGMA.namespaceInput}
                           />
                         )}
                         name="namespace"
@@ -355,6 +358,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                             loading={isLoadingNamespaces}
                             disabled={isLoadingNamespaces || !namespace || !rulesDatasourceName}
                             isClearable
+                            data-testid={selectors.pages.Alerting.ImportToGMA.groupInput}
                           />
                         )}
                         name="ruleGroup"

@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../../../features/panels/histogram/ # /docs/grafana/next/features/panels/histogram/
   - ../../../panels/visualizations/time-series/ # /docs/grafana/next/panels/visualizations/time-series/
   - ../../../panels/visualizations/time-series/annotate-time-series/ # /docs/grafana/next/panels/visualizations/time-series/annotate-time-series/
   - ../../../panels/visualizations/time-series/change-axis-display/ # /docs/grafana/next/panels/visualizations/time-series/change-axis-display/
@@ -54,7 +53,7 @@ Time series visualizations are the default way to show the variations of a set o
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-series-v12.0.png" max-width="750px" alt="Time series visualization" >}}
 
 {{< admonition type="note" >}}
-You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
+When you open a dashboard with a legacy Graph visualization, Grafana migrates it automatically to time series or another supported visualization based on the old panel settings.
 {{< /admonition >}}
 
 A time series visualization displays an x-y graph with time progression on the x-axis and the magnitude of the values on the y-axis. This visualization is ideal for displaying large numbers of timed data points that would be hard to track in a table or list.
@@ -157,7 +156,7 @@ The following overrides help you further refine a time series visualization.
 Use the **Graph styles > Transform** [override property](#field-overrides) to transform series values without affecting the values shown in the tooltip, context menu, or legend. Choose from the following transform options:
 
 - **Constant** - Show the first value as a constant line.
-- **Negative Y transform** - Flip the results to negative values on the y-axis.
+- **Negative Y** - Flip the results to negative values on the y-axis.
 
 ### Fill below to override property
 
@@ -198,7 +197,8 @@ Toggle the **Series visibility** switch on to add the control next to or above t
 This lets you narrow the visible series by name or by label.
 Use the series visibility filter when a panel renders many series and you want to focus on a subset without editing the query.
 
-After you've toggled the switch on, click the **Series visibility** icon to open a tooltip with one or two sections depending on your dataset:
+After you've toggled the switch on, click the **Series visibility** icon to open a tooltip.
+Depending on your dataset, you can filter:
 
 - **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
 - **By labels**: Lists each label key with its values. Select label values to filter series that match.
@@ -207,16 +207,9 @@ The tooltip also provides the following options:
 
 - **Select all** and **Deselect all**: Toggle every value in a section.
 - **Clear all**: Reset the filter.
-  Toggle the **Series visibility** switch on to add the corresponding filter control next to or above the legend.
-  Use it to narrow the visible series by name or by label without editing the query, which is useful when a panel renders many series and you want to focus on a subset.
+- **Pin to sidebar**: Dock the filter alongside the panel so it stays open while you explore.
 
-After toggling the switch on, click the **Series visibility** icon to open a tooltip.
-Depending on your dataset, you can filter:
-
-- **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
-- **By labels**: Lists each label key with its values. Select label values to filter series that match.
-
-For more information, refer to the [Configure legend documentation] (https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/#series-visibility).
+For more information, refer to the [Configure legend documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/#series-visibility).
 
 ### Axis options
 

@@ -62,7 +62,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
 				_, err := svc.CreateServiceAccount(context.Background(), autoAssignOrgID, &tc.form)
-				assert.Equal(t, err, tc.expectedError, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})
@@ -93,7 +97,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				err := svc.DeleteServiceAccount(context.Background(), autoAssignOrgID, testServiceAccountId)
-				assert.Equal(t, err, tc.expectedError, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})
@@ -124,7 +132,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				err := svc.DeleteServiceAccountToken(context.Background(), autoAssignOrgID, testServiceAccountId, testServiceAccountTokenId)
-				assert.Equal(t, err, tc.expectedError, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})
@@ -159,6 +171,27 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 				assert.Equal(t, tc.expectedIsExternal, sa.IsExternal, tc.description)
 			})
 		}
+	})
+
+	t.Run("should decorate service accounts retrieved by UID", func(t *testing.T) {
+		serviceMock.ExpectedServiceAccountProfiles = []*sa.ServiceAccountProfileDTO{
+			{
+				Name:  "my-service-account",
+				Login: "sa-1-my-service-account",
+			},
+			{
+				Name:  sa.ExtSvcPrefix + "grafana-app",
+				Login: sa.ExtSvcLoginPrefix(autoAssignOrgID) + "grafana-app",
+			},
+		}
+
+		serviceAccounts, err := svc.RetrieveServiceAccountsByUIDs(context.Background(), autoAssignOrgID, []string{"sa-1", "sa-2"})
+		require.NoError(t, err)
+		require.Len(t, serviceAccounts, 2)
+		require.False(t, serviceAccounts[0].IsExternal)
+		require.Equal(t, "my-service-account", serviceAccounts[0].RequiredBy)
+		require.True(t, serviceAccounts[1].IsExternal)
+		require.Equal(t, "grafana-app", serviceAccounts[1].RequiredBy)
 	})
 
 	t.Run("should flag external service accounts correctly", func(t *testing.T) {
@@ -234,7 +267,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 				tc := tc
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.UpdateServiceAccount(context.Background(), autoAssignOrgID, testServiceAccountId, &tc.form)
-				assert.Equal(t, tc.expectedError, err, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})
@@ -273,7 +310,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 				tc := tc
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.AddServiceAccountToken(context.Background(), testServiceAccountId, &tc.cmd)
-				assert.Equal(t, tc.expectedError, err, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})

@@ -64,7 +64,7 @@ func TestBatching(t *testing.T) {
 func TestIntegrationBulkOps(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, _ := InitTestDB(t)
+	db, _ := InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	err := db.engine.Sync(new(bulkTestItem))
 	require.NoError(t, err)
 

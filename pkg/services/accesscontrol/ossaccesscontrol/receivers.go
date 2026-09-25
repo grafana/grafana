@@ -41,6 +41,7 @@ func defaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
 		Resource:       receiverPermissionsResource,
+		APIGroup:       accesscontrol.AlertingNotificationsApiGroup,
 		ReaderRoleName: receiverPermissionsReaderRoleName,
 		WriterRoleName: receiverPermissionsWriterRoleName,
 		RoleGroup:      models.AlertRolesGroup,
@@ -50,10 +51,12 @@ func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 func ProvideReceiverPermissionsService(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, service accesscontrol.Service,
-	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
+	actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          receiverPermissionsResource,
+		APIGroup:          accesscontrol.AlertingNotificationsApiGroup,
 		ResourceAttribute: "uid",
 		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
 			return models.ScopeReceiversProvider.GetResourceIDFromUID(resourceID), nil
@@ -74,7 +77,7 @@ func ProvideReceiverPermissionsService(
 		RoleGroup:      models.AlertRolesGroup,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService)
 	if err != nil {
 		return nil, err
 	}

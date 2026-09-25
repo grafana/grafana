@@ -142,7 +142,7 @@ func TestIntegrationUserLoginAttempts(t *testing.T) {
 	cfg.DisableBruteForceLoginProtection = false
 	cfg.DisableUsernameLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 5
-	db := db.InitTestDB(t)
+	db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	service := ProvideService(db, cfg, nil)
 
 	// add multiple login attempts with different uppercases, they all should be counted as the same user
@@ -289,7 +289,7 @@ func TestIntegrationIPLoginAttempts(t *testing.T) {
 	cfg.DisableBruteForceLoginProtection = false
 	cfg.DisableIPAddressLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 3
-	db := db.InitTestDB(t)
+	db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	service := ProvideService(db, cfg, nil)
 
 	_ = service.Add(ctx, "user1", "192.168.1.1")
@@ -322,7 +322,7 @@ func TestIntegrationIPv6AddressSupport(t *testing.T) {
 	// Use controlled time like other tests to avoid timestamp conversion issues
 	testTime := time.Date(2023, 10, 22, 8, 0, 0, 0, time.UTC)
 	store := &xormStore{
-		db:  db.InitTestDB(t),
+		db:  db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		now: func() time.Time { return testTime },
 	}
 	service := &Service{

@@ -2,6 +2,20 @@ export * from './backendSrv';
 export * from './dataSourceSrv';
 export * from './LocationSrv';
 export * from './EchoSrv';
+export {
+  type JourneyOutcome,
+  type JourneyMeta,
+  type JourneyOptions,
+  type StepHandle,
+  type JourneyHandle,
+  type JourneyTracker,
+  type JourneyTriggersFn,
+  type JourneyInstanceFn,
+  type JourneyRegistry,
+  getJourneyTracker,
+  registerJourneyTriggers,
+  onJourneyInstance,
+} from './JourneyTracker';
 export * from './templateSrv';
 export * from './live';
 export * from './LocationService';

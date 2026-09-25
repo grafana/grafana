@@ -3,12 +3,17 @@ package bedrock
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
-const callTimeout = 30 * time.Second
+// callTimeout bounds the whole per-batch InvokeModel attempt sequence (the
+// AWS SDK respects the context deadline across retries). Sized to give the
+// adaptive retryer room to back off and retry under throttling rather than
+// being cut short mid-sequence.
+const callTimeout = 60 * time.Second
 
 // DenseEmbedder embeds text via Bedrock InvokeModel and returns dense
 // float32 vectors.
@@ -39,6 +44,8 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 	}
 	inputType := cohereInputType(input.Task)
 
+	// Chunks run concurrently; accumulate tokens atomically.
+	var tokens atomic.Int64
 	results, err := embedder.BatchProcess(ctx, input.Texts, e.batchSize, func(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 		callCtx, cancel := context.WithTimeoutCause(ctx, callTimeout, ErrCallTimeout)
 		defer cancel()
@@ -46,10 +53,11 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 		res, err := e.client.EmbedTexts(callCtx, e.model, texts, inputType, e.dim)
 		if err != nil {
 			if errors.Is(context.Cause(callCtx), ErrCallTimeout) {
-				return nil, ErrCallTimeout
+				return nil, &embedder.RetryableError{Err: ErrCallTimeout}
 			}
 			return nil, err
 		}
+		tokens.Add(int64(res.InputTokens))
 		if input.Normalize {
 			embedder.NormalizeDenseBatch(res.Vectors)
 		}
@@ -60,9 +68,10 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 		return out, nil
 	})
 	if err != nil {
-		return embedder.EmbedTextOutput{}, err
+		// Successful chunks were still billed; surface their tokens with the error.
+		return embedder.EmbedTextOutput{InputTokens: int(tokens.Load())}, err
 	}
-	return embedder.EmbedTextOutput{Embeddings: results}, nil
+	return embedder.EmbedTextOutput{Embeddings: results, InputTokens: int(tokens.Load())}, nil
 }
 
 // cohereInputType maps generic task names to Cohere's input_type values.

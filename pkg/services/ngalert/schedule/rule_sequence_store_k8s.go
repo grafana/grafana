@@ -8,7 +8,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	alertingv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ RuleSequenceStore = (*K8sRuleSequenceStore)(nil)
@@ -22,18 +24,31 @@ var _ RuleSequenceStore = (*K8sRuleSequenceStore)(nil)
 // is ready. Transient initialization failures are retried on the next call.
 type K8sRuleSequenceStore struct {
 	clientGenerator resource.ClientGenerator
+	namespace       string
 	log             log.Logger
 
 	mu     sync.Mutex
 	client *alertingv0alpha1.RuleSequenceClient
 }
 
+// RuleSequenceNamespace returns the namespace the scheduler lists RuleSequences
+// in, mirroring how the app scopes its informer.
+func RuleSequenceNamespace(cfg *setting.Cfg) string {
+	if cfg == nil || cfg.StackID == "" {
+		return ""
+	}
+	// The cloud mapper ignores the org ID and returns the stack namespace.
+	return reqns.GetNamespaceMapper(cfg)(0)
+}
+
 // NewK8sRuleSequenceStore creates a RuleSequenceStore backed by the k8s
 // RuleSequence resource. The clientGenerator is used lazily: the actual k8s
-// client is not created until the first scheduling poll.
-func NewK8sRuleSequenceStore(clientGenerator resource.ClientGenerator, log log.Logger) *K8sRuleSequenceStore {
+// client is not created until the first scheduling poll. namespace comes from
+// RuleSequenceNamespace.
+func NewK8sRuleSequenceStore(clientGenerator resource.ClientGenerator, namespace string, log log.Logger) *K8sRuleSequenceStore {
 	return &K8sRuleSequenceStore{
 		clientGenerator: clientGenerator,
+		namespace:       namespace,
 		log:             log,
 	}
 }
@@ -58,9 +73,7 @@ func (s *K8sRuleSequenceStore) GetRuleSequencesForScheduling(ctx context.Context
 		return nil, fmt.Errorf("initializing rule sequence client: %w", err)
 	}
 
-	// Empty namespace lists across all namespaces so the scheduler sees
-	// sequences from every org.
-	list, err := client.ListAll(ctx, "", resource.ListOptions{})
+	list, err := client.ListAll(ctx, s.namespace, resource.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("listing rule sequences: %w", err)
 	}

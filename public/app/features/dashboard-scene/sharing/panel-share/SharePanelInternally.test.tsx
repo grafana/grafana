@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
@@ -69,6 +69,18 @@ describe('SharePanelInternally', () => {
     await userEvent.click(copyImageLinkButton);
 
     expect(document.execCommand).toHaveBeenCalledWith('copy');
+  });
+
+  it('should build relative render image URL for fetch and absolute image URL for sharing', async () => {
+    config.appUrl = 'http://dashboards.grafana.com/grafana/';
+    config.rendererAvailable = true;
+    const tab = buildAndRenderScenario();
+
+    await waitFor(() => expect(tab.state.imageUrl).toMatch(/^\/render\/d-solo\/dash-1\?/));
+    expect(tab.state.imageUrl).not.toMatch(/^https?:\/\//);
+    expect(tab.state.imageUrl).toContain('panelId=panel-12');
+    expect(tab.state.absoluteImageUrl).toBe(config.appUrl + tab.state.imageUrl.replace(/^\//, ''));
+    expect(tab.state.absoluteImageUrl).toMatch(/^http:\/\/dashboards\.grafana\.com\/grafana\/render\/d-solo\/dash-1\?/);
   });
 });
 

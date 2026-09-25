@@ -53,14 +53,6 @@ const (
 // Team-management actions. Hardcoded for the same reason as the user-management
 // actions above (the enterprise-only teams.roles:* actions live in pkg/extensions).
 const (
-	actionTeamsCreate = "teams:create"
-	actionTeamsRead   = "teams:read"
-	actionTeamsWrite  = "teams:write"
-	actionTeamsDelete = "teams:delete"
-
-	actionTeamsPermissionsRead  = "teams.permissions:read"
-	actionTeamsPermissionsWrite = "teams.permissions:write"
-
 	actionTeamsRolesRead   = "teams.roles:read"
 	actionTeamsRolesAdd    = "teams.roles:add"
 	actionTeamsRolesRemove = "teams.roles:remove"
@@ -70,7 +62,6 @@ const (
 var (
 	iamGroup             = iamv0.UserResourceInfo.GroupResource().Group
 	usersResource        = iamv0.UserResourceInfo.GroupResource().Resource
-	teamsResource        = iamv0.TeamResourceInfo.GroupResource().Resource
 	roleBindingsResource = iamv0.RoleBindingInfo.GroupResource().Resource
 )
 
@@ -117,20 +108,12 @@ var userManagementMappings = map[string]iamActionMapping{
 	actionUsersRolesRemove: {resource: roleBindingsResource, relations: []string{RelationDelete}},
 }
 
-// teamManagementMappings maps each team-management action to the iam group_resource
+// teamRoleBindingMappings maps each team-management action to the iam group_resource
 // relation(s) it grants, inverting the iam "teams" and "rolebindings" mapper entries.
 // Core team actions gate iam.grafana.app/teams; teams.roles:* gate
 // iam.grafana.app/rolebindings (the same resource user role-bindings gate — team and
 // user role-assignments are not distinguished at the group_resource level).
-var teamManagementMappings = map[string]iamActionMapping{
-	actionTeamsRead:   {resource: teamsResource, relations: []string{RelationGet}},
-	actionTeamsWrite:  {resource: teamsResource, relations: []string{RelationUpdate}},
-	actionTeamsCreate: {resource: teamsResource, relations: []string{RelationCreate}, skipScope: true},
-	actionTeamsDelete: {resource: teamsResource, relations: []string{RelationDelete}},
-
-	actionTeamsPermissionsRead:  {resource: teamsResource, relations: []string{RelationGetPermissions}},
-	actionTeamsPermissionsWrite: {resource: teamsResource, relations: []string{RelationSetPermissions}},
-
+var teamRoleBindingMappings = map[string]iamActionMapping{
 	actionTeamsRolesRead:   {resource: roleBindingsResource, relations: []string{RelationGet}},
 	actionTeamsRolesAdd:    {resource: roleBindingsResource, relations: []string{RelationCreate, RelationUpdate}},
 	actionTeamsRolesRemove: {resource: roleBindingsResource, relations: []string{RelationDelete}},
@@ -214,7 +197,7 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 		// Team-management actions map onto iam group_resources via a dedicated path,
 		// like the user-management actions above (see TeamManagementToTuples).
 		if isTeamManagementAction(perm.Action) {
-			for _, t := range TeamManagementToTuples(subject, perm) {
+			for _, t := range TeamRoleBindingManagementToTuples(subject, perm) {
 				tupleMap[t.String()] = t
 			}
 			continue
@@ -405,17 +388,16 @@ func isAllUsersScope(kind, identifier string) bool {
 	return kind == scopeKindPermissions && identifier == scopeIdentifierDelegate
 }
 
-// TeamManagementToTuples translates a team-management permission into iam tuples.
-// Only "all" scopes translate (see isAllTeamsScope); specific-instance scopes are
-// dropped, since the FGA teams type is uid-based while the legacy scope is id-based
-// and rolebindings is wildcard-only. teams:create is unscoped and always translates.
-func TeamManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
-	m, ok := teamManagementMappings[permission.Action]
+// TeamRoleBindingManagementToTuples translates teams.roles:* actions into iam
+// group_resource tuples. Only wildcard scopes translate; specific-instance scopes
+// are dropped since rolebindings have no per-instance FGA type.
+func TeamRoleBindingManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
+	m, ok := teamRoleBindingMappings[permission.Action]
 	if !ok {
 		return nil
 	}
 
-	if !m.skipScope && !isAllTeamsScope(permission.Kind, permission.Identifier) {
+	if !isAllTeamsScope(permission.Kind, permission.Identifier) {
 		return nil
 	}
 
@@ -429,7 +411,7 @@ func TeamManagementToTuples(subject string, permission RolePermission) []*openfg
 // isTeamManagementAction reports whether the action is one of the team-management
 // actions handled by TeamManagementToTuples.
 func isTeamManagementAction(action string) bool {
-	_, ok := teamManagementMappings[action]
+	_, ok := teamRoleBindingMappings[action]
 	return ok
 }
 
@@ -487,32 +469,65 @@ func GetRoleBindingTuple(subjectKind string, subjectName string, roleName string
 	return tuple, nil
 }
 
-func GetResourcePermissionWriteTuple(req *authzextv1.CreatePermissionOperation) (*openfgav1.TupleKey, error) {
-	resource := req.GetResource()
-	permission := req.GetPermission()
-	object := NewObjectEntry(toZanzanaType(resource.GetGroup()), resource.GetGroup(), resource.GetResource(), "", resource.GetName())
-	tuple, err := NewResourceTuple(object, resource, permission)
-	if err != nil {
-		return nil, err
-	}
-
-	return tuple, nil
+func GetResourcePermissionWriteTuples(req *authzextv1.CreatePermissionOperation) ([]*openfgav1.TupleKey, error) {
+	return resourcePermissionToTuples(req.GetResource(), req.GetPermission())
 }
 
-func GetResourcePermissionDeleteTuple(req *authzextv1.DeletePermissionOperation) (*openfgav1.TupleKeyWithoutCondition, error) {
-	resource := req.GetResource()
-	permission := req.GetPermission()
-	object := NewObjectEntry(toZanzanaType(resource.GetGroup()), resource.GetGroup(), resource.GetResource(), "", resource.GetName())
-	tuple, err := NewResourceTuple(object, resource, permission)
+func GetResourcePermissionDeleteTuples(req *authzextv1.DeletePermissionOperation) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+	tuples, err := resourcePermissionToTuples(req.GetResource(), req.GetPermission())
 	if err != nil {
 		return nil, err
 	}
 
-	return &openfgav1.TupleKeyWithoutCondition{
-		User:     tuple.GetUser(),
-		Relation: tuple.GetRelation(),
-		Object:   tuple.GetObject(),
+	deleteTuples := make([]*openfgav1.TupleKeyWithoutCondition, 0, len(tuples))
+	for _, tuple := range tuples {
+		deleteTuples = append(deleteTuples, &openfgav1.TupleKeyWithoutCondition{
+			User:     tuple.GetUser(),
+			Relation: tuple.GetRelation(),
+			Object:   tuple.GetObject(),
+		})
+	}
+	return deleteTuples, nil
+}
+
+func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authzextv1.Permission) ([]*openfgav1.TupleKey, error) {
+	subject, err := toZanzanaSubject(permission.GetKind(), permission.GetName())
+	if err != nil {
+		return nil, err
+	}
+
+	relation := strings.ToLower(permission.GetVerb())
+	if isDatasourcePermission(resource) {
+		return datasourcePermissionToTuples(subject, relation, resource), nil
+	}
+
+	return []*openfgav1.TupleKey{
+		newResourcePermissionTuple(subject, relation, resource, ""),
 	}, nil
+}
+
+func datasourcePermissionToTuples(subject, relation string, resource *authzextv1.Resource) []*openfgav1.TupleKey {
+	switch relation {
+	case "query":
+		// Query is represented as view on the datasource.
+		relation = RelationSetView
+	case RelationSetEdit, RelationSetAdmin:
+	default:
+		// Preserve granular relations without granting query access.
+		return []*openfgav1.TupleKey{
+			newResourcePermissionTuple(subject, relation, resource, ""),
+		}
+	}
+
+	// Action Sets also grant query access.
+	return []*openfgav1.TupleKey{
+		newResourcePermissionTuple(subject, relation, resource, ""),
+		newResourcePermissionTuple(subject, RelationCreate, resource, "query"),
+	}
+}
+
+func isDatasourcePermission(resource *authzextv1.Resource) bool {
+	return resource.GetResource() == "datasources" && strings.HasSuffix(resource.GetGroup(), ".datasource.grafana.app")
 }
 
 func toZanzanaType(apiGroup string) string {
@@ -522,41 +537,46 @@ func toZanzanaType(apiGroup string) string {
 	return TypeResource
 }
 
-func NewResourceTuple(object string, resource *authzextv1.Resource, perm *authzextv1.Permission) (*openfgav1.TupleKey, error) {
-	// Typ is "folder" or "resource"
-	typ := toZanzanaType(resource.Group)
-
-	// subject
-	subject, err := toZanzanaSubject(perm.GetKind(), perm.GetName())
-	if err != nil {
-		return nil, err
-	}
+func newResourcePermissionTuple(subject, relation string, resource *authzextv1.Resource, subresource string) *openfgav1.TupleKey {
+	typ := toZanzanaType(resource.GetGroup())
 
 	key := &openfgav1.TupleKey{
-		// e.g. "user:{uid}", "serviceaccount:{uid}", "team:{uid}", "basicrole:{viewer|editor|admin}"
+		// e.g. "user:{uid}", "service-account:{uid}", "team:{uid}", "role:basic_{viewer|editor|admin}#assignee"
 		User: subject,
 		// "view", "edit", "admin"
-		Relation: strings.ToLower(perm.Verb),
+		Relation: relation,
 		// e.g. "folder:{name}" or "resource:{apiGroup}/{resource}/{name}"
-		Object: object,
+		// e.g. "resource:{apiGroup}/{resource}/{subresource}/{name}"
+		Object: NewObjectEntry(
+			typ,
+			resource.GetGroup(),
+			resource.GetResource(),
+			subresource,
+			resource.GetName(),
+		),
 	}
 
-	// For resources we add a condition to filter by apiGroup/resource
-	// e.g "group_filter": {"group_resource": "dashboards.grafana.app/dashboards"}
+	// For generic resources we add a condition to filter by apiGroup/resource[/subresource]
+	// e.g "group_filter": {"group_resource": "dashboard.grafana.app/dashboards"}
+	// e.g "group_filter": {"group_resource": "loki.datasource.grafana.app/datasources/query"}
 	if typ == TypeResource {
+		groupResource := resource.GetResource()
+		if subresource != "" {
+			groupResource += "/" + subresource
+		}
 		key.Condition = &openfgav1.RelationshipCondition{
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"group_resource": structpb.NewStringValue(
-						resource.GetGroup() + "/" + resource.GetResource(),
+						resource.GetGroup() + "/" + groupResource,
 					),
 				},
 			},
 		}
 	}
 
-	return key, nil
+	return key
 }
 
 func toZanzanaSubject(kind string, name string) (string, error) {

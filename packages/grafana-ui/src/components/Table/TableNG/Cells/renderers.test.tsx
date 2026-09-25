@@ -4,7 +4,7 @@ import { createDataFrame, createTheme, type Field, FieldType } from '@grafana/da
 
 import { type TableCellOptions, TableCellDisplayMode, type TableCustomCellOptions } from '../../types';
 
-import { getCellRenderer } from './renderers';
+import { getAutoRendererDisplayMode, getCellRenderer } from './renderers';
 
 // Performance testing utilities
 const measurePerformance = (fn: () => void, iterations = 100) => {
@@ -50,6 +50,42 @@ const createLargeJSONData = () => {
 };
 
 describe('TableNG Cells renderers', () => {
+  describe('getAutoRendererDisplayMode', () => {
+    const field = <V,>(type: FieldType, values: V[] = []): Field<V> => ({
+      name: 'f',
+      type,
+      values,
+      config: {},
+      display: (v) => ({ text: String(v), numeric: NaN }),
+    });
+
+    it('resolves an `other` field to JSONView so it picks up the JSON styles', () => {
+      // the display processor already pretty-prints these; without this the cell would render that
+      // JSON in the body font with its indentation collapsed.
+      expect(getAutoRendererDisplayMode(field(FieldType.other, [{ a: 1 }]))).toBe(TableCellDisplayMode.JSONView);
+    });
+
+    it('still resolves geo and time-series frames to their own cell types', () => {
+      expect(getAutoRendererDisplayMode(field(FieldType.geo))).toBe(TableCellDisplayMode.Geo);
+
+      const timeSeriesFrame = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+        ],
+      });
+      expect(getAutoRendererDisplayMode(field(FieldType.frame, [timeSeriesFrame]))).toBe(
+        TableCellDisplayMode.Sparkline
+      );
+    });
+
+    it('leaves scalar field types on Auto', () => {
+      expect(getAutoRendererDisplayMode(field(FieldType.string, ['x']))).toBe(TableCellDisplayMode.Auto);
+      expect(getAutoRendererDisplayMode(field(FieldType.number, [1]))).toBe(TableCellDisplayMode.Auto);
+      expect(getAutoRendererDisplayMode(field(FieldType.boolean, [true]))).toBe(TableCellDisplayMode.Auto);
+    });
+  });
+
   describe('getCellRenderer', () => {
     // Helper function to create a basic field
     function createField<V>(type: FieldType, values: V[] = []): Field<V> {

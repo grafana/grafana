@@ -22,7 +22,7 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 	}
 
 	// Set URL from GitHub installation
-	conn.Spec.URL = fmt.Sprintf("%s/%s", githubInstallationURL, conn.Spec.GitHub.InstallationID)
+	conn.Spec.URL = fmt.Sprintf("https://github.com/settings/installations/%s", conn.Spec.GitHub.InstallationID)
 
 	return nil
 }

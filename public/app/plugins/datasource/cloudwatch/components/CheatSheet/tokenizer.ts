@@ -6,7 +6,7 @@ import { FUNCTIONS, KEYWORDS, QUERY_COMMANDS } from '../../language/cloudwatch-l
 import * as sql from '../../language/cloudwatch-logs-sql/language';
 import * as ppl from '../../language/cloudwatch-ppl/language';
 
-export const baseTokenizer = (languageSpecificFeatures: Grammar): Grammar => ({
+const baseTokenizer = (languageSpecificFeatures: Grammar): Grammar => ({
   comment: {
     pattern: /^#.*/,
     greedy: true,

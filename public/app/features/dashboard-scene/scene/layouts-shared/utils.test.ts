@@ -1,4 +1,48 @@
-import { generateUniqueTitle } from './utils';
+import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+
+import { generateUniqueTitle, getIsLazy } from './utils';
+
+describe('getIsLazy', () => {
+  const originalUser = contextSrv.user;
+  const originalDefault = config.dashboardDefaultPreload;
+
+  beforeEach(() => {
+    contextSrv.user = { ...originalUser, authenticatedBy: '' };
+    config.dashboardDefaultPreload = false;
+  });
+
+  afterAll(() => {
+    contextSrv.user = originalUser;
+    config.dashboardDefaultPreload = originalDefault;
+  });
+
+  it('is not lazy when preload is true', () => {
+    expect(getIsLazy(true)).toBe(false);
+  });
+
+  it('is lazy when preload is false', () => {
+    expect(getIsLazy(false)).toBe(true);
+  });
+
+  it('is lazy when preload is undefined', () => {
+    expect(getIsLazy(undefined)).toBe(true);
+  });
+
+  // default_preload seeds new dashboards at creation time only. If it were read here, switching it
+  // on would silently change every existing dashboard that has no preload value.
+  it('ignores the instance default', () => {
+    config.dashboardDefaultPreload = true;
+    expect(getIsLazy(undefined)).toBe(true);
+    expect(getIsLazy(false)).toBe(true);
+  });
+
+  it('is never lazy for the image renderer user', () => {
+    contextSrv.user = { ...originalUser, authenticatedBy: 'render' };
+    expect(getIsLazy(false)).toBe(false);
+    expect(getIsLazy(undefined)).toBe(false);
+  });
+});
 
 describe('generateUniqueTitle', () => {
   it('should return the original title if it is not in the existing titles', () => {

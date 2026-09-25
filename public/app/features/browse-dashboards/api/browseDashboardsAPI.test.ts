@@ -1,7 +1,7 @@
 import { configureStore, type Middleware, isAnyOf } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
-import { testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { waitFor } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
@@ -9,20 +9,24 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { customFolderCountsHandler } from '@grafana/test-utils/unstable';
+import { customFolderCountsHandler, setTestFlags } from '@grafana/test-utils/unstable';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { legacyAPI } from 'app/api/clients/legacy';
+import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
+import * as variablesManagementCache from 'app/features/variables-management/cache';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
 import { type ThunkDispatch } from 'app/types/store';
 
 import { refetchChildren } from '../state/actions';
 import { browseDashboardsReducer } from '../state/slice';
+import { getFolderURL } from '../utils/dashboards';
 
 import { browseDashboardsAPI } from './browseDashboardsAPI';
 import { PAGE_SIZE } from './constants';
@@ -41,21 +45,86 @@ describe('browseDashboardsAPI', () => {
       reducer: {
         [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
         [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+        // Needed because deleting a folder refreshes the team folders tree, which fetches the user's teams
+        [legacyAPI.reducerPath]: legacyAPI.reducer,
         browseDashboards: browseDashboardsReducer,
       },
       middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(browseDashboardsAPI.middleware, folderAPIv1beta1.middleware),
+        getDefaultMiddleware().concat(
+          browseDashboardsAPI.middleware,
+          folderAPIv1beta1.middleware,
+          legacyAPI.middleware
+        ),
     });
     setStore(store as unknown as Store);
     return store;
   };
 
-  testWithFeatureToggles({ disable: ['provisioning'] });
+  // Mirrors createTestStore but appends an action-recording middleware so tests can assert on dispatches
+  const makeRecorderStore = (recorder: Middleware) => {
+    const store = configureStore({
+      reducer: {
+        [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
+        [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+        // Needed because deleting a folder refreshes the team folders tree, which fetches the user's teams
+        [legacyAPI.reducerPath]: legacyAPI.reducer,
+        browseDashboards: browseDashboardsReducer,
+      },
+      middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware().concat(
+          browseDashboardsAPI.middleware,
+          folderAPIv1beta1.middleware,
+          legacyAPI.middleware,
+          recorder
+        ),
+    });
+    setStore(store as unknown as Store);
+    return store;
+  };
+
+  // Records setStarred dispatches so tests can assert on nav-star cleanup
+  const createStoreWithSetStarredRecorder = () => {
+    const setStarredPayloads: Array<{ id: string; isStarred: boolean }> = [];
+    const recorder: Middleware = () => (next) => (action) => {
+      if (isAnyOf(setStarred)(action)) {
+        setStarredPayloads.push({ id: action.payload.id, isStarred: action.payload.isStarred });
+      }
+      return next(action);
+    };
+
+    return { store: makeRecorderStore(recorder), setStarredPayloads };
+  };
+
+  // Records updateDashboardName dispatches so tests can assert on starred-nav rename updates
+  const createStoreWithUpdateNameRecorder = () => {
+    const updateNamePayloads: Array<{ id: string; title: string; url: string }> = [];
+    const recorder: Middleware = () => (next) => (action) => {
+      if (isAnyOf(updateDashboardName)(action)) {
+        updateNamePayloads.push(action.payload);
+      }
+      return next(action);
+    };
+
+    return { store: makeRecorderStore(recorder), updateNamePayloads };
+  };
+
+  let originalProvisioningEnabled: boolean;
 
   beforeEach(() => {
+    originalProvisioningEnabled = config.provisioningEnabled;
+    config.provisioningEnabled = false;
     getDashboardAPIMock.mockReset();
     folderAPIVersionResolver.set('v1beta1');
+    // foldersAppPlatformAPI defaults to on, but these tests assert against the legacy endpoints.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
+    setTestFlags({ foldersAppPlatformAPI: false });
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
+  });
+
+  afterEach(() => {
+    config.provisioningEnabled = originalProvisioningEnabled;
+    setTestFlags({});
   });
 
   const createMockDashboardAPI = (saveDashboard: jest.Mock) =>
@@ -154,7 +223,7 @@ describe('browseDashboardsAPI', () => {
 
   it('does not check whether a single delete target is provisioned before deleting it', async () => {
     const store = createTestStore();
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
 
     const getProvisionedFolderSpy = jest.fn();
     const deleteFolderSpy = jest.fn();
@@ -189,6 +258,62 @@ describe('browseDashboardsAPI', () => {
     expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('removes a deleted folder from the nav starred section', async () => {
+    const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+
+    server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
+
+    await store.dispatch(
+      browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+    );
+
+    await waitFor(() => {
+      expect(setStarredPayloads).toEqual([{ id: 'folder-1', isStarred: false }]);
+    });
+  });
+
+  it('invalidates the variables list after deleting a folder', async () => {
+    const store = createTestStore();
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+    try {
+      server.use(http.delete('/api/folders/folder-1', () => HttpResponse.json({})));
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+      );
+
+      await waitFor(() => {
+        expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+      });
+    } finally {
+      invalidateVariablesSpy.mockRestore();
+    }
+  });
+
+  it('invalidates the variables list even when deleting a folder fails', async () => {
+    const store = createTestStore();
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+    try {
+      server.use(
+        http.delete('/api/folders/folder-1', () =>
+          HttpResponse.json({ message: 'folder delete failed' }, { status: 500 })
+        )
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+      );
+
+      await waitFor(() => {
+        expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+      });
+    } finally {
+      invalidateVariablesSpy.mockRestore();
+    }
+  });
+
   describe('getAffectedItems', () => {
     it('aggregates plural descendant count keys', async () => {
       const store = createTestStore();
@@ -202,12 +327,16 @@ describe('browseDashboardsAPI', () => {
                   dashboards: 3,
                   library_elements: 4,
                   alertrules: 5,
+                  recordingrules: 6,
+                  variables: 2,
                 }
               : {
                   folders: 1,
                   dashboards: 2,
                   library_elements: 3,
                   alertrules: 4,
+                  recordingrules: 1,
+                  variables: 3,
                 }
           )
         )
@@ -223,8 +352,10 @@ describe('browseDashboardsAPI', () => {
       expect(result.data).toEqual({
         folders: 5,
         dashboards: 6,
-        library_elements: 7,
+        librarypanels: 7,
         alertrules: 9,
+        recordingrules: 7,
+        variables: 5,
       });
     });
 
@@ -252,8 +383,36 @@ describe('browseDashboardsAPI', () => {
       expect(result.data).toEqual({
         folders: 3,
         dashboards: 3,
-        library_elements: 4,
+        librarypanels: 4,
         alertrules: 5,
+        recordingrules: 0,
+        variables: 0,
+      });
+    });
+
+    it('includes recording rule counts', async () => {
+      const store = createTestStore();
+
+      server.use(
+        customFolderCountsHandler(() =>
+          HttpResponse.json({ folders: 1, dashboards: 2, library_elements: 3, alertrules: 4, recordingrules: 5 })
+        )
+      );
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: [],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 2,
+        dashboards: 2,
+        librarypanels: 3,
+        alertrules: 4,
+        recordingrules: 5,
+        variables: 0,
       });
     });
 
@@ -272,10 +431,45 @@ describe('browseDashboardsAPI', () => {
       expect(result.data).toEqual({
         folders: 1,
         dashboards: 5,
-        library_elements: 0,
+        librarypanels: 0,
         alertrules: 0,
+        recordingrules: 0,
+        variables: 0,
       });
       expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);
+    });
+
+    it('includes variable counts', async () => {
+      const store = createTestStore();
+
+      server.use(
+        customFolderCountsHandler(() =>
+          HttpResponse.json({
+            folders: 0,
+            dashboards: 0,
+            library_elements: 0,
+            alertrules: 0,
+            recordingrules: 0,
+            variables: 4,
+          })
+        )
+      );
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: [],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 1,
+        dashboards: 0,
+        librarypanels: 0,
+        alertrules: 0,
+        recordingrules: 0,
+        variables: 4,
+      });
     });
   });
 
@@ -353,7 +547,7 @@ describe('browseDashboardsAPI', () => {
     });
 
     it('refreshes parents for requested folders even when bulk delete yields no successes', async () => {
-      const store = createTestStore();
+      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
       const dispatch = store.dispatch as ThunkDispatch;
       const listFoldersSpy = jest.fn();
       const hasPermissionSpy = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
@@ -379,6 +573,7 @@ describe('browseDashboardsAPI', () => {
         );
 
         expect(listFoldersSpy).toHaveBeenCalledTimes(2);
+        expect(setStarredPayloads).toEqual([]);
       } finally {
         hasPermissionSpy.mockRestore();
       }
@@ -386,7 +581,7 @@ describe('browseDashboardsAPI', () => {
 
     it('does not delete provisioned folders during bulk delete', async () => {
       const store = createTestStore();
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
 
       const deleteSpy = jest.fn();
 
@@ -414,6 +609,202 @@ describe('browseDashboardsAPI', () => {
       await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
 
       expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('invalidates the variables list after bulk-deleting folders', async () => {
+      const store = createTestStore();
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
+
+        await store.dispatch(
+          browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+        );
+
+        await waitFor(() => {
+          expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+        });
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
+    });
+
+    it('invalidates the variables list when bulk delete yields no successes', async () => {
+      const store = createTestStore();
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(
+          http.delete('/api/folders/folder-1', () =>
+            HttpResponse.json({ message: 'Folder not found' }, { status: 404 })
+          ),
+          http.delete('/api/folders/folder-2', () =>
+            HttpResponse.json({ message: 'Folder not found' }, { status: 404 })
+          )
+        );
+
+        await store.dispatch(
+          browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+        );
+
+        await waitFor(() => {
+          expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+        });
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
+    });
+
+    it('does not invalidate the variables list when bulk delete skips every folder as provisioned', async () => {
+      const store = createTestStore();
+      config.provisioningEnabled = true;
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(
+          http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:uid', () =>
+            HttpResponse.json({
+              apiVersion: 'folder.grafana.app/v1beta1',
+              kind: 'Folder',
+              metadata: {
+                name: 'folder-1',
+                namespace: 'default',
+                annotations: {
+                  [AnnoKeyManagerKind]: ManagerKind.Repo,
+                },
+              },
+              spec: { title: 'Folder 1' },
+            })
+          ),
+          http.delete('/api/folders/:uid', () => HttpResponse.json({}))
+        );
+
+        await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
+
+        expect(invalidateVariablesSpy).not.toHaveBeenCalled();
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
+    });
+
+    it('removes each bulk-deleted folder from the nav starred section', async () => {
+      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+
+      server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+      );
+
+      await waitFor(() => {
+        expect(setStarredPayloads).toEqual([
+          { id: 'folder-1', isStarred: false },
+          { id: 'folder-2', isStarred: false },
+        ]);
+      });
+    });
+
+    it('only un-stars folders that were actually deleted when some are provisioned', async () => {
+      config.provisioningEnabled = true;
+      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+
+      const deletedUids: string[] = [];
+
+      server.use(
+        http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-1', () =>
+          HttpResponse.json({
+            apiVersion: 'folder.grafana.app/v1beta1',
+            kind: 'Folder',
+            metadata: {
+              name: 'folder-1',
+              namespace: 'default',
+              annotations: {
+                [AnnoKeyManagerKind]: ManagerKind.Repo,
+              },
+            },
+            spec: { title: 'Folder 1' },
+          })
+        ),
+        http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-2', () =>
+          HttpResponse.json({
+            apiVersion: 'folder.grafana.app/v1beta1',
+            kind: 'Folder',
+            metadata: {
+              name: 'folder-2',
+              namespace: 'default',
+            },
+            spec: { title: 'Folder 2' },
+          })
+        ),
+        http.delete('/api/folders/:uid', ({ params }) => {
+          deletedUids.push(String(params.uid));
+          return HttpResponse.json({});
+        })
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+      );
+
+      await waitFor(() => {
+        expect(deletedUids).toEqual(['folder-2']);
+        expect(setStarredPayloads).toEqual([{ id: 'folder-2', isStarred: false }]);
+      });
+    });
+
+    it('does not un-star folders whose delete failed', async () => {
+      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+
+      const deleteFolder1Spy = jest.fn();
+      const deleteFolder2Spy = jest.fn();
+
+      server.use(
+        http.delete('/api/folders/folder-1', () => {
+          deleteFolder1Spy();
+          return HttpResponse.json({ message: 'err' }, { status: 500 });
+        }),
+        http.delete('/api/folders/folder-2', () => {
+          deleteFolder2Spy();
+          return HttpResponse.json({});
+        })
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+      );
+
+      await waitFor(() => {
+        expect(deleteFolder1Spy).toHaveBeenCalledTimes(1);
+        expect(deleteFolder2Spy).toHaveBeenCalledTimes(1);
+        expect(setStarredPayloads).toEqual([{ id: 'folder-2', isStarred: false }]);
+      });
+    });
+  });
+
+  describe('saveFolder', () => {
+    it('updates the starred nav entry from the request title and folder URL, not the server response', async () => {
+      const { store, updateNamePayloads } = createStoreWithUpdateNameRecorder();
+
+      // Response title/url deliberately differ from the request to catch accidental use of response values
+      server.use(
+        http.put('/api/folders/folder-1', () =>
+          HttpResponse.json({
+            uid: 'folder-1',
+            title: 'ServerTitle',
+            url: '/dashboards/f/folder-1/server-slug',
+            version: 2,
+          })
+        )
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.saveFolder.initiate({ uid: 'folder-1', title: 'Renamed', version: 1 })
+      );
+
+      await waitFor(() => {
+        expect(updateNamePayloads).toEqual([{ id: 'folder-1', title: 'Renamed', url: getFolderURL('folder-1') }]);
+      });
     });
   });
 

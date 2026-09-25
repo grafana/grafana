@@ -171,12 +171,7 @@ interface RulerBasedGroupRulesProps {
   application: RulesSourceApplication;
 }
 
-export function RulerBasedGroupRules({
-  groupIdentifier,
-  application,
-  promGroup,
-  rulerGroup,
-}: RulerBasedGroupRulesProps) {
+function RulerBasedGroupRules({ groupIdentifier, application, promGroup, rulerGroup }: RulerBasedGroupRulesProps) {
   const styles = useStyles2(getStyles);
   const { namespace, groupName } = groupIdentifier;
 

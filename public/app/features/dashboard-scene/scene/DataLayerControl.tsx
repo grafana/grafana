@@ -17,6 +17,7 @@ export function DataLayerControl({ layer, inMenu }: Props) {
   const { isSelected, isSelectable } = useElementSelection(layer.state.key);
   const showLoading = Boolean(data && data.state === LoadingState.Loading);
   const styles = useStyles2(getStyles);
+  const elementType = layer instanceof dataLayers.AnnotationsDataLayer ? 'annotation' : 'data-layer';
 
   const label: string =
     layer instanceof dataLayers.AnnotationsDataLayer && Boolean(layer.state.query.builtIn)
@@ -34,6 +35,8 @@ export function DataLayerControl({ layer, inMenu }: Props) {
           isSelected && 'dashboard-selected-element',
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
+        data-dashboard-element-key={layer.state.key}
+        data-dashboard-element-type={elementType}
       >
         <div className={styles.controlWrapper}>
           <layer.Component model={layer} />
@@ -59,6 +62,8 @@ export function DataLayerControl({ layer, inMenu }: Props) {
         isSelected && 'dashboard-selected-element',
         isSelectable && !isSelected && 'dashboard-selectable-element'
       )}
+      data-dashboard-element-key={layer.state.key}
+      data-dashboard-element-type={elementType}
     >
       <ControlsLabel
         htmlFor={isSelectable ? undefined : elementId}

@@ -1,8 +1,9 @@
 import { merge } from 'lodash';
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
+import { resolvePaletteRefs } from './palette_new';
 import { type DeepRequired, type ThemeRichColor, ThemeRichColorInputSchema } from './types';
 
 const ThemeColorsModeSchema = z.enum(['light', 'dark']);
@@ -17,6 +18,7 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       primary: color,
       secondary: color,
       tertiary: color,
+      accent: color,
       info: color,
       error: color,
       success: color,
@@ -32,8 +34,10 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       }),
 
       background: z.object({
-        /** Dashboard and body background */
+        /** Body background */
         canvas: z.string().optional(),
+        /** Page container background */
+        page: z.string().optional(),
         /** Primary content pane background (panels etc) */
         primary: z.string().optional(),
         /** Cards and elements that need to stand out on the primary background */
@@ -46,8 +50,11 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       }),
 
       border: z.object({
+        /** Use for decoration */
         weak: z.string().optional(),
+        /** Use for widget borders */
         medium: z.string().optional(),
+        /** Use for active/focused widget borders */
         strong: z.string().optional(),
       }),
 
@@ -96,6 +103,7 @@ type ThemeColorsBase<TColor> = DeepRequired<
   primary: TColor;
   secondary: TColor;
   tertiary: TColor;
+  accent: TColor;
   info: TColor;
   error: TColor;
   success: TColor;
@@ -147,13 +155,16 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: `rgba(${this.whiteBase}, 0.08)`,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
     main: palette.purpleDarkMain,
     text: palette.purpleDarkText,
   };
+
+  accent = this.primary;
 
   info = this.primary;
 
@@ -174,6 +185,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   background = {
     canvas: palette.gray05,
+    page: palette.gray10,
     primary: palette.gray10,
     secondary: palette.gray15,
     elevated: palette.gray15,
@@ -233,13 +245,16 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
-    border: this.border.weak,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
     main: palette.purpleLightMain,
     text: palette.purpleLightText,
   };
+
+  accent = this.primary;
 
   info = {
     main: palette.blueLightMain,
@@ -264,6 +279,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   background = {
     canvas: palette.gray100,
+    page: palette.white,
     primary: palette.white,
     secondary: palette.gray95,
     elevated: palette.white,
@@ -293,6 +309,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 }
 
 export function createColors(colors: ThemeColorsInput): ThemeColors {
+  colors = resolvePaletteRefs(colors);
   const dark = new DarkColors();
   const light = new LightColors();
   const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
@@ -300,6 +317,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     primary = base.primary,
     secondary = base.secondary,
     tertiary = base.tertiary,
+    accent = base.accent,
     info = base.info,
     warning = base.warning,
     success = base.success,
@@ -324,20 +342,49 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     if (!color.main) {
       color.main = base[name].main;
     }
+    if (!color.mainEmphasis) {
+      color.mainEmphasis = emphasize(color.main, tonalOffset);
+    }
+    if (!color.contrastText) {
+      color.contrastText = getContrastText(color.main);
+    }
+
+    if (!color.background) {
+      color.background = color.main;
+    }
+    if (!color.backgroundEmphasis) {
+      color.backgroundEmphasis = emphasize(color.background, tonalOffset);
+    }
+
     if (!color.text) {
       color.text = color.main;
     }
+    if (!color.textEmphasis) {
+      color.textEmphasis = base.mode === 'light' ? darken(color.text, tonalOffset) : lighten(color.text, tonalOffset);
+    }
+
     if (!color.border) {
       color.border = color.text;
     }
+    if (!color.borderEmphasis) {
+      color.borderEmphasis = emphasize(color.border, tonalOffset);
+    }
+
+    // Falls back to matching background/border so themes that don't define these render identically
+    // to before subtleBackground/subtleBorder existed.
+    if (!color.subtleBackground) {
+      color.subtleBackground = alpha(color.background, 0.15);
+    }
+    if (!color.subtleBorder) {
+      color.subtleBorder = alpha(color.border, 0.25);
+    }
+
+    // deprecated properties, we should remove these in the future
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
     if (!color.transparent) {
       color.transparent = alpha(color.main, 0.15);
-    }
-    if (!color.contrastText) {
-      color.contrastText = getContrastText(color.main);
     }
     if (!color.borderTransparent) {
       color.borderTransparent = alpha(color.border, 0.25);
@@ -351,6 +398,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       primary: getRichColor({ color: primary, name: 'primary' }),
       secondary: getRichColor({ color: secondary, name: 'secondary' }),
       tertiary: getRichColor({ color: tertiary, name: 'tertiary' }),
+      accent: getRichColor({ color: accent, name: 'accent' }),
       info: getRichColor({ color: info, name: 'info' }),
       error: getRichColor({ color: error, name: 'error' }),
       success: getRichColor({ color: success, name: 'success' }),
@@ -364,7 +412,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   );
 }
 
-type RichColorNames = 'primary' | 'secondary' | 'tertiary' | 'info' | 'error' | 'success' | 'warning';
+type RichColorNames = 'primary' | 'secondary' | 'tertiary' | 'accent' | 'info' | 'error' | 'success' | 'warning';
 interface GetRichColorProps {
   color: Partial<ThemeRichColor>;
   name: RichColorNames;

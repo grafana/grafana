@@ -72,10 +72,9 @@ func TestResourceValidationError(t *testing.T) {
 		require.Len(t, unwrapped, 2, "Unwrap should return 2 errors for joined error")
 
 		// Check that one of the unwrapped errors is a BadRequest
-		var badRequestErr *apierrors.StatusError
 		foundBadRequest := false
 		for _, err := range unwrapped {
-			if errors.As(err, &badRequestErr) {
+			if _, ok := errors.AsType[*apierrors.StatusError](err); ok {
 				foundBadRequest = true
 				require.True(t, apierrors.IsBadRequest(err), "unwrapped error should be a BadRequest")
 				break
@@ -102,9 +101,8 @@ func TestResourceValidationError(t *testing.T) {
 		require.Len(t, unwrapped, 2)
 
 		// Find the BadRequest error in the unwrapped slice
-		var badRequestErr *apierrors.StatusError
 		for _, err := range unwrapped {
-			if errors.As(err, &badRequestErr) {
+			if _, ok := errors.AsType[*apierrors.StatusError](err); ok {
 				// errors.Is should work with the unwrapped BadRequest error
 				require.True(t, errors.Is(validationErr, err), "errors.Is should find the unwrapped BadRequest error")
 				break
@@ -619,6 +617,23 @@ func TestFolderValidationError(t *testing.T) {
 	})
 }
 
+func TestIsFolderNotEmptyAPIError(t *testing.T) {
+	statusErr := &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Code: 400,
+			Details: &metav1.StatusDetails{
+				UID: "folder.not-empty",
+			},
+		},
+	}
+
+	require.True(t, IsFolderNotEmptyAPIError(statusErr))
+	require.True(t, IsFolderNotEmptyAPIError(fmt.Errorf("delete folder: %w", statusErr)))
+	require.True(t, IsFolderNotEmptyAPIError(foldermodel.ErrFolderNotEmpty.Errorf("folder contains a dashboard")))
+	require.False(t, IsFolderNotEmptyAPIError(apierrors.NewBadRequest("bad request")))
+	require.False(t, IsFolderNotEmptyAPIError(nil))
+}
+
 func TestIsFolderValidationAPIError(t *testing.T) {
 	t.Run("nil returns false", func(t *testing.T) {
 		require.False(t, IsFolderValidationAPIError(nil))
@@ -724,7 +739,6 @@ func TestIsFolderValidationAPIError(t *testing.T) {
 	t.Run("matches every entry in the allow-list", func(t *testing.T) {
 		// Guards drift between folderValidationMessageIDs and the matcher.
 		for id := range folderValidationMessageIDs {
-			id := id
 			t.Run(id, func(t *testing.T) {
 				statusErr := &apierrors.StatusError{
 					ErrStatus: metav1.Status{

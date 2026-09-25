@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,6 +18,10 @@ import (
 
 type historySubresource struct {
 	repoGetter RepoGetter
+}
+
+func NewHistorySubresource(repoGetter RepoGetter) *historySubresource {
+	return &historySubresource{repoGetter: repoGetter}
 }
 
 func (h *historySubresource) New() runtime.Object {
@@ -53,22 +56,23 @@ func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) 
 }
 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := logging.FromContext(ctx).With("logger", "history-subresource")
-	ctx = logging.Context(ctx, logger)
-	repo, err := h.repoGetter.GetRepository(ctx, name)
-	if err != nil {
-		logger.Debug("failed to find repository", "error", err)
-		return nil, err
-	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "history-subresource")
+		ctx := logging.Context(ctx, logger)
 
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		ref := query.Get("ref")
-
 		// Reject unvalidated refs before they reach any backend. Empty is allowed
 		// and defaulted by the backend to the configured branch.
 		if !git.IsValidRef(ref) {
 			responder.Error(repository.ErrInvalidRef)
+			return
+		}
+
+		repo, err := h.repoGetter.GetRepository(ctx, name)
+		if err != nil {
+			logger.Debug("failed to find repository", "error", err)
+			responder.Error(err)
 			return
 		}
 
@@ -90,7 +94,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		}
 
 		logger = logger.With("ref", ref, "path", filePath)
-		ctx = logging.Context(r.Context(), logger)
+		ctx = logging.Context(ctx, logger)
 
 		// TODO: Add history pagination
 		commits, err := versioned.History(ctx, filePath, ref)
@@ -101,5 +105,5 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		}
 
 		responder.Object(http.StatusOK, &provisioning.HistoryList{Items: commits})
-	}), 30*time.Second), nil
+	}), nil
 }

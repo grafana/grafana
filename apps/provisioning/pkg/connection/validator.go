@@ -40,6 +40,10 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)validate
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
@@ -103,6 +107,14 @@ func (v *AdmissionValidator) validateRuntime(ctx context.Context, conn *provisio
 				),
 			},
 		)
+	}
+
+	// An OAuth connection's token comes from the authorization flow, not the
+	// spec: there is no token until the user authorizes, and a stale token must
+	// not block the updates needed to recover from it (e.g. new credentials or
+	// reauthorization). Health checks report token validity instead.
+	if _, ok := connection.(OAuthConnection); ok {
+		return nil
 	}
 
 	// Run runtime validation via Test() method

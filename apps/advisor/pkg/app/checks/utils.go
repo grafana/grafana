@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -22,6 +23,19 @@ const (
 	StatusAnnotationError     = "error"
 	StatusAnnotationProcessed = "processed"
 )
+
+// NewErrorLink builds a failure link whose message and messageKey both derive
+// from the same advisor.link.{slug} entry in the translations source, so the
+// display text and the i18n key can't drift apart. The frontend translates via
+// messageKey and uses message as the English fallback.
+func NewErrorLink(slug string, url string) advisor.CheckErrorLink {
+	key := "advisor.link." + slug
+	return advisor.CheckErrorLink{
+		Message:    translations.EN(key),
+		MessageKey: &key,
+		Url:        url,
+	}
+}
 
 func NewCheckReportFailure(
 	severity advisor.CheckReportFailureSeverity,

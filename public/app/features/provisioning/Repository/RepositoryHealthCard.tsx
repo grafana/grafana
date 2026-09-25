@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { Link } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -18,7 +19,7 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
   const { connection } = useConnectionStatus(connectionName);
 
   return (
-    <Card noMargin className={styles.card}>
+    <Card noMargin className={styles.card} data-testid={selectors.pages.Provisioning.RepositoryOverview.healthCard}>
       <Card.Heading>
         <Trans i18nKey="provisioning.repository-overview.health">Health</Trans>
       </Card.Heading>

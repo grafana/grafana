@@ -32,7 +32,7 @@ export function PluginDetailsHeaderSignature({ plugin }: Props): React.ReactElem
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',

@@ -23,14 +23,14 @@ import { type Trace } from '../../types/trace';
 
 import NextPrevResult from './NextPrevResult';
 
-export type TracePageSearchBarProps = {
+type TracePageSearchBarProps = {
   trace: Trace;
   search: TraceSearchProps;
   spanFilterMatches: Set<string> | undefined;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   focusedSpanIndexForSearch: number;
   setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
-  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
+  setFocusedSpanIdForSearch: (spanID: string) => void;
   datasourceType: string;
   showSpanFilters: boolean;
 };
@@ -74,7 +74,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   );
 });
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     controls: css({
       display: 'flex',

@@ -102,7 +102,7 @@ import {
 import { ANNOTATION_LANE_SIZE } from '../../../plugins/panel/timeseries/plugins/utils';
 
 // See UPlotAxisBuilder.ts::calculateAxisSize for default axis size calculation
-export const UPLOT_DEFAULT_AXIS_SIZE = 17;
+const UPLOT_DEFAULT_AXIS_SIZE = 17;
 export const UPLOT_DEFAULT_AXIS_GAP = 5;
 
 const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
@@ -269,6 +269,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       theme,
       grid: { show: custom?.axisGridShow },
       formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
+      decimals: xField.config.decimals,
     });
   }
 
@@ -673,6 +674,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
         const field = frame.fields[seriesIdx];
 
         if (
+          series.show &&
           field.config.custom?.showValues &&
           // @ts-ignore points.show() is always callable on the instance (but may be boolean when passed to uPlot as init option)
           (series.points?.show?.(u, seriesIdx) ||

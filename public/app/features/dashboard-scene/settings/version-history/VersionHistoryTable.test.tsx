@@ -8,6 +8,7 @@ import { VersionHistoryTable } from './VersionHistoryTable';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     versionRestoreClicked: jest.fn(),
     showMoreVersionsClicked: jest.fn(),
   },

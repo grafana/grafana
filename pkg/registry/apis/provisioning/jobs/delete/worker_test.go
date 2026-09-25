@@ -95,6 +95,38 @@ func TestDeleteWorker_ProcessMissingDeleteSettings(t *testing.T) {
 	require.EqualError(t, err, "missing delete settings")
 }
 
+func TestDeleteWorker_CommitMessageFromJobSpec(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action:  v0alpha1.JobActionDelete,
+			Message: "custom commit message from spec",
+			Delete: &v0alpha1.DeleteJobOptions{
+				Paths: []string{"test/path"},
+			},
+		},
+	}
+
+	mockRepo := repository.NewMockRepository(t)
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		return opts.CommitOnlyOnceMessage == "custom commit message from spec"
+	}), mock.Anything).Return(nil)
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("ResetResults", true).Return()
+	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+
+	mockSyncWorker := jobs.NewMockWorker(t)
+	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.Anything, mockProgress).Return(nil)
+
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+}
+
 func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
@@ -906,6 +938,63 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: too many errors")
+}
+
+func TestDeleteWorker_ProcessMissingSourcePathStopsBeforeDeletion(t *testing.T) {
+	ctx := context.Background()
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Paths: []string{"dashboards/explicit.json"},
+				Resources: []v0alpha1.ResourceRef{
+					{Name: "valid-dashboard", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+					{Name: "missing-path-folder", Kind: "Folder", Group: "folder.grafana.app"},
+					{Name: "unprocessed-folder", Kind: "Folder", Group: "folder.grafana.app"},
+				},
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+	mockSyncWorker := jobs.NewMockWorker(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+			return fn(repo, false)
+		}).Once()
+	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil).Once()
+	mockRepositoryResources.On("FindResourcePath", mock.Anything, "valid-dashboard", schema.GroupVersionKind{
+		Group: "dashboard.grafana.app",
+		Kind:  "Dashboard",
+	}).Return("dashboards/valid-dashboard.json", nil).Once()
+	missingPathError := errors.New("resource folder.grafana.app/folders/missing-path-folder has no source path annotation")
+	mockRepositoryResources.On("FindResourcePath", mock.Anything, "missing-path-folder", schema.GroupVersionKind{
+		Group: "folder.grafana.app",
+		Kind:  "Folder",
+	}).Return("", missingPathError).Once()
+
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+	progress := jobs.NewJobProgressRecorder(func(context.Context, v0alpha1.JobStatus) error {
+		return nil
+	}, &metrics, v0alpha1.JobActionDelete)
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, metrics)
+
+	err := worker.Process(ctx, mockRepo, job, progress)
+	require.EqualError(t, err, "delete files from repository: too many errors: 1")
+	status := progress.Complete(ctx, err)
+	require.Equal(t, v0alpha1.JobStateError, status.State)
+	require.Len(t, status.Errors, 1)
+	require.Contains(t, status.Errors[0], missingPathError.Error())
+	require.Empty(t, status.Warnings)
+	mockRepositoryResources.AssertNotCalled(t, "FindResourcePath", mock.Anything, "unprocessed-folder", mock.Anything)
+	mockRepo.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockSyncWorker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {

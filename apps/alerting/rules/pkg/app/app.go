@@ -8,12 +8,15 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -22,13 +25,28 @@ func New(cfg app.Config) (app.App, error) {
 	if !ok {
 		return nil, config.ErrInvalidRuntimeConfig
 	}
+
 	for _, kinds := range apis.GetKinds() {
 		for _, kind := range kinds {
+			validator, err := buildKindValidator(kind, runtimeCfg, cfg.ManifestData)
+			if err != nil {
+				return nil, err
+			}
 			managedKind := simple.AppManagedKind{
-				Kind:      kind,
-				Validator: buildKindValidator(kind, runtimeCfg),
-				Mutator:   buildKindMutator(kind, runtimeCfg),
-				Watcher:   buildKindWatcher(kind, runtimeCfg),
+				Kind:    kind,
+				Watcher: buildKindWatcher(kind, runtimeCfg),
+			}
+			// Assign the validator/mutator only when non-nil: these builders return
+			// concrete pointer types, so assigning a nil result straight into the
+			// KindValidator/KindMutator interface fields would yield a non-nil
+			// interface holding a nil pointer. ValidateManifest would then reject a
+			// validation-only kind (e.g. Config, which has no mutator) as "has a
+			// mutator" and fail app init.
+			if validator != nil {
+				managedKind.Validator = validator
+			}
+			if mutator := buildKindMutator(kind, runtimeCfg); mutator != nil {
+				managedKind.Mutator = mutator
 			}
 			// Only kinds with a watcher run an informer (RuleSequence), so this
 			// scopes that watch to WatchNamespace; empty means all namespaces.
@@ -49,7 +67,8 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: managedKinds,
+		ManagedKinds:          managedKinds,
+		VersionedCustomRoutes: buildSearchRoutes(runtimeCfg),
 	}
 
 	a, err := simple.NewApp(c)
@@ -65,16 +84,57 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Validator {
+const searchRulesPathSegment = "searchRules"
+
+// buildSearchRoutes wires the cross-kind and per-kind rule search handlers
+// (provided by the registry) to their namespaced compatibility routes. A route
+// is skipped when its handler is unset, so manifest validation without a
+// backing instance does not register a nil handler.
+func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
+	handlers := simple.AppVersionRouteHandlers{}
+	for path, handler := range map[string]simple.AppCustomRouteHandler{
+		"/" + searchRulesPathSegment:                cfg.SearchRulesHandler,
+		"/alertrules/" + searchRulesPathSegment:     cfg.SearchAlertRulesHandler,
+		"/recordingrules/" + searchRulesPathSegment: cfg.SearchRecordingRulesHandler,
+	} {
+		if handler == nil {
+			continue
+		}
+		handlers[simple.AppVersionRoute{Namespaced: true, Path: path, Method: simple.AppCustomRouteMethodPost}] = handler
+	}
+	if len(handlers) == 0 {
+		return nil
+	}
+	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
+}
+
+func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.ManifestData) (*simple.Validator, error) {
+	gk := schema.GroupKind{Group: kind.Group(), Kind: kind.Kind()}
 	switch kind.Kind() {
 	case "AlertRule":
-		return alertrule.NewValidator(cfg)
+		return validation.NewBuilder[*v0alpha1.AlertRule]().
+			WithOpenAPIValidation(md, gk).
+			OnWrite(alertrule.ValidateWrite(cfg)).
+			OnDelete(alertrule.ValidateDelete(cfg)).
+			Build()
 	case "RecordingRule":
-		return recordingrule.NewValidator(cfg)
+		return validation.NewBuilder[*v0alpha1.RecordingRule]().
+			WithOpenAPIValidation(md, gk).
+			OnWrite(recordingrule.ValidateWrite(cfg)).
+			OnDelete(recordingrule.ValidateDelete(cfg)).
+			Build()
 	case "RuleSequence":
-		return rulesequence.NewValidator(cfg)
+		return validation.NewBuilder[*v0alpha1.RuleSequence]().
+			WithOpenAPIValidation(md, gk).
+			OnWrite(rulesequence.ValidateWrite(cfg)).
+			Build()
+	case "Config":
+		return validation.NewBuilder[*v0alpha1.Config]().
+			WithOpenAPIValidation(md, gk).
+			OnWrite(config.ValidateConfigWrite(cfg)).
+			Build()
 	}
-	return nil
+	return nil, nil
 }
 
 func buildKindMutator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Mutator {

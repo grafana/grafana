@@ -27,7 +27,8 @@ describe('Alert rules', () => {
 
   const newStateDate = dateTime().subtract(1, 'y');
   const newStateDateFormatted = newStateDate.format('YYYY-MM-DD');
-  const newStateDateAge = newStateDate.fromNow(true);
+  // same logic as convertToAlertRule(): stateAge: dateTime(dto.newStateDate).fromNow(true)
+  const newStateDateAge = dateTime(`${newStateDateFormatted}T10:01:01+02:00`).fromNow(true);
   const payload: AlertRuleDTO[] = [
     {
       id: 2,

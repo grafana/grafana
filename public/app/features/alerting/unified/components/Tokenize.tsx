@@ -136,7 +136,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   popover: css({
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.medium}`,
 
@@ -150,4 +150,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export { Tokenize, Token };
+export { Tokenize };
