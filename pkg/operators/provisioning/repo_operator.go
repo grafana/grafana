@@ -106,6 +106,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		controllerCfg.DrainTimeout(),
 		quotaGetter,
 		controller.NewRepositoryQuotaChecker(repoGetter),
+		controller.NewRepositoryPathConflictChecker(repoGetter),
 		repository.NewIncrementalSyncPolicy(
 			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),

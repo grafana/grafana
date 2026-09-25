@@ -91,13 +91,6 @@ var (
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
 
-// ErrRepositoryParentFolderConflict and ErrRepositoryDuplicatePath are deprecated.
-// Use repository.ErrRepositoryParentFolderConflict and repository.ErrRepositoryDuplicatePath instead.
-var (
-	ErrRepositoryParentFolderConflict = repository.ErrRepositoryParentFolderConflict
-	ErrRepositoryDuplicatePath        = repository.ErrRepositoryDuplicatePath
-)
-
 // JobHistoryConfig holds configuration for job history backends
 type JobHistoryConfig struct {
 	Loki *loki.Config `json:"loki,omitempty"`
@@ -1214,6 +1207,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.quotaGetter,
 				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
+				controller.NewRepositoryPathConflictChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				webhookSecretRotationInterval,
 				nats.Enabled(b.natsSubscriber),

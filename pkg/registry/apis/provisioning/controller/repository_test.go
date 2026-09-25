@@ -1091,6 +1091,32 @@ func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, pa
 	return c.err
 }
 
+// findConditionOp scans every captured op that touches /status/conditions - a whole-array
+// replace (path "/status/conditions", value []metav1.Condition) or a per-condition op
+// (path "/status/conditions/-" or "/status/conditions/<index>", value metav1.Condition) -
+// and returns the condition of conditionType, if any op set one.
+func (c *capturePatcher) findConditionOp(conditionType string) (metav1.Condition, bool) {
+	for _, op := range c.ops {
+		path, ok := op["path"].(string)
+		if !ok || (path != "/status/conditions" && !strings.HasPrefix(path, "/status/conditions/")) {
+			continue
+		}
+		switch v := op["value"].(type) {
+		case []metav1.Condition:
+			for _, cond := range v {
+				if cond.Type == conditionType {
+					return cond, true
+				}
+			}
+		case metav1.Condition:
+			if v.Type == conditionType {
+				return v, true
+			}
+		}
+	}
+	return metav1.Condition{}, false
+}
+
 // findPatchOp returns the last captured op for path, matching JSON Patch's
 // sequential-apply semantics
 func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool) {
@@ -1384,15 +1410,16 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 
 			repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 			rc := &RepositoryController{
-				repos:         repoGetter,
-				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-				healthChecker: healthChecker,
-				statusPatcher: patcher,
-				repoFactory:   repoFactory,
-				jobs:          mockJobs,
-				logger:        logging.DefaultLogger.With("logger", loggerName),
-				tracer:        tracing.InitializeTracerForTest(),
+				repos:               repoGetter,
+				quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+				quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+				pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+				healthChecker:       healthChecker,
+				statusPatcher:       patcher,
+				repoFactory:         repoFactory,
+				jobs:                mockJobs,
+				logger:              logging.DefaultLogger.With("logger", loggerName),
+				tracer:              tracing.InitializeTracerForTest(),
 			}
 
 			_, err := rc.process(namespace + "/" + repoName)
@@ -1479,6 +1506,16 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 						Checked: time.Now().UnixMilli(),
 					},
 					Quota: tc.oldQuota,
+					// Pre-populate a settled PathConflict condition so an unrelated quota
+					// test isn't spuriously triggered by ConditionChanged seeing no existing
+					// condition to compare against (see RepositoryController.process).
+					Conditions: []metav1.Condition{{
+						Type:               provisioning.ConditionTypePathConflict,
+						Status:             metav1.ConditionTrue,
+						Reason:             provisioning.ReasonNoPathConflict,
+						Message:            noPathConflictMsg,
+						ObservedGeneration: 1,
+					}},
 				},
 			}
 
@@ -1515,16 +1552,17 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 
 			repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 			rc := &RepositoryController{
-				repos:         repoGetter,
-				quotaGetter:   quotas.NewFixedQuotaGetter(tc.newQuota),
-				quotaMetrics:  quotaMetrics,
-				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-				healthChecker: healthChecker,
-				statusPatcher: patcher,
-				repoFactory:   repoFactory,
-				jobs:          mockJobs,
-				logger:        logging.DefaultLogger.With("logger", loggerName),
-				tracer:        tracing.InitializeTracerForTest(),
+				repos:               repoGetter,
+				quotaGetter:         quotas.NewFixedQuotaGetter(tc.newQuota),
+				quotaMetrics:        quotaMetrics,
+				quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+				pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+				healthChecker:       healthChecker,
+				statusPatcher:       patcher,
+				repoFactory:         repoFactory,
+				jobs:                mockJobs,
+				logger:              logging.DefaultLogger.With("logger", loggerName),
+				tracer:              tracing.InitializeTracerForTest(),
 			}
 
 			_, err := rc.process(namespace + "/" + repoName)
@@ -1551,24 +1589,8 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 					assert.NotZero(t, patchedQuota.UpdatedAt)
 				}
 
-				condOp, found := patcher.findPatchOp("/status/conditions")
-				assert.True(t, found,
-					"expected /status/conditions patch operation for quota condition update")
-				if found {
-					conditions, ok := condOp["value"].([]metav1.Condition)
-					assert.True(t, ok, "conditions value should be []metav1.Condition")
-					if ok {
-						var quotaCond *metav1.Condition
-						for i := range conditions {
-							if conditions[i].Type == provisioning.ConditionTypeNamespaceQuota {
-								quotaCond = &conditions[i]
-								break
-							}
-						}
-						assert.NotNil(t, quotaCond,
-							"expected NamespaceQuota condition to be present")
-					}
-				}
+				_, found = patcher.findConditionOp(provisioning.ConditionTypeNamespaceQuota)
+				assert.True(t, found, "expected NamespaceQuota condition to be present in a /status/conditions patch operation")
 			}
 		})
 	}
@@ -1605,14 +1627,15 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 	patcher := &capturePatcher{}
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		finalizer:     &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
-		statusPatcher: patcher,
-		logger:        logging.DefaultLogger,
-		tracer:        tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		finalizer:           &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
+		statusPatcher:       patcher,
+		logger:              logging.DefaultLogger,
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process("default/test-repo")
@@ -1675,14 +1698,15 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	patcher := &capturePatcher{}
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		finalizer:     &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
-		statusPatcher: patcher,
-		logger:        logging.DefaultLogger,
-		tracer:        tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		finalizer:           &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
+		statusPatcher:       patcher,
+		logger:              logging.DefaultLogger,
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process("default/test-repo")
@@ -1764,14 +1788,15 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 			patcher := &capturePatcher{err: patchErr}
 			repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 			rc := &RepositoryController{
-				repos:         repoGetter,
-				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-				healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-				finalizer:     &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
-				statusPatcher: patcher,
-				logger:        logging.DefaultLogger,
-				tracer:        tracing.InitializeTracerForTest(),
+				repos:               repoGetter,
+				quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+				quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+				pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+				healthChecker:       NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+				finalizer:           &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
+				statusPatcher:       patcher,
+				logger:              logging.DefaultLogger,
+				tracer:              tracing.InitializeTracerForTest(),
 			}
 
 			_, err := rc.process("default/test-repo")
@@ -1817,14 +1842,15 @@ func TestRepositoryController_process_DeleteDecryptFailureFastRetries(t *testing
 	patcher := &capturePatcher{}
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		finalizer:     &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
-		statusPatcher: patcher,
-		logger:        logging.DefaultLogger,
-		tracer:        tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		finalizer:           &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
+		statusPatcher:       patcher,
+		logger:              logging.DefaultLogger,
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process("default/test-repo")
@@ -1863,14 +1889,15 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	patcher := &capturePatcher{}
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		repoFactory:   mockFactory,
-		statusPatcher: patcher,
-		logger:        logging.DefaultLogger,
-		tracer:        tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:         mockFactory,
+		statusPatcher:       patcher,
+		logger:              logging.DefaultLogger,
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process("default/test-repo")
@@ -1898,6 +1925,20 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	require.NotNil(t, readyCond, "expected Ready condition to be present")
 	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
 	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
+
+	// PathConflict (and quota) are computed before Build is ever attempted, independently of
+	// whether the repository client can be constructed, so a build failure - which may persist
+	// indefinitely, e.g. expired credentials - must not prevent them from being persisted.
+	var pathConflictCond *metav1.Condition
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypePathConflict {
+			pathConflictCond = &conditions[i]
+			break
+		}
+	}
+	require.NotNil(t, pathConflictCond, "expected PathConflict condition to be present despite the build failure")
+	assert.Equal(t, metav1.ConditionTrue, pathConflictCond.Status)
+	assert.Equal(t, provisioning.ReasonNoPathConflict, pathConflictCond.Reason)
 }
 
 // TestRepositoryController_process_RecordsReconcileErrorPhase drives process()
@@ -1923,14 +1964,15 @@ func TestRepositoryController_process_RecordsReconcileErrorPhase(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
-		repos:            repoGetter,
-		quotaGetter:      quotaGetter,
-		quotaChecker:     NewRepositoryQuotaChecker(repoGetter),
-		healthChecker:    NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		statusPatcher:    &capturePatcher{},
-		reconcileMetrics: registerReconcileErrorMetrics(reg),
-		logger:           logging.DefaultLogger,
-		tracer:           tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotaGetter,
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		statusPatcher:       &capturePatcher{},
+		reconcileMetrics:    registerReconcileErrorMetrics(reg),
+		logger:              logging.DefaultLogger,
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process("default/test-repo")
@@ -1965,15 +2007,16 @@ func TestRepositoryController_process_SwallowedUserErrorThenStatusFlushFailure(t
 	patcher := &capturePatcher{err: errors.New("apiserver unavailable")}
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
-		repos:            repoGetter,
-		quotaGetter:      quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:     NewRepositoryQuotaChecker(repoGetter),
-		healthChecker:    NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		repoFactory:      mockFactory,
-		statusPatcher:    patcher,
-		reconcileMetrics: registerReconcileErrorMetrics(reg),
-		logger:           logging.DefaultLogger,
-		tracer:           tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:         mockFactory,
+		statusPatcher:       patcher,
+		reconcileMetrics:    registerReconcileErrorMetrics(reg),
+		logger:              logging.DefaultLogger,
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process("default/test-repo")
@@ -2134,14 +2177,15 @@ func TestRepositoryController_process_UnchangedHealthNotRewritten(t *testing.T) 
 	patcher := &capturePatcher{}
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		repoFactory:   mockFactory,
-		statusPatcher: patcher,
-		logger:        logging.DefaultLogger,
-		tracer:        tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:         mockFactory,
+		statusPatcher:       patcher,
+		logger:              logging.DefaultLogger,
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process("default/test-repo")
@@ -2196,6 +2240,16 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 						MaxResourcesPerRepository: 100,
 						UpdatedAt:                 updatedAt,
 					},
+					// Pre-populate a settled PathConflict condition so this quota-focused
+					// test isn't accidentally triggered by ConditionChanged seeing no existing
+					// condition to compare against.
+					Conditions: []metav1.Condition{{
+						Type:               provisioning.ConditionTypePathConflict,
+						Status:             metav1.ConditionTrue,
+						Reason:             provisioning.ReasonNoPathConflict,
+						Message:            noPathConflictMsg,
+						ObservedGeneration: 1,
+					}},
 				},
 			}
 
@@ -2213,14 +2267,15 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 			repoFactory := repository.NewMockFactory(t)
 
 			rc := &RepositoryController{
-				repos:         repoGetter,
-				quotaGetter:   tc.getter,
-				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-				healthChecker: healthChecker,
-				statusPatcher: patcher,
-				repoFactory:   repoFactory,
-				logger:        logging.DefaultLogger.With("logger", loggerName),
-				tracer:        tracing.InitializeTracerForTest(),
+				repos:               repoGetter,
+				quotaGetter:         tc.getter,
+				quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+				pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+				healthChecker:       healthChecker,
+				statusPatcher:       patcher,
+				repoFactory:         repoFactory,
+				logger:              logging.DefaultLogger.With("logger", loggerName),
+				tracer:              tracing.InitializeTracerForTest(),
 			}
 
 			_, err := rc.process("default/repo")
@@ -2276,14 +2331,15 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: healthChecker,
-		repoFactory:   mockFactory,
-		statusPatcher: patcher,
-		logger:        logging.DefaultLogger,
-		tracer:        tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       healthChecker,
+		repoFactory:         mockFactory,
+		statusPatcher:       patcher,
+		logger:              logging.DefaultLogger,
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process("default/test-repo")
@@ -2303,19 +2359,22 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	conditions, ok := lastConditionsPatch["value"].([]metav1.Condition)
 	require.True(t, ok, "expected conditions value to be []metav1.Condition")
 
-	var hasQuotaCondition, hasReadyCondition bool
+	var hasQuotaCondition, hasPathConflictCondition, hasReadyCondition bool
 	for _, c := range conditions {
 		switch c.Type {
 		case provisioning.ConditionTypeNamespaceQuota:
 			hasQuotaCondition = true
+		case provisioning.ConditionTypePathConflict:
+			hasPathConflictCondition = true
 		case provisioning.ConditionTypeReady:
 			hasReadyCondition = true
 		}
 	}
 
 	assert.True(t, hasQuotaCondition, "expected quota condition in final /status/conditions patch")
+	assert.True(t, hasPathConflictCondition, "expected path conflict condition in final /status/conditions patch")
 	assert.True(t, hasReadyCondition, "expected ready condition in final /status/conditions patch")
-	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
+	assert.Len(t, conditions, 3, "expected exactly 3 conditions (quota + path conflict + ready)")
 }
 
 // TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter verifies
@@ -2466,17 +2525,18 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
-		repos:             repoGetter,
-		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
-		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
-		statusPatcher:     patcher,
-		connectionFactory: mockConnFactory,
-		client:            provClient,
-		repoFactory:       repoFactory,
-		healthChecker:     healthChecker,
-		resyncInterval:    resyncInterval,
-		logger:            logging.DefaultLogger.With("logger", loggerName),
-		tracer:            tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(quotaStatus),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		statusPatcher:       patcher,
+		connectionFactory:   mockConnFactory,
+		client:              provClient,
+		repoFactory:         repoFactory,
+		healthChecker:       healthChecker,
+		resyncInterval:      resyncInterval,
+		logger:              logging.DefaultLogger.With("logger", loggerName),
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process(namespace + "/" + repoName)
@@ -2543,17 +2603,18 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 	patcher := &capturePatcher{}
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
-		repos:             repoGetter,
-		quotaGetter:       quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 100}),
-		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
-		statusPatcher:     patcher,
-		connectionFactory: mockConnFactory,
-		client:            provClient,
-		tokenMetrics:      registerRepositoryTokenMetrics(reg),
-		reconcileMetrics:  registerReconcileErrorMetrics(reg),
-		resyncInterval:    5 * time.Minute,
-		logger:            logging.DefaultLogger.With("logger", loggerName),
-		tracer:            tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 100}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		statusPatcher:       patcher,
+		connectionFactory:   mockConnFactory,
+		client:              provClient,
+		tokenMetrics:        registerRepositoryTokenMetrics(reg),
+		reconcileMetrics:    registerReconcileErrorMetrics(reg),
+		resyncInterval:      5 * time.Minute,
+		logger:              logging.DefaultLogger.With("logger", loggerName),
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process(namespace + "/" + repoName)
@@ -2674,17 +2735,18 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
-		repos:             repoGetter,
-		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
-		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
-		statusPatcher:     patcher,
-		connectionFactory: mockConnFactory,
-		client:            provClient,
-		repoFactory:       repoFactory,
-		healthChecker:     healthChecker,
-		resyncInterval:    5 * time.Minute,
-		logger:            logging.DefaultLogger.With("logger", loggerName),
-		tracer:            tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(quotaStatus),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		statusPatcher:       patcher,
+		connectionFactory:   mockConnFactory,
+		client:              provClient,
+		repoFactory:         repoFactory,
+		healthChecker:       healthChecker,
+		resyncInterval:      5 * time.Minute,
+		logger:              logging.DefaultLogger.With("logger", loggerName),
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process(namespace + "/" + repoName)
@@ -3096,15 +3158,16 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: healthChecker,
-		statusPatcher: patcher,
-		repoFactory:   repoFactory,
-		jobs:          mockJobs,
-		logger:        logging.DefaultLogger.With("logger", loggerName),
-		tracer:        tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       healthChecker,
+		statusPatcher:       patcher,
+		repoFactory:         repoFactory,
+		jobs:                mockJobs,
+		logger:              logging.DefaultLogger.With("logger", loggerName),
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process(namespace + "/" + repoName)
@@ -3191,6 +3254,7 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 		repos:                         repoGetter,
 		quotaGetter:                   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
 		quotaChecker:                  NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker:           NewRepositoryPathConflictChecker(repoGetter),
 		healthChecker:                 healthChecker,
 		statusPatcher:                 patcher,
 		repoFactory:                   repoFactory,
@@ -3275,6 +3339,7 @@ func TestRepositoryController_process_RotationErrorRecordsMetric(t *testing.T) {
 		repos:                         repoGetter,
 		quotaGetter:                   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
 		quotaChecker:                  NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker:           NewRepositoryPathConflictChecker(repoGetter),
 		healthChecker:                 healthChecker,
 		statusPatcher:                 patcher,
 		repoFactory:                   repoFactory,
@@ -3415,15 +3480,16 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: healthChecker,
-		statusPatcher: patcher,
-		repoFactory:   repoFactory,
-		jobs:          mockJobs,
-		logger:        logging.DefaultLogger.With("logger", loggerName),
-		tracer:        tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       healthChecker,
+		statusPatcher:       patcher,
+		repoFactory:         repoFactory,
+		jobs:                mockJobs,
+		logger:              logging.DefaultLogger.With("logger", loggerName),
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 	return rc, patcher
 }
@@ -3702,14 +3768,15 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 	rc := &RepositoryController{
 		repos: repoGetter,
 		// maxRepositories=1 with 2 repos in the namespace -> isOverQuota is true.
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 1}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: healthChecker,
-		statusPatcher: patcher,
-		repoFactory:   repoFactory,
-		jobs:          mockJobs,
-		logger:        logging.DefaultLogger.With("logger", loggerName),
-		tracer:        tracing.InitializeTracerForTest(),
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 1}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       healthChecker,
+		statusPatcher:       patcher,
+		repoFactory:         repoFactory,
+		jobs:                mockJobs,
+		logger:              logging.DefaultLogger.With("logger", loggerName),
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process(namespace + "/" + repoName)
@@ -4054,14 +4121,15 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 	require.NoError(t, indexer.Add(repo))
 	repoLister := listers.NewRepositoryLister(indexer)
 
-	// This repo fixture deterministically produces 5 patch ops (quota, health,
-	// observedGeneration, two condition adds) on the one and only expected
+	// This repo fixture deterministically produces 6 patch ops (quota, health,
+	// observedGeneration, three condition adds) on the one and only expected
 	// call; fieldErrors is not patched since both sides are already empty.
 	statusPatcher := mocks.NewStatusPatcher(t)
 	statusPatcher.
 		On(
 			"Patch",
 			mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
@@ -4089,15 +4157,16 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: healthChecker,
-		statusPatcher: statusPatcher,
-		repoFactory:   repoFactory,
-		jobs:          mockJobs,
-		logger:        logging.DefaultLogger.With("logger", loggerName),
-		tracer:        tracing.InitializeTracerForTest(),
+		repos:               repoGetter,
+		quotaGetter:         quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:        NewRepositoryQuotaChecker(repoGetter),
+		pathConflictChecker: NewRepositoryPathConflictChecker(repoGetter),
+		healthChecker:       healthChecker,
+		statusPatcher:       statusPatcher,
+		repoFactory:         repoFactory,
+		jobs:                mockJobs,
+		logger:              logging.DefaultLogger.With("logger", loggerName),
+		tracer:              tracing.InitializeTracerForTest(),
 	}
 
 	_, err := rc.process(namespace + "/" + repoName)
@@ -4665,7 +4734,7 @@ func TestRepositoryController_WorkerQueueWaitHistogram(t *testing.T) {
 		nil,
 		1,
 		time.Minute, time.Minute, 30*time.Second,
-		nil, nil,
+		nil, nil, nil,
 		repository.IncrementalSyncPolicy{},
 		30*time.Second,
 		false,
@@ -4701,7 +4770,7 @@ func TestRepositoryController_WorkerQueueSizeGauge(t *testing.T) {
 		nil,
 		1,
 		time.Minute, time.Minute, 30*time.Second,
-		nil, nil,
+		nil, nil, nil,
 		repository.IncrementalSyncPolicy{},
 		30*time.Second,
 		false,

@@ -64,10 +64,11 @@ type RepositoryController struct {
 	finalizer     finalizerProcessor
 	statusPatcher StatusPatcher
 
-	repoFactory       repository.Factory
-	connectionFactory connection.Factory
-	healthChecker     *RepositoryHealthChecker
-	quotaChecker      *RepositoryQuotaChecker
+	repoFactory         repository.Factory
+	connectionFactory   connection.Factory
+	healthChecker       *RepositoryHealthChecker
+	quotaChecker        *RepositoryQuotaChecker
+	pathConflictChecker *RepositoryPathConflictChecker
 	// To allow injection for testing.
 	processFn         func(key string) (repoType string, err error)
 	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
@@ -121,6 +122,7 @@ func NewRepositoryController(
 	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
 	quotaChecker *RepositoryQuotaChecker,
+	pathConflictChecker *RepositoryPathConflictChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	webhookSecretRotationInterval time.Duration,
 	natsBacked bool,
@@ -144,11 +146,12 @@ func NewRepositoryController(
 				MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
 			},
 		),
-		repoFactory:       repoFactory,
-		connectionFactory: connectionFactory,
-		healthChecker:     healthChecker,
-		quotaChecker:      quotaChecker,
-		statusPatcher:     statusPatcher,
+		repoFactory:         repoFactory,
+		connectionFactory:   connectionFactory,
+		healthChecker:       healthChecker,
+		quotaChecker:        quotaChecker,
+		pathConflictChecker: pathConflictChecker,
+		statusPatcher:       statusPatcher,
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
@@ -1020,6 +1023,16 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
 	isOverQuota := isQuotaExceeded([]v1.Condition{quotaCondition})
 
+	// Path conflicts are surfaced only as warnings and do not block syncs.
+	// We rely on the `managerKind` and `managerID` annotations to ensure resources are managed by 1 source.
+	pathConflictCtx, pathConflictSpan := rc.tracer.Start(ctx, "provisioning.controller.check_path_conflict", repoSpanAttrs(obj))
+	pathConflictCondition, err := rc.pathConflictChecker.RepositoryPathConflictCondition(pathConflictCtx, obj)
+	pathConflictSpan.End()
+	if err != nil {
+		return repoType, fmt.Errorf("check repository path conflict: %w", err)
+	}
+	hasPathConflictChanged := ConditionChanged(obj.Status.Conditions, pathConflictCondition)
+
 	// Blocked repos MUST process to check if they can unblock
 	forceProcessForUnblock := isCurrentlyBlocked && !isOverQuota
 
@@ -1102,6 +1115,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		reason = "quota_changed"
+	case hasPathConflictChanged:
+		reason = "path_conflict_changed"
+		logger.Info("path conflict condition changed", "path_conflict_status", pathConflictCondition.Status)
 	case len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty():
 		reason = "webhook_missing"
 		logger.Info("webhook missing, reconciling")
@@ -1214,10 +1230,14 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			}
 			patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, buildHealthStatus)...)
 
-			// Patch status so user can see errors
+			// Patch status so user can see errors. quotaCondition and pathConflictCondition
+			// are computed independently of building the repository client, so persist them
+			// here too - otherwise a build failure that persists indefinitely (e.g. expired
+			// credentials) means this repository's Quota/PathConflict conditions are never
+			// written, since the only other place that patches them is unreachable below.
 			readyCondition := buildReadyConditionWithReason(buildHealthStatus, classifyBuildFailureReason(err))
 			if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-				obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+				obj.Status.Conditions, obj.GetGeneration(), quotaCondition, pathConflictCondition, readyCondition,
 			); conditionPatchOps != nil {
 				patchOperations = append(patchOperations, conditionPatchOps...)
 			}
@@ -1350,7 +1370,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// Build ALL condition patches together to avoid one overwriting another.
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
+		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, pathConflictCondition, healthResult.ReadyCondition,
 	); conditionPatchOps != nil {
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
