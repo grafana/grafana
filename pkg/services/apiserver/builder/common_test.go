@@ -3,7 +3,6 @@ package builder
 import (
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,13 +29,6 @@ type manifestResourceBuilder struct {
 	*manifestTestBuilder
 	infos map[schema.GroupVersion][]utils.ResourceInfo
 }
-
-type fullManifestBuilder struct {
-	*manifestResourceBuilder
-	manifest *app.ManifestData
-}
-
-func (b *fullManifestBuilder) ManifestData() *app.ManifestData { return b.manifest }
 
 func (b *manifestResourceBuilder) GetResourceInfos(gv schema.GroupVersion) []utils.ResourceInfo {
 	return b.infos[gv]
@@ -71,32 +63,4 @@ func TestManifestsFromBuilders(t *testing.T) {
 	assert.Equal(t, v2.Group, manifests[1].Group)
 	assert.Equal(t, v2.Version, manifests[1].PreferredVersion)
 	assert.Equal(t, "Cluster", manifests[1].Versions[0].Kinds[0].Scope)
-}
-
-func TestManifestsFromBuildersPrefersFullManifest(t *testing.T) {
-	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
-	searchDisabled := false
-	manifest := &app.ManifestData{
-		Group: gv.Group,
-		Versions: []app.ManifestVersion{{
-			Name:   gv.Version,
-			Served: true,
-			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: "widgets", Scope: "Namespaced",
-				Search: &app.ManifestVersionKindSearch{Endpoint: &searchDisabled},
-			}},
-		}},
-	}
-	info := utils.NewResourceInfo(gv.Group, gv.Version, "widgets", "widget", "Widget", nil, nil, utils.TableColumns{})
-	b := &fullManifestBuilder{
-		manifestResourceBuilder: &manifestResourceBuilder{
-			manifestTestBuilder: &manifestTestBuilder{gvs: []schema.GroupVersion{gv}},
-			infos:               map[schema.GroupVersion][]utils.ResourceInfo{gv: {info}},
-		},
-		manifest: manifest,
-	}
-
-	manifests := ManifestsFromBuilders([]APIGroupBuilder{b})
-
-	require.Equal(t, []*app.ManifestData{manifest}, manifests)
 }
