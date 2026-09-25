@@ -1,5 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 // This file contains the common parts of the rolldown configuration that are shared across multiple packages.
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { InputOptions, OutputOptions, RolldownOptions } from 'rolldown';
 import { dts, type Options as DtsOptions } from 'rolldown-plugin-dts';
@@ -8,7 +9,28 @@ import { dts, type Options as DtsOptions } from 'rolldown-plugin-dts';
 // Prefer PROJECT_CWD env var set by yarn berry
 const projectCwd = process.env.PROJECT_CWD ?? '../../';
 
-export const entryPoint = 'src/index.ts';
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+// Every export that is built for publishing becomes an entry, so each public subpath gets its own JS and
+// declaration files. rolldown-plugin-dts only emits declarations for entries and the modules their types reference.
+export function publishedEntries(): string[] {
+  const pkg: unknown = JSON.parse(readFileSync('package.json', 'utf8'));
+  const exportsMap = isRecord(pkg) && isRecord(pkg.exports) ? pkg.exports : {};
+
+  return Object.values(exportsMap).flatMap((target) => {
+    if (!isRecord(target)) {
+      return [];
+    }
+    const source = target['@grafana-app/source'];
+    const isPublished = Object.keys(target).some((condition) => condition !== '@grafana-app/source');
+    if (typeof source !== 'string' || !isPublished || !/\.tsx?$/.test(source)) {
+      return [];
+    }
+    return [source];
+  });
+}
 
 // Declarations come from the same native TypeScript 7 compiler used for type checking.
 const dtsOptions: DtsOptions = {
@@ -28,7 +50,7 @@ const sharedOutput: OutputOptions = {
 export function createPackageConfig(options: InputOptions = {}): RolldownOptions[] {
   const { plugins } = options;
   const shared: InputOptions = {
-    input: entryPoint,
+    input: publishedEntries(),
     platform: 'neutral',
     tsconfig: 'tsconfig.build.json',
     transform: { target: 'es2018' },
@@ -41,6 +63,8 @@ export function createPackageConfig(options: InputOptions = {}): RolldownOptions
     onLog(level, log, defaultHandler) {
       defaultHandler(level === 'warn' ? 'error' : level, log);
     },
+    // Declaration generation dominates build time by design, so the slow-plugin warning is noise.
+    checks: { pluginTimings: false },
     ...options,
   };
 
