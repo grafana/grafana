@@ -1689,9 +1689,12 @@
       },
       "preview": {
         "error": "Failed to load content: {{error}}",
+        "hide-secrets": "Hide secrets",
         "loading": "Loading content...",
         "notifications-title": "Notifications Config Preview",
         "redaction-error": "This configuration could not be safely previewed and was not displayed.",
+        "reveal-disabled-tooltip": "No secrets were found in this configuration.",
+        "reveal-secrets": "Reveal secrets",
         "rules-title": "Alert Rules Preview"
       },
       "recording-rules": "Recording rules",

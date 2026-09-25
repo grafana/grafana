@@ -19,6 +19,7 @@ import {
   Stack,
   Text,
   TextLink,
+  Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -58,7 +59,12 @@ import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
 import { getPauseRulesLabel, isAutoSyncCommitted, isAutoSyncSelected } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
-import { PreviewRedactionError, buildSecretFieldMap, redactPreviewSecrets } from './redactPreviewSecrets';
+import {
+  PreviewRedactionError,
+  buildSecretFieldMap,
+  containsRedactedValue,
+  redactPreviewSecrets,
+} from './redactPreviewSecrets';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { type DryRunValidationResult } from './types';
@@ -943,6 +949,8 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
 
   const notificationsPreview = usePreviewContent();
   const rulesPreview = usePreviewContent();
+  const [notificationsRevealed, setNotificationsRevealed] = useState(false);
+  const [notificationsRawContent, setNotificationsRawContent] = useState<string | null>(null);
 
   // Fetch integration type schemas to build the secret field map used to redact the notifications
   // preview below — rule content has no secret-bearing fields, so the rules preview skips this.
@@ -970,6 +978,8 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
 
   // Load notifications preview content
   const handlePreviewNotifications = useCallback(() => {
+    setNotificationsRevealed(false);
+    setNotificationsRawContent(null);
     notificationsPreview.show(
       async () => {
         // Fail closed if schema fetch failed — don't read/fetch any raw content at all
@@ -979,11 +989,15 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
 
         if (hasYamlUpload(formData.notificationsSource, formData.notificationsYamlFile)) {
           const rawContent = await formData.notificationsYamlFile.text();
-          return redactPreviewSecrets(rawContent, 'yaml', secretFieldMap);
+          const redacted = redactPreviewSecrets(rawContent, 'yaml', secretFieldMap);
+          setNotificationsRawContent(rawContent);
+          return redacted;
         } else if (formData.notificationsSource === 'datasource' && formData.notificationsDatasourceName) {
           const config = await fetchAlertManagerConfig(formData.notificationsDatasourceName);
           const rawContent = JSON.stringify(config.alertmanager_config, null, 2);
-          return redactPreviewSecrets(rawContent, 'json', secretFieldMap);
+          const redacted = redactPreviewSecrets(rawContent, 'json', secretFieldMap);
+          setNotificationsRawContent(rawContent);
+          return redacted;
         }
         return '';
       },
@@ -998,6 +1012,19 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
     secretFieldMap,
     redactionErrorMessage,
   ]);
+
+  const handleDismissNotificationsPreview = useCallback(() => {
+    setNotificationsRevealed(false);
+    setNotificationsRawContent(null);
+    notificationsPreview.hide();
+  }, [notificationsPreview]);
+
+  const handleToggleRevealNotifications = useCallback(() => {
+    setNotificationsRevealed((revealed) => !revealed);
+  }, []);
+
+  const canRevealNotifications =
+    notificationsRawContent !== null && containsRedactedValue(notificationsPreview.content);
 
   // Load rules preview content. Rule definitions (expr/labels/annotations) don't carry secrets,
   // unlike notifier configs, so this is shown as-is rather than run through redactPreviewSecrets.
@@ -1165,10 +1192,19 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
       <PreviewContentModal
         isOpen={notificationsPreview.isOpen}
         title={t('alerting.import-to-gma.preview.notifications-title', 'Notifications Config Preview')}
-        content={notificationsPreview.content}
+        content={
+          notificationsRevealed
+            ? (notificationsRawContent ?? notificationsPreview.content)
+            : notificationsPreview.content
+        }
         isLoading={notificationsPreview.isLoading}
         language={formData.notificationsSource === 'yaml' ? 'yaml' : 'json'}
-        onDismiss={notificationsPreview.hide}
+        onDismiss={handleDismissNotificationsPreview}
+        reveal={{
+          isRevealed: notificationsRevealed,
+          canReveal: canRevealNotifications,
+          onToggle: handleToggleRevealNotifications,
+        }}
       />
 
       {/* Rules Preview Modal */}
@@ -1192,9 +1228,22 @@ interface PreviewContentModalProps {
   isLoading: boolean;
   language: 'yaml' | 'json';
   onDismiss: () => void;
+  reveal?: {
+    isRevealed: boolean;
+    canReveal: boolean;
+    onToggle: () => void;
+  };
 }
 
-function PreviewContentModal({ isOpen, title, content, isLoading, language, onDismiss }: PreviewContentModalProps) {
+function PreviewContentModal({
+  isOpen,
+  title,
+  content,
+  isLoading,
+  language,
+  onDismiss,
+  reveal,
+}: PreviewContentModalProps) {
   const styles = useStyles2(getPreviewModalStyles);
 
   return (
@@ -1222,6 +1271,32 @@ function PreviewContentModal({ isOpen, title, content, isLoading, language, onDi
         </div>
       )}
       <Modal.ButtonRow>
+        {reveal && (
+          <Tooltip
+            content={
+              reveal.canReveal
+                ? ''
+                : t(
+                    'alerting.import-to-gma.preview.reveal-disabled-tooltip',
+                    'No secrets were found in this configuration.'
+                  )
+            }
+            show={reveal.canReveal ? false : undefined}
+          >
+            <span className={styles.tooltipTarget}>
+              <Button
+                variant="secondary"
+                icon={reveal.isRevealed ? 'eye-slash' : 'eye'}
+                disabled={!reveal.canReveal}
+                onClick={reveal.onToggle}
+              >
+                {reveal.isRevealed
+                  ? t('alerting.import-to-gma.preview.hide-secrets', 'Hide secrets')
+                  : t('alerting.import-to-gma.preview.reveal-secrets', 'Reveal secrets')}
+              </Button>
+            </span>
+          </Tooltip>
+        )}
         <Button variant="secondary" onClick={onDismiss}>
           {t('alerting.common.close', 'Close')}
         </Button>
@@ -1239,6 +1314,9 @@ const getPreviewModalStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.default,
     overflow: 'hidden',
+  }),
+  tooltipTarget: css({
+    display: 'inline-flex',
   }),
 });
 

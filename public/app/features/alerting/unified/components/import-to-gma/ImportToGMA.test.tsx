@@ -37,7 +37,7 @@ jest.mock('@grafana/ui', () => ({
 
 // Selects which fixture the mocked Step1Content below seeds. Prefixed `mock` per Jest's rule for
 // variables referenced from inside a jest.mock factory. Each describe block resets it in its own setup.
-let mockScenario: 'yaml' | 'auto-sync' | 'datasource' | 'schema-derived-secrets' = 'yaml';
+let mockScenario: 'yaml' | 'auto-sync' | 'datasource' | 'schema-derived-secrets' | 'no-secrets' = 'yaml';
 
 // Seeds one of three notifications sources: YAML upload, a plain external datasource, or an
 // Auto-sync-checked datasource. Next is gated on a passing dry-run except under Auto-sync (which
@@ -87,6 +87,19 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
             new File(['{{ define "email" }}{{ end }}'], 'email.tmpl', { type: 'text/plain' }),
             new File(['{{ define "slack" }}{{ end }}'], 'slack.tmpl', { type: 'text/plain' }),
           ]);
+          queueMicrotask(() => onTriggerDryRun?.());
+          return;
+        }
+        if (mockScenario === 'no-secrets') {
+          setValue('notificationsSource', 'yaml');
+          setValue('policyTreeName', 'prometheus-prod');
+          setValue(
+            'notificationsYamlFile',
+            new File(['route:\n  receiver: default\nreceivers:\n  - name: default\n'], 'alertmanager.yaml', {
+              type: 'application/yaml',
+            })
+          );
+          setValue('notificationsTemplateFiles', []);
           queueMicrotask(() => onTriggerDryRun?.());
           return;
         }
@@ -600,9 +613,79 @@ describe('ImportToGMA wizard — preview redaction with schema-derived secrets',
       // channel is not marked secure in the schema and does not match the entropy heuristic,
       // so it must NOT be redacted. This proves we're not blanket-redacting.
       expect(editor.value).toContain('#alerts');
+
+      // Reveal secrets — the real value must show up in the same editor.
+      await user.click(screen.getByRole('button', { name: /reveal secrets/i }));
+      expect(editor.value).toContain('https://example.slack.com/webhook');
+      expect(editor.value).not.toContain('<redacted>');
+
+      // Hide again — back to redacted.
+      await user.click(screen.getByRole('button', { name: /hide secrets/i }));
+      expect(editor.value).toContain('<redacted>');
+      expect(editor.value).not.toContain('https://example.slack.com/webhook');
     } finally {
       mockScenario = 'yaml';
     }
+  });
+});
+
+describe('ImportToGMA wizard — reveal/hide secrets toggle', () => {
+  async function navigateToReview(user: ReturnType<typeof render>['user']) {
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      { timeout: 3000 }
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+    await screen.findByText(/review import/i);
+  }
+
+  afterEach(() => {
+    mockScenario = 'yaml';
+  });
+
+  it('disables the reveal control when nothing was redacted, with a tooltip explaining why', async () => {
+    mockScenario = 'no-secrets';
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReview(user);
+    await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+
+    await screen.findByTestId('code-editor');
+    const revealButton = screen.getByRole('button', { name: /reveal secrets/i });
+    expect(revealButton).toBeDisabled();
+
+    await user.hover(revealButton);
+    expect(await screen.findByText(/no secrets were found in this configuration/i)).toBeInTheDocument();
+  });
+
+  it('reopens the preview hidden after being closed while revealed', async () => {
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReview(user);
+    await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+
+    let editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
+    expect(editor.value).toContain('<redacted>');
+
+    await user.click(screen.getByRole('button', { name: /reveal secrets/i }));
+    expect(editor.value).toContain('hunter2wayTooSimpleButStillAKey123');
+
+    const dialog = screen.getByRole('dialog', { name: /notifications config preview/i });
+    const closeButtons = within(dialog).getAllByRole('button', { name: /close/i });
+    await user.click(closeButtons[closeButtons.length - 1]);
+    expect(screen.queryByRole('dialog', { name: /notifications config preview/i })).not.toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+    editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
+    expect(editor.value).toContain('<redacted>');
+    expect(editor.value).not.toContain('hunter2wayTooSimpleButStillAKey123');
   });
 });
 
@@ -657,6 +740,17 @@ describe('ImportToGMA wizard — rules preview (no redaction)', () => {
 
     expect(await screen.findByRole('button', { name: /preview alert rules/i })).toBeEnabled();
     expect(screen.getByRole('button', { name: /preview configuration/i })).toBeDisabled();
+  });
+
+  it('never renders a reveal control on the rules preview', async () => {
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReviewWithRulesCompleted(user);
+    await user.click(await screen.findByRole('button', { name: /preview alert rules/i }));
+
+    await screen.findByTestId('code-editor');
+    expect(screen.queryByRole('button', { name: /reveal secrets/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /hide secrets/i })).not.toBeInTheDocument();
   });
 });
 
