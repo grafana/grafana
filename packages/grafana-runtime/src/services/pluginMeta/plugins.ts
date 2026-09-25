@@ -9,6 +9,8 @@ import { type Meta } from './types/meta/meta_object_gen';
 import { type Plugin } from './types/plugin/plugin_object_gen';
 import { defaultSpec } from './types/plugin/types.spec.gen';
 
+const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
+
 function getApiVersion(): string {
   return 'v0alpha1';
 }
@@ -31,6 +33,7 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
       requestUrl,
       status: String(metas.status),
       statusText: metas.statusText,
+      traceId: metas.headers.get(GRAFANA_TRACEID_HEADER) ?? '',
     });
     throw error;
   }
@@ -66,6 +69,7 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
       pluginId,
       status: String(result.status),
       statusText: result.statusText,
+      traceId: result.headers.get(GRAFANA_TRACEID_HEADER) ?? '',
     });
     throw error;
   }
@@ -89,6 +93,7 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
       pluginId,
       status: String(result.status),
       statusText: result.statusText,
+      traceId: result.headers.get(GRAFANA_TRACEID_HEADER) ?? '',
     });
     throw error;
   }
