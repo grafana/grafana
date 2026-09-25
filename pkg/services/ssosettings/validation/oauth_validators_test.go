@@ -281,6 +281,46 @@ func TestSkipOrgRoleSyncAllowAssignGrafanaAdminValidator(t *testing.T) {
 	}
 }
 
+func TestSkipOrgRoleSyncRoleAttributeStrictValidator(t *testing.T) {
+	tc := []testCase{
+		{
+			name: "passes when role attribute strict is set, but skip org role sync is not set",
+			input: &social.OAuthInfo{
+				RoleAttributeStrict: true,
+				SkipOrgRoleSync:     false,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "passes when role attribute strict is not set, but skip org role sync is set",
+			input: &social.OAuthInfo{
+				RoleAttributeStrict: false,
+				SkipOrgRoleSync:     true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fails when both role attribute strict and skip org role sync is set",
+			input: &social.OAuthInfo{
+				RoleAttributeStrict: true,
+				SkipOrgRoleSync:     true,
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig("Role attribute strict and Skip org role sync are both set thus role mapping will not be evaluated and users will not be denied access. Consider setting one or the other."),
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			err := SkipOrgRoleSyncRoleAttributeStrictValidator(tt.input, nil)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestOrgMappingValidator(t *testing.T) {
 	tc := []testCase{
 		{
