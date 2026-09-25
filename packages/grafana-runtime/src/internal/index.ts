@@ -10,7 +10,11 @@
  *
  */
 
-export { LegacyDataSourcePicker, setDataSourcePicker } from '../components/DataSourcePicker';
+export {
+  LegacyDataSourcePicker,
+  setDataSourcePicker,
+  isDataSourceCompatibleWithPicker,
+} from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';

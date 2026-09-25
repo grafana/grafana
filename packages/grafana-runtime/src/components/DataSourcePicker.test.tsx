@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
-import { DataSourcePicker, type DataSourcePickerProps, setDataSourcePicker } from './DataSourcePicker';
+import {
+  DataSourcePicker,
+  type DataSourcePickerProps,
+  isDataSourceCompatibleWithPicker,
+  setDataSourcePicker,
+} from './DataSourcePicker';
 
 const mockGetInstanceSettings = jest.fn();
 const mockGetList = jest.fn();
@@ -133,6 +138,257 @@ describe('DataSourcePicker', () => {
 
       const input = screen.getByLabelText('Select a data source');
       expect(input).toHaveProperty('disabled', true);
+    });
+  });
+
+  describe('data source compatibility', () => {
+    const prometheusDs: DataSourceInstanceSettings = {
+      uid: 'prom-uid',
+      name: 'Prometheus',
+      type: 'prometheus',
+      meta: {
+        id: 'prometheus',
+        name: 'Prometheus',
+        type: 'datasource',
+        info: {
+          logos: { small: 'prom.svg', large: 'prom.svg' },
+          author: { name: 'Grafana Labs' },
+          description: '',
+          links: [],
+          screenshots: [],
+          updated: '',
+          version: '1.0.0',
+        },
+        module: '',
+        baseUrl: '',
+      } as DataSourcePluginMeta,
+      readOnly: false,
+      jsonData: {},
+      access: 'proxy',
+    };
+
+    const tempoDs: DataSourceInstanceSettings = {
+      ...prometheusDs,
+      uid: 'tempo-uid',
+      name: 'Tempo',
+      type: 'tempo',
+      meta: {
+        ...prometheusDs.meta,
+        id: 'tempo',
+        name: 'Tempo',
+      },
+    };
+
+    it('rejects a current data source that is not in the filtered list', () => {
+      expect(isDataSourceCompatibleWithPicker('tempo-uid', tempoDs, [prometheusDs])).toBe(false);
+    });
+
+    it('allows a current data source that is in the filtered list', () => {
+      expect(isDataSourceCompatibleWithPicker('prom-uid', prometheusDs, [prometheusDs])).toBe(true);
+    });
+
+    it('allows an empty selection', () => {
+      expect(isDataSourceCompatibleWithPicker(null, undefined, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker(undefined, undefined, [prometheusDs])).toBe(true);
+    });
+
+    it('rejects an empty string uid that cannot be resolved', () => {
+      expect(isDataSourceCompatibleWithPicker('', undefined, [prometheusDs])).toBe(false);
+    });
+
+    it('rejects the org default when nothing is selected and the default is not in the filtered list', () => {
+      expect(isDataSourceCompatibleWithPicker(null, tempoDs, [prometheusDs])).toBe(false);
+      expect(isDataSourceCompatibleWithPicker(undefined, tempoDs, [prometheusDs])).toBe(false);
+    });
+
+    it('allows the org default when nothing is selected and the default is in the filtered list', () => {
+      expect(isDataSourceCompatibleWithPicker(null, prometheusDs, [prometheusDs])).toBe(true);
+    });
+
+    it('rejects a selected data source that cannot be resolved', () => {
+      expect(isDataSourceCompatibleWithPicker('missing-uid', undefined, [prometheusDs])).toBe(false);
+      expect(isDataSourceCompatibleWithPicker({ uid: 'missing-uid' }, undefined, [prometheusDs])).toBe(false);
+    });
+
+    it('allows expression datasources even when they are not in the filtered list', () => {
+      const exprSettings: DataSourceInstanceSettings = {
+        ...prometheusDs,
+        uid: '__expr__',
+        name: 'Expression',
+        type: '__expr__',
+      };
+      expect(isDataSourceCompatibleWithPicker('__expr__', undefined, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker({ uid: '__expr__' }, undefined, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker({ type: '__expr__' }, exprSettings, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker('Expression', undefined, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker('-100', undefined, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker('__expr__', exprSettings, [prometheusDs])).toBe(true);
+    });
+
+    it('rejects mixed and other built-in datasources when they are not in the filtered list', () => {
+      const mixedDs: DataSourceInstanceSettings = {
+        ...prometheusDs,
+        uid: '-- Mixed --',
+        name: '-- Mixed --',
+        type: 'mixed',
+      };
+      expect(isDataSourceCompatibleWithPicker('-- Mixed --', mixedDs, [prometheusDs])).toBe(false);
+      expect(isDataSourceCompatibleWithPicker('-- Mixed --', mixedDs, [prometheusDs, mixedDs])).toBe(true);
+    });
+
+    it('allows template datasource refs that resolved via rawRef even when the variable uid is not in the list', () => {
+      const variableSettings: DataSourceInstanceSettings = {
+        ...prometheusDs,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: 'prometheus', uid: 'prom-uid' },
+      };
+      expect(isDataSourceCompatibleWithPicker('${ds}', variableSettings, [prometheusDs])).toBe(true);
+      expect(
+        isDataSourceCompatibleWithPicker('$ds', { ...variableSettings, uid: '$ds', name: '$ds' }, [prometheusDs])
+      ).toBe(true);
+      expect(
+        isDataSourceCompatibleWithPicker('${rowDs}', { ...variableSettings, uid: '${rowDs}', name: '${rowDs}' }, [
+          prometheusDs,
+        ])
+      ).toBe(true);
+      expect(
+        isDataSourceCompatibleWithPicker(
+          'logs-${stage}-loki',
+          { ...variableSettings, uid: 'logs-${stage}-loki', name: 'logs-${stage}-loki' },
+          [prometheusDs]
+        )
+      ).toBe(true);
+    });
+
+    it('rejects an unresolved template datasource ref', () => {
+      expect(isDataSourceCompatibleWithPicker('${missing}', undefined, [prometheusDs])).toBe(false);
+    });
+
+    it('rejects a template datasource ref whose interpolated datasource is not in the filtered list', () => {
+      const variableSettings: DataSourceInstanceSettings = {
+        ...tempoDs,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: 'tempo', uid: 'tempo-uid' },
+      };
+      expect(isDataSourceCompatibleWithPicker('${ds}', variableSettings, [prometheusDs])).toBe(false);
+    });
+
+    it('rejects a mismatched template ref even when getList injected the variable wrapper', () => {
+      const variableSettings: DataSourceInstanceSettings = {
+        ...tempoDs,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: 'tempo', uid: 'tempo-uid' },
+      };
+      const injectedVariable: DataSourceInstanceSettings = {
+        ...tempoDs,
+        uid: '${ds}',
+        name: '${ds}',
+      };
+      expect(isDataSourceCompatibleWithPicker('${ds}', variableSettings, [prometheusDs, injectedVariable])).toBe(false);
+    });
+
+    it('allows a matching template ref when getList injected the variable wrapper', () => {
+      const variableSettings: DataSourceInstanceSettings = {
+        ...prometheusDs,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: 'prometheus', uid: 'prom-uid' },
+      };
+      const injectedVariable: DataSourceInstanceSettings = {
+        ...prometheusDs,
+        uid: '${ds}',
+        name: '${ds}',
+      };
+      expect(isDataSourceCompatibleWithPicker('${ds}', variableSettings, [prometheusDs, injectedVariable])).toBe(true);
+    });
+
+    it('marks the select invalid when the current data source is not in the filtered list', () => {
+      mockGetInstanceSettings.mockReturnValue(tempoDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+      render(<DataSourcePicker current="tempo-uid" pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('does not mark the select invalid when the current data source matches the filter', () => {
+      mockGetInstanceSettings.mockReturnValue(prometheusDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+      render(<DataSourcePicker current="prom-uid" pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'false');
+    });
+
+    it('recomputes validity on render when the allowed list changes without filter prop changes', () => {
+      mockGetInstanceSettings.mockReturnValue(prometheusDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+      const { rerender } = render(<DataSourcePicker current="prom-uid" pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'false');
+
+      mockGetList.mockReturnValue([]);
+      rerender(<DataSourcePicker current="prom-uid" pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('does not mark the select invalid when noDefault is set and nothing is selected', () => {
+      mockGetInstanceSettings.mockReturnValue(undefined);
+      render(<DataSourcePicker current={null} noDefault onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'false');
+    });
+
+    it('marks the select invalid when the current uid is an empty string that cannot be resolved', () => {
+      mockGetInstanceSettings.mockReturnValue(undefined);
+      render(<DataSourcePicker current="" pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('marks the select invalid when the org default is used and is not in the filtered list', () => {
+      mockGetInstanceSettings.mockReturnValue(tempoDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+      render(<DataSourcePicker current={undefined} pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('keeps the select invalid when the parent passes invalid even if the type matches', () => {
+      mockGetInstanceSettings.mockReturnValue(prometheusDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+      render(<DataSourcePicker current="prom-uid" pluginId="prometheus" invalid onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('marks the select invalid when a custom filter excludes the current data source', () => {
+      mockGetInstanceSettings.mockReturnValue(tempoDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+      render(<DataSourcePicker current="tempo-uid" filter={(ds) => ds.uid === prometheusDs.uid} onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('marks the select invalid when a template ref interpolates to a filtered-out data source even if the variable wrapper is listed', () => {
+      const variableSettings: DataSourceInstanceSettings = {
+        ...tempoDs,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: 'tempo', uid: 'tempo-uid' },
+      };
+      const injectedVariable: DataSourceInstanceSettings = {
+        ...tempoDs,
+        uid: '${ds}',
+        name: '${ds}',
+      };
+      mockGetInstanceSettings.mockReturnValue(variableSettings);
+      mockGetList.mockReturnValue([prometheusDs, injectedVariable]);
+      render(<DataSourcePicker current="${ds}" pluginId="prometheus" variables onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
     });
   });
 
