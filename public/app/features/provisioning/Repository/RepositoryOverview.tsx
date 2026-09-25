@@ -20,6 +20,7 @@ import {
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
+import { PathConflictBanner } from '../Shared/PathConflictBanner';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
@@ -104,6 +105,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         {showFolderMetadataCheck && hasMissingFolderMetadata(conditions) && (
           <MissingFolderMetadataBanner repositoryName={repoName} variant="repo" />
         )}
+        <PathConflictBanner conditions={conditions} />
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
             <Card
