@@ -1,6 +1,7 @@
 package status
 
 import (
+	"fmt"
 	"strings"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
@@ -13,20 +14,23 @@ import (
 // toAlertRuleStatus builds the k8s AlertRule status from the rule's instance states.
 // state/reason/health/timestamps are all derived from the state manager, so it works
 // on any node that holds the state (in-memory or DB-backed) without the scheduler.
-func toAlertRuleStatus(base model.AlertRuleStatus, states []*state.State, paused bool) model.AlertRuleStatus {
+func toAlertRuleStatus(base model.AlertRuleStatus, states []*state.State, execErrState ngmodels.ExecutionErrorState, paused bool) model.AlertRuleStatus {
 	base.State = nil
 	base.Health = nil
 	base.StateReason = new(alertReason(states))
 	base.LastEvaluationTime = nil
 	base.EvaluationDuration = nil
 	base.LastError = nil
+	base.Totals = nil
 
 	if len(states) == 0 {
 		base.Health = new(model.AlertRuleAlertRuleHealthUnknown)
 		base.State = new(model.AlertRuleAlertRuleStateInactive)
 		if paused {
 			base.Health = new(model.AlertRuleAlertRuleHealthPaused)
+			return base
 		}
+		base.Totals = &model.AlertRuleAlertRuleInstanceTotals{}
 		return base
 	}
 
@@ -45,7 +49,25 @@ func toAlertRuleStatus(base model.AlertRuleStatus, states []*state.State, paused
 
 	base.State = new(alertState(apiprometheus.ComputeRuleState(states)))
 	base.Health = new(alertHealth(rs.Health))
+	totals := make(map[string]int64)
+	for _, s := range states {
+		apiprometheus.AddInstanceToTotals(totals, s, execErrState)
+	}
+	base.Totals = AlertRuleTotalsFromMap(totals)
 	return base
+}
+
+// AlertRuleTotalsFromMap converts Prometheus rules API instance totals, keyed by
+// lowercased eval state, into the AlertRule status totals. Unknown keys are ignored.
+func AlertRuleTotalsFromMap(m map[string]int64) *model.AlertRuleAlertRuleInstanceTotals {
+	return &model.AlertRuleAlertRuleInstanceTotals{
+		Healthy:    m["normal"],
+		Firing:     m["alerting"],
+		Pending:    m["pending"],
+		Recovering: m["recovering"],
+		Nodata:     m["nodata"],
+		Error:      m["error"],
+	}
 }
 
 // toRecordingRuleStatus builds the k8s RecordingRule status from the scheduler's
@@ -118,5 +140,23 @@ func recordingHealth(health string, paused, found bool) model.RecordingRuleRecor
 		return model.RecordingRuleRecordingRuleHealthRecording
 	default:
 		return model.RecordingRuleRecordingRuleHealthUnknown
+	}
+}
+
+// execErrStateFromSpec maps the spec's execErrState, applying its default, to the
+// domain value. The k8s and domain enums differ in casing (Ok vs OK), so a plain
+// cast is not safe.
+func execErrStateFromSpec(spec model.AlertRuleSpec) (ngmodels.ExecutionErrorState, error) {
+	switch model.AlertRuleExecErrState(spec.ExecErrStateOrDefault()) {
+	case model.AlertRuleExecErrStateAlerting:
+		return ngmodels.AlertingErrState, nil
+	case model.AlertRuleExecErrStateError:
+		return ngmodels.ErrorErrState, nil
+	case model.AlertRuleExecErrStateOk:
+		return ngmodels.OkErrState, nil
+	case model.AlertRuleExecErrStateKeepLast:
+		return ngmodels.KeepLastErrState, nil
+	default:
+		return "", fmt.Errorf("invalid execErrState %q", spec.ExecErrState)
 	}
 }

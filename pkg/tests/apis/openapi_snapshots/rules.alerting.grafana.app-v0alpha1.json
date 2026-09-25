@@ -4221,6 +4221,39 @@
           "NoData"
         ]
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleInstanceTotals": {
+        "description": "Count of alert instances per state. error also counts instances whose evaluation\nerrored but were mapped to another state via execErrState, so it can overlap.",
+        "type": "object",
+        "required": [
+          "healthy",
+          "firing",
+          "pending",
+          "recovering",
+          "nodata",
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "integer"
+          },
+          "firing": {
+            "type": "integer"
+          },
+          "healthy": {
+            "type": "integer"
+          },
+          "nodata": {
+            "type": "integer"
+          },
+          "pending": {
+            "type": "integer"
+          },
+          "recovering": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleState": {
         "type": "string",
         "enum": [
@@ -4605,6 +4638,9 @@
           },
           "stateReason": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleStateReason"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleInstanceTotals"
           }
         },
         "additionalProperties": false
