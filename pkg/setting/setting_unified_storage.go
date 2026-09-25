@@ -207,6 +207,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
+	cfg.AuthorizeBeforeFetchEnabled = section.Key("authorize_before_fetch_enabled").MustBool(false)
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
 	cfg.IndexRebuildWorkers = section.Key("index_rebuild_workers").MustInt(5)
