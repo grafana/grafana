@@ -1,9 +1,7 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-
 import { type AnnotationQuery, type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import { useFlagDashboardNewLayouts, useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { type SceneComponentProps, type VizPanel, type dataLayers } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -32,7 +30,7 @@ export function AnnotationsEditViewRenderer({ model }: SceneComponentProps<Annot
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
 
-  const isDynamicDashboardsEnabled = useBooleanFlagValue('dashboardNewLayouts', false);
+  const isDynamicDashboardsEnabled = useFlagDashboardNewLayouts();
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {

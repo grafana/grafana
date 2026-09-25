@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import yaml from 'js-yaml';
-import { useAsync } from 'react-use';
+import { useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -23,11 +24,14 @@ export function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode
   const styles = useStyles2(getStyles);
   const { isSharingExternally, isViewingYAML, exportFormat } = model.useState();
 
-  const dashboardJson = useAsync(async () => {
-    const json = await model.getExportableDashboardJson();
+  const [dashboardJson, refreshDashboardJson] = useAsyncFn(() => model.getExportableDashboardJson(), [model], {
+    loading: true,
+  });
 
-    return json;
-  }, [model, isSharingExternally, exportFormat]);
+  // The exporter reads scene state internally, so option changes must trigger a refresh.
+  useEffect(() => {
+    refreshDashboardJson();
+  }, [refreshDashboardJson, isSharingExternally, exportFormat]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
   const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {

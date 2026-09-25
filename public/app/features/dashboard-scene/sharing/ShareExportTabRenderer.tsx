@@ -1,9 +1,10 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import yaml from 'js-yaml';
-import { useAsync } from 'react-use';
+import { useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans } from '@grafana/i18n';
+import { useFlagDashboardNewLayouts } from '@grafana/runtime/internal';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -13,11 +14,16 @@ import { type ShareExportTab } from './ShareExportTab';
 
 export function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
   const { isSharingExternally, isViewingJSON, modalRef, exportFormat, isViewingYAML } = model.useState();
-  const isDynamicDashboardsEnabled = useBooleanFlagValue('dashboardNewLayouts', false);
+  const isDynamicDashboardsEnabled = useFlagDashboardNewLayouts();
 
-  const dashboardJson = useAsync(async () => {
-    return model.getExportableDashboardJson();
-  }, [model, isViewingJSON, isSharingExternally, exportFormat]);
+  const [dashboardJson, refreshDashboardJson] = useAsyncFn(() => model.getExportableDashboardJson(), [model], {
+    loading: true,
+  });
+
+  // The exporter reads scene state internally; also refresh when entering or leaving the JSON view.
+  useEffect(() => {
+    refreshDashboardJson();
+  }, [refreshDashboardJson, isViewingJSON, isSharingExternally, exportFormat]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
   const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {

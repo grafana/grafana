@@ -169,7 +169,10 @@ describe('JsonModelEditView settings redesign', () => {
   ])(
     'shows $expectedAction when dashboardNewLayouts=$dashboardNewLayouts and redesign=$redesign',
     async ({ dashboardNewLayouts, redesign, expectedAction }) => {
-      setTestFlags({ dashboardNewLayouts, [FlagKeys.GrafanaDashboardSettingsRedesign]: redesign });
+      setTestFlags({
+        [FlagKeys.DashboardNewLayouts]: dashboardNewLayouts,
+        [FlagKeys.GrafanaDashboardSettingsRedesign]: redesign,
+      });
       const dashboard = transformSaveModelSchemaV2ToScene({
         apiVersion: 'dashboard.grafana.app/v2',
         kind: 'DashboardWithAccessInfo',
