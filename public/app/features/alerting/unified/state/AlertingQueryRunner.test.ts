@@ -19,7 +19,8 @@ import { type DataQuery } from '@grafana/schema';
 import { type BackendSrv } from 'app/core/services/backend_srv';
 import { EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/alerting/unified/components/settings/mocks/server';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { type AlertingQueryResponse, AlertingQueryRunner } from './AlertingQueryRunner';

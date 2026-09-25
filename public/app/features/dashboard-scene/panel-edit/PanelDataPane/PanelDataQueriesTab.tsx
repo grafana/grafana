@@ -24,7 +24,6 @@ import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionTypeDropdown } from 'app/features/expressions/components/ExpressionTypeDropdown';
 import { ExpressionQueryType } from 'app/features/expressions/types';
-import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { InspectTab } from 'app/features/inspector/types';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
@@ -329,13 +328,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public onAddExpressionOfType = (type: ExpressionQueryType): string => {
     const queries = this.getQueries();
-    // Create base expression query with the specified type
-    const baseQuery = expressionDatasource.newQuery();
-    const queryWithType = { ...baseQuery, type };
-    // Apply defaults specific to the expression type
-    const queryWithDefaults = getDefaults(queryWithType);
-
-    const newQueries = addQuery(queries, queryWithDefaults);
+    const newQueries = addQuery(queries, expressionDatasource.newQuery({ type }));
     this.onQueriesChange(newQueries);
 
     return newQueries[newQueries.length - 1].refId;

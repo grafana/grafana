@@ -1,7 +1,6 @@
 import { createAction, createReducer, original } from '@reduxjs/toolkit';
 
 import {
-  ReducerID,
   type RelativeTimeRange,
   getDataSourceRef,
   getDefaultRelativeTimeRange,
@@ -11,12 +10,10 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import {
-  defaultCondition,
-  isReducerExpression,
-  isThresholdExpression,
-} from 'app/features/expressions/utils/expressionTypes';
+import { type ExpressionQuery, isClassicExpression } from 'app/features/expressions/schemas/expressionQuery';
+import { makeReduceExpression } from 'app/features/expressions/schemas/factories';
+import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
+import { isReducerExpression, isThresholdExpression } from 'app/features/expressions/utils/expressionTypes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../../Analytics';
@@ -144,11 +141,9 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     .addCase(addNewExpression, (state, { payload }) => {
       state.queries = addQuery(state.queries, {
         datasourceUid: ExpressionDatasourceUID,
-        model: expressionDatasource.newQuery({
-          type: payload,
-          conditions: [{ ...defaultCondition, query: { params: [] } }],
-          expression: '',
-        }),
+        // Types that need conditions get their default one from newQuery, so there is nothing to
+        // seed here - and the other types never wanted them in the first place.
+        model: expressionDatasource.newQuery({ type: payload, expression: '' }),
       });
     })
     .addCase(removeExpression, (state, { payload }) => {
@@ -258,7 +253,13 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
         );
 
         state.queries.splice(reduceExpressionIndex, 1);
-        state.queries[1].model.expression = dataQuery?.refId;
+
+        // Point whatever is now second at the data query directly. Classic conditions name their
+        // query per-condition, so they have nothing to repoint here.
+        const promotedModel = state.queries[1].model;
+        if (isExpressionQuery(promotedModel) && !isClassicExpression(promotedModel)) {
+          promotedModel.expression = dataQuery?.refId ?? '';
+        }
       }
 
       const shouldAddReduceExpression =
@@ -266,18 +267,18 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       if (shouldAddReduceExpression) {
         // add reducer to the second position
         // we only update the refid and the model to point to the reducer expression
-        state.queries[1].model.expression = NEW_REDUCER_REF;
+        const thresholdModel = state.queries[1].model;
+        if (isExpressionQuery(thresholdModel) && !isClassicExpression(thresholdModel)) {
+          thresholdModel.expression = NEW_REDUCER_REF;
+        }
 
         // insert in second position the reducer expression
         state.queries.splice(1, 0, {
           datasourceUid: ExpressionDatasourceUID,
-          model: expressionDatasource.newQuery({
-            type: ExpressionQueryType.reduce,
-            reducer: ReducerID.last,
-            conditions: [{ ...defaultCondition, query: { params: [] } }],
-            expression: dataQuery?.refId,
-            refId: NEW_REDUCER_REF,
-          }),
+          model: makeReduceExpression(
+            { refId: NEW_REDUCER_REF },
+            { reducer: 'last', expression: dataQuery?.refId ?? '' }
+          ),
           refId: NEW_REDUCER_REF,
           queryType: 'expression',
         });

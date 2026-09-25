@@ -166,3 +166,46 @@ describe('alertingAlertRuleFormSchema', () => {
     expect(result.annotations).toBeUndefined();
   });
 });
+
+describe('alertingModelSchema expression handling', () => {
+  it('fills in what an expression left out, so a plugin does not have to know the defaults', () => {
+    const parsed = alertingModelSchema.parse({ refId: 'B', type: 'reduce', expression: 'A' });
+
+    expect(parsed).toMatchObject({ type: 'reduce', reducer: 'mean' });
+  });
+
+  it('gives a threshold with no conditions one to work with', () => {
+    const parsed = alertingModelSchema.parse({ refId: 'C', type: 'threshold', expression: 'B' });
+
+    expect(parsed).toMatchObject({ conditions: [{ evaluator: { type: 'gt' } }] });
+  });
+
+  it('reads an expression through the expression schemas rather than the loose branch', () => {
+    // The loose branch would have left `reducer` exactly as given; the expression branch narrows it
+    // to something reduce actually supports.
+    const parsed = alertingModelSchema.parse({ refId: 'B', type: 'reduce', expression: 'A', reducer: 'AVG' });
+
+    // `avg` is a classic-condition reducer, not a reduce one, so it falls back rather than being
+    // passed along to fail at evaluation time.
+    expect(parsed).toMatchObject({ reducer: 'mean' });
+  });
+
+  it('keeps fields on an expression that we do not describe', () => {
+    const parsed = alertingModelSchema.parse({
+      refId: 'B',
+      type: 'reduce',
+      expression: 'A',
+      reducer: 'last',
+      intervalMs: 1000,
+      maxDataPoints: 43200,
+    });
+
+    expect(parsed).toMatchObject({ intervalMs: 1000, maxDataPoints: 43200 });
+  });
+
+  it('leaves a query model alone when its type is not an expression type', () => {
+    const model = { refId: 'A', type: 'timeSeriesQuery', expr: 'up', editorMode: 'code' };
+
+    expect(alertingModelSchema.parse(model)).toMatchObject(model);
+  });
+});

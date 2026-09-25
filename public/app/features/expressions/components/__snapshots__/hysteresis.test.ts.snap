@@ -11,17 +11,6 @@ exports[`thresholdReducer Should update unlooadEvaluator when checking hysteresi
         ],
         "type": "gt",
       },
-      "query": {
-        "params": [
-          "A",
-          "B",
-        ],
-      },
-      "reducer": {
-        "params": [],
-        "type": "avg",
-      },
-      "type": "query",
       "unloadEvaluator": {
         "params": [
           10,
@@ -31,6 +20,7 @@ exports[`thresholdReducer Should update unlooadEvaluator when checking hysteresi
       },
     },
   ],
+  "expression": "",
   "refId": "A",
   "type": "threshold",
 }
@@ -47,20 +37,10 @@ exports[`thresholdReducer Should update unlooadEvaluator when unchecking hystere
         ],
         "type": "gt",
       },
-      "query": {
-        "params": [
-          "A",
-          "B",
-        ],
-      },
-      "reducer": {
-        "params": [],
-        "type": "avg",
-      },
-      "type": "query",
       "unloadEvaluator": undefined,
     },
   ],
+  "expression": "",
   "refId": "A",
   "type": "threshold",
 }
@@ -76,17 +56,6 @@ exports[`thresholdReducer should update Threshold Type, and unloadEvaluator para
         ],
         "type": "lt",
       },
-      "query": {
-        "params": [
-          "A",
-          "B",
-        ],
-      },
-      "reducer": {
-        "params": [],
-        "type": "avg",
-      },
-      "type": "query",
       "unloadEvaluator": {
         "params": [
           10,
@@ -95,6 +64,7 @@ exports[`thresholdReducer should update Threshold Type, and unloadEvaluator para
       },
     },
   ],
+  "expression": "",
   "refId": "A",
   "type": "threshold",
 }
@@ -111,17 +81,6 @@ exports[`thresholdReducer should update expression with RefId 1`] = `
         ],
         "type": "gt",
       },
-      "query": {
-        "params": [
-          "A",
-          "B",
-        ],
-      },
-      "reducer": {
-        "params": [],
-        "type": "avg",
-      },
-      "type": "query",
       "unloadEvaluator": {
         "params": [
           10,
@@ -148,17 +107,6 @@ exports[`thresholdReducer should update unloadParams no error when are invalid 1
         ],
         "type": "gt",
       },
-      "query": {
-        "params": [
-          "A",
-          "B",
-        ],
-      },
-      "reducer": {
-        "params": [],
-        "type": "avg",
-      },
-      "type": "query",
       "unloadEvaluator": {
         "params": [
           20,
@@ -168,6 +116,7 @@ exports[`thresholdReducer should update unloadParams no error when are invalid 1
       },
     },
   ],
+  "expression": "",
   "refId": "A",
   "type": "threshold",
 }
@@ -184,17 +133,6 @@ exports[`thresholdReducer should update unloadParams with no error when are vali
         ],
         "type": "gt",
       },
-      "query": {
-        "params": [
-          "A",
-          "B",
-        ],
-      },
-      "reducer": {
-        "params": [],
-        "type": "avg",
-      },
-      "type": "query",
       "unloadEvaluator": {
         "params": [
           9,
@@ -204,6 +142,7 @@ exports[`thresholdReducer should update unloadParams with no error when are vali
       },
     },
   ],
+  "expression": "",
   "refId": "A",
   "type": "threshold",
 }

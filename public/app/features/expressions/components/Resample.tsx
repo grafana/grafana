@@ -4,13 +4,14 @@ import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-import { downsamplingTypes, type ExpressionQuery, upsamplingTypes } from '../types';
+import { type ResampleExpressionQuery, toDownsamplerId, toUpsamplerId } from '../schemas/resample';
+import { downsamplingTypes, upsamplingTypes } from '../types';
 
 interface Props {
   refIds: Array<SelectableValue<string>>;
-  query: ExpressionQuery;
+  query: ResampleExpressionQuery;
   labelWidth?: number | 'auto';
-  onChange: (query: ExpressionQuery) => void;
+  onChange: (query: ResampleExpressionQuery) => void;
 }
 
 export const Resample = ({ labelWidth = 'auto', onChange, refIds, query }: Props) => {
@@ -22,15 +23,15 @@ export const Resample = ({ labelWidth = 'auto', onChange, refIds, query }: Props
   };
 
   const onRefIdChange = (value: SelectableValue<string>) => {
-    onChange({ ...query, expression: value.value });
+    onChange({ ...query, expression: value.value ?? '' });
   };
 
   const onSelectDownsampler = (value: SelectableValue<string>) => {
-    onChange({ ...query, downsampler: value.value });
+    onChange({ ...query, downsampler: toDownsamplerId(value.value) });
   };
 
   const onSelectUpsampler = (value: SelectableValue<string>) => {
-    onChange({ ...query, upsampler: value.value });
+    onChange({ ...query, upsampler: toUpsamplerId(value.value) });
   };
 
   return (

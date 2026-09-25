@@ -9,13 +9,15 @@ import { Trans, t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { toReduceReducerId } from 'app/features/expressions/schemas/reduce';
+import { toThresholdEvalFunction } from 'app/features/expressions/schemas/threshold';
+import { reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
 import {
-  type ExpressionQuery,
-  ExpressionQueryType,
-  reducerTypes,
-  thresholdFunctions,
-} from 'app/features/expressions/types';
-import { getReducerType, isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
+  isRangeEvaluator,
+  isReducerExpression,
+  isThresholdExpression,
+} from 'app/features/expressions/utils/expressionTypes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { ToLabel } from '../../../../../expressions/components/ToLabel';
@@ -163,25 +165,19 @@ function updateReduceExpression(
   dispatch: Dispatch<UnknownAction>
 ) {
   // 1. make sure have have a reduce expression and that it is pointing to the data query
-  const reduceExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.reduce);
+  const reduceModel = expressionQueriesList.map((query) => query.model).find(isReducerExpression);
 
-  const newReduceExpression = reduceExpression
-    ? produce(reduceExpression?.model, (draft) => {
-        if (draft && draft.conditions?.[0]) {
-          draft.reducer = reducer;
-          const reducerType = getReducerType(reducer) ?? ReducerID.last;
-          // API-loaded rules may have conditions without a reducer object (e.g. provisioned rules
-          // or rules created by older versions). Backfill it to keep conditions[0].reducer.type
-          // in sync with draft.reducer rather than silently skipping the update.
-          if (!draft.conditions[0].reducer) {
-            draft.conditions[0].reducer = { params: [], type: reducerType };
-          } else {
-            draft.conditions[0].reducer.type = reducerType;
-          }
-        }
-      })
-    : undefined;
-  newReduceExpression && dispatch(updateExpression(newReduceExpression));
+  if (!reduceModel) {
+    return;
+  }
+
+  // A reduce expression only has the one reducer. Some saved rules also carry a conditions[] here,
+  // left over from an older shape, but nothing reads it and the backend ignores it.
+  const newReduceExpression = produce(reduceModel, (draft) => {
+    draft.reducer = toReduceReducerId(reducer);
+  });
+
+  dispatch(updateExpression(newReduceExpression));
 }
 
 function updateThresholdFunction(
@@ -189,14 +185,17 @@ function updateThresholdFunction(
   expressionQueriesList: Array<AlertQuery<ExpressionQuery>>,
   dispatch: Dispatch<UnknownAction>
 ) {
-  const thresholdExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.threshold);
+  const thresholdModel = expressionQueriesList.map((query) => query.model).find(isThresholdExpression);
 
-  const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.model.conditions?.[0]) {
-      draft.model.conditions[0].evaluator.type = evaluator;
-    }
+  if (!thresholdModel) {
+    return;
+  }
+
+  const newThresholdExpression = produce(thresholdModel, (draft) => {
+    draft.conditions[0].evaluator.type = toThresholdEvalFunction(evaluator);
   });
-  newThresholdExpression && dispatch(updateExpression(newThresholdExpression.model));
+
+  dispatch(updateExpression(newThresholdExpression));
 }
 
 function updateThresholdValue(
@@ -205,25 +204,28 @@ function updateThresholdValue(
   expressionQueriesList: Array<AlertQuery<ExpressionQuery>>,
   dispatch: Dispatch<UnknownAction>
 ) {
-  const thresholdExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.threshold);
+  const thresholdModel = expressionQueriesList.map((query) => query.model).find(isThresholdExpression);
 
-  const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.model.conditions?.[0]) {
-      draft.model.conditions[0].evaluator.params[index] = value;
-    }
+  if (!thresholdModel) {
+    return;
+  }
+
+  const newThresholdExpression = produce(thresholdModel, (draft) => {
+    draft.conditions[0].evaluator.params[index] = value;
   });
-  newThresholdExpression && dispatch(updateExpression(newThresholdExpression.model));
+
+  dispatch(updateExpression(newThresholdExpression));
 }
 
 export function getSimpleConditionFromExpressions(expressions: Array<AlertQuery<ExpressionQuery>>): SimpleCondition {
-  const reduceExpression = expressions.find((query) => query.model.type === ExpressionQueryType.reduce);
-  const thresholdExpression = expressions.find((query) => query.model.type === ExpressionQueryType.threshold);
-  const conditionsFromThreshold = thresholdExpression?.model.conditions ?? [];
-  const whenField = reduceExpression?.model.reducer;
-  const params = conditionsFromThreshold[0]?.evaluator?.params
-    ? [...conditionsFromThreshold[0]?.evaluator?.params]
-    : [0];
-  const type = conditionsFromThreshold[0]?.evaluator?.type ?? EvalFunction.IsAbove;
+  const models = expressions.map((query) => query.model);
+  const reduceModel = models.find(isReducerExpression);
+  const thresholdModel = models.find(isThresholdExpression);
+
+  const thresholdEvaluator = thresholdModel?.conditions[0].evaluator;
+  const whenField = reduceModel?.reducer;
+  const params = thresholdEvaluator ? [...thresholdEvaluator.params] : [0];
+  const type = thresholdEvaluator?.type ?? EvalFunction.IsAbove;
 
   return {
     whenField: whenField,

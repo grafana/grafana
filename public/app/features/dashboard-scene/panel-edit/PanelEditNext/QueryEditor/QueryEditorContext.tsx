@@ -9,7 +9,8 @@ import {
 } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { type ExpressionQuery, type ExpressionQueryType } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { type ExpressionQueryType } from 'app/features/expressions/types';
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';

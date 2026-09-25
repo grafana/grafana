@@ -28,7 +28,9 @@ import { type DataQuery } from '@grafana/schema';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
+import { isClassicExpression, isResampleExpression, type ExpressionQuery } from './schemas/expressionQuery';
+import { makeExpression, makeSqlExpression } from './schemas/factories';
+import { ExpressionDatasourceUID, ExpressionQueryType } from './types';
 
 const SQL_DISPLAY_NAME_FIELD = '__display_name__';
 const SQL_VALUE_FIELD = '__value__';
@@ -96,13 +98,19 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     super(instanceSettings);
   }
 
-  applyTemplateVariables(query: ExpressionQuery, scopedVars: ScopedVars) {
+  applyTemplateVariables(query: ExpressionQuery, scopedVars: ScopedVars): ExpressionQuery {
     const templateSrv = getTemplateSrv();
-    return {
-      ...query,
-      expression: templateSrv.replace(query.expression, scopedVars),
-      window: templateSrv.replace(query.window, scopedVars),
-    };
+
+    // Classic conditions have no expression of their own - each condition names its own query.
+    if (isClassicExpression(query)) {
+      return query;
+    }
+
+    const interpolated = { ...query, expression: templateSrv.replace(query.expression, scopedVars) };
+
+    return isResampleExpression(interpolated)
+      ? { ...interpolated, window: templateSrv.replace(interpolated.window, scopedVars) }
+      : interpolated;
   }
 
   getCollapsedText(query: ExpressionQuery) {
@@ -128,25 +136,31 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     );
   }
 
-  newQuery(query?: Partial<ExpressionQuery>): ExpressionQuery {
-    return {
-      refId: '--', // Replaced with query
-      datasource: ExpressionDatasourceRef,
-      type: query?.type ?? ExpressionQueryType.math,
-      ...query,
-    };
+  /**
+   * Builds an empty expression. Types that need conditions get their default one from the
+   * factories, so callers no longer have to remember to seed them.
+   */
+  newQuery(query?: {
+    type?: ExpressionQueryType;
+    refId?: string;
+    hide?: boolean;
+    datasource?: ExpressionQuery['datasource'];
+    expression?: string;
+  }): ExpressionQuery {
+    return makeExpression(
+      query?.type ?? ExpressionQueryType.math,
+      {
+        refId: query?.refId ?? '--', // Replaced with query
+        hide: query?.hide,
+        datasource: query?.datasource,
+      },
+      query?.expression
+    );
   }
 
   runMetaSQLExprQuery(request: Partial<SQLQuery>, range: TimeRange, queries: DataQuery[]): Promise<DataFrame> {
     const refId = request.refId || 'meta';
-    const metaSqlExpressionQuery: ExpressionQuery = {
-      window: '',
-      hide: false,
-      expression: request.rawSql,
-      datasource: ExpressionDatasourceRef,
-      refId,
-      type: ExpressionQueryType.sql,
-    };
+    const metaSqlExpressionQuery = makeSqlExpression({ refId, hide: false }, { expression: request.rawSql ?? '' });
     return lastValueFrom(
       getBackendSrv()
         .fetch<BackendDataSourceResponse>({

@@ -1,101 +1,61 @@
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { type ClassicCondition, type ExpressionQuery, ExpressionQueryType } from '../types';
+import { makeExpression, makeReduceExpression } from '../schemas/factories';
+import { ExpressionQueryType, ReducerMode } from '../types';
 
-import { defaultCondition, getDefaults } from './expressionTypes';
+import { getReducerType, isRangeEvaluator, isReducerExpression, isStrictReducer } from './expressionTypes';
 
-describe('getDefaults', () => {
-  describe('classic expression type', () => {
-    it('should create default conditions when conditions is undefined', () => {
-      const query = {
-        type: ExpressionQueryType.classic,
-        refId: 'A',
-      } as ExpressionQuery;
-
-      const result = getDefaults(query);
-      expect(result.conditions).toEqual([defaultCondition]);
-    });
-
-    it('should backfill missing reducer in existing conditions', () => {
-      const query = {
-        type: ExpressionQueryType.classic,
-        refId: 'A',
-        conditions: [
-          {
-            type: 'query',
-            evaluator: { params: [0], type: EvalFunction.IsAbove },
-            query: { params: ['A'] },
-          } satisfies ClassicCondition,
-        ],
-      } as ExpressionQuery;
-
-      const result = getDefaults(query);
-      expect(result.conditions![0].reducer).toEqual({ params: [], type: 'avg' });
-    });
-
-    it('should not overwrite an existing reducer', () => {
-      const query = {
-        type: ExpressionQueryType.classic,
-        refId: 'A',
-        conditions: [
-          {
-            type: 'query',
-            evaluator: { params: [0], type: EvalFunction.IsAbove },
-            query: { params: ['A'] },
-            reducer: { params: [], type: 'max' },
-          },
-        ],
-      } as ExpressionQuery;
-
-      const result = getDefaults(query);
-      expect(result.conditions?.[0].reducer?.type).toBe('max');
-    });
-
-    it('should handle a mix of conditions with and without reducer', () => {
-      const query = {
-        type: ExpressionQueryType.classic,
-        refId: 'A',
-        conditions: [
-          {
-            type: 'query',
-            evaluator: { params: [0], type: EvalFunction.IsAbove },
-            query: { params: ['A'] },
-            reducer: { params: [], type: 'sum' },
-          },
-          {
-            type: 'query',
-            evaluator: { params: [0], type: EvalFunction.IsAbove },
-            query: { params: ['B'] },
-          } satisfies ClassicCondition,
-        ],
-      } as ExpressionQuery;
-
-      const result = getDefaults(query);
-      expect(result.conditions?.[0]?.reducer?.type).toBe('sum');
-      expect(result.conditions?.[1]?.reducer).toEqual({ params: [], type: 'avg' });
-    });
+describe('getReducerType', () => {
+  it('accepts a classic condition reducer', () => {
+    expect(getReducerType('percent_diff_abs')).toBe('percent_diff_abs');
   });
 
-  describe('reduce expression type', () => {
-    it('should set default reducer when missing', () => {
-      const query = {
-        type: ExpressionQueryType.reduce,
-        refId: 'A',
-      } as ExpressionQuery;
+  it('returns undefined for something that is not a reducer', () => {
+    expect(getReducerType('not-a-reducer')).toBeUndefined();
+  });
+});
 
-      const result = getDefaults(query);
-      expect(result.reducer).toBe('mean');
-    });
+describe('isStrictReducer', () => {
+  const reduce = makeReduceExpression({ refId: 'B' });
 
-    it('should not overwrite existing reducer', () => {
-      const query = {
-        type: ExpressionQueryType.reduce,
-        refId: 'A',
-        reducer: 'max',
-      } as ExpressionQuery;
+  it('treats a reduce with no settings as strict, which is what the backend does', () => {
+    expect(isStrictReducer(reduce)).toBe(true);
+  });
 
-      const result = getDefaults(query);
-      expect(result.reducer).toBe('max');
-    });
+  it('treats an empty mode as strict, because that is how the backend spells it', () => {
+    expect(isStrictReducer({ ...reduce, settings: { mode: ReducerMode.Strict } })).toBe(true);
+  });
+
+  it('is not strict when non-numeric values are dropped', () => {
+    expect(isStrictReducer({ ...reduce, settings: { mode: ReducerMode.DropNonNumbers } })).toBe(false);
+  });
+
+  it('is not strict for an expression that is not a reduce', () => {
+    expect(isStrictReducer(makeExpression(ExpressionQueryType.threshold, { refId: 'C' }))).toBe(false);
+  });
+});
+
+describe('isReducerExpression', () => {
+  it('narrows a reduce expression', () => {
+    expect(isReducerExpression(makeExpression(ExpressionQueryType.reduce, { refId: 'B' }))).toBe(true);
+  });
+
+  it('rejects the other types', () => {
+    expect(isReducerExpression(makeExpression(ExpressionQueryType.math, { refId: 'B' }))).toBe(false);
+  });
+});
+
+describe('isRangeEvaluator', () => {
+  it.each([
+    EvalFunction.IsWithinRange,
+    EvalFunction.IsOutsideRange,
+    EvalFunction.IsWithinRangeIncluded,
+    EvalFunction.IsOutsideRangeIncluded,
+  ])('treats %s as a range, so it needs two values', (fn) => {
+    expect(isRangeEvaluator(fn)).toBe(true);
+  });
+
+  it.each([EvalFunction.IsAbove, EvalFunction.IsBelow, EvalFunction.IsEqual])('treats %s as a single value', (fn) => {
+    expect(isRangeEvaluator(fn)).toBe(false);
   });
 });
