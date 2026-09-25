@@ -450,9 +450,13 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       return elements;
     }
 
+    // APPLY_NOTEBOOK_SPEC (a whole-document rewrite) replaces every cell with a new instance
+    // that commonly reuses the old elementName, so a saved entry from before that replace can
+    // no longer be trusted just because cellTimeRangesEdited doesn't (yet) know the new instance.
+    const currentCells = new Set(this.scene.state.body.state.cells);
     const result: Record<string, NotebookElement> = { ...elements };
     for (const [cell, savedTimeRange] of saved) {
-      if (cellTimeRangesEdited.has(cell)) {
+      if (cellTimeRangesEdited.has(cell) || !currentCells.has(cell)) {
         continue;
       }
       const element = result[cell.state.elementName];
@@ -739,7 +743,13 @@ export function changedCellTimeRange(
     if (changedObject === cell && '$timeRange' in partialUpdate) {
       return cell;
     }
-    if (cell.state.$timeRange && changedObject === cell.state.$timeRange) {
+    // A relative range ticks its own `value` on activation/refresh, on the same object — that's
+    // not an edit, so only 'from'/'to' actually changing counts as one.
+    if (
+      cell.state.$timeRange &&
+      changedObject === cell.state.$timeRange &&
+      ('from' in partialUpdate || 'to' in partialUpdate)
+    ) {
       return cell;
     }
   }

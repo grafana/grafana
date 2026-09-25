@@ -1,5 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
@@ -32,7 +33,9 @@ describe('NotebookCellTimeRangeControl', () => {
     const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
 
     await user.click(screen.getByRole('button'));
-    await user.click(screen.getByRole('button', { name: 'Move time range backwards' }));
+    // Testid, not accessible name: SceneTimePicker always computes a duration-specific tooltip
+    // ("Move 12h backward"), unlike TimeRangePicker's own static default text.
+    await user.click(screen.getByTestId(selectors.components.TimePicker.moveBackwardButton));
 
     await user.click(screen.getByRole('button', { name: 'Reset' }));
     await user.click(screen.getByRole('button', { name: 'Apply' }));

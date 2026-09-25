@@ -1,3 +1,4 @@
+import { type TimeOption } from '@grafana/data';
 import {
   SceneObjectBase,
   SceneTimePicker,
@@ -50,8 +51,8 @@ export function withQueryOptionsTimeRange(element: PanelKind, range: CellTimeRan
 
 interface DraftTimeRangeHostState extends SceneObjectState {
   $timeRange: SceneTimeRange;
-  // Not rendered — only its onMoveBackward/onMoveForward/onZoom methods are called directly, which
-  // need a scene-graph parent to resolve sceneGraph.getTimeRange(this) to $timeRange above.
+  // Rendered directly via timePicker.Component: resolves sceneGraph.getTimeRange(timePicker) to
+  // $timeRange above, since SceneObjectBase auto-parents timePicker under this host.
   timePicker: SceneTimePicker;
 }
 
@@ -61,9 +62,14 @@ interface DraftTimeRangeHostState extends SceneObjectState {
  */
 export class DraftTimeRangeHost extends SceneObjectBase<DraftTimeRangeHostState> {}
 
-export function buildDraftTimeRangeHost(from: string, to: string, timeZone: string): DraftTimeRangeHost {
+export function buildDraftTimeRangeHost(
+  from: string,
+  to: string,
+  timeZone: string,
+  quickRanges?: TimeOption[]
+): DraftTimeRangeHost {
   return new DraftTimeRangeHost({
     $timeRange: buildCellSceneTimeRange(from, to, timeZone),
-    timePicker: new SceneTimePicker({}),
+    timePicker: new SceneTimePicker({ hideTimeSettings: true, quickRanges }),
   });
 }

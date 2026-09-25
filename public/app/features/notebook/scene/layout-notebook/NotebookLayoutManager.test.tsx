@@ -1270,7 +1270,8 @@ describe('NotebookLayoutManager', () => {
 
   describe('setCellTimeRange', () => {
     it('applies directly, with no undo entry, while only viewing', () => {
-      const { cell } = panelCell('latency');
+      const { cell, runner } = panelCell('latency');
+      const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
       const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
       const history = attachHistory(manager);
 
@@ -1278,6 +1279,7 @@ describe('NotebookLayoutManager', () => {
 
       expect(cell.state.$timeRange?.state.from).toBe('now-24h');
       expect(history.state.canUndo).toBe(false);
+      expect(runQueries).toHaveBeenCalledTimes(1);
     });
 
     it('records a discrete, correctly labeled undo step while editing', () => {

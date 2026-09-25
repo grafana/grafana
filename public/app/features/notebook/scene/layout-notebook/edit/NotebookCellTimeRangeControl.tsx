@@ -1,13 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { uniqBy } from 'lodash';
 import { useState } from 'react';
-import { useLocalStorage } from 'react-use';
 
-import { isDateTime, type GrafanaTheme2, rangeUtil, type TimeOption, type TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, rangeUtil, type TimeOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
-import { Box, Button, IconButton, Stack, Switch, TimeRangePicker, Toggletip, useStyles2 } from '@grafana/ui';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { Box, Button, IconButton, Stack, Switch, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { isNotebookScene } from '../../isNotebookScene';
 import { type NotebookCellItem } from '../NotebookCellItem';
@@ -62,14 +59,10 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
   const ancestorTimeZone = getAncestorTimeZone(cell);
   const committed = cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : seedFromAncestor(cell);
 
-  const [host] = useState(() => buildDraftTimeRangeHost(committed.from, committed.to, ancestorTimeZone));
-  const { value } = host.state.$timeRange.useState();
+  const [host] = useState(() =>
+    buildDraftTimeRangeHost(committed.from, committed.to, ancestorTimeZone, getQuickRanges(cell))
+  );
   const [useNotebookTime, setUseNotebookTime] = useState(cell.state.$timeRange === undefined);
-  const [history, setHistory] = useLocalStorage<TimeRange[]>(TIME_RANGE_HISTORY_KEY, [], {
-    raw: false,
-    serializer: serializeTimeRangeHistory,
-    deserializer: deserializeTimeRangeHistory,
-  });
 
   const onReset = () => {
     const range = rangeUtil.convertRawToRange({ from: committed.from, to: committed.to }, ancestorTimeZone);
@@ -78,8 +71,9 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
   };
 
   const onApply = () => {
+    // setCellTimeRange (called via onTimeRangeChange) already runs the query itself, in both the
+    // editing and non-editing branches — an extra call here would run it twice.
     cell.onTimeRangeChange(useNotebookTime ? undefined : buildCellTimeRangeSpec(host.state.$timeRange));
-    getQueryRunnerFor(cell.state.body)?.runQueries();
     onClose();
   };
 
@@ -99,23 +93,9 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
         <Switch value={useNotebookTime} onChange={(e) => onToggle(e.currentTarget.checked)} />
       </Box>
       <div className={cx(styles.picker, useNotebookTime && styles.pickerDisabled)} aria-disabled={useNotebookTime}>
-        {/* TimeRangePicker directly, not SceneTimePicker.Component: omitting timeZone/fiscalYearStartMonth
-            hides its "Change time settings" footer entirely, so neither is ever editable per cell. */}
-        <TimeRangePicker
-          isOnCanvas
-          value={value}
-          history={history}
-          onChange={(range) => {
-            if (isDateTime(range.raw.from) || isDateTime(range.raw.to)) {
-              setHistory([range, ...(history ?? [])]);
-            }
-            host.state.$timeRange.onTimeRangeChange(range);
-          }}
-          onChangeTimeZone={() => {}}
-          onMoveBackward={() => host.state.timePicker.onMoveBackward()}
-          onMoveForward={() => host.state.timePicker.onMoveForward()}
-          onZoom={() => host.state.timePicker.onZoom()}
-        />
+        {/* hideTimeSettings (set in buildDraftTimeRangeHost) hides the timezone/fiscal-year footer,
+            so neither is ever editable per cell — timezone always follows the notebook. */}
+        <host.state.timePicker.Component model={host.state.timePicker} />
       </div>
       <Box marginTop={1}>
         <Stack justifyContent="flex-end">
@@ -157,27 +137,6 @@ function getQuickRanges(cell: NotebookCellItem): TimeOption[] | undefined {
   }
 
   return undefined;
-}
-
-// Same key and wire format as @grafana/scenes' own SceneTimePicker (the notebook's top-level
-// picker), so both read and write one shared "recently used absolute ranges" list.
-const TIME_RANGE_HISTORY_KEY = 'grafana.dashboard.timepicker.history';
-
-function deserializeTimeRangeHistory(value: string): TimeRange[] {
-  const values: Array<{ from: string; to: string }> = JSON.parse(value);
-  return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
-}
-
-function serializeTimeRangeHistory(values: TimeRange[]): string {
-  return JSON.stringify(
-    uniqBy(
-      values.map((v) => ({
-        from: typeof v.raw.from === 'string' ? v.raw.from : v.raw.from.toISOString(),
-        to: typeof v.raw.to === 'string' ? v.raw.to : v.raw.to.toISOString(),
-      })),
-      (v) => v.from + v.to
-    ).slice(0, 4)
-  );
 }
 
 const getStyles = (_theme: GrafanaTheme2) => ({

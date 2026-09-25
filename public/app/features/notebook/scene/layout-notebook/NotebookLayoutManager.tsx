@@ -459,6 +459,7 @@ export class NotebookLayoutManager
 
     if (!this.state.isEditing) {
       cell.setState(after);
+      getQueryRunnerFor(cell.state.body)?.runQueries();
       return;
     }
 

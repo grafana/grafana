@@ -111,6 +111,24 @@ describe('deserializeNotebookLayout', () => {
     expect(panelCell.state.body?.state.$timeRange).toBeUndefined();
   });
 
+  // A one-sided override (only timeFrom, e.g. a dashboard-style relative shift) isn't a cell
+  // range — it must reach buildVizPanelState untouched instead of being blanked, or a common
+  // dashboard panel shape would silently lose its override the moment it opens in a notebook.
+  it('leaves a one-sided panel time override untouched for buildVizPanelState', () => {
+    const { layout, elements } = fixture();
+    const panelElement = elements.panel1;
+    if (panelElement.kind === 'Panel') {
+      panelElement.spec.data.spec.queryOptions = { timeFrom: '2h' };
+    }
+
+    const manager = deserializeNotebookLayout(layout, elements);
+    const panelCell = manager.state.cells[0];
+
+    expect(panelCell.state.$timeRange).toBeUndefined();
+    // buildVizPanelState saw the original timeFrom and attached its own PanelTimeRange for it.
+    expect(panelCell.state.body?.state.$timeRange).toBeDefined();
+  });
+
   it('leaves a panel cell with no saved time range without one', () => {
     const { layout, elements } = fixture();
 

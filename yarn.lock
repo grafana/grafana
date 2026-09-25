@@ -3038,13 +3038,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:8.17.0":
-  version: 8.17.0
-  resolution: "@grafana/scenes-react@npm:8.17.0"
+"@grafana/scenes-react@npm:8.19.0":
+  version: 8.19.0
+  resolution: "@grafana/scenes-react@npm:8.19.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.17.0"
+    "@grafana/scenes": "npm:8.19.0"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3058,7 +3058,7 @@ __metadata:
     react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/dc607cc280b7697eb8d9ae0317062d465c2be99d44f295ba3ae467b8fc09548b92b810c8d21db70e98bd416dcff387478438ba19c93e5c42f1ae48a81da0f9fb
+  checksum: 10/4d7a89b7bc163df4f6c3b974e57c7d13d1a277d2ab0beaccfce0d98c2328b2927f9dcd32419608a5767dd038bb6db2910ac7d964acf42bcca83a0aef1767f0c1
   languageName: node
   linkType: hard
 
@@ -3093,9 +3093,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.17.0":
-  version: 8.17.0
-  resolution: "@grafana/scenes@npm:8.17.0"
+"@grafana/scenes@npm:8.19.0":
+  version: 8.19.0
+  resolution: "@grafana/scenes@npm:8.19.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -3120,7 +3120,7 @@ __metadata:
     react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/5db45dec205b91b5b952cd097c8bd0cff0ea4a0b23cd47faa32b0616c4ab36c719ead5898362508e8a7eb7319ed0a412b6f7b516529c9134b42bb732b38db7f7
+  checksum: 10/695a8d7033f9a2483d01558b3b2735cd91c38052e4b908a7e44a94fea26abe9d350f092ac576c58c88060baab4ea1b7f726ba6c32054a1bf10dc8ea9723225d1
   languageName: node
   linkType: hard
 
@@ -20153,8 +20153,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/prometheus": "npm:13.1.14"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:8.17.0"
-    "@grafana/scenes-react": "npm:8.17.0"
+    "@grafana/scenes": "npm:8.19.0"
+    "@grafana/scenes-react": "npm:8.19.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"

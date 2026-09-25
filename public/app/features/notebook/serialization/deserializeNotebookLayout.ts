@@ -54,8 +54,11 @@ export function deserializeNotebookLayout(
 
     if (element.kind === 'Panel') {
       const { timeFrom, timeTo } = element.spec.data.spec.queryOptions;
+      // A one-sided override (e.g. a dashboard-style timeFrom-only shift) isn't a cell range —
+      // leave it untouched so buildVizPanelState sees it and behaves like an ordinary panel
+      // override, instead of being silently blanked below.
       const cellTimeRange = timeFrom && timeTo ? { $timeRange: buildCellSceneTimeRange(timeFrom, timeTo) } : {};
-      const panelElement = timeFrom || timeTo ? withQueryOptionsTimeRange(element, undefined) : element;
+      const panelElement = timeFrom && timeTo ? withQueryOptionsTimeRange(element, undefined) : element;
 
       // buildVizPanelState is dashboard-typed and takes this directly: the notebook panel chain
       // carries the dashboard v2 shape, so the two generated types are structurally identical.

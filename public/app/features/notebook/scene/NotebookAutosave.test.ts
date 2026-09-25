@@ -1,6 +1,16 @@
+import { rangeUtil } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneObjectBase, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import {
+  SceneObjectBase,
+  SceneRefreshPicker,
+  SceneTimePicker,
+  SceneTimeRange,
+  VizPanel,
+  type SceneObjectState,
+  type SceneObjectStateChangedPayload,
+  type SceneTimeRangeState,
+} from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -13,6 +23,7 @@ import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { defaultVisualizationPanelKind } from '../types';
 
+import { changedCellTimeRange } from './NotebookAutosave';
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -483,6 +494,75 @@ describe('NotebookAutosave', () => {
 
       expect(updateNotebook).toHaveBeenCalledTimes(1);
       expect(savedCellTimeRanges()).toEqual([{ from: 'now-24h', to: 'now' }]);
+    });
+
+    // APPLY_NOTEBOOK_SPEC (a whole-document replace) swaps in brand-new cell instances that reuse
+    // the same elementName. A savedCellTimeRanges entry recorded against the old instance must not
+    // outlive the replace and win over what the new document actually carries.
+    it("keeps a whole-document replacement's own cell time range, not a stale one from before the replace", async () => {
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+      expect(savedCellTimeRanges()).toEqual([{ from: 'now-24h', to: 'now' }]);
+
+      const newPanel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
+      const newCell = new NotebookCellItem({
+        elementName: 'panel1',
+        source: 'user',
+        body: newPanel,
+        $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
+      });
+      scene.setState({ body: new NotebookLayoutManager({ cells: [newCell] }) });
+
+      await scene.autosave.saveDocumentChange();
+
+      expect(savedCellTimeRanges().at(-1)).toEqual({ from: 'now-1h', to: 'now' });
+    });
+  });
+
+  describe('changedCellTimeRange', () => {
+    function buildPayload<TState extends SceneObjectState>(
+      overrides: Partial<SceneObjectStateChangedPayload<TState>> &
+        Pick<SceneObjectStateChangedPayload<TState>, 'changedObject'>
+    ): SceneObjectStateChangedPayload<TState> {
+      return { prevState: {} as TState, newState: {} as TState, partialUpdate: {}, ...overrides };
+    }
+
+    it('matches a real reference replacement on the cell', () => {
+      const { scene, cell } = buildSceneWithPanel();
+
+      const payload = buildPayload({ changedObject: cell, partialUpdate: { $timeRange: new SceneTimeRange({}) } });
+
+      expect(changedCellTimeRange(payload, scene)).toBe(cell);
+    });
+
+    // A relative range ticks its own `value` on activation/refresh, on the same object — not an
+    // edit, so it must not be mistaken for one.
+    it("ignores a refresh tick on the cell's own already-set range", () => {
+      const { scene, cell } = buildSceneWithPanel();
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }) });
+
+      const payload = buildPayload<SceneTimeRangeState>({
+        changedObject: cell.state.$timeRange!,
+        partialUpdate: { value: rangeUtil.convertRawToRange({ from: 'now-2h', to: 'now' }) },
+      });
+
+      expect(changedCellTimeRange(payload, scene)).toBeUndefined();
+    });
+
+    it("matches a real edit to the cell's own range object (from/to changing)", () => {
+      const { scene, cell } = buildSceneWithPanel();
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }) });
+
+      const payload = buildPayload<SceneTimeRangeState>({
+        changedObject: cell.state.$timeRange!,
+        partialUpdate: { from: 'now-2h' },
+      });
+
+      expect(changedCellTimeRange(payload, scene)).toBe(cell);
     });
   });
 
