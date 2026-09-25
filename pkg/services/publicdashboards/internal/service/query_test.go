@@ -1442,6 +1442,16 @@ func TestSanitizeDataV2(t *testing.T) {
 											},
 										},
 									},
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"rawQuery": "SELECT mean(value) FROM cpu WHERE time > now() - 1h",
+													"refId":    "B",
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -1470,10 +1480,14 @@ func TestSanitizeDataV2(t *testing.T) {
 
 		panel2Queries := simplejson.NewFromAny(elements["panel-2"]).
 			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
-		require.Len(t, panel2Queries, 1)
+		require.Len(t, panel2Queries, 2)
 		q3spec := simplejson.NewFromAny(panel2Queries[0]).Get("spec").Get("query").Get("spec")
 		assert.Empty(t, q3spec.Get("query").MustString())
 		assert.Equal(t, "A", q3spec.Get("refId").MustString())
+
+		q4spec := simplejson.NewFromAny(panel2Queries[1]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q4spec.Get("rawQuery").MustString())
+		assert.Equal(t, "B", q4spec.Get("refId").MustString())
 	})
 
 	t.Run("does not panic when queries key is missing", func(t *testing.T) {
