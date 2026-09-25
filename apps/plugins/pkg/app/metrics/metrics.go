@@ -86,6 +86,19 @@ var (
 		},
 		[]string{"plugin_id", "version", "caller"},
 	)
+
+	// MetaResolutionFailuresTotal counts per-plugin metadata resolution failures, i.e. calls
+	// to ProviderManager.GetMeta that failed across all providers. Labeled by plugin_id
+	// (bounded by the plugin catalog size, unlike version) so it stays cheap to scrape
+	// even if every plugin starts failing at once.
+	MetaResolutionFailuresTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "meta_resolution_failures_total",
+			Help:      "Total number of per-plugin metadata resolution failures across all providers",
+		},
+		[]string{"plugin_id", "reason"}, // reason: "not_found" or "error"
+	)
 )
 
 func MustRegister(registerer prometheus.Registerer) {
@@ -98,6 +111,7 @@ func MustRegister(registerer prometheus.Registerer) {
 		MetaFetchDurationSeconds,
 		MetaFetchErrorsTotal,
 		MetaRequestsTotal,
+		MetaResolutionFailuresTotal,
 	}
 
 	for _, metric := range metricsToRegister {
