@@ -11,7 +11,6 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/singleflight"
@@ -26,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
@@ -61,6 +61,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 	restConfigProvider restcfg.RestConfigProvider,
+	iamFeatures iam.Features,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -72,6 +73,7 @@ func ProvideService(
 		db,
 		permRegistry,
 		lock,
+		iamFeatures,
 	)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
@@ -103,12 +105,14 @@ func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
+	iamFeatures iam.Features,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
 		cache:          cache,
 		cfg:            cfg,
 		features:       features,
+		iamFeatures:    iamFeatures,
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
@@ -130,6 +134,7 @@ type Service struct {
 	cache                 *localcache.CacheService
 	cfg                   *setting.Cfg
 	features              featuremgmt.FeatureToggles
+	iamFeatures           iam.Features
 	log                   log.Logger
 	registrations         accesscontrol.RegistrationList
 	rolesMu               sync.RWMutex
@@ -163,7 +168,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthzUserPermissions, false, openfeature.TransactionContext(ctx)) {
+	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.iamFeatures.UserPermissionsAPI {
 		if s.userPermissionsClient == nil {
 			return nil, fmt.Errorf("AuthZ user permissions client is not configured")
 		}

@@ -4,22 +4,19 @@ import (
 	"context"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestServiceGetUserPermissionsDelegatesToAuthZ(t *testing.T) {
 	service := setupTestEnv(t, false)
 	service.cfg.RBAC.SingleOrganization = true
-	service.features = featuremgmt.WithFeatures()
-	setAuthZUserPermissionsFlag(t, true)
+	service.iamFeatures = iam.Features{UserPermissionsAPI: true}
 	expected := []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}}
 	client := &fakeUserPermissionsClient{permissions: expected}
 	service.SetUserPermissionsClient(client)
@@ -35,11 +32,23 @@ func TestServiceGetUserPermissionsDelegatesToAuthZ(t *testing.T) {
 	require.Equal(t, 1, client.calls)
 }
 
+func TestServiceGetUserPermissionsUsesLocalRBACWhenStartupAPIIsDisabled(t *testing.T) {
+	service := setupTestEnv(t, false)
+	service.cfg.RBAC.SingleOrganization = true
+	client := &fakeUserPermissionsClient{}
+	service.SetUserPermissionsClient(client)
+	user := &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user-uid", OrgID: 2}
+
+	_, err := service.GetUserPermissions(t.Context(), user, accesscontrol.Options{ReloadCache: true})
+
+	require.NoError(t, err)
+	require.Zero(t, client.calls)
+}
+
 func TestServiceGetUserPermissionsUsesLocalRBACForMultiOrg(t *testing.T) {
 	service := setupTestEnv(t, false)
 	service.cfg.RBAC.SingleOrganization = false
-	service.features = featuremgmt.WithFeatures()
-	setAuthZUserPermissionsFlag(t, true)
+	service.iamFeatures = iam.Features{UserPermissionsAPI: true}
 	client := &fakeUserPermissionsClient{}
 	service.SetUserPermissionsClient(client)
 	user := &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user-uid", OrgID: 2}
@@ -52,8 +61,7 @@ func TestServiceGetUserPermissionsUsesLocalRBACForMultiOrg(t *testing.T) {
 
 func TestServiceGetUserPermissionsUsesLocalRBACForGlobalOrg(t *testing.T) {
 	service := setupTestEnv(t, false)
-	service.features = featuremgmt.WithFeatures()
-	setAuthZUserPermissionsFlag(t, true)
+	service.iamFeatures = iam.Features{UserPermissionsAPI: true}
 	client := &fakeUserPermissionsClient{}
 	service.SetUserPermissionsClient(client)
 	user := &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user-uid", OrgID: accesscontrol.GlobalOrgID}
@@ -64,23 +72,8 @@ func TestServiceGetUserPermissionsUsesLocalRBACForGlobalOrg(t *testing.T) {
 	require.Zero(t, client.calls)
 }
 
-func setAuthZUserPermissionsFlag(t *testing.T, enabled bool) {
-	t.Helper()
-	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagAuthzUserPermissions: {
-			Key:      featuremgmt.FlagAuthzUserPermissions,
-			Variants: map[string]any{"": enabled},
-		},
-	})
-	require.NoError(t, openfeature.SetProviderAndWait(provider))
-	t.Cleanup(func() {
-		require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
-	})
-}
-
 func TestServiceGetRBACUserPermissionsDoesNotDelegateToAuthZ(t *testing.T) {
 	service := setupTestEnv(t, false)
-	service.features = featuremgmt.WithFeatures()
 	client := &fakeUserPermissionsClient{}
 	service.SetUserPermissionsClient(client)
 	user := &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user-uid", OrgID: 2}
