@@ -5,6 +5,10 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
+
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +36,9 @@ type ProxyDependencies struct {
 	RouteAccessChecker pluginproxy.RouteAccessChecker
 	ProxyCfg           *pluginproxy.DataSourceProxySettings
 	HTTPClientProvider httpclient.Provider
+	// TransportConfigKey changes when provider configuration changes between requests.
+	TransportConfigKey string
+	TimeoutDefaults    *sdkhttpclient.TimeoutOptions
 	OAuthTokenService  pluginproxy.OAuthTokenProvider
 	Tracer             tracing.Tracer
 	Features           featuremgmt.FeatureToggles
@@ -55,7 +62,9 @@ func ProvideProxyDependencies(
 }
 
 type subProxyREST struct {
-	builder *DataSourceAPIBuilder
+	builder    *DataSourceAPIBuilder
+	cacheOnce  sync.Once
+	transports *proxyTransportCache
 }
 
 var _ = rest.Connecter(&subProxyREST{})
@@ -64,7 +73,14 @@ func (r *subProxyREST) New() runtime.Object {
 	return &metav1.Status{}
 }
 
-func (r *subProxyREST) Destroy() {}
+func (r *subProxyREST) Destroy() {
+	r.transportCache().close()
+}
+
+func (r *subProxyREST) transportCache() *proxyTransportCache {
+	r.cacheOnce.Do(func() { r.transports = newProxyTransportCache(256, 5*time.Minute) })
+	return r.transports
+}
 
 func (r *subProxyREST) ConnectMethods() []string {
 	unique := map[string]bool{}
@@ -114,6 +130,9 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				return
 			}
 		}
+		loader.transports = r.transportCache()
+		loader.transportConfigKey = deps.TransportConfigKey
+		loader.timeoutDefaults = deps.TimeoutDefaults
 
 		ds, err := loader.DataSource(req.Context())
 		if err != nil {
