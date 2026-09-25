@@ -11586,6 +11586,7 @@
           "excludes": "Exclude",
           "excludes-description": "Matching filesystems are left out of the alert and the host count",
           "invalid-label": "Label names may only contain letters, digits and underscores.",
+          "invalid-pattern": "Pattern is not a valid regular expression.",
           "open": "Exclude hosts or filesystems from the disk alert",
           "summary-excludes": "Excluding {{matchers}}",
           "title": "Customize the disk alert"

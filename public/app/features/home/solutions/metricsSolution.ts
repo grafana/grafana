@@ -92,7 +92,7 @@ export function metricsSolution(
     const ds = await datasource();
     const disk = await diskPressure();
     return ds && disk?.worstInstance && disk.worstMount
-      ? fetchMetricsDiskHoursToFull(disk.worstInstance, disk.worstMount, ds)
+      ? fetchMetricsDiskHoursToFull(disk.worstInstance, disk.worstMount, ds, scopeFor(filter, ds))
       : null;
   });
   const alert = memoize(async () => {

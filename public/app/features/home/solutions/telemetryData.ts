@@ -274,12 +274,17 @@ const DISK_ETA_MAX_HOURS = 48;
 // Pseudo filesystems are always excluded; they read as full without being a problem.
 const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
 
-/** Per-filesystem fill ratio (0..1) that the disk alert and the host count are built on. */
-export function diskRatioExpr(scope: MetricsDiskScope | null): string {
+// The one place the scope becomes matchers, so every disk query narrows to the same filesystems.
+function filesystemSelector(scope: MetricsDiskScope | null, fixed: string[] = []): string {
   const excluded = (scope ? activeExcludes(scope) : []).map(
     ({ label, regex }) => `${label}!~${quotePromString(regex)}`
   );
-  const selector = `{${[FS_EXCLUDE, ...excluded].join(',')}}`;
+  return `{${[...fixed, FS_EXCLUDE, ...excluded].join(',')}}`;
+}
+
+/** Per-filesystem fill ratio (0..1) that the disk alert and the host count are built on. */
+export function diskRatioExpr(scope: MetricsDiskScope | null): string {
+  const selector = filesystemSelector(scope);
   return `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`;
 }
 
@@ -317,13 +322,18 @@ function fetchMetricNameCount(instance: DataSourceWithBackend, start: number, en
 }
 
 // Linear ETA until the shown (fullest) filesystem fills. Growing/steady filesystems drop
-// out via `> 0`; past the clamp a linear estimate is noise.
+// out via `> 0`; past the clamp a linear estimate is noise. Instance labels repeat across
+// clusters, so the scope applies here too or an excluded twin could supply the ETA.
 export async function fetchMetricsDiskHoursToFull(
   instanceLabel: string,
   mountpoint: string,
-  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>,
+  scope: MetricsDiskScope | null
 ): Promise<number | null> {
-  const selector = `{instance=${quotePromString(instanceLabel)},mountpoint=${quotePromString(mountpoint)},${FS_EXCLUDE}}`;
+  const selector = filesystemSelector(scope, [
+    `instance=${quotePromString(instanceLabel)}`,
+    `mountpoint=${quotePromString(mountpoint)}`,
+  ]);
   const hours = await runInstantQueries(
     {
       eta: `min((node_filesystem_avail_bytes${selector} / -deriv(node_filesystem_avail_bytes${selector}[6h])) > 0) / 3600`,

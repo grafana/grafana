@@ -143,10 +143,17 @@ describe('metricsSolution', () => {
     const scoped = metricsSolution(filter);
 
     await scoped.stats();
+    await scoped.alert();
     const cta = await scoped.cta();
 
     expect(mockFetchActivity).toHaveBeenCalledWith(expect.objectContaining({ uid: 'prom-uid' }), filter);
     expect(mockFetchDiskPressure).toHaveBeenCalledWith(expect.objectContaining({ uid: 'prom-uid' }), filter);
+    expect(mockFetchDiskHoursToFull).toHaveBeenCalledWith(
+      'web-03:9100',
+      '/data',
+      expect.objectContaining({ uid: 'prom-uid' }),
+      filter
+    );
     // The Explore link investigates the same population the alert counted.
     expect(decodeURIComponent(cta?.href ?? '')).toContain('instance!~\\"cache-.*\\"');
 
@@ -246,7 +253,8 @@ describe('metricsSolution', () => {
       expect(mockFetchDiskHoursToFull).toHaveBeenCalledWith(
         'web-03:9100',
         '/data',
-        expect.objectContaining({ uid: 'prom-uid' })
+        expect.objectContaining({ uid: 'prom-uid' }),
+        null
       );
     });
 

@@ -557,10 +557,27 @@ describe('metrics telemetry', () => {
   it('reads the ETA for the filesystem selected by disk pressure', async () => {
     mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', 6.4)]);
 
-    await expect(fetchMetricsDiskHoursToFull('web-03:9100', '/data', prom)).resolves.toBe(6.4);
+    await expect(fetchMetricsDiskHoursToFull('web-03:9100', '/data', prom, null)).resolves.toBe(6.4);
 
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       { eta: expect.stringContaining('instance="web-03:9100",mountpoint="/data"') },
+      prom,
+      { timeoutMs: 30_000 }
+    );
+  });
+
+  it('keeps the ETA inside the scope, since an excluded cluster can carry the same instance label', async () => {
+    mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', 6.4)]);
+    const scope = { excludes: [{ label: 'cluster', regex: 'prod-eu-.*' }] };
+
+    await fetchMetricsDiskHoursToFull('web-03:9100', '/data', prom, scope);
+
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(
+      {
+        eta: expect.stringContaining(
+          'instance="web-03:9100",mountpoint="/data",fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs",cluster!~"prod-eu-.*"'
+        ),
+      },
       prom,
       { timeoutMs: 30_000 }
     );
@@ -875,7 +892,7 @@ describe('metrics telemetry', () => {
   it.each([90, 0])('drops a meaningless linear ETA (%s h)', async (eta) => {
     mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', eta)]);
 
-    await expect(fetchMetricsDiskHoursToFull('db-01:9100', '/srv', prom)).resolves.toBeNull();
+    await expect(fetchMetricsDiskHoursToFull('db-01:9100', '/srv', prom, null)).resolves.toBeNull();
   });
 
   it('resolves all-null without querying when the datasource has no backend instance', async () => {
