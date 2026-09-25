@@ -1697,13 +1697,13 @@ func TestCheckMoveAccess(t *testing.T) {
 		},
 		{
 			name:      "move to empty root uses general for destination write",
-			newParent: folder.RootFolderUID,
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
 			oldParent: oldParentUID,
 			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
 		},
 		{
 			name:      "move to empty root detects Editor to Admin escalation",
-			newParent: folder.RootFolderUID,
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
 			oldParent: oldParentUID,
 			allows: []allow{
 				allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID),
@@ -1716,7 +1716,7 @@ func TestCheckMoveAccess(t *testing.T) {
 		{
 			name:      "move from empty root does not mistake Admin for None",
 			newParent: newParentUID,
-			oldParent: folder.RootFolderUID,
+			oldParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
 			allows: []allow{
 				canCreateFolderInNew,
 				allowFolder(utils.VerbSetPermissions, sourceUID, folder.GeneralFolderUID),

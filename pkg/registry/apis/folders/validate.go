@@ -348,10 +348,13 @@ func checkMoveAccess(
 	}
 
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
-	if oldParentUID == folder.RootFolderUID {
+	// Root folders can have an empty parent, but the authorization check does not
+	// evaluate inherited root permissions for an empty parent. Normalize the empty
+	// root sentinel to "general" so the escalation probes evaluate root permissions.
+	if folder.IsRootFolderUID(oldParentUID) {
 		oldParentUID = folder.GeneralFolderUID
 	}
-	if newParentUID == folder.RootFolderUID {
+	if folder.IsRootFolderUID(newParentUID) {
 		newParentUID = folder.GeneralFolderUID
 	}
 
