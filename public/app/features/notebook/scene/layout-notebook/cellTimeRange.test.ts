@@ -1,4 +1,4 @@
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil, setWeekStart } from '@grafana/data';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
@@ -7,7 +7,7 @@ import { NotebookScene } from '../NotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
-import { buildCellSceneTimeRange } from './cellTimeRange';
+import { buildCellSceneTimeRange, buildDraftTimeRangeHost } from './cellTimeRange';
 
 // A day-rounded ("now/d") preset lands on a different calendar day depending on the timezone it's
 // evaluated in. Pacific/Kiritimati (UTC+14) is chosen specifically because it's already the next
@@ -16,13 +16,13 @@ import { buildCellSceneTimeRange } from './cellTimeRange';
 const ANCESTOR_TIME_ZONE = 'Pacific/Kiritimati';
 const NOW = '2024-01-01T20:00:00Z';
 
-function buildActivatedCell(timeZone: string) {
+function buildActivatedCell(timeZone: string, weekStart?: 'saturday' | 'monday' | 'sunday') {
   const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
   const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', body: panel });
   const scene = new NotebookScene({
     title: 'Test notebook',
     body: new NotebookLayoutManager({ cells: [cell] }),
-    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now', timeZone }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now', timeZone, weekStart }),
     timePicker: new SceneTimePicker({}),
     refreshPicker: new SceneRefreshPicker({}),
   });
@@ -37,6 +37,7 @@ describe('buildCellSceneTimeRange', () => {
   });
 
   afterEach(() => {
+    setWeekStart();
     jest.useRealTimers();
   });
 
@@ -107,5 +108,33 @@ describe('buildCellSceneTimeRange', () => {
     expect(cell.state.$timeRange?.state.value.from.valueOf()).toBe(1704056400000);
 
     deactivate();
+  });
+
+  // 2024-01-01 is a Monday. A Saturday week start therefore begins 2023-12-30; the default
+  // (Sunday) week begins 2023-12-31. The ancestor constructor applies weekStart as a global locale
+  // side effect — reset it afterwards so this asserts the cell re-applies the ancestor's week
+  // start itself, rather than inheriting whatever locale was left behind.
+  it("resolves a week-rounded relative range using the ancestor's week start", () => {
+    const { cell, deactivate } = buildActivatedCell('utc', 'saturday');
+    setWeekStart();
+
+    cell.setState({ $timeRange: buildCellSceneTimeRange('now/w', 'now/w') });
+
+    expect(cell.state.$timeRange?.state.value.from.toISOString()).toBe('2023-12-30T00:00:00.000Z');
+    expect(cell.state.$timeRange?.state.value.to.toISOString()).toBe('2024-01-05T23:59:59.999Z');
+
+    deactivate();
+  });
+
+  it("resolves a week-rounded draft range using the notebook's week start", () => {
+    // SceneTimeRange only applies weekStart when it differs from the last one it applied. Pin that
+    // cache to Sunday, then clear the locale, so the draft has to apply Saturday itself.
+    new SceneTimeRange({ from: 'now-6h', to: 'now', weekStart: 'sunday' });
+    setWeekStart();
+
+    const host = buildDraftTimeRangeHost('now/w', 'now/w', 'utc', 'saturday');
+
+    expect(host.state.$timeRange.state.value.from.toISOString()).toBe('2023-12-30T00:00:00.000Z');
+    expect(host.state.$timeRange.state.value.to.toISOString()).toBe('2024-01-05T23:59:59.999Z');
   });
 });

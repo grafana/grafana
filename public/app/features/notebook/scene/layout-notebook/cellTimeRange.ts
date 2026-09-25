@@ -1,4 +1,4 @@
-import { getDefaultTimeRange, rangeUtil, type TimeOption, type TimeRange } from '@grafana/data';
+import { getDefaultTimeRange, rangeUtil, setWeekStart, type TimeOption, type TimeRange } from '@grafana/data';
 import {
   SceneObjectBase,
   SceneTimePicker,
@@ -32,10 +32,15 @@ class NotebookCellTimeRange extends SceneTimeRangeTransformerBase<SceneTimeRange
   }
 
   private refreshValue(): void {
+    const ancestor = this.getAncestorTimeRange().state;
+    // convertRawToRange reads week start from the global date locale, same as SceneTimeRange.
+    if (ancestor.weekStart) {
+      setWeekStart(ancestor.weekStart);
+    }
     const value = rangeUtil.convertRawToRange(
       { from: this.state.from, to: this.state.to },
       this.getTimeZone(),
-      this.getAncestorTimeRange().state.fiscalYearStartMonth
+      ancestor.fiscalYearStartMonth
     );
     this.setState({ value });
   }
@@ -103,10 +108,11 @@ export function buildDraftTimeRangeHost(
   from: string,
   to: string,
   timeZone: string,
+  weekStart: SceneTimeRangeState['weekStart'],
   quickRanges?: TimeOption[]
 ): DraftTimeRangeHost {
   return new DraftTimeRangeHost({
-    $timeRange: new DraftCellTimeRange({ from, to, timeZone }),
+    $timeRange: new DraftCellTimeRange({ from, to, timeZone, weekStart }),
     timePicker: new SceneTimePicker({ hideTimeSettings: true, quickRanges }),
   });
 }

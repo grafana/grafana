@@ -60,7 +60,13 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
   const committed = cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : seedFromAncestor(cell);
 
   const [host] = useState(() =>
-    buildDraftTimeRangeHost(committed.from, committed.to, ancestorTimeZone, getQuickRanges(cell))
+    buildDraftTimeRangeHost(
+      committed.from,
+      committed.to,
+      ancestorTimeZone,
+      getAncestorWeekStart(cell),
+      getQuickRanges(cell)
+    )
   );
   const [useNotebookTime, setUseNotebookTime] = useState(cell.state.$timeRange === undefined);
 
@@ -119,6 +125,10 @@ function seedFromAncestor(cell: NotebookCellItem): CellTimeRangeSpec {
 // isn't picked up in its place.
 function getAncestorTimeZone(cell: NotebookCellItem): string {
   return sceneGraph.getTimeRange(cell.parent ?? cell).getTimeZone();
+}
+
+function getAncestorWeekStart(cell: NotebookCellItem) {
+  return sceneGraph.getTimeRange(cell.parent ?? cell).state.weekStart;
 }
 
 function getQuickRanges(cell: NotebookCellItem): TimeOption[] | undefined {
