@@ -10,6 +10,7 @@ import "@openfeature/core";
 
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
+    | "canvasPanelNesting"
     | "lokiShardSplitting"
     | "faroSessionReplay"
     | "queryHistory.localOnly"
@@ -31,6 +32,8 @@ declare module "@openfeature/core" {
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"
+    | "canvasPanelPanZoom"
+    | "tableSharedCrosshair"
     | "stateTimeline.nameAboveBars"
     | "secretsManagementAppPlatformUI"
     | "grafana.secretsReferenceValueUI"
@@ -46,6 +49,7 @@ declare module "@openfeature/core" {
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "alertingNavigationV2"
+    | "vizActionsAuth"
     | "enableExtensionsAdminPage"
     | "alerting.dataSourceManagedRouteProxy"
     | "alerting.manualAssistantInvestigation"
@@ -61,6 +65,7 @@ declare module "@openfeature/core" {
     | "grafana.newTextPanel"
     | "text.newFeatures"
     | "alertingTriage"
+    | "pieChartGradientColorScheme"
     | "plugins.useMTPlugins"
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
@@ -78,6 +83,7 @@ declare module "@openfeature/core" {
     | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
+    | "enableColorblindSafePanelOptions"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"

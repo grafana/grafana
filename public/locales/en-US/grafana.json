@@ -6062,6 +6062,12 @@
       "ungroup-repeat-loss": "Repeat options configured on the ungrouped groups will be lost.",
       "ungroup-repeat-loss-title": "Ungroup?"
     },
+    "loading": {
+      "drawer": "Loading drawer",
+      "drawer-title": "Loading…",
+      "sidebar": "Loading sidebar",
+      "sidebar-title": "Loading…"
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
       "tooltip-next": "Next",
@@ -10867,6 +10873,7 @@
       "placeholder": "Choose"
     },
     "table": {
+      "cell-actions": "Cell actions",
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
@@ -14885,12 +14892,16 @@
       "force-delete-cancel": "Cancel",
       "force-delete-confirm": "Delete anyway",
       "force-delete-title": "Delete repository anyway",
-      "force-delete-warning": "This removes the repository without completing the blocking step, so anything it manages on the provider side (for example a webhook) is left in place. Only do this if the repository can no longer be reached — for example its credentials have expired or been revoked."
+      "force-delete-warning": "This removes the repository without completing the blocking step, so anything it manages on the provider side (for example a webhook) is left in place. Only do this if the repository can no longer be reached — for example its credentials have expired or been revoked.",
+      "release-button": "Release all resources",
+      "release-confirm": "Release all resources",
+      "release-in-progress": "Releasing resources. The repository is removed on the next cleanup attempt, which can take a minute.",
+      "release-title": "Release all resources",
+      "release-warning": "Instead of deleting them, the remaining folders and resources managed by this repository are kept in Grafana and become editable again. Unmanaged resources are not affected. The repository is removed once they are released."
     },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
-      "not-found": "not found",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
       "tab-overview": "Overview",

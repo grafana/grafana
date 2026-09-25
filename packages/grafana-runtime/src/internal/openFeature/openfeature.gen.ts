@@ -40,6 +40,10 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
+  /** Allow elements nesting */
+  CanvasPanelNesting: "canvasPanelNesting",
+  /** Allow pan and zoom in canvas panel */
+  CanvasPanelPanZoom: "canvasPanelPanZoom",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
@@ -66,6 +70,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enables new colorblind safe palette and line fill patterns for panels */
+  EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
   EnableExtensionsAdminPage: "enableExtensionsAdminPage",
   /** A/A test for recently viewed dashboards feature */
@@ -172,6 +178,8 @@ export const FlagKeys = {
   PaneleditButtonLabels: "paneledit.buttonLabels",
   /** Enables viewing non-applicable drilldowns on a panel level */
   PerPanelNonApplicableDrilldowns: "perPanelNonApplicableDrilldowns",
+  /** Enable gradient color scheme option for the pie chart panel */
+  PieChartGradientColorScheme: "pieChartGradientColorScheme",
   /** Enables RBAC for playlists */
   PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
@@ -236,10 +244,14 @@ export const FlagKeys = {
   TableRefresh: "table.refresh",
   /** Catch-all toggle for new features developed as part of the Q3 table panel refresh */
   TableRefreshNewFeatures: "table.refreshNewFeatures",
+  /** Enables shared crosshair in table panel */
+  TableSharedCrosshair: "tableSharedCrosshair",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
+  /** Allows authenticated API calls in actions */
+  VizActionsAuth: "vizActionsAuth",
 } as const;
 
 /**
@@ -386,6 +398,28 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
 };
 
 /**
+ * Allow elements nesting
+ *
+ * **Details:**
+ * - flag key: `canvasPanelNesting`
+ * - default value: `false`
+ */
+export const useFlagCanvasPanelNesting = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("canvasPanelNesting", false, options).value;
+};
+
+/**
+ * Allow pan and zoom in canvas panel
+ *
+ * **Details:**
+ * - flag key: `canvasPanelPanZoom`
+ * - default value: `false`
+ */
+export const useFlagCanvasPanelPanZoom = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("canvasPanelPanZoom", false, options).value;
+};
+
+/**
  * Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
  *
  * **Details:**
@@ -526,6 +560,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Enables new colorblind safe palette and line fill patterns for panels
+ *
+ * **Details:**
+ * - flag key: `enableColorblindSafePanelOptions`
+ * - default value: `false`
+ */
+export const useFlagEnableColorblindSafePanelOptions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("enableColorblindSafePanelOptions", false, options).value;
 };
 
 /**
@@ -1112,6 +1157,17 @@ export const useFlagPerPanelNonApplicableDrilldowns = (options?: ReactFlagEvalua
 };
 
 /**
+ * Enable gradient color scheme option for the pie chart panel
+ *
+ * **Details:**
+ * - flag key: `pieChartGradientColorScheme`
+ * - default value: `false`
+ */
+export const useFlagPieChartGradientColorScheme = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("pieChartGradientColorScheme", false, options).value;
+};
+
+/**
  * Enables RBAC for playlists
  *
  * **Details:**
@@ -1464,6 +1520,17 @@ export const useFlagTableRefreshNewFeatures = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Enables shared crosshair in table panel
+ *
+ * **Details:**
+ * - flag key: `tableSharedCrosshair`
+ * - default value: `false`
+ */
+export const useFlagTableSharedCrosshair = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("tableSharedCrosshair", false, options).value;
+};
+
+/**
  * Enables the new features in text panel
  *
  * **Details:**
@@ -1483,5 +1550,16 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("useKubernetesShortURLsAPI", true, options).value;
+};
+
+/**
+ * Allows authenticated API calls in actions
+ *
+ * **Details:**
+ * - flag key: `vizActionsAuth`
+ * - default value: `false`
+ */
+export const useFlagVizActionsAuth = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("vizActionsAuth", false, options).value;
 };
 
