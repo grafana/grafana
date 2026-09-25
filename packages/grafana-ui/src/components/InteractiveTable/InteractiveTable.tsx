@@ -279,6 +279,8 @@ export function InteractiveTable<TableData extends object>({
                 return (
                   <th
                     key={header.id}
+                    // react-table v7 set this. Without it, the custom variable preview cannot find its headers.
+                    role="columnheader"
                     colSpan={header.colSpan}
                     className={cx(styles.header, header.column.columnDef.meta?.widthClass, {
                       [styles.disableGrow]: header.column.columnDef.size === 0,
