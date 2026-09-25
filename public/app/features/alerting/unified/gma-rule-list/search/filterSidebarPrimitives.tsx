@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, IconButton, Input, Label, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Icon, IconButton, Input, Label, RadioButtonGroup, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
 
 import { type Criteria, type LabelMatcher, type LabelOperator } from './types';
 
@@ -168,6 +168,36 @@ export function InvalidTokenNote() {
         Could not be resolved — showing no results until this is fixed.
       </Trans>
     </Text>
+  );
+}
+
+export interface SwitchFieldProps {
+  label: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+  disabled?: boolean;
+}
+
+/**
+ * A Switch with the label actually visible on screen. Switch's own `label` prop only sets
+ * `aria-label` on an empty `<label>` — sighted users see no text at all — so this pairs it
+ * with a clickable, visible text node wired to the same control.
+ */
+export function SwitchField({ label, value, onChange, disabled }: SwitchFieldProps) {
+  const id = useId();
+  return (
+    <Stack gap={1} alignItems="center">
+      {/* No `label` prop here: it would only set aria-label on top of the visible <label>
+       * below, doubling the computed accessible name. */}
+      <Switch id={id} value={value} disabled={disabled} onChange={(e) => onChange(e.currentTarget.checked)} />
+      {/* A native <label htmlFor> toggles the switch on click without extra handlers, and
+       * gives the switch its accessible name via label association instead of aria-label. */}
+      <label htmlFor={id}>
+        <Text element="span" color={disabled ? 'disabled' : 'primary'}>
+          {label}
+        </Text>
+      </label>
+    </Stack>
   );
 }
 

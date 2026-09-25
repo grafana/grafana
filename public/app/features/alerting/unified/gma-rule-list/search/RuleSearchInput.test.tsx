@@ -1,20 +1,28 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { RuleSearchInput } from './RuleSearchInput';
 import { alertTokens } from './tokenDefinitions';
 
 describe('RuleSearchInput', () => {
   it('SEARCH-1.2: applies a valid edit after the debounce, not on every keystroke', async () => {
-    const user = userEvent.setup();
+    // Fake timers make the debounce deterministic: with real timers, userEvent's own
+    // per-keystroke delay can exceed a short debounce under load, firing onApply early on a
+    // partial value instead of waiting for the full "cpu". advanceTimers ties userEvent's
+    // internal waits to the same fake clock so typing still resolves.
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     const onApply = jest.fn();
-    render(<RuleSearchInput query="" onApply={onApply} tokens={alertTokens} debounceMs={50} />);
+    render(<RuleSearchInput query="" onApply={onApply} tokens={alertTokens} debounceMs={400} />);
 
     await user.type(screen.getByRole('textbox', { name: /search/i }), 'cpu');
-
     expect(onApply).not.toHaveBeenCalled();
-    await waitFor(() => expect(onApply).toHaveBeenCalledWith('cpu'));
+
+    jest.advanceTimersByTime(400);
+    expect(onApply).toHaveBeenCalledWith('cpu');
     expect(onApply).toHaveBeenCalledTimes(1);
+
+    jest.useRealTimers();
   });
 
   it('SEARCH-1.3: Enter applies immediately, without waiting for the debounce', async () => {

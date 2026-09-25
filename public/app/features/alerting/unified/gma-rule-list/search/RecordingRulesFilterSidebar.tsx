@@ -1,7 +1,7 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, Input, Stack, Switch } from '@grafana/ui';
+import { Button, Input, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
 import { type CriteriaIssue } from './criteriaIssues';
@@ -13,6 +13,7 @@ import {
   RuleTitleField,
   SidebarField,
   SidebarSection,
+  SwitchField,
 } from './filterSidebarPrimitives';
 import { type Criteria } from './types';
 
@@ -66,14 +67,16 @@ export function RecordingRulesFilterSidebar({ criteria, onChange, onClear, hasAc
             >
               <DataSourcePicker
                 current={criteria.dataSourceUids[0]}
+                noDefault
+                onClear={() => onChange({ ...criteria, dataSourceUids: [] })}
                 onChange={(ds: DataSourceInstanceSettings) => onChange({ ...criteria, dataSourceUids: [ds.uid] })}
               />
             </SidebarField>
             <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.plugins">Plugin rules</Trans>}>
-              <Switch
+              <SwitchField
                 label={t('alerting.gma-rule-list.search.property.hide-plugin-rules', 'Hide plugin rules')}
                 value={criteria.hidePluginRules}
-                onChange={(e) => onChange({ ...criteria, hidePluginRules: e.currentTarget.checked })}
+                onChange={(hidePluginRules) => onChange({ ...criteria, hidePluginRules })}
               />
             </SidebarField>
           </SidebarSection>
@@ -89,6 +92,8 @@ export function RecordingRulesFilterSidebar({ criteria, onChange, onClear, hasAc
             <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.target-datasource">Target data source</Trans>}>
               <DataSourcePicker
                 current={criteria.targetDataSourceUid}
+                noDefault
+                onClear={() => onChange({ ...criteria, targetDataSourceUid: undefined })}
                 onChange={(ds: DataSourceInstanceSettings) => onChange({ ...criteria, targetDataSourceUid: ds.uid })}
               />
             </SidebarField>

@@ -84,7 +84,7 @@ export function RuleSearchInput({
   const hasIssues = invalidKeys.length > 0;
 
   return (
-    <Stack direction="column" gap={0.5}>
+    <Stack direction="column" gap={0.5} width="100%">
       <Label htmlFor={id}>
         <Stack gap={0.5} alignItems="center">
           <span>

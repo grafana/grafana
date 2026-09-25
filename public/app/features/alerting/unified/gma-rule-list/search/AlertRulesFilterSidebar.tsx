@@ -3,7 +3,7 @@ import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerti
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, Input, RadioButtonGroup, Stack, Switch, Tooltip } from '@grafana/ui';
+import { Button, Combobox, type ComboboxOption, Input, Stack, Tooltip } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 
@@ -16,8 +16,19 @@ import {
   RuleTitleField,
   SidebarField,
   SidebarSection,
+  SwitchField,
 } from './filterSidebarPrimitives';
 import { type Criteria } from './types';
+
+type PausedValue = 'any' | 'true' | 'false';
+
+function getPausedOptions(): Array<ComboboxOption<PausedValue>> {
+  return [
+    { label: t('alerting.gma-rule-list.search.paused-any', 'Any'), value: 'any' },
+    { label: t('alerting.gma-rule-list.search.paused-true', 'Paused'), value: 'true' },
+    { label: t('alerting.gma-rule-list.search.paused-false', 'Not paused'), value: 'false' },
+  ];
+}
 
 export interface AlertRulesFilterSidebarProps {
   criteria: Criteria;
@@ -72,14 +83,19 @@ export function AlertRulesFilterSidebar({ criteria, onChange, onClear, hasActive
             >
               <DataSourcePicker
                 current={criteria.dataSourceUids[0]}
+                // Without noDefault, an empty `current` preselects the org default data
+                // source instead of showing no selection — misleading here, where no
+                // selection means "don't filter by data source" rather than "use the default".
+                noDefault
+                onClear={() => onChange({ ...criteria, dataSourceUids: [] })}
                 onChange={(ds: DataSourceInstanceSettings) => onChange({ ...criteria, dataSourceUids: [ds.uid] })}
               />
             </SidebarField>
             <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.plugins">Plugin rules</Trans>}>
-              <Switch
+              <SwitchField
                 label={t('alerting.gma-rule-list.search.property.hide-plugin-rules', 'Hide plugin rules')}
                 value={criteria.hidePluginRules}
-                onChange={(e) => onChange({ ...criteria, hidePluginRules: e.currentTarget.checked })}
+                onChange={(hidePluginRules) => onChange({ ...criteria, hidePluginRules })}
               />
             </SidebarField>
           </SidebarSection>
@@ -124,6 +140,7 @@ export function AlertRulesFilterSidebar({ criteria, onChange, onClear, hasActive
             <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.contact-point">Contact point</Trans>}>
               <ContactPointSelector
                 value={criteria.contactPoint}
+                placeholder={t('alerting.gma-rule-list.search.contact-point-placeholder', 'Select contact point')}
                 isClearable
                 disabled={Boolean(criteria.policy)}
                 onChange={(cp: { spec: { title: string } } | null) =>
@@ -135,31 +152,29 @@ export function AlertRulesFilterSidebar({ criteria, onChange, onClear, hasActive
               <Stack direction="column" gap={0.5}>
                 <RoutingTreeSelector
                   value={criteria.policy === 'default' ? undefined : criteria.policy}
+                  placeholder={t('alerting.gma-rule-list.search.policy-placeholder', 'Select policy')}
                   isClearable
                   disabled={Boolean(criteria.contactPoint) || criteria.policy === 'default'}
                   onChange={(tree: RoutingTree | null) =>
                     onChange({ ...criteria, policy: tree?.metadata.name, contactPoint: tree ? undefined : criteria.contactPoint })
                   }
                 />
-                <Switch
+                <SwitchField
                   label={t('alerting.gma-rule-list.search.property.default-policy', 'Default policy')}
                   value={criteria.policy === 'default'}
                   disabled={Boolean(criteria.contactPoint)}
-                  onChange={(e) =>
-                    onChange({ ...criteria, policy: e.currentTarget.checked ? 'default' : undefined, contactPoint: undefined })
-                  }
+                  onChange={(isDefault) => onChange({ ...criteria, policy: isDefault ? 'default' : undefined, contactPoint: undefined })}
                 />
               </Stack>
             </SidebarField>
             <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.paused">Paused</Trans>}>
-              <RadioButtonGroup<'any' | 'true' | 'false'>
-                options={[
-                  { label: t('alerting.gma-rule-list.search.paused-any', 'Any'), value: 'any' },
-                  { label: t('alerting.gma-rule-list.search.paused-true', 'Paused'), value: 'true' },
-                  { label: t('alerting.gma-rule-list.search.paused-false', 'Not paused'), value: 'false' },
-                ]}
+              <Combobox<PausedValue>
+                aria-label={t('alerting.gma-rule-list.search.property.paused', 'Paused')}
+                options={getPausedOptions()}
                 value={criteria.paused ?? 'any'}
-                onChange={(value) => onChange({ ...criteria, paused: value === 'any' ? undefined : value })}
+                onChange={(option: ComboboxOption<PausedValue> | null) =>
+                  onChange({ ...criteria, paused: !option || option.value === 'any' ? undefined : option.value })
+                }
               />
             </SidebarField>
           </SidebarSection>
