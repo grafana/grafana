@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -70,7 +72,7 @@ func legacyStatusHandler(t *testing.T, rule *ngmodels.AlertRule) (*Handler, *log
 	client := NewLegacyClient(*service)
 	client.logger = logger
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1, UserID: 1})
-	return NewHandler(client, client), logger, ctx
+	return NewHandler(selectorForBackend(alertrule.ResourceInfo.GroupResource(), client), selectorForBackend(recordingrule.ResourceInfo.GroupResource(), client)), logger, ctx
 }
 
 func TestPerKindSearch_legacyStatusProjection(t *testing.T) {
@@ -155,7 +157,7 @@ func TestPerKindSearch_statusFieldsRejectFilteringAndSorting(t *testing.T) {
 				}
 				t.Run(field+"/"+operation+"/"+map[bool]string{false: "alert", true: "recording"}[recording], func(t *testing.T) {
 					index := &fakeIndex{}
-					h := NewHandler(index, index)
+					h := newUnifiedHandler(index, index)
 					route := h.SearchAlertRules
 					if recording {
 						route = h.SearchRecordingRules

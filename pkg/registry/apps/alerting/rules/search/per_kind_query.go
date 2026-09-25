@@ -8,7 +8,6 @@ import (
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const (
@@ -49,7 +48,7 @@ func perKindSortedKeys(m map[string]struct{}) []string {
 var perKindDefaultReturnFields = []string{fieldTitle, fieldFolder}
 
 type perKindSearchRequest struct {
-	req    *resourcepb.ResourceSearchRequest
+	req    *Query
 	offset int64
 	fields []string
 }
@@ -57,12 +56,13 @@ type perKindSearchRequest struct {
 func buildPerKindSearchRequest(q *searchv0.SearchQuery, leaves []searchv0.WhereNode, namespace string, k perKind) perKindSearchRequest {
 	offset, _ := decodeCursor(q.Continue)
 	fields := resolvePerKindReturnFields(q.Fields)
-	req := &resourcepb.ResourceSearchRequest{
-		Options:      &resourcepb.ListOptions{Key: resourceKey(namespace, k.groupResource())},
-		Limit:        resolvePerKindLimit(q.Limit),
-		Offset:       offset,
-		Fields:       append([]string{}, fields...),
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	req := &Query{
+		Namespace: namespace,
+		Primary:   k.groupResource(),
+		Limit:     resolvePerKindLimit(q.Limit),
+		Offset:    offset,
+		Fields:    append([]string{}, fields...),
+		PerKind:   true,
 	}
 
 	applyPerKindLeaves(req, leaves)
@@ -90,18 +90,18 @@ func resolvePerKindReturnFields(fields []string) []string {
 	return fields
 }
 
-func applyPerKindLeaves(req *resourcepb.ResourceSearchRequest, leaves []searchv0.WhereNode) {
+func applyPerKindLeaves(req *Query, leaves []searchv0.WhereNode) {
 	for i := range leaves {
 		switch n := leaves[i]; {
 		case n.Text != nil:
-			req.Query = n.Text.Value
+			req.Text = n.Text.Value
 		case n.Filter != nil:
-			req.Options.Fields = append(req.Options.Fields, perKindFilterRequirement(n.Filter))
+			req.Filters = append(req.Filters, perKindFilterRequirement(n.Filter))
 		}
 	}
 }
 
-func perKindFilterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
+func perKindFilterRequirement(f *searchv0.FilterPredicate) *searchv0.FilterPredicate {
 	if f.Field == fieldLabels {
 		m := parseLabelMatcher(f.Values[0])
 		if f.Operator == perKindFilterOperatorNotIn {
@@ -109,17 +109,10 @@ func perKindFilterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requireme
 		}
 		return labelMatcherRequirement(m)
 	}
-	return &resourcepb.Requirement{Key: f.Field, Operator: perKindFilterOperator(f.Operator), Values: f.Values}
+	return f
 }
 
-func perKindFilterOperator(op string) string {
-	if op == perKindFilterOperatorNotIn {
-		return "notin"
-	}
-	return "in"
-}
-
-func applyPerKindLabelSelector(req *resourcepb.ResourceSearchRequest, sel *metav1.LabelSelector) {
+func applyPerKindLabelSelector(req *Query, sel *metav1.LabelSelector) {
 	if sel == nil {
 		return
 	}
@@ -129,31 +122,18 @@ func applyPerKindLabelSelector(req *resourcepb.ResourceSearchRequest, sel *metav
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		req.Options.Labels = append(req.Options.Labels, &resourcepb.Requirement{
-			Key: k, Operator: "in", Values: []string{sel.MatchLabels[k]},
+		req.GroupFilters = append(req.GroupFilters, metav1.LabelSelectorRequirement{
+			Key: k, Operator: metav1.LabelSelectorOpIn, Values: []string{sel.MatchLabels[k]},
 		})
 	}
-	for _, r := range sel.MatchExpressions {
-		op := "in"
-		if r.Operator == metav1.LabelSelectorOpNotIn {
-			op = "notin"
-		}
-		req.Options.Labels = append(req.Options.Labels, &resourcepb.Requirement{
-			Key: r.Key, Operator: op, Values: r.Values,
-		})
-	}
+	req.GroupFilters = append(req.GroupFilters, sel.MatchExpressions...)
 }
 
-func applyPerKindSort(req *resourcepb.ResourceSearchRequest, sorts []searchv0.SortField) {
+func applyPerKindSort(req *Query, sorts []searchv0.SortField) {
 	if len(sorts) == 0 {
 		sorts = []searchv0.SortField{{Field: fieldTitle, Direction: sortAscending}}
 	}
-	for _, s := range sorts {
-		req.SortBy = append(req.SortBy, &resourcepb.ResourceSearchRequest_Sort{
-			Field: s.Field,
-			Desc:  s.Direction == sortDescending,
-		})
-	}
+	req.Sort = sorts
 }
 
 func perKindSortRules(rules []*ngmodels.AlertRule, field string, desc bool) {

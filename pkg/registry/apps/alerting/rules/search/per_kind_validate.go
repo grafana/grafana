@@ -3,6 +3,7 @@ package search
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -409,9 +410,7 @@ func validateSort(sorts []searchv0.SortField, k perKind, p *field.Path) field.Er
 	return errs
 }
 
-// validateReturnFields checks the projection. A field must be retrievable on the
-// kind and carried by the result table both backends emit, else it would be
-// silently absent from every hit.
+// Reject fields either backend cannot return, rather than silently omitting them.
 func validateReturnFields(fields []string, k perKind, p *field.Path) field.ErrorList {
 	var errs field.ErrorList
 	for i, name := range fields {
@@ -420,7 +419,7 @@ func validateReturnFields(fields []string, k perKind, p *field.Path) field.Error
 			errs = append(errs, capErrs...)
 			continue
 		}
-		if _, ok := results.index[name]; !ok {
+		if !slices.Contains(resultColumns, name) {
 			errs = append(errs, field.Invalid(fp, name, "returning this field is not supported"))
 		}
 	}

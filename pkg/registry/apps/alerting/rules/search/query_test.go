@@ -140,7 +140,7 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 // set membership so its values must stay in one multi-value requirement.
 func TestBuildSearchRequest_labelSelector(t *testing.T) {
 	gr := alertrule.ResourceInfo.GroupResource()
-	build := func(t *testing.T, selector string) *resourcepb.ResourceSearchRequest {
+	build := func(t *testing.T, selector string) *Query {
 		t.Helper()
 		sel := selector
 		req, _, err := buildSearchRequest(
@@ -156,7 +156,7 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 	}
 
 	t.Run("selects on metadata labels, not spec labels", func(t *testing.T) {
-		req := build(t, model.GroupLabelKey+"=g1")
+		req := buildUnifiedRequest(build(t, model.GroupLabelKey+"=g1"))
 		require.Len(t, req.Options.Labels, 1)
 		assert.Empty(t, req.Options.Fields, "must not touch the indexed spec-labels field")
 		assert.Equal(t, model.GroupLabelKey, req.Options.Labels[0].Key)
@@ -166,9 +166,10 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 
 	t.Run("multi-value In stays one requirement so values OR", func(t *testing.T) {
 		req := build(t, model.GroupLabelKey+" in (g1,g2)")
-		require.Len(t, req.Options.Labels, 1, "values must stay in one requirement to OR")
-		assert.Equal(t, "in", req.Options.Labels[0].Operator)
-		assert.ElementsMatch(t, []string{"g1", "g2"}, req.Options.Labels[0].Values)
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Labels, 1, "values must stay in one requirement to OR")
+		assert.Equal(t, "in", wire.Options.Labels[0].Operator)
+		assert.ElementsMatch(t, []string{"g1", "g2"}, wire.Options.Labels[0].Values)
 
 		// the legacy side reads both values into the group include filter
 		f := extractFilters(req)
@@ -177,8 +178,9 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 
 	t.Run("NotIn becomes a group exclusion", func(t *testing.T) {
 		req := build(t, model.GroupLabelKey+" notin (g1,g2)")
-		require.Len(t, req.Options.Labels, 1)
-		assert.Equal(t, "notin", req.Options.Labels[0].Operator)
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Labels, 1)
+		assert.Equal(t, "notin", wire.Options.Labels[0].Operator)
 
 		f := extractFilters(req)
 		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsExclude)
@@ -215,7 +217,7 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 			Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldLabels, Operator: op, Values: vals},
 		}
 	}
-	build := func(nodes ...model.CreateSearchRulesRequestSearchWhereNode) (*resourcepb.ResourceSearchRequest, error) {
+	build := func(nodes ...model.CreateSearchRulesRequestSearchWhereNode) (*Query, error) {
 		req, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{
 			Where: &model.CreateSearchRulesRequestSearchWhereNode{And: nodes},
 		}, "default", gr, nil)
@@ -241,9 +243,10 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 		} {
 			req, err := build(leaf(tc.op, tc.value))
 			require.NoError(t, err, "%s %q", tc.op, tc.value)
-			require.Len(t, req.Options.Fields, 1, "%s %q", tc.op, tc.value)
-			assert.Equal(t, tc.operator, req.Options.Fields[0].Operator, "%s %q", tc.op, tc.value)
-			assert.Equal(t, []string{tc.term}, req.Options.Fields[0].Values, "%s %q", tc.op, tc.value)
+			wire := buildUnifiedRequest(req)
+			require.Len(t, wire.Options.Fields, 1, "%s %q", tc.op, tc.value)
+			assert.Equal(t, tc.operator, wire.Options.Fields[0].Operator, "%s %q", tc.op, tc.value)
+			assert.Equal(t, []string{tc.term}, wire.Options.Fields[0].Values, "%s %q", tc.op, tc.value)
 		}
 	})
 
@@ -257,9 +260,10 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 	t.Run("repeated leaves conjoin", func(t *testing.T) {
 		req, err := build(leaf(opIn, "team=a"), leaf(notIn, "env=prod"))
 		require.NoError(t, err)
-		require.Len(t, req.Options.Fields, 2, "each leaf gets its own requirement")
-		assert.Equal(t, "in", req.Options.Fields[0].Operator)
-		assert.Equal(t, "notin", req.Options.Fields[1].Operator)
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Fields, 2, "each leaf gets its own requirement")
+		assert.Equal(t, "in", wire.Options.Fields[0].Operator)
+		assert.Equal(t, "notin", wire.Options.Fields[1].Operator)
 
 		// The legacy backend rebuilds the matchers from those requirements, so a
 		// rule has to satisfy both.
@@ -323,7 +327,7 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 	// in-memory pass used to do when it built the rule's datasource set.
 	t.Run("rejects synthetic datasourceUIDs", func(t *testing.T) {
 		gr := alertrule.ResourceInfo.GroupResource()
-		reqFor := func(vals ...string) (*resourcepb.ResourceSearchRequest, error) {
+		reqFor := func(vals ...string) (*Query, error) {
 			body := model.CreateSearchRulesRequestBody{Where: &model.CreateSearchRulesRequestSearchWhereNode{
 				Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldDatasourceUIDs, Operator: opIn, Values: vals},
 			}}
@@ -334,8 +338,8 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 		t.Run("accepts real datasources", func(t *testing.T) {
 			req, err := reqFor("ds1", "ds2", "ds3")
 			require.NoError(t, err)
-			require.Len(t, req.Options.Fields, 1)
-			assert.Equal(t, []string{"ds1", "ds2", "ds3"}, req.Options.Fields[0].Values)
+			require.Len(t, req.Filters, 1)
+			assert.Equal(t, []string{"ds1", "ds2", "ds3"}, req.Filters[0].Values)
 		})
 
 		t.Run("rejects synethic datasources", func(t *testing.T) {
@@ -370,8 +374,8 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 			require.NoError(t, err, "%s=%s", tc.field, tc.value)
 
 			var got []string
-			for _, r := range req.Options.Fields {
-				if r.Key == tc.field {
+			for _, r := range req.Filters {
+				if r.Field == tc.field {
 					got = r.Values
 				}
 			}
@@ -619,7 +623,7 @@ func TestCellsParseRoundTrip(t *testing.T) {
 	}
 
 	resp := legacyResponse(t, rule)
-	hits := NewHandler(nil, nil).parseHits(resp)
+	hits := NewHandler(nil, nil).parseHits(decodeTestResult(t, resp))
 	require.Len(t, hits, 1)
 	h := hits[0]
 
@@ -665,7 +669,7 @@ func TestParseHits_recordingRuleKind(t *testing.T) {
 		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}},
 	}
 	resp := legacyResponse(t, rule)
-	hits := NewHandler(nil, nil).parseHits(resp)
+	hits := NewHandler(nil, nil).parseHits(decodeTestResult(t, resp))
 	require.Len(t, hits, 1)
 	h := hits[0]
 
