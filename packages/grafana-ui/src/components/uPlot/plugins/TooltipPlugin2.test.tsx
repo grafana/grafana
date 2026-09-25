@@ -496,6 +496,32 @@ describe('TooltipPlugin2', () => {
       view.unmount();
     });
 
+    it('does not throw when ready or scroll fire before the plot is initialised', () => {
+      const { view, readyCallback } = setUp();
+
+      expect(() => readyCallback()).not.toThrow();
+      expect(() => window.dispatchEvent(new Event('scroll'))).not.toThrow();
+
+      view.unmount();
+    });
+
+    it('removes window scroll listener on unmount', () => {
+      const addSpy = jest.spyOn(window, 'addEventListener');
+      const { view } = setUp();
+
+      const scrollRegistration = addSpy.mock.calls.find((call) => call[0] === 'scroll');
+      expect(scrollRegistration).toBeDefined();
+      const onscroll = scrollRegistration![1];
+
+      addSpy.mockRestore();
+
+      const removeSpy = jest.spyOn(window, 'removeEventListener');
+      view.unmount();
+
+      expect(removeSpy).toHaveBeenCalledWith('scroll', onscroll, true);
+      removeSpy.mockRestore();
+    });
+
     it('should clean up mouseup listener (onUp)', () => {
       const docAddSpy = jest.spyOn(document, 'addEventListener');
       const docRemoveSpy = jest.spyOn(document, 'removeEventListener');

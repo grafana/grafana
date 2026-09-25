@@ -608,8 +608,13 @@ export const TooltipPlugin2 = ({
     };
 
     const updatePlotVisible = () => {
-      plotVisible =
-        _plot!.rect.bottom <= winHgt && _plot!.rect.top >= 0 && _plot!.rect.left >= 0 && _plot!.rect.right <= winWid;
+      const rect = _plot?.rect;
+
+      if (rect == null) {
+        return;
+      }
+
+      plotVisible = rect.bottom <= winHgt && rect.top >= 0 && rect.left >= 0 && rect.right <= winWid;
     };
 
     updateWinSize();
@@ -682,7 +687,7 @@ export const TooltipPlugin2 = ({
 
     const onscroll = (e: Event) => {
       updatePlotVisible();
-      _isHovering && e.target instanceof Node && e.target.contains(_plot!.root) && dismiss();
+      _isHovering && _plot != null && e.target instanceof Node && e.target.contains(_plot.root) && dismiss();
     };
 
     window.addEventListener('resize', updateWinSize);
