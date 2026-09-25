@@ -169,7 +169,10 @@ export const Table = memo((props: Props) => {
       ? (_row, relativeIndex) => getRowUniqueId(data, relativeIndex) ?? String(relativeIndex)
       : undefined,
     onSortingChange: (updater) =>
-      setSorting((current) => functionalUpdate(updater, current.filter((sort) => columnIds.has(sort.id)))),
+      setSorting((current) => {
+        const liveSorting = current.filter((sort) => columnIds.has(sort.id));
+        return functionalUpdate(updater, liveSorting);
+      }),
     onExpandedChange: (updater) => setExpanded((current) => functionalUpdate(updater, current)),
     onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,
