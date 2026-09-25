@@ -1,9 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Box, RadioButtonGroup, Stack } from '@grafana/ui';
 
-import { SavedSearches } from '../../components/saved-searches/SavedSearches';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertRulesHeaderActions } from '../actions/AlertRulesHeaderActions';
 import { AlertRulesFilterSidebar } from '../search/AlertRulesFilterSidebar';
@@ -11,14 +10,17 @@ import { RuleSearchInput } from '../search/RuleSearchInput';
 import { getCriteriaIssues } from '../search/criteriaIssues';
 import { parse } from '../search/parser';
 import { useAlertRulesSavedSearches } from '../search/savedSearches';
-import { applySavedSearch, copyLegacySavedSearchesOnce } from '../search/savedSearchesMigration';
 import { serialize } from '../search/serializer';
 import { alertTokens } from '../search/tokenDefinitions';
 import { type Criteria, createEmptyCriteria } from '../search/types';
 import { type RuleListMode, useRuleListSearchState } from '../search/useRuleListSearchState';
+import { ConnectedSavedSearches } from '../shared/ConnectedSavedSearches';
 import { RulesPageShell } from '../shared/RulesPageShell';
+import { SavedSearchesLoadingPlaceholder } from '../shared/SavedSearchesLoadingPlaceholder';
+import { trackRuleListPageView } from '../shared/analytics';
 import { legacyRuleListNameResolvers } from '../shared/nameResolvers';
 import { useRuleListRefreshVersion } from '../shared/refreshRuleLists';
+import { useLegacySavedSearchesCopied } from '../shared/useLegacySavedSearchesCopied';
 
 import { FoldersView } from './FoldersView';
 import { ListView } from './ListView';
@@ -53,13 +55,16 @@ function AlertRulesPage() {
   // hook's own return so this page never has to know its internal caching.
   const issues = getCriteriaIssues(criteria, 'alert');
   const refreshVersion = useRuleListRefreshVersion('alert');
-  const savedSearches = useAlertRulesSavedSearches();
+  const savedSearchesReady = useLegacySavedSearchesCopied(legacyRuleListNameResolvers);
 
-  // Copies the legacy combined collection into this page's own collection once, idempotently.
-  // Runs once on mount; the migration itself is a no-op on every later mount (isKindMigrated
-  // guards it), so it's safe to fire without gating this hook's own storage read on it.
+  const trackedView = useRef(false);
   useEffect(() => {
-    void copyLegacySavedSearchesOnce(legacyRuleListNameResolvers);
+    if (!trackedView.current) {
+      trackedView.current = true;
+      trackRuleListPageView('alert', mode);
+    }
+    // Intentionally tracked once per mount with the mode at that time, not on every mode change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const query = serialize(criteria);
@@ -71,20 +76,6 @@ function AlertRulesPage() {
 
   const onClear = () => {
     reset();
-  };
-
-  const onApplySavedSearch = async (search: { query: string }) => {
-    const { criteria: appliedCriteria } = await applySavedSearch(
-      search.query,
-      'alert',
-      legacyRuleListNameResolvers,
-      (q) => parse(q, alertTokens).criteria,
-      // Re-persisting the migrated form back onto the saved entry isn't exposed by
-      // useGenericSavedSearches (it only renames/deletes/sets-default) - applying still
-      // works against the migrated criteria below, just without updating storage.
-      async () => {}
-    );
-    setCriteria(appliedCriteria);
   };
 
   // The search/filter UI only ever produces criteria; it never fetches. Skip the request and
@@ -104,26 +95,38 @@ function AlertRulesPage() {
     >
       <Stack direction="column" gap={2}>
         <Stack direction="row" gap={2} alignItems="center">
-          <RuleSearchInput query={query} onApply={onApplyQuery} tokens={alertTokens} issues={issues} />
-          <RadioButtonGroup
-            value={mode}
-            onChange={setMode}
-            options={[
-              { label: t('alerting.gma-rule-list.alert-rules.view-folders', 'Folders'), value: 'folders' },
-              { label: t('alerting.gma-rule-list.alert-rules.view-list', 'List'), value: 'list' },
-            ]}
-          />
-          <SavedSearches
-            savedSearches={savedSearches.savedSearches}
-            currentSearchQuery={query}
-            onSave={savedSearches.saveSearch}
-            onRename={savedSearches.renameSearch}
-            onDelete={savedSearches.deleteSearch}
-            onSetDefault={savedSearches.setDefaultSearch}
-            isLoading={savedSearches.isLoading}
-            onApply={onApplySavedSearch}
-            getHref={(search) => `/alerting/rules/alert?search=${encodeURIComponent(search.query)}`}
-          />
+          <Box grow={1} minWidth={0}>
+            <RuleSearchInput query={query} onApply={onApplyQuery} tokens={alertTokens} issues={issues} />
+          </Box>
+          <Box shrink={0}>
+            <RadioButtonGroup
+              value={mode}
+              onChange={setMode}
+              options={[
+                {
+                  icon: 'folder',
+                  label: t('alerting.gma-rule-list.alert-rules.view-folders', 'Folders'),
+                  value: 'folders',
+                },
+                { icon: 'list-ul', label: t('alerting.gma-rule-list.alert-rules.view-list', 'List'), value: 'list' },
+              ]}
+            />
+          </Box>
+          <Box shrink={0}>
+            {savedSearchesReady ? (
+              <ConnectedSavedSearches
+                useSavedSearches={useAlertRulesSavedSearches}
+                kind="alert"
+                query={query}
+                parseForKind={(q) => parse(q, alertTokens).criteria}
+                resolvers={legacyRuleListNameResolvers}
+                setCriteria={setCriteria}
+                getHref={(search) => `/alerting/rules/alert?search=${encodeURIComponent(search.query)}`}
+              />
+            ) : (
+              <SavedSearchesLoadingPlaceholder query={query} />
+            )}
+          </Box>
         </Stack>
         <Stack direction="row" gap={2}>
           <AlertRulesFilterSidebar
@@ -133,7 +136,7 @@ function AlertRulesPage() {
             hasActiveFilters={hasActiveFilters}
             issues={issues}
           />
-          <Box flex={1} minWidth={0}>
+          <Box grow={1} minWidth={0}>
             <AlertRulesBody canSearch={canSearch} mode={mode} criteria={criteria} resetKey={resetKey} />
           </Box>
         </Stack>

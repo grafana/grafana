@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 
-import { Icon, Stack, Text } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Box, IconButton, Stack, Text } from '@grafana/ui';
 
 import { useFolderPath } from './caches';
 
@@ -23,17 +24,23 @@ interface FolderListRowProps {
  */
 export function FolderListRow({ folderUid, ruleCount, expanded, onToggle, children }: FolderListRowProps) {
   const path = useFolderPath(folderUid);
+  const pathLabel = path ? path.join(' / ') : folderUid;
 
   return (
     <div>
       <Stack direction="row" alignItems="center" gap={1}>
-        <button type="button" onClick={onToggle} aria-expanded={expanded} aria-label={path ? path.join(' / ') : folderUid}>
-          <Icon name={expanded ? 'angle-down' : 'angle-right'} />
-        </button>
-        <Text>{path ? path.join(' / ') : folderUid}</Text>
-        <Text color="secondary">{ruleCount ?? '–'}</Text>
+        <IconButton
+          name={expanded ? 'angle-down' : 'angle-right'}
+          aria-expanded={expanded}
+          aria-label={pathLabel}
+          onClick={onToggle}
+        />
+        <Text>{pathLabel}</Text>
+        <Text color="secondary">{ruleCount ?? t('alerting.gma-rule-list.folder-row.count-unavailable', '–')}</Text>
       </Stack>
-      {expanded && <div>{children}</div>}
+      {/* Indented past the folder's own icon+label so its rules read as nested under it,
+          rather than as siblings starting at the same edge. */}
+      {expanded && <Box paddingLeft={6}>{children}</Box>}
     </div>
   );
 }

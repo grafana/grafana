@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
-import { Stack, Text, TextLink, Tooltip } from '@grafana/ui';
+import { Box, Stack, Text, TextLink, Tooltip } from '@grafana/ui';
 
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
@@ -47,8 +47,8 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
   const unavailable = t('alerting.gma-rule-list.recording-rules.unavailable', 'Unavailable');
 
   return (
-    <Stack direction="row" justifyContent="space-between" alignItems="center" wrap="wrap">
-      <Stack direction="column" gap={0.25}>
+    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={2}>
+      <Stack direction="column" gap={0.25} grow={1} minWidth={0}>
         <Stack direction="row" alignItems="center" gap={1}>
           <TextLink href={`/alerting/grafana/${hit.uid}/view`} inline={false}>
             {hit.title}
@@ -67,11 +67,13 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
           })}
         </Text>
         {hit.lastError && (
-          <Text color="secondary" variant="bodySmall">
-            {hit.lastError}
-          </Text>
+          <Tooltip content={hit.lastError}>
+            <Text color="secondary" variant="bodySmall" truncate element="p">
+              {hit.lastError}
+            </Text>
+          </Tooltip>
         )}
-        <Stack direction="row" alignItems="center" gap={1}>
+        <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
           {dataSources.length > 0 && (
             <Stack direction="row" alignItems="center" gap={0.5}>
               {dataSources.map((ds) => (
@@ -102,7 +104,7 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
           )}
         </Stack>
       </Stack>
-      {actions}
+      {actions && <Box shrink={0}>{actions}</Box>}
     </Stack>
   );
 }

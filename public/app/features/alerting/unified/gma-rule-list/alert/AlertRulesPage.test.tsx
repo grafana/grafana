@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, reportInteraction, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -10,6 +10,13 @@ import { clearAllEnrichmentCaches } from '../shared/caches';
 import { _resetRuleListRefreshForTests } from '../shared/refreshRuleLists';
 
 import AlertRulesPage from './AlertRulesPage';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+const reportInteractionMock = jest.mocked(reportInteraction);
 
 const server = setupMswServer();
 
@@ -85,6 +92,7 @@ describe('AlertRulesPage', () => {
   beforeEach(() => {
     clearAllEnrichmentCaches();
     _resetRuleListRefreshForTests();
+    reportInteractionMock.mockClear();
     contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
     mockFolderParents({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
     mockFolderCounts({ 'folder-1': 3, 'folder-2': 0 });
@@ -228,5 +236,47 @@ describe('AlertRulesPage', () => {
 
     expect(await screen.findByText('Failed to load more rules')).toBeInTheDocument();
     expect(screen.getByText('CPU high')).toBeInTheDocument();
+  });
+
+  // M1: one page-view event per mount, with kind and mode, no filter values.
+  it('emits grafana_alerting_gma_rule_list_view once on mount with the kind and mode', async () => {
+    mockFolderSearch(() => ({ items: [], metadata: {} }));
+    mockAlertRuleSearch(() => ({ items: [], metadata: {} }));
+
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+
+    await screen.findByText('No Alert rules found');
+
+    const pageViewCalls = reportInteractionMock.mock.calls.filter(
+      ([event]) => event === 'grafana_alerting_gma_rule_list_view'
+    );
+    expect(pageViewCalls).toEqual([['grafana_alerting_gma_rule_list_view', { kind: 'alert', mode: 'list' }]]);
+  });
+
+  it('does not emit another page-view event on a later re-render of the same mount', async () => {
+    mockFolderSearch(() => ({ items: [], metadata: {} }));
+
+    const { rerender } = render(<AlertRulesPage />);
+    await screen.findByText('No folders found');
+
+    // Re-rendering without unmounting must not re-fire the once-per-mount tracking guard.
+    rerender(<AlertRulesPage />);
+    await screen.findByText('No folders found');
+
+    const pageViewCalls = reportInteractionMock.mock.calls.filter(
+      ([event]) => event === 'grafana_alerting_gma_rule_list_view'
+    );
+    expect(pageViewCalls).toHaveLength(1);
+  });
+
+  // Saved searches: the control stays disabled until the one-time legacy copy settles, then
+  // becomes interactive - never reads the page's own collection before that copy finishes.
+  it('shows a disabled Saved searches control until the legacy copy settles, then an interactive one', async () => {
+    mockFolderSearch(() => ({ items: [], metadata: {} }));
+
+    render(<AlertRulesPage />);
+
+    expect(screen.getByRole('button', { name: 'Saved searches' })).toBeDisabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
   });
 });

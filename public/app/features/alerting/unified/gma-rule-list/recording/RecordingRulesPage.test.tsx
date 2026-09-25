@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, reportInteraction, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -10,6 +10,13 @@ import { clearAllEnrichmentCaches } from '../shared/caches';
 import { _resetRuleListRefreshForTests } from '../shared/refreshRuleLists';
 
 import RecordingRulesPage from './RecordingRulesPage';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+const reportInteractionMock = jest.mocked(reportInteraction);
 
 const server = setupMswServer();
 
@@ -77,6 +84,7 @@ describe('RecordingRulesPage', () => {
   beforeEach(() => {
     clearAllEnrichmentCaches();
     _resetRuleListRefreshForTests();
+    reportInteractionMock.mockClear();
     contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
     mockFolderParents({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
     mockFolderCounts({ 'folder-1': 3, 'folder-2': 0 });
@@ -178,5 +186,30 @@ describe('RecordingRulesPage', () => {
     await screen.findByText('Team Alerts');
     await screen.findByText('Infra');
     expect(countRequests).toBe(0);
+  });
+
+  // M1: one page-view event per mount, with kind and mode, no filter values.
+  it('emits grafana_alerting_gma_rule_list_view once on mount with the kind and mode', async () => {
+    mockFolderSearch(() => ({ items: [], metadata: {} }));
+    mockRecordingRuleSearch(() => ({ items: [], metadata: {} }));
+
+    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+
+    await screen.findByText('No Recording rules found');
+
+    const pageViewCalls = reportInteractionMock.mock.calls.filter(
+      ([event]) => event === 'grafana_alerting_gma_rule_list_view'
+    );
+    expect(pageViewCalls).toEqual([['grafana_alerting_gma_rule_list_view', { kind: 'recording', mode: 'list' }]]);
+  });
+
+  // Saved searches: the control stays disabled until the one-time legacy copy settles.
+  it('shows a disabled Saved searches control until the legacy copy settles, then an interactive one', async () => {
+    mockFolderSearch(() => ({ items: [], metadata: {} }));
+
+    render(<RecordingRulesPage />);
+
+    expect(screen.getByRole('button', { name: 'Saved searches' })).toBeDisabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
   });
 });

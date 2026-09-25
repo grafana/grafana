@@ -1,9 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Box, RadioButtonGroup, Stack } from '@grafana/ui';
 
-import { SavedSearches } from '../../components/saved-searches/SavedSearches';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RecordingRulesHeaderActions } from '../actions/RecordingRulesHeaderActions';
 import { RecordingRulesFilterSidebar } from '../search/RecordingRulesFilterSidebar';
@@ -11,14 +10,17 @@ import { RuleSearchInput } from '../search/RuleSearchInput';
 import { getCriteriaIssues } from '../search/criteriaIssues';
 import { parse } from '../search/parser';
 import { useRecordingRulesSavedSearches } from '../search/savedSearches';
-import { applySavedSearch, copyLegacySavedSearchesOnce } from '../search/savedSearchesMigration';
 import { serialize } from '../search/serializer';
 import { recordingTokens } from '../search/tokenDefinitions';
 import { type Criteria, createEmptyCriteria } from '../search/types';
 import { type RuleListMode, useRuleListSearchState } from '../search/useRuleListSearchState';
+import { ConnectedSavedSearches } from '../shared/ConnectedSavedSearches';
 import { RulesPageShell } from '../shared/RulesPageShell';
+import { SavedSearchesLoadingPlaceholder } from '../shared/SavedSearchesLoadingPlaceholder';
+import { trackRuleListPageView } from '../shared/analytics';
 import { legacyRuleListNameResolvers } from '../shared/nameResolvers';
 import { useRuleListRefreshVersion } from '../shared/refreshRuleLists';
+import { useLegacySavedSearchesCopied } from '../shared/useLegacySavedSearchesCopied';
 
 import { FoldersView } from './FoldersView';
 import { ListView } from './ListView';
@@ -51,10 +53,16 @@ function RecordingRulesPage() {
   const { criteria, mode, setCriteria, setMode, reset } = useRuleListSearchState('recording');
   const issues = getCriteriaIssues(criteria, 'recording');
   const refreshVersion = useRuleListRefreshVersion('recording');
-  const savedSearches = useRecordingRulesSavedSearches();
+  const savedSearchesReady = useLegacySavedSearchesCopied(legacyRuleListNameResolvers);
 
+  const trackedView = useRef(false);
   useEffect(() => {
-    void copyLegacySavedSearchesOnce(legacyRuleListNameResolvers);
+    if (!trackedView.current) {
+      trackedView.current = true;
+      trackRuleListPageView('recording', mode);
+    }
+    // Intentionally tracked once per mount with the mode at that time, not on every mode change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const query = serialize(criteria);
@@ -66,17 +74,6 @@ function RecordingRulesPage() {
 
   const onClear = () => {
     reset();
-  };
-
-  const onApplySavedSearch = async (search: { query: string }) => {
-    const { criteria: appliedCriteria } = await applySavedSearch(
-      search.query,
-      'recording',
-      legacyRuleListNameResolvers,
-      (q) => parse(q, recordingTokens).criteria,
-      async () => {}
-    );
-    setCriteria(appliedCriteria);
   };
 
   const canSearch = issues.length === 0;
@@ -93,26 +90,42 @@ function RecordingRulesPage() {
     >
       <Stack direction="column" gap={2}>
         <Stack direction="row" gap={2} alignItems="center">
-          <RuleSearchInput query={query} onApply={onApplyQuery} tokens={recordingTokens} issues={issues} />
-          <RadioButtonGroup
-            value={mode}
-            onChange={setMode}
-            options={[
-              { label: t('alerting.gma-rule-list.recording-rules.view-folders', 'Folders'), value: 'folders' },
-              { label: t('alerting.gma-rule-list.recording-rules.view-list', 'List'), value: 'list' },
-            ]}
-          />
-          <SavedSearches
-            savedSearches={savedSearches.savedSearches}
-            currentSearchQuery={query}
-            onSave={savedSearches.saveSearch}
-            onRename={savedSearches.renameSearch}
-            onDelete={savedSearches.deleteSearch}
-            onSetDefault={savedSearches.setDefaultSearch}
-            isLoading={savedSearches.isLoading}
-            onApply={onApplySavedSearch}
-            getHref={(search) => `/alerting/rules/recording?search=${encodeURIComponent(search.query)}`}
-          />
+          <Box grow={1} minWidth={0}>
+            <RuleSearchInput query={query} onApply={onApplyQuery} tokens={recordingTokens} issues={issues} />
+          </Box>
+          <Box shrink={0}>
+            <RadioButtonGroup
+              value={mode}
+              onChange={setMode}
+              options={[
+                {
+                  icon: 'folder',
+                  label: t('alerting.gma-rule-list.recording-rules.view-folders', 'Folders'),
+                  value: 'folders',
+                },
+                {
+                  icon: 'list-ul',
+                  label: t('alerting.gma-rule-list.recording-rules.view-list', 'List'),
+                  value: 'list',
+                },
+              ]}
+            />
+          </Box>
+          <Box shrink={0}>
+            {savedSearchesReady ? (
+              <ConnectedSavedSearches
+                useSavedSearches={useRecordingRulesSavedSearches}
+                kind="recording"
+                query={query}
+                parseForKind={(q) => parse(q, recordingTokens).criteria}
+                resolvers={legacyRuleListNameResolvers}
+                setCriteria={setCriteria}
+                getHref={(search) => `/alerting/rules/recording?search=${encodeURIComponent(search.query)}`}
+              />
+            ) : (
+              <SavedSearchesLoadingPlaceholder query={query} />
+            )}
+          </Box>
         </Stack>
         <Stack direction="row" gap={2}>
           <RecordingRulesFilterSidebar
@@ -122,7 +135,7 @@ function RecordingRulesPage() {
             hasActiveFilters={hasActiveFilters}
             issues={issues}
           />
-          <Box flex={1} minWidth={0}>
+          <Box grow={1} minWidth={0}>
             <RecordingRulesBody canSearch={canSearch} mode={mode} criteria={criteria} resetKey={resetKey} />
           </Box>
         </Stack>
