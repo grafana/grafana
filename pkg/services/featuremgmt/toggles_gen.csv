@@ -113,6 +113,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 2022-10-07,queryLibrary,GA,@grafana/sharing-squad,false,false,false
+2026-09-18,grafana.savedQueriesSearch,experimental,@grafana/sharing-squad,false,false,false
 2026-09-16,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
 2026-09-16,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
 2026-09-16,savedQueriesRBAC,GA,@grafana/sharing-squad,false,false,false
@@ -265,7 +266,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.dashboardGlobalVariables,experimental,@grafana/dashboards-squad,false,false,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,preview,@grafana/grafana-operator-experience-squad,false,false,false
-2026-01-07,profilesExemplars,GA,@grafana/observability-traces-and-profiling,false,false,false
 2026-09-16,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-09-16,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
@@ -333,7 +333,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.meticulousAIMode,experimental,@grafana/dataviz-squad,false,false,false
 2026-09-16,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
 2026-09-16,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
-2026-09-16,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
+2026-09-16,alerting.syncExternalAlertmanager,privatePreview,@grafana/alerting-squad,false,true,false
 2026-09-16,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-09-16,grafana.useDefaultScopesEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-09-16,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
@@ -341,7 +341,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-09-16,paneledit.buttonLabels,experimental,@grafana/datapro,false,false,true
 2026-09-16,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
-2026-09-16,grafana.visualDesignRefresh,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-09-16,grafana.visualDesignRefresh,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-09-16,dashboard.searchFieldValueResults,experimental,@grafana/search-and-storage,false,false,false
 2026-09-16,dashboard.apiSearchFieldValueResults,experimental,@grafana/search-and-storage,false,false,false
 2026-09-16,search.apiFieldValueResults,experimental,@grafana/search-and-storage,false,false,false

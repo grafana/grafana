@@ -46,7 +46,7 @@ var (
 			Name:        "canvasPanelNesting",
 			Description: "Allow elements nesting",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 		},
@@ -657,7 +657,7 @@ var (
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},
@@ -681,7 +681,7 @@ var (
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
@@ -737,7 +737,7 @@ var (
 			Name:        "canvasPanelPanZoom",
 			Description: "Allow pan and zoom in canvas panel",
 			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 		},
@@ -752,7 +752,7 @@ var (
 		{
 			Name:        "tableSharedCrosshair",
 			Description: "Enables shared crosshair in table panel",
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
@@ -809,7 +809,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "secretsKeeperUI",
@@ -988,8 +988,16 @@ var (
 			Description: "Enables Saved queries (query library) feature",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Expression:  "true",                                                      // enabled by default
+		},
+		{
+			Name:        "grafana.savedQueriesSearch",
+			Description: "Enables unified search for saved queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true},
+			Expression:  "false",
 		},
 		{
 			Name:        "grafana.savedQueriesPage",
@@ -1012,8 +1020,8 @@ var (
 			Description: "Enables Saved queries (query library) RBAC permissions",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Expression:  "true",                                                      // enabled by default
 		},
 		{
 			Name:        "newSavedQueriesExperience",
@@ -1100,7 +1108,7 @@ var (
 			Description: "Enables the new Alerting navigation structure with improved menu grouping",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "true",
 		},
 
@@ -1233,7 +1241,7 @@ var (
 			Description:  "Allows authenticated API calls in actions",
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaDatavizSquad,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			HideFromDocs: true,
 			Expression:   "false",
 		},
@@ -1334,7 +1342,7 @@ var (
 			Owner:           grafanaCatalogSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "enableSCIM",
@@ -1627,8 +1635,8 @@ var (
 			Description: "Enables the alert rule restore feature",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAlertingSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Expression:  "true",                                                      // enabled by default
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "infinityRunQueriesInParallel",
@@ -1690,7 +1698,7 @@ var (
 		{
 			Name:         "alertingRuleRecoverDeleted",
 			Description:  "Enables the UI functionality to recover and view deleted alert rules",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true}, // changes navtree from the backend
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // changes navtree from the backend
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -2052,7 +2060,7 @@ var (
 			Name:         "alertingTriage",
 			Description:  "Enables the alerting triage feature",
 			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true}, // changes navtree in backend
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // changes navtree in backend
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
@@ -2126,7 +2134,7 @@ var (
 			Name:        "pieChartGradientColorScheme",
 			Description: "Enable gradient color scheme option for the pie chart panel",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 		},
@@ -2286,14 +2294,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "false",
-		},
-		{
-			Name:        "profilesExemplars",
-			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "pyroscopeUTF8LabelNames",
@@ -2731,7 +2731,7 @@ var (
 			Description: "Enables new colorblind safe palette and line fill patterns for panels",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatavizSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Expression:  "false",
 		},
 		{
@@ -2878,11 +2878,10 @@ var (
 		},
 		{
 			Name:            "alerting.syncExternalAlertmanager",
-			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
-			Stage:           FeatureStageExperimental,
+			Description:     "Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source",
+			Stage:           FeatureStagePrivatePreview,
 			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
 			Owner:           grafanaAlertingSquad,
-			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
 		},
@@ -2951,7 +2950,7 @@ var (
 		{
 			Name:         "grafana.visualDesignRefresh",
 			Description:  "Enables the new visual design refresh for the Grafana UI",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",

@@ -84,6 +84,32 @@ func (s *NamespacedResource) GroupResource() string {
 	return fmt.Sprintf("%s/%s", s.Group, s.Resource)
 }
 
+const (
+	// GlobalSearchGroup and GlobalSearchResource name the index that covers a whole
+	// namespace instead of a single resource type. They are not a stored group or
+	// resource, so nothing else can claim this pair, which lets a namespace-wide
+	// index reuse NamespacedResource for its cache entry, storage paths and
+	// ownership. Both have to be non-empty: an empty pair already means "the
+	// default document builder".
+	GlobalSearchGroup    = "search.grafana.app"
+	GlobalSearchResource = "global"
+)
+
+// IsGlobal reports whether the key names the namespace-wide index rather than a
+// single resource type.
+func (s *NamespacedResource) IsGlobal() bool {
+	return s.Group == GlobalSearchGroup && s.Resource == GlobalSearchResource
+}
+
+// GlobalSearchKey returns the key of a namespace's namespace-wide index.
+func GlobalSearchKey(namespace string) NamespacedResource {
+	return NamespacedResource{
+		Namespace: namespace,
+		Group:     GlobalSearchGroup,
+		Resource:  GlobalSearchResource,
+	}
+}
+
 type IndexAction int
 
 const (
@@ -418,8 +444,11 @@ type searchServer struct {
 // getIndexMaxAge returns the configured rebuild interval for the given
 // resource: dashboards use IndexRebuildInterval (cfg.IndexRebuildInterval),
 // other resources use MaxFileIndexAge. Zero means "no age-based rebuild".
+//
+// A namespace-wide index holds dashboards too, and it is the more expensive one
+// to rebuild, so it follows the dashboard interval rather than the default.
 func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
-	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE || key.IsGlobal() {
 		return s.dashboardIndexMaxAge
 	}
 	return s.maxIndexAge
@@ -469,6 +498,9 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 	// Recording sites should not have to check for nil.
 	if indexMetrics == nil {
 		indexMetrics = ProvideIndexMetrics(nil)
+	}
+	if vectorMetrics == nil {
+		vectorMetrics = ProvideVectorMetrics(nil)
 	}
 
 	s := &searchServer{
@@ -837,12 +869,10 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		} else if resp != nil {
 			code = grpcCodeFromErrorResult(resp.Error)
 		}
-		if s.vectorMetrics != nil {
-			metricutil.ObserveWithExemplar(ctx,
-				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
-				time.Since(start).Seconds(),
-			)
-		}
+		metricutil.ObserveWithExemplar(ctx,
+			s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
+			time.Since(start).Seconds(),
+		)
 	}()
 
 	if s.embedder == nil || s.vectorBackend == nil {
@@ -974,15 +1004,11 @@ func (s *searchServer) checkVectorSearchRateLimit(ctx context.Context, namespace
 	allowed, count, err := s.rateLimiter.Allow(ctx, namespace, s.rateLimitWindow, s.rateLimitPerTenant)
 	if err != nil {
 		s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", namespace)
-		if s.vectorMetrics != nil {
-			s.vectorMetrics.RateLimiterErrorsTotal.Inc()
-		}
+		s.vectorMetrics.RateLimiterErrorsTotal.Inc()
 		return status.Error(codes.Unavailable, "rate limiter unavailable")
 	}
 	if !allowed {
-		if s.vectorMetrics != nil {
-			s.vectorMetrics.RateLimitedRequestsTotal.Inc()
-		}
+		s.vectorMetrics.RateLimitedRequestsTotal.Inc()
 		return status.Errorf(codes.ResourceExhausted, "tenant rate limit exceeded: %d requests in window", count)
 	}
 	return nil
@@ -1019,9 +1045,7 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 		return nil, status.Error(codes.Internal, "embed query: empty result")
 	}
 	dense := out.Embeddings[0].Dense
-	if s.vectorMetrics != nil {
-		s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
-	}
+	s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
 	s.storeCachedQueryEmbedding(ctx, namespace, queryHash, dense)
 	return dense, nil
 }
@@ -1040,9 +1064,7 @@ func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace
 	if !hit {
 		return nil, false
 	}
-	if s.vectorMetrics != nil {
-		s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
-	}
+	s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
 	return emb, true
 }
 
@@ -1063,7 +1085,7 @@ func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace,
 		evictN := int(n) - target
 		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
 			s.log.Warn("vector search: cache evict failed", "err", err)
-		} else if deleted > 0 && s.vectorMetrics != nil {
+		} else if deleted > 0 {
 			s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
 		}
 	}
@@ -1982,7 +2004,7 @@ func (b *bulkIndexBatcher) flush() error {
 		return nil
 	}
 	b.span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(b.items))))
-	if err := b.index.BulkIndex(&BulkIndexRequest{Items: b.items, Path: b.phases.pathLabel()}); err != nil {
+	if err := b.index.BulkIndex(&BulkIndexRequest{Items: b.items, Path: b.phases.path}); err != nil {
 		return err
 	}
 	b.total += len(b.items)
@@ -2209,63 +2231,13 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 
 			docs++
 
-			key := &res.Key
-			switch res.Action {
-			case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
-				span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-				// Convert it to an indexable document
-				convertStart := time.Now()
-				doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
-				phases.recordConvert(time.Since(convertStart), err == nil)
-				if err != nil {
-					span.RecordError(err)
-					logger.Error("error building search document", "key", SearchID(key), "err", err)
-					continue
-				}
-
-				items = append(items, &BulkIndexItem{
-					Action: ActionIndex,
-					Doc:    doc,
-				})
-			case resourcepb.WatchEvent_DELETED:
-				// The delete event carries the object as it was, so trash searches can
-				// find it. Two things send it to the index as a removal instead: an
-				// index that cannot hold the markers, and a body we cannot read.
-				var doc *IndexableDocument
-				if keepDeleted {
-					convertStart := time.Now()
-					doc, err = buildDeletedDocument(key, res.ResourceVersion, res.Value)
-					// A failure here still leaves the removal below to give the index, so
-					// nothing is lost and this is not counted as producing nothing. The
-					// marker that could not be built is logged.
-					phases.recordConvert(time.Since(convertStart), true)
-					if err != nil {
-						span.RecordError(err)
-						logger.Warn("error building search document for deleted resource, removing it from the index instead", "key", SearchID(key), "err", err)
-					}
-				} else {
-					// The document is removed rather than converted, so it produced
-					// something for the index all the same.
-					phases.recordConvertNotNeeded()
-				}
-				if doc == nil {
-					span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-					items = append(items, &BulkIndexItem{
-						Action: ActionDelete,
-						Key:    &res.Key,
-					})
-					break
-				}
-
-				span.AddEvent("marking document deleted", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-				items = append(items, &BulkIndexItem{
-					Action: ActionIndex,
-					Doc:    doc,
-				})
-			default:
-				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
+			item := updateItem(ctx, builder, res, keepDeleted, phases, span, logger)
+			if item == nil {
+				// Logged already. Not remembered as processed, so a later update
+				// tries it again.
 				continue
 			}
+			items = append(items, item)
 
 			pendingKeys = append(pendingKeys, cacheKey)
 
@@ -2322,6 +2294,68 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// from the open indexes, so it also follows incremental updates and it is not
 	// added up over repeated rebuilds.
 	return index, nil
+}
+
+// updateItem turns one change storage reported into the item that brings an
+// index in line with it. It returns nil for a change that cannot be applied,
+// after logging why.
+func updateItem(
+	ctx context.Context,
+	builder DocumentBuilder,
+	res *ModifiedResource,
+	keepDeleted bool,
+	phases *buildPhaseRecorder,
+	span trace.Span,
+	logger log.Logger,
+) *BulkIndexItem {
+	key := &res.Key
+	switch res.Action {
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
+		span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+		// Convert it to an indexable document
+		convertStart := time.Now()
+		doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
+		phases.recordConvert(time.Since(convertStart), err == nil)
+		if err != nil {
+			span.RecordError(err)
+			logger.Error("error building search document", "key", SearchID(key), "err", err)
+			return nil
+		}
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+
+	case resourcepb.WatchEvent_DELETED:
+		// The delete event carries the object as it was, so trash searches can
+		// find it. Two things send it to the index as a removal instead: an
+		// index that cannot hold the markers, and a body we cannot read.
+		var doc *IndexableDocument
+		if keepDeleted {
+			convertStart := time.Now()
+			var err error
+			doc, err = buildDeletedDocument(key, res.ResourceVersion, res.Value)
+			// A failure here still leaves the removal below to give the index, so
+			// nothing is lost and this is not counted as producing nothing. The
+			// marker that could not be built is logged.
+			phases.recordConvert(time.Since(convertStart), true)
+			if err != nil {
+				span.RecordError(err)
+				logger.Warn("error building search document for deleted resource, removing it from the index instead", "key", SearchID(key), "err", err)
+			}
+		} else {
+			// The document is removed rather than converted, so it produced
+			// something for the index all the same.
+			phases.recordConvertNotNeeded()
+		}
+		if doc == nil {
+			span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+			return &BulkIndexItem{Action: ActionDelete, Key: &res.Key}
+		}
+		span.AddEvent("marking document deleted", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+
+	default:
+		logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
+		return nil
+	}
 }
 
 // keepsDeletedDocuments reports whether deleted objects should stay in this

@@ -12,10 +12,48 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestUnaryErrorResultInterceptor(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusConflict, Reason: string(metav1.StatusReasonConflict), Message: "outdated version",
+		Details: &resourcepb.ErrorDetails{Name: "dashboard", Causes: []*resourcepb.ErrorCause{{Field: "metadata.resourceVersion", Message: "outdated"}}},
+	}
+	transportErr := status.Error(codes.Unavailable, "transport failed")
+	for _, tc := range []struct {
+		name string
+		resp any
+		err  error
+		want codes.Code
+	}{
+		{"embedded", &resourcepb.UpdateResponse{Error: failure}, nil, codes.Aborted},
+		{"success", &resourcepb.ReadResponse{}, nil, codes.OK},
+		{"typed nil", (*resourcepb.ReadResponse)(nil), nil, codes.OK},
+		{"unrelated response", &resourcepb.HealthCheckResponse{}, nil, codes.OK},
+		{"transport wins", &resourcepb.UpdateResponse{Error: failure}, transportErr, codes.Unavailable},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, err := UnaryErrorResultInterceptor()(t.Context(), nil, &grpc.UnaryServerInfo{}, func(context.Context, any) (any, error) {
+				return tc.resp, tc.err
+			})
+			require.Equal(t, tc.want, status.Code(err))
+			if tc.name == "embedded" {
+				require.Nil(t, resp)
+				details := status.Convert(err).Details()
+				require.Len(t, details, 1)
+				require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
+			} else {
+				require.Equal(t, tc.resp, resp)
+				require.Equal(t, tc.err, err)
+			}
+		})
+	}
+}
 
 func TestUnaryRequestDurationInterceptor(t *testing.T) {
 	tests := []struct {

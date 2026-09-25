@@ -27,6 +27,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
@@ -48,6 +49,18 @@ const (
 	perKindMaxBodyBytes = 1 << 20 // 1 MiB
 )
 
+// Handler serves the per-kind rule search routes. It holds one dual-writer-aware
+// index client per kind because the dual-writer storage mode is per resource.
+type Handler struct {
+	alertRules     resourcepb.ResourceIndexClient
+	recordingRules resourcepb.ResourceIndexClient
+	logger         log.Logger
+}
+
+func NewHandler(alertRules, recordingRules resourcepb.ResourceIndexClient) *Handler {
+	return &Handler{alertRules: alertRules, recordingRules: recordingRules, logger: log.New("alerting.rules.search")}
+}
+
 // kind is the rule kind one search endpoint serves: its identity, the fields a
 // query may reference on it, and the index client to search it with. One client
 // per kind because the dual-writer storage mode is per resource.
@@ -55,17 +68,6 @@ type perKind struct {
 	info   utils.ResourceInfo
 	fields *perKindFieldSet
 	client resourcepb.ResourceIndexClient
-}
-
-type perKindSearchContextKey struct{}
-
-func withPerKindSearch(ctx context.Context) context.Context {
-	return context.WithValue(ctx, perKindSearchContextKey{}, true)
-}
-
-func isPerKindSearch(ctx context.Context) bool {
-	perKind, _ := ctx.Value(perKindSearchContextKey{}).(bool)
-	return perKind
 }
 
 func (k perKind) groupResource() schema.GroupResource {
@@ -114,7 +116,7 @@ func (h *Handler) search(ctx context.Context, w app.CustomRouteResponseWriter, r
 	}
 
 	t := buildPerKindSearchRequest(query, leaves, namespace, k)
-	resp, err := k.client.Search(withPerKindSearch(ctx), t.req)
+	resp, err := k.client.Search(ctx, t.req)
 	if err != nil {
 		h.logger.FromContext(ctx).Error("rule search backend request failed",
 			"namespace", namespace, "group", k.groupResource().Group,

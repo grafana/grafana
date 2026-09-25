@@ -20,8 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 const perKindSearchFolder = "search-folder"
 

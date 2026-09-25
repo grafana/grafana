@@ -7,10 +7,9 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
-)
 
-var oboExchangerLog = log.New("obo-exchanger")
+	"github.com/grafana/grafana-app-sdk/logging"
+)
 
 // oboTokenExchanger decorates a TokenExchanger to inject the caller's access
 // token as SubjectToken, producing an OBO token for cross-pod storage calls.
@@ -20,7 +19,7 @@ type oboTokenExchanger struct {
 }
 
 func (e *oboTokenExchanger) Exchange(ctx context.Context, req authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
-	ctxlog := oboExchangerLog.FromContext(ctx)
+	ctxlog := logging.FromContext(ctx).With("logger", "obo-exchanger")
 
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {

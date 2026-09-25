@@ -118,25 +118,40 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	return GetError(respErr)
 }
 
-// StatusErrorFromResponse converts a unified storage failure to a Kubernetes
-// [apierrors.StatusError] for API-facing callers. The transport error takes
-// precedence over respErr; if both are nil, it returns nil. Context cancellation
-// and deadline errors map to HTTP 499 and 504, respectively.
-//
-// Unlike [ErrorFromResponse], this replaces transport errors. Callers that need
-// the original error chain or gRPC retry classification must use that helper instead.
-//
-// Only errors coming from grpc should be passed to this function, other errors will lose
-// their chain through this.
+// StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a
+// unified storage failure when it can: an embedded [resourcepb.ErrorResult], a gRPC status
+// (wrapped or not), an error already carrying an [apierrors.APIStatus], or a context error.
+// Unstructured gRPC server errors are logged and given a generic public message;
+// attached ErrorResult details retain their message. Anything else is returned
+// unchanged, so response writers apply their own sanitization and logging.
+// Unlike [AsErrorResult], [claims.ErrNamespaceMismatch] is not mapped to 403 — it passes through,
+// since that mapping only ever applied in-process.
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err == nil {
 		return GetError(respErr)
 	}
 	// In-process calls can return context errors instead of gRPC statuses.
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+	localContextErr := errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
+	if localContextErr {
 		err = grpcstatus.FromContextError(err).Err()
 	}
-	return GetError(AsErrorResult(err))
+	var apiStatus apierrors.APIStatus
+	grpcStatus, isGRPC := grpcstatus.FromError(err)
+	if !isGRPC && !errors.As(err, &apiStatus) {
+		return err
+	}
+	result := AsErrorResult(err)
+	if isGRPC && result.Code >= http.StatusInternalServerError && errorResultFromGRPCDetails(err) == nil {
+		if !localContextErr {
+			if grpcStatus.Code() == grpccodes.DeadlineExceeded {
+				errorMappingLog.Warn("Unstructured gRPC deadline exceeded", "error", err)
+			} else {
+				errorMappingLog.Error("Unstructured gRPC server error", "error", err)
+			}
+		}
+		result.Message = http.StatusText(int(result.Code))
+	}
+	return GetError(result)
 }
 
 func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
