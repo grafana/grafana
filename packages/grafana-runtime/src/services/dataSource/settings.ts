@@ -299,7 +299,7 @@ function lookupFromMaps(
   // sit anywhere in the string (e.g. `logs-${stage}-loki`), not only at the start; legacy
   // DataSourceSrv.get() interpolates unconditionally. When interpolation changes nothing
   // (a datasource name that merely contains `$`), fall through to the plain lookup.
-  if (nameOrUid.includes('$')) {
+  if (nameOrUid.includes('$') || nameOrUid.includes('[[')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
     if (interpolated !== nameOrUid) {
       // The plain lookup below reads three maps; this branch must read the same three. Legacy

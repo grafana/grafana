@@ -716,7 +716,7 @@ describe('datasource_srv', () => {
         expect((await getDataSourceInstanceList({ all: true })).map((item) => item.uid)).not.toContain(
           runtimeDataSource.uid
         );
-        fallbacks.expectNoFallbacks(['instance', 'settings']);
+        fallbacks.expectNoFallbacks(['instance', 'settings', 'listItem']);
       });
 
       it('preserves mirrored runtime registrations across initialization and async cache refresh', async () => {
@@ -727,7 +727,7 @@ describe('datasource_srv', () => {
         expect(await dataSourceSrv.get(runtimeDataSource.uid)).toBe(runtimeDataSource);
         expect(await getDataSourceInstance(runtimeDataSource.uid)).toBe(runtimeDataSource);
         expect(await getDataSourceInstanceSettings(runtimeDataSource.uid)).toBe(runtimeDataSource.instanceSettings);
-        fallbacks.expectNoFallbacks(['instance', 'settings']);
+        fallbacks.expectNoFallbacks(['instance', 'settings', 'listItem']);
       });
 
       it('replaces a conflicting async-only runtime registration', async () => {

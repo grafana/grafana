@@ -36,6 +36,9 @@ export interface DataSourceSrv {
     scopedVars?: ScopedVars
   ): DataSourceInstanceSettings | undefined;
 
+  /** UID-only lookup, optional for legacy service implementations without this capability. */
+  getDataSourceSettingsByUid?(uid: string): DataSourceInstanceSettings | undefined;
+
   /**
    * Reloads the DataSourceSrv
    */
