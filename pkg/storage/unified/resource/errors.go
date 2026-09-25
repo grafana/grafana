@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -117,6 +118,28 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	return GetError(respErr)
 }
 
+// StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a
+// unified storage failure when it can: an embedded [resourcepb.ErrorResult], a gRPC status
+// (wrapped or not), an error already carrying an [apierrors.APIStatus], or a context error.
+// Anything else is returned unchanged, so response writers apply their own
+// sanitization and logging instead of exposing internal error text.
+// Unlike [AsErrorResult], [claims.ErrNamespaceMismatch] is not mapped to 403 — it passes through,
+// since that mapping only ever applied in-process.
+func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
+	if err == nil {
+		return GetError(respErr)
+	}
+	// In-process calls can return context errors instead of gRPC statuses.
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		err = grpcstatus.FromContextError(err).Err()
+	}
+	var apiStatus apierrors.APIStatus
+	if _, ok := grpcstatus.FromError(err); !ok && !errors.As(err, &apiStatus) {
+		return err
+	}
+	return GetError(AsErrorResult(err))
+}
+
 func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
 	st, ok := grpcstatus.FromError(err)
 	if !ok || st == nil {
@@ -169,6 +192,40 @@ func newInvalidFieldError(
 			},
 		},
 	}
+}
+
+// SelectableFieldNotIndexedReason is a cause reason, not a top-level one: the
+// top-level reason has to stay a Kubernetes reason so grpcCodeFromErrorResult can
+// map it without falling back to the HTTP code.
+const SelectableFieldNotIndexedReason = "SelectableFieldNotIndexed"
+
+// NewSelectableFieldNotIndexedError reports that the index cannot answer a filter
+// on the given fields.
+func NewSelectableFieldNotIndexedError(fields []string) *resourcepb.ErrorResult {
+	causes := make([]*resourcepb.ErrorCause, 0, len(fields))
+	for _, f := range fields {
+		causes = append(causes, &resourcepb.ErrorCause{
+			Reason: SelectableFieldNotIndexedReason,
+			Field:  f,
+		})
+	}
+	return &resourcepb.ErrorResult{
+		Message: fmt.Sprintf("the index does not hold the selectable fields %v, so it cannot answer a filter on them", fields),
+		Code:    http.StatusBadRequest,
+		Reason:  string(metav1.StatusReasonBadRequest),
+		Details: &resourcepb.ErrorDetails{Causes: causes},
+	}
+}
+
+// IsSelectableFieldNotIndexed reports whether a search was refused because the
+// index does not hold a field the request filtered on.
+func IsSelectableFieldNotIndexed(res *resourcepb.ErrorResult) bool {
+	for _, c := range res.GetDetails().GetCauses() {
+		if c.GetReason() == SelectableFieldNotIndexedReason {
+			return true
+		}
+	}
+	return false
 }
 
 func newRequiredFieldError(

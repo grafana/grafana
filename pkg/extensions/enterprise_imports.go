@@ -578,7 +578,6 @@ import (
 	_ "github.com/m3db/prometheus_remote_client_golang/promremote"
 	_ "github.com/mattermost/xml-roundtrip-validator"
 	_ "github.com/mostynb/go-grpc-compression/nonclobbering/snappy"
-	_ "github.com/mostynb/go-grpc-compression/nonclobbering/zstd"
 	_ "github.com/open-feature/go-sdk/openfeature"
 	_ "github.com/open-feature/go-sdk/openfeature/memprovider"
 	_ "github.com/openfga/api/proto/openfga/v1"
@@ -816,6 +815,7 @@ import (
 	_ "k8s.io/kube-openapi/pkg/spec3"
 	_ "k8s.io/kube-openapi/pkg/validation/spec"
 	_ "k8s.io/utils/net"
+	_ "k8s.io/utils/ptr"
 	_ "sigs.k8s.io/structured-merge-diff/v6/typed"
 	_ "xorm.io/builder"
 )

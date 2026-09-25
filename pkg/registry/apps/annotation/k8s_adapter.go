@@ -90,6 +90,7 @@ var (
 // and delegates actual storage operations to the Store interface.
 type k8sRESTAdapter struct {
 	store          Store
+	tracer         trace.Tracer
 	tableConverter rest.TableConvertor
 	accessClient   authtypes.AccessClient
 	folderResolver DashboardFolderResolver
@@ -149,7 +150,7 @@ func (s *k8sRESTAdapter) ConvertToTable(ctx context.Context, object runtime.Obje
 
 func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
@@ -191,7 +192,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	}
 
 	// TODO: post-fetch filtering breaks pagination - cursor advances by opts.Limit regardless of authz results.
-	allowed, err := canAccessAnnotations(ctx, s.accessClient, s.folderResolver, namespace, result.Items, utils.VerbList)
+	allowed, err := canAccessAnnotations(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, result.Items, utils.VerbList)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +211,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 
 func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -223,7 +224,7 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 		return nil, toAPIError(err, name)
 	}
 
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
+	allowed, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +247,7 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	options *metav1.CreateOptions,
 ) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
@@ -275,7 +276,7 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}
 
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbCreate)
+	allowed, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +313,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	options *metav1.UpdateOptions,
 ) (out runtime.Object, created bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -353,14 +354,14 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	}
 
 	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
+	allowed, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowed {
 		return nil, false, apierrors.NewForbidden(annotationGR, existing.Name, fmt.Errorf("insufficient permissions"))
 	}
-	allowed, err = canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, resource, utils.VerbUpdate)
+	allowed, err = canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, resource, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
@@ -394,7 +395,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (out runtime.Object, completed bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -411,13 +412,13 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, toAPIError(err, name)
 	}
 
-	allowedDelete, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbDelete)
+	allowedDelete, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbDelete)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowedDelete {
 		// Return 404 if caller can't read (don't leak existence), 403 if readable but not deletable.
-		allowedRead, rerr := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
+		allowedRead, rerr := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
 		if rerr != nil {
 			return nil, false, rerr
 		}

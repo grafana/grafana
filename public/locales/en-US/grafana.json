@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "External Alertmanagers",
+      "external-alertmanagers-group-plugin": "External Alertmanagers (opens in Prometheus Alerting)",
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -745,13 +746,20 @@
     },
     "bulk-actions": {
       "delete": {
+        "affected-count": "Deleted {{num}} rules",
+        "no-rules-affected": "No rules were deleted from folder",
         "success": "Rules successfully deleted from folder"
       },
       "pause": {
+        "affected-count": "Paused {{num}} rules",
+        "no-rules-affected": "No rules were paused for folder",
         "success": "Rules evaluation successfully paused for folder"
       },
+      "skipped-provisioned": "Skipped {{num}} provisioned rules",
       "unpause": {
-        "success": "Rules successfully unpaused for this folder"
+        "affected-count": "Resumed {{num}} rules",
+        "no-rules-affected": "No rules were resumed for folder",
+        "success": "Rules successfully resumed for folder"
       }
     },
     "central-alert-history": {
@@ -1780,6 +1788,8 @@
         },
         "source-title": "Import Source",
         "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
+        "templates-added-title_one": "Template file added",
+        "templates-added-title_other": "Template files added",
         "templates-desc": "Optional. Upload the template files referenced by your Alertmanager config. Each file is imported as a template named after the file.",
         "templates-dropzone": "Drop template files here or click to upload",
         "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
@@ -1792,6 +1802,7 @@
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
+        "yaml-added-title": "Configuration file uploaded",
         "yaml-desc": "Accepted file types: {{extensions}}",
         "yaml-file": "Alertmanager config YAML",
         "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
@@ -2663,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "Data source managed alerting is handled by the Prometheus Alerting plugin.",
+      "redirected-title": "Opened in the Prometheus Alerting plugin",
       "text-redirecting": "Redirecting…"
     },
     "query-and-expressions-step": {
@@ -2968,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "datasource-managed-notice": {
+        "action": "View rules in Prometheus Alerting",
+        "body": "Their alert and recording rules are no longer shown here.",
+        "inline_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
+        "inline_other": "{{count}} data sources are managed by the Prometheus Alerting plugin",
+        "inline-action": "View",
+        "title_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
+        "title_other": "{{count}} data sources are managed by the Prometheus Alerting plugin"
+      },
       "ds-error": {
         "title": "Cannot load rules for this datasource"
       },
@@ -2988,7 +3010,8 @@
         "no-more-results": "No more results – found {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters.",
         "results-loading": "Searching – found {{numberOfRules}} rules",
-        "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules"
+        "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules",
+        "search-in-plugin": "Search data source managed rules in Prometheus Alerting"
       },
       "import-disabled-tooltip": {
         "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
@@ -4382,6 +4405,7 @@
       "label-top": "Top"
     },
     "name-show-unfilled-area": "Show unfilled area",
+    "name-text-mode": "Text mode",
     "name-value-display": "Value display",
     "presets": {
       "basic": "Basic",
@@ -4400,6 +4424,13 @@
     "suggestions": {
       "basic": "Bar gauge",
       "lcd": "Bar gauge - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "Auto",
+      "label-name": "Name",
+      "label-none": "None",
+      "label-value": "Value",
+      "label-value-and-name": "Value and name"
     },
     "value-display-options": {
       "label-hidden": "Hidden",
@@ -4504,9 +4535,6 @@
     "create-new": {
       "dashboard-group": "Dashboard"
     },
-    "create-new-button": {
-      "generate-dashboard": "Generate dashboard"
-    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
@@ -4581,7 +4609,6 @@
     },
     "folder-variables": {
       "empty": "No folder-scoped variables in this folder yet.",
-      "list-heading": "Folder variables",
       "new": "New folder variable"
     },
     "manage-folder-nav": {
@@ -5758,6 +5785,7 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "collapse-all-rows": "Collapse all rows",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
       "duplicate": "Duplicate {{typeName}}",
@@ -5765,6 +5793,7 @@
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "expand-all-rows": "Expand all rows",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
@@ -5779,6 +5808,7 @@
       "panel-title": "panel title change",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
+      "remove-multiple": "Remove {{typeName}} ({{num}})",
       "row-title": "Change row title",
       "switch-layout": "Switch layout",
       "switch-layout-row": "Switch layout",
@@ -5796,9 +5826,7 @@
       "add-library-panel-header": "Import panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
-      "add-visualization-description": "Visualizations are panels for your data. Organize them with Auto grid or Custom grid.",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "add-visualization-heading": "Add a visualization",
       "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
@@ -5806,9 +5834,6 @@
       "custom-grid": "Custom grid",
       "custom-grid-description": "Position and size each panel individually",
       "description": "Add a panel to visualize your data",
-      "grid-auto": "Auto",
-      "grid-custom": "Custom",
-      "grid-label": "Grid:",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
@@ -6037,10 +6062,21 @@
       "ungroup-repeat-loss": "Repeat options configured on the ungrouped groups will be lost.",
       "ungroup-repeat-loss-title": "Ungroup?"
     },
+    "loading": {
+      "drawer": "Loading drawer",
+      "drawer-title": "Loading…",
+      "sidebar": "Loading sidebar",
+      "sidebar-title": "Loading…"
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
       "tooltip-next": "Next",
       "tooltip-previous": "Previous"
+    },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-title": "Assistant schema edit"
+      }
     },
     "new-dashboard-with-ds": {
       "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
@@ -6131,9 +6167,7 @@
     "planning-banner": {
       "build": "Build",
       "dismiss": "Dismiss",
-      "panel-count_one": "{{count}} panel",
-      "panel-count_other": "{{count}} panels",
-      "plan-label": "Plan"
+      "preview-label": "Preview"
     },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
@@ -6732,6 +6766,8 @@
       "unlink-library-panel-short": "Unlink"
     },
     "transformation-editor": {
+      "copy-input-data": "Copy input data to clipboard",
+      "copy-output-data": "Copy output data to clipboard",
       "input-data": "Input data",
       "loading": "Loading editor...",
       "output-data": "Output data",
@@ -6750,7 +6786,14 @@
         "title-remove": "Remove",
         "title-show-transform-help": "Show transform help"
       },
-      "title-delete": "Delete {{name}}?"
+      "title-delete": "Delete {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "Edit transformation name",
+        "edit-refId-placeholder": "(Auto)",
+        "refId-exists-error": "Transformation name already exists",
+        "refId-reserved-error": "Transformation name is already used by a query or an earlier transformation",
+        "refId-variable-error": "Transformation name cannot contain a variable"
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "Remove",
@@ -6799,9 +6842,6 @@
     },
     "variable": {
       "description-tooltip": "Variable description"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
     },
     "view-panel": {
       "back-to-dashboard": "Back to dashboard",
@@ -6936,21 +6976,6 @@
     "no-options": "No dashboards found",
     "placeholder": "Select dashboard",
     "unknown-dashboard": "Unknown dashboard ({{uid}})"
-  },
-  "dashboard-prompt": {
-    "datasource-entry": {
-      "generate-dashboard": "Generate dashboard"
-    },
-    "modal": {
-      "title": "What do you want to monitor?"
-    },
-    "prompt": {
-      "cancel": "Cancel",
-      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
-      "input-label": "Describe the dashboard you want",
-      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
-      "submit": "Build it"
-    }
   },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
@@ -7430,7 +7455,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom version.",
-        "title-failed-to-save-dashboard": "Failed to save dashboard",
         "title-plugin-dashboard": "Plugin dashboard",
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
@@ -7698,9 +7722,6 @@
       },
       "label-copy-tags": "Copy tags",
       "label-folder": "Folder",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Failed to save dashboard"
-      },
       "required": "Required"
     },
     "save-dashboard-drawer": {
@@ -7747,6 +7768,9 @@
       "save-variables-label-update-default-variable-values": "Update default variable values",
       "show-variables-warning-alert-body": "Some variables failed to load. If you keep “Update default variable values” checked, the current (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid storing those (failed) values.",
       "show-variables-warning-alert-title": "Variable queries failed"
+    },
+    "save-errors": {
+      "unexpected": "An unexpected error occurred while saving."
     },
     "save-library-viz-panel-modal": {
       "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
@@ -8695,6 +8719,10 @@
       "aria-label-links": "Links",
       "links": "Links"
     },
+    "error-container": {
+      "title-query-error": "Query error",
+      "title-unknown-error": "Unknown error"
+    },
     "explore": {
       "title-flame-graph": "Flame graph",
       "title-graph": "Graph",
@@ -9103,6 +9131,10 @@
       "attribute-category": {
         "other": "Other"
       },
+      "exception-message": "Message:",
+      "exception-stacktrace": "Stacktrace",
+      "exception-title": "Exception",
+      "exception-type": "Type:",
       "label": {
         "kind": "Kind:",
         "library-name": "Library Name:",
@@ -9236,6 +9268,7 @@
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-banner-error": "Trace error banner",
+      "trace-banner-go-to-span": "Go to span",
       "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
       "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
@@ -9426,6 +9459,7 @@
     "flag-value": "Flag value",
     "menu": "Open menu",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "OFREP evaluation",
     "save-flag": "Save",
     "title": "Feature control"
   },
@@ -10548,7 +10582,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
       "alerting-settings-label": "Manage alert rules in Alerting UI",
-      "alerting-settings-tooltip": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.",
+      "alerting-settings-tooltip": "Manage alert rules for this data source. They're shown in Grafana Alerting, or in the Prometheus Alerting app when that's in use. To manage other alerting resources, add an Alertmanager data source.",
       "cert-key-reset": "Reset",
       "custom-headers-add": "Add header",
       "custom-headers-header": "Header",
@@ -10673,6 +10707,7 @@
       "aria-label-sort-column": "Sort column {{columnName}}",
       "expand-row-header": "Row expander",
       "expand-row-tooltip": "Toggle row expanded",
+      "loading": "Loading table",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
     },
@@ -10752,7 +10787,9 @@
       "aria-label-toggle-collapse": "toggle collapse panel",
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
-      "errors-and-notices": "Errors and notices",
+      "explain-with-assistant": "Explain with Assistant",
+      "fix-with-assistant": "Fix with Assistant",
+      "inspect": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -10765,6 +10802,9 @@
     "password-field": {
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
+    },
+    "query-field": {
+      "loading": "Loading editor"
     },
     "query-input": {
       "loading": "Loading editor"
@@ -10830,6 +10870,7 @@
       "placeholder": "Choose"
     },
     "table": {
+      "cell-actions": "Cell actions",
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
@@ -10875,6 +10916,7 @@
         }
       },
       "inspect-drawer-title": "Inspect value",
+      "loading": "Loading table",
       "nested-table": {
         "expander-column-name": "Expand nested rows",
         "no-data": "No data"
@@ -11189,10 +11231,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
+      "incident-filter-all": "All incidents",
+      "incident-filter-label": "Filter incidents by label",
       "incident-tab-label": "Incidents",
       "team-filter-all": "All teams",
       "team-filter-label": "Filter alerts by team",
-      "team-filter-label-incidents": "Filter incidents by team",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
@@ -11423,6 +11466,13 @@
         "setup-action": "Set up Hosted Traces",
         "title": "Trace requests across services"
       },
+      "irm": {
+        "action": "Enable IRM",
+        "context": "Route alerts to on-call schedules and incidents",
+        "description": "Connect Grafana Alerting to IRM to page the right person, escalate automatically, and manage incidents in one place.",
+        "setup-action": "Set up IRM",
+        "title": "Get paged when it matters"
+      },
       "kubernetes-monitoring": {
         "action": "Enable Kubernetes Monitoring",
         "context": "Cluster health next to your existing telemetry",
@@ -11473,6 +11523,28 @@
         "clusters_one": "{{value}} cluster",
         "clusters_other": "{{value}} clusters",
         "description": "See cluster health, cost, and right-sizing savings in one view.",
+        "filter": {
+          "all-clusters": "All clusters",
+          "all-namespaces": "All namespaces",
+          "all-nodes": "All nodes",
+          "badge-ignored": "Filters not applied",
+          "cancel": "Cancel",
+          "clear": "Clear filters",
+          "cluster": "Cluster",
+          "edit": "Edit filters ({{summary}})",
+          "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+          "namespaces": "Namespaces",
+          "no-match": "No matching data",
+          "no-match-hint": "Adjust the filters",
+          "nodes": "Nodes",
+          "open": "Filter by cluster, namespace, or node",
+          "save": "Save",
+          "save-failed": "Could not save to browser storage. Try again.",
+          "summary-cluster": "Cluster: {{cluster}}",
+          "summary-namespaces": "Namespaces: {{namespaces}}",
+          "summary-nodes": "Nodes: {{nodes}}",
+          "title": "Filter Kubernetes Monitoring"
+        },
         "health-nodes_one": "{{count}} node not ready",
         "health-nodes_other": "{{count}} nodes not ready",
         "health-pods_one": "{{count}} pod pending or failed",
@@ -12733,7 +12805,7 @@
     },
     "global-variables": {
       "subtitle": "Template variables shared across dashboards, globally or per folder",
-      "title": "Variables"
+      "title": "Cross-dashboard variables"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
@@ -13016,7 +13088,6 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "generate-dashboard-button": "Generate dashboard",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
@@ -13266,8 +13337,10 @@
       "table": {
         "author": "Author",
         "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
         "created": "Created",
         "edit": "Edit",
+        "link-copied": "Link copied to clipboard",
         "more-actions": "More actions",
         "tags": "Tags",
         "title": "Title",
@@ -13647,10 +13720,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Delete playlist",
-      "edit": "Edit playlist",
-      "start": "Start playlist",
-      "tooltip": "Share playlist"
+      "delete": "Delete",
+      "delete-label": "Delete playlist {{ name }} ",
+      "edit": "Edit",
+      "edit-label": "Edit playlist {{ name }} ",
+      "share": "Share",
+      "share-label": "Share playlist {{ name }} ",
+      "start": "Start",
+      "start-label": "Start playlist {{ name }} ",
+      "tooltip": "Share"
     },
     "create-button": {
       "title": "New playlist"
@@ -13812,6 +13890,11 @@
     },
     "get-started-with-data-source": {
       "add-new-data-source": "Add new data source",
+      "plugin-id": "Plugin ID",
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself",
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
@@ -14799,10 +14882,23 @@
     "repository-status": {
       "error": "Failed to load repository"
     },
+    "repository-status-alert": {
+      "deletion-title": "Repository deletion error",
+      "error-title": "Repository error",
+      "force-delete-button": "Delete anyway",
+      "force-delete-cancel": "Cancel",
+      "force-delete-confirm": "Delete anyway",
+      "force-delete-title": "Delete repository anyway",
+      "force-delete-warning": "This removes the repository without completing the blocking step, so anything it manages on the provider side (for example a webhook) is left in place. Only do this if the repository can no longer be reached — for example its credentials have expired or been revoked.",
+      "release-button": "Release all resources",
+      "release-confirm": "Release all resources",
+      "release-in-progress": "Releasing resources. The repository is removed on the next cleanup attempt, which can take a minute.",
+      "release-title": "Release all resources",
+      "release-warning": "Instead of deleting them, the remaining folders and resources managed by this repository are kept in Grafana and become editable again. Unmanaged resources are not affected. The repository is removed once they are released."
+    },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
-      "not-found": "not found",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
       "tab-overview": "Overview",
@@ -14868,6 +14964,7 @@
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Dashboard Preview",
+      "editor-label": "Resource JSON",
       "existing-dashboard": "Existing dashboard",
       "history": "History",
       "message": {
@@ -15097,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Before you make the dashboard public, acknowledge the following:",
-      "data-src-ack-desc": "Publishing currently only works with a subset of data sources*",
-      "data-src-ack-tooltip": "Learn more about public datasources",
-      "public-ack-desc": "Your entire dashboard will be public*",
-      "public-ack-tooltip": "Learn more about public dashboards",
-      "usage-ack-desc": "Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*",
-      "usage-ack-desc-tooltip": "Learn more about query caching"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Can view dashboard",
-      "copy-button": "Copy",
-      "dashboard-url-field-label": "Dashboard URL",
-      "email-share-type-option-label": "Only specified people",
-      "pause-sharing-dashboard-label": "Pause sharing dashboard",
-      "public-share-type-option-label": "Anyone with a link",
-      "revoke-public-URL-button": "Revoke public URL",
-      "revoke-public-URL-button-title": "Revoke public URL",
-      "settings-title": "Settings"
-    },
     "configuration": {
       "display-annotations-description": "Present annotations on this dashboard",
       "display-annotations-label": "Display annotations",
@@ -15129,21 +15206,11 @@
       "time-range-label": "Time range",
       "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
     },
-    "create-page": {
-      "generate-public-url-button": "Generate public URL",
-      "unsupported-features-desc": "Currently, we don’t support template variables or frontend data sources",
-      "welcome-title": "Welcome to public dashboards!"
-    },
     "email-sharing": {
       "accept-button": "Accept",
       "alert-text": "Sharing dashboards by email is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.",
       "bill-ack": "I understand that adding users requires payment.*",
       "cancel-button": "Cancel",
-      "input-invalid-email-text": "Invalid email",
-      "input-required-email-text": "Email is required",
-      "invite-button": "Invite",
-      "invite-field-desc": "Invite people by email",
-      "invite-field-label": "Invite",
       "learn-more-button": "Learn more",
       "recipient-email-placeholder": "Email",
       "recipient-invalid-email-text": "Invalid email",
@@ -15153,17 +15220,12 @@
       "recipient-list-description": "Only people you've directly invited can access this dashboard",
       "recipient-list-title": "People with access",
       "recipient-required-email-text": "Email is required",
-      "resend-button": "Resend",
-      "resend-button-title": "Resend",
       "resend-invite-label": "Resend invite",
       "revoke-access-label": "Revoke access",
-      "revoke-button": "Revoke",
-      "revoke-button-title": "Revoke",
       "success-creation": "Your dashboard is ready for external sharing",
       "success-share-type-change": "Dashboard access updated: Only specific people can now access with the link"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Please save your dashboard changes before updating the public configuration",
       "unsupport-data-source-alert-readmore-link": "Read more about supported data sources",
       "unsupported-data-source-alert-title": "Unsupported data sources",
       "unsupported-template-variable-alert-desc": "This public dashboard may not work since it uses template variables",
@@ -15177,25 +15239,6 @@
       "public-ack": "I understand that this entire dashboard will be public.*",
       "success-creation": "Your dashboard is now publicly accessible",
       "success-share-type-change": "Dashboard access updated: Anyone with the link can now access"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Collapse settings",
-      "expand-settings-tooltip": "Expand settings"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Default time range",
-      "default-time-range-label-desc": "The public dashboard uses the default time range settings of the dashboard",
-      "show-annotations-label": "Show annotations",
-      "show-annotations-label-desc": "Show annotations on public dashboard",
-      "time-range-picker-label": "Time range picker enabled",
-      "time-range-picker-label-desc": "Allow viewers to change time range"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Annotations = hide",
-      "annotations-show-text": "Annotations = show",
-      "time-range-picker-disabled-text": "Time range picker = disabled",
-      "time-range-picker-enabled-text": "Time range picker = enabled",
-      "time-range-text": "Time range = "
     },
     "share": {
       "success-delete": "Your dashboard is no longer shareable"
@@ -15533,6 +15576,8 @@
       "transformation": "Transformation"
     },
     "transformation-debug": {
+      "copy-input-data": "Copy input data to clipboard",
+      "copy-output-data": "Copy output data to clipboard",
       "input-data": "Input data",
       "output-data": "Output data",
       "title": "Debug transformation"
@@ -15541,6 +15586,10 @@
       "annotations": "Annotation data",
       "label": "Apply transformation to",
       "series": "Query and Transformation results"
+    },
+    "transformation-name": {
+      "auto-placeholder": "(Auto)",
+      "edit": "Edit transformation name"
     },
     "validation": {
       "duplicate-name": "Query name already exists",
@@ -15721,6 +15770,12 @@
     "title": "Unable to find application file"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": "You do not have permission to save this dashboard"
+    },
+    "invalid": {
+      "title": "This dashboard is not valid"
+    },
     "message-length": {
       "info": "The message is {{messageLength}} characters, which exceeds the maximum length of 500 characters. Please shorten it before saving.",
       "title": "Message too long"
@@ -15968,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Share"
-    },
     "embed": {
       "copy": "Copy to clipboard",
       "html": "Embed HTML",
@@ -16017,9 +16069,6 @@
       "time-range-description": "Transforms the current relative time range to an absolute time range",
       "time-range-label": "Lock time range"
     },
-    "panel": {
-      "title": "Share Panel"
-    },
     "snapshot": {
       "cancel-button": "Cancel",
       "copy-link-button": "Copy",
@@ -16035,16 +16084,11 @@
       "local-button": "Publish Snapshot",
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
-      "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
       "url-label": "Snapshot URL"
     },
     "tab-title": {
-      "embed": "Embed",
       "export": "Export",
-      "library-panel": "Library panel",
       "link": "Link",
-      "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
@@ -16237,6 +16281,8 @@
       "new-snapshot-button": "New snapshot",
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
+      "too-large-body": "This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.",
+      "too-large-title": "Snapshot is too large to publish",
       "view-all-button": "View all snapshots"
     },
     "share-panel": {
@@ -16470,7 +16516,9 @@
     }
   },
   "swagger": {
-    "login": "Login"
+    "login": "Login",
+    "namespace-unavailable": "Check the namespace before sending requests, or reload the page to try again.",
+    "namespace-unavailable-title": "Unable to load namespace"
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16531,6 +16579,9 @@
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
+    },
+    "json-cell-options": {
+      "syntax-highlighting": "Syntax highlighting"
     },
     "link-wrapper": {
       "menu": "view data links and actions"
@@ -16648,10 +16699,6 @@
       "external-group-id": "External Group ID",
       "external-group-sync": "External group sync",
       "label-add-external-group": "Add external group",
-      "team-sync-upgrade": "Add a group to enable team sync for free during your trial of Grafana Pro",
-      "text": {
-        "add-group": "Add group"
-      },
       "title-there-external-groups": "There are no external groups to sync with",
       "tooltip-add-external-group": "LDAP group example: {{example}}"
     },
@@ -16698,9 +16745,6 @@
       "label-role": "Role",
       "label-team-details": "Team details",
       "save": "Save team details"
-    },
-    "team-sync-upgrade-content": {
-      "description": "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
     }
   },
   "text": {
@@ -17697,6 +17741,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Field",
+      "label-keep-unjoined": "Keep unjoined",
       "label-mode": "Mode",
       "modes": {
         "description": {
@@ -17709,7 +17754,8 @@
           "outer-tabular": "Outer (tabular)",
           "outer-time-series": "Outer (time series)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": "Pass queries that do not have the selected field through untouched instead of dropping them, so a later Join by field transformation can join them on a different field. Requires a field to be selected."
     },
     "series-to-rows-transformer-editor": {
       "description": {
@@ -17865,13 +17911,6 @@
     "description-x-field": "An increasing numeric value",
     "name-x-field": "X field",
     "placeholder-x-field": "First numeric value"
-  },
-  "upgrade-box": {
-    "discovery-text": "You’ve discovered a Pro feature!",
-    "discovery-text-continued": "Get the Grafana Pro plan to access {{featureName}}.",
-    "get-started": "Get started with {{featureName}}",
-    "learn-more": "Learn more",
-    "upgrade-button": "Upgrade"
   },
   "user-orgs": {
     "current-org-button": "Current",

@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 import { type TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
+import { OVERFLOW_CELL_CLASS } from '../constants';
 import { useReducerEntries } from '../hooks';
 import { getDefaultCellStyles, getJustifyContent, type TextAlign } from '../styles';
 import { type TableRow } from '../types';
@@ -49,7 +50,7 @@ export const SummaryCell = ({
   });
   const displayName = getDisplayName(field);
   const reducerResultsEntries = useReducerEntries(field, rows, displayName, colIdx);
-  const cellClass = clsx(styles.footerCell, defaultFooterCellStyles);
+  const cellClass = clsx(styles.footerCell, defaultFooterCellStyles, OVERFLOW_CELL_CLASS);
   const firstFooterReducers = useMemo(() => {
     for (const footer of footers) {
       if (footer?.reducers?.length ?? 0 > 0) {
