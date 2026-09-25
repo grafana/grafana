@@ -268,8 +268,11 @@ func handleCheckRoute(
 			}
 
 			// Fetch datasource from Grafana using app-platform method
-			// Parameters: namespace, name (UID), group (datasource type)
-			ds, err := datasourceSvc.GetDataSourceInNamespace(ctx, namespace, dsMapping.UID, dsMapping.Type)
+			ds, err := datasourceSvc.GetDataSourceInNamespace(ctx, &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: namespace,
+				Name:      dsMapping.UID,
+				Type:      dsMapping.Type,
+			})
 			if err != nil {
 				dsLogger.Error("Failed to get datasource from namespace", "error", err)
 

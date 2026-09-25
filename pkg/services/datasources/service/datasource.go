@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
@@ -132,8 +133,8 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 type DataSourceRetriever interface {
 	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
-	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
-	GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error)
+	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and type.
+	GetDataSourceInNamespace(ctx context.Context, query *datasources.GetDataSourceInNamespaceQuery) (*datasources.DataSource, error)
 }
 
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
@@ -193,8 +194,31 @@ func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataS
 	return s.retriever.GetDataSource(ctx, query)
 }
 
-func (s *Service) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
-	return s.retriever.GetDataSourceInNamespace(ctx, namespace, name, group)
+// ResolveAliasIDs returns the plugin IDs that pluginType is equivalent to so that
+// a stored datasource is matched regardless of which equivalent type string it was saved under.
+// A nil pluginRegistry resolves to no aliases.
+func ResolveAliasIDs(ctx context.Context, pluginRegistry registry.Service, pluginType string) []string {
+	if pluginRegistry == nil {
+		return nil
+	}
+	p, found := pluginRegistry.Plugin(ctx, pluginType, "")
+	if !found {
+		return nil
+	}
+	aliasIDs := make([]string, 0, len(p.AliasIDs)+1)
+	if p.ID != pluginType {
+		aliasIDs = append(aliasIDs, p.ID)
+	}
+	for _, alias := range p.AliasIDs {
+		if alias != pluginType {
+			aliasIDs = append(aliasIDs, alias)
+		}
+	}
+	return aliasIDs
+}
+
+func (s *Service) GetDataSourceInNamespace(ctx context.Context, query *datasources.GetDataSourceInNamespaceQuery) (*datasources.DataSource, error) {
+	return s.retriever.GetDataSourceInNamespace(ctx, query)
 }
 
 func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {

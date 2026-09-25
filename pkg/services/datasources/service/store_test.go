@@ -530,13 +530,50 @@ func TestIntegrationDataAccess(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			dataSource, err := ss.GetDataSourceInNamespace(context.Background(), "org-10", ds.UID, datasources.DS_ES)
+			dataSource, err := ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds.UID, Type: datasources.DS_ES,
+			})
 			require.NoError(t, err)
 			require.Equal(t, ds.UID, dataSource.UID)
 
-			_, err = ss.GetDataSourceInNamespace(context.Background(), "org-10", ds2.UID, datasources.DS_ES)
+			_, err = ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds2.UID, Type: datasources.DS_ES,
+			})
 			require.Error(t, err)
 			require.IsType(t, datasources.ErrDataSourceNotFound, err)
+		})
+
+		t.Run("Matches when the stored type is any of the provided plugin types", func(t *testing.T) {
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+			ss := SqlStore{db: db, logger: log.NewNopLogger()}
+
+			ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				OrgID:    10,
+				Name:     "Postgres (legacy alias)",
+				Type:     "postgres",
+				Access:   datasources.DS_ACCESS_DIRECT,
+				URL:      "http://test",
+				Database: "site",
+				ReadOnly: true,
+			})
+			require.NoError(t, err)
+
+			dataSource, err := ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds.UID, Type: "grafana-postgresql-datasource", AliasIDs: []string{"postgres"},
+			})
+			require.NoError(t, err)
+			require.Equal(t, ds.UID, dataSource.UID)
+
+			_, err = ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds.UID, Type: "grafana-postgresql-datasource",
+			})
+			require.Error(t, err)
+			require.IsType(t, datasources.ErrDataSourceNotFound, err)
+
+			_, err = ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds.UID,
+			})
+			require.EqualError(t, err, "no datasource type provided")
 		})
 	})
 
