@@ -97,8 +97,7 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 		t.Run("admin to accessible parent", func(t *testing.T) {
 			assertMoveParity(t, f, f.helper.Org1.Admin, "parityB1", "parityA", http.StatusOK)
 		})
-		t.Run("editor without dest permission is forbidden (KNOWN GAP)", func(t *testing.T) {
-			t.Skip("validateOnUpdate misses the escalation check; un-skip when fix lands")
+		t.Run("editor without destination permission is forbidden", func(t *testing.T) {
 			assertMoveParity(t, f, f.rbacEditorOnA, "parityA1", "parityB", http.StatusForbidden)
 		})
 		t.Run("editor cannot gain admin by moving a folder under an administered parent", func(t *testing.T) {
@@ -203,9 +202,11 @@ func newParityFixture(t *testing.T) *parityFixture {
 	}
 	create(accesscontrol.K6FolderUID, "")
 
+	// Keep the basic role at None so the scoped grant is the user's only access;
+	// RoleEditor would also grant access to the unrestricted parityB destination.
 	rbacEditorOnA := helper.CreateUser(
 		"parity-elevated-A", apis.Org1,
-		org.RoleEditor,
+		org.RoleNone,
 		[]resourcepermissions.SetResourcePermissionCommand{{
 			Actions:           []string{folder.ActionFoldersRead, folder.ActionFoldersWrite},
 			Resource:          "folders",
