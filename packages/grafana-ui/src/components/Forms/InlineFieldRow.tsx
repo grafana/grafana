@@ -32,6 +32,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       alignContent: 'flex-start',
       rowGap: theme.spacing(0.5),
+      // Allow the row to shrink below its content so children (e.g. multi-value
+      // selects) wrap onto new lines instead of widening the parent layout.
+      minWidth: 0,
     }),
   };
 };
