@@ -470,6 +470,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanager Eksternal",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Tidak ada sumber data yang ditemukan"
     },
     "alert-menu": {
@@ -2652,6 +2653,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2957,6 +2960,13 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurasikan",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_other": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Tidak dapat memuat aturan untuk sumber data ini"
       },
@@ -2977,7 +2987,8 @@
         "no-more-results": "Tidak ada hasil lagi – {{numberOfRules}} aturan ditemukan",
         "no-rules-found": "Tidak ada aturan peringatan atau pencatatan yang cocok dengan rangkaian filter Anda saat ini.",
         "results-loading": "Mencari–menemukan {{numberOfRules}} aturan",
-        "results-with-cancellation": "Pencarian dibatalkan – {{numberOfRules}} aturan ditemukan"
+        "results-with-cancellation": "Pencarian dibatalkan – {{numberOfRules}} aturan ditemukan",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Impor tidak tersedia saat sinkronisasi otomatis Mimir Alertmanager aktif"
@@ -4360,6 +4371,7 @@
       "label-top": "Atas"
     },
     "name-show-unfilled-area": "Tampilkan area yang tidak terisi",
+    "name-text-mode": "",
     "name-value-display": "Tampilan nilai",
     "presets": {
       "basic": "Dasar",
@@ -4378,6 +4390,13 @@
     "suggestions": {
       "basic": "Pengukur batang",
       "lcd": "Pengukur batang - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Tersembunyi",
@@ -5998,6 +6017,12 @@
       "ungroup-repeat-loss": "Opsi pengulangan yang dikonfigurasi pada grup yang dibatalkan pengelompokannya akan hilang.",
       "ungroup-repeat-loss-title": "Batalkan pengelompokan?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} dari {{numberOfPages}}",
       "tooltip-next": "Berikutnya",
@@ -6715,7 +6740,14 @@
         "title-remove": "Hapus",
         "title-show-transform-help": "Tampilkan bantuan transformasi"
       },
-      "title-delete": "Hapus {{name}}?"
+      "title-delete": "Hapus {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7378,7 +7410,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Perubahan Anda akan hilang saat Anda memperbarui plugin. Gunakan <strong>Simpan sebagai</strong> untuk membuat versi kustom.",
-        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor",
         "title-plugin-dashboard": "Dasbor plugin",
         "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
         "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
@@ -7645,9 +7676,6 @@
       },
       "label-copy-tags": "Salin tag",
       "label-folder": "Folder",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor"
-      },
       "required": "Wajib diisi"
     },
     "save-dashboard-drawer": {
@@ -7694,6 +7722,9 @@
       "save-variables-label-update-default-variable-values": "Perbarui nilai variabel default",
       "show-variables-warning-alert-body": "Beberapa variabel gagal dimuat. Jika Anda tetap mencentang \"Perbarui nilai variabel default\", nilai (gagal) saat ini akan menjadi default dasbor. Anda tetap dapat menyimpan atau menghapus centang opsi untuk menghindari menyimpan nilai (gagal) tersebut.",
       "show-variables-warning-alert-title": "Kueri variabel gagal"
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Batalkan",
@@ -10488,7 +10519,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
       "alerting-settings-label": "Kelola aturan peringatan di UI Alerting",
-      "alerting-settings-tooltip": "Kelola aturan peringatan untuk sumber data ini. Untuk mengelola sumber daya alerting lainnya, tambahkan sumber data Alertmanager.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Atur ulang",
       "custom-headers-add": "Tambahkan header",
       "custom-headers-header": "Header",
@@ -10776,6 +10807,7 @@
       "placeholder": "Pilih"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filter nilai",
       "cell-filter-out": "Filter nilai",
       "cell-inspect": "Periksa nilai",
@@ -11136,10 +11168,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Peringatan aktif",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Insiden",
       "team-filter-all": "Semua tim",
       "team-filter-label": "Filter peringatan berdasarkan tim",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Tim Anda",
       "title": "Peringatan & insiden",
       "title-alerts": "Peringatan",
@@ -15487,6 +15520,10 @@
       "label": "Terapkan transformasi ke",
       "series": "Hasil Kueri dan Transformasi"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Nama kueri sudah ada",
       "empty-name": "Nama kueri tidak boleh kosong"
@@ -15663,6 +15700,12 @@
     "title": "Tidak dapat menemukan file aplikasi"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Pesan memiliki panjang {{messageLength}} karakter, yang melebihi panjang maksimum 500 karakter. Persingkat sebelum menyimpan.",
       "title": "Pesan terlalu panjang"

@@ -38,22 +38,15 @@ test.describe(
     tag: ['@various', '@presets'],
   },
   () => {
-    test('Panel styles section should appear with a New badge', async ({ gotoPanelEditPage, page }) => {
+    test('Panel styles section should be expanded by default', async ({ gotoPanelEditPage, page }) => {
       await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
       await waitForPanelToLoad(page);
 
       const panelStylesSection = getPanelStylesSection(page);
       await expect(panelStylesSection, 'panel styles section is visible').toBeVisible({ timeout: 10000 });
-      await expect(panelStylesSection, 'panel styles section contains "New" badge').toContainText('New');
-    });
+      await expect(panelStylesSection, 'panel styles section shows its title').toContainText('Panel styles');
 
-    test('Panel styles section should be expanded by default', async ({ gotoPanelEditPage, page }) => {
-      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await waitForPanelToLoad(page);
-
-      await expect(getPanelStylesSection(page), 'panel styles section is visible').toBeVisible({ timeout: 10000 });
-
-      const collapseButton = getPanelStylesSection(page).getByRole('button', { name: /Collapse/i });
+      const collapseButton = panelStylesSection.getByRole('button', { name: /Collapse/i });
       await expect(collapseButton, 'collapse button is visible').toBeVisible();
       await expect(collapseButton, 'panel styles section is expanded').toHaveAttribute('aria-expanded', 'true');
     });

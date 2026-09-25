@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"strings"
-	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,7 +56,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
@@ -77,6 +74,7 @@ const MaxConcurrentZanzanaWrites = 20
 
 func RegisterAPIService(
 	cfg *setting.Cfg,
+	features Features,
 	cfgProvider configprovider.ConfigProvider,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
@@ -181,8 +179,8 @@ func RegisterAPIService(
 		logger:                            log.New("iam.apis"),
 		dual:                              dual,
 		unified:                           unified,
-		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg)),
+		userSearchClient: dualwrite.NewSelector[user.SearchBackend](dual, iamv0.UserResourceInfo.GroupResource(),
+			user.NewUserLegacySearchClient(orgService, tracing, cfg), user.NewUnifiedSearchClient(unified, cfg)),
 		teamSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.TeamResourceInfo.GroupResource(),
 			unified, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing)),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
@@ -197,9 +195,9 @@ func RegisterAPIService(
 		),
 		ssoLoginConfig:  sso.NewLoginConfigHandler(cfg, ssoService),
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
-		ofClient:        openfeature.NewDefaultClient(),
+		features:        features,
 	}
-	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, cfg, accessClient)
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient)
 	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
 
 	apiregistration.RegisterAPI(builder)
@@ -222,7 +220,7 @@ func NewAPIService(
 	tracingService tracing.Tracer,
 	mappers *resourcepermission.MappersRegistry,
 	settingService settingsvc.Service,
-	opts ...APIServiceOption,
+	features Features,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider, mappers)
@@ -242,7 +240,6 @@ func NewAPIService(
 	)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		ofClient:                openfeature.NewDefaultClient(),
 		store:                   store,
 		userLegacyStore:         user.NewLegacyStore(store, accessClient, tracingService),
 		saLegacyStore:           serviceaccount.NewLegacyStore(store, accessClient, tracingService),
@@ -270,6 +267,7 @@ func NewAPIService(
 		apiConfig:                  Config{SingleOrganization: true},
 		teamLBACApiInstaller:       teamLBACApiInstaller,
 		settingService:             settingService,
+		features:                   features,
 		// Serve the SSOSetting kind read-only in standalone, gated by kubernetesSsoSettingsApi.
 		ssoLegacyStore: sso.NewLegacyStore(ssosettingsimpl.ProvideReadOnlyDBService(dbProvider), tracingService),
 		authorizer: authorizer.AuthorizerFunc(
@@ -347,9 +345,6 @@ func NewAPIService(
 				return authorizer.DecisionDeny, "access denied", nil
 			}),
 	}
-	for _, opt := range opts {
-		opt(builder)
-	}
 	return builder
 }
 
@@ -358,15 +353,12 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancelFn()
-
 	// Check if any of the AuthZ APIs are enabled
-	enableRolesApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, func(f Features) bool { return f.RolesAPI })
-	enableRoleBindingsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, func(f Features) bool { return f.RoleBindingsAPI })
-	enableGlobalRolesApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, func(f Features) bool { return f.GlobalRolesAPI })
-	enableTeamLBACRuleApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, func(f Features) bool { return f.TeamLBACRulesAPI })
-	enableResourcePermissionsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, func(f Features) bool { return f.ResourcePermissionsAPI })
+	enableRolesApi := b.features.RolesAPI
+	enableRoleBindingsApi := b.features.RoleBindingsAPI
+	enableGlobalRolesApi := b.features.GlobalRolesAPI
+	enableTeamLBACRuleApi := b.features.TeamLBACRulesAPI
+	enableResourcePermissionsApi := b.features.ResourcePermissionsAPI
 
 	if enableRolesApi || enableRoleBindingsApi {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
@@ -414,23 +406,20 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancelFn()
+	enableZanzanaSync := b.features.ZanzanaSync
 
-	enableZanzanaSync := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzZanzanaSync, func(f Features) bool { return f.ZanzanaSync })
-
-	enableRolesApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, func(f Features) bool { return f.RolesAPI })
-	enableRoleBindingsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, func(f Features) bool { return f.RoleBindingsAPI })
-	enableGlobalRolesApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, func(f Features) bool { return f.GlobalRolesAPI })
-	enableTeamLBACRuleApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, func(f Features) bool { return f.TeamLBACRulesAPI })
-	enableTeamsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesTeamsApi, func(f Features) bool { return f.TeamsAPI })
-	enableUserApi := b.isSingleOrgSetup() && b.featureEnabled(ctx, featuremgmt.FlagKubernetesUsersApi, func(f Features) bool { return f.UsersAPI })
-	enableServiceAccountsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, func(f Features) bool { return f.ServiceAccountsAPI })
-	enableServiceAccountTokensApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, func(f Features) bool { return f.ServiceAccountTokensAPI })
-	enableSsoSettingsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, func(f Features) bool { return f.SSOSettingsAPI })
-	enableSaResourcePermissions := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, func(f Features) bool { return f.ServiceAccountResourcePermissions })
-	enableResourcePermissionsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, func(f Features) bool { return f.ResourcePermissionsAPI })
-	enableAuthInfoApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthInfoApi, func(f Features) bool { return f.AuthInfoAPI })
+	enableRolesApi := b.features.RolesAPI
+	enableRoleBindingsApi := b.features.RoleBindingsAPI
+	enableGlobalRolesApi := b.features.GlobalRolesAPI
+	enableTeamLBACRuleApi := b.features.TeamLBACRulesAPI
+	enableTeamsApi := b.features.TeamsAPI
+	enableUserApi := b.isSingleOrgSetup() && b.features.UsersAPI
+	enableServiceAccountsApi := b.features.ServiceAccountsAPI
+	enableServiceAccountTokensApi := b.features.ServiceAccountTokensAPI
+	enableSsoSettingsApi := b.features.SSOSettingsAPI
+	enableSaResourcePermissions := b.features.ServiceAccountResourcePermissions
+	enableResourcePermissionsApi := b.features.ResourcePermissionsAPI
+	enableAuthInfoApi := b.features.AuthInfoAPI
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -1080,14 +1069,11 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancelFn()
-
-	enableTeamsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesTeamsApi, func(f Features) bool { return f.TeamsAPI })
-	enableUserApi := b.isSingleOrgSetup() && b.featureEnabled(ctx, featuremgmt.FlagKubernetesUsersApi, func(f Features) bool { return f.UsersAPI })
-	enableResourcePermissionsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, func(f Features) bool { return f.ResourcePermissionsAPI })
-	enableUserPermissionsApi := b.featureEnabled(ctx, featuremgmt.FlagAuthzUserPermissions, func(f Features) bool { return f.UserPermissionsAPI })
-	enableSsoSettingsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, func(f Features) bool { return f.SSOSettingsAPI })
+	enableTeamsApi := b.features.TeamsAPI
+	enableUserApi := b.isSingleOrgSetup() && b.features.UsersAPI
+	enableResourcePermissionsApi := b.features.ResourcePermissionsAPI
+	enableUserPermissionsApi := b.features.UserPermissionsAPI
+	enableSsoSettingsApi := b.features.SSOSettingsAPI
 
 	searchRoutes := make([]*builder.APIRoutes, 0, 4)
 	if enableUserApi && b.userSearchHandler != nil {
@@ -1116,13 +1102,6 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	}
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
-}
-
-func (b *IdentityAccessManagementAPIBuilder) featureEnabled(ctx context.Context, key string, configured func(Features) bool) bool {
-	if b.features != nil {
-		return configured(*b.features)
-	}
-	return b.ofClient.Boolean(ctx, key, false, openfeature.TransactionContext(ctx))
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {

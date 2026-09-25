@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanager esterni",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Nessuna fonte dati trovata"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configura",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Impossibile caricare le regole per questa origine dati"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Nessun altro risultato: {{numberOfRules}} regole trovate",
         "no-rules-found": "Nessuna regola di avviso o registrazione corrisponde al tuo attuale set di filtri.",
         "results-loading": "Ricerca in corso – {{numberOfRules}} regole trovate",
-        "results-with-cancellation": "Ricerca annullata: {{numberOfRules}} regole trovate"
+        "results-with-cancellation": "Ricerca annullata: {{numberOfRules}} regole trovate",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Le importazioni non sono disponibili mentre la sincronizzazione automatica di Mimir Alertmanager è attiva"
@@ -4392,6 +4405,7 @@
       "label-top": "In alto"
     },
     "name-show-unfilled-area": "Mostra area non riempita",
+    "name-text-mode": "",
     "name-value-display": "Visualizzazione del valore",
     "presets": {
       "basic": "Base",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Indicatore a barre",
       "lcd": "Indicatore a barre – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Nascosto",
@@ -6041,6 +6062,12 @@
       "ungroup-repeat-loss": "Le opzioni di ripetizione configurate sui gruppi non raggruppati andranno perse.",
       "ungroup-repeat-loss-title": "Annullare il raggruppamento?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} di {{numberOfPages}}",
       "tooltip-next": "Avanti",
@@ -6759,7 +6786,14 @@
         "title-remove": "Rimuovi",
         "title-show-transform-help": "Mostra la guida della trasformazione"
       },
-      "title-delete": "Eliminare {{name}}?"
+      "title-delete": "Eliminare {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7424,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Le modifiche andranno perse quando aggiornerai il componente aggiuntivo. Utilizza <strong>Salva con nome</strong> per creare una versione personalizzata.",
-        "title-failed-to-save-dashboard": "Impossibile salvare la dashboard",
         "title-plugin-dashboard": "Dashboard del componente aggiuntivo",
         "title-someone-else-has-updated-this-dashboard": "Qualcun altro ha aggiornato questa dashboard",
         "would-still-dashboard": "Desideri comunque salvare questa dashboard?"
@@ -7692,9 +7725,6 @@
       },
       "label-copy-tags": "Copia tag",
       "label-folder": "Cartella",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Impossibile salvare la dashboard"
-      },
       "required": "Obbligatorio"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Aggiorna i valori delle variabili predefinite",
       "show-variables-warning-alert-body": "Alcune variabili non sono state caricate. Se mantieni selezionata l'opzione \"Aggiorna valori predefiniti delle variabili\", i valori correnti (non caricati) diventeranno quelli predefiniti della dashboard. Puoi comunque salvare o deselezionare l'opzione per evitare di memorizzare quei valori (non caricati).",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Annulla",
@@ -10552,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Avvisi",
       "alerting-settings-label": "Gestisci le regole di avviso nell'interfaccia utente di avviso",
-      "alerting-settings-tooltip": "Gestisci le regole di avviso per questa origine dati. Per gestire altre risorse di avviso, aggiungi un'origine dati Alertmanager.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Ripristino",
       "custom-headers-add": "Aggiungi intestazione",
       "custom-headers-header": "Intestazione",
@@ -10840,6 +10873,7 @@
       "placeholder": "Scegli"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filtra per valore",
       "cell-filter-out": "Escludi valore",
       "cell-inspect": "Ispeziona valore",
@@ -11200,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Avvisi in attivazione",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidenti",
       "team-filter-all": "Tutti i team",
       "team-filter-label": "Filtra gli avvisi per team",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "I tuoi team",
       "title": "Avvisi e incidenti",
       "title-alerts": "Avvisi",
@@ -15605,6 +15640,10 @@
       "label": "Applica la trasformazione a",
       "series": "Risultati della query e della trasformazione"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Il nome della query esiste già",
       "empty-name": "Non è consentito un nome di query vuoto"
@@ -15784,6 +15823,12 @@
     "title": "Impossibile trovare il file dell'applicazione"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Il messaggio è di {{messageLength}} caratteri e supera la lunghezza massima di 500 caratteri. Accorcialo prima di salvare.",
       "title": "Messaggio troppo lungo"

@@ -3,6 +3,7 @@ package resource
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -47,6 +48,13 @@ func setupBadgerKV(t *testing.T) KV {
 }
 
 func setupSqlKV(t *testing.T) kv.KV {
+	t.Helper()
+	store, _ := setupSqlKVWithDB(t)
+	return store
+}
+
+func setupSqlKVWithDB(t *testing.T) (kv.KV, *sql.DB) {
+	t.Helper()
 	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
@@ -54,7 +62,7 @@ func setupSqlKV(t *testing.T) kv.KV {
 	require.NoError(t, err)
 	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
-	return kv
+	return kv, dbConn.SqlDB()
 }
 
 func setupTestDataStore(t *testing.T) *dataStore {

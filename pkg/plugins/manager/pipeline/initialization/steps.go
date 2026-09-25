@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -11,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"go.opentelemetry.io/otel/trace"
+
+
 )
 
 // BackendClientInit implements an InitializeFunc for initializing a backend plugin process.
@@ -142,7 +146,7 @@ func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) 
 	}
 
 	if !p.IsCorePlugin() {
-		r.log.Info("Plugin registered", "pluginId", p.ID)
+		r.log.Info("Plugin registered", "pluginId", p.ID, "pluginVersion", p.Info.Version)
 	}
 
 	return p, nil
