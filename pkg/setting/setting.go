@@ -67,8 +67,32 @@ const DefaultRendererAuthToken = "-"
 
 // ProvisioningMaxFileSizeDefault is the default value for the
 // [provisioning] max_file_size key (5 MiB). It bounds files read from or
-// written to a provisioning repository through the files API.
+// written to a provisioning repository through the files API, and caps
+// single-object git fetches (blob/tree/commit) so an oversized response is
+// aborted mid-read instead of buffered in memory.
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
+
+// ProvisioningMaxBulkFetchSizeDefault is the default value for the
+// [provisioning] max_bulk_fetch_size key (1 GiB). It caps multi-object git
+// fetches (recursive tree listings, commit comparisons) so a malicious or
+// misbehaving server cannot exhaust client memory.
+const ProvisioningMaxBulkFetchSizeDefault int64 = 1024 * 1024 * 1024
+
+// ProvisioningMaxRefsSizeDefault is the default value for the
+// [provisioning] max_refs_size key (10 MiB). It caps git ref-listing and
+// protocol-detection responses.
+const ProvisioningMaxRefsSizeDefault int64 = 10 * 1024 * 1024
+
+// ProvisioningMaxPushResponseSizeDefault is the default value for the
+// [provisioning] max_push_response_size key (10 MiB). It caps the
+// git-receive-pack reply to a push.
+const ProvisioningMaxPushResponseSizeDefault int64 = 10 * 1024 * 1024
+
+// ProvisioningMaxDecodedFileSizeDefault is the default value for the
+// [provisioning] max_decoded_file_size key. Zero keeps nanogit's built-in
+// decoded-object cap (10 MiB) in force rather than disabling it, so
+// decompression-bomb protection is never fully off.
+const ProvisioningMaxDecodedFileSizeDefault int64 = 0
 
 // ProvisioningSyncResourceTimeoutDefault is the default value for the
 // [provisioning] sync_resource_timeout key. It bounds how long applying a
@@ -209,6 +233,10 @@ type Cfg struct {
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
+	ProvisioningMaxBulkFetchSize              int64         // bytes; default 1 GiB; <=0 = unlimited
+	ProvisioningMaxRefsSize                   int64         // bytes; default 10 MiB; <=0 = unlimited
+	ProvisioningMaxPushResponseSize           int64         // bytes; default 10 MiB; <=0 = unlimited
+	ProvisioningMaxDecodedFileSize            int64         // bytes; decoded/inflated per-object cap; <=0 keeps nanogit's built-in 10 MiB default (not unlimited)
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for the repo/connection controllers (jobs use ProvisioningJobPollInterval); default 60s; <=0 = default
@@ -2649,6 +2677,10 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningMaxBulkFetchSize = iniFile.Section("provisioning").Key("max_bulk_fetch_size").MustInt64(ProvisioningMaxBulkFetchSizeDefault)
+	cfg.ProvisioningMaxRefsSize = iniFile.Section("provisioning").Key("max_refs_size").MustInt64(ProvisioningMaxRefsSizeDefault)
+	cfg.ProvisioningMaxPushResponseSize = iniFile.Section("provisioning").Key("max_push_response_size").MustInt64(ProvisioningMaxPushResponseSizeDefault)
+	cfg.ProvisioningMaxDecodedFileSize = iniFile.Section("provisioning").Key("max_decoded_file_size").MustInt64(ProvisioningMaxDecodedFileSizeDefault)
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -45,6 +46,95 @@ type RepositoryConfig struct {
 	SMIMECertificate string
 	Path             string
 	SkipGitSuffix    bool
+	// Limits caps the response sizes nanogit reads per git operation class so
+	// oversized responses are aborted mid-read rather than buffered in memory.
+	Limits Limits
+}
+
+// Limits caps, in bytes, the response sizes nanogit will read from the server,
+// classified by git operation. A non-positive value (<= 0) for any field means
+// unlimited, matching the "<= 0 = unlimited" semantics documented for the
+// corresponding provisioning settings.
+type Limits struct {
+	// MaxFileSize caps single-object fetches (blob/tree/commit, used by
+	// GetBlobByPath). It also drives the post-read content-size check.
+	MaxFileSize int64
+	// MaxBulkFetchSize caps multi-object fetches (recursive tree listings,
+	// commit comparisons).
+	MaxBulkFetchSize int64
+	// MaxRefsSize caps ref-listing and protocol-detection responses.
+	MaxRefsSize int64
+	// MaxPushResponseSize caps the git-receive-pack reply to a push.
+	MaxPushResponseSize int64
+	// MaxDecodedFileSize caps the *decoded* (inflated) size of a single git
+	// object, bounding post-decompression memory so a compressible payload
+	// that fits under the wire caps cannot inflate to gigabytes (a
+	// decompression bomb). Unlike the wire caps above, a non-positive value
+	// does NOT disable the check: it leaves nanogit's built-in default
+	// (10 MiB) in force, so decoded-size protection is never fully off. A
+	// positive value raises or lowers that ceiling.
+	MaxDecodedFileSize int64
+}
+
+// toOptions converts the configured limits into nanogit's options. Any
+// non-positive value is clamped to 0 (unlimited): the provisioning settings
+// document "<= 0 = unlimited", but nanogit rejects negative limit fields at
+// client construction, which would otherwise make a previously valid config
+// fail to instantiate every repository. The second return reports whether any
+// positive cap is set, so callers can skip WithLimits entirely when none is.
+func (l Limits) toOptions() (options.Limits, bool) {
+	clamp := func(v int64) int64 {
+		if v <= 0 {
+			return 0
+		}
+		return v
+	}
+	opts := options.Limits{
+		SingleObjectFetchMaxBytes:   singleObjectWireCap(clamp(l.MaxFileSize)),
+		MultiObjectFetchMaxBytes:    clamp(l.MaxBulkFetchSize),
+		RefsMetadataMaxBytes:        clamp(l.MaxRefsSize),
+		ReceivePackResponseMaxBytes: clamp(l.MaxPushResponseSize),
+		// A non-positive value keeps nanogit's built-in decoded-object default,
+		// so clamping to 0 is the correct "unset" behavior here too.
+		MaxObjectDecodedBytes: clamp(l.MaxDecodedFileSize),
+	}
+	set := opts.SingleObjectFetchMaxBytes > 0 || opts.MultiObjectFetchMaxBytes > 0 ||
+		opts.RefsMetadataMaxBytes > 0 || opts.ReceivePackResponseMaxBytes > 0 ||
+		opts.MaxObjectDecodedBytes > 0
+	return opts, set
+}
+
+// gitWireOverheadDivisor and gitWireOverheadFloor size the headroom added to
+// the decoded content cap when it is reused as a wire-response cap. See
+// singleObjectWireCap.
+const (
+	gitWireOverheadDivisor = 16   // ~6.25% of the payload
+	gitWireOverheadFloor   = 4096 // 4 KiB fixed component
+)
+
+// singleObjectWireCap derives nanogit's SingleObjectFetchMaxBytes from the
+// max_file_size content cap. max_file_size bounds decoded file *content* (that
+// exact limit is still enforced post-read via maxBytes), but
+// SingleObjectFetchMaxBytes caps the git-upload-pack *wire* response, which
+// also carries packfile framing (header/trailer, per-object headers, zlib
+// wrapping) and pkt-line sideband framing. For an incompressible blob at the
+// content limit the wire response is slightly larger than the file, so reusing
+// max_file_size verbatim would make nanogit abort a file the setting promises
+// to allow. The real framing overhead is well under 1% of the payload plus a
+// small constant; the allowance below stays far above that while still
+// bounding per-fetch memory to roughly the file size. Unlimited (0) stays
+// unlimited.
+func singleObjectWireCap(maxFileSize int64) int64 {
+	if maxFileSize <= 0 {
+		return 0
+	}
+	headroom := maxFileSize/gitWireOverheadDivisor + gitWireOverheadFloor
+	// Saturate rather than overflow into a negative (rejected) limit when the
+	// configured cap is already near the int64 ceiling.
+	if maxFileSize > math.MaxInt64-headroom {
+		return math.MaxInt64
+	}
+	return maxFileSize + headroom
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -70,6 +160,12 @@ func NewRepository(
 	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {
 		opts = append(opts, options.WithoutGitSuffix())
+	}
+	// Push the byte limits into nanogit so a malicious or misbehaving server
+	// cannot exhaust client memory: oversized responses are aborted mid-read
+	// rather than buffered in full.
+	if limits, ok := gitConfig.Limits.toOptions(); ok {
+		opts = append(opts, options.WithLimits(limits))
 	}
 	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
@@ -97,14 +193,20 @@ func NewRepository(
 		writerOptions = append(writerOptions, signer)
 	}
 
-	return &gitRepository{
+	repo := &gitRepository{
 		config:        config,
 		gitConfig:     gitConfig,
 		client:        client,
 		writerOptions: writerOptions,
 		metrics:       metrics.Recorder(config.Spec.Type),
 		clientMetrics: clientMetrics.Recorder(config.Spec.Type),
-	}, nil
+	}
+	// Mirror the nanogit wire-level cap with the post-read content check so the
+	// limit applies even if WithMaxFileSize is never called explicitly.
+	if gitConfig.Limits.MaxFileSize > 0 {
+		repo.maxBytes.Store(gitConfig.Limits.MaxFileSize)
+	}
+	return repo, nil
 }
 
 func (r *gitRepository) URL() string {
@@ -130,7 +232,7 @@ func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
 	// Get all refs to find the default branch
 	refs, err := r.client.ListRefs(ctx)
 	if err != nil {
-		return "", fmt.Errorf("list refs: %w", err)
+		return "", wrapNanogitError("list refs", err)
 	}
 
 	var hasMain, hasMaster bool
@@ -391,7 +493,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (out *re
 	// TODO: Fix GetTree in nanogit as it does not work commit hash
 	commit, err := r.client.GetCommit(ctx, refHash)
 	if err != nil {
-		return nil, fmt.Errorf("get commit: %w", mapNanogitError(err))
+		return nil, wrapNanogitError("get commit", err)
 	}
 
 	// Check if the path represents a directory
@@ -404,7 +506,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (out *re
 				return nil, repository.ErrFileNotFound
 			}
 
-			return nil, fmt.Errorf("get tree by path: %w", mapNanogitError(err))
+			return nil, wrapNanogitError("get tree by path", err)
 		}
 
 		return &repository.FileInfo{
@@ -420,7 +522,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (out *re
 			return nil, repository.ErrFileNotFound
 		}
 
-		return nil, fmt.Errorf("read blob: %w", mapNanogitError(err))
+		return nil, wrapNanogitError("read blob", err)
 	}
 
 	if max := r.maxBytes.Load(); max > 0 && int64(len(blob.Content)) > max {
@@ -460,7 +562,7 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) (out []reposit
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return nil, repository.ErrRefNotFound
 		}
-		return nil, fmt.Errorf("get flat tree: %w", mapNanogitError(err))
+		return nil, wrapNanogitError("get flat tree", err)
 	}
 
 	entries := make([]repository.FileTreeEntry, 0, len(tree.Entries))
@@ -506,7 +608,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 
 	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
+		return wrapNanogitError("create staged writer", err)
 	}
 
 	if err := r.create(ctx, path, data, writer); err != nil {
@@ -533,7 +635,7 @@ func (r *gitRepository) create(ctx context.Context, path string, data []byte, wr
 			return repository.ErrFileAlreadyExists
 		}
 
-		return fmt.Errorf("create blob: %w", mapNanogitError(err))
+		return wrapNanogitError("create blob", err)
 	}
 
 	return nil
@@ -561,7 +663,7 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
+		return wrapNanogitError("create staged writer", err)
 	}
 
 	if err := r.update(ctx, path, data, writer); err != nil {
@@ -583,7 +685,7 @@ func (r *gitRepository) update(ctx context.Context, path string, data []byte, wr
 			return repository.ErrFileNotFound
 		}
 
-		return fmt.Errorf("update blob: %w", mapNanogitError(err))
+		return wrapNanogitError("update blob", err)
 	}
 
 	return nil
@@ -631,7 +733,7 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) (
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
+		return wrapNanogitError("create staged writer", err)
 	}
 
 	if err := r.delete(ctx, path, writer); err != nil {
@@ -659,7 +761,7 @@ func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
+		return wrapNanogitError("create staged writer", err)
 	}
 
 	if err := r.move(ctx, oldPath, newPath, writer); err != nil {
@@ -678,14 +780,14 @@ func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
 			}
-			return fmt.Errorf("delete tree: %w", mapNanogitError(err))
+			return wrapNanogitError("delete tree", err)
 		}
 	} else {
 		if _, err := writer.DeleteBlob(ctx, finalPath); err != nil {
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
 			}
-			return fmt.Errorf("delete blob: %w", mapNanogitError(err))
+			return wrapNanogitError("delete blob", err)
 		}
 	}
 
@@ -709,7 +811,7 @@ func (r *gitRepository) move(ctx context.Context, oldPath, newPath string, write
 			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
 				return repository.ErrFileAlreadyExists
 			}
-			return fmt.Errorf("move tree: %w", mapNanogitError(err))
+			return wrapNanogitError("move tree", err)
 		}
 	} else if !safepath.IsDir(oldPath) && !safepath.IsDir(newPath) {
 		// For files, use MoveBlob operation
@@ -720,7 +822,7 @@ func (r *gitRepository) move(ctx context.Context, oldPath, newPath string, write
 			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
 				return repository.ErrFileAlreadyExists
 			}
-			return fmt.Errorf("move blob: %w", mapNanogitError(err))
+			return wrapNanogitError("move blob", err)
 		}
 	} else {
 		// Mismatched types (file to directory or vice versa)
@@ -744,7 +846,7 @@ func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, e
 	logger.Info("list refs")
 	refs, err := r.client.ListRefs(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list refs: %w", err)
+		return nil, wrapNanogitError("list refs", err)
 	}
 	refItems := make([]provisioning.RefItem, 0, len(refs))
 	for _, ref := range refs {
@@ -767,7 +869,7 @@ func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	logger.Info("get latest ref")
 	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
-		return "", fmt.Errorf("get branch ref: %w", err)
+		return "", wrapNanogitError("get branch ref", err)
 	}
 
 	return branchRef.Hash.String(), nil
@@ -810,7 +912,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 
 	files, err := r.client.CompareCommits(ctx, baseHash, refHash, nanogit.WithRenameDetection())
 	if err != nil {
-		return nil, fmt.Errorf("compare commits: %w", err)
+		return nil, wrapNanogitError("compare commits", err)
 	}
 
 	changes = make([]repository.VersionedFileChange, 0)
@@ -953,7 +1055,7 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return hash.Zero, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
 		}
-		return hash.Zero, fmt.Errorf("get ref %s: %w", ref, mapNanogitError(err))
+		return hash.Zero, wrapNanogitError(fmt.Sprintf("get ref %s", ref), err)
 	}
 
 	return branchRef.Hash, nil
@@ -983,14 +1085,14 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 
 	// If error is not "ref not found", return the error
 	if !errors.Is(err, nanogit.ErrObjectNotFound) {
-		return nanogit.Ref{}, fmt.Errorf("check branch exists: %w", err)
+		return nanogit.Ref{}, wrapNanogitError("check branch exists", err)
 	}
 
 	// Branch doesn't exist, create it based on the configured branch
 	srcBranch := r.gitConfig.Branch
 	srcRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", srcBranch))
 	if err != nil {
-		return nanogit.Ref{}, fmt.Errorf("get source branch ref: %w", err)
+		return nanogit.Ref{}, wrapNanogitError("get source branch ref", err)
 	}
 
 	// Create the new branch reference
@@ -1000,7 +1102,7 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 	}
 
 	if err := r.client.CreateRef(ctx, newRef); err != nil {
-		return nanogit.Ref{}, fmt.Errorf("create branch: %w", err)
+		return nanogit.Ref{}, wrapNanogitError("create branch", err)
 	}
 
 	return newRef, nil
@@ -1072,7 +1174,7 @@ func (r *gitRepository) commitAndPush(ctx context.Context, writer nanogit.Staged
 	}
 
 	if err := writer.Push(ctx); err != nil {
-		return fmt.Errorf("push changes: %w", mapNanogitError(err))
+		return wrapNanogitError("push changes", err)
 	}
 
 	return nil
@@ -1181,15 +1283,67 @@ func mapNanogitError(err error) error {
 		return repository.ErrServerUnavailable
 	}
 
+	// nanogit aborted the read because the response exceeded a configured byte
+	// limit (e.g. a file larger than the per-file cap). Surface it as a 413 so
+	// callers and the API layer treat it the same as the post-read size check.
+	var tooLarge *client.ErrResponseTooLarge
+	if errors.As(err, &tooLarge) {
+		return apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("git response for %s operation exceeded the %d byte limit", tooLarge.Op, tooLarge.Limit),
+		)
+	}
+
+	// nanogit rejected an object whose decoded (inflated) size exceeds the
+	// decoded-object cap — a decompression bomb defense that fires before the
+	// object is allocated. Surface it as a 413 like the wire-size limits.
+	var objectTooLarge *protocol.ObjectTooLargeError
+	if errors.As(err, &objectTooLarge) {
+		return apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("git object decoded size %d bytes exceeded the %d byte limit", objectTooLarge.Size, objectTooLarge.Limit),
+		)
+	}
+
 	// Return original error if not a known nanogit error
 	return err
 }
 
-// checkHTTPError checks if the error is a known HTTP error (401, 403, 503) and returns
-// the appropriate TestResults. Returns nil if the error is not a known HTTP error.
+// wrapNanogitError maps a nanogit error to a repository error and prefixes it
+// with context. When the mapped error carries an API status (e.g. the 413 from
+// a capped response), it is returned unwrapped: responsewriters.ErrorToAPIStatus
+// type-switches on the concrete error and does not unwrap fmt.Errorf wrappers,
+// so wrapping would downgrade the status to a generic 500 once the error reaches
+// responder.Error.
+func wrapNanogitError(prefix string, err error) error {
+	if err == nil {
+		return nil
+	}
+	mapped := mapNanogitError(err)
+	if _, ok := mapped.(apierrors.APIStatus); ok {
+		return mapped
+	}
+	return fmt.Errorf("%s: %w", prefix, mapped)
+}
+
+// checkHTTPError checks if the error is a known HTTP error (401, 403, 413, 503) and
+// returns the appropriate TestResults. Returns nil if the error is not a known HTTP error.
 func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults {
 	if err == nil {
 		return nil
+	}
+
+	// A capped git operation (refs listing, branch fetch) aborted because the
+	// response exceeded a configured byte limit; mapNanogitError has already
+	// turned it into a 413. Surface that instead of the generic 400 fallback.
+	if apierrors.IsRequestEntityTooLargeError(err) {
+		return &provisioning.TestResults{
+			Code:    http.StatusRequestEntityTooLarge,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  fieldPath.String(),
+				Detail: err.Error(),
+			}},
+		}
 	}
 
 	if errors.Is(err, repository.ErrUnauthorized) {
