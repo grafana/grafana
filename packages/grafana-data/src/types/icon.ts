@@ -246,6 +246,7 @@ export const availableIconsIndex = {
   rocket: true,
   'ruler-combined': true,
   save: true,
+  'saved-views': true,
   search: true,
   'search-minus': true,
   'search-plus': true,

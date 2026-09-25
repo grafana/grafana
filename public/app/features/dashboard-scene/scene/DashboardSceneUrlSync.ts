@@ -3,6 +3,7 @@ import { type Unsubscribable } from 'rxjs';
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
+import { applySavedViewState } from '../savedviews/state';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
@@ -28,7 +29,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView', 'drow'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView', 'drow', 'viewFilter'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -42,6 +43,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       // param through its own navigation, and reporting the held id here would put it back.
       editPanel: state.editPanel?.getUrlKey() || (state.isEditing ? this._heldEditPanelId : undefined),
       shareView: state.shareView,
+      viewFilter: state.viewFilter,
     };
   }
 
@@ -71,9 +73,24 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { viewPanel, isEditing, editPanel, editview, shareView } = this._scene.state;
+    const { viewPanel, isEditing, editPanel, editview, shareView, viewFilter, savedViews } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
+
+    // Runs in the SAME synchronous URL-sync pass as $timeRange's and every variable's own
+    // updateFromUrl, which are children of this scene and so run right after it (see the
+    // implementation spec, 4.6, for why this ordering — not a fetch here — is what makes a Saved
+    // View a default that an explicit var-*/from/to param still overrides. state.savedViews is
+    // guaranteed already populated by loadSavedViews before the scene ever reaches this point.
+    if (typeof values.viewFilter === 'string' && values.viewFilter !== viewFilter) {
+      const view = savedViews?.find((v) => v.metadata.name === values.viewFilter);
+      if (view) {
+        applySavedViewState(this._scene, view.spec);
+        update.viewFilter = values.viewFilter;
+      }
+    } else if (viewFilter && values.viewFilter === null) {
+      update.viewFilter = undefined;
+    }
 
     // Reachable directly via ?editview=, independent of any settings entry point: without this
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,

@@ -6520,6 +6520,24 @@
           "title": "Row header"
         }
       },
+      "saved-views": {
+        "delete": "Delete",
+        "delete-confirm-body": "Delete \"{{name}}\"? This cannot be undone.",
+        "delete-confirm-confirm": "Delete",
+        "delete-confirm-title": "Delete saved view",
+        "empty": "No saved views yet",
+        "loading": "Loading saved views…",
+        "new-name-placeholder": "New view name",
+        "overwrite": "Overwrite \"{{name}}\"",
+        "overwrite-none": "Overwrite selected view",
+        "pane-header": "Saved views",
+        "rename": "Rename",
+        "rename-cancel": "Cancel",
+        "rename-save": "Save name",
+        "save-as-new": "Save as new view",
+        "title": "Saved views",
+        "tooltip": "Saved views"
+      },
       "section-filters": {
         "title": "Filters"
       },

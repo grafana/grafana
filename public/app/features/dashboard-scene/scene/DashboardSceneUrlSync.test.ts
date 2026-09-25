@@ -1,9 +1,10 @@
 import { waitFor } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
-import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, SceneQueryRunner, SceneTimeRange, UrlSyncManager, VizPanel } from '@grafana/scenes';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
+import { type SavedDashboardView } from '../savedviews/api';
 
 import { DashboardScene } from './DashboardScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
@@ -29,6 +30,62 @@ describe('DashboardSceneUrlSync', () => {
       const layout = scene.state.body as DefaultGridLayoutManager;
       layout.state.grid.setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
+    });
+  });
+
+  describe('viewFilter', () => {
+    function buildSceneWithSavedViews() {
+      const view: SavedDashboardView = {
+        apiVersion: 'dashboardviews.grafana.app/v0alpha1',
+        kind: 'SavedDashboardView',
+        metadata: { name: 'view-1', resourceVersion: '1', creationTimestamp: '' },
+        spec: {
+          dashboardUID: 'dash-1',
+          name: 'My view',
+          timeRange: { from: 'now-24h', to: 'now-1h' },
+          variables: [],
+        },
+      };
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        savedViews: [view],
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+      return { scene, view };
+    }
+
+    it('applies the matching saved view and records it in state', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+
+      expect(scene.state.$timeRange?.state.from).toBe('now-24h');
+      expect(scene.state.$timeRange?.state.to).toBe('now-1h');
+      expect(scene.state.viewFilter).toBe('view-1');
+    });
+
+    it('ignores a viewFilter that does not match any saved view', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'does-not-exist' });
+
+      expect(scene.state.viewFilter).toBeUndefined();
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h');
+    });
+
+    it('clears viewFilter from state when removed from the url', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      expect(scene.state.viewFilter).toBe('view-1');
+
+      scene.urlSync?.updateFromUrl({ viewFilter: null });
+      expect(scene.state.viewFilter).toBeUndefined();
+    });
+
+    it('reflects the applied view in getUrlState', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+
+      expect(scene.urlSync?.getUrlState().viewFilter).toBe('view-1');
     });
   });
 

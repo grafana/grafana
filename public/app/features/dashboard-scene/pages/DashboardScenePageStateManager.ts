@@ -61,6 +61,7 @@ import {
 } from 'app/types/dashboard';
 
 import { type PanelEditor } from '../panel-edit/PanelEditor';
+import { loadSavedViews } from '../savedviews/loadSavedViews';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -550,6 +551,14 @@ abstract class DashboardScenePageStateManagerBase<T>
 
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
+
+    // Only fetched eagerly here when a ?viewFilter= link needs it applied before the scene's URL
+    // sync runs (see loadSavedViews.ts) -- otherwise every dashboard load would pay for a fetch
+    // most dashboards never use. The Saved Views pane fetches lazily on its own if opened without
+    // this having already run.
+    if (scene && typeof locationService.getSearchObject().viewFilter === 'string') {
+      await loadSavedViews(scene);
+    }
 
     return scene;
   }

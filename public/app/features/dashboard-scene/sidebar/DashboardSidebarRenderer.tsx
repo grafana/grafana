@@ -163,6 +163,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
         )}
         <div className={styles.viewGroup}>
           {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
+          {hasUid && !isEmbedded && <SavedViewsSidebarButton sidebar={sidebar} openPane={openPane} />}
           <Sidebar.Button
             icon="list-ui-alt"
             onClick={() => {
@@ -243,6 +244,35 @@ function FiltersOverviewButton({
       title={t('dashboard.sidebar.filters.title', 'Filters')}
       tooltip={t('dashboard.sidebar.filters.tooltip', 'Filters overview')}
       active={openPane?.getId() === 'filters'}
+    />
+  );
+}
+
+function SavedViewsSidebarButton({
+  sidebar,
+  openPane,
+}: {
+  sidebar: DashboardSidebarLike;
+  openPane: DashboardSidebarPane | undefined;
+}) {
+  const onClick = useCallback(async () => {
+    await sidebar.runPaneRequest(async (signal) => {
+      const { SavedViewsPane } = await import(
+        /* webpackChunkName: "dashboard-saved-views" */ '../savedviews/SavedViewsPane'
+      );
+      if (!signal.aborted) {
+        sidebar.openPane(new SavedViewsPane({}));
+      }
+    });
+  }, [sidebar]);
+
+  return (
+    <Sidebar.Button
+      icon="saved-views"
+      onClick={onClick}
+      title={t('dashboard.sidebar.saved-views.title', 'Saved views')}
+      tooltip={t('dashboard.sidebar.saved-views.tooltip', 'Saved views')}
+      active={openPane?.getId() === 'saved-views'}
     />
   );
 }
