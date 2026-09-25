@@ -460,8 +460,19 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         continue;
       }
       const element = result[cell.state.elementName];
-      if (element?.kind === 'Panel') {
+      if (element?.kind !== 'Panel') {
+        continue;
+      }
+
+      if (savedTimeRange) {
+        // Reinstate the saved cell range, overriding whatever a reader's own toggle left live.
         result[cell.state.elementName] = withQueryOptionsTimeRange(element, savedTimeRange);
+        continue;
+      }
+
+      const { timeFrom, timeTo } = element.spec.data.spec.queryOptions;
+      if (timeFrom && timeTo) {
+        result[cell.state.elementName] = withQueryOptionsTimeRange(element, undefined);
       }
     }
 

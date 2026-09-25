@@ -88,4 +88,24 @@ describe('buildCellSceneTimeRange', () => {
 
     deactivate();
   });
+
+  it('re-evaluates a relative cell override when an absolute notebook range is refreshed', () => {
+    const { cell, scene, deactivate } = buildActivatedCell(ANCESTOR_TIME_ZONE);
+    scene.state.$timeRange.onTimeRangeChange(
+      rangeUtil.convertRawToRange(
+        { from: '2024-01-01T10:00:00.000Z', to: '2024-01-01T12:00:00.000Z' },
+        ANCESTOR_TIME_ZONE
+      )
+    );
+    cell.setState({ $timeRange: buildCellSceneTimeRange('now-24h', 'now') });
+
+    jest.setSystemTime(new Date('2024-01-01T21:00:00Z'));
+    scene.state.$timeRange.onRefresh();
+
+    // 2024-01-01T21:00:00.000Z, and 24h before that.
+    expect(cell.state.$timeRange?.state.value.to.valueOf()).toBe(1704142800000);
+    expect(cell.state.$timeRange?.state.value.from.valueOf()).toBe(1704056400000);
+
+    deactivate();
+  });
 });

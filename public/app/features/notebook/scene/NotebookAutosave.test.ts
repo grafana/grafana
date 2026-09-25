@@ -111,6 +111,41 @@ function buildSceneWithPanel() {
   return { scene, cell, panel };
 }
 
+/**
+ * A notebook whose only cell is a panel with its own dashboard-style one-sided time override
+ * (timeFrom set, no timeTo) — unrelated to the notebook's own per-cell time range feature.
+ */
+function buildSceneWithPanelOverride(timeFrom: string) {
+  const panelKind = defaultVisualizationPanelKind();
+  const panel = new VizPanel(
+    buildVizPanelState(
+      {
+        ...panelKind,
+        spec: {
+          ...panelKind.spec,
+          data: {
+            ...panelKind.spec.data,
+            spec: { ...panelKind.spec.data.spec, queryOptions: { ...panelKind.spec.data.spec.queryOptions, timeFrom } },
+          },
+        },
+      },
+      1
+    )
+  );
+  const cell = new NotebookCellItem({ elementName: 'panel1', source: 'user', body: panel });
+
+  const scene = new NotebookScene({
+    uid: 'nb-1',
+    title: 'My notebook',
+    body: new NotebookLayoutManager({ cells: [cell] }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({ refresh: '', intervals: ['10s'] }),
+  });
+
+  return { scene, cell, panel };
+}
+
 /** What reading does to a panel: picking a colour off the legend writes a field override. */
 function recolourLegend(panel: VizPanel, color = 'red') {
   panel.setState({
@@ -138,6 +173,17 @@ function savedTexts() {
   return jest.mocked(updateNotebook).mock.calls.map(([, spec]) => {
     const element = spec.elements.md1;
     return element.kind === 'Cell' && element.spec.content.kind === 'Markdown' ? element.spec.content.spec.text : '';
+  });
+}
+
+/**
+ * The first cell's own raw timeFrom in each write. Unlike savedCellTimeRanges below, this does not
+ * require timeTo too, so it can see a panel's own one-sided (dashboard-style) override survive.
+ */
+function savedPanelTimeFrom() {
+  return jest.mocked(updateNotebook).mock.calls.map(([, spec]) => {
+    const element = spec.elements.panel1;
+    return element.kind === 'Panel' ? element.spec.data.spec.queryOptions.timeFrom : undefined;
   });
 }
 
@@ -520,6 +566,21 @@ describe('NotebookAutosave', () => {
       await scene.autosave.saveDocumentChange();
 
       expect(savedCellTimeRanges().at(-1)).toEqual({ from: 'now-1h', to: 'now' });
+    });
+
+    // A panel's own one-sided timeFrom (no timeTo) is a plain dashboard-style override, unrelated
+    // to the notebook's per-cell range feature — a save triggered by something else must not blank
+    // it just because the cell never had a saved cell time range of its own.
+    it("leaves a panel's own one-sided time override untouched by an unrelated save", async () => {
+      const { scene } = buildSceneWithPanelOverride('2h');
+      deactivate = scene.activate();
+
+      scene.onEnterEditMode();
+      scene.onTitleChange('Renamed while editing');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(jest.mocked(updateNotebook).mock.calls[0][1].title).toBe('Renamed while editing');
+      expect(savedPanelTimeFrom()).toEqual(['2h']);
     });
   });
 
