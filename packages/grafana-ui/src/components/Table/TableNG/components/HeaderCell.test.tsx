@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { createTheme, type Field, FieldType } from '@grafana/data';
 import { type Column } from '@grafana/react-data-grid';
 
+import { TABLE } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 
 import { HeaderCell } from './HeaderCell';
@@ -140,6 +141,47 @@ describe('HeaderCell', () => {
 
     render(<HeaderCell {...baseProps} field={makeField()} />);
     expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).minWidth).not.toBe('0');
+  });
+
+  it('sits the header controls with the last line of a wrapped title', () => {
+    // A wrapped title grows downward while the controls beside it stay one line tall, so centring
+    // them on the whole block leaves the arrow and the column menu floating against its middle.
+    const wrapped = makeField({ config: { custom: { wrapHeaderText: true, filterable: true } } });
+    const { container, unmount } = render(
+      <HeaderCell {...baseProps} field={wrapped} direction="ASC" tableRefreshEnabled />
+    );
+    const root = container.firstElementChild!;
+    const [labelGroup, menu] = Array.from(root.children);
+    expect(window.getComputedStyle(root).alignItems).toBe('flex-end');
+    expect(window.getComputedStyle(labelGroup).alignItems).toBe('flex-end');
+
+    // ...and each control sits in a box one line tall, centred within it, so that it lines up with
+    // the text rather than with the bottom of the cell: they're all shorter than the line box, by
+    // different amounts, so aligning their edges would stagger them against the title.
+    for (const box of [labelGroup.lastElementChild!, menu]) {
+      expect(box).toHaveStyle({ height: `${TABLE.HEADER_LINE_HEIGHT}px`, alignItems: 'center' });
+    }
+
+    unmount();
+
+    // an unwrapped title is one line tall itself, so its controls stay centred on it
+    const oneLine = makeField({ config: { custom: { filterable: true } } });
+    const { container: unwrapped } = render(
+      <HeaderCell {...baseProps} field={oneLine} direction="ASC" tableRefreshEnabled />
+    );
+    const unwrappedRoot = unwrapped.firstElementChild!;
+    expect(window.getComputedStyle(unwrappedRoot).alignItems).toBe('center');
+    expect(window.getComputedStyle(unwrappedRoot.firstElementChild!).alignItems).toBe('center');
+  });
+
+  it('renders the label at the line box the header row is sized with', () => {
+    // `useHeaderHeight` multiplies TABLE.HEADER_LINE_HEIGHT by the wrapped line count to size the
+    // header row, so the label's own line box has to be that same number. A divergence is invisible
+    // until a title wraps, and then shows up as a clipped or over-tall header.
+    render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { wrapHeaderText: true } } })} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).lineHeight).toBe(
+      `${TABLE.HEADER_LINE_HEIGHT}px`
+    );
   });
 
   it('renders nothing when hideHeader is set', () => {

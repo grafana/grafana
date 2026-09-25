@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "configuré",
       "reset-symbol-client-secret": "Réinitialiser"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Requête brute : {{queryDisplayName}}",
       "aria-label-use-query": "Utiliser ce bouton de requête",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Charger les abonnements"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Champ de la dimension {{position}}",
+      "aria-label-operator": "Opérateur de la dimension {{position}}",
+      "aria-label-remove": "Supprimer la dimension {{position}}",
+      "aria-label-value": "Valeur de la dimension {{position}}",
+      "aria-label-values": "Valeurs de la dimension {{position}}",
       "label-dimensions": "Dimensions",
       "placeholder-field": "Champ",
       "placeholder-operation": "Opération",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Limitez le nombre de lignes renvoyées (la valeur par défaut est 1 000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Voulez-vous vraiment passer aux journaux de base ?",
       "confirmText-confirm": "Confirmer",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Les requêtes de journaux de base entraînent des coûts en fonction de la quantité de données analysées.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Journaux",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Requêtes de journaux de base",
-      "tooltip-logs": "Spécifie s’il faut exécuter une requête de journaux de base ou d’analyse."
+      "tooltip-logs": "Spécifie s’il faut exécuter une requête de journaux de base ou d’analyse.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Ressource chargée avec succès, mais sans tableaux"
     },
     "logs-query-editor": {
       "learn-more": "En savoir plus",
-      "view-query": "Afficher la requête dans Azure Portal"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Afficher la requête dans Azure Portal",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Métrique"

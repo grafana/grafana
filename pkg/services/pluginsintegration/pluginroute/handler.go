@@ -58,6 +58,7 @@ type Options struct {
 	Decrypter       decrypt.DecryptService
 	AccessChecker   appplugin.PluginAccessChecker
 	Search          resourcepb.ResourceIndexClient
+	Store           resourcepb.ResourceStoreClient
 	Runner          appplugin.AppPluginRunnerOptions
 	Tracer          tracing.Tracer
 	Features        featuremgmt.FeatureToggles
@@ -82,12 +83,15 @@ func (h *Handler) Destroy() {
 }
 
 // APIGroup describes the versions actually served, including the settings API.
-func APIGroup(plugin definition.PluginDefinition) (metav1.APIGroup, error) {
-	b, err := newBuilder(plugin, Options{})
+func APIGroup(plugin definition.PluginDefinition, opts Options) (metav1.APIGroup, error) {
+	b, err := newBuilder(plugin, opts)
 	if err != nil {
 		return metav1.APIGroup{}, err
 	}
 	gvs := b.GetGroupVersions()
+	if len(gvs) == 0 {
+		return metav1.APIGroup{}, fmt.Errorf("plugin %q has no served versions", plugin.JSONData.ID)
+	}
 	group := metav1.APIGroup{Name: gvs[0].Group}
 	for _, gv := range gvs {
 		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{
@@ -110,6 +114,9 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 		return nil, fmt.Errorf("plugin %q: a storage provider is required", plugin.JSONData.ID)
 	}
 	gvs := b.GetGroupVersions()
+	if len(gvs) == 0 {
+		return nil, fmt.Errorf("plugin %q has no served versions", plugin.JSONData.ID)
+	}
 	group := gvs[0].Group
 	scheme := builder.ProvideScheme()
 	if err := b.InstallSchema(scheme); err != nil {
@@ -178,7 +185,7 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 	info := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 	if err := b.UpdateAPIGroupInfo(&info, builder.APIGroupOptions{
 		Scheme: scheme, OptsGetter: getter, MetricsRegister: reg,
-		StorageOptsRegister: storageOptionsRegister(getter), StorageOpts: storageOpts,
+		StorageOpts:      storageOpts,
 		DualWriteBuilder: dualWriteBuilder,
 	}); err != nil {
 		return nil, fmt.Errorf("%s: build group: %w", group, err)
@@ -218,7 +225,7 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 		opts.Features = featuremgmt.WithFeatures()
 	}
 	return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient, opts.ClientV3,
-		opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Search,
+		opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Search, opts.Store,
 		opts.Runner, opts.Tracer, opts.Features)
 }
 
@@ -230,13 +237,4 @@ func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureV
 		return apistore.NewRESTOptionsGetterForClient(client, secrets,
 			storagebackend.Config{Codec: codecs.LegacyCodec(gvs...)}, configProvider, nil), nil
 	}
-}
-
-func storageOptionsRegister(getter generic.RESTOptionsGetter) apistore.StorageOptionsRegister {
-	if register, ok := getter.(interface {
-		RegisterOptions(schema.GroupResource, apistore.StorageOptions)
-	}); ok {
-		return register.RegisterOptions
-	}
-	return func(schema.GroupResource, apistore.StorageOptions) {}
 }

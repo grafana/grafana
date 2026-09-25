@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
@@ -218,6 +219,18 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
+		if cfg.EnableEmbeddedAPIExtensions {
+			if cfg.ManifestApiServerAddress != "" {
+				cfg.Logger.Warn("manifest_api_server_address is ignored by in-process storage; embedded search reads startup-provisioned AppManifest files")
+			}
+			manifests, err := loadEmbeddedAppManifests(cfg.ProvisioningPath)
+			if err != nil {
+				cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
+			}
+			if err := searchOptions.ReloadManifests(resource.AppManifests(), manifests); err != nil {
+				cfg.Logger.Error("failed to load embedded search fields", "error", err)
+			}
+		}
 
 		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
 			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber)...)
@@ -320,6 +333,20 @@ func NewRemoteResourceClientFromConfig(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 ) (resource.ResourceClient, error) {
+	return newRemoteResourceClientFromConfig(cfg, reg, func(conn, indexConn grpc.ClientConnInterface) (resource.ResourceClient, error) {
+		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
+	})
+}
+
+// NewRemoteResourceClientWithAuth creates a remote client with explicit authentication,
+// retaining the configured storage/search connections, keepalive, and instrumentation.
+func NewRemoteResourceClientWithAuth(cfg *setting.Cfg, tracer trace.Tracer, reg prometheus.Registerer, auth resource.RemoteResourceClientConfig) (resource.ResourceClient, error) {
+	return newRemoteResourceClientFromConfig(cfg, reg, func(conn, indexConn grpc.ClientConnInterface) (resource.ResourceClient, error) {
+		return resource.NewRemoteResourceClient(tracer, conn, indexConn, auth)
+	})
+}
+
+func newRemoteResourceClientFromConfig(cfg *setting.Cfg, reg prometheus.Registerer, newClient func(grpc.ClientConnInterface, grpc.ClientConnInterface) (resource.ResourceClient, error)) (resource.ResourceClient, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	address := apiserverCfg.Key("address").MustString("")
 	if address == "" {
@@ -343,7 +370,7 @@ func NewRemoteResourceClientFromConfig(
 		indexConn = searchConn
 	}
 
-	client, err := resource.NewResourceClient(storageConn, indexConn, cfg, features, tracer)
+	client, err := newClient(storageConn, indexConn)
 	if err != nil {
 		_ = storageConn.Close()
 		if searchConn != nil {

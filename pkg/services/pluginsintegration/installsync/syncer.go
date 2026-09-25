@@ -229,12 +229,7 @@ func isRetryableSyncError(err error) bool {
 	// joined namespace errors individually so their order cannot change whether
 	// a transient failure is retried.
 	if joined, ok := errors.AsType[joinedError](err); ok {
-		for _, joinedErr := range joined.Unwrap() {
-			if isRetryableSyncError(joinedErr) {
-				return true
-			}
-		}
-		return false
+		return slices.ContainsFunc(joined.Unwrap(), isRetryableSyncError)
 	}
 
 	// Some app-sdk errors both expose their own Kubernetes status and unwrap

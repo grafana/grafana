@@ -36,8 +36,7 @@ func registerSubresourceMetrics(reg prometheus.Registerer) {
 	}
 	for _, collector := range []prometheus.Collector{appSubresourceRequests, appSubresourceRequestDuration} {
 		if err := reg.Register(collector); err != nil {
-			var registered prometheus.AlreadyRegisteredError
-			if !errors.As(err, &registered) {
+			if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); !ok {
 				panic(err)
 			}
 		}

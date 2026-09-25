@@ -12,18 +12,26 @@ import (
 )
 
 // UnaryRequestDurationInterceptor records storage_server_grpc_request_duration_seconds
-// for unified-storage RPCs. Returns a pass-through if metrics is nil or RequestDuration
-// is unset, so it is safe to apply unconditionally.
+// for unified-storage RPCs. A nil metrics records to unregistered collectors,
+// so it is safe to apply unconditionally.
 func UnaryRequestDurationInterceptor(metrics *StorageMetrics) grpc.UnaryServerInterceptor {
+	if metrics == nil {
+		metrics = ProvideStorageMetrics(nil)
+	}
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-		if metrics == nil || metrics.RequestDuration == nil {
-			return handler(ctx, req)
-		}
 		start := time.Now()
 		resp, err := handler(ctx, req)
 		group, resource := requestKeyLabels(req)
+		code := status.Code(err)
+		if err == nil {
+			if result, ok := resp.(interface {
+				GetError() *resourcepb.ErrorResult
+			}); ok {
+				code = grpcCodeFromErrorResult(result.GetError())
+			}
+		}
 		metrics.RequestDuration.
-			WithLabelValues(path.Base(info.FullMethod), group, resource, status.Code(err).String()).
+			WithLabelValues(path.Base(info.FullMethod), group, resource, code.String()).
 			Observe(time.Since(start).Seconds())
 		return resp, err
 	}

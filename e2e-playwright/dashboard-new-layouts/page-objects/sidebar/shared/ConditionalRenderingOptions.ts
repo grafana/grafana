@@ -58,95 +58,99 @@ export class ConditionalRenderingOptions extends PageObject {
     return this.getByGrafanaSelector(this.selectors.components.ValuePicker.button('Add rule'));
   }
 
-  /** Returns the "Template variable" name combobox */
-  getVariableRuleNameSelect(): Locator {
-    return this.getByGrafanaSelector(
-      this.selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.variableSelection,
-      { root: this.getRule('variable') }
-    );
-  }
+  readonly templateVariable = {
+    /** Returns the "Template variable" name combobox */
+    getRuleNameSelect: (): Locator => {
+      return this.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.variableSelection,
+        { root: this.getRule('variable') }
+      );
+    },
+    /** Returns the "Template variable" operator combobox */
+    getRuleOperatorSelect: (): Locator => {
+      return this.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.operatorSelection,
+        { root: this.getRule('variable') }
+      );
+    },
+    /** Returns the "Template variable" value input */
+    getRuleValueInput: (): Locator => {
+      return this.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.valueInput,
+        {
+          root: this.getRule('variable'),
+        }
+      );
+    },
+    /**
+     * Adds a "Template variable" rule with the given variable, operator, and value
+     * @param operator has to match the operator text exactly (e.g. "=")
+     */
+    addRule: async (variableName: string, operator: string, variableValue: string) => {
+      await test.step(`Add variable conditional rendering rule: "${variableName}${operator}${variableValue}"`, async () => {
+        await this.getAddRuleButton().click();
 
-  /** Returns the "Template variable" operator combobox */
-  getVariableRuleOperatorSelect(): Locator {
-    return this.getByGrafanaSelector(
-      this.selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.operatorSelection,
-      { root: this.getRule('variable') }
-    );
-  }
+        // ValuePicker opens a react-select listbox (portaled to body), not a dialog
+        await this.page.getByRole('listbox').getByRole('option', { name: 'Template variable' }).click();
 
-  /** Returns the "Template variable" value input */
-  getVariableRuleValueInput(): Locator {
-    return this.getByGrafanaSelector(this.selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.valueInput, {
-      root: this.getRule('variable'),
-    });
-  }
+        // select variable by name
+        await this.templateVariable.getRuleNameSelect().click();
+        await this.page.getByRole('listbox').getByRole('option', { name: variableName, exact: true }).click();
 
-  /**
-   * Adds a "Template variable" rule with the given variable, operator, and value
-   * @param operator has to match the operator text exactly (e.g. "=")
-   */
-  async addVariableRule(variableName: string, operator: string, variableValue: string) {
-    await test.step(`Add variable conditional rendering rule: "${variableName}${operator}${variableValue}"`, async () => {
-      await this.getAddRuleButton().click();
+        // select operator
+        await this.templateVariable.getRuleOperatorSelect().click();
+        // option also renders a description (e.g. "Equals"), so match the operator text exactly
+        await this.page.getByRole('listbox').getByRole('option').getByText(operator, { exact: true }).click();
 
-      // ValuePicker opens a react-select listbox (portaled to body), not a dialog
-      await this.page.getByRole('listbox').getByRole('option', { name: 'Template variable' }).click();
+        // set value
+        const valueInput = this.templateVariable.getRuleValueInput();
+        await valueInput.fill(variableValue);
+        await valueInput.blur();
+      });
+    },
+  };
 
-      // select variable by name
-      await this.getVariableRuleNameSelect().click();
-      await this.page.getByRole('listbox').getByRole('option', { name: variableName, exact: true }).click();
+  readonly timeRange = {
+    /** Returns the "Time range less than" rule combobox */
+    getRuleSelect: (): Locator => {
+      return this.getByGrafanaSelector(this.selectors.pages.Dashboard.Sidebar.conditionalRendering.timeRange.select, {
+        root: this.getRule('timeRangeSize'),
+      });
+    },
+    /**
+     * Adds a "Time range less than" rule
+     * @param optionLabel the label of the duration option to select (e.g. "12 hours")
+     */
+    addRule: async (optionLabel: string) => {
+      await test.step(`Add time range conditional rendering rule: "less than ${optionLabel}"`, async () => {
+        await this.getAddRuleButton().click();
+        // ValuePicker opens a react-select listbox (portaled to body), not a dialog
+        await this.page.getByRole('listbox').getByRole('option', { name: 'Time range less than' }).click();
 
-      // select operator
-      await this.getVariableRuleOperatorSelect().click();
-      // option also renders a description (e.g. "Equals"), so match the operator text exactly
-      await this.page.getByRole('listbox').getByRole('option').getByText(operator, { exact: true }).click();
+        await this.timeRange.getRuleSelect().click();
+        await this.page.getByRole('listbox').getByRole('option', { name: optionLabel, exact: true }).click();
+      });
+    },
+  };
 
-      // set value
-      const valueInput = this.getVariableRuleValueInput();
-      await valueInput.fill(variableValue);
-      await valueInput.blur();
-    });
-  }
-
-  /** Returns the "Time range less than" rule combobox */
-  getTimerangeRuleSelect(): Locator {
-    return this.getByGrafanaSelector(this.selectors.pages.Dashboard.Sidebar.conditionalRendering.timeRange.select, {
-      root: this.getRule('timeRangeSize'),
-    });
-  }
-
-  /**
-   * Adds a "Time range less than" rule
-   * @param optionLabel the label of the duration option to select (e.g. "12 hours")
-   */
-  async addTimeRangeRule(optionLabel: string) {
-    await test.step(`Add timerange conditional rendering rule: "less than ${optionLabel}"`, async () => {
-      await this.getAddRuleButton().click();
-      // ValuePicker opens a react-select listbox (portaled to body), not a dialog
-      await this.page.getByRole('listbox').getByRole('option', { name: 'Time range less than' }).click();
-
-      await this.getTimerangeRuleSelect().click();
-      await this.page.getByRole('listbox').getByRole('option', { name: optionLabel, exact: true }).click();
-    });
-  }
-
-  /** Returns the "Query result" rule combobox (Has data / No data) */
-  getQueryResultRuleSelect(): Locator {
-    return this.getByGrafanaSelector(this.selectors.pages.Dashboard.Sidebar.conditionalRendering.data.select, {
-      root: this.getRule('data'),
-    });
-  }
-
-  /**
-   * Adds a "Query result" rule
-   * @param optionLabel the label of result option to select
-   */
-  async addQueryResultRule(optionLabel: 'Has data' | 'No data') {
-    await test.step(`Add query result conditional rendering rule: "${optionLabel}"`, async () => {
-      await this.getAddRuleButton().click();
-      await this.page.getByRole('listbox').getByRole('option', { name: 'Query result' }).click();
-      await this.getQueryResultRuleSelect().click();
-      await this.page.getByRole('listbox').getByRole('option', { name: optionLabel }).click();
-    });
-  }
+  readonly queryResult = {
+    /** Returns the "Query result" rule combobox (Has data / No data) */
+    getRuleSelect: (): Locator => {
+      return this.getByGrafanaSelector(this.selectors.pages.Dashboard.Sidebar.conditionalRendering.data.select, {
+        root: this.getRule('data'),
+      });
+    },
+    /**
+     * Adds a "Query result" rule
+     * @param optionLabel the label of result option to select
+     */
+    addRule: async (optionLabel: 'Has data' | 'No data') => {
+      await test.step(`Add query result conditional rendering rule: "${optionLabel}"`, async () => {
+        await this.getAddRuleButton().click();
+        await this.page.getByRole('listbox').getByRole('option', { name: 'Query result' }).click();
+        await this.queryResult.getRuleSelect().click();
+        await this.page.getByRole('listbox').getByRole('option', { name: optionLabel }).click();
+      });
+    },
+  };
 }

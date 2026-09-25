@@ -34,6 +34,16 @@ export const DashboardInteractions = {
     reportDashboardInteraction('init_dashboard_completed', properties);
   },
 
+  textPanelUsage: (properties: {
+    mermaid_count: number;
+    handlebars_count: number;
+    data_macro_count: number;
+    per_row_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('text_panel_usage', properties);
+  },
+
   dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
     reportInteraction('grafana_dashboard_copied', properties);
   },
@@ -292,12 +302,6 @@ export const DashboardInteractions = {
   },
   exportCopyJsonClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_export_copy_json_clicked', properties);
-  },
-  exportSaveJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_save_json_clicked', properties);
-  },
-  exportViewJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_view_json_clicked', properties);
   },
   generatePublicDashboardUrlClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_public_generate_url_clicked', properties);

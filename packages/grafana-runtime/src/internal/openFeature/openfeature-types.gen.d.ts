@@ -10,6 +10,7 @@ import "@openfeature/core";
 
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
+    | "canvasPanelNesting"
     | "lokiShardSplitting"
     | "faroSessionReplay"
     | "queryHistory.localOnly"
@@ -28,27 +29,43 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "dashboard.notebooks"
+    | "dashboardUndoRedo"
+    | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"
+    | "canvasPanelPanZoom"
+    | "tableSharedCrosshair"
     | "stateTimeline.nameAboveBars"
+    | "secretsManagementAppPlatformUI"
     | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsColumnAutoComplete"
     | "sqlExpressionsCodeMirror"
     | "grafana.filterablePanels"
+    | "queryLibrary"
     | "grafana.savedQueriesPage"
     | "playlistsRBAC"
+    | "savedQueriesRBAC"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
+    | "alertingNavigationV2"
+    | "vizActionsAuth"
+    | "enableExtensionsAdminPage"
+    | "alerting.dataSourceManagedRouteProxy"
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
+    | "alertRuleRestore"
     | "datasources.azureMonitorBatchAPI"
+    | "alertingRuleRecoverDeleted"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
+    | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
     | "grafana.newTextPanel"
     | "text.newFeatures"
+    | "alertingTriage"
+    | "pieChartGradientColorScheme"
     | "plugins.useMTPlugins"
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
@@ -66,6 +83,7 @@ declare module "@openfeature/core" {
     | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
+    | "enableColorblindSafePanelOptions"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
@@ -107,8 +125,11 @@ declare module "@openfeature/core" {
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault"
     | "grafana.multiTenantUserPermissions"
-    | "datasources.gatewayGuardrails";
+    | "datasources.gatewayGuardrails"
+    | "grafana.pluginExtensionReactElementProps"
+    | "grafana.logDetailsDisplayedFieldControls";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
-  export type ObjectFlagKey = never;
+  export type ObjectFlagKey =
+    | "grafana.mtFallback";
 }

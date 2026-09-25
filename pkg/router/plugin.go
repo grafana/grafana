@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -40,6 +41,7 @@ type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client
 
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
+	PluginClient       plugins.Client
 	ContextProvider    appplugin.PluginContextWrapper
 	AccessControl      accesscontrol.AccessControl
 	DualWrite          dualwrite.Service
@@ -58,7 +60,6 @@ type PluginDependencies struct {
 type PluginLoaderDependencies struct {
 	PluginDependencies
 
-	PluginClient   plugins.Client
 	ClientV3Loader v3.ClientV3Loader
 	PluginSources  sources.Registry
 	ACService      accesscontrol.Service
@@ -86,12 +87,12 @@ func ProvidePluginLoaderDependencies(
 	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
 	return PluginLoaderDependencies{
-		PluginClient:   pluginClient,
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
 		ACService:      acService,
 		AccessClient:   accessClient,
 		PluginDependencies: PluginDependencies{
+			PluginClient:       pluginClient,
 			ContextProvider:    contextProvider,
 			AccessControl:      accessControl,
 			DualWrite:          dualWrite,
@@ -126,7 +127,6 @@ func ProvidePluginLoaderDependenciesWithClients(
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
 	clients RoutesLoaderClients,
-	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
 	return ProvidePluginLoaderDependencies(
 		pluginClient,
@@ -146,7 +146,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 		clients.SecureValues,
 		reg,
 		builderMetrics,
-		restConfigProvider,
+		clients.RESTConfigProvider,
 	)
 }
 
@@ -203,7 +203,7 @@ func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 //-----------------------
 
 func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientProvider, deps PluginDependencies) (*PluginBackend, error) {
-	group, err := pluginroute.APIGroup(plugin)
+	group, err := pluginroute.APIGroup(plugin, pluginroute.Options{PluginClient: deps.PluginClient, ContextProvider: deps.ContextProvider})
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientPro
 	sum := sha256.Sum256(b)
 
 	return &PluginBackend{
-		key:    hex.EncodeToString(sum[:]),
+		key:    "p:" + hex.EncodeToString(sum[:]),
 		group:  group,
 		plugin: plugin,
 		client: client,
@@ -259,6 +259,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		ContextProvider: b.deps.ContextProvider,
 		Decrypter:       b.deps.Decrypter,
 		Search:          b.deps.Unified,
+		Store:           b.deps.Unified,
 		Runner: appplugin.AppPluginRunnerOptions{
 			RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
 			AccessControl:            b.deps.AccessControl,
@@ -267,6 +268,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 			PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 			SearchAPIEnabled:         apiserverSection.Key(searchapi.ConfigKey).MustBool(true),
 			TrashAPIEnabled:          apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true),
+			KeysAPIEnabled:           apiserverSection.Key(keysapi.ConfigKey).MustBool(false),
 		},
 		Tracer:          b.deps.Tracer,
 		Features:        b.deps.Features,
@@ -282,5 +284,9 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	if b.deps.PluginSettings != nil {
 		opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(b.group.Name, b.plugin.JSONData.ID, b.deps.PluginSettings)
 	}
-	return pluginroute.NewHandler(b.plugin, opts)
+	handler, err := pluginroute.NewHandler(b.plugin, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &tracedPluginHandler{Handler: handler, pluginID: b.plugin.JSONData.ID, group: b.group.Name}, nil
 }

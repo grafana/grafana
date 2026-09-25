@@ -1,6 +1,7 @@
 package util
 
 import (
+	"strings"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -376,6 +377,29 @@ func TestTruncateUTF8(t *testing.T) {
 			if tc.n >= 0 {
 				assert.LessOrEqual(t, len(result), tc.n)
 			}
+			assert.True(t, utf8.ValidString(result))
+		})
+	}
+}
+
+func TestSanitizeControlChars(t *testing.T) {
+	tests := []struct {
+		name     string
+		s        string
+		maxBytes int
+		expected string
+	}{
+		{name: "plain value passes through unchanged", s: "hello-world", maxBytes: 128, expected: "hello-world"},
+		{name: "CRLF is stripped", s: "foo\r\nbar", maxBytes: 128, expected: "foobar"},
+		{name: "other ASCII control characters are stripped", s: "foo\x00\x01\x1f\x7fbar", maxBytes: 128, expected: "foobar"},
+		{name: "C1 control characters are stripped too", s: "foo\u0085\u009fbar", maxBytes: 128, expected: "foobar"}, // unicode.IsControl covers 0x80-0x9F, not just ASCII
+		{name: "unicode passes through unchanged", s: "plugin/grafana-slo-app 日本語 😀", maxBytes: 128, expected: "plugin/grafana-slo-app 日本語 😀"},
+		{name: "result is truncated after stripping, without splitting a multi-byte rune", s: strings.Repeat("a", 3) + "é", maxBytes: 3, expected: "aaa"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := SanitizeControlChars(tc.s, tc.maxBytes)
+			assert.Equal(t, tc.expected, result)
 			assert.True(t, utf8.ValidString(result))
 		})
 	}

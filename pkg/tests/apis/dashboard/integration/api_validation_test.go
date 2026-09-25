@@ -746,7 +746,6 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		}
 
 		for _, tc := range testCases {
-			tc := tc // Capture for parallel execution
 			t.Run(tc.name, func(t *testing.T) {
 				// Create the dashboard with the specified refresh value
 				dashObj := createDashboardObject(t, "Dashboard with Refresh: "+tc.refreshValue, "", 0)
@@ -1266,7 +1265,6 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 
 	// Run tests for each identity type
 	for _, identity := range identities {
-		identity := identity // Capture range variable
 		t.Run(identity.Name, func(t *testing.T) {
 			// TODO: This is currently disabled to avoid issues with reusing the same client in tests.
 			// Get admin client for cleanup based on identity type

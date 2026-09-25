@@ -259,13 +259,13 @@ func (s *SocialBase) isGroupMember(groups []string) bool {
 func (s *SocialBase) retrieveRawJWTPayload(token any) ([]byte, error) {
 	tokenString, ok := token.(string)
 	if !ok {
-		return nil, fmt.Errorf("token is not a string: %v", token)
+		return nil, fmt.Errorf("token is not a string")
 	}
 
 	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(tokenString)
 	if matched == nil {
-		return nil, fmt.Errorf("token is not in JWT format: %s", tokenString)
+		return nil, fmt.Errorf("token is not in JWT format")
 	}
 
 	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])

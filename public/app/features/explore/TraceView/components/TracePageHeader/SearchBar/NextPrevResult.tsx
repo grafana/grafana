@@ -28,7 +28,7 @@ import { getServiceDisplayName } from '../../utils/service-name';
 type NextPrevResultProps = {
   trace: Trace;
   spanFilterMatches: Set<string> | undefined;
-  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
+  setFocusedSpanIdForSearch: (spanID: string) => void;
   focusedSpanIndexForSearch: number;
   setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
   datasourceType: string;
@@ -265,7 +265,7 @@ export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
       fontWeight: theme.typography.fontWeightMedium,
     }),
     tooltip: css({
-      color: '#aaa',
+      color: theme.colors.text.secondary,
       marginLeft: theme.spacing(0.5),
       display: 'inline-flex',
       alignItems: 'center',

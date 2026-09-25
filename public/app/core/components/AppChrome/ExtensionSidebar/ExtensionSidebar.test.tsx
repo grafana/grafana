@@ -6,11 +6,8 @@ import { type AddedComponentRegistryItem } from 'app/features/plugins/extensions
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { ExtensionSidebar } from './ExtensionSidebar';
-import {
-  type ExtensionSidebarContextType,
-  getComponentIdFromComponentMeta,
-  useExtensionSidebarContext,
-} from './ExtensionSidebarProvider';
+import { type ExtensionSidebarContextType, useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { getComponentIdFromComponentMeta } from './extensionSidebarUtils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

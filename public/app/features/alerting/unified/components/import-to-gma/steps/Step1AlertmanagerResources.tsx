@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { kebabCase } from 'lodash';
 import { type ComponentProps, useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -13,7 +14,6 @@ import {
   Divider,
   Field,
   FileDropzone,
-  FileUpload,
   Icon,
   IconButton,
   InlineField,
@@ -27,6 +27,7 @@ import {
   Text,
   Tooltip,
 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
@@ -39,6 +40,30 @@ import { getNotificationsSourceOptions, isAutoSyncSelected } from '../Wizard/ste
 import { type DryRunValidationResult } from '../types';
 
 import { findDuplicateTemplateFileName, hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
+
+const YAML_FILE_EXTENSIONS = ['.yaml', '.yml'];
+
+// FileDropzone has no prop to suppress its built-in "Accepted file types" caption, shown via Field description instead.
+const hideAcceptedFileTypesCaption = css({
+  small: {
+    display: 'none',
+  },
+});
+
+// FileDropzone's `accept` option buckets extensions by MIME type, so a `.txt` file (MIME
+// text/plain) collides with the `.yml` bucket and passes; re-check the filename directly.
+function validateYamlFileExtension(file: File) {
+  const hasYamlExtension = YAML_FILE_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
+  if (hasYamlExtension) {
+    return null;
+  }
+  return {
+    code: 'file-invalid-type',
+    message: t('alerting.import-to-gma.step1.yaml-invalid-type', 'File must be a YAML file ({{extensions}})', {
+      extensions: YAML_FILE_EXTENSIONS.join(', '),
+    }),
+  };
+}
 
 /** Whether the Auto-sync checkbox may be offered: requires the sync toggle and Org Admin. */
 function isAutoSyncSegmentEnabled(): boolean {
@@ -104,6 +129,8 @@ export function Step1Content({
     clearErrors,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
+
+  const notifyApp = useAppNotification();
 
   const [
     notificationsSource,
@@ -237,26 +264,54 @@ export function Step1Content({
               <Stack direction="column" gap={2}>
                 <Field
                   label={t('alerting.import-to-gma.step1.yaml-file', 'Alertmanager config YAML')}
+                  description={t('alerting.import-to-gma.step1.yaml-desc', 'Accepted file types: {{extensions}}', {
+                    extensions: YAML_FILE_EXTENSIONS.join(', '),
+                  })}
                   invalid={Boolean(errors.notificationsYamlFile)}
                   error={errors.notificationsYamlFile?.message}
                   noMargin
                 >
                   <Controller
-                    render={({ field: { ref, onChange, value, ...field } }) => (
-                      <FileUpload
-                        {...field}
-                        accept=".yaml,.yml"
-                        onFileUpload={(event) => {
-                          const file = event.currentTarget.files?.[0];
-                          if (file) {
-                            onChange(file);
-                          }
-                        }}
-                      >
-                        {notificationsYamlFile
-                          ? notificationsYamlFile.name
-                          : t('alerting.import-to-gma.step1.upload', 'Upload YAML file')}
-                      </FileUpload>
+                    render={({ field: { onChange } }) => (
+                      <Stack direction="column" gap={1}>
+                        <div className={hideAcceptedFileTypesCaption}>
+                          <FileDropzone
+                            options={{
+                              multiple: false,
+                              accept: YAML_FILE_EXTENSIONS,
+                              validator: validateYamlFileExtension,
+                              onDrop: (acceptedFiles) => {
+                                const file = acceptedFiles[0];
+                                if (file) {
+                                  onChange(file);
+                                  notifyApp.success(
+                                    t('alerting.import-to-gma.step1.yaml-added-title', 'Configuration file uploaded'),
+                                    file.name
+                                  );
+                                }
+                              },
+                            }}
+                            fileListRenderer={() => null}
+                          >
+                            <Text color="secondary">
+                              {t('alerting.import-to-gma.step1.upload', 'Drop YAML file here or click to upload')}
+                            </Text>
+                          </FileDropzone>
+                        </div>
+
+                        {notificationsYamlFile && (
+                          <Stack direction="row" alignItems="center" justifyContent="space-between">
+                            <Text>{notificationsYamlFile.name}</Text>
+                            <IconButton
+                              name="trash-alt"
+                              tooltip={t('alerting.import-to-gma.step1.yaml-remove', 'Remove {{name}}', {
+                                name: notificationsYamlFile.name,
+                              })}
+                              onClick={() => onChange(null)}
+                            />
+                          </Stack>
+                        )}
+                      </Stack>
                     )}
                     control={control}
                     name="notificationsYamlFile"
@@ -289,7 +344,15 @@ export function Step1Content({
                           // the file name becomes the template key, so we don't restrict by extension.
                           options={{
                             multiple: true,
-                            onDrop: (acceptedFiles) => onChange([...value, ...acceptedFiles]),
+                            onDrop: (acceptedFiles) => {
+                              onChange([...value, ...acceptedFiles]);
+                              const title = t('alerting.import-to-gma.step1.templates-added-title', '', {
+                                count: acceptedFiles.length,
+                                defaultValue_one: 'Template file added',
+                                defaultValue_other: 'Template files added',
+                              });
+                              notifyApp.success(title, acceptedFiles.map((file) => file.name).join(', '));
+                            },
                           }}
                           fileListRenderer={() => null}
                         >

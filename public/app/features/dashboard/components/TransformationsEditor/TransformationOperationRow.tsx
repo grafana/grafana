@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
-import { mergeMap } from 'rxjs';
+import { mergeMap, type Subscription } from 'rxjs';
 
 import {
   type DataTransformerConfig,
@@ -10,6 +10,7 @@ import {
   getFrameMatchers,
   transformDataFrame,
   type DataFrame,
+  transformerUsesDynamicRefId,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -25,6 +26,7 @@ import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo
 import { TransformationEditor } from './TransformationEditor';
 import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
+import { TransformationOperationRowHeader } from './TransformationOperationRowHeader';
 import { type TransformationData } from './TransformationsEditor';
 import { type TransformationsEditorTransformation } from './types';
 
@@ -58,6 +60,13 @@ export const TransformationOperationRow = ({
   const [output, setOutput] = useState<DataFrame[]>([]);
   // output of previous transformation
   const [prevOutput, setPrevOutput] = useState<DataFrame[]>([]);
+  const [generatedRefId, setGeneratedRefId] = useState<string | undefined>(undefined);
+
+  // Whether the name can be pinned follows the configuration, not the data, so the editor does not
+  // appear and disappear as queries come and go.
+  const canSetRefId = transformerUsesDynamicRefId(uiConfig, configs[index].transformation.options);
+  // prevOutput is this transformation's unfiltered input, so its refIds are the reserved ones.
+  const reservedRefIds = prevOutput.map((frame) => frame.refId).filter((refId): refId is string => !!refId);
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -123,12 +132,33 @@ export const TransformationOperationRow = ({
       interpolate: (v: string) => getTemplateSrv().replace(v),
     };
 
+    const applyFilter = (frames: DataFrame[]) => (matcher ? frames.filter((frame) => matcher(frame)) : frames);
+
     const inputSubscription = transformDataFrame(inputTransforms, data.series, ctx).subscribe((data) => {
-      if (matcher) {
-        data = data.filter((frame) => matcher(frame));
-      }
-      setInput(data);
+      setInput(applyFilter(data));
     });
+
+    // The generated name has to come from what this transformation actually emits. Guessing it from
+    // the input is wrong wherever the two diverge: Reduce in fields mode keeps the incoming refIds,
+    // transformers that drop empty frames build the name from fewer of them, and the no-op paths
+    // return their input untouched. Run without the filter (already applied) or the static refId, so
+    // what comes back is the name the user would get by leaving the field blank; without `disabled`
+    // too, so a disabled row still shows one. Only the rows that can pin a name render it, and the
+    // rest would pay for the extra replay on every data or config change.
+    let generatedRefIdSubscription: Subscription | undefined;
+
+    if (canSetRefId) {
+      const previewConfig: DataTransformerConfig = {
+        ...config,
+        refId: undefined,
+        filter: undefined,
+        disabled: undefined,
+      };
+      generatedRefIdSubscription = transformDataFrame(inputTransforms, data.series, ctx)
+        .pipe(mergeMap((before) => transformDataFrame([previewConfig], applyFilter(before), ctx)))
+        // More than one frame means there is no single output to name, so the row shows "(Auto)".
+        .subscribe((frames) => setGeneratedRefId(frames.length === 1 ? frames[0].refId : undefined));
+    }
     const outputSubscription = transformDataFrame(inputTransforms, data.series, ctx)
       .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
       .subscribe(setOutput);
@@ -150,8 +180,25 @@ export const TransformationOperationRow = ({
       inputSubscription.unsubscribe();
       outputSubscription.unsubscribe();
       prevOutputSubscription.unsubscribe();
+      generatedRefIdSubscription?.unsubscribe();
     };
-  }, [index, data, configs]);
+  }, [index, data, configs, canSetRefId]);
+
+  const renderHeader = () => {
+    return (
+      <TransformationOperationRowHeader
+        index={index}
+        transformation={configs[index].transformation}
+        transformations={configs.map((config) => config.transformation)}
+        transformationTypeName={`${index + 1} - ${uiConfig.name}`}
+        disabled={disabled}
+        onChange={onChange}
+        canSetRefId={canSetRefId}
+        dynamicRefId={generatedRefId}
+        reservedRefIds={reservedRefIds}
+      />
+    );
+  };
 
   const renderActions = () => {
     return (
@@ -222,10 +269,9 @@ export const TransformationOperationRow = ({
       <QueryOperationRow
         id={id}
         index={index}
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}
+        headerElement={renderHeader}
         disabled={disabled}
         expanderMessages={{
           close: 'Collapse transformation row',
@@ -241,7 +287,6 @@ export const TransformationOperationRow = ({
             onChange={onChange}
           />
         )}
-
         <TransformationEditor
           input={input}
           output={output}
