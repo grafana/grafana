@@ -297,13 +297,83 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
           >
             <Combobox
               id={`${id}-type`}
+              width="auto"
+              minWidth={12}
               options={types.map((t) => ({ label: t, value: t }))}
               value={type}
               onChange={(v) => changeType(v.value)}
             />
           </Field>
 
+          {type === 'boolean' && (
+            <Field
+              className={styles.valueField}
+              label={
+                <span id={`${id}-value-label`} className="sr-only">
+                  <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
+                </span>
+              }
+              useFieldset={false}
+              noMargin
+            >
+              <RadioButtonGroup
+                aria-labelledby={`${id}-value-label`}
+                options={[
+                  { label: 'true', value: 'true' },
+                  { label: 'false', value: 'false' },
+                ]}
+                value={value}
+                onChange={setValue}
+                fullWidth
+              />
+            </Field>
+          )}
+
+          {(type === 'number' || type === 'string') && (
+            <Field
+              className={styles.valueField}
+              label={
+                <label htmlFor={`${id}-value`} className="sr-only">
+                  <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
+                </label>
+              }
+              noMargin
+            >
+              <Input
+                id={`${id}-value`}
+                type={type === 'number' ? 'number' : 'text'}
+                value={value}
+                onChange={(e) => setValue(e.currentTarget.value)}
+              />
+            </Field>
+          )}
+        </Stack>
+
+        {type === 'object' && (
+          <Field
+            label={
+              <span id={`${id}-value-label`} className="sr-only">
+                <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
+              </span>
+            }
+            noMargin
+            error={error}
+            invalid={!!error}
+          >
+            <CodeMirrorEditor
+              value={json}
+              onChange={changeJson}
+              language="json"
+              height="80px"
+              aria-labelledby={`${id}-value-label`}
+            />
+          </Field>
+        )}
+
+        <Stack direction="row" gap={1} alignItems="center">
           <Button
+            className={styles.actionButton}
+            fullWidth
             icon="save"
             onClick={() => {
               getLocalStorageProvider().setFlags({ [key]: value });
@@ -320,6 +390,8 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
           </Button>
 
           <Button
+            className={styles.actionButton}
+            fullWidth
             icon="trash-alt"
             variant="destructive"
             onClick={() => {
@@ -330,64 +402,19 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
             <Trans i18nKey="feature-control.delete-flag">Delete</Trans>
           </Button>
         </Stack>
-
-        {type === 'boolean' && (
-          <Field
-            label={
-              <span className="sr-only">
-                <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
-              </span>
-            }
-            noMargin
-          >
-            <RadioButtonGroup
-              options={[
-                { label: 'true', value: 'true' },
-                { label: 'false', value: 'false' },
-              ]}
-              value={value}
-              onChange={setValue}
-              fullWidth
-            />
-          </Field>
-        )}
-
-        {(type === 'number' || type === 'string') && (
-          <Field
-            label={
-              <label htmlFor={`${id}-value`} className="sr-only">
-                <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
-              </label>
-            }
-            noMargin
-          >
-            <Input
-              id={`${id}-value`}
-              type={type === 'number' ? 'number' : 'text'}
-              value={value}
-              aria-label={t('feature-control.flag-value', 'Flag value')}
-              onChange={(e) => setValue(e.currentTarget.value)}
-            />
-          </Field>
-        )}
-
-        {type === 'object' && (
-          <Field noMargin error={error} invalid={!!error}>
-            <CodeMirrorEditor
-              value={json}
-              onChange={changeJson}
-              language="json"
-              height="80px"
-              aria-label={t('feature-control.flag-value', 'Flag value')}
-            />
-          </Field>
-        )}
       </div>
     </details>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  valueField: css({
+    flex: '1 1 0',
+    minWidth: 0,
+  }),
+  actionButton: css({
+    flex: '1 1 0',
+  }),
   details: css({
     '&[open]': {
       display: 'flex',

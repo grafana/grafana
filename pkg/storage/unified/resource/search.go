@@ -2231,63 +2231,13 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 
 			docs++
 
-			key := &res.Key
-			switch res.Action {
-			case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
-				span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-				// Convert it to an indexable document
-				convertStart := time.Now()
-				doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
-				phases.recordConvert(time.Since(convertStart), err == nil)
-				if err != nil {
-					span.RecordError(err)
-					logger.Error("error building search document", "key", SearchID(key), "err", err)
-					continue
-				}
-
-				items = append(items, &BulkIndexItem{
-					Action: ActionIndex,
-					Doc:    doc,
-				})
-			case resourcepb.WatchEvent_DELETED:
-				// The delete event carries the object as it was, so trash searches can
-				// find it. Two things send it to the index as a removal instead: an
-				// index that cannot hold the markers, and a body we cannot read.
-				var doc *IndexableDocument
-				if keepDeleted {
-					convertStart := time.Now()
-					doc, err = buildDeletedDocument(key, res.ResourceVersion, res.Value)
-					// A failure here still leaves the removal below to give the index, so
-					// nothing is lost and this is not counted as producing nothing. The
-					// marker that could not be built is logged.
-					phases.recordConvert(time.Since(convertStart), true)
-					if err != nil {
-						span.RecordError(err)
-						logger.Warn("error building search document for deleted resource, removing it from the index instead", "key", SearchID(key), "err", err)
-					}
-				} else {
-					// The document is removed rather than converted, so it produced
-					// something for the index all the same.
-					phases.recordConvertNotNeeded()
-				}
-				if doc == nil {
-					span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-					items = append(items, &BulkIndexItem{
-						Action: ActionDelete,
-						Key:    &res.Key,
-					})
-					break
-				}
-
-				span.AddEvent("marking document deleted", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-				items = append(items, &BulkIndexItem{
-					Action: ActionIndex,
-					Doc:    doc,
-				})
-			default:
-				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
+			item := updateItem(ctx, builder, res, keepDeleted, phases, span, logger)
+			if item == nil {
+				// Logged already. Not remembered as processed, so a later update
+				// tries it again.
 				continue
 			}
+			items = append(items, item)
 
 			pendingKeys = append(pendingKeys, cacheKey)
 
@@ -2344,6 +2294,68 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// from the open indexes, so it also follows incremental updates and it is not
 	// added up over repeated rebuilds.
 	return index, nil
+}
+
+// updateItem turns one change storage reported into the item that brings an
+// index in line with it. It returns nil for a change that cannot be applied,
+// after logging why.
+func updateItem(
+	ctx context.Context,
+	builder DocumentBuilder,
+	res *ModifiedResource,
+	keepDeleted bool,
+	phases *buildPhaseRecorder,
+	span trace.Span,
+	logger log.Logger,
+) *BulkIndexItem {
+	key := &res.Key
+	switch res.Action {
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
+		span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+		// Convert it to an indexable document
+		convertStart := time.Now()
+		doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
+		phases.recordConvert(time.Since(convertStart), err == nil)
+		if err != nil {
+			span.RecordError(err)
+			logger.Error("error building search document", "key", SearchID(key), "err", err)
+			return nil
+		}
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+
+	case resourcepb.WatchEvent_DELETED:
+		// The delete event carries the object as it was, so trash searches can
+		// find it. Two things send it to the index as a removal instead: an
+		// index that cannot hold the markers, and a body we cannot read.
+		var doc *IndexableDocument
+		if keepDeleted {
+			convertStart := time.Now()
+			var err error
+			doc, err = buildDeletedDocument(key, res.ResourceVersion, res.Value)
+			// A failure here still leaves the removal below to give the index, so
+			// nothing is lost and this is not counted as producing nothing. The
+			// marker that could not be built is logged.
+			phases.recordConvert(time.Since(convertStart), true)
+			if err != nil {
+				span.RecordError(err)
+				logger.Warn("error building search document for deleted resource, removing it from the index instead", "key", SearchID(key), "err", err)
+			}
+		} else {
+			// The document is removed rather than converted, so it produced
+			// something for the index all the same.
+			phases.recordConvertNotNeeded()
+		}
+		if doc == nil {
+			span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+			return &BulkIndexItem{Action: ActionDelete, Key: &res.Key}
+		}
+		span.AddEvent("marking document deleted", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+
+	default:
+		logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
+		return nil
+	}
 }
 
 // keepsDeletedDocuments reports whether deleted objects should stay in this
