@@ -22,7 +22,7 @@ import (
 
 type missingReadBackend struct{ mockStorageBackend }
 
-func (missingReadBackend) ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse {
+func (*missingReadBackend) ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse {
 	return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing"}}
 }
 
