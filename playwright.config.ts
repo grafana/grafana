@@ -185,8 +185,18 @@ export default defineConfig<PluginOptions>({
       // Role-specific journeys (RBAC-V/RBAC-E) run only under their own project below — the
       // `*.viewer.spec.ts`/`*.editor.spec.ts` filename convention. Without this, the default
       // Admin project also ran the Viewer/Editor specs (and failed, since it's Admin), and the
-      // role projects ran every alerting spec, not just their own.
-      testIgnore: [/\.viewer\.spec\.ts$/, /\.editor\.spec\.ts$/],
+      // role projects ran every alerting spec, not just their own. The two corpus-browsing
+      // specs, and the corpus setup/teardown specs themselves (this project's testDir also
+      // covers the `corpus/` subdirectory), run only under `alerting-corpus-tests` and its
+      // dependencies — running them here too would seed/tear down a 240-rule fixture with no
+      // consuming test in between.
+      testIgnore: [
+        /\.viewer\.spec\.ts$/,
+        /\.editor\.spec\.ts$/,
+        'gma-alert-browsing.spec.ts',
+        'gma-recording-browsing.spec.ts',
+        'corpus/**',
+      ],
     }),
     // Dedicated Viewer/Editor role journeys for the alerting suite — the org-wide `viewer`
     // project belongs to plugin API tests, not alerting, so RBAC-V/RBAC-E use their own.
@@ -211,20 +221,32 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createEditorAndAuthenticate'],
     },
     // Once-per-run shared Alert/Recording rule corpus (see alerting-suite/corpus/), run as a
-    // setup-project dependency rather than `beforeAll` in a fully-parallel spec. Not wired as a
-    // dependency of the `alerting` project above — only specs that actually browse the corpus
-    // should pay its setup cost; add `alerting-corpus-setup` to such a spec's own dependencies.
+    // setup-project dependency rather than `beforeAll` in a fully-parallel spec. Only the
+    // browsing specs that actually need it depend on it (via `alerting-corpus-tests` below) —
+    // the plain `alerting` project (which testIgnores them) doesn't pay this setup cost.
     withAuth({
       name: 'alerting-corpus-setup',
       testDir: path.join(testDirRoot, '/alerting-suite/corpus'),
       testMatch: ['corpus-setup.spec.ts'],
       timeout: 180_000,
     }),
+    // Browsing journeys that read the corpus manifest (ALERT-1/2/3, REC-1/2) — kept out of
+    // the plain `alerting` project so it doesn't seed 240 rules for specs that don't need
+    // them; run `--project=alerting-corpus-teardown` to get the full setup → tests →
+    // teardown chain in one invocation (teardown depends on this project, not directly on
+    // setup, so it never re-seeds a second corpus on top of this one).
+    withAuth({
+      name: 'alerting-corpus-tests',
+      testDir: path.join(testDirRoot, '/alerting-suite'),
+      testMatch: ['gma-alert-browsing.spec.ts', 'gma-recording-browsing.spec.ts'],
+      dependencies: ['alerting-corpus-setup'],
+      timeout: 180_000,
+    }),
     withAuth({
       name: 'alerting-corpus-teardown',
       testDir: path.join(testDirRoot, '/alerting-suite/corpus'),
       testMatch: ['corpus-teardown.spec.ts'],
-      dependencies: ['alerting-corpus-setup'],
+      dependencies: ['alerting-corpus-tests'],
       timeout: 180_000,
     }),
     withAuth({
