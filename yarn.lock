@@ -2663,7 +2663,8 @@ __metadata:
     i18next-pseudo: "npm:^2.2.1"
     micro-memoize: "npm:^4.1.2"
     react-i18next: "npm:^17.0.9"
-    rollup: "npm:^4.60.1"
+    rolldown: "npm:1.2.9"
+    rolldown-plugin-dts: "npm:0.28.6"
     typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
     react: ">=19"

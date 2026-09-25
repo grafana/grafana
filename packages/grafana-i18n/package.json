@@ -16,14 +16,19 @@
   },
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/cjs/index.d.cts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "@grafana-app/source": "./src/index.ts",
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
+      "import": {
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
     },
     "./internal": {
       "@grafana-app/source": "./src/internal/index.ts"
@@ -44,8 +49,7 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
-    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
+    "build": "rolldown -c rolldown.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
@@ -64,7 +68,8 @@
   "devDependencies": {
     "@types/react": "19.2.18",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "rollup": "^4.60.1",
+    "rolldown": "1.2.9",
+    "rolldown-plugin-dts": "0.28.6",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
