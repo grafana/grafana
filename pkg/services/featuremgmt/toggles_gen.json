@@ -105,6 +105,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.gmaOnlyListView",
+        "resourceVersion": "1790343822671",
+        "creationTimestamp": "2026-09-25T13:43:42Z"
+      },
+      "spec": {
+        "description": "Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.manualAssistantInvestigation",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

@@ -87,6 +87,7 @@ declare module "@openfeature/core" {
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
+    | "alerting.gmaOnlyListView"
     | "assistant.frontend.tools.dashboardTemplates"
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
