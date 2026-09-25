@@ -18,20 +18,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestMain(m *testing.M) {
-	db.SetupTestDB()
 	goleak.VerifyTestMain(m,
-		goleak.Cleanup(func(exitCode int) {
-			db.CleanupTestDB()
-			os.Exit(exitCode)
-		}),
 		// OpenFeature starts a process-wide event dispatcher with no shutdown hook.
-		// Inlining changes its reported name between normal and race builds.
+		// Match both stack names: the compiler may inline startEventListener into newEventExecutor.
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.newEventExecutor.(*eventExecutor).startEventListener.func1.1"),
 	)
