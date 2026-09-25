@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"maps"
 	"net/http"
 	"strings"
@@ -13,6 +12,8 @@ import (
 
 	"github.com/sony/gobreaker/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 const (
@@ -101,9 +102,9 @@ func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
 	}
 	empty := map[string]servingEntry{}
 	r.snapshot.Store(&empty)
-	emptyGroups := buildAPIGroupList(nil)
+	emptyGroups := buildAPIGroupList(context.Background(), nil)
 	r.apiGroupList.Store(&emptyGroups)
-	emptyIndex := buildOpenAPIV3Index(nil)
+	emptyIndex := buildOpenAPIV3Index(context.Background(), nil)
 	r.openapiIndex.Store(&emptyIndex)
 	return r
 }
@@ -295,7 +296,7 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 			}
 		}()
 
-		r.storeServing(r.reconcile(ctx))
+		r.storeServing(ctx, r.reconcile(ctx))
 
 		for {
 			select {
@@ -309,7 +310,7 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 					dirty = nil
 					continue
 				}
-				r.storeServing(r.reconcile(ctx))
+				r.storeServing(ctx, r.reconcile(ctx))
 			}
 		}
 	}()
@@ -318,9 +319,9 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 
 // storeServing records a completed reconcile's outcome. Errors are logged
 // here; Ready decides whether they affect readiness.
-func (r *GrafanaRouter) storeServing(err error) {
+func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
 	if err != nil {
-		slog.Error("router: reconcile completed with errors, serving last-known-good", "err", err)
+		logging.FromContext(ctx).Error("router: reconcile completed with errors, serving last-known-good", "err", err)
 	}
 	r.state.Store(&routerState{phase: serving, err: err, served: len(r.served) > 0})
 }
@@ -372,7 +373,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group. A duplicate is a config
 			// error; the last one wins rather than crashing the router.
-			slog.Warn("router: duplicate group in route set, overwriting", "group", group)
+			logging.FromContext(ctx).Warn("router: duplicate group in route set, overwriting", "group", group)
 		}
 		seen[group] = struct{}{}
 
@@ -408,13 +409,13 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		}
 	}
 
-	r.publish()
+	r.publish(ctx)
 	return errors.Join(errs...)
 }
 
 // publish atomically stores the serving snapshot and the synthesized root
 // discovery documents, all built from r.served.
-func (r *GrafanaRouter) publish() {
+func (r *GrafanaRouter) publish(ctx context.Context) {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
@@ -427,10 +428,10 @@ func (r *GrafanaRouter) publish() {
 	}
 	r.snapshot.Store(&snap)
 
-	groupList := buildAPIGroupList(backends)
+	groupList := buildAPIGroupList(ctx, backends)
 	r.apiGroupList.Store(&groupList)
 
-	index := buildOpenAPIV3Index(backends)
+	index := buildOpenAPIV3Index(ctx, backends)
 	r.openapiIndex.Store(&index)
 }
 

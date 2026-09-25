@@ -31,7 +31,7 @@ func TestLoopbackRestConfigProvider(t *testing.T) {
 	require.NoError(t, err)
 	router := withGroups("folder.grafana.app")
 	router.served["folder.grafana.app"].handler = proxy
-	router.publish()
+	router.publish(t.Context())
 	provider := NewLoopbackRestConfigProvider(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		router.HandleFunc(w, r, http.NotFoundHandler())
 	}))

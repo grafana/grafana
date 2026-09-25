@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -115,7 +116,7 @@ func (h *countingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func buildRouterWithBackend(group, key string, upstream http.Handler) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
 	s.served[group] = &handlerEntry{handler: upstream, lastKey: key, breaker: newGroupBreaker(group)}
-	s.publish()
+	s.publish(context.Background())
 	return s
 }
 
@@ -150,7 +151,7 @@ func TestOpenAPIGroupVersionCachesUntilKeyChanges(t *testing.T) {
 	// Bump the key (simulates reconcile picking up a route change) and re-request:
 	// cache must be treated as stale, upstream hit again.
 	s.served["dashboard.grafana.app"] = &handlerEntry{handler: upstream, lastKey: "6", breaker: newGroupBreaker("dashboard.grafana.app")}
-	s.publish()
+	s.publish(t.Context())
 	rec3 := httptest.NewRecorder()
 	h.ServeHTTP(rec3, httptest.NewRequest(http.MethodGet, path, nil))
 	if rec3.Code != http.StatusOK {

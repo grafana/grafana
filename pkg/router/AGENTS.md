@@ -42,6 +42,11 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - On an OpenAPI cache miss, strip conditional headers and the `hash` query parameter before
     proxying.
   - Any 304 must carry an `ETag`.
+- **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
+  `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
+  function that logs has no context, pass one in from its caller (a request's `Context()`, or the
+  reconcile or poll `ctx`). The SDK's default logger is Grafana's, so nothing is lost when the
+  context carries no logger.
 - **Scope is CRUD and List over HTTP/1.1.** No Watch, upgrades or streaming. If that changes,
   revisit flushing, upgrade handling and per-request timeouts.
 
