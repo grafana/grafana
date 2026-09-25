@@ -13,6 +13,7 @@ import {
 import { mockClientSize } from '@grafana/test-utils';
 
 import { TableNG } from './TableNG';
+import { getCellActionStyles } from './styles';
 
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
@@ -91,6 +92,25 @@ function computedColor(color: string): string {
   element.remove();
   return computed;
 }
+
+describe('refreshed cell actions', () => {
+  it('reveals actions on hover, keyboard focus, or an open menu, but not retained mouse focus', () => {
+    const className = getCellActionStyles(createTheme(), 'left', true);
+    const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules));
+    const revealRule = rules.find(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule && rule.selectorText.includes(`.${className}`) && rule.style.opacity === '1'
+    );
+
+    expect(revealRule?.selectorText.split(',').map((selector) => selector.trim())).toEqual([
+      `.rdg-cell:hover>.${className}`,
+      `.rdg-cell:hover>div>.${className}`,
+      `.${className}:has(:focus-visible)`,
+      `.${className}:has([aria-expanded="true"])`,
+    ]);
+    expect(revealRule?.style.getPropertyValue('pointer-events')).toBe('auto');
+  });
+});
 
 describe('table zebra colors', () => {
   it.each(['dark', 'light', 'visual_refresh_dark', 'visual_refresh_light'])(

@@ -9,9 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	"github.com/grafana/authlib/types"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -416,6 +419,16 @@ func TestValidateOnDelete(t *testing.T) {
 		assert.ErrorContains(t, err, "search unavailable")
 	})
 
+	t.Run("does not expose unstructured search failures", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{err: status.Error(codes.Internal, "private database failure")}
+
+		err := ValidateOnDelete(t.Context(), searcher, team)
+
+		apiStatus := responsewriters.ErrorToAPIStatus(err)
+		require.Equal(t, int32(http.StatusInternalServerError), apiStatus.Code)
+		require.Equal(t, http.StatusText(http.StatusInternalServerError), apiStatus.Message)
+	})
+
 	t.Run("allows deletion when folder search is not configured", func(t *testing.T) {
 		require.NoError(t, ValidateOnDelete(t.Context(), nil, team))
 	})
@@ -524,6 +537,26 @@ func (c *fakeTeamSearchClient) Search(ctx context.Context, req *resourcepb.Resou
 
 func teamRow(name string) *resourcepb.ResourceTableRow {
 	return &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: name}}
+}
+
+func TestValidateTitleUniqueSearchErrors(t *testing.T) {
+	plainErr := errors.New("index down")
+	for name, client := range map[string]*deleteValidationSearchClient{
+		"embedded": {response: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+			Code: http.StatusServiceUnavailable, Message: "index unavailable",
+		}}},
+		"transport": {err: status.Error(codes.Unavailable, "index unavailable")},
+		"plain":     {err: plainErr},
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := validateTitleUnique(t.Context(), client, "stacks-1", "new-team", "Engineering")
+			if name == "plain" {
+				require.ErrorIs(t, err, plainErr)
+			} else {
+				require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
+			}
+		})
+	}
 }
 
 func TestValidateOnCreate_TitleUniqueness(t *testing.T) {

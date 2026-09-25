@@ -78,7 +78,7 @@ func withGroupHandler(group string, h http.Handler) *GrafanaRouter {
 		lastKey: "1",
 		breaker: newGroupBreaker(group),
 	}
-	s.publish()
+	s.publish(context.Background())
 	return s
 }
 
@@ -161,7 +161,7 @@ func TestHandleFuncBreakerIgnoresPlain500(t *testing.T) {
 func withGroupHandlerAndBreaker(group string, h http.Handler, cb *gobreaker.CircuitBreaker[struct{}]) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
 	s.served[group] = &handlerEntry{handler: h, lastKey: "1", breaker: cb}
-	s.publish()
+	s.publish(context.Background())
 	return s
 }
 

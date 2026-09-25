@@ -470,6 +470,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "外部アラートマネージャー",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "データソースが見つかりません"
     },
     "alert-menu": {
@@ -2652,6 +2653,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2957,6 +2960,13 @@
     },
     "rule-list": {
       "configure-datasource": "構成",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_other": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "このデータソースのルールを読み込めません"
       },
@@ -2977,7 +2987,8 @@
         "no-more-results": "これ以上の結果はありません –  {{numberOfRules}}件のルールが見つかりました",
         "no-rules-found": "現在のフィルタセットに一致するアラートルールまたは記録ルールはありません。",
         "results-loading": "検索中 – {{numberOfRules}}件のルールが見つかりました",
-        "results-with-cancellation": "検索がキャンセルされました – {{numberOfRules}}件のルールが見つかりました"
+        "results-with-cancellation": "検索がキャンセルされました – {{numberOfRules}}件のルールが見つかりました",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanagerの自動同期が有効な間は、インポートを利用できません"
@@ -4360,6 +4371,7 @@
       "label-top": "上"
     },
     "name-show-unfilled-area": "未入力の領域を表示",
+    "name-text-mode": "",
     "name-value-display": "値を表示",
     "presets": {
       "basic": "ベーシック",
@@ -4378,6 +4390,13 @@
     "suggestions": {
       "basic": "バーゲージ",
       "lcd": "バーゲージ - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "非表示",
@@ -5998,6 +6017,12 @@
       "ungroup-repeat-loss": "グループ化されていないグループに設定された繰り返しオプションは失われます。",
       "ungroup-repeat-loss-title": "グループ解除しますか？"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{numberOfPages}}ページ中の{{currentPage}}ページ目",
       "tooltip-next": "次へ",
@@ -6715,7 +6740,14 @@
         "title-remove": "削除",
         "title-show-transform-help": "変換ヘルプを表示"
       },
-      "title-delete": "{{name}}を削除しますか？"
+      "title-delete": "{{name}}を削除しますか？",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7378,7 +7410,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "プラグインを更新すると、変更内容が失われます。<strong>名前を付けて保存</strong>を使用してカスタムバージョンを作成します。",
-        "title-failed-to-save-dashboard": "ダッシュボードを保存できませんでした",
         "title-plugin-dashboard": "プラグインダッシュボード",
         "title-someone-else-has-updated-this-dashboard": "他のユーザーがこのダッシュボードを更新しました",
         "would-still-dashboard": "このダッシュボードの保存を続行しますか？"
@@ -7645,9 +7676,6 @@
       },
       "label-copy-tags": "タグをコピー",
       "label-folder": "フォルダ",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "ダッシュボードを保存できませんでした"
-      },
       "required": "必須"
     },
     "save-dashboard-drawer": {
@@ -7694,6 +7722,9 @@
       "save-variables-label-update-default-variable-values": "デフォルトの変数値を更新",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "キャンセル",
@@ -10488,7 +10519,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "アラート",
       "alerting-settings-label": "アラートUIでアラートルールを管理する",
-      "alerting-settings-tooltip": "このデータソースのアラートルールを管理します。他のアラートリソースを管理するには、Alertmanagerデータソースを追加します。",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "リセット",
       "custom-headers-add": "ヘッダーを追加",
       "custom-headers-header": "ヘッダー",
@@ -10776,6 +10807,7 @@
       "placeholder": "選択する"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "値でフィルタリング",
       "cell-filter-out": "値を除外してフィルタリング",
       "cell-inspect": "値を検査",
@@ -11136,10 +11168,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "発生中のアラート",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "インシデント",
       "team-filter-all": "すべてのチーム",
       "team-filter-label": "チームでアラートを絞り込む",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "自分のチーム",
       "title": "アラートとインシデント",
       "title-alerts": "アラート",
@@ -15487,6 +15520,10 @@
       "label": "変換の適用先",
       "series": "クエリと変換の結果"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "クエリ名はすでに存在します",
       "empty-name": "空のクエリ名は許可されていません"
@@ -15663,6 +15700,12 @@
     "title": "アプリケーションファイルが見つかりません"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "メッセージは{{messageLength}}文字で、最大文字数（500文字）を超えています。保存する前に短くしてください。",
       "title": "メッセージが長過ぎます"

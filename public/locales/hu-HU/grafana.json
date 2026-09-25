@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Külső riasztáskezelők",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Nem található adatforrás"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurálás",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Nem lehet betölteni a szabályokat ehhez az adatforráshoz"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Nincs több találat – {{numberOfRules}} szabályt sikerült találni",
         "no-rules-found": "Egyetlen riasztási vagy felvételi szabály sem felelt meg az aktuális szűrőkészletének.",
         "results-loading": "Keresés – {{numberOfRules}} talált szabály",
-        "results-with-cancellation": "Keresés megszakítva – {{numberOfRules}} szabályt sikerült találni"
+        "results-with-cancellation": "Keresés megszakítva – {{numberOfRules}} szabályt sikerült találni",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Az importálás nem érhető el, amíg a Mimir-riasztáskezelő automatikus szinkronizálása aktív"
@@ -4392,6 +4405,7 @@
       "label-top": "Felül"
     },
     "name-show-unfilled-area": "Kitöltetlen terület megjelenítése",
+    "name-text-mode": "",
     "name-value-display": "Érték megjelenítése",
     "presets": {
       "basic": "Alap",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Sávdiagramos mérőeszköz",
       "lcd": "Sávdiagramos mérőeszköz – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Rejtett",
@@ -6041,6 +6062,12 @@
       "ungroup-repeat-loss": "A szétbontott csoportokon konfigurált ismétlési beállítások elvesznek.",
       "ungroup-repeat-loss-title": "A csoport szétbontása?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{numberOfPages}}/{{currentPage}}",
       "tooltip-next": "Következő",
@@ -6759,7 +6786,14 @@
         "title-remove": "Eltávolítás",
         "title-show-transform-help": "Transzformációs súgó megjelenítése"
       },
-      "title-delete": "Törli: {{name}}?"
+      "title-delete": "Törli: {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7424,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "A módosítások elvesznek a bővítmény frissítésekor. Egyéni verzió létrehozásához használja a <strong>Mentés másként</strong> lehetőséget.",
-        "title-failed-to-save-dashboard": "Az irányítópult mentése sikertelen volt",
         "title-plugin-dashboard": "Bővítmény-irányítópult",
         "title-someone-else-has-updated-this-dashboard": "Valaki más frissítette ezt az irányítópultot",
         "would-still-dashboard": "Biztosan menti ezt az irányítópultot?"
@@ -7692,9 +7725,6 @@
       },
       "label-copy-tags": "Címkék másolása",
       "label-folder": "Mappa",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Az irányítópult mentése sikertelen volt"
-      },
       "required": "Kötelező"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Alapértelmezett változóértékek frissítése",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Mégse",
@@ -10552,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Riasztás",
       "alerting-settings-label": "Riasztási szabályok kezelése az Alerting kezelőfelületén",
-      "alerting-settings-tooltip": "Riasztási szabályok kezelése ehhez az adatforráshoz. Más Alerting-erőforrások kezeléséhez adjon hozzá egy Alertmanager-adatforrást.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Visszaállítás",
       "custom-headers-add": "Fejléc hozzáadása",
       "custom-headers-header": "Fejléc",
@@ -10840,6 +10873,7 @@
       "placeholder": "Kiválasztás"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Érték szűrése",
       "cell-filter-out": "Érték kiszűrése",
       "cell-inspect": "Érték ellenőrzése",
@@ -11200,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Aktív riasztások",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidensek",
       "team-filter-all": "Az összes csapat",
       "team-filter-label": "Riasztások szűrése csapat alapján",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Az Ön csapatai",
       "title": "Riasztások és incidensek",
       "title-alerts": "Riasztások",
@@ -15605,6 +15640,10 @@
       "label": "Transzformáció alkalmazása erre:",
       "series": "Lekérdezési és transzformációs eredmények"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "A lekérdezés neve már létezik",
       "empty-name": "Üres lekérdezésnév nem engedélyezett"
@@ -15784,6 +15823,12 @@
     "title": "Nem található az alkalmazásfájl"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Az üzenet {{messageLength}} karakter hosszú, amely meghaladja a maximális 500 karaktert. Kérjük, mentés előtt rövidítse le.",
       "title": "Az üzenet túl hosszú"

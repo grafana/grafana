@@ -12,8 +12,8 @@ saveddashboardviewv0alpha1: {
 			// resource's system-generated identifier).
 			name: string
 			timeRange: {
-				from: string
-				to:   string
+				from:      string
+				to:        string
 				timezone?: string
 			}
 			variables: [...SavedViewVariable]
@@ -28,8 +28,8 @@ saveddashboardviewv0alpha1: {
 }
 
 SavedViewVariable: {
-	name: string
-	type: string // "adhoc" | "query" | "custom" | ...
+	name:  string
+	type:  string // "adhoc" | "query" | "custom" | ...
 	value: _
 	filters?: [...SavedViewFilter]
 }

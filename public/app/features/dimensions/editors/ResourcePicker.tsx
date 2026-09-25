@@ -21,7 +21,7 @@ import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { type MediaType, type ResourceFolderName, ResourcePickerSize } from '../types';
 
-import { ResourcePickerPopover } from './ResourcePickerPopover';
+import { ResourcePickerPopover } from './ResourcePickerPopoverLazy';
 
 interface Props {
   onChange: (value?: string) => void;

@@ -2,8 +2,7 @@ import memoizeOne from 'memoize-one';
 
 import { type AbsoluteTimeRange, type LogRowModel, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getBackendSrv, config, locationService } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
 import { copyTextToClipboard } from '@grafana/ui';
 import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
@@ -42,45 +41,33 @@ function getRelativeURLPath(url: string) {
   return path.startsWith('/') ? path.substring(1, path.length) : path;
 }
 
-const createShortLinkLegacy = async (path: string): Promise<string> => {
-  const shortLink = await getBackendSrv().post(`/api/short-urls`, {
-    path: getRelativeURLPath(path),
-  });
-  return shortLink.url;
-};
-
 // Memoized API call, to not re-execute the same request multiple times
-// this function creates a shortURL using the legacy or the new k8s api depending on the feature toggle
 export const createShortLink = memoizeOne(async (path: string): Promise<string> => {
   try {
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.UseKubernetesShortURLsAPI, false)) {
-      // Use RTK API - it handles caching/failures/retries automatically
-      const result = await dispatch(
-        shortURLAPIv1beta1.endpoints.createShortUrl.initiate({
-          shortUrl: {
-            apiVersion: 'shorturl.grafana.app/v1beta1',
-            kind: 'ShortURL',
-            metadata: {},
-            spec: {
-              path: getRelativeURLPath(path),
-            },
+    // Use RTK API - it handles caching/failures/retries automatically
+    const result = await dispatch(
+      shortURLAPIv1beta1.endpoints.createShortUrl.initiate({
+        shortUrl: {
+          apiVersion: 'shorturl.grafana.app/v1beta1',
+          kind: 'ShortURL',
+          metadata: {},
+          spec: {
+            path: getRelativeURLPath(path),
           },
-        })
-      );
+        },
+      })
+    );
 
-      if ('data' in result && result.data) {
-        return buildShortUrl(result.data);
-      }
-
-      if ('error' in result) {
-        const errorMessage = extractErrorMessage(result.error);
-        throw new Error(errorMessage || 'Failed to create short URL');
-      }
-
-      throw new Error('Failed to create short URL');
-    } else {
-      return await createShortLinkLegacy(path);
+    if ('data' in result && result.data) {
+      return buildShortUrl(result.data);
     }
+
+    if ('error' in result) {
+      const errorMessage = extractErrorMessage(result.error);
+      throw new Error(errorMessage || 'Failed to create short URL');
+    }
+
+    throw new Error('Failed to create short URL');
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
