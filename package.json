@@ -477,7 +477,7 @@
     "@opentelemetry/core": "2.11.0",
     "shell-quote": "1.10.0",
     "tmp": "0.2.7",
-    "yaml@npm:^1.10.0": "1.10.3",
+    "yaml@npm:^1.10.0": "2.9.1",
     "tar@npm:7.5.11": "7.5.22",
     "linkify-it": "5.0.2",
     "react-calendar@npm:^6.0.0": "patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch",

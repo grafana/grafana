@@ -35581,19 +35581,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:1.10.3":
-  version: 1.10.3
-  resolution: "yaml@npm:1.10.3"
-  checksum: 10/e2ef2feb92c708138f016c69777a0f1e45f6d3c5e7cbcda30807a98a37eda2e008bd4fa57352b043c65245a4c799d0c99d1f9b3425de40e70929e26d2ea38215
-  languageName: node
-  linkType: hard
-
-"yaml@npm:2.9.0, yaml@npm:^2.3.4, yaml@npm:^2.8.2, yaml@npm:^2.8.3, yaml@npm:^2.9.0":
+"yaml@npm:2.9.0":
   version: 2.9.0
   resolution: "yaml@npm:2.9.0"
   bin:
     yaml: bin.mjs
   checksum: 10/9a95e8e08651c3d292ab6a5befeb5f57b76801caa097c75bb45c9a70ce19c1b11f57e87a6ef84a579ea070ed2c2c8ac541c88c0ae684d544d5f42c7e77d11b7b
+  languageName: node
+  linkType: hard
+
+"yaml@npm:2.9.1, yaml@npm:^2.3.4, yaml@npm:^2.8.2, yaml@npm:^2.8.3, yaml@npm:^2.9.0":
+  version: 2.9.1
+  resolution: "yaml@npm:2.9.1"
+  bin:
+    yaml: bin.mjs
+  checksum: 10/123c5e56a26f4962d3d5954971b2071a533d17041e00ae9ff6a5e634aed2503639bbdeea143b1610eac29613aad95a3a1d10f5fbda87b92203c039ce63934295
   languageName: node
   linkType: hard
 
