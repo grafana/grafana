@@ -69,7 +69,7 @@ describe('RecordingRulesFilterSidebar', () => {
     expect(screen.queryByText('Paused')).not.toBeInTheDocument();
   });
 
-  it('SEARCH-6.3: shows Health as unavailable but visible', () => {
+  it('SEARCH-5.1: shows Health as unavailable but visible', () => {
     render(
       <RecordingRulesFilterSidebar criteria={createEmptyCriteria()} onChange={jest.fn()} onClear={jest.fn()} hasActiveFilters={false} />
     );

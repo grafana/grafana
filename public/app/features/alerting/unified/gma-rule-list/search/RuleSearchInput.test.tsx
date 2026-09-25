@@ -75,7 +75,7 @@ describe('RuleSearchInput', () => {
     expect(screen.getByText(/namespace/)).toBeInTheDocument();
   });
 
-  it('SEARCH-5.1: the help popover lists an example for every token in the given registry', async () => {
+  it('SEARCH-6.4: the help popover lists an example for every token in the given registry', async () => {
     const user = userEvent.setup();
     render(<RuleSearchInput query="" onApply={jest.fn()} tokens={alertTokens} />);
 
@@ -86,7 +86,7 @@ describe('RuleSearchInput', () => {
     }
   });
 
-  it('SEARCH-5.2: marks a pending token as "coming soon" in the help popover', async () => {
+  it('SEARCH-6.5: marks a pending token as "coming soon" in the help popover', async () => {
     const user = userEvent.setup();
     render(<RuleSearchInput query="" onApply={jest.fn()} tokens={alertTokens} />);
 

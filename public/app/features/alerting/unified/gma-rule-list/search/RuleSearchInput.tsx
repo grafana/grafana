@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { FilterInput, Icon, Label, Stack, Text, useStyles2 } from '@grafana/ui';
+import { FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
 
 import { PopupCard } from '../../components/HoverCard';
 
@@ -128,38 +126,34 @@ export function RuleSearchInput({
 }
 
 function SearchHelp({ tokens }: { tokens: TokenDefinition[] }) {
-  const styles = useStyles2(getHelpStyles);
-
   return (
-    <div>
-      <div>
+    <Stack direction="column" gap={1}>
+      <Text element="p">
         <Trans i18nKey="alerting.gma-rule-list.search.help-intro">
           Search syntax allows you to query rules by the filters below. Filters marked &quot;coming soon&quot; are
           visible but not yet functional.
         </Trans>
-      </div>
+      </Text>
       <hr />
-      <div className={styles.grid}>
-        <div>
+      <Grid columns={2} gap={1} alignItems="center">
+        <Text weight="bold">
           <Trans i18nKey="alerting.gma-rule-list.search.help-filter-type">Filter type</Trans>
-        </div>
-        <div>
+        </Text>
+        <Text weight="bold">
           <Trans i18nKey="alerting.gma-rule-list.search.help-expression">Expression</Trans>
-        </div>
+        </Text>
         {tokens.map((token) => (
           <HelpRow key={token.key} definition={token} />
         ))}
-      </div>
-    </div>
+      </Grid>
+    </Stack>
   );
 }
 
 function HelpRow({ definition }: { definition: TokenDefinition }) {
-  const styles = useStyles2(getHelpStyles);
-
   return (
     <>
-      <div>
+      <Text element="span">
         {definition.description}
         {definition.availability === 'pending' && (
           <>
@@ -169,22 +163,9 @@ function HelpRow({ definition }: { definition: TokenDefinition }) {
             </Text>
           </>
         )}
-      </div>
-      <code className={styles.code}>{definition.example}</code>
+      </Text>
+      <code>{definition.example}</code>
     </>
   );
 }
-
-const getHelpStyles = (theme: GrafanaTheme2) => ({
-  grid: css({
-    display: 'grid',
-    gridTemplateColumns: 'max-content auto',
-    gap: theme.spacing(1),
-    alignItems: 'center',
-  }),
-  code: css({
-    display: 'block',
-    textAlign: 'center',
-  }),
-});
 

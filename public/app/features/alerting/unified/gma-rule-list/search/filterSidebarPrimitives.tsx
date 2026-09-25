@@ -1,21 +1,20 @@
-import { css } from '@emotion/css';
 import { type ReactNode, useEffect, useId, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, IconButton, Input, Label, RadioButtonGroup, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Icon, IconButton, Input, Label, RadioButtonGroup, Stack, Switch, Text } from '@grafana/ui';
 
 import { type Criteria, type LabelMatcher, type LabelOperator } from './types';
 
-const SIDEBAR_WIDTH = 250;
-
-const getSidebarStyles = () => ({
-  sidebar: css({ width: SIDEBAR_WIDTH, flexShrink: 0 }),
-});
+// Box's `width` is a spacing-token multiplier for numbers (theme.spacing(n)), not a literal
+// pixel value — a plain CSS length string passes through unchanged instead.
+const SIDEBAR_WIDTH = '250px';
 
 export function FilterSidebarContainer({ children }: { children: ReactNode }) {
-  const styles = useStyles2(getSidebarStyles);
-  return <div className={styles.sidebar}>{children}</div>;
+  return (
+    <Box width={SIDEBAR_WIDTH} shrink={0}>
+      {children}
+    </Box>
+  );
 }
 
 export function SidebarSection({ children }: { children: ReactNode }) {
@@ -68,8 +67,6 @@ export interface LabelMatchersEditorProps {
  * ever accepts what the user types.
  */
 export function LabelMatchersEditor({ labels, onChange }: LabelMatchersEditorProps) {
-  const styles = useStyles2(getLabelEditorStyles);
-
   const updateRow = (index: number, next: Partial<LabelMatcher>) => {
     const updated = labels.map((row, i) => (i === index ? { ...row, ...next } : row));
     onChange(updated);
@@ -86,7 +83,7 @@ export function LabelMatchersEditor({ labels, onChange }: LabelMatchersEditorPro
   return (
     <Stack direction="column" gap={1}>
       {labels.map((label, index) => (
-        <div key={index} className={styles.row}>
+        <Stack key={index} direction="row" gap={0.5} alignItems="center">
           <Input
             aria-label={t('alerting.gma-rule-list.search.label-key', 'Label key')}
             placeholder={t('alerting.gma-rule-list.search.label-key-placeholder', 'key')}
@@ -112,7 +109,7 @@ export function LabelMatchersEditor({ labels, onChange }: LabelMatchersEditorPro
             aria-label={t('alerting.gma-rule-list.search.label-remove', 'Remove label filter')}
             onClick={() => removeRow(index)}
           />
-        </div>
+        </Stack>
       ))}
       <Button size="sm" variant="secondary" fill="outline" icon="plus" onClick={addRow}>
         {t('alerting.gma-rule-list.search.label-add', 'Add label filter')}
@@ -120,14 +117,6 @@ export function LabelMatchersEditor({ labels, onChange }: LabelMatchersEditorPro
     </Stack>
   );
 }
-
-const getLabelEditorStyles = (theme: GrafanaTheme2) => ({
-  row: css({
-    display: 'flex',
-    gap: theme.spacing(0.5),
-    alignItems: 'center',
-  }),
-});
 
 export function RuleTitleField({ criteria, onChange }: { criteria: Criteria; onChange: (criteria: Criteria) => void }) {
   // The title field is a single free-text value even though `criteria.text` is an array
