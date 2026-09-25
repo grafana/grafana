@@ -23,6 +23,7 @@ import (
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -55,7 +56,7 @@ func TestIntegrationMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore)
-		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
+		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger(), legacysql.NewDatabaseProvider(sqlStore))
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 

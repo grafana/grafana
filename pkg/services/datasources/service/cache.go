@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 const (
@@ -58,7 +59,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.GetOrgID())
 
 	query := &datasources.GetDataSourceQuery{ID: datasourceID, OrgID: user.GetOrgID()}
-	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
+	ss := SqlStore{db: dc.SQLStore, logger: dc.logger, dbProvider: legacysql.NewDatabaseProvider(dc.SQLStore)}
 	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
@@ -104,7 +105,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.GetOrgID())
 	query := &datasources.GetDataSourceQuery{UID: datasourceUID, OrgID: user.GetOrgID()}
-	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
+	ss := SqlStore{db: dc.SQLStore, logger: dc.logger, dbProvider: legacysql.NewDatabaseProvider(dc.SQLStore)}
 	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
