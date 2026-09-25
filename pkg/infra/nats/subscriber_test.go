@@ -212,3 +212,36 @@ func TestSubscriber(t *testing.T) {
 		require.EqualValues(t, 2, b.Load(), "other subscription must keep firing")
 	})
 }
+
+// Err is consulted during connection lookup, before creating the subscription.
+type reconnectOnLookupContext struct {
+	context.Context
+	reconnect func()
+}
+
+func (c reconnectOnLookupContext) Err() error {
+	c.reconnect()
+	return c.Context.Err()
+}
+
+func TestSubscriberReconnectDuringSubscribe(t *testing.T) {
+	sub := newTestSubscriber(t, startTestServer(t))
+	var calls atomic.Int64
+	ctx := reconnectOnLookupContext{Context: context.Background(), reconnect: sub.fireReconnect}
+	subscription, err := sub.Subscribe(ctx, "grafana.test.race", func(string, []byte) {}, WithOnReconnect(func() { calls.Add(1) }))
+	require.NoError(t, err)
+	require.EqualValues(t, 1, calls.Load(), "callback must be registered before subscription setup")
+	require.NoError(t, subscription.Unsubscribe())
+	sub.fireReconnect()
+	require.EqualValues(t, 1, calls.Load())
+}
+
+func TestSubscriberFailedSubscribeRemovesReconnectCallback(t *testing.T) {
+	sub := newTestSubscriber(t, startTestServer(t))
+	_, err := sub.Subscribe(context.Background(), "", func(string, []byte) {}, WithOnReconnect(func() { t.Error("failed subscription retained callback") }))
+	require.Error(t, err)
+	sub.fireReconnect()
+	sub.mu.Lock()
+	defer sub.mu.Unlock()
+	require.Empty(t, sub.reconnectCbs)
+}
