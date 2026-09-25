@@ -1,7 +1,9 @@
 import { waitFor } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
-import { NewSceneObjectAddedEvent, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
+
+import * as panelEditor from '../panel-edit/openPanelEditor';
 
 import { DashboardScene } from './DashboardScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
@@ -261,6 +263,19 @@ describe('DashboardSceneUrlSync', () => {
   });
 
   describe('entering edit mode', () => {
+    it('preserves a deep-linked panel editor while entering dashboard edit mode', async () => {
+      locationService.push('/d/test/test?editPanel=1');
+      const scene = buildTestScene();
+      const urlSync = new UrlSyncManager();
+      try {
+        urlSync.initSync(scene);
+        expect(locationService.getSearchObject().editPanel).toBe('1');
+        await waitFor(() => expect(scene.state.editPanel?.getUrlKey()).toBe('1'));
+      } finally {
+        urlSync.cleanUp(scene);
+      }
+    });
+
     it('keeps the URL and selected edit view in sync after successive updates', async () => {
       const scene = buildTestScene();
       scene.setState({
@@ -278,15 +293,38 @@ describe('DashboardSceneUrlSync', () => {
       await waitFor(() => expect(scene.state.editview?.getUrlKey()).toBe('variables'));
     });
 
-    it('it should be possible to go from the view panel view to the edit view when the dashboard is not in edit mdoe', async () => {
+    it('opens the editor when the same URL update closes panel view and already-closed settings', async () => {
       const scene = buildTestScene();
       scene.setState({ isEditing: false });
       scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
       expect(scene.state.viewPanel).toBeDefined();
-      scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+      scene.urlSync?.updateFromUrl({ editPanel: 'panel-1', editview: null });
       // The panel editor is code split, so editPanel lands in a follow-up state update.
       await waitFor(() => expect(scene.state.editPanel).toBeDefined());
       expect(scene.state.viewPanel).toBeUndefined();
+    });
+
+    it('does not reopen the editor when URL sync closes it before its chunk arrives', async () => {
+      const scene = buildTestScene();
+      scene.setState({ isEditing: true });
+      const openEditor = jest.spyOn(panelEditor, 'openPanelEditor');
+      try {
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+        expect(scene.urlSync?.getUrlState().editPanel).toBe('panel-1');
+        const editing = openEditor.mock.results[0].value;
+
+        scene.urlSync?.updateFromUrl({ editPanel: null });
+        await editing;
+
+        expect(scene.state.editPanel).toBeUndefined();
+        expect(scene.urlSync?.getUrlState().editPanel).toBeUndefined();
+
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+        await openEditor.mock.results[1].value;
+        expect(scene.state.editPanel?.getUrlKey()).toBe('1');
+      } finally {
+        openEditor.mockRestore();
+      }
     });
   });
 

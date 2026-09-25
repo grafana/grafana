@@ -31,26 +31,27 @@ export function mockIncidents(
   return queries;
 }
 
-/** Org custom fields with a `team` select field offering the given values. */
-export function mockIncidentTeamField(values: string[]) {
-  server.use(
-    http.post(GET_FIELDS_PATH, () =>
-      HttpResponse.json({
-        fields: [
-          { slug: 'severity', archived: false, selectoptions: [{ value: 'Critical' }] },
-          {
-            slug: 'team',
-            archived: false,
-            // A blank value and one with both quote kinds; neither can be offered as an option.
-            selectoptions: [...values.map((value) => ({ value })), { value: '  ' }, { value: `Ops "A" 'B'` }],
-          },
-        ],
-      })
-    )
-  );
+/** Wire shape of one incident custom field, as far as the filter dropdown reads it. */
+interface MockIncidentField {
+  slug: string;
+  name: string;
+  domainName: 'labels' | 'incident';
+  selectoptions?: Array<{ value: string }>;
 }
 
-/** Org with no custom fields at all, so the incidents team dropdown stays hidden. */
+/** Org custom fields as given. */
+export function mockIncidentFields(fields: MockIncidentField[]) {
+  server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields })));
+}
+
+/** Org custom fields with a single `team` label field offering the given values. */
+export function mockIncidentTeamField(values: string[]) {
+  mockIncidentFields([
+    { slug: 'team', name: 'Team', domainName: 'labels', selectoptions: values.map((value) => ({ value })) },
+  ]);
+}
+
+/** Org with no custom fields at all, so the incidents filter dropdown stays hidden. */
 export function mockNoIncidentFields() {
   server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields: [] })));
 }

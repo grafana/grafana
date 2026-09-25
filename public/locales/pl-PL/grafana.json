@@ -485,6 +485,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Zewnętrzne menedżery alertów",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Nie znaleziono źródeł danych"
     },
     "alert-menu": {
@@ -2715,6 +2716,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -3020,6 +3023,19 @@
     },
     "rule-list": {
       "configure-datasource": "Konfiguruj",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_few": "",
+        "inline_many": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_few": "",
+        "title_many": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Nie można załadować reguł dla tego źródła danych"
       },
@@ -3040,7 +3056,8 @@
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",
         "no-rules-found": "Brak alertów lub reguł rejestrowania pasujących do bieżącego zestawu filtrów.",
         "results-loading": "Wyszukiwanie – liczba znalezionych reguł: {{numberOfRules}}",
-        "results-with-cancellation": "Wyszukiwanie anulowane – liczba znalezionych reguł: {{numberOfRules}}"
+        "results-with-cancellation": "Wyszukiwanie anulowane – liczba znalezionych reguł: {{numberOfRules}}",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Importy są niedostępne, gdy aktywna jest automatyczna synchronizacja menedżera alertów Mimir"
@@ -4456,6 +4473,7 @@
       "label-top": "U góry"
     },
     "name-show-unfilled-area": "Pokaż niewypełniony obszar",
+    "name-text-mode": "",
     "name-value-display": "Wyświetlanie wartości",
     "presets": {
       "basic": "Podstawowy",
@@ -4474,6 +4492,13 @@
     "suggestions": {
       "basic": "Wskaźnik słupkowy",
       "lcd": "Wskaźnik słupkowy – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Ukryte",
@@ -5850,6 +5875,7 @@
     "edit-actions": {
       "add": "Dodaj: {{typeName}}",
       "add-conditional-rule": "Dodaj regułę {{ruleDescription}}",
+      "collapse-all-rows": "",
       "dashboard-description": "Zmień opis pulpitu",
       "dashboard-title": "Zmień tytuł pulpitu",
       "duplicate": "Duplikuj: {{typeName}}",
@@ -5857,6 +5883,7 @@
       "edit-query-result-rule": "Zmień regułę wyniku zapytania",
       "edit-template-variable-rule": "Zmień regułę zmiennej szablonu",
       "edit-time-range-rule": "Zmień regułę zakresu czasu",
+      "expand-all-rows": "",
       "group-into-row": "Grupuj w wierszu",
       "group-into-tab": "Grupuj na karcie",
       "move": "Przenieś {{typeName}}",
@@ -5889,9 +5916,7 @@
       "add-library-panel-header": "Importuj panel",
       "add-visualization-body": "Wybierz źródło danych, a następnie wyszukaj i zwizualizuj dane na wykresach, w statystykach i tabelach lub utwórz listy, korzystaj ze znaczników markdown i innych widżetów.",
       "add-visualization-button": "Dodaj wizualizację",
-      "add-visualization-description": "",
       "add-visualization-header": "Dodaj wizualizację, aby rozpocząć tworzenie nowego pulpitu",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Automatyczna siatka",
       "auto-grid-description": "Panele zmieniają rozmiar, aby pasowały i tworzyły jednolite siatki",
@@ -5899,9 +5924,6 @@
       "custom-grid": "Siatka niestandardowa",
       "custom-grid-description": "Umieść każdy panel osobno i zmień jego rozmiar",
       "description": "Dodaj panel, aby wizualizować dane",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Zaimportuj pulpity z plików lub witryny <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importuj pulpit",
       "import-dashboard-button": "Importuj pulpit",
@@ -6130,6 +6152,12 @@
       "ungroup-repeat-loss": "Opcje powtarzania skonfigurowane dla rozłączonych grup zostaną utracone.",
       "ungroup-repeat-loss-title": "Rozłączyć grupę?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} z {{numberOfPages}}",
       "tooltip-next": "Dalej",
@@ -6231,11 +6259,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_few": "",
-      "panel-count_many": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Pulpit, do którego próbujesz uzyskać dostęp, nie istnieje",
@@ -6854,7 +6878,14 @@
         "title-remove": "Usuń",
         "title-show-transform-help": "Pokaż pomoc dotyczącą transformacji"
       },
-      "title-delete": "Usunąć: {{name}}?"
+      "title-delete": "Usunąć: {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7523,7 +7554,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Zmiany zostaną utracone po zaktualizowaniu wtyczki. Użyj opcji <strong>Zapisz jako</strong>, aby utworzyć wersję niestandardową.",
-        "title-failed-to-save-dashboard": "Nie udało się zapisać pulpitu",
         "title-plugin-dashboard": "Pulpit wtyczek",
         "title-someone-else-has-updated-this-dashboard": "Ktoś inny zaktualizował ten pulpit",
         "would-still-dashboard": "Czy nadal chcesz zapisać ten pulpit?"
@@ -7793,9 +7823,6 @@
       },
       "label-copy-tags": "Kopiuj tagi",
       "label-folder": "Folder",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Nie udało się zapisać pulpitu"
-      },
       "required": "Wymagane"
     },
     "save-dashboard-drawer": {
@@ -7842,6 +7869,9 @@
       "save-variables-label-update-default-variable-values": "Aktualizuj domyślne wartości zmiennych",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Anuluj",
@@ -9544,6 +9574,7 @@
     "flag-value": "Wartość flagi",
     "menu": "Otwórz menu",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Zapisz",
     "title": "Sterowanie funkcjami"
   },
@@ -10686,7 +10717,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerty",
       "alerting-settings-label": "Zarządzaj regułami alertów w interfejsie alertu",
-      "alerting-settings-tooltip": "Zarządzaj regułami alertów dla tego źródła danych. Aby zarządzać innymi zasobami alertów, dodaj źródło danych Alertmanager.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Zresetuj",
       "custom-headers-add": "Dodaj nagłówek",
       "custom-headers-header": "Nagłówek",
@@ -10811,6 +10842,7 @@
       "aria-label-sort-column": "Sortuj kolumnę {{columnName}}",
       "expand-row-header": "Rozszerzanie wierszy",
       "expand-row-tooltip": "Przełącz rozwinięcie wiersza",
+      "loading": "",
       "tooltip-collapse-all": "Zwiń wszystkie wiersze",
       "tooltip-expand-all": "Rozwiń wszystkie wiersze"
     },
@@ -10906,6 +10938,9 @@
       "tooltip-hide": "Ukryj hasło",
       "tooltip-show": "Pokaż hasło"
     },
+    "query-field": {
+      "loading": ""
+    },
     "query-input": {
       "loading": "Ładowanie edytora"
     },
@@ -10970,6 +11005,7 @@
       "placeholder": "Wybierz"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filtruj wg wartości",
       "cell-filter-out": "Odfiltruj wartość",
       "cell-inspect": "Sprawdź wartość",
@@ -11015,6 +11051,7 @@
         }
       },
       "inspect-drawer-title": "Sprawdź wartość",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Rozwiń zagnieżdżone wiersze",
         "no-data": "Brak danych"
@@ -11329,10 +11366,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Uruchomione alerty",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incydenty",
       "team-filter-all": "Wszystkie zespoły",
       "team-filter-label": "Filtruj alerty według zespołu",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Twoje zespoły",
       "title": "Alerty i incydenty",
       "title-alerts": "Alerty",
@@ -13875,10 +13913,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Usuń listę autoodtwarzania",
-      "edit": "Edytuj listę autoodtwarzania",
-      "start": "Rozpocznij autoodtwarzanie",
-      "tooltip": "Udostępnij autoodtwarzanie"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Nowe autoodtwarzanie"
@@ -15068,6 +15111,15 @@
     "repository-status": {
       "error": "Nie udało się wczytać repozytorium"
     },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Wróć do repozytoriów",
       "cleaning-up-resources": "Sprzątanie zasobów repozytorium",
@@ -15828,6 +15880,10 @@
       "label": "Zastosuj transformację do",
       "series": "Wyniki zapytania i transformacji"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Nazwa zapytania już istnieje",
       "empty-name": "Pusta nazwa zapytania jest niedozwolona"
@@ -16013,6 +16069,12 @@
     "title": "Nie można znaleźć pliku aplikacji"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Wiadomość składa się z {{messageLength}} znaków i przekracza maksymalną długość 500 znaków. Skróć ją przed zapisaniem.",
       "title": "Zbyt długa wiadomość."
@@ -16768,7 +16830,9 @@
     }
   },
   "swagger": {
-    "login": "Logowanie"
+    "login": "Logowanie",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17991,6 +18055,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Pole",
+      "label-keep-unjoined": "",
       "label-mode": "Tryb",
       "modes": {
         "description": {
@@ -18003,7 +18068,8 @@
           "outer-tabular": "Zewnętrzne (tabelaryczne)",
           "outer-time-series": "Zewnętrzne (szeregi czasowe)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {

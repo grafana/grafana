@@ -1,6 +1,7 @@
 import { type NavModelItem } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -116,7 +117,7 @@ const ADMIN_PLUGINS_CHILDREN: NavEntryBuilder[] = [
   {
     when: () =>
       config.buildInfo.env === 'development' ||
-      (Boolean(config.featureToggles.enableExtensionsAdminPage) &&
+      (getFeatureFlagClient().getBooleanValue(FlagKeys.EnableExtensionsAdminPage, false) &&
         hasAny(AccessControlAction.PluginsWrite, AccessControlAction.PluginsInstall)),
     build: () => ({
       text: 'Extensions',
