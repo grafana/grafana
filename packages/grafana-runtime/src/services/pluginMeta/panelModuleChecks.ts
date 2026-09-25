@@ -4,36 +4,27 @@ import { logPluginMetaWarning } from './logging';
 
 type WarningLogger = typeof logPluginMetaWarning;
 
-function getPublicPath(): string {
-  return typeof window !== 'undefined' && window.__grafana_public_path__ ? window.__grafana_public_path__ : '';
-}
-
-function normalizeEnd(url: string): string {
-  return url.endsWith('/') ? url : `${url}/`;
-}
-
-/**
- * Strips a leading public-path prefix from a module path so that metas-side
- * module strings (which the metas mapper rewrites via `prependPublicPathToCorePlugins`
- * for decoupled core plugins) can be compared against bootdata-side raw module paths.
- */
-export function normalizePanelModulePath(module: string | undefined): string | undefined {
+function normalizePanelModulePath(module: string | undefined): string {
+  const PUBLIC_URL_SEGMENT = '/public/';
+  const PUBLIC_PREFIX = 'public/';
   if (!module) {
-    return module;
+    return '';
   }
-  const publicPath = getPublicPath();
-  if (!publicPath) {
-    return module;
+  const urlIdx = module.lastIndexOf(PUBLIC_URL_SEGMENT);
+  if (urlIdx !== -1) {
+    return module.slice(urlIdx + PUBLIC_URL_SEGMENT.length);
   }
-  const prefix = normalizeEnd(publicPath);
-  return module.startsWith(prefix) ? module.slice(prefix.length) : module;
+  if (module.startsWith(PUBLIC_PREFIX)) {
+    return module.slice(PUBLIC_PREFIX.length);
+  }
+  return module;
 }
 
 export function hasPanelModuleMetaAgreement(
   metasModule: string | undefined,
   bootDataModule: string | undefined
 ): boolean {
-  return normalizePanelModulePath(bootDataModule) === normalizePanelModulePath(metasModule);
+  return normalizePanelModulePath(metasModule) === normalizePanelModulePath(bootDataModule);
 }
 
 export function logPanelMetasDisagreementsWithBootData(

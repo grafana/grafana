@@ -1,189 +1,161 @@
 import { type PanelPluginMeta, PluginType } from '@grafana/data';
 
-import {
-  hasPanelModuleMetaAgreement,
-  logPanelMetasDisagreementsWithBootData,
-  normalizePanelModulePath,
-} from './panelModuleChecks';
-
-const CDN_MODULE = 'https://plugins-cdn.grafana.com/canvas/1.0.0/module.js';
-const CORE_MODULE = 'core:plugin/canvas';
-const RAW_DECOUPLED_CORE_MODULE = 'public/app/plugins/panel/timeseries/module.js';
-const PUBLIC_PATH = 'https://cdn.example.com/';
-const PREFIXED_DECOUPLED_CORE_MODULE = `${PUBLIC_PATH}${RAW_DECOUPLED_CORE_MODULE}`;
+import { hasPanelModuleMetaAgreement, logPanelMetasDisagreementsWithBootData } from './panelModuleChecks';
 
 const panelWith = (module: string | undefined): PanelPluginMeta =>
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   ({ module }) as PanelPluginMeta;
 
-describe('normalizePanelModulePath', () => {
-  it('returns undefined when input is undefined', () => {
-    expect(normalizePanelModulePath(undefined)).toBeUndefined();
-  });
-
-  it('returns empty string when input is empty', () => {
-    expect(normalizePanelModulePath('')).toBe('');
-  });
-
-  it('returns input unchanged when publicPath is not set', () => {
-    expect(normalizePanelModulePath(RAW_DECOUPLED_CORE_MODULE)).toBe(RAW_DECOUPLED_CORE_MODULE);
-  });
-
-  describe('when publicPath is set', () => {
-    beforeEach(() => {
-      window.__grafana_public_path__ = PUBLIC_PATH;
-    });
-
-    afterEach(() => {
-      window.__grafana_public_path__ = '';
-    });
-
-    it('strips a matching publicPath prefix from the module string', () => {
-      expect(normalizePanelModulePath(PREFIXED_DECOUPLED_CORE_MODULE)).toBe(RAW_DECOUPLED_CORE_MODULE);
-    });
-
-    it('adds a trailing slash to publicPath before matching', () => {
-      window.__grafana_public_path__ = 'https://cdn.example.com';
-      expect(normalizePanelModulePath(PREFIXED_DECOUPLED_CORE_MODULE)).toBe(RAW_DECOUPLED_CORE_MODULE);
-    });
-
-    it('returns input unchanged when module does not start with publicPath', () => {
-      expect(normalizePanelModulePath(CDN_MODULE)).toBe(CDN_MODULE);
-    });
-  });
-});
-
 describe('hasPanelModuleMetaAgreement', () => {
-  it.each([
-    ['modules match', CDN_MODULE, CDN_MODULE],
-    ['both undefined', undefined, undefined],
-    ['both empty', '', ''],
-  ])('returns true when %s', (_desc, metasModule, bootDataModule) => {
-    expect(hasPanelModuleMetaAgreement(metasModule, bootDataModule)).toBe(true);
+  describe('trivial equality', () => {
+    it.each([
+      ['identical core references', 'core:plugin/canvas'],
+      ['identical bootdata paths', 'public/app/plugins/panel/timeseries/module.js'],
+      ['both undefined', undefined],
+      ['both empty strings', ''],
+    ])('agrees on %s', (_desc, module) => {
+      expect(hasPanelModuleMetaAgreement(module, module)).toBe(true);
+    });
   });
 
-  it.each([
-    ['modules differ (core vs cdn)', CORE_MODULE, CDN_MODULE],
-    ['metas has a value and bootdata is undefined', CDN_MODULE, undefined],
-    ['metas has a value and bootdata is empty', CDN_MODULE, ''],
-    ['metas module is empty and bootdata has a value', '', CDN_MODULE],
-    ['metas module is undefined and bootdata has a value', undefined, CDN_MODULE],
-  ])('returns false when %s', (_desc, metasModule, bootDataModule) => {
-    expect(hasPanelModuleMetaAgreement(metasModule, bootDataModule)).toBe(false);
+  describe('cross-source equivalence for decoupled core panels', () => {
+    it('agrees when Cloud metas serves the same panel as bootdata', () => {
+      const CLOUD_TIMESERIES =
+        'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/panel/timeseries/module.js';
+      const BOOT_TIMESERIES = 'public/app/plugins/panel/timeseries/module.js';
+      expect(hasPanelModuleMetaAgreement(CLOUD_TIMESERIES, BOOT_TIMESERIES)).toBe(true);
+    });
   });
 
-  describe('when publicPath is set (decoupled core plugin)', () => {
-    beforeEach(() => {
-      window.__grafana_public_path__ = PUBLIC_PATH;
-    });
+  describe('value drift between defined modules', () => {
+    const CLOUD_TIMESERIES =
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/panel/timeseries/module.js';
+    const CDN_CANVAS = 'https://plugins-cdn.grafana.com/canvas/1.0.0/module.js';
+    const CORE_CANVAS = 'core:plugin/canvas';
+    const BOOT_STAT = 'public/app/plugins/panel/stat/module.js';
 
-    afterEach(() => {
-      window.__grafana_public_path__ = '';
+    it.each([
+      ['a core reference and an external CDN URL for the same plugin', CORE_CANVAS, CDN_CANVAS],
+      ['a decoupled core panel and an unrelated core reference', CLOUD_TIMESERIES, CORE_CANVAS],
+      ['a decoupled core panel and a different plugin path', CLOUD_TIMESERIES, BOOT_STAT],
+    ])('disagrees when metas and bootdata resolve to %s', (_desc, metas, boot) => {
+      expect(hasPanelModuleMetaAgreement(metas, boot)).toBe(false);
     });
+  });
 
-    it('returns true when metas has publicPath-prefixed module and bootdata has raw module', () => {
-      expect(hasPanelModuleMetaAgreement(PREFIXED_DECOUPLED_CORE_MODULE, RAW_DECOUPLED_CORE_MODULE)).toBe(true);
-    });
+  describe('presence mismatch (one side is defined, the other is not)', () => {
+    const SOME_MODULE = 'https://plugins-cdn.grafana.com/canvas/1.0.0/module.js';
 
-    it('returns false when normalized modules still differ', () => {
-      expect(hasPanelModuleMetaAgreement(PREFIXED_DECOUPLED_CORE_MODULE, CORE_MODULE)).toBe(false);
+    it.each([
+      ['metas defined, bootdata undefined', SOME_MODULE, undefined],
+      ['metas defined, bootdata empty', SOME_MODULE, ''],
+    ])('disagrees when %s', (_desc, metas, boot) => {
+      expect(hasPanelModuleMetaAgreement(metas, boot)).toBe(false);
     });
   });
 });
 
 describe('logPanelMetasDisagreementsWithBootData', () => {
-  it('logs a single aggregated warning for one disagreement', () => {
-    const logWarning = jest.fn();
+  const MESSAGE = 'PluginMeta: bootdata/metas panel module disagreements';
+  const CDN_CANVAS = 'https://plugins-cdn.grafana.com/canvas/1.0.0/module.js';
+  const CORE_CANVAS = 'core:plugin/canvas';
 
-    logPanelMetasDisagreementsWithBootData(
-      { canvas: panelWith(CORE_MODULE) },
-      { canvas: panelWith(CDN_MODULE) },
-      logWarning
-    );
-
-    expect(logWarning).toHaveBeenCalledTimes(1);
-    expect(logWarning).toHaveBeenCalledWith('PluginMeta: bootdata/metas panel module disagreements', {
-      pluginType: PluginType.panel,
-      count: '1',
-      total: '1',
-      pluginIds: 'canvas',
-    });
-  });
-
-  it('aggregates disagreements into a single warning call', () => {
-    const logWarning = jest.fn();
-
-    logPanelMetasDisagreementsWithBootData(
-      {
-        canvas: panelWith(CORE_MODULE),
-        text: panelWith(CDN_MODULE),
-        gauge: panelWith(''),
-      },
-      {
-        canvas: panelWith(CDN_MODULE),
-        text: panelWith(CDN_MODULE),
-        gauge: panelWith(CDN_MODULE),
-      },
-      logWarning
-    );
-
-    expect(logWarning).toHaveBeenCalledTimes(1);
-    expect(logWarning).toHaveBeenCalledWith('PluginMeta: bootdata/metas panel module disagreements', {
-      pluginType: PluginType.panel,
-      count: '2',
-      total: '3',
-      pluginIds: 'canvas,gauge',
-    });
-  });
-
-  it('does not log when modules match', () => {
-    const logWarning = jest.fn();
-
-    logPanelMetasDisagreementsWithBootData(
-      { canvas: panelWith(CDN_MODULE) },
-      { canvas: panelWith(CDN_MODULE) },
-      logWarning
-    );
-
-    expect(logWarning).not.toHaveBeenCalled();
-  });
-
-  it('logs a disagreement when a panel is present in metas but missing from bootdata', () => {
-    // A panel the metas response advertises to the frontend but that bootdata
-    // has no record of is a divergence worth surfacing: it can indicate the
-    // frontend exposing panels the backend does not consider installed.
-    const logWarning = jest.fn();
-
-    logPanelMetasDisagreementsWithBootData({ canvas: panelWith(CDN_MODULE) }, {}, logWarning);
-
-    expect(logWarning).toHaveBeenCalledTimes(1);
-    expect(logWarning).toHaveBeenCalledWith('PluginMeta: bootdata/metas panel module disagreements', {
-      pluginType: PluginType.panel,
-      count: '1',
-      total: '1',
-      pluginIds: 'canvas',
-    });
-  });
-
-  describe('when publicPath is set (decoupled core plugin)', () => {
-    beforeEach(() => {
-      window.__grafana_public_path__ = PUBLIC_PATH;
-    });
-
-    afterEach(() => {
-      window.__grafana_public_path__ = '';
-    });
-
-    it('does not log when a decoupled core panel has matching normalized modules', () => {
+  describe('when there is a value disagreement', () => {
+    it('logs a single aggregated warning for one disagreeing panel', () => {
       const logWarning = jest.fn();
 
       logPanelMetasDisagreementsWithBootData(
-        { timeseries: panelWith(PREFIXED_DECOUPLED_CORE_MODULE) },
-        { timeseries: panelWith(RAW_DECOUPLED_CORE_MODULE) },
+        { canvas: panelWith(CORE_CANVAS) },
+        { canvas: panelWith(CDN_CANVAS) },
+        logWarning
+      );
+
+      expect(logWarning).toHaveBeenCalledTimes(1);
+      expect(logWarning).toHaveBeenCalledWith(MESSAGE, {
+        pluginType: PluginType.panel,
+        count: '1',
+        total: '1',
+        pluginIds: 'canvas',
+      });
+    });
+
+    it('aggregates multiple disagreements into a single warning call', () => {
+      const CDN_TEXT = 'https://plugins-cdn.grafana.com/text/1.0.0/module.js';
+      const CDN_GAUGE = 'https://plugins-cdn.grafana.com/gauge/1.0.0/module.js';
+      const logWarning = jest.fn();
+
+      // canvas: core vs cdn -> disagreement.
+      // text:   cdn vs cdn (same) -> agreement.
+      // gauge:  empty vs cdn -> disagreement.
+      logPanelMetasDisagreementsWithBootData(
+        {
+          canvas: panelWith(CORE_CANVAS),
+          text: panelWith(CDN_TEXT),
+          gauge: panelWith(''),
+        },
+        {
+          canvas: panelWith(CDN_CANVAS),
+          text: panelWith(CDN_TEXT),
+          gauge: panelWith(CDN_GAUGE),
+        },
+        logWarning
+      );
+
+      expect(logWarning).toHaveBeenCalledTimes(1);
+      expect(logWarning).toHaveBeenCalledWith(MESSAGE, {
+        pluginType: PluginType.panel,
+        count: '2',
+        total: '3',
+        pluginIds: 'canvas,gauge',
+      });
+    });
+  });
+
+  describe('when there is no disagreement', () => {
+    it('does not log when all modules match', () => {
+      const logWarning = jest.fn();
+
+      logPanelMetasDisagreementsWithBootData(
+        { canvas: panelWith(CDN_CANVAS) },
+        { canvas: panelWith(CDN_CANVAS) },
         logWarning
       );
 
       expect(logWarning).not.toHaveBeenCalled();
+    });
+
+    it('does not log when a decoupled core panel on Cloud matches its bootdata entry', () => {
+      const CLOUD_TIMESERIES =
+        'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/panel/timeseries/module.js';
+      const BOOT_TIMESERIES = 'public/app/plugins/panel/timeseries/module.js';
+      const logWarning = jest.fn();
+
+      // Metas: fully-qualified CDN URL produced by prependPublicPathToCorePlugins.
+      // Bootdata: raw `public/app/plugins/...` path.
+      // Normalization strips both to `app/plugins/panel/timeseries/module.js`.
+      logPanelMetasDisagreementsWithBootData(
+        { timeseries: panelWith(CLOUD_TIMESERIES) },
+        { timeseries: panelWith(BOOT_TIMESERIES) },
+        logWarning
+      );
+
+      expect(logWarning).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when a panel is missing from bootdata', () => {
+    it('logs a disagreement (frontend advertises a panel the backend does not know about)', () => {
+      const logWarning = jest.fn();
+
+      logPanelMetasDisagreementsWithBootData({ canvas: panelWith(CDN_CANVAS) }, {}, logWarning);
+
+      expect(logWarning).toHaveBeenCalledTimes(1);
+      expect(logWarning).toHaveBeenCalledWith(MESSAGE, {
+        pluginType: PluginType.panel,
+        count: '1',
+        total: '1',
+        pluginIds: 'canvas',
+      });
     });
   });
 });
