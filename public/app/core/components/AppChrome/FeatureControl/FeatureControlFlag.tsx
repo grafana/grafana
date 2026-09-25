@@ -354,7 +354,7 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
           </Field>
         )}
 
-        <Box marginTop={2}>
+        <Box>
           <Stack direction="row" gap={1} alignItems="center">
             <Button
               className={styles.actionButton}
