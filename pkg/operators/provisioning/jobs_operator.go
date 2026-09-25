@@ -3,8 +3,6 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
 	"sync"
 	"time"
 
@@ -18,9 +16,7 @@ import (
 )
 
 func RunJobController(ctx context.Context, deps server.OperatorDependencies) error {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-job-controller")
+	logger := logging.DefaultLogger.With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
 	controllerCfg, err := setupJobsControllerFromConfig(deps.Config, deps.Registerer)
