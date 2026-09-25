@@ -348,15 +348,11 @@ func checkMoveAccess(
 	}
 
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
-	// Root folders can have an empty parent, but the authorization check does not
-	// evaluate inherited root permissions for an empty parent. Normalize the empty
-	// root sentinel to "general" so the escalation probes evaluate root permissions.
-	if folder.IsRootFolderUID(oldParentUID) {
-		oldParentUID = folder.GeneralFolderUID
-	}
-	if folder.IsRootFolderUID(newParentUID) {
-		newParentUID = folder.GeneralFolderUID
-	}
+	// Parents pass through as-is: RBAC maps empty->general only for create, not
+	// for get/update/delete/setpermissions. Normalizing here would pull in
+	// general-scoped grants RBAC wouldn't apply, inflating the old-parent tier
+	// and masking a real escalation on a move out of root. The destination-create
+	// check relies on RBAC's own create-time empty->general mapping.
 
 	// Separators must keep correlation IDs within OpenFGA's regex pattern ^[\w\d-]{1,36}$
 	const (
