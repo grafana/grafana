@@ -41,13 +41,10 @@ type AuthJWTSettings struct {
 }
 
 type ExtJWTSettings struct {
-	Enabled      bool
-	ExpectIssuer string
-	JWKSUrl      string
-	Audiences    []string
-	// WildcardOrgID is the OrgID a "*" namespace token resolves to. Undocumented:
-	// OSS/single-org deployments default to 0, but cloud's NewGrafanaTokenAuthenticator
-	// caller (cloud_router.go) runs against org 1, so it needs this overridable.
+	Enabled       bool
+	ExpectIssuer  string
+	JWKSUrl       string
+	Audiences     []string
 	WildcardOrgID int64
 }
 
