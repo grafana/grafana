@@ -21,7 +21,7 @@ func DataSourceMigration(dsMigrator migrator.DataSourceMigrator) migrations.Migr
 			{
 				GroupResource: gr,
 				LockTables:    []string{"data_source"},
-				// Per-plugin group (see ResourceGroupsFunc), all served at the v0alpha1 floor.
+				// Every plugin group is served at the v0alpha1 floor.
 				FloorVersion: datasourceV0.VERSION,
 			},
 		},
@@ -32,7 +32,6 @@ func DataSourceMigration(dsMigrator migrator.DataSourceMigrator) migrations.Migr
 			migrator.DataSourceCountValidation(),
 		},
 		// data_source table is still used by other code paths
-		RenameTables:       []string{},
-		ResourceGroupsFunc: dsMigrator.PluginGroups,
+		RenameTables: []string{},
 	}
 }
