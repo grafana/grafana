@@ -45,20 +45,38 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 )
 
 var (
-	_ appsdkapiserver.AppInstaller        = (*AppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider     = (*AppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider  = (*AppInstaller)(nil)
-	_ appinstaller.LegacyStatusProvider   = (*AppInstaller)(nil)
-	_ appinstaller.StorageOptionsProvider = (*AppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller           = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider        = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider     = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStatusProvider      = (*AppInstaller)(nil)
+	_ appinstaller.StorageOptionsProvider    = (*AppInstaller)(nil)
+	_ appinstaller.SearchIndexClientProvider = (*AppInstaller)(nil)
 )
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
 	ng  *ngalert.AlertNG
+
+	// searchIndexClients back GetSearchIndexClient: the same dual-writer-aware
+	// clients the /searchRules compatibility route uses, reused (not duplicated)
+	// so generic /search agrees with /searchRules in every storage mode.
+	searchIndexClients map[schema.GroupResource]resourcepb.ResourceIndexClient
+}
+
+// GetSearchIndexClient implements appinstaller.SearchIndexClientProvider,
+// serving generic POST .../alertrules/search and .../recordingrules/search from
+// the same client /searchRules already uses, instead of the apiserver's shared
+// Unified Storage index (which is empty for these two kinds below dual-writer
+// mode 4). Every other GroupResource gets nil, deferring to the shared index.
+func (a *AppInstaller) GetSearchIndexClient(gr schema.GroupResource) resourcepb.ResourceIndexClient {
+	return a.searchIndexClients[gr]
 }
 
 func RegisterAppInstaller(
@@ -84,10 +102,13 @@ func RegisterAppInstaller(
 	// backend (provisioning service) serves modes 0-3, the unified client 4+.
 	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
 	searchAdapter := dualwrite.NewSearchAdapter(dual)
-	searchHandler := search.NewHandler(
-		unifiedresource.NewSearchClient(searchAdapter, alertrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
-		unifiedresource.NewSearchClient(searchAdapter, recordingrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
-	)
+	alertRulesSearchClient := unifiedresource.NewSearchClient(searchAdapter, alertrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch)
+	recordingRulesSearchClient := unifiedresource.NewSearchClient(searchAdapter, recordingrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch)
+	searchHandler := search.NewHandler(alertRulesSearchClient, recordingRulesSearchClient)
+	installer.searchIndexClients = map[schema.GroupResource]resourcepb.ResourceIndexClient{
+		alertrule.ResourceInfo.GroupResource():     alertRulesSearchClient,
+		recordingrule.ResourceInfo.GroupResource(): recordingRulesSearchClient,
+	}
 
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
 		FolderValidator:                  newFolderValidator(ng),
@@ -300,13 +321,19 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	)
 }
 
-// ruleSearchReadAttributes restates the compatibility POST as the list it
-// performs. Kubernetes parses /{resource}/searchRules as a create of an object
-// named searchRules, which would otherwise require rule-create permission.
+// ruleSearchReadAttributes restates the compatibility POST and the generic
+// POST .../{resource}/search as the list they perform. Kubernetes parses both
+// as a create of an object named "searchRules"/"search", which would otherwise
+// require rule-create permission -- denying a Viewer merely for using a search
+// route that happens to be a POST.
 func ruleSearchReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
 	resourceName := attr.GetResource()
 	isRule := resourceName == alertrule.ResourceInfo.GroupResource().Resource || resourceName == recordingrule.ResourceInfo.GroupResource().Resource
-	if isRule && attr.IsResourceRequest() && attr.GetVerb() == "create" && attr.GetName() == search.RouteResource && attr.GetSubresource() == "" {
+	if !isRule || !attr.IsResourceRequest() || attr.GetVerb() != "create" || attr.GetSubresource() != "" {
+		return attr
+	}
+	switch attr.GetName() {
+	case search.RouteResource, searchv0.SearchPathSegment:
 		return searchauthorizer.AsReadAttributes(attr)
 	}
 	return attr

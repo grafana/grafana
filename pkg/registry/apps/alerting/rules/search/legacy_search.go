@@ -3,10 +3,13 @@ package search
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	prom_model "github.com/prometheus/common/model"
 	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -50,16 +53,24 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		return nil, err
 	}
 
-	f := extractFilters(req)
-	perKindSearch := isPerKindSearch(ctx)
-	if perKindSearch && f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
+	f, err := extractFilters(req)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
+	// singleKind is false only for the deprecated cross-kind /search route
+	// (search.go), the one caller that federates recording rules onto an alert
+	// rule request (or vice versa) via req.Federated. Both per-resource routes --
+	// the compatibility .../searchRules and the generic .../search this backs
+	// today -- always search one kind and never set it.
+	singleKind := len(req.Federated) == 0
+	if singleKind && f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
 		return emptyResponse(), nil
 	}
 	rules, _, _, err := c.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:                  ruleTypeForRequest(req),
 		RuleUIDs:                  f.names,
 		GroupFilter:               provisioning.ListRuleStringFilter{Include: f.groupsInclude, Exclude: f.groupsExclude},
-		FolderFilter:              includeFilter(f.folders),
+		FolderFilter:              provisioning.ListRuleStringFilter{Include: f.folders, Exclude: f.foldersExclude},
 		PausedFilter:              provisioning.ListRuleBoolFilter{Value: f.paused},
 		DashboardFilter:           stringFilter(f.dashboardUID),
 		PanelIDFilter:             stringFilter(f.panelID),
@@ -77,30 +88,37 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	filtered := rules[:0]
 	for _, r := range rules {
-		if perKindSearch && !matchTitle(r, f.title) {
+		if singleKind && !matchTitle(r, f.title) {
 			continue
 		}
 		if !matchLabels(r, f.labelMatchers) {
 			continue
 		}
-		if perKindSearch && !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
+		if singleKind && !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
+			continue
+		}
+		if singleKind && !matchNotificationTypeExclude(r, f.notificationTypeExclude) {
 			continue
 		}
 		filtered = append(filtered, r)
 	}
-	if perKindSearch {
+	if singleKind {
 		perKindSortRules(filtered, f.sortField, f.sortDesc)
 	} else {
 		sortRules(filtered, f.sortField, f.sortDesc)
 	}
 
 	total := len(filtered)
-	page := applyOffset(filtered, req.Offset, req.Limit)
+	start, err := legacyResumeIndex(filtered, req)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
+	page := applyOffset(filtered, start, req.Limit)
 
 	table := &resourcepb.ResourceTable{Columns: resultColumnDefinitions()}
 	for _, r := range page {
 		values := ruleColumnValues(r)
-		if perKindSearch {
+		if singleKind {
 			c.addStatusValues(r, values)
 		}
 		cells, err := ruleCells(values)
@@ -108,13 +126,49 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 			return nil, err
 		}
 		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{
-			Key:   ruleKey(req.Options.GetKey().GetNamespace(), r),
-			Cells: cells,
+			Key:        ruleKey(req.Options.GetKey().GetNamespace(), r),
+			Cells:      cells,
+			SortFields: []string{legacySortKey(r)},
 		})
 	}
 	// ListAlertRules restricts the query to folders the caller can read, so total
 	// counts authorized rules exactly rather than bounding them from above.
 	return &resourcepb.ResourceSearchResponse{Results: table, TotalHits: int64(total), TotalHitsExact: true}, nil
+}
+
+// legacySortKey is the composite key filtered rows are ordered by. It is
+// opaque outside this package: the generic /search route's cursor and the
+// per-kind /searchRules route's offset cursor both wrap it (see
+// legacyResumeIndex), but neither inspects it. Title-then-UID mirrors
+// perKindSortRules/sortRules, so the same key totally orders the rows those
+// functions already sort by, letting a resume search for it with a plain
+// string comparison.
+func legacySortKey(r *ngmodels.AlertRule) string {
+	return strings.ToLower(r.Title) + "\x1f" + r.UID
+}
+
+// legacyResumeIndex resolves the row to resume paging from. The per-kind
+// /searchRules route always pages by offset (req.Offset, see
+// per_kind_query.go); the generic /search route instead pages by the last
+// page's sort values (req.SearchAfter, see
+// pkg/registry/apis/search/translate.go's decodeContinue), since the legacy
+// backend was never taught the generic route's offset field. Resolving both
+// here, against the same freshly filtered-and-sorted slice, keeps the two
+// routes' pages correct even when they are used against a changing rule set.
+func legacyResumeIndex(rules []*ngmodels.AlertRule, req *resourcepb.ResourceSearchRequest) (int64, error) {
+	if len(req.SearchAfter) == 0 {
+		return req.Offset, nil
+	}
+	cursor := req.SearchAfter[0]
+	desc := len(req.SortBy) > 0 && req.SortBy[0].Desc
+	idx := sort.Search(len(rules), func(i int) bool {
+		key := legacySortKey(rules[i])
+		if desc {
+			return key < cursor
+		}
+		return key > cursor
+	})
+	return int64(idx), nil
 }
 
 func ruleKey(namespace string, r *ngmodels.AlertRule) *resourcepb.ResourceKey {

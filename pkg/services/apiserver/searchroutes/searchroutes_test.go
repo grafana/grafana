@@ -1,21 +1,27 @@
 package searchroutes
 
 import (
+	"context"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -574,3 +580,95 @@ func TestBuildForServedGroupVersions_RejectsAMalformedDeclaration(t *testing.T) 
 	require.Error(t, err)
 	assert.Nil(t, routes)
 }
+
+// recordingClient counts Search calls so a test can tell which client a
+// mounted route actually reached, not just which path it was mounted at.
+type recordingClient struct {
+	resourcepb.ResourceIndexClient
+	calls int
+}
+
+func (c *recordingClient) Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	c.calls++
+	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}, TotalHitsExact: true}, nil
+}
+
+// fakeSearchIndexInstaller implements appinstaller.SearchIndexClientProvider,
+// the extension point a rules-style installer uses to serve its own dual-
+// writer-aware client from the generic /search route instead of the shared
+// index.
+type fakeSearchIndexInstaller struct {
+	appsdkapiserver.AppInstaller
+	groupVersions []schema.GroupVersion
+	overrides     map[schema.GroupResource]resourcepb.ResourceIndexClient
+}
+
+func (f *fakeSearchIndexInstaller) GroupVersions() []schema.GroupVersion {
+	return f.groupVersions
+}
+
+func (f *fakeSearchIndexInstaller) GetSearchIndexClient(gr schema.GroupResource) resourcepb.ResourceIndexClient {
+	return f.overrides[gr]
+}
+
+// TestBuildFromManifests_SearchIndexClientOverride proves the override wiring
+// end to end: a GroupResource an installer claims is served by its own
+// client, never the shared index passed to Build*; every other kind (and
+// trash, which never reaches an override -- see searchroutes.go) is
+// unaffected.
+func TestBuildFromManifests_SearchIndexClientOverride(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	manifests := []*app.ManifestData{{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{Kind: "Widget", Plural: "widgets", Scope: namespacedScope},
+				{Kind: "Gadget", Plural: "gadgets", Scope: namespacedScope},
+			},
+		}},
+	}}
+
+	defaultClient := &recordingClient{}
+	overrideClient := &recordingClient{}
+	installer := &fakeSearchIndexInstaller{
+		groupVersions: []schema.GroupVersion{gv},
+		overrides: map[schema.GroupResource]resourcepb.ResourceIndexClient{
+			{Group: gv.Group, Resource: "widgets"}: overrideClient,
+		},
+	}
+
+	routes := BuildFromManifests(manifests, true, false, tracing.InitializeTracerForTest(), defaultClient, nil,
+		[]appsdkapiserver.AppInstaller{installer})
+
+	callSearch := func(resourceName string) {
+		for _, gvRoutes := range routes {
+			if gvRoutes.GroupVersion != gv || gvRoutes.Routes == nil {
+				continue
+			}
+			for _, route := range gvRoutes.Routes.Namespace {
+				if route.Path != resourceName+"/search" {
+					continue
+				}
+				req := httptest.NewRequest("POST", "/", strings.NewReader(validSearchQueryBody))
+				req = req.WithContext(genericapirequest.WithNamespace(req.Context(), "default"))
+				rec := httptest.NewRecorder()
+				route.Handler(rec, req)
+				require.Equal(t, 200, rec.Code, rec.Body.String())
+				return
+			}
+		}
+		t.Fatalf("no search route mounted for %q", resourceName)
+	}
+
+	callSearch("widgets")
+	assert.Equal(t, 1, overrideClient.calls, "widgets has an override and must reach it")
+	assert.Equal(t, 0, defaultClient.calls, "widgets must not also reach the shared index")
+
+	callSearch("gadgets")
+	assert.Equal(t, 1, overrideClient.calls, "gadgets has no override and must not reach widgets' client")
+	assert.Equal(t, 1, defaultClient.calls, "gadgets falls back to the shared index")
+}
+
+const validSearchQueryBody = `{"apiVersion":"` + searchv0.APIVERSION + `","kind":"` + searchv0.KindSearchQuery + `"}`

@@ -57,17 +57,6 @@ type perKind struct {
 	client resourcepb.ResourceIndexClient
 }
 
-type perKindSearchContextKey struct{}
-
-func withPerKindSearch(ctx context.Context) context.Context {
-	return context.WithValue(ctx, perKindSearchContextKey{}, true)
-}
-
-func isPerKindSearch(ctx context.Context) bool {
-	perKind, _ := ctx.Value(perKindSearchContextKey{}).(bool)
-	return perKind
-}
-
 func (k perKind) groupResource() schema.GroupResource {
 	return k.info.GroupResource()
 }
@@ -114,7 +103,7 @@ func (h *Handler) search(ctx context.Context, w app.CustomRouteResponseWriter, r
 	}
 
 	t := buildPerKindSearchRequest(query, leaves, namespace, k)
-	resp, err := k.client.Search(withPerKindSearch(ctx), t.req)
+	resp, err := k.client.Search(ctx, t.req)
 	if err != nil {
 		h.logger.FromContext(ctx).Error("rule search backend request failed",
 			"namespace", namespace, "group", k.groupResource().Group,

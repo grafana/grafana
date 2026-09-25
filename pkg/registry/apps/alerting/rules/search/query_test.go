@@ -115,7 +115,9 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, offset)
 
-	f := extractFilters(req)
+	f, err := extractFilters(req)
+
+	require.NoError(t, err)
 	assert.Equal(t, "cpu", f.title)
 	assert.Equal(t, []string{"f1", "f2"}, f.folders)
 	assert.Equal(t, []string{"ds1", "ds2"}, f.datasourceUIDs)
@@ -171,7 +173,8 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 		assert.ElementsMatch(t, []string{"g1", "g2"}, req.Options.Labels[0].Values)
 
 		// the legacy side reads both values into the group include filter
-		f := extractFilters(req)
+		f, err := extractFilters(req)
+		require.NoError(t, err)
 		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsInclude)
 	})
 
@@ -180,7 +183,9 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 		require.Len(t, req.Options.Labels, 1)
 		assert.Equal(t, "notin", req.Options.Labels[0].Operator)
 
-		f := extractFilters(req)
+		f, err := extractFilters(req)
+
+		require.NoError(t, err)
 		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsExclude)
 		assert.Empty(t, f.groupsInclude)
 	})
@@ -263,7 +268,7 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 
 		// The legacy backend rebuilds the matchers from those requirements, so a
 		// rule has to satisfy both.
-		matchers := extractFilters(req).labelMatchers
+		matchers := mustExtractFilters(t, req).labelMatchers
 		assert.True(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "a"}}, matchers))
 		assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "a", "env": "prod"}}, matchers))
 		assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"other": "x"}}, matchers))

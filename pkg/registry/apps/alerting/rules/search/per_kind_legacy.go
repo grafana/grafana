@@ -74,6 +74,25 @@ func matchSourceDatasourceUIDs(r *ngmodels.AlertRule, wanted []string) bool {
 	return false
 }
 
+// matchNotificationTypeExclude reports whether r's notification type is
+// outside exclude. A NotIn filter on notificationType is applied in memory
+// (see filters.notificationTypeExclude) because it must carry more than one
+// excluded value: excluding both known types is how "default policy" (no
+// notification settings) is expressed, and the store's exclude filter for this
+// field only ever pushed down one value.
+func matchNotificationTypeExclude(r *ngmodels.AlertRule, exclude []string) bool {
+	if len(exclude) == 0 {
+		return true
+	}
+	_, notificationType, _ := notificationFields(r.NotificationSettings)
+	for _, v := range exclude {
+		if notificationType == v {
+			return false
+		}
+	}
+	return true
+}
+
 func matchTitle(r *ngmodels.AlertRule, query string) bool {
 	title := strings.ToLower(r.Title)
 	for _, term := range titleSearchTerms(query) {

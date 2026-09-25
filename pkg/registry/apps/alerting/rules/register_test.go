@@ -8,6 +8,7 @@ import (
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
@@ -42,6 +43,24 @@ func TestRuleSearchReadAttributes(t *testing.T) {
 			recordingrule.ResourceInfo.GroupResource().Resource,
 		} {
 			got := ruleSearchReadAttributes(request(resource, search.RouteResource))
+			require.Equal(t, "list", got.GetVerb(), resource)
+			require.Empty(t, got.GetName(), resource)
+		}
+	})
+
+	// The generic POST .../{resource}/search route (searchroutes.BuildWithOptions,
+	// mounted via appinstaller.SearchIndexClientProvider) is parsed by Kubernetes
+	// the same way as the compatibility route: a create of an object named
+	// "search". Left unrewritten, a Viewer with only read access would be denied
+	// by alertrule.Authorize/recordingrule.Authorize, which require create
+	// permission for verb "create" -- a 403 for using a search endpoint that
+	// merely happens to be a POST.
+	t.Run("generic search is authorized as a list", func(t *testing.T) {
+		for _, resource := range []string{
+			alertrule.ResourceInfo.GroupResource().Resource,
+			recordingrule.ResourceInfo.GroupResource().Resource,
+		} {
+			got := ruleSearchReadAttributes(request(resource, searchv0.SearchPathSegment))
 			require.Equal(t, "list", got.GetVerb(), resource)
 			require.Empty(t, got.GetName(), resource)
 		}

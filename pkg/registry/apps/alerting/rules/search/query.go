@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -471,41 +473,80 @@ type filters struct {
 	// groupsInclude/groupsExclude come from a labelSelector on the controlled
 	// group metadata label, which the legacy backend applies through its
 	// GroupFilter rather than as an indexed field.
-	groupsInclude       []string
-	groupsExclude       []string
-	paused              *bool
-	dashboardUID        string
-	panelID             string
-	receiver            string
-	notificationType    string
-	routingTree         string
-	metric              string
-	targetDatasourceUID string
-	sortField           string
-	sortDesc            bool
+	groupsInclude    []string
+	groupsExclude    []string
+	paused           *bool
+	dashboardUID     string
+	panelID          string
+	receiver         string
+	notificationType string
+	// notificationTypeExclude holds the values of a NotIn filter on
+	// notificationType. It is applied in memory (see matchNotificationType)
+	// rather than pushed to the store, so it can carry more than one excluded
+	// value -- needed for the "default policy" mapping, which excludes every
+	// known type at once to find rules with no notification settings at all.
+	notificationTypeExclude []string
+	routingTree             string
+	metric                  string
+	targetDatasourceUID     string
+	// foldersExclude holds the values of a NotIn filter on folder.
+	foldersExclude []string
+	sortField      string
+	sortDesc       bool
 }
 
-func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
+// isNotIn reports whether a requirement's operator excludes its values. Both
+// callers that build requirements in this package (perKindFilterOperator here
+// and filterRequirement in the generic translator) use "notin"; "!=" is
+// accepted too since requirementToLabelMatcher already treats it as an alias.
+func isNotIn(op string) bool {
+	return op == "notin" || op == "!="
+}
+
+// extractFilters decodes a ResourceSearchRequest into the backend-neutral view
+// the legacy client applies. It is fed requests from two different encoders --
+// the per-kind /searchRules translator (per_kind_query.go) and the generic
+// /search translator (pkg/registry/apis/search/translate.go) -- so it must
+// accept whichever field names and operator spellings either one produces;
+// today the two already agree on both.
+func extractFilters(req *resourcepb.ResourceSearchRequest) (filters, error) {
 	f := filters{title: req.Query}
 	opts := req.Options
 	if opts != nil {
 		for _, r := range opts.Fields {
+			notIn := isNotIn(r.Operator)
 			switch r.Key {
 			case fieldName:
 				f.names = r.Values
 			case fieldFolder:
-				f.folders = r.Values
+				if notIn {
+					f.foldersExclude = append(f.foldersExclude, r.Values...)
+				} else {
+					f.folders = append(f.folders, r.Values...)
+				}
 			case fieldType:
 				f.ruleType = firstValue(r.Values)
 			case fieldLabels:
-				if len(r.Values) == 1 {
-					f.labelMatchers = append(f.labelMatchers, requirementToLabelMatcher(r))
+				switch r.Operator {
+				case string(resource.OperatorRegex), string(resource.OperatorNotRegex):
+					m, err := parseLabelRegexMatcher(firstValue(r.Values), r.Operator == string(resource.OperatorNotRegex))
+					if err != nil {
+						return filters{}, err
+					}
+					f.labelMatchers = append(f.labelMatchers, m)
+				default:
+					if len(r.Values) == 1 {
+						f.labelMatchers = append(f.labelMatchers, requirementToLabelMatcher(r))
+					}
 				}
 			case fieldDatasourceUIDs:
 				f.datasourceUIDs = r.Values
 			case fieldPaused:
 				if len(r.Values) == 1 {
 					if b, err := strconv.ParseBool(r.Values[0]); err == nil {
+						if notIn {
+							b = !b
+						}
 						f.paused = &b
 					}
 				}
@@ -516,7 +557,11 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 			case fieldReceiver:
 				f.receiver = firstValue(r.Values)
 			case fieldNotificationType:
-				f.notificationType = firstValue(r.Values)
+				if notIn {
+					f.notificationTypeExclude = append(f.notificationTypeExclude, r.Values...)
+				} else {
+					f.notificationType = firstValue(r.Values)
+				}
 			case fieldRoutingTree:
 				f.routingTree = firstValue(r.Values)
 			case fieldMetric:
@@ -532,7 +577,7 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 			if r.Key != model.GroupLabelKey {
 				continue
 			}
-			if r.Operator == "notin" {
+			if isNotIn(r.Operator) {
 				f.groupsExclude = append(f.groupsExclude, r.Values...)
 				continue
 			}
@@ -543,7 +588,7 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 		f.sortField = req.SortBy[0].Field
 		f.sortDesc = req.SortBy[0].Desc
 	}
-	return f
+	return f, nil
 }
 
 func firstValue(values []string) string {
@@ -557,6 +602,10 @@ type labelMatcher struct {
 	key   string
 	value string
 	op    matcherOp
+	// re backs matchRegex/matchNotRegex. Compiled once when the matcher is
+	// parsed so a pattern error surfaces as a 400 before any row is scanned,
+	// rather than once per row or silently on the first bad row.
+	re *regexp.Regexp
 }
 
 type matcherOp int
@@ -566,6 +615,8 @@ const (
 	matchNotEquals
 	matchExists
 	matchNotExists
+	matchRegex
+	matchNotRegex
 )
 
 // parseLabelMatcher parses a "labels" query value: key=value, key!=value, key
@@ -650,8 +701,34 @@ func matchLabel(r *ngmodels.AlertRule, m labelMatcher) bool {
 		return ok && v == m.value
 	case matchNotEquals:
 		return !ok || v != m.value
+	case matchRegex:
+		// A missing label is matched as the empty string, mirroring the generic
+		// backend's whole-value regex semantics (see search-api-capabilities.md).
+		return m.re.MatchString(v)
+	case matchNotRegex:
+		return !m.re.MatchString(v)
 	}
 	return false
+}
+
+// parseLabelRegexMatcher parses a "labels" regex requirement's pattern, which
+// carries the full-value "key=<re>" form: everything before the first "=" is
+// the label key, and the rest is the RE2 pattern matched against that label's
+// whole value (missing treated as empty, per matchLabel).
+func parseLabelRegexMatcher(pattern string, negate bool) (labelMatcher, error) {
+	key, rePattern, ok := strings.Cut(pattern, "=")
+	if !ok {
+		return labelMatcher{}, fmt.Errorf(`labels regex pattern %q must be of the form "key=<pattern>"`, pattern)
+	}
+	re, err := regexp.Compile("^(?:" + rePattern + ")$")
+	if err != nil {
+		return labelMatcher{}, fmt.Errorf("invalid labels regex pattern %q: %w", rePattern, err)
+	}
+	op := matchRegex
+	if negate {
+		op = matchNotRegex
+	}
+	return labelMatcher{key: key, value: rePattern, op: op, re: re}, nil
 }
 
 // isQueryDatasource reports whether a UID names a datasource a user actually
@@ -680,13 +757,6 @@ func sortRules(rules []*ngmodels.AlertRule, field string, desc bool) {
 		}
 		return less(rules[i], rules[j])
 	})
-}
-
-func includeFilter(values []string) provisioning.ListRuleStringFilter {
-	if len(values) == 0 {
-		return provisioning.ListRuleStringFilter{}
-	}
-	return provisioning.ListRuleStringFilter{Include: values}
 }
 
 func stringFilter(value string) provisioning.ListRuleStringFilter {

@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -35,6 +36,13 @@ var trashAllowlist = map[string]bool{
 
 type BuildOptions struct {
 	FieldValueResultsEnabled searchapi.FieldValueResultsEnabled
+
+	// SearchIndexClientProviders serves a GroupResource's search route from a
+	// client other than the shared index, by asking each of these in turn (see
+	// appinstaller.SearchIndexClientProvider). BuildWithOptions/BuildFromManifests
+	// populate this from the installers passed to them; a caller building routes
+	// through BuildForServedGroupVersionsWithOptions directly may set it too.
+	SearchIndexClientProviders []appinstaller.SearchIndexClientProvider
 }
 
 // Build returns the search and trash routes to mount, or nil when both are off or
@@ -71,6 +79,7 @@ func BuildWithOptions(
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
 	manifests := slices.Concat(resource.AppManifests(), builder.ManifestsFromBuilders(builders))
+	options.SearchIndexClientProviders = append(searchIndexClientProvidersFrom(installers), options.SearchIndexClientProviders...)
 	routes, err := BuildForServedGroupVersionsWithOptions(
 		manifests, builder.ServedGroupVersions(builders, installers),
 		searchEnabled, trashEnabled, tracer, index, options,
@@ -101,13 +110,14 @@ func BuildFromManifests(
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
 	manifests = slices.Concat(manifests, builder.ManifestsFromBuilders(builders))
-	routes, err := BuildForServedGroupVersions(
+	routes, err := BuildForServedGroupVersionsWithOptions(
 		manifests,
 		builder.ServedGroupVersions(builders, installers),
 		searchEnabled,
 		trashEnabled,
 		tracer,
 		index,
+		BuildOptions{SearchIndexClientProviders: searchIndexClientProvidersFrom(installers)},
 	)
 	if err != nil {
 		panic(err.Error())
@@ -152,9 +162,25 @@ func BuildForServedGroupVersionsWithOptions(
 	if err != nil {
 		return nil, err
 	}
-	handler := searchapi.NewHandlerWithOptions(index, provider, tracer, searchapi.HandlerOptions{
-		FieldValueResultsEnabled: options.FieldValueResultsEnabled,
-	})
+	handlerOptions := searchapi.HandlerOptions{FieldValueResultsEnabled: options.FieldValueResultsEnabled}
+	handler := searchapi.NewHandlerWithOptions(index, provider, tracer, handlerOptions)
+
+	// searchHandlers caches one extra Handler per GroupResource an installer
+	// overrides the index client for (see appinstaller.SearchIndexClientProvider),
+	// so every kind sharing that GroupResource reuses it instead of rebuilding it.
+	// A GroupResource with no override always resolves to the shared handler.
+	searchHandlers := map[schema.GroupResource]*searchapi.Handler{}
+	searchHandlerFor := func(gr schema.GroupResource) *searchapi.Handler {
+		if h, ok := searchHandlers[gr]; ok {
+			return h
+		}
+		h := handler
+		if client := searchIndexClientOverride(gr, options.SearchIndexClientProviders); client != nil {
+			h = searchapi.NewHandlerWithOptions(client, provider, tracer, handlerOptions)
+		}
+		searchHandlers[gr] = h
+		return h
+	}
 
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
 	mounted := map[schema.GroupVersionResource]bool{}
@@ -182,10 +208,12 @@ func BuildForServedGroupVersionsWithOptions(
 				}
 				mounted[gvr] = true
 				// Answered separately so a kind can opt out of one endpoint
-				// without the other.
+				// without the other. Only the search route ever reaches an
+				// override handler; trash always stays on the shared index (see
+				// appinstaller.SearchIndexClientProvider).
 				if searchEnabled && kind.HasSearchEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
-						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
+						searchHandlerFor(gvr.GroupResource()).SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
 				if trashEnabled && trashAllowlist[gv.Group+"/"+resourceName] && kind.HasTrashEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
@@ -196,6 +224,31 @@ func BuildForServedGroupVersionsWithOptions(
 	}
 
 	return toGroupVersionRoutes(byGroupVersion), nil
+}
+
+// searchIndexClientProvidersFrom picks out the installers that implement
+// appinstaller.SearchIndexClientProvider, in the order given.
+func searchIndexClientProvidersFrom(installers []appsdkapiserver.AppInstaller) []appinstaller.SearchIndexClientProvider {
+	var out []appinstaller.SearchIndexClientProvider
+	for _, inst := range installers {
+		if provider, ok := inst.(appinstaller.SearchIndexClientProvider); ok {
+			out = append(out, provider)
+		}
+	}
+	return out
+}
+
+// searchIndexClientOverride asks each provider for a client to serve gr's
+// search route with, and returns the first non-nil answer. Only one provider
+// is expected to own a given GroupResource; if more than one answers, the
+// first wins.
+func searchIndexClientOverride(gr schema.GroupResource, providers []appinstaller.SearchIndexClientProvider) resourcepb.ResourceIndexClient {
+	for _, provider := range providers {
+		if client := provider.GetSearchIndexClient(gr); client != nil {
+			return client
+		}
+	}
+	return nil
 }
 
 func toGroupVersionRoutes(byGroupVersion map[schema.GroupVersion][]searchapi.Route) []builder.GroupVersionRoutes {

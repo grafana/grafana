@@ -18,6 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// mustExtractFilters is extractFilters for tests that only need to assert on
+// the decoded filters and expect no error.
+func mustExtractFilters(t *testing.T, req *resourcepb.ResourceSearchRequest) filters {
+	t.Helper()
+	f, err := extractFilters(req)
+	require.NoError(t, err)
+	return f
+}
+
 // translate validates and lowers a query for the alert rule kind, failing the
 // test if validation rejects it. Translation assumes a valid query, so a test
 // that means to exercise it must not smuggle in an invalid one.
@@ -127,7 +136,8 @@ func TestPerKindTranslateQuery_extractRoundTrip(t *testing.T) {
 	tr := translate(t, q)
 	assert.Zero(t, tr.offset)
 
-	f := extractFilters(tr.req)
+	f, err := extractFilters(tr.req)
+	require.NoError(t, err)
 	assert.Equal(t, "cpu", f.title)
 	assert.Equal(t, []string{"f1", "f2"}, f.folders)
 	assert.Equal(t, []string{"ds1", "ds2"}, f.datasourceUIDs)
@@ -165,7 +175,7 @@ func TestPerKindTranslateQuery_typeFilter(t *testing.T) {
 		assert.Equal(t, fieldType, req.Options.Fields[0].Key)
 		assert.Equal(t, "in", req.Options.Fields[0].Operator)
 		assert.Equal(t, []string{ruleTypeAlerting}, req.Options.Fields[0].Values)
-		assert.Equal(t, ruleTypeAlerting, extractFilters(req).ruleType)
+		assert.Equal(t, ruleTypeAlerting, mustExtractFilters(t, req).ruleType)
 	})
 
 	t.Run("the legacy backend matches it against the kind it searches", func(t *testing.T) {
@@ -174,7 +184,7 @@ func TestPerKindTranslateQuery_typeFilter(t *testing.T) {
 		assert.Equal(t, ngmodels.RuleTypeFilterAlerting, ruleTypeForRequest(matching))
 
 		contradicting := translate(t, typeQuery(ruleTypeRecording)).req
-		assert.NotEqual(t, extractFilters(contradicting).ruleType, ruleTypeForResource(contradicting),
+		assert.NotEqual(t, mustExtractFilters(t, contradicting).ruleType, ruleTypeForResource(contradicting),
 			"a contradicted type filter must not be silently ignored")
 
 		recording := translateFor(t, recordingRuleKind(t), typeQuery(ruleTypeRecording)).req
@@ -213,7 +223,7 @@ func TestPerKindTranslateQuery_labelSelector(t *testing.T) {
 		assert.ElementsMatch(t, []string{"g1", "g2"}, req.Options.Labels[0].Values)
 
 		// the legacy side reads both values into the group include filter
-		assert.ElementsMatch(t, []string{"g1", "g2"}, extractFilters(req).groupsInclude)
+		assert.ElementsMatch(t, []string{"g1", "g2"}, mustExtractFilters(t, req).groupsInclude)
 	})
 
 	t.Run("NotIn becomes a group exclusion", func(t *testing.T) {
@@ -223,7 +233,9 @@ func TestPerKindTranslateQuery_labelSelector(t *testing.T) {
 		require.Len(t, req.Options.Labels, 1)
 		assert.Equal(t, "notin", req.Options.Labels[0].Operator)
 
-		f := extractFilters(req)
+		f, err := extractFilters(req)
+
+		require.NoError(t, err)
 		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsExclude)
 		assert.Empty(t, f.groupsInclude)
 	})
@@ -276,7 +288,7 @@ func TestPerKindTranslateQuery_labelsFilterLeaf(t *testing.T) {
 
 		// The legacy backend rebuilds the matchers from those requirements, so a
 		// rule has to satisfy both.
-		matchers := extractFilters(req).labelMatchers
+		matchers := mustExtractFilters(t, req).labelMatchers
 		assert.True(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "a"}}, matchers))
 		assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "a", "env": "prod"}}, matchers))
 		assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"other": "x"}}, matchers))
