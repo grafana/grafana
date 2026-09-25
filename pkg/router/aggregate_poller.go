@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"log/slog"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // Defaults for background discovery polling. Not configurable yet.
@@ -115,7 +115,7 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 	groups, err := discoverGroups(ctx, t.client, t.base.String())
 	if err != nil {
 		t.cooldown.OnFailure(now)
-		slog.Warn("router: aggregate discovery poll failed, backing off", "target", t.name, "err", err)
+		logging.FromContext(ctx).Warn("router: aggregate discovery poll failed, backing off", "target", t.name, "err", err)
 		return
 	}
 	t.cooldown.OnSuccess(now)
@@ -128,7 +128,7 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 		}
 		backend, err := newAggregateBackend(t.name, group, t.base, t.proxyTransport)
 		if err != nil {
-			slog.Warn("router: skipping unfingerprintable discovered group", "target", t.name, "group", group.Name, "err", err)
+			logging.FromContext(ctx).Warn("router: skipping unfingerprintable discovered group", "target", t.name, "group", group.Name, "err", err)
 			continue
 		}
 		backends = append(backends, backend)
