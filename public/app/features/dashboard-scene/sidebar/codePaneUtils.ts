@@ -8,10 +8,8 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { ensureV2Response } from '../../dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from '../../dashboard/api/utils';
-
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { type DashboardScene } from '../scene/DashboardScene';
-
 import { type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { buildDashboardResource, validateDashboardResourceEnvelope } from './dashboardResource';

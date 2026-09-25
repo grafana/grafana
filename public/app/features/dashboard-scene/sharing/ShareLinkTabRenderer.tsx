@@ -2,7 +2,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch, TextLink } from '@grafana/ui';
+import { Alert, Box, ClipboardButton, Field, FieldSet, Icon, Input, Stack, Switch, TextLink } from '@grafana/ui';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 
 import { getDashboardSceneFor } from '../utils/utils';
@@ -43,38 +43,49 @@ export function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab
         </Trans>
       </p>
       <FieldSet>
-        <Field label={lockTimeRangeLabel} description={isRelativeTime ? lockTimeRangeDescription : ''}>
-          <Switch id="share-current-time-range" value={useLockedTime} onChange={model.onToggleLockedTime} />
-        </Field>
-        <ThemePicker selectedTheme={selectedTheme} onChange={model.onThemeChange} />
-        <Field label={shortenURLTranslation}>
-          <Switch id="share-shorten-url" value={useShortUrl} onChange={model.onUrlShorten} />
-        </Field>
+        <Box paddingBottom={2}>
+          <Stack direction="column" gap={2}>
+            <Field label={lockTimeRangeLabel} description={isRelativeTime ? lockTimeRangeDescription : ''} noMargin>
+              <Switch id="share-current-time-range" value={useLockedTime} onChange={model.onToggleLockedTime} />
+            </Field>
+            <Stack direction="column" gap={0}>
+              <ThemePicker selectedTheme={selectedTheme} onChange={model.onThemeChange} />
+              <Field label={shortenURLTranslation} noMargin>
+                <Switch id="share-shorten-url" value={useShortUrl} onChange={model.onUrlShorten} />
+              </Field>
+            </Stack>
 
-        <Field label={linkURLTranslation}>
-          <Input
-            id="link-url-input"
-            value={shareUrl}
-            readOnly
-            addonAfter={
-              <ClipboardButton icon="copy" variant="primary" getText={model.getShareUrl} onClipboardCopy={model.onCopy}>
-                <Trans i18nKey="share-modal.link.copy-link-button">Copy</Trans>
-              </ClipboardButton>
-            }
-          />
-        </Field>
+            <Field label={linkURLTranslation} noMargin>
+              <Input
+                id="link-url-input"
+                value={shareUrl}
+                readOnly
+                addonAfter={
+                  <ClipboardButton
+                    icon="copy"
+                    variant="primary"
+                    getText={model.getShareUrl}
+                    onClipboardCopy={model.onCopy}
+                  >
+                    <Trans i18nKey="share-modal.link.copy-link-button">Copy</Trans>
+                  </ClipboardButton>
+                }
+              />
+            </Field>
+          </Stack>
+        </Box>
       </FieldSet>
 
       {panel && config.rendererAvailable && (
         <>
           {isDashboardSaved && (
-            <div className="gf-form">
+            <Box display="flex" direction="row" alignItems="flex-start" position="relative" marginBottom={0.5}>
               <a href={absoluteImageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
                 <Icon name="camera" />
                 &nbsp;
                 <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>
               </a>
-            </div>
+            </Box>
           )}
 
           {!isDashboardSaved && (

@@ -12,6 +12,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
+import { type MoveDirection } from './annotations/MoveDirection';
 import { type DashboardEditView, type DashboardEditViewState } from './utils';
 
 const AnnotationsEditViewRenderer = lazy(() =>
@@ -24,11 +25,6 @@ function LazyAnnotationsEditViewRenderer(props: SceneComponentProps<AnnotationsE
       <AnnotationsEditViewRenderer {...props} />
     </Suspense>
   );
-}
-
-export enum MoveDirection {
-  UP = -1,
-  DOWN = 1,
 }
 
 export interface AnnotationsEditViewState extends DashboardEditViewState {
@@ -46,6 +42,10 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
+  }
+
+  public getDataLayers() {
+    return dashboardSceneGraph.getDataLayers(this._dashboard);
   }
 
   public getDataLayer(editIndex: number): dataLayers.AnnotationsDataLayer {

@@ -1,6 +1,8 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+
 import { type AnnotationQuery, type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { type SceneComponentProps, type VizPanel, type dataLayers } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
@@ -13,7 +15,6 @@ import {
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -24,14 +25,14 @@ import { useDashboardEditPageNav } from './utils';
 
 export function AnnotationsEditViewRenderer({ model }: SceneComponentProps<AnnotationsEditView>) {
   const dashboard = model.getDashboard();
-  const { annotationLayers } = dashboardSceneGraph.getDataLayers(dashboard).useState();
+  const { annotationLayers } = model.getDataLayers().useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
-  const panels = dashboardSceneGraph.getVizPanels(dashboard);
+  const panels = dashboard.getDashboardPanels();
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
 
-  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isDynamicDashboardsEnabled = useBooleanFlagValue('dashboardNewLayouts', false);
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {

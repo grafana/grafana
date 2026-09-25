@@ -1,9 +1,9 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import yaml from 'js-yaml';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -13,10 +13,11 @@ import { type ShareExportTab } from './ShareExportTab';
 
 export function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
   const { isSharingExternally, isViewingJSON, modalRef, exportFormat, isViewingYAML } = model.useState();
+  const isDynamicDashboardsEnabled = useBooleanFlagValue('dashboardNewLayouts', false);
 
   const dashboardJson = useAsync(async () => {
     return model.getExportableDashboardJson();
-  }, [isViewingJSON, isSharingExternally, exportFormat]);
+  }, [model, isViewingJSON, isSharingExternally, exportFormat]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
   const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {
@@ -34,10 +35,7 @@ export function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExpor
           <ResourceExport
             dashboardJson={dashboardJson}
             isSharingExternally={isSharingExternally ?? false}
-            exportFormat={
-              exportFormat ??
-              (config.featureToggles.dashboardNewLayouts ? ExportFormat.V2Resource : ExportFormat.Classic)
-            }
+            exportFormat={exportFormat ?? (isDynamicDashboardsEnabled ? ExportFormat.V2Resource : ExportFormat.Classic)}
             isViewingYAML={isViewingYAML ?? false}
             onExportFormatChange={model.onExportFormatChange}
             onShareExternallyChange={model.onShareExternallyChange}

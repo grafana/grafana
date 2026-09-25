@@ -16,12 +16,8 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { DashboardInteractions } from '../utils/interactions';
 
 import { ShareSnapshot } from './ShareButton/share-snapshot/ShareSnapshot';
-import {
-  formatSnapshotSize,
-  getExpireOptions,
-  getSnapshotPayloadSizeBytes,
-  ShareSnapshotTab,
-} from './ShareSnapshotTab';
+import { formatSnapshotSize, getSnapshotPayloadSizeBytes, ShareSnapshotTab } from './ShareSnapshotTab';
+import { getExpireOptions } from './snapshotOptions';
 
 jest.mock('app/features/dashboard/services/SnapshotSrv', () => ({
   getDashboardSnapshotSrv: jest.fn(),

@@ -1,4 +1,4 @@
-// Keep renderer imports behind this shared async entry point so sharing views load together.
+/* eslint-disable no-barrel-files/no-barrel-files -- This shared async entry point keeps sharing renderers in one lazy-loaded group. */
 export { DownloadDashboardDiagnosticsRenderer } from './DownloadDashboardDiagnosticsRenderer';
 export { DownloadDiagnosticsRenderer } from './DownloadDiagnosticsRenderer';
 export { ExportAsCodeRenderer } from './ExportButton/ExportAsCodeRenderer';

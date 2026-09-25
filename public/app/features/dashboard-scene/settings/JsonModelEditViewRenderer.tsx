@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { type SceneComponentProps, SceneObjectRef } from '@grafana/scenes';
 import { Alert, Box, Button, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -43,7 +44,7 @@ export function JsonModelEditViewRenderer({ model }: SceneComponentProps<JsonMod
   const canSave = dashboard.useState().meta.canSave;
   const { jsonText } = model.useState();
 
-  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isDynamicDashboardsEnabled = useBooleanFlagValue('dashboardNewLayouts', false);
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const handleValidationChange = useCallback((hasErrors: boolean) => {

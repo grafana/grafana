@@ -3,10 +3,11 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Box, Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
 
-import { getExpireOptions, type ShareSnapshotTab } from './ShareSnapshotTab';
+import { type ShareSnapshotTab } from './ShareSnapshotTab';
+import { getExpireOptions } from './snapshotOptions';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
@@ -52,23 +53,27 @@ export function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSna
             </p>
           </div>
 
-          <Field label={t('share-modal.snapshot.name', `Snapshot name`)}>
-            <Input
-              id="snapshot-name-input"
-              width={30}
-              defaultValue={snapshotName}
-              onBlur={(e) => model.onSnasphotNameChange(e.target.value)}
-            />
-          </Field>
+          <Box marginBottom={2}>
+            <Stack direction="column" gap={2}>
+              <Field label={t('share-modal.snapshot.name', `Snapshot name`)} noMargin>
+                <Input
+                  id="snapshot-name-input"
+                  width={30}
+                  defaultValue={snapshotName}
+                  onBlur={(e) => model.onSnasphotNameChange(e.target.value)}
+                />
+              </Field>
 
-          <Field label={t('share-modal.snapshot.expire', `Expire`)}>
-            <RadioButtonGroup<number>
-              id="expire-select-input"
-              options={getExpireOptions()}
-              value={selectedExpireOption?.value}
-              onChange={model.onExpireChange}
-            />
-          </Field>
+              <Field label={t('share-modal.snapshot.expire', `Expire`)} noMargin>
+                <RadioButtonGroup<number>
+                  id="expire-select-input"
+                  options={getExpireOptions()}
+                  value={selectedExpireOption?.value}
+                  onChange={model.onExpireChange}
+                />
+              </Field>
+            </Stack>
+          </Box>
 
           <Modal.ButtonRow>
             <Button
@@ -100,8 +105,8 @@ export function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSna
 
       {/* When snapshot has been created - show link and allow copy/deletion */}
       {snapshotResult.value && (
-        <Stack direction="column" gap={0}>
-          <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')}>
+        <Stack direction="column" gap={2}>
+          <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')} noMargin>
             <Input
               data-testid={selectors.CopyUrlInput}
               id="snapshot-url-input"
