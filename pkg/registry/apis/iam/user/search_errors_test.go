@@ -42,14 +42,15 @@ func TestUnifiedSearchErrorStatus(t *testing.T) {
 				t.Run(operation, func(t *testing.T) {
 					backend := NewUnifiedSearchClient(&MockClient{MockResponses: index.MockResponses, MockError: index.MockError}, nil)
 					err := validate(t.Context(), backend, "stacks-1", "user-1", "taken")
-					if name == "plain" {
+					switch name {
+					case "plain":
 						require.ErrorIs(t, err, plainErr)
-					} else if name == "internal" {
+					case "internal":
 						var statusErr apierrors.APIStatus
 						require.ErrorAs(t, err, &statusErr)
 						require.Equal(t, http.StatusInternalServerError, int(statusErr.Status().Code))
 						require.NotContains(t, statusErr.Status().Message, "private database failure")
-					} else {
+					default:
 						require.True(t, apierrors.IsTooManyRequests(err), "got %v", err)
 					}
 				})

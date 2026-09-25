@@ -358,7 +358,7 @@ func TestDeleteTeamPreservesFolderSearchErrorStatus(t *testing.T) {
 				}))
 				res, err := server.Send(req)
 				require.NoError(t, err)
-				defer res.Body.Close()
+				defer func() { require.NoError(t, res.Body.Close()) }()
 				require.Equal(t, input.code, res.StatusCode)
 				var body struct {
 					Message string `json:"message"`

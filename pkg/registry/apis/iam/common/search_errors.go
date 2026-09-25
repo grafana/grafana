@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"net/http"
 
 	"google.golang.org/grpc/status"
@@ -26,8 +27,8 @@ func SearchStatusError(respErr *resourcepb.ErrorResult, err error) error {
 			return converted
 		}
 	}
-	statusErr, ok := converted.(*apierrors.StatusError)
-	if !ok || statusErr.ErrStatus.Code < http.StatusInternalServerError {
+	var statusErr *apierrors.StatusError
+	if !errors.As(converted, &statusErr) || statusErr.ErrStatus.Code < http.StatusInternalServerError {
 		return converted
 	}
 	statusErr.ErrStatus.Message = http.StatusText(int(statusErr.ErrStatus.Code))
