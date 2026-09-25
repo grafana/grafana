@@ -6,15 +6,16 @@ import (
 	"strconv"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // filterableFields are the field names a filter leaf may target. They mirror
@@ -46,12 +47,7 @@ var filterableFields = map[string]struct{}{
 	fieldTargetDatasourceUID: {},
 }
 
-// buildSearchRequest translates a SearchQuery body into a ResourceSearchRequest
-// for the primary kind, federating the given kinds. It returns the resolved
-// offset so the handler can compute the next page token. The where tree is
-// flattened: text leaves become the free-text query, filter leaves become field
-// requirements, and the labelSelector becomes label-field requirements.
-func buildSearchRequest(body model.CreateSearchRulesRequestBody, namespace string, primary schema.GroupResource, federated []schema.GroupResource) (*resourcepb.ResourceSearchRequest, int64, error) {
+func buildSearchRequest(body model.CreateSearchRulesRequestBody, namespace string, primary schema.GroupResource, federated []schema.GroupResource) (*Query, int64, error) {
 	limit := int64(defaultLimit)
 	if body.Limit != nil {
 		if *body.Limit <= 0 {
@@ -72,16 +68,13 @@ func buildSearchRequest(body model.CreateSearchRulesRequestBody, namespace strin
 		offset = n
 	}
 
-	req := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Key: resourceKey(namespace, primary)},
-		Limit:   limit,
-		Offset:  offset,
-		// HACK: this should be implicit but bleve doesn't populate all the columns for free text filters
-		// we can remove this once that behavior is fixed.
-		Fields: append([]string{}, resultColumns...),
-	}
-	for _, gr := range federated {
-		req.Federated = append(req.Federated, resourceKey(namespace, gr))
+	req := &Query{
+		Namespace: namespace,
+		Primary:   primary,
+		Federated: federated,
+		Limit:     limit,
+		Offset:    offset,
+		Fields:    append([]string{}, resultColumns...),
 	}
 
 	// Field projection and facets are part of the contract shape but not yet
@@ -139,7 +132,7 @@ func rejectRepeatedFilterFields(node *model.CreateSearchRulesRequestSearchWhereN
 // applyWhere flattens the where tree onto the request. v1 supports a top-level
 // and-combinator plus text and filter leaves; a node may set exactly one of
 // and/text/filter.
-func applyWhere(req *resourcepb.ResourceSearchRequest, node *model.CreateSearchRulesRequestSearchWhereNode) error {
+func applyWhere(req *Query, node *model.CreateSearchRulesRequestSearchWhereNode) error {
 	if node == nil {
 		return nil
 	}
@@ -185,14 +178,14 @@ func applyWhere(req *resourcepb.ResourceSearchRequest, node *model.CreateSearchR
 // is rejected rather than silently overwriting the first. Per-field text search
 // (the leaf's optional fields) is not yet wired to the backend and is rejected
 // so a client is not misled into thinking it took effect.
-func applyText(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearchRulesRequestSearchTextLeaf) error {
-	if req.Query != "" {
+func applyText(req *Query, leaf *model.CreateSearchRulesRequestSearchTextLeaf) error {
+	if req.Text != "" {
 		return fmt.Errorf("multiple text leaves are not supported")
 	}
 	if len(leaf.Fields) > 0 {
 		return fmt.Errorf("per-field text search is not supported")
 	}
-	req.Query = leaf.Value
+	req.Text = leaf.Value
 	return nil
 }
 
@@ -221,7 +214,7 @@ var validRuleTypes = map[string]struct{}{
 // applyFilter maps a filter leaf onto a field requirement. The labels field is
 // special: its values are label matchers flattened into indexed terms. Values
 // that the backend cannot honor are rejected rather than silently dropped.
-func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearchRulesRequestSearchFilterLeaf) error {
+func applyFilter(req *Query, leaf *model.CreateSearchRulesRequestSearchFilterLeaf) error {
 	if _, ok := filterableFields[leaf.Field]; !ok {
 		return fmt.Errorf("field %q is not filterable", leaf.Field)
 	}
@@ -257,7 +250,7 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 			// flipping its operator rather than negating the term.
 			m = negateMatcher(m)
 		}
-		req.Options.Fields = append(req.Options.Fields, labelMatcherRequirement(m))
+		req.Filters = append(req.Filters, labelMatcherRequirement(m))
 		return nil
 	}
 
@@ -270,8 +263,8 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 		}
 	}
 
-	req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
-		Key:      leaf.Field,
+	req.Filters = append(req.Filters, &searchv0.FilterPredicate{
+		Field:    leaf.Field,
 		Operator: op,
 		Values:   values,
 	})
@@ -348,9 +341,9 @@ func checkAndNormalizeFilterLeaf(leaf *model.CreateSearchRulesRequestSearchFilte
 func filterOperator(op model.CreateSearchRulesRequestSearchFilterLeafOperator) (string, error) {
 	switch op {
 	case model.CreateSearchRulesRequestSearchFilterLeafOperatorIn:
-		return "in", nil
+		return "In", nil
 	case model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn:
-		return "notin", nil
+		return "NotIn", nil
 	default:
 		return "", fmt.Errorf("unsupported filter operator %q", op)
 	}
@@ -375,7 +368,7 @@ var selectableLabelKeys = map[string]struct{}{
 // index built since. An index built before that still overmatches values sharing
 // a word, until it is rebuilt, which is one reason selection stays restricted to
 // selectableLabelKeys, whose values are generated and do not collide in practice.
-func applyLabelSelector(req *resourcepb.ResourceSearchRequest, selector *string) error {
+func applyLabelSelector(req *Query, selector *string) error {
 	if selector == nil || *selector == "" {
 		return nil
 	}
@@ -392,9 +385,9 @@ func applyLabelSelector(req *resourcepb.ResourceSearchRequest, selector *string)
 		if err != nil {
 			return err
 		}
-		req.Options.Labels = append(req.Options.Labels, &resourcepb.Requirement{
+		req.GroupFilters = append(req.GroupFilters, metav1.LabelSelectorRequirement{
 			Key:      r.Key(),
-			Operator: op,
+			Operator: metav1.LabelSelectorOperator(op),
 			Values:   r.Values().List(),
 		})
 	}
@@ -407,9 +400,9 @@ func applyLabelSelector(req *resourcepb.ResourceSearchRequest, selector *string)
 func labelSelectorOperator(r labels.Requirement) (string, error) {
 	switch r.Operator() {
 	case selection.Equals, selection.DoubleEquals, selection.In:
-		return "in", nil
+		return "In", nil
 	case selection.NotEquals, selection.NotIn:
-		return "notin", nil
+		return "NotIn", nil
 	default:
 		return "", fmt.Errorf("unsupported labelSelector operator %q", r.Operator())
 	}
@@ -433,7 +426,7 @@ func negateMatcher(m labelMatcher) labelMatcher {
 
 // applySort maps sort fields onto the request. A leading "-" denotes descending.
 // Only the title field is sortable today; any other field is rejected.
-func applySort(req *resourcepb.ResourceSearchRequest, fields []model.CreateSearchRulesRequestSearchSortField) error {
+func applySort(req *Query, fields []model.CreateSearchRulesRequestSearchSortField) error {
 	for _, f := range fields {
 		s := string(f)
 		desc := strings.HasPrefix(s, "-")
@@ -441,7 +434,11 @@ func applySort(req *resourcepb.ResourceSearchRequest, fields []model.CreateSearc
 		if name != fieldTitle {
 			return fmt.Errorf("field %q is not sortable", name)
 		}
-		req.SortBy = append(req.SortBy, &resourcepb.ResourceSearchRequest_Sort{Field: name, Desc: desc})
+		direction := sortAscending
+		if desc {
+			direction = sortDescending
+		}
+		req.Sort = append(req.Sort, searchv0.SortField{Field: name, Direction: direction})
 	}
 	return nil
 }
@@ -453,9 +450,6 @@ func trimSortPrefix(s string) string {
 	return s
 }
 
-// filters is the backend-neutral view of a ResourceSearchRequest used by the
-// legacy backend. The handler encodes these into the request; the legacy and
-// unified backends each decode the request in their own way.
 type filters struct {
 	// title is the free-text query: a word search over the rule title, pushed
 	// down as SearchTitle. A title filter leaf is rejected (see
@@ -485,63 +479,60 @@ type filters struct {
 	sortDesc            bool
 }
 
-func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
-	f := filters{title: req.Query}
-	opts := req.Options
-	if opts != nil {
-		for _, r := range opts.Fields {
-			switch r.Key {
-			case fieldName:
-				f.names = r.Values
-			case fieldFolder:
-				f.folders = r.Values
-			case fieldType:
-				f.ruleType = firstValue(r.Values)
-			case fieldLabels:
-				if len(r.Values) == 1 {
-					f.labelMatchers = append(f.labelMatchers, requirementToLabelMatcher(r))
+func extractFilters(req *Query) filters {
+	f := filters{title: req.Text}
+	for _, r := range req.Filters {
+		switch r.Field {
+		case fieldName:
+			f.names = r.Values
+		case fieldFolder:
+			f.folders = r.Values
+		case fieldType:
+			f.ruleType = firstValue(r.Values)
+		case fieldLabels:
+			if len(r.Values) == 1 {
+				f.labelMatchers = append(f.labelMatchers, requirementToLabelMatcher(r))
+			}
+		case fieldDatasourceUIDs:
+			f.datasourceUIDs = r.Values
+		case fieldPaused:
+			if len(r.Values) == 1 {
+				if b, err := strconv.ParseBool(r.Values[0]); err == nil {
+					f.paused = &b
 				}
-			case fieldDatasourceUIDs:
-				f.datasourceUIDs = r.Values
-			case fieldPaused:
-				if len(r.Values) == 1 {
-					if b, err := strconv.ParseBool(r.Values[0]); err == nil {
-						f.paused = &b
-					}
-				}
-			case fieldDashboardUID:
-				f.dashboardUID = firstValue(r.Values)
-			case fieldPanelID:
-				f.panelID = firstValue(r.Values)
-			case fieldReceiver:
-				f.receiver = firstValue(r.Values)
-			case fieldNotificationType:
-				f.notificationType = firstValue(r.Values)
-			case fieldRoutingTree:
-				f.routingTree = firstValue(r.Values)
-			case fieldMetric:
-				f.metric = firstValue(r.Values)
-			case fieldTargetDatasourceUID:
-				f.targetDatasourceUID = firstValue(r.Values)
 			}
-		}
-		// Metadata label requirements come from the labelSelector. Only the
-		// controlled group label is selectable (see selectableLabelKeys), and the
-		// legacy backend applies it through GroupFilter.
-		for _, r := range opts.Labels {
-			if r.Key != model.GroupLabelKey {
-				continue
-			}
-			if r.Operator == "notin" {
-				f.groupsExclude = append(f.groupsExclude, r.Values...)
-				continue
-			}
-			f.groupsInclude = append(f.groupsInclude, r.Values...)
+		case fieldDashboardUID:
+			f.dashboardUID = firstValue(r.Values)
+		case fieldPanelID:
+			f.panelID = firstValue(r.Values)
+		case fieldReceiver:
+			f.receiver = firstValue(r.Values)
+		case fieldNotificationType:
+			f.notificationType = firstValue(r.Values)
+		case fieldRoutingTree:
+			f.routingTree = firstValue(r.Values)
+		case fieldMetric:
+			f.metric = firstValue(r.Values)
+		case fieldTargetDatasourceUID:
+			f.targetDatasourceUID = firstValue(r.Values)
 		}
 	}
-	if len(req.SortBy) > 0 {
-		f.sortField = req.SortBy[0].Field
-		f.sortDesc = req.SortBy[0].Desc
+	// Metadata label requirements come from the labelSelector. Only the
+	// controlled group label is selectable (see selectableLabelKeys), and the
+	// legacy backend applies it through GroupFilter.
+	for _, r := range req.GroupFilters {
+		if r.Key != model.GroupLabelKey {
+			continue
+		}
+		if r.Operator == metav1.LabelSelectorOpNotIn {
+			f.groupsExclude = append(f.groupsExclude, r.Values...)
+			continue
+		}
+		f.groupsInclude = append(f.groupsInclude, r.Values...)
+	}
+	if len(req.Sort) > 0 {
+		f.sortField = req.Sort[0].Field
+		f.sortDesc = req.Sort[0].Direction == sortDescending
 	}
 	return f
 }
@@ -587,12 +578,12 @@ func parseLabelMatcher(s string) labelMatcher {
 // to and from a requirement on the indexed "labels" field, using flattened
 // "key"/"key=value" terms and in/notin operators so a matcher survives the
 // request and resolves the same way on both backends.
-func labelMatcherRequirement(m labelMatcher) *resourcepb.Requirement {
-	operator := "in"
+func labelMatcherRequirement(m labelMatcher) *searchv0.FilterPredicate {
+	operator := "In"
 	if labelMatcherIsNegated(m) {
-		operator = "notin"
+		operator = "NotIn"
 	}
-	return &resourcepb.Requirement{Key: fieldLabels, Operator: operator, Values: []string{labelTerm(m)}}
+	return &searchv0.FilterPredicate{Field: fieldLabels, Operator: operator, Values: []string{labelTerm(m)}}
 }
 
 // labelTerm is the indexed term for a matcher: a bare key for an existence
@@ -612,8 +603,8 @@ func labelMatcherIsNegated(m labelMatcher) bool {
 
 // requirementToLabelMatcher rebuilds the matcher a labels requirement encodes.
 // The term carries the key and value, the operator carries the polarity.
-func requirementToLabelMatcher(r *resourcepb.Requirement) labelMatcher {
-	negated := r.Operator == "notin" || r.Operator == "!="
+func requirementToLabelMatcher(r *searchv0.FilterPredicate) labelMatcher {
+	negated := r.Operator == "NotIn"
 	if k, v, ok := strings.Cut(r.Values[0], "="); ok {
 		op := matchEquals
 		if negated {

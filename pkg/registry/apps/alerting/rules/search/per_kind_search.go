@@ -30,49 +30,26 @@ import (
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 const (
-	// The page size bounds are taken from the generic search API rather than
-	// restated, so a client's limit is clamped to the same numbers here and there.
-	// The cap also matters on its own: the legacy backend loads and filters the
-	// full rule set in memory before paginating, so an unbounded limit would let
-	// one request materialize an entire tenant's rules.
+	// Keep the same page-size bounds as the generic search API.
 	perKindDefaultLimit = searchapi.DefaultLimit
 	perKindMaxLimit     = searchapi.MaxLimit
-
-	// kindMaxBodyBytes bounds the search request body. The where tree is small; this
-	// guards against a client streaming an unbounded body into the decoder.
-	perKindMaxBodyBytes = 1 << 20 // 1 MiB
+	// Bound body reads to avoid consuming unbounded input.
+	perKindMaxBodyBytes = 1 << 20
 )
 
-// kind is the rule kind one search endpoint serves: its identity, the fields a
-// query may reference on it, and the index client to search it with. One client
-// per kind because the dual-writer storage mode is per resource.
 type perKind struct {
 	info   utils.ResourceInfo
 	fields *perKindFieldSet
-	client resourcepb.ResourceIndexClient
+	client *dualwrite.Selector[Backend]
 }
 
-type perKindSearchContextKey struct{}
+func (k perKind) groupResource() schema.GroupResource { return k.info.GroupResource() }
 
-func withPerKindSearch(ctx context.Context) context.Context {
-	return context.WithValue(ctx, perKindSearchContextKey{}, true)
-}
-
-func isPerKindSearch(ctx context.Context) bool {
-	perKind, _ := ctx.Value(perKindSearchContextKey{}).(bool)
-	return perKind
-}
-
-func (k perKind) groupResource() schema.GroupResource {
-	return k.info.GroupResource()
-}
-
-func newPerKind(info utils.ResourceInfo, client resourcepb.ResourceIndexClient) perKind {
+func newPerKind(info utils.ResourceInfo, client *dualwrite.Selector[Backend]) perKind {
 	return perKind{info: info, fields: perKindFieldSets[info.GroupResource()], client: client}
 }
 
@@ -87,17 +64,14 @@ func requestNamespace(req *app.CustomRouteRequest) (string, error) {
 	return namespace, nil
 }
 
-// SearchAlertRules serves POST .../alertrules/searchRules.
 func (h *Handler) SearchAlertRules(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
 	return h.search(ctx, w, req, newPerKind(alertrule.ResourceInfo, h.alertRules))
 }
 
-// SearchRecordingRules serves POST .../recordingrules/searchRules.
 func (h *Handler) SearchRecordingRules(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
 	return h.search(ctx, w, req, newPerKind(recordingrule.ResourceInfo, h.recordingRules))
 }
 
-// search is the flow both routes share; only the kind differs.
 func (h *Handler) search(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest, k perKind) error {
 	namespace, err := requestNamespace(req)
 	if err != nil {
@@ -107,57 +81,46 @@ func (h *Handler) search(ctx context.Context, w app.CustomRouteResponseWriter, r
 	if err != nil {
 		return err
 	}
-
 	leaves, ferrs := validatePerKindQuery(query, k)
 	if len(ferrs) > 0 {
 		return invalidQuery(ferrs)
 	}
 
-	t := buildPerKindSearchRequest(query, leaves, namespace, k)
-	resp, err := k.client.Search(withPerKindSearch(ctx), t.req)
+	searchQuery := buildPerKindSearchRequest(query, leaves, namespace, k)
+	backend, err := k.client.Resolve(ctx)
+	if err != nil {
+		return err
+	}
+	resp, err := backend.Search(ctx, searchQuery)
 	if err != nil {
 		h.logger.FromContext(ctx).Error("rule search backend request failed",
 			"namespace", namespace, "group", k.groupResource().Group,
-			"resource", k.groupResource().Resource, "client", fmt.Sprintf("%T", k.client), "error", err)
+			"resource", k.groupResource().Resource, "client", fmt.Sprintf("%T", backend), "error", err)
 		return err
 	}
-	// The backend reports failures in the payload, not as a transport error.
-	if resp.GetError() != nil {
-		err = resource.GetError(resp.GetError())
-		h.logger.FromContext(ctx).Error("rule search backend returned an error",
-			"namespace", namespace, "group", k.groupResource().Group,
-			"resource", k.groupResource().Resource, "client", fmt.Sprintf("%T", k.client), "error", err)
-		return err
-	}
-
-	out, err := h.results(ctx, namespace, resp, t, k)
-	if err != nil {
-		h.logger.FromContext(ctx).Error("rule search response mapping failed",
-			"namespace", namespace, "group", k.groupResource().Group,
-			"resource", k.groupResource().Resource, "error", err)
-		return err
+	out := &searchv0.SearchResults{
+		TypeMeta: metaForKind(searchv0.KindSearchResults),
+		Metadata: searchv0.ResultsMetadata{
+			Continue:          nextPageToken(resp, searchQuery.Offset),
+			TotalHits:         resp.TotalHits,
+			TotalHitsRelation: totalHitsRelation(resp.TotalHitsExact),
+		},
+		Items: resultItems(resp, searchQuery.Fields, k),
 	}
 	return writePerKindJSON(w, out)
 }
 
-// invalidQuery reports a rejected query the way the generic search API reports
-// one: a 422 naming the offending fields, attributed to the envelope's own kind
-// rather than to the rule kind being searched.
+// Report errors against the search envelope, not the rule kind being searched.
 func invalidQuery(errs field.ErrorList) error {
 	return apierrors.NewInvalid(schema.GroupKind{Group: searchv0.GROUP, Kind: searchv0.KindSearchQuery}, "", errs)
 }
 
-// decodePerKindSearchQuery reads and parses the SearchQuery POST body. A body is
-// required: the envelope's apiVersion and kind identify what is being asked for,
-// so there is no meaningful empty request.
 func decodePerKindSearchQuery(req *app.CustomRouteRequest) (*searchv0.SearchQuery, error) {
 	if req.Body == nil {
 		return nil, apierrors.NewBadRequest("request body is empty")
 	}
-	// The reader owns the body: close it so the runner can release the underlying
-	// connection even when the handler consumes only part of it.
+	// The runner must be able to release the connection even after a partial read.
 	defer func() { _ = req.Body.Close() }()
-
 	raw, err := io.ReadAll(io.LimitReader(req.Body, perKindMaxBodyBytes+1))
 	if err != nil {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("reading search request body: %s", err))
@@ -165,7 +128,6 @@ func decodePerKindSearchQuery(req *app.CustomRouteRequest) (*searchv0.SearchQuer
 	if int64(len(raw)) > perKindMaxBodyBytes {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("search request body exceeds %d bytes", perKindMaxBodyBytes))
 	}
-
 	var query searchv0.SearchQuery
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
@@ -175,49 +137,16 @@ func decodePerKindSearchQuery(req *app.CustomRouteRequest) (*searchv0.SearchQuer
 		}
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid request body: %s", err))
 	}
-	// Anything after the first value means the caller sent something other than
-	// the single query about to be acted on.
 	if err := dec.Decode(&json.RawMessage{}); !errors.Is(err, io.EOF) {
 		return nil, apierrors.NewBadRequest("request body must contain a single JSON object")
 	}
 	return &query, nil
 }
 
-// results maps a backend response onto the public envelope.
-func (h *Handler) results(ctx context.Context, namespace string, resp *resourcepb.ResourceSearchResponse, t perKindSearchRequest, k perKind) (*searchv0.SearchResults, error) {
-	items, err := h.resultItems(ctx, namespace, resp, t.fields, k)
-	if err != nil {
-		return nil, err
-	}
-	return &searchv0.SearchResults{
-		TypeMeta: metaForKind(searchv0.KindSearchResults),
-		Metadata: searchv0.ResultsMetadata{
-			Continue:          nextPageToken(resp, t.offset),
-			TotalHits:         resp.GetTotalHits(),
-			TotalHitsRelation: totalHitsRelation(resp.GetTotalHitsExact()),
-		},
-		Items: items,
-	}, nil
-}
-
-// nextPageToken offers a cursor when more results may exist. An inexact total
-// cannot prove a non-empty page was the last one, so it may produce one extra
-// empty request rather than making authorized results unreachable.
-//
-// Offset paging rather than the generic search API's sort-value cursor, because
-// rows from the legacy backend carry no sort values. The token is opaque either
-// way, so which one it is stays invisible to the client. Correct only while each
-// backend paginates one globally-ordered set: pages ordered differently would
-// skip or duplicate rows.
-func nextPageToken(resp *resourcepb.ResourceSearchResponse, offset int64) string {
-	var rows int64
-	switch resp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		rows = int64(len(resp.GetResults().GetRows()))
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		rows = int64(len(resp.GetRows()))
-	}
-	if rows == 0 || (resp.GetTotalHitsExact() && offset+rows >= resp.GetTotalHits()) {
+// An inexact total cannot prove the page was the last one; allow one more request.
+func nextPageToken(resp *Result, offset int64) string {
+	rows := int64(len(resp.Hits))
+	if rows == 0 || (resp.TotalHitsExact && offset+rows >= resp.TotalHits) {
 		return ""
 	}
 	return encodeCursor(offset + rows)
@@ -230,83 +159,26 @@ func totalHitsRelation(exact bool) searchv0.TotalHitsRelation {
 	return searchv0.TotalHitsAtMost
 }
 
-// resultItems converts the backend response into envelope items, projected down
-// to the requested fields. Decoding follows the response format so a new client
-// remains compatible with servers that return the legacy table.
-func (h *Handler) resultItems(ctx context.Context, namespace string, resp *resourcepb.ResourceSearchResponse, fields []string, k perKind) ([]searchv0.ResultItem, error) {
-	switch resp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return h.tableResultItems(ctx, namespace, resp.GetResults(), fields, k)
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return fieldValueResultItems(resp.GetFields(), resp.GetRows(), fields, k)
-	default:
-		return nil, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
-	}
-}
-
-func (h *Handler) tableResultItems(ctx context.Context, namespace string, table *resourcepb.ResourceTable, fields []string, k perKind) ([]searchv0.ResultItem, error) {
-	rows := table.GetRows()
-	cols := table.GetColumns()
+func resultItems(resp *Result, fields []string, k perKind) []searchv0.ResultItem {
 	wanted := requestedFields(fields)
-
-	items := make([]searchv0.ResultItem, 0, len(rows))
-	for _, row := range rows {
-		if len(row.GetCells()) != len(cols) {
-			return nil, fmt.Errorf("row has %d cells but the table declares %d columns", len(row.GetCells()), len(cols))
-		}
-		item := perKindResultItem(row.GetKey(), k)
+	items := make([]searchv0.ResultItem, 0, len(resp.Hits))
+	for _, hit := range resp.Hits {
+		item := searchv0.ResultItem{Resource: searchv0.ResourceRef{
+			Group: k.groupResource().Group, Resource: k.groupResource().Resource,
+			Kind: k.info.GroupVersionKind().Kind, Name: hit.Name,
+		}}
 		values := map[string]any{}
-		for i, col := range cols {
-			if !wanted[col.GetName()] {
-				continue
-			}
-			v, err := resource.DecodeCell(col, i, row.GetCells()[i])
-			if err != nil {
-				// One unreadable column loses that field rather than failing the
-				// whole search, so a schema bug degrades a hit instead of an outage.
-				h.logger.FromContext(ctx).Warn("failed to decode rule search result column",
-					"namespace", namespace, "group", k.groupResource().Group,
-					"resource", k.groupResource().Resource, "column", col.GetName(),
-					"rule", row.GetKey().GetName(), "error", err)
-				continue
-			}
-			if v != nil {
-				values[col.GetName()] = v
-			}
-		}
-		if len(values) > 0 {
-			item.Fields = &common.Unstructured{Object: values}
-		}
-		items = append(items, item)
-	}
-	return items, nil
-}
-
-func fieldValueResultItems(fields []*resourcepb.ResourceSearchField, rows []*resourcepb.ResourceSearchRow, projected []string, k perKind) ([]searchv0.ResultItem, error) {
-	wanted := requestedFields(projected)
-	items := make([]searchv0.ResultItem, 0, len(rows))
-	for i, row := range rows {
-		if row == nil || row.GetKey() == nil {
-			return nil, fmt.Errorf("field-value search result row %d has no resource key", i)
-		}
-		decoded, err := resource.DecodeSearchValues(fields, row)
-		if err != nil {
-			return nil, fmt.Errorf("decoding field-value search result row %d: %w", i, err)
-		}
-
-		values := make(map[string]any, len(decoded))
-		for name, value := range decoded {
+		for name, value := range hit.Values {
 			if wanted[name] {
 				values[name] = value
 			}
 		}
-		item := perKindResultItem(row.GetKey(), k)
 		if len(values) > 0 {
 			item.Fields = &common.Unstructured{Object: values}
 		}
 		items = append(items, item)
 	}
-	return items, nil
+	return items
 }
 
 func requestedFields(fields []string) map[string]bool {
@@ -315,18 +187,6 @@ func requestedFields(fields []string) map[string]bool {
 		wanted[name] = true
 	}
 	return wanted
-}
-
-func perKindResultItem(key *resourcepb.ResourceKey, k perKind) searchv0.ResultItem {
-	return searchv0.ResultItem{
-		Resource: searchv0.ResourceRef{
-			Group:    k.groupResource().Group,
-			Resource: k.groupResource().Resource,
-			Kind:     k.info.GroupVersionKind().Kind,
-			Name:     key.GetName(),
-		},
-		// This compatibility API omits relevance scores; use generic search for scoring.
-	}
 }
 
 func metaForKind(kindName string) metav1.TypeMeta {

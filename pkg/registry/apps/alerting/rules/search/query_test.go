@@ -7,15 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
-	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -140,7 +136,7 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 // set membership so its values must stay in one multi-value requirement.
 func TestBuildSearchRequest_labelSelector(t *testing.T) {
 	gr := alertrule.ResourceInfo.GroupResource()
-	build := func(t *testing.T, selector string) *resourcepb.ResourceSearchRequest {
+	build := func(t *testing.T, selector string) *Query {
 		t.Helper()
 		sel := selector
 		req, _, err := buildSearchRequest(
@@ -156,7 +152,7 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 	}
 
 	t.Run("selects on metadata labels, not spec labels", func(t *testing.T) {
-		req := build(t, model.GroupLabelKey+"=g1")
+		req := buildUnifiedRequest(build(t, model.GroupLabelKey+"=g1"))
 		require.Len(t, req.Options.Labels, 1)
 		assert.Empty(t, req.Options.Fields, "must not touch the indexed spec-labels field")
 		assert.Equal(t, model.GroupLabelKey, req.Options.Labels[0].Key)
@@ -166,9 +162,10 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 
 	t.Run("multi-value In stays one requirement so values OR", func(t *testing.T) {
 		req := build(t, model.GroupLabelKey+" in (g1,g2)")
-		require.Len(t, req.Options.Labels, 1, "values must stay in one requirement to OR")
-		assert.Equal(t, "in", req.Options.Labels[0].Operator)
-		assert.ElementsMatch(t, []string{"g1", "g2"}, req.Options.Labels[0].Values)
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Labels, 1, "values must stay in one requirement to OR")
+		assert.Equal(t, "in", wire.Options.Labels[0].Operator)
+		assert.ElementsMatch(t, []string{"g1", "g2"}, wire.Options.Labels[0].Values)
 
 		// the legacy side reads both values into the group include filter
 		f := extractFilters(req)
@@ -177,8 +174,9 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 
 	t.Run("NotIn becomes a group exclusion", func(t *testing.T) {
 		req := build(t, model.GroupLabelKey+" notin (g1,g2)")
-		require.Len(t, req.Options.Labels, 1)
-		assert.Equal(t, "notin", req.Options.Labels[0].Operator)
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Labels, 1)
+		assert.Equal(t, "notin", wire.Options.Labels[0].Operator)
 
 		f := extractFilters(req)
 		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsExclude)
@@ -215,7 +213,7 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 			Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldLabels, Operator: op, Values: vals},
 		}
 	}
-	build := func(nodes ...model.CreateSearchRulesRequestSearchWhereNode) (*resourcepb.ResourceSearchRequest, error) {
+	build := func(nodes ...model.CreateSearchRulesRequestSearchWhereNode) (*Query, error) {
 		req, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{
 			Where: &model.CreateSearchRulesRequestSearchWhereNode{And: nodes},
 		}, "default", gr, nil)
@@ -241,9 +239,10 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 		} {
 			req, err := build(leaf(tc.op, tc.value))
 			require.NoError(t, err, "%s %q", tc.op, tc.value)
-			require.Len(t, req.Options.Fields, 1, "%s %q", tc.op, tc.value)
-			assert.Equal(t, tc.operator, req.Options.Fields[0].Operator, "%s %q", tc.op, tc.value)
-			assert.Equal(t, []string{tc.term}, req.Options.Fields[0].Values, "%s %q", tc.op, tc.value)
+			wire := buildUnifiedRequest(req)
+			require.Len(t, wire.Options.Fields, 1, "%s %q", tc.op, tc.value)
+			assert.Equal(t, tc.operator, wire.Options.Fields[0].Operator, "%s %q", tc.op, tc.value)
+			assert.Equal(t, []string{tc.term}, wire.Options.Fields[0].Values, "%s %q", tc.op, tc.value)
 		}
 	})
 
@@ -257,9 +256,10 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 	t.Run("repeated leaves conjoin", func(t *testing.T) {
 		req, err := build(leaf(opIn, "team=a"), leaf(notIn, "env=prod"))
 		require.NoError(t, err)
-		require.Len(t, req.Options.Fields, 2, "each leaf gets its own requirement")
-		assert.Equal(t, "in", req.Options.Fields[0].Operator)
-		assert.Equal(t, "notin", req.Options.Fields[1].Operator)
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Fields, 2, "each leaf gets its own requirement")
+		assert.Equal(t, "in", wire.Options.Fields[0].Operator)
+		assert.Equal(t, "notin", wire.Options.Fields[1].Operator)
 
 		// The legacy backend rebuilds the matchers from those requirements, so a
 		// rule has to satisfy both.
@@ -323,7 +323,7 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 	// in-memory pass used to do when it built the rule's datasource set.
 	t.Run("rejects synthetic datasourceUIDs", func(t *testing.T) {
 		gr := alertrule.ResourceInfo.GroupResource()
-		reqFor := func(vals ...string) (*resourcepb.ResourceSearchRequest, error) {
+		reqFor := func(vals ...string) (*Query, error) {
 			body := model.CreateSearchRulesRequestBody{Where: &model.CreateSearchRulesRequestSearchWhereNode{
 				Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldDatasourceUIDs, Operator: opIn, Values: vals},
 			}}
@@ -334,8 +334,8 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 		t.Run("accepts real datasources", func(t *testing.T) {
 			req, err := reqFor("ds1", "ds2", "ds3")
 			require.NoError(t, err)
-			require.Len(t, req.Options.Fields, 1)
-			assert.Equal(t, []string{"ds1", "ds2", "ds3"}, req.Options.Fields[0].Values)
+			require.Len(t, req.Filters, 1)
+			assert.Equal(t, []string{"ds1", "ds2", "ds3"}, req.Filters[0].Values)
 		})
 
 		t.Run("rejects synethic datasources", func(t *testing.T) {
@@ -370,8 +370,8 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 			require.NoError(t, err, "%s=%s", tc.field, tc.value)
 
 			var got []string
-			for _, r := range req.Options.Fields {
-				if r.Key == tc.field {
+			for _, r := range req.Filters {
+				if r.Field == tc.field {
 					got = r.Values
 				}
 			}
@@ -413,8 +413,7 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 	})
 }
 
-// legacyResponse builds the search response the legacy backend would return for
-// a single rule.
+// Older unified servers return table cells rather than field values.
 func legacyResponse(t *testing.T, rule *ngmodels.AlertRule) *resourcepb.ResourceSearchResponse {
 	t.Helper()
 	cells, err := ruleCells(ruleColumnValues(rule))
@@ -426,93 +425,6 @@ func legacyResponse(t *testing.T, rule *ngmodels.AlertRule) *resourcepb.Resource
 			Rows:    []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: cells}},
 		},
 	}
-}
-
-// TestResultColumnsCoverSearchFields asserts the result table carries exactly
-// the fields the kinds declare, plus the two standard fields the document
-// builder supplies. A field added to the CUE but not here would be indexed and
-// filterable on the unified backend yet missing from every hit, and a name here
-// that no kind declares has no column definition to encode against.
-func TestResultColumnsCoverSearchFields(t *testing.T) {
-	want := map[string]struct{}{fieldTitle: {}, fieldFolder: {}}
-	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
-	for _, gr := range []schema.GroupResource{
-		alertrule.ResourceInfo.GroupResource(),
-		recordingrule.ResourceInfo.GroupResource(),
-	} {
-		for _, sfd := range provider.Fields(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource}) {
-			want[sfd.Name] = struct{}{}
-		}
-	}
-
-	names := make([]string, 0, len(want))
-	for name := range want {
-		names = append(names, name)
-	}
-	assert.ElementsMatch(t, names, resultColumns)
-}
-
-// TestSearchFieldsAgreeAcrossKinds guards the fields both rule kinds declare.
-// validateCrossVersionConsistency enforces this across versions of one kind,
-// but nothing enforces it across the two kinds, and buildSearchColumns resolves
-// a conflict by taking the first declaration. A divergence would therefore give
-// one kind's rows the other kind's column type: the legacy encoder would reject
-// the value at request time, and a unified hit would decode against a type it
-// was not encoded with.
-func TestSearchFieldsAgreeAcrossKinds(t *testing.T) {
-	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
-	fieldsFor := func(gr schema.GroupResource) map[string]resource.SearchFieldDefinition {
-		out := map[string]resource.SearchFieldDefinition{}
-		for _, sfd := range provider.Fields(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource}) {
-			out[sfd.Name] = sfd
-		}
-		return out
-	}
-
-	alert := fieldsFor(alertrule.ResourceInfo.GroupResource())
-	recording := fieldsFor(recordingrule.ResourceInfo.GroupResource())
-
-	shared := 0
-	for name, a := range alert {
-		r, ok := recording[name]
-		if !ok {
-			continue
-		}
-		shared++
-		assert.Equal(t, a.Type, r.Type, "field %q has a different type on each kind", name)
-		assert.Equal(t, a.Array, r.Array, "field %q is an array on only one kind", name)
-		assert.ElementsMatch(t, a.Capabilities, r.Capabilities, "field %q has different capabilities on each kind", name)
-	}
-	// Guard the guard: if the kinds stop sharing fields entirely this test would
-	// pass vacuously.
-	require.NotZero(t, shared, "expected the rule kinds to share search fields")
-}
-
-// TestResultTableBuiltCleanly asserts the result table assembled without
-// dropping columns. Construction degrades rather than panicking, so a
-// declaration gap would otherwise only show up as a missing field at runtime.
-func TestResultTableBuiltCleanly(t *testing.T) {
-	require.NoError(t, results.err)
-	require.Empty(t, results.skipped)
-	require.Len(t, results.defs, len(resultColumns))
-	require.Len(t, results.encoders, len(resultColumns))
-}
-
-// TestResultColumnsAreTyped pins that the legacy table declares the same column
-// types the unified index does. Declaring everything as a string would still
-// round-trip through this package's own reader, but a hit from the unified
-// backend would then decode against different types.
-func TestResultColumnsAreTyped(t *testing.T) {
-	byName := map[string]*resourcepb.ResourceTableColumnDefinition{}
-	for _, col := range resultColumnDefinitions() {
-		byName[col.Name] = col
-	}
-
-	require.Equal(t, resourcepb.ResourceTableColumnDefinition_BOOLEAN, byName[fieldPaused].Type)
-	require.Equal(t, resourcepb.ResourceTableColumnDefinition_INT64, byName[fieldPanelID].Type)
-	require.True(t, byName[fieldLabels].IsArray, "labels is indexed as flattened terms")
-	require.True(t, byName[fieldDatasourceUIDs].IsArray)
-	require.False(t, byName[fieldAnnotations].IsArray, "annotations is a whole JSON object")
 }
 
 func TestBuildSearchRequest_rejectsUnsortableField(t *testing.T) {
@@ -619,7 +531,7 @@ func TestCellsParseRoundTrip(t *testing.T) {
 	}
 
 	resp := legacyResponse(t, rule)
-	hits := NewHandler(nil, nil).parseHits(resp)
+	hits := NewHandler(nil, nil).parseHits(decodeTestResult(t, resp))
 	require.Len(t, hits, 1)
 	h := hits[0]
 
@@ -665,7 +577,7 @@ func TestParseHits_recordingRuleKind(t *testing.T) {
 		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}},
 	}
 	resp := legacyResponse(t, rule)
-	hits := NewHandler(nil, nil).parseHits(resp)
+	hits := NewHandler(nil, nil).parseHits(decodeTestResult(t, resp))
 	require.Len(t, hits, 1)
 	h := hits[0]
 

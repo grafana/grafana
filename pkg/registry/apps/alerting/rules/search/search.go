@@ -19,8 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 const (
@@ -34,23 +33,19 @@ const (
 	maxBodyBytes = 1 << 20 // 1 MiB
 )
 
-// Handler serves the rule search custom route. It decodes the SearchQuery POST
-// body into a ResourceSearchRequest and delegates to a dual-writer-aware search
-// client that routes to the legacy or unified backend based on the resource's
-// storage mode. One router per kind is held because the dual-writer mode is per
-// resource.
+// Each rule kind can change storage mode independently.
 type Handler struct {
-	alertRules     resourcepb.ResourceIndexClient
-	recordingRules resourcepb.ResourceIndexClient
+	alertRules     *dualwrite.Selector[Backend]
+	recordingRules *dualwrite.Selector[Backend]
 	logger         log.Logger
 }
 
-func NewHandler(alertRules, recordingRules resourcepb.ResourceIndexClient) *Handler {
+func NewHandler(alertRules, recordingRules *dualwrite.Selector[Backend]) *Handler {
 	return &Handler{alertRules: alertRules, recordingRules: recordingRules, logger: log.New("alerting.rules.search")}
 }
 
 // clientFor selects the router for the primary resource being searched.
-func (h *Handler) clientFor(primary schema.GroupResource) resourcepb.ResourceIndexClient {
+func (h *Handler) clientFor(primary schema.GroupResource) *dualwrite.Selector[Backend] {
 	if primary.Resource == recordingrule.ResourceInfo.GroupResource().Resource {
 		return h.recordingRules
 	}
@@ -113,17 +108,18 @@ func decodeSearchQuery(req *app.CustomRouteRequest) (model.CreateSearchRulesRequ
 
 // run builds the search request, dispatches to the mode-routed client for the
 // primary kind, and computes the next page token.
-func (h *Handler) run(ctx context.Context, body model.CreateSearchRulesRequestBody, namespace string, primary schema.GroupResource, federated []schema.GroupResource) (*resourcepb.ResourceSearchResponse, string, error) {
+func (h *Handler) run(ctx context.Context, body model.CreateSearchRulesRequestBody, namespace string, primary schema.GroupResource, federated []schema.GroupResource) (*Result, string, error) {
 	searchReq, offset, err := buildSearchRequest(body, namespace, primary, federated)
 	if err != nil {
 		return nil, "", apierrors.NewBadRequest(err.Error())
 	}
-	resp, err := h.clientFor(primary).Search(ctx, searchReq)
+	backend, err := h.clientFor(primary).Resolve(ctx)
 	if err != nil {
 		return nil, "", err
 	}
-	if resp.Error != nil {
-		return nil, "", resource.GetError(resp.Error)
+	resp, err := backend.Search(ctx, searchReq)
+	if err != nil {
+		return nil, "", err
 	}
 	// Offset paging rather than the generic search API's sort-value cursor,
 	// because rows from the legacy backend carry no sort values. Correct only
@@ -173,14 +169,11 @@ func typeFilterValue(where *model.CreateSearchRulesRequestSearchWhereNode) strin
 	return ""
 }
 
-func rowCount(resp *resourcepb.ResourceSearchResponse) int64 {
-	if resp.Results == nil {
-		return 0
-	}
-	return int64(len(resp.Results.Rows))
+func rowCount(resp *Result) int64 {
+	return int64(len(resp.Hits))
 }
 
-func (h *Handler) metadata(resp *resourcepb.ResourceSearchResponse, next string) model.CreateSearchRulesSearchResultsMetadata {
+func (h *Handler) metadata(resp *Result, next string) model.CreateSearchRulesSearchResultsMetadata {
 	meta := model.CreateSearchRulesSearchResultsMetadata{}
 	if next != "" {
 		meta.Continue = &next
@@ -199,50 +192,25 @@ func (h *Handler) metadata(resp *resourcepb.ResourceSearchResponse, next string)
 
 var searchResultsTypeMeta = metav1.TypeMeta{APIVersion: model.GroupVersion.String(), Kind: "RuleSearchResults"}
 
-func resourceKey(namespace string, gr schema.GroupResource) *resourcepb.ResourceKey {
-	return &resourcepb.ResourceKey{Namespace: namespace, Group: gr.Group, Resource: gr.Resource}
-}
-
-// rowReader reads cells from a search result table by column name.
 type rowReader struct {
-	cols   []*resourcepb.ResourceTableColumnDefinition
-	idx    map[string]int
-	row    *resourcepb.ResourceTableRow
+	hit    Hit
 	logger log.Logger
 }
 
-func (h *Handler) newRowReaders(resp *resourcepb.ResourceSearchResponse) []rowReader {
-	if resp.Results == nil {
-		return nil
-	}
-	idx := map[string]int{}
-	for i, c := range resp.Results.Columns {
-		idx[c.Name] = i
-	}
-	readers := make([]rowReader, 0, len(resp.Results.Rows))
-	for _, row := range resp.Results.Rows {
-		readers = append(readers, rowReader{cols: resp.Results.Columns, idx: idx, row: row, logger: h.logger})
+func (h *Handler) newRowReaders(resp *Result) []rowReader {
+	readers := make([]rowReader, 0, len(resp.Hits))
+	for _, hit := range resp.Hits {
+		readers = append(readers, rowReader{hit: hit, logger: h.logger})
 	}
 	return readers
 }
 
 func (r rowReader) value(name string) any {
-	i, ok := r.idx[name]
-	if !ok || i >= len(r.row.Cells) || i >= len(r.cols) || len(r.row.Cells[i]) == 0 {
-		return nil
-	}
-	// We encode using the builder encoders in the legacy storage implementation which is
-	// what allows us to use this here.
-	v, err := resource.DecodeCell(r.cols[i], i, r.row.Cells[i])
-	if err != nil {
-		r.warn(name, err)
-		return nil
-	}
-	return v
+	return r.hit.Values[name]
 }
 
 func (r rowReader) warn(column string, err error) {
-	r.logger.Warn("failed to decode rule search result column", "column", column, "rule", r.row.Key.GetName(), "error", err)
+	r.logger.Warn("failed to decode rule search result column", "column", column, "rule", r.hit.Name, "error", err)
 }
 
 func (r rowReader) str(name string) string {
@@ -274,6 +242,9 @@ func (r rowReader) int64Ptr(name string) *int64 {
 }
 
 func (r rowReader) strings(name string) []string {
+	if v, ok := r.value(name).([]string); ok {
+		return v
+	}
 	v, ok := r.value(name).([]any)
 	if !ok {
 		return nil
@@ -311,7 +282,7 @@ func (r rowReader) jsonMap(name string) map[string]string {
 // (group/resource/kind/name) and the per-kind field payload. A row's kind is
 // discriminated by its type column, so a federated (cross-kind) response mixes
 // both kinds in one list.
-func (h *Handler) parseHits(resp *resourcepb.ResourceSearchResponse) []model.CreateSearchRulesSearchResultHit {
+func (h *Handler) parseHits(resp *Result) []model.CreateSearchRulesSearchResultHit {
 	rows := h.newRowReaders(resp)
 	hits := make([]model.CreateSearchRulesSearchResultHit, 0, len(rows))
 	for _, r := range rows {
@@ -338,7 +309,7 @@ func (r rowReader) resource() model.CreateSearchRulesSearchResultResource {
 		Group:    gr.Group,
 		Resource: gr.Resource,
 		Kind:     info.GroupVersionKind().Kind,
-		Name:     r.row.Key.GetName(),
+		Name:     r.hit.Name,
 	}
 }
 

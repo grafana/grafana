@@ -15,7 +15,6 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Unified search can report totalHits as an upper bound, so the relation has to
@@ -23,11 +22,11 @@ import (
 func TestHandlerMetadata_totalHitsRelation(t *testing.T) {
 	h := NewHandler(nil, nil)
 
-	exact := h.metadata(&resourcepb.ResourceSearchResponse{TotalHits: 3, TotalHitsExact: true}, "")
+	exact := h.metadata(&Result{TotalHits: 3, TotalHitsExact: true}, "")
 	require.NotNil(t, exact.TotalHitsRelation)
 	assert.Equal(t, model.CreateSearchRulesTotalHitsRelationEq, *exact.TotalHitsRelation)
 
-	bounded := h.metadata(&resourcepb.ResourceSearchResponse{TotalHits: 700}, "")
+	bounded := h.metadata(&Result{TotalHits: 700}, "")
 	require.NotNil(t, bounded.TotalHitsRelation)
 	assert.Equal(t, model.CreateSearchRulesTotalHitsRelationLte, *bounded.TotalHitsRelation)
 }

@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func (c *legacyClient) addStatusValues(r *ngmodels.AlertRule, values map[string]any) {
@@ -44,18 +43,11 @@ func (c *legacyClient) addStatusValues(r *ngmodels.AlertRule, values map[string]
 	}
 }
 
-func ruleTypeForResource(req *resourcepb.ResourceSearchRequest) string {
-	if req.Options.GetKey().GetResource() == recordingrule.ResourceInfo.GroupResource().Resource {
+func ruleTypeForResource(req *Query) string {
+	if req.Primary.Resource == recordingrule.ResourceInfo.GroupResource().Resource {
 		return ruleTypeRecording
 	}
 	return ruleTypeAlerting
-}
-
-func emptyResponse() *resourcepb.ResourceSearchResponse {
-	return &resourcepb.ResourceSearchResponse{
-		Results:        &resourcepb.ResourceTable{Columns: resultColumnDefinitions()},
-		TotalHitsExact: true,
-	}
 }
 
 func matchSourceDatasourceUIDs(r *ngmodels.AlertRule, wanted []string) bool {

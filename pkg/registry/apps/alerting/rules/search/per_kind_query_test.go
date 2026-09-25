@@ -21,12 +21,12 @@ import (
 // translate validates and lowers a query for the alert rule kind, failing the
 // test if validation rejects it. Translation assumes a valid query, so a test
 // that means to exercise it must not smuggle in an invalid one.
-func translate(t *testing.T, q *searchv0.SearchQuery) perKindSearchRequest {
+func translate(t *testing.T, q *searchv0.SearchQuery) *Query {
 	t.Helper()
 	return translateFor(t, alertRuleKind(t), q)
 }
 
-func translateFor(t *testing.T, k perKind, q *searchv0.SearchQuery) perKindSearchRequest {
+func translateFor(t *testing.T, k perKind, q *searchv0.SearchQuery) *Query {
 	t.Helper()
 	leaves, errs := validatePerKindQuery(q, k)
 	require.Empty(t, errs, "query must be valid before translation")
@@ -98,7 +98,7 @@ func TestPerKindTranslateQuery_targetsTheEndpointsKind(t *testing.T) {
 		"recording rules": recordingRuleKind(t),
 	} {
 		t.Run(name, func(t *testing.T) {
-			req := translateFor(t, k, query()).req
+			req := buildUnifiedRequest(translateFor(t, k, query()))
 			assert.Equal(t, k.groupResource().Group, req.Options.Key.Group)
 			assert.Equal(t, k.groupResource().Resource, req.Options.Key.Resource)
 			assert.Equal(t, "default", req.Options.Key.Namespace)
@@ -125,9 +125,9 @@ func TestPerKindTranslateQuery_extractRoundTrip(t *testing.T) {
 	q.Sort = []searchv0.SortField{{Field: fieldTitle, Direction: sortDescending}}
 
 	tr := translate(t, q)
-	assert.Zero(t, tr.offset)
+	assert.Zero(t, tr.Offset)
 
-	f := extractFilters(tr.req)
+	f := extractFilters(tr)
 	assert.Equal(t, "cpu", f.title)
 	assert.Equal(t, []string{"f1", "f2"}, f.folders)
 	assert.Equal(t, []string{"ds1", "ds2"}, f.datasourceUIDs)
@@ -160,24 +160,25 @@ func TestPerKindTranslateQuery_typeFilter(t *testing.T) {
 	}
 
 	t.Run("becomes a field requirement", func(t *testing.T) {
-		req := translate(t, typeQuery(ruleTypeAlerting)).req
-		require.Len(t, req.Options.Fields, 1)
-		assert.Equal(t, fieldType, req.Options.Fields[0].Key)
-		assert.Equal(t, "in", req.Options.Fields[0].Operator)
-		assert.Equal(t, []string{ruleTypeAlerting}, req.Options.Fields[0].Values)
+		req := translate(t, typeQuery(ruleTypeAlerting))
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Fields, 1)
+		assert.Equal(t, fieldType, wire.Options.Fields[0].Key)
+		assert.Equal(t, "in", wire.Options.Fields[0].Operator)
+		assert.Equal(t, []string{ruleTypeAlerting}, wire.Options.Fields[0].Values)
 		assert.Equal(t, ruleTypeAlerting, extractFilters(req).ruleType)
 	})
 
 	t.Run("the legacy backend matches it against the kind it searches", func(t *testing.T) {
-		matching := translate(t, typeQuery(ruleTypeAlerting)).req
+		matching := translate(t, typeQuery(ruleTypeAlerting))
 		assert.Equal(t, ruleTypeAlerting, ruleTypeForResource(matching))
 		assert.Equal(t, ngmodels.RuleTypeFilterAlerting, ruleTypeForRequest(matching))
 
-		contradicting := translate(t, typeQuery(ruleTypeRecording)).req
+		contradicting := translate(t, typeQuery(ruleTypeRecording))
 		assert.NotEqual(t, extractFilters(contradicting).ruleType, ruleTypeForResource(contradicting),
 			"a contradicted type filter must not be silently ignored")
 
-		recording := translateFor(t, recordingRuleKind(t), typeQuery(ruleTypeRecording)).req
+		recording := translateFor(t, recordingRuleKind(t), typeQuery(ruleTypeRecording))
 		assert.Equal(t, ruleTypeRecording, ruleTypeForResource(recording))
 		assert.Equal(t, ngmodels.RuleTypeFilterRecording, ruleTypeForRequest(recording))
 	})
@@ -188,15 +189,15 @@ func TestPerKindTranslateQuery_typeFilter(t *testing.T) {
 // labels), and a Kubernetes "in (a, b)" is set membership so its values must stay
 // in one multi-value requirement.
 func TestPerKindTranslateQuery_labelSelector(t *testing.T) {
-	build := func(t *testing.T, sel *metav1.LabelSelector) *resourcepb.ResourceSearchRequest {
+	build := func(t *testing.T, sel *metav1.LabelSelector) *Query {
 		t.Helper()
 		q := query()
 		q.LabelSelector = sel
-		return translate(t, q).req
+		return translate(t, q)
 	}
 
 	t.Run("selects on metadata labels, not spec labels", func(t *testing.T) {
-		req := build(t, &metav1.LabelSelector{MatchLabels: map[string]string{model.GroupLabelKey: "g1"}})
+		req := buildUnifiedRequest(build(t, &metav1.LabelSelector{MatchLabels: map[string]string{model.GroupLabelKey: "g1"}}))
 		require.Len(t, req.Options.Labels, 1)
 		assert.Empty(t, req.Options.Fields, "must not touch the indexed spec-labels field")
 		assert.Equal(t, model.GroupLabelKey, req.Options.Labels[0].Key)
@@ -208,9 +209,10 @@ func TestPerKindTranslateQuery_labelSelector(t *testing.T) {
 		req := build(t, &metav1.LabelSelector{MatchExpressions: []metav1.LabelSelectorRequirement{{
 			Key: model.GroupLabelKey, Operator: metav1.LabelSelectorOpIn, Values: []string{"g1", "g2"},
 		}}})
-		require.Len(t, req.Options.Labels, 1, "values must stay in one requirement to OR")
-		assert.Equal(t, "in", req.Options.Labels[0].Operator)
-		assert.ElementsMatch(t, []string{"g1", "g2"}, req.Options.Labels[0].Values)
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Labels, 1, "values must stay in one requirement to OR")
+		assert.Equal(t, "in", wire.Options.Labels[0].Operator)
+		assert.ElementsMatch(t, []string{"g1", "g2"}, wire.Options.Labels[0].Values)
 
 		// the legacy side reads both values into the group include filter
 		assert.ElementsMatch(t, []string{"g1", "g2"}, extractFilters(req).groupsInclude)
@@ -220,8 +222,9 @@ func TestPerKindTranslateQuery_labelSelector(t *testing.T) {
 		req := build(t, &metav1.LabelSelector{MatchExpressions: []metav1.LabelSelectorRequirement{{
 			Key: model.GroupLabelKey, Operator: metav1.LabelSelectorOpNotIn, Values: []string{"g1", "g2"},
 		}}})
-		require.Len(t, req.Options.Labels, 1)
-		assert.Equal(t, "notin", req.Options.Labels[0].Operator)
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Labels, 1)
+		assert.Equal(t, "notin", wire.Options.Labels[0].Operator)
 
 		f := extractFilters(req)
 		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsExclude)
@@ -239,11 +242,11 @@ func TestPerKindTranslateQuery_labelsFilterLeaf(t *testing.T) {
 	leaf := func(op string, vals ...string) searchv0.WhereNode {
 		return perKindFilterLeaf(fieldLabels, op, vals...)
 	}
-	build := func(t *testing.T, nodes ...searchv0.WhereNode) *resourcepb.ResourceSearchRequest {
+	build := func(t *testing.T, nodes ...searchv0.WhereNode) *Query {
 		t.Helper()
 		q := query()
 		q.Where = perKindAndNode(nodes...)
-		return translate(t, q).req
+		return translate(t, q)
 	}
 
 	t.Run("encodes one matcher per leaf", func(t *testing.T) {
@@ -261,7 +264,7 @@ func TestPerKindTranslateQuery_labelsFilterLeaf(t *testing.T) {
 			{perKindFilterOperatorNotIn, "team=a", "notin", "team=a"},
 			{perKindFilterOperatorNotIn, "team", "notin", "team"},
 		} {
-			req := build(t, leaf(tc.op, tc.value))
+			req := buildUnifiedRequest(build(t, leaf(tc.op, tc.value)))
 			require.Len(t, req.Options.Fields, 1, "%s %q", tc.op, tc.value)
 			assert.Equal(t, tc.operator, req.Options.Fields[0].Operator, "%s %q", tc.op, tc.value)
 			assert.Equal(t, []string{tc.term}, req.Options.Fields[0].Values, "%s %q", tc.op, tc.value)
@@ -270,9 +273,10 @@ func TestPerKindTranslateQuery_labelsFilterLeaf(t *testing.T) {
 
 	t.Run("repeated leaves conjoin", func(t *testing.T) {
 		req := build(t, leaf(perKindFilterOperatorIn, "team=a"), leaf(perKindFilterOperatorNotIn, "env=prod"))
-		require.Len(t, req.Options.Fields, 2, "each leaf gets its own requirement")
-		assert.Equal(t, "in", req.Options.Fields[0].Operator)
-		assert.Equal(t, "notin", req.Options.Fields[1].Operator)
+		wire := buildUnifiedRequest(req)
+		require.Len(t, wire.Options.Fields, 2, "each leaf gets its own requirement")
+		assert.Equal(t, "in", wire.Options.Fields[0].Operator)
+		assert.Equal(t, "notin", wire.Options.Fields[1].Operator)
 
 		// The legacy backend rebuilds the matchers from those requirements, so a
 		// rule has to satisfy both.
@@ -287,7 +291,7 @@ func TestPerKindTranslateQuery_labelsFilterLeaf(t *testing.T) {
 // ascending so free-text order does not change with the storage mode.
 func TestPerKindTranslateQuery_sort(t *testing.T) {
 	t.Run("defaults to title ascending", func(t *testing.T) {
-		sorts := translate(t, query()).req.SortBy
+		sorts := buildUnifiedRequest(translate(t, query())).SortBy
 		require.Len(t, sorts, 1)
 		assert.Equal(t, fieldTitle, sorts[0].Field)
 		assert.False(t, sorts[0].Desc)
@@ -304,7 +308,7 @@ func TestPerKindTranslateQuery_sort(t *testing.T) {
 		t.Run("direction "+tc.direction, func(t *testing.T) {
 			q := query()
 			q.Sort = []searchv0.SortField{{Field: fieldTitle, Direction: tc.direction}}
-			req := translate(t, q).req
+			req := buildUnifiedRequest(translate(t, q))
 			require.Len(t, req.SortBy, 1)
 			assert.Equal(t, fieldTitle, req.SortBy[0].Field)
 			assert.Equal(t, tc.desc, req.SortBy[0].Desc)
@@ -318,21 +322,19 @@ func TestPerKindTranslateQuery_sort(t *testing.T) {
 func TestPerKindTranslateQuery_returnFields(t *testing.T) {
 	t.Run("requests field-value results", func(t *testing.T) {
 		request := translate(t, query())
-		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.req.ResultFormat)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, buildUnifiedRequest(request).ResultFormat)
 	})
 
 	t.Run("defaults to title and folder", func(t *testing.T) {
 		request := translate(t, query())
-		assert.Equal(t, []string{fieldTitle, fieldFolder}, request.fields)
-		assert.Equal(t, request.fields, request.req.Fields)
+		assert.Equal(t, []string{fieldTitle, fieldFolder}, request.Fields)
 	})
 
 	t.Run("honours an explicit projection", func(t *testing.T) {
 		q := query()
 		q.Fields = []string{fieldPaused, fieldLabels}
 		request := translate(t, q)
-		assert.Equal(t, []string{fieldPaused, fieldLabels}, request.fields)
-		assert.Equal(t, request.fields, request.req.Fields)
+		assert.Equal(t, []string{fieldPaused, fieldLabels}, request.Fields)
 	})
 }
 
@@ -348,33 +350,27 @@ func TestPerKindTranslateQuery_pagination(t *testing.T) {
 	}
 
 	t.Run("defaults an unset limit", func(t *testing.T) {
-		assert.Equal(t, int64(perKindDefaultLimit), translate(t, limitQuery(0)).req.Limit)
+		assert.Equal(t, int64(perKindDefaultLimit), translate(t, limitQuery(0)).Limit)
 	})
 	t.Run("clamps a limit above the maximum", func(t *testing.T) {
-		assert.Equal(t, int64(perKindMaxLimit), translate(t, limitQuery(perKindMaxLimit+1)).req.Limit)
+		assert.Equal(t, int64(perKindMaxLimit), translate(t, limitQuery(perKindMaxLimit+1)).Limit)
 	})
 	t.Run("keeps a limit in range", func(t *testing.T) {
-		assert.Equal(t, int64(25), translate(t, limitQuery(25)).req.Limit)
+		assert.Equal(t, int64(25), translate(t, limitQuery(25)).Limit)
 	})
 	t.Run("resumes from a token it issued", func(t *testing.T) {
 		q := query()
 		q.Continue = encodeCursor(40)
 		tr := translate(t, q)
-		assert.Equal(t, int64(40), tr.offset)
-		assert.Equal(t, int64(40), tr.req.Offset)
+		assert.Equal(t, int64(40), tr.Offset)
 	})
 	t.Run("starts from the beginning with no token", func(t *testing.T) {
 		tr := translate(t, query())
-		assert.Zero(t, tr.offset)
-		assert.Zero(t, tr.req.Offset)
+		assert.Zero(t, tr.Offset)
 	})
 }
 
-// TestResultColumnsCoverSearchFields asserts the result table carries exactly
-// the fields the kinds declare, plus the two standard fields the document
-// builder supplies. A field added to the CUE but not here would be indexed and
-// filterable on the unified backend yet impossible to return, and a name here
-// that no kind declares has no column definition to encode against.
+// Keep return-field validation aligned with the declared search fields.
 func TestPerKindResultColumnsCoverSearchFields(t *testing.T) {
 	want := map[string]struct{}{fieldTitle: {}, fieldFolder: {}}
 	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
@@ -394,12 +390,10 @@ func TestPerKindResultColumnsCoverSearchFields(t *testing.T) {
 	assert.ElementsMatch(t, names, resultColumns)
 }
 
-// TestDefaultReturnFieldsAreServable guards the defaults: a projection can only
-// return a column the result table carries, so a default that is not one would
-// make every unprojected hit come back with no fields at all.
+// Default projections must use fields supported by return-field validation.
 func TestPerKindDefaultReturnFieldsAreServable(t *testing.T) {
 	for _, name := range perKindDefaultReturnFields {
-		assert.Contains(t, results.index, name, "default return field %q is not a result column", name)
+		assert.Contains(t, resultColumns, name, "default return field %q is not a result column", name)
 	}
 }
 
@@ -431,13 +425,8 @@ func TestPerKindFieldSets(t *testing.T) {
 	assert.False(t, alert.has(fieldName, resource.SearchCapabilityRetrieve))
 }
 
-// TestSearchFieldsAgreeAcrossKinds guards the fields both rule kinds declare.
-// validateCrossVersionConsistency enforces this across versions of one kind,
-// but nothing enforces it across the two kinds, and buildSearchColumns resolves
-// a conflict by taking the first declaration. A divergence would therefore give
-// one kind's rows the other kind's column type: the legacy encoder would reject
-// the value at request time, and a unified hit would decode against a type it
-// was not encoded with.
+// The old-server fixtures share column definitions across kinds, so conflicting
+// declarations would make the fixtures misrepresent one kind's response.
 func TestPerKindSearchFieldsAgreeAcrossKinds(t *testing.T) {
 	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
 	fieldsFor := func(gr schema.GroupResource) map[string]resource.SearchFieldDefinition {
@@ -467,21 +456,16 @@ func TestPerKindSearchFieldsAgreeAcrossKinds(t *testing.T) {
 	require.NotZero(t, shared, "expected the rule kinds to share search fields")
 }
 
-// TestResultTableBuiltCleanly asserts the result table assembled without
-// dropping columns. Construction degrades rather than panicking, so a
-// declaration gap would otherwise only show up as a missing field at runtime.
-func TestPerKindResultTableBuiltCleanly(t *testing.T) {
+// Missing fixture columns would leave old-server decoding compatibility untested.
+func TestOldServerResultTableFixtureBuiltCleanly(t *testing.T) {
 	require.NoError(t, results.err)
 	require.Empty(t, results.skipped)
 	require.Len(t, results.defs, len(resultColumns))
 	require.Len(t, results.encoders, len(resultColumns))
 }
 
-// TestResultColumnsAreTyped pins that the legacy table declares the same column
-// types the unified index does. Declaring everything as a string would still
-// round-trip through this package's own reader, but a hit from the unified
-// backend would then decode against different types.
-func TestPerKindResultColumnsAreTyped(t *testing.T) {
+// Old-server fixtures must use the index's column types to exercise real decoding.
+func TestOldServerResultColumnFixturesAreTyped(t *testing.T) {
 	byName := map[string]*resourcepb.ResourceTableColumnDefinition{}
 	for _, col := range resultColumnDefinitions() {
 		byName[col.Name] = col
