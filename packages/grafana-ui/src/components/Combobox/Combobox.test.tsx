@@ -653,6 +653,28 @@ describe('Combobox', () => {
       expect(loaderSpy).toHaveBeenCalledWith('abc');
     });
 
+    it('shows rows published before the async loader resolves', async () => {
+      let publish: ((options: ComboboxOption[]) => void) | undefined;
+      const asyncOptions = jest.fn((_searchTerm: string, context: { publish: (options: ComboboxOption[]) => void }) => {
+        publish = context.publish;
+        return new Promise<void>(() => undefined);
+      });
+
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      expect(screen.queryByRole('option', { name: 'up' })).not.toBeInTheDocument();
+
+      act(() => {
+        publish?.([{ value: 'up' }]);
+      });
+
+      expect(await screen.findByRole('option', { name: 'up' })).toBeInTheDocument();
+    });
+
     it('should not show an error when a stale request rejects after a newer request has succeeded', async () => {
       jest.spyOn(console, 'error').mockImplementation();
 
