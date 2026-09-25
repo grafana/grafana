@@ -391,6 +391,72 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 }
 
+func TestInstantQueryPath(t *testing.T) {
+	testCases := []struct {
+		name     string
+		dsType   string
+		expected string
+		ok       bool
+	}{
+		{
+			name:     "loki datasource",
+			dsType:   datasources.DS_LOKI,
+			expected: "loki/api/v1/query",
+			ok:       true,
+		},
+		{
+			name:     "prometheus datasource",
+			dsType:   datasources.DS_PROMETHEUS,
+			expected: "api/v1/query",
+			ok:       true,
+		},
+		{
+			name:     "amazon prometheus datasource",
+			dsType:   datasources.DS_AMAZON_PROMETHEUS,
+			expected: "api/v1/query",
+			ok:       true,
+		},
+		{
+			name:     "azure prometheus datasource",
+			dsType:   datasources.DS_AZURE_PROMETHEUS,
+			expected: "api/v1/query",
+			ok:       true,
+		},
+		{
+			name:     "victoria metrics datasource",
+			dsType:   datasources.DS_VICTORIA_METRICS,
+			expected: "api/v1/query",
+			ok:       true,
+		},
+		{
+			name:   "unsupported datasource",
+			dsType: datasources.DS_GRAPHITE,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			path, ok := instantQueryPath(tc.dsType)
+			require.Equal(t, tc.ok, ok)
+			require.Equal(t, tc.expected, path)
+		})
+	}
+
+	// every type accepted by the ruler must have a query path, otherwise rule
+	// testing fails for a datasource the API already let through
+	for _, dsType := range []string{
+		datasources.DS_LOKI,
+		datasources.DS_PROMETHEUS,
+		datasources.DS_AMAZON_PROMETHEUS,
+		datasources.DS_AZURE_PROMETHEUS,
+		datasources.DS_VICTORIA_METRICS,
+	} {
+		require.True(t, isLotexRulerCompatible(dsType), dsType)
+		_, ok := instantQueryPath(dsType)
+		require.True(t, ok, dsType)
+	}
+}
+
 func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory, featureManager featuremgmt.FeatureToggles, ruleStore RuleStore) *TestingApiSrv {
 	if ac == nil {
 		ac = acMock.New()

@@ -404,6 +404,10 @@ func TestPrometheusRulesToGrafana_PrometheusCompatibleDatasources(t *testing.T) 
 			name:           "azure managed prometheus",
 			datasourceType: datasources.DS_AZURE_PROMETHEUS,
 		},
+		{
+			name:           "victoriametrics",
+			datasourceType: datasources.DS_VICTORIA_METRICS,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -460,6 +464,10 @@ func TestPrometheusRulesToGrafana_PrometheusCompatibleTargetDatasources(t *testi
 		{
 			name:                 "azure managed prometheus",
 			targetDatasourceType: datasources.DS_AZURE_PROMETHEUS,
+		},
+		{
+			name:                 "victoriametrics",
+			targetDatasourceType: datasources.DS_VICTORIA_METRICS,
 		},
 	}
 

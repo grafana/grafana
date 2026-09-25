@@ -94,7 +94,7 @@ func (p *LotexProm) getEndpoints(ctx *contextmodel.ReqContext) (*promEndpoints, 
 
 	var routes promEndpoints
 	switch {
-	case isPrometheusCompatible(ds.Type):
+	case datasources.IsPrometheusCompatible(ds.Type):
 		routes = prometheusEndpoints
 	case ds.Type == datasources.DS_LOKI:
 		routes = lokiEndpoints

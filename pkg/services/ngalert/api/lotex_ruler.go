@@ -232,7 +232,7 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 
 	var prefix string
 	switch {
-	case isPrometheusCompatible(ds.Type):
+	case datasources.IsPrometheusCompatible(ds.Type):
 		prefix = prometheusPrefix
 	case ds.Type == datasources.DS_LOKI:
 		prefix = lokiPrefix
