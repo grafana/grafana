@@ -16,9 +16,9 @@ import (
 
 	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
-	"github.com/sony/gobreaker/v2"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -91,7 +91,7 @@ type singleTenantDiscovery struct {
 type singleTenantFallback struct {
 	cache         *lru.Cache[int64, singleTenantHost]
 	breakerMu     sync.Mutex
-	breakers      *lru.Cache[string, *gobreaker.CircuitBreaker[struct{}]]
+	breakers      *lru.Cache[string, *groupBreaker]
 	lookups       singleflight.Group
 	lookupLimiter *rate.Limiter // nil means lookups are not rate limited
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
@@ -125,7 +125,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	if opts.breakerCacheSize == 0 {
 		opts.breakerCacheSize = opts.cacheSize
 	}
-	breakers, err := lru.New[string, *gobreaker.CircuitBreaker[struct{}]](opts.breakerCacheSize)
+	breakers, err := lru.New[string, *groupBreaker](opts.breakerCacheSize)
 	if err != nil {
 		return nil, fmt.Errorf("single-tenant breaker cache: %w", err)
 	}
@@ -150,6 +150,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 
 	if opts.transport == nil {
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
+		opts.transport.ResponseHeaderTimeout = backendResponseHeaderTimeout
 	}
 
 	return &singleTenantFallback{
@@ -285,7 +286,9 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},
-		Transport: newBackendTransport(st.transport),
+		Transport:     newBackendTransport(st.transport),
+		ErrorHandler:  proxyErrorHandler,
+		FlushInterval: streamingFlushInterval,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err
@@ -313,7 +316,7 @@ func checkStackOrigin(resp *http.Response, slug string) error {
 // ST groups span multiple hosts, so their handler isolates breakers by destination and group.
 func (*singleTenantFallback) managesCircuitBreaking() {}
 
-func (st *singleTenantFallback) breakerForDestination(host *url.URL, group string) *gobreaker.CircuitBreaker[struct{}] {
+func (st *singleTenantFallback) breakerForDestination(host *url.URL, group string) *groupBreaker {
 	key := host.Scheme + "://" + host.Host + "#" + group
 	st.breakerMu.Lock()
 	defer st.breakerMu.Unlock()
@@ -352,21 +355,22 @@ func (st *singleTenantFallback) Backends() ([]Backend, error) {
 func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error) {
 	client := &http.Client{Transport: st.transport, Timeout: singleTenantLookupTimeout}
 
-	groups, err := discoverGroups(ctx, client, st.discoveryHost.String())
+	groups, err := discoverGroupResources(ctx, client, st.discoveryHost.String())
 	if err != nil {
 		return nil, err
 	}
 
 	backends := make([]Backend, 0, len(groups))
-	for _, group := range groups {
-		groupJSON, err := json.Marshal(group)
+	for _, discovered := range groups {
+		key, err := discoveredGroupKey(discovered)
 		if err != nil {
 			return nil, fmt.Errorf("fingerprinting single-tenant discovery: %w", err)
 		}
 		backends = append(backends, &fallbackBackend{
-			group: group,
-			key:   "st:" + hashHex(string(groupJSON)),
-			st:    st,
+			group:     discovered.group,
+			discovery: discovered.discovery,
+			key:       "st:" + key,
+			st:        st,
 		})
 	}
 	return backends, nil
@@ -445,9 +449,18 @@ var (
 )
 
 type fallbackBackend struct {
-	group v1.APIGroup
-	key   string
-	st    http.Handler
+	group     v1.APIGroup
+	discovery *apidiscoveryv2.APIGroupDiscovery
+	key       string
+	st        http.Handler
+}
+
+// Discovery implements [DiscoveryProvider] with the resources from the last poll.
+func (f *fallbackBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
+	if f.discovery == nil {
+		return apidiscoveryv2.APIGroupDiscovery{}, false
+	}
+	return *f.discovery, true
 }
 
 // Group implements [Backend].

@@ -139,6 +139,9 @@ func (s *Service) stopping(error) error {
 	if s.ready != nil {
 		s.ready.SetNotReady()
 	}
+	// Watches never go idle, so the server's shutdown would otherwise wait for
+	// each one to end. Clients re-establish them against another replica.
+	s.router.closeWatches()
 	return nil
 }
 

@@ -1,10 +1,10 @@
 package router
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/sony/gobreaker/v2"
 )
@@ -15,6 +15,9 @@ type statusRecorder struct {
 	http.ResponseWriter
 	status      int
 	wroteHeader bool
+
+	// onStatus, when set, is called once with the final status as soon as it is written.
+	onStatus func(status int)
 }
 
 func newStatusRecorder(w http.ResponseWriter) *statusRecorder {
@@ -28,6 +31,9 @@ func (r *statusRecorder) WriteHeader(code int) {
 	if code >= 200 || code == http.StatusSwitchingProtocols {
 		r.status = code
 		r.wroteHeader = true
+		if r.onStatus != nil {
+			r.onStatus(code)
+		}
 	}
 	r.ResponseWriter.WriteHeader(code)
 }
@@ -97,27 +103,42 @@ func isBackendFailure(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
 
+// groupBreaker is two-step, so an outcome can be reported when the response
+// status is known rather than when the handler returns.
+type groupBreaker = gobreaker.TwoStepCircuitBreaker[struct{}]
+
+// errCallerGone marks a request whose own context ended: the caller left or
+// its deadline passed. That says nothing about the backend's health.
+var errCallerGone = errors.New("router: caller's request ended")
+
 // newGroupBreaker returns a circuit breaker with gobreaker's defaults (trips
-// after more than 5 consecutive failures, stays open 60s). Context errors are
-// excluded: a client disconnect surfaces as a 502 but says nothing about the
-// backend's health.
-func newGroupBreaker(group string) *gobreaker.CircuitBreaker[struct{}] {
-	return gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+// after more than 5 consecutive failures, stays open 60s). Only errCallerGone
+// is excluded. Matching context errors instead would also exclude backend
+// timeouts, such as the transport's response-header timeout, which matches
+// context.DeadlineExceeded.
+func newGroupBreaker(group string) *groupBreaker {
+	return gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name: group,
 		IsExcluded: func(err error) bool {
-			return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
+			return errors.Is(err, errCallerGone)
 		},
 	})
 }
 
-// breakerOutcome turns one completed proxy attempt into the error
-// cb.Execute's func should return: the request's context error if it was
-// canceled/timed out (excluded by newGroupBreaker's IsExcluded, checked
-// ahead of status so a disconnect is never miscounted as a backend
-// failure), a backend-failure error for isBackendFailure statuses, or nil.
-func breakerOutcome(req *http.Request, status int) error {
+// breakerOutcome turns one proxy attempt into the error reported to the
+// breaker: errCallerGone if the request's own context
+// ended (checked first, so a disconnect is never counted against the
+// backend), the recorded proxy failure, a backend-failure error for
+// isBackendFailure statuses, or nil.
+func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error {
 	if err := req.Context().Err(); err != nil {
-		return err
+		return fmt.Errorf("%w: %w", errCallerGone, err)
+	}
+	if failure.err != nil {
+		if errors.Is(failure.err, errBackendRedirect) {
+			return nil // the backend answered; the router refused to relay it
+		}
+		return fmt.Errorf("router: proxy failed: %w", failure.err)
 	}
 	if isBackendFailure(status) {
 		return fmt.Errorf("router: backend returned status %d", status)
@@ -125,12 +146,14 @@ func breakerOutcome(req *http.Request, status int) error {
 	return nil
 }
 
-// serveThroughBreaker proxies one request to h through cb: closed/half-open
-// calls h and streams the response straight to w via statusRecorder (no
-// buffering, so streaming is preserved); open (or half-open already at its
-// trial cap) skips h entirely and fails fast with a local 503 -- no dial
-// attempted.
-func serveThroughBreaker(cb *gobreaker.CircuitBreaker[struct{}], group string, h http.Handler, w http.ResponseWriter, req *http.Request) {
+// serveThroughBreaker proxies one request to h through cb, streaming the
+// response straight to w. An open breaker (or a half-open one already running
+// its trial request) fails fast with a local 503, without calling h.
+//
+// The outcome is reported as soon as the response status is written, not when
+// the body ends. A watch streams for as long as it lasts; holding its outcome
+// until then would keep a half-open breaker's only trial slot for that long.
+func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.ResponseWriter, req *http.Request) {
 	// A handler spanning multiple destinations must not also share a group-wide breaker.
 	if _, ownsBreakers := h.(interface{ managesCircuitBreaking() }); ownsBreakers {
 		h.ServeHTTP(w, req)
@@ -139,11 +162,25 @@ func serveThroughBreaker(cb *gobreaker.CircuitBreaker[struct{}], group string, h
 	rec, req, endSpan := traceRouterRequest(w, req, "router.backend", group)
 	defer endSpan()
 	w = rec.writer()
-	_, err := cb.Execute(func() (struct{}, error) {
-		h.ServeHTTP(w, req)
-		return struct{}{}, breakerOutcome(req, rec.status)
-	})
-	if errors.Is(err, gobreaker.ErrOpenState) || errors.Is(err, gobreaker.ErrTooManyRequests) {
+	done, err := cb.Allow()
+	if err != nil {
 		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
+		return
 	}
+	req, failure := withProxyFailure(req)
+	var once sync.Once
+	report := func(outcome error) { once.Do(func() { done(outcome) }) }
+	rec.onStatus = func(status int) { report(breakerOutcome(req, status, failure)) }
+	defer func() {
+		if p := recover(); p != nil {
+			outcome := breakerOutcome(req, rec.status, failure)
+			if outcome == nil {
+				outcome = fmt.Errorf("router: backend handler panicked: %v", p)
+			}
+			report(outcome)
+			panic(p)
+		}
+		report(breakerOutcome(req, rec.status, failure))
+	}()
+	h.ServeHTTP(w, req)
 }

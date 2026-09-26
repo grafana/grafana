@@ -25,8 +25,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 	k8srest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -172,6 +176,14 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			defer cancel()
 
+			// Watch from the current resource version, so every change below
+			// must also arrive as an event through the router.
+			initial, err := resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			watcher, err := resource.Watch(ctx, metav1.ListOptions{ResourceVersion: initial.GetResourceVersion()})
+			require.NoError(t, err)
+			defer watcher.Stop()
+
 			object := &unstructured.Unstructured{Object: map[string]any{
 				"apiVersion": group + "/v1", "kind": kind.name,
 				"metadata": map[string]any{"name": "example"},
@@ -197,6 +209,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 			}
 			require.NotEmpty(t, created.GetUID())
 			require.NotEmpty(t, created.GetResourceVersion())
+			require.Equal(t, created.GetUID(), nextWatchEvent(ctx, t, watcher, watch.Added, created.GetName()).GetUID())
 
 			got, err := resource.Get(ctx, created.GetName(), metav1.GetOptions{})
 			require.NoError(t, err)
@@ -207,6 +220,9 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 			updated, err := resource.Update(ctx, got, metav1.UpdateOptions{})
 			require.NoError(t, err)
 			require.NotEqual(t, created.GetResourceVersion(), updated.GetResourceVersion())
+			modified := nextWatchEvent(ctx, t, watcher, watch.Modified, created.GetName())
+			require.Equal(t, updated.GetResourceVersion(), modified.GetResourceVersion())
+			require.Equal(t, "updated", modified.Object["spec"].(map[string]any)["value"])
 			got, err = resource.Get(ctx, created.GetName(), metav1.GetOptions{})
 			require.NoError(t, err)
 			require.Equal(t, "updated", got.Object["spec"].(map[string]any)["value"])
@@ -219,6 +235,8 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 			require.Len(t, list.Items, 1)
 			require.Equal(t, created.GetUID(), list.Items[0].GetUID())
 
+			// No DELETED event is asserted: unified storage sends deletes with an
+			// empty value, which the apistore watch decoder rejects.
 			require.NoError(t, resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
 			_, err = resource.Get(ctx, created.GetName(), metav1.GetOptions{})
 			require.True(t, apierrors.IsNotFound(err), "expected NotFound after deletion, got %v", err)
@@ -227,6 +245,63 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 			require.Empty(t, list.Items)
 		})
 	}
+
+	t.Run("an informer syncs and follows changes", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+		defer cancel()
+		gvr := schema.GroupVersionResource{Group: group, Version: "v1", Resource: "things"}
+		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, 0, namespace, nil)
+		informer := factory.ForResource(gvr).Informer()
+		added := make(chan string, 8)
+		updated := make(chan string, 8)
+		_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj any) { added <- obj.(*unstructured.Unstructured).GetName() },
+			UpdateFunc: func(_, obj any) {
+				thing := obj.(*unstructured.Unstructured)
+				if value, _, _ := unstructured.NestedString(thing.Object, "spec", "value"); value == "updated" {
+					updated <- thing.GetName()
+				}
+			},
+		})
+		require.NoError(t, err)
+		factory.Start(ctx.Done())
+		t.Cleanup(factory.Shutdown)
+		require.True(t, cache.WaitForCacheSync(ctx.Done(), informer.HasSynced), "the informer must sync through the router")
+
+		resource := client.Resource(gvr).Namespace(namespace)
+		created, err := resource.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": group + "/v1", "kind": "Thing",
+			"metadata": map[string]any{"name": "informed"},
+			"spec":     map[string]any{"value": "initial"},
+		}}, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{}) })
+		requireName := func(events <-chan string, what string) {
+			t.Helper()
+			select {
+			case name := <-events:
+				require.Equal(t, created.GetName(), name)
+			case <-ctx.Done():
+				t.Fatalf("the informer saw no %s: %v", what, ctx.Err())
+			}
+		}
+		requireName(added, "add")
+
+		// Update the latest copy, retrying on conflict, since another writer may
+		// have changed the object since it was created.
+		require.NoError(t, retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			current, err := resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			if err := unstructured.SetNestedField(current.Object, "updated", "spec", "value"); err != nil {
+				return err
+			}
+			_, err = resource.Update(ctx, current, metav1.UpdateOptions{})
+			return err
+		}))
+		requireName(updated, "update")
+	})
 
 	t.Run("rejects invalid access tokens", func(t *testing.T) {
 		expired := claims
@@ -254,6 +329,32 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		_, err := client.Resource(schema.GroupVersionResource{Group: group, Version: "v1", Resource: "things"}).Namespace("stacks-5678").List(t.Context(), metav1.ListOptions{})
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 	})
+}
+
+// nextWatchEvent waits for the next event about name, skipping bookmarks and
+// other objects, and requires it to be of type want.
+func nextWatchEvent(ctx context.Context, t *testing.T, watcher watch.Interface, want watch.EventType, name string) *unstructured.Unstructured {
+	t.Helper()
+	for {
+		select {
+		case event, ok := <-watcher.ResultChan():
+			require.True(t, ok, "watch closed before a %s event for %q", want, name)
+			require.NotEqual(t, watch.Error, event.Type, "watch error: %v", event.Object)
+			if event.Type == watch.Bookmark {
+				continue
+			}
+			object, ok := event.Object.(*unstructured.Unstructured)
+			require.True(t, ok, "unexpected %T in watch event", event.Object)
+			if object.GetName() != name {
+				continue
+			}
+			require.Equal(t, want, event.Type, "event for %q", name)
+			return object
+		case <-ctx.Done():
+			require.FailNow(t, "no watch event", "waiting for %s of %q: %v", want, name, ctx.Err())
+			return nil
+		}
+	}
 }
 
 type pluginRouterTokenTransport struct {
