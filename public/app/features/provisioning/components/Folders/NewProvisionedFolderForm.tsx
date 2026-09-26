@@ -215,6 +215,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             <Input
               {...register('title', {
                 required: t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required'),
+                // This value becomes a directory name in the repository, so it must never carry surrounding spaces
+                setValueAs: (value: string) => value.trim(),
                 validate: validateProvisionedFolderName,
               })}
               placeholder={t(
