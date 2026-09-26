@@ -71,6 +71,21 @@ func (c *AMConfigV1) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver
 	return UIDs
 }
 
+// GetDefaultRoute returns the default (root) routing tree, which is stored in ManagedRoutes alongside named
+// managed routes rather than as a separate field.
+func (c *AMConfigV1) GetDefaultRoute() *Route {
+	return c.ManagedRoutes[models.DefaultRoutingTreeName]
+}
+
+// SetDefaultRoute sets the default (root) routing tree, which is stored in ManagedRoutes alongside named
+// managed routes rather than as a separate field.
+func (c *AMConfigV1) SetDefaultRoute(route *Route) {
+	if c.ManagedRoutes == nil {
+		c.ManagedRoutes = make(map[string]*Route, 1)
+	}
+	c.ManagedRoutes[models.DefaultRoutingTreeName] = route
+}
+
 func (c *AMConfigV1) Validate() error {
 	for _, r := range c.Templates {
 		if err := r.Validate(); err != nil {
@@ -92,20 +107,35 @@ func (c *AMConfigV1) Validate() error {
 			return err
 		}
 	}
+	return c.ValidateRoutes()
+}
+
+func (c *AMConfigV1) ValidateRoutes() error {
+	// Taken from https://github.com/prometheus/alertmanager/blob/14cbe6301c732658d6fe877ec55ad5b738abcf06/config/config.go#L171-L192
+	// Check if we have a root route. We cannot check for it in the
+	// UnmarshalYAML method because it won't be called if the input is empty
+	// (e.g. the config file is empty or only contains whitespace).
+	defaultRoute := c.GetDefaultRoute()
+	if defaultRoute == nil {
+		return fmt.Errorf("no route provided in config")
+	}
+	if defaultRoute.Continue {
+		return fmt.Errorf("cannot have continue in root route")
+	}
+	receivers := make(map[string]struct{}, len(c.Receivers))
+	for _, r := range c.Receivers {
+		receivers[r.Name] = struct{}{}
+	}
+	if err := defaultRoute.ValidateReceivers(receivers); err != nil {
+		return err
+	}
+
 	for _, r := range c.ManagedRoutes {
 		if err := r.Validate(); err != nil {
 			return err
 		}
 	}
-	if err := c.AlertmanagerConfig.Validate(); err != nil {
-		return err
-	}
-
-	receivers := make(map[string]struct{}, len(c.Receivers))
-	for _, r := range c.Receivers {
-		receivers[r.Name] = struct{}{}
-	}
-	return c.AlertmanagerConfig.Route.ValidateReceivers(receivers)
+	return nil
 }
 
 // ExtraAlertmanagerConfig is a parsed imported Prometheus/Mimir Alertmanager configuration.
@@ -302,28 +332,6 @@ type PostableApiAlertingConfig struct {
 	Config
 }
 
-func (c *PostableApiAlertingConfig) GetRoute() *Route {
-	return c.Route
-}
-
-// Validate ensures the root route is well-formed.
-func (c *PostableApiAlertingConfig) Validate() error {
-	// Taken from https://github.com/prometheus/alertmanager/blob/14cbe6301c732658d6fe877ec55ad5b738abcf06/config/config.go#L171-L192
-	// Check if we have a root route. We cannot check for it in the
-	// UnmarshalYAML method because it won't be called if the input is empty
-	// (e.g. the config file is empty or only contains whitespace).
-	if c.Route == nil {
-		return fmt.Errorf("no route provided in config")
-	}
-
-	// Check if continue in root route.
-	if c.Route.Continue {
-		return fmt.Errorf("cannot have continue in root route")
-	}
-
-	return nil
-}
-
 // allReceivers will recursively walk a routing tree and return a list of all the
 // referenced receiver names.
 func allReceivers(route *config.Route) (res []string) {
@@ -343,7 +351,6 @@ func allReceivers(route *config.Route) (res []string) {
 
 type Config struct {
 	Global       *config.GlobalConfig
-	Route        *Route
 	InhibitRules []config.InhibitRule
 	Templates    []string
 }

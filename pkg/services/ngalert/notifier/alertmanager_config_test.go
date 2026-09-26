@@ -319,14 +319,8 @@ receivers:
 
 		cfg := v1.AMConfigV1{
 			ManagedRoutes: map[string]*v1.Route{
-				identifier: {Receiver: "initial-receiver"},
-			},
-			AlertmanagerConfig: v1.PostableApiAlertingConfig{
-				Config: v1.Config{
-					Route: &v1.Route{
-						Receiver: "initial-receiver",
-					},
-				},
+				identifier:                    {Receiver: "initial-receiver"},
+				models.DefaultRoutingTreeName: {Receiver: "initial-receiver"},
 			},
 			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				{
