@@ -169,7 +169,7 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 		shadowed: []shadowedGroup{{Group: "first.ext.grafana.app", Source: sourceSingleTenant, By: sourceRouteBackend}},
 		sources: []sourceStatus{
 			{Source: sourceRouteBackend, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
-			{Source: sourceSingleTenant, LastError: "discovery unavailable", Failures: 2},
+			{Source: sourceSingleTenant, Failures: 2},
 		},
 	}
 	reg := prometheus.NewRegistry()

@@ -118,7 +118,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	deployment, err := fetchPluginManifests(ctx, t.client, t.url)
 	if err != nil {
 		t.cooldown.OnFailure(now)
-		t.status.recordFailure(err)
+		t.status.recordFailure()
 		logging.FromContext(ctx).Warn("router: plugin manifests poll failed, backing off", "url", t.url, "err", err)
 		return
 	}
@@ -161,7 +161,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
 			continue
 		}
-		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key, host: entry.Host, authn: t.authn}
+		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key, authn: t.authn}
 		backends = append(backends, deploymentBackend)
 		keys[deploymentBackend.Key()] = struct{}{}
 	}
@@ -262,17 +262,13 @@ func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
 type pluginDeploymentBackend struct {
 	Backend
 	key   string
-	host  string
 	authn authn.TokenAuthenticator
 }
 
 func (b *pluginDeploymentBackend) Key() string { return b.key }
 
-// Describe implements [DescribedBackend]: the plugin's API is served in-process
-// and calls its backend over gRPC at host.
-func (b *pluginDeploymentBackend) Describe() BackendDescription {
-	return BackendDescription{Source: sourcePluginsURL, Target: b.host}
-}
+// Source implements [SourcedBackend]. It overrides the embedded PluginBackend's.
+func (b *pluginDeploymentBackend) Source() string { return sourcePluginsURL }
 
 func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error) {
 	if b.authn == nil {

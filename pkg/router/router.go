@@ -60,7 +60,7 @@ type servingEntry struct {
 	key     string
 	breaker *groupBreaker
 	watches context.Context
-	source  BackendDescription
+	source  string
 
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
@@ -546,7 +546,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
-			entry.source = describeBackend(e.backend)
+			entry.source = backendSource(e.backend)
 			backends = append(backends, e.backend)
 			if provider, ok := e.backend.(DiscoveryProvider); ok {
 				if d, ok := provider.Discovery(); ok {

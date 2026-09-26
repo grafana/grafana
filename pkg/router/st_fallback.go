@@ -444,7 +444,7 @@ func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{})
 	backends, err := st.discover(ctx)
 	if err != nil {
 		st.cooldown.OnFailure(now)
-		st.status.recordFailure(err)
+		st.status.recordFailure()
 		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
 		next := &singleTenantDiscovery{err: err}
 		if prev != nil {
@@ -499,13 +499,10 @@ func (f *fallbackBackend) Group() v1.APIGroup {
 	return f.group
 }
 
-// Key implements [Backend].
-// Describe implements [DescribedBackend]. Each request goes to the stack its
-// namespace names, so there is no single target.
-func (f *fallbackBackend) Describe() BackendDescription {
-	return BackendDescription{Source: sourceSingleTenant, Target: "per stack, from the namespace"}
-}
+// Source implements [SourcedBackend].
+func (f *fallbackBackend) Source() string { return sourceSingleTenant }
 
+// Key implements [Backend].
 func (f *fallbackBackend) Key() string {
 	return f.key
 }

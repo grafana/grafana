@@ -239,7 +239,6 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	require.Len(t, statuses, 2)
 	require.Equal(t, sourceSingleTenant, statuses[0].Source)
 	require.False(t, statuses[0].LastSuccess.IsZero())
-	require.Empty(t, statuses[0].LastError)
 	require.Equal(t, uint64(1), statuses[0].Successes)
 	require.Equal(t, sourceStatus{Source: "aggregate:baas_apiserver"}, statuses[1], "never polled")
 
@@ -247,6 +246,5 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	pollDiscovery(t, st)
 	statuses = loader.sourceStatuses()
 	require.False(t, statuses[0].LastSuccess.IsZero(), "the last success is kept after a failure")
-	require.Contains(t, statuses[0].LastError, "discovery unavailable")
 	require.Equal(t, uint64(1), statuses[0].Failures)
 }

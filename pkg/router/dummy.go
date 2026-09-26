@@ -45,9 +45,7 @@ func (d *dummyBackend) Load(context.Context) (http.Handler, error) {
 	return d, nil
 }
 
-func (d *dummyBackend) Describe() BackendDescription {
-	return BackendDescription{Source: sourceDummy}
-}
+func (d *dummyBackend) Source() string { return sourceDummy }
 
 func (d *dummyBackend) Key() string {
 	return "static"

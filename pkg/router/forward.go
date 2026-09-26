@@ -18,7 +18,6 @@ type forwardBackend struct {
 	group        metav1.APIGroup
 	key          string
 	routeBackend v1alpha2.RouteBackendSpec
-	target       string
 
 	// the only output of instantiation which is cached
 	proxy *httputil.ReverseProxy
@@ -48,7 +47,6 @@ func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackend
 	return &forwardBackend{
 		group:        group,
 		routeBackend: routeBackend,
-		target:       u.Scheme + "://" + u.Host,
 		key:          key,
 		proxy: &httputil.ReverseProxy{
 			Rewrite:        func(pr *httputil.ProxyRequest) { rewriteOutbound(pr, u) },
@@ -64,9 +62,7 @@ func (b *forwardBackend) Group() metav1.APIGroup {
 	return b.group
 }
 
-func (b *forwardBackend) Describe() BackendDescription {
-	return BackendDescription{Source: sourceRouteBackend, Target: b.target}
-}
+func (b *forwardBackend) Source() string { return sourceRouteBackend }
 
 func (b *forwardBackend) Key() string {
 	return b.key

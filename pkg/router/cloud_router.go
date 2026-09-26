@@ -417,7 +417,7 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	put := func(b Backend) {
 		group := b.Group().Name
 		if previous, ok := lookup[group]; ok {
-			shadowed = append(shadowed, shadowedGroup{Group: group, Source: describeBackend(previous).Source, By: describeBackend(b).Source})
+			shadowed = append(shadowed, shadowedGroup{Group: group, Source: backendSource(previous), By: backendSource(b)})
 		}
 		lookup[group] = b
 	}
@@ -444,7 +444,7 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	if l.routeBackendClient != nil {
 		manifests, backends, err := l.routeResources(ctx)
 		if err != nil {
-			l.routeBackendStatus.recordFailure(err)
+			l.routeBackendStatus.recordFailure()
 			return nil, err
 		}
 		l.routeBackendStatus.recordSuccess(time.Now())

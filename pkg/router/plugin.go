@@ -264,10 +264,8 @@ func (b *PluginBackend) Group() metav1.APIGroup {
 	return b.group
 }
 
-// Describe implements [DescribedBackend]: a local plugin is served in-process.
-func (b *PluginBackend) Describe() BackendDescription {
-	return BackendDescription{Source: sourceLocalPlugin}
-}
+// Source implements [SourcedBackend].
+func (b *PluginBackend) Source() string { return sourceLocalPlugin }
 
 func (b *PluginBackend) Key() string {
 	return b.key

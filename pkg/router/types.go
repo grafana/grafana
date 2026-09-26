@@ -27,20 +27,11 @@ type DiscoveryProvider interface {
 	Discovery() (apidiscoveryv2.APIGroupDiscovery, bool)
 }
 
-// BackendDescription says where a backend comes from and where its requests
-// go, for the router's metrics.
-type BackendDescription struct {
-	// Source is the route source, such as "routebackend" or
-	// "aggregate:baas_apiserver".
-	Source string `json:"source"`
-	// Target is where requests are sent; empty when the backend is served
-	// in-process.
-	Target string `json:"target,omitempty"`
-}
-
-// DescribedBackend is an optional Backend interface that describes the backend.
-type DescribedBackend interface {
-	Describe() BackendDescription
+// SourcedBackend is an optional Backend interface that names the route source
+// the backend came from, such as "routebackend" or "aggregate:baas_apiserver",
+// for the router's metrics.
+type SourcedBackend interface {
+	Source() string
 }
 
 type RoutesLoader interface {
