@@ -13333,7 +13333,9 @@
       "new-notebook": "New notebook",
       "no-results": "No notebooks found",
       "partial-load-error": "Some notebooks could not be loaded",
-      "search-placeholder": "Search notebooks by title...",
+      "search-placeholder": "Search notebooks...",
+      "search-scope-content": "Matches may be in titles, markdown, or code.",
+      "search-scope-title": "Searching titles only on this instance.",
       "table": {
         "author": "Author",
         "copy-link": "Copy link",

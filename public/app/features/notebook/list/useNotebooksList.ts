@@ -5,6 +5,7 @@ import { useDebounce } from 'react-use';
 
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
+import { useFlagDashboardNotebooksContentSearch } from '@grafana/runtime/internal';
 import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -60,7 +61,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 /**
  * Whether this Grafana serves `.../notebooks/search` at all. The route is mounted from
- * `[grafana-apiserver] enable_search_api`, which is off by default and is not reported in
+ * `[grafana-apiserver] enable_search_api`, which can be disabled and is not reported in
  * frontend settings, so the only way to find out is to ask and see.
  *
  * Module-level on purpose: RTK Query caches per argument, so component state would let every
@@ -75,6 +76,7 @@ let searchUnavailable = false;
  * serves the route is a property of the deployment, not of one mount or one set of filters.
  */
 let searchConfirmedAvailable = false;
+let contentSearchUnavailable = false;
 
 /** A notebook flattened for display, so the table never has to know about k8s metadata. */
 export interface NotebookRow {
@@ -95,12 +97,15 @@ interface UseNotebooksListOptions {
 }
 
 export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
+  const contentSearchEnabled = useFlagDashboardNotebooksContentSearch();
   const [searchQuery, setSearchQuery] = useState('');
   const [createdByMe, setCreatedByMe] = useState(false);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   // Mirrors the module latch into state, so the branches below have it as a real dependency and a
   // flip re-renders on its own. A fresh mount starts from what earlier mounts already learned.
   const [usingFallback, setUsingFallback] = useState(searchUnavailable);
+  const [contentSearchAvailable, setContentSearchAvailable] = useState(!contentSearchUnavailable);
+  const searchContent = contentSearchEnabled && contentSearchAvailable;
 
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useDebounce(() => setDebouncedSearch(searchQuery), SEARCH_DEBOUNCE_MS, [searchQuery]);
@@ -123,8 +128,8 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   }, []);
 
   const searchBody = useMemo(
-    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined, tagFilter),
-    [debouncedSearch, filterByAuthor, currentUserUid, tagFilter]
+    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined, tagFilter, searchContent),
+    [debouncedSearch, filterByAuthor, currentUserUid, tagFilter, searchContent]
   );
 
   const search = useSearchNotebooksInfiniteQuery(enabled && !usingFallback ? searchBody : skipToken);
@@ -160,6 +165,11 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     // before committing, so the fallback request starts in the same commit and nothing paints in
     // between.
     setUsingFallback(true);
+  }
+
+  if (searchContent && debouncedSearch.trim() && isUnsupportedContentSearch(search.error)) {
+    contentSearchUnavailable = true;
+    setContentSearchAvailable(false);
   }
 
   const list = useListNotebookQuery(enabled && usingFallback ? { limit: NOTEBOOKS_PAGE_LIMIT } : skipToken);
@@ -301,6 +311,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     isLoadingMore: !usingFallback && !isError && (hasNextPage || search.isFetchingNextPage),
     /** Distinguishes "no notebooks at all" from "none matched the filters". */
     isFiltered,
+    searchesContent: !usingFallback && searchContent,
     searchQuery,
     setSearchQuery,
     /**
@@ -344,13 +355,16 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
  * notebook — and flattened to a single leaf when only one predicate applies, because v1
  * accepts just a top-level leaf or one `and` of leaves.
  */
-function buildSearchQuery(search: string, authorUid: string | undefined, tags: string[]): NotebookSearchQuery {
+function buildSearchQuery(
+  search: string,
+  authorUid: string | undefined,
+  tags: string[],
+  searchContent: boolean
+): NotebookSearchQuery {
   const leaves: WhereNode[] = [];
   const needle = search.trim();
   if (needle) {
-    // Fields default to the kind's text fields, which is `title` — the one thing this box
-    // searches.
-    leaves.push({ text: { value: needle } });
+    leaves.push({ text: { value: needle, ...(searchContent ? { fields: ['title', 'content'] } : {}) } });
   }
   if (authorUid) {
     // Only the `user:<uid>` form: that is what the apiserver records on create. Author *names* are
@@ -441,6 +455,25 @@ function isRouteMissing(error: unknown): boolean {
   return isFetchError(error) && (error.status === 404 || error.status === 405);
 }
 
+function isUnsupportedContentSearch(error: unknown): boolean {
+  if (!isFetchError<{ details?: { causes?: Array<{ field?: string; message?: string; reason?: string }> } }>(error)) {
+    return false;
+  }
+
+  if (error.status !== 422) {
+    return false;
+  }
+
+  return (
+    error.data?.details?.causes?.some(
+      (cause) =>
+        cause.reason === 'FieldValueInvalid' &&
+        /^where(?:\.and\[\d+\])?\.text\.fields\[1\]$/.test(cause.field ?? '') &&
+        cause.message === 'Invalid value: "content": unknown field'
+    ) ?? false
+  );
+}
+
 /** Keeps internal identity keys like `user:abc123` out of the UI when a lookup comes back empty. */
 function anonymousAuthor(): string {
   return t('notebooks.list.unknown-author', 'Anonymous');
@@ -450,4 +483,5 @@ function anonymousAuthor(): string {
 export function __resetSearchAvailabilityForTests() {
   searchUnavailable = false;
   searchConfirmedAvailable = false;
+  contentSearchUnavailable = false;
 }
