@@ -256,6 +256,10 @@ func newFolderTranslation() translation {
 
 func newDatasourceQueryTranslation() translation {
 	dsTranslation := newResourceTranslation("datasources", "uid", false, map[string]bool{utils.VerbCreate: true})
+	// Keep caching checks on the datasource resource so access metadata can be
+	// evaluated in one homogeneous batch alongside its management permissions.
+	dsTranslation.verbMapping[utils.VerbGetCaching] = "datasources.caching:read"
+	dsTranslation.verbMapping[utils.VerbSetCaching] = "datasources.caching:write"
 
 	dsTranslation.actionSetMapping = map[string][]string{
 		// utils.VerbWatch: {"datasources:query"},
