@@ -168,6 +168,7 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 
 func (b *aggregateBackend) Group() metav1.APIGroup { return b.group }
 func (b *aggregateBackend) Key() string            { return b.key }
+func (b *aggregateBackend) Source() string         { return aggregateSource(b.targetName) }
 func (b *aggregateBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
 	if b.discovery == nil {
 		return apidiscoveryv2.APIGroupDiscovery{}, false

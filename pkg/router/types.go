@@ -17,6 +17,10 @@ type Backend interface {
 
 	// How the prefix is handled. Handler support /apis/{group}* and /openapi/v3/{group}*
 	Load(context.Context) (http.Handler, error)
+
+	// The backend source such as "aggregate:baas_apiserver" or "local-plugin"
+	// this is used in the exposed metric labels
+	Source() string
 }
 
 // DiscoveryProvider is an optional Backend interface for a backend that

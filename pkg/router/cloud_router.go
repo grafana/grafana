@@ -11,25 +11,27 @@ import (
 	"net/url"
 	"os"
 	"slices"
+	"sync/atomic"
+	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
-
-	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // cloudRouterSection is the remote control-plane apiserver this loader reads
@@ -215,6 +217,9 @@ type cloudLoader struct {
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
+
+	routeBackendStatus pollStatus
+	shadowed           atomic.Pointer[[]shadowedGroup]
 }
 
 type tlsCacheKey struct {
@@ -262,6 +267,17 @@ func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTa
 		l.amInformer, err = newInformer(v1alpha2.AppManifestKind(), clients, watcher)
 		if err != nil {
 			return nil, fmt.Errorf("app manifest informer: %w", err)
+		}
+		// Once synced, Load reads the caches, so the source's health comes from
+		// the informers themselves: their list and watch errors, and (in
+		// Watcher) the events they receive.
+		for _, inf := range []*operator.KubernetesBasedInformer{l.rbInformer, l.amInformer} {
+			if err := inf.SharedIndexInformer.SetWatchErrorHandlerWithContext(func(ctx context.Context, r *cache.Reflector, err error) {
+				l.routeBackendStatus.recordFailure()
+				cache.DefaultWatchErrorHandler(ctx, r, err)
+			}); err != nil {
+				return nil, fmt.Errorf("informer watch error handler: %w", err)
+			}
 		}
 	}
 
@@ -387,6 +403,8 @@ func (l *cloudLoader) Watcher() operator.ResourceWatcher {
 	// The event carries no data we use: reconcile re-reads full state via Load.
 	// So push is a pure edge, coalesced against the buffered-1 dirty channel.
 	push := func() {
+		// An event means data arrived from the remote apiserver.
+		l.routeBackendStatus.recordSuccess(time.Now())
 		select {
 		case l.dirty <- struct{}{}:
 		default: // a wake is already pending; drop this redundant signal
@@ -407,6 +425,15 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	lookup := make(map[string]Backend)
 	var discoveryErr error
+	var shadowed []shadowedGroup
+	// put adds b, recording any backend for the same group it overrides.
+	put := func(b Backend) {
+		group := b.Group().Name
+		if previous, ok := lookup[group]; ok {
+			shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
+		}
+		lookup[group] = b
+	}
 
 	// Lowest priority first -- the MT backends will replace the ST flavors
 	if l.singleTenantFallback != nil {
@@ -415,14 +442,14 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 			discoveryErr = fmt.Errorf("single-tenant discovery: %w", err)
 		}
 		for _, b := range backends {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
 
 	// Aggregate targets override ST; later targets override earlier targets.
 	for _, target := range l.aggregateTargets {
 		for _, b := range target.Backends() {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
 
@@ -433,16 +460,17 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 			return nil, err
 		}
 		for _, b := range l.combineByName(ctx, manifests, backends) {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
 
 	// Managed plugins
 	if l.pluginsTarget != nil {
 		for _, b := range l.pluginsTarget.Backends() {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
+	l.recordShadowed(ctx, shadowed)
 
 	if len(lookup) == 0 && discoveryErr != nil {
 		return nil, discoveryErr
@@ -454,6 +482,50 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	})
 
 	return backends, nil
+}
+
+// recordShadowed stores the groups shadowed in the latest load, and logs
+// when that set changes so a new conflict is visible without flooding the log.
+func (l *cloudLoader) recordShadowed(ctx context.Context, shadowed []shadowedGroup) {
+	slices.SortFunc(shadowed, func(a, b shadowedGroup) int {
+		return cmp.Or(cmp.Compare(a.Group, b.Group), cmp.Compare(a.Source, b.Source))
+	})
+	if previous := l.shadowed.Swap(&shadowed); previous == nil || !slices.Equal(*previous, shadowed) {
+		for _, s := range shadowed {
+			logging.FromContext(ctx).Warn("router: group offered by more than one source", "group", s.Group, "source", s.Source, "servedBy", s.By)
+		}
+	}
+}
+
+func (l *cloudLoader) shadowedGroups() []shadowedGroup {
+	if shadowed := l.shadowed.Load(); shadowed != nil {
+		return *shadowed
+	}
+	return nil
+}
+
+func (l *cloudLoader) stackLookups() map[string]uint64 {
+	if l.singleTenantFallback == nil {
+		return nil
+	}
+	return l.singleTenantFallback.lookupsBy.byResult()
+}
+
+func (l *cloudLoader) sourceStatuses() []sourceStatus {
+	var statuses []sourceStatus
+	if l.singleTenantFallback != nil {
+		statuses = append(statuses, l.singleTenantFallback.status.status(sourceSingleTenant))
+	}
+	for _, target := range l.aggregateTargets {
+		statuses = append(statuses, target.status.status(aggregateSource(target.name)))
+	}
+	if l.routeBackendClient != nil {
+		statuses = append(statuses, l.routeBackendStatus.status(sourceRouteBackend))
+	}
+	if l.pluginsTarget != nil {
+		statuses = append(statuses, l.pluginsTarget.status.status(sourcePluginsURL))
+	}
+	return statuses
 }
 
 // routeResources returns the AppManifests and RouteBackends from the informer
@@ -473,14 +545,19 @@ func (l *cloudLoader) routeResources(ctx context.Context) ([]v1alpha2.AppManifes
 		return manifests, backends, nil
 	}
 
+	// Only a direct list counts toward the source's status; cache reads say
+	// nothing about the remote apiserver.
 	backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
 	if err != nil {
+		l.routeBackendStatus.recordFailure()
 		return nil, nil, err
 	}
 	manifests, err := l.appManifestClient.ListAll(ctx, "", resource.ListOptions{})
 	if err != nil {
+		l.routeBackendStatus.recordFailure()
 		return nil, nil, err
 	}
+	l.routeBackendStatus.recordSuccess(time.Now())
 	return manifests.Items, backends.Items, nil
 }
 

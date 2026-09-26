@@ -6,9 +6,8 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // oboTokenExchanger decorates a TokenExchanger to inject the caller's access

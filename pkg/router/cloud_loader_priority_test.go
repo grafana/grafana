@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -153,7 +154,12 @@ func TestCloudLoaderReadsRouteResourcesFromInformerCache(t *testing.T) {
 		"appmanifests":  {"AppManifest", `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example","resourceVersion":"1"},"spec":{"appName":"example","group":"example.grafana.app","versions":[{"name":"v1"}]}}`},
 	}
 	var lists atomic.Int32
+	var down atomic.Bool
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if down.Load() {
+			http.Error(w, "unavailable", http.StatusInternalServerError)
+			return
+		}
 		resource, ok := items[req.URL.Path[strings.LastIndex(req.URL.Path, "/")+1:]]
 		if !ok {
 			http.NotFound(w, req)
@@ -201,10 +207,58 @@ func TestCloudLoaderReadsRouteResourcesFromInformerCache(t *testing.T) {
 		return loader.rbInformer.SharedIndexInformer.HasSynced() && loader.amInformer.SharedIndexInformer.HasSynced()
 	}, 5*time.Second, 10*time.Millisecond)
 
-	// Once synced, reconciles are served from the caches.
+	// Once synced, reconciles are served from the caches, and reading them
+	// doesn't count as the source loading.
 	listsAfterSync := lists.Load()
+	successesAfterSync := loader.routeBackendStatus.successes.Load()
 	for range 5 {
 		requireExampleGroup()
 	}
 	require.Equal(t, listsAfterSync, lists.Load())
+	require.Equal(t, successesAfterSync, loader.routeBackendStatus.successes.Load())
+
+	// With the apiserver failing, the informers' list and watch errors are the
+	// source's failures. Dropping the open watches makes them reconnect.
+	down.Store(true)
+	api.CloseClientConnections()
+	require.Eventually(t, func() bool { return loader.routeBackendStatus.failures.Load() > 0 }, 10*time.Second, 10*time.Millisecond)
+}
+
+func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
+	st := newTestSingleTenantFallback(t)
+	st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
+	fail := false
+	st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
+		if fail {
+			return nil, errors.New("discovery unavailable")
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"groups":[{"name":"shared"},{"name":"st-only"}]}`))}, nil
+	})
+	base, err := url.Parse("https://baas.example.com")
+	require.NoError(t, err)
+	shared, err := newAggregateBackend("baas_apiserver", metav1.APIGroup{Name: "shared"}, base, &http.Transport{})
+	require.NoError(t, err)
+	aggregate := priorityAggregate(shared)
+	aggregate.name = "baas_apiserver"
+	loader, err := newCloudLoader(nil, []*aggregateTarget{aggregate}, nil, st)
+	require.NoError(t, err)
+
+	pollDiscovery(t, st)
+	backends, err := loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Len(t, backends, 2)
+	require.Equal(t, []shadowedGroup{{Group: "shared", Source: sourceSingleTenant, By: "aggregate:baas_apiserver"}}, loader.shadowedGroups())
+
+	statuses := loader.sourceStatuses()
+	require.Len(t, statuses, 2)
+	require.Equal(t, sourceSingleTenant, statuses[0].Source)
+	require.False(t, statuses[0].LastSuccess.IsZero())
+	require.Equal(t, uint64(1), statuses[0].Successes)
+	require.Equal(t, sourceStatus{Source: "aggregate:baas_apiserver"}, statuses[1], "never polled")
+
+	fail = true
+	pollDiscovery(t, st)
+	statuses = loader.sourceStatuses()
+	require.False(t, statuses[0].LastSuccess.IsZero(), "the last success is kept after a failure")
+	require.Equal(t, uint64(1), statuses[0].Failures)
 }

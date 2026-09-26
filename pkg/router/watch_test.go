@@ -292,7 +292,7 @@ func TestWatchMetricsAreSeparate(t *testing.T) {
 	require.NoError(t, err)
 	_ = resp.Body.Close()
 	require.Equal(t, 1, testutil.CollectAndCount(metrics.duration))
-	require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", "204")))
+	require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", routeBackend, "204")))
 }
 
 func histogramCount(t *testing.T, observer prometheus.Observer) uint64 {
