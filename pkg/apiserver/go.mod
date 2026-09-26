@@ -7,6 +7,8 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana-app-sdk/logging v0.60.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
+	github.com/grafana/grafana/pkg/infra/features v0.0.0-00010101000000-000000000000
+	github.com/open-feature/go-sdk v1.17.2
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/contrib/propagators/jaeger v1.46.0
 	go.opentelemetry.io/otel v1.46.0

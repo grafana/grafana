@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -100,6 +101,12 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		// Runs after WithRequester so auth info is available for the first-hop fallback.
 		handler = auditing.HTTPInjectAuditAnnotationMiddleware(handler)
 
+		// Fills in a namespace for flag evaluation from apiserver request info /
+		// identity when nothing (e.g. baggage) already set one - see
+		// filters.WithTransactionContextFallback. Must run after WithRequester,
+		// so it's wrapped by it here rather than appearing after it.
+		handler = filters.WithTransactionContextFallback(handler)
+
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
 
@@ -118,6 +125,7 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		// would stay open for the whole long-running connection. See
 		// filters.WithWatchInstrumentation for the upstream request span.
 		handler = withoutWatchServerSpan(handler, c.TracerProvider)
+		handler = features.WithTransactionContextMiddleware(handler)
 		handler = filters.WithExtractJaegerTrace(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
 		utilruntime.ReallyCrash = false
