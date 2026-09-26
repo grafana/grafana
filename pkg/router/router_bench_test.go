@@ -215,6 +215,8 @@ type benchmarkBackend struct {
 
 func (b *benchmarkBackend) Key() string { return b.key }
 
+func (b *benchmarkBackend) Source() string { return "test" }
+
 // Discard bodies to avoid measuring recorder allocations or retaining responses
 // across iterations, while preserving header writes performed by the router.
 type benchmarkResponseWriter struct {

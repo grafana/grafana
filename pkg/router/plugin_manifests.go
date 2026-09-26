@@ -267,7 +267,7 @@ type pluginDeploymentBackend struct {
 
 func (b *pluginDeploymentBackend) Key() string { return b.key }
 
-// Source implements [SourcedBackend]. It overrides the embedded PluginBackend's.
+// Source implements [Backend]. It overrides the embedded PluginBackend's.
 func (b *pluginDeploymentBackend) Source() string { return sourcePluginsURL }
 
 func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error) {

@@ -5,27 +5,17 @@ import (
 	"time"
 )
 
-// Route sources, as reported by SourcedBackend.Source.
+// Route sources, as reported by Backend.Source.
 const (
 	sourceRouteBackend  = "routebackend"
 	sourceSingleTenant  = "single-tenant"
 	sourcePluginsURL    = "plugins_url"
 	sourceLocalPlugin   = "local-plugin"
 	sourceDummy         = "dummy"
-	sourceUnknown       = "unknown"
 	aggregateSourceName = "aggregate:"
 )
 
 func aggregateSource(target string) string { return aggregateSourceName + target }
-
-// backendSource returns b's route source, or sourceUnknown for a backend that
-// doesn't name one.
-func backendSource(b Backend) string {
-	if s, ok := b.(SourcedBackend); ok {
-		return s.Source()
-	}
-	return sourceUnknown
-}
 
 // sourceStatus is how a route source's loads or polls are going.
 type sourceStatus struct {

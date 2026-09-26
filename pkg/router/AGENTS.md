@@ -146,8 +146,8 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
   scrape time by `routerCollector` (also in `metrics.go`), from atomics and the snapshot, so reconcile and
   serving never update gauges. Labels stay bounded: `group` only for served groups, a fixed set of
   values for `route`, `reason`, `state` and `result`; any other group is `unknown` (`KnownGroup`). In middleware mode, only requests the router
-  owns (`owns`) are instrumented. New backends should implement `SourcedBackend`, and new sources
-  should report through `loaderStatus`, or they show up as `unknown`.
+  owns (`owns`) are instrumented. New backends must name their source (`Backend.Source`), and new sources
+  should report through `loaderStatus`, or their loads don't appear in the metrics.
 
 ## Lifecycle
 

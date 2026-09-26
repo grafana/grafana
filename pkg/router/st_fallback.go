@@ -499,7 +499,7 @@ func (f *fallbackBackend) Group() v1.APIGroup {
 	return f.group
 }
 
-// Source implements [SourcedBackend].
+// Source implements [Backend].
 func (f *fallbackBackend) Source() string { return sourceSingleTenant }
 
 // Key implements [Backend].

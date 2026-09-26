@@ -264,7 +264,7 @@ func (b *PluginBackend) Group() metav1.APIGroup {
 	return b.group
 }
 
-// Source implements [SourcedBackend].
+// Source implements [Backend].
 func (b *PluginBackend) Source() string { return sourceLocalPlugin }
 
 func (b *PluginBackend) Key() string {

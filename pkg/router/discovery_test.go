@@ -28,6 +28,7 @@ type fakeBackend struct {
 }
 
 func (b *fakeBackend) Key() string            { return b.key }
+func (b *fakeBackend) Source() string         { return "test" }
 func (b *fakeBackend) Group() metav1.APIGroup { return b.group }
 func (b *fakeBackend) Load(context.Context) (http.Handler, error) {
 	if b.handler != nil {

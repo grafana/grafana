@@ -546,7 +546,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
-			entry.source = backendSource(e.backend)
+			entry.source = e.backend.Source()
 			backends = append(backends, e.backend)
 			if provider, ok := e.backend.(DiscoveryProvider); ok {
 				if d, ok := provider.Discovery(); ok {

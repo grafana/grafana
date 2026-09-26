@@ -17,6 +17,10 @@ type Backend interface {
 
 	// How the prefix is handled. Handler support /apis/{group}* and /openapi/v3/{group}*
 	Load(context.Context) (http.Handler, error)
+
+	// The route source this backend came from, such as "routebackend" or
+	// "aggregate:baas_apiserver", for the router's metrics.
+	Source() string
 }
 
 // DiscoveryProvider is an optional Backend interface for a backend that
@@ -25,13 +29,6 @@ type Backend interface {
 // The result must change only when Key does.
 type DiscoveryProvider interface {
 	Discovery() (apidiscoveryv2.APIGroupDiscovery, bool)
-}
-
-// SourcedBackend is an optional Backend interface that names the route source
-// the backend came from, such as "routebackend" or "aggregate:baas_apiserver",
-// for the router's metrics.
-type SourcedBackend interface {
-	Source() string
 }
 
 type RoutesLoader interface {
