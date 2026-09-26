@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 
 import { applyFieldOverrides, createTheme, type DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
@@ -101,7 +102,7 @@ function applyOverrides(dataFrame: DataFrame) {
   return dataFrames[0];
 }
 
-function getTestContext(propOverrides: Partial<TableRTProps> = {}) {
+function getTestContext(propOverrides: Partial<TableRTProps> = {}, strictMode = false) {
   const onSortByChange = jest.fn();
   const onCellFilterAdded = jest.fn();
   const onColumnResize = jest.fn();
@@ -117,7 +118,8 @@ function getTestContext(propOverrides: Partial<TableRTProps> = {}) {
   };
 
   Object.assign(props, propOverrides);
-  const { rerender } = render(<Table {...props} />);
+  const table = <Table {...props} />;
+  const { rerender } = render(strictMode ? <StrictMode>{table}</StrictMode> : table);
 
   return { rerender, onSortByChange, onCellFilterAdded, onColumnResize };
 }
@@ -259,6 +261,54 @@ describe('Table', () => {
         { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
         { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
       ]);
+    });
+
+    it('calls onSortByChange once with the sorted field', async () => {
+      const { onSortByChange } = getTestContext({}, true);
+
+      await userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
+
+      expect(onSortByChange).toHaveBeenCalledTimes(1);
+      expect(onSortByChange).toHaveBeenCalledWith([{ displayName: 'temperature', desc: false }]);
+    });
+
+    it('does not error when data fields change and a previous sort column id is gone', () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const { rerender } = getTestContext({
+        initialSortBy: [{ displayName: 'temperature', desc: true }],
+      });
+
+      expect(getColumnHeader(/temperature/)).toBeInTheDocument();
+
+      // Column ids are field indices. Dropping fields so index "1" (temperature) no longer exists
+      // while the table instance keeps its previous sorting state must not console.error.
+      const reducedFrame = getDataFrame(
+        toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: [1609459200000, 1609470000000],
+              config: { custom: { filterable: false } },
+            },
+          ],
+        })
+      );
+
+      rerender(
+        <Table
+          ariaLabel="aria-label"
+          data={reducedFrame}
+          height={600}
+          width={800}
+          initialSortBy={[{ displayName: 'temperature', desc: true }]}
+        />
+      );
+
+      expect(getColumnHeader(/time/)).toBeInTheDocument();
+      expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining("Column with id '1' does not exist"));
+      consoleError.mockRestore();
     });
   });
 
@@ -707,7 +757,7 @@ describe('Table', () => {
 
       // Sort rows, and check the new order
       const table = getTable();
-      await userEvent.click(within(table).getAllByTitle('Toggle SortBy')[0]);
+      await userEvent.click(within(table).getAllByRole('button', { name: /Sort by column/ })[0]);
       rows = within(table).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
@@ -731,7 +781,7 @@ describe('Table', () => {
 
       // Sort again rows
       tables = screen.getAllByRole('table');
-      await userEvent.click(within(tables[0]).getAllByTitle('Toggle SortBy')[0]);
+      await userEvent.click(within(tables[0]).getAllByRole('button', { name: /Sort by column/ })[0]);
       rows = within(table).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([

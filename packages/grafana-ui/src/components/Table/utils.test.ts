@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { type HeaderGroup, type Row } from 'react-table';
+import { type Header, type Row } from '@tanstack/react-table';
 
 import { type Field, type FieldConfigSource, FieldType, MutableDataFrame, type SelectableValue } from '@grafana/data';
 
@@ -20,6 +20,17 @@ import {
   createFooterCalculationValues,
   guessTextBoundingBox,
 } from './utils';
+
+function mockRow(values: Record<string, unknown> | unknown[], index = 0): Row<unknown> {
+  const entries = Object.entries(values);
+  const valuesById = Object.fromEntries(entries);
+
+  return {
+    index,
+    getValue: (id: string) => valuesById[id],
+    getAllCells: () => entries.map(([id, value]) => ({ column: { id }, getValue: () => value })),
+  } as unknown as Row<unknown>;
+}
 
 function getData() {
   const data = new MutableDataFrame({
@@ -94,30 +105,30 @@ describe('Table utils', () => {
     it('Should build columns from DataFrame', () => {
       const columns = getColumns(getData(), 1000, 120, false);
 
-      expect(columns[0].Header).toBe('Time');
-      expect(columns[1].Header).toBe('Value');
+      expect(columns[0].header).toBe('Time');
+      expect(columns[1].header).toBe('Value');
     });
 
     it('Should distribute width and use field config width', () => {
       const columns = getColumns(getData(), 1000, 120, false);
 
-      expect(columns[0].width).toBe(450);
-      expect(columns[1].width).toBe(100);
+      expect(columns[0].size).toBe(450);
+      expect(columns[1].size).toBe(100);
     });
 
     it('Should distribute width and use field config width with expander enabled', () => {
       const columns = getColumns(getData(), 1000, 120, true);
 
-      expect(columns[0].width).toBe(50); // expander column
-      expect(columns[1].width).toBe(425);
-      expect(columns[2].width).toBe(100);
+      expect(columns[0].size).toBe(50); // expander column
+      expect(columns[1].size).toBe(425);
+      expect(columns[2].size).toBe(100);
     });
 
     it('Should set field on columns', () => {
       const columns = getColumns(getData(), 1000, 120, false);
 
-      expect(columns[0].field.name).toBe('Time');
-      expect(columns[1].field.name).toBe('Value');
+      expect(columns[0].meta.field.name).toBe('Time');
+      expect(columns[1].meta.field.name).toBe('Value');
     });
   });
 
@@ -139,31 +150,19 @@ describe('Table utils', () => {
   describe('filterByValue', () => {
     describe('happy path', () => {
       const field = { values: ['a', 'aa', 'ab', 'b', 'ba', 'bb', 'c'] } as unknown as Field;
-      const rows = [
-        { index: 0, values: { 0: 'a' } },
-        { index: 1, values: { 0: 'aa' } },
-        { index: 2, values: { 0: 'ab' } },
-        { index: 3, values: { 0: 'b' } },
-        { index: 4, values: { 0: 'ba' } },
-        { index: 5, values: { 0: 'bb' } },
-        { index: 6, values: { 0: 'c' } },
-      ] as unknown as Row[];
+      const rows = ['a', 'aa', 'ab', 'b', 'ba', 'bb', 'c'].map((value, index) => mockRow({ 0: value }, index));
       const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
 
       const result = filterByValue(field)(rows, '0', filterValues);
 
-      expect(result).toEqual([
-        { index: 0, values: { 0: 'a' } },
-        { index: 3, values: { 0: 'b' } },
-        { index: 6, values: { 0: 'c' } },
-      ]);
+      expect(result.map((row) => row.index)).toEqual([0, 3, 6]);
     });
 
     describe('fast exit cases', () => {
       describe('no rows', () => {
         it('should return empty array', () => {
           const field = { values: ['a'] } as unknown as Field;
-          const rows: Row[] = [];
+          const rows: Array<Row<unknown>> = [];
           const filterValues = [{ value: 'a' }];
 
           const result = filterByValue(field)(rows, '', filterValues);
@@ -175,7 +174,7 @@ describe('Table utils', () => {
       describe('no filterValues', () => {
         it('should return rows', () => {
           const field = { values: ['a'] } as unknown as Field;
-          const rows = [{}] as Row[];
+          const rows = [{}] as Array<Row<unknown>>;
           const filterValues = undefined;
 
           const result = filterByValue(field)(rows, '', filterValues);
@@ -187,7 +186,7 @@ describe('Table utils', () => {
       describe('no field', () => {
         it('should return rows', () => {
           const field = undefined;
-          const rows = [{}] as Row[];
+          const rows = [{}] as Array<Row<unknown>>;
           const filterValues = [{ value: 'a' }];
 
           const result = filterByValue(field)(rows, '', filterValues);
@@ -199,11 +198,7 @@ describe('Table utils', () => {
       describe('missing id in values', () => {
         it('should return rows', () => {
           const field = { values: ['a', 'b', 'c'] } as unknown as Field;
-          const rows = [
-            { index: 0, values: { 0: 'a' } },
-            { index: 1, values: { 0: 'b' } },
-            { index: 2, values: { 0: 'c' } },
-          ] as unknown as Row[];
+          const rows = ['a', 'b', 'c'].map((value, index) => mockRow({ 0: value }, index));
           const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
 
           const result = filterByValue(field)(rows, '1', filterValues);
@@ -244,7 +239,7 @@ describe('Table utils', () => {
             text: '1.0',
           }),
         };
-        const rows = [] as Row[];
+        const rows = [] as Array<Row<unknown>>;
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -527,17 +522,19 @@ describe('Table utils', () => {
       ${{ values: [NaN] }}                      | ${{ values: [NaN] }}                      | ${0}
       ${{ values: [NaN] }}                      | ${{ values: [1] }}                        | ${-1}
     `("when called with a: '$a.toString', b: '$b.toString' then result should be '$expected'", ({ a, b, expected }) => {
-      expect(sortNumber(a, b, '0')).toEqual(expected);
+      expect(sortNumber(mockRow(a.values), mockRow(b.values), '0')).toEqual(expected);
     });
 
     it.skip('should have good performance', () => {
       const ITERATIONS = 100000;
-      const a = { values: Array(ITERATIONS) } as unknown as Row;
-      const b = { values: Array(ITERATIONS) } as unknown as Row;
+      const valuesA = Array(ITERATIONS);
+      const valuesB = Array(ITERATIONS);
       for (let i = 0; i < ITERATIONS; i++) {
-        a.values[i] = Math.random() * Date.now();
-        b.values[i] = Math.random() * Date.now();
+        valuesA[i] = Math.random() * Date.now();
+        valuesB[i] = Math.random() * Date.now();
       }
+      const a = mockRow(valuesA);
+      const b = mockRow(valuesB);
 
       const start = performance.now();
       for (let i = 0; i < ITERATIONS; i++) {
@@ -550,7 +547,7 @@ describe('Table utils', () => {
   });
 
   describe('sortCaseInsensitive', () => {
-    const row = (value: unknown) => ({ values: [value] }) as unknown as Row;
+    const row = (value: unknown) => mockRow([value]);
 
     it('treats equal strings as equal regardless of case', () => {
       expect(sortCaseInsensitive(row('Alpha'), row('alpha'), '0')).toBe(0);
@@ -710,11 +707,7 @@ describe('calculateAroundPointThreshold', () => {
 
 describe('createFooterCalculationValues', () => {
   it('builds per-column arrays from rows', () => {
-    const rows = [
-      { values: { 0: 10, 1: 'a' } },
-      { values: { 0: 20, 1: 'b' } },
-      { values: { 0: 30, 1: 'c' } },
-    ] as unknown as Row[];
+    const rows = [mockRow({ 0: 10, 1: 'a' }), mockRow({ 0: 20, 1: 'b' }), mockRow({ 0: 30, 1: 'c' })];
 
     const result = createFooterCalculationValues(rows);
     expect(result[0]).toEqual([10, 20, 30]);
@@ -727,7 +720,7 @@ describe('createFooterCalculationValues', () => {
   });
 
   it('handles single row', () => {
-    const rows = [{ values: { 0: 42 } }] as unknown as Row[];
+    const rows = [mockRow({ 0: 42 })];
     const result = createFooterCalculationValues(rows);
     expect(result[0]).toEqual([42]);
   });
@@ -735,7 +728,7 @@ describe('createFooterCalculationValues', () => {
 
 describe('guessTextBoundingBox', () => {
   function makeHeaderGroup(width: number) {
-    return { width } as unknown as HeaderGroup;
+    return { getSize: () => width } as unknown as Header<unknown, unknown>;
   }
 
   it('returns defaultRowHeight when osContext is null, using the headerGroup width', () => {
@@ -743,8 +736,8 @@ describe('guessTextBoundingBox', () => {
     expect(guessTextBoundingBox('hello world', makeHeaderGroup(500), null, 20, 36)).toEqual({ width: 500, height: 36 });
   });
 
-  it('defaults width to 300 when headerGroup.width is undefined', () => {
-    const result = guessTextBoundingBox('text', {} as unknown as HeaderGroup, null, 20, 36);
+  it('defaults width to 300 when there is no header for the column', () => {
+    const result = guessTextBoundingBox('text', undefined, null, 20, 36);
     expect(result.width).toBe(300);
   });
 

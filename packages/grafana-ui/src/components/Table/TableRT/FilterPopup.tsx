@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { type Column } from '@tanstack/react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
@@ -17,7 +18,7 @@ import { FilterList } from './FilterList';
 import { type TableStyles } from './styles';
 
 interface Props {
-  column: any;
+  column: Column<unknown, unknown>;
   tableStyles: TableStyles;
   onClose: () => void;
   field?: Field;
@@ -28,7 +29,7 @@ interface Props {
 }
 
 export const FilterPopup = ({
-  column: { preFilteredRows, filterValue, setFilter },
+  column,
   onClose,
   field,
   searchFilter,
@@ -37,9 +38,15 @@ export const FilterPopup = ({
   setOperator,
 }: Props) => {
   const theme = useTheme2();
+  const preFilteredRows = column.getFacetedRowModel().rows;
+  const filterValue = column.getFilterValue();
+  const setFilter = column.setFilterValue;
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
-  const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
+  const filteredOptions = useMemo(
+    () => getFilteredOptions(options, Array.isArray(filterValue) ? filterValue : undefined),
+    [options, filterValue]
+  );
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
   const ref = useRef<HTMLDivElement>(null);

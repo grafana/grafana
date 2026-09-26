@@ -13,7 +13,7 @@ The InteractiveTable is used to display and select data efficiently.
 It allows for the display and modification of detailed information.
 With additional functionality it allows for batch editing, as needed by your feature's users.
 
-It is a wrapper around [React Table](https://react-table-v7.tanstack.com/), for more information, refer to the [official documentation](https://react-table.tanstack.com/docs/overview).
+It is a wrapper around [TanStack Table](https://tanstack.com/table/v8/docs/overview).
 
 ### When to use
 
@@ -157,7 +157,7 @@ export const MyComponent = () => {
 
 ### Custom Header Rendering
 
-Column headers can be customized using strings, React elements, or renderer functions. The `header` property accepts any value that matches React Table's `Renderer` type.
+Column headers can be customized using strings, React elements, or renderer functions.
 
 **Important:** When using custom header content, prefer inline elements (like `<span>`) over block elements (like `<div>`) to avoid layout issues. Block-level elements can cause extra spacing and alignment problems in table headers because they disrupt the table's inline flow. Use `display: inline-flex` or `display: inline-block` when you need flexbox or block-like behavior.
 
@@ -196,6 +196,9 @@ const columns: Array<Column<TableData>> = [
 ### Custom Cell Rendering
 
 Individual cells can be rendered using custom content dy defining a `cell` property on the column definition.
+`CellProps` and `SortByFn` use the TanStack Table v8 row and context APIs. Consumers migrating from react-table v7
+must replace table-instance properties such as `rows` and `row.values` with their TanStack Table equivalents.
+The `value` and `cell.value` aliases remain available for compatibility.
 
 <Story id="experimental-interactivetable--with-custom-cell" />
 

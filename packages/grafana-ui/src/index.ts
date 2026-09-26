@@ -68,7 +68,7 @@ export {
 export { DateTimePicker } from './components/DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './components/List/List';
 export { InteractiveTable } from './components/InteractiveTable/InteractiveTableLazy';
-export type { FetchDataArgs, FetchDataFunc } from './components/InteractiveTable/InteractiveTable';
+export type { ColumnSort, FetchDataArgs, FetchDataFunc } from './components/InteractiveTable/InteractiveTable';
 export { TagsInput } from './components/TagsInput/TagsInput';
 export { AutoSaveField } from './components/AutoSaveField/AutoSaveField';
 export { Pagination } from './components/Pagination/Pagination';
@@ -424,7 +424,7 @@ export { toIconName, isIconSize, getAvailableIcons, getFieldTypeIcon, getFieldTy
 export type { ActionMeta } from './types/select';
 export type { ComponentSize } from './types/size';
 export type { Column } from './types/interactiveTable';
-export type { CellProps, SortByFn } from 'react-table';
+export type { CellProps, SortByFn } from './components/InteractiveTable/types';
 
 export {
   DEFAULT_ANNOTATION_COLOR,

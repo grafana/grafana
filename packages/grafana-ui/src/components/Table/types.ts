@@ -1,12 +1,18 @@
+import {
+  type Cell,
+  type CellContext,
+  type ColumnDef,
+  type Row,
+  type RowData,
+  type TableState,
+} from '@tanstack/react-table';
 import { type Property } from 'csstype';
 import { type FC } from 'react';
-import { type CellProps, type Column, type Row, type TableState, type UseExpandedRowProps } from 'react-table';
 
 import {
   type DataFrame,
   type Field,
   type KeyValue,
-  type SelectableValue,
   type TimeRange,
   type FieldConfigSource,
   type ActionModel,
@@ -48,7 +54,18 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableCellProps extends CellProps<any> {
+/** Link props the table implementation can pass down to its cell renderers. */
+export interface TableCellUserProps {
+  href?: string;
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+}
+
+/**
+ * Props passed to a cell renderer. TanStack Table only passes its own `CellContext`, the rest of the props
+ * are added by `TableCell` when it renders the cell.
+ */
+export interface TableCellProps extends Omit<CellContext<unknown, unknown>, 'cell'> {
+  cell: Cell<unknown, unknown> & { value: any };
   tableStyles: TableStyles;
   cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;
@@ -57,18 +74,40 @@ export interface TableCellProps extends CellProps<any> {
   frame: DataFrame;
   actions?: ActionModel[]; // unused in NG
   setInspectCell?: TableInspectCellCallback;
+  timeRange?: TimeRange;
+  userProps?: TableCellUserProps;
+  rowStyled?: boolean;
+  rowExpanded?: boolean;
+  textWrapped?: boolean;
+  height?: number;
+  showFilters?: boolean;
 }
 
 export type CellComponent = FC<TableCellProps>;
 
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GrafanaTableColumn = Column & {
+interface GrafanaColumnMeta {
   field: Field;
-  sortType: 'number' | 'basic' | 'alphanumeric-insensitive';
-  filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => SelectableValue[];
   justifyContent: Property.JustifyContent;
-  minWidth: number;
+  /** Renderer for the cells of this column. It is rendered by `TableCell`, which adds the Grafana specific props. */
+  cellComponent: CellComponent;
+}
+
+declare module '@tanstack/react-table' {
+  // Grafana specific column configuration. TanStack Table only passes `meta` through, it never reads it.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    field?: Field;
+    justifyContent?: Property.JustifyContent;
+    cellComponent?: CellComponent;
+  }
+}
+
+export type GrafanaTableColumn = ColumnDef<unknown, unknown> & {
+  id: string;
+  minSize: number;
+  meta: GrafanaColumnMeta;
 };
 
 export interface TableFooterCalc {
@@ -80,21 +119,13 @@ export interface TableFooterCalc {
 }
 
 export interface GrafanaTableState extends TableState {
-  // We manually track this to know where to reset the row heights. This is needed because react-table removed the
-  // collapsed IDs/indexes from the state.expanded map so when collapsing we would have to do a diff of current and
-  // previous state.expanded to know what changed.
+  // We manually track this to know where to reset the row heights. Collapsed IDs disappear from the expanded map,
+  // so without a recorded index we would have to diff current and previous expanded state to know what changed.
   lastExpandedOrCollapsedIndex?: number;
 }
 
-export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
+export type GrafanaTableRow = Row<unknown>;
 
-export interface TableStateReducerProps {
-  onColumnResize?: TableColumnResizeActionCallback;
-  onSortByChange?: TableSortByActionCallback;
-  data: DataFrame;
-}
-
-// export interface Props {
 export interface TableRTProps {
   ariaLabel?: string;
   data: DataFrame;

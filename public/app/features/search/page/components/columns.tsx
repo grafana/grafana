@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
 import { intervalToDuration } from 'date-fns/intervalToDuration';
+import type { ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import {
@@ -15,6 +16,7 @@ import { config } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
+import { type CellComponent } from '@grafana/ui/internal';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -26,12 +28,19 @@ import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from 
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
-import { type TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
 const DELETED_BY_COLUMN_WIDTH = 200;
+
+export interface TableColumn {
+  id: string;
+  Header?: ReactNode | (() => ReactNode);
+  Cell?: CellComponent;
+  width?: number;
+  field?: Field;
+}
 
 export const generateColumns = (
   response: QueryResponse,
@@ -135,10 +144,10 @@ export const generateColumns = (
         <div key={key} className={cx(styles.cell, isLoaded && description && styles.nameCell)} {...cellProps}>
           {!isLoaded ? (
             <Skeleton width={200} />
-          ) : isDeleted || !p.userProps.href ? (
+          ) : isDeleted || !p.userProps?.href ? (
             <span className={classNames}>{name}</span>
           ) : (
-            <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
+            <a href={p.userProps?.href} onClick={p.userProps?.onClick} className={classNames} title={name}>
               {name}
             </a>
           )}

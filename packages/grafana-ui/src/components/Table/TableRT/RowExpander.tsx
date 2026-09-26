@@ -12,14 +12,16 @@ export interface Props {
 
 export function RowExpander({ row, tableStyles }: Props) {
   return (
-    <div className={tableStyles.expanderCell} {...row.getToggleRowExpandedProps()}>
+    // react-table v7 spread only a click handler here, keyboard support is a separate change
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div className={tableStyles.expanderCell} onClick={row.getToggleExpandedHandler()}>
       <Icon
         aria-label={
-          row.isExpanded
+          row.getIsExpanded()
             ? t('grafana-ui.row-expander.collapse', 'Collapse row')
             : t('grafana-ui.row-expander.expand', 'Expand row')
         }
-        name={row.isExpanded ? 'angle-down' : 'angle-right'}
+        name={row.getIsExpanded() ? 'angle-down' : 'angle-right'}
         size="lg"
       />
     </div>

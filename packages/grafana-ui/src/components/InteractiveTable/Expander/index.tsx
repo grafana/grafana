@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { type CellProps, type HeaderProps } from 'react-table';
 
 import { t, Trans } from '@grafana/i18n';
 
 import { IconButton } from '../../IconButton/IconButton';
+import { type CellProps, type HeaderProps } from '../types';
 
 const expanderContainerStyles = css({
   display: 'flex',
@@ -11,19 +11,16 @@ const expanderContainerStyles = css({
   height: '100%',
 });
 
-export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, void>) {
+export function ExpanderCell<K extends object>({ row, table }: CellProps<K>) {
+  const rowHTMLID = table.options.meta?.getRowHTMLID?.(row.id);
   return (
     <div className={expanderContainerStyles}>
       <IconButton
         tooltip={t('grafana-ui.interactive-table.expand-row-tooltip', 'Toggle row expanded')}
-        // @ts-expect-error react-table doesn't ship with useExpanded types and we can't use declaration merging without affecting the table viz
-        aria-controls={row.isExpanded ? __rowID : undefined}
-        // @ts-expect-error same as the line above
-        name={row.isExpanded ? 'angle-down' : 'angle-right'}
-        // @ts-expect-error same as the line above
-        aria-expanded={row.isExpanded}
-        // @ts-expect-error same as the line above
-        {...row.getToggleRowExpandedProps()}
+        aria-controls={row.getIsExpanded() ? rowHTMLID : undefined}
+        name={row.getIsExpanded() ? 'angle-down' : 'angle-right'}
+        aria-expanded={row.getIsExpanded()}
+        onClick={row.getToggleExpandedHandler()}
         size="lg"
       />
     </div>
@@ -38,7 +35,8 @@ export function EmptyExpanderHeader() {
   );
 }
 
-export function ExpanderHeader<K extends object>({ isAllRowsExpanded, toggleAllRowsExpanded }: HeaderProps<K>) {
+export function ExpanderHeader<K extends object>({ table }: HeaderProps<K>) {
+  const isAllRowsExpanded = table.getIsAllRowsExpanded();
   return (
     <div className={expanderContainerStyles}>
       <IconButton
@@ -48,7 +46,7 @@ export function ExpanderHeader<K extends object>({ isAllRowsExpanded, toggleAllR
             : t('grafana-ui.interactive-table.aria-label-collapse-all', 'Collapse all rows')
         }
         name={!isAllRowsExpanded ? 'table-expand-all' : 'table-collapse-all'}
-        onClick={() => toggleAllRowsExpanded()}
+        onClick={() => table.toggleAllRowsExpanded()}
         size={'lg'}
         tooltip={
           !isAllRowsExpanded

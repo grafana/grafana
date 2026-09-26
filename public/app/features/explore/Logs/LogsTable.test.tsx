@@ -339,7 +339,7 @@ describe('LogsTable', () => {
 
       // Verify the Time column has the sort indicator (arrow down for descending)
       const timeColumnHeader = screen.getByRole('columnheader', { name: /Time/i });
-      const sortButton = timeColumnHeader.querySelector('button[title="Toggle SortBy"]');
+      const sortButton = timeColumnHeader.querySelector('button[aria-label^="Sort by column"]');
       expect(sortButton).toBeTruthy();
 
       // Click to toggle sort (desc -> asc)
