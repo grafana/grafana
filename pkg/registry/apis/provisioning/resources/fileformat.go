@@ -13,7 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 
+	goyaml "go.yaml.in/yaml/v3"
+
 	"github.com/grafana/grafana-app-sdk/logging"
+	alertingv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -38,27 +41,92 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 	// Strip BOMs from file data before parsing
 	cleanData := util.StripBOMFromBytes(info.Data)
 
-	// Try parsing as JSON
-	if cleanData[0] == '{' {
+	// Try parsing as JSON or YAML
+	if len(cleanData) > 0 && cleanData[0] == '{' {
 		err := json.Unmarshal(cleanData, &value)
 		if err != nil {
 			return nil, nil, "", err
 		}
-		// Strip BOMs from all string values in the parsed JSON
-		stripped, ok := util.StripBOMFromInterface(value).(map[string]any)
-		if !ok {
-			return nil, nil, "", fmt.Errorf("unexpected type after BOM stripping")
-		}
-		value = stripped
 	} else {
-		return nil, nil, "", fmt.Errorf("unable to read file")
+		err := goyaml.Unmarshal(cleanData, &value)
+		if err != nil {
+			return nil, nil, "", err
+		}
 	}
+	// Strip BOMs from all string values in the parsed data
+	stripped, ok := util.StripBOMFromInterface(value).(map[string]any)
+	if !ok {
+		return nil, nil, "", fmt.Errorf("unexpected type after BOM stripping")
+	}
+	value = stripped
 
 	// regular version headers exist
 	// TODO: do we intend on this checking Kind or kind? document reasoning.
 	if value["apiVersion"] != nil {
 		if value["kind"] != nil {
 			return nil, nil, "", ErrClassicResourceIsAlreadyK8sForm
+		}
+
+		// Handle classic provisioning apiVersion: 1 (e.g. Alerting provisioning)
+		var isApiVer1 bool
+		if fmt.Sprintf("%v", value["apiVersion"]) == "1" {
+			isApiVer1 = true
+		}
+
+		if isApiVer1 && (value["groups"] != nil || value["rules"] != nil) {
+			var name string
+			var ruleSpec map[string]any
+
+			if groups, ok := value["groups"].([]any); ok && len(groups) > 0 {
+				if grpMap, ok := groups[0].(map[string]any); ok {
+					if n, ok := grpMap["name"].(string); ok && n != "" {
+						name = n
+					}
+					if rules, ok := grpMap["rules"].([]any); ok && len(rules) > 0 {
+						if r, ok := rules[0].(map[string]any); ok {
+							ruleSpec = r
+						}
+					}
+				}
+			}
+			if ruleSpec == nil {
+				if rules, ok := value["rules"].([]any); ok && len(rules) > 0 {
+					if r, ok := rules[0].(map[string]any); ok {
+						ruleSpec = r
+					}
+				}
+			}
+			if ruleSpec == nil {
+				return nil, nil, "", ErrUnableToReadResourceBytes
+			}
+
+			kind := "AlertRule"
+			if _, ok := ruleSpec["record"]; ok {
+				kind = "RecordingRule"
+			}
+
+			gvk := &schema.GroupVersionKind{
+				Group:   alertingv0alpha1.APIGroup,
+				Version: alertingv0alpha1.APIVersion,
+				Kind:    kind,
+			}
+
+			if uid, ok := ruleSpec["uid"].(string); ok && uid != "" {
+				name = uid
+			} else if name == "" {
+				name = util.GenerateShortUID()
+			}
+
+			return &unstructured.Unstructured{
+				Object: map[string]any{
+					"apiVersion": gvk.GroupVersion().String(),
+					"kind":       gvk.Kind,
+					"metadata": map[string]any{
+						"name": name,
+					},
+					"spec": ruleSpec,
+				},
+			}, gvk, provisioning.ClassicAlerting, nil
 		}
 
 		logging.FromContext(ctx).Debug("TODO... likely a provisioning",
