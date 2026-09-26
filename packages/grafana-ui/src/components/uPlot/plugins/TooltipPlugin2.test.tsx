@@ -415,6 +415,47 @@ describe('TooltipPlugin2', () => {
       removeSpy.mockRestore();
     });
 
+    it('removes window scroll and resize listeners of the previous config on config change', () => {
+      const addSpy = jest.spyOn(window, 'addEventListener');
+      const { view } = setUp();
+
+      const resizeHandler = addSpy.mock.calls.find((call) => call[0] === 'resize')![1];
+      const scrollHandler = addSpy.mock.calls.find((call) => call[0] === 'scroll')![1];
+      addSpy.mockRestore();
+
+      const removeSpy = jest.spyOn(window, 'removeEventListener');
+      view.rerender(
+        <TooltipPlugin2
+          config={new UPlotConfigBuilder()}
+          hoverMode={TooltipHoverMode.xOne}
+          render={() => <span>Tooltip content</span>}
+        />
+      );
+
+      expect(removeSpy).toHaveBeenCalledWith('resize', resizeHandler);
+      expect(removeSpy).toHaveBeenCalledWith('scroll', scrollHandler, true);
+      removeSpy.mockRestore();
+
+      view.unmount();
+    });
+
+    it('does not throw on window scroll, resize or ready before the plot is initialized', () => {
+      const addSpy = jest.spyOn(window, 'addEventListener');
+      const { view, readyCallback } = setUp();
+
+      const resizeHandler = addSpy.mock.calls.find((call) => call[0] === 'resize')![1] as EventListener;
+      const scrollHandler = addSpy.mock.calls.find((call) => call[0] === 'scroll')![1] as EventListener;
+      addSpy.mockRestore();
+
+      expect(() => {
+        scrollHandler(new Event('scroll'));
+        resizeHandler(new Event('resize'));
+        readyCallback();
+      }).not.toThrow();
+
+      view.unmount();
+    });
+
     it('should disconnect sizeRef observable on config change', async () => {
       const disconnectSpy = jest.spyOn(ResizeObserver.prototype, 'disconnect');
       const { view } = setUp();
