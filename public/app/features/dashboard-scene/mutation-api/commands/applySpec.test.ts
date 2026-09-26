@@ -15,6 +15,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
+import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { type DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -24,6 +25,7 @@ import { getLibraryPanelBehavior } from '../../utils/utils';
 
 import { applySpecCommand } from './applySpec';
 import { getSpecCommand } from './getSpec';
+import { startBatchCommand, endBatchCommand, getLastActionCommand, undoCommand } from './history';
 import { type MutationContext } from './types';
 
 // Entering edit mode starts the change tracker, which spawns a real web worker jsdom does not have.
@@ -300,5 +302,147 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
 
     expect(isDraggable(scene)).toBe(true);
+  });
+});
+
+describe('dashboard mutation history', () => {
+  it('groups spec applies into one attributed undo entry and redoes the entire turn', async () => {
+    const original = makeSpec((spec) => {
+      spec.title = 'Before';
+    });
+    const scene = buildScene(original);
+    const context = { scene };
+    await startBatchCommand.handler({ description: 'Build dashboard' }, context);
+    await applySpec(
+      scene,
+      makeSpec((spec) => {
+        spec.title = 'First edit';
+      })
+    );
+    await applySpec(
+      scene,
+      makeSpec((spec) => {
+        spec.title = 'Second edit';
+      })
+    );
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(0);
+    await endBatchCommand.handler({}, context);
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
+    expect((await getLastActionCommand.handler({}, context)).data).toEqual({
+      action: { description: 'Build dashboard', actor: 'mutation-api' },
+    });
+
+    expect((await undoCommand.handler({ expectedActor: 'mutation-api' }, context)).data).toEqual({ undone: true });
+    expect((await readSpec(scene)).title).toBe('Before');
+    expect(scene.state.sidebar.state.redoStack).toHaveLength(1);
+    scene.state.sidebar.redoAction();
+    expect((await readSpec(scene)).title).toBe('Second edit');
+    expect((await getLastActionCommand.handler({}, context)).data).toEqual({
+      action: { description: 'Build dashboard', actor: 'mutation-api' },
+    });
+  });
+
+  it('attributes an individual mutation API apply', async () => {
+    const scene = buildScene(makeSpec());
+    await applySpec(
+      scene,
+      makeSpec((spec) => {
+        spec.title = 'Changed';
+      })
+    );
+    expect((await getLastActionCommand.handler({}, { scene })).data).toEqual({
+      action: { description: 'Assistant schema edit', actor: 'mutation-api' },
+    });
+  });
+
+  it('does not attribute direct UI spec edits to the mutation API', async () => {
+    const scene = buildScene(makeSpec());
+    await applySpec(
+      scene,
+      makeSpec((spec) => {
+        spec.title = 'API edit';
+      })
+    );
+    applyDashboardSpec({ scene, spec: makeSpec(), description: 'Code pane edit' });
+    expect((await getLastActionCommand.handler({}, { scene })).data).toEqual({
+      action: { description: 'Code pane edit', actor: undefined },
+    });
+  });
+
+  it('reports empty history without undoing anything', async () => {
+    const scene = buildScene(
+      makeSpec((spec) => {
+        spec.title = 'Unchanged';
+      })
+    );
+    expect((await getLastActionCommand.handler({}, { scene })).data).toEqual({ action: null });
+    expect((await undoCommand.handler({}, { scene })).data).toEqual({ undone: false });
+    expect((await readSpec(scene)).title).toBe('Unchanged');
+  });
+
+  it('keeps successful edits undoable when a later apply is invalid', async () => {
+    const scene = buildScene(
+      makeSpec((spec) => {
+        spec.title = 'Before';
+      })
+    );
+    await startBatchCommand.handler({ description: 'Partial turn' }, { scene });
+    await applySpec(
+      scene,
+      makeSpec((spec) => {
+        spec.title = 'Successful edit';
+      })
+    );
+    const rejected = await applySpecCommand.handler({ spec: {}, validate: true }, { scene });
+    expect(rejected.success).toBe(false);
+    await endBatchCommand.handler({}, { scene });
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
+    await undoCommand.handler({}, { scene });
+    expect((await readSpec(scene)).title).toBe('Before');
+  });
+});
+
+describe('undo actor precondition', () => {
+  it.each([undefined, 'another-plugin'])('leaves later %s edits and both stacks unchanged', async (actor) => {
+    const scene = buildScene(makeSpec());
+    await applySpec(
+      scene,
+      makeSpec((spec) => {
+        spec.title = 'API edit';
+      })
+    );
+    applyDashboardSpec({
+      scene,
+      spec: makeSpec((spec) => {
+        spec.title = 'Later edit';
+      }),
+      description: 'Later edit',
+      actor,
+    });
+    const result = await undoCommand.handler({ expectedActor: 'mutation-api' }, { scene });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Nothing was undone');
+    expect((await readSpec(scene)).title).toBe('Later edit');
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(2);
+    expect(scene.state.sidebar.state.redoStack).toHaveLength(0);
+  });
+
+  it('can undo an unattributed edit when no actor precondition is requested', async () => {
+    const scene = buildScene(makeSpec());
+    await applySpec(
+      scene,
+      makeSpec((spec) => {
+        spec.title = 'API edit';
+      })
+    );
+    applyDashboardSpec({
+      scene,
+      spec: makeSpec((spec) => {
+        spec.title = 'User edit';
+      }),
+      description: 'User edit',
+    });
+    expect((await undoCommand.handler({}, { scene })).data).toEqual({ undone: true });
+    expect((await readSpec(scene)).title).toBe('API edit');
   });
 });

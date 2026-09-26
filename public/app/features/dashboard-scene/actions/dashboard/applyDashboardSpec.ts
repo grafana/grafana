@@ -14,12 +14,13 @@ type DashboardUrlSync = {
 };
 
 export interface ApplyDashboardSpecProps {
+  actor?: string;
   scene: DashboardScene;
   spec: DashboardV2Spec;
   description: string;
 }
 
-export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardSpecProps): void {
+export function applyDashboardSpec({ scene, spec, description, actor }: ApplyDashboardSpecProps): void {
   const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
 
@@ -42,6 +43,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
 
   edit({
     source: scene,
+    actor,
     description,
     perform: () => {
       if (editPanelKey) {

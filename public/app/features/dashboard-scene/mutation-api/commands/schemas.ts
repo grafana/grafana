@@ -879,6 +879,14 @@ const endPlanningPayloadSchema = z.object({
  * as the command description (flows into JSON Schema for LLM consumers).
  */
 export const payloads = {
+  startBatch: z
+    .object({ description: z.string().min(1) })
+    .describe('Start collecting dashboard edits into one undo action.'),
+  endBatch: z.object({}).describe('Finish the current dashboard edit batch.'),
+  getLastAction: z.object({}).describe('Read the description and actor of the next dashboard action to undo.'),
+  undo: z
+    .object({ expectedActor: z.string().optional() })
+    .describe('Undo the last dashboard action or completed batch, optionally requiring its actor to match.'),
   addVariable: addVariablePayloadSchema.describe('Add a new template variable'),
   removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
   updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),

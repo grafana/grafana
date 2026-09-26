@@ -3,6 +3,7 @@ import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { type SceneObject } from '@grafana/scenes';
 
 export interface DashboardEditActionEventPayload {
+  actor?: string;
   removedObject?: SceneObject;
   addedObject?: SceneObject;
   movedObject?: SceneObject;
@@ -18,6 +19,7 @@ export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditA
 }
 
 export interface DashboardBatchEditActionEventPayload {
+  actor?: string;
   source: SceneObject;
   description?: string;
 }
