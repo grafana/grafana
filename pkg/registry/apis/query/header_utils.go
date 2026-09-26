@@ -45,6 +45,7 @@ var expectedHeaders = map[string]string{
 	strings.ToLower(queryService.HeaderDashboardTitle): queryService.HeaderDashboardTitle,
 	strings.ToLower(queryService.HeaderPanelTitle):     queryService.HeaderPanelTitle,
 	strings.ToLower(queryService.HeaderCallerID):       queryService.HeaderCallerID,
+	strings.ToLower(queryService.HeaderGrafanaSource):  queryService.HeaderGrafanaSource,
 	strings.ToLower("User-Agent"):                      "User-Agent",
 	strings.ToLower("X-Real-IP"):                       "X-Real-IP",
 	strings.ToLower("X-Forwarded-For"):                 "X-Forwarded-For",
