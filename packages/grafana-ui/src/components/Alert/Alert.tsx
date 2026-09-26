@@ -23,6 +23,8 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
+  /** Accessible label for the alert button. If omitted and buttonContent is a string, the visible text is used. */
+  buttonAriaLabel?: string;
   bottomSpacing?: number;
   topSpacing?: number;
   /** Custom action element rendered in the alert's button area, independently from the dismiss button. */
@@ -41,6 +43,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       onRemove,
       children,
       buttonContent,
+      buttonAriaLabel,
       elevated,
       bottomSpacing,
       topSpacing,
@@ -100,7 +103,12 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             <Stack alignItems="center" wrap="wrap">
               {action}
               {onRemove && buttonContent && (
-                <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
+                <Button
+                  aria-label={buttonAriaLabel ?? (typeof buttonContent === 'string' ? undefined : closeLabel)}
+                  variant="secondary"
+                  onClick={onRemove}
+                  type="button"
+                >
                   {buttonContent}
                 </Button>
               )}
@@ -110,7 +118,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           {onRemove && !buttonContent && (
             <div className={styles.close}>
               <Button
-                aria-label={closeLabel}
+                aria-label={buttonAriaLabel ?? closeLabel}
                 icon="times"
                 onClick={onRemove}
                 type="button"

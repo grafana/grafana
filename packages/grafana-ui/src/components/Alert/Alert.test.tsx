@@ -71,16 +71,46 @@ describe('Alert', () => {
     });
   });
 
-  describe('backward compatibility', () => {
-    it('renders buttonContent with onRemove as before', () => {
+  describe('button accessible names and onRemove', () => {
+    it('uses visible string buttonContent as the accessible name', () => {
       render(<Alert title="Test" buttonContent="Go back" onRemove={jest.fn()} />);
-      expect(screen.getByRole('button', { name: /close alert/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /close alert/i })).not.toBeInTheDocument();
+    });
+
+    it('allows overriding button accessible name with buttonAriaLabel', () => {
+      render(
+        <Alert
+          title="Test"
+          buttonContent="Go back"
+          buttonAriaLabel="Return to alert overview"
+          onRemove={jest.fn()}
+        />
+      );
+      expect(screen.getByRole('button', { name: 'Return to alert overview' })).toBeInTheDocument();
       expect(screen.getByText('Go back')).toBeInTheDocument();
     });
 
-    it('renders dismiss X icon when only onRemove is set', () => {
+    it('falls back to closeLabel when buttonContent is not a plain string and buttonAriaLabel is omitted', () => {
+      render(
+        <Alert
+          title="Test"
+          buttonContent={<span data-testid="custom-content">Dismiss</span>}
+          onRemove={jest.fn()}
+        />
+      );
+      expect(screen.getByRole('button', { name: /close alert/i })).toBeInTheDocument();
+      expect(screen.getByTestId('custom-content')).toBeInTheDocument();
+    });
+
+    it('renders dismiss X icon when only onRemove is set and announces as Close alert', () => {
       render(<Alert title="Test" onRemove={jest.fn()} />);
       expect(screen.getByRole('button', { name: /close alert/i })).toBeInTheDocument();
+    });
+
+    it('allows setting buttonAriaLabel on the icon-only dismiss button', () => {
+      render(<Alert title="Test" onRemove={jest.fn()} buttonAriaLabel="Dismiss warning" />);
+      expect(screen.getByRole('button', { name: 'Dismiss warning' })).toBeInTheDocument();
     });
   });
 });
