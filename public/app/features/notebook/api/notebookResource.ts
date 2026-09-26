@@ -97,7 +97,10 @@ export async function duplicateNotebook(uid: string): Promise<CreatedNotebook> {
   const source = read.data.spec as unknown as NotebookSpec;
   return createNotebook({
     ...source,
-    title: t('notebooks.duplicate.title', 'Copy of {{title}}', { title: source.title }),
+    title: t('notebooks.duplicate.title', 'Copy of {{title}}', {
+      title: source.title,
+      interpolation: { escapeValue: false },
+    }),
   });
 }
 

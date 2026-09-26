@@ -171,6 +171,7 @@ describe('duplicateNotebook', () => {
 
   it('creates a new resource with the source content, settings and references but no source metadata', async () => {
     const sourceSpec = notebookSpec({
+      title: "Checkout's errors/sec & <alerts>",
       elements: {
         chart: panelCell(1, 'p95 latency'),
         library: {
