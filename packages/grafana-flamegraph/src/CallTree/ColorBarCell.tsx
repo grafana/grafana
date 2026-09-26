@@ -55,7 +55,7 @@ function getStyles(theme: GrafanaTheme2) {
     colorBar: css({
       height: '16px',
       minWidth: '2px',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
     }),
   };
 }
