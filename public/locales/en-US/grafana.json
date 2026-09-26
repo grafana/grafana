@@ -13135,6 +13135,17 @@
       "add-arc": "Add arc",
       "title-remove-arc": "Remove arc"
     },
+    "data-error": {
+      "edge-example": "Edge “{{edgeId}}”: {{missingEndpoints}}",
+      "ensure-matching-nodes": "Ensure every edge source and target has a matching node after transformations.",
+      "missing-endpoint": "{{side}} “{{id}}” is absent from the node data.",
+      "missing-endpoints_one": "Cannot visualize graph data: {{count}} edge references a missing node.",
+      "missing-endpoints_other": "Cannot visualize graph data: {{count}} edges reference missing nodes.",
+      "missing-field": "Cannot visualize graph data: the {{field}} field is required in the {{frame}} data frame.",
+      "omitted-edges_one": "{{count}} more affected edge not shown.",
+      "omitted-edges_other": "{{count}} more affected edges not shown.",
+      "title": "Cannot visualize graph data"
+    },
     "edge": {
       "aria-label-from-to": "Edge from: {{from}} to: {{to}}"
     },
