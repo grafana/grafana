@@ -55,8 +55,11 @@ func LegacyCreateCommandToUnstructured(cmd dtos.CreateShortURLCmd) unstructured.
 	return obj
 }
 
-func UnstructuredToLegacyShortURLDTO(item unstructured.Unstructured, appURL string) *dtos.ShortURL {
-	url := fmt.Sprintf("%s/goto/%s?orgId=%s", strings.TrimSuffix(appURL, "/"), item.GetName(), item.GetNamespace())
+func UnstructuredToLegacyShortURLDTO(item unstructured.Unstructured, appURL string, orgID *int64) *dtos.ShortURL {
+	url := fmt.Sprintf("%s/goto/%s", strings.TrimSuffix(appURL, "/"), item.GetName())
+	if orgID != nil {
+		url = fmt.Sprintf("%s?orgId=%d", url, *orgID)
+	}
 
 	return &dtos.ShortURL{
 		UID: item.GetName(),

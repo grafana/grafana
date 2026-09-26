@@ -12,10 +12,48 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestUnaryErrorResultInterceptor(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusConflict, Reason: string(metav1.StatusReasonConflict), Message: "outdated version",
+		Details: &resourcepb.ErrorDetails{Name: "dashboard", Causes: []*resourcepb.ErrorCause{{Field: "metadata.resourceVersion", Message: "outdated"}}},
+	}
+	transportErr := status.Error(codes.Unavailable, "transport failed")
+	for _, tc := range []struct {
+		name string
+		resp any
+		err  error
+		want codes.Code
+	}{
+		{"embedded", &resourcepb.UpdateResponse{Error: failure}, nil, codes.Aborted},
+		{"success", &resourcepb.ReadResponse{}, nil, codes.OK},
+		{"typed nil", (*resourcepb.ReadResponse)(nil), nil, codes.OK},
+		{"unrelated response", &resourcepb.HealthCheckResponse{}, nil, codes.OK},
+		{"transport wins", &resourcepb.UpdateResponse{Error: failure}, transportErr, codes.Unavailable},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, err := UnaryErrorResultInterceptor()(t.Context(), nil, &grpc.UnaryServerInfo{}, func(context.Context, any) (any, error) {
+				return tc.resp, tc.err
+			})
+			require.Equal(t, tc.want, status.Code(err))
+			if tc.name == "embedded" {
+				require.Nil(t, resp)
+				details := status.Convert(err).Details()
+				require.Len(t, details, 1)
+				require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
+			} else {
+				require.Equal(t, tc.resp, resp)
+				require.Equal(t, tc.err, err)
+			}
+		})
+	}
+}
 
 func TestUnaryRequestDurationInterceptor(t *testing.T) {
 	tests := []struct {
@@ -51,7 +89,8 @@ func TestUnaryRequestDurationInterceptor(t *testing.T) {
 			require.Equal(t, tt.err, err)
 			families, gatherErr := reg.Gather()
 			require.NoError(t, gatherErr)
-			found := false
+			foundStatus := false
+			foundListPath := false
 			for _, family := range families {
 				if family.GetName() != "storage_server_grpc_request_duration_seconds" {
 					continue
@@ -59,15 +98,55 @@ func TestUnaryRequestDurationInterceptor(t *testing.T) {
 				require.Len(t, family.Metric, 1)
 				require.Equal(t, uint64(1), family.Metric[0].GetHistogram().GetSampleCount())
 				for _, label := range family.Metric[0].Label {
-					if label.GetName() == "status_code" {
-						found = true
+					switch label.GetName() {
+					case "status_code":
+						foundStatus = true
 						require.Equal(t, tt.want.String(), label.GetValue())
+					case "list_path":
+						foundListPath = true
+						require.Equal(t, listPathNotApplicable, label.GetValue())
 					}
 				}
 			}
-			require.True(t, found, "status_code metric label missing")
+			require.True(t, foundStatus, "status_code metric label missing")
+			require.True(t, foundListPath, "list_path metric label missing")
 		})
 	}
+}
+
+func TestUnaryRequestDurationInterceptorRecordsListPath(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	req := &resourcepb.ListRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Group: "dashboard.grafana.app", Resource: "dashboards",
+	}}}
+
+	_, err := UnaryRequestDurationInterceptor(metrics)(
+		t.Context(),
+		req,
+		&grpc.UnaryServerInfo{FullMethod: "/resource.ResourceStore/List"},
+		func(ctx context.Context, _ any) (any, error) {
+			setListRequestPath(ctx, listPathTrash)
+			return &resourcepb.ListResponse{}, nil
+		},
+	)
+	require.NoError(t, err)
+
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	for _, family := range families {
+		if family.GetName() != "storage_server_grpc_request_duration_seconds" {
+			continue
+		}
+		require.Len(t, family.Metric, 1)
+		for _, label := range family.Metric[0].Label {
+			if label.GetName() == "list_path" {
+				require.Equal(t, listPathTrash, label.GetValue())
+				return
+			}
+		}
+	}
+	t.Fatal("list_path metric label missing")
 }
 
 type panickingResourceStore struct {

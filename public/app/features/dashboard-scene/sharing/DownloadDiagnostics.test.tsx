@@ -50,12 +50,12 @@ describe('DownloadDiagnostics', () => {
     interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) => queries);
   });
 
-  it('renders the sensitive-data warning and download action', () => {
+  it('renders the sensitive-data warning and download action', async () => {
     const { tab } = setupScenario();
 
     render(<tab.Component model={tab} />);
 
-    expect(screen.getByText('May contain sensitive data')).toBeInTheDocument();
+    expect(await screen.findByText('May contain sensitive data')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Download diagnostics' })).toBeInTheDocument();
   });
 
@@ -63,7 +63,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario();
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
     const [{ queries, from, to }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
@@ -78,7 +78,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario();
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     const [{ panel: panelModel, dashboard: dashboardModel }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     // The whole dashboard save model is sent (bundled as dashboard.json), and this panel's JSON is
@@ -97,7 +97,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario(undefined, undefined, 'panel-7-clone-1', dashboardModel, 'v2');
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     const [{ panel: panelModel, dashboard: forwardedDashboardModel }] =
       jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
@@ -116,7 +116,7 @@ describe('DownloadDiagnostics', () => {
     });
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
     const [{ panel: panelModel, dashboard: dashboardModel }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
@@ -136,7 +136,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario(undefined, runner);
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     const [{ panelData }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     // Bundled as paneldata.json, which is what querydata.json (the backend's frames) gets diffed against.
@@ -163,7 +163,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario(undefined, runner);
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
     const [{ panelData }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
@@ -192,7 +192,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario(undefined, runner);
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     const [{ queries }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     expect(queries).toEqual([
@@ -213,7 +213,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario(undefined, runner);
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     const [{ queries }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     // The resolved query, not the literal $job, is what gets captured (WMD1 / #1530).
@@ -233,7 +233,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario();
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     expect(await screen.findByText('404 Not Found')).toBeInTheDocument();
   });
@@ -243,7 +243,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario(undefined, runner);
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
 
     expect(await screen.findByText('This panel has no active queries to capture.')).toBeInTheDocument();
     expect(downloadDiagnosticsForQueries).not.toHaveBeenCalled();
@@ -254,7 +254,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario(onDismiss);
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
 
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
@@ -275,7 +275,7 @@ describe('DownloadDiagnostics', () => {
     const { tab } = setupScenario(onDismiss, runner);
 
     render(<tab.Component model={tab} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Download diagnostics' }));
     // Cancel while interpolation is still in flight; the abort controller now exists (created before
     // interpolation), so this must abort it rather than no-op against a null ref.
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
