@@ -1,3 +1,4 @@
+import { useFlag } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { compact, uniq } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -96,13 +97,15 @@ interface UseNotebooksListOptions {
 }
 
 export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
+  const contentSearchEnabled = useFlag('dashboard.notebooksContentSearch', false).value;
   const [searchQuery, setSearchQuery] = useState('');
   const [createdByMe, setCreatedByMe] = useState(false);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   // Mirrors the module latch into state, so the branches below have it as a real dependency and a
   // flip re-renders on its own. A fresh mount starts from what earlier mounts already learned.
   const [usingFallback, setUsingFallback] = useState(searchUnavailable);
-  const [searchContent, setSearchContent] = useState(!contentSearchUnavailable);
+  const [contentSearchAvailable, setContentSearchAvailable] = useState(!contentSearchUnavailable);
+  const searchContent = contentSearchEnabled && contentSearchAvailable;
 
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useDebounce(() => setDebouncedSearch(searchQuery), SEARCH_DEBOUNCE_MS, [searchQuery]);
@@ -171,7 +174,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     isUnsupportedContentSearch(search.error)
   ) {
     contentSearchUnavailable = true;
-    setSearchContent(false);
+    setContentSearchAvailable(false);
   }
 
   const list = useListNotebookQuery(enabled && usingFallback ? { limit: NOTEBOOKS_PAGE_LIMIT } : skipToken);

@@ -25,6 +25,7 @@ import { NotebooksListPage } from './NotebooksListPage';
 
 // The route is registered unconditionally, so the page itself enforces this OpenFeature flag.
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
+const CONTENT_SEARCH_FLAG = 'dashboard.notebooksContentSearch';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
   useGetDisplayMappingQuery: jest.fn(),
@@ -299,7 +300,7 @@ describe('NotebooksListPage', () => {
   });
 
   it('filters the list by title or saved content through the endpoint', async () => {
-    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setTestFlags({ [NOTEBOOKS_FLAG]: true, [CONTENT_SEARCH_FLAG]: true });
     setNotebooks([
       makeHit('nb1', 'Checkout error spike'),
       makeHit('nb2', 'Q2 latency regression'),
@@ -320,6 +321,24 @@ describe('NotebooksListPage', () => {
     // The narrowing came from the request, not from re-filtering what was already on screen.
     expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
       expect.objectContaining({ where: { text: { value: 'latency', fields: ['title', 'content'] } } })
+    );
+  });
+
+  it('searches titles only before content indexing is enabled', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([
+      makeHit('nb1', 'Checkout error spike'),
+      makeHit('nb2', 'Incident notes', [], 'user:abc', 'checkout'),
+    ]);
+
+    render(<NotebooksListPage />);
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks...'), 'checkout');
+
+    expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Incident notes')).not.toBeInTheDocument());
+    expect(screen.getByText('Searching titles only on this instance.')).toBeInTheDocument();
+    expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { text: { value: 'checkout' } } })
     );
   });
 
@@ -936,7 +955,7 @@ describe('NotebooksListPage', () => {
     // results. Holding it until the results land would lose any search the reader filters again on
     // top of before that happens.
     it('reports as the filter commits, without waiting for the results', async () => {
-      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setTestFlags({ [NOTEBOOKS_FLAG]: true, [CONTENT_SEARCH_FLAG]: true });
       setNotebooks(twoNotebooks());
 
       render(<NotebooksListPage />);

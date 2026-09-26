@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -27,6 +28,7 @@ const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery)
 
 const CREATED_MS = Date.UTC(2026, 0, 1);
 const UPDATED_MS = Date.UTC(2026, 1, 1);
+const CONTENT_SEARCH_FLAG = 'dashboard.notebooksContentSearch';
 
 function makeHit(overrides: {
   name: string;
@@ -207,10 +209,12 @@ describe('useNotebooksList', () => {
     while (afterEachRestore.length) {
       afterEachRestore.pop()?.();
     }
+    act(() => setTestFlags({}));
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    setTestFlags({ [CONTENT_SEARCH_FLAG]: true });
     // The availability latch is module state by design, so each case starts from "unknown".
     __resetSearchAvailabilityForTests();
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
@@ -222,6 +226,19 @@ describe('useNotebooksList', () => {
   });
 
   describe('the request', () => {
+    it('searches titles only until content indexing is enabled', async () => {
+      setTestFlags({ [CONTENT_SEARCH_FLAG]: false });
+      const { result } = setupHook();
+
+      act(() => result.current.setSearchQuery('checkout'));
+
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).not.toHaveProperty('where.text.fields');
+      });
+      expect(result.current.searchesContent).toBe(false);
+    });
+
     it('projects only the fields the table renders', () => {
       setupHook();
 
