@@ -17,6 +17,11 @@ title: Notification template reference
 menuTitle: Template reference
 weight: 102
 refs:
+  grafana-and-legacy-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
   label-types:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#label-types
@@ -50,11 +55,11 @@ By default, Grafana provides predefined templates to format notification message
 
 You can also customize your notifications with custom templates, which are based on the [Go template language](ref:template-language).
 
-This documentation lists the data available for use in notification templates.
+This reference covers shared notification data and functions, along with additions available only to Grafana integrations. Legacy integrations use Mimir-compatible templates and data. The integration's version, not the alert's origin, determines which data and functions are available. Refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates) for the integration version mapping and differences in built-in defaults.
 
 ## Notification Data
 
-In notification templates, dot (`.`) is initialized with the following data:
+In notification templates, dot (`.`) is initialized with notification data. Legacy integrations don't provide `GroupKey` or `TruncatedAlerts`. For Grafana integrations, `GroupKey` is always set, and `TruncatedAlerts` is set only by the Webhook and Grafana IRM integrations:
 
 | Name                | Type              | Description                                                                                             |
 | ------------------- | ----------------- | ------------------------------------------------------------------------------------------------------- |
@@ -108,7 +113,7 @@ You can execute this template by passing the dot (`.`):
 | `GeneratorURL` | string        | A link to Grafana, or the source of the alert if using an external alert generator.                                                                 |
 | `Fingerprint`  | string        | A unique string that identifies the alert.                                                                                                          |
 
-Grafana-managed alerts include these additional properties:
+Grafana integrations provide these additional alert properties. Legacy integrations don't provide them, even when the alert originates in Grafana. Values depend on the alert's annotations and evaluation data, as described in the following table:
 
 | Name           | Type      | Description                                                                                                                                          |
 | -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -132,7 +137,7 @@ This example iterates over the list of firing and resolved alerts (`.Alerts`) in
   {{ .GeneratorURL }}
   {{ .Fingerprint }}
 
-  {{/* Only available for Grafana-managed alerts */}}
+  {{/* These fields require a Grafana integration, regardless of alert origin. */}}
   {{ .DashboardURL }}
   {{ .PanelURL }}
   {{ .SilenceURL }}
@@ -209,7 +214,7 @@ Functions can perform actions in templates such as transforming or formatting da
 
 Note that the [functions provided by Go's template language](ref:template-language-functions), such as `index`, `and`, `printf`, and `len`, are available, along with many others.
 
-In addition, the following functions are also available for templating notifications:
+In addition, the following functions are available in both Grafana and Legacy notification templates:
 
 | Name           | Arguments                  | Returns       | Description                                                                                                                                                                                                      |
 | -------------- | -------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -268,6 +273,8 @@ You can then use `tz` to change the timezone from UTC to local time, such as `Eu
 ```
 
 ## Namespaced Functions
+
+The following namespaced functions are available only in Grafana templates.
 
 {{< admonition type="note" >}}
 

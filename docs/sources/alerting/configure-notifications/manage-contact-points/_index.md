@@ -26,6 +26,21 @@ labels:
 title: Configure contact points
 weight: 410
 refs:
+  import-alertmanager-configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/import-alertmanager-configuration/
+  grafana-and-legacy-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
+  contact-point-fundamentals:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/contact-points/
   alertmanager:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
@@ -161,7 +176,13 @@ The ability to modify protected fields is controlled by the RBAC action `alert.n
 
 ## Supported contact point integrations
 
-Each contact point integration has its own configuration options and setup process. The following list shows the contact point integrations supported by Grafana.
+Each contact point integration has its own configuration options and setup process. The following list shows Grafana integrations. Their configuration, behavior, and features differ from integrations in Prometheus Alertmanager, even when they notify the same service.
+
+Grafana also supports imported integrations, which the UI identifies as **Legacy**. These preserve Mimir-compatible notification behavior and use Mimir-compatible templates. For how the **Legacy** label maps to API integration versions, refer to [Contact points](ref:contact-point-fundamentals).
+
+{{< admonition type="note" >}}
+Importing Alertmanager configurations is in public preview and disabled by default. For enablement requirements and prerequisites, refer to [Import Alertmanager configuration](ref:import-alertmanager-configuration).
+{{< /admonition >}}
 
 {{< column-list >}}
 
@@ -191,7 +212,7 @@ Each contact point integration has its own configuration options and setup proce
 
 {{< /column-list >}}
 
-Some of the integrations above are not supported by Prometheus Alertmanager. For the list of supported integrations, refer to the [Prometheus Alertmanager receiver settings](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings).
+If you configure an external Prometheus Alertmanager, use the [Prometheus Alertmanager receiver settings](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings) for its supported integrations and configuration. Those settings don't describe Grafana integrations.
 
 ## Allowlist notification source IP addresses
 
@@ -230,6 +251,8 @@ In contact points, you can also customize notification messages. For example, wh
 By default, notification messages include common alert details, which are usually sufficient for most cases.
 
 If necessary, you can customize the content and format of notification messages. You can create a custom notification template, which can then be applied to one or more contact points.
+
+Grafana integrations use Grafana templates. Legacy integrations use templates labeled **Legacy**, regardless of where their alerts originate. Named definitions must be available to the integration, and Grafana and Legacy templates don't share definitions. Before reusing templates with imported integrations or migrating a contact point, refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates).
 
 On the **Templates** tab under **Notification configuration**, you can view, edit, copy or delete notification templates. Refer to [manage notification templates](ref:manage-notification-templates) for instructions on selecting or creating a template for a contact point.
 
