@@ -1,6 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in progress; P7 partly addressed)
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in progress; P7 partly addressed; W items not started)
 Package: `pkg/router`
 
 ## Context
@@ -20,6 +20,18 @@ The core engine is sound and should keep its current shape:
 Most of the items below concern how the router fails, what it forwards, and how the route sources
 fit together.
 
+**Watch is in scope and must behave exactly as it does in Kubernetes.** Watches are rare compared
+with CRUD and List, but clients such as informers and plugin operators depend on them. Every item
+in this plan, and every change to the proxy path, must hold for a request that streams for 30
+minutes or more. That covers:
+
+- `?watch=1` / `?watch=true`. The deprecated `/apis/<g>/<v>/watch/...` path form is out of scope;
+- watch-list (`sendInitialEvents=true`) with its bookmark events, and `allowWatchBookmarks`;
+- `timeoutSeconds`, which the backend enforces and the router must not cut short;
+- watch over WebSocket (`Upgrade: websocket`), which Kubernetes also serves.
+
+The W section lists what currently falls short.
+
 Each item has a stable ID. Tick it here when it lands, and note the PR number.
 
 ## Suggested PR order
@@ -29,24 +41,30 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
 2. **PR B (discovery synthesis):** P5a, then P5b.
 3. **PR C:** the rest of the P items (P4, P6–P11).
 4. **Restructure:** A1–A4 as follow-ups. They are easier once PRs A and B land.
-5. **Operability (O1–O2):** can run in parallel with any of the above.
-6. **Cleanup (C1–C4):** fold into whichever PR touches the file.
+5. **PR W (watch parity):** W1, W4 and W7 first, since the breaker problem affects any watch today.
+   Then W2, W3 and W6.
+6. **Operability (O1–O2):** can run in parallel with any of the above.
+7. **Cleanup (C1–C4):** fold into whichever PR touches the file.
 
 ---
 
 ## P: Fix before a wider rollout
 
-- [ ] **P1. Proxy transports need a response-header timeout.**
+- [x] **P1. Proxy transports need a response-header timeout.**
   - **Problem:** the proxy transports are clones of `http.DefaultTransport`, which sets no
     `ResponseHeaderTimeout`. When a client disconnects, the resulting context error is excluded from
     breaker accounting (`newGroupBreaker`, `breaker.go`). A backend that accepts connections but
     never responds therefore never counts as a failure, so it never trips the breaker, and goroutines
     pile up.
   - **Fix:** set `ResponseHeaderTimeout` on the forward (`transportFor`), aggregate
-    (`newAggregateBaseTransport`) and ST fallback transports. This is safe while the router is
-    limited to CRUD and List with no Watch.
+    (`newAggregateBaseTransport`) and ST fallback transports.
+  - **Watch:** a header timeout is safe for watches, because a Kubernetes apiserver writes the
+    response headers as soon as the watch starts; only the body streams. Nothing on the proxy path
+    may bound the whole request: no `http.Client.Timeout`, no context deadline, no write timeout on
+    the router's listener. A watch ends when the backend closes it (for example at `timeoutSeconds`)
+    or the client leaves. Cover this with a watch that outlives the header timeout (W7).
 
-- [ ] **P2. Rejected redirects trip the breaker, and routing and forwarding disagree about the path.**
+- [x] **P2. Rejected redirects trip the breaker, and routing and forwarding disagree about the path.**
   - **Redirects:** `rejectBackendRedirects` (`router.go`) returns an error, which `ReverseProxy`
     turns into a 502, and the breaker counts that 502 as a backend failure. Many servers redirect
     non-canonical paths (`..`, `//`), so around six such requests from any caller can open the breaker
@@ -55,7 +73,8 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
     escaped path. `..` segments and `%2F` can reach a backend in a form that doesn't match the group
     the request was routed by.
   - **Fix:**
-    - Reject non-canonical paths with a 400 in `HandleFunc`, before routing.
+    - Reject non-canonical paths with a 400 in `HandleFunc`, before routing. The `watch` query
+      parameter must keep working.
     - Give each proxy its own `ErrorHandler` that labels the failure kind: transport error, rejected
       redirect, or stack origin mismatch. `serveThroughBreaker` then classifies by failure kind
       instead of guessing from the status code. A rejected redirect should not count as a backend
@@ -176,6 +195,95 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
     that decision explicitly.
   - Document `st_discovery_url` in the AGENTS.md settings table.
   - Rename `ProvideCloudRoutesLoaderFactory`: it returns a loader, not a factory.
+
+---
+
+## W: Watch parity with Kubernetes
+
+Found by checking each part of the proxy path against a watch that streams for 30+ minutes.
+
+- [ ] **W1. The circuit breaker holds a watch for its whole lifetime.**
+  - **Problem:** `serveThroughBreaker` (`breaker.go`) runs the entire request inside
+    `cb.Execute`, and the outcome is recorded only when the handler returns.
+    - When the breaker is half-open, gobreaker allows one trial request. A watch that starts as the
+      trial holds that slot until the stream ends, often 30 minutes or more. Every other request to
+      the group gets a 503 in the meantime, and the breaker can't close.
+    - A watch's success or failure is known once its status is written, but it's counted only when
+      the stream closes.
+    - The ST fallback's per-destination breakers (`breakerForDestination`) go through the same path.
+  - **Fix:** switch to gobreaker's two-step breaker (`NewTwoStepCircuitBreaker`, `Allow` returns a
+    `done` callback). Call `done` with the outcome as soon as the response status is written (from
+    `statusRecorder.WriteHeader`), or when the handler returns without writing one. The rest of the
+    stream no longer affects the breaker.
+  - **Test:** with the breaker half-open, an open watch must not block other requests, and a watch
+    that starts with a 200 closes the breaker immediately.
+
+- [ ] **W2. Metrics and the in-flight gauge count a watch as one long request.**
+  - **Problem:** `routerMetrics.instrument` (`metrics.go`) observes every request in the duration
+    histogram and the in-flight gauge. One watch lasting 30 minutes skews latency percentiles, and
+    idle watches look like load. Kubernetes separates long-running requests: they are excluded from
+    `apiserver_request_duration_seconds` and from max-in-flight limits, and counted in
+    `apiserver_longrunning_requests` instead.
+  - **Fix:** classify a request as long-running the way Kubernetes does: verb `watch` (the `watch`
+    query parameter) or a protocol upgrade. Exclude long-running requests from the duration histogram and the in-flight
+    gauge, count them in a `grafana_router_longrunning_requests{group}` gauge, and add a `verb`
+    label to the duration histogram. The access log still records each watch when it ends.
+
+- [ ] **W3. Watches outlive route changes, and they can block shutdown.**
+  - **Shutdown:** the standalone module server stops its listener with
+    `httpServ.Shutdown(context.Background())` (`pkg/server/instrumentation_service.go`).
+    `Shutdown` waits for active connections to go idle, which a watch never does, so stopping the
+    router can hang until every watch ends. Kubernetes ends watches during shutdown after a grace
+    period (`ShutdownWatchTerminationGracePeriod`).
+    - Fix: give `Shutdown` a deadline and then close the remaining connections, or have the router
+      cancel its in-flight watches when its service stops. Clients reconnect to another replica.
+  - **Route changes:** when a group is removed, or rebuilt because its key changed (for example
+    the target moved), watches already open keep streaming from the old handler. They continue
+    until the backend or client ends them, so a moved group can keep sending events from the old
+    target. The apiextensions apiserver closes watches when a CRD's storage changes, and clients
+    then re-list and re-watch.
+    - Fix: give each `handlerEntry` a context that reconcile cancels when it replaces or drops the
+      entry, and derive watch requests from it, so they end and clients reconnect to the new backend.
+      Ordinary requests finish normally.
+
+- [ ] **W4. Streaming depends on a proxy heuristic.** `httputil.ReverseProxy` flushes after every
+  write only when the response has no `Content-Length`, which is true of watch responses today.
+  - **Fix:** set `FlushInterval: -1` explicitly on the forward, aggregate and ST proxies, so events
+    are never buffered whatever the backend sends. Keep `captureWriter`, which buffers, out of any
+    path a watch can take. Today it is used only for discovery and OpenAPI documents.
+  - **Test:** through each proxy type, a watch event must reach the client while the stream is
+    still open (W7).
+
+- ~~**W5. The ST fallback doesn't recognise the deprecated watch path.**~~ Dropped: the deprecated
+  `/apis/<g>/<v>/watch/...` path form is out of scope.
+
+- [ ] **W6. Watch over WebSocket isn't supported yet.**
+  - **Problem:** Kubernetes serves watch over WebSocket (`Upgrade: websocket`), and kube-aggregator
+    proxies it with its upgrade-aware handler. AGENTS.md currently says "No upgrades".
+    - `httputil.ReverseProxy` can proxy an upgrade, but only if the writer it gets can hijack the
+      connection. `statusRecorder.writer()` offers `Hijack` only when the writer it wraps also has
+      `CloseNotify`. In middleware mode that is Grafana's `responsewriter.WrapForHTTP1Or2`, which
+      hasn't been checked.
+    - On an upgrade, the recorder never sees a status write, so metrics and the breaker record 200
+      rather than 101.
+  - **Fix:** support upgrades for watch in every backend type and in both modes. Record 101 as the
+    status, treat an upgraded request as long-running (W2), and change the AGENTS.md scope rule.
+    If support is deliberately left out instead, reject upgrades with a clear error and document
+    the gap; it must not fail silently.
+
+- [ ] **W7. Watch acceptance tests.** One table-driven test across every backend type (forward,
+  aggregate, ST, in-process plugin) and both modes (standalone, middleware), checking:
+  - `?watch=1` and `?watch=true`;
+  - watch-list with `sendInitialEvents=true`, including the initial-events-end bookmark;
+  - `timeoutSeconds`: the backend ends the stream, and the router doesn't end it sooner;
+  - an event reaches the client before the stream ends (W4);
+  - a client disconnect cancels the upstream request;
+  - the breaker and metrics treat the watch as in W1 and W2;
+  - shutdown and route changes end the watch (W3);
+  - WebSocket watch (W6).
+
+  Add one integration test in `pkg/tests/apis/appplugin/` that runs a client-go informer against a
+  plugin kind through the router, and checks that it syncs and receives an update.
 
 ---
 

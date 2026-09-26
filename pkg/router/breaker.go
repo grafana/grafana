@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -97,27 +96,38 @@ func isBackendFailure(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
 
+// errCallerGone marks a request whose own context ended: the caller left or
+// its deadline passed. That says nothing about the backend's health.
+var errCallerGone = errors.New("router: caller's request ended")
+
 // newGroupBreaker returns a circuit breaker with gobreaker's defaults (trips
-// after more than 5 consecutive failures, stays open 60s). Context errors are
-// excluded: a client disconnect surfaces as a 502 but says nothing about the
-// backend's health.
+// after more than 5 consecutive failures, stays open 60s). Only errCallerGone
+// is excluded. Matching context errors instead would also exclude backend
+// timeouts, such as the transport's response-header timeout, which matches
+// context.DeadlineExceeded.
 func newGroupBreaker(group string) *gobreaker.CircuitBreaker[struct{}] {
 	return gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
 		Name: group,
 		IsExcluded: func(err error) bool {
-			return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
+			return errors.Is(err, errCallerGone)
 		},
 	})
 }
 
 // breakerOutcome turns one completed proxy attempt into the error
-// cb.Execute's func should return: the request's context error if it was
-// canceled/timed out (excluded by newGroupBreaker's IsExcluded, checked
-// ahead of status so a disconnect is never miscounted as a backend
-// failure), a backend-failure error for isBackendFailure statuses, or nil.
-func breakerOutcome(req *http.Request, status int) error {
+// cb.Execute's func should return: errCallerGone if the request's own context
+// ended (checked first, so a disconnect is never counted against the
+// backend), the recorded proxy failure, a backend-failure error for
+// isBackendFailure statuses, or nil.
+func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error {
 	if err := req.Context().Err(); err != nil {
-		return err
+		return fmt.Errorf("%w: %w", errCallerGone, err)
+	}
+	if failure.err != nil {
+		if errors.Is(failure.err, errBackendRedirect) {
+			return nil // the backend answered; the router refused to relay it
+		}
+		return fmt.Errorf("router: proxy failed: %w", failure.err)
 	}
 	if isBackendFailure(status) {
 		return fmt.Errorf("router: backend returned status %d", status)
@@ -139,9 +149,10 @@ func serveThroughBreaker(cb *gobreaker.CircuitBreaker[struct{}], group string, h
 	rec, req, endSpan := traceRouterRequest(w, req, "router.backend", group)
 	defer endSpan()
 	w = rec.writer()
+	req, failure := withProxyFailure(req)
 	_, err := cb.Execute(func() (struct{}, error) {
 		h.ServeHTTP(w, req)
-		return struct{}{}, breakerOutcome(req, rec.status)
+		return struct{}{}, breakerOutcome(req, rec.status, failure)
 	})
 	if errors.Is(err, gobreaker.ErrOpenState) || errors.Is(err, gobreaker.ErrTooManyRequests) {
 		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
