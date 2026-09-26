@@ -14,6 +14,7 @@ labels:
 menuTitle: Provision
 title: Provision the Tempo data source
 weight: 800
+review_date: 2026-09-10
 aliases:
   - /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#provision-the-data-source
 ---
@@ -43,7 +44,7 @@ To make changes, you can either:
 ## Example file
 
 This example provisioning YAML file sets up the equivalents of the options available in the Tempo data source UI.
-Replace `grafana-pyroscope-datasource` with the actual UID of your Pyroscope datasource, and verify the other `datasource Uid` values match what's actually provisioned.
+Replace `grafana-pyroscope-datasource` with the actual UID of your Pyroscope data source, and verify the other `datasource Uid` values match what's actually provisioned.
 
 ```yaml
 apiVersion: 1
