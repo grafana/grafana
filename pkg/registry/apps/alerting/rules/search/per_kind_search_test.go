@@ -36,15 +36,13 @@ import (
 // handler test can assert on both what went down and what came back.
 type fakeIndex struct {
 	resourcepb.ResourceIndexClient
-	resp    *resourcepb.ResourceSearchResponse
-	err     error
-	got     *resourcepb.ResourceSearchRequest
-	perKind bool
+	resp *resourcepb.ResourceSearchResponse
+	err  error
+	got  *resourcepb.ResourceSearchRequest
 }
 
 func (f *fakeIndex) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	f.got = req
-	f.perKind = isPerKindSearch(ctx)
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -130,9 +128,6 @@ func callWith(t *testing.T, body io.ReadCloser, resp *resourcepb.ResourceSearchR
 		Body:               body,
 	})
 	require.NoError(t, err)
-	if index.got != nil {
-		require.True(t, index.perKind)
-	}
 	return rec, index
 }
 

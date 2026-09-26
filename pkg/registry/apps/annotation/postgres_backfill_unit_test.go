@@ -35,6 +35,11 @@ func TestAnnotationArgs_EmptyToNull(t *testing.T) {
 	require.Nil(t, args["legacy_id"], "zero LegacyID must bind NULL")
 }
 
+func TestAnnotationArgs_PointTimeEndDefaultsToTime(t *testing.T) {
+	args := annotationArgs(migrator.BackfillRecord{Namespace: "ns", Name: "n", Time: 100})
+	require.Equal(t, int64(100), args["time_end"], "a point must bind time_end = time")
+}
+
 func TestUpdateMigratedSQL(t *testing.T) {
 	setClause, whereClause, found := strings.Cut(updateMigratedSQL, " WHERE ")
 	require.True(t, found, "update must have a WHERE clause")

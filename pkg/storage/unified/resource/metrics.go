@@ -59,12 +59,12 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 		}, []string{"resource", "served_by"}),
 		RequestDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "storage_server_grpc_request_duration_seconds",
-			Help:                            "Time (in seconds) spent serving unified storage gRPC requests, labeled by group and resource.",
+			Help:                            "Time (in seconds) spent serving unified storage gRPC requests, labeled by method, group, resource, status, and List execution path.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"method", "group", "resource", "status_code"}),
+		}, []string{"method", "group", "resource", "status_code", "list_path"}),
 		DegradedOperations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "storage_server_degraded_operations_total",
 			Help: "Operations that proceeded despite a failed external dependency " +
