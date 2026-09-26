@@ -48,3 +48,26 @@ func TestProvidePluginInstanceConfigMarketplaceLicenseDirectory(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, cfg.MarketplaceLicenseDirectory, pluginCfg.MarketplaceLicenseDirectory)
 }
+
+func TestProvidePluginInstanceConfigNamespace(t *testing.T) {
+	t.Run("on-prem default org", func(t *testing.T) {
+		cfg := &setting.Cfg{Raw: ini.Empty()}
+		pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.Equal(t, "default", pluginCfg.Namespace)
+	})
+
+	t.Run("on-prem non-default org", func(t *testing.T) {
+		cfg := &setting.Cfg{Raw: ini.Empty(), AutoAssignOrg: true, AutoAssignOrgId: 7}
+		pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.Equal(t, "org-7", pluginCfg.Namespace)
+	})
+
+	t.Run("cloud stack", func(t *testing.T) {
+		cfg := &setting.Cfg{Raw: ini.Empty(), StackID: "6481"}
+		pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.Equal(t, "stacks-6481", pluginCfg.Namespace)
+	})
+}
