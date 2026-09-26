@@ -3772,6 +3772,58 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/repositories/{name}/resources/resolve": {
+      "post": {
+        "tags": [
+          "Provisioning",
+          "Repository"
+        ],
+        "description": "Resolve exact repository paths to synced resources the caller can read. Duplicate paths are returned once in first-occurrence order. Unavailable paths have no resource.",
+        "operationId": "resolveRepositoryResources",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "description": "repository name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceResolveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Resource resolution results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceResolveResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/repositories/{name}/status": {
       "get": {
         "tags": [
@@ -6149,6 +6201,57 @@
               "gitlab",
               "local"
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceResolveRequest": {
+        "description": "ResourceResolveRequest resolves exact paths relative to the configured repository root.",
+        "type": "object",
+        "required": [
+          "paths"
+        ],
+        "properties": {
+          "paths": {
+            "description": "Paths must contain between 1 and 100 non-root resource paths. Folder paths accept a trailing slash.",
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceResolveResponse": {
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "results": {
+            "description": "Results preserve the first occurrence of each requested path.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceResolveResult"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceResolveResult": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "description": "Resource is omitted when the path cannot be resolved to one readable synced resource.",
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceListItem"
           }
         }
       },

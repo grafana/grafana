@@ -921,6 +921,39 @@ func (ResourceListItem) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceListItem"
 }
 
+// ResourceResolveRequest resolves exact paths relative to the configured repository root.
+type ResourceResolveRequest struct {
+	// Paths must contain between 1 and 100 non-root resource paths. Folder paths accept a trailing slash.
+	// +k8s:validation:minItems=1
+	// +k8s:validation:maxItems=100
+	// +listType=atomic
+	Paths []string `json:"paths"`
+}
+
+func (ResourceResolveRequest) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceResolveRequest"
+}
+
+type ResourceResolveResponse struct {
+	// Results preserve the first occurrence of each requested path.
+	// +listType=atomic
+	Results []ResourceResolveResult `json:"results"`
+}
+
+func (ResourceResolveResponse) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceResolveResponse"
+}
+
+type ResourceResolveResult struct {
+	Path string `json:"path"`
+	// Resource is omitted when the path cannot be resolved to one readable synced resource.
+	Resource *ResourceListItem `json:"resource,omitempty"`
+}
+
+func (ResourceResolveResult) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceResolveResult"
+}
+
 // Information we can get just from the file listing
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ResourceStats struct {

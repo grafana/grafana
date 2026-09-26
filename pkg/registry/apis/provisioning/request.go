@@ -72,7 +72,7 @@ func unmarshalJSON(r *http.Request, maxSize int64, v interface{}) error {
 		return fmt.Errorf("error decoding JSON: %w", err)
 	}
 
-	if decoder.More() {
+	if err := decoder.Decode(new(any)); err != io.EOF {
 		return fmt.Errorf("multiple JSON objects not allowed")
 	}
 

@@ -497,7 +497,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //
 // Repositories:
 //   - CRUD: repositories:create/read/write/delete
-//   - Subresources: files (any auth), refs (editor), resources/history/status (admin)
+//   - Subresources: files (handler authorization), refs (editor), history/status (admin)
+//   - Resources: full listing (admin), POST resources/resolve (handler authorization)
 //   - Test: repositories:write
 //   - Jobs subresource: jobs:create/read
 //
@@ -626,7 +627,28 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Read-only subresources: resources, history, status (admin only).
+	// Resources subresource: admin full listing and resource-level authorization for path resolution.
+	//
+	// GET resources exposes metadata for the entire repository, so it requires
+	// repositories:write (VerbUpdate), scoped to the repository Name.
+	// POST resources/resolve delegates authorization to its handler, where the requested
+	// paths and current resource metadata are available. The handler checks each resource's
+	// read permissions, allowing Viewers and Editors to resolve links to resources they can
+	// access without granting access to the full repository listing.
+	case "resources":
+		// Kubernetes represents POST as "create"; the resolver checks resource read permissions in its handler.
+		if a.GetVerb() == apiutils.VerbCreate && strings.HasSuffix(a.GetPath(), "/resources/resolve") {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbUpdate,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	// Read-only subresources: history, status (admin only).
 	//
 	// These expose repository management/inspection views and must be admin-only. We gate
 	// on repositories:write (VerbUpdate) - an admin-only action - rather than
@@ -636,7 +658,7 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	// can manage it"). We keep the repositories resource with the repository Name rather
 	// than proxying through an unrelated resource (e.g. stats), so this remains correct if
 	// access is later scoped to individual repositories.
-	case "resources", "history", "status":
+	case "history", "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
 			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
@@ -942,7 +964,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b.resourceLister, b.clients, b.access), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled), 30*time.Second)
 
@@ -1321,6 +1343,8 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	if b.gv.Version == "v1beta1" {
 		compBase = strings.Replace(compBase, ".v0alpha1.", ".v1beta1.", 1)
 	}
+
+	b.postProcessResourcesOpenAPI(oas, repoprefix, compBase)
 
 	// TODO: Remove this endpoint when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
