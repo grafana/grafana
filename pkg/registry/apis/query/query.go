@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -61,8 +62,15 @@ func (mcs *MyCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID
 	}, nil
 }
 
+func logOpenFeatureContext(ctx context.Context, log log.Logger) {
+	attrs := openfeature.TransactionContext(ctx).Attributes()
+	log.Debug("openfeature-context", "attrs", fmt.Sprintf("%#v", attrs))
+}
+
 func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.Request) {
 	w.Header().Set("X-Ds-Querier", b.instanceProvider.GetMode())
+
+	logOpenFeatureContext(httpreq.Context(), b.log)
 
 	ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 	defer span.End()
