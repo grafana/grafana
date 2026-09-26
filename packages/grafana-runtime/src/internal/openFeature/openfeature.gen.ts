@@ -90,6 +90,8 @@ export const FlagKeys = {
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
+  /** Enables using the Config From Query Results transformation's Dynamic Field Name option */
+  GrafanaConfigFromQueryDynamicName: "grafana.configFromQueryDynamicName",
   /** Enables custom dashboard templates for enterprise */
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
@@ -672,6 +674,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.cmdkHybridSearch", false, options).value;
+};
+
+/**
+ * Enables using the Config From Query Results transformation's Dynamic Field Name option
+ *
+ * **Details:**
+ * - flag key: `grafana.configFromQueryDynamicName`
+ * - default value: `false`
+ */
+export const useFlagGrafanaConfigFromQueryDynamicName = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.configFromQueryDynamicName", false, options).value;
 };
 
 /**

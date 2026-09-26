@@ -2362,6 +2362,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.configFromQueryDynamicName",
+        "resourceVersion": "1789684178225",
+        "creationTimestamp": "2026-09-17T22:29:38Z"
+      },
+      "spec": {
+        "description": "Enables using the Config From Query Results transformation's Dynamic Field Name option",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.correlationsSkipLegacy",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

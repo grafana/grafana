@@ -18,10 +18,16 @@ import {
   getFieldConfigFromFrame,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
+import { extractConfigFromQueryDynamic } from './configFromQueryDynamic';
+
 export interface ConfigFromQueryTransformOptions {
   configRefId?: string;
   mappings: FieldToConfigMapping[];
   applyTo?: MatcherConfig;
+}
+
+export enum CustomCFQMatchers {
+  dynamicFieldName = 'dynamic_field_name',
 }
 
 export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions, data: DataFrame[]) {
@@ -38,12 +44,18 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     return data;
   }
 
+  const mappings = options.mappings ?? [];
+
+  if (options.applyTo?.id === CustomCFQMatchers.dynamicFieldName) {
+    return extractConfigFromQueryDynamic(options, data, configFrame, mappings);
+  }
+
   const reducedConfigFrame: DataFrame = {
     fields: [],
     length: 1,
   };
 
-  const mappingResult = evaluateFieldMappings(configFrame, options.mappings ?? [], false);
+  const mappingResult = evaluateFieldMappings(configFrame, mappings, false);
 
   // reduce config frame
   for (const field of configFrame.fields) {

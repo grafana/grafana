@@ -4,10 +4,12 @@ import { mockTransformationsRegistry } from '@grafana/data/internal';
 import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 import {
+  CustomCFQMatchers,
   extractConfigFromQuery,
   getConfigFromDataTransformer,
   type ConfigFromQueryTransformOptions,
 } from './configFromQuery';
+import * as importDynamic from './configFromQueryDynamic';
 
 describe('config from data', () => {
   const config = toDataFrame({
@@ -168,6 +170,22 @@ describe('config from data', () => {
     const results = extractConfigFromQuery(options, [config, seriesA]);
     expect(results.length).toBe(1);
     expect(results[0].fields[1].config.displayName).toBe('first-name');
+  });
+
+  it('Should delegate to dynamic handler if the matcher is dynamic', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [],
+      applyTo: {
+        id: CustomCFQMatchers.dynamicFieldName,
+      },
+    };
+
+    const mock = jest.spyOn(importDynamic, 'extractConfigFromQueryDynamic');
+    mock.mockReturnValue([]);
+
+    extractConfigFromQuery(options, [config, seriesA]);
+    expect(mock).toHaveBeenCalled();
   });
 });
 
