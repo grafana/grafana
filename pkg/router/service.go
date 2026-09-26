@@ -106,6 +106,16 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 	next.ServeHTTP(w, req)
 }
 
+// DebugHandler returns the router's debug page for the embedded API server to
+// mount, in middleware mode only. The standalone target mounts it on its own
+// listener in RegisterTargetRoutes.
+func (s *Service) DebugHandler() (string, http.Handler) {
+	if !s.middleware || s.standalone {
+		return "", nil
+	}
+	return debugPath, http.HandlerFunc(s.router.serveDebug)
+}
+
 // Run adapts Service to the full server's background-service lifecycle.
 func (s *Service) Run(ctx context.Context) error {
 	if err := s.StartAsync(ctx); err != nil {

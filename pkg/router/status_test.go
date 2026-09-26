@@ -156,3 +156,31 @@ func TestDebugEndpoint(t *testing.T) {
 	httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, debugPath, nil))
 	require.Equal(t, http.StatusMethodNotAllowed, recorder.Code, "the endpoint is read-only")
 }
+
+func TestDebugHandlerOnlyInMiddlewareMode(t *testing.T) {
+	for _, tc := range []struct {
+		name                   string
+		middleware, standalone bool
+		mounted                bool
+	}{
+		{name: "middleware", middleware: true, mounted: true},
+		{name: "standalone target (mounted on its own listener instead)", standalone: true},
+		{name: "standalone target with the middleware flag", middleware: true, standalone: true},
+		{name: "disabled"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, _, _ := newStatusService(t)
+			svc.middleware, svc.standalone = tc.middleware, tc.standalone
+			path, handler := svc.DebugHandler()
+			if !tc.mounted {
+				require.Nil(t, handler)
+				return
+			}
+			require.Equal(t, debugPath, path)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.Contains(t, recorder.Body.String(), `"group": "first.ext.grafana.app"`)
+		})
+	}
+}
