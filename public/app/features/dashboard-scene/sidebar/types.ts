@@ -36,6 +36,7 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   selectObject(obj: SceneObject, options?: ElementSelectionOnSelectOptions): void;
   openPane(openPane: DashboardSidebarPane): void;
   closePane(): void;
+  refreshAfterRebuild(): void;
   getSelectedObject(key?: string): SceneObject | undefined;
   undoAction(): void;
   redoAction(): void;
