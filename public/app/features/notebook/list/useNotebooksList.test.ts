@@ -135,6 +135,18 @@ function setSearchRouteMissing(status = 404) {
   setSearch([], { error: { status, data: { message: 'not found' }, config: { url: '' } } });
 }
 
+function unsupportedContentError(field = 'where.text.fields[1]') {
+  return {
+    status: 422,
+    data: {
+      details: {
+        causes: [{ reason: 'FieldValueInvalid', field, message: 'Invalid value: "content": unknown field' }],
+      },
+    },
+    config: { url: '' },
+  };
+}
+
 function makeNotebook(
   overrides: {
     name: string;
@@ -233,7 +245,7 @@ describe('useNotebooksList', () => {
       expect(lastSearchArg()).not.toHaveProperty('sort');
     });
 
-    it('sends a bare text leaf when only a title is searched', async () => {
+    it('searches titles and saved content', async () => {
       const { result } = setupHook();
 
       act(() => {
@@ -241,7 +253,7 @@ describe('useNotebooksList', () => {
       });
 
       await waitFor(() => {
-        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout', fields: ['title', 'content'] } } });
       });
     });
 
@@ -253,8 +265,84 @@ describe('useNotebooksList', () => {
       });
 
       await waitFor(() => {
-        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout', fields: ['title', 'content'] } } });
       });
+    });
+
+    it('falls back to title search if the server does not support content', async () => {
+      const { result, rerender } = setupHook();
+
+      act(() => result.current.setSearchQuery('checkout'));
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { fields: ['title', 'content'] } } });
+      });
+
+      setSearch([], { error: unsupportedContentError() });
+      rerender();
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).not.toHaveProperty('where.text.fields');
+      });
+      expect(mockUseListNotebookQuery).toHaveBeenLastCalledWith(skipToken);
+
+      setSearch([makeHit({ name: 'nb1', title: 'Checkout' })]);
+      rerender();
+      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+    });
+
+    it('falls back when a tag filter nests the unsupported content field', async () => {
+      const { result, rerender } = setupHook();
+
+      act(() => {
+        result.current.setSearchQuery('checkout');
+        result.current.addTagFilter('ops');
+      });
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [
+              { text: { fields: ['title', 'content'] } },
+              { filter: { field: 'tags', operator: 'In', values: ['ops'] } },
+            ],
+          },
+        });
+      });
+
+      setSearch([], { error: unsupportedContentError('where.and[0].text.fields[1]') });
+      rerender();
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [{ text: { value: 'checkout' } }, { filter: { field: 'tags', operator: 'In', values: ['ops'] } }],
+          },
+        });
+        expect(lastSearchArg()).not.toHaveProperty('where.and[0].text.fields');
+      });
+    });
+
+    it('does not hide unrelated search validation errors', async () => {
+      const { result, rerender } = setupHook();
+
+      act(() => result.current.setSearchQuery('checkout'));
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { fields: ['title', 'content'] } } });
+      });
+
+      const error = {
+        status: 422,
+        data: {
+          details: {
+            causes: [{ reason: 'FieldValueInvalid', field: 'where.text.fields[0]', message: 'Invalid query' }],
+          },
+        },
+        config: { url: '' },
+      };
+      setSearch([], { error });
+      rerender();
+
+      expect(lastSearchArg()).toMatchObject({ where: { text: { fields: ['title', 'content'] } } });
+      expect(result.current.error).toBe(error);
+      expect(result.current.searchesContent).toBe(true);
     });
 
     it('sends a bare filter leaf when only the author is filtered', async () => {

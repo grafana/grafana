@@ -56,10 +56,10 @@ const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
 const mockListFiltered = jest.mocked(NotebookAnalytics.listFiltered);
 
-function makeHit(name: string, title: string, tags: string[] = [], createdBy = 'user:abc'): ResultItem {
+function makeHit(name: string, title: string, tags: string[] = [], createdBy = 'user:abc', content = ''): ResultItem {
   return {
     resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name },
-    fields: { title, tags, createdBy, created: Date.UTC(2026, 0, 1), updated: Date.UTC(2026, 1, 1) },
+    fields: { title, tags, createdBy, content, created: Date.UTC(2026, 0, 1), updated: Date.UTC(2026, 1, 1) },
   };
 }
 
@@ -142,17 +142,19 @@ function setNotebooks(
     }
 
     const leaves = leavesOf(query.where);
-    const needle = leaves.find((leaf) => leaf.text)?.text?.value.toLowerCase();
+    const text = leaves.find((leaf) => leaf.text)?.text;
+    const needle = text?.value.toLowerCase();
     const authors = leaves.find((leaf) => leaf.filter?.field === 'createdBy')?.filter?.values;
     // A leaf per tag, so every one of them has to match — the same narrowing the endpoint does.
     const tags = leaves.filter((leaf) => leaf.filter?.field === 'tags').flatMap((leaf) => leaf.filter?.values ?? []);
 
     const matched = items.filter((item) => {
       const title = String(item.fields?.title ?? '').toLowerCase();
+      const content = String(item.fields?.content ?? '').toLowerCase();
       const createdBy = String(item.fields?.createdBy ?? '');
       const itemTags = Array.isArray(item.fields?.tags) ? item.fields.tags : [];
       return (
-        (!needle || title.includes(needle)) &&
+        (!needle || title.includes(needle) || (text?.fields?.includes('content') && content.includes(needle))) &&
         (!authors || authors.includes(createdBy)) &&
         tags.every((tag) => itemTags.includes(tag))
       );
@@ -296,22 +298,28 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
   });
 
-  it('filters the list by title through the endpoint', async () => {
+  it('filters the list by title or saved content through the endpoint', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setNotebooks([makeHit('nb1', 'Checkout error spike'), makeHit('nb2', 'Q2 latency regression')]);
+    setNotebooks([
+      makeHit('nb1', 'Checkout error spike'),
+      makeHit('nb2', 'Q2 latency regression'),
+      makeHit('nb3', 'Incident notes', [], 'user:abc', 'Latency was caused by the deploy'),
+    ]);
 
     render(<NotebooksListPage />);
 
-    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks...'), 'latency');
 
     await screen.findByText('Q2 latency regression');
     await waitFor(() => {
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
     expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
+    expect(screen.getByText('Incident notes')).toBeInTheDocument();
+    expect(screen.getByText('Matches may be in titles, markdown, or code.')).toBeInTheDocument();
     // The narrowing came from the request, not from re-filtering what was already on screen.
     expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
-      expect.objectContaining({ where: { text: { value: 'latency' } } })
+      expect.objectContaining({ where: { text: { value: 'latency', fields: ['title', 'content'] } } })
     );
   });
 
@@ -427,7 +435,7 @@ describe('NotebooksListPage', () => {
 
     expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
 
-    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'zzz');
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks...'), 'zzz');
 
     // Not the create call-to-action: notebooks exist, they just did not match.
     expect(await screen.findByText('No notebooks found')).toBeInTheDocument();
@@ -464,7 +472,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Search notebooks by title...')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Search notebooks...')).not.toBeInTheDocument();
     expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
   });
 
@@ -476,7 +484,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    const input = await screen.findByPlaceholderText('Search notebooks by title...');
+    const input = await screen.findByPlaceholderText('Search notebooks...');
     await userEvent.type(input, 'zzz');
 
     expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
@@ -550,7 +558,7 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByText(`${ROWS_PER_PAGE * 3} notebooks`)).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: '3' }));
 
-    await userEvent.type(screen.getByPlaceholderText('Search notebooks by title...'), 'needle');
+    await userEvent.type(screen.getByPlaceholderText('Search notebooks...'), 'needle');
 
     expect(await screen.findByText('1 notebook')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'needle' })).toBeInTheDocument();
@@ -601,7 +609,7 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByText('Some notebooks could not be loaded')).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
     // The filters stay usable, and the fatal alert does not appear.
-    expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search notebooks...')).toBeInTheDocument();
     expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
   });
 
@@ -621,7 +629,7 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByRole('status', { name: 'Loading notebooks' })).toBeInTheDocument();
     expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
     // The filters stay put, caret and all.
-    expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search notebooks...')).toBeInTheDocument();
   });
 
   // The counts come from the same absent data as the rows, so leaving them rendered would claim
@@ -668,7 +676,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks...'), 'latency');
 
     expect(await screen.findByRole('link', { name: 'Q2 latency regression' })).toBeInTheDocument();
 
@@ -695,7 +703,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks...'), 'latency');
 
     expect(await screen.findByRole('link', { name: 'Q2 latency regression' })).toBeInTheDocument();
 
@@ -750,7 +758,7 @@ describe('NotebooksListPage', () => {
 
       render(<NotebooksListPage />);
 
-      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks...'), 'latency');
 
       await waitFor(() =>
         expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
@@ -805,7 +813,7 @@ describe('NotebooksListPage', () => {
 
       // A change that does report, so the silence above has something arriving to measure it
       // against rather than a wait that was already over.
-      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks...'), 'latency');
 
       await waitFor(() =>
         expect(mockListFiltered).toHaveBeenCalledWith('search', {
@@ -890,7 +898,7 @@ describe('NotebooksListPage', () => {
 
       render(<NotebooksListPage />);
 
-      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      const searchBox = await screen.findByPlaceholderText('Search notebooks...');
       await userEvent.type(searchBox, 'latency');
       await waitFor(() => expect(mockListFiltered).toHaveBeenCalledTimes(1));
 
@@ -911,7 +919,7 @@ describe('NotebooksListPage', () => {
 
       render(<NotebooksListPage />);
 
-      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      const searchBox = await screen.findByPlaceholderText('Search notebooks...');
       await userEvent.type(searchBox, 'latency');
       await waitFor(() =>
         expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
@@ -936,13 +944,13 @@ describe('NotebooksListPage', () => {
 
       // Nothing lands for the new filters from here on.
       setNotebooks(twoNotebooks(), { isReloading: true });
-      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks...'), 'latency');
 
       // The request carrying the new text is what says the debounce committed. The skeleton alone
       // would not: it appears on the first keystroke, before the debounce fires.
       await waitFor(() =>
         expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
-          expect.objectContaining({ where: { text: { value: 'latency' } } })
+          expect.objectContaining({ where: { text: { value: 'latency', fields: ['title', 'content'] } } })
         )
       );
 
@@ -960,7 +968,7 @@ describe('NotebooksListPage', () => {
 
       render(<NotebooksListPage />);
 
-      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks...'), 'latency');
 
       expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
       expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });
