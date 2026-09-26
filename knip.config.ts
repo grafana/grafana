@@ -42,6 +42,8 @@ const config: KnipConfig = {
   workspaces: {
     '.': {
       ignoreDependencies: [
+        // shared Rollup config lives in packages/, outside the root project analyzed by knip
+        ...packageIgnoreDeps,
         // used by yarn test:ci
         'jest-junit',
 
@@ -127,14 +129,12 @@ const config: KnipConfig = {
       ignoreDependencies: packageIgnoreDeps,
       jest: true,
     },
-    // `grafana-alerting` has stories that are included in `grafana-ui`'s storybook
-    // this means:
-    //   - we need to manually enable the storybook plugin since there's no storybook dep in package.json
-    //   - its stories/mdx docs reference dependencies that are managed by `grafana-ui`
+    // `grafana-alerting` has stories that are included in `grafana-ui`'s storybook,
+    // so we need to manually enable the storybook plugin since there's no storybook dep in package.json
     // TODO `grafana-alerting` should probably have its own storybook (like `grafana-flamegraph`)
     'packages/grafana-alerting': {
       entry: defaultEntries,
-      ignoreDependencies: [...packageIgnoreDeps, '@storybook/addon-docs', '@storybook/react'],
+      ignoreDependencies: packageIgnoreDeps,
       storybook: true,
     },
     'packages/grafana-api-clients': {
