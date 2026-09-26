@@ -2,6 +2,7 @@ package status
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -163,6 +164,29 @@ func TestSyncer_sync_writesBothKindsAndDedupes(t *testing.T) {
 	require.NoError(t, s.sync(context.Background()))
 	require.Equal(t, 1, gen.alert.updates)
 	require.Equal(t, 1, gen.recording.updates)
+}
+
+func TestSyncer_sync_totalsUseSpecExecErrState(t *testing.T) {
+	// defaultRule has no execErrState, which defaults to Error: an Error-state
+	// instance is counted once. okRule's execErrState Ok maps an errored instance
+	// to Normal, so it is counted as both healthy and error.
+	defaultRule := alertRuleObj("default")
+	okRule := alertRuleObj("ok")
+	okRule.Spec.ExecErrState = model.AlertRuleExecErrStateOk
+	gen := &fakeGenerator{
+		alert:     newFakeRuleClient(&model.AlertRuleList{Items: []model.AlertRule{defaultRule, okRule}}),
+		recording: newFakeRuleClient(&model.RecordingRuleList{}),
+	}
+	boom := errors.New("boom")
+	states := &fakeStates{byUID: map[string][]*state.State{
+		"default": {{State: eval.Error, Error: boom}},
+		"ok":      {{State: eval.Normal, Error: boom}},
+	}}
+	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, states, &fakeStatus{}, nil)
+
+	require.NoError(t, s.sync(context.Background()))
+	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{Error: 1}, gen.alert.updated["default"].(*model.AlertRule).Status.Totals)
+	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{Healthy: 1, Error: 1}, gen.alert.updated["ok"].(*model.AlertRule).Status.Totals)
 }
 
 func TestSyncer_sync_skipsDisabledOrgs(t *testing.T) {

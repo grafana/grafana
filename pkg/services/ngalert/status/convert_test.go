@@ -23,14 +23,16 @@ func TestToAlertRuleStatus(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		states     []*state.State
-		paused     bool
-		wantState  model.AlertRuleAlertRuleState
-		wantReason model.AlertRuleAlertRuleStateReason
-		wantHealth model.AlertRuleAlertRuleHealth
-		wantError  string
-		wantEval   bool
+		name         string
+		states       []*state.State
+		execErrState ngmodels.ExecutionErrorState
+		paused       bool
+		wantState    model.AlertRuleAlertRuleState
+		wantReason   model.AlertRuleAlertRuleStateReason
+		wantHealth   model.AlertRuleAlertRuleHealth
+		wantError    string
+		wantEval     bool
+		wantTotals   *model.AlertRuleAlertRuleInstanceTotals
 	}{
 		{
 			name:       "firing",
@@ -39,6 +41,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
 			wantHealth: model.AlertRuleAlertRuleHealthOK,
 			wantEval:   true,
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Firing: 1},
 		},
 		{
 			name:       "pending",
@@ -47,6 +50,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
 			wantHealth: model.AlertRuleAlertRuleHealthOK,
 			wantEval:   true,
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Pending: 1},
 		},
 		{
 			name:       "normal is healthy",
@@ -55,15 +59,18 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
 			wantHealth: model.AlertRuleAlertRuleHealthOK,
 			wantEval:   true,
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Healthy: 1},
 		},
 		{
-			name:       "error keeps healthy state with error health",
-			states:     []*state.State{withEval(&state.State{State: eval.Error, Error: errors.New("boom")})},
-			wantState:  model.AlertRuleAlertRuleStateHealthy,
-			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
-			wantHealth: model.AlertRuleAlertRuleHealthError,
-			wantError:  "boom",
-			wantEval:   true,
+			name:         "error keeps healthy state with error health",
+			execErrState: ngmodels.ErrorErrState,
+			states:       []*state.State{withEval(&state.State{State: eval.Error, Error: errors.New("boom")})},
+			wantState:    model.AlertRuleAlertRuleStateHealthy,
+			wantReason:   model.AlertRuleAlertRuleStateReasonEvaluated,
+			wantHealth:   model.AlertRuleAlertRuleHealthError,
+			wantError:    "boom",
+			wantEval:     true,
+			wantTotals:   &model.AlertRuleAlertRuleInstanceTotals{Error: 1},
 		},
 		{
 			name:       "nodata keeps healthy state with nodata health",
@@ -72,6 +79,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
 			wantHealth: model.AlertRuleAlertRuleHealthNoData,
 			wantEval:   true,
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Nodata: 1},
 		},
 		{
 			name:       "keep-last reason (comma-joined) maps to KeepLast",
@@ -80,6 +88,21 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonKeepLast,
 			wantHealth: model.AlertRuleAlertRuleHealthOK,
 			wantEval:   true,
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Firing: 1},
+		},
+		{
+			name: "exec error mapped to another state is also counted as error",
+			states: []*state.State{
+				withEval(&state.State{State: eval.Alerting, Error: errors.New("boom")}),
+				withEval(&state.State{State: eval.Normal}),
+			},
+			execErrState: ngmodels.AlertingErrState,
+			wantState:    model.AlertRuleAlertRuleStateFiring,
+			wantReason:   model.AlertRuleAlertRuleStateReasonEvaluated,
+			wantHealth:   model.AlertRuleAlertRuleHealthError,
+			wantError:    "boom",
+			wantEval:     true,
+			wantTotals:   &model.AlertRuleAlertRuleInstanceTotals{Firing: 1, Healthy: 1, Error: 1},
 		},
 		{
 			name:       "paused overrides health",
@@ -97,16 +120,18 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
 			wantHealth: model.AlertRuleAlertRuleHealthUnknown,
 			wantEval:   false,
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := toAlertRuleStatus(model.AlertRuleStatus{}, tc.states, tc.paused)
+			got := toAlertRuleStatus(model.AlertRuleStatus{}, tc.states, tc.execErrState, tc.paused)
 
 			require.Equal(t, tc.wantState, *got.State)
 			require.Equal(t, tc.wantReason, *got.StateReason)
 			require.Equal(t, tc.wantHealth, *got.Health)
+			require.Equal(t, tc.wantTotals, got.Totals)
 
 			if tc.wantError != "" {
 				require.NotNil(t, got.LastError)
@@ -200,17 +225,19 @@ func TestToAlertRuleStatus_preservesBaseAndClearsStaleFields(t *testing.T) {
 		State:            new(model.AlertRuleAlertRuleStateFiring),
 		Health:           new(model.AlertRuleAlertRuleHealthError),
 		LastError:        &staleErr,
+		Totals:           &model.AlertRuleAlertRuleInstanceTotals{Firing: 3},
 		OperatorStates:   map[string]model.AlertRulestatusOperatorState{"other-op": {}},
 		AdditionalFields: map[string]any{"foo": "bar"},
 	}
 
 	// No states and no error now: every syncer-owned field must reflect the new
 	// computation, not the stale base value.
-	got := toAlertRuleStatus(base, nil, false)
+	got := toAlertRuleStatus(base, nil, ngmodels.ErrorErrState, false)
 
 	require.Equal(t, model.AlertRuleAlertRuleStateInactive, *got.State)
 	require.Equal(t, model.AlertRuleAlertRuleHealthUnknown, *got.Health)
 	require.Nil(t, got.LastError, "stale LastError must be cleared")
+	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{}, got.Totals, "stale Totals must be recomputed")
 
 	// Fields owned by other writers are preserved from base.
 	require.Contains(t, got.OperatorStates, "other-op")
@@ -232,4 +259,24 @@ func TestToRecordingRuleStatus_preservesBaseAndClearsStaleFields(t *testing.T) {
 	require.Nil(t, got.LastError, "stale LastError must be cleared")
 	require.Contains(t, got.OperatorStates, "other-op")
 	require.Equal(t, "bar", got.AdditionalFields["foo"])
+}
+
+func TestAlertRuleTotalsFromMap(t *testing.T) {
+	got := AlertRuleTotalsFromMap(map[string]int64{
+		"normal":     1,
+		"alerting":   2,
+		"pending":    3,
+		"recovering": 4,
+		"nodata":     5,
+		"error":      6,
+		"unknown":    7,
+	})
+	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{
+		Healthy:    1,
+		Firing:     2,
+		Pending:    3,
+		Recovering: 4,
+		Nodata:     5,
+		Error:      6,
+	}, got)
 }

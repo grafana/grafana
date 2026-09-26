@@ -434,6 +434,17 @@ func RuleStateToAPIString(s eval.State) string {
 	}
 }
 
+// AddInstanceToTotals counts an alert instance into totals, keyed by its lowercased
+// state. An instance whose evaluation errored but was mapped to another state via
+// execErrState is also counted under "error", so the counts can overlap.
+func AddInstanceToTotals(totals map[string]int64, s *state.State, execErrState ngmodels.ExecutionErrorState) {
+	totals[strings.ToLower(s.State.String())] += 1
+	// Do not add error twice when execution error state is Error
+	if s.Error != nil && execErrState != ngmodels.ErrorErrState {
+		totals["error"] += 1
+	}
+}
+
 // computeAlertStates computes rule state, totals, and alert details from the given states.
 // It mutates toMutate in place (State, ActiveAt, Alerts) and returns total and filtered-total counts.
 func computeAlertStates(states []*state.State, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
@@ -442,12 +453,7 @@ func computeAlertStates(states []*state.State, source *ngmodels.AlertRule, toMut
 	totalsFiltered := make(map[string]int64)
 	for _, alertState := range states {
 		activeAt := alertState.StartsAt
-		stateKey := strings.ToLower(alertState.State.String())
-		totals[stateKey] += 1
-		// Do not add error twice when execution error state is Error
-		if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
-			totals["error"] += 1
-		}
+		AddInstanceToTotals(totals, alertState, source.ExecErrState)
 
 		// Track earliest ActiveAt for firing alerts
 		if alertState.State == eval.Alerting {
@@ -466,11 +472,7 @@ func computeAlertStates(states []*state.State, source *ngmodels.AlertRule, toMut
 			continue
 		}
 
-		totalsFiltered[stateKey] += 1
-		// Do not add error twice when execution error state is Error
-		if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
-			totalsFiltered["error"] += 1
-		}
+		AddInstanceToTotals(totalsFiltered, alertState, source.ExecErrState)
 
 		if limitAlerts != 0 {
 			valString := ""
