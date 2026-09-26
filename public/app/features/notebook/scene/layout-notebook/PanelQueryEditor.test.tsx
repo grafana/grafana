@@ -365,7 +365,14 @@ describe('PanelQueryEditor', () => {
 
     await waitFor(() => expect(runQueries).toHaveBeenCalled());
     expect(getVizSuggestionForQuery).toHaveBeenCalledWith(runner.state.queries[0], expect.anything());
-    expect(changePluginType).toHaveBeenCalledWith('table', { showHeader: true }, undefined);
+    expect(changePluginType).toHaveBeenCalledWith(
+      'table',
+      { showHeader: true },
+      {
+        defaults: { custom: {} },
+        overrides: [],
+      }
+    );
     // The real run must come after the plugin swap, not before — a viz change mid-flight after data
     // has already arrived would otherwise briefly render the old plugin against new data.
     expect(changePluginType.mock.invocationCallOrder[0]).toBeLessThan(runQueries.mock.invocationCallOrder[0]);
