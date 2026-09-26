@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -158,7 +159,7 @@ func NewRepositoryController(
 			maxWorkers:    parallelOperations,
 		},
 		jobs:                          jobs,
-		logger:                        logging.DefaultLogger.With("logger", loggerName),
+		logger:                        log.NewSlogLogger(loggerName),
 		registry:                      registry,
 		tracer:                        tracer,
 		resyncInterval:                resyncInterval,

@@ -270,6 +270,22 @@ func NewNopLogger() *ConcreteLogger {
 	return newConcreteLogger(gokitlog.NewNopLogger())
 }
 
+// NewSlogLogger returns a named logger that satisfies the
+// github.com/grafana/grafana-app-sdk/logging Logger interface. Unlike the
+// app-sdk default logger, it is backed by the configured Grafana logging stack
+// (global level, output modes and the per-logger [log] filters), so the
+// standard `log.filters` configuration applies to it. It is used by components
+// that log through the app-sdk logging package (for example the provisioning
+// operators and controllers) and therefore would otherwise bypass the Grafana
+// logging configuration entirely.
+//
+// The handler level is left at debug so the per-logger filter configured via
+// `log.filters` stays authoritative; a higher default would drop records before
+// the per-logger filter could allow them.
+func NewSlogLogger(name string) logging.Logger {
+	return logging.NewSLogLogger(sloggokit.NewGoKitHandler(New(name), slog.LevelDebug))
+}
+
 func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...any) gokitlog.Logger, ctx []any) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return ctxLogger
