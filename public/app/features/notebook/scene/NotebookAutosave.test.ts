@@ -644,6 +644,106 @@ describe('NotebookAutosave', () => {
       stopPanel();
     });
 
+    it('saves an explicit visualization choice with the same plugin', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Bars',
+        pluginId: panel.state.pluginId,
+        hash: 'bars',
+        options: { ...panel.state.options, fillOpacity: 42 },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(savedVizConfigs().at(-1)?.spec.options).toMatchObject({ fillOpacity: 42 });
+      stopPanel();
+    });
+
+    it('waits for visualization undo before leaving edit mode and saving', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+
+      let finishUndo!: () => void;
+      const undoBlocked = new Promise<void>((resolve) => {
+        finishUndo = resolve;
+      });
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        if (pluginId === 'timeseries') {
+          await undoBlocked;
+        }
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+        options: { showHeader: true },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(savedVizConfigs().at(-1)?.group).toBe('table');
+
+      scene.editHistory.undo();
+      scene.onExitEditMode();
+      expect(scene.state.isEditing).toBe(true);
+
+      await jest.advanceTimersByTimeAsync(0);
+      finishUndo();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(scene.state.isEditing).toBe(false);
+      expect(savedVizConfigs().at(-1)?.group).toBe('timeseries');
+      stopPanel();
+    });
+
+    it('waits for visualization undo when leaving the route', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+
+      let finishUndo!: () => void;
+      const undoBlocked = new Promise<void>((resolve) => {
+        finishUndo = resolve;
+      });
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        if (pluginId === 'timeseries') {
+          await undoBlocked;
+        }
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+        options: { showHeader: true },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(savedVizConfigs().at(-1)?.group).toBe('table');
+
+      scene.editHistory.undo();
+      deactivate();
+      deactivate = undefined;
+      await jest.advanceTimersByTimeAsync(0);
+      finishUndo();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(savedVizConfigs().at(-1)?.group).toBe('timeseries');
+      stopPanel();
+    });
+
     // Disowned when the session starts, so it stays out even though that panel is the one edited.
     it('is not written when a reader set it before edit mode and only a query was edited after', async () => {
       const { scene, cell, panel } = buildSceneWithPanel();

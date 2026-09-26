@@ -173,6 +173,31 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(() => transformNotebookSceneToSaveModel(scene)).not.toThrow();
   });
 
+  it('saves panel title and visualization changes', async () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const cell = scene.state.body.state.cells.find((item) => item.state.elementName === 'latency-panel')!;
+    const panel = cell.state.body!;
+    jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+      panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+    });
+
+    scene.state.body.setPanelTitle(cell, 'Updated latency');
+    await scene.state.body.changePanelVisualization(cell, {
+      name: 'Table',
+      pluginId: 'table',
+      hash: 'table',
+      options: { showHeader: true },
+    });
+
+    const saved = transformNotebookSceneToSaveModel(scene).elements['latency-panel'];
+    expect(saved.kind).toBe('Panel');
+    if (saved.kind === 'Panel') {
+      expect(saved.spec.title).toBe('Updated latency');
+      expect(saved.spec.vizConfig.group).toBe('table');
+      expect(saved.spec.vizConfig.spec.options).toMatchObject({ showHeader: true });
+    }
+  });
+
   // The block the editor keeps at the bottom is dropped from the layout, so its element has to go too
   // or `elements` keeps an entry that no layout item points at.
   it('leaves no orphan element behind when the trailing empty block is dropped', () => {
