@@ -26,6 +26,13 @@ export function notebookNewEditUrl(): string {
   return `${NOTEBOOK_NEW_URL}?${NOTEBOOK_EDIT_PARAM}=${NOTEBOOK_EDIT_PARAM_ON}`;
 }
 
+/** Browser-facing new-notebook link, including the current org and Grafana sub-path. */
+export function notebookNewEditHref(): string {
+  return locationService
+    .getHistory()
+    .createHref({ pathname: NOTEBOOK_NEW_URL, search: `?${NOTEBOOK_EDIT_PARAM}=${NOTEBOOK_EDIT_PARAM_ON}` });
+}
+
 /**
  * The single-notebook destination, nested under the list so the two stay consistent. The list's
  * title link points here; its Edit action points at the same page with the edit param.

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagDashboardNotebooks, useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
@@ -19,6 +19,8 @@ import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgr
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
+import { canCreateNotebooks } from 'app/features/notebook/permissions';
+import { notebookNewEditHref } from 'app/features/notebook/urls';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
@@ -162,6 +164,7 @@ export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
+  const notebooksEnabled = useFlagDashboardNotebooks();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const { queryLibraryEnabled, openDrawer } = useQueryLibraryContext();
 
@@ -216,6 +219,17 @@ export function useStaticActions(): CommandPaletteAction[] {
       });
     }
 
+    if (notebooksEnabled && canCreateNotebooks()) {
+      navBarActions.push({
+        id: 'new-notebook',
+        name: t('command-palette.action.new-notebook', 'New notebook'),
+        section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
+        priority: ACTIONS_PRIORITY,
+        perform: () => window.location.assign(notebookNewEditHref()),
+      });
+    }
+
     const canReadQueries = hasSavedQueryReadPermissions();
 
     if (queryLibraryEnabled && canReadQueries) {
@@ -234,6 +248,7 @@ export function useStaticActions(): CommandPaletteAction[] {
     isAnalyticsFrameworkEnabled,
     isCustomDashboardTemplatesEnabled,
     isTemplateDashboardsAvailable,
+    notebooksEnabled,
     navBarTree,
     queryLibraryEnabled,
     openDrawer,

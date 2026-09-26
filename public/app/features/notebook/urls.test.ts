@@ -6,6 +6,7 @@ import {
   isNotebookEditUrl,
   notebookEditHref,
   notebookEditUrl,
+  notebookNewEditHref,
   notebookShareUrl,
   notebookViewHref,
   notebookViewUrl,
@@ -57,6 +58,12 @@ describe('notebook urls', () => {
     setHistory(3);
 
     expect(notebookEditHref('nb1')).toBe('/notebooks/nb1?edit=true&orgId=3');
+  });
+
+  it('opens a new notebook in edit mode in the current org and sub-path', () => {
+    setHistory(3, '/grafana');
+
+    expect(notebookNewEditHref()).toBe('/grafana/notebooks/new?edit=true&orgId=3');
   });
 
   // Router-relative, unlike notebookEditHref: useNavigate applies the base and orgId itself, so

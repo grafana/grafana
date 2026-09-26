@@ -5,12 +5,14 @@ import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagDashboardNotebooks, useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { canCreateNotebooks } from 'app/features/notebook/permissions';
+import { notebookNewEditHref } from 'app/features/notebook/urls';
 import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -30,6 +32,7 @@ export const QuickAdd = ({}: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
+  const notebooksEnabled = useFlagDashboardNotebooks();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
 
   const theme = useTheme2();
@@ -68,8 +71,30 @@ export const QuickAdd = ({}: Props) => {
       }
     }
 
+    if (notebooksEnabled && canCreateNotebooks() && !groups.some((group) => group.parentId === 'notebooks')) {
+      const dashboardGroupIndex = groups.findIndex((group) => group.parentId === 'dashboards/browse');
+      groups.splice(dashboardGroupIndex + 1, 0, {
+        parentId: 'notebooks',
+        parentText: t('navigation.notebooks', 'Notebooks'),
+        items: [
+          {
+            id: 'notebooks/new',
+            text: t('navigation.quick-add.new-notebook-button', 'New notebook'),
+            url: notebookNewEditHref(),
+            onClick: () => window.location.assign(notebookNewEditHref()),
+          },
+        ],
+      });
+    }
+
     return groups;
-  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, isTemplateDashboardsAvailable, navBarTree]);
+  }, [
+    isAnalyticsFrameworkEnabled,
+    isCustomDashboardTemplatesEnabled,
+    isTemplateDashboardsAvailable,
+    navBarTree,
+    notebooksEnabled,
+  ]);
 
   const showQuickAdd = actionGroups.some((g) => g.items.length > 0);
 

@@ -97,6 +97,7 @@ const setup = (navBarTree?: NavModelItem[]) => {
 
 describe('QuickAdd', () => {
   const originalDashboardTemplates = config.featureToggles.dashboardTemplates;
+  const originalPermissions = contextSrv.user.permissions;
 
   beforeAll(() => {
     jest.spyOn(window, 'matchMedia').mockImplementation(
@@ -116,11 +117,12 @@ describe('QuickAdd', () => {
     config.featureToggles.dashboardTemplates = false;
     mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
     mockGetDashboardTemplatesTab.mockReturnValue(null);
-    setTestFlags({ 'grafana.customDashboardTemplates': false });
+    setTestFlags({ 'grafana.customDashboardTemplates': false, 'dashboard.notebooks': false });
   });
 
   afterEach(() => {
     config.featureToggles.dashboardTemplates = originalDashboardTemplates;
+    contextSrv.user.permissions = originalPermissions;
   });
 
   it('renders a `New` button', () => {
@@ -180,6 +182,34 @@ describe('QuickAdd', () => {
     );
     expect(ungroupedGroup).toBeDefined();
     expect(within(ungroupedGroup!).getByRole('menuitem', { name: 'New import' })).toBeInTheDocument();
+  });
+
+  it('shows New notebook in a Notebooks group when creation is allowed', async () => {
+    setTestFlags({ 'dashboard.notebooks': true });
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
+    setup([]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    const notebookGroup = screen.getByRole('group', { name: 'Notebooks' });
+    expect(within(notebookGroup).getByRole('menuitem', { name: 'New notebook' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/notebooks/new?edit=true')
+    );
+  });
+
+  it('hides New notebook when the feature is disabled', async () => {
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
+    setup();
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    expect(screen.queryByRole('group', { name: 'Notebooks' })).not.toBeInTheDocument();
+  });
+
+  it('hides New notebook without create permission', async () => {
+    setTestFlags({ 'dashboard.notebooks': true });
+    contextSrv.user.permissions = {};
+    setup();
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    expect(screen.queryByRole('group', { name: 'Notebooks' })).not.toBeInTheDocument();
   });
 
   describe('Use template button', () => {

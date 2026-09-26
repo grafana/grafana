@@ -1,7 +1,13 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { canAddPanelToNotebook, canCreateNotebooks, canDeleteNotebooks, canEditNotebooks } from './permissions';
+import {
+  canAddPanelToNotebook,
+  canCreateNotebooks,
+  canDeleteNotebooks,
+  canEditNotebooks,
+  canReadNotebooks,
+} from './permissions';
 
 /** Grants exactly these actions and nothing else. */
 function grant(...actions: AccessControlAction[]) {
@@ -17,6 +23,7 @@ describe('notebook permissions', () => {
   // so these only come apart for a custom role — which is exactly where checking the wrong one
   // hides an affordance a user is entitled to, or offers one the backend will refuse.
   it.each([
+    ['canReadNotebooks', canReadNotebooks, AccessControlAction.NotebooksRead],
     ['canEditNotebooks', canEditNotebooks, AccessControlAction.NotebooksWrite],
     ['canCreateNotebooks', canCreateNotebooks, AccessControlAction.NotebooksCreate],
     ['canDeleteNotebooks', canDeleteNotebooks, AccessControlAction.NotebooksDelete],
