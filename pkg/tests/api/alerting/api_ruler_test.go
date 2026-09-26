@@ -4163,7 +4163,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
-			require.JSONEq(t, `{"message":"rules deleted"}`, string(b))
+			require.JSONEq(t, `{"deleted":1,"message":"rules deleted","skipped":0}`, string(b))
 		})
 	}
 }
