@@ -6843,9 +6843,6 @@
     "variable": {
       "description-tooltip": "Változó leírása"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Vissza az irányítópultra",
       "not-found": ""
@@ -13353,7 +13350,7 @@
       "count-truncated_other": "Az első {{count}} jegyzetfüzet betöltve"
     },
     "new": {
-      "default-title": "Jegyzetfüzet #{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Sikertelen mentés",
@@ -14892,12 +14889,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Vissza az adattárakhoz",
       "cleaning-up-resources": "Adattári erőforrások tisztítása",
-      "not-found": "nem található",
       "not-found-message": "Nem található adattár",
       "repository-config-exists-configuration": "Győződjön meg arról, hogy a tároló konfigurációja létezik a konfigurációs fájlban.",
       "tab-overview": "Áttekintés",
@@ -15193,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Mielőtt nyilvánossá tenné az irányítópultot, vegye figyelembe a következőket:",
-      "data-src-ack-desc": "A közzététel jelenleg csak az adatforrások egy részhalmazával működik*",
-      "data-src-ack-tooltip": "További információ a nyilvános adatforrásokról",
-      "public-ack-desc": "A teljes irányítópultja nyilvános lesz*",
-      "public-ack-tooltip": "További információ a nyilvános irányítópultokról",
-      "usage-ack-desc": "Az irányítópult nyilvánossá tétele azt eredményezi, hogy a lekérdezések az irányítópult minden egyes megtekintéskor lefutnak, ami növelheti a költségeket*",
-      "usage-ack-desc-tooltip": "További információ a lekérdezések gyorsítótárazásáról"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Megtekintheti az irányítópultot",
-      "copy-button": "Másolás",
-      "dashboard-url-field-label": "Irányítópult URL-címe",
-      "email-share-type-option-label": "Csak meghatározott személyek",
-      "pause-sharing-dashboard-label": "Irányítópult megosztásának szüneteltetése",
-      "public-share-type-option-label": "Bárki, aki rendelkezik a hivatkozással",
-      "revoke-public-URL-button": "Nyilvános URL-cím visszavonása",
-      "revoke-public-URL-button-title": "Nyilvános URL-cím visszavonása",
-      "settings-title": "Beállítások"
-    },
     "configuration": {
       "display-annotations-description": "Jegyzetek megjelenítése ezen az irányítópulton",
       "display-annotations-label": "Jegyzetek megjelenítése",
@@ -15225,21 +15206,11 @@
       "time-range-label": "Időtartomány",
       "time-range-tooltip": "A megosztott irányítópult az irányítópult alapértelmezett időtartomány-beállításait használja"
     },
-    "create-page": {
-      "generate-public-url-button": "Nyilvános URL-cím generálása",
-      "unsupported-features-desc": "Jelenleg nem támogatjuk a sablonváltozókat vagy a frontend-adatforrásokat",
-      "welcome-title": "Üdvözöljük a nyilvános irányítópultoknál!"
-    },
     "email-sharing": {
       "accept-button": "Elfogadás",
       "alert-text": "Az irányítópultok e-mailben történő megosztása felhasználónként lesz kiszámlázva a 30 napos token időtartamára, függetlenül a megosztott irányítópultok számától. A számlázás 30 nap elteltével leáll, kivéve, ha megújítja a tokent.",
       "bill-ack": "Tudomásul veszem, hogy a felhasználók hozzáadásához fizetés szükséges.*",
       "cancel-button": "Mégse",
-      "input-invalid-email-text": "Érvénytelen e-mail-cím",
-      "input-required-email-text": "Az e-mail-cím megadása kötelező",
-      "invite-button": "Meghívás",
-      "invite-field-desc": "Személyek meghívása e-mailben",
-      "invite-field-label": "Meghívás",
       "learn-more-button": "További információk",
       "recipient-email-placeholder": "E-mail",
       "recipient-invalid-email-text": "Érvénytelen e-mail-cím",
@@ -15249,17 +15220,12 @@
       "recipient-list-description": "Csak az Ön által közvetlenül meghívott személyek férhetnek hozzá ehhez az irányítópulthoz",
       "recipient-list-title": "Hozzáféréssel rendelkező személyek",
       "recipient-required-email-text": "Az e-mail-cím megadása kötelező",
-      "resend-button": "Újraküldés",
-      "resend-button-title": "Újraküldés",
       "resend-invite-label": "Meghívó újraküldése",
       "revoke-access-label": "Hozzáférés visszavonása",
-      "revoke-button": "Visszavonás",
-      "revoke-button-title": "Visszavonás",
       "success-creation": "Az irányítópult készen áll a külső megosztásra",
       "success-share-type-change": "Irányítópult-hozzáférés frissítve: mostantól csak bizonyos személyek férhetnek hozzá a hivatkozás birtokában"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Kérjük, mentse az irányítópult módosításait a nyilvános konfiguráció frissítése előtt",
       "unsupport-data-source-alert-readmore-link": "További információ a támogatott adatforrásokról",
       "unsupported-data-source-alert-title": "Nem támogatott adatforrások",
       "unsupported-template-variable-alert-desc": "Előfordulhat, hogy ez a nyilvános irányítópult nem működik, mivel sablonváltozókat használ",
@@ -15273,25 +15239,6 @@
       "public-ack": "Tudomásul veszem, hogy ez a teljes irányítópult nyilvános lesz.*",
       "success-creation": "Az irányítópult mostantól nyilvánosan elérhető",
       "success-share-type-change": "Irányítópult-hozzáférés frissítve: mostantól bárki hozzáférhet a hivatkozás birtokában"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Beállítások összecsukása",
-      "expand-settings-tooltip": "Beállítások kibontása"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Alapértelmezett időtartomány",
-      "default-time-range-label-desc": "A nyilvános irányítópult az irányítópult alapértelmezett időtartomány-beállításait használja",
-      "show-annotations-label": "Jegyzetek megjelenítése",
-      "show-annotations-label-desc": "Jegyzetek megjelenítése a nyilvános irányítópulton",
-      "time-range-picker-label": "Időtartomány-választó engedélyezve",
-      "time-range-picker-label-desc": "Lehetővé teszi a megtekintők számára az időtartomány módosítását"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Jegyzetek = elrejtés",
-      "annotations-show-text": "Jegyzetek = megjelenítés",
-      "time-range-picker-disabled-text": "Időtartomány-választó = letiltva",
-      "time-range-picker-enabled-text": "Időtartomány-választó = engedélyezve",
-      "time-range-text": "Időtartomány = "
     },
     "share": {
       "success-delete": "Az irányítópult már nem osztható meg"
@@ -16076,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Megosztás"
-    },
     "embed": {
       "copy": "Másolás vágólapra",
       "html": "HTML beágyazása",
@@ -16125,9 +16069,6 @@
       "time-range-description": "Az aktuális relatív időtartományt abszolút időtartománnyá alakítja",
       "time-range-label": "Időtartomány zárolása"
     },
-    "panel": {
-      "title": "Panel megosztása"
-    },
     "snapshot": {
       "cancel-button": "Mégse",
       "copy-link-button": "Másolás",
@@ -16143,16 +16084,11 @@
       "local-button": "Pillanatkép közzététele",
       "mistake-message": "Hibázott? ",
       "name": "Pillanatkép neve",
-      "timeout": "Időtúllépés (másodpercben)",
-      "timeout-description": "Előfordulhat, hogy konfigurálnia kell az időtúllépés értékét, ha hosszú időt vesz igénybe az irányítópult-metrikák összegyűjtése.",
       "url-label": "Pillanatkép URL-címe"
     },
     "tab-title": {
-      "embed": "Beágyazás",
       "export": "Exportálás",
-      "library-panel": "Könyvtárpanel",
       "link": "Hivatkozás",
-      "public-dashboard-title": "Nyilvános irányítópult",
       "snapshot": "Pillanatkép"
     },
     "theme-picker": {

@@ -6843,9 +6843,6 @@
     "variable": {
       "description-tooltip": "Descrição da variável"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Voltar ao painel de controlo",
       "not-found": ""
@@ -13353,7 +13350,7 @@
       "count-truncated_other": "Primeiros {{count}} blocos de notas carregados"
     },
     "new": {
-      "default-title": "Bloco de notas n.º {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Falha ao guardar",
@@ -14892,12 +14889,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Voltar aos repositórios",
       "cleaning-up-resources": "A limpar recursos do repositório",
-      "not-found": "não encontrado",
       "not-found-message": "Repositório não encontrado",
       "repository-config-exists-configuration": "Certifique-se de que a configuração do repositório existe no ficheiro de configuração.",
       "tab-overview": "Visão geral",
@@ -15193,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Antes de tornar o painel de controlo público, tenha em atenção o seguinte:",
-      "data-src-ack-desc": "Atualmente, a publicação só funciona com um subconjunto de origens de dados*",
-      "data-src-ack-tooltip": "Saiba mais sobre origens de dados públicas",
-      "public-ack-desc": "Todo o seu painel de controlo será público*",
-      "public-ack-tooltip": "Saiba mais sobre painéis de controlo públicos",
-      "usage-ack-desc": "Tornar um painel de controlo público fará com que as consultas sejam executadas sempre que este for visualizado, o que pode aumentar os custos*",
-      "usage-ack-desc-tooltip": "Saiba mais sobre o armazenamento em cache de consultas"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Pode ver o painel de controlo",
-      "copy-button": "Copiar",
-      "dashboard-url-field-label": "URL do painel de controlo",
-      "email-share-type-option-label": "Apenas pessoas especificadas",
-      "pause-sharing-dashboard-label": "Pausar a partilha do painel de controlo",
-      "public-share-type-option-label": "Qualquer pessoa com o link",
-      "revoke-public-URL-button": "Revogar URL público",
-      "revoke-public-URL-button-title": "Revogar URL público",
-      "settings-title": "Definições"
-    },
     "configuration": {
       "display-annotations-description": "Apresentar anotações neste painel de controlo",
       "display-annotations-label": "Mostrar anotações",
@@ -15225,21 +15206,11 @@
       "time-range-label": "Intervalo de tempo",
       "time-range-tooltip": "O painel de controlo partilhado utiliza as definições de intervalo de tempo padrão do painel de controlo"
     },
-    "create-page": {
-      "generate-public-url-button": "Gerar URL público",
-      "unsupported-features-desc": "Atualmente, não suportamos variáveis de modelos ou origens de dados de frontend",
-      "welcome-title": "Damos-lhe as boas-vindas aos painéis de controlo públicos!"
-    },
     "email-sharing": {
       "accept-button": "Aceitar",
       "alert-text": "A partilha de painéis de controlo por e-mail é faturada por utilizador enquanto o token de 30 dias estiver em vigor, independentemente da quantidade de painéis de controlo partilhados. A faturação termina após 30 dias, a menos que renove o token.",
       "bill-ack": "Compreendo que adicionar utilizadores requer pagamento.*",
       "cancel-button": "Cancelar",
-      "input-invalid-email-text": "E-mail inválido",
-      "input-required-email-text": "O e-mail é obrigatório",
-      "invite-button": "Convidar",
-      "invite-field-desc": "Convidar pessoas por e-mail",
-      "invite-field-label": "Convidar",
       "learn-more-button": "Saiba mais",
       "recipient-email-placeholder": "E-mail",
       "recipient-invalid-email-text": "E-mail inválido",
@@ -15249,17 +15220,12 @@
       "recipient-list-description": "Apenas as pessoas que convidou diretamente podem aceder a este painel de controlo",
       "recipient-list-title": "Pessoas com acesso",
       "recipient-required-email-text": "O e-mail é obrigatório",
-      "resend-button": "Reenviar",
-      "resend-button-title": "Reenviar",
       "resend-invite-label": "Reenviar convite",
       "revoke-access-label": "Revogar acesso",
-      "revoke-button": "Revogar",
-      "revoke-button-title": "Revogar",
       "success-creation": "O seu painel de controlo está pronto para uma partilha externa",
       "success-share-type-change": "Acesso ao painel de controlo atualizado: agora, apenas pessoas específicas podem aceder com o link"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Guarde as alterações do seu painel de controlo antes de atualizar a configuração pública",
       "unsupport-data-source-alert-readmore-link": "Leia mais sobre as origens de dados suportadas",
       "unsupported-data-source-alert-title": "Origens de dados não suportadas",
       "unsupported-template-variable-alert-desc": "Este painel de controlo público pode não funcionar, uma vez que utiliza variáveis de modelo",
@@ -15273,25 +15239,6 @@
       "public-ack": "Compreendo que todo este painel de controlo será público.*",
       "success-creation": "O seu painel de controlo está agora acessível ao público",
       "success-share-type-change": "Acesso ao painel de controlo atualizado: agora, qualquer pessoa com o link pode aceder"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Fechar definições",
-      "expand-settings-tooltip": "Expandir definições"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Intervalo de tempo padrão",
-      "default-time-range-label-desc": "O painel de controlo público utiliza as definições de intervalo de tempo padrão do painel de controlo",
-      "show-annotations-label": "Mostrar anotações",
-      "show-annotations-label-desc": "Mostrar anotações no painel de controlo público",
-      "time-range-picker-label": "Seletor de intervalo de tempo ativado",
-      "time-range-picker-label-desc": "Permitir que os utilizadores alterem o intervalo de tempo"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Anotações = ocultar",
-      "annotations-show-text": "Anotações = mostrar",
-      "time-range-picker-disabled-text": "Seletor de intervalo de tempo = desativado",
-      "time-range-picker-enabled-text": "Seletor de intervalo de tempo = ativado",
-      "time-range-text": "Intervalo de tempo = "
     },
     "share": {
       "success-delete": "O seu painel de controlo já não pode ser partilhado"
@@ -16076,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Partilhar"
-    },
     "embed": {
       "copy": "Copiar para a área de transferência",
       "html": "Incorporar HTML",
@@ -16125,9 +16069,6 @@
       "time-range-description": "Transforma o intervalo de tempo relativo atual num intervalo de tempo absoluto",
       "time-range-label": "Bloquear intervalo de tempo"
     },
-    "panel": {
-      "title": "Partilhar painel"
-    },
     "snapshot": {
       "cancel-button": "Cancelar",
       "copy-link-button": "Copiar",
@@ -16143,16 +16084,11 @@
       "local-button": "Publicar instantâneo",
       "mistake-message": "Cometeu um erro? ",
       "name": "Nome do instantâneo",
-      "timeout": "Tempo de espera (segundos)",
-      "timeout-description": "Pode ter de configurar o valor do tempo limite se demorar muito tempo a recolher as métricas do seu painel de controlo.",
       "url-label": "URL do instantâneo"
     },
     "tab-title": {
-      "embed": "Incorporar",
       "export": "Exportar",
-      "library-panel": "Painel de biblioteca",
       "link": "Link",
-      "public-dashboard-title": "Painel de controlo público",
       "snapshot": "Imagem instantânea"
     },
     "theme-picker": {
