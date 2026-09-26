@@ -1,6 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in #133630, O1 in #133638, O2 undecided; P7 partly addressed)
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in #133630, O1 in #133638, O2 in this branch pending a decision; P7 partly addressed)
 Package: `pkg/router`
 
 ## Context
@@ -304,11 +304,8 @@ Found by checking each part of the proxy path against a watch that streams for 3
     transitions, backend failure reasons, discovery results, poll attempts and stack lookups, plus a
     `route` label on request metrics. See `specs/2026-09-26-router-metrics.md`.
 
-- [ ] **O2. Read-only debug endpoint.** A JSON view of the current snapshot showing, for each group:
+- [x] **O2. Read-only debug endpoint.** A JSON view of the current snapshot showing, for each group:
   source, key, target host and breaker state.
-  - Undecided whether to expose this yet. The same information is available from the OpenAPI
-    discovery index (each group's key identifies its backend) and the O1 metrics. An implementation
-    is kept in a separate draft PR.
 
 - [x] **O3. One logger.** The package mixes global `slog`, Grafana's `infra/log`
   (`obo_exchanger.go`) and the app-sdk logger (`plugin.go`). Inject a single

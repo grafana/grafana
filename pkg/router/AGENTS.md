@@ -148,6 +148,11 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
   values for `route`, `reason`, `state` and `result`; any other group is `unknown` (`KnownGroup`). In middleware mode, only requests the router
   owns (`owns`) are instrumented. New backends should implement `DescribedBackend`, and new sources
   should report through `loaderStatus`, or they show up as `unknown`.
+- **Debug endpoint (`debug.go`):** `GET /debug/router` serves the route state as JSON: for each
+  group, its source, key, target and breaker, plus shadowed groups, source status and readiness.
+  The standalone target mounts it on its internal listener; in middleware mode the embedded API
+  server mounts it in Grafana's HTTP server for server admins only (`Service.DebugHandler`), since
+  it shows internal backend hosts.
 
 ## Lifecycle
 
