@@ -46,6 +46,12 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		return nil
 	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
+
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return err
+	}
+
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
 		// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
@@ -54,7 +60,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
 			var err error
-			folderKeys, err = deletedRuleFolderKeys(sess, orgID, ruleUID)
+			folderKeys, err = deletedRuleFolderKeys(sess, orgID, ruleUID, dbHelper.Table("alert_rule"))
 			if err != nil {
 				return err
 			}
@@ -125,20 +131,26 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 }
 
 func (st DBstore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64, ruleUIDs []string) ([]alertRuleVersion, error) {
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	alertRuleVersionTable := dbHelper.Table("alert_rule_version")
+
 	var result []alertRuleVersion
-	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		args, in := getINSubQueryArgs(ruleUIDs)
 		// take only the latest versions of each rule by GUID
 		rows, err := sess.SQL(fmt.Sprintf(`
-		SELECT v1.* FROM alert_rule_version AS v1
+		SELECT v1.* FROM %[1]s AS v1
 			INNER JOIN (
 			    SELECT rule_guid, MAX(id) AS id
-			    FROM alert_rule_version
+			    FROM %[1]s
 			    WHERE rule_org_id = ?
-			      AND rule_uid IN (%s)
+			      AND rule_uid IN (%[2]s)
 			    GROUP BY rule_guid
 			) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
-		`, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
+		`, alertRuleVersionTable, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
 
 		if err != nil {
 			return err
@@ -498,9 +510,9 @@ func collectNamespaceUIDsByOrg(rules []*ngmodels.AlertRule) []orgNamespaces {
 
 // deletedRuleFolderKeys returns the deduplicated parent folders of the given rules. It runs on the
 // caller's session so it must be invoked before the rules are deleted in the same transaction.
-func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
+func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string, alertRuleTable string) ([]ngmodels.FolderKey, error) {
 	var uids []string
-	if err := sess.Table(alertRule{}).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids); err != nil {
+	if err := sess.Table(alertRuleTable).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids); err != nil {
 		return nil, err
 	}
 	seen := make(map[string]struct{}, len(uids))
@@ -1746,19 +1758,9 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 			return folder.ErrAccessDenied
 		}
 
-		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
-			OrgID:         orgID,
-			NamespaceUIDs: []string{folderUID},
-		})
+		uids, err := st.listAlertRuleUIDsInFolder(ctx, orgID, folderUID)
 		if err != nil {
 			return err
-		}
-
-		uids := make([]string, 0, len(rules))
-		for _, tgt := range rules {
-			if tgt != nil {
-				uids = append(uids, tgt.UID)
-			}
 		}
 
 		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), false, uids...); err != nil {
@@ -1766,6 +1768,24 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 		}
 	}
 	return nil
+}
+
+// listAlertRuleUIDsInFolder is a narrow ListAlertRules substitute for the delete path, so only
+// this path needs to go through legacyDatabaseProvider, not ListAlertRules' other callers.
+func (st DBstore) listAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var uids []string
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(dbHelper.Table("alert_rule")).Cols("uid").Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).Find(&uids)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return uids, nil
 }
 
 // Kind returns the name of the alert rule type of entity.
