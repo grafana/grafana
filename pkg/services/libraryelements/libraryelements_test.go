@@ -97,6 +97,46 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.NotNil(t, result.Result)
 			require.Equal(t, 0, len(result.Result.Elements))
 		})
+
+	scenarioWithPanel(t, "When an admin deletes a folder, the delete query is routed through LegacyDatabaseProvider",
+		func(t *testing.T, sc scenarioContext) {
+			var requestedTables []string
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					DB: sc.service.SQLStore,
+					Table: func(n string) string {
+						requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+						return n
+					},
+				}, nil
+			}
+
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+			require.Contains(t, requestedTables, "library_element")
+		})
+}
+
+func TestLibraryElementService_legacyDatabaseProvider(t *testing.T) {
+	t.Run("falls back to identity table names when LegacyDatabaseProvider is unset", func(t *testing.T) {
+		svc := &LibraryElementService{}
+		dbHelper, err := svc.legacyDatabaseProvider(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "library_element", dbHelper.Table("library_element"))
+	})
+
+	t.Run("delegates to the configured provider when set", func(t *testing.T) {
+		svc := &LibraryElementService{
+			LegacyDatabaseProvider: func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					Table: func(n string) string { return "hg_stack1." + n },
+				}, nil
+			},
+		}
+		dbHelper, err := svc.legacyDatabaseProvider(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "hg_stack1.library_element", dbHelper.Table("library_element"))
+	})
 }
 
 func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
