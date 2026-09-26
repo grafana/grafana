@@ -1,6 +1,8 @@
 import { logMeasurement, reportInteraction, config } from '@grafana/runtime';
 import { performanceUtils, type SceneObject } from '@grafana/scenes';
 
+import { getTimeSinceBoot } from './performanceUtils';
+
 interface SceneInteractionProfileEvent {
   origin: string;
   duration: number;
@@ -30,7 +32,7 @@ export function getDashboardComponentInteractionCallback(uid: string, title: str
       networkDuration: e.networkDuration,
       startTs: e.startTs,
       endTs: e.endTs,
-      timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
+      timeSinceBoot: getTimeSinceBoot(),
     };
 
     reportInteraction('dashboard_interaction', {
