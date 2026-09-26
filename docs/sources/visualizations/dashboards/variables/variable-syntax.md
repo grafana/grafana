@@ -224,3 +224,43 @@ servers = ["test1", "test2"]
 String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
+
+### `xxh3`
+
+Hashes the interpolated value with [xxHash](https://xxhash.com/) (XXH3_64bits) and returns a 16-character, zero-padded lowercase hexadecimal string. Useful when a downstream data source stores XXH3-hashed identifiers—for example, a Loki label that holds an XXH3_64bits hash of a serial number—and users want to query using the original, un-hashed value.
+
+Multi-valued variables are hashed individually, then joined with commas. `xxh3` always uses a seed of `0` and does not support custom seeds. To specify a seed, use `xxhash` instead.
+
+```bash
+serial = 'SN-42'
+String to interpolate: '${serial:xxh3}'
+Interpolation result: '<16-hex-char xxh3-64 digest>'
+```
+
+```bash
+serials = ['SN-1', 'SN-2']
+String to interpolate: '${serials:xxh3}'
+Interpolation result: '<digest-1>,<digest-2>'
+```
+
+{{< admonition type="note" >}}
+The `xxh3` formatter loads its WebAssembly implementation asynchronously the first time a dashboard using it is opened. If the dashboard dispatches a query before the WebAssembly finishes loading (typically only on the very first render after a hard reload), the variable interpolates to the un-hashed value and a warning is logged to the browser console. Reload the panel produces the correct hash.
+{{< /admonition >}}
+
+### `xxhash`
+
+Hashes the interpolated value with [xxHash](https://xxhash.com/) (XXH64) and returns a 16-character, zero-padded lowercase hexadecimal string. Useful when a downstream data source stores hashed identifiers—for example, a Loki label that holds an XXH64 hash of a serial number—and users want to query using the original, un-hashed value.
+
+Multi-valued variables are hashed individually, then joined with commas. An optional seed argument can be supplied in decimal (`${var:xxhash:1234}`) or hexadecimal (`${var:xxhash:0x1234}`) form. The default seed is `0`.
+
+```bash
+serial = 'SN-42'
+String to interpolate: '${serial:xxhash}'
+Interpolation result: '<16-hex-char xxhash64 digest>'
+```
+
+```bash
+serials = ['SN-1', 'SN-2']
+String to interpolate: '${serials:xxhash}'
+Interpolation result: '<digest-1>,<digest-2>'
+```
