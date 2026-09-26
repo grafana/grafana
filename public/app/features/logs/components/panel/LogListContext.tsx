@@ -29,7 +29,13 @@ import { reportInteraction } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type PopoverContent } from '@grafana/ui';
 
-import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
+import {
+  checkLogsError,
+  checkLogsSampled,
+  copyLogs as copy,
+  downloadLogs as download,
+  type DownloadFormat,
+} from '../../utils';
 import { getFieldSelectorState } from '../fieldSelector/fieldSelectorUtils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
@@ -44,6 +50,7 @@ import { type LogListModel } from './processing';
 export interface LogListContextData
   extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'showLevel' | 'unwrappedColumns'> {
   controlsExpanded: boolean;
+  copyLogs: () => void;
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
   forceEscape: boolean;
@@ -83,6 +90,7 @@ export const LogListContext = createContext<LogListContextData>({
   controlsExpanded: false,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
+  copyLogs: () => {},
   downloadLogs: () => {},
   filterLevels: [],
   forceEscape: false,
@@ -540,16 +548,22 @@ export const LogListContextProvider = ({
     [logOptionsStorageKey, onLogOptionsChange]
   );
 
+  const filteredLogsForExport = useCallback(() => {
+    return logListState.filterLevels.length === 0
+      ? logs
+      : logs.filter((log) => logListState.filterLevels.includes(log.logLevel));
+  }, [logListState.filterLevels, logs]);
+
   const downloadLogs = useCallback(
     (format: DownloadFormat) => {
-      const filteredLogs =
-        logListState.filterLevels.length === 0
-          ? logs
-          : logs.filter((log) => logListState.filterLevels.includes(log.logLevel));
-      download(format, filteredLogs, logsMeta, displayedFields);
+      download(format, filteredLogsForExport(), logsMeta, displayedFields);
     },
-    [displayedFields, logListState.filterLevels, logs, logsMeta]
+    [displayedFields, filteredLogsForExport, logsMeta]
   );
+
+  const copyLogs = useCallback(() => {
+    copy(filteredLogsForExport(), logsMeta, displayedFields);
+  }, [displayedFields, filteredLogsForExport, logsMeta]);
 
   const setTimestampResolution = useCallback(
     (timestampResolution: LogLineTimestampResolution) => {
@@ -614,6 +628,7 @@ export const LogListContextProvider = ({
         controlsExpanded,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields,
+        copyLogs,
         downloadLogs,
         filterLevels: logListState.filterLevels,
         fontSize: logListState.fontSize,

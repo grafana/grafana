@@ -22,6 +22,16 @@ import { transformToZipkin } from './transformToZipkin';
  * @param {string} title
  */
 export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title = '', fields: string[] = []) {
+  const textToDownload = logsModelToTxt(logsModel, fields);
+
+  const blob = new Blob([textToDownload], {
+    type: 'text/plain;charset=utf-8',
+  });
+  const fileName = `${title ? `${title}-logs` : 'Logs'}-${dateTimeFormat(new Date())}.txt`;
+  saveAs(blob, fileName);
+}
+
+export function logsModelToTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, fields: string[] = []) {
   let textToDownload = '';
 
   if (logsModel.meta?.length) {
@@ -38,11 +48,7 @@ export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows
     textToDownload = textToDownload + newRow;
   });
 
-  const blob = new Blob([textToDownload], {
-    type: 'text/plain;charset=utf-8',
-  });
-  const fileName = `${title ? `${title}-logs` : 'Logs'}-${dateTimeFormat(new Date())}.txt`;
-  saveAs(blob, fileName);
+  return textToDownload;
 }
 
 /**
