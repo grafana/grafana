@@ -40,12 +40,12 @@ describe('getTelemetrySetupLink', () => {
     });
   });
 
-  it('uses Cloud instrumentation documentation for traces even when the setup guide is available', () => {
+  it('opens the in-app Pathfinder traces guide when the setup guide is available', () => {
     jest.mocked(contextSrv.hasRole).mockImplementation((role) => role === 'Admin');
 
     expect(getTelemetrySetupLink('traces', { setupGuideEnabled: true })).toEqual({
       action: 'Instrument traces',
-      href: 'https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/instrument-apps/',
+      href: '/a/grafana-pathfinder-app?doc=%2Fdocs%2Flearning-paths%2Fsend-traces-alloy%2F&source=homepage-recommendations',
       cta: 'learn_more',
     });
   });
