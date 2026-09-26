@@ -129,7 +129,7 @@ func TestIntegrationNotebooksSearchAPI(t *testing.T) {
 
 		err = unstructured.SetNestedField(obj.Object, "uniquememoryfinding observation", "spec", "elements", "note", "spec", "content", "spec", "text")
 		require.NoError(t, err)
-		obj, err = admin.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+		_, err = admin.Resource.Update(ctx, obj, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Eventually(t, func() bool {
 			return len(find("uniquecheckoutlatency")) == 0 && slices.Equal([]string{name}, find("uniquememoryfinding"))
