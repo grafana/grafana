@@ -77,6 +77,12 @@ const (
 	// ReasonResourceTooLarge indicates a resource file exceeded the maximum size
 	// the repository will read.
 	ReasonResourceTooLarge = "ResourceTooLarge"
+	// ReasonUnsupportedPath indicates the sync found one or more paths that fail
+	// repository path validation (too deep, unsafe characters, etc.). The user
+	// must fix or remove the offending paths; the sync completes with a warning
+	// rather than failing, since this is a user-fixable content issue, not a
+	// system failure.
+	ReasonUnsupportedPath = "UnsupportedPath"
 	// ReasonMissingFolderMetadata indicates the pull completed but some folders are missing
 	// _folder.json metadata files; their UIDs are unstable and may change on re-sync.
 	ReasonMissingFolderMetadata = "MissingFolderMetadata"
