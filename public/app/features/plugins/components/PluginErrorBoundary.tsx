@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { PluginContext } from '@grafana/data';
+import { faro } from '@grafana/faro-web-sdk';
 
 interface PluginErrorBoundaryProps {
   children: React.ReactNode;
@@ -29,6 +30,17 @@ export class PluginErrorBoundary extends React.Component<PluginErrorBoundaryProp
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
+    // Mirror @grafana/ui ErrorBoundary: React render errors never reach
+    // window.onerror (the boundary swallows them), so they have to be pushed
+    // to Faro explicitly. Plugin id is the boundaryName equivalent.
+    faro?.api?.pushError(error, {
+      context: {
+        type: 'boundary',
+        source: this.context?.meta.id ?? 'unknown',
+        ...(info.componentStack ? { componentStack: info.componentStack } : {}),
+      },
+    });
+
     if (this.props.onError) {
       this.props.onError(error, info);
     } else {
