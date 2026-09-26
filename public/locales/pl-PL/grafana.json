@@ -6937,9 +6937,6 @@
     "variable": {
       "description-tooltip": "Opis zmiennej"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Wróć do pulpitu",
       "not-found": ""
@@ -13543,7 +13540,7 @@
       "count-truncated_other": "Pierwsze {{count}} notatnika zostało wczytane"
     },
     "new": {
-      "default-title": "Notatnik nr {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Nie udało się zapisać",
@@ -15118,12 +15115,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Wróć do repozytoriów",
       "cleaning-up-resources": "Sprzątanie zasobów repozytorium",
-      "not-found": "nie znaleziono",
       "not-found-message": "Nie znaleziono repozytorium",
       "repository-config-exists-configuration": "Upewnij się, że konfiguracja repozytorium istnieje w pliku konfiguracyjnym.",
       "tab-overview": "Przegląd",
@@ -15419,26 +15420,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Zanim upublicznisz pulpit, potwierdź następujące informacje:",
-      "data-src-ack-desc": "Publikowanie obecnie działa tylko z podzbiorem źródeł danych*",
-      "data-src-ack-tooltip": "Dowiedz się więcej o publicznych źródłach danych",
-      "public-ack-desc": "Cały pulpit będzie publiczny*",
-      "public-ack-tooltip": "Dowiedz się więcej o pulpitach publicznych",
-      "usage-ack-desc": "Upublicznienie pulpitu spowoduje uruchamianie zapytań przy każdym jego wyświetleniu, co może zwiększyć koszty*",
-      "usage-ack-desc-tooltip": "Dowiedz się więcej o buforowaniu zapytań"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Może wyświetlać pulpit",
-      "copy-button": "Kopiuj",
-      "dashboard-url-field-label": "URL pulpitu",
-      "email-share-type-option-label": "Tylko określone osoby",
-      "pause-sharing-dashboard-label": "Wstrzymaj udostępnianie pulpitu",
-      "public-share-type-option-label": "Każda osoba mająca link",
-      "revoke-public-URL-button": "Cofnij upublicznienie URL",
-      "revoke-public-URL-button-title": "Cofnij upublicznienie URL",
-      "settings-title": "Ustawienia"
-    },
     "configuration": {
       "display-annotations-description": "Prezentuj komentarze na tym pulpicie",
       "display-annotations-label": "Wyświetl komentarze",
@@ -15451,21 +15432,11 @@
       "time-range-label": "Zakres czasu",
       "time-range-tooltip": "Pulpit udostępniony używa domyślnych ustawień zakresu czasu pulpitu"
     },
-    "create-page": {
-      "generate-public-url-button": "Wygeneruj publiczny URL",
-      "unsupported-features-desc": "Obecnie nie obsługujemy zmiennych szablonów ani źródeł danych frontendowych",
-      "welcome-title": "Witamy w pulpitach publicznych!"
-    },
     "email-sharing": {
       "accept-button": "Zaakceptuj",
       "alert-text": "Udostępnianie pulpitów przez e-mail jest rozliczane za każdego użytkownika przez okres trwania 30-dniowego tokena, niezależnie od liczby udostępnianych pulpitów. Rozliczenia ustają po 30 dniach, chyba że odnowisz token.",
       "bill-ack": "Rozumiem, że dodawanie użytkowników wiąże się z opłatą.*",
       "cancel-button": "Anuluj",
-      "input-invalid-email-text": "Błędny e-mail",
-      "input-required-email-text": "E-mail jest wymagany",
-      "invite-button": "Zaproś",
-      "invite-field-desc": "Zaproś osoby przez e-mail",
-      "invite-field-label": "Zaproś",
       "learn-more-button": "Dowiedz się więcej",
       "recipient-email-placeholder": "E-mail",
       "recipient-invalid-email-text": "Błędny e-mail",
@@ -15475,17 +15446,12 @@
       "recipient-list-description": "Dostęp do tego pulpitu mają tylko osoby, które otrzymały od Ciebie bezpośrednie zaproszenia",
       "recipient-list-title": "Osoby z dostępem",
       "recipient-required-email-text": "E-mail jest wymagany",
-      "resend-button": "Wyślij ponownie",
-      "resend-button-title": "Wyślij ponownie",
       "resend-invite-label": "Wyślij ponownie zaproszenie",
       "revoke-access-label": "Cofnij dostęp",
-      "revoke-button": "Cofnij",
-      "revoke-button-title": "Cofnij",
       "success-creation": "Pulpit jest gotowy do udostępnienia zewnętrznego",
       "success-share-type-change": "Zaktualizowano dostęp do pulpitu: teraz tylko określone osoby mogą uzyskać dostęp za pomocą linku"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Zapisz zmiany w pulpicie przed aktualizacją konfiguracji publicznej",
       "unsupport-data-source-alert-readmore-link": "Dowiedz się więcej o obsługiwanych źródłach danych",
       "unsupported-data-source-alert-title": "Nieobsługiwane źródła danych",
       "unsupported-template-variable-alert-desc": "Ten pulpit publiczny może nie działać, ponieważ używa zmiennych szablonu",
@@ -15499,25 +15465,6 @@
       "public-ack": "Rozumiem, że cały pulpit będzie publiczny.*",
       "success-creation": "Pulpit jest teraz publicznie dostępny",
       "success-share-type-change": "Zaktualizowano dostęp do pulpitu: każda osoba mająca link może teraz uzyskać dostęp"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Zwiń ustawienia",
-      "expand-settings-tooltip": "Rozwiń ustawienia"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Domyślny zakres czasu",
-      "default-time-range-label-desc": "Pulpit publiczny używa domyślnych ustawień zakresu czasu pulpitu",
-      "show-annotations-label": "Pokaż komentarze",
-      "show-annotations-label-desc": "Pokaż komentarze na pulpicie publicznym",
-      "time-range-picker-label": "Włączono selektor zakresu czasu",
-      "time-range-picker-label-desc": "Zezwalaj oglądającym na zmianę zakresu czasu"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Komentarze = ukryj",
-      "annotations-show-text": "Komentarze = pokaż",
-      "time-range-picker-disabled-text": "Selektor zakresu czasu = wyłączony",
-      "time-range-picker-enabled-text": "Selektor zakresu czasu = włączony",
-      "time-range-text": "Zakres czasu = "
     },
     "share": {
       "success-delete": "Nie można już udostępnić pulpitu"
@@ -16324,9 +16271,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Udostępnij"
-    },
     "embed": {
       "copy": "Kopiuj do schowka",
       "html": "Osadź kod HTML",
@@ -16373,9 +16317,6 @@
       "time-range-description": "Przekształca bieżący względny zakres czasu na bezwzględny zakres czasu",
       "time-range-label": "Zablokuj zakres czasu"
     },
-    "panel": {
-      "title": "Udostępnij panel"
-    },
     "snapshot": {
       "cancel-button": "Anuluj",
       "copy-link-button": "Kopiuj",
@@ -16391,16 +16332,11 @@
       "local-button": "Opublikuj migawkę",
       "mistake-message": "Czy to błąd? ",
       "name": "Nazwa migawki",
-      "timeout": "Limit czasu (w sekundach)",
-      "timeout-description": "Jeśli zbieranie danych z pulpitu zajmuje dużo czasu, może być konieczne skonfigurowanie wartości limitu czasu.",
       "url-label": "URL migawki"
     },
     "tab-title": {
-      "embed": "Osadzanie",
       "export": "Eksport",
-      "library-panel": "Panel biblioteki",
       "link": "Link",
-      "public-dashboard-title": "Pulpit publiczny",
       "snapshot": "Migawka"
     },
     "theme-picker": {

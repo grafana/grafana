@@ -6796,9 +6796,6 @@
     "variable": {
       "description-tooltip": "變數描述"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "返回儀表板",
       "not-found": ""
@@ -13258,7 +13255,7 @@
       "count-truncated_other": "已載入前 {{count}} 個筆記本"
     },
     "new": {
-      "default-title": "筆記本 #{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "儲存失敗",
@@ -14779,12 +14776,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "返回至儲存庫",
       "cleaning-up-resources": "清理儲存庫資源",
-      "not-found": "找不到",
       "not-found-message": "找不到儲存庫",
       "repository-config-exists-configuration": "請確認儲存庫設定存在於設定檔案中。",
       "tab-overview": "概覽",
@@ -15080,26 +15081,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "在公開儀表板之前，請確認以下幾點：",
-      "data-src-ack-desc": "發布目前僅適用於一部分資料來源*",
-      "data-src-ack-tooltip": "進一步了解公共資料來源",
-      "public-ack-desc": "您的整個儀表板將公開*",
-      "public-ack-tooltip": "進一步了解公共儀表板",
-      "usage-ack-desc": "公開儀表板將導致每次檢視時都會執行查詢，這可能會增加成本*",
-      "usage-ack-desc-tooltip": "進一步了解查詢快取"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "可以檢視儀表板",
-      "copy-button": "複製",
-      "dashboard-url-field-label": "儀表板網址",
-      "email-share-type-option-label": "僅限特定人員",
-      "pause-sharing-dashboard-label": "暫停分享儀表板",
-      "public-share-type-option-label": "任何擁有連結的人",
-      "revoke-public-URL-button": "撤銷公共網址",
-      "revoke-public-URL-button-title": "撤銷公共網址",
-      "settings-title": "設定"
-    },
     "configuration": {
       "display-annotations-description": "在此儀表板上顯示註釋",
       "display-annotations-label": "顯示註釋",
@@ -15112,21 +15093,11 @@
       "time-range-label": "時間範圍",
       "time-range-tooltip": "共用儀表板使用儀表板的預設時間範圍設定"
     },
-    "create-page": {
-      "generate-public-url-button": "產生公共網址",
-      "unsupported-features-desc": "目前，我們不支援範本變數或前端資料來源",
-      "welcome-title": "歡迎使用公共儀表板！"
-    },
     "email-sharing": {
       "accept-button": "接受",
       "alert-text": "透過電子郵件分享儀表板時，將依使用者數進行計費，計費期間為 30 天的權杖有效期，不論實際分享的儀表板數量為何。除非您續訂權杖，否則計費將在 30 天後停止。",
       "bill-ack": "我了解新增使用者需要付費。*",
       "cancel-button": "取消",
-      "input-invalid-email-text": "無效的電子郵件",
-      "input-required-email-text": "必須要有電子郵件",
-      "invite-button": "邀請",
-      "invite-field-desc": "透過電子郵件邀請他人",
-      "invite-field-label": "邀請",
       "learn-more-button": "了解更多資訊",
       "recipient-email-placeholder": "電子郵件",
       "recipient-invalid-email-text": "無效的電子郵件",
@@ -15136,17 +15107,12 @@
       "recipient-list-description": "只有您直接邀請的人才能存取此儀表板",
       "recipient-list-title": "有存取權限的人員",
       "recipient-required-email-text": "必須要有電子郵件",
-      "resend-button": "重新傳送",
-      "resend-button-title": "重新傳送",
       "resend-invite-label": "重新傳送邀請",
       "revoke-access-label": "撤銷存取權限",
-      "revoke-button": "撤銷",
-      "revoke-button-title": "撤銷",
       "success-creation": "您的儀表板已準備好進行外部分享",
       "success-share-type-change": "儀表板存取權限已更新：現在只有特定人員才能使用連結存取"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "在更新公共設定之前，請儲存儀表板變更",
       "unsupport-data-source-alert-readmore-link": "閱讀更多關於支援的資料來源",
       "unsupported-data-source-alert-title": "不支援的資料來源",
       "unsupported-template-variable-alert-desc": "此公共儀表板可能無法運作，因為它使用範本變數",
@@ -15160,25 +15126,6 @@
       "public-ack": "我了解整個儀表板將公開。*",
       "success-creation": "您的儀表板現在可以公開存取",
       "success-share-type-change": "儀表板存取權限已更新：現在任何擁有連結的人都可以存取"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "收闔設定",
-      "expand-settings-tooltip": "展開設定"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "預設時間範圍",
-      "default-time-range-label-desc": "公共儀表板使用儀表板的預設時間範圍設定",
-      "show-annotations-label": "顯示註釋",
-      "show-annotations-label-desc": "在公共儀表板上顯示註釋",
-      "time-range-picker-label": "時間範圍選擇器已啟用",
-      "time-range-picker-label-desc": "允許檢視者變更時間範圍"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "註釋 = 隱藏",
-      "annotations-show-text": "註釋 = 顯示",
-      "time-range-picker-disabled-text": "時間範圍選擇器 = 已停用",
-      "time-range-picker-enabled-text": "時間範圍選擇器 = 已啟用",
-      "time-range-text": "時間範圍 = "
     },
     "share": {
       "success-delete": "您的儀表板不再可分享"
@@ -15952,9 +15899,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "分享"
-    },
     "embed": {
       "copy": "複製至剪貼簿",
       "html": "內嵌 HTML",
@@ -16001,9 +15945,6 @@
       "time-range-description": "將目前的相對時間範圍轉換為絕對時間範圍",
       "time-range-label": "鎖定時間範圍"
     },
-    "panel": {
-      "title": "分享面板"
-    },
     "snapshot": {
       "cancel-button": "取消",
       "copy-link-button": "複製",
@@ -16019,16 +15960,11 @@
       "local-button": "發布快照",
       "mistake-message": "您弄錯了嗎？",
       "name": "快照名稱",
-      "timeout": "逾時（秒）",
-      "timeout-description": "如果收集儀表板指標需要很長時間，則可能需要設定逾時值。",
       "url-label": "快照網址"
     },
     "tab-title": {
-      "embed": "嵌入",
       "export": "匯出",
-      "library-panel": "資料庫面板",
       "link": "連結",
-      "public-dashboard-title": "公共儀表板",
       "snapshot": "快照"
     },
     "theme-picker": {

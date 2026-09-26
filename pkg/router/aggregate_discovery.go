@@ -114,9 +114,10 @@ func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL
 		group:      group,
 		key:        key,
 		proxy: &httputil.ReverseProxy{
-			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(&target) },
+			Rewrite:        func(pr *httputil.ProxyRequest) { rewriteOutbound(pr, &target) },
 			Transport:      newBackendTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
+			ErrorHandler:   proxyErrorHandler,
 		},
 	}, nil
 }

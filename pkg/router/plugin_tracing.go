@@ -25,5 +25,5 @@ func (h *tracedPluginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 	}
 	rec, req, endSpan := traceRouterRequest(w, req, "router.plugin", h.group, attribute.String("grafana.plugin.id", h.pluginID))
 	defer endSpan()
-	h.Handler.ServeHTTP(rec, req)
+	h.Handler.ServeHTTP(rec.writer(), req)
 }
