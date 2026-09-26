@@ -69,6 +69,8 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		TargetDatasourceUIDFilter: stringFilter(f.targetDatasourceUID),
 		DatasourceUIDs:            f.datasourceUIDs,
 		SearchTitle:               f.title,
+		StateFilter:               listStringFilter(f.states),
+		HealthFilter:              listStringFilter(f.healths),
 	})
 	if err != nil {
 		return nil, err

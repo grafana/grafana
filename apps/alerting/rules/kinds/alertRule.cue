@@ -58,7 +58,7 @@ alertRulev0alpha1: alertRuleKind & {
 			name: "health"
 			path: "status.health"
 			type: "string"
-			capabilities: ["retrieve"]
+			capabilities: ["filter", "retrieve"]
 			description: "The health of the rule"
 		},
 		{
@@ -86,7 +86,7 @@ alertRulev0alpha1: alertRuleKind & {
 			name: "state"
 			path: "status.state"
 			type: "string"
-			capabilities: ["retrieve"]
+			capabilities: ["filter", "retrieve"]
 			description: "The state of the alert rule"
 		},
 		{

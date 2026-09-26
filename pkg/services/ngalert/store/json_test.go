@@ -221,3 +221,77 @@ func TestBuildGlobPattern(t *testing.T) {
 		})
 	}
 }
+
+func TestJsonValueIn(t *testing.T) {
+	tests := []struct {
+		name     string
+		dialect  migrator.Dialect
+		wantSQL  string
+		wantArgs []any
+	}{
+		{
+			name:     "MySQL",
+			dialect:  migrator.NewMysqlDialect(),
+			wantSQL:  `JSON_UNQUOTE(JSON_EXTRACT(NULLIF(k8s_status, ''), CONCAT('$."', ?, '"'))) IN (?,?)`,
+			wantArgs: []any{"state", "firing", "pending"},
+		},
+		{
+			name:     "PostgreSQL",
+			dialect:  migrator.NewPostgresDialect(),
+			wantSQL:  "jsonb_extract_path_text(NULLIF(k8s_status, '')::jsonb, ?) IN (?,?)",
+			wantArgs: []any{"state", "firing", "pending"},
+		},
+		{
+			name:     "SQLite",
+			dialect:  migrator.NewSQLite3Dialect(),
+			wantSQL:  `json_extract(NULLIF(k8s_status, ''), '$."' || ? || '"') IN (?,?)`,
+			wantArgs: []any{"state", "firing", "pending"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql, args, err := jsonValueIn(tt.dialect, "k8s_status", "state", []string{"firing", "pending"})
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSQL, sql)
+			require.Equal(t, tt.wantArgs, args)
+		})
+	}
+}
+
+func TestJsonValueNotIn(t *testing.T) {
+	tests := []struct {
+		name     string
+		dialect  migrator.Dialect
+		wantSQL  string
+		wantArgs []any
+	}{
+		{
+			name:     "MySQL",
+			dialect:  migrator.NewMysqlDialect(),
+			wantSQL:  `(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(k8s_status, ''), CONCAT('$."', ?, '"'))) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(NULLIF(k8s_status, ''), CONCAT('$."', ?, '"'))) NOT IN (?))`,
+			wantArgs: []any{"health", "health", "error"},
+		},
+		{
+			name:     "PostgreSQL",
+			dialect:  migrator.NewPostgresDialect(),
+			wantSQL:  "(jsonb_extract_path_text(NULLIF(k8s_status, '')::jsonb, ?) IS NULL OR jsonb_extract_path_text(NULLIF(k8s_status, '')::jsonb, ?) NOT IN (?))",
+			wantArgs: []any{"health", "health", "error"},
+		},
+		{
+			name:     "SQLite",
+			dialect:  migrator.NewSQLite3Dialect(),
+			wantSQL:  `(json_extract(NULLIF(k8s_status, ''), '$."' || ? || '"') IS NULL OR json_extract(NULLIF(k8s_status, ''), '$."' || ? || '"') NOT IN (?))`,
+			wantArgs: []any{"health", "health", "error"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql, args, err := jsonValueNotIn(tt.dialect, "k8s_status", "health", []string{"error"})
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSQL, sql)
+			require.Equal(t, tt.wantArgs, args)
+		})
+	}
+}
