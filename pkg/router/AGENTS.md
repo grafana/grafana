@@ -117,9 +117,17 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
   that group.
-- **Aggregated discovery:** reads each backend's discovery with the caller's credentials, and keeps
-  only the group that backend owns. For older backends it falls back to per-version discovery.
-  Versions that can't be fetched are still listed, marked `Stale`.
+- **Aggregated discovery** is built without a request per backend per call:
+  - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
+    keep them from their polls, which use the router's own identity, and they are part of the key.
+  - Every other group comes from `discoveryCache`, keyed by backend key with a TTL
+    (`discoveryCacheTTL`) and shared across callers, since discovery isn't filtered per caller.
+    A miss is fetched with the caller's credentials. Concurrent callers share one fetch, misses run
+    in parallel, and each fetch is bounded by `discoveryFetchTimeout`. Only complete fetches are
+    stored.
+  - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
+    older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
+    last good copy is served, marked `Stale`.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
 - **Metrics:** unknown groups are labelled `unknown` (`KnownGroup`) so arbitrary client paths can't
   create new series.
