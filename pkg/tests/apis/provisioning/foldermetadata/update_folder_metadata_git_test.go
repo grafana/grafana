@@ -33,8 +33,11 @@ func TestIntegrationGitFiles_UpdateFolderMetadataOnNewBranch(t *testing.T) {
 	_ = resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder on default branch should succeed: %s", string(body))
 
+	// Nested folder previews need an existing ancestor in Grafana.
+	helper.SyncAndWait(t, repoName)
 	originalUID := readFolderFieldOnRef(t, helper, repoName, "rename-target/_folder.json", "", "metadata", "name")
 	require.NotEmpty(t, originalUID, "setup: folder should have a UID")
+	helper.RequireFolders(t, originalUID)
 	originalTitle := readFolderFieldOnRef(t, helper, repoName, "rename-target/_folder.json", "", "spec", "title")
 	require.NotEmpty(t, originalTitle, "setup: folder should have a title")
 
@@ -131,7 +134,7 @@ func TestIntegrationGitFiles_EditorCreatesDashboardOnNewBranchWithGranularPermis
 	helper := sharedGitHelper(t)
 
 	const repoName = "editor-new-branch-granular-perms"
-	helper.CreateGitRepo(t, repoName, nil, "write", "branch")
+	helper.CreateFolderTargetGitRepo(t, repoName, nil, "write", "branch")
 
 	// Create a subfolder on the default branch (writes _folder.json with stable UID).
 	resp := postFolderViaFilesAPI(t, helper, repoName, "team-a/", "", "Create team-a folder")
@@ -139,8 +142,11 @@ func TestIntegrationGitFiles_EditorCreatesDashboardOnNewBranchWithGranularPermis
 	_ = resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode, "folder creation should succeed: %s", string(body))
 
+	// Sync before the files API read, which also authorizes folder previews.
+	helper.SyncAndWait(t, repoName)
 	folderUID := readFolderFieldOnRef(t, helper, repoName, "team-a/_folder.json", "", "metadata", "name")
 	require.NotEmpty(t, folderUID, "team-a should have a stable UID from _folder.json")
+	helper.RequireFolders(t, repoName, folderUID)
 
 	// Grant editor granular permissions scoped to the repo root folder only.
 	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{

@@ -379,6 +379,7 @@ func TestIntegrationGitFiles_ListFiles(t *testing.T) {
 	}
 
 	_, _ = helper.CreateGitRepo(t, repoName, initialContent)
+	helper.SyncAndWait(t, repoName)
 
 	t.Run("list all files", func(t *testing.T) {
 		result := helper.AdminREST.Get().
