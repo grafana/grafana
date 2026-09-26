@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { act, cleanup, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { render } from 'test/test-utils';
 
 import {
   ActionType,
@@ -9,8 +10,8 @@ import {
   type PluginMetaInfo,
   PluginType,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { ConnectionPicker } from './ConnectionPicker';
 import { INFINITY_DATASOURCE_TYPE } from './utils';
@@ -56,8 +57,6 @@ jest.mock('@grafana/runtime/unstable', () => ({
 }));
 
 describe('ConnectionPicker', () => {
-  const originalFeatureToggles = config.featureToggles;
-
   beforeEach(() => {
     jest.mocked(getDataSourceInstanceList).mockReset();
     jest
@@ -66,11 +65,12 @@ describe('ConnectionPicker', () => {
   });
 
   afterEach(() => {
-    config.featureToggles = originalFeatureToggles;
+    cleanup();
+    setTestFlags({});
   });
 
   it('renders the direct option for a Fetch action', () => {
-    config.featureToggles = { ...originalFeatureToggles, vizActionsAuth: false };
+    setTestFlags({ vizActionsAuth: false });
 
     render(<ConnectionPicker actionType={ActionType.Fetch} onChange={jest.fn()} />);
 
@@ -78,15 +78,16 @@ describe('ConnectionPicker', () => {
   });
 
   it('does not query datasources when vizActionsAuth toggle is disabled', () => {
-    config.featureToggles = { ...originalFeatureToggles, vizActionsAuth: false };
+    setTestFlags({ vizActionsAuth: false });
 
     render(<ConnectionPicker actionType={ActionType.Fetch} onChange={jest.fn()} />);
 
+    expect(screen.getByText('Direct from browser')).toBeInTheDocument();
     expect(getDataSourceInstanceList).not.toHaveBeenCalled();
   });
 
   it('lists infinity datasources when vizActionsAuth toggle is enabled', async () => {
-    config.featureToggles = { ...originalFeatureToggles, vizActionsAuth: true };
+    setTestFlags({ vizActionsAuth: true });
     const user = userEvent.setup();
 
     render(<ConnectionPicker actionType={ActionType.Fetch} onChange={jest.fn()} />);
@@ -106,7 +107,7 @@ describe('ConnectionPicker', () => {
   });
 
   it('calls onChange with the selected DataSourceInstanceSettings when an infinity datasource is picked', async () => {
-    config.featureToggles = { ...originalFeatureToggles, vizActionsAuth: true };
+    setTestFlags({ vizActionsAuth: true });
     const onChange = jest.fn();
 
     render(<ConnectionPicker actionType={ActionType.Fetch} onChange={onChange} />);
@@ -118,7 +119,7 @@ describe('ConnectionPicker', () => {
   });
 
   it('calls onChange with "direct" when the direct option is selected', async () => {
-    config.featureToggles = { ...originalFeatureToggles, vizActionsAuth: true };
+    setTestFlags({ vizActionsAuth: true });
     const onChange = jest.fn();
 
     render(<ConnectionPicker actionType={ActionType.Infinity} datasourceUid="infinity-uid-1" onChange={onChange} />);
@@ -126,5 +127,39 @@ describe('ConnectionPicker', () => {
     await selectOptionInTest(screen.getByRole('combobox'), 'Direct from browser');
 
     expect(onChange).toHaveBeenCalledWith('direct');
+  });
+
+  it('updates available connections when the flag changes', async () => {
+    setTestFlags({ vizActionsAuth: false });
+    const { user } = render(<ConnectionPicker actionType={ActionType.Fetch} onChange={jest.fn()} />);
+
+    expect(screen.getByText('Direct from browser')).toBeInTheDocument();
+    expect(getDataSourceInstanceList).not.toHaveBeenCalled();
+
+    await act(async () => setTestFlags({ vizActionsAuth: true }));
+    await user.click(screen.getByRole('combobox'));
+    expect(await screen.findByText('My Infinity')).toBeInTheDocument();
+
+    await act(async () => setTestFlags({ vizActionsAuth: false }));
+    expect(screen.getByRole('option', { name: /Direct from browser/ })).toBeInTheDocument();
+    expect(screen.queryByText('My Infinity')).not.toBeInTheDocument();
+  });
+
+  it('keeps datasource options hidden when the flag is disabled during loading', async () => {
+    setTestFlags({ vizActionsAuth: true });
+    let resolveDataSources!: (dataSources: DataSourceInstanceListItem[]) => void;
+    jest.mocked(getDataSourceInstanceList).mockReturnValue(
+      new Promise((resolve) => {
+        resolveDataSources = resolve;
+      })
+    );
+    const { user } = render(<ConnectionPicker actionType={ActionType.Fetch} onChange={jest.fn()} />);
+
+    await act(async () => setTestFlags({ vizActionsAuth: false }));
+    await act(async () => resolveDataSources([infinityDS1]));
+    await user.click(screen.getByRole('combobox'));
+
+    expect(screen.getByRole('option', { name: /Direct from browser/ })).toBeInTheDocument();
+    expect(screen.queryByText('My Infinity')).not.toBeInTheDocument();
   });
 });

@@ -797,9 +797,6 @@
     }
   },
   "public/app/core/components/OptionsUI/fieldColor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    },
     "@grafana/require-no-margin": {
       "count": 1
     }
@@ -910,11 +907,6 @@
   "public/app/core/utils/ticks.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    }
-  },
-  "public/app/features/actions/ConnectionPicker.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/actions/ParamsEditor.tsx": {
@@ -1582,21 +1574,6 @@
   "public/app/features/browse-dashboards/components/DeletedDashboardsLimitBanner.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/element.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 4
-    }
-  },
-  "public/app/features/canvas/runtime/scene.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 6
-    }
-  },
-  "public/app/features/canvas/runtime/sceneAbleManagement.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 5
     }
   },
   "public/app/features/commandPalette/scopes/recentScopesActions.ts": {
@@ -2814,11 +2791,6 @@
       "count": 1
     }
   },
-  "public/app/features/table/hooks.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/templating/formatVariableValue.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -3434,11 +3406,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/canvas/components/CanvasContextMenu.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/plugins/panel/canvas/editor/LineStyleEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -3447,21 +3414,6 @@
   "public/app/plugins/panel/canvas/editor/element/PlacementEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
-    }
-  },
-  "public/app/plugins/panel/canvas/editor/layer/TreeNavigationEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/module.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/panel/canvas/utils.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/plugins/panel/debug/EventBusLogger.tsx": {
@@ -3588,11 +3540,6 @@
   },
   "public/app/plugins/panel/text/v1/textPanelMigrationHandler.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/timeseries/LineStyleEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
