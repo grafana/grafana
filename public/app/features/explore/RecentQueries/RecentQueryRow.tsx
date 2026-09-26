@@ -11,7 +11,8 @@ type Props = {
   query: RichHistoryQuery;
   queryDisplayTexts: string[];
   datasourceLogo?: string;
-  onSelectQuery: (query: RichHistoryQuery) => void;
+  /** When omitted, the primary Select action is not rendered (see RecentQueriesLayout). */
+  onSelectQuery?: (query: RichHistoryQuery) => void;
   onStarQuery: (id: string, starred: boolean) => void;
   onSaveQuery?: (query: RichHistoryQuery) => void;
 };
@@ -44,7 +45,7 @@ export function RecentQueryRow({
   }, [onSaveQuery, query]);
 
   const handleSelect = useCallback(() => {
-    onSelectQuery(query);
+    onSelectQuery?.(query);
   }, [onSelectQuery, query]);
 
   // Dismiss the star tooltip when clicking outside the card
@@ -79,7 +80,8 @@ export function RecentQueryRow({
   const tooltipContent = <span>{t('recent-queries.row.star-tooltip', 'Query starred!')}</span>;
 
   const actionButton = onSaveQuery ? (
-    <Button variant="secondary" size="sm" onClick={handleSave}>
+    // Save is the primary action when there is no host editor to select into.
+    <Button variant={onSelectQuery ? 'secondary' : 'primary'} size="sm" onClick={handleSave}>
       {t('recent-queries.row.save', 'Save query')}
     </Button>
   ) : showStarTooltip ? (
@@ -113,9 +115,11 @@ export function RecentQueryRow({
       </div>
       <div className={styles.actions}>
         {actionButton}
-        <Button variant="primary" size="sm" onClick={handleSelect}>
-          {t('recent-queries.row.select-query', 'Select query')}
-        </Button>
+        {onSelectQuery && (
+          <Button variant="primary" size="sm" onClick={handleSelect}>
+            {t('recent-queries.row.select-query', 'Select query')}
+          </Button>
+        )}
       </div>
     </div>
   );
