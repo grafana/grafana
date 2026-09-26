@@ -1,6 +1,7 @@
 package state
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 	"math/rand"
@@ -134,7 +135,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 				t.Run("add both annotations if there is an image token and url", func(t *testing.T) {
 					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Annotations = randomMapOfStrings()
-					alertState.Image = &ngModels.Image{Token: "test_token", URL: "test_url"}
+					alertState.Image = newImageAttempt(&ngModels.Image{Token: "test_token", URL: "test_url"}, nil)
 
 					result := StateToPostableAlert(alertState, appURL)
 
@@ -150,10 +151,21 @@ func Test_StateToPostableAlert(t *testing.T) {
 					require.Equal(t, expected, result.Annotations)
 				})
 
+				t.Run("don't add annotations for failed attempts", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					alertState.Image = &ImageAttempt{
+						Image: ngModels.Image{Token: "test_token", URL: "test_url"},
+						Error: errors.New("capture failed"),
+					}
+					result := StateToPostableAlert(alertState, appURL)
+					require.NotContains(t, result.Annotations, alertingModels.ImageTokenAnnotation)
+					require.NotContains(t, result.Annotations, alertingModels.ImageURLAnnotation)
+				})
+
 				t.Run("don't add annotations if there's no image token or url", func(t *testing.T) {
 					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Annotations = randomMapOfStrings()
-					alertState.Image = &ngModels.Image{}
+					alertState.Image = newImageAttempt(&ngModels.Image{}, nil)
 
 					result := StateToPostableAlert(alertState, appURL)
 

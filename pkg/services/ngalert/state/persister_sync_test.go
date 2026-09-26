@@ -133,14 +133,14 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 				Condition: "A",
 			},
 			Error: errors.New("test"),
-			Image: &ngmodels.Image{
+			Image: newImageAttempt(&ngmodels.Image{
 				ID:        rand.Int63(),
 				Token:     util.GenerateShortUID(),
 				Path:      util.GenerateShortUID(),
 				URL:       util.GenerateShortUID(),
 				CreatedAt: time.Now().Add(2 * time.Minute),
 				ExpiresAt: time.Now().Add(3 * time.Minute),
-			},
+			}, nil),
 			Annotations: ngmodels.GenerateAlertLabels(4, "annotations_"),
 			Labels:      ngmodels.GenerateAlertLabels(4, "labels_"),
 			Values: map[string]float64{
