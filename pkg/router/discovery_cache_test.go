@@ -289,3 +289,32 @@ func TestAggregatedDiscoveryMixesProvidersAndFetchesSafely(t *testing.T) {
 		require.Len(t, aggregatedDiscovery(t, router), 40)
 	}
 }
+
+func TestAggregatedDiscoveryDoesNotWaitForAHungBackend(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const hungGroup = "hung.ext.grafana.app"
+		release := make(chan struct{})
+		// Blocks without ever looking at its request context.
+		hung := http.HandlerFunc(func(http.ResponseWriter, *http.Request) { <-release })
+		router := NewGrafanaRouter(staticLoader{backends: []Backend{
+			&fakeBackend{group: metav1.APIGroup{Name: hungGroup, Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: hungGroup + "/v1", Version: "v1"}}}, key: "1", handler: hung},
+			&fakeBackend{group: metav1.APIGroup{Name: cachedGroup, Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: cachedGroup + "/v1", Version: "v1"}}}, key: "1", handler: &countingDiscoveryBackend{group: cachedGroup}},
+		}})
+		require.NoError(t, router.reconcile(t.Context()))
+
+		start := time.Now()
+		groups := aggregatedDiscovery(t, router)
+		require.Equal(t, discoveryFetchTimeout, time.Since(start))
+		requireFreshness(t, groups[hungGroup], apidiscoveryv2.DiscoveryFreshnessStale)
+		requireFreshness(t, groups[cachedGroup], apidiscoveryv2.DiscoveryFreshnessCurrent)
+
+		// The fetch is still stuck; later requests must not wait on it again.
+		start = time.Now()
+		groups = aggregatedDiscovery(t, router)
+		require.Zero(t, time.Since(start))
+		requireFreshness(t, groups[hungGroup], apidiscoveryv2.DiscoveryFreshnessStale)
+
+		close(release)
+		synctest.Wait()
+	})
+}
