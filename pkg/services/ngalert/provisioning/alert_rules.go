@@ -1124,13 +1124,19 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, user identity.
 			uids = append(uids, tgt.UID)
 		}
 	}
-	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, user.GetOrgID(), models.NewUserUID(user), false, uids...); err != nil {
+	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, user.GetOrgID(), userUidOrFallback(user), false, uids...); err != nil {
 		return err
 	}
+	// Propagate the provenance-delete error instead of swallowing it.
+	// Swallowing it left stale rows in provenance_type accumulating over
+	// time (the table grows unboundedly), and a partial failure meant
+	// the rule write and its provenance write could be inconsistent. When
+	// an error is returned, the caller's outer InTransaction rolls the
+	// rule write back too, which is the correct behavior — a rule that
+	// can't have its provenance cleared should not appear deleted.
 	for _, uid := range uids {
 		if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, user.GetOrgID()); err != nil {
-			// We failed to clean up the record, but this doesn't break things. Log it and move on.
-			service.log.Warn("Failed to delete provenance record for rule: %w", err)
+			return fmt.Errorf("failed to delete provenance record for rule %s: %w", uid, err)
 		}
 	}
 	return nil
