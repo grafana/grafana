@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
@@ -241,5 +241,21 @@ describe('NotebookPanelActions', () => {
 
     expect(panel.state.title).toBe('Latency');
     expect(screen.queryByRole('textbox', { name: 'Panel title' })).not.toBeInTheDocument();
+  });
+
+  it('does not commit a cancelled title when the input blurs', async () => {
+    const { cell, panel } = buildPanelCell();
+    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+
+    await screen.findByRole('link', { name: 'Open in Explore' });
+    fireEvent.click(screen.getByRole('button', { name: 'Edit panel title' }));
+    const title = screen.getByRole('textbox', { name: 'Panel title' });
+    fireEvent.change(title, { target: { value: 'Wrong title' } });
+    act(() => {
+      fireEvent.keyDown(title, { key: 'Escape' });
+      fireEvent.blur(title);
+    });
+
+    expect(panel.state.title).toBe('Latency');
   });
 });

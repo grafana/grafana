@@ -279,6 +279,18 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.cellTimeRangesEdited.clear();
   }
 
+  public markVisualizationEdited(elementName: string): void {
+    if (!this.scene.state.isEditing) {
+      return;
+    }
+    this.vizConfigsEdited.add(elementName);
+    const somethingToWrite = this.hasSomethingToWrite();
+    if (somethingToWrite) {
+      this.editedByWriter = true;
+    }
+    this.schedule(somethingToWrite);
+  }
+
   /**
    * The panels a reader changed and nobody has decided about yet. Empty means nothing to ask about.
    *

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type RefObject, useEffect, useState } from 'react';
+import { type RefObject, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -45,9 +45,14 @@ export function NotebookPanelActions({
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(title);
   const [originalTitle, setOriginalTitle] = useState(title);
+  const renameFinished = useRef(false);
   const canEditPanel = isEditing && !isLibraryPanel(panel);
 
   const finishRename = () => {
+    if (renameFinished.current) {
+      return;
+    }
+    renameFinished.current = true;
     cell.onPanelTitleChange(draft.trim());
     cell.onPanelTitleCommit();
     setRenaming(false);
@@ -76,6 +81,7 @@ export function NotebookPanelActions({
               } else if (event.key === 'Escape') {
                 event.preventDefault();
                 event.stopPropagation();
+                renameFinished.current = true;
                 cell.onPanelTitleChange(originalTitle);
                 cell.onPanelTitleCommit();
                 setRenaming(false);
@@ -112,6 +118,7 @@ export function NotebookPanelActions({
               size="sm"
               tooltip={t('notebooks.panel.rename', 'Edit panel title')}
               onClick={() => {
+                renameFinished.current = false;
                 setOriginalTitle(title);
                 setDraft(title);
                 setRenaming(true);
