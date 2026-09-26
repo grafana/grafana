@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"fmt"
+	"net"
 	"slices"
 	"testing"
 	"time"
@@ -18,10 +20,59 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+type distributorTestProvider struct {
+	grpcserver.Provider
+	server *grpc.Server
+}
+
+func (p distributorTestProvider) GetServer() *grpc.Server { return p.server }
+
+func TestSearchDistributorConvertsOwnErrors(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
+			srv := grpc.NewServer()
+			_, err := ProvideSearchDistributorServer(noop.NewTracerProvider().Tracer("test"),
+				&setting.Cfg{UnifiedStorageGRPCErrorResultToStatus: enabled}, nil, nil,
+				distributorTestProvider{server: srv})
+			require.NoError(t, err)
+
+			listener := bufconn.Listen(1024 * 1024)
+			t.Cleanup(srv.Stop)
+			go func() { _ = srv.Serve(listener) }()
+			conn, err := grpc.NewClient("passthrough:///bufnet",
+				grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
+				grpc.WithTransportCredentials(insecure.NewCredentials()))
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = conn.Close() })
+
+			resp, err := resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+				Namespace: "default", Keys: []*resourcepb.ResourceKey{{Namespace: "other"}},
+			})
+			want := NewBadRequestError("key namespace does not match request namespace")
+			if !enabled {
+				require.NoError(t, err)
+				require.True(t, proto.Equal(want, resp.GetError()))
+				return
+			}
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
+			details := status.Convert(err).Details()
+			require.Len(t, details, 1)
+			require.True(t, proto.Equal(want, details[0].(*resourcepb.ErrorResult)))
+		})
+	}
+}
 
 func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {
 	t.Run("replication factor 1", func(t *testing.T) {
@@ -68,6 +119,76 @@ func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestDistributorCheckHealth(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name        string
+		desc        *ring.Desc
+		startRing   bool
+		wantHealthy bool
+		wantError   string
+	}{
+		{
+			name:        "ring service not started",
+			desc:        searchRingDescForTest(now, ring.ACTIVE),
+			wantHealthy: false,
+			wantError:   "ring is not running: state=New",
+		},
+		{
+			name:        "empty descriptor",
+			desc:        ring.NewDesc(),
+			startRing:   true,
+			wantHealthy: false,
+			wantError:   "search server ring has no instances",
+		},
+		{
+			name:        "active instances",
+			desc:        searchRingDescForTest(now, ring.ACTIVE, ring.ACTIVE, ring.ACTIVE),
+			startRing:   true,
+			wantHealthy: true,
+		},
+		{
+			name:        "joining instances",
+			desc:        searchRingDescForTest(now, ring.JOINING, ring.JOINING, ring.JOINING),
+			startRing:   true,
+			wantHealthy: true,
+		},
+		{
+			name:        "stale active instances",
+			desc:        searchRingDescForTest(now.Add(-2*RingHeartbeatTimeout), ring.ACTIVE, ring.ACTIVE, ring.ACTIVE),
+			startRing:   true,
+			wantHealthy: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testRing, _ := newSearchRingWithDescForTest(t, 1, tt.desc, tt.startRing)
+			ds := &distributorServer{ring: testRing}
+
+			assertHealth := func(c *assert.CollectT) {
+				healthy, err := ds.CheckHealth(t.Context())
+				assert.Equal(c, tt.wantHealthy, healthy)
+				if tt.wantError == "" {
+					assert.NoError(c, err)
+				} else {
+					assert.ErrorContains(c, err, tt.wantError)
+				}
+
+				response, responseErr := ds.IsHealthy(t.Context(), &resourcepb.HealthCheckRequest{})
+				assert.NoError(c, responseErr)
+				if tt.wantHealthy {
+					assert.Equal(c, resourcepb.HealthCheckResponse_SERVING, response.Status)
+				} else {
+					assert.Equal(c, resourcepb.HealthCheckResponse_NOT_SERVING, response.Status)
+				}
+			}
+
+			require.EventuallyWithT(t, assertHealth, time.Second, 10*time.Millisecond)
+		})
+	}
 }
 
 // VectorSearch must forward the incoming gRPC metadata (which carries the access
@@ -126,6 +247,11 @@ func searchReplicaSetIDs(testRing *ring.Ring, extendReplicaSet bool) ([]string, 
 
 func newSearchRingForTest(t *testing.T, replicationFactor int, firstInstanceState ring.InstanceState) (*ring.Ring, kv.Client) {
 	t.Helper()
+	return newSearchRingWithDescForTest(t, replicationFactor, searchRingDescForTest(time.Now(), firstInstanceState, ring.ACTIVE, ring.ACTIVE), true)
+}
+
+func newSearchRingWithDescForTest(t *testing.T, replicationFactor int, desc *ring.Desc, start bool) (*ring.Ring, kv.Client) {
+	t.Helper()
 
 	logger := gokitlog.NewNopLogger()
 	store, closer := consul.NewInMemoryClient(ring.GetCodec(), logger, prometheus.NewRegistry())
@@ -133,7 +259,7 @@ func newSearchRingForTest(t *testing.T, replicationFactor int, firstInstanceStat
 		require.NoError(t, closer.Close())
 	})
 
-	updateSearchRingForTest(t, store, firstInstanceState)
+	setSearchRingForTest(t, store, desc)
 
 	testRing, err := ring.NewWithStoreClientAndStrategy(ring.Config{
 		HeartbeatTimeout:  time.Minute,
@@ -141,27 +267,37 @@ func newSearchRingForTest(t *testing.T, replicationFactor int, firstInstanceStat
 	}, RingName, RingKey, store, ring.NewIgnoreUnhealthyInstancesReplicationStrategy(), prometheus.NewRegistry(), logger)
 	require.NoError(t, err)
 
-	require.NoError(t, services.StartAndAwaitRunning(t.Context(), testRing))
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
-		defer cancel()
-		require.NoError(t, services.StopAndAwaitTerminated(ctx, testRing))
-	})
+	if start {
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), testRing))
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
+			defer cancel()
+			require.NoError(t, services.StopAndAwaitTerminated(ctx, testRing))
+		})
+	}
 
 	return testRing, store
 }
 
 func updateSearchRingForTest(t *testing.T, store kv.Client, firstInstanceState ring.InstanceState) {
 	t.Helper()
+	setSearchRingForTest(t, store, searchRingDescForTest(time.Now(), firstInstanceState, ring.ACTIVE, ring.ACTIVE))
+}
 
-	desc := ring.NewDesc()
-	now := time.Now()
-	desc.AddIngester("instance-a", "instance-a", "", []uint32{100}, firstInstanceState, now, false, time.Time{}, nil)
-	desc.AddIngester("instance-b", "instance-b", "", []uint32{200}, ring.ACTIVE, now, false, time.Time{}, nil)
-	desc.AddIngester("instance-c", "instance-c", "", []uint32{300}, ring.ACTIVE, now, false, time.Time{}, nil)
+func setSearchRingForTest(t *testing.T, store kv.Client, desc *ring.Desc) {
+	t.Helper()
 
 	err := store.CAS(t.Context(), RingKey, func(interface{}) (interface{}, bool, error) {
 		return desc, false, nil
 	})
 	require.NoError(t, err)
+}
+
+func searchRingDescForTest(heartbeat time.Time, states ...ring.InstanceState) *ring.Desc {
+	desc := ring.NewDesc()
+	for i, state := range states {
+		id := fmt.Sprintf("instance-%c", 'a'+rune(i))
+		desc.AddIngester(id, id, "", []uint32{uint32((i + 1) * 100)}, state, heartbeat, false, time.Time{}, nil)
+	}
+	return desc
 }

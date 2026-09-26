@@ -127,7 +127,6 @@ func ProvidePluginLoaderDependenciesWithClients(
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
 	clients RoutesLoaderClients,
-	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
 	return ProvidePluginLoaderDependencies(
 		pluginClient,
@@ -147,7 +146,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 		clients.SecureValues,
 		reg,
 		builderMetrics,
-		restConfigProvider,
+		clients.RESTConfigProvider,
 	)
 }
 
@@ -164,7 +163,7 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
 				// TODO? should we fail more loudly
-				if !strings.Contains(jsonData.ID, "-") || strings.Contains(jsonData.ID, ".") || jsonData.ID == "v1" {
+				if !isPluginAPIGroup(jsonData.ID) || jsonData.ID == "v1" {
 					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
 					return false
 				}
@@ -188,11 +187,28 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 			}, pl.deps.PluginDependencies,
 		)
 		if err != nil {
-			return nil, err
+			// One bad plugin must not keep every other plugin from loading.
+			logging.FromContext(ctx).Warn("router: skipping app plugin", "pluginId", plugin.JSONData.ID, "err", err)
+			continue
 		}
 		backends = append(backends, backend)
 	}
 	return backends, nil
+}
+
+// pluginManifestGroupSuffix is required on manifest groups: unified storage
+// always enforces RBAC on it, and no core Grafana group uses it.
+const pluginManifestGroupSuffix = ".ext.grafana.app"
+
+// isPluginAPIGroup reports whether group has the shape of an app plugin's API
+// group: a manifest group ending in pluginManifestGroupSuffix, or a plugin ID,
+// which contains a hyphen and no dots. No core Grafana or Kubernetes group has
+// either shape, so a group that passes cannot shadow one.
+func isPluginAPIGroup(group string) bool {
+	if name, ok := strings.CutSuffix(group, pluginManifestGroupSuffix); ok {
+		return name != ""
+	}
+	return strings.Contains(group, "-") && !strings.Contains(group, ".")
 }
 
 func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
@@ -203,10 +219,20 @@ func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 // BACKEND
 //-----------------------
 
-func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientProvider, deps PluginDependencies) (*PluginBackend, error) {
+func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientProvider, deps PluginDependencies) (_ *PluginBackend, err error) {
+	// The plugin API builder panics on an invalid manifest. Plugins are loaded
+	// inside the reconcile loop, so a panic here would stop it for every group.
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("plugin %q: %v", plugin.JSONData.ID, p)
+		}
+	}()
 	group, err := pluginroute.APIGroup(plugin, pluginroute.Options{PluginClient: deps.PluginClient, ContextProvider: deps.ContextProvider})
 	if err != nil {
 		return nil, err
+	}
+	if !isPluginAPIGroup(group.Name) {
+		return nil, fmt.Errorf("plugin %q: API group %q is not a plugin group", plugin.JSONData.ID, group.Name)
 	}
 
 	b, err := json.Marshal(plugin)
@@ -217,7 +243,7 @@ func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientPro
 	sum := sha256.Sum256(b)
 
 	return &PluginBackend{
-		key:    hex.EncodeToString(sum[:]),
+		key:    "p:" + hex.EncodeToString(sum[:]),
 		group:  group,
 		plugin: plugin,
 		client: client,
@@ -285,5 +311,9 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	if b.deps.PluginSettings != nil {
 		opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(b.group.Name, b.plugin.JSONData.ID, b.deps.PluginSettings)
 	}
-	return pluginroute.NewHandler(b.plugin, opts)
+	handler, err := pluginroute.NewHandler(b.plugin, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &tracedPluginHandler{Handler: handler, pluginID: b.plugin.JSONData.ID, group: b.group.Name}, nil
 }

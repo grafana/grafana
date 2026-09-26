@@ -10,6 +10,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -22,7 +23,16 @@ type fakeBuilder struct {
 }
 
 func (b *fakeBuilder) GetGroupVersions() []schema.GroupVersion { return b.gvs }
-func (b *fakeBuilder) InstallSchema(*runtime.Scheme) error     { return nil }
+
+type resourceBuilder struct {
+	*fakeBuilder
+	infos []utils.ResourceInfo
+}
+
+func (b *resourceBuilder) GetResourceInfos(schema.GroupVersion) []utils.ResourceInfo {
+	return b.infos
+}
+func (b *fakeBuilder) InstallSchema(*runtime.Scheme) error { return nil }
 func (b *fakeBuilder) UpdateAPIGroupInfo(*genericapiserver.APIGroupInfo, builder.APIGroupOptions) error {
 	return nil
 }
@@ -135,6 +145,61 @@ func TestBuild_MountsBothScopes(t *testing.T) {
 			Kinds: []app.ManifestVersionKind{
 				{Kind: "Widget", Plural: "widgets", Scope: supportedKindScope},
 			},
+		}},
+	}}
+
+	routes := BuildFromManifests(manifests, true, nil, fakeStore{}, builders, nil)
+
+	want := map[string][]string{gv.String(): {"widgets/list-keys"}}
+	assert.Equal(t, want, paths(routes), "cluster-wide mount")
+	assert.Equal(t, want, namespacedPaths(routes), "namespaced mount")
+}
+
+func TestBuild_MountsBuilderAdvertisedKinds(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	info := utils.NewResourceInfo(gv.Group, gv.Version, "widgets", "widget", "Widget", nil, nil, utils.TableColumns{})
+	builders := []builder.APIGroupBuilder{&resourceBuilder{
+		fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}},
+		infos:       []utils.ResourceInfo{info},
+	}}
+
+	routes := BuildFromManifests(nil, true, nil, fakeStore{}, builders, nil)
+
+	want := map[string][]string{gv.String(): {"widgets/list-keys"}}
+	assert.Equal(t, want, paths(routes), "cluster-wide mount")
+	assert.Equal(t, want, namespacedPaths(routes), "namespaced mount")
+}
+
+func TestBuild_SkipsBuilderAdvertisedClusterScopedKinds(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	info := utils.NewResourceInfo(gv.Group, gv.Version, "clusters", "cluster", "Cluster", nil, nil, utils.TableColumns{})
+	info = info.WithClusterScope()
+	builders := []builder.APIGroupBuilder{&resourceBuilder{
+		fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}},
+		infos:       []utils.ResourceInfo{info},
+	}}
+
+	routes := BuildFromManifests(nil, true, nil, fakeStore{}, builders, nil)
+
+	assert.Empty(t, paths(routes))
+	assert.Empty(t, namespacedPaths(routes))
+}
+
+func TestBuild_MountsKindsDeclaredByManifestAndBuilderOnce(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	info := utils.NewResourceInfo(gv.Group, gv.Version, "widgets", "widget", "Widget", nil, nil, utils.TableColumns{})
+	builders := []builder.APIGroupBuilder{&resourceBuilder{
+		fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}},
+		infos:       []utils.ResourceInfo{info},
+	}}
+	manifests := []*app.ManifestData{{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind: "Widget", Plural: "widgets", Scope: supportedKindScope,
+			}},
 		}},
 	}}
 

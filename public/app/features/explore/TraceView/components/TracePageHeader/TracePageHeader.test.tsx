@@ -23,9 +23,10 @@ import {
   type PluginExtensionLink,
   PluginExtensionPoints,
   PluginExtensionTypes,
+  type TraceSearchProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { usePluginLinks, usePluginComponents, config } from '@grafana/runtime';
+import { usePluginLinks, usePluginComponents, config, reportInteraction } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
@@ -95,7 +96,8 @@ const setup = (
   pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false },
   hideHeaderDetails = false,
   logsLinkModel?: LinkModel,
-  traceOverride = trace
+  traceOverride = trace,
+  overrides: { search?: TraceSearchProps; spanFilterMatches?: Set<string> } = {}
 ) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
@@ -108,12 +110,13 @@ const setup = (
     app: CoreApp.Unknown,
     trace: traceOverride,
     timeZone: '',
-    search: DEFAULT_SPAN_FILTERS,
+    search: overrides.search ?? DEFAULT_SPAN_FILTERS,
     setSearch: jest.fn(),
     showSpanFilters: true,
     setShowSpanFilters: jest.fn(),
-    spanFilterMatches: undefined,
+    spanFilterMatches: overrides.spanFilterMatches,
     setFocusedSpanIdForSearch: jest.fn(),
+    onGoToSpan: jest.fn(),
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),
     data: new MutableDataFrame(),
@@ -130,6 +133,9 @@ const setup = (
     ...render(<TracePageHeader {...defaultProps} />),
     mockUsePluginLinks,
     mockUsePluginComponents,
+    setFocusedSpanIdForSearch: defaultProps.setFocusedSpanIdForSearch,
+    onGoToSpan: defaultProps.onGoToSpan,
+    setSearch: defaultProps.setSearch,
   };
 };
 
@@ -359,7 +365,89 @@ describe('TracePageHeader test', () => {
     expect(within(banner).getByText('payment-service')).toBeInTheDocument();
     expect(within(banner).getByText('POST /payments/authorize')).toBeInTheDocument();
     expect(within(banner).getByText('1.42s · 58.9% of trace')).toBeInTheDocument();
+    expect(within(banner).getByRole('button', { name: 'Go to span' })).toBeInTheDocument();
     expect(within(banner).queryByText('checkout-service')).not.toBeInTheDocument();
+  });
+
+  it('shows a span too short to round to 0.1% as an unescaped "<0.1%"', () => {
+    const errorTraceId = 'tiny-span-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 5_000_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 5_000_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'tiny-error',
+          depth: 1,
+          duration: 811,
+          tags: [{ key: 'error', type: 'String', value: 'true' }],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    const banner = screen.getByLabelText('Trace error banner');
+    expect(within(banner).getByText('811μs · <0.1% of trace')).toBeInTheDocument();
+  });
+
+  it('asks to go to the highlighted span and reports the click on every Go to span click, including repeats', async () => {
+    const errorTraceId = 'go-to-span-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 2_410_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 2_410_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'payment-error',
+          depth: 2,
+          duration: 1_420_000,
+          operationName: 'authorize',
+          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.route', type: 'String', value: '/payments/authorize' },
+            { key: 'error', type: 'String', value: 'true' },
+          ],
+        },
+      ],
+    };
+
+    const { onGoToSpan } = setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+    const goToSpan = screen.getByRole('button', { name: 'Go to span' });
+
+    await userEvent.click(goToSpan);
+    await userEvent.click(goToSpan);
+
+    expect(onGoToSpan).toHaveBeenCalledTimes(2);
+    expect(onGoToSpan).toHaveBeenCalledWith('payment-error');
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledWith('grafana_traces_trace_view_go_to_span_clicked', {
+      app: CoreApp.Unknown,
+      datasourceType: 'tempo',
+      grafana_version: config.buildInfo.version,
+      location: 'trace-banner',
+    });
   });
 
   it('should render the trace-level logs link when provided', () => {

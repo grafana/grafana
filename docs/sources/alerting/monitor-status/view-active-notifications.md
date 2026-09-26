@@ -92,7 +92,7 @@ You can filter by label, state, or Alertmanager:
 
 From **Custom group by** dropdown, select a combination of labels to view a grouping other than the default. This helps validate the [grouping settings of your notification policies](ref:grouping).
 
-If an alert does not contain labels specified either in the grouping of the default policy or the custom grouping, then the alert is added to a catch all group with a header of `No grouping`.
+If an alert does not contain labels specified either in the grouping of the default policy or the custom grouping, then the alert is added to a catch-all group with a header of `No grouping`.
 
 ## View notification errors
 

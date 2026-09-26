@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -33,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -859,7 +861,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracer, nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracer, nil, iam.Features{})
 	require.NoError(t, err)
 
 	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
@@ -870,6 +872,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
+	serviceAccountRetriever := serviceaccountsretriever.ProvideService(sql, nil, nil, userSvc, orgSvc)
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
@@ -877,7 +880,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc, nil, NewActionSetService(),
+		ac, acService, sql, teamSvc, userSvc, serviceAccountRetriever, NewActionSetService(),
 	)
 	require.NoError(t, err)
 

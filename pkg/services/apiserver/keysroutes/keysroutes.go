@@ -3,6 +3,8 @@
 package keysroutes
 
 import (
+	"slices"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -42,6 +44,7 @@ func BuildFromManifests(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
+	manifests = slices.Concat(manifests, builder.ManifestsFromBuilders(builders))
 	return BuildForServedGroupVersions(
 		manifests, builder.ServedGroupVersions(builders, installers), enabled, tracer, store)
 }
@@ -64,6 +67,7 @@ func BuildForServedGroupVersions(
 
 	handler := keysapi.NewHandler(store, tracer)
 	scopes := map[schema.GroupVersion]*routeScopes{}
+	mounted := map[schema.GroupVersionResource]bool{}
 
 	for _, m := range manifests {
 		if m == nil {
@@ -82,6 +86,11 @@ func BuildForServedGroupVersions(
 					continue
 				}
 				resourceName := resource.ManifestResourceName(kind)
+				gvr := gv.WithResource(resourceName)
+				if mounted[gvr] {
+					continue
+				}
+				mounted[gvr] = true
 				if scopes[gv] == nil {
 					scopes[gv] = &routeScopes{}
 				}

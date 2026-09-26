@@ -47,6 +47,11 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newService(loader, reg)
 	s.standalone = slices.Contains(cfg.Target, "router")
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	if s.middleware && !s.standalone {
+		// The middleware runs ahead of the embedded API server, so it hosts only
+		// app plugin groups and can never shadow a group the server owns.
+		s.router.acceptGroup = isPluginAPIGroup
+	}
 	return s, nil
 }
 
@@ -134,6 +139,9 @@ func (s *Service) stopping(error) error {
 	if s.ready != nil {
 		s.ready.SetNotReady()
 	}
+	// Watches never go idle, so the server's shutdown would otherwise wait for
+	// each one to end. Clients re-establish them against another replica.
+	s.router.closeWatches()
 	return nil
 }
 

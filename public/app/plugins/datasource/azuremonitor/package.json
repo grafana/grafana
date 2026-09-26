@@ -8,7 +8,7 @@
     "@grafana/azure-sdk": "0.1.0",
     "@grafana/data": "13.3.0-pre",
     "@grafana/i18n": "13.3.0-pre",
-    "@grafana/plugin-ui": "^0.15.1",
+    "@grafana/plugin-ui": "^0.17.0",
     "@grafana/runtime": "13.3.0-pre",
     "@grafana/schema": "13.3.0-pre",
     "@grafana/ui": "13.3.0-pre",
@@ -33,9 +33,9 @@
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",
-    "@types/lodash": "4.17.20",
+    "@types/lodash": "^4.17.25",
     "@types/node": "24.10.1",
-    "@types/prismjs": "1.26.5",
+    "@types/prismjs": "^1.26.6",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "i18next-cli": "^1.48.0",
@@ -55,5 +55,5 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.17.1"
+  "packageManager": "yarn@4.18.0"
 }

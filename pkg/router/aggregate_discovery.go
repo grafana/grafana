@@ -15,25 +15,34 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// discoverGroups fetches and decodes the discovery document a target apiserver
-// exposes at /apis. Aggregate targets have no RouteBackend CR to define what
-// they serve, so this active discovery call is unavoidable; forward backends
-// avoid it by learning their group from their CR instead.
-//
-// The request asks for the aggregated discovery format (aggregatedDiscoveryJSON)
-// ahead of the classic one. This matters for a target running the standalone
-// apiextensions apiserver (baas_apiserver): its plain, no-Accept-header /apis
-// response is served from a static map only ever populated for
-// apiextensions.k8s.io itself at startup, never updated as CRDs come and go --
-// CRD-backed groups are only ever pushed into the aggregated-discovery manager.
-// Without requesting that format explicitly, this poll would silently never see
-// any CRD group on that target. A target that doesn't support the aggregated
-// format (older or non-k8s-style servers) still negotiates down to the classic
-// one, which decodeDiscoveryResponse falls back to.
+// discoveredGroup is one group from a target's /apis document. discovery holds
+// its resources when the target served the aggregated format, and is nil for
+// the classic format, which lists only versions.
+type discoveredGroup struct {
+	group     metav1.APIGroup
+	discovery *apidiscoveryv2.APIGroupDiscovery
+}
+
+// discoverGroups fetches a target's /apis discovery document. It asks for the
+// aggregated format first: the standalone apiextensions apiserver lists
+// CRD-backed groups only there, never in its plain /apis response. Servers
+// without it fall back to the classic APIGroupList.
 func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([]metav1.APIGroup, error) {
-	// Trim a trailing slash before joining: a configured "https://host/" would
-	// otherwise produce "//apis", which most servers route differently than
-	// "/apis" -- silently breaking discovery for that target.
+	discovered, err := discoverGroupResources(ctx, client, baseURL)
+	if err != nil {
+		return nil, err
+	}
+	groups := make([]metav1.APIGroup, len(discovered))
+	for i, d := range discovered {
+		groups[i] = d.group
+	}
+	return groups, nil
+}
+
+// discoverGroupResources is discoverGroups, keeping each group's resources
+// when the target served the aggregated format.
+func discoverGroupResources(ctx context.Context, client *http.Client, baseURL string) ([]discoveredGroup, error) {
+	// A trailing slash would produce "//apis", which servers route differently.
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimSuffix(baseURL, "/")+apisPrefix, nil)
 	if err != nil {
 		return nil, fmt.Errorf("router: building discovery request: %w", err)
@@ -56,20 +65,29 @@ func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([
 // apidiscovery.k8s.io group), and as the classic APIGroupList otherwise -- a
 // target may ignore the requested Accept header entirely and always answer
 // with the classic format.
-func decodeDiscoveryResponse(resp *http.Response, baseURL string) ([]metav1.APIGroup, error) {
+func decodeDiscoveryResponse(resp *http.Response, baseURL string) ([]discoveredGroup, error) {
 	if strings.Contains(resp.Header.Get("Content-Type"), "apidiscovery.k8s.io") {
 		var list apidiscoveryv2.APIGroupDiscoveryList
 		if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
 			return nil, fmt.Errorf("router: decoding APIGroupDiscoveryList from %s: %w", baseURL, err)
 		}
-		return apiGroupDiscoveryListToGroups(list), nil
+		groups := apiGroupDiscoveryListToGroups(list)
+		discovered := make([]discoveredGroup, len(groups))
+		for i := range groups {
+			discovered[i] = discoveredGroup{group: groups[i], discovery: &list.Items[i]}
+		}
+		return discovered, nil
 	}
 
 	var list metav1.APIGroupList
 	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
 		return nil, fmt.Errorf("router: decoding APIGroupList from %s: %w", baseURL, err)
 	}
-	return list.Groups, nil
+	discovered := make([]discoveredGroup, len(list.Groups))
+	for i, group := range list.Groups {
+		discovered[i] = discoveredGroup{group: group}
+	}
+	return discovered, nil
 }
 
 // apiGroupDiscoveryListToGroups converts the aggregated discovery document into
@@ -103,44 +121,78 @@ func apiGroupDiscoveryListToGroups(list apidiscoveryv2.APIGroupDiscoveryList) []
 type aggregateBackend struct {
 	targetName string
 	group      metav1.APIGroup
+	discovery  *apidiscoveryv2.APIGroupDiscovery
 	key        string
 	proxy      *httputil.ReverseProxy
 }
 
-var _ Backend = &aggregateBackend{}
+var (
+	_ Backend           = &aggregateBackend{}
+	_ DiscoveryProvider = &aggregateBackend{}
+)
 
 func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
-	body, err := json.Marshal(group)
+	return newDiscoveredAggregateBackend(targetName, discoveredGroup{group: group}, base, transport)
+}
+
+// newDiscoveredAggregateBackend also keeps the group's resources from the
+// poll, so /apis can be built without asking the target again. They are part
+// of the key, so a resource change on the target republishes discovery.
+func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
+	group := discovered.group
+	key, err := discoveredGroupKey(discovered)
 	if err != nil {
 		return nil, fmt.Errorf("router: fingerprinting discovered group %q: %w", group.Name, err)
 	}
-	sum := sha256.Sum256(body)
-	key := "aggregate:" + targetName + ":" + hex.EncodeToString(sum[:])[:16]
+	key = "aggregate:" + targetName + ":" + key
 
-	// Normalize a trailing slash out of the base path, on a copy so the caller
-	// keeps ownership of base (aggregateTarget.base is shared by every group on
-	// that target). ProxyRequest.SetURL's joiner happens to collapse "/" + "/x"
-	// today, so this is belt-and-braces rather than a live bug -- but it makes
-	// the "base path has no trailing slash" invariant local and explicit here
-	// instead of resting on a stdlib join detail, the same invariant
-	// discoverGroups relies on for the discovery URL.
+	// Copy base, since every group on the target shares it, and drop any
+	// trailing slash.
 	target := *base
 	target.Path = strings.TrimRight(target.Path, "/")
 
 	return &aggregateBackend{
 		targetName: targetName,
 		group:      group,
+		discovery:  discovered.discovery,
 		key:        key,
 		proxy: &httputil.ReverseProxy{
-			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(&target) },
-			Transport:      transport,
+			Rewrite:        func(pr *httputil.ProxyRequest) { rewriteOutbound(pr, &target) },
+			Transport:      newBackendTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
+			ErrorHandler:   proxyErrorHandler,
+			FlushInterval:  streamingFlushInterval,
 		},
 	}, nil
 }
 
 func (b *aggregateBackend) Group() metav1.APIGroup { return b.group }
 func (b *aggregateBackend) Key() string            { return b.key }
+func (b *aggregateBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
+	if b.discovery == nil {
+		return apidiscoveryv2.APIGroupDiscovery{}, false
+	}
+	return *b.discovery, true
+}
+
+// discoveredGroupKey fingerprints a discovered group. A group without
+// resources hashes exactly as before resources were kept, so its key is
+// unchanged.
+func discoveredGroupKey(d discoveredGroup) (string, error) {
+	var value any = d.group
+	if d.discovery != nil {
+		value = struct {
+			Group     metav1.APIGroup
+			Discovery *apidiscoveryv2.APIGroupDiscovery
+		}{d.group, d.discovery}
+	}
+	body, err := json.Marshal(value)
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(body)
+	return hex.EncodeToString(sum[:])[:16], nil
+}
 func (b *aggregateBackend) Load(context.Context) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		b.proxy.ServeHTTP(w, req)

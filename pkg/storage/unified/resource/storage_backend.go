@@ -172,43 +172,30 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 }
 
 // observeGCGroupResource records how long a GC pass over one group/resource took.
-// Nil-safe for test backends.
 func (m *kvBackendMetrics) observeGCGroupResource(group, resource string, d time.Duration) {
-	if m == nil {
-		return
-	}
 	m.GCGroupResourceDuration.WithLabelValues(group, resource).Observe(d.Seconds())
 }
 
 func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
-	if m == nil {
-		return
-	}
 	m.WriteConflicts.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
 }
 
 func (m *kvBackendMetrics) recordEventEmitFailure(event WriteEvent) {
-	if m == nil {
-		return
-	}
 	m.EventEmitFailures.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
 }
 
 func (m *kvBackendMetrics) recordWatchNotificationPublished(event Event) {
-	if m == nil {
-		return
-	}
 	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
 func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
-	if m == nil {
-		return
-	}
 	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
-var _ KVBackend = &kvStorageBackend{}
+var (
+	_ KVBackend      = &kvStorageBackend{}
+	_ KeyListBackend = &kvStorageBackend{}
+)
 
 type KVBackend interface {
 	StorageBackend
@@ -1320,25 +1307,14 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 }
 
-func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest) ([]*BackendReadResponse, error) {
-	responses := make([]*BackendReadResponse, len(requests))
-	type batchReadEntry struct {
-		index int
-		key   kv.DataKey
-	}
-	entries := make([]batchReadEntry, 0, len(requests))
-	keys := make([]kv.DataKey, 0, len(requests))
-
+func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
 	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
 	// would otherwise resolve the highest retained revision below it, so the batch
 	// and single-read paths would disagree when search and storage briefly diverge.
-	// The latest RV is fetched once and shared across the batch.
 	var maxReqRV int64
 	for _, req := range requests {
 		if req != nil && req.Key != nil {
-			if rv := ToSnowflakeRV(req.ResourceVersion); rv > maxReqRV {
-				maxReqRV = rv
-			}
+			maxReqRV = max(maxReqRV, ToSnowflakeRV(req.ResourceVersion))
 		}
 	}
 	var latestRV int64
@@ -1351,96 +1327,163 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 		}
 	}
 
-	for i, req := range requests {
-		if req == nil || req.Key == nil {
-			responses[i] = &BackendReadResponse{Error: NewBadRequestError("missing key")}
-			continue
+	return func(yield func(*BackendReadResponse) bool) {
+		type batchReadEntry struct {
+			request  *resourcepb.ReadRequest
+			key      kv.DataKey
+			response *BackendReadResponse
+		}
+		entries := make([]batchReadEntry, 0, len(requests))
+		keys := make([]kv.DataKey, 0, len(requests))
+		for _, req := range requests {
+			entry := batchReadEntry{request: req}
+			if req == nil || req.Key == nil {
+				entry.response = &BackendReadResponse{Error: NewBadRequestError("missing key")}
+				entries = append(entries, entry)
+				continue
+			}
+
+			rv := ToSnowflakeRV(req.ResourceVersion)
+			if rv > latestRV {
+				entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
+				entries = append(entries, entry)
+				continue
+			}
+			meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
+				Group:     req.Key.Group,
+				Resource:  req.Key.Resource,
+				Namespace: req.Key.Namespace,
+				Name:      req.Key.Name,
+			}, rv)
+			if errors.Is(err, ErrNotFound) {
+				entry.response = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+				entries = append(entries, entry)
+				continue
+			}
+			if err != nil {
+				entry.response = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+				entries = append(entries, entry)
+				continue
+			}
+
+			entry.key = kv.DataKey{
+				Group:           req.Key.Group,
+				Resource:        req.Key.Resource,
+				Namespace:       req.Key.Namespace,
+				Name:            req.Key.Name,
+				ResourceVersion: meta.ResourceVersion,
+				Action:          meta.Action,
+				Folder:          meta.Folder,
+			}
+			entries = append(entries, entry)
+			keys = append(keys, entry.key)
 		}
 
-		rv := ToSnowflakeRV(req.ResourceVersion)
-		if rv > latestRV {
-			responses[i] = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
-			continue
+		next, stopPull := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+		var peek DataObj
+		var hasPeek bool
+		stop := func() {
+			if hasPeek && peek.Value != nil {
+				_ = peek.Value.Close()
+			}
+			hasPeek = false
+			stopPull()
 		}
-		name := req.Key.Name
-		getKey := GetRequestKey{
-			Group:     req.Key.Group,
-			Resource:  req.Key.Resource,
-			Namespace: req.Key.Namespace,
-			Name:      name,
-		}
-		meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, getKey, rv)
-		if errors.Is(err, ErrNotFound) {
-			responses[i] = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
-			continue
-		}
-		if err != nil {
-			responses[i] = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
-			continue
-		}
+		for _, entry := range entries {
+			if entry.response != nil {
+				if !yield(entry.response) {
+					stop()
+					return
+				}
+				continue
+			}
+			if !hasPeek {
+				var peekErr error
+				peek, peekErr, hasPeek = next()
+				if peekErr != nil {
+					yield(&BackendReadResponse{
+						Key:             entry.request.Key,
+						ResourceVersion: entry.key.ResourceVersion,
+						Folder:          entry.key.Folder,
+						Error:           &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: peekErr.Error()},
+					})
+					stop()
+					return
+				}
+			}
 
-		dataKey := kv.DataKey{
-			Group:           req.Key.Group,
-			Resource:        req.Key.Resource,
-			Namespace:       req.Key.Namespace,
-			Name:            name,
-			ResourceVersion: meta.ResourceVersion,
-			Action:          meta.Action,
-			Folder:          meta.Folder,
-			GUID:            meta.GUID,
-		}
-		entries = append(entries, batchReadEntry{index: i, key: dataKey})
-		keys = append(keys, dataKey)
-	}
-
-	if len(keys) == 0 {
-		return responses, nil
-	}
-
-	values := make(map[string][]byte, len(keys))
-	var batchErr error
-	for obj, err := range k.dataStore.BatchGet(ctx, keys) {
-		if err != nil {
-			batchErr = err
-			break
-		}
-		value, err := readAndClose(obj.Value)
-		if err != nil {
-			batchErr = err
-			break
-		}
-		values[obj.Key.String()] = value
-	}
-
-	for _, entry := range entries {
-		// A late batch failure must not discard values already read.
-		if value, ok := values[entry.key.String()]; ok {
-			responses[entry.index] = &BackendReadResponse{
-				Key:             requests[entry.index].Key,
+			response := &BackendReadResponse{
+				Key:             entry.request.Key,
 				ResourceVersion: entry.key.ResourceVersion,
-				Value:           value,
 				Folder:          entry.key.Folder,
 			}
-			continue
+			if hasPeek && peek.Key.String() == entry.key.String() {
+				value, err := readAndClose(peek.Value)
+				hasPeek = false
+				if err != nil {
+					response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+					yield(response)
+					stop()
+					return
+				}
+				response.Value = value
+			} else {
+				response.Error = NewNotFoundError(entry.request.Key)
+			}
+			if !yield(response) {
+				stop()
+				return
+			}
 		}
-		// A batch-level failure is a 500; an individually missing key means the
-		// resource vanished between resolve and read (e.g. GC), which is a not-found
-		// like the single-read path returns.
-		errRes := NewNotFoundError(requests[entry.index].Key)
-		if batchErr != nil {
-			errRes = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: batchErr.Error()}
-		}
-		// Folder/RV are set so authorization (which runs before the error surfaces)
-		// checks the real folder instead of denying on an empty one.
-		responses[entry.index] = &BackendReadResponse{
-			Key:             requests[entry.index].Key,
-			ResourceVersion: entry.key.ResourceVersion,
-			Folder:          entry.key.Folder,
-			Error:           errRes,
-		}
+		stop()
+	}, nil
+}
+
+func (k *kvStorageBackend) FetchValues(ctx context.Context, items []BackendListKey) (iter.Seq2[*BackendReadResponse, error], error) {
+	if len(items) > dataBatchSize {
+		return nil, fmt.Errorf("value fetch batch has %d items, maximum is %d", len(items), dataBatchSize)
 	}
 
-	return responses, nil
+	keys := make([]DataKey, len(items))
+	for idx, item := range items {
+		if item.Key == nil {
+			return nil, fmt.Errorf("value fetch item %d has no resource key", idx)
+		}
+		if item.dataKey.Group != item.Key.Group || item.dataKey.Resource != item.Key.Resource ||
+			item.dataKey.Namespace != item.Key.Namespace || item.dataKey.Name != item.Key.Name ||
+			item.dataKey.ResourceVersion != item.ResourceVersion || item.dataKey.Folder != item.Folder {
+			return nil, fmt.Errorf("value fetch item %d does not match its backend key", idx)
+		}
+		keys[idx] = item.dataKey
+	}
+
+	return func(yield func(*BackendReadResponse, error) bool) {
+		for obj, err := range k.dataStore.BatchGet(ctx, keys) {
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+
+			value, err := readAndClose(obj.Value)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			if !yield(&BackendReadResponse{
+				Key: &resourcepb.ResourceKey{
+					Namespace: obj.Key.Namespace,
+					Group:     obj.Key.Group,
+					Resource:  obj.Key.Resource,
+					Name:      obj.Key.Name,
+				},
+				ResourceVersion: obj.Key.ResourceVersion,
+				Folder:          obj.Key.Folder,
+				Value:           value,
+			}, nil) {
+				return
+			}
+		}
+	}, nil
 }
 
 // ListIterator returns an iterator for listing resources.
@@ -1448,8 +1491,6 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
-
-	req.ResourceVersion = ToSnowflakeRV(req.ResourceVersion)
 
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListIterator", trace.WithAttributes(
 		attribute.String("namespace", req.Options.Key.Namespace),
@@ -1459,7 +1500,49 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	defer span.End()
 	defer func() { recordSpanError(span, err) }()
 
-	// Parse continue token if provided
+	listRV, keys, err := k.listResourceKeys(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace == "")
+	defer it.stop()
+
+	if err := cb(it); err != nil {
+		return 0, err
+	}
+
+	return listRV, nil
+}
+
+func (k *kvStorageBackend) ListKeys(ctx context.Context, req *resourcepb.ListRequest, cb func(ListKeyIterator) error) (rv int64, err error) {
+	if req.Options == nil || req.Options.Key == nil {
+		return 0, fmt.Errorf("missing options or key in ListRequest")
+	}
+
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListKeys", trace.WithAttributes(
+		attribute.String("namespace", req.Options.Key.Namespace),
+		attribute.String("group", req.Options.Key.Group),
+		attribute.String("resource", req.Options.Key.Resource),
+	))
+	defer span.End()
+	defer func() { recordSpanError(span, err) }()
+
+	listRV, keys, err := k.listResourceKeys(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+
+	it := newKvListKeyIterator(keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace == "")
+	defer it.stop()
+	if err := cb(it); err != nil {
+		return 0, err
+	}
+	return listRV, nil
+}
+
+func (k *kvStorageBackend) listResourceKeys(ctx context.Context, req *resourcepb.ListRequest) (int64, iter.Seq2[DataKey, error], error) {
+	req.ResourceVersion = ToSnowflakeRV(req.ResourceVersion)
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
 			Group:     req.Options.Key.Group,
@@ -1473,15 +1556,14 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("invalid continue token: %w", err)
+			return 0, nil, fmt.Errorf("invalid continue token: %w", err)
 		}
 		if token.Name == "" {
-			return 0, fmt.Errorf("invalid continue token: name is required for list resources")
+			return 0, nil, fmt.Errorf("invalid continue token: name is required for list resources")
 		}
 		if !continueTokenMatchesListRequest(token, req) {
-			return 0, apierrors.NewBadRequest("invalid continue token: list scope does not match request")
+			return 0, nil, apierrors.NewBadRequest("invalid continue token: list scope does not match request")
 		}
-		// Only use token namespace for cross-namespace queries (when request namespace is empty).
 		if req.Options.Key.Namespace == "" {
 			listOptions.ContinueNamespace = token.Namespace
 		}
@@ -1489,29 +1571,17 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		listOptions.ResourceVersion = ToSnowflakeRV(token.ResourceVersion)
 	}
 
-	// We set the listRV to the last event resource version.
-	// If no events exist yet, we generate a new snowflake.
 	listRV := k.snowflake.Generate().Int64()
 	if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
 		listRV = lastEventKey.ResourceVersion
 	} else if !errors.Is(err, ErrNotFound) {
-		return 0, fmt.Errorf("failed to fetch last event: %w", err)
+		return 0, nil, fmt.Errorf("failed to fetch last event: %w", err)
 	}
-
 	if listOptions.ResourceVersion > 0 {
 		listRV = listOptions.ResourceVersion
 	}
 
-	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
-
-	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace == "")
-	defer it.stop()
-
-	if err := cb(it); err != nil {
-		return 0, err
-	}
-
-	return listRV, nil
+	return listRV, k.dataStore.ListResourceKeysAtRevision(ctx, listOptions), nil
 }
 
 func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListRequest) bool {
@@ -1554,6 +1624,84 @@ func keysAsDataObjs(keys iter.Seq2[DataKey, error]) iter.Seq2[DataObj, error] {
 				return
 			}
 		}
+	}
+}
+
+type kvListKeyIterator struct {
+	listRV                int64
+	includeTokenNamespace bool
+	keysOnly              bool
+	clusterWide           bool
+	next                  func() (DataKey, error, bool)
+	stopFn                func()
+	started               bool
+	current               DataKey
+	nextKey               DataKey
+	err                   error
+	nextErr               error
+	hasMore               bool
+}
+
+func newKvListKeyIterator(keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListKeyIterator {
+	next, stopFn := iter.Pull2(keys)
+	return &kvListKeyIterator{
+		listRV:                listRV,
+		includeTokenNamespace: includeTokenNamespace,
+		keysOnly:              keysOnly,
+		clusterWide:           clusterWide,
+		next:                  next,
+		stopFn:                stopFn,
+	}
+}
+
+func (i *kvListKeyIterator) stop() {
+	if i.stopFn != nil {
+		i.stopFn()
+	}
+}
+
+func (i *kvListKeyIterator) Next() bool {
+	if !i.started {
+		i.started = true
+		i.nextKey, i.nextErr, i.hasMore = i.next()
+	}
+	if !i.hasMore {
+		return false
+	}
+
+	i.current, i.err = i.nextKey, i.nextErr
+	if i.err != nil {
+		return false
+	}
+	i.nextKey, i.nextErr, i.hasMore = i.next()
+	return true
+}
+
+func (i *kvListKeyIterator) Error() error {
+	return i.err
+}
+
+func (i *kvListKeyIterator) Item() BackendListKey {
+	token := ContinueToken{
+		Name:            i.nextKey.Name,
+		ResourceVersion: i.listRV,
+		KeysOnly:        i.keysOnly,
+		ClusterWide:     i.clusterWide,
+	}
+	if i.includeTokenNamespace {
+		token.Namespace = i.nextKey.Namespace
+	}
+	return BackendListKey{
+		Key: &resourcepb.ResourceKey{
+			Namespace: i.current.Namespace,
+			Group:     i.current.Group,
+			Resource:  i.current.Resource,
+			Name:      i.current.Name,
+		},
+		ResourceVersion: i.current.ResourceVersion,
+		Folder:          i.current.Folder,
+		ContinueToken:   token.String(),
+		dataKey:         i.current,
 	}
 }
 

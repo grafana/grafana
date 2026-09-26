@@ -2,13 +2,11 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -24,7 +22,6 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	teamapi "github.com/grafana/grafana/pkg/registry/apis/iam/team"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -46,7 +43,6 @@ type UserTeamREST struct {
 	client     resourcepb.ResourceIndexClient
 	teamGetter rest.Getter
 	tracer     trace.Tracer
-	ofClient   openfeature.IClient
 }
 
 func NewUserTeamREST(client resourcepb.ResourceIndexClient, teamGetter rest.Getter, tracer trace.Tracer) *UserTeamREST {
@@ -54,7 +50,6 @@ func NewUserTeamREST(client resourcepb.ResourceIndexClient, teamGetter rest.Gett
 		client:     client,
 		teamGetter: teamGetter,
 		tracer:     tracer,
-		ofClient:   openfeature.NewDefaultClient(),
 	}
 }
 
@@ -79,12 +74,6 @@ func (s *UserTeamREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !s.ofClient.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context())) {
-			responder.Error(apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
-				name, errors.New("functionality not available")))
-			return
-		}
-
 		ctx, span := s.tracer.Start(r.Context(), "user.teams")
 		defer span.End()
 
@@ -161,8 +150,8 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 		}
 
 		result, err := s.client.Search(ctx, searchRequest)
-		if err := resource.ErrorFromResponse(result.GetError(), err); err != nil {
-			responder.Error(apierrors.NewInternalError(err))
+		if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
+			responder.Error(err)
 			return
 		}
 		rows, err := decodeUserTeamSearchRows(result)
@@ -177,7 +166,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 
 		items, err := s.buildItems(common.WithSubresourceNamespace(ctx), rows, name)
 		if err != nil {
-			responder.Error(apierrors.NewInternalError(err))
+			responder.Error(err)
 			return
 		}
 

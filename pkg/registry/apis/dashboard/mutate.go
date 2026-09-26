@@ -3,6 +3,8 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,20 +33,20 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	switch a.GetResource().Resource {
 	case dashboardV0.DASHBOARD_RESOURCE:
 		return b.mutateDashboard(ctx, a)
-	// Reachability invariant: Variable storage is registered only when
-	// accessControl is set. The flag is gated per request in GetAuthorizer, so
-	// this case fires when the feature is enabled in embedded mode. Standalone
-	// skips storage. If Variable is added to another version or moved to a
-	// subresource, update storage registration and this switch in lockstep.
+	// Reachability invariant: variable storage is always registered, but
+	// FlagGrafanaDashboardGlobalVariables is gated per request in GetAuthorizer.
+	// When the feature is disabled the authorizer denies the request (403)
+	// before admission runs, so this case only fires when global variables
+	// are enabled.
 	case dashboardV2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		return mutateVariable(a)
 
 	// Reachability invariant: this case only fires when the apiserver routes a
 	// request to the v2beta1 Notebook storage, which is registered in
 	// UpdateAPIGroupInfo behind FlagDashboardNotebooks (see register.go).
-	// Notebooks need no mutation today; layout validation happens in Validate.
+	// Layout validation happens in Validate.
 	case dashboardV2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
-		return nil
+		return mutateNotebook(a)
 
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
@@ -202,6 +204,32 @@ func mutateVariable(a admission.Attributes) error {
 
 	if a.GetOperation() == admission.Create && variable.GetName() == "" {
 		variable.SetName(deriveVariableMetadataName(getVariableName(variable.Spec), meta.GetFolder()))
+	}
+
+	return nil
+}
+
+// Matches the title the UI gives a new notebook, so a notebook created through the API is not named
+// differently from one created by clicking New. Sortable rather than localized, for the same reason
+// it is in the UI: these titles are read as a list.
+const notebookDefaultTitleFormat = "Notebook 2006-01-02 15:04"
+
+// mutateNotebook names a notebook that was created without a title. Nothing requires one — `title`
+// is a plain string in the spec, so an omitted title arrives as "" and becomes a blank row in the
+// notebooks list with nothing to click.
+//
+// Create only. Re-titling on update would stamp a notebook someone deliberately cleared with the
+// time it was edited rather than created, which is worse than the blank it replaces.
+func mutateNotebook(a admission.Attributes) error {
+	notebook, ok := a.GetObject().(*dashboardV2beta1.Notebook)
+	if !ok {
+		return fmt.Errorf("mutation error: expected notebook, got %T", a.GetObject())
+	}
+
+	// UTC, where the UI uses the signed-in user's timezone: admission has no user timezone to format
+	// in — the preference can be "browser", which means nothing without a browser to ask.
+	if a.GetOperation() == admission.Create && strings.TrimSpace(notebook.Spec.Title) == "" {
+		notebook.Spec.Title = time.Now().UTC().Format(notebookDefaultTitleFormat)
 	}
 
 	return nil

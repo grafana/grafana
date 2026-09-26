@@ -14,7 +14,7 @@ labels:
 menuTitle: Template variables
 title: TestData template variables
 weight: 300
-review_date: '2026-04-08'
+review_date: '2026-08-11'
 ---
 
 # TestData template variables
