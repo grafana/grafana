@@ -100,12 +100,16 @@ describe('NotebookToolbar', () => {
   const originalLocationService = locationService;
   const originalAppUrl = config.appUrl;
   const originalIsSecureContext = window.isSecureContext;
+  const originalRudderstackWriteKey = config.rudderstackWriteKey;
+  const originalRudderstackDataPlaneUrl = config.rudderstackDataPlaneUrl;
 
   beforeEach(() => {
     // Outside a secure context copyTextToClipboard falls back to document.execCommand, which jsdom
     // does not implement — the copy would fail silently and never reach the clipboard stub.
     Object.assign(window, { isSecureContext: true });
     config.appUrl = 'https://host/';
+    config.rudderstackWriteKey = 'test-key';
+    config.rudderstackDataPlaneUrl = 'https://example.com';
     // Every render mounts the delete hook, including the tests that never delete anything.
     setupDelete();
     setIrmAvailable(false);
@@ -115,6 +119,8 @@ describe('NotebookToolbar', () => {
     Object.assign(window, { isSecureContext: originalIsSecureContext });
     setLocationService(originalLocationService);
     config.appUrl = originalAppUrl;
+    config.rudderstackWriteKey = originalRudderstackWriteKey;
+    config.rudderstackDataPlaneUrl = originalRudderstackDataPlaneUrl;
   });
 
   /**
@@ -139,6 +145,12 @@ describe('NotebookToolbar', () => {
 
     return rendered;
   }
+
+  it('offers feedback in the notebook toolbar', () => {
+    setup();
+
+    expect(screen.getByRole('button', { name: 'Give feedback' })).toBeInTheDocument();
+  });
 
   it('copies an absolute link to the notebook, not the in-app path', async () => {
     const { user } = setup();
@@ -217,6 +229,7 @@ describe('NotebookToolbar', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Give feedback' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
@@ -236,6 +249,7 @@ describe('NotebookToolbar', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Give feedback' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
@@ -480,6 +494,23 @@ describe('NotebookToolbar', () => {
       await user.click(screen.getByRole('button', { name: 'More actions' }));
 
       expect(screen.queryByRole('menuitem', { name: 'Copy as Markdown' })).not.toBeInTheDocument();
+    });
+
+    it('keeps feedback open when the first save gives the notebook a uid', async () => {
+      const scene = buildScene();
+      scene.setState({ uid: undefined });
+      const { rerender, user } = render(<NotebookToolbar scene={scene} />);
+
+      await user.click(screen.getByRole('button', { name: 'Give feedback' }));
+      await user.click(screen.getByRole('button', { name: 'Could be better' }));
+      await user.type(screen.getByRole('textbox', { name: 'Tell us more (optional)' }), 'Saving felt slow');
+
+      act(() => scene.setState({ uid: 'nb1' }));
+      rerender(<NotebookToolbar uid="nb1" scene={scene} />);
+
+      expect(screen.getByRole('dialog', { name: 'Tell us about your experience with notebooks' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Tell us more (optional)' })).toHaveValue('Saving felt slow');
+      expect(screen.getByRole('button', { name: 'Copy link' })).not.toHaveAttribute('aria-disabled');
     });
   });
 });

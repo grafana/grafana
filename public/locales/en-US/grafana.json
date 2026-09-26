@@ -13286,6 +13286,28 @@
       "error": "Failed to export notebook",
       "label": "Export"
     },
+    "feedback": {
+      "cancel": "Cancel",
+      "comment-label": "Tell us more (optional)",
+      "give-feedback": "Give feedback",
+      "negative": "Could be better",
+      "negative-help": "Select a topic or add a comment.",
+      "positive": "Good",
+      "positive-label": "What do you like?",
+      "reason": {
+        "adding-content": "Adding content",
+        "editing": "Editing",
+        "getting-started": "Getting started",
+        "missing-feature": "Missing feature",
+        "sharing": "Sharing",
+        "something-broken": "Something is broken",
+        "visualizations": "Visualizations"
+      },
+      "reason-label": "What could be better?",
+      "send": "Send feedback",
+      "sent": "Thanks for your feedback",
+      "title": "Tell us about your experience with notebooks"
+    },
     "history": {
       "add-block": "Add block",
       "add-query": "Add query",

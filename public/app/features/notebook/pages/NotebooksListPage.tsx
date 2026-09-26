@@ -12,7 +12,8 @@ import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { NotebookTagsField } from '../NotebookTagsField';
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_LIST_FILTER_TYPE } from '../analytics/types';
+import { NOTEBOOK_FEEDBACK_SOURCE, NOTEBOOK_LIST_FILTER_TYPE } from '../analytics/types';
+import { NotebookFeedbackButton } from '../feedback/NotebookFeedbackButton';
 import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
 import { canCreateNotebooks } from '../permissions';
@@ -122,7 +123,12 @@ export function NotebooksListPage() {
           <FeatureBadge featureState={FeatureState.preview} />
         </Stack>
       )}
-      actions={hasNoNotebooks ? undefined : createButton}
+      actions={
+        <Stack alignItems="center" gap={1} wrap="wrap">
+          <NotebookFeedbackButton labeled source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_LIST} />
+          {!hasNoNotebooks && createButton}
+        </Stack>
+      }
     >
       <Page.Contents isLoading={isLoading}>
         <Stack direction="column" gap={2}>
