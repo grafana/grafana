@@ -68,23 +68,32 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	}
 	// A backend owns the entire group, including which versions are served.
 	// Never keep fallback versions of a group the router has taken over.
-	var mu sync.Mutex
+	// Fetches run in parallel, each writing only its own result slot, and the
+	// groups map is written on this goroutine alone.
+	type fetch struct {
+		name   string
+		result apidiscoveryv2.APIGroupDiscovery
+	}
+	snapshot := *r.snapshot.Load()
+	fetches := make([]*fetch, 0, len(snapshot))
 	var wg sync.WaitGroup
-	for name, entry := range *r.snapshot.Load() {
+	for name, entry := range snapshot {
 		if entry.discovery != nil {
 			groups[name] = *entry.discovery
 			continue
 		}
+		f := &fetch{name: name}
+		fetches = append(fetches, f)
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			d := r.groupDiscovery(req, name, entry)
-			mu.Lock()
-			groups[name] = d
-			mu.Unlock()
+			f.result = r.groupDiscovery(req, name, entry)
 		}()
 	}
 	wg.Wait()
+	for _, f := range fetches {
+		groups[f.name] = f.result
+	}
 	items := make([]apidiscoveryv2.APIGroupDiscovery, 0, len(groups))
 	for _, group := range groups {
 		items = append(items, group)

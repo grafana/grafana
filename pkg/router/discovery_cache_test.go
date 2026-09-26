@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -265,4 +266,26 @@ func TestAggregatedDiscoveryDoesNotCacheFailedFetchWithoutVersions(t *testing.T)
 	require.Equal(t, "things", group.Versions[0].Resources[0].Resource)
 	aggregatedDiscovery(t, router)
 	require.EqualValues(t, 3, handler.calls.Load())
+}
+
+func TestAggregatedDiscoveryMixesProvidersAndFetchesSafely(t *testing.T) {
+	backends := make([]Backend, 0, 40)
+	for i := range 20 {
+		provided := fmt.Sprintf("provided%d.ext.grafana.app", i)
+		backends = append(backends, &providerBackend{
+			fakeBackend: fakeBackend{group: metav1.APIGroup{Name: provided}, key: "1"},
+			discovery:   thingsDiscovery(provided),
+		})
+		fetched := fmt.Sprintf("fetched%d.ext.grafana.app", i)
+		backends = append(backends, &fakeBackend{group: metav1.APIGroup{Name: fetched}, key: "1", handler: &countingDiscoveryBackend{group: fetched}})
+	}
+	router := NewGrafanaRouter(staticLoader{backends: backends})
+	require.NoError(t, router.reconcile(t.Context()))
+
+	// Warm the cache so later fetches return at once, while provider entries
+	// are still being added on the request goroutine.
+	aggregatedDiscovery(t, router)
+	for range 20 {
+		require.Len(t, aggregatedDiscovery(t, router), 40)
+	}
 }
