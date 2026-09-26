@@ -42,6 +42,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -301,7 +302,20 @@ func (s *Storage) Versioner() storage.Versioner {
 func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
 	ctx, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
-	return s.serializer.Decode(ctx, data, obj)
+	obj, err := s.serializer.Decode(ctx, data, obj)
+	if err != nil {
+		return obj, err
+	}
+
+	// Replace empty folder with "general" on read
+	if s.opts.EnableFolderSupport {
+		m, _ := utils.MetaAccessor(obj)
+		if m != nil && m.GetFolder() == "" {
+			m.SetFolder(folder.GeneralFolderUID)
+		}
+	}
+
+	return obj, nil
 }
 
 // cleanupSecretsAfterFailedPreparation deletes inline secrets a failed preparation created, but only
@@ -519,6 +533,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
 	decoder := newStreamDecoder(client, s.newFunc, predicate, s.serializer, cancelWatch, cmd.SendInitialEvents)
+	decoder.decodeObject = s.convertToObject
 
 	return watch.NewStreamWatcher(decoder, reporter), nil
 }

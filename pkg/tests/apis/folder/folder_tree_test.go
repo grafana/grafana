@@ -448,9 +448,12 @@ func getFoldersFromDashboardV0Search(t *testing.T, client *rest.RESTClient, ns s
 	lookup := make(map[string]*FolderView, len(results.Hits))
 	for _, hit := range results.Hits {
 		fv := &FolderView{
-			Name:   hit.Name,
-			Title:  hit.Title,
-			Parent: hit.Folder,
+			Name:  hit.Name,
+			Title: hit.Title,
+			// Root-level resources surface as "general" via the k8s API; the
+			// tree builder expects "" for root to anchor them on the synthetic
+			// top-level node.
+			Parent: folder.ToLegacyFolderUID(hit.Folder),
 		}
 
 		result = client.Get().AbsPath("apis", folderV1.APIGroup,
@@ -503,9 +506,11 @@ func getFoldersFromAPIServerList(t *testing.T, client dynamic.ResourceInterface)
 			require.NoError(t, err)
 
 			fv := &FolderView{
-				Name:   hit.GetName(),
-				Title:  title,
-				Parent: obj.GetFolder(),
+				Name:  hit.GetName(),
+				Title: title,
+				// Root folders carry the "general" sentinel in the annotation;
+				// the tree builder uses "" to denote root.
+				Parent: folder.ToLegacyFolderUID(obj.GetFolder()),
 			}
 
 			access, err := client.Get(context.Background(), fv.Name, v1.GetOptions{}, "access")

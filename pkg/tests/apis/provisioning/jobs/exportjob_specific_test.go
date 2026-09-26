@@ -15,6 +15,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -193,7 +194,7 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 		// was fully created and claimed.
 		depth := 0
 		folderUID := d.GetAnnotations()[utils.AnnoKeyFolder]
-		for folderUID != "" {
+		for !foldermodel.IsRootFolderUID(folderUID) {
 			f, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
 			if !assert.NoError(collect, err, "ancestor folder %q should exist", folderUID) {
 				return

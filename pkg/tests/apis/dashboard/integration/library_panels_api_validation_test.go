@@ -17,7 +17,6 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -336,7 +335,8 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 		ContentType: "application/json",
 	}, &model.LibraryElementResponse{})
 	require.Equal(t, http.StatusOK, moveToRootResponse.Response.StatusCode)
-	require.Equal(t, ac.GeneralFolderUID, moveToRootResponse.Result.Result.FolderUID)
+	require.Empty(t, moveToRootResponse.Result.Result.FolderUID)
+	require.Empty(t, moveToRootResponse.Result.Result.Meta.FolderUID)
 	require.NoError(t, deleteLibraryElement(t, ctx, ctx.AdminUser, createdByFolderIDResult["uid"].(string)))
 
 	// create: the display title and properties without a typed spec field (e.g.
@@ -354,6 +354,8 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	}, ctx.AdminUser)
 	require.NoError(t, err)
 	result := created["result"].(map[string]interface{})
+	require.Empty(t, result["folderUid"])
+	require.Empty(t, result["meta"].(map[string]interface{})["folderUid"])
 	uid := result["uid"].(string)
 	require.NotEmpty(t, uid)
 	require.Equal(t, "CRUDPanel", result["name"])
@@ -369,6 +371,8 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	require.NoError(t, err)
 	gotResult := got["result"].(map[string]interface{})
 	require.Equal(t, uid, gotResult["uid"])
+	require.Empty(t, gotResult["folderUid"])
+	require.Empty(t, gotResult["meta"].(map[string]interface{})["folderUid"])
 	gotModel := gotResult["model"].(map[string]interface{})
 	require.Equal(t, "CRUD panel display title", gotModel["title"])
 	require.Contains(t, gotModel, "transformations")
@@ -382,6 +386,9 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	filtered, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements?searchString=crudpanel", ctx.AdminUser)
 	require.NoError(t, err)
 	require.Equal(t, float64(1), filtered["result"].(map[string]interface{})["totalCount"])
+	filteredPanel := filtered["result"].(map[string]interface{})["elements"].([]interface{})[0].(map[string]interface{})
+	require.Empty(t, filteredPanel["folderUid"])
+	require.Empty(t, filteredPanel["meta"].(map[string]interface{})["folderUid"])
 
 	empty, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements?searchString=doesnotmatch", ctx.AdminUser)
 	require.NoError(t, err)
