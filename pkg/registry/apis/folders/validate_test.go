@@ -1696,6 +1696,41 @@ func TestCheckMoveAccess(t *testing.T) {
 			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
 		},
 		{
+			// Empty root parent passes through as-is; RBAC applies create-time
+			// empty->general itself, so the create probe matches the empty folder.
+			name:      "move to empty root: destination-create checked at empty parent",
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			oldParent: oldParentUID,
+			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.LegacyRootFolderUID)}, //nolint:staticcheck
+		},
+		{
+			name:      "move to empty root detects Editor to Admin escalation",
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			oldParent: oldParentUID,
+			allows: []allow{
+				allowFolder(utils.VerbCreate, "", folder.LegacyRootFolderUID), //nolint:staticcheck
+				canUpdateOnSourceUnderOld,
+				allowFolder(utils.VerbUpdate, sourceUID, folder.LegacyRootFolderUID),         //nolint:staticcheck
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.LegacyRootFolderUID), //nolint:staticcheck
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			// Regression: a general-scoped setperms grant must NOT inflate the tier
+			// of an empty-parent root folder. Old tier is None, so gaining Editor
+			// (update) under the new parent is a real None->Editor escalation. The
+			// old empty->general normalization masked this as Admin.
+			name:      "move from empty root: general grant does not inflate old tier",
+			newParent: newParentUID,
+			oldParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.GeneralFolderUID), // scoped to general: intentionally ignored for an empty-parent root folder
+				canUpdateOnSourceUnderNew,
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
 			name:        "move to root denied without create at root",
 			newParent:   folder.GeneralFolderUID,
 			oldParent:   oldParentUID,
