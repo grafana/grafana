@@ -53,7 +53,7 @@ describe('ImportToGMARules', () => {
   });
 
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
-  testWithFeatureToggles({ enable: ['alertingImportYAMLUI', 'alertingMigrationUI'] });
+  testWithFeatureToggles({ enable: ['alertingMigrationUI'] });
 
   it('should render the import source options', () => {
     render(<ImportToGMARules />);
