@@ -1,5 +1,3 @@
-import type { Variant } from './variants.ts';
-
 export interface TemplateInput {
   group: string;
   groupName: string;
@@ -23,9 +21,13 @@ export function formatEndpoints(endpointsInput: string): string {
     .join(', ');
 }
 
-export function renderBaseAPI(input: TemplateInput, variant: Variant): string {
-  const imports = variant.baseAPIImports;
+/** lowerCamel reducer path from a group name and version, e.g. `notificationsAlertingAPIv0alpha1`. */
+export function deriveReducerPath(groupName: string, version: string): string {
+  const camel = groupName.replace(/\.([a-z])/g, (_, letter: string) => letter.toUpperCase());
+  return `${camel}API${version}`;
+}
 
+export function renderBaseAPI(input: Pick<TemplateInput, 'group' | 'version' | 'reducerPath'>, imports: string): string {
   return `import { createApi } from '@reduxjs/toolkit/query/react';
 
 ${imports}

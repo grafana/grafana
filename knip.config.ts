@@ -26,6 +26,8 @@ const config: KnipConfig = {
   ignore: [
     '**/*.gen.ts*',
     '**/*_gen.ts*',
+    // golden output of the grafana-api-clients CLI, compared against by its tests
+    'packages/grafana-api-clients/src/cli/testdata/generated/**',
     'public/app/features/alerting/unified/search/search.terms.js',
     'scripts/grafana-server/tmp/**',
     'devenv/**',

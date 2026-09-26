@@ -46,7 +46,7 @@ async function main() {
   }
 
   // Create baseAPI.ts and index.ts
-  writeNewFileIfMissing(path.join(clientDir, 'baseAPI.ts'), renderBaseAPI(answers, variant));
+  writeNewFileIfMissing(path.join(clientDir, 'baseAPI.ts'), renderBaseAPI(answers, variant.baseAPIImports));
   writeNewFileIfMissing(path.join(clientDir, 'index.ts'), renderIndexTs());
 
   // Add config entry to the generate script (inject before the marker so marker stays last)

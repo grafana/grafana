@@ -3,7 +3,6 @@ import path from 'path';
 
 export function writeNewFileIfMissing(filePath: string, content: string): boolean {
   if (fs.existsSync(filePath)) {
-    console.warn(`⚠️ Skipping existing file: ${filePath}`);
     return false;
   }
 

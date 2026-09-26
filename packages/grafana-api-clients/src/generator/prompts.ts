@@ -1,6 +1,7 @@
 import Enquirer from 'enquirer';
 
 import { getOpenAPISpecs } from './openapi.ts';
+import { deriveReducerPath } from './templates.ts';
 import { variantFor } from './variants.ts';
 
 export interface GeneratorAnswers {
@@ -51,11 +52,6 @@ function parseGroupName(apiInfo: string): string {
 
 function parseVersion(apiInfo: string): string {
   return apiInfo.split('.grafana.app-')[1]?.replace(/\.json$/, '') ?? '';
-}
-
-function deriveReducerPath(groupName: string, version: string): string {
-  const camel = groupName.replace(/\.([a-z])/g, (_, letter: string) => letter.toUpperCase());
-  return `${camel}API${version}`;
 }
 
 export async function runPrompts(basePath: string): Promise<GeneratorAnswers> {

@@ -4,7 +4,7 @@
     "title": "historian.alerting.grafana.app/v0alpha1"
   },
   "paths": {
-    "/": {
+    "/apis/historian.alerting.grafana.app/v0alpha1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",

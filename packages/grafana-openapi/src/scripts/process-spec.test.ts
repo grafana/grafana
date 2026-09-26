@@ -98,11 +98,14 @@ describe('processOpenAPISpec', () => {
     expect(unresolved).toEqual([]);
   });
 
-  it('strips the group, version and namespace from paths', () => {
+  it('strips the namespaced prefix from paths and leaves the rest absolute', () => {
     const processed = processOpenAPISpec(specWithClashingNames());
 
-    // The '/watch/' path survives, despite what the function's own description says.
-    expect(Object.keys(processed.paths).sort()).toEqual(['/dashboards/{name}/search', '/search', '/watch/dashboards']);
+    expect(Object.keys(processed.paths).sort()).toEqual([
+      '/apis/dashboard.grafana.app/v0alpha1/search',
+      '/apis/dashboard.grafana.app/v0alpha1/watch/dashboards',
+      '/dashboards/{name}/search',
+    ]);
     // The namespace parameter is not useful to a client that already knows its own.
     expect(processed.paths['/dashboards/{name}/search'].parameters).toEqual([{ name: 'name', in: 'path' }]);
   });

@@ -5,7 +5,7 @@
     "title": "iam.grafana.app/v0alpha1"
   },
   "paths": {
-    "/": {
+    "/apis/iam.grafana.app/v0alpha1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",

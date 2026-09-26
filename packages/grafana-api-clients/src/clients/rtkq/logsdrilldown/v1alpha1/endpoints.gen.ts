@@ -12,7 +12,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/` }),
+        query: () => ({ url: `/apis/logsdrilldown.grafana.app/v1alpha1/` }),
         providesTags: ['API Discovery'],
       }),
       listLogsDrilldownDefaultColumns: build.query<

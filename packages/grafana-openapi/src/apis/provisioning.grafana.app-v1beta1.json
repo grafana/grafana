@@ -5,7 +5,7 @@
     "title": "provisioning.grafana.app/v1beta1"
   },
   "paths": {
-    "/": {
+    "/apis/provisioning.grafana.app/v1beta1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",

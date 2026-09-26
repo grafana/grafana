@@ -4,9 +4,8 @@ import { buildSchemaNameMap, escapeJsonPointer, simplifySchemaName } from './sch
 
 /**
  * Process an OpenAPI spec to remove k8s metadata from names and paths:
- * - Remove paths containing "/watch/" as they're deprecated.
- * - Remove 'ForAllNamespaces' endpoints
  * - Remove the prefix: "/apis/<group>/<version>/namespaces/{namespace}" from paths.
+ *   Paths without it (cluster-scoped kinds, version-level routes, discovery) stay absolute.
  * - Filter out `namespace` from path parameters.
  * - Update all $ref fields to remove k8s metadata from schema names.
  * - Simplify schema names in "components.schemas".
@@ -17,7 +16,7 @@ export function processOpenAPISpec(spec: OpenAPIV3.Document) {
 
   // Decided up front because the paths are rewritten before the schemas are, and a $ref
   // has to end up with the same name as the schema it points at.
-  const schemaNames = buildSchemaNameMap(Object.keys(newSpec.components.schemas), specGroup(newSpec));
+  const schemaNames = buildSchemaNameMap(Object.keys(newSpec.components.schemas), specGroupVersion(newSpec)?.group);
 
   // Process 'paths' property
   const newPaths: Record<string, unknown> = {};
@@ -27,7 +26,7 @@ export function processOpenAPISpec(spec: OpenAPIV3.Document) {
       continue;
     }
     // Remove the specified part from the path key
-    const newPathKey = path.replace(/^\/apis\/[^\/]+\/[^\/]+/, '').replace(/^\/namespaces\/\{namespace}/, '');
+    const newPathKey = path.replace(/^\/apis\/[^/]+\/[^/]+\/namespaces\/\{namespace}/, '');
 
     // Process each method in the path (e.g., get, post)
     const newPathItem: Record<string, unknown> = {};
@@ -40,15 +39,6 @@ export function processOpenAPISpec(spec: OpenAPIV3.Document) {
     for (const method of Object.keys(pathItem)) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const operation = pathItem[method as keyof OpenAPIV3.PathItemObject];
-
-      if (
-        typeof operation === 'object' &&
-        operation !== null &&
-        'operationId' in operation &&
-        operation.operationId?.includes('ForAllNamespaces')
-      ) {
-        continue;
-      }
 
       // Filter out namespace parameter at operation level
       if (
@@ -91,20 +81,24 @@ function filterNamespaceParameters(parameters: Array<OpenAPIV3.ReferenceObject |
 }
 
 /**
- * The group the document describes, taken from a path since that is where it appears
- * literally. `info.title` is the fallback, and is not always a group - the quotas
+ * The group and version the document describes, taken from a path since that is where they
+ * appear literally. `info.title` is the fallback, and is not always a group - the quotas
  * document calls itself 'Grafana API Server'.
  */
-function specGroup(spec: OpenAPIV3.Document) {
+export function specGroupVersion(spec: OpenAPIV3.Document): { group: string; version: string } | undefined {
   for (const path of Object.keys(spec.paths ?? {})) {
-    const match = path.match(/^\/apis\/([^\/]+)\//);
+    const match = path.match(/^\/apis\/([^/]+)\/([^/]+)\//);
     if (match) {
-      return match[1];
+      return { group: match[1], version: match[2] };
     }
   }
 
   const title = spec.info?.title ?? '';
-  return /^\S+\/v\S*$/.test(title) ? title.split('/')[0] : undefined;
+  if (/^\S+\/v\S*$/.test(title)) {
+    const [group, version] = title.split('/');
+    return { group, version };
+  }
+  return undefined;
 }
 
 /**

@@ -5,7 +5,7 @@
     "title": "folder.grafana.app/v1"
   },
   "paths": {
-    "/": {
+    "/apis/folder.grafana.app/v1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",

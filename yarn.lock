@@ -2384,13 +2384,20 @@ __metadata:
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@typescript/native": "npm:typescript@^7.0.2"
     enquirer: "npm:^2.4.1"
+    esbuild: "npm:0.28.1"
     openapi-types: "npm:^12.1.3"
     rollup: "npm:^4.60.1"
     typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
     "@grafana/runtime": ">=11.6"
     "@reduxjs/toolkit": ^2.10.0
+    "@rtk-query/codegen-openapi": ^2.0.0
     rxjs: ^7.8.2
+  peerDependenciesMeta:
+    "@rtk-query/codegen-openapi":
+      optional: true
+  bin:
+    grafana-api-clients: ./dist/cli/generate.mjs
   languageName: unknown
   linkType: soft
 
