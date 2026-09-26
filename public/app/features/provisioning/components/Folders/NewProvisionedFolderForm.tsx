@@ -59,7 +59,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     action: 'create',
     resourceKind: 'folder',
     resourceID: '',
-    title: (title ?? '').trim(),
+    title: title ?? '',
     ...getCurrentCommitUser(),
   };
   const { locked, message } = useCommitMessageTemplate({
@@ -144,9 +144,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
-    // The folder API trims the title it stores, so the directory must be named from the trimmed value too
-    const folderName = title.trim();
-    if (!folderName || !repoName) {
+    if (!title || !repoName) {
       onError(
         t(
           'browse-dashboards.new-provisioned-folder-form.error-missing-title-or-repo',
@@ -157,10 +155,10 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     }
 
     const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
-    const path = joinPath(basePath, `${folderName}/`);
+    const path = joinPath(basePath, `${title}/`);
 
     const folderModel = {
-      title: folderName,
+      title,
       type: 'folder',
     };
 
@@ -217,7 +215,9 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             <Input
               {...register('title', {
                 required: t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required'),
-                validate: (value) => validateProvisionedFolderName(value.trim()),
+                // This value becomes a directory name in the repository, so it must never carry surrounding spaces
+                setValueAs: (value: string) => value.trim(),
+                validate: validateProvisionedFolderName,
               })}
               placeholder={t(
                 'browse-dashboards.new-provisioned-folder-form.folder-name-input-placeholder-enter-folder-name',
