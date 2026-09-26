@@ -100,6 +100,7 @@
     "fishery": "^2.3.1",
     "lodash": "^4.17.21",
     "micro-memoize": "^4.1.2",
+    "react-use": "^17.6.1",
     "tinycolor2": "^1.6.0"
   }
 }
