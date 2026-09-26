@@ -44,6 +44,15 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - On an OpenAPI cache miss, strip conditional headers and the `hash` query parameter before
     proxying.
   - Any 304 must carry an `ETag`.
+- **In middleware mode the router serves only app plugin groups** (`isPluginAPIGroup`: a
+  `*.ext.grafana.app` manifest group, or a plugin ID with a hyphen and no dots). It runs ahead of
+  the embedded API server, so it must never shadow a group that server owns. `NewPluginBackend`
+  enforces the same rule in every mode. One bad backend or plugin fails only its own group; it
+  must never stop the reconcile loop.
+- **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
+  requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
+  `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
+  Without a requester (standalone), they pass through. `X-Forwarded-*` is always set.
 - **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
   `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
   function that logs has no context, pass one in from its caller (a request's `Context()`, or the
@@ -108,9 +117,17 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
   that group.
-- **Aggregated discovery:** reads each backend's discovery with the caller's credentials, and keeps
-  only the group that backend owns. For older backends it falls back to per-version discovery.
-  Versions that can't be fetched are still listed, marked `Stale`.
+- **Aggregated discovery** is built without a request per backend per call:
+  - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
+    keep them from their polls, which use the router's own identity, and they are part of the key.
+  - Every other group comes from `discoveryCache`, keyed by backend key with a TTL
+    (`discoveryCacheTTL`) and shared across callers, since discovery isn't filtered per caller.
+    A miss is fetched with the caller's credentials. Concurrent callers share one fetch, misses run
+    in parallel, and each fetch is bounded by `discoveryFetchTimeout`. Only complete fetches are
+    stored.
+  - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
+    older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
+    last good copy is served, marked `Stale`.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
 - **Metrics:** unknown groups are labelled `unknown` (`KnownGroup`) so arbitrary client paths can't
   create new series.

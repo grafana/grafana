@@ -19,6 +19,7 @@ import (
 	"github.com/sony/gobreaker/v2"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -150,6 +151,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 
 	if opts.transport == nil {
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
+		opts.transport.ResponseHeaderTimeout = backendResponseHeaderTimeout
 	}
 
 	return &singleTenantFallback{
@@ -281,11 +283,12 @@ func isSingleTenantDiscoveryPath(path string) bool {
 func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, w http.ResponseWriter, req *http.Request) {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
-			pr.SetURL(host.url)
+			rewriteOutbound(pr, host.url)
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},
-		Transport: newBackendTransport(st.transport),
+		Transport:    newBackendTransport(st.transport),
+		ErrorHandler: proxyErrorHandler,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err
@@ -352,21 +355,22 @@ func (st *singleTenantFallback) Backends() ([]Backend, error) {
 func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error) {
 	client := &http.Client{Transport: st.transport, Timeout: singleTenantLookupTimeout}
 
-	groups, err := discoverGroups(ctx, client, st.discoveryHost.String())
+	groups, err := discoverGroupResources(ctx, client, st.discoveryHost.String())
 	if err != nil {
 		return nil, err
 	}
 
 	backends := make([]Backend, 0, len(groups))
-	for _, group := range groups {
-		groupJSON, err := json.Marshal(group)
+	for _, discovered := range groups {
+		key, err := discoveredGroupKey(discovered)
 		if err != nil {
 			return nil, fmt.Errorf("fingerprinting single-tenant discovery: %w", err)
 		}
 		backends = append(backends, &fallbackBackend{
-			group: group,
-			key:   "st:" + hashHex(string(groupJSON)),
-			st:    st,
+			group:     discovered.group,
+			discovery: discovered.discovery,
+			key:       "st:" + key,
+			st:        st,
 		})
 	}
 	return backends, nil
@@ -445,9 +449,18 @@ var (
 )
 
 type fallbackBackend struct {
-	group v1.APIGroup
-	key   string
-	st    http.Handler
+	group     v1.APIGroup
+	discovery *apidiscoveryv2.APIGroupDiscovery
+	key       string
+	st        http.Handler
+}
+
+// Discovery implements [DiscoveryProvider] with the resources from the last poll.
+func (f *fallbackBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
+	if f.discovery == nil {
+		return apidiscoveryv2.APIGroupDiscovery{}, false
+	}
+	return *f.discovery, true
 }
 
 // Group implements [Backend].

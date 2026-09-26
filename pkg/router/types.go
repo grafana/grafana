@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -16,6 +17,14 @@ type Backend interface {
 
 	// How the prefix is handled. Handler support /apis/{group}* and /openapi/v3/{group}*
 	Load(context.Context) (http.Handler, error)
+}
+
+// DiscoveryProvider is an optional Backend interface for a backend that
+// already knows its group's resources. The router builds that group's
+// aggregated discovery from it instead of asking the backend on each request.
+// The result must change only when Key does.
+type DiscoveryProvider interface {
+	Discovery() (apidiscoveryv2.APIGroupDiscovery, bool)
 }
 
 type RoutesLoader interface {
