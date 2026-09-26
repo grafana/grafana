@@ -80,6 +80,7 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	for name, entry := range snapshot {
 		if entry.discovery != nil {
 			groups[name] = *entry.discovery
+			r.observeDiscovery(name, discoveryProvided)
 			continue
 		}
 		f := &fetch{name: name}
@@ -173,7 +174,7 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 }
 
 func readDiscovery(req *http.Request, handler http.Handler, path, accept string, into any) (int, error) {
-	proxyReq := req.Clone(req.Context())
+	proxyReq := req.Clone(withoutRequestOutcome(req.Context()))
 	proxyReq.Method = http.MethodGet
 	proxyReq.Body = nil
 	proxyReq.ContentLength = 0

@@ -303,6 +303,7 @@ func TestReadyFailsAfterTotallyFailedInitialReconcile(t *testing.T) {
 type failingBackend struct{ group, key string }
 
 func (b failingBackend) Key() string            { return b.key }
+func (b failingBackend) Source() string         { return "test" }
 func (b failingBackend) Group() metav1.APIGroup { return metav1.APIGroup{Name: b.group} }
 func (b failingBackend) Load(context.Context) (http.Handler, error) {
 	return nil, errors.New("load failed")
