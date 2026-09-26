@@ -8,7 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
+import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/notebookSearchAvailability';
 
 import { NotebooksListPage } from './NotebooksListPage';
 

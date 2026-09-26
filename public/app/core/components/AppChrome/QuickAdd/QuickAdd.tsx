@@ -11,6 +11,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { canCreateNotebooks } from 'app/features/notebook/permissions';
 import { notebookNewEditHref } from 'app/features/notebook/urls';
 import { useSelector } from 'app/types/store';
@@ -80,8 +81,7 @@ export const QuickAdd = ({}: Props) => {
           {
             id: 'notebooks/new',
             text: t('navigation.quick-add.new-notebook-button', 'New notebook'),
-            url: notebookNewEditHref(),
-            onClick: () => window.location.assign(notebookNewEditHref()),
+            url: notebookNewEditHref(NOTEBOOK_ENTRY_POINT.QUICK_ADD),
           },
         ],
       });

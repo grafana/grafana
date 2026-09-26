@@ -19,6 +19,7 @@ import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgr
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
+import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { canCreateNotebooks } from 'app/features/notebook/permissions';
 import { notebookNewEditHref } from 'app/features/notebook/urls';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -226,7 +227,7 @@ export function useStaticActions(): CommandPaletteAction[] {
         section: t('command-palette.section.actions', 'Actions'),
         sectionId: SECTION_ACTIONS,
         priority: ACTIONS_PRIORITY,
-        perform: () => window.location.assign(notebookNewEditHref()),
+        perform: () => window.location.assign(notebookNewEditHref(NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE)),
       });
     }
 

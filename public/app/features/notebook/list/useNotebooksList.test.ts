@@ -7,7 +7,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { defaultSpec as defaultNotebookSpec } from 'app/features/notebook/types';
 
 import { type ResultItem, type SearchResults, useSearchNotebooksInfiniteQuery } from './notebookSearchApi';
-import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
+import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from './notebookSearchAvailability';
+import { useNotebooksList } from './useNotebooksList';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
   useGetDisplayMappingQuery: jest.fn(),

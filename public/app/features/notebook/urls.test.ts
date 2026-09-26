@@ -2,14 +2,17 @@ import { createBrowserHistory, createMemoryHistory } from 'history';
 
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
 
+import { NOTEBOOK_ENTRY_POINT } from './analytics/types';
 import {
   isNotebookEditUrl,
+  newNotebookEntryPoint,
   notebookEditHref,
   notebookEditUrl,
   notebookNewEditHref,
   notebookShareUrl,
   notebookViewHref,
   notebookViewUrl,
+  searchWithoutNotebookSource,
 } from './urls';
 
 describe('notebook urls', () => {
@@ -64,6 +67,25 @@ describe('notebook urls', () => {
     setHistory(3, '/grafana');
 
     expect(notebookNewEditHref()).toBe('/grafana/notebooks/new?edit=true&orgId=3');
+  });
+
+  it('carries the launcher source without dropping the org', () => {
+    setHistory(3);
+
+    expect(notebookNewEditHref(NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE)).toBe(
+      '/notebooks/new?edit=true&notebookSource=command_palette&orgId=3'
+    );
+  });
+
+  it('reads only supported launcher sources and removes them after creation', () => {
+    setHistory(1);
+    locationService.push('/notebooks/new?edit=true&notebookSource=quick_add&from=now-3h');
+
+    expect(newNotebookEntryPoint()).toBe(NOTEBOOK_ENTRY_POINT.QUICK_ADD);
+    expect(searchWithoutNotebookSource(locationService.getLocation().search)).toBe('?edit=true&from=now-3h&orgId=1');
+
+    locationService.push('/notebooks/new?edit=true&notebookSource=other');
+    expect(newNotebookEntryPoint()).toBe(NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST);
   });
 
   // Router-relative, unlike notebookEditHref: useNavigate applies the base and orgId itself, so

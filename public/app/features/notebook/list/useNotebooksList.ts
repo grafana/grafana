@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
 import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -16,6 +15,12 @@ import {
   type ResultItem,
   type WhereNode,
 } from './notebookSearchApi';
+import {
+  NOTEBOOKS_PAGE_LIMIT,
+  confirmNotebookSearchAvailable,
+  isNotebookSearchUnavailable,
+  markNotebookSearchUnavailable,
+} from './notebookSearchAvailability';
 
 /** For ordering tag names for a reader, rather than by code point. */
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
@@ -32,17 +37,6 @@ const SearchField = {
   updated: 'updated',
 } as const;
 
-/**
- * Rows per request, not the size of the list: pages are followed until the server runs out or the
- * accumulation ceiling is reached, so this only decides how many round trips that takes.
- *
- * The endpoint's own maximum, because the pages come back sequentially — each one needs the previous
- * cursor — so a smaller page multiplies latency rather than spreading it. The projection makes the
- * size side cheap either way, at roughly 280 bytes a row. Asking for more is pointless: the server
- * clamps to this.
- */
-export const NOTEBOOKS_PAGE_LIMIT = 500;
-
 /** Projection: everything the table renders, and nothing else. */
 const SEARCH_FIELDS = [
   SearchField.title,
@@ -57,24 +51,6 @@ const SEARCH_FIELDS = [
  * the dashboard search debounce.
  */
 const SEARCH_DEBOUNCE_MS = 300;
-
-/**
- * Whether this Grafana serves `.../notebooks/search` at all. The route is mounted from
- * `[grafana-apiserver] enable_search_api`, which is off by default and is not reported in
- * frontend settings, so the only way to find out is to ask and see.
- *
- * Module-level on purpose: RTK Query caches per argument, so component state would let every
- * keystroke produce a fresh argument and re-attempt a route that is already known to be
- * absent. Delete this, and the LIST branch below, once the endpoint is on everywhere.
- */
-let searchUnavailable = false;
-
-/**
- * Whether the route has ever answered, which is what makes a later 404 readable as transient rather
- * than as absence. Module-level for the same reason as `searchUnavailable`: whether this deployment
- * serves the route is a property of the deployment, not of one mount or one set of filters.
- */
-let searchConfirmedAvailable = false;
 
 /** A notebook flattened for display, so the table never has to know about k8s metadata. */
 export interface NotebookRow {
@@ -100,7 +76,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   // Mirrors the module latch into state, so the branches below have it as a real dependency and a
   // flip re-renders on its own. A fresh mount starts from what earlier mounts already learned.
-  const [usingFallback, setUsingFallback] = useState(searchUnavailable);
+  const [usingFallback, setUsingFallback] = useState(isNotebookSearchUnavailable);
 
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useDebounce(() => setDebouncedSearch(searchQuery), SEARCH_DEBOUNCE_MS, [searchQuery]);
@@ -144,7 +120,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   // An answer for any filters proves the route is served here, and that outlives the cache entry it
   // arrived in.
   if (search.currentData !== undefined) {
-    searchConfirmedAvailable = true;
+    confirmNotebookSearchAvailable();
   }
 
   // Latch on the first "no such route" answer, so we stop asking for the rest of the session.
@@ -154,8 +130,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   // a proxy answering for it — and is a real error to show rather than grounds for abandoning
   // search. Not `currentData === undefined`, which is empty on every filter change and so cannot
   // tell "never answered" from "not answered for these filters yet".
-  if (!searchConfirmedAvailable && search.error && isRouteMissing(search.error) && !usingFallback) {
-    searchUnavailable = true;
+  if (search.error && !usingFallback && markNotebookSearchUnavailable(search.error)) {
     // Setting state during render is the derived-state pattern: React re-runs this component
     // before committing, so the fallback request starts in the same commit and nothing paints in
     // between.
@@ -432,22 +407,7 @@ function stringArrayField(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
 }
 
-/**
- * Whether the failure means the endpoint is not served here, as opposed to a real error worth
- * showing. An unmounted route parses as a request for a resource named "search", so it comes
- * back as a 404; 405 covers an apiserver that knows the path but not the verb.
- */
-function isRouteMissing(error: unknown): boolean {
-  return isFetchError(error) && (error.status === 404 || error.status === 405);
-}
-
 /** Keeps internal identity keys like `user:abc123` out of the UI when a lookup comes back empty. */
 function anonymousAuthor(): string {
   return t('notebooks.list.unknown-author', 'Anonymous');
-}
-
-/** Test seam: the latches are module state, so they have to be resettable between cases. */
-export function __resetSearchAvailabilityForTests() {
-  searchUnavailable = false;
-  searchConfirmedAvailable = false;
 }

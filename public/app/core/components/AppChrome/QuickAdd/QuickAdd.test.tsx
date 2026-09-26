@@ -193,7 +193,7 @@ describe('QuickAdd', () => {
     const notebookGroup = screen.getByRole('group', { name: 'Notebooks' });
     expect(within(notebookGroup).getByRole('menuitem', { name: 'New notebook' })).toHaveAttribute(
       'href',
-      expect.stringContaining('/notebooks/new?edit=true')
+      expect.stringContaining('/notebooks/new?edit=true&notebookSource=quick_add')
     );
   });
 
