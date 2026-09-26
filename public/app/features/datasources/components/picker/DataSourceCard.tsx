@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { useDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 import { Card, Icon, TagList, useTheme2 } from '@grafana/ui';
 
 interface DataSourceCardProps {
@@ -23,6 +24,17 @@ export function DataSourceCard({
 }: DataSourceCardProps) {
   const theme = useTheme2();
   const styles = getStyles(theme, ds.meta.builtIn);
+  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem([
+    {
+      uid: ds.uid,
+      type: ds.type,
+      apiVersion: ds.apiVersion,
+      name: ds.name,
+      meta: ds.meta,
+      isDefault: ds.isDefault ?? false,
+    },
+  ]);
+  const isDefaultDataSource = defaultDataSource?.uid === ds.uid;
 
   return (
     <Card
@@ -35,7 +47,7 @@ export function DataSourceCard({
       <Card.Heading className={styles.heading}>
         <div className={styles.headingContent}>
           <span className={styles.name}>
-            {ds.name} {ds.isDefault ? <TagList tags={['default']} /> : null}
+            {ds.name} {isDefaultDataSource ? <TagList tags={['default']} /> : null}
           </span>
           <div className={styles.rightSection}>
             <small className={styles.type}>{description || ds.meta.name}</small>
