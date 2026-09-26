@@ -150,7 +150,12 @@ describe('initVariablesTransaction', () => {
           expect(dispatchedActions[12]).toEqual(toKeyedAction(key, variableStateFetching(toVariablePayload(ds))));
           expect(dispatchedActions[13]).toEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(adhoc))));
           expect(dispatchedActions[14]).toEqual(
-            toKeyedAction(key, createDataSourceOptions(toVariablePayload(ds, { sources: [], regex: undefined })))
+            toKeyedAction(
+              key,
+              createDataSourceOptions(
+                toVariablePayload(ds, { sources: [], regex: undefined, defaultDataSourceUid: undefined })
+              )
+            )
           );
           expect(dispatchedActions[15]).toEqual(
             toKeyedAction(
