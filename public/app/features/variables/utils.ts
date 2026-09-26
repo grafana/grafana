@@ -46,7 +46,12 @@ export function containsVariable(...args: any[]) {
     matches !== null
       ? matches.find((match) => {
           const varMatch = variableRegexExec(match);
-          return varMatch !== null && varMatch.indexOf(variableName) > -1;
+          // Capture groups 1, 2 and 4 hold the referenced variable's name ($var1, [[var2]], ${var3}).
+          // Groups 3, 5 and 6 hold a format specifier or field path, which must not count as a match.
+          return (
+            varMatch !== null &&
+            (varMatch[1] === variableName || varMatch[2] === variableName || varMatch[4] === variableName)
+          );
         })
       : false;
 
