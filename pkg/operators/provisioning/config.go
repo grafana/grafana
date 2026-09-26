@@ -55,7 +55,7 @@ type ControllerConfig struct {
 	resyncInterval        time.Duration
 	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
-	natsSubscriber        nats.Subscriber
+	natsSubscriber        *nats.SubscriberService
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	tokenExchangeClient   *authn.TokenExchangeClient
@@ -126,8 +126,8 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		registry: registry,
 		Settings: cfg,
 		// Operators run against an external NATS (no embedded server), so a nil
-		// server yields a config that dials the configured client URLs. The
-		// subscriber connects lazily and is a no-op transport when NATS is disabled.
+		// server yields a config that dials the configured client URLs. Each
+		// consuming controller owns the subscriber service lifecycle.
 		natsSubscriber: nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), registry),
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),

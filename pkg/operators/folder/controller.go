@@ -2,10 +2,13 @@ package folder
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,6 +19,7 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/server"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -37,7 +41,7 @@ var folderGVR = schema.GroupVersionResource{
 // re-list-only if the live subscription can't open, rather than blocking
 // readiness on it — otherwise a plain apiserver watch, matching the pattern
 // in pkg/registry/apis/provisioning/informer's delta sources.
-func RunFolderController(ctx context.Context, deps server.OperatorDependencies) error {
+func RunFolderController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "folder-controller")
@@ -65,6 +69,16 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 
 	var reg cache.ResourceEventHandlerRegistration
 	if nats.Enabled(subscriber) {
+		var stopSubscriber func() error
+		ctx, stopSubscriber = supervision.Watch(ctx, subscriber)
+		defer func() {
+			deps.HealthNotifier.SetNotReady()
+			runErr = errors.Join(runErr, stopSubscriber())
+		}()
+		if err := services.StartAndAwaitRunning(ctx, subscriber); err != nil {
+			return fmt.Errorf("failed to start NATS subscriber: %w", err)
+		}
+
 		newObject := func(ns, name string) runtime.Object {
 			return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 		}
