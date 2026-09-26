@@ -198,6 +198,8 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       return () => {
         window.removeEventListener('pagehide', onPageHide);
         window.removeEventListener('pageshow', onPageShow);
+        this.commitTitleEdit();
+        stopAutosave?.();
         // A toggle-off already ended the session and turned isEditing back off; this only catches
         // the case where the page itself goes away while a session was still open.
         if (this.state.isEditing) {
@@ -208,8 +210,6 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
           this.setState({ isEditing: false });
           this.state.body.editModeChanged?.(false);
         }
-        this.commitTitleEdit();
-        stopAutosave?.();
         destroyMutationClient();
         timeRangeSub.unsubscribe();
         stateSub.unsubscribe();
@@ -357,6 +357,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   }
 
   public onExitEditMode = () => {
+    const pendingVizChanges = this.state.body.whenVizChangesSettled();
+    if (pendingVizChanges) {
+      void pendingVizChanges.then(() => this.onExitEditMode());
+      return;
+    }
+
     // Read before the state change below, which is itself what turns this false.
     const wasEditing = this.state.isEditing;
 
