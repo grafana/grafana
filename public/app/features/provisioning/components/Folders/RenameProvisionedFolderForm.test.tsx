@@ -7,7 +7,6 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type FolderDTO } from 'app/types/folders';
 
-import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import {
   type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
@@ -116,7 +115,6 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   isMissingRepo: false,
   canPushToConfiguredBranch: true,
   isLoading: false,
-  status: RepoViewStatus.Ready,
 };
 
 function setup(props: Partial<Parameters<typeof RenameProvisionedFolderForm>[0]> = {}, hookData = defaultHookData) {

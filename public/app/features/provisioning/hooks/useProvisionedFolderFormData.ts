@@ -11,10 +11,7 @@ import {
   shouldEnforceBranchTemplate,
 } from 'app/features/provisioning/components/defaults';
 import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
-import {
-  type RepositoryViewData,
-  type RepoViewStatus,
-} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { type RepositoryViewData } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type BaseProvisionedFormData } from '../types/form';
 
@@ -34,11 +31,6 @@ export interface ProvisionedFolderFormDataResult {
   isLoading: boolean;
   /** True when loading has settled and no repository could be resolved. See useGetResourceRepositoryView. */
   isMissingRepo: boolean;
-  /** Orphaned and Error also set isMissingRepo, so map them onto ProvisionedFormGate, whose priority
-   * order shows their own notices instead */
-  status: RepoViewStatus;
-  /** Only meaningful when status is Error */
-  error?: unknown;
 }
 
 /**
@@ -49,7 +41,7 @@ export function useProvisionedFolderFormData({
   title,
   branchPrefix = 'folder',
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
-  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo, status, error } = view;
+  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = view;
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
@@ -82,7 +74,5 @@ export function useProvisionedFolderFormData({
     isReadOnlyRepo,
     isLoading: Boolean(isLoading),
     isMissingRepo,
-    status,
-    error,
   };
 }

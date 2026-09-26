@@ -299,31 +299,21 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 }
 
 export function NewProvisionedFolderForm({ onDismiss, view }: Props) {
-  const {
-    canPushToConfiguredBranch,
-    repository,
-    folder,
-    initialValues,
-    isReadOnlyRepo,
-    isMissingRepo,
-    isLoading,
-    status,
-    error,
-  } = useProvisionedFolderFormData({
+  const { canPushToConfiguredBranch, initialValues } = useProvisionedFolderFormData({
     view,
     title: '', // Empty title for new folders
   });
 
   return (
     <ProvisionedFormGate
-      isLoading={isLoading}
+      isLoading={view.isLoading}
       // A deleted or unreachable repository is a dead end of its own, not the same as a location
       // that was never provisioned, so each gets its own notice rather than the generic banner
-      isOrphaned={status === RepoViewStatus.Orphaned}
-      isError={status === RepoViewStatus.Error}
-      error={error}
-      isMissingRepo={isMissingRepo}
-      isReadOnly={isReadOnlyRepo}
+      isOrphaned={view.status === RepoViewStatus.Orphaned}
+      isError={view.status === RepoViewStatus.Error}
+      error={view.error}
+      isMissingRepo={view.isMissingRepo}
+      isReadOnly={view.isReadOnlyRepo}
       readOnlyMessage={t(
         'browse-dashboards.new-folder.read-only-message',
         'To create this folder, please add the resource in your repository directly.'
@@ -333,9 +323,9 @@ export function NewProvisionedFolderForm({ onDismiss, view }: Props) {
         <FormContent
           onDismiss={onDismiss}
           initialValues={initialValues}
-          repository={repository}
+          repository={view.repository}
           canPushToConfiguredBranch={canPushToConfiguredBranch}
-          folder={folder}
+          folder={view.folder}
         />
       )}
     </ProvisionedFormGate>

@@ -5,8 +5,6 @@ import { type RepositoryViewData, useGetResourceRepositoryView } from './useGetR
 export type SaveTarget = 'repository' | 'database';
 
 export interface SaveRepositoryView extends RepositoryViewData {
-  /** Folder the lookup ran for; undefined at the root */
-  folderUid?: string;
   /** The save must go through a repository */
   isProvisioned: boolean;
   /** The root of a folderless repository is the one place a new resource can go either way */
@@ -39,7 +37,6 @@ export function useSaveRepositoryView({
   });
   return {
     ...view,
-    folderUid: targetFolderUid,
     // isInstanceManaged is not counted: a Ready lookup already resolves it as `repository`, so it would
     // only add orphaned dead ends
     isProvisioned: Boolean(isManaged) || Boolean(view.repository),

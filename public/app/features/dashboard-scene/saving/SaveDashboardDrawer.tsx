@@ -5,7 +5,7 @@ import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types'
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
-import { SaveTargetSwitch } from 'app/features/provisioning/components/Dashboards/SaveTargetSwitch';
+import { SaveTargetSwitch } from 'app/features/provisioning/components/Shared/SaveTargetSwitch';
 import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getSaveTarget, type SaveTarget } from 'app/features/provisioning/hooks/useSaveRepositoryView';

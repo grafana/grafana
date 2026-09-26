@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Spinner, Stack } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { FormLoadingErrorAlert } from 'app/features/provisioning/components/Dashboards/FormLoadingErrorAlert';
-import { SaveTargetSwitch } from 'app/features/provisioning/components/Dashboards/SaveTargetSwitch';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
+import { SaveTargetSwitch } from 'app/features/provisioning/components/Shared/SaveTargetSwitch';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import {
   getSaveTarget,

@@ -200,8 +200,7 @@ describe('NewProvisionedFolderForm', () => {
     });
 
     const request = requireCapturedRequest(capturedRequest);
-    expect(request.url.pathname).toContain('/repositories/test-repo/files/');
-    expect(request.url.pathname).toContain('New%20Test%20Folder');
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/dashboards/New%20Test%20Folder/');
     expect(request.url.searchParams.get('message')).toBe('Creating a new test folder');
     expect(request.body).toEqual({ title: 'New Test Folder', type: 'folder' });
 
@@ -494,24 +493,6 @@ describe('NewProvisionedFolderForm', () => {
     );
 
     expect(await screen.findByText(text)).toBeInTheDocument();
-  });
-
-  it('nests under the parent source path when a parent folder is given', async () => {
-    server.use(
-      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-        capturedRequest = { url: new URL(request.url), body: await request.json() };
-        return HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-folder' } } } });
-      })
-    );
-
-    const { user } = setup();
-
-    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
-    await user.type(folderNameInput, 'My Team');
-    await user.click(screen.getByRole('button', { name: /^create$/i }));
-
-    await waitFor(() => expect(capturedRequest).not.toBeNull());
-    expect(requireCapturedRequest(capturedRequest).url.pathname).toContain('/files/dashboards/My%20Team/');
   });
 
   it('should show read-only alert when repository has no workflows', async () => {

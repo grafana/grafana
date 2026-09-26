@@ -115,25 +115,23 @@ describe('useDashboardRepositoryView', () => {
   });
 
   it('resolves a new dashboard from the folder it is headed to', () => {
-    const { result } = renderHook(() => useDashboardRepositoryView(createDashboard({ folderUid: 'f1' })));
+    renderHook(() => useDashboardRepositoryView(createDashboard({ folderUid: 'f1' })));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
       name: undefined,
       folderName: 'f1',
       includeFolderless: false,
     });
-    expect(result.current.folderUid).toBe('f1');
   });
 
   it('treats the general uid as the root, like an empty one', () => {
-    const { result } = renderHook(() => useDashboardRepositoryView(createDashboard({ folderUid: 'general' })));
+    renderHook(() => useDashboardRepositoryView(createDashboard({ folderUid: 'general' })));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
       name: undefined,
       folderName: undefined,
       includeFolderless: true,
     });
-    expect(result.current.folderUid).toBeUndefined();
   });
 
   it('resolves a Save As copy like a new save, from its annotation and folder rather than isManagedRepository', () => {
@@ -200,7 +198,7 @@ describe('useDashboardRepositoryView', () => {
 
       const { result } = renderHook(() => useDashboardRepositoryView(newDashboard()));
 
-      expect(result.current).toMatchObject({ status: RepoViewStatus.Loading, folderUid: undefined, isHeld: false });
+      expect(result.current).toMatchObject({ status: RepoViewStatus.Loading, canChooseTarget: false, isHeld: false });
       expect(result.current.lookup).toEqual({ status: RepoViewStatus.Loading, error: undefined });
     });
 
@@ -209,12 +207,7 @@ describe('useDashboardRepositoryView', () => {
       mockRepositoryView({ repository: { name: 'root-repo', target: 'folderless' } });
       const { result, rerender } = renderHook(() => useDashboardRepositoryView(dashboard));
 
-      expect(result.current).toMatchObject({
-        isProvisioned: true,
-        canChooseTarget: true,
-        folderUid: undefined,
-        isHeld: false,
-      });
+      expect(result.current).toMatchObject({ isProvisioned: true, canChooseTarget: true, isHeld: false });
 
       mockRepositoryView({ status: RepoViewStatus.Loading });
       act(() => {
@@ -224,18 +217,12 @@ describe('useDashboardRepositoryView', () => {
       // The held root view keeps its choice, so a pick still in flight cannot take the switch away
       expect(result.current).toMatchObject({ status: RepoViewStatus.Ready, canChooseTarget: true, isHeld: true });
       expect(result.current.repository?.name).toBe('root-repo');
-      expect(result.current.folderUid).toBeUndefined();
       expect(result.current.lookup).toEqual({ status: RepoViewStatus.Loading, error: undefined });
 
       mockRepositoryView();
       rerender();
 
-      expect(result.current).toMatchObject({
-        isProvisioned: false,
-        canChooseTarget: false,
-        folderUid: 'f1',
-        isHeld: false,
-      });
+      expect(result.current).toMatchObject({ isProvisioned: false, canChooseTarget: false, isHeld: false });
       expect(result.current.repository).toBeUndefined();
     });
 
@@ -250,7 +237,6 @@ describe('useDashboardRepositoryView', () => {
       });
 
       expect(result.current.repository?.name).toBe('root-repo');
-      expect(result.current.folderUid).toBeUndefined();
       expect(result.current.isHeld).toBe(true);
       expect(result.current.lookup.status).toBe(RepoViewStatus.Orphaned);
 

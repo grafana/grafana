@@ -209,13 +209,15 @@ describe('NewFolderDrawerContent', () => {
       expect(queryToDatabaseSwitch()).not.toBeInTheDocument();
     });
 
-    it('keeps a repository-managed parent off the database form while the lookup is in flight', () => {
-      mockRepositories([FOLDER_REPO], () => new Promise<void>(() => {}));
+    it('keeps a repository-managed parent off the database form when the lookup fails', async () => {
+      server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
       mockFolder(FOLDER_REPO.name);
 
       setup(mockFolderDTO(1, { managedBy: ManagerKind.Repo }));
 
-      // Settled from the parent's own annotation, so a slow lookup cannot route it to the database form
+      // Settled from the parent's own annotation, so a failed lookup dead-ends on the Git gate rather
+      // than offering the database, which is not a valid target inside a managed folder
+      expect(await screen.findByText('Error loading form')).toBeInTheDocument();
       expect(queryDatabaseForm()).not.toBeInTheDocument();
     });
 
