@@ -28,7 +28,7 @@ type DiscoveryProvider interface {
 }
 
 // BackendDescription says where a backend comes from and where its requests
-// go, for the router's metrics.
+// go, for the router's metrics and debug endpoint.
 type BackendDescription struct {
 	// Source is the route source, such as "routebackend" or
 	// "aggregate:baas_apiserver".

@@ -17,6 +17,10 @@ import (
 
 const readinessPollInterval = time.Second
 
+// debugPath serves the router's state as JSON on the standalone router's
+// listener, next to /metrics.
+const debugPath = "/debug/router"
+
 // ReadyNotifier reports the router's readiness through the module server's
 // shared health endpoint.
 type ReadyNotifier interface {
@@ -79,6 +83,7 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 		httpRouter.Handle(path, handler)
 		httpRouter.PathPrefix(path + "/").Handler(handler)
 	}
+	httpRouter.Handle(debugPath, http.HandlerFunc(s.router.serveDebug)).Methods(http.MethodGet)
 	return nil
 }
 
@@ -99,6 +104,16 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 		return
 	}
 	next.ServeHTTP(w, req)
+}
+
+// DebugHandler returns the router's debug page for the embedded API server to
+// mount, in middleware mode only. The standalone target mounts it on its own
+// listener in RegisterTargetRoutes.
+func (s *Service) DebugHandler() (string, http.Handler) {
+	if !s.middleware || s.standalone {
+		return "", nil
+	}
+	return debugPath, http.HandlerFunc(s.router.serveDebug)
 }
 
 // Run adapts Service to the full server's background-service lifecycle.

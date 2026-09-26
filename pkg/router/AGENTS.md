@@ -151,7 +151,12 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     serves instead, in the latest load;
   - `grafana_router_source_last_success_timestamp_seconds{source}`.
 
-  New backends should implement `DescribedBackend`, and new sources should report through
+  The router also serves the same state as JSON at `GET /debug/router`: for each group, its source,
+  key, target and breaker, plus shadowed groups, source status and readiness. The standalone target
+  mounts it on its internal listener; in middleware mode the embedded API server mounts it in
+  Grafana's HTTP server for server admins only (`Service.DebugHandler`), since it shows internal
+  backend hosts. New
+  backends should implement `DescribedBackend`, and new sources should report through
   `loaderStatus`, or they show up as `unknown`.
 
 ## Lifecycle
