@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -207,4 +208,45 @@ func TestCloudLoaderReadsRouteResourcesFromInformerCache(t *testing.T) {
 		requireExampleGroup()
 	}
 	require.Equal(t, listsAfterSync, lists.Load())
+}
+
+func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
+	st := newTestSingleTenantFallback(t)
+	st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
+	fail := false
+	st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
+		if fail {
+			return nil, errors.New("discovery unavailable")
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"groups":[{"name":"shared"},{"name":"st-only"}]}`))}, nil
+	})
+	base, err := url.Parse("https://baas.example.com")
+	require.NoError(t, err)
+	shared, err := newAggregateBackend("baas_apiserver", metav1.APIGroup{Name: "shared"}, base, &http.Transport{})
+	require.NoError(t, err)
+	aggregate := priorityAggregate(shared)
+	aggregate.name = "baas_apiserver"
+	loader, err := newCloudLoader(nil, []*aggregateTarget{aggregate}, nil, st)
+	require.NoError(t, err)
+
+	pollDiscovery(t, st)
+	backends, err := loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Len(t, backends, 2)
+	require.Equal(t, []shadowedGroup{{Group: "shared", Source: sourceSingleTenant, By: "aggregate:baas_apiserver"}}, loader.shadowedGroups())
+
+	statuses := loader.sourceStatuses()
+	require.Len(t, statuses, 2)
+	require.Equal(t, sourceSingleTenant, statuses[0].Source)
+	require.False(t, statuses[0].LastSuccess.IsZero())
+	require.Empty(t, statuses[0].LastError)
+	require.Equal(t, uint64(1), statuses[0].Successes)
+	require.Equal(t, sourceStatus{Source: "aggregate:baas_apiserver"}, statuses[1], "never polled")
+
+	fail = true
+	pollDiscovery(t, st)
+	statuses = loader.sourceStatuses()
+	require.False(t, statuses[0].LastSuccess.IsZero(), "the last success is kept after a failure")
+	require.Contains(t, statuses[0].LastError, "discovery unavailable")
+	require.Equal(t, uint64(1), statuses[0].Failures)
 }

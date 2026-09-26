@@ -5,7 +5,7 @@ Package: `pkg/router`
 
 Every metric the router exports, and how to chart its state on a Grafana dashboard. Request metrics
 are recorded as requests finish (`metrics.go`); route state is read from the router when Prometheus
-scrapes (`routerCollector`, `status.go`).
+scrapes (`routerCollector`, also in `metrics.go`).
 
 ## Label rules
 
