@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
-	"github.com/sony/gobreaker/v2"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -91,7 +90,7 @@ type singleTenantDiscovery struct {
 type singleTenantFallback struct {
 	cache         *lru.Cache[int64, singleTenantHost]
 	breakerMu     sync.Mutex
-	breakers      *lru.Cache[string, *gobreaker.CircuitBreaker[struct{}]]
+	breakers      *lru.Cache[string, *groupBreaker]
 	lookups       singleflight.Group
 	lookupLimiter *rate.Limiter // nil means lookups are not rate limited
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
@@ -125,7 +124,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	if opts.breakerCacheSize == 0 {
 		opts.breakerCacheSize = opts.cacheSize
 	}
-	breakers, err := lru.New[string, *gobreaker.CircuitBreaker[struct{}]](opts.breakerCacheSize)
+	breakers, err := lru.New[string, *groupBreaker](opts.breakerCacheSize)
 	if err != nil {
 		return nil, fmt.Errorf("single-tenant breaker cache: %w", err)
 	}
@@ -286,8 +285,9 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},
-		Transport:    newBackendTransport(st.transport),
-		ErrorHandler: proxyErrorHandler,
+		Transport:     newBackendTransport(st.transport),
+		ErrorHandler:  proxyErrorHandler,
+		FlushInterval: streamingFlushInterval,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err
@@ -315,7 +315,7 @@ func checkStackOrigin(resp *http.Response, slug string) error {
 // ST groups span multiple hosts, so their handler isolates breakers by destination and group.
 func (*singleTenantFallback) managesCircuitBreaking() {}
 
-func (st *singleTenantFallback) breakerForDestination(host *url.URL, group string) *gobreaker.CircuitBreaker[struct{}] {
+func (st *singleTenantFallback) breakerForDestination(host *url.URL, group string) *groupBreaker {
 	key := host.Scheme + "://" + host.Host + "#" + group
 	st.breakerMu.Lock()
 	defer st.breakerMu.Unlock()

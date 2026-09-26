@@ -118,6 +118,7 @@ func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL
 			Transport:      newBackendTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
 			ErrorHandler:   proxyErrorHandler,
+			FlushInterval:  streamingFlushInterval,
 		},
 	}, nil
 }

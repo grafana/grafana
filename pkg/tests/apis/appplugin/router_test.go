@@ -27,7 +27,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 	k8srest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -242,6 +244,53 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 			require.Empty(t, list.Items)
 		})
 	}
+
+	t.Run("an informer syncs and follows changes", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+		defer cancel()
+		gvr := schema.GroupVersionResource{Group: group, Version: "v1", Resource: "things"}
+		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, 0, namespace, nil)
+		informer := factory.ForResource(gvr).Informer()
+		added := make(chan string, 8)
+		updated := make(chan string, 8)
+		_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj any) { added <- obj.(*unstructured.Unstructured).GetName() },
+			UpdateFunc: func(_, obj any) {
+				thing := obj.(*unstructured.Unstructured)
+				if value, _, _ := unstructured.NestedString(thing.Object, "spec", "value"); value == "updated" {
+					updated <- thing.GetName()
+				}
+			},
+		})
+		require.NoError(t, err)
+		factory.Start(ctx.Done())
+		t.Cleanup(factory.Shutdown)
+		require.True(t, cache.WaitForCacheSync(ctx.Done(), informer.HasSynced), "the informer must sync through the router")
+
+		resource := client.Resource(gvr).Namespace(namespace)
+		created, err := resource.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": group + "/v1", "kind": "Thing",
+			"metadata": map[string]any{"name": "informed"},
+			"spec":     map[string]any{"value": "initial"},
+		}}, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{}) })
+		requireName := func(events <-chan string, what string) {
+			t.Helper()
+			select {
+			case name := <-events:
+				require.Equal(t, created.GetName(), name)
+			case <-ctx.Done():
+				t.Fatalf("the informer saw no %s: %v", what, ctx.Err())
+			}
+		}
+		requireName(added, "add")
+
+		require.NoError(t, unstructured.SetNestedField(created.Object, "updated", "spec", "value"))
+		_, err = resource.Update(ctx, created, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		requireName(updated, "update")
+	})
 
 	t.Run("rejects invalid access tokens", func(t *testing.T) {
 		expired := claims
