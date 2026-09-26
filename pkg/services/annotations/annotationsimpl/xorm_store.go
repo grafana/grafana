@@ -155,12 +155,12 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 			return err
 		}
 
-		for i, item := range hasTags {
+		for i := range hasTags {
+			item := &hasTags[i]
 			if _, err := sess.Table("annotation").Insert(item); err != nil {
 				return err
 			}
-			itemWithID := &hasTags[i]
-			if err := r.ensureTags(ctx, itemWithID.ID, itemWithID.Tags); err != nil {
+			if err := r.ensureTags(ctx, item.ID, item.Tags); err != nil {
 				return err
 			}
 		}
