@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -18,6 +19,11 @@ type Response struct {
 
 type QueryDataClient interface {
 	QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error)
+}
+
+// ChunkedQueryDataClient is optional; unary clients retain their existing contract.
+type ChunkedQueryDataClient interface {
+	QueryChunkedData(context.Context, data.QueryDataRequest, chunked.RawChunkReceiver) error
 }
 
 type InstanceConfigurationSettings struct {

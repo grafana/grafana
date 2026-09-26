@@ -45,6 +45,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 										200: {
 											ResponseProps: spec3.ResponseProps{
 												Content: map[string]*spec3.MediaType{
+													"text/jsonl": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.StringProperty()}},
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{

@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ds_service "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
@@ -141,6 +142,11 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 		// 	errutil.WithPublicMessage("Error reading query")).
 		// 	Errorf("error reading: %w", err)
 		responder.Error(err)
+		return
+	}
+
+	if chunked.IsRequestingChunkedResponse(httpreq.Header.Get("Accept")) {
+		b.queryChunkedDatasources(ctx, raw, w, httpreq, responder, connectLogger)
 		return
 	}
 
