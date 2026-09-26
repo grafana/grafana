@@ -183,28 +183,28 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 	}
 
 	return v1.AMConfigV1{
-			ExtraConfigs: cfg.ExtraConfigs[1:],
-			Templates:    templates,
-			Receivers:    mergedReceivers,
-			AlertmanagerConfig: v1.PostableApiAlertingConfig{
-				Config: v1.Config{
-					Global:       nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
-					Route:        cfg.AlertmanagerConfig.Route,
-					InhibitRules: cfg.AlertmanagerConfig.InhibitRules,
-					Templates:    nil, // Grafana does not use this.
-				},
+		ExtraConfigs: cfg.ExtraConfigs[1:],
+		Templates:    templates,
+		Receivers:    mergedReceivers,
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
+				Global:       nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
+				Route:        cfg.AlertmanagerConfig.Route,
+				InhibitRules: cfg.AlertmanagerConfig.InhibitRules,
+				Templates:    nil, // Grafana does not use this.
 			},
-			ManagedRoutes:   managedRoutes,
-			InhibitionRules: managedInhibitionRules,
-			TimeIntervals:   mergedTimeIntervals,
-		}, MergeResult{
-			RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates},
-			AddedRoute:           mimirCfg.Identifier,
-			AddedReceivers:       addedReceivers,
-			AddedTimeIntervals:   addedTimeIntervals,
-			AddedTemplates:       addedTemplates,
-			AddedInhibitionRules: addedInhibitionRules,
-		}, nil
+		},
+		ManagedRoutes:   managedRoutes,
+		InhibitionRules: managedInhibitionRules,
+		TimeIntervals:   mergedTimeIntervals,
+	}, MergeResult{
+		RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates},
+		AddedRoute:           mimirCfg.Identifier,
+		AddedReceivers:       addedReceivers,
+		AddedTimeIntervals:   addedTimeIntervals,
+		AddedTemplates:       addedTemplates,
+		AddedInhibitionRules: addedInhibitionRules,
+	}, nil
 }
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by
