@@ -4639,6 +4639,8 @@
       "error-saving": "An error occurred while creating folder.",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
+      "text-destination-path": "Will be created in {{repository}} under {{path}}",
+      "text-destination-root": "Will be created at the root of {{repository}}",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
       "title-pull-request-created": "Pull request created",
       "title-this-repository-is-read-only": "This repository is read only"
@@ -14996,6 +14998,10 @@
       "error-saving": "Failed to save changes",
       "missing-info": "Missing required fields for saving",
       "read-only-message": "To edit this resource, please update it in your repository directly."
+    },
+    "save-target-switch": {
+      "create-in-database": "Create in Grafana database instead",
+      "create-in-git": "Create in Git repository instead"
     },
     "setup-modal": {
       "done": "Done",

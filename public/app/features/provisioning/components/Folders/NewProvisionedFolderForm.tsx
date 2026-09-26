@@ -4,17 +4,19 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, Text } from '@grafana/ui';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeySourcePath, type Resource } from 'app/features/apiserver/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { RepoViewStatus, type RepositoryViewData } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
@@ -28,15 +30,18 @@ import { getProvisionedRequestError } from '../utils/errors';
 import { validateProvisionedFolderName } from '../utils/folderName';
 import { joinPath } from '../utils/path';
 
-interface FormProps extends Props {
+interface FormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
   folder?: Folder;
-}
-interface Props {
-  parentFolder?: FolderDTO;
   onDismiss?: () => void;
+}
+
+interface Props {
+  onDismiss?: () => void;
+  /** Resolved once by the caller, so this form and the caller always agree on the repository */
+  view: RepositoryViewData;
 }
 
 function FormContent({ initialValues, repository, canPushToConfiguredBranch, folder, onDismiss }: FormProps) {
@@ -79,6 +84,22 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   });
 
   const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
+  // The same value doSave commits under, so the destination shown cannot drift from the destination used
+  const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
+  const repoLabel = repository?.title || repository?.name;
+  // Rendered as React text, which escapes it already; escaping here too would show "/" as "&#x2F;"
+  const destination = basePath
+    ? t(
+        'browse-dashboards.new-provisioned-folder-form.text-destination-path',
+        'Will be created in {{repository}} under {{path}}',
+        { repository: repoLabel, path: basePath, interpolation: { escapeValue: false } }
+      )
+    : t(
+        'browse-dashboards.new-provisioned-folder-form.text-destination-root',
+        'Will be created at the root of {{repository}}',
+        { repository: repoLabel, interpolation: { escapeValue: false } }
+      );
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
@@ -130,7 +151,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 
   // Use the repository-type and resource-type aware provisioned request handler
   const { handleSuccess } = useProvisionedRequestHandler<FolderDTO>({
-    folderUID: folder?.metadata.name,
+    // No parent folder at the root, so the root list is the one to refetch
+    folderUID: folder?.metadata.name ?? GENERAL_FOLDER_UID,
     workflow,
     repository,
     resourceType: 'folder',
@@ -154,7 +176,6 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       return;
     }
 
-    const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
     const path = joinPath(basePath, `${title}/`);
 
     const folderModel = {
@@ -225,6 +246,12 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             />
           </Field>
 
+          {repoLabel && (
+            <Text variant="bodySmall" color="secondary">
+              {destination}
+            </Text>
+          )}
+
           <ResourceEditFormSharedFields
             resourceType="folder"
             isNew
@@ -271,18 +298,22 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   );
 }
 
-export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo, isMissingRepo, isLoading } =
-    useProvisionedFolderFormData({
-      folderUid: parentFolder?.uid,
-      title: '', // Empty title for new folders
-    });
+export function NewProvisionedFolderForm({ onDismiss, view }: Props) {
+  const { canPushToConfiguredBranch, initialValues } = useProvisionedFolderFormData({
+    view,
+    title: '', // Empty title for new folders
+  });
 
   return (
     <ProvisionedFormGate
-      isLoading={isLoading}
-      isMissingRepo={isMissingRepo}
-      isReadOnly={isReadOnlyRepo}
+      isLoading={view.isLoading}
+      // A deleted or unreachable repository is a dead end of its own, not the same as a location
+      // that was never provisioned, so each gets its own notice rather than the generic banner
+      isOrphaned={view.status === RepoViewStatus.Orphaned}
+      isError={view.status === RepoViewStatus.Error}
+      error={view.error}
+      isMissingRepo={view.isMissingRepo}
+      isReadOnly={view.isReadOnlyRepo}
       readOnlyMessage={t(
         'browse-dashboards.new-folder.read-only-message',
         'To create this folder, please add the resource in your repository directly.'
@@ -290,12 +321,11 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
     >
       {initialValues && (
         <FormContent
-          parentFolder={parentFolder}
           onDismiss={onDismiss}
           initialValues={initialValues}
-          repository={repository}
+          repository={view.repository}
           canPushToConfiguredBranch={canPushToConfiguredBranch}
-          folder={folder}
+          folder={view.folder}
         />
       )}
     </ProvisionedFormGate>

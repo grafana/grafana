@@ -617,6 +617,7 @@ describe('SaveDashboardDrawer', () => {
         status,
         isNewSave: true,
         isProvisioned: false,
+        canChooseTarget: false,
         isInstanceManaged: false,
         isReadOnlyRepo: false,
         isMissingRepo: false,
@@ -700,7 +701,7 @@ describe('SaveDashboardDrawer', () => {
     it('offers the database save only at the root of a folderless repository', async () => {
       jest
         .mocked(useDashboardRepositoryView)
-        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo }));
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: true }));
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
@@ -720,7 +721,7 @@ describe('SaveDashboardDrawer', () => {
       // Inside a folder the folder decides, so there is nothing to choose
       jest
         .mocked(useDashboardRepositoryView)
-        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, folderUid: 'f1' }));
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: false }));
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'f1' } });
       });
@@ -780,7 +781,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('keeps the database form up while a folder picked in it resolves', async () => {
-      let repoState = view({ isProvisioned: true, repository: folderlessRepo });
+      let repoState = view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: true });
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
@@ -797,6 +798,7 @@ describe('SaveDashboardDrawer', () => {
       repoState = view({
         isProvisioned: true,
         repository: folderlessRepo,
+        canChooseTarget: true,
         isHeld: true,
         lookup: { status: RepoViewStatus.Loading },
       });
@@ -815,7 +817,7 @@ describe('SaveDashboardDrawer', () => {
       expect(saveDashboardMutationMock).not.toHaveBeenCalled();
       expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue('Typed');
 
-      repoState = view({ isProvisioned: false, folderUid: 'f1' });
+      repoState = view({ isProvisioned: false, canChooseTarget: false });
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta } });
       });
@@ -857,7 +859,7 @@ describe('SaveDashboardDrawer', () => {
 
       jest
         .mocked(useDashboardRepositoryView)
-        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo }));
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: true }));
 
       const fresh = setup();
       fresh.dashboard.setState({ uid: '', version: 0 });

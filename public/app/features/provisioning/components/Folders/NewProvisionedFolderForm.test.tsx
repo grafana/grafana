@@ -6,12 +6,9 @@ import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { type FolderDTO } from 'app/types/folders';
+import { configureStore } from 'app/store/configureStore';
 
-import {
-  type ProvisionedFolderFormDataResult,
-  useProvisionedFolderFormData,
-} from '../../hooks/useProvisionedFolderFormData';
+import { RepoViewStatus, type RepositoryViewData } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
@@ -48,10 +45,6 @@ jest.mock('../../hooks/useGetRepositoryFolders', () => ({
   useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
 }));
 
-jest.mock('../../hooks/useProvisionedFolderFormData', () => ({
-  useProvisionedFolderFormData: jest.fn(),
-}));
-
 jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
   usePullRequestParam: jest.fn(),
 }));
@@ -65,43 +58,26 @@ jest.mock('react-router-dom-v5-compat', () => {
 
 interface Props {
   onDismiss?: () => void;
-  parentFolder?: FolderDTO;
 }
 
-function setup(props: Partial<Props> = {}, hookData = mockHookData) {
+function setup(props: Partial<Props> = {}, view: RepositoryViewData = mockView) {
   const defaultProps: Props = {
     onDismiss: jest.fn(),
-    parentFolder: {
-      id: 1,
-      uid: 'folder-uid',
-      title: 'Parent Folder',
-      url: '/dashboards/f/folder-uid',
-      hasAcl: false,
-      canSave: true,
-      canEdit: true,
-      canAdmin: true,
-      canDelete: true,
-      repository: {
-        name: 'test-repo',
-        type: 'github',
-      },
-    } as unknown as FolderDTO,
     ...props,
   };
 
-  (useProvisionedFolderFormData as jest.Mock).mockReturnValue(hookData);
-
   return {
-    ...render(<NewProvisionedFolderForm {...defaultProps} />),
+    ...render(<NewProvisionedFolderForm {...defaultProps} view={view} />),
     props: defaultProps,
   };
 }
 
-const mockHookData: ProvisionedFolderFormDataResult = {
+const mockView: RepositoryViewData = {
   repository: {
     name: 'test-repo',
     title: 'Test Repository',
     type: 'github',
+    branch: 'main',
     workflows: ['write', 'branch'],
     target: 'folder',
   },
@@ -116,17 +92,9 @@ const mockHookData: ProvisionedFolderFormDataResult = {
       title: '',
     },
   },
-  canPushToConfiguredBranch: true,
-  initialValues: {
-    title: '',
-    comment: '',
-    ref: 'folder/test-timestamp',
-    repo: 'test-repo',
-    path: '/dashboards',
-    workflow: 'write',
-  },
-  isLoading: false,
+  isInstanceManaged: false,
   isMissingRepo: false,
+  status: RepoViewStatus.Ready,
 };
 
 function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
@@ -158,10 +126,10 @@ describe('NewProvisionedFolderForm', () => {
     setup(
       {},
       {
-        ...mockHookData,
+        ...mockView,
         repository: undefined,
-        initialValues: undefined,
         isLoading: true,
+        status: RepoViewStatus.Loading,
       }
     );
     expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
@@ -172,9 +140,8 @@ describe('NewProvisionedFolderForm', () => {
     setup(
       {},
       {
-        ...mockHookData,
+        ...mockView,
         repository: undefined,
-        initialValues: undefined,
         isMissingRepo: true,
       }
     );
@@ -233,8 +200,7 @@ describe('NewProvisionedFolderForm', () => {
     });
 
     const request = requireCapturedRequest(capturedRequest);
-    expect(request.url.pathname).toContain('/repositories/test-repo/files/');
-    expect(request.url.pathname).toContain('New%20Test%20Folder');
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/dashboards/New%20Test%20Folder/');
     expect(request.url.searchParams.get('message')).toBe('Creating a new test folder');
     expect(request.body).toEqual({ title: 'New Test Folder', type: 'folder' });
 
@@ -255,8 +221,8 @@ describe('NewProvisionedFolderForm', () => {
       })
     );
 
-    const hookDataWithTrailingSlash = {
-      ...mockHookData,
+    const viewWithTrailingSlash = {
+      ...mockView,
       folder: {
         metadata: {
           annotations: {
@@ -269,7 +235,7 @@ describe('NewProvisionedFolderForm', () => {
       },
     };
 
-    const { user } = setup({}, hookDataWithTrailingSlash);
+    const { user } = setup({}, viewWithTrailingSlash);
 
     const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
     await user.clear(folderNameInput);
@@ -297,27 +263,14 @@ describe('NewProvisionedFolderForm', () => {
         });
       })
     );
-    const { user } = setup(
-      {},
-      {
-        ...mockHookData,
-        initialValues: {
-          ...mockHookData.initialValues!,
-          ref: '',
-          workflow: 'branch',
-        },
-      }
-    );
+    const { user } = setup();
 
     const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
     await user.clear(folderNameInput);
     await user.type(folderNameInput, 'Branch Folder');
 
-    const branchInput = screen.getByRole('combobox', { name: /branch/i });
-    await user.click(branchInput);
-    await user.clear(branchInput);
-    await user.type(branchInput, 'feature/new-folder');
-    await user.keyboard('{Enter}');
+    // A new branch name moves the form off the configured branch, onto the branch workflow
+    await user.type(screen.getByRole('combobox', { name: /branch/i }), 'feature/new-folder{Enter}');
 
     const submitButton = screen.getByRole('button', { name: /^create$/i });
     await user.click(submitButton);
@@ -347,9 +300,9 @@ describe('NewProvisionedFolderForm', () => {
     const { user } = setup(
       {},
       {
-        ...mockHookData,
+        ...mockView,
         repository: {
-          ...mockHookData.repository!,
+          ...mockView.repository!,
           commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
         },
       }
@@ -443,11 +396,110 @@ describe('NewProvisionedFolderForm', () => {
     expect(props.onDismiss).toHaveBeenCalled();
   });
 
+  describe('at the root of a folderless repository', () => {
+    const folderlessView: RepositoryViewData = {
+      ...mockView,
+      repository: { ...mockView.repository!, name: 'folderless-repo', target: 'folderless' },
+      // No parent folder, so no source path to nest under
+      folder: undefined,
+    };
+
+    beforeEach(() => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-folder' } } } });
+        })
+      );
+    });
+
+    it('commits the folder at the repository root, with no directory prefix', async () => {
+      const { user } = setup({}, folderlessView);
+
+      const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+      await user.type(folderNameInput, 'My Team');
+      await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.pathname).toBe(
+        '/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/folderless-repo/files/My%20Team/'
+      );
+      expect(request.url.searchParams.get('message')).toBe('Create folder: My Team');
+      expect(request.body).toEqual({ title: 'My Team', type: 'folder' });
+    });
+
+    it('reloads the dashboards root list, so the new folder shows there', async () => {
+      const store = configureStore();
+      const { user } = render(<NewProvisionedFolderForm view={folderlessView} onDismiss={jest.fn()} />, { store });
+
+      await user.type(await screen.findByRole('textbox', { name: /folder name/i }), 'My Team');
+      await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => expect(store.getState().browseDashboards.rootItems).toBeDefined());
+    });
+  });
+
+  describe('when the parent folder has no usable repository', () => {
+    it('names the deleted repository as the reason, rather than reporting none was found', async () => {
+      setup(
+        {},
+        {
+          ...mockView,
+          repository: undefined,
+          isMissingRepo: true,
+          status: RepoViewStatus.Orphaned,
+        }
+      );
+
+      expect(await screen.findByText('Provisioning repository no longer exists')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Repository not found')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument();
+    });
+
+    it('reports a failed lookup as a failure, rather than as an unprovisioned location', async () => {
+      setup(
+        {},
+        {
+          ...mockView,
+          repository: undefined,
+          isMissingRepo: true,
+          status: RepoViewStatus.Error,
+          error: { data: { message: 'settings unavailable' } },
+        }
+      );
+
+      expect(await screen.findByText('Error loading form')).toBeInTheDocument();
+      expect(screen.getByText('settings unavailable')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Repository not found')).not.toBeInTheDocument();
+    });
+  });
+
+  // Repository titles and source paths routinely contain "/", which must not reach the page HTML-escaped
+  it.each([
+    { sourcePath: 'dashboards/team', text: 'Will be created in owner/repo under dashboards/team' },
+    { sourcePath: undefined, text: 'Will be created at the root of owner/repo' },
+  ])('shows "$text" verbatim', async ({ sourcePath, text }) => {
+    setup(
+      {},
+      {
+        ...mockView,
+        repository: { ...mockView.repository!, title: 'owner/repo' },
+        folder: {
+          ...mockView.folder!,
+          metadata: { annotations: sourcePath ? { 'grafana.app/sourcePath': sourcePath } : {} },
+        },
+      }
+    );
+
+    expect(await screen.findByText(text)).toBeInTheDocument();
+  });
+
   it('should show read-only alert when repository has no workflows', async () => {
     setup(
       {},
       {
-        ...mockHookData,
+        ...mockView,
         repository: {
           name: 'test-repo',
           title: 'Test Repository',
@@ -478,19 +530,20 @@ describe('NewProvisionedFolderForm commit message template', () => {
   });
 
   it('pre-fills Comment from the repository template', async () => {
-    setup(
+    const { user } = setup(
       {},
       {
-        ...mockHookData,
+        ...mockView,
         repository: {
-          ...mockHookData.repository!,
+          ...mockView.repository!,
           commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
         },
-        initialValues: { ...mockHookData.initialValues!, title: 'Reports' },
       }
     );
 
-    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await user.type(await screen.findByRole('textbox', { name: /folder name/i }), 'Reports');
+
+    const comment = screen.getByRole('textbox', { name: /comment/i });
     await waitFor(() => expect(comment).toHaveValue('feat(folders): create Reports'));
     expect(comment).not.toHaveAttribute('readonly');
   });
@@ -506,14 +559,13 @@ describe('NewProvisionedFolderForm commit message template', () => {
     const { user } = setup(
       {},
       {
-        ...mockHookData,
+        ...mockView,
         repository: {
-          ...mockHookData.repository!,
+          ...mockView.repository!,
+          // write is the default workflow, so only the enforcement can move the form onto branch
           workflows: ['write', 'branch'],
           branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/enforced-folder' },
         },
-        // useProvisionedFolderFormData switches this to the branch workflow under enforcement.
-        initialValues: { ...mockHookData.initialValues!, workflow: 'branch' },
       }
     );
 
