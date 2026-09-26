@@ -13380,6 +13380,7 @@
       "add-block": "Add block",
       "add-query": "Add query",
       "add-tag": "Add tag",
+      "change-visualization": "Change visualization",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
       "duplicate-query": "Duplicate query",
@@ -13392,6 +13393,7 @@
       "remove-tag": "Remove tag",
       "rename": "Rename notebook",
       "reset-cell-time-range": "Use notebook time range",
+      "rename-panel": "Rename panel",
       "select-query": "Select query",
       "set-cell-time-range": "Set panel time range",
       "split-block": "Split block",
@@ -13442,6 +13444,17 @@
     },
     "new": {
       "default-title-with-date": "Notebook {{date}}"
+    },
+    "panel": {
+      "change-visualization": "Change visualization",
+      "edit-query": "Edit query",
+      "hide-query": "Hide query editor",
+      "open-explore": "Open in Explore",
+      "rename": "Edit panel title",
+      "suggestions-empty": "No suggestions for this data.",
+      "suggestions-error": "Could not load suggestions.",
+      "suggestions-no-data": "Run a query to see suggestions.",
+      "title-label": "Panel title"
     },
     "save-status": {
       "failed": "Save failed",
