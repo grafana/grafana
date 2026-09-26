@@ -50,6 +50,36 @@ export function getRepeatCloneSourceKey(scene: SceneObject): string | undefined 
   return undefined;
 }
 
+/**
+ * How many panels an element renders as. A repeat renders its source plus one clone per variable
+ * value; everything else renders once. Panels keep their clones on the parent layout item, rows
+ * and tabs on themselves.
+ */
+export function getRenderedInstanceCount(scene: SceneObject): number {
+  const repeats = getRepeats(scene) ?? getRepeats(scene.parent);
+  return 1 + (repeats?.length ?? 0);
+}
+
+function getRepeats(scene: SceneObject | undefined): unknown[] | undefined {
+  const state = scene?.state;
+
+  if (!state) {
+    return undefined;
+  }
+
+  if ('repeatedPanels' in state && Array.isArray(state.repeatedPanels)) {
+    return state.repeatedPanels;
+  }
+  if ('repeatedRows' in state && Array.isArray(state.repeatedRows)) {
+    return state.repeatedRows;
+  }
+  if ('repeatedTabs' in state && Array.isArray(state.repeatedTabs)) {
+    return state.repeatedTabs;
+  }
+
+  return undefined;
+}
+
 export function getLocalVariableValueSet(
   variable: SceneVariable<MultiValueVariableState>,
   value: VariableValueSingle,
