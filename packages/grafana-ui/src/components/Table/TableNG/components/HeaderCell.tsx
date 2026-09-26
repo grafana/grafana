@@ -24,6 +24,7 @@ import { getDisplayName, isSortableField } from '../utils';
 import { HeaderCellMenu } from './HeaderCellMenu';
 
 interface HeaderCellProps {
+  onAddToAssistant?: () => void;
   column: Column<TableRow, TableSummaryRow>;
   rows: TableRow[];
   field: Field;
@@ -63,6 +64,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterRows,
   crossFilterTailRows,
   tableRefreshEnabled,
+  onAddToAssistant,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -242,13 +244,14 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           {label}
         </Stack>
 
-        {filterable && (
+        {(filterable || onAddToAssistant) && (
           <Stack direction="row" gap={0.5} alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
             <HeaderCellMenu
               displayName={displayName}
               filterable={filterable}
               hasActiveFilter={hasActiveFilter}
               onOpenFilter={openFilter}
+              onAddToAssistant={onAddToAssistant}
             />
           </Stack>
         )}

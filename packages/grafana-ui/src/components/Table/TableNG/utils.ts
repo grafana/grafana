@@ -1282,6 +1282,7 @@ function sampleIndices(totalLen: number, sampleSize: number): number[] {
 }
 
 export interface ContentAwareColWidthsOptions {
+  hasAssistantAction?: boolean;
   typographyCtx: TypographyCtx;
   /**
    * Header labels render at `fontWeightMedium`, which is wider than the body text `typographyCtx`
@@ -1421,6 +1422,7 @@ function measureInlineRunWidth(
  * that shifts every other column's share of the leftover space).
  */
 export interface HeaderAffordanceOptions {
+  hasAssistantAction?: boolean;
   showTypeIcons: boolean;
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
@@ -1436,7 +1438,7 @@ export interface HeaderAffordanceOptions {
  */
 export function getHeaderAffordanceWidth(
   field: Field,
-  { showTypeIcons, tableRefreshEnabled, isFiltered }: HeaderAffordanceOptions
+  { showTypeIcons, tableRefreshEnabled, isFiltered, hasAssistantAction }: HeaderAffordanceOptions
 ): number {
   const isFilterable = field.config.custom?.filterable ?? false;
   let width = 0;
@@ -1449,8 +1451,8 @@ export function getHeaderAffordanceWidth(
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
   if (tableRefreshEnabled) {
     // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
-    // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
-    width += isFilterable ? HEADER_MENU_SPACE : 0;
+    // stays in flow (opacity-faded, not unmounted) whenever filtering or Assistant is available.
+    width += isFilterable || hasAssistantAction ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
     // only exists while the filter holds, so its space is reserved only then (the widths recompute
     // when the filter changes).
@@ -1735,6 +1737,7 @@ export function computeContentAwareColWidths(
     typographyCtx,
     headerTypographyCtx,
     showTypeIcons = false,
+    hasAssistantAction = false,
     hasHeader = true,
     getActions,
     tableRefreshEnabled = false,
@@ -1789,6 +1792,7 @@ export function computeContentAwareColWidths(
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
+          hasAssistantAction,
         })
       : 0;
 

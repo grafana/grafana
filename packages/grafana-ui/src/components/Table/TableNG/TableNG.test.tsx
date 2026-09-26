@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -82,6 +82,39 @@ const createBasicDataFrame = (): DataFrame =>
       ],
     })
   );
+
+it.each([false, true])('adds the entire field from its header after sorting (filtered=%s)', async (filtered) => {
+  const frame = createBasicDataFrame();
+  frame.fields[0].config.custom = { ...frame.fields[0].config.custom, filterable: filtered };
+  const onFieldAddToAssistant = jest.fn();
+  render(
+    <TableNG
+      data={frame}
+      width={800}
+      height={600}
+      tableRefreshEnabled
+      sortBy={[{ displayName: 'Column B', desc: true }]}
+      onFieldAddToAssistant={onFieldAddToAssistant}
+    />
+  );
+  const menu = screen.getByRole('button', { name: 'Column options for Column A' });
+  if (filtered) {
+    await userEvent.click(menu);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+    expect(screen.getByText('A2')).toBeInTheDocument();
+    expect(screen.queryByText('A1')).not.toBeInTheDocument();
+  }
+  act(() => menu.focus());
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onFieldAddToAssistant).toHaveBeenCalledTimes(1);
+  expect(onFieldAddToAssistant).toHaveBeenCalledWith(
+    frame,
+    expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] })
+  );
+});
 
 // A `FieldType.other` column, which the Auto cell pretty-prints as JSON.
 const createJsonDataFrame = (wrapText: boolean): DataFrame =>
@@ -239,6 +272,21 @@ const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
     })
   );
 };
+
+it('attaches the nested field from its own frame', async () => {
+  const frame = createNestedDataFrame();
+  const onFieldAddToAssistant = jest.fn();
+  render(
+    <TableNG data={frame} width={800} height={600} tableRefreshEnabled onFieldAddToAssistant={onFieldAddToAssistant} />
+  );
+  await userEvent.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+  await userEvent.click(screen.getByRole('button', { name: 'Column options for Nested B' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onFieldAddToAssistant).toHaveBeenCalledWith(
+    expect.objectContaining({ name: 'NestedData' }),
+    expect.objectContaining({ name: 'Nested B', values: [10, 20] })
+  );
+});
 
 /**
  * A nested table where the apply-to-row background lives on a field *inside the nested frame*
