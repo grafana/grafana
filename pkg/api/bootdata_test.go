@@ -58,6 +58,65 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+func TestHTTPServer_GetFSDataSources_PostgresDatabase(t *testing.T) {
+	for _, storedType := range []string{"postgres", datasources.DS_POSTGRES} {
+		t.Run(storedType, func(t *testing.T) {
+			for _, tc := range []struct {
+				name     string
+				jsonData *simplejson.Json
+				want     string
+			}{
+				{name: "nil jsonData", want: "legacy_database"},
+				{name: "missing database", jsonData: simplejson.New(), want: "legacy_database"},
+				{name: "null database", jsonData: simplejson.NewFromAny(map[string]any{"database": nil}), want: "legacy_database"},
+				{name: "empty database", jsonData: simplejson.NewFromAny(map[string]any{"database": ""}), want: "legacy_database"},
+				{name: "configured database", jsonData: simplejson.NewFromAny(map[string]any{"database": "configured_database"}), want: "configured_database"},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					ds := &datasources.DataSource{
+						OrgID:    1,
+						UID:      "postgres-source",
+						Name:     "PostgreSQL",
+						Type:     storedType,
+						Database: "legacy_database",
+						JsonData: tc.jsonData,
+					}
+					plugin := pluginstore.Plugin{
+						JSONData: plugins.JSONData{
+							ID:       datasources.DS_POSTGRES,
+							Type:     plugins.TypeDataSource,
+							AliasIDs: []string{"postgres"},
+						},
+						FS: &pluginfakes.FakePluginFS{},
+					}
+					hs := &HTTPServer{
+						Cfg:                setting.NewCfg(),
+						tracer:             tracing.InitializeTracerForTest(),
+						pluginStore:        &pluginstore.FakePluginStore{},
+						pluginAssets:       newPluginAssets()(),
+						dsGuardian:         guardian.ProvideGuardian(),
+						DataSourcesService: &datafakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}},
+					}
+					ctx := &contextmodel.ReqContext{
+						Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)},
+						SignedInUser: &user.SignedInUser{OrgID: 1},
+					}
+					available := AvailablePlugins{
+						plugins.TypeDataSource: {datasources.DS_POSTGRES: &availablePluginDTO{Plugin: plugin}},
+					}
+
+					settings, err := hs.getFSDataSources(ctx, available)
+
+					require.NoError(t, err)
+					require.Contains(t, settings, ds.Name)
+					assert.Equal(t, datasources.DS_POSTGRES, settings[ds.Name].Type)
+					assert.Equal(t, tc.want, settings[ds.Name].JSONData["database"])
+				})
+			}
+		})
+	}
+}
+
 func TestGetEnabledOAuthProvidersUsesCallerContext(t *testing.T) {
 	type contextKey struct{}
 
