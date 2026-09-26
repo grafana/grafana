@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -17,11 +17,13 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { getUpdatedHoverHeader } from 'app/features/dashboard-scene/scene/panel-timerange/utils';
 import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -87,6 +89,13 @@ interface PendingQueriesEdit {
   timer?: ReturnType<typeof setTimeout>;
 }
 
+interface PendingPanelTitleEdit {
+  elementName: string;
+  before: string;
+  after: string;
+  action: NotebookEditAction;
+}
+
 export class NotebookLayoutManager
   extends SceneObjectBase<NotebookLayoutManagerState>
   implements DashboardLayoutManager<{}, NotebookLayoutKind>
@@ -114,6 +123,8 @@ export class NotebookLayoutManager
 
   private pendingContentEdit?: PendingContentEdit;
   private pendingQueriesEdit?: PendingQueriesEdit;
+  private pendingPanelTitleEdit?: PendingPanelTitleEdit;
+  private pendingVizChanges = new Map<string, Promise<void>>();
 
   public constructor(state: NotebookLayoutManagerState) {
     super(state);
@@ -457,6 +468,138 @@ export class NotebookLayoutManager
     });
   }
 
+  public setPanelTitle(cell: NotebookCellItem, title: string): void {
+    const panel = cell.state.body;
+    if (!panel || isLibraryPanel(panel) || panel.state.title === title) {
+      return;
+    }
+
+    const elementName = cell.state.elementName;
+    const pending = this.pendingPanelTitleEdit;
+    if (pending?.elementName === elementName) {
+      pending.after = title;
+      this.applyPanelTitle(elementName, title);
+      if (pending.before === title) {
+        this.editHistory?.discard(pending.action);
+        this.pendingPanelTitleEdit = undefined;
+      }
+      return;
+    }
+
+    this.commitPendingEdits();
+    const history = this.editHistory;
+    if (!history) {
+      this.applyPanelTitle(elementName, title);
+      return;
+    }
+
+    const edit: PendingPanelTitleEdit = {
+      elementName,
+      before: panel.state.title,
+      after: title,
+      action: {
+        label: t('notebooks.history.rename-panel', 'Rename panel'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
+        perform: () => {
+          this.commitPanelTitleEdit();
+          this.applyPanelTitle(edit.elementName, edit.after);
+        },
+        undo: () => {
+          this.commitPanelTitleEdit();
+          this.applyPanelTitle(edit.elementName, edit.before);
+        },
+      },
+    };
+    this.pendingPanelTitleEdit = edit;
+    this.applyPanelTitle(elementName, title);
+    history.record(edit.action);
+  }
+
+  public commitPanelTitleEdit(): void {
+    this.pendingPanelTitleEdit = undefined;
+  }
+
+  private applyPanelTitle(elementName: string, title: string): void {
+    for (const cell of this.state.cells) {
+      if (cell.state.elementName === elementName && cell.state.body) {
+        cell.state.body.setState({
+          title,
+          hoverHeader: getUpdatedHoverHeader(title, cell.state.body.state.$timeRange?.state),
+        });
+      }
+    }
+  }
+
+  public async changePanelVisualization(
+    cell: NotebookCellItem,
+    suggestion: PanelPluginVisualizationSuggestion
+  ): Promise<void> {
+    if (!cell.state.body || isLibraryPanel(cell.state.body)) {
+      return;
+    }
+
+    this.commitPendingEdits();
+    const elementName = cell.state.elementName;
+    let panels: VizPanel[] = [];
+    let before: Array<ReturnType<typeof snapshotVisualization>> = [];
+    let after: Array<ReturnType<typeof snapshotVisualization>> = [];
+    const action: NotebookEditAction = {
+      label: t('notebooks.history.change-visualization', 'Change visualization'),
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: () => {
+        void this.enqueueVizChange(elementName, () => applyVisualizations(panels, after));
+      },
+      undo: () => {
+        void this.enqueueVizChange(elementName, () => applyVisualizations(panels, before));
+      },
+    };
+    const history = this.editHistory;
+    history?.record(action);
+
+    try {
+      await this.enqueueVizChange(elementName, async () => {
+        panels = this.state.cells
+          .filter((candidate) => candidate.state.elementName === elementName)
+          .map((candidate) => candidate.state.body)
+          .filter((panel): panel is VizPanel => Boolean(panel));
+        before = panels.map(snapshotVisualization);
+        await Promise.all(
+          panels.map((panel) => panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig))
+        );
+        after = panels.map(snapshotVisualization);
+      });
+    } catch (error) {
+      history?.discard(action);
+      throw error;
+    }
+
+    if (isEqual(before, after)) {
+      history?.discard(action);
+    }
+  }
+
+  private enqueueVizChange(elementName: string, change: () => Promise<void>): Promise<void> {
+    const result = (this.pendingVizChanges.get(elementName) ?? Promise.resolve()).then(change);
+    const settled = result.then(
+      () => {},
+      () => {}
+    );
+    this.pendingVizChanges.set(elementName, settled);
+    void settled.then(() => {
+      if (this.pendingVizChanges.get(elementName) === settled) {
+        this.pendingVizChanges.delete(elementName);
+      }
+    });
+    return result;
+  }
+
+  public whenVizChangesSettled(): Promise<string[]> | undefined {
+    const pending = [...this.pendingVizChanges.entries()];
+    return pending.length
+      ? Promise.all(pending.map(([, change]) => change)).then(() => pending.map(([name]) => name))
+      : undefined;
+  }
+
   /**
    * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
    * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
@@ -723,6 +866,7 @@ export class NotebookLayoutManager
   public commitPendingEdits(): void {
     this.commitContentEdits();
     this.commitQueriesEdits();
+    this.commitPanelTitleEdit();
   }
 
   private insertCell(cell: NotebookCellItem, index: number): void {
@@ -803,6 +947,23 @@ export class NotebookLayoutManager
   public static createFromLayout(): NotebookLayoutManager {
     return new NotebookLayoutManager({ cells: [] });
   }
+}
+
+function snapshotVisualization(panel: VizPanel) {
+  return {
+    pluginId: panel.state.pluginId,
+    options: structuredClone(panel.state.options),
+    fieldConfig: structuredClone(panel.state.fieldConfig),
+  };
+}
+
+async function applyVisualizations(panels: VizPanel[], snapshots: Array<ReturnType<typeof snapshotVisualization>>) {
+  await Promise.all(
+    panels.map((panel, index) => {
+      const snapshot = snapshots[index];
+      return panel.changePluginType(snapshot.pluginId, snapshot.options, snapshot.fieldConfig);
+    })
+  );
 }
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {

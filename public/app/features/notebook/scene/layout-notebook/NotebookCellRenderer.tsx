@@ -5,12 +5,14 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { NotebookPanelActions } from './NotebookPanelActions';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
@@ -50,7 +52,9 @@ export function NotebookCellRenderer({
   onAdvance,
   onFocusRequest,
   onNavigate,
-}: { cell: NotebookCellItem } & NarrativeCellFocusProps) {
+  onDuplicate,
+  onDelete,
+}: { cell: NotebookCellItem; onDuplicate?: () => void; onDelete?: () => void } & NarrativeCellFocusProps) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
   // Panel and Collapsed cells have no caret of their own to detect an ArrowUp/Down boundary with —
@@ -61,7 +65,16 @@ export function NotebookCellRenderer({
   }
 
   if (panel) {
-    return <PanelCell cell={cell} panel={panel} isEditing={isEditing} autoFocus={autoFocus} />;
+    return (
+      <PanelCell
+        cell={cell}
+        panel={panel}
+        isEditing={isEditing}
+        autoFocus={autoFocus}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+      />
+    );
   }
 
   if (narrative) {
@@ -89,18 +102,45 @@ function PanelCell({
   panel,
   isEditing,
   autoFocus,
+  onDuplicate,
+  onDelete,
 }: {
   cell: NotebookCellItem;
   panel: VizPanel;
   isEditing: boolean;
   autoFocus?: boolean;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
 }) {
   const styles = useStyles2(getStyles);
+  const [queryEditorOpen, setQueryEditorOpen] = useState(true);
+  const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
+  const autoSuggest = useRef(Boolean(autoFocus));
+  const canEditQuery = isEditing && isEditableQueryPanel(panel);
 
   return (
     <Stack direction="column" gap={1}>
-      {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
+      {canEditQuery && queryEditorOpen && (
+        <PanelQueryEditor
+          cell={cell}
+          panel={panel}
+          autoFocus={autoFocus}
+          lastSuggestedQuery={lastSuggestedQuery}
+          autoSuggest={autoSuggest}
+        />
+      )}
       <div className={styles.panel}>
+        <NotebookPanelActions
+          cell={cell}
+          panel={panel}
+          isEditing={isEditing}
+          lastSuggestedQuery={lastSuggestedQuery}
+          autoSuggest={autoSuggest}
+          onToggleQueryEditor={canEditQuery ? () => setQueryEditorOpen((open) => !open) : undefined}
+          queryEditorOpen={queryEditorOpen}
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+        />
         <panel.Component model={panel} />
       </div>
     </Stack>
@@ -317,6 +357,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   panel: css({
     height: PANEL_HEIGHT,
     position: 'relative',
+    '&:hover, &:focus-within': {
+      '[data-notebook-panel-actions]': {
+        opacity: 1,
+        pointerEvents: 'auto',
+      },
+    },
   }),
   content: css({
     padding: theme.spacing(1, 0),

@@ -327,6 +327,22 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   /** Writes a pending save immediately, if there is one. */
   public flush(): void {
+    const pendingVizChanges = this.scene.state.body.whenVizChangesSettled();
+    if (pendingVizChanges) {
+      const wasEditing = this.scene.state.isEditing;
+      this.scheduleSave.cancel();
+      void pendingVizChanges.then((elementNames) => {
+        if (!this.abandoned) {
+          if (wasEditing) {
+            elementNames.forEach((name) => this.vizConfigsEdited.add(name));
+            this.editedByWriter = true;
+          }
+          this.schedule();
+          this.flush();
+        }
+      });
+      return;
+    }
     this.scheduleSave.flush();
   }
 

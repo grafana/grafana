@@ -371,6 +371,26 @@ describe('PanelQueryEditor', () => {
     expect(changePluginType.mock.invocationCallOrder[0]).toBeLessThan(runQueries.mock.invocationCallOrder[0]);
   });
 
+  it('records an automatic visualization suggestion in notebook history', async () => {
+    const { panel, cell, history } = buildPanel();
+    const originalPluginId = panel.state.pluginId;
+    jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+      panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+    });
+    getVizSuggestionForQuery.mockResolvedValue({ pluginId: 'table', options: { showHeader: true } });
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(history.state.undoLabel).toBe('Change visualization'));
+    expect(panel.state.pluginId).toBe('table');
+
+    act(() => history.undo());
+    await waitFor(() => expect(panel.state.pluginId).toBe(originalPluginId));
+
+    act(() => history.redo());
+    await waitFor(() => expect(panel.state.pluginId).toBe('table'));
+  });
+
   it('still runs the query when the suggestion fails', async () => {
     const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
@@ -401,6 +421,72 @@ describe('PanelQueryEditor', () => {
     // The query itself hasn't changed between clicks, so the (query-running) suggestion fetch only
     // has to happen once — the second "Run query" click should go straight to the real run.
     expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the suggestion choice when the query editor is closed and reopened', async () => {
+    const { panel, cell } = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    const lastSuggestedQuery = { current: undefined as DataQuery | undefined };
+    const firstEditor = render(<PanelQueryEditor panel={panel} cell={cell} lastSuggestedQuery={lastSuggestedQuery} />);
+
+    await firstEditor.user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+    firstEditor.unmount();
+
+    const reopenedEditor = render(
+      <PanelQueryEditor panel={panel} cell={cell} lastSuggestedQuery={lastSuggestedQuery} />
+    );
+    await reopenedEditor.user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(2));
+
+    expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not replace a manually chosen visualization when running the same query', async () => {
+    const { panel, cell } = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    const lastSuggestedQuery = { current: runner.state.queries[0] };
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} lastSuggestedQuery={lastSuggestedQuery} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+
+    expect(getVizSuggestionForQuery).not.toHaveBeenCalled();
+  });
+
+  it('does not auto-replace an existing visualization after reload or query edits', async () => {
+    const { panel, cell } = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} autoSuggest={{ current: false }} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+    expect(getVizSuggestionForQuery).not.toHaveBeenCalled();
+  });
+
+  it('does not apply a delayed suggestion after leaving edit mode', async () => {
+    const { panel, cell } = buildPanel();
+    let finishSuggestion!: (suggestion: { pluginId: string; options: {} }) => void;
+    getVizSuggestionForQuery.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishSuggestion = resolve;
+        })
+    );
+    const changeVisualization = jest.spyOn(cell, 'onVisualizationChange');
+    const runQueries = jest.spyOn(getQueryRunnerFor(panel)!, 'runQueries');
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} autoSuggest={{ current: true }} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1));
+    cell.getParentLayout().editModeChanged(false);
+    finishSuggestion({ pluginId: 'table', options: {} });
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+
+    expect(changeVisualization).not.toHaveBeenCalled();
   });
 
   it('fetches a fresh suggestion after the query changes', async () => {
