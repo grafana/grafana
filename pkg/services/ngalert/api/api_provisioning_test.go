@@ -70,6 +70,29 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func TestRoutePostAlertRuleReturnsBindErrorMessage(t *testing.T) {
+	body := bytes.NewBufferString(`{"for":"300"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/provisioning/alert-rules", body)
+	req.Header.Set("Content-Type", "application/json")
+
+	rc := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  req,
+			Resp: web.NewResponseWriter(http.MethodPost, httptest.NewRecorder()),
+		},
+		SignedInUser: &user.SignedInUser{OrgID: 1},
+		Logger:       &logtest.Fake{},
+	}
+
+	resp := NewProvisioningApi(nil).RoutePostAlertRule(rc)
+
+	require.Equal(t, http.StatusBadRequest, resp.Status())
+
+	var payload map[string]string
+	require.NoError(t, json.Unmarshal(resp.Body(), &payload))
+	require.Equal(t, `not a valid duration string: "300"`, payload["message"])
+}
+
 func TestIntegrationProvisioningApi(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
