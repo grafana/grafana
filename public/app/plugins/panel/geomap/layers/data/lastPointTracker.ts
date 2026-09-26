@@ -1,7 +1,7 @@
 import Feature from 'ol/Feature';
-import * as layer from 'ol/layer';
-import * as source from 'ol/source';
-import * as style from 'ol/style';
+import LayerVector from 'ol/layer/Vector';
+import SourceVector from 'ol/source/Vector';
+import { Style, Icon } from 'ol/style';
 
 import { type MapLayerRegistryItem, type PanelData, PluginState } from '@grafana/data';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
@@ -33,18 +33,18 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
     const config = { ...defaultOptions, ...options.config };
 
     point.setStyle(
-      new style.Style({
-        image: new style.Icon({
+      new Style({
+        image: new Icon({
           src: config.icon,
         }),
       })
     );
 
-    const vectorSource = new source.Vector({
+    const vectorSource = new SourceVector({
       features: [point],
     });
 
-    const vectorLayer = new layer.Vector({
+    const vectorLayer = new LayerVector({
       source: vectorSource,
     });
 
