@@ -38,6 +38,7 @@ import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
+import { buildCellSceneTimeRange, type CellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
 import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
@@ -457,6 +458,35 @@ export class NotebookLayoutManager
     });
   }
 
+  public setCellTimeRange(cell: NotebookCellItem, spec: CellTimeRangeSpec | undefined): void {
+    const panel = cell.state.body;
+    const before = { $timeRange: cell.state.$timeRange, panelTimeRange: panel?.state.$timeRange };
+    const after = {
+      $timeRange: spec ? buildCellSceneTimeRange(spec.from, spec.to) : undefined,
+      panelTimeRange: undefined,
+    };
+
+    const apply = (state: typeof before) => {
+      cell.setState({ $timeRange: state.$timeRange });
+      panel?.setState({ $timeRange: state.panelTimeRange });
+      getQueryRunnerFor(panel)?.runQueries();
+    };
+
+    if (!this.state.isEditing) {
+      apply(after);
+      return;
+    }
+
+    this.executeEdit({
+      label: spec
+        ? t('notebooks.history.set-cell-time-range', 'Set panel time range')
+        : t('notebooks.history.reset-cell-time-range', 'Use notebook time range'),
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: () => apply(after),
+      undo: () => apply(before),
+    });
+  }
+
   /**
    * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
    * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
@@ -652,6 +682,8 @@ export class NotebookLayoutManager
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
       body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
+      // A bare .clone() would reuse the same $timeRange instance across both cells.
+      ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),
     });
 
     this.executeEdit({
@@ -786,6 +818,7 @@ export class NotebookLayoutManager
         key: undefined,
         body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
         ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
+        ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),
       })
     );
 

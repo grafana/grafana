@@ -33,6 +33,7 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { clearExploreZoom, markExploreZoom } from 'app/features/notebook/addPanel/zoomedCaptureRange';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type StoreState } from 'app/types/store';
 
@@ -156,6 +157,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
+  }
+
+  componentWillUnmount() {
+    clearExploreZoom(this.props.exploreId);
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -306,6 +311,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
+    markExploreZoom(exploreId, absoluteRange);
   };
 
   /**

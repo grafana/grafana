@@ -4,8 +4,8 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
-import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
+import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
+import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
@@ -15,6 +15,7 @@ import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
+import { NotebookCellTimeRangeControl } from './edit/NotebookCellTimeRangeControl';
 
 // A lone VizPanel fills its parent, so the parent needs a resolved height (not just
 // min-height) or PanelChrome measures 0 and nothing shows.
@@ -96,10 +97,23 @@ function PanelCell({
   autoFocus?: boolean;
 }) {
   const styles = useStyles2(getStyles);
+  // NotebookCellItem has no static Component and is never otherwise activated, so a $timeRange
+  // assigned to it would never get its own activate() call without this.
+  const { $timeRange } = useSceneObjectState(cell, { shouldActivateOrKeepAlive: true });
+
+  // PanelQueryEditor already mounts its own copy of this control inline, so this one only needs to fill in for the
+  // two cases isEditableQueryPanel excludes (a library panel, or one with transformations),
+  // where there is no query editor to be inline with.
+  const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
 
   return (
     <Stack direction="column" gap={1}>
       {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
+      {showStandaloneClock && (
+        <Box display="flex" justifyContent="flex-end">
+          <NotebookCellTimeRangeControl cell={cell} />
+        </Box>
+      )}
       <div className={styles.panel}>
         <panel.Component model={panel} />
       </div>

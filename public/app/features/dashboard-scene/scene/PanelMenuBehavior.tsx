@@ -28,6 +28,7 @@ import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/append
 import { InspectTab } from 'app/features/inspector/types';
 import { AddPanelToNotebookScene } from 'app/features/notebook/addPanel/AddPanelToNotebookScene';
 import { getRecentNotebook } from 'app/features/notebook/addPanel/recentNotebook';
+import { clearPanelZoom, markPanelZoom, wasPanelZoomed } from 'app/features/notebook/addPanel/zoomedCaptureRange';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { canAddPanelToNotebook, canEditNotebooks } from 'app/features/notebook/permissions';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
@@ -49,6 +50,30 @@ import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
+
+export function notebookPanelZoomBehavior(panel: VizPanel) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)) {
+    return;
+  }
+
+  const onTimeRangeChange = panel.onTimeRangeChange;
+  const timeRange = sceneGraph.getTimeRange(panel);
+  const subscription = timeRange.subscribeToState((next, previous) => {
+    if (next.from !== previous.from || next.to !== previous.to) {
+      clearPanelZoom(panel);
+    }
+  });
+  panel.onTimeRangeChange = (range) => {
+    onTimeRangeChange(range);
+    markPanelZoom(panel, timeRange.state.value);
+  };
+
+  return () => {
+    panel.onTimeRangeChange = onTimeRangeChange;
+    subscription.unsubscribe();
+    clearPanelZoom(panel);
+  };
+}
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -406,10 +431,19 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.add-to-recent-notebook', 'Add to "{{title}}"', { title: recent.title }),
           iconClassName: 'book',
           onClick: async () => {
-            const { quickAddPanelToNotebook } = await import('app/features/notebook/addPanel/quickAddPanelToNotebook');
+            const [{ quickAddPanelToNotebook }, { withCapturedTimeRange }] = await Promise.all([
+              import('app/features/notebook/addPanel/quickAddPanelToNotebook'),
+              import('app/features/notebook/addPanel/captureTimeRange'),
+            ]);
             const modal = new AddPanelToNotebookScene({ panelRef: panel.getRef() });
+            const sourceTimeRange = modal.getSourceTimeRange();
             await quickAddPanelToNotebook(
-              modal.buildPanel,
+              async () =>
+                withCapturedTimeRange(
+                  await modal.buildPanel(),
+                  sourceTimeRange,
+                  wasPanelZoomed(panel, sourceTimeRange)
+                ),
               NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
               modal.isLibraryPanel(),
               () => dashboard.showModal(modal),

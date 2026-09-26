@@ -32,7 +32,7 @@ import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBeh
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
-import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
+import { notebookPanelZoomBehavior, panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
@@ -167,6 +167,7 @@ export function buildVizPanel(panel: PanelKind, id?: number, buildOptions: Build
  * and therefore require a DashboardScene ancestor.
  */
 function addDashboardPanelChrome(vizPanelState: VizPanelState): void {
+  vizPanelState.$behaviors = [...(vizPanelState.$behaviors ?? []), notebookPanelZoomBehavior];
   vizPanelState.headerActions = new VizPanelHeaderActions({
     hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
   });

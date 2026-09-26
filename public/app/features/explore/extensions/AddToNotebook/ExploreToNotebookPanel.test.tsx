@@ -1,8 +1,9 @@
 import { render } from 'test/test-utils';
 
-import { type DataSourceApi } from '@grafana/data';
+import { rangeUtil, type DataSourceApi } from '@grafana/data';
 import { type DataSourceRef } from '@grafana/schema';
 import { buildPanelElementFromExplore } from 'app/features/notebook/addPanel/buildPanelElementFromExplore';
+import { clearExploreZoom, markExploreZoom } from 'app/features/notebook/addPanel/zoomedCaptureRange';
 import { type ExploreState } from 'app/types/explore';
 
 import { createEmptyQueryResponse } from '../../state/utils';
@@ -12,6 +13,8 @@ import { ExploreToNotebookPanel } from './ExploreToNotebookPanel';
 interface ModalBodyProps {
   buildPanel: () => Promise<unknown>;
   onDismiss: () => void;
+  sourceTimeRange: ReturnType<typeof rangeUtil.convertRawToRange>;
+  defaultLockTimeRange: boolean;
 }
 
 const mockModalBody = jest.fn();
@@ -29,11 +32,18 @@ jest.mock('app/features/notebook/addPanel/buildPanelElementFromExplore');
 
 const DATASOURCE_REF: DataSourceRef = { type: 'prometheus', uid: 'prom' };
 
-function setup({ withDatasource = true } = {}) {
+function setup({ withDatasource = true, zoomed = false } = {}) {
   const onClose = jest.fn();
   const queries = [{ refId: 'A' }];
   const queryResponse = createEmptyQueryResponse();
   const panelsState = { logs: { id: 'log-row-1' } };
+  const range = rangeUtil.convertRawToRange(
+    zoomed ? { from: '2026-09-25T10:15:00.000Z', to: '2026-09-25T10:25:00.000Z' } : { from: 'now-1h', to: 'now' },
+    'utc'
+  );
+  if (zoomed) {
+    markExploreZoom('left', range);
+  }
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a whole pane, of which the component reads four fields
   const datasourceInstance = { getRef: () => DATASOURCE_REF } as DataSourceApi;
 
@@ -47,6 +57,7 @@ function setup({ withDatasource = true } = {}) {
             queryResponse,
             panelsState,
             datasourceInstance: withDatasource ? datasourceInstance : undefined,
+            range,
           },
         },
       } as unknown as ExploreState,
@@ -55,11 +66,14 @@ function setup({ withDatasource = true } = {}) {
 
   const props: ModalBodyProps = mockModalBody.mock.calls[0][0];
 
-  return { onClose, queries, queryResponse, panelsState, props };
+  return { onClose, queries, queryResponse, panelsState, range, props };
 }
 
 describe('ExploreToNotebookPanel', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => {
+    jest.clearAllMocks();
+    clearExploreZoom('left');
+  });
 
   // The pane it was opened on, not whichever one Explore happens to consider current: a split view
   // would otherwise capture the wrong half.
@@ -90,5 +104,16 @@ describe('ExploreToNotebookPanel', () => {
     const { props, onClose } = setup();
 
     expect(props.onDismiss).toBe(onClose);
+  });
+
+  it('passes the selected Explore pane time range to the picker', () => {
+    const { props, range } = setup();
+    expect(props.sourceTimeRange).toEqual(range);
+    expect(props.defaultLockTimeRange).toBe(false);
+  });
+
+  it('defaults to locking the range after a graph zoom', () => {
+    const { props } = setup({ zoomed: true });
+    expect(props.defaultLockTimeRange).toBe(true);
   });
 });
