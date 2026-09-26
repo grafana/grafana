@@ -2,7 +2,7 @@ import { type DataSourceInstanceListItem, type DataSourceRef } from '@grafana/da
 
 import { getDatasourcePluginMeta, getPluginIdFromDatasourceInstanceType } from '../pluginMeta/datasources';
 
-import { lookupByUid, toListItem } from './settings';
+import { lookupListItemByUid } from './settings';
 
 /**
  * Look up a data source **by uid** and return the slim {@link DataSourceInstanceListItem} —
@@ -31,12 +31,11 @@ export async function getDataSourceInstanceListItem(
     return undefined;
   }
 
-  const settings = lookupByUid(uid);
-  if (!settings) {
+  const item = await lookupListItemByUid(uid);
+  if (!item) {
     return undefined;
   }
 
-  const item = toListItem(settings);
   // Built-ins report the plugin *type* as their instance type, so the plugin id has to be
   // derived from the name before the plugin meta cache can be queried.
   const pluginId = getPluginIdFromDatasourceInstanceType(item.type, item.name);

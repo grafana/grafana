@@ -1,12 +1,22 @@
 import { type DataSourceApi, type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { config } from '../../config';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { setBackendSrv } from '../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setLogger } from '../logging/registry';
+import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { getDataSourceCacheGeneration, subscribeToDataSourceCache } from './cacheGeneration';
-import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
+import {
+  DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING,
+  FALLBACK_TO_BOOTDATA_LIST_WARNING,
+  FALLBACK_TO_BOOTDATA_SETTINGS_WARNING,
+  FALLBACK_TO_LEGACY_LIST_WARNING,
+  FALLBACK_TO_LEGACY_SETTINGS_WARNING,
+} from './constants';
 import { setExpressionDataSourceInstance } from './expressionDs';
 import {
   _resetForTests,
@@ -1185,5 +1195,277 @@ describe('instanceSettings', () => {
         expect(logWarning).not.toHaveBeenCalled();
       });
     });
+  });
+});
+
+describe('async instance settings initialization', () => {
+  const asyncFixtures = Object.fromEntries(
+    Object.entries(fixtures).filter(([name]) => name !== 'Expression' && name !== 'Charlie')
+  ) as Record<string, DataSourceInstanceSettings>;
+  const pluginMetas = Object.fromEntries(
+    Object.values(asyncFixtures).map((settings) => [settings.meta.id, settings.meta])
+  );
+  const connections = {
+    items: Object.values(asyncFixtures)
+      .filter((settings) => !['grafana', 'mixed', 'dashboard'].includes(settings.meta.id))
+      .map((settings) => ({
+        title: settings.name,
+        name: settings.uid,
+        group: `${settings.type}.datasource.grafana.app`,
+        version: 'v0alpha1',
+        plugin: settings.type,
+      })),
+  };
+  const previousQueryService = config.featureToggles.queryService;
+  const previousConnections = config.featureToggles.queryServiceWithConnections;
+
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.PluginsInitDataSourcesAsync]: true });
+    config.featureToggles.queryService = true;
+    config.featureToggles.queryServiceWithConnections = true;
+    setDatasourcePluginMetas(pluginMetas);
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+    config.featureToggles.queryService = previousQueryService;
+    config.featureToggles.queryServiceWithConnections = previousConnections;
+  });
+
+  it('starts initialization without awaiting and shares it with consumers', async () => {
+    let resolveConnections!: (value: typeof connections) => void;
+    const pendingConnections = new Promise<typeof connections>((resolve) => {
+      resolveConnections = resolve;
+    });
+    backendGet.mockReturnValueOnce(pendingConnections);
+
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+
+    expect(backendGet).toHaveBeenCalledTimes(1);
+    const first = getDataSourceInstanceList({ all: true });
+    const second = getDataSourceInstanceList({ all: true });
+    expect(backendGet).toHaveBeenCalledTimes(1);
+
+    resolveConnections(connections);
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+
+    expect(firstResult).toEqual(secondResult);
+    expect(firstResult.map((item) => item.uid)).toEqual(['uid-alpha', 'uid-bravo', '-- Grafana --']);
+  });
+
+  it('falls back to boot data and logs when connections fail', async () => {
+    backendGet.mockRejectedValueOnce(Object.assign(new Error('connections unavailable'), { status: 503 }));
+
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+    const result = await getDataSourceInstanceList({ all: true });
+
+    expect(result.map((item) => item.uid)).toEqual(['uid-alpha', 'uid-bravo', '-- Grafana --']);
+    expect(logWarning).toHaveBeenCalledWith(
+      FALLBACK_TO_BOOTDATA_LIST_WARNING,
+      expect.objectContaining({ operation: 'startup', status: '503' })
+    );
+  });
+
+  it('falls back to boot data when the connections list diverges', async () => {
+    backendGet.mockResolvedValueOnce({
+      items: connections.items.map((connection) =>
+        connection.name === 'uid-alpha' ? { ...connection, title: 'Different name' } : connection
+      ),
+    });
+
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+    const result = await getDataSourceInstanceList({ all: true });
+
+    expect(result.map((item) => item.name)).toEqual(['Alpha', 'Bravo', '-- Grafana --']);
+    expect(logWarning).toHaveBeenCalledWith(
+      FALLBACK_TO_BOOTDATA_LIST_WARNING,
+      expect.objectContaining({ reason: 'datasource-list-parity-mismatch' })
+    );
+  });
+
+  it('logs and skips a connection without a plugin type', async () => {
+    backendGet.mockResolvedValueOnce({
+      items: connections.items.map((connection) =>
+        connection.name === 'uid-alpha' ? { ...connection, plugin: undefined } : connection
+      ),
+    });
+
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+    await getDataSourceInstanceList({ all: true });
+
+    expect(logWarning).toHaveBeenCalledWith(DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING, {
+      dataSourceUid: 'uid-alpha',
+      dataSourceName: 'Alpha',
+      operation: 'startup',
+      requestUrl: '/apis/query.grafana.app/v0alpha1/namespaces/default/connections',
+    });
+  });
+
+  it('loads matching settings once per uid', async () => {
+    backendGet.mockResolvedValueOnce(connections).mockResolvedValue({
+      apiVersion: 'test-db.datasource.grafana.app/v0alpha1',
+      metadata: {
+        name: 'uid-alpha',
+        labels: { 'grafana.app/deprecatedInternalID': '1' },
+      },
+      spec: {
+        title: 'Alpha',
+        access: 'direct',
+        readOnly: false,
+        isDefault: false,
+        jsonData: {},
+      },
+    });
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+
+    const [first, second] = await Promise.all([
+      getDataSourceInstanceSettings('uid-alpha'),
+      getDataSourceInstanceSettings('uid-alpha'),
+    ]);
+
+    expect(first).toEqual(expect.objectContaining(fixtures.Alpha));
+    expect(second).toEqual(first);
+    expect(backendGet).toHaveBeenCalledTimes(2);
+    expect(logWarning).not.toHaveBeenCalled();
+  });
+
+  it('uses boot settings for synthesized built-ins without logging a fallback', async () => {
+    backendGet.mockResolvedValueOnce(connections);
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+
+    const result = await getDataSourceInstanceSettings('-- Grafana --');
+
+    expect(result).toEqual(fixtures['-- Grafana --']);
+    expect(backendGet).toHaveBeenCalledTimes(1);
+    expect(logWarning).not.toHaveBeenCalled();
+  });
+
+  it('continues to resolve runtime-registered settings', async () => {
+    const runtime = ds({ id: 9, uid: 'uid-runtime', name: 'Runtime', type: 'runtime-db' });
+    backendGet.mockResolvedValueOnce(connections);
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+    upsertRuntimeDataSourceInstanceSettings(runtime);
+
+    const result = await getDataSourceInstanceSettings('uid-runtime');
+
+    expect(result).toBe(runtime);
+    expect(backendGet).toHaveBeenCalledTimes(1);
+    expect(logWarning).not.toHaveBeenCalled();
+  });
+
+  it('falls back only the mismatching settings item and logs it once', async () => {
+    backendGet.mockResolvedValueOnce(connections).mockResolvedValue({
+      apiVersion: 'test-db.datasource.grafana.app/v0alpha1',
+      metadata: {
+        name: 'uid-alpha',
+        labels: { 'grafana.app/deprecatedInternalID': '1' },
+      },
+      spec: {
+        title: 'Alpha',
+        access: 'proxy',
+        readOnly: false,
+        isDefault: false,
+        jsonData: {},
+      },
+    });
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+
+    const first = await getDataSourceInstanceSettings('uid-alpha');
+    const second = await getDataSourceInstanceSettings('uid-alpha');
+
+    expect(first).toEqual(fixtures.Alpha);
+    expect(second).toEqual(fixtures.Alpha);
+    expect(backendGet).toHaveBeenCalledTimes(2);
+    expect(logWarning).toHaveBeenCalledTimes(1);
+    expect(logWarning).toHaveBeenCalledWith(
+      FALLBACK_TO_BOOTDATA_SETTINGS_WARNING,
+      expect.objectContaining({ operation: 'settings', pluginType: 'test-db' })
+    );
+  });
+
+  it('falls back only the failed settings item and logs it once', async () => {
+    backendGet
+      .mockResolvedValueOnce(connections)
+      .mockRejectedValueOnce(Object.assign(new Error('settings unavailable'), { status: 503 }));
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+
+    const first = await getDataSourceInstanceSettings('uid-alpha');
+    const second = await getDataSourceInstanceSettings('uid-alpha');
+
+    expect(first).toEqual(fixtures.Alpha);
+    expect(second).toEqual(fixtures.Alpha);
+    expect(backendGet).toHaveBeenCalledTimes(2);
+    expect(logWarning).toHaveBeenCalledTimes(1);
+    expect(logWarning).toHaveBeenCalledWith(
+      FALLBACK_TO_BOOTDATA_SETTINGS_WARNING,
+      expect.objectContaining({ operation: 'settings', pluginType: 'test-db', status: '503' })
+    );
+  });
+
+  it('reloads connections and clears cached settings', async () => {
+    const settingsResponse = {
+      apiVersion: 'test-db.datasource.grafana.app/v0alpha1',
+      metadata: {
+        name: 'uid-alpha',
+        labels: { 'grafana.app/deprecatedInternalID': '1' },
+      },
+      spec: {
+        title: 'Alpha',
+        access: 'direct',
+        readOnly: false,
+        isDefault: false,
+        jsonData: {},
+      },
+    };
+    backendGet
+      .mockResolvedValueOnce(connections)
+      .mockResolvedValueOnce(settingsResponse)
+      .mockResolvedValueOnce(connections)
+      .mockResolvedValueOnce(settingsResponse);
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+    await getDataSourceInstanceSettings('uid-alpha');
+
+    await reloadDataSourceInstanceSettings();
+    await getDataSourceInstanceSettings('uid-alpha');
+
+    expect(backendGet).toHaveBeenNthCalledWith(3, '/apis/query.grafana.app/v0alpha1/namespaces/default/connections');
+    expect(backendGet).toHaveBeenCalledTimes(4);
+  });
+
+  it('starts cache synchronization internally without returning a promise', async () => {
+    backendGet.mockResolvedValueOnce(connections);
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+    await getDataSourceInstanceList({ all: true });
+
+    let resolveConnections!: (value: typeof connections) => void;
+    backendGet.mockReturnValueOnce(
+      new Promise<typeof connections>((resolve) => {
+        resolveConnections = resolve;
+      })
+    );
+
+    const result = syncDataSourceInstanceSettings({ datasources: asyncFixtures, defaultDatasource: 'Bravo' });
+
+    expect(result).toBeUndefined();
+    expect(backendGet).toHaveBeenCalledTimes(2);
+
+    const list = getDataSourceInstanceList({ all: true });
+    resolveConnections(connections);
+    expect((await list).map((item) => item.uid)).toEqual(['uid-alpha', 'uid-bravo', '-- Grafana --']);
+  });
+
+  it('accepts connection list changes on reload without comparing them to the startup snapshot', async () => {
+    const updatedConnections = {
+      items: connections.items.filter((connection) => connection.name !== 'uid-alpha'),
+    };
+    backendGet.mockResolvedValueOnce(connections).mockResolvedValueOnce(updatedConnections);
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+    await getDataSourceInstanceList({ all: true });
+
+    await reloadDataSourceInstanceSettings();
+    const result = await getDataSourceInstanceList({ all: true });
+
+    expect(result.map((item) => item.uid)).toEqual(['uid-bravo', '-- Grafana --']);
+    expect(logWarning).not.toHaveBeenCalled();
   });
 });

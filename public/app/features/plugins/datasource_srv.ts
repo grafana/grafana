@@ -396,8 +396,8 @@ export class DatasourceSrv implements DataSourceService {
     config.datasources = settings.datasources;
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);
-    // Keep the new async instance-settings cache in sync with the legacy srv during the
-    // transition where both exist. Reuses the payload just fetched — no extra request.
+    // Start refreshing the new async instance-settings cache during the transition where
+    // both services exist. Consumers join the cached refresh if it is still in flight.
     syncDataSourceInstanceSettings({
       datasources: settings.datasources,
       defaultDatasource: settings.defaultDatasource,
