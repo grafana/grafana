@@ -277,6 +277,34 @@ func (h *K8sClientWithFallback) Update(
 	return res, nil
 }
 
+// Create cannot use the embedded handler. That handler was built for the legacy
+// dashboard resource, so client-go will post to that resource path even when obj
+// says apiVersion: dashboard.grafana.app/v2. A new dashboard has no stored version
+// to look up, so the create path must choose the handler from the object itself.
+func (h *K8sClientWithFallback) Create(
+	ctx context.Context, obj *unstructured.Unstructured, orgID int64, options metav1.CreateOptions,
+) (*unstructured.Unstructured, error) {
+	ctx, span := tracing.Start(ctx, "K8sClientWithFallback.Create")
+	defer span.End()
+
+	version := obj.GroupVersionKind().Version
+	h.log.Debug("using client for version", "version", version)
+
+	span.SetAttributes(
+		attribute.String("version", version),
+		attribute.String("dashboard.metadata.name", obj.GetName()),
+		attribute.Int64("org.id", orgID),
+	)
+
+	res, err := h.newClientFunc(ctx, version).Create(ctx, obj, orgID, options)
+	if err != nil {
+		h.log.Debug("failed to create object", "error", err)
+		return nil, tracing.Error(span, err)
+	}
+
+	return res, nil
+}
+
 // fetchWithVersion fetches multiple resources from the K8s API.
 // It uses concurrent Get requests, one for each name.
 //
