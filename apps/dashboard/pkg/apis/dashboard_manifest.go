@@ -1012,6 +1012,15 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaNotebookv2beta1,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "content",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"text"},
+							Description:  "Authored markdown and code cell content",
+						},
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

@@ -3,7 +3,9 @@ package dashboards
 import (
 	"context"
 	"net/http"
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,11 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// Notebooks declare no searchFields of their own, so everything here runs on the
-// standard field set the index gives every kind. The point of the test is that a
-// kind reaches the search endpoint purely by being listed in searchroutes.allowed —
-// no document builder, no manifest declaration.
-//
 // Helpers (search, names, postRaw) are shared with searchapi_test.go.
 func TestIntegrationNotebooksSearchAPI(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -76,6 +73,70 @@ func TestIntegrationNotebooksSearchAPI(t *testing.T) {
 		got := names(results)
 		assert.Subset(t, got, []string{"nbsearch-cpu", "nbsearch-memory", "nbsearch-disk"})
 		assert.NotContains(t, got, unrelatedName, "a notebook whose title lacks the term should not match")
+	})
+
+	t.Run("finds saved cell content and tracks edits and deletion", func(t *testing.T) {
+		const name = "nbsearch-content"
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"spec": map[string]any{
+				"title": "Autumn timeline",
+				"elements": map[string]any{
+					"note": map[string]any{"kind": "Cell", "spec": map[string]any{"content": map[string]any{"kind": "Markdown", "spec": map[string]any{"text": "uniquecheckoutlatency observation"}}}},
+					"code": map[string]any{"kind": "Cell", "spec": map[string]any{"content": map[string]any{"kind": "Code", "spec": map[string]any{"language": "javascript", "code": "const uniquequeryconstant = 42;"}}}},
+				},
+				"layout": map[string]any{"kind": "NotebookLayout", "spec": map[string]any{"cells": []any{
+					map[string]any{"kind": "NotebookLayoutItem", "spec": map[string]any{"element": map[string]any{"kind": "ElementReference", "name": "note"}}},
+					map[string]any{"kind": "NotebookLayoutItem", "spec": map[string]any{"element": map[string]any{"kind": "ElementReference", "name": "code"}}},
+				}}},
+			},
+		}}
+		obj.SetName(name)
+		obj.SetAPIVersion(gvr.GroupVersion().String())
+		obj.SetKind("Notebook")
+		obj, err := admin.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		find := func(term string) []string {
+			results, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+				Where:  &searchV0.WhereNode{Text: &searchV0.TextPredicate{Value: term, Fields: []string{"title", "content"}}},
+				Fields: []string{"title"},
+				Limit:  20,
+			})
+			require.Equal(t, http.StatusOK, code)
+			for _, item := range results.Items {
+				if item.Resource.Name == name {
+					assert.NotContains(t, item.Fields.Object, "content")
+				}
+			}
+			return names(results)
+		}
+
+		require.Eventually(t, func() bool { return slices.Equal([]string{name}, find("uniquecheckoutlatency")) }, 10*time.Second, 100*time.Millisecond)
+		assert.Equal(t, []string{name}, find("uniquecheckoutlatency observation"))
+		assert.Equal(t, []string{name}, find("uniquequeryconstant"))
+		_, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where:  &searchV0.WhereNode{Text: &searchV0.TextPredicate{Value: "uniquecheckoutlatency", Fields: []string{"content"}}},
+			Fields: []string{"content"},
+			Limit:  20,
+		})
+		assert.Equal(t, http.StatusUnprocessableEntity, code)
+		otherOrgResults, code := search(t, ctx, helper.OrgB.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{Text: &searchV0.TextPredicate{Value: "uniquecheckoutlatency", Fields: []string{"title", "content"}}},
+			Limit: 20,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.NotContains(t, names(otherOrgResults), name)
+
+		err = unstructured.SetNestedField(obj.Object, "uniquememoryfinding observation", "spec", "elements", "note", "spec", "content", "spec", "text")
+		require.NoError(t, err)
+		obj, err = admin.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Eventually(t, func() bool {
+			return len(find("uniquecheckoutlatency")) == 0 && slices.Equal([]string{name}, find("uniquememoryfinding"))
+		}, 10*time.Second, 100*time.Millisecond)
+
+		require.NoError(t, admin.Resource.Delete(ctx, name, metav1.DeleteOptions{}))
+		require.Eventually(t, func() bool { return len(find("uniquememoryfinding")) == 0 }, 10*time.Second, 100*time.Millisecond)
 	})
 
 	t.Run("returns the search envelope", func(t *testing.T) {
