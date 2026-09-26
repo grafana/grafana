@@ -11,13 +11,17 @@ import {
 
 type CopiedTimeRangeResult = { range: RawTimeRange; isError: false } | { range: string; isError: true };
 
-export const getShiftedTimeRange = (direction: number, origRange: TimeRange): AbsoluteTimeRange => {
+export const getShiftedTimeRange = (
+  direction: number,
+  origRange: TimeRange,
+  shiftAmountMs?: number
+): AbsoluteTimeRange => {
   const range = {
     from: toUtc(origRange.from),
     to: toUtc(origRange.to),
   };
 
-  const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+  const timespan = shiftAmountMs ?? (range.to.valueOf() - range.from.valueOf()) / 2;
   let to: number, from: number;
 
   if (direction === -1) {

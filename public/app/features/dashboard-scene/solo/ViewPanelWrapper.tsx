@@ -29,7 +29,7 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
   const context = usePanelSceneContextObject(panel);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const viewPanelPane = useMemo(() => new ViewPanelSidePane({ panelRef: panel.getRef() }), [panel]);
-  const { fanoutMode } = useSceneObjectState(viewPanelPane, { shouldActivateOrKeepAlive: true });
+  const { fanoutMode, fanoutWindowCount } = useSceneObjectState(viewPanelPane, { shouldActivateOrKeepAlive: true });
 
   // Open pane on mount
   useEffect(() => {
@@ -52,13 +52,13 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
     return () => sub.unsubscribe();
   }, [viewPanelPane, sidebar]);
 
-  if (!context || !data || !fanoutMode) {
+  if (!context || !data) {
     return <panel.Component model={panel} />;
   }
 
   return (
     <SceneContext.Provider value={context}>
-      <FanoutPanel panel={panel} panelDataIn={data!} fanoutMode={fanoutMode} />
+      <FanoutPanel panel={panel} panelDataIn={data} fanoutMode={fanoutMode} windowCount={fanoutWindowCount} />
     </SceneContext.Provider>
   );
 }
