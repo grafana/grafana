@@ -32,6 +32,11 @@ export interface QueryRunOptions {
   signal?: AbortSignal;
 }
 
+/** PromQL string literal: PromQL only accepts Go escapes, so backslash, quote and newline are escaped. */
+export function quotePromString(value: string): string {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+}
+
 export function readScalar(frames: DataFrame[], refId: string): number | null {
   // '' is never a label key, so this shares readLabeledScalar's lookup with the label discarded.
   return readLabeledScalar(frames, refId, '')?.value ?? null;
