@@ -22,17 +22,17 @@ build_dir = 'build/rspack' if use_rspack else 'build'
 manifest_path = 'public/%s/assets-manifest.json' % build_dir
 boot_path = 'public/%s/boot.js' % build_dir
 
-# A cold build (yarn install + serial plugin builds + main webpack compile) can take
+# A cold build (pnpm install + serial plugin builds + main webpack compile) can take
 # longer than Tilt's default 5m readiness timeout before 'npm run start' is ready, which
 # fails `tilt ci` in CI even though the build succeeds. Raise the readiness timeout.
 ci_settings(readiness_timeout='15m')
 
 # --- Frontend processes
 local_resource(
-  'yarn install',
-  cmd='yarn install',
+  'pnpm install',
+  cmd='pnpm install --frozen-lockfile',
   deps=[
-    'yarn.lock',
+    'pnpm-lock.yaml',
   ],
   labels=["local"]
 )
@@ -43,7 +43,7 @@ local_resource(
   # noHmr: this stack serves assets from a disk-backed CDN mount, so the build has to write
   # files rather than hold them in a dev server.
   serve_cmd='npm run start:rspack:noHmr -- --env noTsCheck=1 --env noLint=1' if use_rspack else 'npm run start:noLint',
-  resource_deps=['yarn install'],
+  resource_deps=['pnpm install'],
 
   # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
   # the webpack build is complete?
@@ -64,7 +64,7 @@ if use_rspack:
     'rspack boot',
     cmd='npm run build:rspack:boot -- --env develop',
     deps=['../../public/boot'],
-    resource_deps=['yarn install'],
+    resource_deps=['pnpm install'],
     allow_parallel=True,
     labels=["local"]
   )

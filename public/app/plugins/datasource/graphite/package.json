@@ -9,7 +9,7 @@
     "@grafana/runtime": "13.3.0-pre",
     "@grafana/schema": "13.3.0-pre",
     "@grafana/ui": "13.3.0-pre",
-    "@reduxjs/toolkit": "2.10.1",
+    "@reduxjs/toolkit": "catalog:",
     "lodash": "^4.17.23",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -42,6 +42,6 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.18.0",
+  "packageManager": "pnpm@12.6.0",
   "type": "module"
 }

@@ -85,9 +85,9 @@ deps-js: node_modules ## Install frontend dependencies.
 deps: deps-js ## Install all dependencies.
 
 .PHONY: node_modules
-node_modules: package.json yarn.lock ## Install node modules.
+node_modules: package.json pnpm-lock.yaml ## Install node modules.
 	@echo "install frontend dependencies"
-	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+	pnpm install --frozen-lockfile
 
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json

@@ -59,7 +59,7 @@
     "packages:clean": "rimraf ./npm-artifacts && nx run-many -t clean --projects='tag:scope:package' --maxParallel=100",
     "packages:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:package'",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
-    "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
+    "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- pnpm pack --pack-destination ../../npm-artifacts",
     "packages:typecheck": "nx run-many -t typecheck --projects='tag:scope:package'",
     "packages:test:ci": "nx run-many -t test:ci --projects='tag:scope:package'",
     "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json,js,cjs}\"",
@@ -341,7 +341,7 @@
     "@react-aria/overlays": "3.30.0",
     "@react-aria/utils": "3.31.0",
     "@react-awesome-query-builder/ui": "6.6.15",
-    "@reduxjs/toolkit": "2.10.1",
+    "@reduxjs/toolkit": "catalog:",
     "@tanstack/react-virtual": "^3.5.1",
     "@visx/event": "3.12.0",
     "@visx/gradient": "3.12.0",
@@ -447,50 +447,6 @@
     "vis-network": "10.1.2",
     "whatwg-fetch": "3.6.20"
   },
-  "resolutions": {
-    "underscore": "1.13.8",
-    "@types/slate": "0.47.16",
-    "semver@npm:~7.3.5": "^7.3.5",
-    "@react-aria/dialog": "3.5.31",
-    "@react-aria/focus": "3.21.2",
-    "@react-aria/overlays": "3.30.0",
-    "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#./patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
-    "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#./patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
-    "history@4.10.1": "patch:history@npm%3A4.10.1#./patches/history-npm-4.10.1-ee217563ae.patch",
-    "history@^4.10.1": "patch:history@npm%3A4.10.1#./patches/history-npm-4.10.1-ee217563ae.patch",
-    "redux": "^5.0.0",
-    "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
-    "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
-    "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
-    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
-    "swagger-ui-react/dompurify": "3.4.15",
-    "socks/ip-address": "10.7.2",
-    "refractor/prismjs": "^1.27.0",
-    "@mapbox/jsonlint-lines-primitives": "workspace:*",
-    "get-document": "workspace:*",
-    "gitconfiglocal": "2.1.0",
-    "tmp@npm:^0.0.33": "~0.2.1",
-    "js-yaml@npm:4.1.1": "^4.1.0",
-    "js-yaml@npm:=4.1.1": "^4.1.0",
-    "js-yaml@npm:=4.3.0": "^4.3.1",
-    "nodemailer": "9.1.1",
-    "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
-    "storybook-react-rsbuild/@storybook/react": "10.3.6",
-    "@types/slate/immutable": "^5.0.0",
-    "@types/slate-react/immutable": "^5.0.0",
-    "ws": "^8.20.1",
-    "js-cookie": "^3.0.7",
-    "@opentelemetry/core": "2.11.0",
-    "shell-quote": "1.10.0",
-    "tmp": "0.2.7",
-    "yaml@npm:^1.10.0": "1.10.3",
-    "tar@npm:7.5.11": "7.5.22",
-    "react-calendar@npm:^6.0.0": "patch:react-calendar@npm%3A6.0.1#~/patches/react-calendar-npm-6.0.1-22fe91a41c.patch",
-    "axios": "1.20.0",
-    "pacote": "21.5.1",
-    "brace-expansion@npm:5.0.6": "^5.0.9",
-    "@braintree/sanitize-url@npm:^7.0.1": "7.0.1"
-  },
   "workspaces": {
     "packages": [
       "packages/*",
@@ -501,15 +457,7 @@
   "engines": {
     "node": ">= 22 <25"
   },
-  "packageManager": "yarn@4.18.0",
-  "dependenciesMeta": {
-    "msw": {
-      "built": true
-    },
-    "prettier@3.6.2": {
-      "unplugged": true
-    }
-  },
+  "packageManager": "pnpm@12.6.0",
   "msw": {
     "workerDirectory": [
       "public"

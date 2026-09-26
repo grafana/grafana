@@ -30,8 +30,7 @@ WORKDIR /tmp/grafana
 
 RUN apk add --no-cache make build-base python3
 
-COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
-COPY .yarn .yarn
+COPY package.json project.json nx.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches patches
 COPY packages packages
 COPY e2e-playwright e2e-playwright
@@ -44,10 +43,11 @@ COPY conf/defaults.ini ./conf/defaults.ini
 #
 ENV NODE_ENV=${JS_NODE_ENV}
 #
-RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
-    yarn install; \
+RUN npm install -g "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1].split('+')[0]")" && \
+  if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
+    pnpm install --no-frozen-lockfile; \
   else \
-    yarn install --immutable; \
+    pnpm install --frozen-lockfile; \
   fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
@@ -55,7 +55,7 @@ COPY scripts scripts
 COPY emails emails
 
 # Set the build argument according to default or argument passed
-RUN yarn ${JS_YARN_BUILD_FLAG}
+RUN pnpm run ${JS_YARN_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder

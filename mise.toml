@@ -1,6 +1,8 @@
+min_version = "2026.2.8"
+
 [tools]
 go = '''{{ exec(command="awk '/^go [0-9]/{print $2}' go.mod") }}'''
 
 [settings]
 node.corepack = true
-idiomatic_version_file_enable_tools = ["node"]
+idiomatic_version_file_enable_tools = ["node", "pnpm"]
