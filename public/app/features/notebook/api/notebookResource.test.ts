@@ -6,10 +6,10 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 
-import { codeCell, markdownCell, notebookSpec } from '../mutation-api/test-utils';
+import { codeCell, markdownCell, notebookSpec, panelCell } from '../mutation-api/test-utils';
 import { type Spec as NotebookSpec } from '../types';
 
-import { createNotebook, updateNotebook } from './notebookResource';
+import { createNotebook, duplicateNotebook, updateNotebook } from './notebookResource';
 
 // The write dispatches through the app store; route that dispatch to a test store carrying the dashboard
 // v2beta1 API so the real RTK mutation, and the real base query that decides the patch content type, both
@@ -157,5 +157,64 @@ describe('createNotebook', () => {
     fetchOf({ ...saved, metadata: { ...saved.metadata, generation: undefined } });
 
     await expect(createNotebook(spec)).resolves.toEqual({ uid: 'nb-1', url: '/notebooks/nb-1' });
+  });
+});
+
+describe('duplicateNotebook', () => {
+  beforeEach(() => {
+    testStore = createTestStore();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('creates a new resource with the source content, settings and references but no source metadata', async () => {
+    const sourceSpec = notebookSpec({
+      title: "Checkout's errors/sec & <alerts>",
+      elements: {
+        chart: panelCell(1, 'p95 latency'),
+        library: {
+          kind: 'LibraryPanel',
+          spec: { id: 2, title: 'Shared chart', libraryPanel: { uid: 'lib-1', name: 'shared-chart' } },
+        },
+        note: markdownCell('What we found'),
+      },
+    });
+    const source = savedNotebook(sourceSpec, 8);
+    const duplicateSpec = { ...sourceSpec, title: `Copy of ${sourceSpec.title}` };
+    const copy = {
+      ...savedNotebook(duplicateSpec, 1),
+      metadata: { ...source.metadata, name: 'nb-copy', generation: 1, resourceVersion: '1' },
+    };
+    const fetch = jest
+      .fn()
+      .mockReturnValueOnce(of(createFetchResponse(source)))
+      .mockReturnValueOnce(of(createFetchResponse(copy)));
+    setBackendSrv({ fetch } as unknown as BackendSrv);
+
+    await expect(duplicateNotebook('nb-1')).resolves.toEqual({
+      uid: 'nb-copy',
+      url: '/notebooks/nb-copy',
+      generation: 1,
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ method: 'GET', url: expect.stringMatching(/\/notebooks\/nb-1$/) })
+    );
+    const created = fetch.mock.calls[1][0];
+    expect(created.method).toBe('POST');
+    expect(created.data.metadata).toEqual({ generateName: 'n' });
+    expect(created.data.spec).toEqual(duplicateSpec);
+    expect(source.spec).toEqual(sourceSpec);
+  });
+
+  it('does not create a copy when reading the source fails', async () => {
+    const fetch = jest.fn().mockReturnValue(throwError(() => ({ status: 403, data: { message: 'Forbidden' } })));
+    setBackendSrv({ fetch } as unknown as BackendSrv);
+
+    await expect(duplicateNotebook('nb-1')).rejects.toThrow('Forbidden');
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

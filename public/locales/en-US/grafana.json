@@ -13279,6 +13279,11 @@
       "success": "Notebook deleted",
       "title": "Delete"
     },
+    "duplicate": {
+      "action": "Duplicate notebook",
+      "error": "Failed to duplicate notebook",
+      "title": "Copy of {{title}}"
+    },
     "export": {
       "copied": "Notebook copied as Markdown",
       "copy-markdown": "Copy as Markdown",

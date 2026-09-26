@@ -184,6 +184,48 @@ describe('NotebookAutosave', () => {
     expect(NotebookAnalytics.autosaveFailed).not.toHaveBeenCalled();
   });
 
+  it('flushes a pending edit before a saved notebook is copied', async () => {
+    const scene = activateEditing();
+    editFirstCell(scene, 'Latest findings');
+
+    await scene.autosave.flushAndWait();
+
+    expect(savedTexts()).toEqual(['Latest findings']);
+    expect(scene.autosave.state.status).toBe('saved');
+  });
+
+  it('waits for an edit queued behind an in-flight save', async () => {
+    const scene = activateEditing();
+    let finishFirstSave!: (value: { generation: number }) => void;
+    jest.mocked(updateNotebook).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishFirstSave = resolve;
+        })
+    );
+
+    editFirstCell(scene, 'First draft');
+    scene.autosave.flush();
+    editFirstCell(scene, 'Latest findings');
+    const waitForSave = scene.autosave.flushAndWait();
+
+    expect(savedTexts()).toEqual(['First draft']);
+    finishFirstSave({ generation: 2 });
+    await waitForSave;
+
+    expect(savedTexts()).toEqual(['First draft', 'Latest findings']);
+    expect(scene.autosave.state.status).toBe('saved');
+  });
+
+  it('does not duplicate an older version after a save fails', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('save failed'));
+    editFirstCell(scene, 'Unsaved findings');
+
+    await expect(scene.autosave.flushAndWait()).rejects.toThrow('save failed');
+    expect(scene.autosave.state.status).toBe('error');
+  });
+
   it('reports unsaved changes while a save is still waiting on the debounce', async () => {
     const scene = activateEditing();
 
