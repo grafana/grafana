@@ -2,8 +2,12 @@ package resources
 
 import (
 	"context"
+	"fmt"
+	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -16,6 +20,7 @@ import (
 //go:generate mockery --name ResourceLister --structname MockResourceLister --inpackage --filename resource_lister_mock.go --with-expecter
 type ResourceLister interface {
 	List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error)
+	Search(ctx context.Context, namespace, repository string, resourceTypes []schema.GroupResource) (*provisioning.ResourceList, error)
 	Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error)
 }
 
@@ -156,4 +161,207 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		}
 	}
 	return stats, nil
+}
+
+// Search lists repository-managed resources of the requested types in a namespace,
+// collecting all pages and deduplicating by resource identity. It returns only
+// identities, source paths, and folders for link resolution and authorization.
+//
+// Callers must check read access before exposing results, since search does not
+// enforce permissions for every resource kind.
+func (o *ResourceListerFromSearch) Search(ctx context.Context, namespace, repository string, resourceTypes []schema.GroupResource) (*provisioning.ResourceList, error) {
+	list := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
+	seenTypes := make(map[schema.GroupResource]bool, len(resourceTypes))
+	seenResources := make(map[string]bool)
+	for _, resourceType := range resourceTypes {
+		if seenTypes[resourceType] {
+			continue
+		}
+		seenTypes[resourceType] = true
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: namespace,
+					Group:     resourceType.Group,
+					Resource:  resourceType.Resource,
+				},
+				Fields: []*resourcepb.Requirement{
+					{Key: resource.SEARCH_FIELD_MANAGER_KIND, Operator: string(selection.Equals), Values: []string{string(utils.ManagerKindRepo)}},
+					{Key: resource.SEARCH_FIELD_MANAGER_ID, Operator: string(selection.Equals), Values: []string{repository}},
+				},
+			},
+			// Folder is needed for authorization; source path resolves repository links.
+			Fields: []string{
+				resource.SEARCH_FIELD_FOLDER,
+				resource.SEARCH_FIELD_SOURCE_PATH,
+			},
+			Limit:        100,
+			SortBy:       []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		}
+		var rowsRead int64
+		for {
+			response, err := o.store.Search(ctx, req)
+			if err != nil {
+				return nil, fmt.Errorf("search managed %s: %w", resourceType, err)
+			}
+			if response == nil {
+				return nil, fmt.Errorf("search managed %s: missing response", resourceType)
+			}
+			if response.Error != nil {
+				return nil, fmt.Errorf("search managed %s: %w", resourceType, resource.GetError(response.Error))
+			}
+			var items []provisioning.ResourceListItem
+			var cursor []string
+			var rowCount int
+			switch response.ResultFormat {
+			case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+				if response.Results == nil {
+					return nil, fmt.Errorf("search managed %s: missing result table", resourceType)
+				}
+				rowCount = len(response.Results.Rows)
+				if rowCount > 0 {
+					items, err = decodeResourceListTable(response.Results, req.Options.Key, req.Fields)
+					cursor = response.Results.Rows[rowCount-1].GetSortFields()
+				}
+			case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+				rowCount = len(response.Rows)
+				if rowCount > 0 {
+					items, err = decodeResourceListFieldValues(response, req.Options.Key, req.Fields)
+					cursor = response.Rows[rowCount-1].GetSortFields()
+				}
+			default:
+				return nil, fmt.Errorf("search managed %s: unsupported result format %s", resourceType, response.ResultFormat)
+			}
+			if err != nil {
+				return nil, fmt.Errorf("search managed %s: %w", resourceType, err)
+			}
+			// Authorization can shorten a page and leave the total hit count approximate.
+			if rowCount == 0 {
+				break
+			}
+			for _, item := range items {
+				identity := item.Group + "/" + item.Resource + "/" + item.Name
+				if !seenResources[identity] {
+					seenResources[identity] = true
+					list.Items = append(list.Items, item)
+				}
+			}
+			rowsRead += int64(rowCount)
+			// Cursors avoid reauthorizing preceding hits on every page.
+			if len(cursor) > 0 {
+				req.SearchAfter = slices.Clone(cursor)
+				req.Offset = 0
+			} else {
+				req.SearchAfter = nil
+				req.Offset = rowsRead
+			}
+		}
+	}
+	return list, nil
+}
+
+func decodeResourceListFieldValues(response *resourcepb.ResourceSearchResponse, scope *resourcepb.ResourceKey, fields []string) ([]provisioning.ResourceListItem, error) {
+	definitions := make(map[string]bool, len(response.Fields))
+	for i, field := range response.Fields {
+		if field == nil {
+			return nil, fmt.Errorf("missing field definition at index %d", i)
+		}
+		if definitions[field.Name] {
+			return nil, fmt.Errorf("duplicate field %q", field.Name)
+		}
+		definitions[field.Name] = true
+	}
+	for _, field := range fields {
+		if !definitions[field] {
+			return nil, fmt.Errorf("missing field %q", field)
+		}
+	}
+
+	items := make([]provisioning.ResourceListItem, 0, len(response.Rows))
+	for _, row := range response.Rows {
+		if row == nil || row.Key == nil || row.Key.Name == "" {
+			return nil, fmt.Errorf("missing resource key")
+		}
+		if row.Key.Namespace != scope.Namespace || row.Key.Group != scope.Group || row.Key.Resource != scope.Resource {
+			return nil, fmt.Errorf("resource key does not match the requested namespace and resource type")
+		}
+		values, err := resource.DecodeSearchValues(response.Fields, row)
+		if err != nil {
+			return nil, fmt.Errorf("decoding field values: %w", err)
+		}
+		item := provisioning.ResourceListItem{Group: row.Key.Group, Resource: row.Key.Resource, Name: row.Key.Name}
+		for _, field := range fields {
+			value := values[field]
+			if value == nil {
+				continue
+			}
+			text, ok := value.(string)
+			if !ok {
+				return nil, fmt.Errorf("expected string in field %q", field)
+			}
+			switch field {
+			case resource.SEARCH_FIELD_FOLDER:
+				item.Folder = text
+			case resource.SEARCH_FIELD_SOURCE_PATH:
+				item.Path = text
+			}
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+func decodeResourceListTable(table *resourcepb.ResourceTable, scope *resourcepb.ResourceKey, fields []string) ([]provisioning.ResourceListItem, error) {
+	columns := make(map[string]int, len(table.Columns))
+	for i, column := range table.Columns {
+		if column == nil {
+			return nil, fmt.Errorf("missing column definition at index %d", i)
+		}
+		if _, exists := columns[column.Name]; exists {
+			return nil, fmt.Errorf("duplicate column %q", column.Name)
+		}
+		columns[column.Name] = i
+	}
+	for _, field := range fields {
+		if _, exists := columns[field]; !exists {
+			return nil, fmt.Errorf("missing column %q", field)
+		}
+	}
+
+	items := make([]provisioning.ResourceListItem, 0, len(table.Rows))
+	for _, row := range table.Rows {
+		if row == nil || row.Key == nil || row.Key.Name == "" {
+			return nil, fmt.Errorf("missing resource key")
+		}
+		if row.Key.Namespace != scope.Namespace || row.Key.Group != scope.Group || row.Key.Resource != scope.Resource {
+			return nil, fmt.Errorf("resource key does not match the requested namespace and resource type")
+		}
+		if len(row.Cells) != len(table.Columns) {
+			return nil, fmt.Errorf("row has %d cells but the table declares %d columns", len(row.Cells), len(table.Columns))
+		}
+		item := provisioning.ResourceListItem{Group: row.Key.Group, Resource: row.Key.Resource, Name: row.Key.Name}
+		for _, field := range fields {
+			i := columns[field]
+			value, err := resource.DecodeCell(table.Columns[i], i, row.Cells[i])
+			if err != nil {
+				return nil, fmt.Errorf("decoding column %q: %w", field, err)
+			}
+			if value == nil {
+				continue
+			}
+			text, ok := value.(string)
+			if !ok {
+				return nil, fmt.Errorf("expected string in column %q", field)
+			}
+			switch field {
+			case resource.SEARCH_FIELD_FOLDER:
+				item.Folder = text
+			case resource.SEARCH_FIELD_SOURCE_PATH:
+				item.Path = text
+			}
+		}
+		items = append(items, item)
+	}
+	return items, nil
 }
