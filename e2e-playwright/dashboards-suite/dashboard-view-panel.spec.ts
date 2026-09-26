@@ -26,6 +26,38 @@ test.describe('View panel', { tag: ['@dashboards'] }, () => {
     await expect(dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.headerTitle)).not.toBeVisible();
   });
 
+  test('Remembers when the pane was closed and does not auto-open it again', async ({
+    gotoDashboardPage,
+    selectors,
+  }) => {
+    let dashboardPage = await openTestDashboardAndEnterViewPanel(gotoDashboardPage, selectors);
+
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.headerTitle)).toContainText(
+      'View panel'
+    );
+
+    // Close the pane, then re-enter view mode: the pane should stay closed
+    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.headerTitle)).not.toBeVisible();
+
+    dashboardPage = await openTestDashboardAndEnterViewPanel(gotoDashboardPage, selectors);
+
+    await expect(dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.viewPanelControls)).toBeVisible();
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.headerTitle)).not.toBeVisible();
+
+    // Reopen the pane via the sidebar button: auto-open is restored
+    await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.viewPanelControls).click();
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.headerTitle)).toContainText(
+      'View panel'
+    );
+
+    dashboardPage = await openTestDashboardAndEnterViewPanel(gotoDashboardPage, selectors);
+
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.headerTitle)).toContainText(
+      'View panel'
+    );
+  });
+
   test('Can toggle panel viz option', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await openTestDashboardAndEnterViewPanel(gotoDashboardPage, selectors);
 
