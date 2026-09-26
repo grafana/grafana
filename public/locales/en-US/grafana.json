@@ -11064,6 +11064,25 @@
       "title": "Graph"
     }
   },
+  "grot-loading-game": {
+    "badge-title": "Play while you wait",
+    "best": "Best {{best}} ms",
+    "canvas-label": "Grot runner game. Press space to jump.",
+    "close-game": "Close the Grot game",
+    "continue": "Continue",
+    "crashed-hint": "Ouch, {{score}} ms. Space to try again",
+    "final-score": "You kept Grot alive for {{score}} ms",
+    "label-duration": "Fake load time",
+    "label-loading": "Loading Explore",
+    "label-preparing": "Preparing Explore",
+    "label-ready": "Explore is ready",
+    "loaded": "Explore would render here.",
+    "open-game": "Play a game with Grot while you wait",
+    "restart": "Restart loading",
+    "running-hint": "Jump over alerts and broken pods",
+    "start-hint": "Press space or tap to start",
+    "title": "Grot loading game"
+  },
   "heatmap": {
     "calculate-from-data-options": {
       "label-no": "No",
