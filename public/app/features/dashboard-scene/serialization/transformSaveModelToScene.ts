@@ -506,7 +506,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     subHeader: new VizPanelSubHeader({}),
-    $behaviors: [notebookPanelZoomBehavior],
+    $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
     _UNSAFE_clearPreviousFieldValues: true,
@@ -519,6 +519,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     vizPanelState.pluginId = LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID;
     vizPanelState.$data = undefined;
   }
+
+  vizPanelState.$behaviors!.push(notebookPanelZoomBehavior);
 
   if (!config.publicDashboardAccessToken) {
     vizPanelState.menu = new VizPanelMenu({
