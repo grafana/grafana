@@ -14,11 +14,11 @@ import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNG
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 import { type ViewMode } from './viewMode';
 
-beforeAll(() => {
+beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
 });
 
-afterAll(() => {
+afterEach(() => {
   setTestFlags({});
 });
 
@@ -46,17 +46,20 @@ jest.mock('@grafana/ui/unstable', () => ({
     value,
     onChange,
     basicSetup,
+    extensions,
     'aria-label': ariaLabel,
   }: {
     value: string;
     onChange: (value: string) => void;
     basicSetup?: { lineNumbers?: boolean };
+    extensions?: unknown[];
     'aria-label'?: string;
   }) => (
     <textarea
       aria-label={ariaLabel}
       value={value}
       data-line-numbers={String(Boolean(basicSetup?.lineNumbers))}
+      data-extensions={String(extensions?.length ?? 0)}
       onChange={(e) => onChange(e.target.value)}
     />
   ),
@@ -502,6 +505,38 @@ describe('TextNGEditor', () => {
       await enterWriteMode();
 
       expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'false');
+    });
+  });
+
+  describe('handlebars highlighting', () => {
+    it('is added in Markdown mode', async () => {
+      setup('# {{title}}', TextMode.Markdown);
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-extensions', '1');
+    });
+
+    it('is added in HTML mode', async () => {
+      setup('<p>{{title}}</p>', TextMode.HTML);
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-extensions', '1');
+    });
+
+    it('is left out in Code mode, where templates are never compiled', async () => {
+      setup('{{title}}', TextMode.Code, jest.fn(), false, CodeLanguage.Json);
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-extensions', '0');
+    });
+
+    it('is left out when the text.newFeatures flag is off', async () => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+
+      setup('# {{title}}', TextMode.Markdown);
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-extensions', '0');
     });
   });
 

@@ -5,18 +5,24 @@ import { useDebounce } from 'react-use';
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, createCodeEditorTheme, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import {
+  CodeMirrorEditor,
+  createCodeEditorTheme,
+  type CodeMirrorEditorLanguage,
+  type CodeMirrorExtension,
+} from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
-import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
+import { catchTemplateError, compilesHandlebars, interpolateTemplate, type RowWindow } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 import { getEditorLayoutStyles } from './editorLayout';
+import { createHandlebarsHighlighter } from './handlebarsHighlight';
 import { variableCompletion } from './variableCompletion';
 import { type ViewMode } from './viewMode';
 
@@ -62,6 +68,8 @@ const getLanguageLabels = (): Record<CodeLanguage, string> => ({
   [CodeLanguage.Xml]: 'XML',
   [CodeLanguage.Yaml]: 'YAML',
 });
+
+const NO_EXTENSIONS: CodeMirrorExtension[] = [];
 
 const COMMIT_DEBOUNCE_MS = 250;
 // Markdown, sanitization and the innerHTML reparse cost tens of milliseconds on
@@ -176,6 +184,13 @@ export function TextNGEditor({
 
   const completionSources = useMemo(() => [variableCompletion(suggestions ?? [])], [suggestions]);
 
+  const highlightHandlebars = compilesHandlebars(mode);
+
+  const extensions = useMemo(
+    () => (highlightHandlebars ? [createHandlebarsHighlighter(theme)] : NO_EXTENSIONS),
+    [highlightHandlebars, theme]
+  );
+
   const basicSetup = useMemo(
     () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : false }),
     [mode, showLineNumbers]
@@ -285,6 +300,7 @@ export function TextNGEditor({
               onChange={handleDraftChange}
               language={editorLanguage}
               completionSources={completionSources}
+              extensions={extensions}
               lineWrapping
               basicSetup={basicSetup}
               height="100%"
