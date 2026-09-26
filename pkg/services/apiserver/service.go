@@ -79,12 +79,6 @@ type RequestRouter interface {
 	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
 }
 
-// requestRouterDebug is implemented by a request router that serves a
-// read-only debug page. A nil handler means there is none to mount.
-type requestRouterDebug interface {
-	DebugHandler() (path string, handler http.Handler)
-}
-
 type service struct {
 	services.NamedService
 
@@ -246,16 +240,6 @@ func ProvideService(
 	s.rr.Group("/healthz", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
-
-	// The request router's debug page shows internal backend hosts, so only
-	// server admins may read it.
-	if debug, ok := requestRouter.(requestRouterDebug); ok {
-		if path, handler := debug.DebugHandler(); handler != nil {
-			s.rr.Get(path, middleware.ReqGrafanaAdmin, func(c *contextmodel.ReqContext) {
-				handler.ServeHTTP(c.Resp, c.Req)
-			})
-		}
-	}
 
 	eventualRestConfigProvider.cfg = s
 	close(eventualRestConfigProvider.ready)
