@@ -2754,7 +2754,8 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 		expected    bool
 	}
 
-	testCases := []testCase{
+	testCases := make([]testCase, 0, 43)
+	testCases = append(testCases, []testCase{
 		{
 			name: "resource with stack role and folder read permission",
 			permissions: []accesscontrol.Permission{
@@ -2854,7 +2855,7 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbSetPermissions, Name: "w1", Folder: "f1"},
 			expected: false,
 		},
-	}
+	}...)
 
 	for _, parent := range []string{"", accesscontrol.GeneralFolderUID} {
 		for _, name := range []string{"", "w1"} {
