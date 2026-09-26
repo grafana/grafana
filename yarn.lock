@@ -2914,15 +2914,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/react-data-grid@npm:7.0.0-beta.57":
-  version: 7.0.0-beta.57
-  resolution: "@grafana/react-data-grid@npm:7.0.0-beta.57"
-  dependencies:
-    clsx: "npm:^2.0.0"
+"@grafana/react-data-grid@npm:7.0.0-beta.60":
+  version: 7.0.0-beta.60
+  resolution: "@grafana/react-data-grid@npm:7.0.0-beta.60"
   peerDependencies:
-    react: ^18.0 || ^19.0
-    react-dom: ^18.0 || ^19.0
-  checksum: 10/9027fa01a959836105d5f60d5ca17f136679a69ce44d3466618c3fc6cab904ec187a08fd70ef724b5042b3528a32eb600bc8de4460204cd7f6cbcdf9e472a79f
+    react: ^19.2
+    react-dom: ^19.2
+  checksum: 10/a4f05b742e8f07ac4bcd5bfbbd9a1ad7e9521a388b0b8798290ae5c978bab79a4ce5e742d188fd16a4aaa8a6bdc151732d2d42ea2b7fe75fdf3cd24aa6f88f35
   languageName: node
   linkType: hard
 
@@ -3226,7 +3224,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@grafana/i18n": "npm:13.3.0-pre"
-    "@grafana/react-data-grid": "npm:7.0.0-beta.57"
+    "@grafana/react-data-grid": "npm:7.0.0-beta.60"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:^18.0.1"
