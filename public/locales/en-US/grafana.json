@@ -7709,6 +7709,11 @@
       "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
     },
+    "row-edit-actions": {
+      "copy-disabled": "Repeated rows can't be copied individually",
+      "delete-disabled": "Repeated rows can't be deleted individually",
+      "duplicate-disabled": "Repeated rows can't be duplicated individually"
+    },
     "save-button": {
       "save": "Save",
       "save-and-overwrite": "Save and overwrite",

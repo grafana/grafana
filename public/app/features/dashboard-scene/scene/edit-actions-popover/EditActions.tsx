@@ -26,12 +26,11 @@ export function SettingsActionButton({ onClick }: { onClick: () => void }) {
 
 export const SHOW_COPIED_DURATION_MS = 2000;
 
-export function CopyActionButton({ onClick, isRepeated }: { onClick: () => void; isRepeated?: boolean }) {
+export function CopyActionButton({ onClick, disabledReason }: { onClick: () => void; disabledReason?: string }) {
   const styles = useStyles2(getActionStyles);
   const [copied, setCopied] = useState(false);
-  const tooltip = isRepeated
-    ? t('dashboard-scene.control-edit-actions.copied-tooltip-disabled', "Repeated panels can't be copied individually")
-    : t('dashboard-scene.control-edit-actions.copy-clipboard-tooltip', 'Copy to clipboard');
+  const tooltip =
+    disabledReason ?? t('dashboard-scene.control-edit-actions.copy-clipboard-tooltip', 'Copy to clipboard');
 
   useEffect(() => {
     if (!copied) {
@@ -57,21 +56,16 @@ export function CopyActionButton({ onClick, isRepeated }: { onClick: () => void;
           onClick();
           setCopied(true);
         }}
-        disabled={isRepeated}
+        disabled={disabledReason !== undefined}
       />
     </Tooltip>
   );
 }
 
-export function DuplicateActionButton({ onClick, isRepeated }: { onClick: () => void; isRepeated?: boolean }) {
+export function DuplicateActionButton({ onClick, disabledReason }: { onClick: () => void; disabledReason?: string }) {
   const styles = useStyles2(getActionStyles);
 
-  const tooltip = isRepeated
-    ? t(
-        'dashboard-scene.control-edit-actions.duplicate-tooltip-disabled',
-        "Repeated panels can't be duplicated individually"
-      )
-    : t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate');
+  const tooltip = disabledReason ?? t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate');
 
   return (
     <IconButton
@@ -82,7 +76,7 @@ export function DuplicateActionButton({ onClick, isRepeated }: { onClick: () => 
       onClick={onClick}
       tooltip={tooltip}
       tooltipPlacement="top"
-      disabled={isRepeated}
+      disabled={disabledReason !== undefined}
     />
   );
 }
@@ -92,19 +86,25 @@ export function DeleteActionButton({
   text,
   yesText,
   onConfirm,
-  isRepeated,
+  disabledReason,
+  confirm = true,
 }: {
   title: string;
   text: string;
   yesText: string;
   onConfirm: () => void;
-  isRepeated?: boolean;
+  confirm?: boolean;
+  disabledReason?: string;
 }) {
   const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
 
   const onClickInternal = useCallback(() => {
     closePopover();
+    if (!confirm) {
+      onConfirm();
+      return;
+    }
     appEvents.publish(
       new ShowConfirmModalEvent({
         title,
@@ -113,11 +113,9 @@ export function DeleteActionButton({
         onConfirm,
       })
     );
-  }, [closePopover, title, text, yesText, onConfirm]);
+  }, [closePopover, title, text, yesText, onConfirm, confirm]);
 
-  const tooltip = isRepeated
-    ? t('dashboard-scene.control-edit-actions.delete-tooltip-disabled', "Repeated panels can't be deleted individually")
-    : t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
+  const tooltip = disabledReason ?? t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
 
   return (
     <IconButton
@@ -128,7 +126,7 @@ export function DeleteActionButton({
       onClick={onClickInternal}
       tooltip={tooltip}
       tooltipPlacement="top"
-      disabled={isRepeated}
+      disabled={disabledReason !== undefined}
     />
   );
 }
