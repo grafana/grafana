@@ -801,27 +801,24 @@ export function useColumnResize(
 export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
-  const updateScrollbarDimensions = debounce(() => {
-    const el = ref.current?.element;
-    if (el) {
-      setScrollbarWidth(el!.offsetWidth - el!.clientWidth);
-    }
-  }, 150);
-
   useLayoutEffect(() => {
     const el = ref.current?.element;
     if (!el || IS_SAFARI_26) {
       return;
     }
 
-    updateScrollbarDimensions();
+    const measureScrollbarWidth = () => setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    // Reserve scrollbar space before paint; debouncing this first read makes the columns jump.
+    measureScrollbarWidth();
 
+    const updateScrollbarDimensions = debounce(measureScrollbarWidth, 150);
     const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
     resizeObserver.observe(el);
     return () => {
       resizeObserver.disconnect();
+      updateScrollbarDimensions.cancel();
     };
-  }, [ref, height, updateScrollbarDimensions]);
+  }, [ref, height]);
 
   return scrollbarWidth;
 }
