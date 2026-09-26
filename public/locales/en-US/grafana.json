@@ -13217,6 +13217,10 @@
       "query": {
         "add": "Add query",
         "run": "Run query"
+      },
+      "viz-suggestions": {
+        "label": "Suggested visualization",
+        "placeholder": "Run a query to see suggestions"
       }
     },
     "errors": {
