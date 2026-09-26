@@ -12,6 +12,7 @@ import { type PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
 import { fieldMatchers } from '../transformations/matchers';
+import { FieldMatcherID } from '../transformations/matchers/ids';
 import { type ScopedVars, type DataContextScopedVar } from '../types/ScopedVars';
 import {
   type DataFrame,
@@ -93,6 +94,30 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
   return { min, max, delta: (max ?? 0) - (min ?? 0) };
 }
 
+function interpolateMatcherOptions(matcherOptions: unknown, replaceVariables?: InterpolateFunction): unknown {
+  if (!replaceVariables) {
+    return matcherOptions;
+  }
+
+  if (typeof matcherOptions === 'string') {
+    return replaceVariables(matcherOptions, undefined, VariableFormatID.Regex);
+  }
+
+  if (
+    matcherOptions &&
+    typeof matcherOptions === 'object' &&
+    'pattern' in matcherOptions &&
+    typeof matcherOptions.pattern === 'string'
+  ) {
+    return {
+      ...matcherOptions,
+      pattern: replaceVariables(matcherOptions.pattern, undefined, VariableFormatID.Regex),
+    };
+  }
+
+  return matcherOptions;
+}
+
 /**
  * Return a copy of the DataFrame with all rules applied
  */
@@ -129,8 +154,15 @@ export function applyFieldOverrides(
         continue;
       }
 
+      const isRegexpMatcher =
+        rule.matcher.id === FieldMatcherID.byRegexp || rule.matcher.id === FieldMatcherID.byRegexpOrNames;
+
       override.push({
-        match: info.get(rule.matcher.options),
+        match: info.get(
+          isRegexpMatcher
+            ? interpolateMatcherOptions(rule.matcher.options, options.replaceVariables)
+            : rule.matcher.options
+        ),
         properties: rule.properties,
       });
     }
