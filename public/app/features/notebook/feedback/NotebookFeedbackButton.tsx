@@ -2,7 +2,9 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, Field, Modal, Stack, Text, TextArea, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -86,16 +88,26 @@ export function NotebookFeedbackButton({
     close();
   };
 
+  if (!(config.rudderstackWriteKey && config.rudderstackDataPlaneUrl)) {
+    return null;
+  }
+
   return (
     <>
       {labeled ? (
-        <Button variant="secondary" icon="comment-alt-message" onClick={() => setIsOpen(true)}>
+        <Button
+          variant="secondary"
+          icon="comment-alt-message"
+          data-testid={selectors.components.NotebookFeedback.button}
+          onClick={() => setIsOpen(true)}
+        >
           <Trans i18nKey="notebooks.feedback.give-feedback">Give feedback</Trans>
         </Button>
       ) : (
         <ToolbarButton
           variant="canvas"
           icon="comment-alt-message"
+          data-testid={selectors.components.NotebookFeedback.button}
           tooltip={t('notebooks.feedback.give-feedback', 'Give feedback')}
           onClick={() => setIsOpen(true)}
         />

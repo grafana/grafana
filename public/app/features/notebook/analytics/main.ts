@@ -28,7 +28,6 @@ import {
   type NotebookFeedbackReason,
   type NotebookFeedbackSource,
   type NotebookFeedbackSubmittedProperties,
-  NOTEBOOK_FEEDBACK_SUBMITTED_EVENT,
   type NotebookLinkCopiedProperties,
   type NotebookLinkCopySource,
   type NotebookListFilteredProperties,
@@ -90,9 +89,9 @@ const createListFilteredEvent = createNotebookEvent<NotebookListFilteredProperti
  * this attempt was aiming for.
  */
 const createAddFailedEvent = createNotebookEvent<NotebookAddFailedProperties>('add_to_notebook_failed');
-const createFeedbackSubmittedEvent = createNotebookEvent<NotebookFeedbackSubmittedProperties>(
-  NOTEBOOK_FEEDBACK_SUBMITTED_EVENT
-);
+
+/** Fired when a person submits feedback from the notebooks list or notebook toolbar. */
+const createFeedbackSubmittedEvent = createNotebookEvent<NotebookFeedbackSubmittedProperties>('feedback_submitted');
 
 /** The one panel an add or a create came with, so both events describe it the same way. */
 interface AddedPanel {

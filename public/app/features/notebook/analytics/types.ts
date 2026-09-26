@@ -45,8 +45,6 @@ export const NOTEBOOK_FEEDBACK_REASON = {
   MISSING_FEATURE: 'missing_feature',
 } as const;
 
-export const NOTEBOOK_FEEDBACK_SUBMITTED_EVENT = 'feedback_submitted';
-
 export const NOTEBOOK_FEEDBACK_SOURCE = {
   NOTEBOOK_LIST: 'notebook_list',
   NOTEBOOK_TOOLBAR: 'notebook_toolbar',
@@ -56,12 +54,16 @@ export type NotebookFeedbackRating = (typeof NOTEBOOK_FEEDBACK_RATING)[keyof typ
 export type NotebookFeedbackReason = (typeof NOTEBOOK_FEEDBACK_REASON)[keyof typeof NOTEBOOK_FEEDBACK_REASON];
 export type NotebookFeedbackSource = (typeof NOTEBOOK_FEEDBACK_SOURCE)[keyof typeof NOTEBOOK_FEEDBACK_SOURCE];
 
-export type NotebookFeedbackSubmittedProperties = EventProperty & {
+export interface NotebookFeedbackSubmittedProperties extends EventProperty {
+  /** Where the feedback form was opened. */
   source: NotebookFeedbackSource;
+  /** Whether the person liked their notebook experience. */
   rating: NotebookFeedbackRating;
+  /** Topics selected in the feedback form. */
   reasons: NotebookFeedbackReason[];
+  /** Optional written feedback, without notebook content or queries. */
   comment?: string;
-};
+}
 
 /** What the added panel says about itself, as readAddedPanelShape reads it off the spec. */
 export interface AddedPanelShape extends EventProperty {

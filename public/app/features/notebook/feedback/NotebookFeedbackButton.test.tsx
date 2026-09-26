@@ -1,5 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
+
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_FEEDBACK_RATING, NOTEBOOK_FEEDBACK_REASON, NOTEBOOK_FEEDBACK_SOURCE } from '../analytics/types';
 
@@ -12,12 +15,34 @@ jest.mock('app/core/copy/appNotification', () => ({
 }));
 
 describe('NotebookFeedbackButton', () => {
+  const originalWriteKey = config.rudderstackWriteKey;
+  const originalDataPlaneUrl = config.rudderstackDataPlaneUrl;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    config.rudderstackWriteKey = 'test-key';
+    config.rudderstackDataPlaneUrl = 'https://example.com';
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
+    config.rudderstackWriteKey = originalWriteKey;
+    config.rudderstackDataPlaneUrl = originalDataPlaneUrl;
+  });
+
+  it('hides the form when no feedback collector is configured', () => {
+    config.rudderstackWriteKey = undefined;
+    render(<NotebookFeedbackButton source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR} />);
+
+    expect(screen.queryByRole('button', { name: 'Give feedback' })).not.toBeInTheDocument();
+  });
+
+  it('uses the same selector for labeled and toolbar actions', () => {
+    const { rerender } = render(<NotebookFeedbackButton source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR} />);
+    expect(screen.getByTestId(selectors.components.NotebookFeedback.button)).toBeInTheDocument();
+
+    rerender(<NotebookFeedbackButton labeled source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_LIST} />);
+    expect(screen.getByTestId(selectors.components.NotebookFeedback.button)).toBeInTheDocument();
   });
 
   it('records what worked well without sending notebook content', async () => {
