@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
@@ -55,6 +57,7 @@ type ControllerConfig struct {
 	resyncInterval        time.Duration
 	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
+	provisioningRESTCfg   *rest.Config
 	natsSubscriber        nats.Subscriber
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
@@ -343,8 +346,25 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	}
 
 	c.provisioningClient = provisioningClient
+	// Kept for callers that need a route the typed clientset has no method for,
+	// such as the keys-only re-list.
+	c.provisioningRESTCfg = config
 
 	return provisioningClient, nil
+}
+
+// ProvisioningRESTClient returns a REST client for the provisioning apiserver,
+// for endpoints outside the typed clientset. It shares the clientset's config, so
+// building the clientset first is what supplies it.
+func (c *ControllerConfig) ProvisioningRESTClient() (rest.Interface, error) {
+	if _, err := c.ProvisioningClient(); err != nil {
+		return nil, err
+	}
+
+	cfg := rest.CopyConfig(c.provisioningRESTCfg)
+	cfg.GroupVersion = &schema.GroupVersion{Group: provisioning.GROUP, Version: provisioning.VERSION}
+	cfg.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	return rest.RESTClientFor(cfg)
 }
 
 // wrapWithTracing wraps the rest config transport with otelhttp so outbound
