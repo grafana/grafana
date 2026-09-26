@@ -23,7 +23,6 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
     apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedFunctionsRegistryItem[]>>;
-      initialState?: RegistryType<AddedFunctionsRegistryItem[]>;
     } = {}
   ) {
     super(apps, options);
