@@ -8,6 +8,7 @@ import {
   type PluginExtensionPanelContext,
   PluginExtensionTypes,
   getDefaultTimeRange,
+  rangeUtil,
   store,
   toDataFrame,
 } from '@grafana/data';
@@ -21,6 +22,7 @@ import {
   SceneVariableSet,
   VizPanel,
   VizPanelMenu,
+  sceneGraph,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
@@ -30,6 +32,7 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { quickAddPanelToNotebook } from 'app/features/notebook/addPanel/quickAddPanelToNotebook';
 import { getRecentNotebook } from 'app/features/notebook/addPanel/recentNotebook';
+import { wasPanelZoomed } from 'app/features/notebook/addPanel/zoomedCaptureRange';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -39,7 +42,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
-import { panelMenuBehavior } from './PanelMenuBehavior';
+import { notebookPanelZoomBehavior, panelMenuBehavior } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -1220,6 +1223,77 @@ describe('panelMenuBehavior', () => {
         expect.any(Function),
         `${scene.state.uid}:${panel.getPathId()}`
       );
+    });
+
+    it('locks the dashboard panel’s zoomed range when quick adding', async () => {
+      jest.mocked(getRecentNotebook).mockReturnValue({ uid: 'nb1', title: 'Investigation', at: 100 });
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      mocks.contextSrv.hasPermission.mockReturnValue(true);
+
+      const range = rangeUtil.convertRawToRange(
+        { from: '2026-09-25T10:15:00.000Z', to: '2026-09-25T10:25:00.000Z' },
+        'utc'
+      );
+      const { menu, panel } = await buildTestScene({});
+      notebookPanelZoomBehavior(panel);
+      panel.onTimeRangeChange({ from: range.from.valueOf(), to: range.to.valueOf() });
+      jest.mocked(quickAddPanelToNotebook).mockClear();
+      jest.mocked(quickAddPanelToNotebook).mockImplementation(async (buildPanel) => {
+        const captured = await buildPanel();
+        expect(captured.kind === 'Panel' && captured.spec.data.spec.queryOptions).toEqual(
+          expect.objectContaining({ timeFrom: range.from.toISOString(), timeTo: range.to.toISOString() })
+        );
+      });
+
+      menu.activate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      await menu.state.items?.find((item) => item.text === 'Add to "Investigation"')?.onClick?.({} as never);
+
+      expect(quickAddPanelToNotebook).toHaveBeenCalledTimes(1);
+    });
+
+    it('forgets a panel zoom after the dashboard time range changes', async () => {
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      const range = rangeUtil.convertRawToRange(
+        { from: '2026-09-25T10:15:00.000Z', to: '2026-09-25T10:25:00.000Z' },
+        'utc'
+      );
+      const otherRange = rangeUtil.convertRawToRange(
+        { from: '2026-09-25T09:00:00.000Z', to: '2026-09-25T10:00:00.000Z' },
+        'utc'
+      );
+      const { scene, panel } = await buildTestScene({});
+      notebookPanelZoomBehavior(panel);
+      panel.onTimeRangeChange({ from: range.from.valueOf(), to: range.to.valueOf() });
+      expect(wasPanelZoomed(panel, range)).toBe(true);
+
+      sceneGraph.getTimeRange(scene).onTimeRangeChange(otherRange);
+      sceneGraph.getTimeRange(scene).onTimeRangeChange(range);
+      expect(wasPanelZoomed(panel, range)).toBe(false);
+    });
+
+    it('does not lock a manually selected absolute dashboard range when quick adding', async () => {
+      jest.mocked(getRecentNotebook).mockReturnValue({ uid: 'nb1', title: 'Investigation', at: 100 });
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      mocks.contextSrv.hasPermission.mockReturnValue(true);
+
+      const range = rangeUtil.convertRawToRange(
+        { from: '2026-09-25T10:15:00.000Z', to: '2026-09-25T10:25:00.000Z' },
+        'utc'
+      );
+      const { scene, menu } = await buildTestScene({});
+      sceneGraph.getTimeRange(scene).onTimeRangeChange(range);
+      jest.mocked(quickAddPanelToNotebook).mockClear();
+      jest.mocked(quickAddPanelToNotebook).mockImplementation(async (buildPanel) => {
+        const captured = await buildPanel();
+        expect(captured.kind === 'Panel' && captured.spec.data.spec.queryOptions.timeFrom).toBeUndefined();
+      });
+
+      menu.activate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      await menu.state.items?.find((item) => item.text === 'Add to "Investigation"')?.onClick?.({} as never);
+
+      expect(quickAddPanelToNotebook).toHaveBeenCalledTimes(1);
     });
 
     it('sits in its own section immediately above Remove while editing', async () => {

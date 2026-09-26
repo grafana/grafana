@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Box,
@@ -38,6 +38,7 @@ import {
   addPanelToExistingNotebook,
   createNotebookWithPanel,
 } from './addPanelToNotebook';
+import { withCapturedTimeRange } from './captureTimeRange';
 import { setRecentNotebook } from './recentNotebook';
 import { getSortOptions, useNotebookPicker } from './useNotebookPicker';
 
@@ -57,9 +58,18 @@ interface Props {
    * loaded library panel is inlined on the way here and the built element cannot say.
    */
   isLibraryPanel: boolean;
+  sourceTimeRange: TimeRange;
+  defaultLockTimeRange: boolean;
 }
 
-export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint, isLibraryPanel }: Props) {
+export function AddPanelToNotebookModalBody({
+  buildPanel,
+  onDismiss,
+  entryPoint,
+  isLibraryPanel,
+  sourceTimeRange,
+  defaultLockTimeRange,
+}: Props) {
   const styles = useStyles2(getStyles);
   const canAddToExisting = canEditNotebooks();
   const canCreate = canCreateNotebooks();
@@ -89,6 +99,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
 
   const picker = useNotebookPicker();
   const [selectedUid, setSelectedUid] = useState<string>();
+  const [lockTimeRange, setLockTimeRange] = useState(defaultLockTimeRange);
 
   // A selection the filters have since hidden is derived away rather than cleared in an effect: the
   // uid is still in state, so relaxing the filter brings the choice back instead of silently
@@ -123,7 +134,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
       let panelWasBuilt = false;
 
       try {
-        const panel = await buildPanel();
+        const panel = withCapturedTimeRange(await buildPanel(), sourceTimeRange, lockTimeRange);
         panelWasBuilt = true;
 
         const added = existingUid
@@ -167,7 +178,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
         throw error;
       }
     },
-    [buildPanel, onDismiss, selected, entryPoint, isLibraryPanel]
+    [buildPanel, onDismiss, selected, entryPoint, isLibraryPanel, sourceTimeRange, lockTimeRange]
   );
 
   const isSubmitting = submitState.loading;
@@ -241,7 +252,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
                         enumerating them from the rows on screen would offer only the authors
                         already visible. */}
                     {picker.canFilterByMe && (
-                      <div className={styles.filterToggle}>
+                      <div className={styles.alignedToggle}>
                         <Checkbox
                           value={picker.createdByMe}
                           onChange={(event) => picker.setCreatedByMe(event.currentTarget.checked)}
@@ -277,7 +288,17 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
         </form>
       </Box>
 
-      <Modal.ButtonRow>
+      <Modal.ButtonRow
+        leftItems={
+          <div className={styles.alignedToggle}>
+            <Checkbox
+              value={lockTimeRange}
+              onChange={(event) => setLockTimeRange(event.currentTarget.checked)}
+              label={t('notebooks.add-panel.lock-time-range', 'Lock time range for this visualization')}
+            />
+          </div>
+        }
+      >
         <Button variant="secondary" onClick={onDismiss} fill="outline">
           <Trans i18nKey="notebooks.add-panel.cancel">Cancel</Trans>
         </Button>
@@ -295,11 +316,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // Checkbox sizes itself to its label's line box, which is shorter than the inputs beside it, so
-  // centring the row alone still leaves it sitting high. Giving it the same height as those controls
-  // puts it on their centre line. Wrapped rather than styled through Checkbox itself, which would
-  // mean reaching into a grafana-ui component's own layout.
-  filterToggle: css({
+  alignedToggle: css({
     display: 'flex',
     alignItems: 'center',
     minHeight: theme.spacing(theme.components.height.md),

@@ -45,7 +45,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { notebookPanelZoomBehavior, panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
@@ -506,7 +506,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     subHeader: new VizPanelSubHeader({}),
-    $behaviors: [],
+    $behaviors: [notebookPanelZoomBehavior],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
     _UNSAFE_clearPreviousFieldValues: true,

@@ -22,6 +22,7 @@ import {
 } from 'app/core/utils/timePicker';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { sortLogsResult } from 'app/features/logs/utils';
+import { clearExploreZoom } from 'app/features/notebook/addPanel/zoomedCaptureRange';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { type ExploreItemState } from 'app/types/explore';
 import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
@@ -60,10 +61,12 @@ export const updateTimeRange = (options: {
     const { syncedTimes } = getState().explore;
     if (syncedTimes) {
       Object.keys(getState().explore.panes).forEach((exploreId) => {
+        clearExploreZoom(exploreId);
         dispatch(updateTime({ ...options, exploreId }));
         dispatch(runQueries({ exploreId: exploreId, preserveCache: true }));
       });
     } else {
+      clearExploreZoom(options.exploreId);
       dispatch(updateTime({ ...options }));
       dispatch(runQueries({ exploreId: options.exploreId, preserveCache: true }));
     }
