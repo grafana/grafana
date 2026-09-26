@@ -8,6 +8,7 @@ import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/u
 
 import { alertInstanceKey } from '../../utils/rules';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
+import { AlertInstanceExtensionPoint, useHasAlertInstancePluginLinks } from '../extensions/AlertInstanceExtensionPoint';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
 import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
@@ -30,6 +31,8 @@ type AlertTableColumnProps = DynamicTableColumnProps<RuleAndAlert>;
 type AlertTableItemProps = DynamicTableItemProps<RuleAndAlert>;
 
 export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, showNotificationColumn }: Props) => {
+  const { hasLinks: hasPluginLinks, isLoading: isPluginLinksLoading } = useHasAlertInstancePluginLinks(rule, instances);
+
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -81,6 +84,18 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
               <AlertInstanceNotificationAction rule={rule} instance={alert} />
             ),
             size: '120px',
+          } satisfies AlertTableColumnProps,
+        ]
+      : []),
+    ...(hasPluginLinks || isPluginLinksLoading
+      ? [
+          {
+            id: 'plugin-actions',
+            label: '',
+            // eslint-disable-next-line react/display-name
+            renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
+              <AlertInstanceExtensionPoint rule={rule} instance={alert} />
+            ),
           } satisfies AlertTableColumnProps,
         ]
       : []),
