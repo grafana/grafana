@@ -72,30 +72,41 @@ export function SidebarPaneHeader({ children, title }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
-    header: css({
-      display: 'flex',
-      alignItems: 'center',
-      padding: theme.spacing(1.5, 1, 1.5, 1.5),
-      gap: theme.spacing(1),
-    }),
+    header: css(
+      {
+        display: 'flex',
+        alignItems: 'center',
+        padding: theme.spacing(1.5, 1, 1.5, 1.5),
+        gap: theme.spacing(1),
+      },
+      visualRefreshEnabled && {
+        background: theme.colors.background.secondary,
+      }
+    ),
     flexGrow: css({
       flexGrow: 1,
     }),
-    actions: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(0, 1, 1.5, 1),
-      '&:empty': {
-        display: 'none',
+    actions: css(
+      {
+        display: 'flex',
+        alignItems: 'center',
+        gap: theme.spacing(1),
+        padding: theme.spacing(0, 1, 1.5, 1),
+        '&:empty': {
+          display: 'none',
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        background: theme.colors.background.secondary,
+      }
+    ),
     dockedButtonUndocked: css({
       opacity: 0.6,
     }),

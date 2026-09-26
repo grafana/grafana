@@ -122,7 +122,7 @@ function getStyles(theme: GrafanaTheme2) {
     // it can never peek past the rounded footer corners.
     footer: css({
       marginTop: 'auto',
-      background: theme.colors.background.primary,
+      background: theme.flags.visualDesignRefresh ? theme.colors.background.secondary : theme.colors.background.primary,
       padding: theme.spacing(0, 1.5),
       height: FOOTER_HEIGHT,
       display: 'grid',

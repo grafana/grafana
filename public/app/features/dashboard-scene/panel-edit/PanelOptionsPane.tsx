@@ -278,6 +278,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
 function getStyles(theme: GrafanaTheme2) {
   return {
     top: css({
+      background: theme.colors.background.secondary,
       display: 'flex',
       flexDirection: 'row',
       padding: theme.spacing(1, 2),

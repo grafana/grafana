@@ -24,14 +24,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
-import {
-  type AdHocFilterItem,
-  ErrorBoundaryAlert,
-  PanelContainer,
-  ScrollContainer,
-  type Themeable2,
-  withTheme2,
-} from '@grafana/ui';
+import { type AdHocFilterItem, ErrorBoundaryAlert, ScrollContainer, type Themeable2, withTheme2 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type StoreState } from 'app/types/store';
@@ -86,6 +79,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     queryContainer: css({
       label: 'queryContainer',
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1),
     }),
     exploreContainer: css({
@@ -718,7 +713,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                       icon="arrow"
                       mergeSingleChild={true}
                     >
-                      <PanelContainer className={styles.queryContainer}>
+                      <div className={styles.queryContainer}>
                         {correlationsBox}
                         <QueryRows
                           exploreId={exploreId}
@@ -750,7 +745,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           onReplaceQueriesFromLibrary={replaceQueriesFromLibrary}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
-                      </PanelContainer>
+                      </div>
                     </ContentOutlineItem>
                     <AutoSizer onResize={this.onResize} disableHeight>
                       {({ width }) => {

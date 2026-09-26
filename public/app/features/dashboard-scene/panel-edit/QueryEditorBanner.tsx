@@ -95,7 +95,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     padding: theme.spacing(0, 2),
     height: theme.spacing(5),
-    backgroundColor: theme.colors.background.primary,
+    background: theme.flags.visualDesignRefresh ? theme.colors.background.secondary : theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
     flexShrink: 0,

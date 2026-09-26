@@ -56,7 +56,7 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean, visualRefreshEnabled
     width: splitted && theme.spacing(6),
   }),
   pageToolbar: css({
-    background: theme.flags.visualDesignRefresh ? theme.colors.background.page : theme.colors.background.canvas,
+    background: theme.flags.visualDesignRefresh ? theme.components.page.background : theme.colors.background.canvas,
     borderTopLeftRadius: theme.shape.radius.lg,
     borderTopRightRadius: theme.shape.radius.lg,
     padding: theme.spacing(2, 0),

@@ -149,6 +149,8 @@ export function QueryEditorFooter() {
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const backgroundColor = visualRefreshEnabled ? theme.colors.background.secondary : theme.colors.background.primary;
   return {
     container: css({
       position: 'sticky',
@@ -156,7 +158,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
@@ -184,7 +186,7 @@ function getStyles(theme: GrafanaTheme2) {
         top: 0,
         bottom: 0,
         width: theme.spacing(4),
-        background: `linear-gradient(to right, transparent, ${theme.colors.background.primary})`,
+        background: `linear-gradient(to right, transparent, ${backgroundColor})`,
         pointerEvents: 'none',
       },
     }),

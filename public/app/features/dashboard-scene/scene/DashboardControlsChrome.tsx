@@ -52,7 +52,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
         // Enough to clear it, and low enough to stay under the fixed app top bar that the controls row
         // scrolls past on narrow viewports.
         zIndex: 2,
-        background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+        background: visualRefreshEnabled ? theme.components.page.background : theme.colors.background.canvas,
         [theme.breakpoints.up('md')]: {
           position: 'sticky',
           // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.

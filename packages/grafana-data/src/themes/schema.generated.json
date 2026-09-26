@@ -542,6 +542,9 @@
             "secondary": {
               "type": "string"
             },
+            "tertiary": {
+              "type": "string"
+            },
             "elevated": {
               "type": "string"
             }
@@ -1503,6 +1506,15 @@
               "type": "string"
             },
             "borderColor": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "page": {
+          "type": "object",
+          "properties": {
+            "background": {
               "type": "string"
             }
           },

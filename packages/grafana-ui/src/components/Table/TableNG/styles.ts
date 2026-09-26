@@ -80,7 +80,7 @@ export const getGridStyles = memoize(
     const table = theme.components.table;
     const bgColor = transparent
       ? theme.flags.visualDesignRefresh
-        ? theme.colors.background.page
+        ? theme.components.page.background
         : theme.colors.background.canvas
       : theme.components.panel.background;
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;

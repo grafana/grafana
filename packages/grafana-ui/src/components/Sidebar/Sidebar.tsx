@@ -136,6 +136,7 @@ function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     container: css({
       display: 'flex',
@@ -144,6 +145,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: '1 1 0',
       border: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
+      overflow: 'hidden',
       borderRadius: theme.shape.radius.lg,
       zIndex: theme.zIndex.navbarFixed,
       bottom: 0,
@@ -174,17 +176,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     undockedPaneOpen: css({
       boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     }),
-    toolbar: css({
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      paddingBottom: theme.spacing(1),
-      flexGrow: 0,
-      gap: theme.spacing(2),
-      overflowX: 'hidden',
-      overflowY: 'auto',
-      width: theme.spacing(SIDE_BAR_WIDTH_WITH_TEXT),
-    }),
+    toolbar: css(
+      {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingBottom: theme.spacing(1),
+        flexGrow: 0,
+        gap: theme.spacing(2),
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        width: theme.spacing(SIDE_BAR_WIDTH_WITH_TEXT),
+      },
+      visualRefreshEnabled && {
+        background: theme.colors.background.secondary,
+      }
+    ),
     toolbarIconsOnly: css({
       width: theme.spacing(SIDE_BAR_WIDTH_ICON_ONLY),
     }),

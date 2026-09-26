@@ -489,7 +489,7 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
     // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two
     // tokens are the page's own background (PageLayoutType.Custom, see getDefaultBackgroundForLayout), so
     // the row reads as chrome rather than as a tinted band — same pairing DashboardControlsChrome uses.
-    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+    background: visualRefreshEnabled ? theme.components.page.background : theme.colors.background.canvas,
     // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
     // it scroll away rather than eat the reading area, and this follows suit.
     [theme.breakpoints.up('md')]: {

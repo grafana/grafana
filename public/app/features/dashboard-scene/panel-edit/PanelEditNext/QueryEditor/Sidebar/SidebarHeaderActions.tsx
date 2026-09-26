@@ -62,6 +62,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      background: theme.flags.visualDesignRefresh ? theme.colors.background.secondary : theme.colors.background.primary,
     }),
     inner: css({
       display: 'flex',

@@ -107,7 +107,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: theme.spacing(37.5),
       },
       visualRefreshEnabled && {
-        backgroundColor: theme.colors.background.page,
+        backgroundColor: theme.components.page.background,
         border: `1px solid ${theme.colors.border.weak}`,
         borderRadius: theme.shape.radius.lg,
         padding: theme.spacing(2),

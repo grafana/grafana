@@ -129,6 +129,9 @@ export const ThemeComponentsInputSchema = z
       background: z.string().optional(),
       borderColor: z.string().optional(),
     }),
+    page: z.object({
+      background: z.string().optional(),
+    }),
     panel: z.object({
       padding: z.number().optional(),
       headerHeight: z.number().optional(),
@@ -250,6 +253,9 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     switch: {
       activeBackground: colors.accent.main,
       activeBackgroundHover: colors.accent.shade,
+    },
+    page: {
+      background: colors.background.primary,
     },
     panel: {
       padding: 1,
