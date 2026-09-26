@@ -154,7 +154,12 @@ func TestCloudLoaderReadsRouteResourcesFromInformerCache(t *testing.T) {
 		"appmanifests":  {"AppManifest", `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example","resourceVersion":"1"},"spec":{"appName":"example","group":"example.grafana.app","versions":[{"name":"v1"}]}}`},
 	}
 	var lists atomic.Int32
+	var down atomic.Bool
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if down.Load() {
+			http.Error(w, "unavailable", http.StatusInternalServerError)
+			return
+		}
 		resource, ok := items[req.URL.Path[strings.LastIndex(req.URL.Path, "/")+1:]]
 		if !ok {
 			http.NotFound(w, req)
@@ -202,12 +207,21 @@ func TestCloudLoaderReadsRouteResourcesFromInformerCache(t *testing.T) {
 		return loader.rbInformer.SharedIndexInformer.HasSynced() && loader.amInformer.SharedIndexInformer.HasSynced()
 	}, 5*time.Second, 10*time.Millisecond)
 
-	// Once synced, reconciles are served from the caches.
+	// Once synced, reconciles are served from the caches, and reading them
+	// doesn't count as the source loading.
 	listsAfterSync := lists.Load()
+	successesAfterSync := loader.routeBackendStatus.successes.Load()
 	for range 5 {
 		requireExampleGroup()
 	}
 	require.Equal(t, listsAfterSync, lists.Load())
+	require.Equal(t, successesAfterSync, loader.routeBackendStatus.successes.Load())
+
+	// With the apiserver failing, the informers' list and watch errors are the
+	// source's failures. Dropping the open watches makes them reconnect.
+	down.Store(true)
+	api.CloseClientConnections()
+	require.Eventually(t, func() bool { return loader.routeBackendStatus.failures.Load() > 0 }, 10*time.Second, 10*time.Millisecond)
 }
 
 func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {

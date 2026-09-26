@@ -19,19 +19,19 @@ import (
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
-
-	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // cloudRouterSection is the remote control-plane apiserver this loader reads
@@ -268,6 +268,17 @@ func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTa
 		if err != nil {
 			return nil, fmt.Errorf("app manifest informer: %w", err)
 		}
+		// Once synced, Load reads the caches, so the source's health comes from
+		// the informers themselves: their list and watch errors, and (in
+		// Watcher) the events they receive.
+		for _, inf := range []*operator.KubernetesBasedInformer{l.rbInformer, l.amInformer} {
+			if err := inf.SharedIndexInformer.SetWatchErrorHandlerWithContext(func(ctx context.Context, r *cache.Reflector, err error) {
+				l.routeBackendStatus.recordFailure()
+				cache.DefaultWatchErrorHandler(ctx, r, err)
+			}); err != nil {
+				return nil, fmt.Errorf("informer watch error handler: %w", err)
+			}
+		}
 	}
 
 	l.BasicService = services.NewBasicService(nil, l.running, nil).WithName("cloud-apps-routes-loader")
@@ -392,6 +403,8 @@ func (l *cloudLoader) Watcher() operator.ResourceWatcher {
 	// The event carries no data we use: reconcile re-reads full state via Load.
 	// So push is a pure edge, coalesced against the buffered-1 dirty channel.
 	push := func() {
+		// An event means data arrived from the remote apiserver.
+		l.routeBackendStatus.recordSuccess(time.Now())
 		select {
 		case l.dirty <- struct{}{}:
 		default: // a wake is already pending; drop this redundant signal
@@ -444,10 +457,8 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	if l.routeBackendClient != nil {
 		manifests, backends, err := l.routeResources(ctx)
 		if err != nil {
-			l.routeBackendStatus.recordFailure()
 			return nil, err
 		}
-		l.routeBackendStatus.recordSuccess(time.Now())
 		for _, b := range l.combineByName(ctx, manifests, backends) {
 			put(b)
 		}
@@ -534,14 +545,19 @@ func (l *cloudLoader) routeResources(ctx context.Context) ([]v1alpha2.AppManifes
 		return manifests, backends, nil
 	}
 
+	// Only a direct list counts toward the source's status; cache reads say
+	// nothing about the remote apiserver.
 	backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
 	if err != nil {
+		l.routeBackendStatus.recordFailure()
 		return nil, nil, err
 	}
 	manifests, err := l.appManifestClient.ListAll(ctx, "", resource.ListOptions{})
 	if err != nil {
+		l.routeBackendStatus.recordFailure()
 		return nil, nil, err
 	}
+	l.routeBackendStatus.recordSuccess(time.Now())
 	return manifests.Items, backends.Items, nil
 }
 

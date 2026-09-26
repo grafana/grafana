@@ -101,6 +101,12 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 
 	require.Equal(t, http.StatusNoContent, serve("/apis/test-app/v1/namespaces/ns/things"))
 	require.Equal(t, uint64(1), requestCount(t, svc, "test-app", "list", routeBackend, "204"))
+
+	// The router rejects a non-canonical path itself, so it is the router's to count.
+	invalid := "/apis/dashboard.grafana.app/../test-app/v1/things"
+	require.Equal(t, http.StatusBadRequest, serve(invalid))
+	verb := requestVerb(httptest.NewRequest(http.MethodGet, invalid, nil))
+	require.Equal(t, uint64(1), requestCount(t, svc, unknownGroupLabel, verb, routeInvalid, "400"))
 }
 
 func TestDiscoveryResultMetrics(t *testing.T) {

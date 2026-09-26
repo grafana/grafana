@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker/v2"
-
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -241,12 +240,18 @@ func groupFromPath(path string) string {
 }
 
 // owns reports whether the router answers req itself rather than passing it
-// to next: root discovery, which it builds, and groups it serves. In
+// to next: root discovery, which it builds, groups it serves, and paths it
+// rejects before routing. In
 // middleware mode everything else belongs to the embedded API server, which
 // has its own metrics.
 func (r *GrafanaRouter) owns(req *http.Request) bool {
 	path := req.URL.Path
+	inTree := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/") ||
+		path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/")
 	switch {
+	case inTree && !canonicalAPIPath(req.URL):
+		return true // HandleFunc rejects it before routing, so it never reaches next
+
 	case path == apisPrefix || path == apisPrefix+"/" || path == openapiV3Prefix || path == openapiV3Prefix+"/":
 		return true
 	case strings.HasPrefix(path, apisPrefix+"/"):
