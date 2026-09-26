@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, CallToActionCard, Icon, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -21,8 +21,10 @@ export const NoDataSourceCallToAction = () => {
     contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
     contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
-  const message =
-    'Explore requires at least one data source. Once you have added a data source, you can query it here.';
+  const message = t(
+    'explore.no-data-source-call-to-action.message',
+    'Explore requires at least one data source. Once you have added a data source, you can query it here.'
+  );
   const footer = (
     <>
       <Icon name="rocket" />
