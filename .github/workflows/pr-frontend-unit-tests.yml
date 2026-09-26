@@ -95,7 +95,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run test:ci
+    - run: npm run test:ci
       env:
         TEST_MAX_WORKERS: 4
         TEST_SHARD: ${{ matrix.shard }}
@@ -139,7 +139,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run test:ci
+    - run: npm run test:ci
       env:
         TEST_MAX_WORKERS: 4
         TEST_SHARD: ${{ matrix.shard }}
@@ -161,7 +161,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run plugin:test:ci
+    - run: npm run plugin:test:ci
 
   frontend-rspack-plugin-tests:
     needs:
@@ -179,7 +179,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run test:rspack
+    - run: npm run test:rspack
 
   frontend-packages-unit-tests:
     needs:
@@ -197,7 +197,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run packages:test:ci
+    - run: npm run packages:test:ci
 
   # Disabled for now, since react-19 is screwing this up
   # devenv:

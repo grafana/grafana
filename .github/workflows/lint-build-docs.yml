@@ -45,7 +45,7 @@ jobs:
         uses: ./.github/actions/yarn-install
 
       - name: Lint docs
-        run: yarn run prettier:checkDocs
+        run: npm run prettier:checkDocs
         env:
           # Increase memory for prettier due to large number of files
           NODE_OPTIONS: --max_old_space_size=8192

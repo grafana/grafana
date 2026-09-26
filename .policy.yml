@@ -623,6 +623,10 @@ approval_rules:
           - ^(?:(?:[^/]*(?:/|$))*)nx\.json$
           - ^(?:(?:[^/]*(?:/|$))*)project\.json$
           - ^(?:(?:[^/]*(?:/|$))*)yarn\.lock$
+          - ^pnpm-lock\.yaml$
+          - ^pnpm-workspace\.yaml$
+          - ^\.npmrc$
+          - ^patches\/(?:(?:[^/]*(?:/|$))*)$
           - ^conf\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.yarnrc\.yml$
           - ^\.yarn\/(?:(?:[^/]*(?:/|$))*)$

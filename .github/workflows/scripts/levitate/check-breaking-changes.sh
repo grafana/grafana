@@ -34,23 +34,30 @@ while IFS=" " read -r -a package; do
     continue
   fi
 
-  # Skip packages that don't exist in the base (packages introduced in PR)
-  if [[ ! -f "./base/@$PACKAGE_PATH.tgz" ]]; then
+  # Skip packages that don't exist in the base (packages introduced in PR).
+  # Yarn's --out includes @ in the tarball name; pnpm's pack does not.
+  BASE_TARBALL=$(find ./base -maxdepth 1 -type f \( -name "@${PACKAGE_PATH}-[0-9]*.tgz" -o -name "${PACKAGE_PATH}-[0-9]*.tgz" -o -name "@${PACKAGE_PATH}.tgz" \) -print -quit)
+  if [[ -z "$BASE_TARBALL" ]]; then
     continue
   fi
+  CURRENT_TARBALL=$(find ./pr -maxdepth 1 -type f \( -name "@${PACKAGE_PATH}-[0-9]*.tgz" -o -name "${PACKAGE_PATH}-[0-9]*.tgz" -o -name "@${PACKAGE_PATH}.tgz" \) -print -quit)
+  if [[ -z "$CURRENT_TARBALL" ]]; then
+    echo "Missing PR tarball for ${PACKAGE_PATH}" >&2
+    exit 1
+  fi
 
-  # Extract the npm package tarballs into separate directories e.g. ./base/@grafana-data.tgz -> ./base/grafana-data/
+  # Extract the packed npm tarballs for the type comparison.
   mkdir "$PREV"
-  tar -xf "./base/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$PREV"
+  tar -xf "$BASE_TARBALL" --strip-components=1 -C "$PREV"
   mkdir "$CURRENT"
-  tar -xf "./pr/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$CURRENT"
+  tar -xf "$CURRENT_TARBALL" --strip-components=1 -C "$CURRENT"
 
   # Run the comparison and record the exit code
   echo ""
   echo ""
   echo "$PACKAGE_PATH"
   echo "================================================="
-  yarn exec levitate compare --prev "$PREV" --current "$CURRENT" --json >data.json
+  npm exec --no -- levitate compare --prev "$PREV" --current "$CURRENT" --json >data.json
 
   # Check if the comparison returned with a non-zero exit code
   # Record the output, maybe with some additional information

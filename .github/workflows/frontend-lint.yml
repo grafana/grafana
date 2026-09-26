@@ -55,8 +55,8 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run prettier:check
-    - run: yarn run lint
+    - run: npm run prettier:check
+    - run: npm run lint
   lint-frontend-prettier-enterprise:
     needs: detect-changes
     permissions:
@@ -83,8 +83,8 @@ jobs:
         token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run prettier:check
-    - run: yarn run lint
+    - run: npm run prettier:check
+    - run: npm run lint
   lint-frontend-typecheck:
     needs: detect-changes
     permissions:
@@ -105,8 +105,8 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run typecheck
-    - run: yarn run typecheck:smoke
+    - run: npm run typecheck
+    - run: npm run typecheck:smoke
   lint-frontend-typecheck-enterprise:
     needs: detect-changes
     permissions:
@@ -135,8 +135,8 @@ jobs:
         token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run typecheck
-    - run: yarn run typecheck:smoke
+    - run: npm run typecheck
+    - run: npm run typecheck:smoke
   lint-frontend-api-clients:
     permissions:
       contents: read
@@ -157,10 +157,10 @@ jobs:
     - name: Generate API clients
       run: |
         extract_error_message='ERROR! API client generation failed!'
-        yarn generate-apis || (echo "${extract_error_message}" && false)
+        npm run generate-apis || (echo "${extract_error_message}" && false)
     - name: Verify generated clients
       run: |
-        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'npm run generate-apis', commit the changes and push again."
         file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
@@ -194,11 +194,11 @@ jobs:
     - name: Generate OpenAPI specs
       run: |
         extract_error_message='ERROR! OpenAPI generation failed!'
-        yarn generate:openapi || (echo "${extract_error_message}" && false)
+        npm run generate:openapi || (echo "${extract_error_message}" && false)
     - name: Verify generated specs
       run: |
         git add -N .
-        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate:openapi', commit the changes and push again."
+        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'npm run generate:openapi', commit the changes and push again."
         file_diff="$(git diff --name-only ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
@@ -233,10 +233,10 @@ jobs:
     - name: Generate API clients
       run: |
         extract_error_message='ERROR! API client generation failed!'
-        yarn generate-apis || (echo "${extract_error_message}" && false)
+        npm run generate-apis || (echo "${extract_error_message}" && false)
     - name: Verify generated clients
       run: |
-        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'npm run generate-apis', commit the changes and push again."
         # LICENSE is swapped to the Enterprise License Agreement by the "Setup Enterprise"
         # step above (grafana-enterprise's build.sh overlay), not by API client generation.
         file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum' ':!LICENSE')"
@@ -264,8 +264,8 @@ jobs:
       uses: ./.github/actions/yarn-install
     - name: Build and pack packages
       run: |
-        yarn run packages:build
-        yarn run packages:pack
+        npm run packages:build
+        npm run packages:pack
     - name: Validate packages
       run: ./scripts/validate-npm-packages.sh
   lint-circular-dependencies:
@@ -294,7 +294,7 @@ jobs:
       # the first sed command is used to clean the output
       working-directory: ./pr
       run: |
-        yarn lint:circular &> /tmp/pr-circular.txt || true
+        npm run --silent lint:circular &> /tmp/pr-circular.txt || true
         sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/pr-circular.txt > /tmp/pr-circular-clean.txt
         echo "Circular dependencies on PR:"
         pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
@@ -318,7 +318,7 @@ jobs:
       working-directory: ./main
       # the first sed command is used to clean the output
       run: |
-        yarn lint:circular &> /tmp/main-circular.txt || true
+        npm run --silent lint:circular &> /tmp/main-circular.txt || true
         sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/main-circular.txt > /tmp/main-circular-clean.txt
         echo "Circular dependencies on main:"
         main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
@@ -362,7 +362,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Run knip
-      run: yarn run knip
+      run: npm run knip
 
   yarn-install-validation:
     needs:
@@ -379,26 +379,38 @@ jobs:
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
 
-    # Deliberately not using the yarn-install action for exact control over the command for extra checks
     - name: Install yarn dependencies
+      id: frontend-install
+      uses: ./.github/actions/yarn-install
+      with:
+        hardened-mode: 'true'
+
+    # Keep the extra cache-integrity check for Yarn installations.
+    - name: Check Yarn cache
+      if: steps.frontend-install.outputs.package-manager == 'yarn'
       run: yarn install --immutable --check-cache
       env:
         YARN_ENABLE_HARDENED_MODE: 1
 
-    - name: Check yarn.lock is deduplicated
-      id: yarn-dedupe
-      run: yarn dedupe --check
-    - name: Report yarn dedupe failure
-      if: failure() && steps.yarn-dedupe.outcome == 'failure'
+    - name: Check lockfile is deduplicated
+      id: dedupe
       run: |
-        echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
+        if [ "${{ steps.frontend-install.outputs.package-manager }}" = 'yarn' ]; then
+          yarn dedupe --check
+        else
+          pnpm dedupe --check
+        fi
+    - name: Report dedupe failure
+      if: failure() && steps.dedupe.outcome == 'failure'
+      run: |
+        echo "::error::The lockfile contains duplicate dependencies. Run your package manager's dedupe command locally, commit the updated lockfile, and push again."
         exit 1
 
-    - name: Check yarn constraints
-      id: yarn-constraints
-      run: yarn constraints
-    - name: Report yarn constraints failure
-      if: failure() && steps.yarn-constraints.outcome == 'failure'
+    - name: Check workspace constraints
+      id: workspace-constraints
+      run: node scripts/check-workspace-constraints.mjs
+    - name: Report workspace constraints failure
+      if: failure() && steps.workspace-constraints.outcome == 'failure'
       run: |
-        echo "::error::Yarn constraints check failed. Run 'yarn constraints --fix' locally, commit the changes, and push again."
+        echo "::error::Workspace constraints check failed. Fix the workspace dependencies, commit the changes, and push again."
         exit 1

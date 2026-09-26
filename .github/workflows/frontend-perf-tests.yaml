@@ -52,7 +52,7 @@ jobs:
           GRAFANA_URL: https://fsperf.grafana-dev.net
           GRAFANA_ADMIN_USER: ${{ env.FSPERF_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERF_PASSWORD }}
-        run: yarn e2e:playwright --grep @performance --reporter json
+        run: npm run e2e:playwright -- --grep @performance --reporter json
 
       - name: Bench report (fsperf)
         id: bench-fsperf

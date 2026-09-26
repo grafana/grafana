@@ -18,11 +18,19 @@ runs:
       env:
         VERSION: ${{ inputs.version }}
       run: |
-        yarn install
+        PM=$(node -p "require('./package.json').packageManager.split('@')[0]")
+        case "$PM" in
+          yarn) corepack enable && yarn install ;;
+          pnpm) npm install -g "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1].split('+')[0]")" && pnpm install --frozen-lockfile ;;
+          *) echo "Unsupported package manager: $PM" >&2; exit 1 ;;
+        esac
         npm version "$VERSION" --no-git-tag-version
-        yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
-        yarn install
-        yarn prettier:write
+        npm exec --no -- lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+        case "$PM" in
+          yarn) yarn install ;;
+          pnpm) pnpm install --lockfile-only ;;
+        esac
+        npm run prettier:write
     - name: make gen-cue
       shell: bash
       run: make gen-cue

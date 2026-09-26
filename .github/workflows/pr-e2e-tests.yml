@@ -134,7 +134,7 @@ jobs:
         uses: ./.github/actions/setup-playwright
 
       - name: Run Storybook and E2E tests
-        run: yarn e2e:playwright:storybook
+        run: npm run e2e:playwright:storybook
 
   run-playwright-tests:
     needs:
@@ -164,7 +164,7 @@ jobs:
 
       # It's quicker to build them in each test shard then prebuild and upload/download them as artifacts
       - name: Build test plugins
-        run: yarn e2e:plugin:build
+        run: npm run e2e:plugin:build
 
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
       - name: Download backend artifacts
@@ -234,7 +234,7 @@ jobs:
           echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
 
       - name: Run Playwright tests
-        run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
+        run: npm run e2e:playwright -- --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
         env:
           GRAFANA_URL: http://localhost:3001
           CI: true
@@ -332,7 +332,7 @@ jobs:
             echo ""
             echo "Alternatively, download the test report from $REPORT_URL"
             echo "and view it locally with:"
-            echo "  yarn playwright show-report <path-to-unzipped-report>"
+            echo "  npm exec --no -- playwright show-report <path-to-unzipped-report>"
           fi
 
   report-playwright-bench:
@@ -397,7 +397,7 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
         with:
-          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
+          cache: 'false' # Don't use setup-node's built-in caching; yarn-install handles it
       - name: Install yarn dependencies
         uses: ./.github/actions/yarn-install
       - name: Download frontend artifacts

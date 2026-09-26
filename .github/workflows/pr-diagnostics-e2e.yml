@@ -89,12 +89,12 @@ jobs:
           done
 
       - name: Run diagnostics e2e
-        run: yarn playwright test --project=diagnostics --reporter=list
+        run: npm exec --no -- playwright test --project=diagnostics --reporter=list
         env:
           GRAFANA_URL: http://localhost:3002
           CI: true
           # Without this, Node resolves @grafana/* workspace packages via their built dist/
-          # output (not built here), rather than source -- see yarn e2e:pw in package.json.
+          # output (not built here), rather than source -- see e2e:pw in package.json.
           NODE_OPTIONS: '-C @grafana-app/source'
 
       - uses: actions/upload-artifact@v7

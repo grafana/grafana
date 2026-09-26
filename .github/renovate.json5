@@ -23,7 +23,7 @@
   ],
   ignorePaths: ["emails/**", "**/mocks/**"],
   labels: ["area/frontend", "dependencies", "no-changelog"],
-  postUpdateOptions: ["yarnDedupeHighest"],
+  postUpdateOptions: ["yarnDedupeHighest", "pnpmDedupe"],
   packageRules: [
     {
       automerge: true,

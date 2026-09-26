@@ -95,9 +95,13 @@ runs:
             - '**/nx.json'
             - '**/project.json'
             - '**/yarn.lock'
+            - '**/pnpm-lock.yaml'
             - 'conf/**'
             - '.yarnrc.yml'
             - '.yarn/**'
+            - 'pnpm-workspace.yaml'
+            - '.npmrc'
+            - 'patches/**'
             - 'tsconfig.json'
             - '**.js'
             - '*.ts'
@@ -119,8 +123,8 @@ runs:
             - '!**.spec.tsx'
             - '!e2e/**'
             - '!e2e-playwright/**'
-            # test-plugins/* are yarn workspaces copied into the image before
-            # `yarn install --immutable`, so a manifest change there can break the
+            # test-plugins/* are frontend workspaces copied into the image before
+            # dependencies are installed, so a manifest change there can break the
             # build even though the rest of e2e-playwright is test-only.
             - 'e2e-playwright/test-plugins/**/package.json'
           rpm_packaging:
@@ -208,6 +212,10 @@ runs:
             - 'nx.json'
             - 'tsconfig.json'
             - '.yarn/**'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - '.npmrc'
+            - 'patches/**'
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
           frontend_src:
@@ -236,6 +244,10 @@ runs:
             - 'nx.json'
             - 'tsconfig.json'
             - '.yarn/**'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - '.npmrc'
+            - 'patches/**'
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
             - '!**.test.ts'
@@ -254,6 +266,10 @@ runs:
             - '**/package.json'
             - '.yarnrc.yml'
             - 'yarn.config.cjs'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - '.npmrc'
+            - 'patches/**'
           frontend_packages:
             - '.github/actions/checkout/**'
             - '.github/actions/change-detection/**'
