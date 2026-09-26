@@ -2191,7 +2191,7 @@ __metadata:
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "npm:13.3.0-pre"
-    "@kusto/monaco-kusto": "npm:^10.0.0"
+    "@kusto/monaco-kusto": "npm:15.0.1"
     "@openfeature/web-sdk": "npm:^1.10.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
@@ -2208,7 +2208,7 @@ __metadata:
     immer: "npm:10.2.0"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.55.1"
     prismjs: "npm:1.30.0"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"
@@ -2252,7 +2252,7 @@ __metadata:
     fast-deep-equal: "npm:^3.1.3"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.55.1"
     prismjs: "npm:1.30.0"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"
@@ -3289,7 +3289,7 @@ __metadata:
     jquery: "npm:^3.7.1"
     lodash: "npm:^4.17.23"
     micro-memoize: "npm:^4.1.2"
-    monaco-editor: "npm:^0.34.1"
+    monaco-editor: "npm:^0.55.1"
     msw: "npm:^2.10.2"
     msw-storybook-addon: "npm:^2.0.7"
     ol: "npm:^10.7.0"
@@ -5350,34 +5350,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:11.5.3":
-  version: 11.5.3
-  resolution: "@kusto/language-service-next@npm:11.5.3"
-  checksum: 10/22b8944a3cc6916695f42e4a3fdf972525979c5bba1d9a59815e1cf5bd522635bfad04b2d76e0872ec8c7f042159e0858967c35d494a2ca28ee2c90eabf660b7
+"@kusto/language-service-next@npm:12.4.1":
+  version: 12.4.1
+  resolution: "@kusto/language-service-next@npm:12.4.1"
+  checksum: 10/0a4c65d721053276e2771db0b5d3a4fb04c86041f9e51a2f8df7cf252750818121460966614b4d719048100f4a43340cde83c01a58fc1a5adc78d3fff77ff9db
   languageName: node
   linkType: hard
 
-"@kusto/language-service@npm:0.0.278":
-  version: 0.0.278
-  resolution: "@kusto/language-service@npm:0.0.278"
-  checksum: 10/5a84f169e2669feaa1cbc071ec12a154afe2b3a1adb9e3687d95d10a7087fd04d9c2238fb58f783a2cd320fffd6ace4c052caf63be563189f3aee9ad3a241395
+"@kusto/language-service@npm:0.0.297":
+  version: 0.0.297
+  resolution: "@kusto/language-service@npm:0.0.297"
+  checksum: 10/590649353be0498f025ee1fb8d9643174f4d7de538fa886d142697af3a06995f025c14bc53aaf628b7efb789334ba0233e8919597a8347e928d768535adc7b25
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:^10.0.0":
-  version: 10.0.22
-  resolution: "@kusto/monaco-kusto@npm:10.0.22"
+"@kusto/monaco-kusto@npm:15.0.1":
+  version: 15.0.1
+  resolution: "@kusto/monaco-kusto@npm:15.0.1"
   dependencies:
-    "@kusto/language-service": "npm:0.0.278"
-    "@kusto/language-service-next": "npm:11.5.3"
+    "@kusto/language-service": "npm:0.0.297"
+    "@kusto/language-service-next": "npm:12.4.1"
     lodash-es: "npm:^4.17.21"
     vscode-languageserver-types: "npm:^3.17.4"
     xregexp: "npm:^5.1.1"
   peerDependencies:
-    monaco-editor: ^0.46.0
-  bin:
-    copyMonacoFilesAMD: copyMonacoFilesAMD.js
-  checksum: 10/4d6393049e7efe9fbaf0ce1e4f902773ac8700dc27000335c128162b418df8187f81d34110ad5190dd520ed80e8bd738aef4e01371e35fc93b0906780451e02a
+    monaco-editor: ^0.55.0
+  checksum: 10/a9ad864a77dd701b896ba63d833f902863340200d080d90eb70320f56a0533e64c867fae7f9a3e4285b0f02ab0bf09425fb5e833a5437c15599c7600e69b1577
   languageName: node
   linkType: hard
 
@@ -17054,6 +17052,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dompurify@npm:3.2.7":
+  version: 3.2.7
+  resolution: "dompurify@npm:3.2.7"
+  dependencies:
+    "@types/trusted-types": "npm:^2.0.7"
+  dependenciesMeta:
+    "@types/trusted-types":
+      optional: true
+  checksum: 10/51b7866fb834ee62d6c415f41ece5ce11db7b463f60a822932a1f832573a40b98be7715550298690e7647988fbe086db1098bda9b10548b3166fc975eb9bd849
+  languageName: node
+  linkType: hard
+
 "dompurify@npm:3.4.15, dompurify@npm:^3.3.3, dompurify@npm:^3.4.0":
   version: 3.4.15
   resolution: "dompurify@npm:3.4.15"
@@ -20043,7 +20053,7 @@ __metadata:
     "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@hello-pangea/dnd": "npm:18.0.1"
-    "@kusto/monaco-kusto": "npm:^10.0.0"
+    "@kusto/monaco-kusto": "npm:15.0.1"
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@lezer/common": "npm:1.5.2"
     "@lezer/lr": "npm:1.4.10"
@@ -20234,7 +20244,7 @@ __metadata:
     ml-regression-polynomial: "npm:^3.0.0"
     ml-regression-simple-linear: "npm:^3.0.0"
     moment: "npm:2.31.0"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.55.1"
     moveable: "npm:0.53.0"
     msw: "npm:2.10.4"
     mutationobserver-shim: "npm:0.3.7"
@@ -24724,6 +24734,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"marked@npm:14.0.0":
+  version: 14.0.0
+  resolution: "marked@npm:14.0.0"
+  bin:
+    marked: bin/marked.js
+  checksum: 10/5f69e58e177bde75fb6145127c939c096d05494c5dff92d73af8a550097d6631c82e919f8a375e3743379a2623418151086b925a902a2be123590b887716f2bb
+  languageName: node
+  linkType: hard
+
 "marked@npm:16.3.0, marked@npm:^16.3.0":
   version: 16.3.0
   resolution: "marked@npm:16.3.0"
@@ -25852,7 +25871,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-editor@npm:0.34.1, monaco-editor@npm:^0.34.1":
+"monaco-editor@npm:0.55.1, monaco-editor@npm:^0.55.1":
+  version: 0.55.1
+  resolution: "monaco-editor@npm:0.55.1"
+  dependencies:
+    dompurify: "npm:3.2.7"
+    marked: "npm:14.0.0"
+  checksum: 10/73836b612a923342001b8cbb459aad0de486c94672fb7cf9d28bdafed9f3b7523d5aba510d9f8e7d24476a5aacf0d3a5c0cdc520ed4764f6f89f8cf5ba8d9329
+  languageName: node
+  linkType: hard
+
+"monaco-editor@npm:^0.34.1":
   version: 0.34.1
   resolution: "monaco-editor@npm:0.34.1"
   checksum: 10/50cde6f68f27cd66fbaadb7efe0e6ce46748e4bb552ddaa84451fbda18e5ff970a1fa79371c04618927c1f6348839747e3d4804fe383040bad2137527f8a38e4

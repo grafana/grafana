@@ -1,4 +1,4 @@
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import type * as monacoType from 'monaco-editor';
 
 // CloudWatch Logs: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html
 interface CloudWatchLogsLanguage extends monacoType.languages.IMonarchLanguage {

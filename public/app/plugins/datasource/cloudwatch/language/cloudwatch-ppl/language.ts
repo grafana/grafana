@@ -1,4 +1,4 @@
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import type * as monacoType from 'monaco-editor';
 
 // OpenSearch PPL syntax: https://github.com/opensearch-project/opensearch-spark/blob/0.5/ppl-spark-integration/src/main/antlr4/OpenSearchPPLParser.g4
 interface CloudWatchPPLLanguage extends monacoType.languages.IMonarchLanguage {

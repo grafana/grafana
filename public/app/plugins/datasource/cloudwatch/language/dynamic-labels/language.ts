@@ -1,4 +1,4 @@
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import type * as monacoType from 'monaco-editor';
 
 import { config } from '@grafana/runtime';
 

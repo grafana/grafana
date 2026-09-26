@@ -44,7 +44,7 @@ import {
 
 import { LogsSQLCompletionItemProvider } from './CompletionItemProvider';
 
-jest.mock('monaco-editor/esm/vs/editor/editor.api', () => ({
+jest.mock('monaco-editor', () => ({
   Token: jest.fn((offset, type, language) => ({ offset, type, language })),
 }));
 

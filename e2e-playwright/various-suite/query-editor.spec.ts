@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { fillMonacoEditor } from '../utils/monaco';
+
 test.describe(
   'Query editor',
   {
@@ -24,15 +26,14 @@ test.describe(
       await page.waitForSelector('.monaco-editor');
 
       // Type the query text and then backspace
-      const queryField = page.locator('.monaco-editor textarea');
-      await queryField.fill(queryText);
-      await queryField.press('Backspace');
+      const queryEditor = page.locator('.monaco-editor').first();
+      await fillMonacoEditor(queryEditor, queryText);
+      await page.keyboard.press('Backspace');
 
-      // Verify the text is truncated
       await expect(page.getByText(queryText.slice(0, -1))).toBeVisible();
 
       // Use undo (Ctrl+Z)
-      await queryField.press('Control+z');
+      await page.keyboard.press('Control+z');
 
       // Verify the full query text is restored
       await expect(page.getByText(queryText)).toBeVisible();

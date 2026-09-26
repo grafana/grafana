@@ -1,4 +1,10 @@
-import { type EntityGroup, type Function, type ScalarParameter, type TabularParameter } from '@kusto/monaco-kusto';
+import {
+  type EntityGroup,
+  type Function,
+  type Graph,
+  type ScalarParameter,
+  type TabularParameter,
+} from '@kusto/monaco-kusto';
 
 import { type AzureDataSourceJsonData, type AzureDataSourceSecureJsonData } from '@grafana/azure-sdk';
 import {
@@ -132,6 +138,7 @@ interface Database {
   majorVersion: number;
   minorVersion: number;
   entityGroups: EntityGroup[];
+  graphs: Graph[];
 }
 
 export interface FormatAsFieldProps extends AzureQueryEditorFieldProps {
