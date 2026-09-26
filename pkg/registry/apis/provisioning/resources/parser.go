@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -266,6 +267,13 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	parsed.FolderScoped = supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK)
 	if info.Path != "" && parsed.FolderScoped {
 		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
+	}
+	// Dashboards inside a folder inherit access from it; root-level ones have nothing to inherit
+	// from, so they need their own default ACL or only admins can see them. apistore strips this
+	// annotation and runs its permission setter instead of persisting it.
+	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" &&
+		foldermodel.IsRootFolderUID(parsed.Meta.GetFolder()) {
+		parsed.Meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 
 	return parsed, nil
