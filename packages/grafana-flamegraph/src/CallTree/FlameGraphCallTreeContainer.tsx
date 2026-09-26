@@ -438,15 +438,13 @@ const FlameGraphCallTreeContainer = memo(
         {
           Header: 'Function',
           accessor: 'label',
-          Cell: ({ row, value, rowIndex }: { row: Row<CallTreeNode>; value: string; rowIndex?: number }) => (
+          Cell: ({ row, value }: { row: Row<CallTreeNode>; value: string }) => (
             <FunctionCellWithExpander
               // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
               value={value}
               depth={row.original.depth - depthOffset}
               hasChildren={Boolean(row.original.children?.length)}
-              rowIndex={rowIndex}
-              rows={tableInstanceRef.current.rows}
               onSymbolClick={onSymbolClick}
               compact={isCompact}
               toggleRowExpanded={tableInstanceRef.current.toggleRowExpanded}
