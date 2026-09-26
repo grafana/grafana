@@ -231,6 +231,8 @@ export interface BootData {
  * @internal
  */
 export interface GrafanaConfig {
+  /** Milliseconds between activity checks. Present only for authenticated browser sessions. */
+  sessionHeartbeatInterval?: number;
   publicDashboardAccessToken: string;
   publicDashboardsEnabled: boolean;
   snapshotEnabled: boolean;

@@ -3,7 +3,6 @@
 This directory contains the TypeScript source for the Grafana frontend service boot script which is responsible for:
 
 - fetching boot data from `/bootdata`
-- handles session expiry and token rotation
 - applies theme
 - handles SSO auto-login redirects
 

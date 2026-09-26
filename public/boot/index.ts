@@ -47,33 +47,6 @@ function setLoading() {
 
 const CHECK_INTERVAL = 1 * 1000;
 
-function getCookie(name: string) {
-  const cookies = document.cookie.split(';').map((c) => c.trim());
-
-  for (const cookie of cookies) {
-    if (cookie.startsWith(name + '=')) {
-      return cookie.substring(name.length + 1);
-    }
-  }
-
-  return undefined;
-}
-
-function getSessionExpiration() {
-  const value = getCookie('grafana_session_expiry');
-  if (!value) {
-    return undefined;
-  }
-  const realExpiresSeconds = parseInt(value, 10);
-  const expiresSeconds = Math.max(realExpiresSeconds - 10, 0); // Rotate 10s before the real expiration
-  const expiration = new Date(expiresSeconds * 1000);
-  return expiration;
-}
-
-async function rotateSession() {
-  await fetch('/api/user/auth-tokens/rotate', { method: 'POST' });
-}
-
 interface BootApiResponse {
   navTree: NavLinkDTO[];
   settings: GrafanaConfig & { loginError?: string }; // loginError is enterprise-only
@@ -83,24 +56,6 @@ interface BootApiResponse {
 }
 
 type FetchBootDataResult = undefined | { redirect: string } | BootApiResponse;
-
-/**
- * Rotate the session token if it's within the expiry window
- */
-async function rotateExpiredSession() {
-  try {
-    const sessionExpiration = getSessionExpiration();
-    const now = new Date();
-
-    // If the session has expired, don't continue trying to fetch boot data
-    if (sessionExpiration && now >= sessionExpiration) {
-      await rotateSession();
-    }
-    // Just ignore any errors in session rotation. The user can just log in again.
-  } catch (error) {
-    console.warn('Failed to rotate session', error);
-  }
-}
 
 /**
  * Fetches boot data from the server. If it returns undefined, it should be retried later.
@@ -189,8 +144,6 @@ async function fetchBootData(): Promise<FetchBootDataResult> {
 function loadBootData(): Promise<{ redirect: string } | BootApiResponse> {
   return new Promise((resolve, reject) => {
     const attemptFetch = async () => {
-      await rotateExpiredSession();
-
       try {
         const bootData = await fetchBootData();
 
@@ -301,8 +254,6 @@ async function initBootDataFromLegacy() {
 }
 
 async function initBootDataFromMT() {
-  await rotateExpiredSession();
-
   const display = await fetchUser();
   if (display) {
     window.grafanaBootData.user = {
