@@ -209,3 +209,21 @@ func TestLibraryPanelModelRoundTrip(t *testing.T) {
 		require.FailNowf(t, "model round trip mismatch (-want +got):%s", diff)
 	}
 }
+
+func TestLibraryPanelRootFolderConversion(t *testing.T) {
+	panel := &v0alpha1.LibraryPanel{ObjectMeta: metav1.ObjectMeta{Name: "panel", Annotations: map[string]string{utils.AnnoKeyFolder: "general"}}}
+	create, err := ToCreateLibraryElementCommand(panel)
+	require.NoError(t, err)
+	require.Equal(t, new(""), create.FolderUID)
+	for _, previousFolder := range []string{"", "general", "parent"} {
+		previous := panel.DeepCopy()
+		previous.Annotations[utils.AnnoKeyFolder] = previousFolder
+		patch, err := ToPatchLibraryElementCommand(panel, previous)
+		require.NoError(t, err)
+		if previousFolder == "parent" {
+			require.Equal(t, new(""), patch.FolderUID)
+		} else {
+			require.Nil(t, patch.FolderUID)
+		}
+	}
+}

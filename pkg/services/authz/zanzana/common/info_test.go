@@ -154,3 +154,42 @@ func TestNewResourceInfoFromCheck_FolderCreateAtRootUsesGeneral(t *testing.T) {
 	require.Equal(t, accesscontrol.GeneralFolderUID, info.name)
 	require.Equal(t, NewTypedIdent(TypeFolder, accesscontrol.GeneralFolderUID), info.ResourceIdent())
 }
+
+func TestRootFolderSentinels(t *testing.T) {
+	for _, verb := range []string{utils.VerbCreate, utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+		for _, resource := range []string{"folders", "dashboards"} {
+			t.Run(resource+"/"+verb, func(t *testing.T) {
+				group := "dashboard.grafana.app"
+				if resource == "folders" {
+					group = "folder.grafana.app"
+				}
+				legacy := NewResourceInfoFromCheck(&authzv1.CheckRequest{Group: group, Resource: resource, Verb: verb})
+				canonical := NewResourceInfoFromCheck(&authzv1.CheckRequest{Group: group, Resource: resource, Verb: verb, Folder: "general"})
+				require.Equal(t, legacy, canonical)
+				batch := NewResourceInfoFromBatchCheckItem(&authzv1.BatchCheckItem{Group: group, Resource: resource, Verb: verb, Folder: "general"})
+				require.Equal(t, legacy, batch)
+			})
+		}
+	}
+}
+
+func TestRootScopedResourcesPreserveFolderPermissionTarget(t *testing.T) {
+	for _, resource := range []string{"variables", "librarypanels"} {
+		for _, verb := range []string{utils.VerbCreate, utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+			for _, parent := range []string{"", "general", "parent"} {
+				t.Run(resource+"/"+verb+"/"+parent, func(t *testing.T) {
+					expected := parent
+					if expected == "" {
+						expected = "general"
+					}
+					info := NewResourceInfoFromCheck(&authzv1.CheckRequest{Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, Folder: parent})
+					require.Equal(t, NewFolderIdent(expected), info.FolderIdent())
+					batch := NewResourceInfoFromBatchCheckItem(&authzv1.BatchCheckItem{Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, Folder: parent})
+					require.Equal(t, info, batch)
+					list := NewResourceInfoFromList(&authzv1.ListRequest{Group: "dashboard.grafana.app", Resource: resource})
+					require.Empty(t, list.FolderIdent())
+				})
+			}
+		}
+	}
+}

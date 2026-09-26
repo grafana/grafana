@@ -234,24 +234,16 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 			expected:    true,
 		},
 		{
-			name:         "variable get at the root maps the empty parent to general",
-			permissions:  []accesscontrol.Permission{{Action: "folders:view", Scope: "folders:uid:general"}},
-			req:          parityCheckReq(dashboardGroup, "variables", "", utils.VerbGet, "region", ""),
-			expected:     true,
-			zanzanaToday: new(false),
-			divergence: "RBAC maps an empty parent to general for variables on every verb, because variables " +
-				"persist with an empty folder annotation while grants use folders:uid:general. Zanzana applies " +
-				"the empty-to-general default on create only, so a root variable read falls through to a " +
-				"direct object check and is denied.",
+			name:        "variable get at the root maps the empty parent to general",
+			permissions: []accesscontrol.Permission{{Action: "folders:view", Scope: "folders:uid:general"}},
+			req:         parityCheckReq(dashboardGroup, "variables", "", utils.VerbGet, "region", ""),
+			expected:    true,
 		},
 		{
-			name:         "variable update at the root maps the empty parent to general",
-			permissions:  []accesscontrol.Permission{{Action: "folders:edit", Scope: "folders:uid:general"}},
-			req:          parityCheckReq(dashboardGroup, "variables", "", utils.VerbUpdate, "region", ""),
-			expected:     true,
-			zanzanaToday: new(false),
-			divergence: "Same empty-parent handling as the get case above: RBAC rewrites the parent to general " +
-				"for variables on every verb, Zanzana only on create.",
+			name:        "variable update at the root maps the empty parent to general",
+			permissions: []accesscontrol.Permission{{Action: "folders:edit", Scope: "folders:uid:general"}},
+			req:         parityCheckReq(dashboardGroup, "variables", "", utils.VerbUpdate, "region", ""),
+			expected:    true,
 		},
 
 		// -- subresources ----------------------------------------------------
@@ -423,14 +415,10 @@ func TestIntegrationRBACParityList(t *testing.T) {
 			expected:    parityListResult{Items: []string{"parent", "child"}},
 		},
 		{
-			name:         "variables with a grant on general",
-			permissions:  []accesscontrol.Permission{{Action: "folders:view", Scope: "folders:uid:general"}},
-			req:          parityListReq(dashboardGroup, "variables", "", utils.VerbList),
-			expected:     parityListResult{Folders: []string{"general", ""}},
-			zanzanaToday: &parityListResult{Folders: []string{"general"}},
-			divergence: "RBAC aliases the root folder sentinels for variables, returning both general and the " +
-				"empty string so variables persisted with an empty folder annotation match. Zanzana returns " +
-				"only the folder UIDs it holds tuples for.",
+			name:        "variables with a grant on general",
+			permissions: []accesscontrol.Permission{{Action: "folders:view", Scope: "folders:uid:general"}},
+			req:         parityListReq(dashboardGroup, "variables", "", utils.VerbList),
+			expected:    parityListResult{Folders: []string{"general", ""}},
 		},
 	}
 

@@ -10,6 +10,7 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 type typeInfo struct {
@@ -58,6 +59,10 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 		relations,
 	)
 
+	if resource.UsesRootFolderPermissions() && resource.folder == "" {
+		resource.folder = accesscontrol.GeneralFolderUID
+	}
+
 	// Special case for creating folders and resources in the root folder
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
@@ -105,6 +110,10 @@ func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInf
 		relations,
 	)
 
+	if resource.UsesRootFolderPermissions() && resource.folder == "" {
+		resource.folder = accesscontrol.GeneralFolderUID
+	}
+
 	// Special case for creating folders and resources in the root folder
 	if item.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
@@ -134,6 +143,10 @@ func getTypeAndRelations(group, resource string) (string, []string) {
 func newResource(
 	typ, group, resource, name, folder, subresource string, relations []string,
 ) ResourceInfo {
+	// Global variables and library panels intentionally use root-folder permissions.
+	if group != "dashboard.grafana.app" || (resource != "variables" && resource != "librarypanels") {
+		folder = foldermodel.ToLegacyFolderUID(folder)
+	}
 	return ResourceInfo{
 		typ:         typ,
 		group:       group,
@@ -153,6 +166,11 @@ type ResourceInfo struct {
 	folder      string
 	subresource string
 	relations   []string
+}
+
+// UsesRootFolderPermissions identifies resources whose root objects use General-folder grants.
+func (r ResourceInfo) UsesRootFolderPermissions() bool {
+	return r.group == "dashboard.grafana.app" && (r.resource == "variables" || r.resource == "librarypanels")
 }
 
 func (r ResourceInfo) GroupResource() string {

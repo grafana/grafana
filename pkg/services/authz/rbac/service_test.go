@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -1329,7 +1330,7 @@ func TestService_listPermission(t *testing.T) {
 			expectedFolders: []string{"folder-a"},
 		},
 		{
-			name: "should not alias empty parent for dashboard list with general grant",
+			name: "should not inherit general folder grants for dashboard list",
 			permissions: []accesscontrol.Permission{
 				{
 					Action:     "dashboards:read",
@@ -1346,7 +1347,6 @@ func TestService_listPermission(t *testing.T) {
 				Resource: "dashboards",
 				Options:  &ListRequestOptions{},
 			},
-			expectedFolders: []string{accesscontrol.GeneralFolderUID},
 		},
 		{
 			name: "should return dashboards that user has annotation read access to via subresource",
@@ -2754,7 +2754,8 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 		expected    bool
 	}
 
-	testCases := []testCase{
+	testCases := make([]testCase, 0, 43)
+	testCases = append(testCases, []testCase{
 		{
 			name: "resource with stack role and folder read permission",
 			permissions: []accesscontrol.Permission{
@@ -2854,6 +2855,27 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbSetPermissions, Name: "w1", Folder: "f1"},
 			expected: false,
 		},
+	}...)
+
+	for _, parent := range []string{"", accesscontrol.GeneralFolderUID} {
+		for _, name := range []string{"", "w1"} {
+			for _, verb := range []string{utils.VerbCreate, utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+				for _, hasStackRole := range []bool{false, true} {
+					var permissions []accesscontrol.Permission
+					if hasStackRole {
+						permissions = []accesscontrol.Permission{stackRole(group + "/widgets:" + verb)}
+					} else {
+						permissions = []accesscontrol.Permission{folderPerm("folders:read", accesscontrol.GeneralFolderUID), folderPerm("folders:write", accesscontrol.GeneralFolderUID)}
+					}
+					testCases = append(testCases, testCase{
+						name:        fmt.Sprintf("root parent=%q name=%q verb=%s stackRole=%t", parent, name, verb, hasStackRole),
+						permissions: permissions,
+						req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: verb, Name: name, Folder: parent},
+						expected:    hasStackRole,
+					})
+				}
+			}
+		}
 	}
 
 	for _, tc := range testCases {
@@ -4560,4 +4582,64 @@ func TestService_BatchCheckRebuildsFolderTreeAtMostOnce(t *testing.T) {
 
 	assert.LessOrEqual(t, fStore.folderListCalls, 2,
 		"the folder list is fetched once and rebuilt at most once, not once per item")
+}
+
+func TestRootFolderInheritance(t *testing.T) {
+	s := &Service{}
+	for _, resource := range []string{"dashboards", "folders"} {
+		for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+			allowed, err := s.checkInheritedPermissions(t.Context(), map[string]bool{"folders:uid:general": true}, &checkRequest{Resource: resource, Verb: verb, ParentFolder: "general"}, func(bool) (*folderTree, error) {
+				t.Fatal("root is not a parent to inherit from")
+				return nil, nil
+			})
+			require.NoError(t, err)
+			require.False(t, allowed)
+		}
+	}
+	tree := newFolderTree(nil)
+	scopes := map[string]bool{"folders:uid:general": true}
+	require.Empty(t, buildItemList(scopes, tree, "dashboards:uid:", false, false).Folders)
+	require.ElementsMatch(t, []string{"general"}, buildItemList(scopes, tree, "dashboards:uid:", false, true).Folders)
+	require.ElementsMatch(t, []string{"", "general"}, buildItemList(scopes, tree, "", true, false).Folders)
+}
+
+func TestRootFolderPermissionMapping(t *testing.T) {
+	for _, resource := range []string{"variables", "librarypanels", "dashboards"} {
+		for _, parent := range []string{"", "general"} {
+			for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+				for _, scope := range []string{"general", "other-folder"} {
+					t.Run(fmt.Sprintf("%s/%q/%s/%s", resource, parent, verb, scope), func(t *testing.T) {
+						s := setupService()
+						ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+						s.folderCache.Set(t.Context(), folderCacheKey(ns.Value), newFolderTree(nil))
+						req := &checkRequest{Namespace: ns, Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, ParentFolder: parent}
+						allowed, err := s.checkPermission(t.Context(), map[string]bool{"folders:uid:" + scope: true}, nil, req, s.newFolderTreeGetter(t.Context(), ns, false))
+						require.NoError(t, err)
+						require.Equal(t, resource != "dashboards" && scope == "general", allowed)
+					})
+				}
+			}
+		}
+		for _, verb := range []string{utils.VerbList, utils.VerbWatch} {
+			t.Run(resource+"/"+verb, func(t *testing.T) {
+				s := setupService()
+				ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+				s.folderCache.Set(t.Context(), folderCacheKey(ns.Value), newFolderTree(nil))
+				action := "variables:read"
+				switch resource {
+				case "librarypanels":
+					action = "library.panels:read"
+				case "dashboards":
+					action = "dashboards:read"
+				}
+				result, err := s.listPermission(t.Context(), map[string]bool{"folders:uid:general": true}, &listRequest{Namespace: ns, Group: "dashboard.grafana.app", Resource: resource, Verb: verb, Action: action, Options: &ListRequestOptions{}})
+				require.NoError(t, err)
+				if resource == "dashboards" {
+					require.Empty(t, result.Folders)
+				} else {
+					require.ElementsMatch(t, []string{"", "general"}, result.Folders)
+				}
+			})
+		}
+	}
 }
