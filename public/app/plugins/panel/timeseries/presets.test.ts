@@ -78,6 +78,7 @@ describe('timeseriesPresetsSupplier', () => {
     const stackedBars = result.find((p) => p.name === 'Stacked bars');
     expect(stackedBars?.fieldConfig?.defaults?.custom?.drawStyle).toBe(GraphDrawStyle.Bars);
     expect(stackedBars?.fieldConfig?.defaults?.custom?.stacking?.mode).toBe(StackingMode.Normal);
+    expect(stackedBars?.cardOptions?.maxRows).toBe(30);
   });
 
   it('returns 3 presets with stacked 100% for multi series with many points', () => {
@@ -88,25 +89,22 @@ describe('timeseriesPresetsSupplier', () => {
     expect(stacked100?.fieldConfig?.defaults?.custom?.stacking?.mode).toBe(StackingMode.Percent);
   });
 
-  it('all presets include a previewModifier', () => {
+  it('caps previews at 8 series, and caps preview rows at 30 for the bar presets only', () => {
     const result = getPresets({ dataSummary: makeSummary(1, 3) });
-    for (const preset of result) {
-      expect(preset.cardOptions?.previewModifier).toBeDefined();
-    }
-  });
-
-  it('all presets include cardOptions with maxSeries', () => {
-    const result = getPresets({ dataSummary: makeSummary(1, 3) });
-    for (const preset of result) {
-      expect(preset.cardOptions?.maxSeries).toBeDefined();
-    }
+    expect(result.map((p) => [p.name, p.cardOptions?.maxSeries, p.cardOptions?.maxRows])).toEqual([
+      ['Single fill', 8, undefined],
+      ['Smooth scheme', 8, undefined],
+      ['Dashed threshold', 8, undefined],
+      ['Step fill', 8, undefined],
+      ['Bars', 8, 30],
+      ['Bars scheme', 8, 30],
+    ]);
   });
 
   describe('previewModifier', () => {
     const result = getPresets({ dataSummary: makeSummary(1, 3) });
 
-    it('sets disableKeyboardEvents and hidden axis placement', () => {
-      const preset = result[0];
+    it.each(result)('sets disableKeyboardEvents and hides the axis for $name', (preset) => {
       const custom: Partial<GraphFieldConfig> = { lineWidth: 1 };
       const suggestion = {
         ...preset,
