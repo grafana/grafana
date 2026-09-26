@@ -30,7 +30,7 @@ import { type DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrches
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { notebookPanelZoomBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
@@ -223,7 +223,7 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
     seriesLimit: config.panelSeriesLimit,
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
-    $behaviors: [],
+    $behaviors: [notebookPanelZoomBehavior],
     subHeader: new VizPanelSubHeader({}),
     extendPanelContext: setDashboardPanelContext,
     menu: new VizPanelMenu({

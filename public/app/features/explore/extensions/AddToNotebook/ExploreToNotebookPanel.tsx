@@ -1,5 +1,6 @@
 import { AddPanelToNotebookModalBody } from 'app/features/notebook/addPanel/AddPanelToNotebookModalBody';
 import { buildPanelElementFromExplore } from 'app/features/notebook/addPanel/buildPanelElementFromExplore';
+import { wasExploreZoomed } from 'app/features/notebook/addPanel/zoomedCaptureRange';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { useSelector } from 'app/types/store';
 
@@ -36,6 +37,8 @@ export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
       entryPoint={NOTEBOOK_ENTRY_POINT.EXPLORE}
       // Explore builds its panel from the pane's queries, so there is no library panel to send.
       isLibraryPanel={false}
+      sourceTimeRange={exploreItem.range}
+      defaultLockTimeRange={wasExploreZoomed(exploreId, exploreItem.range)}
     />
   );
 }

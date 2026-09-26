@@ -13220,6 +13220,13 @@
       "query": {
         "add": "Add query",
         "run": "Run query"
+      },
+      "time-range": {
+        "button": "Update time range",
+        "locked": "Locked: {{range}}",
+        "reset": "Reset",
+        "tooltip-default": "Uses the notebook's time range",
+        "use-notebook-time": "Use notebook time range"
       }
     },
     "errors": {
@@ -13259,6 +13266,7 @@
       "list-none": "You have no notebooks yet. Create one instead.",
       "list-none-read-only": "You have no notebooks yet, and no permission to create one.",
       "list-truncated": "Not every notebook is shown. Narrow the search to find others.",
+      "lock-time-range": "Lock time range for this visualization",
       "quick-add": "Add to \"{{title}}\"",
       "search-placeholder": "Search by title",
       "sort-alphabetical": "Alphabetically (A–Z)",
@@ -13304,7 +13312,9 @@
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
       "remove-tag": "Remove tag",
+      "reset-cell-time-range": "Use notebook time range",
       "select-query": "Select query",
+      "set-cell-time-range": "Set panel time range",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",
