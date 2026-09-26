@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -21,6 +20,8 @@ import (
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // LoaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
@@ -410,7 +411,7 @@ func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{})
 	backends, err := st.discover(ctx)
 	if err != nil {
 		st.cooldown.OnFailure(now)
-		slog.Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
+		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
 		next := &singleTenantDiscovery{err: err}
 		if prev != nil {
 			next.backends = prev.backends

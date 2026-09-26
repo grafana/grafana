@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"log/slog"
 	"maps"
 	"net/http"
 	"net/url"
@@ -29,6 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // cloudRouterSection is the remote control-plane apiserver this loader reads
@@ -431,7 +432,7 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, b := range l.combineByName(manifests, backends) {
+		for _, b := range l.combineByName(ctx, manifests, backends) {
 			lookup[b.Group().Name] = b
 		}
 	}
@@ -624,7 +625,7 @@ func buildAggregateTLSConfig(caFile string, insecure bool) (*tls.Config, error) 
 	return tlsCfg, nil
 }
 
-func (l *cloudLoader) combineByName(manifests []v1alpha2.AppManifest, backends []v1alpha2.RouteBackend) []Backend {
+func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.AppManifest, backends []v1alpha2.RouteBackend) []Backend {
 	// Index the manifests by AppName, we can then correlate them with backends found and combine for RouteConfig
 	manifestMap := make(map[string]apiGroupWithKey, len(manifests))
 	for _, m := range manifests {
@@ -647,7 +648,7 @@ func (l *cloudLoader) combineByName(manifests []v1alpha2.AppManifest, backends [
 			// Operator/Plugin backends, and any Forward backend missing its
 			// config block, have a nil Forward -- not yet supported here.
 			if b.Spec.Forward == nil {
-				slog.Warn("router.NewForwardBackend: route backend has no forward config, skipping", "Group", m.group.Name, "mode", b.Spec.Mode)
+				logging.FromContext(ctx).Warn("router.NewForwardBackend: route backend has no forward config, skipping", "Group", m.group.Name, "mode", b.Spec.Mode)
 				continue
 			}
 			transportKey := tlsCacheKey{
@@ -659,17 +660,17 @@ func (l *cloudLoader) combineByName(manifests []v1alpha2.AppManifest, backends [
 
 			transport, err := l.transportFor(transportKey)
 			if err != nil {
-				slog.Warn("router.NewForwardBackend failed to create or fetch cached transport", "Group", m.group.Name, "err", err)
+				logging.FromContext(ctx).Warn("router.NewForwardBackend failed to create or fetch cached transport", "Group", m.group.Name, "err", err)
 				continue
 			}
 			current, err := NewForwardBackend(m.group, b.Spec, b.ResourceVersion+"-"+m.key, transport)
 			if err != nil {
-				slog.Warn("router.NewForwardBackend failed", "Group", m.group.Name, "err", err)
+				logging.FromContext(ctx).Warn("router.NewForwardBackend failed", "Group", m.group.Name, "err", err)
 				continue
 			}
 			combined = append(combined, current)
 		} else {
-			slog.Warn("RoutesLoader: manifest not found for route backend", "name", b.Name)
+			logging.FromContext(ctx).Warn("RoutesLoader: manifest not found for route backend", "name", b.Name)
 			continue
 		}
 	}

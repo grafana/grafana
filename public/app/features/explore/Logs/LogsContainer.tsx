@@ -35,7 +35,7 @@ import { updateTimeRange, loadMoreLogs } from '../state/time';
 import { LiveTailControls } from '../useLiveTailControls';
 import { getFieldLinksForExplore } from '../utils/links';
 
-import { LiveLogsWithTheme } from './LiveLogs';
+import { LiveLogs } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 
@@ -263,7 +263,7 @@ const LogsContainer = memo(function LogsContainer({
         <PanelChrome title={t('explore.logs-container.label-logs', 'Logs')}>
           <LiveTailControls exploreId={exploreId}>
             {(controls) => (
-              <LiveLogsWithTheme
+              <LiveLogs
                 logRows={logRows}
                 timeZone={timeZone}
                 stopLive={controls.stop}

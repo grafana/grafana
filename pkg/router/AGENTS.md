@@ -32,7 +32,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 - **The circuit breaker is passive only.** `gobreaker`, one breaker per group, driven by the
   outcomes of real proxied requests; no active health probes. Context cancellation is excluded from
   breaker accounting. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
-  `Flush` (via `Unwrap`, or a no-op `Flush` for buffering writers).
+  `Flush` (via `Unwrap`, or a no-op `Flush` for buffering writers). Handlers get
+  `statusRecorder.writer()`, not the recorder itself, because in-process plugin apiservers need a
+  real `http.Flusher` (plus `CloseNotify`) to serve watches.
 - **Each poll loop has exactly one pacing source**: its `cooldown`. Don't add a second ticker. A
   failed poll changes nothing; the previous snapshot keeps serving.
 - **Proxy hygiene:**
@@ -42,8 +44,13 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - On an OpenAPI cache miss, strip conditional headers and the `hash` query parameter before
     proxying.
   - Any 304 must carry an `ETag`.
-- **Scope is CRUD and List over HTTP/1.1.** No Watch, upgrades or streaming. If that changes,
-  revisit flushing, upgrade handling and per-request timeouts.
+- **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
+  `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
+  function that logs has no context, pass one in from its caller (a request's `Context()`, or the
+  reconcile or poll `ctx`). The SDK's default logger is Grafana's, so nothing is lost when the
+  context carries no logger.
+- **Scope is CRUD, List and Watch over HTTP/1.1.** Plugin operators watch their resources through
+  in-process plugin backends. No upgrades. Any per-request timeout must exempt watches.
 
 ## Package layout
 

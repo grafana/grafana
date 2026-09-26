@@ -3,7 +3,6 @@ package router
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"sort"
 
@@ -17,6 +16,8 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
 	"k8s.io/kube-openapi/pkg/handler3"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 const aggregatedDiscoveryJSON = "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList"
@@ -163,7 +164,7 @@ func readDiscovery(req *http.Request, handler http.Handler, path, accept string,
 func serveDiscoveryJSON(w http.ResponseWriter, req *http.Request, value any) {
 	body, err := json.Marshal(value)
 	if err != nil {
-		slog.Error("router: failed to marshal discovery", "error", err)
+		logging.FromContext(req.Context()).Error("router: failed to marshal discovery", "error", err)
 		http.Error(w, "failed to marshal discovery", http.StatusInternalServerError)
 		return
 	}
