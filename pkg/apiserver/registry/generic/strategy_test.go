@@ -3,6 +3,7 @@ package generic_test
 import (
 	"testing"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -146,10 +147,12 @@ func TestStatusStrategy(t *testing.T) {
 		}
 
 		t.Run("ignores spec updates", func(t *testing.T) {
-			// The assumption here is that the status strategy should not allow for spec updates.
-			// This is drawn due to the GetResetFields function returning `metadata` and `spec`, and due to it copying old `metadata` fields to the new object (but not spec?).
-			t.Skip("assumption does not hold -- verify with app platform if this is intended")
-
+			// A status-subresource update must never persist a spec change,
+			// no matter what the incoming object contains: admission does not
+			// validate subresource requests, so a JSON Patch smuggling a
+			// /spec op alongside a /status op would otherwise persist
+			// unvalidated (see GetResetFields, which already declares `spec`
+			// as a reset field for this strategy).
 			t.Parallel()
 			oldObj := obj.DeepCopy()
 			newObj := obj.DeepCopy()
@@ -157,6 +160,53 @@ func TestStatusStrategy(t *testing.T) {
 			expectedObj := obj.DeepCopy()
 
 			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv)
+			strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
+			require.Equal(t, expectedObj, newObj)
+		})
+
+		t.Run("ignores secure updates", func(t *testing.T) {
+			// Same concern as spec: admission skips subresource requests
+			// entirely, so a status PATCH that also smuggles a /secure op
+			// must not have that change persisted either.
+			t.Parallel()
+			secureObj := &testSecureObj{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+				Secure:     testSecureObjSecure{Token: common.InlineSecureValue{Name: "existing-token"}},
+			}
+			oldObj := secureObj.DeepCopyObject().(*testSecureObj)
+			newObj := secureObj.DeepCopyObject().(*testSecureObj)
+			newObj.Secure.Token = common.InlineSecureValue{Name: "smuggled-token"}
+			expectedObj := secureObj.DeepCopyObject().(*testSecureObj)
+
+			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv)
+			strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
+			require.Equal(t, expectedObj, newObj)
+		})
+
+		t.Run("WithAllowBundlingSpec lets a status update also change spec", func(t *testing.T) {
+			t.Parallel()
+			oldObj := obj.DeepCopy()
+			newObj := obj.DeepCopy()
+			newObj.Spec.NodeSelector = map[string]string{"foo": "baz"}
+			expectedObj := newObj.DeepCopy()
+
+			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv).WithAllowBundlingSpec()
+			strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
+			require.Equal(t, expectedObj, newObj)
+		})
+
+		t.Run("WithAllowBundlingSecure lets a status update also change secure values", func(t *testing.T) {
+			t.Parallel()
+			secureObj := &testSecureObj{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+				Secure:     testSecureObjSecure{Token: common.InlineSecureValue{Name: "existing-token"}},
+			}
+			oldObj := secureObj.DeepCopyObject().(*testSecureObj)
+			newObj := secureObj.DeepCopyObject().(*testSecureObj)
+			newObj.Secure.Token = common.InlineSecureValue{Name: "bundled-token"}
+			expectedObj := newObj.DeepCopyObject().(*testSecureObj)
+
+			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv).WithAllowBundlingSecure()
 			strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
 			require.Equal(t, expectedObj, newObj)
 		})
@@ -462,4 +512,26 @@ func TestGetAttrs(t *testing.T) {
 
 		require.Equal(t, fields.Set{"metadata.name": "test"}, f, "expected fields to match")
 	})
+}
+
+// testSecureObj is a minimal runtime.Object with a "Secure" field, used to
+// exercise genericStatusStrategy's secure-value reset: example.Pod (used
+// elsewhere in this file) has no such field.
+type testSecureObj struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+	Secure testSecureObjSecure
+}
+
+type testSecureObjSecure struct {
+	Token common.InlineSecureValue
+}
+
+func (o *testSecureObj) DeepCopyObject() runtime.Object {
+	if o == nil {
+		return nil
+	}
+	out := *o
+	out.ObjectMeta = *o.DeepCopy()
+	return &out
 }
