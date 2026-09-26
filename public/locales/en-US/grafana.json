@@ -13217,6 +13217,13 @@
       "query": {
         "add": "Add query",
         "run": "Run query"
+      },
+      "time-range": {
+        "button": "Update time range",
+        "locked": "Locked: {{range}}",
+        "reset": "Reset",
+        "tooltip-default": "Uses the notebook's time range",
+        "use-notebook-time": "Use notebook time range"
       }
     },
     "errors": {
@@ -13300,7 +13307,9 @@
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
       "remove-tag": "Remove tag",
+      "reset-cell-time-range": "Use notebook time range",
       "select-query": "Select query",
+      "set-cell-time-range": "Set panel time range",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",

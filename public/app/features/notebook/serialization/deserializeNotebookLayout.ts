@@ -7,6 +7,7 @@ import { type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashbo
 
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
+import { buildCellSceneTimeRange, withQueryOptionsTimeRange } from '../scene/layout-notebook/cellTimeRange';
 import { type NotebookElement, type NotebookLayoutKind } from '../types';
 
 interface NotebookHeader {
@@ -52,14 +53,28 @@ export function deserializeNotebookLayout(
     };
 
     if (element.kind === 'Panel') {
+      const { timeFrom, timeTo } = element.spec.data.spec.queryOptions;
+      // A one-sided override (e.g. a dashboard-style timeFrom-only shift) isn't a cell range —
+      // leave it untouched so buildVizPanelState sees it and behaves like an ordinary panel
+      // override, instead of being silently blanked below.
+      const cellTimeRange = timeFrom && timeTo ? { $timeRange: buildCellSceneTimeRange(timeFrom, timeTo) } : {};
+      const panelElement = timeFrom && timeTo ? withQueryOptionsTimeRange(element, undefined) : element;
+
       // buildVizPanelState is dashboard-typed and takes this directly: the notebook panel chain
       // carries the dashboard v2 shape, so the two generated types are structurally identical.
       cells.push(
-        new NotebookCellItem({ ...base, body: new VizPanel(buildVizPanelState(element, panelIdGenerator?.())) })
+        new NotebookCellItem({
+          ...base,
+          ...cellTimeRange,
+          body: new VizPanel(buildVizPanelState(panelElement, panelIdGenerator?.())),
+        })
       );
     } else if (element.kind === 'LibraryPanel') {
       cells.push(
-        new NotebookCellItem({ ...base, body: new VizPanel(buildLibraryPanelState(element, panelIdGenerator?.())) })
+        new NotebookCellItem({
+          ...base,
+          body: new VizPanel(buildLibraryPanelState(element, panelIdGenerator?.())),
+        })
       );
     } else if (element.kind === 'Cell') {
       cells.push(new NotebookCellItem({ ...base, content: element.spec.content }));

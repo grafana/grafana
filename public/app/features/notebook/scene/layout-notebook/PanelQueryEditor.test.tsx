@@ -189,6 +189,13 @@ describe('PanelQueryEditor', () => {
     expect(await screen.findByTestId('resolved-datasource-A')).toHaveTextContent('default-uid');
   });
 
+  it('mounts the time-range control inline, next to Add query', async () => {
+    const { panel, cell } = buildPanel();
+    render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    expect(await screen.findByRole('button', { name: /time range/i })).toBeInTheDocument();
+  });
+
   it('offers a datasource picker when nothing resolves', async () => {
     resolvedSettings = undefined;
     const { panel, cell } = buildPanel();
