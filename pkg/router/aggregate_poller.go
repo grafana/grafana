@@ -112,7 +112,7 @@ func (t *aggregateTarget) run(ctx context.Context, dirty chan<- struct{}) {
 func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 	now := time.Now()
 
-	groups, err := discoverGroups(ctx, t.client, t.base.String())
+	groups, err := discoverGroupResources(ctx, t.client, t.base.String())
 	if err != nil {
 		t.cooldown.OnFailure(now)
 		logging.FromContext(ctx).Warn("router: aggregate discovery poll failed, backing off", "target", t.name, "err", err)
@@ -122,13 +122,13 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 
 	backends := make([]Backend, 0, len(groups))
 	keys := make(map[string]struct{}, len(groups))
-	for _, group := range groups {
-		if !matchesAnyPattern(group.Name, t.patterns) {
+	for _, discovered := range groups {
+		if !matchesAnyPattern(discovered.group.Name, t.patterns) {
 			continue
 		}
-		backend, err := newAggregateBackend(t.name, group, t.base, t.proxyTransport)
+		backend, err := newDiscoveredAggregateBackend(t.name, discovered, t.base, t.proxyTransport)
 		if err != nil {
-			logging.FromContext(ctx).Warn("router: skipping unfingerprintable discovered group", "target", t.name, "group", group.Name, "err", err)
+			logging.FromContext(ctx).Warn("router: skipping unfingerprintable discovered group", "target", t.name, "group", discovered.group.Name, "err", err)
 			continue
 		}
 		backends = append(backends, backend)

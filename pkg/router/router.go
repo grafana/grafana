@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -56,6 +57,10 @@ type servingEntry struct {
 	key     string
 	breaker *groupBreaker
 	watches context.Context
+
+	// discovery is set when the backend is a DiscoveryProvider, so the
+	// group's aggregated discovery needs no request.
+	discovery *apidiscoveryv2.APIGroupDiscovery
 }
 
 type phase int
@@ -103,6 +108,10 @@ type GrafanaRouter struct {
 	// sync.Map rather than an atomic swap. Stale entries are overwritten on the
 	// next fetch, not evicted.
 	openapiDocs sync.Map
+
+	// discoveryCache holds aggregated discovery fetched from backends that
+	// are not DiscoveryProviders, shared across callers.
+	discoveryCache discoveryCache
 
 	// Set before serving by the standalone target; middleware keeps its delegate.
 	unregisteredGroupHandler http.Handler
@@ -492,10 +501,16 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 		if e.backend != nil {
 			entry.group = e.backend.Group()
 			backends = append(backends, e.backend)
+			if provider, ok := e.backend.(DiscoveryProvider); ok {
+				if d, ok := provider.Discovery(); ok {
+					entry.discovery = &d
+				}
+			}
 		}
 		snap[group] = entry
 	}
 	r.snapshot.Store(&snap)
+	r.discoveryCache.retain(snap)
 
 	groupList := buildAPIGroupList(ctx, backends)
 	r.apiGroupList.Store(&groupList)

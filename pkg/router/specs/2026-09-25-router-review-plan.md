@@ -1,6 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in progress; P7 partly addressed)
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in #133630; P7 partly addressed)
 Package: `pkg/router`
 
 ## Context
@@ -104,19 +104,19 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
   - **Fix:** check that the namespace matches the caller's token before the lookup, raise the cache
     size (and make it configurable) or add a lookup rate limit, and size the breaker cache separately.
 
-- [ ] **P5. Aggregated discovery fans out to every backend on every request.**
+- [x] **P5. Aggregated discovery fans out to every backend on every request.**
   - **Problem:**
     - `serveAggregatedDiscovery` (`discovery_handler.go`) calls every served group's backend in
       sequence, on every request, and falls back to one call per version.
     - kubectl and client-go request this on nearly every command.
     - A target that serves K groups returns the same `/apis` document K times per request.
     - A single slow backend stalls discovery for everyone.
-  - [ ] **P5a. Build discovery locally where the router already has the data.** Plugin backends and
+  - [x] **P5a. Build discovery locally where the router already has the data.** Plugin backends and
     manifest-backed forward backends already hold their manifest, which lists the kinds. Add an
     optional interface on `Backend`, such as `Discovery() (apidiscoveryv2.APIGroupDiscovery, bool)`,
     and build those entries without any network call. This adds a new interface to `types.go` and
     removes none, which is consistent with that file's rule on interfaces.
-  - [ ] **P5b. Cache discovery for the backends that still need a fetch** (the aggregate and ST
+  - [x] **P5b. Cache discovery for the backends that still need a fetch** (the aggregate and ST
     targets). Fetch with the router's own identity and cache by backend key, as kube-aggregator's
     discovery controller does. This means revisiting the current decision, recorded in AGENTS.md,
     not to cache discovery across callers. k8s discovery is not filtered per caller.
