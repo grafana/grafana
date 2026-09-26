@@ -195,7 +195,10 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       }
 
       if (props.omitHideFromViz) {
-        const nonHiddenFields = alignedFrameFinal.fields.filter((field) => field.config.custom?.hideFrom?.viz !== true);
+        // Always keep the first (time) field for the timeline chart
+        const nonHiddenFields = alignedFrameFinal.fields.filter(
+          (field, i) => i === 0 || field.config.custom?.hideFrom?.viz !== true
+        );
         alignedFrameFinal = {
           ...alignedFrameFinal,
           fields: nonHiddenFields,
