@@ -1,7 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in progress; P7 partly addressed; W items not started)
-
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in #133630; P7 partly addressed)
 Package: `pkg/router`
 
 ## Context
@@ -203,7 +202,7 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
 
 Found by checking each part of the proxy path against a watch that streams for 30+ minutes.
 
-- [ ] **W1. The circuit breaker holds a watch for its whole lifetime.**
+- [x] **W1. The circuit breaker holds a watch for its whole lifetime.**
   - **Problem:** `serveThroughBreaker` (`breaker.go`) runs the entire request inside
     `cb.Execute`, and the outcome is recorded only when the handler returns.
     - When the breaker is half-open, gobreaker allows one trial request. A watch that starts as the
@@ -219,7 +218,7 @@ Found by checking each part of the proxy path against a watch that streams for 3
   - **Test:** with the breaker half-open, an open watch must not block other requests, and a watch
     that starts with a 200 closes the breaker immediately.
 
-- [ ] **W2. Metrics and the in-flight gauge count a watch as one long request.**
+- [x] **W2. Metrics and the in-flight gauge count a watch as one long request.**
   - **Problem:** `routerMetrics.instrument` (`metrics.go`) observes every request in the duration
     histogram and the in-flight gauge. One watch lasting 30 minutes skews latency percentiles, and
     idle watches look like load. Kubernetes separates long-running requests: they are excluded from
@@ -230,7 +229,7 @@ Found by checking each part of the proxy path against a watch that streams for 3
     gauge, count them in a `grafana_router_longrunning_requests{group}` gauge, and add a `verb`
     label to the duration histogram. The access log still records each watch when it ends.
 
-- [ ] **W3. Watches outlive route changes, and they can block shutdown.**
+- [x] **W3. Watches outlive route changes, and they can block shutdown.**
   - **Shutdown:** the standalone module server stops its listener with
     `httpServ.Shutdown(context.Background())` (`pkg/server/instrumentation_service.go`).
     `Shutdown` waits for active connections to go idle, which a watch never does, so stopping the
@@ -247,7 +246,7 @@ Found by checking each part of the proxy path against a watch that streams for 3
       entry, and derive watch requests from it, so they end and clients reconnect to the new backend.
       Ordinary requests finish normally.
 
-- [ ] **W4. Streaming depends on a proxy heuristic.** `httputil.ReverseProxy` flushes after every
+- [x] **W4. Streaming depends on a proxy heuristic.** `httputil.ReverseProxy` flushes after every
   write only when the response has no `Content-Length`, which is true of watch responses today.
   - **Fix:** set `FlushInterval: -1` explicitly on the forward, aggregate and ST proxies, so events
     are never buffered whatever the backend sends. Keep `captureWriter`, which buffers, out of any
@@ -258,7 +257,8 @@ Found by checking each part of the proxy path against a watch that streams for 3
 - ~~**W5. The ST fallback doesn't recognise the deprecated watch path.**~~ Dropped: the deprecated
   `/apis/<g>/<v>/watch/...` path form is out of scope.
 
-- [ ] **W6. Watch over WebSocket isn't supported yet.**
+- [x] **W6. Watch over WebSocket isn't supported yet.** Decided: not supported. Upgrade requests to
+  routed groups and the ST fallback are rejected with a 400 that says so (`rejectUpgrade`).
   - **Problem:** Kubernetes serves watch over WebSocket (`Upgrade: websocket`), and kube-aggregator
     proxies it with its upgrade-aware handler. AGENTS.md currently says "No upgrades".
     - `httputil.ReverseProxy` can proxy an upgrade, but only if the writer it gets can hijack the
@@ -272,7 +272,7 @@ Found by checking each part of the proxy path against a watch that streams for 3
     If support is deliberately left out instead, reject upgrades with a clear error and document
     the gap; it must not fail silently.
 
-- [ ] **W7. Watch acceptance tests.** One table-driven test across every backend type (forward,
+- [x] **W7. Watch acceptance tests.** One table-driven test across every backend type (forward,
   aggregate, ST, in-process plugin) and both modes (standalone, middleware), checking:
   - `?watch=1` and `?watch=true`;
   - watch-list with `sendInitialEvents=true`, including the initial-events-end bookmark;

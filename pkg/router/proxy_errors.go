@@ -19,6 +19,11 @@ import (
 // headers as soon as it starts and then streams for as long as it lasts.
 const backendResponseHeaderTimeout = 60 * time.Second
 
+// streamingFlushInterval makes every proxy flush after each write, so a watch
+// event reaches the client at once. Without it, ReverseProxy flushes that way
+// only for responses without a Content-Length.
+const streamingFlushInterval = -1
+
 // errBackendRedirect marks a backend response the router refused to relay.
 // It is a policy decision, not evidence that the backend is unhealthy.
 var errBackendRedirect = errors.New("router: backend redirect rejected")

@@ -161,6 +161,7 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 			Transport:      newBackendTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
 			ErrorHandler:   proxyErrorHandler,
+			FlushInterval:  streamingFlushInterval,
 		},
 	}, nil
 }
