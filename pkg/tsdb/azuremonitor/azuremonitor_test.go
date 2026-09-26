@@ -478,13 +478,11 @@ func TestCheckHealth(t *testing.T) {
 				}},
 		},
 		{
-			name:          "Successfully returns UNKNOWN status if no log analytics workspace is found",
+			name:          "Successfully connects when no log analytics workspace is found",
 			errorExpected: false,
 			expectedResult: &backend.CheckHealthResult{
-				Status:  backend.HealthStatusUnknown,
-				Message: "One or more health checks failed. See details below.",
-				JSONDetails: []byte(
-					`{"verboseMessage": "1. Successfully connected to Azure Monitor endpoint.\n2. No Log Analytics workspaces found.\n3. Successfully connected to Azure Resource Graph endpoint." }`),
+				Status:  backend.HealthStatusOk,
+				Message: "Successfully connected to Azure Monitor and Azure Resource Graph endpoints. No Log Analytics workspaces found.",
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
@@ -549,6 +547,29 @@ func TestCheckHealth(t *testing.T) {
 				assert.NoError(t, err)
 			}
 			assert.Equal(t, tt.expectedResult, res)
+		})
+	}
+}
+
+func TestLogAnalyticsCheckHealthWorkspaceErrors(t *testing.T) {
+	for _, statusCode := range []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusInternalServerError} {
+		t.Run(http.StatusText(statusCode), func(t *testing.T) {
+			dsInfo := types.DatasourceInfo{
+				Routes: testRoutes,
+				Services: map[string]types.DatasourceService{
+					azureMonitor: {
+						HTTPClient: NewTestClient(func(req *http.Request) (*http.Response, error) {
+							return &http.Response{
+								StatusCode: statusCode,
+								Body:       io.NopCloser(strings.NewReader(`{"error":{"message":"workspace lookup failed"}}`)),
+							}, nil
+						}),
+					},
+				},
+			}
+			message, status := logAnalyticsCheckHealth(context.Background(), dsInfo, "subscription-id")
+			assert.Equal(t, backend.HealthStatusError, status)
+			assert.Contains(t, message, "workspace lookup failed")
 		})
 	}
 }
