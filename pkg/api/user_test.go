@@ -85,7 +85,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
-		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
 		authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sqlStore), secretsService)
 		require.NoError(t, err)
 		srv := authinfoimpl.ProvideService(
