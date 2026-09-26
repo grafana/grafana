@@ -1,7 +1,8 @@
-import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -15,6 +16,27 @@ setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 setupMswServer();
+
+jest.mock('@grafana/runtime/unstable', () => {
+  const actual = jest.requireActual('@grafana/runtime/unstable');
+  return { ...actual, getDataSourceInstanceList: jest.fn(actual.getDataSourceInstanceList) };
+});
+
+const runtime = jest.requireActual('@grafana/runtime/unstable');
+const listMock = jest.mocked(getDataSourceInstanceList);
+
+// Holds the recording rules target discovery until the test releases it.
+function holdRecordingTargetDiscovery() {
+  let release = () => {};
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  listMock.mockImplementation(async (filters) => {
+    await released;
+    return runtime.getDataSourceInstanceList(filters);
+  });
+  return release;
+}
 
 const ui = {
   importSource: {
@@ -55,11 +77,41 @@ describe('ImportToGMARules', () => {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
   testWithFeatureToggles({ enable: ['alertingImportYAMLUI', 'alertingMigrationUI'] });
 
-  it('should render the import source options', () => {
+  afterEach(() => {
+    listMock.mockImplementation(runtime.getDataSourceInstanceList);
+  });
+
+  it('should render the import source options', async () => {
     render(<ImportToGMARules />);
 
     expect(ui.importSource.existingDatasource.get()).toBeInTheDocument();
     expect(ui.importSource.yaml.get()).toBeInTheDocument();
+    await waitFor(() => expect(ui.additionalSettings.targetDataSourceForRecording.get()).toBeEnabled());
+  });
+
+  describe('recording rules target', () => {
+    it('disables the YAML target and recording target pickers until the valid targets are known', async () => {
+      const releaseDiscovery = holdRecordingTargetDiscovery();
+      const { user } = render(<ImportToGMARules />);
+      await user.click(ui.importSource.yaml.get());
+
+      expect(await ui.yamlImport.targetDataSource.find()).toBeDisabled();
+      expect(ui.additionalSettings.targetDataSourceForRecording.get()).toBeDisabled();
+
+      releaseDiscovery();
+
+      await waitFor(() => expect(ui.additionalSettings.targetDataSourceForRecording.get()).toBeEnabled());
+      expect(ui.yamlImport.targetDataSource.get()).toBeEnabled();
+    });
+
+    it('shows an error on the recording target field when the valid targets cannot be loaded', async () => {
+      listMock.mockRejectedValue(new Error('list request failed'));
+      render(<ImportToGMARules />);
+
+      expect(
+        await screen.findByText('Failed to load the list of data sources that can store recording rules')
+      ).toBeInTheDocument();
+    });
   });
 
   describe('existing datasource', () => {
