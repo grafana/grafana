@@ -1,8 +1,8 @@
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import React, { useCallback, useEffect } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
-import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import React, { useEffect } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -23,7 +23,6 @@ import {
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ImportFormValues } from '../ImportToGMA';
-import { useDryRunNotifications } from '../useImport';
 
 import { Step1Content, useStep1Validation } from './Step1AlertmanagerResources';
 
@@ -93,28 +92,7 @@ const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
 const defaultStep1Props = {
   canImport: true,
   dryRunState: 'idle' as const,
-  onTriggerDryRun: jest.fn(),
-  onResetDryRun: jest.fn(),
 };
-
-// Wires the real dry-run hook into Step1Content the way ImportWizardContent does, so the trigger
-// effect runs against the real callbacks — used to guard against a re-trigger request loop.
-function DryRunLoopHarness() {
-  const { runDryRun, reset } = useDryRunNotifications();
-  const { getValues } = useFormContext<ImportFormValues>();
-  const onTriggerDryRun = useCallback(() => {
-    const values = getValues();
-    runDryRun({
-      source: values.notificationsSource,
-      datasourceName: values.notificationsDatasourceName ?? undefined,
-      yamlFile: values.notificationsYamlFile,
-      templateFiles: values.notificationsTemplateFiles,
-      configIdentifier: values.policyTreeName,
-    });
-  }, [getValues, runDryRun]);
-
-  return <Step1Content canImport dryRunState="idle" onTriggerDryRun={onTriggerDryRun} onResetDryRun={reset} />;
-}
 
 describe('Step1AlertmanagerResources', () => {
   beforeAll(() => {
@@ -542,17 +520,16 @@ describe('Step1AlertmanagerResources', () => {
 
       expect(onResult).toHaveBeenCalledWith(true);
     });
-  });
 
-  describe('dry-run trigger effect', () => {
-    it('triggers the dry-run once for a stable valid config and does not loop', async () => {
-      let dryRunCount = 0;
-      server.use(
-        http.post('/api/convert/api/v1/alerts', () => {
-          dryRunCount += 1;
-          return HttpResponse.json({ status: 'success' });
-        })
-      );
+    // isStep1Valid recomputes from the live value every render, so it needs no debounce fix.
+    it('reflects the current, still-valid name immediately without blur', async () => {
+      const user = userEvent.setup();
+      // ValidationHookWrapper above only re-notifies on change, which never happens here (isValid is
+      // true throughout) — render the live value directly instead.
+      function ValidationDisplay({ canImport }: { canImport: boolean }) {
+        const isValid = useStep1Validation(canImport);
+        return <div data-testid="step1-valid">{String(isValid)}</div>;
+      }
 
       render(
         <TestWrapper
@@ -564,19 +541,21 @@ describe('Step1AlertmanagerResources', () => {
             }),
           }}
         >
-          <DryRunLoopHarness />
+          <Step1Content {...defaultStep1Props} />
+          <ValidationDisplay canImport />
         </TestWrapper>
       );
 
-      await waitFor(() => expect(dryRunCount).toBeGreaterThanOrEqual(1));
-      const settledCount = dryRunCount;
-      // A single trigger (allow 2 for a StrictMode double-mount) — not a runaway loop.
-      expect(settledCount).toBeLessThanOrEqual(2);
-      // Give any runaway re-trigger loop time to fire more requests, then confirm it stopped.
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 250));
-      });
-      expect(dryRunCount).toBe(settledCount);
+      await waitFor(() => expect(screen.getByTestId('step1-valid')).toHaveTextContent('true'));
+
+      const input = screen.getByPlaceholderText(/prometheus-prod/i);
+      // Single keystroke — see the comment on the equivalent edit above.
+      await user.type(input, '2');
+      expect(input).toHaveFocus(); // no blur happened
+      expect(input).toHaveValue('prometheus-prod2');
+
+      // No waitFor: this must already be true on the very next render, with no async settling.
+      expect(screen.getByTestId('step1-valid')).toHaveTextContent('true');
     });
   });
 
@@ -749,23 +728,20 @@ describe('Step1AlertmanagerResources', () => {
         expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeInTheDocument();
       });
 
-      it('disables Policy Tree Name and skips the dry-run once checked', async () => {
+      it('disables Policy Tree Name once checked', async () => {
         grantUserRole('Admin');
         const user = userEvent.setup();
-        const onTriggerDryRun = jest.fn();
 
         render(
           <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
-            <Step1Content {...defaultStep1Props} onTriggerDryRun={onTriggerDryRun} />
+            <Step1Content {...defaultStep1Props} />
           </TestWrapper>
         );
 
         await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
-        onTriggerDryRun.mockClear();
         await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
 
         expect(screen.getByPlaceholderText(/prometheus-prod/i)).toBeDisabled();
-        expect(onTriggerDryRun).not.toHaveBeenCalled();
       });
 
       it('always lists every Alertmanager datasource regardless of auto-sync checked state', async () => {

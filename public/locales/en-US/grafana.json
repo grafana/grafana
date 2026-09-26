@@ -1766,7 +1766,7 @@
         "datasource": "Alertmanager data source",
         "datasource-autosync-badge": "Auto-sync",
         "heading": "Import Notification Resources",
-        "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
+        "next-disabled-tooltip": "Complete the required fields before continuing.",
         "no-datasources": "No Alertmanager data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
@@ -1806,6 +1806,7 @@
         "yaml-desc": "Accepted file types: {{extensions}}",
         "yaml-file": "Alertmanager config YAML",
         "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
+        "yaml-parse-error": "Your YAML has a syntax error: {{message}}",
         "yaml-remove": "Remove {{name}}"
       },
       "step2": {

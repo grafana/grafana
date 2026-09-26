@@ -37,9 +37,9 @@ import { type ImportFormValues } from '../ImportToGMA';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { ValidationStatus } from '../ValidationStatus';
 import { getNotificationsSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
-import { type DryRunValidationResult } from '../types';
+import { type DryRunState, type DryRunValidationResult } from '../types';
 
-import { findDuplicateTemplateFileName, hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
+import { canRunDryRun, findDuplicateTemplateFileName, isStep1Valid, validatePolicyTreeName } from './utils';
 
 const YAML_FILE_EXTENSIONS = ['.yaml', '.yml'];
 
@@ -99,13 +99,9 @@ interface Step1ContentProps {
   /** Whether the user has permission to import notifications */
   canImport: boolean;
   /** Dry-run validation state */
-  dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
+  dryRunState: DryRunState;
   /** Dry-run validation result */
   dryRunResult?: DryRunValidationResult;
-  /** Callback to trigger dry-run validation */
-  onTriggerDryRun: () => void;
-  /** Callback to clear a stale dry-run result when the step is no longer runnable */
-  onResetDryRun: () => void;
 }
 
 /**
@@ -113,13 +109,7 @@ interface Step1ContentProps {
  * This component contains only the form fields, without the header or action buttons
  * The WizardStep wrapper provides those
  */
-export function Step1Content({
-  canImport,
-  dryRunState,
-  dryRunResult,
-  onTriggerDryRun,
-  onResetDryRun,
-}: Step1ContentProps) {
+export function Step1Content({ canImport, dryRunState, dryRunResult }: Step1ContentProps) {
   const {
     control,
     register,
@@ -165,31 +155,14 @@ export function Step1Content({
   const duplicateTemplateFileName = findDuplicateTemplateFileName(notificationsTemplateFiles);
 
   // Whether we have enough data to run a dry-run validation
-  const canRunDryRun =
-    !autoSyncActive &&
-    Boolean(policyTreeName) &&
-    validatePolicyTreeName(policyTreeName) === true &&
-    !duplicateTemplateFileName &&
-    hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
-
-  // Trigger dry-run when a source is selected (YAML file or datasource) or the template files change.
-  // When the step is no longer runnable (e.g. a duplicate template name), clear any previous result so
-  // a stale success can't keep the review step reporting the config as ready to import.
-  useEffect(() => {
-    if (canRunDryRun) {
-      onTriggerDryRun();
-    } else {
-      onResetDryRun();
-    }
-  }, [
-    canRunDryRun,
-    onTriggerDryRun,
-    onResetDryRun,
+  const canRunDryRunNow = canRunDryRun({
+    policyTreeName,
     notificationsSource,
     notificationsYamlFile,
     notificationsDatasourceUID,
     notificationsTemplateFiles,
-  ]);
+    autoSyncNotificationsEnabled: autoSyncNotificationsEnabled ?? false,
+  });
 
   // Drop any leftover Policy Tree Name error once Auto-sync disables the field.
   useEffect(() => {
@@ -207,13 +180,11 @@ export function Step1Content({
     }
   }, [isLoadingAutoSyncConfig, isSelectedDatasourceAutoSyncCapable, autoSyncNotificationsEnabled, setValue]);
 
-  // Trigger validation + dry-run when the policy tree name input loses focus
-  const handlePolicyTreeNameBlur = useCallback(async () => {
-    await trigger('policyTreeName'); //force validation onblur
-    if (canRunDryRun) {
-      onTriggerDryRun();
-    }
-  }, [trigger, canRunDryRun, onTriggerDryRun]);
+  // Re-runs this field's own react-hook-form validation on blur (dry-run re-validation on edit
+  // now lives in ImportWizardContent, which watches the same form values directly).
+  const handlePolicyTreeNameBlur = useCallback(() => {
+    trigger('policyTreeName');
+  }, [trigger]);
 
   const sourceOptions = getNotificationsSourceOptions();
 
@@ -478,7 +449,7 @@ export function Step1Content({
       </Box>
 
       {/* Validation Status */}
-      {canRunDryRun && dryRunState && dryRunState !== 'idle' && (
+      {canRunDryRunNow && dryRunState && dryRunState !== 'idle' && (
         <ValidationStatus state={dryRunState} result={dryRunResult} />
       )}
     </Stack>
