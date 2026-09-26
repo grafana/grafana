@@ -492,3 +492,71 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewCon
 	})
 	common.RequireDashboardTitle(t, helper.DashboardsV1, uid, "Edited Title")
 }
+
+// TestIntegrationProvisioning_IncrementalGitSync_RenameFromInvalidOldPath_Recovers
+// reproduces grafana#130899. IsPathSupported rejects the '&' in the old path,
+// so the first full sync is a silent no-op (independent of #131449) -- but
+// still advances lastRef, and incremental rename-detection is git-level, so it
+// reaches RenameResourceFile regardless. Before this PR's fix that aborted
+// there; now a single Get settles that the dashboard was never synced, and
+// the write goes through as a plain create.
+func TestIntegrationProvisioning_IncrementalGitSync_RenameFromInvalidOldPath_Recovers(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "git-incremental-rename-invalid-old-path"
+	const uid = "invalid-old-path-001"
+
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"bad&path/dashboard.json": common.DashboardJSON(uid, "Recovered Dashboard", 1),
+	}, "write", "branch")
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	helper.RequireRepoDashboardCount(t, repoName, 0)
+
+	require.NoError(t, local.CreateDirPath("good-path"))
+	_, err := local.Git("mv", "bad&path/dashboard.json", "good-path/dashboard.json")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "rename away from the invalid path")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
+		uid: {Title: "Recovered Dashboard", SourcePath: "good-path/dashboard.json"},
+	})
+}
+
+// TestIntegrationProvisioning_FullGitSync_RenameFromInvalidOldPath_Recovers is
+// the full-sync counterpart Roberto asked for. Full sync's own rename
+// detection (DetectRenames) never calls RenameResourceFile -- it pairs a
+// FileActionDeleted (from Grafana's stored list) with a FileActionCreated by
+// hash, so it was never exposed to this bug. Nothing existed to pair against
+// here, so this hits the plain-create side, not the hash-match side -- but it
+// still answers #130899's literal claim: a full pull does recover it.
+func TestIntegrationProvisioning_FullGitSync_RenameFromInvalidOldPath_Recovers(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "git-full-rename-invalid-old-path"
+	const uid = "invalid-old-path-full-001"
+
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"bad&path/dashboard.json": common.DashboardJSON(uid, "Recovered Dashboard", 1),
+	}, "write", "branch")
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	helper.RequireRepoDashboardCount(t, repoName, 0)
+
+	require.NoError(t, local.CreateDirPath("good-path"))
+	_, err := local.Git("mv", "bad&path/dashboard.json", "good-path/dashboard.json")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "rename away from the invalid path")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
+		uid: {Title: "Recovered Dashboard", SourcePath: "good-path/dashboard.json"},
+	})
+}

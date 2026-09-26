@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -228,6 +229,18 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	return fileName, len(body), nil
 }
 
+func shouldSkipStrictValidation(oldHash, newHash string) bool {
+	return oldHash != "" && oldHash == newHash
+}
+
+// QuotaGate is the minimal quota interface RenameResourceFile needs: reserve
+// a slot for a genuine create, and give it back if the write turns out not
+// to need it. quotas.QuotaTracker (and its mock) already satisfy this.
+type QuotaGate interface {
+	TryAcquire() bool
+	Release()
+}
+
 // WriteResourceOption configures optional behavior for resource write operations.
 type WriteResourceOption func(*writeResourceConfig)
 
@@ -278,7 +291,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	// file, the spec is unchanged — only metadata (path, folder) differs. Skip
 	// strict validation so the unchanged spec is not rejected by rules introduced
 	// after the resource was first persisted (e.g. legacy dashboards).
-	if cfg.existingHash != "" && cfg.existingHash == fileInfo.Hash {
+	if shouldSkipStrictValidation(cfg.existingHash, fileInfo.Hash) {
 		parsed.SkipStrictValidation = true
 	}
 
@@ -433,26 +446,84 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	return nil
 }
 
-// RenameResourceFile moves the resource at previousPath to newPath. The returned
-// size is the number of bytes of the new file content written at newPath.
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error) {
+// RenameResourceFile moves the resource at previousPath to newPath. quota
+// (nil-safe) is consulted only at the point a net-new resource is about to be
+// created -- an in-place update never calls it, so quota exhaustion cannot
+// block a rename that isn't actually adding a resource -- and given back if
+// the write ends up not needing it after all (failure, or an update found on
+// retry).
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, quota QuotaGate, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error) {
 	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read previous file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, false, fmt.Errorf("failed to read previous file: %w", err)
 	}
-	oldParsed, err := r.parser.Parse(ctx, oldInfo)
-	if err != nil {
-		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to parse previous file: %w", err)
-	}
+	oldParsed, oldParseErr := r.parser.Parse(ctx, oldInfo)
 
 	newInfo, err := r.repo.Read(ctx, newPath, newRef)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read new file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, false, fmt.Errorf("failed to read new file: %w", err)
 	}
 	size := len(newInfo.Data)
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse new file: %w", err)
+		return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("failed to parse new file: %w", err)
+	}
+
+	if oldParseErr != nil {
+		if pathErr := IsPathSupported(previousPath); pathErr != nil {
+			// Bad path, not a content problem: proceed with the new write;
+			// other parse failures fall through to the fatal return below.
+			// One Get (regardless of hash) gates quota exactly once; hash
+			// match additionally proves old and new are the same object, so
+			// nothing is left to orphan -- hash-differ leaves that unconfirmed.
+			resolved := shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash)
+			// Same identity Run() writes with -- a mismatch can read as
+			// NotFound and wrongly choose ForceCreate.
+			identityCtx, _, err := identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
+			if err != nil {
+				return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("set provisioning identity: %w", err)
+			}
+			existing, getErr := newParsed.Client.Get(identityCtx, newParsed.Obj.GetName(), metav1.GetOptions{})
+			reserved := false
+			switch {
+			case getErr == nil:
+				newParsed.Existing = existing
+				if resolved {
+					newParsed.SkipStrictValidation = true
+				}
+			case apierrors.IsNotFound(getErr):
+				if quota != nil {
+					if !quota.TryAcquire() {
+						return "", "", schema.GroupVersionKind{}, size, false, quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping recovery of %s", newPath))
+					}
+					reserved = true
+				}
+				newParsed.ForceCreate = true
+			default:
+				// Neither found nor not-found -- stays fatal rather than
+				// falling through with neither branch's decision made.
+				return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("check existing resource before rename recovery: %w", getErr)
+			}
+			newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
+			if err != nil {
+				if reserved {
+					quota.Release()
+				}
+				return "", "", gvk, size, false, fmt.Errorf("failed to write resource: %w", err)
+			}
+			// A create with no matching delete is the one outcome that adds a
+			// resource; a fallback to update (e.g. Create raced into
+			// AlreadyExists) needs its reservation given back.
+			netNew := newParsed.Action == provisioning.ResourceActionCreate
+			if reserved && !netNew {
+				quota.Release()
+			}
+			if resolved {
+				return newName, "", gvk, size, netNew, nil
+			}
+			return newName, "", gvk, size, netNew, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
+		}
+		return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("failed to parse previous file: %w", oldParseErr)
 	}
 
 	// Delete the old resource when the identity changed (name or resource kind).
@@ -460,14 +531,14 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	if !oldParsed.SameIdentity(newParsed) {
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.Run(ctx); err != nil {
-			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, size, fmt.Errorf("failed to delete old resource: %w", err)
+			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, size, false, fmt.Errorf("failed to delete old resource: %w", err)
 		}
 	} else {
 		// Delete dry-run fetches the existing object (with ownership validation)
 		// without mutating it, populating oldParsed.Existing for identity comparison.
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.DryRun(ctx); err != nil {
-			return "", "", schema.GroupVersionKind{}, size, err
+			return "", "", schema.GroupVersionKind{}, size, false, err
 		}
 		// Pure path-only rename (git blob hash unchanged): the file content is
 		// byte-identical, so the UPDATE we are about to send carries the same
@@ -478,7 +549,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		// Rename-with-edits (different hashes) keeps strict validation: the
 		// new content is a real change and any validation failure must be
 		// surfaced rather than silently admitted.
-		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+		if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
 			newParsed.SkipStrictValidation = true
 		}
 	}
@@ -487,7 +558,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 
 	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 	if err != nil {
-		return oldParsed.Obj.GetName(), oldFolderName, gvk, size, fmt.Errorf("failed to write resource: %w", err)
+		return oldParsed.Obj.GetName(), oldFolderName, gvk, size, false, fmt.Errorf("failed to write resource: %w", err)
 	}
 
 	// When the resource's parent folder didn't change (e.g. the entire
@@ -498,7 +569,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		oldFolderName = ""
 	}
 
-	return newName, oldFolderName, gvk, size, nil
+	return newName, oldFolderName, gvk, size, false, nil
 }
 
 // RemoveResourceFromFile deletes the resource described by the file at path/ref.
