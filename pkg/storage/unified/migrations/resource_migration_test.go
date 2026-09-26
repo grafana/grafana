@@ -391,6 +391,34 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 		}
 	})
 
+	t.Run("timeout reports the rename threads it can see", func(t *testing.T) {
+		table := uniqueTable(t, env.engine)
+		renamer := &mysqlTableRenamer{log: logger, waitDeadline: 500 * time.Millisecond}
+		mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+
+		sess := env.engine.NewSession()
+		defer sess.Close()
+		require.NoError(t, sess.Begin())
+		renamer.Init(sess, mg)
+
+		unlock, results := lockAndQueueRename(t, env.engine, []string{table})
+
+		require.NoError(t, renamer.waitForRenamesQueued(context.Background(), []renamePair{{table, table + legacySuffix}}))
+
+		err := renamer.waitForRenamesQueued(context.Background(), []renamePair{{"nonexistent_xyz", "nonexistent_xyz" + legacySuffix}})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "visible RENAME threads")
+		require.Contains(t, err.Error(), table)
+
+		unlock()
+		select {
+		case err := <-results[0]:
+			require.NoError(t, err)
+		case <-time.After(10 * time.Second):
+			t.Fatal("RENAME timed out")
+		}
+	})
+
 	t.Run("context cancellation", func(t *testing.T) {
 		table := uniqueTable(t, env.engine)
 		renamer := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
