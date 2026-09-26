@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -74,12 +76,24 @@ type CreateTokenCommand struct {
 	ExternalSession *ExternalSession
 }
 
+// SessionTokenOAuthInfo contains a session token, its linked OAuth credentials,
+// and provider metadata, loaded together to avoid separate lookups.
+type SessionTokenOAuthInfo struct {
+	Token      *UserToken
+	AuthID     string
+	AuthModule string
+	OAuthToken *oauth2.Token
+	// AuthModule comes from the external session, which may outlive its user_auth row.
+	HasAuthInfo bool
+}
+
 // UserTokenService are used for generating and validating user tokens
 //
 //go:generate mockery --name UserTokenService --structname MockUserAuthTokenService --outpkg authtest --filename auth_token_service_mock.go --output ./authtest/
 type UserTokenService interface {
 	CreateToken(ctx context.Context, cmd *CreateTokenCommand) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
+	LookupTokenForOAuth(ctx context.Context, unhashedToken string) (*SessionTokenOAuthInfo, error)
 	GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*UserToken, error)
 	GetExternalSession(ctx context.Context, externalSessionID int64) (*ExternalSession, error)
 	FindExternalSessions(ctx context.Context, query *ListExternalSessionQuery) ([]*ExternalSession, error)
