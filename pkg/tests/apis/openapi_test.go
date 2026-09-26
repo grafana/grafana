@@ -2,6 +2,7 @@ package apis
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"testing"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+const updateOpenAPISnapshotsEnv = "UPDATE_OPENAPI_SNAPSHOTS"
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -23,7 +26,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationOpenAPIs(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	h := newOpenAPITestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:      false, // required for experimental APIs
 		RBACSingleOrganization: true,  // required for the Users API
 		EnableFeatureToggles: []string{
@@ -160,7 +163,12 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "plugins.grafana.app",
 		Version: "v0alpha1",
 	}}
+	snapshotVerifier := VerifyOpenAPISnapshots
+	if os.Getenv(updateOpenAPISnapshotsEnv) == "1" {
+		snapshotVerifier = updateOpenAPISnapshots
+	}
+
 	for _, gv := range groups {
-		VerifyOpenAPISnapshots(t, dir, gv, h)
+		snapshotVerifier(t, dir, gv, h)
 	}
 }
