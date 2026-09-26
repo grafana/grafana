@@ -72,6 +72,17 @@ func legacyActionToK8s(dsType, action string) (string, bool) {
 	return convertedAction, convertedAction != action
 }
 
+// LegacyActionRequiresK8sForm reports whether a legacy datasource action has a k8s
+// equivalent inside a datasource API group, and must therefore be written in k8s form.
+func LegacyActionRequiresK8sForm(action string) bool {
+	k8sAction, ok := legacyActionToK8s("*", action)
+	if !ok {
+		return false
+	}
+	group, _, found := strings.Cut(k8sAction, "/")
+	return found && strings.HasSuffix(group, K8sDatasourceAPIGroupSuffix)
+}
+
 // LegacyDatasourceAction replaces a legacy ds action string with its k8s form
 func LegacyDatasourceAction(dsType string, action *string) {
 	if converted, ok := legacyActionToK8s(dsType, *action); ok {
