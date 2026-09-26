@@ -2,9 +2,11 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,12 +16,15 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
+	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
+	k8testing "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
@@ -35,6 +40,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
+	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -1253,43 +1259,27 @@ func (s *repoIDHandlerStub) Test(context.Context) (*provisioning.TestResults, er
 func (s *repoIDHandlerStub) ResolvedRepoID() string   { return s.resolvedID }
 func (s *repoIDHandlerStub) ShouldUpdateRepoID() bool { return s.shouldUpdate }
 
-// raceSimulatingPatcher approximates the apiserver's atomic JSON Patch
-// application (see k8s.io/apiserver/pkg/endpoints/handlers/patch.go,
-// jsonPatcher.applyJSPatch): all operations are evaluated against a single
-// storage snapshot, and if any "test" operation fails, none of the patch's
-// other operations are applied. This lets tests exercise what happens when a
-// stale reconciliation's precondition no longer holds, without needing the
-// real evanphx/json-patch dependency in this package.
-type raceSimulatingPatcher struct {
-	storage *provisioning.Repository
+// countingStatusPatcher is a StatusPatcher that records how many times Patch
+// was called, and - when client is set - actually applies the patch against
+// the status subresource so callers can observe the persisted result (e.g.
+// /status/observedGeneration). The call count proves applyPatches sends
+// exactly one combined patch per pass, regardless of whether it succeeds.
+type countingStatusPatcher struct {
+	calls  atomic.Int32
+	client client.ProvisioningV0alpha1Interface
 }
 
-func (p *raceSimulatingPatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]interface{}) error {
-	for _, op := range patchOperations {
-		if op["op"] != "test" {
-			continue
-		}
-		path, _ := op["path"].(string)
-		if path == "/spec/gitlab/url" {
-			var currentURL string
-			if p.storage.Spec.GitLab != nil {
-				currentURL = p.storage.Spec.GitLab.URL
-			}
-			if currentURL != op["value"] {
-				return apierrors.NewGenericServerResponse(
-					http.StatusUnprocessableEntity, "", schema.GroupResource{}, "",
-					fmt.Sprintf("test operation on %s failed", path), 0, false)
-			}
-		}
+func (p *countingStatusPatcher) Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error {
+	p.calls.Add(1)
+	if p.client == nil {
+		return nil
 	}
-
-	for _, op := range patchOperations {
-		if op["op"] == "add" && op["path"] == "/spec/gitlab/repoID" && p.storage.Spec.GitLab != nil {
-			p.storage.Spec.GitLab.RepoID, _ = op["value"].(string)
-		}
+	patch, err := json.Marshal(patchOperations)
+	if err != nil {
+		return err
 	}
-
-	return nil
+	_, err = p.client.Repositories(repo.Namespace).Patch(ctx, repo.Name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
+	return err
 }
 
 // TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL verifies
@@ -1357,7 +1347,66 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 			require.NoError(t, indexer.Add(observed))
 			repoLister := listers.NewRepositoryLister(indexer)
 
-			patcher := &raceSimulatingPatcher{storage: storage}
+			// The repo ID backfill's spec ops and the status ops (including
+			// observedGeneration/conditions) now travel in one combined patch
+			// through rc.statusPatcher against the status subresource.
+			// Seeding the fake clientset with `storage` and letting its real
+			// JSON Patch application (RFC 6902 "test" op semantics) evaluate
+			// the patch is what simulates the race here.
+			fakeClientset := fakeclientset.NewSimpleClientset(storage)
+
+			// The plain fake clientset doesn't bump Generation on a spec
+			// change the way the real unified storage backend does (see
+			// pkg/storage/unified/apistore/prepare.go). Mirror that one
+			// behavior here so this test can exercise the exact staleness
+			// scenario a real spec-changing PATCH produces: the resulting
+			// generation must be computed before the write (RepositoryController
+			// no longer has a chance to read it back mid-pass, since it's one
+			// atomic write now), or /status/observedGeneration ends up wrong
+			// relative to the server's actual generation.
+			fakeClientset.PrependReactor("patch", "repositories", func(action k8testing.Action) (bool, runtime.Object, error) {
+				patchAction, ok := action.(k8testing.PatchAction)
+				if !ok || patchAction.GetSubresource() != "status" {
+					return false, nil, nil
+				}
+
+				tracker := fakeClientset.Tracker()
+				gvr := action.GetResource()
+				existingObj, err := tracker.Get(gvr, patchAction.GetNamespace(), patchAction.GetName())
+				if err != nil {
+					return true, nil, err
+				}
+				existing, ok := existingObj.(*provisioning.Repository)
+				if !ok {
+					return true, nil, fmt.Errorf("unexpected type %T", existingObj)
+				}
+
+				oldBytes, err := json.Marshal(existing)
+				if err != nil {
+					return true, nil, err
+				}
+				patch, err := jsonpatch.DecodePatch(patchAction.GetPatch())
+				if err != nil {
+					return true, nil, err
+				}
+				newBytes, err := patch.Apply(oldBytes)
+				if err != nil {
+					return true, nil, err // preserves "test" op failure semantics
+				}
+				updated := &provisioning.Repository{}
+				if err := json.Unmarshal(newBytes, updated); err != nil {
+					return true, nil, err
+				}
+
+				if !reflect.DeepEqual(existing.Spec, updated.Spec) {
+					updated.Generation = existing.Generation + 1
+				}
+
+				if err := tracker.Update(gvr, updated, patchAction.GetNamespace()); err != nil {
+					return true, nil, err
+				}
+				return true, updated, nil
+			})
 
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().
@@ -1365,6 +1414,7 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 				Maybe()
 
 			tester := repository.NewTester()
+			patcher := &countingStatusPatcher{client: fakeClientset.ProvisioningV0alpha1()}
 			healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
 			mockRepo := &repoIDHandlerStub{
@@ -1384,6 +1434,7 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 
 			repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 			rc := &RepositoryController{
+				client:        fakeClientset.ProvisioningV0alpha1(),
 				repos:         repoGetter,
 				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
 				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
@@ -1403,12 +1454,44 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 				require.NoError(t, err)
 			}
 
+			updated, getErr := fakeClientset.ProvisioningV0alpha1().Repositories(namespace).
+				Get(context.Background(), repoName, metav1.GetOptions{})
+			require.NoError(t, getErr)
+
 			if tc.wantRepoIDSet {
-				assert.Equal(t, "resolved-for-a", storage.Spec.GitLab.RepoID,
+				assert.Equal(t, "resolved-for-a", updated.Spec.GitLab.RepoID,
 					"repoID should be backfilled when the url has not changed")
 			} else {
-				assert.Empty(t, storage.Spec.GitLab.RepoID,
+				assert.Empty(t, updated.Spec.GitLab.RepoID,
 					"a stale reconciliation must not pin a repoID resolved for a different url")
+			}
+
+			if tc.wantErr {
+				assert.Equal(t, int32(1), patcher.calls.Load(),
+					"the combined spec+status patch is attempted once, but the url precondition failing must reject the whole write atomically")
+				assert.EqualValues(t, 0, updated.Status.ObservedGeneration,
+					"a rejected combined patch must leave observedGeneration untouched")
+			} else {
+				assert.Greater(t, patcher.calls.Load(), int32(0),
+					"the combined spec+status patch should have been applied")
+				// The repoID backfill bumped Generation server-side; observedGeneration
+				// must reflect that fresh value, not the one obj had when process()
+				// first read it - otherwise the next reconcile sees a spurious
+				// mismatch and treats spec as changed again for no reason.
+				assert.Equal(t, updated.Generation, updated.Status.ObservedGeneration,
+					"observedGeneration must match the generation actually produced by this pass's spec patch")
+				assert.EqualValues(t, 2, updated.Generation,
+					"the repoID backfill should have bumped generation by exactly one")
+
+				// The Ready/NamespaceQuota conditions were built earlier in this same
+				// pass, before the repoID backfill bumped generation - they must not
+				// persist stamped with the stale, pre-backfill generation while
+				// observedGeneration above advances to the new one.
+				for _, c := range updated.Status.Conditions {
+					assert.Equal(t, updated.Generation, c.ObservedGeneration,
+						"condition %q must be stamped with the post-backfill generation", c.Type)
+				}
+				assert.NotEmpty(t, updated.Status.Conditions, "expected conditions to have been written this pass")
 			}
 		})
 	}
@@ -2447,6 +2530,13 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 				},
 			}
 		},
+		repositoriesFunc: func(_ string) client.RepositoryInterface {
+			return mockRepoInterface{
+				patchFunc: func(_ context.Context, _ string, _ types.PatchType, _ []byte, _ metav1.PatchOptions, _ ...string) (*provisioning.Repository, error) {
+					return repo, nil
+				},
+			}
+		},
 	}
 
 	// The repo factory and health checker are reached.
@@ -2651,6 +2741,13 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 			return mockConnectionInterface{
 				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {
 					return connObj, nil
+				},
+			}
+		},
+		repositoriesFunc: func(_ string) client.RepositoryInterface {
+			return mockRepoInterface{
+				patchFunc: func(_ context.Context, _ string, _ types.PatchType, _ []byte, _ metav1.PatchOptions, _ ...string) (*provisioning.Repository, error) {
+					return repo, nil
 				},
 			}
 		},
@@ -3422,6 +3519,7 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 		statusPatcher: patcher,
 		repoFactory:   repoFactory,
 		jobs:          mockJobs,
+		client:        fakeclientset.NewSimpleClientset(repo).ProvisioningV0alpha1(),
 		logger:        logging.DefaultLogger.With("logger", loggerName),
 		tracer:        tracing.InitializeTracerForTest(),
 	}
@@ -3509,6 +3607,9 @@ func TestRepositoryController_process_BranchProtectionFailureStillRunsHooks(t *t
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
 		},
+		Secure: provisioning.SecureValues{
+			Token: common.InlineSecureValue{Name: "existing-token"},
+		},
 	}
 
 	stub := &hookRepoStub{
@@ -3558,6 +3659,9 @@ func TestRepositoryController_process_WritePermissionDeniedStillRunsHooks(t *tes
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
+		},
+		Secure: provisioning.SecureValues{
+			Token: common.InlineSecureValue{Name: "existing-token"},
 		},
 	}
 
@@ -3670,6 +3774,9 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
 		},
+		Secure: provisioning.SecureValues{
+			Token: common.InlineSecureValue{Name: "existing-token"},
+		},
 	}
 	// A second repo in the same namespace keeps the namespace over quota.
 	otherRepo := repo.DeepCopy()
@@ -3708,6 +3815,7 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 		statusPatcher: patcher,
 		repoFactory:   repoFactory,
 		jobs:          mockJobs,
+		client:        fakeclientset.NewSimpleClientset(repo).ProvisioningV0alpha1(),
 		logger:        logging.DefaultLogger.With("logger", loggerName),
 		tracer:        tracing.InitializeTracerForTest(),
 	}

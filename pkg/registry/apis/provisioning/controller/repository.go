@@ -1027,14 +1027,48 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
+	// Set below, once hook processing has run; read inside applyPatches after
+	// any spec op this pass has been applied. See the comment at its
+	// assignment for why the observedGeneration op can't be pre-built here.
+	var markObservedGeneration bool
 
 	// applyPatches flushes any patches not yet written
 	applyPatches := func() error {
-		if len(patchOperations) == 0 {
-			return nil
-		}
 		ops := patchOperations
 		patchOperations = nil
+		shouldMarkObserved := markObservedGeneration
+		markObservedGeneration = false
+
+		if len(ops) == 0 && !shouldMarkObserved {
+			return nil
+		}
+
+		// A spec op in this write bumps generation by exactly one - unified
+		// storage's rule (see apistore/prepare.go's hasChanged/SetGeneration),
+		// independent of which endpoint carries the write. Since this is one
+		// atomic, resourceVersion-gated write, that outcome is knowable up
+		// front: it either lands starting from exactly obj's current state,
+		// or the whole write fails and nothing below applies.
+		finalGeneration := obj.Generation
+		for _, op := range ops {
+			if path, _ := op["path"].(string); strings.HasPrefix(path, "/spec") {
+				finalGeneration = obj.Generation + 1
+				break
+			}
+		}
+
+		if shouldMarkObserved {
+			ops = append(ops, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/observedGeneration",
+				"value": finalGeneration,
+			})
+		}
+		// Conditions built earlier this pass were stamped with obj.Generation
+		// before any spec op above was known; rebind them to the generation
+		// this write will actually produce (a no-op if it's unchanged).
+		RebindConditionGeneration(ops, finalGeneration)
+
 		patchCtx, patchSpan := rc.tracer.Start(ctx, "provisioning.controller.apply_status",
 			repoSpanAttrs(obj),
 			trace.WithAttributes(attribute.Int("patch.operations", len(ops))),
@@ -1043,6 +1077,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		if patchErr := rc.statusPatcher.Patch(patchCtx, obj, ops...); patchErr != nil {
 			return fmt.Errorf("status patch operations failed: %w", patchErr)
 		}
+		obj.Generation = finalGeneration
 		return nil
 	}
 	defer func() {
@@ -1340,13 +1375,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// observedGeneration, and since retries after this point only trigger on a
 	// generation mismatch or a missing webhook, that failure would never be
 	// retried once cooldown ends.
-	if hasSpecChanged && hookErr == nil && !hooksSuppressed {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/observedGeneration",
-			"value": obj.Generation,
-		})
-	}
+
+	// get latest observedGeneration after any additional spec changes have been applied
+	// during `applyPatches()`
+	markObservedGeneration = hasSpecChanged && hookErr == nil && !hooksSuppressed
 
 	// Build ALL condition patches together to avoid one overwriting another.
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(

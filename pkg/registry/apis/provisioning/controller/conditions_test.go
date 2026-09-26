@@ -615,3 +615,117 @@ func findCondition(conditions []metav1.Condition, conditionType string) *metav1.
 	}
 	return nil
 }
+
+func TestRebindConditionGeneration(t *testing.T) {
+	t.Run("whole-array replace: every condition in the array is rebound", func(t *testing.T) {
+		// Shape produced by buildInitialConditionsPatch, when the conditions
+		// array has never been initialized.
+		ops := []map[string]interface{}{
+			{
+				"op":   "replace",
+				"path": "/status/conditions",
+				"value": []metav1.Condition{
+					{Type: provisioning.ConditionTypeNamespaceQuota, ObservedGeneration: 1},
+					{Type: provisioning.ConditionTypeReady, ObservedGeneration: 1},
+				},
+			},
+		}
+
+		RebindConditionGeneration(ops, 2)
+
+		conditions, ok := ops[0]["value"].([]metav1.Condition)
+		require.True(t, ok)
+		require.Len(t, conditions, 2)
+		for _, c := range conditions {
+			assert.Equal(t, int64(2), c.ObservedGeneration, "condition %q should be rebound", c.Type)
+		}
+	})
+
+	t.Run("per-condition add: the single condition is rebound", func(t *testing.T) {
+		// Shape produced by BuildConditionPatchOpsFromExisting for a
+		// newly-appeared condition type.
+		ops := []map[string]interface{}{
+			{
+				"op":    "add",
+				"path":  "/status/conditions/-",
+				"value": metav1.Condition{Type: provisioning.ConditionTypeReady, ObservedGeneration: 1},
+			},
+		}
+
+		RebindConditionGeneration(ops, 2)
+
+		condition, ok := ops[0]["value"].(metav1.Condition)
+		require.True(t, ok)
+		assert.Equal(t, int64(2), condition.ObservedGeneration)
+	})
+
+	t.Run("per-condition replace: the single condition is rebound", func(t *testing.T) {
+		// Shape produced by BuildConditionPatchOpsFromExisting for a condition
+		// type that already exists and changed.
+		ops := []map[string]interface{}{
+			{
+				"op":    "replace",
+				"path":  "/status/conditions/0",
+				"value": metav1.Condition{Type: provisioning.ConditionTypeNamespaceQuota, ObservedGeneration: 1},
+			},
+		}
+
+		RebindConditionGeneration(ops, 2)
+
+		condition, ok := ops[0]["value"].(metav1.Condition)
+		require.True(t, ok)
+		assert.Equal(t, int64(2), condition.ObservedGeneration)
+	})
+
+	t.Run("multiple per-condition ops in the same batch are each rebound independently", func(t *testing.T) {
+		ops := []map[string]interface{}{
+			{
+				"op":    "add",
+				"path":  "/status/conditions/-",
+				"value": metav1.Condition{Type: provisioning.ConditionTypeReady, ObservedGeneration: 1},
+			},
+			{
+				"op":    "replace",
+				"path":  "/status/conditions/0",
+				"value": metav1.Condition{Type: provisioning.ConditionTypeNamespaceQuota, ObservedGeneration: 1},
+			},
+		}
+
+		RebindConditionGeneration(ops, 3)
+
+		for _, op := range ops {
+			condition, ok := op["value"].(metav1.Condition)
+			require.True(t, ok)
+			assert.Equal(t, int64(3), condition.ObservedGeneration, "condition %q should be rebound", condition.Type)
+		}
+	})
+
+	t.Run("non-condition ops in the same batch are left untouched", func(t *testing.T) {
+		ops := []map[string]interface{}{
+			{
+				"op":    "replace",
+				"path":  "/status/observedGeneration",
+				"value": int64(1),
+			},
+			{
+				"op":    "add",
+				"path":  "/status/conditions/-",
+				"value": metav1.Condition{Type: provisioning.ConditionTypeReady, ObservedGeneration: 1},
+			},
+		}
+
+		RebindConditionGeneration(ops, 2)
+
+		assert.Equal(t, int64(1), ops[0]["value"], "a non-condition op must not be touched")
+		condition, ok := ops[1]["value"].(metav1.Condition)
+		require.True(t, ok)
+		assert.Equal(t, int64(2), condition.ObservedGeneration)
+	})
+
+	t.Run("empty ops does not panic", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			RebindConditionGeneration(nil, 2)
+			RebindConditionGeneration([]map[string]interface{}{}, 2)
+		})
+	})
+}
