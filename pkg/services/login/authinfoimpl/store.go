@@ -8,9 +8,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfok8s"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -25,18 +29,23 @@ type Store struct {
 
 func ProvideStore(ctx context.Context, sql legacysql.LegacyDatabaseProvider,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	cfg *setting.Cfg,
+	configProvider apiserver.DirectRestConfigProvider,
+	tracer tracing.Tracer,
 ) (login.Store, error) {
-	store := &Store{
+	legacyStore := &Store{
 		sql:            sql,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
 	}
 
-	if err := store.authInfoUserUIDMigration(ctx); err != nil {
+	if err := legacyStore.authInfoUserUIDMigration(ctx); err != nil {
 		return nil, err
 	}
 
-	return store, nil
+	k8sStore := authinfok8s.NewStore(log.New("login.authinfo.k8s"), cfg, configProvider, tracer)
+
+	return newRedirectStore(legacyStore, k8sStore, cfg), nil
 }
 
 // GetAuthInfo returns the auth info for a user
