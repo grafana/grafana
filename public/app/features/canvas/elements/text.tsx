@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import * as React from 'react';
 import { of } from 'rxjs';
 
@@ -48,13 +48,32 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   panelData = context.instanceState?.scene?.data.series;
 
   const textRef = useRef<string>(config.text?.fixed ?? '');
+  const contextRef = useRef(context);
+  contextRef.current = context;
 
   // Save text on TextEdit unmount
   useEffect(() => {
     return () => {
-      saveText(textRef.current);
+      const currentContext = contextRef.current;
+      const selectedElement: ElementState | undefined = currentContext.instanceState?.selected[0];
+      if (selectedElement) {
+        const options = selectedElement.options;
+        selectedElement.onChange({
+          ...options,
+          config: {
+            ...options.config,
+            text: { ...selectedElement.options.config.text, fixed: textRef.current },
+          },
+        });
+
+        // Force a re-render (update scene data after config update)
+        const scene = currentContext.instanceState?.scene;
+        if (scene) {
+          scene.updateData(scene.data);
+        }
+      }
     };
-  });
+  }, []);
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -69,30 +88,6 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   const onKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
     textRef.current = event.currentTarget.value;
   };
-
-  const saveText = useCallback(
-    (textValue: string) => {
-      let selectedElement: ElementState;
-      selectedElement = context.instanceState?.selected[0];
-      if (selectedElement) {
-        const options = selectedElement.options;
-        selectedElement.onChange({
-          ...options,
-          config: {
-            ...options.config,
-            text: { ...selectedElement.options.config.text, fixed: textValue },
-          },
-        });
-
-        // Force a re-render (update scene data after config update)
-        const scene = context.instanceState?.scene;
-        if (scene) {
-          scene.updateData(scene.data);
-        }
-      }
-    },
-    [context.instanceState?.scene, context.instanceState?.selected]
-  );
 
   const styles = useStyles2(getStyles(data));
   return (
