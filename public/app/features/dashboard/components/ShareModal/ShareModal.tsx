@@ -20,12 +20,7 @@ import { ShareSnapshot } from './ShareSnapshot';
 import { type ShareModalTabModel, type ShareModalTabProps } from './types';
 import { getTrackingSource, shareDashboardType } from './utils';
 
-const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
-
-export function addDashboardShareTab(tab: ShareModalTabModel) {
-  customDashboardTabs.push(tab);
-}
 
 function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: string) {
   const linkLabel = t('share-modal.tab-title.link', 'Link');
@@ -56,8 +51,6 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
       value: shareDashboardType.export,
       component: ShareExport,
     });
-    tabs.push(...customDashboardTabs);
-
     if (isPublicDashboardsEnabled()) {
       tabs.push({
         label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
