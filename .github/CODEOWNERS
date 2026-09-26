@@ -476,6 +476,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/general-dashboards.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/import-dashboard.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/load-options-from-url.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/meticulous-feature-flags.spec.ts @grafana/dataviz-squad
 /e2e-playwright/dashboards-suite/new-constant-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-custom-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-interval-variable.spec.ts @grafana/dashboards-squad
@@ -658,6 +659,9 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/openFeature @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/internal/openFeature/index.test.ts @grafana/dataviz-squad
+/packages/grafana-runtime/src/internal/openFeature/meticulous.test.tsx @grafana/dataviz-squad
+/packages/grafana-runtime/src/internal/openFeature/meticulous.ts @grafana/dataviz-squad
 /packages/grafana-runtime/src/unstable.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/tsconfig.build.json @grafana/grafana-frontend-platform
 /packages/grafana-runtime/tsconfig.json @grafana/grafana-frontend-platform

@@ -1,6 +1,13 @@
 import { LocalStorageProvider } from '@openfeature/localstorage-provider';
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
-import { OpenFeature, ProviderEvents, NOOP_PROVIDER, type EventDetails, MultiProvider } from '@openfeature/react-sdk';
+import {
+  OpenFeature,
+  ProviderEvents,
+  NOOP_PROVIDER,
+  type EventDetails,
+  MultiProvider,
+  type Provider,
+} from '@openfeature/react-sdk';
 
 import { config } from '../../config';
 import { logError } from '../../utils/logging';
@@ -66,10 +73,22 @@ export async function initOpenFeature() {
 
   const lsProvider = getLocalStorageProvider();
   const ofProvider = getOFREPWebProvider();
+  let provider: Provider | undefined;
+
+  if (window.Meticulous != null) {
+    try {
+      const { createMeticulousProvider } = await import(
+        /* webpackChunkName: "meticulous-openfeature" */ './meticulous'
+      );
+      provider = createMeticulousProvider([lsProvider, ofProvider]);
+    } catch (error) {
+      console.error('Failed to load Meticulous OpenFeature integration', error);
+    }
+  }
 
   await OpenFeature.setProviderAndWait(
     GRAFANA_CORE_OPEN_FEATURE_DOMAIN,
-    new MultiProvider([{ provider: lsProvider }, { provider: ofProvider }]),
+    provider ?? new MultiProvider([{ provider: lsProvider }, { provider: ofProvider }]),
     {
       targetingKey: config.namespace,
       ...config.openFeatureContext,

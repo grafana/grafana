@@ -62,6 +62,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@alwaysmeticulous/api@npm:2.341.0":
+  version: 2.341.0
+  resolution: "@alwaysmeticulous/api@npm:2.341.0"
+  checksum: 10/cf71b6670234f0730422899a4a61c447ad7d88d717440d9f9a6ee274f5874c040952400c49aaea37b277b2cc4a9e8c42c2a77ed77d33e5ce8dadd540f76ef113
+  languageName: node
+  linkType: hard
+
+"@alwaysmeticulous/sdk-bundles-api@npm:2.341.0":
+  version: 2.341.0
+  resolution: "@alwaysmeticulous/sdk-bundles-api@npm:2.341.0"
+  dependencies:
+    "@alwaysmeticulous/api": "npm:2.341.0"
+  checksum: 10/c1b6d4959e141127b010f591899b61da5477df96a49cf4ba8450a7c0df5032d6e49574507874f29545067b2a473be924eb518eb576dda7b096da3159a3588d6e
+  languageName: node
+  linkType: hard
+
 "@andrewbranch/untar.js@npm:^1.0.3":
   version: 1.0.3
   resolution: "@andrewbranch/untar.js@npm:1.0.3"
@@ -2978,6 +2994,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
+    "@alwaysmeticulous/sdk-bundles-api": "npm:2.341.0"
     "@grafana/data": "npm:13.3.0-pre"
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.12.0"
