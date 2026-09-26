@@ -50,6 +50,8 @@ func TestRequestMetricsRouteLabel(t *testing.T) {
 		{"/apis/other-app/v1/namespaces/ns/things", unknownGroupLabel, "list", routeNext, "404"},
 		{"/apis", "", "get", routeDiscovery, "200"},
 		{"/apis//v1/things", "", "list", routeInvalid, "400"},
+		{"/openapi/v3/apis/test-app/v1", "test-app", "get", routeBackend, "204"},
+		{"/openapi/v3/apis/other-app/v1", unknownGroupLabel, "get", routeNext, "404"},
 		{"/version", "", "get", routeNext, "404"},
 	} {
 		instrumented(svc, tc.target)

@@ -82,10 +82,20 @@ func (m *routerMetrics) discoveryResult(group, result string) {
 	m.discoveryResults.WithLabelValues(group, result).Inc()
 }
 
+// requestGroup returns the group a request is for: the group of an
+// /apis/<group>/... path, or of an /openapi/v3/apis/<group>/<version>
+// document, which is served by the same backend.
+func requestGroup(path string) string {
+	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
+		return group
+	}
+	return GroupFromPath(path)
+}
+
 // instrument serves req through gr.HandleFunc with request metrics, then logs
 // the outcome. next is forwarded to HandleFunc unchanged.
 func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler) {
-	group := GroupFromPath(req.URL.Path)
+	group := requestGroup(req.URL.Path)
 	metricGroup := group
 	if group != "" && !gr.KnownGroup(group) {
 		metricGroup = unknownGroupLabel
