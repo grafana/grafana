@@ -141,18 +141,13 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
-- **Metrics:** unknown groups are labelled `unknown` (`KnownGroup`) so arbitrary client paths can't
-  create new series. The duration histogram is labelled by group, verb and status code.
-- **Route state:** `routerCollector` (`status.go`) exports, at scrape time:
-  - `grafana_router_groups{source}`: groups served per route source;
-  - `grafana_router_breaker_state{group}`: 0 closed, 1 half-open, 2 open;
-  - `grafana_router_reconciles_total` and `grafana_router_reconcile_errors_total`;
-  - `grafana_router_shadowed_groups{source}`: groups a source offered that a higher-priority source
-    serves instead, in the latest load;
-  - `grafana_router_source_last_success_timestamp_seconds{source}`.
-
-  New backends should implement `DescribedBackend`, and new sources should report through
-  `loaderStatus`, or they show up as `unknown`.
+- **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric and example dashboard
+  queries; keep it in sync. Request metrics are recorded in `metrics.go`; route state is read at
+  scrape time by `routerCollector` (`status.go`), from atomics and the snapshot, so reconcile and
+  serving never update gauges. Labels stay bounded: `group` only for served groups, a fixed set of
+  values for `route`, `reason`, `state` and `result`; any other group is `unknown` (`KnownGroup`). In middleware mode, only requests the router
+  owns (`owns`) are instrumented. New backends should implement `DescribedBackend`, and new sources
+  should report through `loaderStatus`, or they show up as `unknown`.
 
 ## Lifecycle
 

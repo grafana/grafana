@@ -77,6 +77,7 @@ func (c *discoveryCache) retain(snapshot map[string]servingEntry) {
 func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
 	c := &r.discoveryCache
 	if d, found, fresh := c.lookup(name, entry.key); found && fresh {
+		r.observeDiscovery(name, discoveryCached)
 		return d
 	}
 	v, _, _ := c.fetches.Do(name+"\x00"+entry.key, func() (any, error) {
@@ -90,12 +91,33 @@ func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry ser
 		return fetchedDiscovery{discovery: d, complete: complete}, nil
 	})
 	fetched := v.(fetchedDiscovery)
-	if !fetched.complete {
+	switch {
+	case fetched.complete:
+		r.observeDiscovery(name, discoveryFetched)
+	default:
 		if d, found, _ := c.lookup(name, entry.key); found {
+			r.observeDiscovery(name, discoveryStale)
 			return staleDiscovery(d)
 		}
+		r.observeDiscovery(name, discoveryUnavailable)
 	}
 	return fetched.discovery
+}
+
+// How a group's aggregated discovery was obtained, for
+// grafana_router_discovery_results_total.
+const (
+	discoveryProvided    = "provided"    // from a DiscoveryProvider, no request
+	discoveryCached      = "cached"      // a fresh cache entry
+	discoveryFetched     = "fetched"     // a complete fetch from the backend
+	discoveryStale       = "stale"       // the last good copy, after a failed fetch
+	discoveryUnavailable = "unavailable" // nothing to serve but the group's versions
+)
+
+func (r *GrafanaRouter) observeDiscovery(group, result string) {
+	if r.onDiscovery != nil {
+		r.onDiscovery(group, result)
+	}
 }
 
 func staleDiscovery(d apidiscoveryv2.APIGroupDiscovery) apidiscoveryv2.APIGroupDiscovery {

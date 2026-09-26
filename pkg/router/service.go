@@ -87,6 +87,8 @@ func newService(loader RoutesLoader, reg prometheus.Registerer) *Service {
 		router:  NewGrafanaRouter(loader),
 		metrics: newRouterMetrics(reg),
 	}
+	s.router.onBreakerChange = s.metrics.breakerChanged
+	s.router.onDiscovery = s.metrics.discoveryResult
 	reg.MustRegister(newRouterCollector(s.router))
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 	return s
@@ -95,6 +97,12 @@ func newService(loader RoutesLoader, reg prometheus.Registerer) *Service {
 // HandleFunc serves through the router when enabled and otherwise delegates.
 func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	if s.middleware {
+		// Requests for groups the router doesn't serve belong to the embedded
+		// API server, which has its own metrics; don't count them as the router's.
+		if !s.router.owns(req) {
+			s.router.HandleFunc(w, req, next)
+			return
+		}
 		s.metrics.instrument(s.router, w, req, next)
 		return
 	}

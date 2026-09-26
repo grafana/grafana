@@ -30,6 +30,9 @@ func (l *statusLoader) Notify(context.Context) (<-chan struct{}, error) {
 }
 func (l *statusLoader) shadowedGroups() []shadowedGroup { return l.shadowed }
 func (l *statusLoader) sourceStatuses() []sourceStatus  { return l.sources }
+func (l *statusLoader) stackLookups() map[string]uint64 {
+	return map[string]uint64{"cache_hit": 3, "resolved": 1}
+}
 
 func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Registry) {
 	t.Helper()
@@ -41,8 +44,8 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 		backends: []Backend{first, second, &dummyBackend{group: "dummy.ext.grafana.app"}},
 		shadowed: []shadowedGroup{{Group: "first.ext.grafana.app", Source: sourceSingleTenant, By: sourceRouteBackend}},
 		sources: []sourceStatus{
-			{Source: sourceRouteBackend, LastSuccess: time.Unix(1700000000, 0).UTC()},
-			{Source: sourceSingleTenant, LastError: "discovery unavailable"},
+			{Source: sourceRouteBackend, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
+			{Source: sourceSingleTenant, LastError: "discovery unavailable", Failures: 2},
 		},
 	}
 	reg := prometheus.NewRegistry()
@@ -60,15 +63,27 @@ func TestRouterCollector(t *testing.T) {
 	}
 
 	expected := `
-# HELP grafana_router_breaker_state State of each group's circuit breaker: 0 closed, 1 half-open, 2 open.
+# HELP grafana_router_breaker_state Circuit breaker state of each group: 1 for its current state (closed, half-open or open), 0 for the others.
 # TYPE grafana_router_breaker_state gauge
-grafana_router_breaker_state{group="dummy.ext.grafana.app"} 0
-grafana_router_breaker_state{group="first.ext.grafana.app"} 0
-grafana_router_breaker_state{group="second.ext.grafana.app"} 2
+grafana_router_breaker_state{group="dummy.ext.grafana.app",state="closed"} 1
+grafana_router_breaker_state{group="dummy.ext.grafana.app",state="half-open"} 0
+grafana_router_breaker_state{group="dummy.ext.grafana.app",state="open"} 0
+grafana_router_breaker_state{group="first.ext.grafana.app",state="closed"} 1
+grafana_router_breaker_state{group="first.ext.grafana.app",state="half-open"} 0
+grafana_router_breaker_state{group="first.ext.grafana.app",state="open"} 0
+grafana_router_breaker_state{group="second.ext.grafana.app",state="closed"} 0
+grafana_router_breaker_state{group="second.ext.grafana.app",state="half-open"} 0
+grafana_router_breaker_state{group="second.ext.grafana.app",state="open"} 1
+# HELP grafana_router_breaker_transitions_total Circuit breaker state changes, by group and the state entered: closed, half-open or open.
+# TYPE grafana_router_breaker_transitions_total counter
+grafana_router_breaker_transitions_total{group="second.ext.grafana.app",state="open"} 1
 # HELP grafana_router_groups Number of API groups the router serves, by route source.
 # TYPE grafana_router_groups gauge
 grafana_router_groups{source="dummy"} 1
 grafana_router_groups{source="routebackend"} 2
+# HELP grafana_router_ready Whether the router is ready to serve traffic: 1 ready, 0 not.
+# TYPE grafana_router_ready gauge
+grafana_router_ready 1
 # HELP grafana_router_reconcile_errors_total Number of route reconciles that completed with errors.
 # TYPE grafana_router_reconcile_errors_total counter
 grafana_router_reconcile_errors_total 1
@@ -81,10 +96,23 @@ grafana_router_shadowed_groups{source="single-tenant"} 1
 # HELP grafana_router_source_last_success_timestamp_seconds When each route source last loaded successfully, in seconds since the Unix epoch.
 # TYPE grafana_router_source_last_success_timestamp_seconds gauge
 grafana_router_source_last_success_timestamp_seconds{source="routebackend"} 1.7e+09
+# HELP grafana_router_source_polls_total Load or poll attempts of each route source, by result: success or failure.
+# TYPE grafana_router_source_polls_total counter
+grafana_router_source_polls_total{result="failure",source="routebackend"} 0
+grafana_router_source_polls_total{result="failure",source="single-tenant"} 2
+grafana_router_source_polls_total{result="success",source="routebackend"} 4
+grafana_router_source_polls_total{result="success",source="single-tenant"} 0
+# HELP grafana_router_stack_lookups_total Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.
+# TYPE grafana_router_stack_lookups_total counter
+grafana_router_stack_lookups_total{result="cache_hit"} 3
+grafana_router_stack_lookups_total{result="resolved"} 1
 `
 	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(expected),
-		"grafana_router_breaker_state", "grafana_router_groups", "grafana_router_reconcile_errors_total",
-		"grafana_router_reconciles_total", "grafana_router_shadowed_groups", "grafana_router_source_last_success_timestamp_seconds"))
+		"grafana_router_breaker_state", "grafana_router_breaker_transitions_total", "grafana_router_groups",
+		"grafana_router_ready", "grafana_router_reconcile_errors_total", "grafana_router_reconciles_total",
+		"grafana_router_shadowed_groups", "grafana_router_source_last_success_timestamp_seconds",
+		"grafana_router_source_polls_total", "grafana_router_stack_lookups_total"))
+	require.Equal(t, 1, testutil.CollectAndCount(reg, "grafana_router_last_reconcile_timestamp_seconds"))
 }
 
 func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
@@ -117,6 +145,7 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	require.Equal(t, sourceSingleTenant, statuses[0].Source)
 	require.False(t, statuses[0].LastSuccess.IsZero())
 	require.Empty(t, statuses[0].LastError)
+	require.Equal(t, uint64(1), statuses[0].Successes)
 	require.Equal(t, sourceStatus{Source: "aggregate:baas_apiserver"}, statuses[1], "never polled")
 
 	fail = true
@@ -124,4 +153,5 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	statuses = loader.sourceStatuses()
 	require.False(t, statuses[0].LastSuccess.IsZero(), "the last success is kept after a failure")
 	require.Contains(t, statuses[0].LastError, "discovery unavailable")
+	require.Equal(t, uint64(1), statuses[0].Failures)
 }

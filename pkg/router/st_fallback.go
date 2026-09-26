@@ -71,6 +71,31 @@ type singleTenantHost struct {
 // errStackOriginMismatch means the response came from a different stack than the one resolved.
 var errStackOriginMismatch = errors.New("router: response came from an unexpected stack")
 
+// stackLookupCounts counts grafana.com stack lookups by result, for metrics.
+type stackLookupCounts struct {
+	cacheHit, resolved, notFound, throttled, failed atomic.Uint64
+}
+
+func (c *stackLookupCounts) record(target *singleTenantTarget, err error) {
+	switch {
+	case errors.Is(err, errStackLookupThrottled):
+		c.throttled.Add(1)
+	case err != nil:
+		c.failed.Add(1)
+	case target == nil:
+		c.notFound.Add(1)
+	default:
+		c.resolved.Add(1)
+	}
+}
+
+func (c *stackLookupCounts) byResult() map[string]uint64 {
+	return map[string]uint64{
+		"cache_hit": c.cacheHit.Load(), "resolved": c.resolved.Load(), "not_found": c.notFound.Load(),
+		"throttled": c.throttled.Load(), "error": c.failed.Load(),
+	}
+}
+
 // errStackLookupThrottled means the lookup rate limit was reached. It is never cached.
 var errStackLookupThrottled = errors.New("router: stack lookup throttled")
 
@@ -102,6 +127,7 @@ type singleTenantFallback struct {
 	discovery atomic.Pointer[singleTenantDiscovery]
 	cooldown  *cooldown
 	status    pollStatus
+	lookupsBy stackLookupCounts
 }
 
 type singleTenantFallbackOptions struct {
@@ -179,6 +205,7 @@ func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace 
 		return nil, err
 	}
 	if host, ok := st.cachedHost(info.StackID); ok {
+		st.lookupsBy.cacheHit.Add(1)
 		return host, nil
 	}
 
@@ -196,10 +223,12 @@ func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace 
 	}
 }
 
-func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (*singleTenantTarget, error) {
+func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (target *singleTenantTarget, err error) {
 	if host, ok := st.cachedHost(stackID); ok {
+		st.lookupsBy.cacheHit.Add(1)
 		return host, nil
 	}
+	defer func() { st.lookupsBy.record(target, err) }()
 	// Fail fast rather than queue: waiting would hold requests open under a flood.
 	if st.lookupLimiter != nil && !st.lookupLimiter.Allow() {
 		return nil, errStackLookupThrottled
@@ -211,7 +240,6 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 	if err != nil {
 		return nil, err
 	}
-	var target *singleTenantTarget
 	if host.URL != "" {
 		u, err := url.Parse(host.URL)
 		if err != nil {

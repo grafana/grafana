@@ -117,12 +117,22 @@ var errCallerGone = errors.New("router: caller's request ended")
 // timeouts, such as the transport's response-header timeout, which matches
 // context.DeadlineExceeded.
 func newGroupBreaker(group string) *groupBreaker {
-	return gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
+	return newObservedGroupBreaker(group, nil)
+}
+
+// newObservedGroupBreaker is newGroupBreaker, calling onChange with the group
+// and its new state on every transition.
+func newObservedGroupBreaker(group string, onChange func(group string, to gobreaker.State)) *groupBreaker {
+	settings := gobreaker.Settings{
 		Name: group,
 		IsExcluded: func(err error) bool {
 			return errors.Is(err, errCallerGone)
 		},
-	})
+	}
+	if onChange != nil {
+		settings.OnStateChange = func(name string, _, to gobreaker.State) { onChange(name, to) }
+	}
+	return gobreaker.NewTwoStepCircuitBreaker[struct{}](settings)
 }
 
 // breakerOutcome turns one proxy attempt into the error reported to the
@@ -164,6 +174,7 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 	w = rec.writer()
 	done, err := cb.Allow()
 	if err != nil {
+		setFailure(req, failureBreakerOpen)
 		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
 		return
 	}
@@ -181,6 +192,11 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 			panic(p)
 		}
 		report(breakerOutcome(req, rec.status, failure))
+		if failure.err != nil {
+			if reason := failureReason(req, failure.err); reason != "" {
+				setFailure(req, reason)
+			}
+		}
 	}()
 	h.ServeHTTP(w, req)
 }

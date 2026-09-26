@@ -300,6 +300,9 @@ Found by checking each part of the proxy path against a watch that streams for 3
     gauge of groups currently shadowed, since a lasting conflict would bump a counter on every
     reconcile;
   - timestamp: last successful poll, per source.
+  - The metrics audit added readiness, last-reconcile time, per-state breaker series and
+    transitions, backend failure reasons, discovery results, poll attempts and stack lookups, plus a
+    `route` label on request metrics. See `specs/2026-09-26-router-metrics.md`.
 
 - [ ] **O2. Read-only debug endpoint.** A JSON view of the current snapshot showing, for each group:
   source, key, target host and breaker state.

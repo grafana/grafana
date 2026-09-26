@@ -9,6 +9,9 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
+
+	"github.com/sony/gobreaker/v2"
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,10 +43,10 @@ type handlerEntry struct {
 	endWatches context.CancelFunc
 }
 
-func newHandlerEntry(b Backend, handler http.Handler, group string) *handlerEntry {
+func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group string) *handlerEntry {
 	watches, endWatches := context.WithCancel(context.Background())
 	return &handlerEntry{
-		backend: b, handler: handler, lastKey: b.Key(), breaker: newGroupBreaker(group),
+		backend: b, handler: handler, lastKey: b.Key(), breaker: newObservedGroupBreaker(group, r.onBreakerChange),
 		watches: watches, endWatches: endWatches,
 	}
 }
@@ -122,9 +125,17 @@ type GrafanaRouter struct {
 	// the embedded API server owns.
 	acceptGroup func(group string) bool
 
-	// reconciles and reconcileErrors count completed reconciles, for metrics.
+	// reconciles and reconcileErrors count completed reconciles, and
+	// lastReconcile is when the latest one finished (Unix nanoseconds), for
+	// metrics.
 	reconciles      atomic.Uint64
 	reconcileErrors atomic.Uint64
+	lastReconcile   atomic.Int64
+
+	// onBreakerChange and onDiscovery report events to the metrics; nil when
+	// the router is not instrumented. Set before Run.
+	onBreakerChange func(group string, to gobreaker.State)
+	onDiscovery     func(group, result string)
 
 	// watches ends every watch in progress when the router closes them.
 	watches    context.Context
@@ -155,10 +166,12 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 
 	// Not part of the /apis or /openapi/v3 trees — not ours.
 	if !isOpenAPI && !isAPIs {
+		setRoute(req, routeNext)
 		next.ServeHTTP(w, req)
 		return
 	}
 	if !canonicalAPIPath(req.URL) {
+		setRoute(req, routeInvalid)
 		http.Error(w, "non-canonical API path", http.StatusBadRequest)
 		return
 	}
@@ -172,6 +185,7 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 	// Root discovery (APIGroupList) is the only path that needs a union
 	// across every group; synthesize it router-side.
 	if path == apisPrefix || path == apisPrefix+"/" {
+		setRoute(req, routeDiscovery)
 		r.serveAPIGroupList(w, req, next)
 		return
 	}
@@ -183,6 +197,7 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		r.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
+	setRoute(req, routeBackend)
 	if rejectUpgrade(w, req) {
 		return
 	}
@@ -200,6 +215,7 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
 	if group != "" && r.unregisteredGroupHandler != nil {
+		setRoute(req, routeFallback)
 		if rejectUpgrade(w, req) {
 			return
 		}
@@ -210,6 +226,7 @@ func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.
 		r.unregisteredGroupHandler.ServeHTTP(w, req)
 		return
 	}
+	setRoute(req, routeNext)
 	next.ServeHTTP(w, req)
 }
 
@@ -221,6 +238,24 @@ func groupFromPath(path string) string {
 		rest = rest[:i]
 	}
 	return rest
+}
+
+// owns reports whether the router answers req itself rather than passing it
+// to next: root discovery, which it builds, and groups it serves. In
+// middleware mode everything else belongs to the embedded API server, which
+// has its own metrics.
+func (r *GrafanaRouter) owns(req *http.Request) bool {
+	path := req.URL.Path
+	switch {
+	case path == apisPrefix || path == apisPrefix+"/" || path == openapiV3Prefix || path == openapiV3Prefix+"/":
+		return true
+	case strings.HasPrefix(path, apisPrefix+"/"):
+		return r.KnownGroup(groupFromPath(path))
+	}
+	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
+		return r.KnownGroup(group)
+	}
+	return false
 }
 
 // GroupFromPath returns the group of an /apis/<group>[/...] path, or "" for
@@ -258,11 +293,13 @@ func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
 // serveOpenAPIV3 serves the /openapi/v3 index and per-group-version documents.
 func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	if req.URL.Path == openapiV3Prefix || req.URL.Path == openapiV3Prefix+"/" {
+		setRoute(req, routeDiscovery)
 		r.serveOpenAPIIndex(w, req, next)
 		return
 	}
 	group, version, ok := parseOpenAPIGroupVersionPath(req.URL.Path)
 	if !ok {
+		setRoute(req, routeNext)
 		next.ServeHTTP(w, req)
 		return
 	}
@@ -278,6 +315,7 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 		r.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
+	setRoute(req, routeBackend)
 
 	cacheKey := group + "/" + version
 	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
@@ -381,6 +419,7 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 // here; Ready decides whether they affect readiness.
 func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
 	r.reconciles.Add(1)
+	r.lastReconcile.Store(time.Now().UnixNano())
 	if err != nil {
 		r.reconcileErrors.Add(1)
 		logging.FromContext(ctx).Error("router: reconcile completed with errors, serving last-known-good", "err", err)
@@ -459,13 +498,13 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 
 		if !ok {
 			// New group: create the entry, starting with a fresh, closed breaker.
-			r.served[group] = newHandlerEntry(b, handler, group)
+			r.served[group] = r.newHandlerEntry(b, handler, group)
 			continue
 		}
 		// Changed: replace the entry. Connection pools survive through the
 		// loader's shared transports; the breaker is reset (see handlerEntry).
 		retired = append(retired, e)
-		r.served[group] = newHandlerEntry(b, handler, group)
+		r.served[group] = r.newHandlerEntry(b, handler, group)
 	}
 
 	for group, e := range r.served {

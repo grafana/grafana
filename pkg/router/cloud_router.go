@@ -493,6 +493,13 @@ func (l *cloudLoader) shadowedGroups() []shadowedGroup {
 	return nil
 }
 
+func (l *cloudLoader) stackLookups() map[string]uint64 {
+	if l.singleTenantFallback == nil {
+		return nil
+	}
+	return l.singleTenantFallback.lookupsBy.byResult()
+}
+
 func (l *cloudLoader) sourceStatuses() []sourceStatus {
 	var statuses []sourceStatus
 	if l.singleTenantFallback != nil {
