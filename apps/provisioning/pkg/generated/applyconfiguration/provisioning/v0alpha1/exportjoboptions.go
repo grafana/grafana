@@ -30,6 +30,23 @@ type ExportJobOptionsApplyConfiguration struct {
 	// new folders on a subsequent sync rather than taking over the originals.
 	// Has no effect when folder metadata is not written.
 	GenerateNewFolderIDs *bool `json:"generateNewFolderIDs,omitempty"`
+	// History writes one commit per stored version of each exported resource,
+	// oldest first, instead of a single commit holding only the current state.
+	// Each commit keeps the timestamp of the version it was written from, so the
+	// resulting file history reflects when the changes were actually made.
+	//
+	// Unified storage keeps a bounded number of versions per resource, so the
+	// history is necessarily partial: anything older than the retained window is
+	// not in the database and cannot be written. A version whose content matches
+	// the one before it produces no commit.
+	//
+	// Every version is written to the path the resource occupies now, so a
+	// rename does not split the history across two files.
+	//
+	// Only repositories that stage commits locally support this; it is ignored
+	// otherwise. Push jobs reject it: they export with newly generated resource
+	// identifiers, leaving no prior history to attach to.
+	History *bool `json:"history,omitempty"`
 }
 
 // ExportJobOptionsApplyConfiguration constructs a declarative configuration of the ExportJobOptions type for use with
@@ -88,5 +105,13 @@ func (b *ExportJobOptionsApplyConfiguration) WithResources(values ...*ResourceRe
 // If called multiple times, the GenerateNewFolderIDs field is set to the value of the last call.
 func (b *ExportJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value bool) *ExportJobOptionsApplyConfiguration {
 	b.GenerateNewFolderIDs = &value
+	return b
+}
+
+// WithHistory sets the History field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the History field is set to the value of the last call.
+func (b *ExportJobOptionsApplyConfiguration) WithHistory(value bool) *ExportJobOptionsApplyConfiguration {
+	b.History = &value
 	return b
 }

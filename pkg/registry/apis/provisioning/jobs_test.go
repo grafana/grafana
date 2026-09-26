@@ -146,6 +146,23 @@ func TestExportFeatureGate(t *testing.T) {
 		assert.Contains(t, err.Error(), "push jobs require the provisioningExport feature flag")
 	})
 
+	t.Run("push rejects history because it regenerates identifiers", func(t *testing.T) {
+		// Accepting the option and quietly ignoring it was the previous behaviour;
+		// a push exports under new identifiers, so replayed history would belong
+		// to resources that do not exist.
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+		c := &jobsConnector{}
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{History: true},
+		}
+
+		err := c.authorizeJob(ctx, nil, cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.Contains(t, err.Error(), "use a migrate job to preserve history")
+	})
+
 	t.Run("migrate rejected when disabled", func(t *testing.T) {
 		featuremgmt.WithDisabledFlags(t, featuremgmt.FlagProvisioningExport)
 		c := &jobsConnector{}

@@ -74,6 +74,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 				Branch:               options.Branch,
 				Resources:            options.Resources,
 				GenerateNewFolderIDs: options.GenerateNewFolderIDs,
+				History:              options.History,
 			},
 		},
 	}
