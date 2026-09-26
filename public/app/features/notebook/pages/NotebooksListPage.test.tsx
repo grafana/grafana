@@ -441,6 +441,19 @@ describe('NotebooksListPage', () => {
 
     expect(await screen.findByText("You haven't created any notebooks yet")).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New notebook' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Give feedback' })).toBeInTheDocument();
+  });
+
+  it('opens feedback from the list header without leaving the list', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    render(<NotebooksListPage />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Give feedback' }));
+
+    expect(screen.getByRole('dialog', { name: 'Tell us about your experience with notebooks' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
   });
 
   // Create is its own action, so a writer who cannot create gets the read-only empty state rather

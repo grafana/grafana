@@ -24,6 +24,10 @@ import {
   type NotebookExportedProperties,
   type NotebookExportDestination,
   type NotebookExportSource,
+  type NotebookFeedbackRating,
+  type NotebookFeedbackReason,
+  type NotebookFeedbackSubmittedProperties,
+  NOTEBOOK_FEEDBACK_SUBMITTED_EVENT,
   type NotebookLinkCopiedProperties,
   type NotebookLinkCopySource,
   type NotebookListFilteredProperties,
@@ -85,6 +89,9 @@ const createListFilteredEvent = createNotebookEvent<NotebookListFilteredProperti
  * this attempt was aiming for.
  */
 const createAddFailedEvent = createNotebookEvent<NotebookAddFailedProperties>('add_to_notebook_failed');
+const createFeedbackSubmittedEvent = createNotebookEvent<NotebookFeedbackSubmittedProperties>(
+  NOTEBOOK_FEEDBACK_SUBMITTED_EVENT
+);
 
 /** The one panel an add or a create came with, so both events describe it the same way. */
 interface AddedPanel {
@@ -105,6 +112,10 @@ function addedPanelProperties({ panel, isLibraryPanel }: AddedPanel) {
  * turn a scene into what each event sends, here and once, instead of at every place that fires one.
  */
 export const NotebookAnalytics = {
+  feedbackSubmitted(rating: NotebookFeedbackRating, reasons: NotebookFeedbackReason[], comment: string): void {
+    createFeedbackSubmittedEvent({ rating, reasons, ...(comment.trim() && { comment: comment.trim() }) });
+  },
+
   loaded(scene: NotebookScene, wasCached: boolean): void {
     createLoadedEvent({
       // Both call sites only reach this with a scene that already has a uid, so the fallback here is

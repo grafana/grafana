@@ -10,6 +10,7 @@ import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOUR
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
+import { NotebookFeedbackButton } from '../feedback/NotebookFeedbackButton';
 import { AttachToIncidentModal } from '../incidents/AttachToIncidentModal';
 import { DeclareIncidentModal } from '../incidents/DeclareIncidentModal';
 import { IrmMenuItem } from '../incidents/IrmMenuItem';
@@ -22,7 +23,7 @@ import { transformNotebookSceneToSaveModel } from '../serialization/transformNot
 import { NOTEBOOKS_BASE_URL, notebookShareUrl } from '../urls';
 
 /**
- * The notebook view's action cluster: copy link, the edit toggle, and the "more actions" kebab
+ * The notebook view's action cluster: copy link, feedback, the edit toggle, and the "more actions" kebab
  * (export, IRM, delete). Embedded inline in the scene's own controls row (`NotebookScene.tsx`).
  *
  * Rendered for a notebook that does not exist yet as well, so that creating one by typing does not
@@ -111,6 +112,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
           onClick={onCopyLink}
         />
       )}
+      {!isEmbedded && <NotebookFeedbackButton />}
       <NotebookEditToggle notebook={scene} />
       {!isEmbedded && (
         <Dropdown overlay={moreMenu} placement="bottom-end">
@@ -170,6 +172,7 @@ function UnavailableActions({ scene }: { scene: NotebookScene }) {
           aria-label={t('notebooks.view.copy-link', 'Copy link')}
         />
       )}
+      {!isEmbedded && <NotebookFeedbackButton />}
       <NotebookEditToggle notebook={scene} />
       {!isEmbedded && (
         <Button

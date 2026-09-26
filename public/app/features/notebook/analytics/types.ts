@@ -30,6 +30,32 @@ export interface NotebookShape extends EventProperty {
   datasourceCount: number;
 }
 
+export const NOTEBOOK_FEEDBACK_RATING = {
+  GOOD: 'good',
+  COULD_BE_BETTER: 'could_be_better',
+} as const;
+
+export const NOTEBOOK_FEEDBACK_REASON = {
+  GETTING_STARTED: 'getting_started',
+  EDITING: 'editing',
+  ADDING_CONTENT: 'adding_content',
+  VISUALIZATIONS: 'visualizations',
+  SHARING: 'sharing',
+  SOMETHING_BROKEN: 'something_broken',
+  MISSING_FEATURE: 'missing_feature',
+} as const;
+
+export const NOTEBOOK_FEEDBACK_SUBMITTED_EVENT = 'feedback_submitted';
+
+export type NotebookFeedbackRating = (typeof NOTEBOOK_FEEDBACK_RATING)[keyof typeof NOTEBOOK_FEEDBACK_RATING];
+export type NotebookFeedbackReason = (typeof NOTEBOOK_FEEDBACK_REASON)[keyof typeof NOTEBOOK_FEEDBACK_REASON];
+
+export type NotebookFeedbackSubmittedProperties = EventProperty & {
+  rating: NotebookFeedbackRating;
+  reasons: NotebookFeedbackReason[];
+  comment?: string;
+};
+
 /** What the added panel says about itself, as readAddedPanelShape reads it off the spec. */
 export interface AddedPanelShape extends EventProperty {
   /** The panel's visualization plugin ID. Empty when only a library panel reference was stored. */
