@@ -2,6 +2,7 @@ import { uniqueId } from 'lodash';
 
 import { type DataFrameDTO, type DataFrameJSON } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   VizPanel,
   SceneTimePicker,
@@ -508,7 +509,12 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-    _UNSAFE_clearPreviousFieldValues: true,
+    // Chunked packets retain earlier frames until the query completes.
+    // Clearing a rendered frame here also clears the query runner's retained values.
+    _UNSAFE_clearPreviousFieldValues: !getFeatureFlagClient().getBooleanValue(
+      'datasources.chunkedQueryStreaming',
+      false
+    ),
   };
 
   if (panel.libraryPanel) {

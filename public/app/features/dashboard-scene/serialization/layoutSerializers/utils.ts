@@ -1,6 +1,6 @@
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
+import { getFeatureFlagClient, getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
 import {
   type SceneDataProvider,
   type SceneDataQuery,
@@ -104,7 +104,12 @@ export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState
     $data: createPanelDataProvider(panel),
     titleItems,
     $behaviors: [],
-    _UNSAFE_clearPreviousFieldValues: true,
+    // Chunked packets retain earlier frames until the query completes.
+    // Clearing a rendered frame here also clears the query runner's retained values.
+    _UNSAFE_clearPreviousFieldValues: !getFeatureFlagClient().getBooleanValue(
+      'datasources.chunkedQueryStreaming',
+      false
+    ),
   };
 
   // Set up Angular migration handler if migration data is present
@@ -195,7 +200,12 @@ export function buildLibraryPanelState(panel: LibraryPanelKind, id?: number): Vi
       defaults: {},
       overrides: [],
     },
-    _UNSAFE_clearPreviousFieldValues: true,
+    // Chunked packets retain earlier frames until the query completes.
+    // Clearing a rendered frame here also clears the query runner's retained values.
+    _UNSAFE_clearPreviousFieldValues: !getFeatureFlagClient().getBooleanValue(
+      'datasources.chunkedQueryStreaming',
+      false
+    ),
   };
 
   return vizPanelState;
