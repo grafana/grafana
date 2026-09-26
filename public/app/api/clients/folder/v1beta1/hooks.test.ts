@@ -324,6 +324,26 @@ describe('useDeleteMultipleFoldersMutationFacade', () => {
     expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
   });
 
+  it('deletes multiple folders via the app platform API when both flags are on', async () => {
+    // PoC: the app platform backend now supports cascading delete, gated behind
+    // kubernetesFolderCascadeDeleteAsync specifically -- this facade only skips the legacy path
+    // when that flag is also on.
+    setTestFlags({ foldersAppPlatformAPI: true, kubernetesFolderCascadeDeleteAsync: true });
+    const folderUIDs = ['uid1', 'uid2'];
+    const { result } = renderHook(() => useDeleteMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
+    });
+    await act(async () => {
+      await result.current({ folderUIDs });
+    });
+
+    // Should call deleteFolder for each UID via the app platform mutation, not the legacy one
+    expect(mockDeleteFolder).toHaveBeenCalledTimes(2);
+    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid1' });
+    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid2' });
+    expect(mockDeleteFolderLegacy).not.toHaveBeenCalled();
+  });
+
   it('uses legacy call when flag is false', async () => {
     setTestFlags({ foldersAppPlatformAPI: false });
     const folderUIDs = ['uid1', 'uid2'];
@@ -334,9 +354,27 @@ describe('useDeleteMultipleFoldersMutationFacade', () => {
       await result.current({ folderUIDs });
     });
 
-    // Should call deleteFolder for each UID
     expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
     expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
+    expect(mockDeleteFolder).not.toHaveBeenCalled();
+  });
+
+  it('uses legacy call when foldersAppPlatformAPI is on but kubernetesFolderCascadeDeleteAsync is off', async () => {
+    // This is the important case: foldersAppPlatformAPI covers unrelated App Platform folder
+    // behavior and can be on independently of the cascade-delete PoC flag -- ordinary folder
+    // deletes must stay on the legacy path unless kubernetesFolderCascadeDeleteAsync is also on.
+    setTestFlags({ foldersAppPlatformAPI: true, kubernetesFolderCascadeDeleteAsync: false });
+    const folderUIDs = ['uid1', 'uid2'];
+    const { result } = renderHook(() => useDeleteMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
+    });
+    await act(async () => {
+      await result.current({ folderUIDs });
+    });
+
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
+    expect(mockDeleteFolder).not.toHaveBeenCalled();
   });
 });
 

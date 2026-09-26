@@ -16,8 +16,22 @@ export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: R
   const { children, page, kind, lastPageOfKind } = action.payload;
   const { parentUID } = action.meta.arg;
 
+  const isRoot = !parentUID || isRootFolderUID(parentUID);
+  const previousItems = (isRoot ? state.rootItems : state.childrenByParentUID[parentUID])?.items ?? [];
+
+  // A folder/dashboard undergoing an async cascade delete drops out of search results the instant
+  // deletionTimestamp is set, well before the cascade actually finishes -- long before this refetch
+  // (triggered by the delete action itself) would otherwise remove its row. Keep it visible, using
+  // its last-known data, for as long as it's tracked in cascadeDeletingUIDs, so
+  // DeletingFolderBadge/DeletingDashboardBadge still has a row to render on and can poll the item's
+  // real state directly instead of relying on search. Those components remove the UID from
+  // cascadeDeletingUIDs (via itemCascadeDeleteFinished) once they've confirmed it's actually gone,
+  // at which point the next refetch drops it for real.
+  const newUIDs = new Set(children.map((item) => item.uid));
+  const ghostItems = previousItems.filter((item) => state.cascadeDeletingUIDs[item.uid] && !newUIDs.has(item.uid));
+
   const newCollection = {
-    items: children,
+    items: ghostItems.length > 0 ? [...children, ...ghostItems] : children,
     lastFetchedKind: kind,
     lastFetchedPage: page,
     lastKindHasMoreItems: !lastPageOfKind,
@@ -194,6 +208,22 @@ export function setAllSelection(
       }
     }
   }
+}
+
+export function itemCascadeDeleteStarted(state: BrowseDashboardsState, action: PayloadAction<string>) {
+  state.cascadeDeletingUIDs[action.payload] = true;
+}
+
+export function itemCascadeDeleteFinished(state: BrowseDashboardsState, action: PayloadAction<string>) {
+  delete state.cascadeDeletingUIDs[action.payload];
+  delete state.cascadeDeleteErrors[action.payload];
+}
+
+export function itemCascadeDeleteErrored(
+  state: BrowseDashboardsState,
+  action: PayloadAction<{ uid: string; errors: string[] }>
+) {
+  state.cascadeDeleteErrors[action.payload.uid] = action.payload.errors;
 }
 
 export function clearFolders(state: BrowseDashboardsState, action: PayloadAction<Array<string | undefined>>) {

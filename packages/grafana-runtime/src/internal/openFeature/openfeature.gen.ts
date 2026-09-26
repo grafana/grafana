@@ -162,6 +162,8 @@ export const FlagKeys = {
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** PoC: async, finalizer-driven cascade deletion of a folder's subtree, done by a background controller instead of inline in the delete request. Stamps new folders with a cascade-delete finalizer on create; has no backfill for existing folders */
+  KubernetesFolderCascadeDeleteAsync: "kubernetesFolderCascadeDeleteAsync",
   /** Enables team APIs in the app platform */
   KubernetesTeamsApi: "kubernetesTeamsApi",
   /** Routes library panel requests from /api to the /apis endpoint */
@@ -1068,6 +1070,17 @@ export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationO
  */
 export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("inlineLogDetailsNoScrolls", false, options).value;
+};
+
+/**
+ * PoC: async, finalizer-driven cascade deletion of a folder's subtree, done by a background controller instead of inline in the delete request. Stamps new folders with a cascade-delete finalizer on create; has no backfill for existing folders
+ *
+ * **Details:**
+ * - flag key: `kubernetesFolderCascadeDeleteAsync`
+ * - default value: `false`
+ */
+export const useFlagKubernetesFolderCascadeDeleteAsync = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("kubernetesFolderCascadeDeleteAsync", false, options).value;
 };
 
 /**

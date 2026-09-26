@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/util/dryrun"
 
@@ -32,6 +33,8 @@ var (
 	_ rest.Creater              = (*folderStorage)(nil)
 	_ rest.Updater              = (*folderStorage)(nil)
 	_ rest.GracefulDeleter      = (*folderStorage)(nil)
+	_ rest.Watcher              = (*folderStorage)(nil)
+	_ rest.CollectionDeleter    = (*folderStorage)(nil)
 )
 
 type folderStorage struct {
@@ -73,6 +76,29 @@ func (s *folderStorage) List(ctx context.Context, options *internalversion.ListO
 
 func (s *folderStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return s.store.Get(ctx, name, options)
+}
+
+// Watch and DeleteCollection both forward to the wrapped store, which is always the unified generic
+// registry store here and so always implements both; the type assertions just avoid a hard
+// dependency on that. Without these, folderStorage silently supported neither at all (unlike the MT
+// storage path, which uses the unified store directly without this wrapper) -- and
+// newCascadeDeleteStorage only re-exposes the pair together (see its doc comment), so both need to
+// be present here or neither is: a consumer trying to watch folders (e.g. an informer-based
+// controller) got a "watch is not supported" error even though it didn't touch collection deletes.
+func (s *folderStorage) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	watcher, ok := s.store.(rest.Watcher)
+	if !ok {
+		return nil, fmt.Errorf("folder storage: wrapped store does not support watch")
+	}
+	return watcher.Watch(ctx, options)
+}
+
+func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	collectionDeleter, ok := s.store.(rest.CollectionDeleter)
+	if !ok {
+		return nil, fmt.Errorf("folder storage: wrapped store does not support collection delete")
+	}
+	return collectionDeleter.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
 
 func (s *folderStorage) Create(ctx context.Context,

@@ -17,6 +17,8 @@ const initialState: BrowseDashboardsState = {
     panel: {},
     $all: false,
   },
+  cascadeDeletingUIDs: {},
+  cascadeDeleteErrors: {},
 };
 
 const browseDashboardsSlice = createSlice({
@@ -32,8 +34,15 @@ const browseDashboardsSlice = createSlice({
 
 export const browseDashboardsReducer = browseDashboardsSlice.reducer;
 
-export const { setFolderOpenState, setItemSelectionState, setAllSelection, clearFolders } =
-  browseDashboardsSlice.actions;
+export const {
+  setFolderOpenState,
+  setItemSelectionState,
+  setAllSelection,
+  clearFolders,
+  itemCascadeDeleteStarted,
+  itemCascadeDeleteFinished,
+  itemCascadeDeleteErrored,
+} = browseDashboardsSlice.actions;
 
 export default {
   browseDashboards: browseDashboardsReducer,

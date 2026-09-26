@@ -101,6 +101,10 @@ export function useChildrenByParentUIDState() {
   return useSelector((wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID);
 }
 
+export function useIsItemCascadeDeleting(uid: string) {
+  return useSelector((wholeState: StoreState) => Boolean(wholeState.browseDashboards.cascadeDeletingUIDs[uid]));
+}
+
 export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
 }

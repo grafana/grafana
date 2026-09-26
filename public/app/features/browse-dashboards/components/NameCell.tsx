@@ -12,9 +12,13 @@ import { getIconForItem } from 'app/features/search/service/utils';
 import { Indent } from '../../../core/components/Indent/Indent';
 import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
 import { canEditItemType } from '../permissions';
-import { useChildrenByParentUIDState } from '../state/hooks';
+import { useChildrenByParentUIDState, useIsItemCascadeDeleting } from '../state/hooks';
 import { type DashboardsTreeCellProps } from '../types';
 import { makeRowID } from '../utils/dashboards';
+import { useDiscoverCascadeDeleting } from '../utils/useDiscoverCascadeDeleting';
+
+import { DeletingDashboardBadge } from './DeletingDashboardBadge';
+import { DeletingFolderBadge } from './DeletingFolderBadge';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';
@@ -33,6 +37,11 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
   const ownerReference = item.kind !== 'ui' ? item.ownerReference : undefined;
+  const isCascadeDeleting = useIsItemCascadeDeleting(item.kind !== 'ui' ? item.uid : '');
+  // Discover a folder mid-cascade-delete that this browser session never triggered or watched
+  // itself (e.g. a demo tree built directly via the API) -- skipped once already tracked, or for
+  // anything that isn't a folder row.
+  useDiscoverCascadeDeleting(item.kind !== 'ui' ? item.uid : '', isCascadeDeleting || item.kind !== 'folder');
 
   if (item.kind === 'ui') {
     return (
@@ -118,6 +127,13 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
         </Text>
 
         {showRepoBadge && <FolderRepo folder={item} canEdit={canEditItem} />}
+
+        {isCascadeDeleting && item.kind === 'folder' && (
+          <DeletingFolderBadge folderUID={item.uid} parentUID={item.parentUID} />
+        )}
+        {isCascadeDeleting && item.kind === 'dashboard' && (
+          <DeletingDashboardBadge dashboardUID={item.uid} parentUID={item.parentUID} />
+        )}
 
         <DescriptionTooltip description={item.description} />
 

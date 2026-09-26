@@ -23,7 +23,13 @@ import { starredFoldersEnabled } from '../../utils/dashboards';
 import CreateNewButton from '../CreateNewButton';
 import { FolderActionsButton } from '../FolderActionsButton';
 
-export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder }) => {
+export const FolderDetailsActions = ({
+  folderDTO,
+  isFolderDeleting,
+}: {
+  folderDTO?: CombinedFolder;
+  isFolderDeleting?: boolean;
+}) => {
   // Fetch the root (aka general) folder if we're not in a specific folder
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
@@ -65,7 +71,14 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
       >
         <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
       </LinkButton>
-      {folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
+      {folderDTO && (
+        <FolderActionsButton
+          folder={folderDTO}
+          repoType={repoType}
+          isReadOnlyRepo={isReadOnlyRepo}
+          isFolderDeleting={isFolderDeleting}
+        />
+      )}
       {(canCreateDashboards || canCreateFolders) && (
         <CreateNewButton
           parentFolder={folderDTO}
@@ -73,6 +86,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
           canCreateFolder={canCreateFolders}
           repoType={repoType}
           isReadOnlyRepo={isReadOnlyRepo}
+          isFolderDeleting={isFolderDeleting}
         />
       )}
     </Stack>

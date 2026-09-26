@@ -592,6 +592,22 @@ func validateOnDelete(ctx context.Context,
 		return nil
 	}
 
+	// PoC async cascade delete: a folder already carrying the cascade-delete finalizer (stamped at
+	// creation -- see register.go's Mutate/stampCascadeDeleteFinalizer) is going to be emptied and
+	// completed by the background CascadeDeleteController, not this request. Bypassing the empty
+	// check here just lets the delete proceed to set deletionTimestamp: the finalizer itself is
+	// what keeps the object from actually being removed until the controller clears it, so unlike
+	// the synchronous cascade above, no gracePeriodSeconds=0 "force" opt-in is required -- nothing
+	// destructive happens inline in this request.
+	if kubernetesFolderCascadeDeleteAsyncEnabled(ctx) && slices.Contains(f.Finalizers, folders.CascadeDeleteFinalizer) {
+		logging.FromContext(ctx).Info(
+			"folder delete proceeding under async cascade delete; its subtree will be cascade-deleted by the background controller",
+			"folder", f.Name,
+			"namespace", f.Namespace,
+		)
+		return nil
+	}
+
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
 	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		logging.FromContext(ctx).Error("Could not verify if folder is empty", "namespace", f.Namespace, "folder", f.Name, "error", err)

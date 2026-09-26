@@ -3497,6 +3497,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesFolderCascadeDeleteAsync",
+        "resourceVersion": "1789547176605",
+        "creationTimestamp": "2026-09-16T08:26:16Z"
+      },
+      "spec": {
+        "description": "PoC: async, finalizer-driven cascade deletion of a folder's subtree, done by a background controller instead of inline in the delete request. Stamps new folders with a cascade-delete finalizer on create; has no backfill for existing folders",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesFolderCountsLegacyStorage",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

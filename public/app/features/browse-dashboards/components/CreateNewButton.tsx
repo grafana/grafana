@@ -38,6 +38,8 @@ interface Props {
   canCreateDashboard: boolean;
   isReadOnlyRepo: boolean;
   repoType?: RepoType;
+  /** True while parentFolder itself is undergoing an async cascade delete. */
+  isFolderDeleting?: boolean;
 }
 
 export default function CreateNewButton({
@@ -46,6 +48,7 @@ export default function CreateNewButton({
   canCreateFolder,
   isReadOnlyRepo,
   repoType,
+  isFolderDeleting,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
@@ -178,8 +181,17 @@ export default function CreateNewButton({
     <>
       <Dropdown overlay={newMenu} placement="bottom-end" onVisibleChange={handleVisibleChange}>
         <Button
-          disabled={isReadOnlyRepo}
-          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
+          disabled={isReadOnlyRepo || isFolderDeleting}
+          tooltip={
+            isFolderDeleting
+              ? t(
+                  'browse-dashboards.create-new-button.folder-deleting-tooltip',
+                  "This folder is being deleted, so new content can't be added to it."
+                )
+              : isReadOnlyRepo
+                ? getReadOnlyTooltipText({ isLocal: repoType === 'local' })
+                : undefined
+          }
           variant="secondary"
           data-testid={selectors.components.CreateNewButton.newButton}
         >
