@@ -243,6 +243,10 @@ const (
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
 
+	// FlagDashboardNotebooksContentSearch
+	// Search saved notebook markdown and code after the unified search server supports content indexing
+	FlagDashboardNotebooksContentSearch = "dashboard.notebooksContentSearch"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
