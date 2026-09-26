@@ -60,8 +60,8 @@ func (s *singleTenantInstance) GetSettings() clientapi.InstanceConfigurationSett
 	return s.instanceConf
 }
 
-func (s *singleTenantInstance) GetLogger() log.Logger {
-	return s.logger
+func (s *singleTenantInstance) GetLogLabels() []any {
+	return nil
 }
 
 func (s *singleTenantInstance) ReportMetrics() {
