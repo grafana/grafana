@@ -32,6 +32,7 @@ RUN apk add --no-cache make build-base python3
 
 COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
+COPY patches patches
 COPY packages packages
 COPY e2e-playwright e2e-playwright
 COPY public public
