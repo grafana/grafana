@@ -644,6 +644,28 @@ describe('NotebookAutosave', () => {
       stopPanel();
     });
 
+    it('saves an explicit visualization choice with the same plugin', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Bars',
+        pluginId: panel.state.pluginId,
+        hash: 'bars',
+        options: { ...panel.state.options, fillOpacity: 42 },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(savedVizConfigs().at(-1)?.spec.options).toMatchObject({ fillOpacity: 42 });
+      stopPanel();
+    });
+
     it('waits for visualization undo before leaving edit mode and saving', async () => {
       const { scene, cell, panel } = buildSceneWithPanel();
       deactivate = scene.activate();

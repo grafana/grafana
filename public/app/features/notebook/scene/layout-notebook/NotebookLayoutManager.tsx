@@ -3,7 +3,12 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import {
+  filterFieldConfigOverrides,
+  type GrafanaTheme2,
+  isStandardFieldProp,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -547,10 +552,18 @@ export class NotebookLayoutManager
       label: t('notebooks.history.change-visualization', 'Change visualization'),
       kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => {
-        void this.enqueueVizChange(elementName, () => applyVisualizations(panels, after));
+        void this.enqueueVizChange(elementName, async () => {
+          if (after.length) {
+            await applyVisualizations(panels, after);
+          }
+        });
       },
       undo: () => {
-        void this.enqueueVizChange(elementName, () => applyVisualizations(panels, before));
+        void this.enqueueVizChange(elementName, async () => {
+          if (before.length) {
+            await applyVisualizations(panels, before);
+          }
+        });
       },
     };
     const history = this.editHistory;
@@ -564,7 +577,16 @@ export class NotebookLayoutManager
           .filter((panel): panel is VizPanel => Boolean(panel));
         before = panels.map(snapshotVisualization);
         await Promise.all(
-          panels.map((panel) => panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig))
+          panels.map((panel) => {
+            const fieldConfig = {
+              defaults: { ...panel.state.fieldConfig.defaults, custom: {} },
+              overrides: filterFieldConfigOverrides(panel.state.fieldConfig.overrides, isStandardFieldProp),
+            };
+            return panel.changePluginType(suggestion.pluginId, suggestion.options, {
+              ...(suggestion.fieldConfig ?? fieldConfig),
+              overrides: fieldConfig.overrides,
+            });
+          })
         );
         after = panels.map(snapshotVisualization);
       });
@@ -575,6 +597,8 @@ export class NotebookLayoutManager
 
     if (isEqual(before, after)) {
       history?.discard(action);
+    } else {
+      this.notebookScene?.autosave.markVisualizationEdited(elementName);
     }
   }
 

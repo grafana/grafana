@@ -1394,6 +1394,72 @@ describe('NotebookLayoutManager', () => {
       expect(panel.state.options).toMatchObject({ showHeader: true });
     });
 
+    it('keeps standard field overrides when changing visualization', async () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      const { manager } = withHistory([cell]);
+      panel.setState({
+        fieldConfig: {
+          defaults: { unit: 'ms', custom: { drawStyle: 'line' } },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'latency' },
+              properties: [
+                { id: 'unit', value: 's' },
+                { id: 'custom.drawStyle', value: 'bars' },
+              ],
+            },
+          ],
+        },
+      });
+      const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+
+      await manager.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+        fieldConfig: { defaults: { unit: 'short' }, overrides: [] },
+      });
+
+      expect(changePluginType).toHaveBeenCalledWith('table', undefined, {
+        defaults: { unit: 'short' },
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'latency' },
+            properties: [{ id: 'unit', value: 's' }],
+          },
+        ],
+      });
+    });
+
+    it('removes a failed visualization change after a newer edit', async () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      const { manager, history } = withHistory([cell]);
+      let rejectChange!: (error: Error) => void;
+      jest.spyOn(panel, 'changePluginType').mockImplementation(
+        () =>
+          new Promise<void>((_, reject) => {
+            rejectChange = reject;
+          })
+      );
+
+      const change = manager.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+      });
+      await waitFor(() => expect(rejectChange).toBeDefined());
+      manager.setPanelTitle(cell, 'Latency');
+      rejectChange(new Error('plugin failed to load'));
+      await expect(change).rejects.toThrow('plugin failed to load');
+
+      expect(history.state.undoLabel).toBe('Rename panel');
+      history.undo();
+      expect(panel.state.title).not.toBe('Latency');
+      expect(history.undo()).toBe(false);
+    });
+
     it('keeps visualization and title edits in the order they started', async () => {
       const { cell } = panelCell('viz');
       const panel = cell.state.body!;
