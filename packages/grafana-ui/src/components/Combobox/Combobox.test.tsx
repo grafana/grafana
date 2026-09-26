@@ -185,6 +185,67 @@ describe('Combobox', () => {
     expect(onChangeHandler).toHaveBeenCalledWith(iconOptions[1]);
   });
 
+  it('renders custom options in a virtualized list', async () => {
+    const largeOptions: Array<ComboboxOption<string>> = Array.from({ length: 1000 }, (_, index) => ({
+      label: `Option ${index}`,
+      value: String(index),
+    }));
+
+    render(
+      <Combobox
+        options={largeOptions}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => <span>Custom content {option.label}</span>}
+      />
+    );
+    await user.click(screen.getByRole('combobox'));
+
+    expect(await screen.findByText('Custom content Option 0')).toBeVisible();
+    expect(screen.getAllByRole('option').length).toBeLessThan(50); // not everything is rendered!
+    expect(screen.queryByText('Custom content Option 999')).not.toBeInTheDocument();
+  });
+
+  it('selects the source option from a custom descendant and keeps its string label in the input', async () => {
+    render(
+      <Combobox
+        options={options}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => (
+          <span>
+            Custom content for <strong data-testid={`custom-option-${option.value}`}>{option.label}</strong>
+          </span>
+        )}
+      />
+    );
+
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByTestId('custom-option-2'));
+
+    expect(onChangeHandler).toHaveBeenCalledTimes(1);
+    expect(onChangeHandler).toHaveBeenCalledWith(options[1]);
+    expect(screen.getByRole('combobox')).toHaveValue('Option 2');
+  });
+
+  it('selects an option with custom content by keyboard', async () => {
+    render(
+      <Combobox
+        options={options}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => <span>{option.label} custom</span>}
+      />
+    );
+
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+
+    expect(onChangeHandler).toHaveBeenCalledWith(options[2]);
+    expect(input).toHaveValue('Option 3');
+  });
+
   it('selects value by clicking that needs scrolling', async () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
 
@@ -492,6 +553,32 @@ describe('Combobox', () => {
       await userEvent.keyboard('{Enter}'); // Select 1 as the first option
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'string').toBeFalsy();
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'number').toBeTruthy();
+    });
+
+    it('uses default content for a numeric custom-value row', async () => {
+      const numericOptions: Array<ComboboxOption<number>> = [
+        { label: 'One', value: 1 },
+        { label: 'Two', value: 2 },
+      ];
+
+      render(
+        <Combobox<number>
+          options={numericOptions}
+          value={null}
+          onChange={onChangeHandler}
+          createCustomValue
+          renderOption={(option) => <span>Number {option.value.toFixed(2)}</span>}
+        />
+      );
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByText('Number 1.00')).toBeVisible();
+
+      await user.type(input, 'custom');
+
+      expect(await screen.findByText('custom')).toBeVisible();
+      expect(screen.getByText('Use custom value')).toBeVisible();
     });
   });
 
