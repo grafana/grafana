@@ -18,6 +18,7 @@ import {
   type SplitOpenOptions,
   store,
   SupplementaryQueryType,
+  urlUtil,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -148,6 +149,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
+  outlineHiddenFromUrl: boolean;
 
   constructor(props: Props) {
     super(props);
@@ -156,6 +158,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
+    const { contentOutline } = urlUtil.getUrlSearchParams();
+    this.outlineHiddenFromUrl = (Array.isArray(contentOutline) ? contentOutline[0] : contentOutline) === 'false';
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -180,9 +184,13 @@ export class Explore extends PureComponent<Props, ExploreState> {
   };
 
   onContentOutlineToogle = () => {
-    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, !this.state.contentOutlineVisible);
-    this.setState((state) => {
-      const newContentOutlineVisible = this.props.compact ? true : !state.contentOutlineVisible;
+    // Base the flip on what's actually visible right now, not just the raw persisted state,
+    // since `outlineHiddenFromUrl` can be hiding the panel despite `contentOutlineVisible` being true.
+    const isVisible = this.state.contentOutlineVisible && !this.outlineHiddenFromUrl;
+    this.outlineHiddenFromUrl = false;
+    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, !isVisible);
+    this.setState(() => {
+      const newContentOutlineVisible = this.props.compact ? true : !isVisible;
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'outline',
         type: newContentOutlineVisible ? 'open' : 'close',
@@ -684,7 +692,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
-          isContentOutlineOpen={contentOutlineVisible}
+          isContentOutlineOpen={contentOutlineVisible && !this.outlineHiddenFromUrl}
         />
         <div
           style={{
@@ -693,7 +701,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           }}
         >
           <div className={styles.wrapper}>
-            {contentOutlineVisible && !compact && (
+            {contentOutlineVisible && !compact && !this.outlineHiddenFromUrl && (
               <ContentOutline
                 scroller={this.scrollElement}
                 panelId={`content-outline-container-${exploreId}`}
