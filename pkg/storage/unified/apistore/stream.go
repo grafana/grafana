@@ -125,10 +125,15 @@ decode:
 			return watch.Bookmark, obj, nil
 		}
 
-		obj, err := d.toObject(evt.Resource)
-		if err != nil {
-			klog.Errorf("error decoding entity: %s", err)
-			return watch.Error, nil, err
+		// A delete carries the deleted object in Previous, and servers send its
+		// value empty. Decode Resource only when there is no Previous to use.
+		var obj runtime.Object
+		if evt.Type != resourcepb.WatchEvent_DELETED || evt.Previous == nil {
+			obj, err = d.toObject(evt.Resource)
+			if err != nil {
+				klog.Errorf("error decoding entity: %s", err)
+				return watch.Error, nil, err
+			}
 		}
 
 		var watchAction watch.EventType
