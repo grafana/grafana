@@ -564,6 +564,7 @@ func (l *cloudLoader) transportFor(key tlsCacheKey) (*http.Transport, error) {
 
 	t := http.DefaultTransport.(*http.Transport).Clone()
 	t.TLSClientConfig = tlsCfg
+	t.ResponseHeaderTimeout = backendResponseHeaderTimeout
 	if l.dialer != nil {
 		t.DialContext = l.dialer.Dial
 	}
@@ -595,6 +596,7 @@ func newAggregateBaseTransport(tlsCfg *tls.Config) *http.Transport {
 	t := http.DefaultTransport.(*http.Transport).Clone()
 	t.MaxIdleConnsPerHost = aggregateMaxIdleConnsPerHost
 	t.TLSClientConfig = tlsCfg
+	t.ResponseHeaderTimeout = backendResponseHeaderTimeout
 	return t
 }
 

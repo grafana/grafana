@@ -6937,9 +6937,6 @@
     "variable": {
       "description-tooltip": "Описание переменной"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Назад в дашборд",
       "not-found": "Панель не найдена"
@@ -13543,7 +13540,7 @@
       "count-truncated_other": "{{count}} первого блокнота загружено"
     },
     "new": {
-      "default-title": "Блокнот № {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Ошибка сохранения",
@@ -15118,12 +15115,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Назад к репозиториям",
       "cleaning-up-resources": "Очистка ресурсов репозитория",
-      "not-found": "не найдено",
       "not-found-message": "Репозиторий не найден",
       "repository-config-exists-configuration": "Убедитесь, что конфигурация репозитория существует в файле конфигурации.",
       "tab-overview": "Обзор",
@@ -15419,26 +15420,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Прежде чем сделать дашборд общедоступным, обратите внимание на следующее:",
-      "data-src-ack-desc": "В настоящее время публикация работает только с подмножеством источников данных*",
-      "data-src-ack-tooltip": "Подробнее об общедоступных источниках данных",
-      "public-ack-desc": "Весь дашборд будет общедоступным*",
-      "public-ack-tooltip": "Подробнее об общедоступных дашбордах",
-      "usage-ack-desc": "Если сделать дашборд общедоступным, запросы будут выполняться каждый раз при его просмотре, что может увеличить затраты*",
-      "usage-ack-desc-tooltip": "Подробнее о кэшировании запросов"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Может просматривать дашборд",
-      "copy-button": "Копировать",
-      "dashboard-url-field-label": "URL-адрес дашборда",
-      "email-share-type-option-label": "Только указанные пользователи",
-      "pause-sharing-dashboard-label": "Приостановить общий доступ к дашборду",
-      "public-share-type-option-label": "Любой, у кого есть ссылка",
-      "revoke-public-URL-button": "Отозвать общедоступный URL-адрес",
-      "revoke-public-URL-button-title": "Отозвать общедоступный URL-адрес",
-      "settings-title": "Параметры"
-    },
     "configuration": {
       "display-annotations-description": "Показывать аннотации на этом дашборде",
       "display-annotations-label": "Показывать аннотации",
@@ -15451,21 +15432,11 @@
       "time-range-label": "Временной диапазон",
       "time-range-tooltip": "Совместно используемый дашборд использует параметры временного диапазона по умолчанию"
     },
-    "create-page": {
-      "generate-public-url-button": "Создать общедоступный URL-адрес",
-      "unsupported-features-desc": "В настоящее время мы не поддерживаем переменные шаблонов или клиентские источники данных",
-      "welcome-title": "Добро пожаловать в общедоступные дашборды!"
-    },
     "email-sharing": {
       "accept-button": "Принять",
       "alert-text": "Плата за совместное использование дашбордов по электронной почте взимается за каждого пользователя в течение 30-дневного срока действия токена независимо от количества совместно используемых дашбордов. Если вы не продлеваете срок действия токена, плата перестает взиматься по истечении 30 дней.",
       "bill-ack": "Я понимаю, что за каждого добавленного пользователя взимается плата.*",
       "cancel-button": "Отмена",
-      "input-invalid-email-text": "Недопустимый адрес электронной почты",
-      "input-required-email-text": "Введите адрес электронной почты",
-      "invite-button": "Пригласить",
-      "invite-field-desc": "Пригласить пользователей по электронной почте",
-      "invite-field-label": "Пригласить",
       "learn-more-button": "Подробнее",
       "recipient-email-placeholder": "Адрес электронной почты",
       "recipient-invalid-email-text": "Недопустимый адрес электронной почты",
@@ -15475,17 +15446,12 @@
       "recipient-list-description": "Доступ к этому дашборду могут получить только те, кого вы напрямую пригласили.",
       "recipient-list-title": "Пользователи с доступом",
       "recipient-required-email-text": "Введите адрес электронной почты",
-      "resend-button": "Повторить отправку",
-      "resend-button-title": "Повторить отправку",
       "resend-invite-label": "Отправить приглашение повторно",
       "revoke-access-label": "Отозвать доступ",
-      "revoke-button": "Отозвать",
-      "revoke-button-title": "Отозвать",
       "success-creation": "Ваш дашборд готов к внешнему совместному использованию",
       "success-share-type-change": "Доступ к дашборду обновлен: теперь доступ по ссылке могут получить только определенные пользователи"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Сохраните изменения в дашборде перед обновлением общедоступной конфигурации",
       "unsupport-data-source-alert-readmore-link": "Подробнее о поддерживаемых источниках данных",
       "unsupported-data-source-alert-title": "Неподдерживаемые источники данных",
       "unsupported-template-variable-alert-desc": "Общедоступный дашборд может не работать, поскольку использует переменные шаблона",
@@ -15499,25 +15465,6 @@
       "public-ack": "Я понимаю, что дашборд будет общедоступным.*",
       "success-creation": "Ваш дашборд теперь является общедоступным",
       "success-share-type-change": "Доступ к дашборду обновлен: теперь он доступен всем, у кого есть ссылка"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Свернуть параметры",
-      "expand-settings-tooltip": "Развернуть параметры"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Временной диапазон по умолчанию",
-      "default-time-range-label-desc": "Общедоступный дашборд использует параметры временного диапазона по умолчанию",
-      "show-annotations-label": "Показать аннотации",
-      "show-annotations-label-desc": "Показывать аннотации на общедоступном дашборде",
-      "time-range-picker-label": "Включен указатель временного диапазона",
-      "time-range-picker-label-desc": "Разрешить просматривающим пользователям менять временной диапазон"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Аннотации = скрыть",
-      "annotations-show-text": "Аннотации = показать",
-      "time-range-picker-disabled-text": "Указатель временного диапазона = отключен",
-      "time-range-picker-enabled-text": "Указатель временного диапазона = включен",
-      "time-range-text": "Временной диапазон = "
     },
     "share": {
       "success-delete": "Ваш дашборд больше не допускает совместного использования"
@@ -16324,9 +16271,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Общий доступ"
-    },
     "embed": {
       "copy": "Копировать в буфер обмена",
       "html": "Встроить HTML",
@@ -16373,9 +16317,6 @@
       "time-range-description": "Преобразует текущий относительный временной диапазон в абсолютный.",
       "time-range-label": "Заблокировать временной диапазон"
     },
-    "panel": {
-      "title": "Общий доступ к панели"
-    },
     "snapshot": {
       "cancel-button": "Отмена",
       "copy-link-button": "Копировать",
@@ -16391,16 +16332,11 @@
       "local-button": "Опубликовать снимок",
       "mistake-message": "Вы ошиблись? ",
       "name": "Имя снимка",
-      "timeout": "Время ожидания (сек.)",
-      "timeout-description": "Возможно, вам потребуется настроить значение времени ожидания на случай продолжительного сбора метрик дашборда.",
       "url-label": "URL-адрес снимка"
     },
     "tab-title": {
-      "embed": "Встраивание",
       "export": "Экспорт",
-      "library-panel": "Панель библиотеки",
       "link": "Ссылка",
-      "public-dashboard-title": "Общедоступный дашборд",
       "snapshot": "Снимок"
     },
     "theme-picker": {

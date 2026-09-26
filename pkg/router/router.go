@@ -102,6 +102,11 @@ type GrafanaRouter struct {
 
 	// Set before serving by the standalone target; middleware keeps its delegate.
 	unregisteredGroupHandler http.Handler
+
+	// acceptGroup, when set, limits which groups reconcile will serve. Set
+	// before Run; the middleware uses it so the router never shadows a group
+	// the embedded API server owns.
+	acceptGroup func(group string) bool
 }
 
 func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
@@ -122,16 +127,22 @@ func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
 // Anything the router does not own falls through to next.
 func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	path := req.URL.Path
+	isOpenAPI := path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/")
+	isAPIs := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/")
 
-	// OpenAPI v3 discovery index and per-group-version documents.
-	if path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/") {
-		r.serveOpenAPIV3(w, req, next)
+	// Not part of the /apis or /openapi/v3 trees — not ours.
+	if !isOpenAPI && !isAPIs {
+		next.ServeHTTP(w, req)
+		return
+	}
+	if !canonicalAPIPath(req.URL) {
+		http.Error(w, "non-canonical API path", http.StatusBadRequest)
 		return
 	}
 
-	// Not part of the /apis tree — not ours.
-	if path != apisPrefix && !strings.HasPrefix(path, apisPrefix+"/") {
-		next.ServeHTTP(w, req)
+	// OpenAPI v3 discovery index and per-group-version documents.
+	if isOpenAPI {
+		r.serveOpenAPIV3(w, req, next)
 		return
 	}
 
@@ -379,6 +390,10 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	seen := make(map[string]struct{}, len(rawBackends))
 	for _, b := range rawBackends {
 		group := b.Group().Name
+		if r.acceptGroup != nil && !r.acceptGroup(group) {
+			logging.FromContext(ctx).Warn("router: group not allowed in this mode, skipping", "group", group)
+			continue
+		}
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group. A duplicate is a config
 			// error; the last one wins rather than crashing the router.
@@ -391,7 +406,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 			continue // unchanged: keep the live Backend (and its pool)
 		}
 
-		handler, err := b.Load(ctx)
+		handler, err := loadBackend(ctx, b)
 		if err != nil {
 			// Keep last-known-good for this group. lastKey is not advanced, so
 			// a later wake retries.
@@ -420,6 +435,18 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 
 	r.publish(ctx)
 	return errors.Join(errs...)
+}
+
+// loadBackend turns a panic in one backend's Load into that group's error, so
+// a bad backend (such as a plugin with an invalid manifest) cannot stop the
+// reconcile loop for every other group.
+func loadBackend(ctx context.Context, b Backend) (handler http.Handler, err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			handler, err = nil, fmt.Errorf("panic: %v", p)
+		}
+	}()
+	return b.Load(ctx)
 }
 
 // publish atomically stores the serving snapshot and the synthesized root
@@ -455,7 +482,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 // elsewhere.
 func rejectBackendRedirects(resp *http.Response) error {
 	if resp.StatusCode >= 300 && resp.StatusCode <= 399 && resp.Header.Get("Location") != "" {
-		return fmt.Errorf("router: rejecting redirect from backend (status %d, location %q)", resp.StatusCode, resp.Header.Get("Location"))
+		return fmt.Errorf("%w (status %d, location %q)", errBackendRedirect, resp.StatusCode, resp.Header.Get("Location"))
 	}
 	return nil
 }

@@ -151,6 +151,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 
 	if opts.transport == nil {
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
+		opts.transport.ResponseHeaderTimeout = backendResponseHeaderTimeout
 	}
 
 	return &singleTenantFallback{
@@ -282,11 +283,12 @@ func isSingleTenantDiscoveryPath(path string) bool {
 func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, w http.ResponseWriter, req *http.Request) {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
-			pr.SetURL(host.url)
+			rewriteOutbound(pr, host.url)
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},
-		Transport: newBackendTransport(st.transport),
+		Transport:    newBackendTransport(st.transport),
+		ErrorHandler: proxyErrorHandler,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err

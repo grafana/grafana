@@ -157,9 +157,10 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 		discovery:  discovered.discovery,
 		key:        key,
 		proxy: &httputil.ReverseProxy{
-			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(&target) },
+			Rewrite:        func(pr *httputil.ProxyRequest) { rewriteOutbound(pr, &target) },
 			Transport:      newBackendTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
+			ErrorHandler:   proxyErrorHandler,
 		},
 	}, nil
 }
