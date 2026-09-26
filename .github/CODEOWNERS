@@ -1291,6 +1291,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/dashboard/search_test.go @grafana/grafana-search-and-storage
 /pkg/registry/apps/advisor @grafana/grafana-catalog
 /pkg/registry/apps/alerting @grafana/alerting-squad
+/pkg/registry/apps/annotation @grafana/grafana-backend-services-squad
 /pkg/registry/apps/plugins @grafana/grafana-catalog
 /pkg/registry/apps/dashvalidator @grafana/sharing-squad
 /pkg/codegen/ @grafana/grafana-as-code
