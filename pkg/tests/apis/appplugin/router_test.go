@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	k8srest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -286,9 +287,19 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		}
 		requireName(added, "add")
 
-		require.NoError(t, unstructured.SetNestedField(created.Object, "updated", "spec", "value"))
-		_, err = resource.Update(ctx, created, metav1.UpdateOptions{})
-		require.NoError(t, err)
+		// Update the latest copy, retrying on conflict, since another writer may
+		// have changed the object since it was created.
+		require.NoError(t, retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			current, err := resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			if err := unstructured.SetNestedField(current.Object, "updated", "spec", "value"); err != nil {
+				return err
+			}
+			_, err = resource.Update(ctx, current, metav1.UpdateOptions{})
+			return err
+		}))
 		requireName(updated, "update")
 	})
 
