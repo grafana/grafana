@@ -26,6 +26,7 @@ import {
   type NotebookExportSource,
   type NotebookFeedbackRating,
   type NotebookFeedbackReason,
+  type NotebookFeedbackSource,
   type NotebookFeedbackSubmittedProperties,
   NOTEBOOK_FEEDBACK_SUBMITTED_EVENT,
   type NotebookLinkCopiedProperties,
@@ -112,8 +113,13 @@ function addedPanelProperties({ panel, isLibraryPanel }: AddedPanel) {
  * turn a scene into what each event sends, here and once, instead of at every place that fires one.
  */
 export const NotebookAnalytics = {
-  feedbackSubmitted(rating: NotebookFeedbackRating, reasons: NotebookFeedbackReason[], comment: string): void {
-    createFeedbackSubmittedEvent({ rating, reasons, ...(comment.trim() && { comment: comment.trim() }) });
+  feedbackSubmitted(
+    rating: NotebookFeedbackRating,
+    reasons: NotebookFeedbackReason[],
+    comment: string,
+    source: NotebookFeedbackSource
+  ): void {
+    createFeedbackSubmittedEvent({ rating, reasons, source, ...(comment.trim() && { comment: comment.trim() }) });
   },
 
   loaded(scene: NotebookScene, wasCached: boolean): void {

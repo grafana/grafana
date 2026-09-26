@@ -9,7 +9,7 @@ import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutMa
 import { defaultVisualizationPanelKind } from '../types';
 
 import { NotebookAnalytics } from './main';
-import { NOTEBOOK_FEEDBACK_RATING, NOTEBOOK_FEEDBACK_REASON } from './types';
+import { NOTEBOOK_FEEDBACK_RATING, NOTEBOOK_FEEDBACK_REASON, NOTEBOOK_FEEDBACK_SOURCE } from './types';
 
 describe('NotebookAnalytics.feedbackSubmitted', () => {
   it('reports rating, fixed reasons, and an optional trimmed comment', () => {
@@ -20,14 +20,25 @@ describe('NotebookAnalytics.feedbackSubmitted', () => {
     NotebookAnalytics.feedbackSubmitted(
       NOTEBOOK_FEEDBACK_RATING.COULD_BE_BETTER,
       [NOTEBOOK_FEEDBACK_REASON.EDITING, NOTEBOOK_FEEDBACK_REASON.SOMETHING_BROKEN],
-      '  Saving did not work  '
+      '  Saving did not work  ',
+      NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR
     );
 
-    NotebookAnalytics.feedbackSubmitted(NOTEBOOK_FEEDBACK_RATING.GOOD, [], '   ');
+    NotebookAnalytics.feedbackSubmitted(
+      NOTEBOOK_FEEDBACK_RATING.GOOD,
+      [],
+      '   ',
+      NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_LIST
+    );
 
     expect(events).toEqual([
-      { rating: 'could_be_better', reasons: ['editing', 'something_broken'], comment: 'Saving did not work' },
-      { rating: 'good', reasons: [] },
+      {
+        rating: 'could_be_better',
+        reasons: ['editing', 'something_broken'],
+        source: 'notebook_toolbar',
+        comment: 'Saving did not work',
+      },
+      { rating: 'good', reasons: [], source: 'notebook_list' },
     ]);
     unsubscribe();
   });

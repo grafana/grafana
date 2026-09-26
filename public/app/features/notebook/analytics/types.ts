@@ -47,10 +47,17 @@ export const NOTEBOOK_FEEDBACK_REASON = {
 
 export const NOTEBOOK_FEEDBACK_SUBMITTED_EVENT = 'feedback_submitted';
 
+export const NOTEBOOK_FEEDBACK_SOURCE = {
+  NOTEBOOK_LIST: 'notebook_list',
+  NOTEBOOK_TOOLBAR: 'notebook_toolbar',
+} as const;
+
 export type NotebookFeedbackRating = (typeof NOTEBOOK_FEEDBACK_RATING)[keyof typeof NOTEBOOK_FEEDBACK_RATING];
 export type NotebookFeedbackReason = (typeof NOTEBOOK_FEEDBACK_REASON)[keyof typeof NOTEBOOK_FEEDBACK_REASON];
+export type NotebookFeedbackSource = (typeof NOTEBOOK_FEEDBACK_SOURCE)[keyof typeof NOTEBOOK_FEEDBACK_SOURCE];
 
 export type NotebookFeedbackSubmittedProperties = EventProperty & {
+  source: NotebookFeedbackSource;
   rating: NotebookFeedbackRating;
   reasons: NotebookFeedbackReason[];
   comment?: string;

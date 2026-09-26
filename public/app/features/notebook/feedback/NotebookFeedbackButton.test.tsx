@@ -1,7 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_FEEDBACK_RATING, NOTEBOOK_FEEDBACK_REASON } from '../analytics/types';
+import { NOTEBOOK_FEEDBACK_RATING, NOTEBOOK_FEEDBACK_REASON, NOTEBOOK_FEEDBACK_SOURCE } from '../analytics/types';
 
 import { NotebookFeedbackButton } from './NotebookFeedbackButton';
 
@@ -22,7 +22,7 @@ describe('NotebookFeedbackButton', () => {
 
   it('records what worked well without sending notebook content', async () => {
     const feedbackSubmitted = jest.spyOn(NotebookAnalytics, 'feedbackSubmitted').mockImplementation();
-    const { user } = render(<NotebookFeedbackButton />);
+    const { user } = render(<NotebookFeedbackButton source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR} />);
 
     await user.click(screen.getByRole('button', { name: 'Give feedback' }));
     expect(screen.getByRole('dialog', { name: 'Tell us about your experience with notebooks' })).toBeInTheDocument();
@@ -38,7 +38,8 @@ describe('NotebookFeedbackButton', () => {
     expect(feedbackSubmitted).toHaveBeenCalledWith(
       NOTEBOOK_FEEDBACK_RATING.GOOD,
       [NOTEBOOK_FEEDBACK_REASON.VISUALIZATIONS],
-      '  The charts are useful  '
+      '  The charts are useful  ',
+      NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(mockSuccess).toHaveBeenCalledWith('Thanks for your feedback');
@@ -46,7 +47,7 @@ describe('NotebookFeedbackButton', () => {
 
   it('requires a reason for negative feedback', async () => {
     const feedbackSubmitted = jest.spyOn(NotebookAnalytics, 'feedbackSubmitted').mockImplementation();
-    const { user } = render(<NotebookFeedbackButton />);
+    const { user } = render(<NotebookFeedbackButton source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR} />);
 
     await user.click(screen.getByRole('button', { name: 'Give feedback' }));
     await user.click(screen.getByRole('button', { name: 'Could be better' }));
@@ -65,13 +66,14 @@ describe('NotebookFeedbackButton', () => {
     expect(feedbackSubmitted).toHaveBeenCalledWith(
       NOTEBOOK_FEEDBACK_RATING.COULD_BE_BETTER,
       [NOTEBOOK_FEEDBACK_REASON.EDITING, NOTEBOOK_FEEDBACK_REASON.SOMETHING_BROKEN],
-      ''
+      '',
+      NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR
     );
   });
 
   it('accepts written negative feedback without a reason chip', async () => {
     const feedbackSubmitted = jest.spyOn(NotebookAnalytics, 'feedbackSubmitted').mockImplementation();
-    const { user } = render(<NotebookFeedbackButton />);
+    const { user } = render(<NotebookFeedbackButton source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR} />);
 
     await user.click(screen.getByRole('button', { name: 'Give feedback' }));
     await user.click(screen.getByRole('button', { name: 'Could be better' }));
@@ -81,13 +83,14 @@ describe('NotebookFeedbackButton', () => {
     expect(feedbackSubmitted).toHaveBeenCalledWith(
       NOTEBOOK_FEEDBACK_RATING.COULD_BE_BETTER,
       [],
-      'Unable to save changes'
+      'Unable to save changes',
+      NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR
     );
   });
 
   it('clears reasons when switching ratings', async () => {
     const feedbackSubmitted = jest.spyOn(NotebookAnalytics, 'feedbackSubmitted').mockImplementation();
-    const { user } = render(<NotebookFeedbackButton />);
+    const { user } = render(<NotebookFeedbackButton source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR} />);
 
     await user.click(screen.getByRole('button', { name: 'Give feedback' }));
     await user.click(screen.getByRole('button', { name: 'Could be better' }));
@@ -95,6 +98,11 @@ describe('NotebookFeedbackButton', () => {
     await user.click(screen.getByRole('button', { name: 'Good' }));
     await user.click(screen.getByRole('button', { name: 'Send feedback' }));
 
-    expect(feedbackSubmitted).toHaveBeenCalledWith(NOTEBOOK_FEEDBACK_RATING.GOOD, [], '');
+    expect(feedbackSubmitted).toHaveBeenCalledWith(
+      NOTEBOOK_FEEDBACK_RATING.GOOD,
+      [],
+      '',
+      NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR
+    );
   });
 });

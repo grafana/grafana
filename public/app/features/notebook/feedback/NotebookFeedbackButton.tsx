@@ -10,6 +10,7 @@ import { NotebookAnalytics } from '../analytics/main';
 import {
   NOTEBOOK_FEEDBACK_RATING,
   NOTEBOOK_FEEDBACK_REASON,
+  type NotebookFeedbackSource,
   type NotebookFeedbackRating,
   type NotebookFeedbackReason,
 } from '../analytics/types';
@@ -25,7 +26,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export function NotebookFeedbackButton({ labeled = false }: { labeled?: boolean }) {
+export function NotebookFeedbackButton({
+  labeled = false,
+  source,
+}: {
+  labeled?: boolean;
+  source: NotebookFeedbackSource;
+}) {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
   const [isOpen, setIsOpen] = useState(false);
@@ -74,7 +81,7 @@ export function NotebookFeedbackButton({ labeled = false }: { labeled?: boolean 
       return;
     }
 
-    NotebookAnalytics.feedbackSubmitted(rating, selectedReasons, comment);
+    NotebookAnalytics.feedbackSubmitted(rating, selectedReasons, comment, source);
     notifyApp.success(t('notebooks.feedback.sent', 'Thanks for your feedback'));
     close();
   };
