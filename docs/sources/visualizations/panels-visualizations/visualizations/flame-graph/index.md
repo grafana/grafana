@@ -127,7 +127,7 @@ The sandwich view allows you to show the context of the clicked function. It sho
 Under the **Grouping** section of the menu, the following options let you expand and collapse groups of functions:
 
 - **Expand group** - Expands the grouped function you've clicked. Displayed if you click a function that's been automatically grouped in the flame graph.
-- **Expand all groups** - Expands all grouped functions in the flame graph. Always displayed when you click the graph.
+- **Expand all groups** - Expands all grouped functions in the flame graph. Displayed unless all groups in the flame graph are already expanded.
 - **Collapse group** - Collapses the expanded function you've clicked. Displayed if you click a function in the flame graph that's been manually expanded.
 - **Collapse all groups** - Collapses all expanded functions in the flame graph. Displayed if there are any expanded functions when you click the graph.
 
@@ -151,7 +151,7 @@ The call tree shows the profile's call hierarchy as an expandable tree. Each row
 
 {{< figure src="/media/docs/pyroscope/screenshot-flamegraph-call-tree.png" max-width="700px" alt="A flame graph visualization showing the toolbar and a Call tree view alongside the flame graph." >}}
 
-To explore the tree, click the expand icon on a row to reveal its child functions, and click it again to collapse them. Expanding a branch lets you follow a single call path from a parent function down to the functions it calls.
+To explore the tree, click a function's name in a row to reveal its child functions, and click it again to collapse them. Expanding a branch lets you follow a single call path from a parent function down to the functions it calls.
 
 Use the call tree when you want to read the call hierarchy directly, one path at a time, instead of scanning block widths in the flame graph or aggregated rows in the top table. It works well as a substitute for the callers side of [Sandwich view](#sandwich-view) when you want to trace how a function is reached in the call hierarchy.
 

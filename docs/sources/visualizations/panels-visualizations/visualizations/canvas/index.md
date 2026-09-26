@@ -472,7 +472,7 @@ You can style the selected connection using the following options:
   - **Negative values** - Display reverse arrows.
   - **Zero** - Display no arrow heads.
 
-- **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**.
+- **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**. When you choose **Dashed** or **Dotted**, an **Animate** switch appears that lets you animate the dashes along the connection.
 
 ### Standard options
 

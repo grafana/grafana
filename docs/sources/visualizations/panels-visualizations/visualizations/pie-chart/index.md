@@ -177,6 +177,8 @@ Use these settings to define how the legend appears in your visualization. For m
 | Placement | Select where to display the legend. Choose **Bottom** or **Right**. |
 | Width | Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**. |
 | Legend values | Select values to display in the legend. You can select more than one:<ul><li>**Percent** - The percentage of the whole.</li><li>**Value** - The raw numerical value.</li></ul> |
+| Overflow | Control how overflow for long series names is handled. Choose **Ellipsis** or **Wrap**. This option is only displayed if you set the legend **Mode** to **Table**. |
+| Limit | Limit how many legend items are shown by default. The remaining items become available through an expandable **Show all** link. |
 
 <!-- prettier-ignore-end -->
 
