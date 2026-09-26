@@ -149,9 +149,10 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, helper *legacysql.Lega
 		rows = nil
 	}
 	return &rowsWrapper{
-		rows:    rows,
-		a:       a,
-		history: query.GetHistory,
+		rows:           rows,
+		a:              a,
+		history:        query.GetHistory,
+		rawDataColumns: query.SelectRawDataColumns(),
 	}, err
 }
 
@@ -380,10 +381,11 @@ func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int
 }
 
 type rowsWrapper struct {
-	a       *dashboardSqlAccess
-	rows    *sql.Rows
-	history bool
-	count   int
+	a              *dashboardSqlAccess
+	rows           *sql.Rows
+	history        bool
+	rawDataColumns bool
+	count          int
 
 	// Current
 	row *dashboardRow
@@ -413,7 +415,7 @@ func (r *rowsWrapper) Next() bool {
 	for r.rows.Next() {
 		r.count++
 
-		r.row, err = r.a.scanRow(r.rows, r.history)
+		r.row, err = r.a.scanRow(r.rows, r.history, r.rawDataColumns)
 		if err != nil {
 			r.a.log.Error("error scanning dashboard", "error", err)
 			if len(r.rejected) > 100 || r.row == nil {
@@ -485,7 +487,7 @@ func (a *dashboardSqlAccess) parseDashboard(dash *dashboardV1.Dashboard, data []
 	return nil
 }
 
-func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRow, error) {
+func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history, rawDataColumns bool) (*dashboardRow, error) {
 	dash := &dashboardV1.Dashboard{
 		TypeMeta:   dashboardV1.DashboardResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string)},
@@ -512,16 +514,32 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 	var origin_path sql.NullString
 	var origin_ts sql.NullInt64
 	var origin_hash sql.NullString
+	var versionData []byte
+	var dashboardData []byte
 	var data []byte // the dashboard JSON
 	var version int64
 
-	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &title, &folder_uid,
+	destinations := []any{&orgId, &dashboard_id, &dash.Name, &title, &folder_uid,
 		&deleted, &plugin_id,
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
 		&created, &createdBy, &createdByID,
 		&updated, &updatedBy, &updatedByID,
-		&version, &message, &data, &apiVersion,
-	)
+		&version, &message}
+	if rawDataColumns {
+		destinations = append(destinations, &versionData, &dashboardData)
+	} else {
+		destinations = append(destinations, &data)
+	}
+	destinations = append(destinations, &apiVersion)
+	err := rows.Scan(destinations...)
+	if rawDataColumns {
+		// Match COALESCE's NULL precedence in Go so both JSON values are read
+		// directly from their source columns without a SQL expression.
+		data = dashboardData
+		if versionData != nil {
+			data = versionData
+		}
+	}
 
 	switch apiVersion.String {
 	case "":
