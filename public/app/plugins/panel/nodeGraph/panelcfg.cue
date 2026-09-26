@@ -52,6 +52,8 @@ composableKinds: PanelCfg: {
 					zoomMode?: ZoomMode
 					// How to layout the nodes in the node graph
 					layoutAlgorithm?: LayoutAlgorithm
+					// Automatically fit and center the graph when its layout or panel size changes
+					fitToView?: bool
 				} @cuetsy(kind="interface")
 			}
 		}]

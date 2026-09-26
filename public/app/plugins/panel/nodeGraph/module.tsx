@@ -57,6 +57,16 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
         ],
       },
     });
+    builder.addBooleanSwitch({
+      name: t('node-graph.name-fit-to-view', 'Fit graph to view'),
+      description: t(
+        'node-graph.description-fit-to-view',
+        'Automatically fit and center the graph when its layout or panel size changes'
+      ),
+      category,
+      path: 'fitToView',
+      defaultValue: false,
+    });
     builder.addNestedOptions({
       category: [t('node-graph.category-nodes', 'Nodes')],
       path: 'nodes',
