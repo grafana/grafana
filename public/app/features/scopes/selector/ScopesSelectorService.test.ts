@@ -420,6 +420,187 @@ describe('ScopesSelectorService', () => {
     });
   });
 
+  describe('expandToGroup', () => {
+    const applicationsNode: ScopeNode = {
+      metadata: { name: 'applications' },
+      spec: { linkId: '', linkType: 'scope', parentName: '', nodeType: 'container', title: 'Applications' },
+    };
+    const cloudNode: ScopeNode = {
+      metadata: { name: 'cloud' },
+      spec: { linkId: '', linkType: 'scope', parentName: 'applications', nodeType: 'container', title: 'Cloud' },
+    };
+    const devLeafNode: ScopeNode = {
+      metadata: { name: 'dev-leaf' },
+      spec: { linkId: 'scope-dev', linkType: 'scope', parentName: 'cloud', nodeType: 'leaf', title: 'Dev' },
+    };
+
+    beforeEach(() => {
+      apiClient.fetchNodes.mockImplementation((options: { parent?: string }) => {
+        if (options.parent === '') {
+          return Promise.resolve([applicationsNode]);
+        } else if (options.parent === 'applications') {
+          return Promise.resolve([cloudNode]);
+        } else if (options.parent === 'cloud') {
+          return Promise.resolve([devLeafNode]);
+        }
+        return Promise.resolve([]);
+      });
+
+      apiClient.fetchScopeNode.mockImplementation((scopeNodeId: string) => {
+        if (scopeNodeId === 'cloud') {
+          return Promise.resolve(cloudNode);
+        } else if (scopeNodeId === 'applications') {
+          return Promise.resolve(applicationsNode);
+        }
+        return Promise.resolve(undefined);
+      });
+    });
+
+    it('should expand every ancestor down to the target group and load its children', async () => {
+      await service.expandToGroup('cloud');
+
+      expect(service.state.tree.expanded).toBe(true);
+      expect(service.state.tree.children?.applications?.expanded).toBe(true);
+      expect(service.state.tree.children?.applications?.children?.cloud?.expanded).toBe(true);
+      expect(service.state.tree.children?.applications?.children?.cloud?.childrenLoaded).toBe(true);
+      expect(service.state.tree.children?.applications?.children?.cloud?.children?.['dev-leaf']).toBeDefined();
+    });
+
+    it('should collapse other branches so only the target branch ends up expanded', async () => {
+      // Load root children, then expand a branch, before jumping to the target group.
+      await service.filterNode('', '');
+      await service.toggleExpandedNode('applications');
+      expect(service.state.tree.children?.applications?.expanded).toBe(true);
+
+      await service.expandToGroup('cloud');
+
+      // Applications is still expanded (it's an ancestor of cloud), but nothing unrelated stayed open.
+      expect(service.state.tree.children?.applications?.expanded).toBe(true);
+      expect(service.state.tree.children?.applications?.children?.cloud?.expanded).toBe(true);
+    });
+
+    it('should do nothing when the target node cannot be resolved', async () => {
+      apiClient.fetchScopeNode.mockResolvedValue(undefined);
+
+      await expect(service.expandToGroup('unknown-node')).resolves.not.toThrow();
+      expect(service.state.tree.children).toBeUndefined();
+    });
+  });
+
+  describe('discoverQuickJumpGroups (private, exercised via open())', () => {
+    const writeRecent = (entries: Array<{ scopeIds: string[]; scopeNodeId?: string }>) => {
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify(entries.map((e) => ({ ...e, version: 'test-version' })));
+    };
+
+    // discoverQuickJumpGroups is private; cast through unknown rather than any to invoke it directly in tests.
+    const runDiscovery = () =>
+      (service as unknown as { discoverQuickJumpGroups: () => Promise<void> }).discoverQuickJumpGroups();
+
+    it('should resolve the group behind a recent scope using its defaultPath', async () => {
+      const devScope: Scope = {
+        metadata: { name: 'scope-dev' },
+        spec: { title: 'Dev', filters: [], defaultPath: ['applications', 'cloud', 'dev-leaf'] },
+      };
+      apiClient.fetchScope.mockResolvedValue(devScope);
+      writeRecent([{ scopeIds: ['scope-dev'] }]);
+
+      await runDiscovery();
+
+      expect(service.state.quickJumpGroups).toEqual([{ scopeNodeId: 'cloud', path: ['applications', 'cloud'] }]);
+    });
+
+    it('should not offer a group that is only 1 level below root', async () => {
+      const grafanaScope: Scope = {
+        metadata: { name: 'scope-grafana' },
+        spec: { title: 'Grafana', filters: [], defaultPath: ['applications', 'grafana-leaf'] },
+      };
+      apiClient.fetchScope.mockResolvedValue(grafanaScope);
+      writeRecent([{ scopeIds: ['scope-grafana'] }]);
+
+      await runDiscovery();
+
+      expect(service.state.quickJumpGroups).toEqual([]);
+    });
+
+    it('should fall back to walking parentName when the scope has no defaultPath', async () => {
+      const applicationsNode: ScopeNode = {
+        metadata: { name: 'applications' },
+        spec: { linkId: '', linkType: 'scope', parentName: '', nodeType: 'container', title: 'Applications' },
+      };
+      const cloudNode: ScopeNode = {
+        metadata: { name: 'cloud' },
+        spec: { linkId: '', linkType: 'scope', parentName: 'applications', nodeType: 'container', title: 'Cloud' },
+      };
+      const devNode: ScopeNode = {
+        metadata: { name: 'dev-node' },
+        spec: { linkId: 'scope-dev', linkType: 'scope', parentName: 'cloud', nodeType: 'leaf', title: 'Dev' },
+      };
+      const devScope: Scope = { metadata: { name: 'scope-dev' }, spec: { title: 'Dev', filters: [] } };
+
+      apiClient.fetchScope.mockResolvedValue(devScope);
+      apiClient.fetchScopeNode.mockImplementation((id: string) => {
+        if (id === 'dev-node') {
+          return Promise.resolve(devNode);
+        } else if (id === 'cloud') {
+          return Promise.resolve(cloudNode);
+        } else if (id === 'applications') {
+          return Promise.resolve(applicationsNode);
+        }
+        return Promise.resolve(undefined);
+      });
+      writeRecent([{ scopeIds: ['scope-dev'], scopeNodeId: 'dev-node' }]);
+
+      await runDiscovery();
+
+      expect(service.state.quickJumpGroups).toEqual([{ scopeNodeId: 'cloud', path: ['applications', 'cloud'] }]);
+    });
+
+    it('should deduplicate groups shared by multiple recent scopes', async () => {
+      const devScope: Scope = {
+        metadata: { name: 'scope-dev' },
+        spec: { title: 'Dev', filters: [], defaultPath: ['applications', 'cloud', 'dev-leaf'] },
+      };
+      const opsScope: Scope = {
+        metadata: { name: 'scope-ops' },
+        spec: { title: 'Ops', filters: [], defaultPath: ['applications', 'cloud', 'ops-leaf'] },
+      };
+      apiClient.fetchScope.mockImplementation((name: string) =>
+        Promise.resolve(name === 'scope-dev' ? devScope : opsScope)
+      );
+      writeRecent([{ scopeIds: ['scope-dev'] }, { scopeIds: ['scope-ops'] }]);
+
+      await runDiscovery();
+
+      expect(service.state.quickJumpGroups).toEqual([{ scopeNodeId: 'cloud', path: ['applications', 'cloud'] }]);
+    });
+
+    it('should not let a stale call overwrite a newer one', async () => {
+      const devScope: Scope = {
+        metadata: { name: 'scope-dev' },
+        spec: { title: 'Dev', filters: [], defaultPath: ['applications', 'cloud', 'dev-leaf'] },
+      };
+      writeRecent([{ scopeIds: ['scope-dev'] }]);
+
+      // fetchScope is called once per discoverQuickJumpGroups() call, in call order, so resolvers[0] belongs to
+      // the stale (first) call and resolvers[1] to the current (second) one.
+      const resolvers: Array<(scope: Scope) => void> = [];
+      apiClient.fetchScope.mockImplementation(() => new Promise((resolve) => resolvers.push(resolve)));
+
+      // Kick off a first (stale) call, then immediately start a second (current) one.
+      const stalePromise = runDiscovery();
+      const currentPromise = runDiscovery();
+
+      // Resolve the stale call's fetch first; it should lose the race and not write state.
+      resolvers[0](devScope);
+      await stalePromise;
+      expect(service.state.quickJumpGroups).toEqual([]);
+
+      resolvers[1](devScope);
+      await currentPromise;
+      expect(service.state.quickJumpGroups).toEqual([{ scopeNodeId: 'cloud', path: ['applications', 'cloud'] }]);
+    });
+  });
+
   describe('closeAndReset', () => {
     it('should close the selector and reset selectedScopes to match appliedScopes', async () => {
       await service.changeScopes(['test-scope']);

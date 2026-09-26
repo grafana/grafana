@@ -18,6 +18,7 @@ export function useScopeActions() {
       deselectScope: selector?.deselectScope ?? (() => {}),
       filterNode: selector?.filterNode ?? (() => {}),
       toggleExpandedNode: selector?.toggleExpandedNode ?? (() => {}),
+      expandToGroup: selector?.expandToGroup ?? (() => {}),
     }),
     [selector]
   );

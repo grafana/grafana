@@ -1,4 +1,4 @@
-import { type ScopeNode, store as storeImpl } from '@grafana/data';
+import { type Scope, type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -9,7 +9,7 @@ import { ScopesServiceBase } from '../ScopesServiceBase';
 import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { isCurrentPath } from '../dashboards/scopeNavgiationUtils';
 
-import { writeRecentScope } from './recentScopesStorage';
+import { RECENT_SCOPES_MAX, readStoredRecentScopes, writeRecentScope } from './recentScopesStorage';
 import {
   closeNodes,
   expandNodes,
@@ -20,7 +20,7 @@ import {
   modifyTreeNodeAtPath,
   treeNodeAtPath,
 } from './scopesTreeUtils';
-import { type NodesMap, type ScopesMap, type SelectedScope, type TreeNode } from './types';
+import { type NodesMap, type QuickJumpGroup, type ScopesMap, type SelectedScope, type TreeNode } from './types';
 
 export interface ScopesSelectorServiceState {
   // Used to indicate loading of the scopes themselves for example when applying them.
@@ -48,10 +48,17 @@ export interface ScopesSelectorServiceState {
   // Simple tree structure for the scopes categories. Each node in a tree has a scopeNodeId which keys the nodes cache
   // map.
   tree: TreeNode;
+
+  // Nested groups (2+ levels below root) behind recently used scopes, shown as shortcuts at the top level of the
+  // selector so users don't have to expand every intermediate level to get back to them. Resolved in the
+  // background after open().
+  quickJumpGroups: QuickJumpGroup[];
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
   private redirectEnabled = true;
+  // Bumped on every open()/close so an in-flight quick jump group discovery can tell it's stale and stop writing.
+  private quickJumpDiscoveryGeneration = 0;
 
   public setRedirectEnabled(enabled: boolean) {
     this.redirectEnabled = enabled;
@@ -83,6 +90,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         query: '',
         children: undefined,
       },
+
+      quickJumpGroups: [],
     });
   }
 
@@ -250,6 +259,41 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
+  /**
+   * Jumps straight to a quick jump group (or any other node), expanding every ancestor along the way and loading
+   * their children, so the group's own (selectable) children render immediately. Mirrors the path-expansion `open()`
+   * does for a previously applied scope, but for an arbitrary target chosen from the quick jump shortcuts.
+   */
+  public expandToGroup = async (targetScopeNodeId: string) => {
+    let newTree = closeNodes(this.state.tree);
+    this.updateState({ tree: newTree });
+
+    const nodePath = await this.getNodePath(targetScopeNodeId);
+    if (nodePath.length === 0) {
+      return;
+    }
+
+    const stringPath = nodePath.map((n) => n.metadata.name);
+    stringPath.unshift(''); // Add root segment
+
+    if (!treeNodeAtPath(newTree, stringPath)) {
+      newTree = insertPathNodesIntoTree(newTree, nodePath);
+      this.updateState({ tree: newTree });
+    }
+
+    // Load children for every ancestor (so siblings are visible) as well as the target's own children.
+    for (let i = 1; i <= stringPath.length; i++) {
+      const ancestorPath = stringPath.slice(0, i);
+      const ancestorNode = treeNodeAtPath(this.state.tree, ancestorPath);
+      if (ancestorNode && !ancestorNode.childrenLoaded) {
+        await this.loadNodeChildren(ancestorPath, ancestorNode, '');
+      }
+    }
+
+    newTree = expandNodes(this.state.tree, stringPath);
+    this.updateState({ tree: newTree });
+  };
+
   private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string) => {
     this.updateState({ loadingNodeName: treeNode.scopeNodeId });
 
@@ -303,6 +347,71 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // TODO: we might not want to update the tree as a side effect of this function
     this.updateState({ tree: newTree, nodes: newNodes, loadingNodeName: undefined });
     return { newTree };
+  };
+
+  /**
+   * Fills `state.quickJumpGroups` from recently used scopes: for each one, resolves the group (immediate parent)
+   * it lives under and, if that group sits 2+ levels below root, offers it as a shortcut. Deliberately does not
+   * walk the wider hierarchy looking for other groups — that would mean extra `fetchNodes` calls (real backend
+   * load) on every open() for orgs of any size, for groups the user hasn't shown any interest in yet. Safe to call
+   * repeatedly; each call invalidates the previous one via `quickJumpDiscoveryGeneration` so a stale call from an
+   * earlier open() can't clobber a newer one.
+   */
+  private discoverQuickJumpGroups = async () => {
+    this.quickJumpDiscoveryGeneration++;
+    const generation = this.quickJumpDiscoveryGeneration;
+
+    try {
+      const stored = readStoredRecentScopes(this.store).slice(0, RECENT_SCOPES_MAX);
+      const groups: QuickJumpGroup[] = [];
+      const seen = new Set<string>();
+
+      for (const entry of stored) {
+        const scopeId = entry.scopeIds[0];
+        if (!scopeId) {
+          continue;
+        }
+
+        let scope: Scope | undefined = this.state.scopes[scopeId];
+        if (!scope) {
+          scope = await this.apiClient.fetchScope(scopeId);
+          if (scope) {
+            this.updateState({ scopes: { ...this.state.scopes, [scope.metadata.name]: scope } });
+          }
+        }
+
+        // defaultPath is root-exclusive and leaf-inclusive, e.g. ['applications', 'cloud', 'dev']. A group at
+        // least 2 levels below root needs at least 3 entries (ancestor, group, leaf).
+        let path: string[] | undefined;
+        const defaultPath = scope?.spec.defaultPath;
+        if (defaultPath && defaultPath.length >= 3) {
+          path = defaultPath.slice(0, defaultPath.length - 1);
+        } else if (entry.scopeNodeId) {
+          // getNodePath is root-exclusive, leaf-inclusive, e.g. ['applications', 'cloud', 'dev'].
+          const nodePath = await this.getNodePath(entry.scopeNodeId);
+          if (nodePath.length >= 3) {
+            path = nodePath.slice(0, nodePath.length - 1).map((n) => n.metadata.name);
+          }
+        }
+
+        if (!path) {
+          continue;
+        }
+
+        const groupId = path[path.length - 1];
+        if (seen.has(groupId)) {
+          continue;
+        }
+        seen.add(groupId);
+        groups.push({ scopeNodeId: groupId, path });
+      }
+
+      if (generation === this.quickJumpDiscoveryGeneration) {
+        this.updateState({ quickJumpGroups: groups });
+      }
+    } catch (error) {
+      console.error('Failed to resolve quick jump groups', error);
+    }
   };
 
   /**
@@ -469,7 +578,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     if (defaultPath.length > 1) {
       // Extract from defaultPath (most reliable source)
-      // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
+      // defaultPath is root-exclusive and leaf-inclusive, e.g. ['parent-id', 'scope-node-id']
       scopeNodeId = defaultPath[defaultPath.length - 1];
     } else {
       // Fallback to the scopeNodeId passed in
@@ -608,15 +717,20 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     this.resetSelection();
-    this.updateState({ tree: newTree, opened: true });
+    this.updateState({ tree: newTree, opened: true, quickJumpGroups: [] });
+    this.discoverQuickJumpGroups();
   };
 
   public closeAndReset = () => {
+    // Invalidate any in-flight discovery so it stops writing state after we've closed.
+    this.quickJumpDiscoveryGeneration++;
     this.updateState({ opened: false });
     this.resetSelection();
   };
 
   public closeAndApply = () => {
+    // Invalidate any in-flight discovery so it stops writing state after we've closed.
+    this.quickJumpDiscoveryGeneration++;
     this.updateState({ opened: false });
     return this.apply();
   };
