@@ -104,7 +104,20 @@ func (b *AppPluginAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			if decision != authorizer.DecisionAllow {
 				return decision, reason, err
 			}
-			return b.authorizeKind(ctx, attr)
+
+			if attr.IsResourceRequest() {
+				if attr.GetResource() == "app" {
+					// Keep settings and their subresources subject to the remaining
+					// authorizers, including the built-in org-role fallback.
+					return authorizer.DecisionNoOpinion, "", nil
+				}
+
+				return b.authorizeKind(ctx, attr)
+			}
+
+			// Non-resource requests do not have a manifest kind policy; leave
+			// them to the remaining authorizers after checking app access.
+			return authorizer.DecisionNoOpinion, "", nil
 		},
 	)
 }
