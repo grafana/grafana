@@ -72,7 +72,7 @@ jobs:
         uses: ./.github/actions/yarn-install
 
       - name: Build storybook
-        run: yarn storybook:build
+        run: npm run storybook:build
 
       # Create the GCS folder name
       # "latest" when triggered from the latest release
