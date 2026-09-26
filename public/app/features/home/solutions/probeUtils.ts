@@ -4,7 +4,11 @@ import { map, mergeMap, takeUntil } from 'rxjs/operators';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import {
+  getDataSourceInstance,
+  getDataSourceInstanceList,
+  getDefaultDataSourceInstanceListItem,
+} from '@grafana/runtime/unstable';
 
 /**
  * A lazily-started, shared solution fact derived from the solution's datasource: the first read
@@ -205,7 +209,7 @@ export async function listProbeCandidates(
     filter: (ds) => ds.meta.id !== 'grafana',
   });
   const pool = list.filter((ds) => !excludeUids?.has(ds.uid) && !isCloudUtilityDatasourceName(ds.name));
-  const def = pool.find((ds) => ds.isDefault);
+  const def = await getDefaultDataSourceInstanceListItem(pool);
   return def ? [def, ...pool.filter((ds) => ds !== def)] : pool;
 }
 
