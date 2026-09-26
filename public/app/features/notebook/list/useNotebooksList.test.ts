@@ -307,6 +307,24 @@ describe('useNotebooksList', () => {
       expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
     });
 
+    it('falls back when an unsupported content error retains cached pages', async () => {
+      const { result, rerender } = setupHook();
+
+      act(() => result.current.setSearchQuery('checkout'));
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { fields: ['title', 'content'] } } });
+      });
+
+      setSearch([makeHit({ name: 'cached', title: 'Previous page' })], { error: unsupportedContentError() });
+      rerender();
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).not.toHaveProperty('where.text.fields');
+      });
+      expect(result.current.searchesContent).toBe(false);
+      expect(mockUseListNotebookQuery).toHaveBeenLastCalledWith(skipToken);
+    });
+
     it('falls back when a tag filter nests the unsupported content field', async () => {
       const { result, rerender } = setupHook();
 

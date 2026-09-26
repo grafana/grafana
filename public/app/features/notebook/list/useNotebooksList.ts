@@ -1,4 +1,3 @@
-import { useFlag } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { compact, uniq } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -6,6 +5,7 @@ import { useDebounce } from 'react-use';
 
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
+import { useFlagDashboardNotebooksContentSearch } from '@grafana/runtime/internal';
 import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -97,7 +97,7 @@ interface UseNotebooksListOptions {
 }
 
 export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
-  const contentSearchEnabled = useFlag('dashboard.notebooksContentSearch', false).value;
+  const contentSearchEnabled = useFlagDashboardNotebooksContentSearch();
   const [searchQuery, setSearchQuery] = useState('');
   const [createdByMe, setCreatedByMe] = useState(false);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
@@ -167,12 +167,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     setUsingFallback(true);
   }
 
-  if (
-    searchContent &&
-    debouncedSearch.trim() &&
-    search.currentData === undefined &&
-    isUnsupportedContentSearch(search.error)
-  ) {
+  if (searchContent && debouncedSearch.trim() && isUnsupportedContentSearch(search.error)) {
     contentSearchUnavailable = true;
     setContentSearchAvailable(false);
   }

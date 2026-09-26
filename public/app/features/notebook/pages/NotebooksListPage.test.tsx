@@ -336,7 +336,8 @@ describe('NotebooksListPage', () => {
 
     expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText('Incident notes')).not.toBeInTheDocument());
-    expect(screen.getByText('Searching titles only on this instance.')).toBeInTheDocument();
+    expect(screen.getByText('Searching titles only on this instance.')).toHaveAttribute('role', 'status');
+    expect(screen.getByText('Searching titles only on this instance.')).toHaveAttribute('aria-live', 'polite');
     expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
       expect.objectContaining({ where: { text: { value: 'checkout' } } })
     );

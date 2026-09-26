@@ -178,7 +178,7 @@ export function NotebooksListPage() {
                   placeholder={t('notebooks.list.search-placeholder', 'Search notebooks...')}
                 />
                 {searchQuery.trim() && (
-                  <Text variant="bodySmall" color="secondary">
+                  <Text variant="bodySmall" color="secondary" role="status" aria-live="polite">
                     {searchesContent
                       ? t('notebooks.list.search-scope-content', 'Matches may be in titles, markdown, or code.')
                       : t('notebooks.list.search-scope-title', 'Searching titles only on this instance.')}
