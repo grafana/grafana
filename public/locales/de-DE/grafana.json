@@ -6843,9 +6843,6 @@
     "variable": {
       "description-tooltip": "Variablenbeschreibung"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Zurück zum Dashboard",
       "not-found": ""
@@ -13353,7 +13350,7 @@
       "count-truncated_other": "Erste {{count}} Notizbücher geladen"
     },
     "new": {
-      "default-title": "Notizbuch Nr. {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Speichern gescheitert",
@@ -14892,12 +14889,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
       "cleaning-up-resources": "Bereinigen von Repository-Ressourcen",
-      "not-found": "nicht gefunden",
       "not-found-message": "Repository nicht gefunden",
       "repository-config-exists-configuration": "Achten Sie darauf, dass die Repository-config in der Konfigurationsdatei vorhanden ist.",
       "tab-overview": "Übersicht",
@@ -15193,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Bevor Sie das Dashboard veröffentlichen, bestätigen Sie Folgendes:",
-      "data-src-ack-desc": "Die Veröffentlichung funktioniert derzeit nur mit einer Teilmenge von Datenquellen*",
-      "data-src-ack-tooltip": "Erfahren Sie mehr über öffentliche Datenquellen",
-      "public-ack-desc": "Ihr gesamtes Dashboard wird öffentlich sein*",
-      "public-ack-tooltip": "Erfahren Sie mehr über öffentliche Dashboards",
-      "usage-ack-desc": "Wenn ein Dashboard öffentlich gemacht wird, werden die Abfragen jedes Mal beim Anzeigen ausgeführt, was zur Erhöhung der Kosten führen kann*",
-      "usage-ack-desc-tooltip": "Erfahren Sie mehr zum Abfrage-Caching"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Kann Dashboard anzeigen",
-      "copy-button": "Kopieren",
-      "dashboard-url-field-label": "Dashboard-URL",
-      "email-share-type-option-label": "Nur bestimmte Personen",
-      "pause-sharing-dashboard-label": "Teilen des Dashboards pausieren",
-      "public-share-type-option-label": "Jeder mit einem Link",
-      "revoke-public-URL-button": "Öffentliche URL widerrufen",
-      "revoke-public-URL-button-title": "Öffentliche URL widerrufen",
-      "settings-title": "Einstellungen"
-    },
     "configuration": {
       "display-annotations-description": "Anmerkungen zu diesem Dashboard anzeigen",
       "display-annotations-label": "Anmerkungen anzeigen",
@@ -15225,21 +15206,11 @@
       "time-range-label": "Zeitbereich",
       "time-range-tooltip": "Das freigegebene Dashboard verwendet die Standardeinstellungen für den Zeitbereich des Dashboards"
     },
-    "create-page": {
-      "generate-public-url-button": "Öffentliche URL generieren",
-      "unsupported-features-desc": "Momentan unterstützen wir keine Template-Variablen oder Frontend-Datenquellen",
-      "welcome-title": "Willkommen zu öffentlichen Dashboards!"
-    },
     "email-sharing": {
       "accept-button": "Annehmen",
       "alert-text": "Das Teilen von Dashboards per E-Mail wird für die Dauer des 30-tägigen Tokens pro Benutzer berechnet, egal, wie viele Dashboards geteilt werden. Die Abrechnung wird nach 30 Tagen beendet, sofern Sie das Token nicht verlängern.",
       "bill-ack": "Mir ist bewusst, dass beim Hinzufügen von Benutzern eine Zahlung fällig wird.*",
       "cancel-button": "Abbrechen",
-      "input-invalid-email-text": "Ungültige E-Mail",
-      "input-required-email-text": "E-Mail-Adresse ist erforderlich",
-      "invite-button": "Einladen",
-      "invite-field-desc": "Personen per E-Mail einladen",
-      "invite-field-label": "Einladen",
       "learn-more-button": "Mehr erfahren",
       "recipient-email-placeholder": "E-Mail-Adresse",
       "recipient-invalid-email-text": "Ungültige E-Mail",
@@ -15249,17 +15220,12 @@
       "recipient-list-description": "Nur Personen, die Sie direkt eingeladen haben, können auf dieses Dashboard zugreifen",
       "recipient-list-title": "Personen mit Zugriff",
       "recipient-required-email-text": "E-Mail-Adresse ist erforderlich",
-      "resend-button": "Erneut senden",
-      "resend-button-title": "Erneut senden",
       "resend-invite-label": "Einladung erneut senden",
       "revoke-access-label": "Zugriff widerrufen",
-      "revoke-button": "Widerrufen",
-      "revoke-button-title": "Widerrufen",
       "success-creation": "Ihr Dashboard ist bereit für die externe Freigabe",
       "success-share-type-change": "Dashboard-Zugriff aktualisiert: Nur bestimmte Personen können jetzt mit dem Link zugreifen"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Bitte speichern Sie Ihre Dashboard-Änderungen bevor Sie die öffentliche Konfiguration aktualisieren",
       "unsupport-data-source-alert-readmore-link": "Erfahren Sie mehr über unterstützte Datenquellen",
       "unsupported-data-source-alert-title": "Nicht unterstützte Datenquellen",
       "unsupported-template-variable-alert-desc": "Dieses öffentliche Dashboard funktioniert möglicherweise nicht, da es Template-Variablen verwendet",
@@ -15273,25 +15239,6 @@
       "public-ack": "Mir ist bewusst, dass das gesamte Dashboard öffentlich sein wird.*",
       "success-creation": "Ihr Dashboard ist jetzt öffentlich zugänglich",
       "success-share-type-change": "Dashboard-Zugriff aktualisiert: Jeder mit dem Link kann jetzt zugreifen"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Einstellungen einklappen",
-      "expand-settings-tooltip": "Einstellungen aufklappen"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Standardzeitraum",
-      "default-time-range-label-desc": "Das öffentliche Dashboard verwendet die Standard-Zeitraumeinstellungen des Dashboards",
-      "show-annotations-label": "Anmerkungen anzeigen",
-      "show-annotations-label-desc": "Anmerkungen im öffentlichen Dashboard anzeigen",
-      "time-range-picker-label": "Zeitraumauswahl aktiviert",
-      "time-range-picker-label-desc": "Betrachtern erlauben, den Zeitraum zu ändern"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Anmerkungen = ausblenden",
-      "annotations-show-text": "Anmerkungen = anzeigen",
-      "time-range-picker-disabled-text": "Zeitraumauswahl = deaktiviert",
-      "time-range-picker-enabled-text": "Zeitraumauswahl = aktiviert",
-      "time-range-text": "Zeitraum = "
     },
     "share": {
       "success-delete": "Ihr Dashboard kann nicht mehr geteilt werden"
@@ -16076,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Teilen"
-    },
     "embed": {
       "copy": "In die Zwischenablage kopieren",
       "html": "HTML einbetten",
@@ -16125,9 +16069,6 @@
       "time-range-description": "Wandelt den aktuellen relativen Zeitbereich in einen absoluten Zeitbereich um",
       "time-range-label": "Zeitbereich sperren"
     },
-    "panel": {
-      "title": "Panel teilen"
-    },
     "snapshot": {
       "cancel-button": "Abbrechen",
       "copy-link-button": "Kopieren",
@@ -16143,16 +16084,11 @@
       "local-button": "Snapshot veröffentlichen",
       "mistake-message": "Hast du einen Fehler gemacht? ",
       "name": "Name des Schnappschusses",
-      "timeout": "Timeout (Sekunden)",
-      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen.",
       "url-label": "Schnappschuss-URL"
     },
     "tab-title": {
-      "embed": "Einbetten",
       "export": "Exportieren",
-      "library-panel": "Bibliotheks-Panel",
       "link": "Link",
-      "public-dashboard-title": "Öffentliches Dashboard",
       "snapshot": "Schnappschuss"
     },
     "theme-picker": {
