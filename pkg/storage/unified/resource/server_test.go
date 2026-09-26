@@ -3572,6 +3572,31 @@ func TestServerListKeysFetchesAtMostOneValueBatchAfterAuthorization(t *testing.T
 	require.Equal(t, 0, readsAfter-readsBefore)
 }
 
+func TestServerListRecordsInstrumentationPath(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		UserID:    123,
+		UserUID:   "u123",
+		Namespace: appsNamespace.Namespace,
+	})
+	ctx, state := withRequestMetricsState(ctx)
+	seedResource(t, backend, ctx, "resource-000", "")
+
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:                     backend,
+		AuthorizeBeforeFetchEnabled: true,
+	})
+	require.NoError(t, err)
+	t.Cleanup(srv.cancel)
+
+	rsp, err := srv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Items, 1)
+	require.Equal(t, listPathStoreAuthorizeFirst, state.listPath)
+}
+
 func TestServerAuthorizeBeforeFetchKeysOnly(t *testing.T) {
 	srv, ctx := newKeysOnlyTestServer(t, true)
 	seedPlaylist(t, srv, ctx, "default", "aaa")

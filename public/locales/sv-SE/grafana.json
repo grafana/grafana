@@ -6843,9 +6843,6 @@
     "variable": {
       "description-tooltip": "Variabelbeskrivning"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Tillbaka till instrumentpanelen",
       "not-found": ""
@@ -13353,7 +13350,7 @@
       "count-truncated_other": "Första {{count}} anteckningsböckerna laddade"
     },
     "new": {
-      "default-title": "Anteckningsbok nr {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Det gick inte att spara",
@@ -14892,12 +14889,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Tillbaka till lagringsplatserna",
       "cleaning-up-resources": "Rensa lagringsplatsresurser",
-      "not-found": "hittades inte",
       "not-found-message": "Lagringsplatsen hittades inte",
       "repository-config-exists-configuration": "Verifiera att lagringsplatskonfigurationen finns i konfigurationsfilen.",
       "tab-overview": "Översikt",
@@ -15193,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Innan du offentliggör instrumentpanelen ska du bekräfta följande:",
-      "data-src-ack-desc": "Publicering fungerar för närvarande endast med en delmängd av datakällor*",
-      "data-src-ack-tooltip": "Läs mer om offentliga datakällor",
-      "public-ack-desc": "Hela din instrumentpanel kommer att vara offentlig*",
-      "public-ack-tooltip": "Läs mer om offentliga instrumentpaneler",
-      "usage-ack-desc": "Att göra en instrumentpanel offentlig kommer att leda till att frågor körs varje gång den visas, vilket kan öka kostnaderna*",
-      "usage-ack-desc-tooltip": "Läs mer om cachelagring av frågor"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Kan visa instrumentpanelen",
-      "copy-button": "Kopiera",
-      "dashboard-url-field-label": "URL för instrumentpanel",
-      "email-share-type-option-label": "Endast angivna personer",
-      "pause-sharing-dashboard-label": "Pausa delning av instrumentpanelen",
-      "public-share-type-option-label": "Alla med länk",
-      "revoke-public-URL-button": "Återkalla offentlig webbadress",
-      "revoke-public-URL-button-title": "Återkalla offentlig webbadress",
-      "settings-title": "Inställningar"
-    },
     "configuration": {
       "display-annotations-description": "Presentera kommentarer på denna instrumentpanel",
       "display-annotations-label": "Visa kommentarer",
@@ -15225,21 +15206,11 @@
       "time-range-label": "Tidsintervall",
       "time-range-tooltip": "Den offentliga instrumentpanelen använder instrumentpanelens standardinställning för tidsintervall"
     },
-    "create-page": {
-      "generate-public-url-button": "Generera offentlig webbadress",
-      "unsupported-features-desc": "För närvarande saknar vi stöd för mallvariabler eller frontend-datakällor",
-      "welcome-title": "Välkommen till offentliga instrumentpaneler!"
-    },
     "email-sharing": {
       "accept-button": "Acceptera",
       "alert-text": "Delning av instrumentpaneler via e-post faktureras per användare under den tid en 30-dagarstoken varar, oavsett hur många instrumentpaneler som delas. Faktureringen upphör efter 30 dagar om du inte förnyar denna token.",
       "bill-ack": "Jag förstår att betalning krävs för att lägga till användare.*",
       "cancel-button": "Avbryt",
-      "input-invalid-email-text": "Ogiltig e-postadress",
-      "input-required-email-text": "E-post är obligatoriskt",
-      "invite-button": "Bjud in",
-      "invite-field-desc": "Bjud in personer via e-post",
-      "invite-field-label": "Bjud in",
       "learn-more-button": "Läs mer",
       "recipient-email-placeholder": "E-post",
       "recipient-invalid-email-text": "Ogiltig e-postadress",
@@ -15249,17 +15220,12 @@
       "recipient-list-description": "Endast personer du har bjudit in direkt kan komma åt denna instrumentpanel",
       "recipient-list-title": "Personer med åtkomst",
       "recipient-required-email-text": "E-post är obligatoriskt",
-      "resend-button": "Skicka igen",
-      "resend-button-title": "Skicka igen",
       "resend-invite-label": "Skicka om inbjudan",
       "revoke-access-label": "Återkalla åtkomst",
-      "revoke-button": "Återkalla",
-      "revoke-button-title": "Återkalla",
       "success-creation": "Din instrumentpanel är redo för extern delning",
       "success-share-type-change": "Åtkomst till instrumentpanelen uppdaterad: Endast specifika personer kan nu komma åt den med hjälp av länken"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Spara ändringarna i instrumentpanelen innan du uppdaterar den offentliga konfigurationen",
       "unsupport-data-source-alert-readmore-link": "Läs mer om datakällor som stöds",
       "unsupported-data-source-alert-title": "Datakällor som inte stöds",
       "unsupported-template-variable-alert-desc": "Den här offentliga instrumentpanelen kanske inte fungerar eftersom den använder mallvariabler",
@@ -15273,25 +15239,6 @@
       "public-ack": "Jag förstår att hela denna instrumentpanel kommer att vara offentlig.*",
       "success-creation": "Din instrumentpanel är nu tillgänglig för allmänheten",
       "success-share-type-change": "Åtkomst till instrumentpanelen uppdaterad: alla som har länken kan nu komma åt instrumentpanelen"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Inställningar för dölja",
-      "expand-settings-tooltip": "Inställningar för expandera"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Standardtidsintervall",
-      "default-time-range-label-desc": "Den offentliga instrumentpanelen använder instrumentpanelens standardinställning för tidsintervall",
-      "show-annotations-label": "Visa kommentarer",
-      "show-annotations-label-desc": "Visa anteckningar på offentlig instrumentpanel",
-      "time-range-picker-label": "Tidsintervallväljare aktiverad",
-      "time-range-picker-label-desc": "Tillåt tittare att ändra tidsintervall"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Kommentarer = dölj",
-      "annotations-show-text": "Kommentarer = visa",
-      "time-range-picker-disabled-text": "Tidsintervallväljare = inaktiverad",
-      "time-range-picker-enabled-text": "Tidsintervallväljare = aktiverad",
-      "time-range-text": "Tidsintervall = "
     },
     "share": {
       "success-delete": "Din instrumentpanel kan inte längre delas"
@@ -16076,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Dela"
-    },
     "embed": {
       "copy": "Kopiera till urklippet",
       "html": "Bädda in HTML",
@@ -16125,9 +16069,6 @@
       "time-range-description": "Omvandlar det aktuella relativa tidsintervallet till ett absolut tidsintervall",
       "time-range-label": "Lås tidsintervall"
     },
-    "panel": {
-      "title": "Dela panel"
-    },
     "snapshot": {
       "cancel-button": "Avbryt",
       "copy-link-button": "Kopiera",
@@ -16143,16 +16084,11 @@
       "local-button": "Publicera ögonblicksbild",
       "mistake-message": "Gjorde du ett misstag? ",
       "name": "Namn för ögonblicksbild",
-      "timeout": "Timeout (sekunder)",
-      "timeout-description": "Du kan behöva konfigurera timeoutvärdet om det tar lång tid att samla in statistik från instrumentpanelen.",
       "url-label": "Webbadress för ögonblicksbild"
     },
     "tab-title": {
-      "embed": "Bädda in",
       "export": "Exportera",
-      "library-panel": "Bibliotekspanel",
       "link": "Länk",
-      "public-dashboard-title": "Offentlig instrumentpanel",
       "snapshot": "Ögonblicksbild"
     },
     "theme-picker": {

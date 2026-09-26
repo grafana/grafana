@@ -1,6 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in progress)
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in progress; P7 partly addressed)
 Package: `pkg/router`
 
 ## Context
@@ -61,7 +61,7 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
       instead of guessing from the status code. A rejected redirect should not count as a backend
       failure.
 
-- [ ] **P3. Define an explicit policy for headers sent to backends.**
+- [x] **P3. Define an explicit policy for headers sent to backends.**
   - **Problem:** in middleware mode, `pkg/services/apiserver/service.go` hands the raw Grafana
     request to `HandleFunc`. The forward proxy therefore passes every header to remote `RouteBackend`
     URLs, including Grafana's session `Cookie`. Callers who log in with a session also send no
@@ -130,7 +130,7 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
 - [ ] **P10. The OpenAPI document cache never drops removed groups.** Entries in `openapiDocs`
   (`router.go`) for groups that are no longer served stay in memory forever. Prune them in `publish`.
 
-- [ ] **P11. One bad plugin blocks every local plugin.** `PluginLoader.Load` (`plugin.go`) returns an
+- [x] **P11. One bad plugin blocks every local plugin.** `PluginLoader.Load` (`plugin.go`) returns an
   error for the whole load if any single `NewPluginBackend` call fails. Skip and warn instead, as the
   other sources already do.
 

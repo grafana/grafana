@@ -47,6 +47,11 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newService(loader, reg)
 	s.standalone = slices.Contains(cfg.Target, "router")
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	if s.middleware && !s.standalone {
+		// The middleware runs ahead of the embedded API server, so it hosts only
+		// app plugin groups and can never shadow a group the server owns.
+		s.router.acceptGroup = isPluginAPIGroup
+	}
 	return s, nil
 }
 
