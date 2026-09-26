@@ -2525,15 +2525,7 @@ func nextEventBatch(notifications <-chan Event, buf []Event) ([]Event, bool) {
 func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent) bool {
 	keys := make([]DataKey, len(batch))
 	for i, event := range batch {
-		keys[i] = DataKey{
-			Group:           event.Group,
-			Resource:        event.Resource,
-			Namespace:       event.Namespace,
-			Name:            event.Name,
-			ResourceVersion: event.ResourceVersion,
-			Action:          event.Action,
-			Folder:          event.Folder,
-		}
+		keys[i] = eventDataKey(event)
 	}
 
 	// Read the whole batch before emitting any of it: the iterator holds a
@@ -2577,33 +2569,8 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			continue
 		}
 
-		var t resourcepb.WatchEvent_Type
-		switch event.Action {
-		case DataActionCreated:
-			t = resourcepb.WatchEvent_ADDED
-		case DataActionUpdated:
-			t = resourcepb.WatchEvent_MODIFIED
-		case DataActionDeleted:
-			t = resourcepb.WatchEvent_DELETED
-		}
-
 		select {
-		case out <- &WrittenEvent{
-			Key: &resourcepb.ResourceKey{
-				Namespace: event.Namespace,
-				Group:     event.Group,
-				Resource:  event.Resource,
-				Name:      event.Name,
-			},
-			Type:            t,
-			Folder:          event.Folder,
-			Value:           data,
-			ResourceVersion: event.ResourceVersion,
-			PreviousRV:      event.PreviousRV,
-			PreviousAction:  event.PreviousAction,
-			PreviousFolder:  event.PreviousFolder,
-			Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
-		}:
+		case out <- writtenEvent(event, data):
 		case <-ctx.Done():
 			return false
 		}
