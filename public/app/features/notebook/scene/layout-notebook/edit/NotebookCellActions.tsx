@@ -41,6 +41,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(0.5),
     padding: theme.spacing(0.25, 0.5),
+    paddingLeft: theme.spacing(1),
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,

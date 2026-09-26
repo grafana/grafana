@@ -179,6 +179,11 @@ describe('NotebookPanelActions', () => {
     await waitFor(() => expect(lastSuggestedQuery.current).toBe(runner.state.queries[0]));
     expect(autoSuggest.current).toBe(false);
     expect(cell.onVisualizationChange).toHaveBeenCalledWith(expect.objectContaining({ pluginId: 'table' }));
+    expect(screen.queryByRole('button', { name: 'Table' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change visualization' })).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
+    expect(await screen.findByRole('button', { name: 'Table' })).toBeInTheDocument();
   });
 
   it('lets keyboard users choose a visualization suggestion', async () => {
@@ -196,14 +201,16 @@ describe('NotebookPanelActions', () => {
       hasErrors: false,
     });
     jest.spyOn(cell, 'onVisualizationChange').mockResolvedValue(undefined);
-    const { user } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
     const suggestion = await screen.findByRole('button', { name: 'Table' });
-    suggestion.focus();
-    await user.keyboard('{Enter}');
+    fireEvent.keyDown(suggestion, { key: 'Enter' });
 
-    expect(cell.onVisualizationChange).toHaveBeenCalledWith(expect.objectContaining({ pluginId: 'table' }));
+    await waitFor(() => {
+      expect(cell.onVisualizationChange).toHaveBeenCalledWith(expect.objectContaining({ pluginId: 'table' }));
+      expect(screen.queryByRole('button', { name: 'Table' })).not.toBeInTheDocument();
+    });
   });
 
   it('updates the panel title while editing', async () => {

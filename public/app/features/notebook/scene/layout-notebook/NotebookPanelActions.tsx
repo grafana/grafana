@@ -224,14 +224,20 @@ function VizSuggestionsButton({
   lastSuggestedQuery?: RefObject<DataQuery | undefined>;
   autoSuggest?: RefObject<boolean>;
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
     <Toggletip
+      show={open}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
       content={
         <SuggestionsContent
           cell={cell}
           panel={panel}
           lastSuggestedQuery={lastSuggestedQuery}
           autoSuggest={autoSuggest}
+          onSelect={() => setOpen(false)}
         />
       }
       placement="bottom-end"
@@ -251,11 +257,13 @@ function SuggestionsContent({
   panel,
   lastSuggestedQuery,
   autoSuggest,
+  onSelect,
 }: {
   cell: NotebookCellItem;
   panel: VizPanel;
   lastSuggestedQuery?: RefObject<DataQuery | undefined>;
   autoSuggest?: RefObject<boolean>;
+  onSelect: () => void;
 }) {
   const styles = useStyles2(getStyles);
   const { data } = sceneGraph.getData(panel).useState();
@@ -327,6 +335,7 @@ function SuggestionsContent({
                 if (lastSuggestedQuery) {
                   lastSuggestedQuery.current = selectedQuery;
                 }
+                onSelect();
               })
               .catch(() => setError(true))
               .finally(() => setChanging(false));
@@ -356,6 +365,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     opacity: 0,
     pointerEvents: 'none',
+    '&:has(button[aria-expanded="true"])': {
+      opacity: 1,
+      pointerEvents: 'auto',
+    },
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),
     },
