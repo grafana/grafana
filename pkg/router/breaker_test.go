@@ -161,7 +161,7 @@ func TestHandleFuncBreakerIgnoresPlain500(t *testing.T) {
 	}
 }
 
-func withGroupHandlerAndBreaker(group string, h http.Handler, cb *gobreaker.CircuitBreaker[struct{}]) *GrafanaRouter {
+func withGroupHandlerAndBreaker(group string, h http.Handler, cb *groupBreaker) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
 	s.served[group] = &handlerEntry{handler: h, lastKey: "1", breaker: cb}
 	s.publish(context.Background())
@@ -182,7 +182,7 @@ func TestHandleFuncBreakerHalfOpenRecovers(t *testing.T) {
 		}
 	})
 
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        "test",
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 		Timeout:     timeout,
@@ -246,7 +246,7 @@ func TestHandleFuncBreakerHalfOpenCapRejectsConcurrentTrial(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        "test",
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 		Timeout:     timeout,
@@ -295,8 +295,10 @@ func (l staticLoader) Notify(context.Context) (<-chan struct{}, error) {
 // a ReadyToTrip that opens on the first one, independent of production
 // thresholds -- these lifecycle tests care about whether trip *state*
 // survives reconcile, not how many failures it takes to get there.
-func tripBreaker(cb *gobreaker.CircuitBreaker[struct{}]) {
-	_, _ = cb.Execute(func() (struct{}, error) { return struct{}{}, errors.New("forced failure") })
+func tripBreaker(cb *groupBreaker) {
+	if done, err := cb.Allow(); err == nil {
+		done(errors.New("forced failure"))
+	}
 }
 
 // TestReconcileUnchangedKeyPreservesBreakerState pins that a group whose key
@@ -305,7 +307,7 @@ func tripBreaker(cb *gobreaker.CircuitBreaker[struct{}]) {
 // preservation.
 func TestReconcileUnchangedKeyPreservesBreakerState(t *testing.T) {
 	group := "dashboard.grafana.app"
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})
@@ -337,7 +339,7 @@ func TestReconcileUnchangedKeyPreservesBreakerState(t *testing.T) {
 // the old one was open -- because the target may have moved.
 func TestReconcileChangedKeyResetsBreaker(t *testing.T) {
 	group := "dashboard.grafana.app"
-	oldCB := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	oldCB := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})
@@ -402,7 +404,7 @@ func TestOpenAPIGroupVersionRoutesThroughBreaker(t *testing.T) {
 func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 	group := "dashboard.grafana.app"
 	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})
