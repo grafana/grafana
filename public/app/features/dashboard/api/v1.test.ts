@@ -4,6 +4,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import {
   AnnoKeyFolder,
   AnnoKeyGrantPermissions,
+  AnnoKeyIgnorePredefinedVariables,
   AnnoKeyManagerAllowsEdits,
   AnnoKeyManagerKind,
   AnnoKeyMessage,
@@ -642,6 +643,52 @@ describe('v1 dashboard API', () => {
           metadata: expect.objectContaining({
             annotations: expect.objectContaining({
               [AnnoKeyFolder]: 'current-folder',
+            }),
+          }),
+        }),
+        expect.anything()
+      );
+    });
+
+    it('should preserve custom labels and annotations from the current dashboard', async () => {
+      // History list: version 3 without any custom metadata
+      mockGet.mockResolvedValueOnce({
+        metadata: { resourceVersion: '1' },
+        items: [
+          {
+            ...mockDashboardDto,
+            metadata: {
+              ...mockDashboardDto.metadata,
+              generation: 3,
+              annotations: { [AnnoKeyFolder]: 'old-folder' },
+            },
+          },
+        ],
+      });
+
+      // Current dashboard carries user-authored metadata
+      mockGet.mockResolvedValueOnce({
+        ...mockDashboardDto,
+        metadata: {
+          ...mockDashboardDto.metadata,
+          labels: { 'example.com/team': 'observability' },
+          annotations: {
+            [AnnoKeyFolder]: 'current-folder',
+            [AnnoKeyIgnorePredefinedVariables]: 'true',
+          },
+        },
+      });
+
+      const api = new K8sDashboardAPI();
+      await api.restoreDashboardVersion('dash-uid', 3);
+
+      expect(mockPut).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            labels: expect.objectContaining({ 'example.com/team': 'observability' }),
+            annotations: expect.objectContaining({
+              [AnnoKeyIgnorePredefinedVariables]: 'true',
             }),
           }),
         }),
