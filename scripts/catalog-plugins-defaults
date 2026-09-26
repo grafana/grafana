@@ -1,5 +1,9 @@
 # Catalog plugin IDs to bundle under data/plugins-bundled (one per line).
 # Optional pin: id:version.
+grafana-lokiexplore-app
+grafana-pyroscope-app
+grafana-exploretraces-app
+grafana-metricsdrilldown-app
 elasticsearch
 prometheus
 tempo
@@ -11,5 +15,6 @@ jaeger
 loki
 mysql
 influxdb
+grafana-advisor-app
 grafana-postgresql-datasource
 grafana-pyroscope-datasource
