@@ -257,6 +257,9 @@ func newFolderTranslation() translation {
 func newDatasourceQueryTranslation() translation {
 	dsTranslation := newResourceTranslation("datasources", "uid", false, map[string]bool{utils.VerbCreate: true})
 
+	dsTranslation.verbMapping[utils.VerbGetExternalRules] = accesscontrol.ActionAlertingRuleExternalRead
+	dsTranslation.verbMapping[utils.VerbSetExternalRules] = accesscontrol.ActionAlertingRuleExternalWrite
+
 	dsTranslation.actionSetMapping = map[string][]string{
 		// utils.VerbWatch: {"datasources:query"},
 		utils.VerbGet:              {"datasources:query", "datasources:admin", "datasources:edit"},
