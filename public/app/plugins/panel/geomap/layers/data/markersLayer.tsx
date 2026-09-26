@@ -199,16 +199,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             }
           });
 
-          // Update hasVector state after processing all features
-          hasVector = hasText || hasLineString;
-
-          // Update layer visibility based on current hasVector state
-          const layersArray = layers.getLayers();
-          layersArray.clear();
-          if (hasVector) {
-            layersArray.extend(symbol ? [symbolLayer, vectorLayer] : [vectorLayer]);
-          } else {
-            layersArray.extend([symbolLayer]);
+          // Re-adding the WebGL layer drops its GPU buffers and renders empty frames until the async rebuild is done
+          const nextHasVector = hasText || hasLineString;
+          if (nextHasVector !== hasVector) {
+            hasVector = nextHasVector;
+            const layersArray = layers.getLayers();
+            layersArray.clear();
+            layersArray.extend(hasVector ? (symbol ? [symbolLayer, vectorLayer] : [vectorLayer]) : [symbolLayer]);
           }
 
           break; // Only the first frame for now!
