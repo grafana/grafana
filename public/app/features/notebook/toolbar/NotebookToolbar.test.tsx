@@ -8,6 +8,7 @@ import { AppNotificationList } from 'app/core/components/AppNotifications/AppNot
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { NotebookAnalytics } from '../analytics/main';
+import { duplicateNotebook } from '../api/notebookResource';
 import { notebookIncidents, stubAttachForm, stubDeclareForm } from '../incidents/testHelpers';
 import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
@@ -20,6 +21,10 @@ import { NotebookToolbar } from './NotebookToolbar';
 
 jest.mock('app/api/clients/dashboard/v2beta1', () => ({
   useDeleteNotebookMutation: jest.fn(),
+}));
+jest.mock('../api/notebookResource', () => ({
+  ...jest.requireActual('../api/notebookResource'),
+  duplicateNotebook: jest.fn(),
 }));
 
 // Stubbed because the notebook header reads its tag options from a facet on this module, which calls
@@ -108,6 +113,7 @@ describe('NotebookToolbar', () => {
     config.appUrl = 'https://host/';
     // Every render mounts the delete hook, including the tests that never delete anything.
     setupDelete();
+    jest.mocked(duplicateNotebook).mockReset().mockResolvedValue({ uid: 'nb-copy', url: '/notebooks/nb-copy' });
     setIrmAvailable(false);
   });
 
@@ -126,10 +132,11 @@ describe('NotebookToolbar', () => {
    * service when the button is clicked, not at render, so setting it afterwards is enough.
    */
   function setup() {
+    const scene = buildScene();
     const rendered = render(
       <>
         <AppNotificationList />
-        <NotebookToolbar uid="nb1" scene={buildScene()} />
+        <NotebookToolbar uid="nb1" scene={scene} />
       </>
     );
 
@@ -137,8 +144,48 @@ describe('NotebookToolbar', () => {
     history.setOrgIdGetter(() => 3);
     setLocationService(history);
 
-    return rendered;
+    return { ...rendered, scene, history };
   }
+
+  it('duplicates the latest saved notebook and opens the copy for editing', async () => {
+    const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    const { user, scene, history } = setup();
+    const flushAndWait = jest.spyOn(scene.autosave, 'flushAndWait');
+
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Duplicate notebook' }));
+
+    await waitFor(() => expect(history.getLocation().pathname).toBe('/notebooks/nb-copy'));
+    expect(history.getLocation().search).toBe('?edit=true&orgId=3');
+    expect(flushAndWait).toHaveBeenCalledTimes(1);
+    expect(duplicateNotebook).toHaveBeenCalledWith('nb1');
+    expect(flushAndWait.mock.invocationCallOrder[0]).toBeLessThan(
+      jest.mocked(duplicateNotebook).mock.invocationCallOrder[0]
+    );
+    hasPermission.mockRestore();
+  });
+
+  it('stays on the source and reports a duplication failure', async () => {
+    const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    jest.mocked(duplicateNotebook).mockRejectedValueOnce(new Error('Could not create copy'));
+    const { user, history } = setup();
+
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Duplicate notebook' }));
+
+    expect(await screen.findByText('Failed to duplicate notebook')).toBeInTheDocument();
+    expect(history.getLocation().pathname).toBe('/');
+    hasPermission.mockRestore();
+  });
+
+  it('hides duplication without create permission', async () => {
+    const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    const { user } = setup();
+
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    expect(screen.queryByRole('menuitem', { name: 'Duplicate notebook' })).not.toBeInTheDocument();
+    hasPermission.mockRestore();
+  });
 
   it('copies an absolute link to the notebook, not the in-app path', async () => {
     const { user } = setup();

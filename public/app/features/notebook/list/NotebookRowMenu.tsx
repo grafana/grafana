@@ -6,18 +6,27 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
-import { canDeleteNotebooks } from '../permissions';
+import { canCreateNotebooks, canDeleteNotebooks } from '../permissions';
 import { type Spec as NotebookSpec } from '../types';
 import { notebookShareUrl } from '../urls';
 
 /**
- * A notebook's row-level actions. Duplicate still has to slot in alongside these, which is why Export
- * sits in a submenu rather than at the top level.
+ * A notebook's row-level actions. Export sits in a submenu to leave room for Duplicate.
  *
  * Delete only asks; the row above owns both the confirmation and the request. This menu lives in a
  * Dropdown overlay that unmounts as the menu closes, so a modal opened from here would go with it.
  */
-export function NotebookRowMenu({ uid, onDelete }: { uid: string; onDelete: () => void }) {
+export function NotebookRowMenu({
+  uid,
+  onDelete,
+  onDuplicate,
+  isDuplicating = false,
+}: {
+  uid: string;
+  onDelete: () => void;
+  onDuplicate?: () => void;
+  isDuplicating?: boolean;
+}) {
   const [fetchNotebook] = useLazyGetNotebookQuery();
   const notifyApp = useAppNotification();
 
@@ -44,6 +53,14 @@ export function NotebookRowMenu({ uid, onDelete }: { uid: string; onDelete: () =
   return (
     <Menu>
       <Menu.Item label={t('notebooks.list.table.copy-link', 'Copy link')} icon="link" onClick={onCopyLink} />
+      {onDuplicate && canCreateNotebooks() && (
+        <Menu.Item
+          label={t('notebooks.duplicate.action', 'Duplicate notebook')}
+          icon="copy"
+          disabled={isDuplicating}
+          onClick={onDuplicate}
+        />
+      )}
       <Menu.Item
         label={t('notebooks.export.label', 'Export')}
         icon="download-alt"

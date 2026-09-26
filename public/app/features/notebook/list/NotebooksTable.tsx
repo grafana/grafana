@@ -20,6 +20,7 @@ import {
 import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
+import { useDuplicateNotebook } from '../duplicate/useDuplicateNotebook';
 import { canEditNotebooks } from '../permissions';
 import { notebookEditHref, notebookViewUrl } from '../urls';
 
@@ -97,6 +98,7 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
   // closes. Only the uid and title, because the rows are flattened and carry no resource envelope.
   const [toDelete, setToDelete] = useState<{ uid: string; title: string } | undefined>();
   const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_LIST);
+  const { duplicate, isDuplicating } = useDuplicateNotebook();
 
   // Stable, so the memoized rows and the memoized columns below are not rebuilt on every render.
   const onDelete = useCallback((uid: string, title: string) => setToDelete({ uid, title }), []);
@@ -157,11 +159,17 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
       {
         ...withoutSkeleton(layout.actions),
         cell: ({ row: { original } }) => (
-          <NotebookRowActions uid={original.uid} title={original.title} onDelete={onDelete} />
+          <NotebookRowActions
+            uid={original.uid}
+            title={original.title}
+            onDelete={onDelete}
+            onDuplicate={duplicate}
+            isDuplicating={isDuplicating}
+          />
         ),
       },
     ];
-  }, [styles, onDelete, onTagClick]);
+  }, [styles, onDelete, onTagClick, duplicate, isDuplicating]);
 
   return (
     <>
@@ -262,10 +270,14 @@ const NotebookRowActions = memo(function NotebookRowActions({
   uid,
   title,
   onDelete,
+  onDuplicate,
+  isDuplicating,
 }: {
   uid: string;
   title: string;
   onDelete: (uid: string, title: string) => void;
+  onDuplicate: (uid: string) => Promise<void>;
+  isDuplicating: boolean;
 }) {
   // Omitted rather than disabled for a user who cannot edit, matching the create button on the page
   // around this table.
@@ -278,7 +290,17 @@ const NotebookRowActions = memo(function NotebookRowActions({
           {t('notebooks.list.table.edit', 'Edit')}
         </LinkButton>
       )}
-      <Dropdown overlay={<NotebookRowMenu uid={uid} onDelete={() => onDelete(uid, title)} />} placement="bottom-end">
+      <Dropdown
+        overlay={
+          <NotebookRowMenu
+            uid={uid}
+            onDelete={() => onDelete(uid, title)}
+            onDuplicate={() => void onDuplicate(uid)}
+            isDuplicating={isDuplicating}
+          />
+        }
+        placement="bottom-end"
+      >
         <IconButton
           name="ellipsis-v"
           variant="secondary"

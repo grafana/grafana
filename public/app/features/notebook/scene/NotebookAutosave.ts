@@ -184,17 +184,18 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.vizConfigsBeforeReadingChange.clear();
     this.editedByWriter = true;
     this.schedule();
+    await this.flushAndWait();
+  }
+
+  /** Finish any pending or in-flight edit before an action reads the saved notebook. */
+  public async flushAndWait(): Promise<void> {
     this.flush();
 
-    // `flush` runs the save synchronously, so anything to write is already in flight by now. A save that
-    // was already running when this arrived leaves this one queued behind it, and the queued one is the
-    // one carrying the change, so waiting on a single request would return before it was written.
+    // A save already running can queue another write, so wait until the queue is empty.
     while (this.inFlightSave) {
       await this.inFlightSave;
     }
 
-    // Nothing is left in flight, so the status now says how it went. Still no error means the write
-    // landed, or there was nothing to write and the notebook already holds what was asked for.
     if (this.state.status === 'error') {
       throw new Error(this.state.errorMessage ?? 'The notebook could not be saved.');
     }

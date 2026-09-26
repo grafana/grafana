@@ -5,6 +5,7 @@
  */
 
 import { API_GROUP, API_VERSION, type Notebook } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
+import { t } from '@grafana/i18n';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { extractErrorMessage } from 'app/api/utils';
 import { type Resource } from 'app/features/apiserver/types';
@@ -76,6 +77,28 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
   // The generation comes back so a notebook created by autosave can be reopened without rebuilding its
   // scene: NotebookPageStateManager compares it, and a missing number reads as somebody else's write.
   return { uid, url: notebookViewUrl(uid), generation: result.data?.metadata?.generation };
+}
+
+/** Copy the saved spec into a new resource, preserving panel and datasource references but not resource history. */
+export async function duplicateNotebook(uid: string): Promise<CreatedNotebook> {
+  const read = await dispatch(
+    dashboardAPIv2beta1.endpoints.getNotebook.initiate({ name: uid }, { subscribe: false, forceRefetch: true })
+  );
+
+  if ('error' in read && read.error) {
+    throw new Error(extractErrorMessage(read.error, 'Failed to read the notebook.'));
+  }
+
+  if (!read.data) {
+    throw new Error('The notebook could not be read, so it was not duplicated.');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec at the read seam
+  const source = read.data.spec as unknown as NotebookSpec;
+  return createNotebook({
+    ...source,
+    title: t('notebooks.duplicate.title', 'Copy of {{title}}', { title: source.title }),
+  });
 }
 
 /**

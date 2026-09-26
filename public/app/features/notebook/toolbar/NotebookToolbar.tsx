@@ -9,11 +9,12 @@ import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
+import { useDuplicateNotebook } from '../duplicate/useDuplicateNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
 import { AttachToIncidentModal } from '../incidents/AttachToIncidentModal';
 import { DeclareIncidentModal } from '../incidents/DeclareIncidentModal';
 import { IrmMenuItem } from '../incidents/IrmMenuItem';
-import { canDeleteNotebooks } from '../permissions';
+import { canCreateNotebooks, canDeleteNotebooks } from '../permissions';
 import { NotebookEditToggle } from '../scene/NotebookEditToggle';
 import { useIsNotebookEmbedded } from '../scene/NotebookEmbeddedContext';
 import { type NotebookScene } from '../scene/NotebookScene';
@@ -23,7 +24,7 @@ import { NOTEBOOKS_BASE_URL, notebookShareUrl } from '../urls';
 
 /**
  * The notebook view's action cluster: copy link, the edit toggle, and the "more actions" kebab
- * (export, IRM, delete). Embedded inline in the scene's own controls row (`NotebookScene.tsx`).
+ * (duplicate, export, IRM, delete). Embedded inline in the scene's own controls row (`NotebookScene.tsx`).
  *
  * Rendered for a notebook that does not exist yet as well, so that creating one by typing does not
  * push the document down once a uid shows up. Copy link and the kebab need a notebook that exists,
@@ -36,6 +37,7 @@ export function NotebookToolbar({ uid, scene }: { uid?: string; scene: NotebookS
 function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_TOOLBAR);
+  const { duplicate, isDuplicating } = useDuplicateNotebook();
   // Owned here, not by the menu items: those are inside the Dropdown overlay, which unmounts as the
   // menu closes.
   const [isDeclaring, setIsDeclaring] = useState(false);
@@ -81,6 +83,14 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   // rather than nested under their own "Export" submenu.
   const moreMenu = () => (
     <Menu>
+      {canCreateNotebooks() && (
+        <Menu.Item
+          label={t('notebooks.duplicate.action', 'Duplicate notebook')}
+          icon="copy"
+          disabled={isDuplicating}
+          onClick={() => void duplicate(uid, () => scene.autosave.flushAndWait())}
+        />
+      )}
       <NotebookExportMenu
         uid={uid}
         getSpec={async () => transformNotebookSceneToSaveModel(scene)}
