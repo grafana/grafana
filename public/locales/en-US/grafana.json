@@ -3553,6 +3553,7 @@
         }
       },
       "error-message-prefix": "Error message:",
+      "evaluation-match-value": "value: {{value}}",
       "filter-group": "Filter group",
       "filter-group-tooltip": "Filter each state history group either by exact match or a regular expression, for example:",
       "placeholder-search": "Search",
