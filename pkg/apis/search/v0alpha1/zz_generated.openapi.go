@@ -296,7 +296,7 @@ func schema_pkg_apis_search_v0alpha1_ResultsMetadata(ref common.ReferenceCallbac
 					},
 					"totalHits": {
 						SchemaProps: spec.SchemaProps{
-							Description: "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+							Description: "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
 							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int64",
@@ -304,7 +304,7 @@ func schema_pkg_apis_search_v0alpha1_ResultsMetadata(ref common.ReferenceCallbac
 					},
 					"totalHitsRelation": {
 						SchemaProps: spec.SchemaProps{
-							Description: "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+							Description: "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
