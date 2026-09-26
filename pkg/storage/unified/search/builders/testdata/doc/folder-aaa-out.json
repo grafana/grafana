@@ -8,18 +8,19 @@
   "name": "aaa",
   "rv": 1234,
   "_rv": "1234",
+  "groupResource": "folder.grafana.app/folders",
   "title": "test-aaa",
   "title_ngram": "test-aaa",
   "title_phrase": "test-aaa",
   "created": 1730490142000,
   "createdBy": "user:1",
+  "ownerReferences": [
+    "iam.grafana.app/Team/engineering",
+    "iam.grafana.app/User/test"
+  ],
   "manager": {
     "kind": "repo",
     "id": "MyGIT"
   },
-  "managedBy": "repo:MyGIT",
-  "ownerReferences": [
-    "iam.grafana.app/Team/engineering",
-    "iam.grafana.app/User/test"
-  ]
+  "managedBy": "repo:MyGIT"
 }

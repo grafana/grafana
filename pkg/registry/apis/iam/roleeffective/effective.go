@@ -38,12 +38,13 @@ func DiffRolespecPermissions(base, desired []iamv0.RolespecPermission) (added, o
 }
 
 // ResolveEffective returns the effective permissions for a namespace Role: permissions from
-// each RoleRef (GlobalRole), minus PermissionsOmitted, plus the role's own Permissions.
-// getGlobalPerms returns the permissions for a GlobalRole by name. If the role has no RoleRefs,
-// hasRefs is false and the caller should use its own "own permissions only" path.
+// its RoleRefs, minus PermissionsOmitted, plus the role's own Permissions. This function does not
+// validate role-reference policy; resolveRef receives each complete reference and resolves supported
+// kinds or returns an error. If the role has no RoleRefs, hasRefs is false and the caller should use
+// its own "own permissions only" path.
 func ResolveEffective(
 	role *iamv0.Role,
-	getGlobalPerms func(roleName string) ([]ActionScope, error),
+	resolveRef func(ref iamv0.RolespecRoleRef) ([]ActionScope, error),
 ) (effective []ActionScope, hasRefs bool, err error) {
 	if len(role.Spec.RoleRefs) == 0 {
 		return nil, false, nil
@@ -57,9 +58,9 @@ func ResolveEffective(
 	effectiveMap := make(map[string]ActionScope)
 
 	for _, roleRef := range role.Spec.RoleRefs {
-		perms, err := getGlobalPerms(roleRef.Name)
+		perms, err := resolveRef(roleRef)
 		if err != nil {
-			return nil, true, fmt.Errorf("global role %q: %w", roleRef.Name, err)
+			return nil, true, fmt.Errorf("role ref kind %q name %q: %w", roleRef.Kind, roleRef.Name, err)
 		}
 		for _, p := range perms {
 			key := p.Action + "|" + p.Scope

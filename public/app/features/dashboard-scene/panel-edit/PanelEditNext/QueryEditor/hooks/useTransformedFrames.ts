@@ -8,6 +8,8 @@ import {
   type DataFrame,
   type DataTransformContext,
   type DataTransformerConfig,
+  type FrameMatcher,
+  getFrameMatchers,
   transformDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -82,6 +84,33 @@ export function isInterpolatable(config: TransformationConfigs[number]): config 
 }
 
 /**
+ * The matcher for a filter as the pipeline applies it, or nothing if that filter cannot be built
+ * into one.
+ *
+ * Pass an interpolated config — {@link FrameReplay.configs} or {@link useInterpolatedConfigs} —
+ * rather than the stored one: a `$var` in the filter resolves before the replay sees it, so a
+ * matcher built from the original narrows on the literal.
+ *
+ * `getFrameMatchers` throws on a matcher id it does not know, and `byName` runs its option through
+ * `stringToJsRegex`, which throws on a `/`-prefixed string that is not a complete `/pattern/flags` —
+ * a variable resolving to a path is enough. The pipeline's own call sits behind the replay's error
+ * handling; this one runs during render, where a throw would take the surrounding editor down with
+ * it, so a filter that cannot be built is treated as no filter at all.
+ */
+export function frameMatcherFor(config: TransformationConfigs[number] | undefined): FrameMatcher | undefined {
+  if (config === undefined || !isInterpolatable(config) || !config.filter?.options) {
+    return undefined;
+  }
+
+  try {
+    return getFrameMatchers(config.filter);
+  } catch (err) {
+    console.error('Failed to build a transformation filter for the panel editor', err);
+    return undefined;
+  }
+}
+
+/**
  * Whether two configs resolve to the same transformation. Custom operators are compared by
  * identity, which is what "unchanged" means for something interpolation passes through untouched.
  */
@@ -98,7 +127,7 @@ function isSameConfig(a: TransformationConfigs[number], b: TransformationConfigs
  * objects in Scene state still hold the literal `$var`. The resolved options are the only thing that
  * moves, so they are the only thing an effect can key on.
  */
-function useInterpolatedConfigs(configs: TransformationConfigs): TransformationConfigs {
+export function useInterpolatedConfigs(configs: TransformationConfigs): TransformationConfigs {
   return useStableArray(interpolateConfigs(configs), isSameConfig);
 }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana-app-sdk/resource"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
@@ -31,7 +30,7 @@ import (
 )
 
 const (
-	ServiceName          = "plugins.installsync"
+	ServiceName          = install.PluginStoreSyncServiceIdentity
 	syncerLockActionName = "plugin-install-api-sync"
 )
 
@@ -106,7 +105,7 @@ func newSyncer(
 // ProvideSyncer creates a new Syncer for syncing plugin installations to the API.
 func ProvideSyncer(
 	featureToggles featuremgmt.FeatureToggles,
-	clientGenerator resource.ClientGenerator,
+	clientGenerator ClientGenerator,
 	orgService org.Service,
 	cfgProvider configprovider.ConfigProvider,
 	serverLock ServerLock,

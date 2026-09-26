@@ -696,6 +696,19 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 		// Only own Permissions are used — global role not inherited.
 		require.NotEmpty(t, tuples)
 	})
+
+	for _, kind := range []string{"Role", "", "Unknown", "globalrole"} {
+		t.Run("unsupported ref kind "+kind, func(t *testing.T) {
+			role := &iamv0.Role{
+				ObjectMeta: metav1.ObjectMeta{Name: "invalid-role"},
+				Spec:       iamv0.RoleSpec{RoleRefs: []iamv0.RolespecRoleRef{{Kind: kind, Name: "global-role-a"}}},
+			}
+			tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "expected GlobalRole")
+			assert.Nil(t, tuples)
+		})
+	}
 }
 
 // TestTranslateRoleToTuples_RoleManagementPermissions verifies the reconciler

@@ -16,15 +16,30 @@ jest.mock('@grafana/runtime/internal', () => ({
     FeatureControlFlagTestOnly: 'feature-gamma',
   },
   getOFREPWebProvider: jest.fn().mockReturnValue({
-    flagCache: { 'feature-alpha': true, 'feature-beta': false } as Record<string, unknown>,
+    flagCache: {
+      'feature-alpha': { value: true, reason: 'DEFAULT' },
+      'feature-beta': { value: false, reason: 'TARGETING_MATCH' },
+      'feature-object': { value: { enabled: true, cohort: 'staff' }, reason: 'STATIC' },
+      'feature-error': { errorCode: 'FLAG_NOT_FOUND', errorDetails: 'No provider result found for this flag.' },
+    } as Record<string, unknown>,
     events: { addHandler: jest.fn(), removeHandler: jest.fn() },
   } as never),
 }));
 
 jest.mock('@grafana/ui/unstable', () => ({
   ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: ({ value, onChange, 'aria-label': ariaLabel }: CodeMirrorEditorProps) => (
-    <textarea aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />
+  CodeMirrorEditor: ({
+    value,
+    onChange,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+  }: CodeMirrorEditorProps) => (
+    <textarea
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   ),
 }));
 
@@ -68,6 +83,18 @@ describe('FeatureControlFlag', () => {
     getLocalStorageProvider().clearFlags();
   });
 
+  it.each([
+    { type: 'boolean', value: 'true' },
+    { type: 'number', value: '42' },
+    { type: 'string', value: 'hello' },
+    { type: 'object', value: '{"enabled":true}' },
+  ])('labels the $type value control with a screen-reader-only label', async ({ value }) => {
+    renderComponent({ key: 'alpha', value });
+    await expandFlag('alpha');
+
+    expect(screen.getByLabelText('Flag value')).toHaveAccessibleName('Flag value');
+  });
+
   [
     { type: 'boolean', before: { storage: 'true', expected: 'true' }, after: { input: 'true', expected: 'true' } },
     { type: 'number', before: { storage: '42', expected: '42' }, after: { input: '42', expected: '42' } },
@@ -105,7 +132,6 @@ describe('FeatureControlFlag', () => {
         renderComponent({ key: 'alpha', value: before.storage });
         await expandFlag('alpha');
 
-        expect(screen.getByRole('textbox', { name: 'Flag key' })).toHaveValue('alpha');
         expect(screen.getByRole('combobox', { name: 'Flag type' })).toHaveValue(type);
 
         if (type === 'boolean') {
@@ -182,5 +208,44 @@ describe('FeatureControlFlag', () => {
     expect(screen.getByRole('option', { name: 'feature-alpha' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'feature-beta' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'feature-gamma' })).toBeInTheDocument();
+  });
+
+  it('shows the OFREP evaluation when selecting a new flag key', async () => {
+    renderComponent();
+    await expandFlag('new-flag-override');
+
+    await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'feature-alpha[Enter]');
+
+    expect(screen.getByText('OFREP evaluation')).toBeInTheDocument();
+    expect(screen.getAllByText('true')).toHaveLength(2);
+  });
+
+  it('shows the OFREP evaluation value and reason for an existing flag', async () => {
+    renderComponent({ key: 'feature-alpha', value: 'false' });
+    await expandFlag('feature-alpha');
+
+    expect(screen.getByText('OFREP evaluation')).toBeInTheDocument();
+    expect(screen.getAllByText('true')).toHaveLength(2);
+
+    await userEvent.hover(screen.getByTestId('icon-info-circle'));
+    expect(await screen.findByText('DEFAULT')).toBeInTheDocument();
+  });
+
+  it('shows the full OFREP object value in the badge tooltip', async () => {
+    renderComponent({ key: 'feature-object', value: 'false' });
+    await expandFlag('feature-object');
+
+    await userEvent.hover(screen.getByText('{...}'));
+    expect(await screen.findByText('{"enabled":true,"cohort":"staff"}')).toBeInTheDocument();
+  });
+
+  it('shows OFREP error details separately from the error badge', async () => {
+    renderComponent({ key: 'feature-error', value: 'true' });
+    await expandFlag('feature-error');
+
+    expect(screen.getByText('FLAG_NOT_FOUND')).toBeInTheDocument();
+
+    await userEvent.hover(screen.getByTestId('icon-info-circle'));
+    expect(await screen.findByText('No provider result found for this flag.')).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -2630,6 +2630,30 @@ describe('TableNG', () => {
   });
 
   describe('Cell inspection', () => {
+    it('opens the refreshed cell menu by keyboard and applies a filter from the grid', async () => {
+      const data = createBasicDataFrame();
+      data.fields[0].config.filterable = true;
+      data.fields[0].config.custom = { ...data.fields[0].config.custom, inspect: true };
+      const onCellFilterAdded = jest.fn();
+      render(
+        <TableNG data={data} width={800} height={600} tableRefreshEnabled onCellFilterAdded={onCellFilterAdded} />
+      );
+
+      const cell = screen.getByRole('gridcell', { name: 'A1' });
+      const trigger = within(cell).getByTestId(
+        selectors.components.Panels.Visualization.TableNG.cellActions.triggerButton
+      );
+      trigger.focus();
+      await user.keyboard('{Enter}');
+      expect(screen.getByRole('menu', { name: 'Cell actions' })).toBeVisible();
+      await user.keyboard('{Escape}');
+      expect(trigger).toHaveFocus();
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('menuitem', { name: 'Filter for value' }));
+      expect(onCellFilterAdded).toHaveBeenCalledWith({ key: 'Column A', operator: '=', value: 'A1' });
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    });
+
     it('shows inspect icon when hovering over a cell with inspection enabled', async () => {
       const inspectDataFrame = {
         ...createBasicDataFrame(),

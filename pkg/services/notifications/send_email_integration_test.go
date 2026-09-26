@@ -15,13 +15,16 @@ func TestEmailIntegrationTest(t *testing.T) {
 		setting.BuildVersion = "4.0.0"
 
 		cfg := setting.NewCfg()
-		cfg.Smtp.Enabled = true
+		setRawKeys(t, cfg, "smtp", map[string]string{
+			"enabled":      "true",
+			"from_address": "from@address.com",
+			"from_name":    "Grafana Admin",
+		})
+		setRawKeys(t, cfg, "emails", map[string]string{"content_types": "text/html, text/plain"})
 		cfg.StaticRootPath = "../../../public/"
 		cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
 		cfg.Smtp.FromAddress = "from@address.com"
-		cfg.Smtp.FromName = "Grafana Admin"
-		cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
-		ns, err := ProvideService(newBus(t), cfg, NewFakeMailer(), nil)
+		ns, err := provideTestService(t, newBus(t), cfg, NewFakeMailer())
 		require.NoError(t, err)
 
 		t.Run("When sending reset email password", func(t *testing.T) {

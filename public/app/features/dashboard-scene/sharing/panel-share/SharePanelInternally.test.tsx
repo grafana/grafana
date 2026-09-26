@@ -65,7 +65,7 @@ describe('SharePanelInternally', () => {
     config.rendererAvailable = true;
     buildAndRenderScenario();
 
-    const copyImageLinkButton = screen.getByRole('button', { name: /copy image link/i });
+    const copyImageLinkButton = await screen.findByRole('button', { name: /copy image link/i });
     await userEvent.click(copyImageLinkButton);
 
     expect(document.execCommand).toHaveBeenCalledWith('copy');
@@ -76,6 +76,7 @@ describe('SharePanelInternally', () => {
     config.rendererAvailable = true;
     const tab = buildAndRenderScenario();
 
+    expect(await screen.findByText('Panel preview')).toBeInTheDocument();
     await waitFor(() => expect(tab.state.imageUrl).toMatch(/^\/render\/d-solo\/dash-1\?/));
     expect(tab.state.imageUrl).not.toMatch(/^https?:\/\//);
     expect(tab.state.imageUrl).toContain('panelId=panel-12');
