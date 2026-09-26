@@ -384,8 +384,45 @@ func queryToJson(query *simplejson.Json, supportLocalTimeRange bool) ([]byte, er
 	return simplejson.NewFromAny(d).MarshalJSON()
 }
 
+func GetDataSourceFromQuery(ctx context.Context, user identity.Requester, skipDSCache bool, query *simplejson.Json, dataSourceCache datasources.CacheService) (*datasources.DataSource, error) {
+	uid := query.Get("datasource").Get("uid").MustString()
+
+	// before 8.3 special types could be sent as datasource (expr)
+	if uid == "" {
+		uid = query.Get("datasource").MustString()
+	}
+
+	if kind := expr.NodeTypeFromDatasourceUID(uid); kind != expr.TypeDatasourceNode {
+		return expr.DataSourceModelFromNodeType(kind)
+	}
+
+	if uid == grafanads.DatasourceUID {
+		return grafanads.DataSourceModel(user.GetOrgID()), nil
+	}
+
+	if uid != "" {
+		ds, err := dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipDSCache)
+		if err != nil {
+			return nil, err
+		}
+		return ds, nil
+	}
+
+	// use datasourceId if it exists
+	id := query.Get("datasourceId").MustInt64(0)
+	if id > 0 {
+		ds, err := dataSourceCache.GetDatasource(ctx, id, user, skipDSCache)
+		if err != nil {
+			return nil, err
+		}
+		return ds, nil
+	}
+
+	return nil, ErrInvalidDatasourceID
+}
+
 // parseRequest parses a request into parsed queries grouped by datasource uid
-func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocalTimeRange bool) (*parsedRequest, error) {
+func ParseMetricRequest(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocalTimeRange bool, l log.Logger, dsCache datasources.CacheService) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, ErrNoQueriesFound
 	}
@@ -397,9 +434,8 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 	}
 
 	// Parse the queries and store them by datasource
-	datasourcesByUid := map[string]*datasources.DataSource{}
 	for _, query := range reqDTO.Queries {
-		ds, err := s.getDataSourceFromQuery(ctx, user, skipDSCache, query, datasourcesByUid)
+		ds, err := GetDataSourceFromQuery(ctx, user, skipDSCache, query, dsCache)
 		if err != nil {
 			return nil, err
 		}
@@ -407,7 +443,6 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			return nil, ErrInvalidDatasourceID
 		}
 
-		datasourcesByUid[ds.UID] = ds
 		if expr.NodeTypeFromDatasourceUID(ds.UID) != expr.TypeDatasourceNode {
 			req.hasExpression = true
 		} else {
@@ -451,7 +486,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 		}
 		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], pq)
 
-		s.log.Debug("Processed metrics query",
+		l.Debug("Processed metrics query",
 			"ref_id", pq.query.RefID,
 			"from", timeRange.GetFromAsMsEpoch(),
 			"to", timeRange.GetToAsMsEpoch(),
@@ -462,46 +497,15 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 	return req, req.validateRequest(ctx)
 }
 
+// parseRequest parses a request into parsed queries grouped by datasource uid
+func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocalTimeRange bool) (*parsedRequest, error) {
+	req, err := ParseMetricRequest(ctx, user, skipDSCache, reqDTO, supportLocalTimeRange, s.log, s.dataSourceCache)
+	if err != nil {
+		return nil, err
+	}
+	return req, req.validateRequest(ctx)
+}
+
 func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user identity.Requester, skipDSCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
-	var err error
-	uid := query.Get("datasource").Get("uid").MustString()
-
-	// before 8.3 special types could be sent as datasource (expr)
-	if uid == "" {
-		uid = query.Get("datasource").MustString()
-	}
-
-	// check cache value
-	ds, ok := history[uid]
-	if ok {
-		return ds, nil
-	}
-
-	if kind := expr.NodeTypeFromDatasourceUID(uid); kind != expr.TypeDatasourceNode {
-		return expr.DataSourceModelFromNodeType(kind)
-	}
-
-	if uid == grafanads.DatasourceUID {
-		return grafanads.DataSourceModel(user.GetOrgID()), nil
-	}
-
-	if uid != "" {
-		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipDSCache)
-		if err != nil {
-			return nil, err
-		}
-		return ds, nil
-	}
-
-	// use datasourceId if it exists
-	id := query.Get("datasourceId").MustInt64(0)
-	if id > 0 {
-		ds, err = s.dataSourceCache.GetDatasource(ctx, id, user, skipDSCache)
-		if err != nil {
-			return nil, err
-		}
-		return ds, nil
-	}
-
-	return nil, ErrInvalidDatasourceID
+	return GetDataSourceFromQuery(ctx, user, skipDSCache, query, s.dataSourceCache)
 }

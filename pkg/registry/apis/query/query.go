@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"slices"
 	"strconv"
@@ -144,7 +145,17 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 		return
 	}
 
-	qdr, err := handleQuery(ctx, *raw, *b, httpreq, responder, connectLogger)
+	var qdr *backend.QueryDataResponse
+	pq, err := prepareQuery(ctx, *raw, *b, httpreq, connectLogger)
+	if len(pq.mReq.Queries) == 1 {
+		dsResponse, _ := handleQueryStreaming(ctx, pq, connectLogger)
+		w.Header().Set("Content-Type", dsResponse.Header.Get("Content-Type"))
+		io.Copy(w, dsResponse.Body)
+		dsResponse.Body.Close()
+		return
+	} else {
+		qdr, err = handleQuery(ctx, *pq, *b)
+	}
 
 	if err != nil {
 		connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err, "err_type", fmt.Sprintf("%T", err))
@@ -322,9 +333,17 @@ func handlePreparedQuery(ctx context.Context, pq *preparedQuery, concurrentQuery
 	return resp, err
 }
 
+func handleQueryStreaming(
+	ctx context.Context,
+	pq *preparedQuery,
+	connectLogger log.Logger,
+) (*http.Response, error) {
+	return &http.Response{}, nil
+}
+
 func handleQuery(
 	ctx context.Context,
-	raw query.QueryDataRequest,
+	pq *preparedQuery,
 	b QueryAPIBuilder,
 	httpreq *http.Request,
 	responder rest.Responder,
