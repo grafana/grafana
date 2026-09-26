@@ -1,12 +1,14 @@
 package clientmiddleware
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -88,7 +90,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		}
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewOAuthTokenMiddleware(oAuthTokenService)),
+			handlertest.WithMiddlewares(NewOAuthTokenMiddleware(oAuthTokenService), NewHTTPClientMiddleware()),
 		)
 
 		jsonDataMap := map[string]any{
@@ -114,6 +116,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
 			require.Equal(t, "Bearer access-token", cdt.QueryDataReq.Headers[backend.OAuthIdentityTokenHeaderName])
 			require.Equal(t, "id-token", cdt.QueryDataReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
+			assertOAuthHeadersForwardedOnWire(t, cdt.QueryDataCtx, req)
 		})
 
 		t.Run("Should forward OAuth Identity when calling QueryChunkedData", func(t *testing.T) {
@@ -127,6 +130,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "test", cdt.QueryChunkedDataReq.Headers[otherHeader])
 			require.Equal(t, "Bearer access-token", cdt.QueryChunkedDataReq.Headers[backend.OAuthIdentityTokenHeaderName])
 			require.Equal(t, "id-token", cdt.QueryChunkedDataReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
+			assertOAuthHeadersForwardedOnWire(t, cdt.QueryChunkedDataCtx, req)
 		})
 
 		t.Run("Should forward OAuth Identity when calling CallResource", func(t *testing.T) {
@@ -142,6 +146,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "Bearer access-token", cdt.CallResourceReq.Headers[backend.OAuthIdentityTokenHeaderName][0])
 			require.Len(t, cdt.CallResourceReq.Headers[backend.OAuthIdentityIDTokenHeaderName], 1)
 			require.Equal(t, "id-token", cdt.CallResourceReq.Headers[backend.OAuthIdentityIDTokenHeaderName][0])
+			assertOAuthHeadersForwardedOnWire(t, cdt.CallResourceCtx, req)
 		})
 
 		t.Run("Should forward OAuth Identity when calling CheckHealth", func(t *testing.T) {
@@ -155,6 +160,25 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
 			require.Equal(t, "Bearer access-token", cdt.CheckHealthReq.Headers[backend.OAuthIdentityTokenHeaderName])
 			require.Equal(t, "id-token", cdt.CheckHealthReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
+			assertOAuthHeadersForwardedOnWire(t, cdt.CheckHealthCtx, req)
 		})
 	})
+}
+
+// assertOAuthHeadersForwardedOnWire verifies that the OAuth identity headers set on the
+// plugin request by OAuthTokenMiddleware actually reach the outbound *http.Request, by running
+// the contextual middleware HTTPClientMiddleware registers through to a final round tripper.
+func assertOAuthHeadersForwardedOnWire(t *testing.T, ctx context.Context, baseReq *http.Request) {
+	t.Helper()
+
+	middlewares := httpclient.ContextualMiddlewareFromContext(ctx)
+	require.Len(t, middlewares, 1)
+	require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+
+	reqClone := baseReq.Clone(baseReq.Context())
+	res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: true}, finalRoundTripper).RoundTrip(reqClone)
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+	require.Equal(t, "Bearer access-token", reqClone.Header.Get(backend.OAuthIdentityTokenHeaderName))
+	require.Equal(t, "id-token", reqClone.Header.Get(backend.OAuthIdentityIDTokenHeaderName))
 }

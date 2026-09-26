@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -79,12 +80,15 @@ func TestForwardIDMiddleware(t *testing.T) {
 	})
 
 	t.Run("When signed in", func(t *testing.T) {
-		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewForwardIDMiddleware()))
+		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewForwardIDMiddleware(), NewHTTPClientMiddleware()))
 
 		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
 			Context:      &web.Context{Req: &http.Request{}},
 			SignedInUser: &user.SignedInUser{IDToken: "some-token"},
 		})
+
+		wireReq, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
+		require.NoError(t, err)
 
 		t.Run("And requests are for a datasource", func(t *testing.T) {
 			pluginContext := backend.PluginContext{
@@ -97,6 +101,7 @@ func TestForwardIDMiddleware(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, "some-token", cdt.QueryDataReq.GetHTTPHeader(forwardIDHeaderName))
+				assertForwardIDHeaderOnWire(t, cdt.QueryDataCtx, wireReq)
 			})
 
 			t.Run("Should set forwarded id header if present for QueryChunkedData", func(t *testing.T) {
@@ -105,6 +110,7 @@ func TestForwardIDMiddleware(t *testing.T) {
 				}, nopChunkedWriter{})
 				require.NoError(t, err)
 				require.Equal(t, "some-token", cdt.QueryChunkedDataReq.GetHTTPHeader(forwardIDHeaderName))
+				assertForwardIDHeaderOnWire(t, cdt.QueryChunkedDataCtx, wireReq)
 			})
 
 			t.Run("Should set forwarded id header if present for CallResource", func(t *testing.T) {
@@ -113,6 +119,7 @@ func TestForwardIDMiddleware(t *testing.T) {
 				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.Equal(t, "some-token", cdt.CallResourceReq.GetHTTPHeader(forwardIDHeaderName))
+				assertForwardIDHeaderOnWire(t, cdt.CallResourceCtx, wireReq)
 			})
 
 			t.Run("Should set forwarded id header if present for CheckHealth", func(t *testing.T) {
@@ -121,6 +128,7 @@ func TestForwardIDMiddleware(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, "some-token", cdt.CheckHealthReq.GetHTTPHeader(forwardIDHeaderName))
+				assertForwardIDHeaderOnWire(t, cdt.CheckHealthCtx, wireReq)
 			})
 
 			t.Run("Should set forwarded id header if present for SubscribeStream", func(t *testing.T) {
@@ -334,4 +342,21 @@ func TestForwardIDMiddleware(t *testing.T) {
 			require.Equal(t, "signed-in-token", cdt.QueryDataReq.GetHTTPHeader(forwardIDHeaderName))
 		})
 	})
+}
+
+// assertForwardIDHeaderOnWire verifies that the forwarded id header set on the plugin request
+// by ForwardIDMiddleware actually reaches the outbound *http.Request, by running the contextual
+// middleware HTTPClientMiddleware registers through to a final round tripper.
+func assertForwardIDHeaderOnWire(t *testing.T, ctx context.Context, baseReq *http.Request) {
+	t.Helper()
+
+	middlewares := httpclient.ContextualMiddlewareFromContext(ctx)
+	require.Len(t, middlewares, 1)
+	require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+
+	reqClone := baseReq.Clone(baseReq.Context())
+	res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: true}, finalRoundTripper).RoundTrip(reqClone)
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+	require.Equal(t, "some-token", reqClone.Header.Get(forwardIDHeaderName))
 }
