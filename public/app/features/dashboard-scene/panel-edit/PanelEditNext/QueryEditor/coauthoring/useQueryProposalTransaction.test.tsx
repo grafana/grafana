@@ -140,4 +140,38 @@ describe('useQueryProposalTransaction', () => {
     expect(runQueries).toHaveBeenCalledTimes(1);
     act(() => expect(result.current.preview(proposedQuery)).toBe(true));
   });
+
+  it('does not expose a proposal to a replacement datasource before transaction cleanup', () => {
+    const renders: Array<{ editorQuery?: DataQuery | null; editorQueries: DataQuery[] }> = [];
+    const adapter = createAdapter();
+    const updateQuery = jest.fn();
+    const runQueries = jest.fn();
+    const startQueryPreview = jest.fn(() => ({
+      dispose: jest.fn(),
+      subscribeToState: jest.fn(() => () => undefined),
+    }));
+    const { result, rerender } = renderHook(
+      ({ queryKey }: { queryKey: string }) => {
+        const transaction = useQueryProposalTransaction({
+          query: queryA,
+          queries: [queryA, queryB],
+          queryKey,
+          adapter,
+          updateQuery,
+          runQueries,
+          startQueryPreview,
+        });
+        renders.push({ editorQuery: transaction.editorQuery, editorQueries: transaction.editorQueries });
+        return transaction;
+      },
+      { initialProps: { queryKey: 'prometheus-1:A' } }
+    );
+
+    act(() => expect(result.current.preview(proposedQuery)).toBe(true));
+    renders.length = 0;
+
+    rerender({ queryKey: 'prometheus-2:A' });
+
+    expect(renders[0]).toEqual({ editorQuery: queryA, editorQueries: [queryA, queryB] });
+  });
 });

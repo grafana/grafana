@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 import {
   type DataSourceApi,
@@ -7,7 +7,7 @@ import {
   type ScopedVars,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { EmbeddedScene, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
 
 import { useSelectedQueryDatasource } from './useSelectedQueryDatasource';
@@ -60,6 +60,12 @@ const mockPrometheusDatasource: Partial<DataSourceApi<DataQuery, DataSourceJsonD
   },
 };
 
+const mockSecondPrometheusDatasource: Partial<DataSourceApi<DataQuery, DataSourceJsonData>> = {
+  ...mockPrometheusDatasource,
+  name: 'Prometheus 2',
+  uid: 'prometheus-2-uid',
+};
+
 const mockTestDataSettings: DataSourceInstanceSettings = {
   uid: 'testdata-uid',
   name: 'TestData',
@@ -95,6 +101,12 @@ const mockPrometheusSettings: DataSourceInstanceSettings = {
   access: 'proxy',
   jsonData: {},
   readOnly: false,
+};
+
+const mockSecondPrometheusSettings: DataSourceInstanceSettings = {
+  ...mockPrometheusSettings,
+  uid: 'prometheus-2-uid',
+  name: 'Prometheus 2',
 };
 
 const refUid = (ref?: DataSourceRef | string | null) => (typeof ref === 'string' ? ref : ref?.uid);
@@ -378,6 +390,63 @@ describe('useSelectedQueryDatasource', () => {
       // Settings keep the un-interpolated variable identity; rawRef proves it resolved to Prometheus.
       expect(result.current.selectedQueryDsData?.dsSettings.uid).toBe('${metrics_source}');
       expect(result.current.selectedQueryDsData?.dsSettings.rawRef?.uid).toBe('prometheus-uid');
+    });
+
+    it('re-resolves a datasource variable when its selected instance changes', async () => {
+      const variable = new TestVariable({
+        name: 'metrics_source',
+        value: 'prometheus-uid',
+        text: 'Prometheus',
+        options: [],
+      });
+      const variablePanel = new VizPanel({ key: 'variable-panel' });
+      new EmbeddedScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+        body: variablePanel,
+      });
+
+      const resolvedSettings = {
+        'prometheus-uid': mockPrometheusSettings,
+        'prometheus-2-uid': mockSecondPrometheusSettings,
+      };
+      const resolvedDatasources = {
+        'prometheus-uid': mockPrometheusDatasource,
+        'prometheus-2-uid': mockSecondPrometheusDatasource,
+      };
+      const resolveCurrentUid = () => String(variable.state.value) as keyof typeof resolvedSettings;
+      const isVariableLookup = (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
+        refUid(ref) === '${metrics_source}' && Boolean(scopedVars?.__sceneObject);
+
+      mockGetDataSourceInstanceSettings.mockImplementation(
+        (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) => {
+          if (!isVariableLookup(ref, scopedVars)) {
+            return Promise.resolve(undefined);
+          }
+
+          const resolved = resolvedSettings[resolveCurrentUid()];
+          return Promise.resolve({
+            ...resolved,
+            name: '${metrics_source}',
+            uid: '${metrics_source}',
+            rawRef: { type: 'prometheus', uid: resolved.uid },
+          });
+        }
+      );
+      mockGetDataSourceInstance.mockImplementation((ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
+        isVariableLookup(ref, scopedVars)
+          ? Promise.resolve(resolvedDatasources[resolveCurrentUid()])
+          : Promise.reject(new Error('Unknown datasource'))
+      );
+
+      const query: DataQuery = { refId: 'A', datasource: variableDatasourceRef };
+      const { result } = renderHook(() => useSelectedQueryDatasource(query, mockTestDataSettings, variablePanel));
+
+      await waitFor(() => expect(result.current.selectedQueryDsData?.datasource).toBe(mockPrometheusDatasource));
+
+      act(() => variable.changeValueTo('prometheus-2-uid', 'Prometheus 2'));
+
+      await waitFor(() => expect(result.current.selectedQueryDsData?.datasource).toBe(mockSecondPrometheusDatasource));
+      expect(result.current.selectedQueryDsData?.dsSettings.rawRef?.uid).toBe('prometheus-2-uid');
     });
 
     it('fails to resolve a section-scoped datasource variable without the panel scene scope (regression guard)', async () => {
