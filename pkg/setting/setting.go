@@ -703,9 +703,10 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                      map[string]UnifiedStorageConfig
-	UnifiedStorageAuthzExemptionEnabled bool
-	UnifiedStorageAuthzExemptResources  []string
+	UnifiedStorage                        map[string]UnifiedStorageConfig
+	UnifiedStorageAuthzExemptionEnabled   bool
+	UnifiedStorageAuthzExemptResources    []string
+	UnifiedStorageGRPCErrorResultToStatus bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -2025,6 +2026,15 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 
 	return key
+}
+
+// HasKey reports whether k is set either in the ini file or via its environment variable override.
+func (s *DynamicSection) HasKey(k string) bool {
+	envKey := EnvKey(s.section.Name(), k)
+	if len(s.env.Getenv(envKey)) > 0 {
+		return true
+	}
+	return s.section.HasKey(k)
 }
 
 func (s *DynamicSection) KeysHash() map[string]string {

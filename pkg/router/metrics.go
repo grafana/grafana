@@ -51,7 +51,7 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 
 	start := time.Now()
 	rec := newStatusRecorder(w)
-	gr.HandleFunc(rec, req, next)
+	gr.HandleFunc(rec.writer(), req, next)
 	duration := time.Since(start)
 
 	group := GroupFromPath(req.URL.Path)

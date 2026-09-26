@@ -6843,9 +6843,6 @@
     "variable": {
       "description-tooltip": "Değişken açıklaması"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Panoya geri dön",
       "not-found": "Panel bulunamadı"
@@ -13353,7 +13350,7 @@
       "count-truncated_other": "İlk {{count}} not defteri yüklendi"
     },
     "new": {
-      "default-title": "Not defteri no. {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Kaydedilemedi",
@@ -14892,12 +14889,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Depolara geri dön",
       "cleaning-up-resources": "Depo kaynakları temizleniyor",
-      "not-found": "bulunamadı",
       "not-found-message": "Depo bulunamadı",
       "repository-config-exists-configuration": "Depo yapılandırmasının yapılandırma dosyasında mevcut olduğundan emin olun.",
       "tab-overview": "Genel Bakış",
@@ -15193,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Panoyu herkese açık hâle getirmeden önce aşağıdakileri kabul edin:",
-      "data-src-ack-desc": "Yayınlama şu anda yalnızca belirli veri kaynakları* ile çalışmaktadır",
-      "data-src-ack-tooltip": "Genel veri kaynakları hakkında daha fazla bilgi edinin",
-      "public-ack-desc": "Panonuzun tamamı herkese açık olacak*",
-      "public-ack-tooltip": "Genel panolar hakkında daha fazla bilgi edinin",
-      "usage-ack-desc": "Bir panoyu herkese açık hâle getirmek, her görüntülendiğinde sorguların çalışmasına neden olur ve bu da maliyetleri artırabilir.*",
-      "usage-ack-desc-tooltip": "Sorguyu önbelleğe alma hakkında daha fazla bilgi edinin"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Panoyu görüntüleyebilir",
-      "copy-button": "Kopyala",
-      "dashboard-url-field-label": "Pano URL'si",
-      "email-share-type-option-label": "Sadece belirtilen kişiler",
-      "pause-sharing-dashboard-label": "Pano paylaşımı duraklat",
-      "public-share-type-option-label": "Bağlantıya sahip olan herkes",
-      "revoke-public-URL-button": "Herkese açık URL'yi iptal et",
-      "revoke-public-URL-button-title": "Herkese açık URL'yi iptal et",
-      "settings-title": "Ayarlar"
-    },
     "configuration": {
       "display-annotations-description": "Bu panodaki ek açıklamaları göster",
       "display-annotations-label": "Ek açıklamaları görüntüle",
@@ -15225,21 +15206,11 @@
       "time-range-label": "Zaman aralığı",
       "time-range-tooltip": "Paylaşılan pano, panonun varsayılan zaman aralığı ayarlarını kullanır"
     },
-    "create-page": {
-      "generate-public-url-button": "Herkese açık URL oluştur",
-      "unsupported-features-desc": "Şu anda şablon değişkenlerini veya ön uç veri kaynaklarını desteklemiyoruz",
-      "welcome-title": "Herkese açık panolara hoş geldiniz!"
-    },
     "email-sharing": {
       "accept-button": "Kabul et",
       "alert-text": "E-posta ile pano paylaşımı, paylaşılan pano sayısından bağımsız olarak 30 günlük belirteç süresi boyunca kullanıcı başına ücretlendirilir. Belirteç yenilenmezse 30 gün sonra faturalandırma durur.",
       "bill-ack": "Kullanıcı eklemenin ödeme gerektirdiğini anlıyorum.*",
       "cancel-button": "İptal",
-      "input-invalid-email-text": "Geçersiz e-posta",
-      "input-required-email-text": "E-posta gereklidir",
-      "invite-button": "Davet et",
-      "invite-field-desc": "Kişileri e-postayla davet edin",
-      "invite-field-label": "Davet et",
       "learn-more-button": "Daha fazla bilgi edinin",
       "recipient-email-placeholder": "E-posta",
       "recipient-invalid-email-text": "Geçersiz e-posta",
@@ -15249,17 +15220,12 @@
       "recipient-list-description": "Yalnızca doğrudan davet ettiğiniz kişiler bu panoya erişebilir",
       "recipient-list-title": "Erişimi olan kişiler",
       "recipient-required-email-text": "E-posta gereklidir",
-      "resend-button": "Yeniden gönder",
-      "resend-button-title": "Yeniden gönder",
       "resend-invite-label": "Daveti yeniden gönder",
       "revoke-access-label": "Erişimi iptal et",
-      "revoke-button": "İptal et",
-      "revoke-button-title": "İptal et",
       "success-creation": "Panonuz haricî paylaşım için hazır",
       "success-share-type-change": "Pano erişimi güncellendi: Artık yalnızca belirli kişiler bağlantı ile erişebilir."
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Genel yapılandırmayı güncellemeden önce lütfen pano değişikliklerinizi kaydedin",
       "unsupport-data-source-alert-readmore-link": "Desteklenen veri kaynakları hakkında daha fazla bilgi edinin",
       "unsupported-data-source-alert-title": "Desteklenmeyen veri kaynakları",
       "unsupported-template-variable-alert-desc": "Bu herkese açık pano şablon değişkenleri kullandığından çalışmayabilir",
@@ -15273,25 +15239,6 @@
       "public-ack": "Bu panonun tamamen herkese açık olacağını anlıyorum.*",
       "success-creation": "Panonuza artık herkes erişebilir",
       "success-share-type-change": "Pano erişimi güncellendi: Artık bağlantıya sahip herkes erişebilir"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Ayarları daralt",
-      "expand-settings-tooltip": "Ayarları genişlet"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Varsayılan zaman aralığı",
-      "default-time-range-label-desc": "Herkese açık pano panonun varsayılan zaman aralığı ayarlarını kullanır",
-      "show-annotations-label": "Ek açıklamaları göster",
-      "show-annotations-label-desc": "Herkese açık panoda ek açıklamaları göster",
-      "time-range-picker-label": "Zaman aralığı seçici etkinleştirildi",
-      "time-range-picker-label-desc": "Görüntüleyenlerin zaman aralığını değiştirmesine izin ver"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Ek açıklamalar = gizle",
-      "annotations-show-text": "Ek açıklamalar = göster",
-      "time-range-picker-disabled-text": "Zaman aralığı seçici = devre dışı",
-      "time-range-picker-enabled-text": "Zaman aralığı seçici = etkin",
-      "time-range-text": "Zaman aralığı = "
     },
     "share": {
       "success-delete": "Panonuz artık paylaşılabilir değil"
@@ -16076,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Paylaş"
-    },
     "embed": {
       "copy": "Panoya kopyala",
       "html": "HTML ekle",
@@ -16125,9 +16069,6 @@
       "time-range-description": "Mevcut göreli zaman aralığını mutlak zaman aralığına dönüştürür",
       "time-range-label": "Zaman aralığını kilitle"
     },
-    "panel": {
-      "title": "Paneli paylaşın"
-    },
     "snapshot": {
       "cancel-button": "İptal",
       "copy-link-button": "Kopyala",
@@ -16143,16 +16084,11 @@
       "local-button": "Anlık görüntüyü yayınla",
       "mistake-message": "Bir hata mı yaptınız? ",
       "name": "Anlık görüntü adı",
-      "timeout": "Zaman aşımı (saniye)",
-      "timeout-description": "Pano metriklerinizin toplanması uzun sürüyorsa zaman aşımı değerini yapılandırmanız gerekebilir.",
       "url-label": "Anlık görüntü URL'si"
     },
     "tab-title": {
-      "embed": "Ekle",
       "export": "Dışa aktar",
-      "library-panel": "Kütüphane paneli",
       "link": "Bağlantı",
-      "public-dashboard-title": "Herkese açık pano",
       "snapshot": "Anlık görüntü"
     },
     "theme-picker": {

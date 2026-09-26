@@ -6843,9 +6843,6 @@
     "variable": {
       "description-tooltip": "Descripción de la variable"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Volver al dashboard",
       "not-found": ""
@@ -13353,7 +13350,7 @@
       "count-truncated_other": "{{count}} primeros cuadernos cargados"
     },
     "new": {
-      "default-title": "Cuaderno n.º {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Error al guardar",
@@ -14892,12 +14889,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Volver a los repositorios",
       "cleaning-up-resources": "Limpiando los recursos del repositorio",
-      "not-found": "no ha sido encontrado",
       "not-found-message": "Repositorio no encontrado",
       "repository-config-exists-configuration": "Asegúrate de que la configuración del repositorio exista en el archivo de configuración.",
       "tab-overview": "Resumen",
@@ -15193,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Antes de hacer público el tablero, ten en cuenta lo siguiente:",
-      "data-src-ack-desc": "Actualmente, la publicación solo funciona con un subconjunto de fuentes de datos*",
-      "data-src-ack-tooltip": "Más información sobre las fuentes de datos públicas",
-      "public-ack-desc": "Tu tablero será totalmente público*",
-      "public-ack-tooltip": "Más información sobre los tableros públicos",
-      "usage-ack-desc": "Convertir un tablero en público hará que las consultas se ejecuten cada vez que se visualice, lo que puede aumentar los costes*",
-      "usage-ack-desc-tooltip": "Más información sobre la caché de consultas"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Puedes ver el tablero",
-      "copy-button": "Copiar",
-      "dashboard-url-field-label": "URL del tablero",
-      "email-share-type-option-label": "Solo personas especificadas",
-      "pause-sharing-dashboard-label": "Pausar el panel compartido",
-      "public-share-type-option-label": "Cualquiera con un enlace",
-      "revoke-public-URL-button": "Revocar la URL pública",
-      "revoke-public-URL-button-title": "Revocar URL pública",
-      "settings-title": "Configuración"
-    },
     "configuration": {
       "display-annotations-description": "Presentar anotaciones en este panel de control",
       "display-annotations-label": "Mostrar anotaciones",
@@ -15225,21 +15206,11 @@
       "time-range-label": "Intervalo de tiempo",
       "time-range-tooltip": "El panel de control compartido utiliza la configuración predeterminada del intervalo de tiempo del panel de control"
     },
-    "create-page": {
-      "generate-public-url-button": "Generar URL pública",
-      "unsupported-features-desc": "Actualmente, no son compatibles las variables de plantillas o las fuentes de datos de la interfaz",
-      "welcome-title": "¡Bienvenidos al tablero público!"
-    },
     "email-sharing": {
       "accept-button": "Aceptar",
       "alert-text": "La compartición de paneles de control por correo electrónico se factura por usuario durante la duración del token de 30 días, independientemente de cuántos paneles de control se compartan. La facturación se detiene después de 30 días a menos que renueves el token.",
       "bill-ack": "Entiendo que añadir usuarios requiere un pago.*",
       "cancel-button": "Cancelar",
-      "input-invalid-email-text": "Correo no válido",
-      "input-required-email-text": "El correo electrónico es obligatorio",
-      "invite-button": "Invitar",
-      "invite-field-desc": "Invitar a otras personas por correo electrónico",
-      "invite-field-label": "Invitar",
       "learn-more-button": "Más información",
       "recipient-email-placeholder": "Correo electrónico",
       "recipient-invalid-email-text": "Correo no válido",
@@ -15249,17 +15220,12 @@
       "recipient-list-description": "Solo las personas a las que hayas invitado directamente pueden acceder a este panel de control",
       "recipient-list-title": "Personas con acceso",
       "recipient-required-email-text": "El correo electrónico es obligatorio",
-      "resend-button": "Reenviar",
-      "resend-button-title": "Reenviar",
       "resend-invite-label": "Volver a enviar invitación",
       "revoke-access-label": "Revocar acceso",
-      "revoke-button": "Revocar",
-      "revoke-button-title": "Revocar",
       "success-creation": "Tu panel de control está listo para compartirlo externamente",
       "success-share-type-change": "Acceso al panel de control actualizado: ahora solo ciertas personas pueden acceder con el enlace"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Guarda los cambios realizados en el tablero antes de actualizar la configuración pública",
       "unsupport-data-source-alert-readmore-link": "Leer más sobre las fuentes de datos compatibles",
       "unsupported-data-source-alert-title": "Fuentes de datos no compatibles",
       "unsupported-template-variable-alert-desc": "Este tablero público puede que no funcione, ya que utiliza variables de plantillas",
@@ -15273,25 +15239,6 @@
       "public-ack": "Entiendo que todo el panel de control será público.*",
       "success-creation": "Tu panel de control ahora es de acceso público",
       "success-share-type-change": "Acceso al panel de control actualizado: ahora cualquier persona con el enlace puede acceder"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Contraer ajustes",
-      "expand-settings-tooltip": "Expandir ajustes"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Rango de tiempo predeterminado",
-      "default-time-range-label-desc": "El tablero público utiliza la configuración predeterminada del rango de tiempo del tablero",
-      "show-annotations-label": "Mostrar anotaciones",
-      "show-annotations-label-desc": "Mostrar anotaciones en el tablero público",
-      "time-range-picker-label": "Selector de rango de tiempo activado",
-      "time-range-picker-label-desc": "Permitir que los usuarios cambien el rango de tiempo"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Anotaciones = ocultar",
-      "annotations-show-text": "Anotaciones = mostrar",
-      "time-range-picker-disabled-text": "Selector de rango de tiempo = desactivado",
-      "time-range-picker-enabled-text": "Selector de rango de tiempo = activado",
-      "time-range-text": "Rango de tiempo = "
     },
     "share": {
       "success-delete": "Tu panel de control ya no se puede compartir"
@@ -16076,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Compartir"
-    },
     "embed": {
       "copy": "Copiar al portapapeles",
       "html": "Incrustar HTML",
@@ -16125,9 +16069,6 @@
       "time-range-description": "Transforma el intervalo de tiempo relativo actual en un intervalo de tiempo absoluto",
       "time-range-label": "Bloquear el intervalo de tiempo"
     },
-    "panel": {
-      "title": "Compartir panel"
-    },
     "snapshot": {
       "cancel-button": "Cancelar",
       "copy-link-button": "Copiar",
@@ -16143,16 +16084,11 @@
       "local-button": "Publicar instantánea",
       "mistake-message": "¿Ha cometido un error? ",
       "name": "Nombre de la instantánea",
-      "timeout": "Tiempo de espera (segundos)",
-      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
       "url-label": "URL de la instantánea"
     },
     "tab-title": {
-      "embed": "Incrustar",
       "export": "Exportar",
-      "library-panel": "Panel de librería",
       "link": "Enlace",
-      "public-dashboard-title": "Tablero público",
       "snapshot": "Instantánea"
     },
     "theme-picker": {

@@ -168,6 +168,11 @@ func (c *Proxy) Priority() uint {
 func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
 	ctx, span := c.tracer.Start(ctx, "authn.proxy.Hook")
 	defer span.End()
+
+	if c.cfg.AuthProxy.SyncTTL == 0 {
+		return nil
+	}
+
 	if id.ClientParams.CacheAuthProxyKey == "" {
 		return nil
 	}
