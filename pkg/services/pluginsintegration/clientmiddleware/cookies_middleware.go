@@ -58,30 +58,32 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 	proxyutil.ClearCookieHeader(reqCtx.Req, allowedCookies, m.skipCookiesNames)
 
 	cookieStr := reqCtx.Req.Header.Get(cookieHeaderName)
+	var headers *map[string]string
 	switch t := req.(type) {
 	case *backend.QueryDataRequest:
-		if cookieStr == "" {
-			delete(t.Headers, cookieHeaderName)
-		} else {
-			t.Headers[cookieHeaderName] = cookieStr
-		}
+		headers = &t.Headers
 	case *backend.QueryChunkedDataRequest:
-		if cookieStr == "" {
-			delete(t.Headers, cookieHeaderName)
-		} else {
-			t.Headers[cookieHeaderName] = cookieStr
-		}
+		headers = &t.Headers
 	case *backend.CheckHealthRequest:
-		if cookieStr == "" {
-			delete(t.Headers, cookieHeaderName)
-		} else {
-			t.Headers[cookieHeaderName] = cookieStr
-		}
+		headers = &t.Headers
 	case *backend.CallResourceRequest:
 		if cookieStr == "" {
 			delete(t.Headers, cookieHeaderName)
 		} else {
+			if t.Headers == nil {
+				t.Headers = map[string][]string{}
+			}
 			t.Headers[cookieHeaderName] = []string{cookieStr}
+		}
+	}
+	if headers != nil {
+		if cookieStr == "" {
+			delete(*headers, cookieHeaderName)
+		} else {
+			if *headers == nil {
+				*headers = map[string]string{}
+			}
+			(*headers)[cookieHeaderName] = cookieStr
 		}
 	}
 
