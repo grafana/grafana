@@ -143,6 +143,18 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
 - **Metrics:** unknown groups are labelled `unknown` (`KnownGroup`) so arbitrary client paths can't
   create new series. The duration histogram is labelled by group, verb and status code.
+- **Route state:** `routerCollector` (`status.go`) exports, at scrape time:
+  - `grafana_router_groups{source}`: groups served per route source;
+  - `grafana_router_breaker_state{group}`: 0 closed, 1 half-open, 2 open;
+  - `grafana_router_reconciles_total` and `grafana_router_reconcile_errors_total`;
+  - `grafana_router_shadowed_groups{source}`: groups a source offered that a higher-priority source
+    serves instead, in the latest load;
+  - `grafana_router_source_last_success_timestamp_seconds{source}`.
+
+  The standalone router also serves the same state as JSON at `GET /debug/router`: for each group,
+  its source, key, target and breaker, plus shadowed groups, source status and readiness. New
+  backends should implement `DescribedBackend`, and new sources should report through
+  `loaderStatus`, or they show up as `unknown`.
 
 ## Lifecycle
 

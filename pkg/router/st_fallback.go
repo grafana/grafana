@@ -101,6 +101,7 @@ type singleTenantFallback struct {
 	// discovery is written only by run's goroutine; nil until the first poll.
 	discovery atomic.Pointer[singleTenantDiscovery]
 	cooldown  *cooldown
+	status    pollStatus
 }
 
 type singleTenantFallbackOptions struct {
@@ -415,6 +416,7 @@ func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{})
 	backends, err := st.discover(ctx)
 	if err != nil {
 		st.cooldown.OnFailure(now)
+		st.status.recordFailure(err)
 		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
 		next := &singleTenantDiscovery{err: err}
 		if prev != nil {
@@ -424,6 +426,7 @@ func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{})
 		return
 	}
 	st.cooldown.OnSuccess(now)
+	st.status.recordSuccess(now)
 	st.discovery.Store(&singleTenantDiscovery{backends: backends})
 
 	if prev != nil && prev.err == nil && sameKeySet(backendKeys(prev.backends), backendKeys(backends)) {
@@ -469,6 +472,12 @@ func (f *fallbackBackend) Group() v1.APIGroup {
 }
 
 // Key implements [Backend].
+// Describe implements [DescribedBackend]. Each request goes to the stack its
+// namespace names, so there is no single target.
+func (f *fallbackBackend) Describe() BackendDescription {
+	return BackendDescription{Source: sourceSingleTenant, Target: "per stack, from the namespace"}
+}
+
 func (f *fallbackBackend) Key() string {
 	return f.key
 }

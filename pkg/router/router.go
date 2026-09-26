@@ -57,6 +57,7 @@ type servingEntry struct {
 	key     string
 	breaker *groupBreaker
 	watches context.Context
+	source  BackendDescription
 
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
@@ -120,6 +121,10 @@ type GrafanaRouter struct {
 	// before Run; the middleware uses it so the router never shadows a group
 	// the embedded API server owns.
 	acceptGroup func(group string) bool
+
+	// reconciles and reconcileErrors count completed reconciles, for metrics.
+	reconciles      atomic.Uint64
+	reconcileErrors atomic.Uint64
 
 	// watches ends every watch in progress when the router closes them.
 	watches    context.Context
@@ -375,7 +380,9 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 // storeServing records a completed reconcile's outcome. Errors are logged
 // here; Ready decides whether they affect readiness.
 func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
+	r.reconciles.Add(1)
 	if err != nil {
+		r.reconcileErrors.Add(1)
 		logging.FromContext(ctx).Error("router: reconcile completed with errors, serving last-known-good", "err", err)
 	}
 	r.state.Store(&routerState{phase: serving, err: err, served: len(r.served) > 0})
@@ -500,6 +507,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
+			entry.source = describeBackend(e.backend)
 			backends = append(backends, e.backend)
 			if provider, ok := e.backend.(DiscoveryProvider); ok {
 				if d, ok := provider.Discovery(); ok {

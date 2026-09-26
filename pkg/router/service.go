@@ -17,6 +17,10 @@ import (
 
 const readinessPollInterval = time.Second
 
+// debugPath serves the router's state as JSON on the standalone router's
+// listener, next to /metrics.
+const debugPath = "/debug/router"
+
 // ReadyNotifier reports the router's readiness through the module server's
 // shared health endpoint.
 type ReadyNotifier interface {
@@ -79,6 +83,7 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 		httpRouter.Handle(path, handler)
 		httpRouter.PathPrefix(path + "/").Handler(handler)
 	}
+	httpRouter.Handle(debugPath, http.HandlerFunc(s.router.serveDebug)).Methods(http.MethodGet)
 	return nil
 }
 
@@ -87,6 +92,7 @@ func newService(loader RoutesLoader, reg prometheus.Registerer) *Service {
 		router:  NewGrafanaRouter(loader),
 		metrics: newRouterMetrics(reg),
 	}
+	reg.MustRegister(newRouterCollector(s.router))
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 	return s
 }

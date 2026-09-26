@@ -120,6 +120,7 @@ func apiGroupDiscoveryListToGroups(list apidiscoveryv2.APIGroupDiscoveryList) []
 // vs a RouteBackend CR), not in how requests are served.
 type aggregateBackend struct {
 	targetName string
+	target     string
 	group      metav1.APIGroup
 	discovery  *apidiscoveryv2.APIGroupDiscovery
 	key        string
@@ -153,6 +154,7 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 
 	return &aggregateBackend{
 		targetName: targetName,
+		target:     target.String(),
 		group:      group,
 		discovery:  discovered.discovery,
 		key:        key,
@@ -168,6 +170,9 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 
 func (b *aggregateBackend) Group() metav1.APIGroup { return b.group }
 func (b *aggregateBackend) Key() string            { return b.key }
+func (b *aggregateBackend) Describe() BackendDescription {
+	return BackendDescription{Source: aggregateSource(b.targetName), Target: b.target}
+}
 func (b *aggregateBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
 	if b.discovery == nil {
 		return apidiscoveryv2.APIGroupDiscovery{}, false

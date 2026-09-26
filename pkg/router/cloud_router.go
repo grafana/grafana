@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"os"
 	"slices"
+	"sync/atomic"
+	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
@@ -215,6 +217,9 @@ type cloudLoader struct {
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
+
+	routeBackendStatus pollStatus
+	shadowed           atomic.Pointer[[]shadowedGroup]
 }
 
 type tlsCacheKey struct {
@@ -407,6 +412,15 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	lookup := make(map[string]Backend)
 	var discoveryErr error
+	var shadowed []shadowedGroup
+	// put adds b, recording any backend for the same group it overrides.
+	put := func(b Backend) {
+		group := b.Group().Name
+		if previous, ok := lookup[group]; ok {
+			shadowed = append(shadowed, shadowedGroup{Group: group, Source: describeBackend(previous).Source, By: describeBackend(b).Source})
+		}
+		lookup[group] = b
+	}
 
 	// Lowest priority first -- the MT backends will replace the ST flavors
 	if l.singleTenantFallback != nil {
@@ -415,14 +429,14 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 			discoveryErr = fmt.Errorf("single-tenant discovery: %w", err)
 		}
 		for _, b := range backends {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
 
 	// Aggregate targets override ST; later targets override earlier targets.
 	for _, target := range l.aggregateTargets {
 		for _, b := range target.Backends() {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
 
@@ -430,19 +444,22 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	if l.routeBackendClient != nil {
 		manifests, backends, err := l.routeResources(ctx)
 		if err != nil {
+			l.routeBackendStatus.recordFailure(err)
 			return nil, err
 		}
+		l.routeBackendStatus.recordSuccess(time.Now())
 		for _, b := range l.combineByName(ctx, manifests, backends) {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
 
 	// Managed plugins
 	if l.pluginsTarget != nil {
 		for _, b := range l.pluginsTarget.Backends() {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
+	l.recordShadowed(ctx, shadowed)
 
 	if len(lookup) == 0 && discoveryErr != nil {
 		return nil, discoveryErr
@@ -454,6 +471,43 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	})
 
 	return backends, nil
+}
+
+// recordShadowed stores the groups shadowed in the latest load, and logs
+// when that set changes so a new conflict is visible without flooding the log.
+func (l *cloudLoader) recordShadowed(ctx context.Context, shadowed []shadowedGroup) {
+	slices.SortFunc(shadowed, func(a, b shadowedGroup) int {
+		return cmp.Or(cmp.Compare(a.Group, b.Group), cmp.Compare(a.Source, b.Source))
+	})
+	if previous := l.shadowed.Swap(&shadowed); previous == nil || !slices.Equal(*previous, shadowed) {
+		for _, s := range shadowed {
+			logging.FromContext(ctx).Warn("router: group offered by more than one source", "group", s.Group, "source", s.Source, "servedBy", s.By)
+		}
+	}
+}
+
+func (l *cloudLoader) shadowedGroups() []shadowedGroup {
+	if shadowed := l.shadowed.Load(); shadowed != nil {
+		return *shadowed
+	}
+	return nil
+}
+
+func (l *cloudLoader) sourceStatuses() []sourceStatus {
+	var statuses []sourceStatus
+	if l.singleTenantFallback != nil {
+		statuses = append(statuses, l.singleTenantFallback.status.status(sourceSingleTenant))
+	}
+	for _, target := range l.aggregateTargets {
+		statuses = append(statuses, target.status.status(aggregateSource(target.name)))
+	}
+	if l.routeBackendClient != nil {
+		statuses = append(statuses, l.routeBackendStatus.status(sourceRouteBackend))
+	}
+	if l.pluginsTarget != nil {
+		statuses = append(statuses, l.pluginsTarget.status.status(sourcePluginsURL))
+	}
+	return statuses
 }
 
 // routeResources returns the AppManifests and RouteBackends from the informer

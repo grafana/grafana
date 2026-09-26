@@ -1,6 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in #133630; P7 partly addressed)
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in #133630, O1 and O2 in progress; P7 partly addressed)
 Package: `pkg/router`
 
 ## Context
@@ -290,16 +290,18 @@ Found by checking each part of the proxy path against a watch that streams for 3
 
 ## O: Operability
 
-- [ ] **O1. Metrics for route state, not just requests.** kube-aggregator's main operational
+- [x] **O1. Metrics for route state, not just requests.** kube-aggregator's main operational
   advantage is `APIService` status, which shows who serves each group and whether it is available.
   Minimum set:
   - gauge: groups served, labeled by source;
   - gauge: breaker state per group;
   - counters: reconcile runs and reconcile errors;
-  - counter: source conflicts (one source overriding another for the same group);
+  - counter: source conflicts (one source overriding another for the same group). Implemented as a
+    gauge of groups currently shadowed, since a lasting conflict would bump a counter on every
+    reconcile;
   - timestamp: last successful poll, per source.
 
-- [ ] **O2. Read-only debug endpoint.** A JSON view of the current snapshot showing, for each group:
+- [x] **O2. Read-only debug endpoint.** A JSON view of the current snapshot showing, for each group:
   source, key, target host and breaker state.
 
 - [x] **O3. One logger.** The package mixes global `slog`, Grafana's `infra/log`

@@ -43,6 +43,7 @@ type aggregateTarget struct {
 	// healthy re-poll cadence and its backoff is the post-failure retry
 	// schedule. Written and read solely from run()'s goroutine.
 	cooldown *cooldown
+	status   pollStatus
 
 	snapshot atomic.Pointer[[]Backend]
 	lastKeys atomic.Pointer[map[string]struct{}]
@@ -115,10 +116,12 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 	groups, err := discoverGroupResources(ctx, t.client, t.base.String())
 	if err != nil {
 		t.cooldown.OnFailure(now)
+		t.status.recordFailure(err)
 		logging.FromContext(ctx).Warn("router: aggregate discovery poll failed, backing off", "target", t.name, "err", err)
 		return
 	}
 	t.cooldown.OnSuccess(now)
+	t.status.recordSuccess(now)
 
 	backends := make([]Backend, 0, len(groups))
 	keys := make(map[string]struct{}, len(groups))
