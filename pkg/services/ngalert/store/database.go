@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 // TimeNow makes it possible to test usage of time
@@ -43,6 +44,9 @@ type DBstore struct {
 	DashboardService dashboards.DashboardService
 	AccessControl    accesscontrol.AccessControl
 	Bus              bus.Bus
+	// LegacyDatabaseProvider resolves table names for this store's SQL queries. If unset, queries
+	// use bare table names.
+	LegacyDatabaseProvider legacysql.LegacyDatabaseProvider
 }
 
 func ProvideDBStore(
@@ -55,19 +59,29 @@ func ProvideDBStore(
 	bus bus.Bus,
 ) (*DBstore, error) {
 	store := DBstore{
-		Cfg:              cfg.UnifiedAlerting,
-		FeatureToggles:   featureToggles,
-		SQLStore:         sqlstore,
-		Logger:           log.New("ngalert.dbstore"),
-		FolderService:    folderService,
-		DashboardService: dashboards,
-		AccessControl:    ac,
-		Bus:              bus,
+		Cfg:                    cfg.UnifiedAlerting,
+		FeatureToggles:         featureToggles,
+		SQLStore:               sqlstore,
+		Logger:                 log.New("ngalert.dbstore"),
+		FolderService:          folderService,
+		DashboardService:       dashboards,
+		AccessControl:          ac,
+		Bus:                    bus,
+		LegacyDatabaseProvider: legacysql.NewDatabaseProvider(sqlstore),
 	}
 	if err := folderService.RegisterService(store); err != nil {
 		return nil, err
 	}
 	return &store, nil
+}
+
+// legacyDatabaseProvider falls back to bare table names when LegacyDatabaseProvider is unset, so
+// a DBstore built directly (as in tests) keeps working unchanged.
+func (st DBstore) legacyDatabaseProvider(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+	if st.LegacyDatabaseProvider == nil {
+		return legacysql.NewDatabaseProvider(st.SQLStore)(ctx)
+	}
+	return st.LegacyDatabaseProvider(ctx)
 }
 
 // RuleChangeEvent is published via DBSession.PublishAfterCommit, so subscribers observe it only

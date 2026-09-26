@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -912,6 +913,90 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 			return nil
 		})
 	})
+}
+
+func TestDBstore_legacyDatabaseProvider(t *testing.T) {
+	t.Run("falls back to identity table names when LegacyDatabaseProvider is unset", func(t *testing.T) {
+		store := DBstore{}
+		dbHelper, err := store.legacyDatabaseProvider(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "alert_rule", dbHelper.Table("alert_rule"))
+	})
+
+	t.Run("delegates to the configured provider when set", func(t *testing.T) {
+		store := DBstore{
+			LegacyDatabaseProvider: func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					Table: func(n string) string { return "hg_stack1." + n },
+				}, nil
+			},
+		}
+		dbHelper, err := store.legacyDatabaseProvider(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "hg_stack1.alert_rule", dbHelper.Table("alert_rule"))
+	})
+}
+
+func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{},
+		featuremgmt.FlagAlertingFolderHasRulesLabel, featuremgmt.FlagAlertRuleRestore)
+
+	var requestedTables []string
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB: sqlStore,
+			Table: func(n string) string {
+				requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+				return n
+			},
+		}, nil
+	}
+
+	rule := createRule(t, store, models.RuleGen)
+
+	err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, false, rule.UID)
+	require.NoError(t, err)
+
+	assert.Contains(t, requestedTables, "alert_rule")
+	assert.Contains(t, requestedTables, "alert_rule_version")
+}
+
+func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+	store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
+		{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
+	})
+
+	var requestedTables []string
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB: sqlStore,
+			Table: func(n string) string {
+				requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+				return n
+			},
+		}, nil
+	}
+
+	rule := createRule(t, store, nil)
+
+	err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+	require.NoError(t, err)
+
+	assert.Contains(t, requestedTables, "alert_rule")
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
