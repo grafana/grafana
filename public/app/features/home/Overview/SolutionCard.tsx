@@ -81,30 +81,32 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         )}
       </Card.Description>
 
-      <Card.Actions className={styles.actions}>
-        {ctaLoading ? (
-          <Skeleton width={120} height={24} />
-        ) : cta ? (
-          <LinkButton
-            href={cta.href}
-            fill="text"
-            size="sm"
-            icon="angle-right"
-            iconPlacement="right"
-            className={cx(styles.textAction, isAttentionCta && styles.attentionAction)}
-            onClick={() =>
-              ctaClicked({
-                surface: 'overview',
-                action: cta.action,
-                placement: 'card',
-                solution: solution.id,
-              })
-            }
-          >
-            <Text truncate>{cta.label}</Text>
-          </LinkButton>
-        ) : null}
-      </Card.Actions>
+      {(ctaLoading || cta) && (
+        <Card.Actions className={styles.actions}>
+          {ctaLoading ? (
+            <Skeleton width={120} height={24} />
+          ) : (
+            <LinkButton
+              href={cta.href}
+              fill="text"
+              size="sm"
+              icon="angle-right"
+              iconPlacement="right"
+              className={cx(styles.textAction, isAttentionCta && styles.attentionAction)}
+              onClick={() =>
+                ctaClicked({
+                  surface: 'overview',
+                  action: cta.action,
+                  placement: 'card',
+                  solution: solution.id,
+                })
+              }
+            >
+              <Text truncate>{cta.label}</Text>
+            </LinkButton>
+          )}
+        </Card.Actions>
+      )}
       {solution.id === 'kubernetes' && datasource && (
         <Card.SecondaryActions>
           <KubernetesFilterActions datasource={datasource} attention={isAttentionCta} />

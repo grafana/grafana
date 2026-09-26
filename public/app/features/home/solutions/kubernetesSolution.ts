@@ -2,7 +2,6 @@ import memoize from 'micro-memoize';
 
 import { formattedValueToString, getValueFormat, locationUtil, type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
 import {
   fetchClusterCpuSeries,
@@ -15,7 +14,7 @@ import {
   type KubernetesScope,
 } from './kubernetesData';
 import { type KubernetesFilter } from './kubernetesFilter';
-import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
+import { accessibleAppPage, exploreFallbackCta, openAppLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal, type SignalDetection } from './solutionState';
@@ -185,13 +184,10 @@ export function kubernetesSolution(
         }
       }
       const href = await accessibleAppHref('/home', ds);
-      return href
-        ? { label: openAppLabel('Kubernetes Monitoring'), href, action: 'open_solution' }
-        : {
-            label: openExploreLabel(),
-            href: constructDataSourceExploreUrl({ name: ds.name }),
-            action: 'open_solution',
-          };
+      if (href) {
+        return { label: openAppLabel('Kubernetes Monitoring'), href, action: 'open_solution' };
+      }
+      return exploreFallbackCta(ds);
     },
   };
 }
