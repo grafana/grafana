@@ -150,6 +150,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 
 	if opts.transport == nil {
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
+		opts.transport.ResponseHeaderTimeout = backendResponseHeaderTimeout
 	}
 
 	return &singleTenantFallback{
@@ -285,7 +286,8 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},
-		Transport: newBackendTransport(st.transport),
+		Transport:    newBackendTransport(st.transport),
+		ErrorHandler: proxyErrorHandler,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err

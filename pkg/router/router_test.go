@@ -344,7 +344,7 @@ func TestRouterFallbackOnlyForUnregisteredGroups(t *testing.T) {
 		{"/openapi/v3/", false, http.StatusOK},
 		{"/openapi/v3/apis/unknown", false, http.StatusNotFound},
 		{"/openapi/v3/apis/unknown/v1/extra", false, http.StatusNotFound},
-		{"/apis//v1/namespaces/stacks-123/widgets", false, http.StatusNotFound},
+		{"/apis//v1/namespaces/stacks-123/widgets", false, http.StatusBadRequest},
 		{"/apisfoo/unknown", false, http.StatusNotFound},
 		{"/healthz", false, http.StatusNotFound},
 	} {

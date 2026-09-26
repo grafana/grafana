@@ -118,16 +118,22 @@ func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
 // Anything the router does not own falls through to next.
 func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	path := req.URL.Path
+	isOpenAPI := path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/")
+	isAPIs := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/")
 
-	// OpenAPI v3 discovery index and per-group-version documents.
-	if path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/") {
-		r.serveOpenAPIV3(w, req, next)
+	// Not part of the /apis or /openapi/v3 trees — not ours.
+	if !isOpenAPI && !isAPIs {
+		next.ServeHTTP(w, req)
+		return
+	}
+	if !canonicalAPIPath(req.URL) {
+		http.Error(w, "non-canonical API path", http.StatusBadRequest)
 		return
 	}
 
-	// Not part of the /apis tree — not ours.
-	if path != apisPrefix && !strings.HasPrefix(path, apisPrefix+"/") {
-		next.ServeHTTP(w, req)
+	// OpenAPI v3 discovery index and per-group-version documents.
+	if isOpenAPI {
+		r.serveOpenAPIV3(w, req, next)
 		return
 	}
 
@@ -461,7 +467,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 // elsewhere.
 func rejectBackendRedirects(resp *http.Response) error {
 	if resp.StatusCode >= 300 && resp.StatusCode <= 399 && resp.Header.Get("Location") != "" {
-		return fmt.Errorf("router: rejecting redirect from backend (status %d, location %q)", resp.StatusCode, resp.Header.Get("Location"))
+		return fmt.Errorf("%w (status %d, location %q)", errBackendRedirect, resp.StatusCode, resp.Header.Get("Location"))
 	}
 	return nil
 }
