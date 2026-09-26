@@ -13,6 +13,7 @@ import {
   type DataSourceJsonData,
   type DataSourceRef,
   getDataSourceRef,
+  LoadingState,
   makeClassES5Compatible,
   parseLiveChannelAddress,
   type ScopedVars,
@@ -33,10 +34,12 @@ import {
 } from '../services';
 import { getDataSourceInstanceSettings } from '../services/dataSource/settings';
 
+import { toChunkedDataQueryResponse } from './chunkedQueryResponse';
 import { ExpressionDatasourceRef, isExpressionReference } from './expressionRef';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
-import { isQueryServiceCompatible } from './qscheck';
+import { areDatasourceTypesAllowed, isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
+import { toDataQueryError } from './toDataQueryError';
 import { UserStorage } from './userStorage';
 
 export class HealthCheckError extends Error {
@@ -152,7 +155,9 @@ class DataSourceWithBackend<
     this.datasourceInstanceSettings = instanceSettings;
   }
 
-  private async createBackendRequest(request: DataQueryRequest<TQuery>): Promise<[BackendSrvRequest, DataQuery[]]> {
+  private async createBackendRequest(
+    request: DataQueryRequest<TQuery>
+  ): Promise<[BackendSrvRequest, DataQuery[], boolean]> {
     const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
@@ -244,6 +249,7 @@ class DataSourceWithBackend<
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 
     let url = '/api/ds/query?ds_type=' + this.type;
+    let useChunkedResponse = false;
 
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
@@ -257,6 +263,15 @@ class DataSourceWithBackend<
           apiGroup = 'datasource.grafana.app';
         }
         url = `/apis/${apiGroup}/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+
+        // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+        const chunkedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-chunked-types', {
+          types: [],
+        });
+        if (areDatasourceTypesAllowed(datasources, chunkedTypes)) {
+          headers.Accept = 'text/jsonl';
+          useChunkedResponse = true;
+        }
       }
     }
 
@@ -302,6 +317,7 @@ class DataSourceWithBackend<
         headers,
       },
       queries,
+      useChunkedResponse,
     ];
   }
 
@@ -321,8 +337,17 @@ class DataSourceWithBackend<
     // query() is called rather than when it is subscribed to, and a rejection (e.g. an unknown
     // datasource) on a never-subscribed observable would surface as an unhandled rejection.
     return defer(() => this.createBackendRequest(request)).pipe(
-      switchMap(([req, queries]) =>
-        getBackendSrv()
+      switchMap(([req, queries, useChunkedResponse]) => {
+        if (useChunkedResponse) {
+          return toChunkedDataQueryResponse(getBackendSrv().chunked(req)).pipe(
+            catchError((err) => {
+              const error = toDataQueryError(err);
+              return of<DataQueryResponse>({ data: [], error, errors: [error], state: LoadingState.Error });
+            })
+          );
+        }
+
+        return getBackendSrv()
           .fetch<BackendDataSourceResponse>(req)
           .pipe(
             switchMap((raw) => {
@@ -340,8 +365,8 @@ class DataSourceWithBackend<
             catchError((err) => {
               return of(toDataQueryResponse(err));
             })
-          )
-      )
+          );
+      })
     );
   }
 

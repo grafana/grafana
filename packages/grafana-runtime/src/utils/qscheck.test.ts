@@ -1,6 +1,6 @@
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type DataSourceJsonData } from '@grafana/data';
 
-import { isQueryServiceCompatible } from './qscheck';
+import { areDatasourceTypesAllowed, isQueryServiceCompatible } from './qscheck';
 
 interface TestJsonData extends DataSourceJsonData {
   oauthPassThru?: unknown;
@@ -323,6 +323,31 @@ describe('qscheck', () => {
       const result = isQueryServiceCompatible(settings, t.flag);
       expect(result).toBe(t.expected);
       expect(consoleErrorSpy).toHaveBeenCalledTimes(t.errorLogs);
+    });
+  });
+
+  describe('areDatasourceTypesAllowed', () => {
+    const settings = (type: string): DataSourceInstanceSettings<TestJsonData> => ({
+      jsonData: {},
+      uid: 'uid1',
+      type,
+      name: type,
+      meta: {} as DataSourcePluginMeta,
+      readOnly: false,
+      access: 'proxy',
+    });
+
+    it('requires every datasource type to be explicitly enabled', () => {
+      expect(areDatasourceTypesAllowed([settings('prometheus'), settings('loki')], { types: ['prometheus'] })).toBe(
+        false
+      );
+      expect(
+        areDatasourceTypesAllowed([settings('prometheus'), settings('loki')], { types: ['prometheus', 'loki'] })
+      ).toBe(true);
+    });
+
+    it('rejects requests without datasource queries', () => {
+      expect(areDatasourceTypesAllowed([], { types: ['prometheus'] })).toBe(false);
     });
   });
 });
