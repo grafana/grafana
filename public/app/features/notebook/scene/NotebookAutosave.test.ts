@@ -8,7 +8,7 @@ import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/l
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
+import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { defaultVisualizationPanelKind } from '../types';
@@ -1106,6 +1106,16 @@ describe('NotebookAutosave', () => {
       expect(scene.state.uid).toBe('nb-new');
       expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
       expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb-new', 'notebook_list', 1);
+    });
+
+    it('attributes creation to the launcher that opened the blank notebook', async () => {
+      const scene = activateBlankEditing();
+      scene.autosave.setEntryPoint(NOTEBOOK_ENTRY_POINT.QUICK_ADD);
+
+      typeIntoIt(scene, 'first thought');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb-new', 'quick_add', 1);
     });
 
     it('is not created at all when nothing was typed', async () => {

@@ -10,7 +10,7 @@ import {
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT, type NotebookEntryPoint } from '../analytics/types';
 import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
@@ -91,9 +91,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private abandoned = false;
   /** Failures in a row since the last save that landed. `autosave_failed` sends this as `attempt`. */
   private failedAttempts = 0;
+  private entryPoint: NotebookEntryPoint = NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST;
 
   public constructor(private scene: NotebookScene) {
     super({ status: 'idle' });
+  }
+
+  public setEntryPoint(source: NotebookEntryPoint): void {
+    this.entryPoint = source;
   }
 
   /** Begins watching for changes. Returns the teardown, which flushes anything still pending. */
@@ -585,9 +590,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       } finally {
         this.adoptingUid = false;
       }
-      // Only a blank notebook reaches this create, and the list is the only link to the blank route
-      // today. A second way in has to hand its own source to the autosave.
-      NotebookAnalytics.created(created, NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST, spec.layout.spec.cells.length);
+      NotebookAnalytics.created(created, this.entryPoint, spec.layout.spec.cells.length);
       return { generation };
     });
   }

@@ -11,9 +11,15 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { type ContextSrv, contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { searchNotebookTitles } from 'app/features/notebook/list/notebookSearchApi';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { getRecentDashboardActions, getSearchResultActions, useSearchResults } from './dashboardActions';
+
+jest.mock('app/features/notebook/list/notebookSearchApi', () => ({ searchNotebookTitles: jest.fn() }));
+
+const mockSearchNotebookTitles = jest.mocked(searchNotebookTitles);
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -23,6 +29,7 @@ describe('dashboardActions', () => {
   const mockRecentDashboardUids = ['my-dashboard-1'];
 
   beforeEach(() => {
+    mockSearchNotebookTitles.mockResolvedValue([]);
     server.use(
       getCustomSearchHandler([
         {
@@ -158,6 +165,57 @@ describe('dashboardActions', () => {
             managedBy: ManagerKind.Repo,
           }),
         ]);
+      });
+    });
+
+    describe('notebook results', () => {
+      const originalPermissions = contextSrv.user.permissions;
+
+      beforeEach(() => {
+        mockContextSrv.user.isSignedIn = true;
+        contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
+        mockSearchNotebookTitles.mockResolvedValue([
+          {
+            resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name: 'nb1' },
+            fields: { title: 'Incident notes' },
+          },
+        ]);
+      });
+
+      afterEach(() => {
+        contextSrv.user.permissions = originalPermissions;
+      });
+
+      it('adds notebook title matches alongside dashboards when enabled', async () => {
+        const results = await getSearchResultActions('Incident', false, true);
+
+        expect(mockSearchNotebookTitles).toHaveBeenCalledWith('Incident', 10);
+        expect(results).toEqual([
+          expect.objectContaining({ sectionId: 'dashboards' }),
+          expect.objectContaining({
+            id: 'go/notebook/nb1',
+            name: 'Incident notes',
+            section: 'Notebooks',
+            sectionId: 'notebooks',
+            url: expect.stringContaining('/notebooks/nb1'),
+          }),
+        ]);
+      });
+
+      it('does not search notebooks without the feature flag or read permission', async () => {
+        await getSearchResultActions('Incident');
+        contextSrv.user.permissions = {};
+        await getSearchResultActions('Incident', false, true);
+
+        expect(mockSearchNotebookTitles).not.toHaveBeenCalled();
+      });
+
+      it('keeps dashboard results if notebook search is unavailable', async () => {
+        mockSearchNotebookTitles.mockRejectedValue(new Error('notebook search unavailable'));
+
+        const results = await getSearchResultActions('Incident', false, true);
+
+        expect(results).toEqual([expect.objectContaining({ sectionId: 'dashboards' })]);
       });
     });
 
@@ -336,6 +394,32 @@ describe('dashboardActions', () => {
           },
         ]);
       });
+    });
+
+    it('includes notebook matches when the notebook feature is enabled', async () => {
+      mockContextSrv.user.isSignedIn = true;
+      const originalPermissions = contextSrv.user.permissions;
+      contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
+      setTestFlags({ 'dashboard.notebooks': true });
+      mockSearchNotebookTitles.mockResolvedValue([
+        {
+          resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name: 'nb1' },
+          fields: { title: 'Incident notes' },
+        },
+      ]);
+
+      try {
+        const { result } = renderHook(() => useSearchResults({ searchQuery: 'Incident', show: true }), { wrapper });
+
+        await waitFor(() => {
+          expect(result.current.searchResults).toEqual([
+            expect.objectContaining({ sectionId: 'dashboards' }),
+            expect.objectContaining({ name: 'Incident notes', sectionId: 'notebooks' }),
+          ]);
+        });
+      } finally {
+        contextSrv.user.permissions = originalPermissions;
+      }
     });
 
     it('returns hybrid dashboard actions when both the cmdkHybridSearch and vectorSearch flags are on', async () => {

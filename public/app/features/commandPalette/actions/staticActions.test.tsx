@@ -184,3 +184,36 @@ describe('useStaticActions - open saved queries action', () => {
     expect(mockQueryLibraryContext.openDrawer).toHaveBeenCalledWith({ options: { context: 'command-palette' } });
   });
 });
+
+describe('useStaticActions - new notebook action', () => {
+  const originalPermissions = contextSrv.user.permissions;
+
+  afterEach(() => {
+    contextSrv.user.permissions = originalPermissions;
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
+  it('includes the new notebook action when enabled and permitted', () => {
+    setTestFlags({ 'dashboard.notebooks': true });
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
+
+    const { result } = renderStaticActions();
+    const action = result.current.find((action) => action.id === 'new-notebook');
+    expect(action).toEqual(expect.objectContaining({ name: 'New notebook', perform: expect.any(Function) }));
+  });
+
+  it('hides the action when notebooks are disabled', () => {
+    setTestFlags({ 'dashboard.notebooks': false });
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
+    expect(renderStaticActions().result.current.some((action) => action.id === 'new-notebook')).toBe(false);
+  });
+
+  it('hides the action when creation is not permitted', () => {
+    setTestFlags({ 'dashboard.notebooks': true });
+    contextSrv.user.permissions = {};
+    expect(renderStaticActions().result.current.some((action) => action.id === 'new-notebook')).toBe(false);
+  });
+});

@@ -1,5 +1,7 @@
 import { config, locationService } from '@grafana/runtime';
 
+import { NOTEBOOK_ENTRY_POINT, type NotebookEntryPoint } from './analytics/types';
+
 export const NOTEBOOKS_BASE_URL = '/notebooks';
 
 /**
@@ -17,6 +19,7 @@ export const NOTEBOOK_EDIT_PARAM_ON = 'true';
  * resource is only created once there is something to save.
  */
 export const NOTEBOOK_NEW_URL = `${NOTEBOOKS_BASE_URL}/new`;
+const NOTEBOOK_SOURCE_PARAM = 'notebookSource';
 
 /**
  * Where the list's create button goes. A blank notebook exists only to be written into, so it opens
@@ -24,6 +27,29 @@ export const NOTEBOOK_NEW_URL = `${NOTEBOOKS_BASE_URL}/new`;
  */
 export function notebookNewEditUrl(): string {
   return `${NOTEBOOK_NEW_URL}?${NOTEBOOK_EDIT_PARAM}=${NOTEBOOK_EDIT_PARAM_ON}`;
+}
+
+/** Browser-facing new-notebook link, including the current org and Grafana sub-path. */
+export function notebookNewEditHref(source?: NotebookEntryPoint): string {
+  const search = new URLSearchParams({ [NOTEBOOK_EDIT_PARAM]: NOTEBOOK_EDIT_PARAM_ON });
+  if (source) {
+    search.set(NOTEBOOK_SOURCE_PARAM, source);
+  }
+  return locationService.getHistory().createHref({ pathname: NOTEBOOK_NEW_URL, search: `?${search.toString()}` });
+}
+
+export function newNotebookEntryPoint(): NotebookEntryPoint {
+  const source = new URLSearchParams(locationService.getLocation().search).get(NOTEBOOK_SOURCE_PARAM);
+  if (source === NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE || source === NOTEBOOK_ENTRY_POINT.QUICK_ADD) {
+    return source;
+  }
+  return NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST;
+}
+
+export function searchWithoutNotebookSource(search: string): string {
+  const params = new URLSearchParams(search);
+  params.delete(NOTEBOOK_SOURCE_PARAM);
+  return `?${params.toString()}`;
 }
 
 /**
