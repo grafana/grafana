@@ -9460,6 +9460,8 @@
     "menu": "Open menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP evaluation",
+    "ofrep-reason": "Reason: <2>{{reason}}</2>",
+    "ofrep-variant": "Variant: <2>{{variant}}</2>",
     "save-flag": "Save",
     "title": "Feature control"
   },
