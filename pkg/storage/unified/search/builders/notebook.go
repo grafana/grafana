@@ -58,6 +58,12 @@ func (builder *notebookDocumentBuilder) BuildDocument(ctx context.Context, key *
 	if err := json.Unmarshal(value, &notebook); err != nil {
 		return nil, err
 	}
+	indexed := resource.NewIndexableDocument(key, rv, accessor, doc.Title)
+	indexed.Description = doc.Description
+	indexed.Tags = doc.Tags
+	indexed.Fields = doc.Fields
+	indexed.SelectableFields = doc.SelectableFields
+	doc = indexed
 
 	content := make([]string, 0, len(notebook.Spec.Layout.Spec.Cells))
 	for _, item := range notebook.Spec.Layout.Spec.Cells {

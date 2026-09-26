@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,18 +102,36 @@ func TestNotebookDocumentBuilderReadsBlob(t *testing.T) {
 		"apiVersion": "dashboard.grafana.app/v2beta1",
 		"kind":       "Notebook",
 		"metadata": map[string]any{
-			"name": key.Name,
+			"name":              key.Name,
+			"labels":            map[string]any{"status": "current"},
+			"creationTimestamp": "2026-01-01T00:00:00Z",
 			"annotations": map[string]any{
-				utils.AnnoKeyBlob: "blob-uid",
+				utils.AnnoKeyBlob:             "blob-uid",
+				utils.AnnoKeyFolder:           "current-folder",
+				utils.AnnoKeyCreatedBy:        "user:current-creator",
+				utils.AnnoKeyUpdatedBy:        "user:current-updater",
+				utils.AnnoKeyUpdatedTimestamp: "2026-02-01T00:00:00Z",
 			},
 		},
 	}
 	full := map[string]any{
 		"apiVersion": metadata["apiVersion"],
 		"kind":       metadata["kind"],
-		"metadata":   metadata["metadata"],
+		"metadata": map[string]any{
+			"name":              key.Name,
+			"labels":            map[string]any{"status": "stale"},
+			"creationTimestamp": "2025-01-01T00:00:00Z",
+			"annotations": map[string]any{
+				utils.AnnoKeyFolder:           "stale-folder",
+				utils.AnnoKeyCreatedBy:        "user:stale-creator",
+				utils.AnnoKeyUpdatedBy:        "user:stale-updater",
+				utils.AnnoKeyUpdatedTimestamp: "2025-02-01T00:00:00Z",
+			},
+		},
 		"spec": map[string]any{
-			"title": "Large notebook",
+			"title":       "Large notebook",
+			"description": "Notebook description",
+			"tags":        []string{"ops"},
 			"elements": map[string]any{
 				"note": map[string]any{"kind": "Cell", "spec": map[string]any{"content": map[string]any{"kind": "Markdown", "spec": map[string]any{"text": "content in blob"}}}},
 			},
@@ -134,6 +153,15 @@ func TestNotebookDocumentBuilderReadsBlob(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, storage.read)
 	assert.Equal(t, []string{"content in blob"}, doc.Fields[notebookContentField])
+	assert.Equal(t, "Large notebook", doc.Title)
+	assert.Equal(t, "Notebook description", doc.Description)
+	assert.Equal(t, []string{"ops"}, doc.Tags)
+	assert.Equal(t, map[string]string{"status": "current"}, doc.Labels)
+	assert.Equal(t, "current-folder", doc.Folder)
+	assert.Equal(t, "user:current-creator", doc.CreatedBy)
+	assert.Equal(t, "user:current-updater", doc.UpdatedBy)
+	assert.Equal(t, time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli(), doc.Created)
+	assert.Equal(t, time.Date(2026, time.February, 1, 0, 0, 0, 0, time.UTC).UnixMilli(), doc.Updated)
 
 	builder, err = info.Namespaced(context.Background(), key.Namespace, nil)
 	require.NoError(t, err)
