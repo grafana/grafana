@@ -377,7 +377,18 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 		// Share one settings store across all versions.
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI,
-			opts.StorageOptsGetterFor(settingsRI, apistore.StorageOptions{EnableFolderSupport: false}))
+			opts.StorageOptsGetterFor(settingsRI, apistore.StorageOptions{
+				EnableFolderSupport: false,
+
+				// Every app plugin shares one collection, keyed by plugin ID
+				SharedStorage: &apistore.SharedStorage{
+					Group: apppluginV0.STORAGE_GROUP,
+					Name: &apistore.SharedName{
+						Served: apppluginV0.INSTANCE_NAME,
+						Stored: b.pluginJSON.ID,
+					},
+				},
+			}))
 		if err != nil {
 			return err
 		}

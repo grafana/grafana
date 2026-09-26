@@ -92,6 +92,11 @@ type StorageOptions struct {
 	// through it unless GVK is declared, in which case writes preserve the object's GVK.
 	Serializer Serializer
 
+	// SharedStorage persists this resource in a collection shared with other API groups,
+	// for example every datasource type is stored under datasource.grafana.app.
+	// Unless Serializer is set, shared storage uses [JSONSerializer].
+	SharedStorage *SharedStorage
+
 	// Required to force unique constraints
 	Index resourcepb.ResourceIndexClient
 
@@ -262,6 +267,32 @@ func NewStorage(
 				Resource:  k.Resource,
 				Name:      k.Name,
 			}, err
+		}
+	}
+
+	if shared := opts.SharedStorage; shared != nil {
+		if err := shared.validate(); err != nil {
+			return nil, nil, fmt.Errorf("invalid shared storage for %s: %w", s.gr.String(), err)
+		}
+		parseKey := s.getKey
+		s.getKey = func(key string) (*resourcepb.ResourceKey, error) {
+			k, err := parseKey(key)
+			if err != nil {
+				return nil, err
+			}
+			k.Group = shared.Group
+			k.Name, err = shared.storedName(k.Name)
+			return k, err
+		}
+		// The codec cannot decode the shared group, which the scheme does not register
+		inner := opts.Serializer
+		if inner == nil {
+			inner = JSONSerializer()
+		}
+		s.serializer = &sharedSerializer{
+			inner:  inner,
+			shared: *shared,
+			served: s.gr.Group,
 		}
 	}
 
@@ -472,7 +503,7 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta, s.ownerReference(meta)); err != nil {
 			logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
 		}
 
@@ -494,6 +525,9 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	req, predicate, err := toListRequest(k, opts)
 	if err != nil {
 		return watch.NewEmptyWatch(), nil
+	}
+	if err := s.restrictSharedList(req); err != nil {
+		return nil, err
 	}
 
 	cmd := &resourcepb.WatchRequest{
@@ -561,6 +595,12 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	}
 
 	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
+	if errors.Is(err, errSharedMismatch) {
+		if opts.IgnoreNotFound {
+			return runtime.SetZeroValue(objPtr)
+		}
+		return storage.NewKeyNotFoundError(key, req.ResourceVersion)
+	}
 	if err != nil {
 		return err
 	}
@@ -583,6 +623,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	req, predicate, err := toListRequest(k, opts)
 	if err != nil {
+		return err
+	}
+	if err := s.restrictSharedList(req); err != nil {
 		return err
 	}
 
@@ -659,6 +702,9 @@ func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrap
 	defer span.End()
 
 	obj, err := s.convertToObject(ctx, item.Value, s.newFunc())
+	if errors.Is(err, errSharedMismatch) {
+		return nil, false, nil
+	}
 	if err != nil {
 		return nil, false, err
 	}
@@ -788,6 +834,13 @@ func (s *Storage) GuaranteedUpdate(
 		}
 
 		existingObj, err = s.convertToObject(ctx, readResponse.Value, s.newFunc())
+		if errors.Is(err, errSharedMismatch) {
+			// The name is taken by another group in the shared collection
+			if ignoreNotFound {
+				return apierrors.NewAlreadyExists(s.gr, req.Key.Name)
+			}
+			return apierrors.NewNotFound(s.gr, req.Key.Name)
+		}
 		if err != nil {
 			return err
 		}

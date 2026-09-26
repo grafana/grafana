@@ -8,13 +8,16 @@ import (
 	"net/http"
 	"slices"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0alpha1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -25,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -51,7 +55,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
-				DualWriterMode: grafanarest.Mode0,
+				DualWriterMode: grafanarest.Mode3,
 			},
 		},
 	})
@@ -144,6 +148,66 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 		keys := slices.Collect(maps.Keys(ds.Secure))
 		require.ElementsMatch(t, []string{"bbb", "ccc"}, keys) // removed A and added C
+	})
+
+	// Every datasource type is persisted in one unified storage collection
+	t.Run("stored in the shared datasource group", func(t *testing.T) {
+		storage := helper.GetEnv().ResourceClient
+		svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
+		key := &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     datasourceV0alpha1.GROUP,
+			Resource:  "datasources",
+			Name:      "test",
+		}
+
+		// Every dual-write mode (1-3) writes to unified storage in the background
+		stored := &unstructured.Unstructured{}
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			rsp, err := storage.Read(svcCtx, &resourcepb.ReadRequest{Key: key})
+			require.NoError(c, err)
+			require.Nil(c, rsp.Error)
+			require.NoError(c, stored.UnmarshalJSON(rsp.Value))
+			url, _, _ := unstructured.NestedString(stored.Object, "spec", "url")
+			require.Equal(c, "http://fake.url", url, "includes the update")
+		}, 5*time.Second, 50*time.Millisecond)
+
+		require.Equal(t, "datasource.grafana.app/v0alpha1", stored.GetAPIVersion())
+		require.Equal(t, "grafana-testdata-datasource", stored.GetLabels()[datasourceV0alpha1.LabelKeyGroup])
+
+		secure, _, _ := unstructured.NestedMap(stored.Object, "secure")
+		require.ElementsMatch(t, []string{"bbb", "ccc"}, slices.Collect(maps.Keys(secure)))
+
+		// Nothing is written under the per-plugin group
+		pluginKey := &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     "grafana-testdata-datasource.datasource.grafana.app",
+			Resource:  key.Resource,
+			Name:      key.Name,
+		}
+		rsp, err := storage.Read(svcCtx, &resourcepb.ReadRequest{Key: pluginKey})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+
+		// The label selects this plugin's datasources from the shared collection
+		list, err := storage.List(svcCtx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Labels: []*resourcepb.Requirement{{
+					Key:      datasourceV0alpha1.LabelKeyGroup,
+					Operator: "=",
+					Values:   []string{"grafana-testdata-datasource"},
+				}},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, list.Error)
+		require.Len(t, list.Items, 1)
 	})
 
 	t.Run("list", func(t *testing.T) {
