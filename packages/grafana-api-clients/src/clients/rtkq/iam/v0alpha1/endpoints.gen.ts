@@ -437,7 +437,12 @@ const injectedRtkApi = api
         providesTags: ['Display'],
       }),
       getCurrentUserPermissions: build.query<GetCurrentUserPermissionsApiResponse, GetCurrentUserPermissionsApiArg>({
-        query: () => ({ url: `/users/~/permissions` }),
+        query: (queryArg) => ({
+          url: `/users/~/permissions`,
+          params: {
+            skipCache: queryArg.skipCache,
+          },
+        }),
         providesTags: ['User'],
       }),
     }),
@@ -899,7 +904,10 @@ export type GetUserTeamsApiArg = {
 export type GetCurrentUserDisplayApiResponse = /** status 200 undefined */ Display;
 export type GetCurrentUserDisplayApiArg = void;
 export type GetCurrentUserPermissionsApiResponse = /** status 200 undefined */ UserPermissions;
-export type GetCurrentUserPermissionsApiArg = void;
+export type GetCurrentUserPermissionsApiArg = {
+  /** recompute the permissions instead of serving the cached snapshot */
+  skipCache?: boolean;
+};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
