@@ -18,8 +18,8 @@ type Backend interface {
 	// How the prefix is handled. Handler support /apis/{group}* and /openapi/v3/{group}*
 	Load(context.Context) (http.Handler, error)
 
-	// The route source this backend came from, such as "routebackend" or
-	// "aggregate:baas_apiserver", for the router's metrics.
+	// The backend source such as "aggregate:baas_apiserver" or "local-plugin"
+	// this is used in the exposed metric labels
 	Source() string
 }
 
