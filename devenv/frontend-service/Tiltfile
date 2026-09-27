@@ -23,7 +23,7 @@ manifest_path = 'public/%s/assets-manifest.json' % build_dir
 boot_path = 'public/%s/boot.js' % build_dir
 
 # A cold build (yarn install + serial plugin builds + main webpack compile) can take
-# longer than Tilt's default 5m readiness timeout before 'yarn start' is ready, which
+# longer than Tilt's default 5m readiness timeout before 'npm run start' is ready, which
 # fails `tilt ci` in CI even though the build succeeds. Raise the readiness timeout.
 ci_settings(readiness_timeout='15m')
 
@@ -38,11 +38,11 @@ local_resource(
 )
 
 local_resource(
-  'yarn start',
+  'npm run start',
   cmd='rm -rf %s' % manifest_path,
   # noHmr: this stack serves assets from a disk-backed CDN mount, so the build has to write
   # files rather than hold them in a dev server.
-  serve_cmd='yarn start:rspack:noHmr -- --env noTsCheck=1 --env noLint=1' if use_rspack else 'yarn start:noLint',
+  serve_cmd='npm run start:rspack:noHmr -- --env noTsCheck=1 --env noLint=1' if use_rspack else 'npm run start:noLint',
   resource_deps=['yarn install'],
 
   # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
@@ -56,13 +56,13 @@ local_resource(
   labels=["local"]
 )
 
-# boot.js has its own rspack config, so the watch that 'yarn start' runs no longer rebuilds
+# boot.js has its own rspack config, so the watch that 'npm run start' runs no longer rebuilds
 # it. The image copies boot.js and live_update syncs it, so without this an edit to
 # public/boot would never reach the container.
 if use_rspack:
   local_resource(
     'rspack boot',
-    cmd='yarn build:rspack:boot --env develop',
+    cmd='npm run build:rspack:boot -- --env develop',
     deps=['../../public/boot'],
     resource_deps=['yarn install'],
     allow_parallel=True,
@@ -147,11 +147,11 @@ dc_resource("proxy",
   labels=["services"]
 )
 dc_resource("grafana-api",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["npm run start", "backend-build"],
   labels=["services"]
 )
 dc_resource("frontend-service",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["npm run start", "backend-build"],
   labels=["services"],
 )
 dc_resource("alloy", labels=["observability"])
