@@ -62,13 +62,16 @@ type handlerEntry struct {
 	// the handler is replaced or removed, so those watches move to the new one.
 	watches    context.Context
 	endWatches context.CancelFunc
+
+	// use is set when the handler must be destroyed once retired.
+	use *handlerUse
 }
 
 func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group string) *handlerEntry {
 	watches, endWatches := context.WithCancel(context.Background())
 	return &handlerEntry{
 		backend: b, handler: handler, lastKey: b.Key(), breaker: newObservedGroupBreaker(group, r.onBreakerChange),
-		watches: watches, endWatches: endWatches,
+		watches: watches, endWatches: endWatches, use: newHandlerUse(handler),
 	}
 }
 
@@ -82,6 +85,7 @@ type servingEntry struct {
 	breaker *groupBreaker
 	watches context.Context
 	source  string
+	use     *handlerUse
 
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
@@ -228,7 +232,7 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
 	// single owning backend (one backend owns all versions of a group).
 	serve := func(w http.ResponseWriter, req *http.Request) {
-		serveThroughBreaker(entry.breaker, group, entry.handler, w, req)
+		entry.serve(group, w, req)
 	}
 	if requestVerb(req) == "watch" {
 		r.serveWatch(w, req, entry.watches, serve)
@@ -370,7 +374,7 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	stripConditionalHeaders(proxyReq)
 	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter()
-	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)
+	entry.serve(group, rec, proxyReq)
 
 	maps.Copy(w.Header(), rec.header)
 	// Private schemas pass through authorization on every request. Honor their
@@ -524,7 +528,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	}
 
 	var errs []error
-	var retired []*handlerEntry
+	retired := map[string]*handlerEntry{}
 	seen := make(map[string]struct{}, len(rawBackends))
 	for _, b := range rawBackends {
 		group := b.Group().Name
@@ -559,13 +563,13 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		}
 		// Changed: replace the entry. Connection pools survive through the
 		// loader's shared transports; the breaker is reset (see handlerEntry).
-		retired = append(retired, e)
+		retired[group] = e
 		r.served[group] = r.newHandlerEntry(b, handler, group)
 	}
 
 	for group, e := range r.served {
 		if _, ok := seen[group]; !ok {
-			retired = append(retired, e)
+			retired[group] = e
 			delete(r.served, group)
 		}
 	}
@@ -573,10 +577,11 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	r.publish(ctx)
 	// End retired watches only after publishing, so clients that re-watch
 	// reach the new backend.
-	for _, e := range retired {
+	for group, e := range retired {
 		if e.endWatches != nil {
 			e.endWatches()
 		}
+		destroyWhenDrained(ctx, group, e)
 	}
 	return errors.Join(errs...)
 }
@@ -599,7 +604,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches}
+		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches, use: e.use}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
 			entry.source = e.backend.Source()
