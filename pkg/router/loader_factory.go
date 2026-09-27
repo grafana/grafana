@@ -1,10 +1,14 @@
 package router
 
 import (
+	"fmt"
+	"slices"
+
 	"github.com/grafana/authlib/types"
 
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -21,7 +25,17 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 
 	// Plugin sources
 	if deps.PluginSources != nil {
-		return newPluginLoader(deps)
+		// The standalone router runs no Grafana authentication, so its plugins
+		// authenticate access tokens themselves, as managed plugins do.
+		var auth authn.TokenAuthenticator
+		if slices.Contains(cfg.Target, "router") {
+			tokenAuth, err := authn.NewGrafanaTokenAuthenticator(cfg)
+			if err != nil {
+				return nil, fmt.Errorf("router: local plugins in the standalone router need access token verification: %w", err)
+			}
+			auth = tokenAuth
+		}
+		return newPluginLoader(deps, auth)
 	}
 
 	return dummyRoutesLoader{groups: []string{

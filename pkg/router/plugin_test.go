@@ -257,3 +257,55 @@ func TestPluginLoaderSkipsInvalidPlugins(t *testing.T) {
 	require.Len(t, backends, 1)
 	require.Equal(t, "valid-app", backends[0].Group().Name)
 }
+
+func TestStandaloneLocalPluginsAuthenticateAccessTokens(t *testing.T) {
+	valid := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "valid-app", Type: plugins.TypeApp},
+		FS:       plugins.NewFakeFS(),
+	}}
+	deps := PluginLoaderDependencies{
+		PluginSources: &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+			return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+				return []*plugins.FoundBundle{valid}, nil
+			}}}
+		}},
+		PluginDependencies: PluginDependencies{
+			PluginClient:    struct{ plugins.Client }{},
+			ContextProvider: struct{ appplugin.PluginContextWrapper }{},
+			Unified:         &resource.MockResourceClient{},
+			AccessControl:   &actest.FakeAccessControl{ExpectedEvaluate: true},
+		},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.Target = []string{"router"}
+	_, err := ProvideRoutesLoader(cfg, deps)
+	require.ErrorContains(t, err, "need access token verification")
+
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"router"}
+	loader, err := ProvideRoutesLoader(cfg, deps)
+	require.NoError(t, err)
+	backends, err := loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Len(t, backends, 1)
+	require.Equal(t, sourceLocalPlugin, backends[0].Source())
+	handler, err := backends[0].Load(t.Context())
+	require.NoError(t, err)
+	t.Cleanup(handler.(destroyer).Destroy)
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/apis/valid-app/v0alpha1", nil))
+	require.Equal(t, http.StatusUnauthorized, res.Code, "a request without an access token is refused")
+
+	// Middleware mode authenticates before the router, so plugins don't.
+	backends, err = mustProvideRoutesLoader(t, setting.NewCfg(), deps).Load(t.Context())
+	require.NoError(t, err)
+	require.IsType(t, &PluginBackend{}, backends[0])
+}
+
+func mustProvideRoutesLoader(t *testing.T, cfg *setting.Cfg, deps PluginLoaderDependencies) RoutesLoader {
+	t.Helper()
+	loader, err := ProvideRoutesLoader(cfg, deps)
+	require.NoError(t, err)
+	return loader
+}
