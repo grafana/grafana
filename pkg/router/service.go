@@ -44,7 +44,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 		return nil, fmt.Errorf("routes loader is required")
 	}
 
-	s := newService(loader, reg)
+	s, err := newService(loader, reg)
+	if err != nil {
+		return nil, err
+	}
 	s.standalone = slices.Contains(cfg.Target, "router")
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 	if s.middleware && !s.standalone {
@@ -82,16 +85,24 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	return nil
 }
 
-func newService(loader RoutesLoader, reg prometheus.Registerer) *Service {
+// newService fails, rather than panicking, when reg already has the router's
+// metrics, for example if a second router service is built.
+func newService(loader RoutesLoader, reg prometheus.Registerer) (*Service, error) {
+	metrics, err := newRouterMetrics(reg)
+	if err != nil {
+		return nil, err
+	}
 	s := &Service{
 		router:  NewGrafanaRouter(loader),
-		metrics: newRouterMetrics(reg),
+		metrics: metrics,
 	}
 	s.router.onBreakerChange = s.metrics.breakerChanged
 	s.router.onDiscovery = s.metrics.discoveryResult
-	reg.MustRegister(newRouterCollector(s.router))
+	if err := reg.Register(newRouterCollector(s.router)); err != nil {
+		return nil, fmt.Errorf("router: registering metrics: %w", err)
+	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
-	return s
+	return s, nil
 }
 
 // HandleFunc serves through the router when enabled and otherwise delegates.

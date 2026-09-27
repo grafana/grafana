@@ -22,7 +22,7 @@ func metricsService(t *testing.T, group, upstream string) *Service {
 	t.Helper()
 	backend, err := NewForwardBackend(metav1.APIGroup{Name: group}, forwardSpec(upstream), "1", &http.Transport{})
 	require.NoError(t, err)
-	svc := newService(&mutableLoader{backends: []Backend{backend}}, prometheus.NewRegistry())
+	svc := mustNewService(t, &mutableLoader{backends: []Backend{backend}}, prometheus.NewRegistry())
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	return svc
 }
@@ -112,7 +112,7 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 }
 
 func TestDiscoveryResultMetrics(t *testing.T) {
-	svc := newService(&mutableLoader{backends: []Backend{
+	svc := mustNewService(t, &mutableLoader{backends: []Backend{
 		&providerBackend{
 			fakeBackend: fakeBackend{group: metav1.APIGroup{Name: "provided.ext.grafana.app"}, key: "1"},
 			discovery:   thingsDiscovery("provided.ext.grafana.app"),
@@ -181,7 +181,7 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 		},
 	}
 	reg := prometheus.NewRegistry()
-	svc := newService(loader, reg)
+	svc := mustNewService(t, loader, reg)
 	svc.router.storeServing(t.Context(), svc.router.reconcile(t.Context()))
 	return svc, loader, reg
 }
@@ -245,4 +245,18 @@ grafana_router_stack_lookups_total{result="resolved"} 1
 		"grafana_router_shadowed_groups", "grafana_router_source_last_success_timestamp_seconds",
 		"grafana_router_source_polls_total", "grafana_router_stack_lookups_total"))
 	require.Equal(t, 1, testutil.CollectAndCount(reg, "grafana_router_last_reconcile_timestamp_seconds"))
+}
+
+func mustNewService(t *testing.T, loader RoutesLoader, reg prometheus.Registerer) *Service {
+	t.Helper()
+	svc, err := newService(loader, reg)
+	require.NoError(t, err)
+	return svc
+}
+
+func TestNewServiceFailsOnDuplicateRegistration(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	mustNewService(t, &mutableLoader{}, reg)
+	_, err := newService(&mutableLoader{}, reg)
+	require.ErrorContains(t, err, "registering metrics")
 }

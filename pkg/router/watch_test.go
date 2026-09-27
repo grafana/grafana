@@ -130,7 +130,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 		}
 	}
 
-	svc := newService(&mutableLoader{backends: backends}, prometheus.NewRegistry())
+	svc := mustNewService(t, &mutableLoader{backends: backends}, prometheus.NewRegistry())
 	svc.middleware = middleware
 	svc.router.unregisteredGroupHandler = fallback
 	require.NoError(t, svc.router.reconcile(t.Context()))

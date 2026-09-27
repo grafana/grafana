@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -28,7 +29,7 @@ type routerMetrics struct {
 	discoveryResults   *prometheus.CounterVec
 }
 
-func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
+func newRouterMetrics(reg prometheus.Registerer) (*routerMetrics, error) {
 	m := &routerMetrics{
 		inFlight: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: "grafana",
@@ -70,8 +71,12 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 			Help:      "How each group's aggregated discovery was obtained: provided, cached, fetched, stale or unavailable.",
 		}, []string{"group", "result"}),
 	}
-	reg.MustRegister(m.inFlight, m.longRunning, m.duration, m.backendFailures, m.breakerTransitions, m.discoveryResults)
-	return m
+	for _, c := range []prometheus.Collector{m.inFlight, m.longRunning, m.duration, m.backendFailures, m.breakerTransitions, m.discoveryResults} {
+		if err := reg.Register(c); err != nil {
+			return nil, fmt.Errorf("router: registering metrics: %w", err)
+		}
+	}
+	return m, nil
 }
 
 func (m *routerMetrics) breakerChanged(group string, to gobreaker.State) {
