@@ -30,6 +30,12 @@ For basic configuration provisioning refer to [Provision Grafana](https://grafan
 
 {{< /admonition >}}
 
+## Authentication settings stored in the database take precedence
+
+Grafana stores SAML, OAuth, and LDAP settings in its database when you configure them through the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/), the SAML or OAuth UI, Terraform, or [settings updates at runtime](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/). Stored values override this file, and nothing in the UI or the file says so, which most often surprises people during credential rotation.
+
+If a change to this file appears to have no effect, refer to [Check for stored settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/#check-for-stored-settings).
+
 ## Configuration file location
 
 The default settings for a Grafana instance are stored in the `<WORKING DIRECTORY>/conf/defaults.ini` file.
@@ -815,6 +821,10 @@ Set to `true` to enable the HSTS includeSubDomains option. Only applied if `stri
 Set to `false` to disable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `true`.
 
 #### `x_xss_protection`
+
+{{< admonition type="warning" >}}
+This setting will be removed in a future major version. Support for it has been removed by browsers. Consider disabling it in the meantime and using `content_security_policy` instead.
+{{< /admonition >}}
 
 Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `true`.
 
@@ -2839,6 +2849,14 @@ To prevent automatic updates for specific plugins, pin them to a specific versio
 
 Directory containing Marketplace license files for plugins. Name each file `license-<PLUGIN_ID>.jwt`.
 Defaults to the Grafana data path, alongside the default Enterprise `license.jwt` file.
+
+#### `renewal_enabled`
+
+Available in Grafana Enterprise and Grafana Pro.
+
+Controls periodic renewal of persisted Marketplace plugin licenses. The default is `true`.
+
+Set this option to `false` to disable automatic renewal network requests.
 
 <hr>
 

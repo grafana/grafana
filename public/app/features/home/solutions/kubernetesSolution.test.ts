@@ -7,7 +7,7 @@ import {
   type KubernetesHealth,
   resolveKubernetesDatasource,
 } from './kubernetesData';
-import { kubernetesSolution } from './kubernetesSolution';
+import { kubernetesDetection, kubernetesSolution } from './kubernetesSolution';
 import { pluginAvailability, setupGuideEnabled } from './pluginAvailability';
 import { accessibleAppPage } from './pluginPages';
 
@@ -40,6 +40,14 @@ const mockAccessibleAppPage = jest.mocked(accessibleAppPage);
 const datasource = { uid: 'k8s-uid', name: 'k8s-prom', type: 'prometheus' } as DataSourceInstanceListItem;
 const healthy: KubernetesHealth = { alertsFiring: null, unhealthyPods: 0, restarts1h: 0, notReadyNodes: 0 };
 
+const storedFilter = {
+  datasourceUid: 'k8s-uid',
+  datasourceName: 'k8s-prom',
+  cluster: 'prod',
+  namespaces: [],
+  nodes: [],
+};
+
 beforeEach(() => {
   mockFetchCpu.mockReset();
   mockFetchCpu.mockResolvedValue(null);
@@ -59,7 +67,7 @@ beforeEach(() => {
 
 describe('kubernetesSolution', () => {
   it('constructs an inert solution with its identity available synchronously', () => {
-    const solution = kubernetesSolution();
+    const solution = kubernetesSolution(null);
 
     expect(solution).toMatchObject({ id: 'kubernetes', icon: 'kubernetes', title: 'Kubernetes Monitoring' });
     expect(mockResolveDatasource).not.toHaveBeenCalled();
@@ -70,7 +78,7 @@ describe('kubernetesSolution', () => {
   });
 
   it('shares one active detection between signal and datasource readers', async () => {
-    const solution = kubernetesSolution();
+    const solution = kubernetesSolution(null);
 
     await expect(solution.signal()).resolves.toBe('active');
     await expect(solution.datasource()).resolves.toBe(datasource);
@@ -80,7 +88,7 @@ describe('kubernetesSolution', () => {
 
   it('reports inactive with no datasource after a definitive empty result', async () => {
     mockResolveDatasource.mockResolvedValue(null);
-    const solution = kubernetesSolution();
+    const solution = kubernetesSolution(null);
 
     await expect(solution.signal()).resolves.toBe('inactive');
     await expect(solution.datasource()).resolves.toBeNull();
@@ -88,7 +96,7 @@ describe('kubernetesSolution', () => {
 
   it('degrades a failed detection to unknown without starting detail queries', async () => {
     mockResolveDatasource.mockRejectedValue(new Error('datasource list failed'));
-    const solution = kubernetesSolution();
+    const solution = kubernetesSolution(null);
 
     await expect(solution.signal()).resolves.toBe('unknown');
     await expect(solution.datasource()).resolves.toBeNull();
@@ -106,7 +114,7 @@ describe('kubernetesSolution', () => {
   it('queries each detail once with the datasource that proved Kubernetes usage', async () => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchCpu.mockResolvedValue(series);
-    const solution = kubernetesSolution();
+    const solution = kubernetesSolution(null);
 
     await Promise.all([
       solution.stats(),
@@ -120,17 +128,17 @@ describe('kubernetesSolution', () => {
 
     expect(mockResolveDatasource).toHaveBeenCalledTimes(1);
     expect(mockFetchInventory).toHaveBeenCalledTimes(1);
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource);
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, null);
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, null);
     expect(mockFetchCpu).toHaveBeenCalledTimes(1);
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource);
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, null);
   });
 });
 
 describe('kubernetesSolution alert', () => {
   it('returns no alert for a healthy cluster without probing the app', async () => {
-    const solution = kubernetesSolution();
+    const solution = kubernetesSolution(null);
 
     await expect(solution.needsAttention()).resolves.toBe(false);
     await expect(solution.alert()).resolves.toBeNull();
@@ -140,7 +148,7 @@ describe('kubernetesSolution alert', () => {
   it('leads with firing alerts', async () => {
     mockFetchHealth.mockResolvedValue({ alertsFiring: 3, unhealthyPods: 1, restarts1h: 0, notReadyNodes: 0 });
 
-    const solution = kubernetesSolution();
+    const solution = kubernetesSolution(null);
     await expect(solution.needsAttention()).resolves.toBe(true);
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     await expect(solution.alert()).resolves.toEqual({
@@ -149,13 +157,13 @@ describe('kubernetesSolution alert', () => {
     });
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, null);
   });
 
   it('leads with the first health row when nothing is firing', async () => {
     mockFetchHealth.mockResolvedValue({ alertsFiring: null, unhealthyPods: 2, restarts1h: 5, notReadyNodes: 1 });
 
-    await expect(kubernetesSolution().alert()).resolves.toMatchObject({
+    await expect(kubernetesSolution(null).alert()).resolves.toMatchObject({
       primary: '2 pods pending or failed',
       details: ['5 restarts in the last hour', '1 node not ready'],
     });
@@ -164,32 +172,60 @@ describe('kubernetesSolution alert', () => {
 
 describe('kubernetesSolution stats and sparkline', () => {
   it('formats cluster and pod inventory', async () => {
-    await expect(kubernetesSolution().stats()).resolves.toEqual({
+    await expect(kubernetesSolution(null).stats()).resolves.toEqual({
       primary: '2 clusters',
       secondary: '24 pods',
     });
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource);
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, null);
   });
 
   it('omits empty inventory', async () => {
     mockFetchInventory.mockResolvedValue({ clusters: 0, pods: 0 });
 
-    await expect(kubernetesSolution().stats()).resolves.toBeNull();
+    await expect(kubernetesSolution(null).stats()).resolves.toBeNull();
+  });
+
+  it('scopes facts to a filter saved for the resolved datasource and ignores one saved for another', async () => {
+    await kubernetesSolution(storedFilter).stats();
+    await kubernetesSolution({ ...storedFilter, datasourceUid: 'other-uid' }).stats();
+
+    expect(mockFetchInventory.mock.calls).toEqual([
+      [datasource, expect.objectContaining({ cluster: 'prod' })],
+      [datasource, null],
+    ]);
+  });
+
+  it('shares a detection between recreated solutions', async () => {
+    const detect = kubernetesDetection();
+
+    await kubernetesSolution(null, detect).datasource();
+    await kubernetesSolution(storedFilter, detect).datasource();
+
+    expect(mockResolveDatasource).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports no matching data instead of hiding empty scoped inventory', async () => {
+    mockFetchInventory.mockResolvedValue({ clusters: 0, pods: 0 });
+
+    await expect(kubernetesSolution(storedFilter).stats()).resolves.toEqual({
+      primary: 'No matching data',
+      secondary: 'Adjust the filters',
+    });
   });
 
   it('returns the CPU trend with its 24-hour caption', async () => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchCpu.mockResolvedValue(series);
 
-    await expect(kubernetesSolution().sparkline()).resolves.toEqual({
+    await expect(kubernetesSolution(null).sparkline()).resolves.toEqual({
       series,
       caption: 'Cluster CPU · last 24h',
     });
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource);
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, null);
   });
 
   it('omits the sparkline when the CPU metric is unavailable', async () => {
-    await expect(kubernetesSolution().sparkline()).resolves.toBeNull();
+    await expect(kubernetesSolution(null).sparkline()).resolves.toBeNull();
   });
 });
 
@@ -197,7 +233,7 @@ describe('kubernetesSolution CTA and offer', () => {
   it('opens the alerts page when the solution needs attention', async () => {
     mockFetchHealth.mockResolvedValue({ alertsFiring: 3, unhealthyPods: 1, restarts1h: 0, notReadyNodes: 0 });
 
-    await expect(kubernetesSolution().cta()).resolves.toEqual({
+    await expect(kubernetesSolution(null).cta()).resolves.toEqual({
       label: 'View alerts in Kubernetes Monitoring',
       href: '/a/grafana-k8s-app/alerts?var-datasource=k8s-prom',
       action: 'view_alerts',
@@ -209,7 +245,7 @@ describe('kubernetesSolution CTA and offer', () => {
     mockFetchHealth.mockResolvedValue({ alertsFiring: 1, unhealthyPods: 0, restarts1h: 0, notReadyNodes: 0 });
     mockAccessibleAppPage.mockImplementation(async (appId, path) => (path === '/alerts' ? null : `/a/${appId}${path}`));
 
-    await expect(kubernetesSolution().cta()).resolves.toEqual({
+    await expect(kubernetesSolution(null).cta()).resolves.toEqual({
       label: 'Open Kubernetes Monitoring',
       href: '/a/grafana-k8s-app/home?var-datasource=k8s-prom',
       action: 'open_solution',
@@ -217,7 +253,7 @@ describe('kubernetesSolution CTA and offer', () => {
   });
 
   it('opens the app with the proving datasource when accessible', async () => {
-    await expect(kubernetesSolution().cta()).resolves.toEqual({
+    await expect(kubernetesSolution(null).cta()).resolves.toEqual({
       label: 'Open Kubernetes Monitoring',
       href: '/a/grafana-k8s-app/home?var-datasource=k8s-prom',
       action: 'open_solution',
@@ -228,7 +264,7 @@ describe('kubernetesSolution CTA and offer', () => {
   it('falls back to Explore using the proving datasource when the app is inaccessible', async () => {
     mockAccessibleAppPage.mockResolvedValue(null);
 
-    const cta = await kubernetesSolution().cta();
+    const cta = await kubernetesSolution(null).cta();
 
     expect(cta?.label).toBe('Open in Explore');
     expect(cta?.href).toMatch(/^\/explore\?left=/);
@@ -239,7 +275,7 @@ describe('kubernetesSolution CTA and offer', () => {
   it('offers the accessible setup flow after a definitive no-data result', async () => {
     mockResolveDatasource.mockResolvedValue(null);
 
-    await expect(kubernetesSolution().offer()).resolves.toEqual({
+    await expect(kubernetesSolution(null).offer()).resolves.toEqual({
       availability: 'setup',
       description: 'See cluster health, cost, and right-sizing savings in one view.',
       setupHint: '~3 min · Helm/Alloy',
@@ -256,7 +292,7 @@ describe('kubernetesSolution CTA and offer', () => {
     mockResolveDatasource.mockResolvedValue(null);
     mockAccessibleAppPage.mockResolvedValue(null);
 
-    await expect(kubernetesSolution().offer()).resolves.toEqual({
+    await expect(kubernetesSolution(null).offer()).resolves.toEqual({
       availability: 'setup',
       description: 'See cluster health, cost, and right-sizing savings in one view.',
       setupHint: '~3 min · Helm/Alloy',
@@ -265,7 +301,7 @@ describe('kubernetesSolution CTA and offer', () => {
   });
 
   it('never loads plugin availability for an active solution', async () => {
-    await expect(kubernetesSolution().offer()).resolves.toBeNull();
+    await expect(kubernetesSolution(null).offer()).resolves.toBeNull();
     expect(mockPluginAvailability).not.toHaveBeenCalled();
     expect(mockSetupGuideEnabled).not.toHaveBeenCalled();
   });

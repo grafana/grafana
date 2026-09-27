@@ -16,8 +16,9 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/incidentFilter';
 import { ACTIVE_INCIDENTS_QUERY, mockIncidents } from './AlertsIncidents/mockIncidentsApi';
-import { ALERTS_TEAM_FILTER_STORAGE_KEY, INCIDENTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
+import { ALERTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
@@ -144,20 +145,20 @@ describe('HomePage', () => {
     expect(filters[0][0]).toContain('platform');
   });
 
-  it('scopes active incidents to their own stored team, not the alerts one', async () => {
+  it('scopes active incidents to their own stored filter, not the alerts team', async () => {
     mockUsePluginBridge.mockReturnValue({
       installed: true,
       loading: false,
       settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
     });
     window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'backend');
-    window.localStorage.setItem(INCIDENTS_TEAM_FILTER_STORAGE_KEY, 'platform');
+    window.localStorage.setItem(INCIDENTS_FILTER_STORAGE_KEY, 'squad:Frontend');
     const queries = mockIncidents([]);
 
     render(<HomePage />);
 
     await waitFor(() => expect(queries).toHaveLength(1));
-    expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"platform"`);
+    expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`);
   });
 
   it('renders the OSS welcome message', async () => {
@@ -363,6 +364,17 @@ describe('HomePage', () => {
 
     // The card renders once the extensions settle.
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+  });
+
+  it('renders the dashboards grid above the stack overview on the redesigned homepage', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stubSolution('metrics')], signals: jest.fn() });
+
+    render(<HomePage />);
+
+    const dashboards = await screen.findByRole('heading', { name: 'Dashboards' });
+    const overview = await screen.findByRole('heading', { name: 'Your observability stack overview' });
+    expect(dashboards.compareDocumentPosition(overview)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   describe('solutions gating', () => {

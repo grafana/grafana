@@ -10,6 +10,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/handler3"
 
@@ -155,6 +156,7 @@ func TestPluginBackendLoad(t *testing.T) {
 		handler, err := backend.Load(t.Context())
 		require.NoError(t, err)
 		require.Equal(t, 1, calls)
+		spans := setupRouterTracing(t)
 		t.Cleanup(handler.(interface{ Destroy() }).Destroy)
 		req := httptest.NewRequest(http.MethodGet, "/apis/"+plugin.Manifest.Group, nil)
 		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
@@ -163,6 +165,16 @@ func TestPluginBackendLoad(t *testing.T) {
 		res := httptest.NewRecorder()
 		handler.ServeHTTP(res, req)
 		require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+		var found bool
+		for _, span := range spans.Ended() {
+			if span.Name() == "router.plugin" {
+				found = true
+				require.Contains(t, span.Attributes(), attribute.String("grafana.plugin.id", plugin.JSONData.ID))
+				require.Contains(t, span.Attributes(), attribute.String("grafana.router.group", plugin.Manifest.Group))
+				require.Contains(t, span.Attributes(), attribute.Int("http.response.status_code", http.StatusOK))
+			}
+		}
+		require.True(t, found, "loaded plugin routes must emit a plugin span")
 		var group metav1.APIGroup
 		require.NoError(t, json.Unmarshal(res.Body.Bytes(), &group))
 		require.Equal(t, backend.Group().Versions, group.Versions)
@@ -208,4 +220,40 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 		router.HandleFunc(denied, req, http.NotFoundHandler())
 		require.Equal(t, http.StatusForbidden, denied.Code, denied.Body.String())
 	}
+}
+
+func TestPluginLoaderSkipsInvalidPlugins(t *testing.T) {
+	valid := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "valid-app", Type: plugins.TypeApp},
+		FS:       plugins.NewFakeFS(),
+	}}
+	// Claims a core group; building its API would panic, and serving it
+	// would shadow the embedded server's dashboards.
+	invalid := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "invalid-app", Type: plugins.TypeApp},
+		FS: plugins.NewInMemoryFS(map[string][]byte{
+			"app-sdk-manifest.json": []byte(`{
+				"apiVersion": "apps.grafana.app/v1alpha2",
+				"spec": {"appName": "invalid", "group": "dashboard.grafana.app",
+					"versions": [{"name": "v1", "served": true, "kinds": [{"kind": "Thing", "plural": "things", "scope": "Namespaced"}]}]}
+			}`),
+		}),
+	}}
+	sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+			return []*plugins.FoundBundle{invalid, valid}, nil
+		}}}
+	}}
+	loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
+		PluginSources: sources,
+		PluginDependencies: PluginDependencies{
+			PluginClient:    struct{ plugins.Client }{},
+			ContextProvider: struct{ appplugin.PluginContextWrapper }{},
+		},
+	})
+	require.NoError(t, err)
+	backends, err := loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Len(t, backends, 1)
+	require.Equal(t, "valid-app", backends[0].Group().Name)
 }

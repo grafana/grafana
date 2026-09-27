@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,6 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// newTestKVStorageBackend builds just enough of a kvStorageBackend to publish
+// watch notifications.
+func newTestKVStorageBackend(pub EventPublisher) *kvStorageBackend {
+	return &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub, metrics: newKVBackendMetrics(nil)}
+}
 
 // fakeEventPublisher records what publishWatchNotification hands to the bus.
 type fakeEventPublisher struct {
@@ -59,7 +64,7 @@ func TestPublishWatchNotification(t *testing.T) {
 
 	t.Run("publishes a metadata-only notification on the resource subject", func(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: true}
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 
 		backend.publishWatchNotification(context.Background(), event)
 
@@ -82,8 +87,8 @@ func TestPublishWatchNotification(t *testing.T) {
 
 	t.Run("counts a successful publish", func(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: true}
-		metrics := newKVBackendMetrics(prometheus.NewPedanticRegistry())
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub, metrics: metrics}
+		backend := newTestKVStorageBackend(pub)
+		metrics := backend.metrics
 
 		backend.publishWatchNotification(context.Background(), event)
 
@@ -93,8 +98,8 @@ func TestPublishWatchNotification(t *testing.T) {
 
 	t.Run("counts a failed publish as a failure, not as published", func(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: true, err: errors.New("bus unavailable")}
-		metrics := newKVBackendMetrics(prometheus.NewPedanticRegistry())
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub, metrics: metrics}
+		backend := newTestKVStorageBackend(pub)
+		metrics := backend.metrics
 
 		backend.publishWatchNotification(context.Background(), event)
 
@@ -104,7 +109,7 @@ func TestPublishWatchNotification(t *testing.T) {
 
 	t.Run("does nothing when the publisher is disabled", func(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: false}
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 
 		backend.publishWatchNotification(context.Background(), event)
 
@@ -112,7 +117,7 @@ func TestPublishWatchNotification(t *testing.T) {
 	})
 
 	t.Run("does nothing when no publisher is configured", func(t *testing.T) {
-		backend := &kvStorageBackend{log: log.NewNopLogger()}
+		backend := newTestKVStorageBackend(nil)
 		// Must not panic on a nil publisher.
 		backend.publishWatchNotification(context.Background(), event)
 	})

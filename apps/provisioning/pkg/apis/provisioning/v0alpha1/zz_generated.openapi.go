@@ -32,6 +32,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ConnectionStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
 		ConnectionWebhookConfig{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref),
 		DeleteJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
+		DeletionStatus{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref),
 		ErrorDetails{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
 		ExportJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
 		ExternalRepository{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
@@ -803,6 +804,41 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 		},
 		Dependencies: []string{
 			ResourceRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DeletionStatus reports the progress of an in-progress deletion and the problem blocking it. It is populated while the repository is Terminating and its finalizers run, so a client can explain the holdup and force-remove the blocking finalizer.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "State is the phase of the deletion.\n\nPossible enum values:\n - `\"Blocked\"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the \"in progress\" signal — so no separate Working state is needed.",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"Blocked"},
+						},
+					},
+					"finalizer": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Message is a human-readable explanation of what went wrong, suitable for showing to users.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -2741,9 +2777,15 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 					},
 					"deleteError": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Error information during repository deletion (if any)",
+							Description: "Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string.",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"deletion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating.",
+							Ref:         ref(DeletionStatus{}.OpenAPIModelName()),
 						},
 					},
 					"quota": {
@@ -2758,7 +2800,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), QuotaStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), SyncStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), WebhookStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			DeletionStatus{}.OpenAPIModelName(), ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), QuotaStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), SyncStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), WebhookStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 

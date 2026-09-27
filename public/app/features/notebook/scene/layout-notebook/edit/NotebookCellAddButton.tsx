@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { Dropdown, IconButton, useStyles2 } from '@grafana/ui';
 
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './NotebookBlockTypeMenu';
+import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './cellClassNames';
 
 interface Props {
   /** This cell's own position; the button always inserts directly below it, at index + 1. */
@@ -15,7 +16,7 @@ interface Props {
 }
 
 /**
- * The per-cell "add block" affordance, shown next to the drag handle in edit mode: inserts a new
+ * The per-cell "add block" button, shown next to the drag handle in edit mode: inserts a new
  * block directly below this cell.
  */
 export function NotebookCellAddButton({ index, onAdd, className }: Props) {
@@ -23,7 +24,9 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className={cx(styles.wrapper, className, isMenuOpen && styles.revealed)}>
+    <div
+      className={cx(styles.wrapper, className, isMenuOpen && [styles.revealed, NOTEBOOK_CELL_CONTROLS_PINNED_CLASS])}
+    >
       <Dropdown
         overlay={<NotebookBlockTypeMenu onPick={(type) => onAdd?.(type, index + 1)} />}
         placement="bottom-start"

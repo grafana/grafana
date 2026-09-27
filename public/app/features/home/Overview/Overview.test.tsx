@@ -27,6 +27,14 @@ const guide = {
   href: '#',
 };
 
+/** A live Kubernetes solution; each call is a distinct object, as recreating it for a new filter yields. */
+const liveKubernetes = (needsAttention: () => Promise<boolean>) =>
+  stubSolution('kubernetes', {
+    title: 'Kubernetes Monitoring',
+    datasource: async () => stubDatasource,
+    needsAttention,
+  });
+
 describe('Overview', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -504,5 +512,48 @@ describe('Overview', () => {
 
     expect(screen.getByRole('heading', { name: 'Available' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Enable' })).toBeInTheDocument();
+  });
+
+  it('holds a re-placed card in its slot as a skeleton and regroups it once its facts settle', async () => {
+    // A sibling that never settles keeps one skeleton in the pending grid below the groups.
+    const logs = stubSolution('logs', { datasource: () => new Promise<null>(() => {}) });
+
+    const { rerender } = render(<Overview solutions={[liveKubernetes(async () => false), logs]} />);
+
+    expect(await screen.findByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
+
+    const pending = deferred<boolean>();
+    rerender(<Overview solutions={[liveKubernetes(() => pending.promise), logs]} />);
+
+    // The recreated solution keeps its slot under its previous group as a skeleton; the pending grid does not grow.
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(2);
+    expect(screen.getByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
+
+    await act(async () => pending.resolve(true));
+
+    // Only one live solution exists, so the attention group holding a card means it moved there.
+    expect(await screen.findByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Enabled' })).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
+  });
+
+  it('lets the newest placement win when an older one settles later', async () => {
+    const first = deferred<boolean>();
+    const second = deferred<boolean>();
+
+    const { rerender } = render(<Overview solutions={[liveKubernetes(() => first.promise)]} />);
+    rerender(<Overview solutions={[liveKubernetes(() => second.promise)]} />);
+
+    await act(async () => second.resolve(false));
+
+    expect(await screen.findByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
+
+    await act(async () => first.resolve(true));
+
+    expect(screen.getByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Needs attention' })).not.toBeInTheDocument();
   });
 });

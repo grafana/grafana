@@ -140,6 +140,42 @@ describe('Unified Storage Searcher', () => {
     expect(response.view.get(0).uid).toBe('team-owned-dashboard');
   });
 
+  describe('sort request parameters', () => {
+    let searchRequests: URL[] = [];
+
+    // The searcher also loads folder location info, so capture every request and
+    // pick the one carrying the sort.
+    const captureSearchHandler = http.get(searchRoute, ({ request }) => {
+      searchRequests.push(new URL(request.url));
+      return HttpResponse.json({ totalHits: 0, hits: [] });
+    });
+
+    beforeEach(() => {
+      searchRequests = [];
+    });
+
+    it.each([
+      { sort: 'name_sort', expectedSort: 'title', expectedField: 'title' },
+      { sort: '-name_sort', expectedSort: '-title', expectedField: 'title' },
+      { sort: 'alpha-desc', expectedSort: '-title', expectedField: 'title' },
+      { sort: 'viewed-recently-desc', expectedSort: '-views_last_30_days', expectedField: 'views_last_30_days' },
+      { sort: 'viewed-desc', expectedSort: '-views_total', expectedField: 'views_total' },
+      { sort: 'errors-recently-asc', expectedSort: 'errors_last_30_days', expectedField: 'errors_last_30_days' },
+      { sort: '-views_total', expectedSort: '-views_total', expectedField: 'views_total' },
+      { sort: 'views_last_30_days', expectedSort: 'views_last_30_days', expectedField: 'views_last_30_days' },
+    ])('asks to sort on $expectedSort for sort value $sort', async ({ sort, expectedSort, expectedField }) => {
+      server.use(captureSearchHandler);
+
+      const searcher = new UnifiedSearcher();
+      await searcher.search({ query: '*', sort });
+
+      const request = searchRequests.find((url) => url.searchParams.has('sort'));
+      expect(request?.searchParams.get('sort')).toBe(expectedSort);
+      // The sorted field is requested back so the results table can show its value.
+      expect(request?.searchParams.get('field')).toBe(expectedField);
+    });
+  });
+
   describe('starred', () => {
     const starsHandler = (resources: Array<{ group: string; kind: string; names: string[] }>) =>
       http.get(starsRoute, () =>

@@ -528,6 +528,7 @@ func (ng *AlertNG) init() error {
 		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		ng.MultiOrgAlertmanager,
 	)
 	receiverTestService := notifier.NewReceiverTestingService(
 		receiverService,
@@ -554,6 +555,7 @@ func (ng *AlertNG) init() error {
 		false, // imported resources are not exposed via provisioning APIs
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		ng.MultiOrgAlertmanager,
 	)
 
 	// Create limits provider based on alertmanager mode.

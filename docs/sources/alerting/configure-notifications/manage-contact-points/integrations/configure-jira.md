@@ -20,6 +20,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
+  notification-policies:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/
+  custom-payload-webhook:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload
 ---
 
 # Configure Jira for Alerting
@@ -71,4 +81,10 @@ For more details on contact points, including how to test them and enable notifi
 | Reopen Duration         | The time duration (in minutes) to control whether to reopen an issue that was closed within this duration or create a new one. If not specified, the most recent issue that matches the deduplication key will be updated and reopened (if reopen transition is specified).                                           |
 | "Won't fix" Transition  | Specify a resolution status that should be ignored when searching for existing issues. For example, issues with this resolution will not be reopened or updated by subsequent alerts.                                                                                                                                 |
 | Deduplication Key Field | Custom field to store the deduplication key. Must be a text field. <br> If not specified, the deduplication key is added to labels in the format of `ALERT(hash sum)`. See [Jira documentation](https://support.atlassian.com/jira-cloud-administration/docs/create-a-custom-field/) for how to create custom fields. |
-| Fields                  | Allows to configure custom fields of Jira issue. The field name should be of the format like `customfield_10001`.                                                                                                                                                                                                     |
+| Fields                  | Extra Jira issue fields, including standard and custom fields. For custom fields, use `customfield_<FIELD_ID>`, where `<FIELD_ID>` is the numeric field ID in your Jira instance. For JSON parsing and templating behavior, refer to [Custom field data](#custom-field-data).                                         |
+
+### Custom field data
+
+Grafana attempts to parse each string field value as JSON when it loads the contact point. Grafana sends values parsed as objects or arrays as structured JSON, such as `{"value": "High"}`, but doesn't evaluate templates inside them. Grafana evaluates values that remain strings as notification templates, but doesn't parse their rendered output as JSON. Templates therefore can't generate dynamic object or array field values, such as those required by Jira select-list fields.
+
+To set different structured values for different alerts, create a Jira contact point for each static value and route alerts with [notification policies](ref:notification-policies). Or use a [Webhook contact point with a custom payload](ref:custom-payload-webhook) to send structured JSON that includes alert data.

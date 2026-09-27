@@ -26,7 +26,7 @@ func discoveryRouter(t *testing.T, group string, handler http.Handler) *GrafanaR
 	router.served[group] = &handlerEntry{
 		backend: backend, handler: handler, lastKey: backend.key, breaker: newGroupBreaker(group),
 	}
-	router.publish()
+	router.publish(t.Context())
 	return router
 }
 
@@ -123,7 +123,7 @@ func TestAggregatedDiscoverySupportsLegacyBackends(t *testing.T) {
 		w.WriteHeader(http.StatusServiceUnavailable)
 	}))
 	router.served["broken.ext.grafana.app"] = broken.served["broken.ext.grafana.app"]
-	router.publish()
+	router.publish(t.Context())
 	req := httptest.NewRequest(http.MethodGet, "/apis", nil)
 	req.Header.Set("Accept", aggregatedDiscoveryJSON)
 	res := httptest.NewRecorder()

@@ -40,6 +40,11 @@ preferencesV1alpha1: {
 	pluralName: "Preferences"
 	scope:      "Namespaced"
 
+	// Normal list reads are restricted to the caller's owners.
+	search: {
+		endpoint: false
+	}
+
 	validation: {
 		operations: [
 			"CREATE",
@@ -55,6 +60,11 @@ preferencesV1: {
 	kind:       "Preferences"
 	pluralName: "Preferences"
 	scope:      "Namespaced"
+
+	// Normal list reads are restricted to the caller's owners.
+	search: {
+		endpoint: false
+	}
 
 	validation: {
 		operations: [

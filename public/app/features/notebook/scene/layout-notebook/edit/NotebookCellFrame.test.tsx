@@ -80,7 +80,7 @@ describe('NotebookCellFrame', () => {
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
   });
 
-  it('renders no affordances outside edit mode', () => {
+  it('renders no cell controls outside edit mode', () => {
     renderFrame();
 
     expect(screen.queryByRole('button', { name: 'Drag to reorder' })).not.toBeInTheDocument();
