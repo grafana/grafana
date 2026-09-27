@@ -16,6 +16,6 @@ The `IndexProvider` (`pkg/services/frontend/index.go`) inlines the script into t
 Each bundler builds its own copy from `public/boot/index.ts`:
 
 - webpack builds `public/build/boot.js` from a separate entry point named `boot`. The standard frontend build produces it.
-- rspack builds `public/build/rspack/boot.js` from its own config, `scripts/rspack/rspack.boot.ts`. `yarn build:rspack` and the rspack dev commands build it first. To build only this file, run `yarn build:rspack:boot`.
+- rspack builds `public/build/rspack/boot.js` from its own config, `scripts/rspack/rspack.boot.ts`. `pnpm build:rspack` and the rspack dev commands build it first. To build only this file, run `pnpm build:rspack:boot`.
 
 The rspack config is separate because the main rspack build emits ES modules. The backend inlines this file into a classic `<script>` tag, so the file must be one self-contained IIFE with no `import` or `export`.

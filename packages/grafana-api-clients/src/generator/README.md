@@ -5,7 +5,7 @@ This generator automates the process of creating RTK Query API clients for Grafa
 ## Usage
 
 ```bash
-yarn generate:api-client
+pnpm generate:api-client
 ```
 
 The CLI will prompt for:

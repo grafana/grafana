@@ -57,7 +57,7 @@ allow_embedding = true
 
 - Change the dashboard URL in `grafana-iframe-oauth-sample/src/pages/restricted.tsx` to use the dashboard you created (keep URL query values)
 
-- Start sample app from the `grafana-iframe-oauth-sample` folder with: `yarn start`
+- Start the sample app from the `grafana-iframe-oauth-sample` folder with its package manager (for example, `pnpm start`).
 
 - Navigate to [http://localhost:4200](http://localhost:4200) and press restricted area
 
