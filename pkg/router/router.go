@@ -18,6 +18,12 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 )
 
+// Backoff for retrying a failed reconcile.
+const (
+	reconcileRetryMin = time.Second
+	reconcileRetryMax = time.Minute
+)
+
 const (
 	apisPrefix      = "/apis"
 	openapiV3Prefix = "/openapi/v3"
@@ -108,8 +114,8 @@ type GrafanaRouter struct {
 
 	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
 	// "group/version". Serving goroutines write it on cache misses, so it is a
-	// sync.Map rather than an atomic swap. Stale entries are overwritten on the
-	// next fetch, not evicted.
+	// sync.Map rather than an atomic swap. publish drops entries for groups
+	// that are gone or whose backend changed.
 	openapiDocs sync.Map
 
 	// discoveryCache holds aggregated discovery fetched from backends that
@@ -399,8 +405,30 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 			}
 		}()
 
-		r.storeServing(ctx, r.reconcile(ctx))
+		// A failed reconcile is retried with backoff: nothing else guarantees
+		// another wake, for example when the loader's first list fails and no
+		// event follows. A wake from the loader still reconciles at once.
+		retry := newCooldown(0, reconcileRetryMin, reconcileRetryMax)
+		retryTimer := time.NewTimer(0)
+		retryTimer.Stop()
+		defer retryTimer.Stop()
+		var retryC <-chan time.Time
+		run := func() {
+			err := r.reconcile(ctx)
+			r.storeServing(ctx, err)
+			now := time.Now()
+			if err == nil {
+				retry.OnSuccess(now)
+				retryTimer.Stop()
+				retryC = nil
+				return
+			}
+			retry.OnFailure(now)
+			retryTimer.Reset(retry.Until(now))
+			retryC = retryTimer.C
+		}
 
+		run()
 		for {
 			select {
 			case <-ctx.Done():
@@ -413,7 +441,9 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 					dirty = nil
 					continue
 				}
-				r.storeServing(ctx, r.reconcile(ctx))
+				run()
+			case <-retryC:
+				run()
 			}
 		}
 	}()
@@ -563,12 +593,25 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	}
 	r.snapshot.Store(&snap)
 	r.discoveryCache.retain(snap)
+	r.retainOpenAPIDocs(snap)
 
 	groupList := buildAPIGroupList(ctx, backends)
 	r.apiGroupList.Store(&groupList)
 
 	index := buildOpenAPIV3Index(ctx, backends)
 	r.openapiIndex.Store(&index)
+}
+
+// retainOpenAPIDocs drops cached OpenAPI documents for groups that are no
+// longer served, or whose backend changed and would miss the cache anyway.
+func (r *GrafanaRouter) retainOpenAPIDocs(snapshot map[string]servingEntry) {
+	r.openapiDocs.Range(func(k, v any) bool {
+		group, _, _ := strings.Cut(k.(string), "/")
+		if served, ok := snapshot[group]; !ok || served.key != v.(openapiCacheEntry).key {
+			r.openapiDocs.Delete(k)
+		}
+		return true
+	})
 }
 
 // rejectBackendRedirects is a ReverseProxy ModifyResponse hook that turns a

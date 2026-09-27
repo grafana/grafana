@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
@@ -353,48 +354,48 @@ func getAPIGroupsForCoreGroupsWithoutManifests() map[string]metav1.APIGroup {
 }
 
 func apiGroupFromManifestData(manifest app.ManifestData) metav1.APIGroup {
-	group := metav1.APIGroup{Name: manifest.Group}
+	var served []string
 	for _, version := range manifest.Versions {
-		if !version.Served {
-			continue
-		}
-		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{
-			GroupVersion: manifest.Group + "/" + version.Name,
-			Version:      version.Name,
-		})
-	}
-	if manifest.PreferredVersion != "" {
-		group.PreferredVersion = metav1.GroupVersionForDiscovery{
-			GroupVersion: manifest.Group + "/" + manifest.PreferredVersion,
-			Version:      manifest.PreferredVersion,
+		if version.Served {
+			served = append(served, version.Name)
 		}
 	}
-	return group
+	return apiGroupForVersions(manifest.Group, served, manifest.PreferredVersion)
 }
 
 func apiGroupFromManifestSpec(spec v1alpha2.AppManifestSpec) metav1.APIGroup {
-	group := metav1.APIGroup{Name: spec.Group}
+	var served []string
 	for _, version := range spec.Versions {
-		if version.Served != nil && !*version.Served {
-			continue
+		if version.Served == nil || *version.Served {
+			served = append(served, version.Name)
 		}
-		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{
-			GroupVersion: spec.Group + "/" + version.Name,
-			Version:      version.Name,
-		})
 	}
-
-	preferredVersion := ""
+	preferred := ""
 	if spec.PreferredVersion != nil {
-		preferredVersion = *spec.PreferredVersion
-	} else if len(spec.Versions) > 0 {
-		preferredVersion = spec.Versions[len(spec.Versions)-1].Name
+		preferred = *spec.PreferredVersion
 	}
-	if preferredVersion != "" {
-		group.PreferredVersion = metav1.GroupVersionForDiscovery{
-			GroupVersion: spec.Group + "/" + preferredVersion,
-			Version:      preferredVersion,
+	return apiGroupForVersions(spec.Group, served, preferred)
+}
+
+// apiGroupForVersions describes a group serving the given versions, in order.
+// Its preferred version is preferred when that is served, and otherwise the
+// served version Kubernetes ranks highest: GA over beta over alpha, then the
+// highest number. An unserved version is never preferred.
+func apiGroupForVersions(name string, served []string, preferred string) metav1.APIGroup {
+	group := metav1.APIGroup{Name: name}
+	for _, v := range served {
+		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{GroupVersion: name + "/" + v, Version: v})
+	}
+	if !slices.Contains(served, preferred) {
+		preferred = ""
+		for _, v := range served {
+			if preferred == "" || version.CompareKubeAwareVersionStrings(v, preferred) > 0 {
+				preferred = v
+			}
 		}
+	}
+	if preferred != "" {
+		group.PreferredVersion = metav1.GroupVersionForDiscovery{GroupVersion: name + "/" + preferred, Version: preferred}
 	}
 	return group
 }
