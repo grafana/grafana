@@ -7,8 +7,10 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -368,4 +370,98 @@ func TestRouterFallbackOnlyForUnregisteredGroups(t *testing.T) {
 			}
 		})
 	}
+}
+
+// flakyLoader fails its first failures loads, and never signals a wake.
+type flakyLoader struct {
+	failures int
+	loads    atomic.Int32
+}
+
+func (l *flakyLoader) Load(context.Context) ([]Backend, error) {
+	if int(l.loads.Add(1)) <= l.failures {
+		return nil, errors.New("load failed")
+	}
+	return []Backend{&fakeBackend{group: metav1.APIGroup{Name: "retried.ext.grafana.app"}, key: "1"}}, nil
+}
+func (l *flakyLoader) Notify(context.Context) (<-chan struct{}, error) {
+	return make(chan struct{}), nil
+}
+
+func TestRunRetriesAFailedReconcile(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		loader := &flakyLoader{failures: 2}
+		router := NewGrafanaRouter(loader)
+		require.NoError(t, router.Run(ctx))
+		synctest.Wait()
+		require.Error(t, router.Ready(ctx), "the first load failed")
+
+		// Retried after reconcileRetryMin, then after twice that.
+		time.Sleep(reconcileRetryMin)
+		synctest.Wait()
+		require.EqualValues(t, 2, loader.loads.Load())
+		require.Error(t, router.Ready(ctx))
+		time.Sleep(2 * reconcileRetryMin)
+		synctest.Wait()
+		require.EqualValues(t, 3, loader.loads.Load())
+		require.NoError(t, router.Ready(ctx))
+		require.True(t, router.KnownGroup("retried.ext.grafana.app"))
+
+		// Once reconciled, no more retries.
+		time.Sleep(10 * reconcileRetryMax)
+		synctest.Wait()
+		require.EqualValues(t, 3, loader.loads.Load())
+	})
+}
+
+func TestPublishDropsStaleOpenAPIDocs(t *testing.T) {
+	router := withGroups("kept", "changed", "removed")
+	for _, group := range []string{"kept", "changed", "removed"} {
+		router.openapiDocs.Store(group+"/v1", openapiCacheEntry{key: router.served[group].lastKey})
+	}
+
+	router.served["changed"].lastKey = "new-key"
+	delete(router.served, "removed")
+	router.publish(t.Context())
+
+	var cached []string
+	router.openapiDocs.Range(func(k, _ any) bool {
+		cached = append(cached, k.(string))
+		return true
+	})
+	require.Equal(t, []string{"kept/v1"}, cached)
+}
+
+func TestDrainWake(t *testing.T) {
+	queued := make(chan struct{}, 1)
+	queued <- struct{}{}
+	require.Equal(t, (<-chan struct{})(queued), drainWake(queued))
+	require.Empty(t, queued, "a queued wake is consumed")
+
+	require.Equal(t, (<-chan struct{})(queued), drainWake(queued), "an empty channel is left alone")
+
+	closed := make(chan struct{})
+	close(closed)
+	require.Nil(t, drainWake(closed), "a closed channel is no longer selected")
+	require.Nil(t, drainWake(nil))
+}
+
+func TestStoreOpenAPIDocRevalidatesTheBackend(t *testing.T) {
+	router := withGroups("served")
+	current := router.served["served"].lastKey
+	stored := func(cacheKey string) bool {
+		_, ok := router.openapiDocs.Load(cacheKey)
+		return ok
+	}
+
+	router.storeOpenAPIDoc("served", "served/v1", openapiCacheEntry{key: current})
+	require.True(t, stored("served/v1"))
+
+	// Fetched from a backend that has since been replaced, or a group that is gone.
+	router.storeOpenAPIDoc("served", "served/v2", openapiCacheEntry{key: "old-key"})
+	require.False(t, stored("served/v2"))
+	router.storeOpenAPIDoc("removed", "removed/v1", openapiCacheEntry{key: current})
+	require.False(t, stored("removed/v1"))
 }
