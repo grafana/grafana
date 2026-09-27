@@ -132,6 +132,28 @@ func TestHandlerServesManifestRoutes(t *testing.T) {
 	}
 }
 
+func TestHandlerServesDiscoveryForRouteOnlyVersions(t *testing.T) {
+	plugin := testPlugin()
+	for i := range plugin.Manifest.Versions {
+		plugin.Manifest.Versions[i].Kinds = nil
+	}
+	handler := withRequester(loadHandler(t, plugin, allowAll(testOptions())))
+
+	var group metav1.APIGroup
+	getJSON(t, handler, "/apis/example.ext.grafana.app", &group)
+	require.Equal(t, []metav1.GroupVersionForDiscovery{
+		{GroupVersion: "example.ext.grafana.app/v1alpha1", Version: "v1alpha1"},
+	}, group.Versions)
+
+	var resources metav1.APIResourceList
+	getJSON(t, handler, "/apis/example.ext.grafana.app/v1alpha1", &resources)
+	require.Equal(t, "example.ext.grafana.app/v1alpha1", resources.GroupVersion)
+	require.Empty(t, resources.APIResources)
+
+	res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/widgets")
+	require.Contains(t, res.Body.String(), errStubRoute.Error(), "the route did not reach the plugin (%d)", res.Code)
+}
+
 func TestHandlerDeniesUnauthenticatedRequests(t *testing.T) {
 	handler := loadHandler(t, testPlugin(), testOptions())
 

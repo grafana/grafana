@@ -12,7 +12,10 @@ routes; `appplugin.RegisterAPIService` remains available during the transition.
 The handler serves group and resource discovery, manifest kinds, settings and their
 subresources, custom v3 routes, and OpenAPI v3. `APIGroup(plugin, opts)` describes the
 same served versions, including the existing settings version and excluding
-manifest versions with `served: false`. Plugins without a manifest keep their
+manifest versions with `served: false`. A plugin whose manifest defines routes but no
+kinds is still advertised, with an empty resource list. If another version has kinds,
+though, a version with only routes is missing from group and version discovery,
+because the API server only advertises versions with resources when a group has any. Plugins without a manifest keep their
 plugin ID as the API group and serve settings and their subresources at `v0alpha1`.
 When the router middleware is enabled, it serves both kinds of plugins;
 `RegisterAPIService` leaves API installation to the router. The router always loads

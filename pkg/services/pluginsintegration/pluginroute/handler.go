@@ -191,7 +191,9 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 		return nil, fmt.Errorf("%s: build group: %w", group, err)
 	}
 	info.NegotiatedSerializer = grafanarest.DefaultNoProtobufNegotiatedSerializer(codecs)
-	if err := server.InstallAPIGroup(&info); err != nil {
+	// Plugin servers don't hide v0alpha1 resources, so don't hide v0alpha1
+	// routes either.
+	if err := builder.InstallAPIGroupWithRoutes(server, &info, builders, resources, true); err != nil {
 		return nil, fmt.Errorf("%s: install group: %w", group, err)
 	}
 	if err := builder.AugmentWebServicesWithCustomRoutes(server.Handler.GoRestfulContainer, builders, reg, resources); err != nil {

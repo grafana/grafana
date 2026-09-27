@@ -164,6 +164,11 @@ type GroupVersionRoutes struct {
 
 // APIRoutes define explicit HTTP handlers in an apiserver
 // TBD: is this actually necessary -- there may be more k8s native options for this
+//
+// A version is only advertised in discovery when it has resources, or when no
+// version of its group does (see InstallAPIGroupWithRoutes). A version that only
+// serves routes in a group that also has resources still serves them, but is
+// missing from discovery.
 type APIRoutes struct {
 	// Root handlers are registered directly after the apiVersion identifier
 	Root []APIRouteHandler

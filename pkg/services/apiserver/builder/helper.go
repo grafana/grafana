@@ -385,15 +385,12 @@ func InstallAPIs(
 			}
 		}
 
-		// skip installing the group if there are no resources left after filtering
-		if len(g.VersionedResourcesStorageMap) == 0 {
-			continue
-		}
-
 		// overrride the negotiated serializer to exclude protobuf, after the NewDefaultAPIGroupInfo, since it otherwise replaces the codecs
 		g.NegotiatedSerializer = grafanarest.DefaultNoProtobufNegotiatedSerializer(codecs)
 
-		if err := server.InstallAPIGroup(&g); err != nil {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		experimentalAPIs := features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)
+		if err := InstallAPIGroupWithRoutes(server, &g, buildersForGroup, apiResourceConfig, experimentalAPIs); err != nil {
 			return err
 		}
 	}
