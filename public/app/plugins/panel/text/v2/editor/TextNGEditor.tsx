@@ -279,7 +279,8 @@ export function TextNGEditor({
         {showEditor && (
           // Outside interactions (Save, Apply, Back) blur the editor on mousedown,
           // so a pending draft is committed before anything reads the options.
-          // Escape stays here so it cannot reach the global handler that leaves panel edit.
+          // Escape stays here so it arms CodeMirror's Escape-then-Tab focus exit
+          // instead of reaching the global handler that leaves panel edit.
           // eslint-disable-next-line jsx-a11y/no-static-element-interactions
           <div
             ref={editorContainerRef}
@@ -293,7 +294,6 @@ export function TextNGEditor({
               language={editorLanguage}
               completionSources={completionSources}
               lineWrapping
-              indentWithTab={false}
               basicSetup={basicSetup}
               height="100%"
               aria-label={t('textng.editor.aria-label-content', 'Text content')}
