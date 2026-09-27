@@ -401,6 +401,16 @@ func TestBuildLogQuery(t *testing.T) {
 			exp: []string{`{orgID="123",from="state-history"} | json | labels_env!~"prod.*"`},
 		},
 		{
+			name: "sanitizes instance label names like the loki json parser",
+			query: models.HistoryQuery{
+				OrgID: 123,
+				Labels: labels.Matchers{
+					mustNewMatcher(t, labels.MatchEqual, "host.hostname", "server-1"),
+				},
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | labels_host_hostname="server-1"`},
+		},
+		{
 			name: "filters by all namespaces",
 			query: models.HistoryQuery{
 				OrgID: 123,
