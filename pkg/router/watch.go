@@ -30,7 +30,9 @@ func requestVerb(req *http.Request) string {
 
 // rejectUpgrade answers an upgrade request, which is how a client asks for a
 // watch over WebSocket. The router does not proxy upgrades, so it says so
-// rather than failing some other way.
+// rather than failing some other way. Only the HTTP/1.1 Connection: Upgrade
+// form is checked: the listeners don't enable HTTP/2 extended CONNECT, so
+// enabling it must add a check here.
 func rejectUpgrade(w http.ResponseWriter, req *http.Request) bool {
 	if !httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
 		return false

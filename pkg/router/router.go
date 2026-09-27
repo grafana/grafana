@@ -19,32 +19,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 )
 
-// drainWake consumes a wake already queued on dirty, if any. It returns nil
-// once dirty is closed, so the caller stops selecting on it.
-func drainWake(dirty <-chan struct{}) <-chan struct{} {
-	if dirty == nil {
-		return nil
-	}
-	select {
-	case _, ok := <-dirty:
-		if !ok {
-			return nil
-		}
-	default:
-	}
-	return dirty
-}
-
-// Backoff for retrying a failed reconcile.
-const (
-	reconcileRetryMin = time.Second
-	reconcileRetryMax = time.Minute
-
-	// A backend whose Load keeps failing is retried on its own, longer
-	// backoff, so a bad plugin isn't rebuilt on every reconcile retry.
-	backendRetryMax = 10 * time.Minute
-)
-
 const (
 	apisPrefix      = "/apis"
 	openapiV3Prefix = "/openapi/v3"
@@ -292,9 +266,8 @@ func groupFromPath(path string) string {
 
 // owns reports whether the router answers req itself rather than passing it
 // to next: root discovery, which it builds, groups it serves, and paths it
-// rejects before routing. In
-// middleware mode everything else belongs to the embedded API server, which
-// has its own metrics.
+// rejects before routing. In middleware mode everything else belongs to the
+// embedded API server, which has its own metrics.
 func (r *GrafanaRouter) owns(req *http.Request) bool {
 	path := req.URL.Path
 	inTree := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/") ||
@@ -495,6 +468,32 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 		}
 	}()
 	return nil
+}
+
+// Backoff for retrying a failed reconcile.
+const (
+	reconcileRetryMin = time.Second
+	reconcileRetryMax = time.Minute
+
+	// A backend whose Load keeps failing is retried on its own, longer
+	// backoff, so a bad plugin isn't rebuilt on every reconcile retry.
+	backendRetryMax = 10 * time.Minute
+)
+
+// drainWake consumes a wake already queued on dirty, if any. It returns nil
+// once dirty is closed, so the caller stops selecting on it.
+func drainWake(dirty <-chan struct{}) <-chan struct{} {
+	if dirty == nil {
+		return nil
+	}
+	select {
+	case _, ok := <-dirty:
+		if !ok {
+			return nil
+		}
+	default:
+	}
+	return dirty
 }
 
 // storeServing records a completed reconcile's outcome. Errors are logged
