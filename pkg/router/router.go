@@ -248,7 +248,7 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		return
 	}
 	setRoute(req, routeBackend)
-	if rejectUpgrade(w, req) {
+	if rejectUpgrade(w, req) || rejectDeprecatedWatch(w, req) {
 		return
 	}
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
@@ -266,7 +266,7 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
 	if group != "" && r.unregisteredGroupHandler != nil {
 		setRoute(req, routeFallback)
-		if rejectUpgrade(w, req) {
+		if rejectUpgrade(w, req) || rejectDeprecatedWatch(w, req) {
 			return
 		}
 		if requestVerb(req) == "watch" {

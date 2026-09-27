@@ -39,6 +39,18 @@ func rejectUpgrade(w http.ResponseWriter, req *http.Request) bool {
 	return true
 }
 
+// rejectDeprecatedWatch answers a watch requested with the deprecated
+// /apis/<group>/<version>/watch/... path form, which the router does not
+// support, rather than proxying it as an ordinary request.
+func rejectDeprecatedWatch(w http.ResponseWriter, req *http.Request) bool {
+	parts := strings.SplitN(strings.TrimPrefix(req.URL.Path, apisPrefix+"/"), "/", 4)
+	if len(parts) < 3 || parts[2] != "watch" {
+		return false
+	}
+	http.Error(w, "the deprecated /watch/ path is not supported; use the watch query parameter", http.StatusBadRequest)
+	return true
+}
+
 // serveWatch runs a watch whose lifetime the router controls: it ends when
 // scope ends (its group's backend was replaced or removed) or when the router
 // closes its watches on shutdown. Clients then re-establish the watch, as they
