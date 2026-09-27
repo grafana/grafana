@@ -10,7 +10,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/sony/gobreaker/v2"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -33,7 +32,20 @@ type handlerEntry struct {
 
 	// breaker is replaced when the key changes, since the target may have
 	// moved and its old trip state no longer applies.
-	breaker *gobreaker.CircuitBreaker[struct{}]
+	breaker *groupBreaker
+
+	// watches scopes the watches served by this handler. reconcile ends it when
+	// the handler is replaced or removed, so those watches move to the new one.
+	watches    context.Context
+	endWatches context.CancelFunc
+}
+
+func newHandlerEntry(b Backend, handler http.Handler, group string) *handlerEntry {
+	watches, endWatches := context.WithCancel(context.Background())
+	return &handlerEntry{
+		backend: b, handler: handler, lastKey: b.Key(), breaker: newGroupBreaker(group),
+		watches: watches, endWatches: endWatches,
+	}
 }
 
 // servingEntry is the immutable per-group record published into snapshot. It
@@ -43,7 +55,8 @@ type servingEntry struct {
 	group   metav1.APIGroup
 	handler http.Handler
 	key     string
-	breaker *gobreaker.CircuitBreaker[struct{}]
+	breaker *groupBreaker
+	watches context.Context
 
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
@@ -107,6 +120,10 @@ type GrafanaRouter struct {
 	// before Run; the middleware uses it so the router never shadows a group
 	// the embedded API server owns.
 	acceptGroup func(group string) bool
+
+	// watches ends every watch in progress when the router closes them.
+	watches    context.Context
+	endWatches context.CancelFunc
 }
 
 func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
@@ -114,6 +131,7 @@ func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
 		loader: loader,
 		served: map[string]*handlerEntry{},
 	}
+	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
 	r.snapshot.Store(&empty)
 	emptyGroups := buildAPIGroupList(context.Background(), nil)
@@ -160,13 +178,30 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		r.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
+	if rejectUpgrade(w, req) {
+		return
+	}
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
 	// single owning backend (one backend owns all versions of a group).
-	serveThroughBreaker(entry.breaker, group, entry.handler, w, req)
+	serve := func(w http.ResponseWriter, req *http.Request) {
+		serveThroughBreaker(entry.breaker, group, entry.handler, w, req)
+	}
+	if requestVerb(req) == "watch" {
+		r.serveWatch(w, req, entry.watches, serve)
+		return
+	}
+	serve(w, req)
 }
 
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
 	if group != "" && r.unregisteredGroupHandler != nil {
+		if rejectUpgrade(w, req) {
+			return
+		}
+		if requestVerb(req) == "watch" {
+			r.serveWatch(w, req, nil, r.unregisteredGroupHandler.ServeHTTP)
+			return
+		}
 		r.unregisteredGroupHandler.ServeHTTP(w, req)
 		return
 	}
@@ -387,6 +422,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	}
 
 	var errs []error
+	var retired []*handlerEntry
 	seen := make(map[string]struct{}, len(rawBackends))
 	for _, b := range rawBackends {
 		group := b.Group().Name
@@ -416,24 +452,30 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 
 		if !ok {
 			// New group: create the entry, starting with a fresh, closed breaker.
-			r.served[group] = &handlerEntry{backend: b, handler: handler, lastKey: b.Key(), breaker: newGroupBreaker(group)}
+			r.served[group] = newHandlerEntry(b, handler, group)
 			continue
 		}
-		// Changed: swap in place. Connection pools survive through the
+		// Changed: replace the entry. Connection pools survive through the
 		// loader's shared transports; the breaker is reset (see handlerEntry).
-		e.backend = b
-		e.handler = handler
-		e.lastKey = b.Key()
-		e.breaker = newGroupBreaker(group)
+		retired = append(retired, e)
+		r.served[group] = newHandlerEntry(b, handler, group)
 	}
 
-	for group := range r.served {
+	for group, e := range r.served {
 		if _, ok := seen[group]; !ok {
+			retired = append(retired, e)
 			delete(r.served, group)
 		}
 	}
 
 	r.publish(ctx)
+	// End retired watches only after publishing, so clients that re-watch
+	// reach the new backend.
+	for _, e := range retired {
+		if e.endWatches != nil {
+			e.endWatches()
+		}
+	}
 	return errors.Join(errs...)
 }
 
@@ -455,7 +497,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker}
+		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
 			backends = append(backends, e.backend)

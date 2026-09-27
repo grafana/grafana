@@ -29,8 +29,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil).
 - **`Ready` fails only when nothing is served.** A partial reconcile error is logged, but must not
   drain the router from its load balancer.
-- **The circuit breaker is passive only.** `gobreaker`, one breaker per group, driven by the
-  outcomes of real proxied requests; no active health probes. Context cancellation is excluded from
+- **The circuit breaker is passive only.** `gobreaker`'s two-step breaker, one per group, driven by
+  the outcomes of real proxied requests; no active health probes. An outcome is reported as soon as
+  the response status is written, never when the body ends, so a watch can't hold a half-open
+  breaker's trial slot. Only requests whose own context ended (`errCallerGone`) are excluded from
   breaker accounting. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
   `Flush` (via `Unwrap`, or a no-op `Flush` for buffering writers). Handlers get
   `statusRecorder.writer()`, not the recorder itself, because in-process plugin apiservers need a
@@ -58,8 +60,18 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   function that logs has no context, pass one in from its caller (a request's `Context()`, or the
   reconcile or poll `ctx`). The SDK's default logger is Grafana's, so nothing is lost when the
   context carries no logger.
-- **Scope is CRUD, List and Watch over HTTP/1.1.** Plugin operators watch their resources through
-  in-process plugin backends. No upgrades. Any per-request timeout must exempt watches.
+- **Scope is CRUD, List and Watch over HTTP/1.1, and a watch must behave as it does in Kubernetes.**
+  Plugin operators watch their resources through in-process plugin backends. Every change to the
+  proxy path must hold for a watch that streams for 30+ minutes:
+  - Nothing may bound the whole request; only the response-header timeout applies. The backend ends
+    a watch (for example at `timeoutSeconds`), or the client does.
+  - Every proxy flushes after each write (`streamingFlushInterval`).
+  - A watch runs through `serveWatch`: it ends when its group's backend is replaced or removed, and
+    when the service stops (`closeWatches`), so clients re-watch and shutdown never waits on it.
+  - Watches are long-running requests, identified with the apiserver's `RequestInfoFactory`: they
+    count in `grafana_router_longrunning_requests`, not in the duration histogram or in-flight gauge.
+  - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
+    deprecated `/watch/` path form is not supported either.
 
 ## Package layout
 
@@ -130,7 +142,7 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     last good copy is served, marked `Stale`.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
 - **Metrics:** unknown groups are labelled `unknown` (`KnownGroup`) so arbitrary client paths can't
-  create new series.
+  create new series. The duration histogram is labelled by group, verb and status code.
 
 ## Lifecycle
 

@@ -53,6 +53,7 @@ func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackend
 			Transport:      newBackendTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
 			ErrorHandler:   proxyErrorHandler,
+			FlushInterval:  streamingFlushInterval,
 		},
 	}, nil
 }
