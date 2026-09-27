@@ -31,6 +31,8 @@ export interface TraceToLogsOptions {
   filterByTraceID?: boolean;
   filterBySpanID?: boolean;
   lokiSearch?: boolean; // legacy
+  query?: string;
+  customQuery?: boolean;
 }
 
 export interface TraceToLogsOptionsV2 {
@@ -61,7 +63,8 @@ export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOption
     return undefined;
   }
   const traceToLogs: TraceToLogsOptionsV2 = {
-    customQuery: false,
+    customQuery: data.tracesToLogs.customQuery ?? false,
+    query: data.tracesToLogs.query,
   };
   traceToLogs.datasourceUid = data.tracesToLogs.datasourceUid;
   traceToLogs.tags = data.tracesToLogs.mapTagNamesEnabled
