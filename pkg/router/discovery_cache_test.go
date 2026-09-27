@@ -323,3 +323,40 @@ func TestAggregatedDiscoveryDoesNotWaitForAHungBackend(t *testing.T) {
 		synctest.Wait()
 	})
 }
+
+func TestIncompleteFetchKeepsTheResourcesItRead(t *testing.T) {
+	const olderGroup = "older.ext.grafana.app"
+	// An older backend: no aggregated discovery, v1 answers, v2 fails.
+	older := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		switch req.URL.Path {
+		case "/apis/" + olderGroup + "/v1":
+			_ = json.NewEncoder(w).Encode(metav1.APIResourceList{
+				TypeMeta:     metav1.TypeMeta{Kind: "APIResourceList", APIVersion: "v1"},
+				GroupVersion: olderGroup + "/v1",
+				APIResources: []metav1.APIResource{{Name: "things", Namespaced: true, Kind: "Thing", Verbs: []string{"get", "list"}}},
+			})
+		case "/apis/" + olderGroup + "/v2":
+			w.WriteHeader(http.StatusInternalServerError)
+		default:
+			http.NotFound(w, req)
+		}
+	})
+	router := NewGrafanaRouter(staticLoader{backends: []Backend{&fakeBackend{
+		group: metav1.APIGroup{Name: olderGroup, Versions: []metav1.GroupVersionForDiscovery{
+			{GroupVersion: olderGroup + "/v1", Version: "v1"}, {GroupVersion: olderGroup + "/v2", Version: "v2"},
+		}},
+		key: "1", handler: older,
+	}}})
+	require.NoError(t, router.reconcile(t.Context()))
+
+	group := aggregatedDiscovery(t, router)[olderGroup]
+	require.Len(t, group.Versions, 2)
+	versions := map[string]apidiscoveryv2.APIVersionDiscovery{}
+	for _, v := range group.Versions {
+		versions[v.Version] = v
+	}
+	require.Equal(t, apidiscoveryv2.DiscoveryFreshnessCurrent, versions["v1"].Freshness)
+	require.Len(t, versions["v1"].Resources, 1, "the resources the fetch did read are served")
+	require.Equal(t, "things", versions["v1"].Resources[0].Resource)
+	require.Equal(t, apidiscoveryv2.DiscoveryFreshnessStale, versions["v2"].Freshness)
+}

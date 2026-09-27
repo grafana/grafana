@@ -140,15 +140,22 @@ func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry ser
 			r.observeDiscovery(name, discoveryFetched)
 			return fetched.discovery
 		}
-		return r.missedDiscovery(name, entry)
+		if d, found, _ := c.lookup(name, entry.key); found {
+			r.observeDiscovery(name, discoveryStale)
+			return staleDiscovery(d)
+		}
+		// Keep what the fetch did read: an older backend's per-version
+		// discovery can have answered for some versions.
+		r.observeDiscovery(name, discoveryUnavailable)
+		return fetched.discovery
 	case <-timer.C:
 		return r.missedDiscovery(name, entry)
 	}
 }
 
-// missedDiscovery is what a caller serves when the group's fetch failed or
-// missed its deadline: the last cached copy marked stale, or the group's
-// versions alone.
+// missedDiscovery is what a caller serves when the group's fetch missed its
+// deadline, so there is no result to use: the last cached copy marked stale,
+// or the group's versions alone.
 func (r *GrafanaRouter) missedDiscovery(name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
 	if d, found, _ := r.discoveryCache.lookup(name, entry.key); found {
 		r.observeDiscovery(name, discoveryStale)
