@@ -308,11 +308,16 @@ func TestAggregatedDiscoveryDoesNotWaitForAHungBackend(t *testing.T) {
 		requireFreshness(t, groups[hungGroup], apidiscoveryv2.DiscoveryFreshnessStale)
 		requireFreshness(t, groups[cachedGroup], apidiscoveryv2.DiscoveryFreshnessCurrent)
 
-		// The fetch is still stuck; later requests must not wait on it again.
+		// The fetch is still stuck and past its deadline. Later requests neither
+		// wait on it nor join it, so they don't pile up on the stuck call.
+		_, overdue := router.discoveryCache.fetchDeadline(hungGroup + "\x00" + "1")
+		require.True(t, overdue)
 		start = time.Now()
-		groups = aggregatedDiscovery(t, router)
+		for range 100 {
+			groups = aggregatedDiscovery(t, router)
+			requireFreshness(t, groups[hungGroup], apidiscoveryv2.DiscoveryFreshnessStale)
+		}
 		require.Zero(t, time.Since(start))
-		requireFreshness(t, groups[hungGroup], apidiscoveryv2.DiscoveryFreshnessStale)
 
 		close(release)
 		synctest.Wait()

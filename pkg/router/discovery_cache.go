@@ -66,18 +66,18 @@ func (c *discoveryCache) store(group, key string, d apidiscoveryv2.APIGroupDisco
 
 // fetchDeadline returns the deadline of the fetch for key, starting one if
 // none is in progress.
-func (c *discoveryCache) fetchDeadline(key string) time.Time {
+func (c *discoveryCache) fetchDeadline(key string) (deadline time.Time, overdue bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if deadline, ok := c.deadlines[key]; ok {
-		return deadline
+		return deadline, !time.Now().Before(deadline)
 	}
 	if c.deadlines == nil {
 		c.deadlines = map[string]time.Time{}
 	}
-	deadline := time.Now().Add(discoveryFetchTimeout)
+	deadline = time.Now().Add(discoveryFetchTimeout)
 	c.deadlines[key] = deadline
-	return deadline
+	return deadline, false
 }
 
 func (c *discoveryCache) fetchDone(key string) {
@@ -112,7 +112,13 @@ func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry ser
 		return d
 	}
 	key := name + "\x00" + entry.key
-	deadline := c.fetchDeadline(key)
+	deadline, overdue := c.fetchDeadline(key)
+	if overdue {
+		// The fetch is still running past its deadline. Don't join it: each
+		// caller that joins holds a result channel until the fetch returns,
+		// which for a stuck backend is never.
+		return r.missedDiscovery(name, entry)
+	}
 	results := c.fetches.DoChan(key, func() (any, error) {
 		defer c.fetchDone(key)
 		// Shared by concurrent callers, so one caller leaving must not cancel it.
@@ -126,19 +132,28 @@ func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry ser
 	})
 	timer := time.NewTimer(time.Until(deadline))
 	defer timer.Stop()
-	var fetched fetchedDiscovery
 	select {
 	case result := <-results:
-		fetched = result.Val.(fetchedDiscovery)
-	case <-timer.C:
-		fetched = fetchedDiscovery{discovery: unavailableDiscovery(name, entry)}
-	}
-	if !fetched.complete {
+		fetched := result.Val.(fetchedDiscovery)
+		if fetched.complete {
+			return fetched.discovery
+		}
 		if d, found, _ := c.lookup(name, entry.key); found {
 			return staleDiscovery(d)
 		}
+		return fetched.discovery
+	case <-timer.C:
+		return r.missedDiscovery(name, entry)
 	}
-	return fetched.discovery
+}
+
+// missedDiscovery is what a caller serves when the group's fetch missed its
+// deadline: the last cached copy marked stale, or the group's versions alone.
+func (r *GrafanaRouter) missedDiscovery(name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
+	if d, found, _ := r.discoveryCache.lookup(name, entry.key); found {
+		return staleDiscovery(d)
+	}
+	return unavailableDiscovery(name, entry)
 }
 
 // unavailableDiscovery lists a group's versions, marked stale and without
