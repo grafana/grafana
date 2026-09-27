@@ -67,9 +67,9 @@ function buildScene(spec: DashboardV2Spec): DashboardScene {
   return transformSaveModelSchemaV2ToScene(dto);
 }
 
-async function applySpec(scene: DashboardScene, spec: DashboardV2Spec) {
+async function applySpec(scene: DashboardScene, spec: DashboardV2Spec, validate = false) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the payload schema takes an opaque record
-  const payload = { spec: spec as unknown as Record<string, unknown>, validate: false };
+  const payload = { spec: spec as unknown as Record<string, unknown>, validate };
   return applySpecCommand.handler(payload, { scene } satisfies MutationContext);
 }
 
@@ -242,6 +242,36 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
 
     expect(editedPanelKey(scene)).toBeUndefined();
+  });
+});
+
+describe('APPLY_SPEC with a user-set transformation refId', () => {
+  function withTransformationRefId(spec: DashboardV2Spec) {
+    transformationsOf(spec)[0].spec.refId = 'T1';
+  }
+
+  function transformationsOf(spec: DashboardV2Spec) {
+    const panel = spec.elements['panel-1'];
+    if (panel.kind !== 'Panel') {
+      throw new Error('expected panel-1 to be a Panel');
+    }
+    return panel.spec.data.spec.transformations;
+  }
+
+  it('round-trips refId through a validated apply and a read back', async () => {
+    const scene = buildScene(makeSpec());
+
+    expect((await applySpec(scene, makeSpec(withTransformationRefId), true)).success).toBe(true);
+
+    expect(transformationsOf(await readSpec(scene))[0].spec.refId).toBe('T1');
+  });
+
+  it('leaves refId unset when the applied spec has none', async () => {
+    const scene = buildScene(makeSpec());
+
+    expect((await applySpec(scene, makeSpec(), true)).success).toBe(true);
+
+    expect(transformationsOf(await readSpec(scene))[0].spec.refId).toBeUndefined();
   });
 });
 

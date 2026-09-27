@@ -24,11 +24,11 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
 
   // Keep sidebar alive - otherwise undo/redo stack would be wiped out
-  const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, {
+  const { isOverlayLoading: rebuiltLoading, ...newState } = sceneUtils.cloneSceneObjectState(rebuilt.state, {
     key: scene.state.key,
     sidebar: scene.state.sidebar,
   });
-  const previousState = { ...scene.state };
+  const { isOverlayLoading: previousLoading, ...previousState } = scene.state;
 
   // `setState` merges, so an open panel editor would survive the swap still driving the
   // VizPanel and layout item of the tree we just discarded: edits made through it never reach

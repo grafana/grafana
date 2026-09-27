@@ -212,6 +212,7 @@ export type InspectCellProps = {
 };
 
 export interface TableCellActionsProps {
+  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   displayName: string;

@@ -117,8 +117,10 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
 
 	var metricsInt grpc.UnaryServerInterceptor
+	convertErrors := false
 	if s, ok := srv.(*server); ok {
 		metricsInt = UnaryRequestDurationInterceptor(s.storageMetrics)
+		convertErrors = s.grpcErrorResultToStatus
 	}
 
 	for _, desc := range []*grpc.ServiceDesc{
@@ -131,7 +133,11 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
 	} {
-		if metricsInt != nil && desc == &resourcepb.ResourceStore_ServiceDesc {
+		isResourceStore := desc == &resourcepb.ResourceStore_ServiceDesc
+		if convertErrors {
+			desc = grpchan.InterceptServer(desc, UnaryErrorResultInterceptor(), nil)
+		}
+		if metricsInt != nil && isResourceStore {
 			desc = grpchan.InterceptServer(desc, metricsInt, nil)
 		}
 

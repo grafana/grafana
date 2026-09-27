@@ -207,7 +207,7 @@ Define a query to get the data you want to measure and a condition that needs to
 
 Depending on the data source, the query editor offers a **Builder** and a **Code** option. **Builder** helps you construct a query with a visual interface. The **Builder** option is useful if you have limited experience with the query language, while **Code** lets you write the query directly for more control. Switch between them using the **Builder** and **Code** tabs on the query editor toolbar.
 
-The **Default** option allows to configure one query and one alert condition. The **Advanced** option allows multiple queries and expressions for more complex rule definitions.
+The **Default** option allows you to configure one query and one alert condition. The **Advanced** option allows you to use multiple queries and expressions for more complex rule definitions.
 
 {{< collapse title="Default options" >}}
 
@@ -288,13 +288,13 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 1. Optionally, set the [Keep firing for](ref:keep-firing-for) period.
 
-   You can set the minimum amount of time that an alert remains firing after the breached threshold expression no longer returns any results. This sets an alert to a "Recovering" state for the duration of time set here. The Recovering state can be used to reduce noise from flapping alerts. Select "none" stop an alert from firing immediately after the breach threshold is cleared.
+   You can set the minimum amount of time that an alert remains firing after the breached threshold expression no longer returns any results. This sets an alert to a "Recovering" state for the duration of time set here. The Recovering state can be used to reduce noise from flapping alerts. Select "none" to stop an alert from firing immediately after the breach threshold is cleared.
 
 1. Turn on pause alert notifications, if required.
 
    You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts.
    Pausing stops alert rule evaluation and doesn't create any alert instances.
-   This is different to [mute timings](ref:mute-timings), which stop notifications from being delivered, but still allows for alert rule evaluation and the creation of alert instances.
+   This is different from [mute timings](ref:mute-timings), which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
 
 1. In **Configure no data and error handling**, you can define the alerting behavior and alerting state for two scenarios:
    - When the evaluation returns **No data** or all values are null.
@@ -318,7 +318,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 Configure who receives notifications when the alert rule fires.
 
-The **Default** option allows to select a [contact point](ref:contact-points) to handle notifications for this alert rule. The **Advanced** option routes notifications through [notification policies](ref:notification-policies).
+The **Default** option allows you to select a [contact point](ref:contact-points) to handle notifications for this alert rule. The **Advanced** option routes notifications through [notification policies](ref:notification-policies).
 
 {{< collapse title="Default options" >}}
 

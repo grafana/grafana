@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
-import { detectSignal } from './solutionState';
+import { detectSignal, settleSignals } from './solutionState';
 
 const datasource: DataSourceInstanceListItem = {
   uid: 'prometheus',
@@ -44,5 +44,21 @@ describe('detectSignal', () => {
     await jest.advanceTimersByTimeAsync(30_000);
 
     await expect(detected).resolves.toEqual({ status: 'unknown', datasource: null });
+  });
+});
+
+describe('settleSignals', () => {
+  it('reads a rejection as unknown and keeps the other signals', async () => {
+    await expect(
+      settleSignals({
+        metrics: Promise.resolve('active'),
+        logs: Promise.reject(new Error('logs unavailable')),
+        traces: Promise.resolve('inactive'),
+      })
+    ).resolves.toEqual({
+      metrics: 'active',
+      logs: 'unknown',
+      traces: 'inactive',
+    });
   });
 });

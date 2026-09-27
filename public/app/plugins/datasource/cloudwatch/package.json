@@ -31,9 +31,9 @@
     "@testing-library/user-event": "14.6.1",
     "@types/common-tags": "^1.8.0",
     "@types/jest": "29.5.14",
-    "@types/lodash": "4.17.20",
+    "@types/lodash": "^4.17.25",
     "@types/node": "24.10.1",
-    "@types/prismjs": "1.26.5",
+    "@types/prismjs": "^1.26.6",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "core-js": "3.44.0",
@@ -52,5 +52,5 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.17.1"
+  "packageManager": "yarn@4.18.0"
 }

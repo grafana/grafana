@@ -148,7 +148,7 @@ Follow the same steps as before to create a webhook contact point in Grafana Ale
 1. In the **URL** field, enter the endpoint URL of the heartbeat.
 1. Click **Save contact point**.
 
-You can now click the **Test** button to send an alert to the heartbeat endpoint. In **IRM**, verify the heartbeat status in the **Hearbeat** column on the **Integrations** page.
+You can now click the **Test** button to send an alert to the heartbeat endpoint. In **IRM**, verify the heartbeat status in the **Heartbeat** column on the **Integrations** page.
 
 {{< figure src="/media/docs/alerting/view-heartbeat-status-on-irm.png" max-width="750px" caption="Heartbeat status column in the Grafana IRM Integrations page" >}}
 

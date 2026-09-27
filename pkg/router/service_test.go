@@ -164,8 +164,8 @@ func TestRouterTargetCloudFallback(t *testing.T) {
 		loader := &cloudLoader{}
 		if enabled {
 			loader.singleTenantFallback = newTestSingleTenantFallback(t)
-			loader.singleTenantFallback.resolveHost = func(context.Context, int64) (string, error) {
-				return "https://tenant.example.com", nil
+			loader.singleTenantFallback.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+				return singleTenantStack{URL: "https://tenant.example.com"}, nil
 			}
 			loader.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
 				require.Equal(t, "tenant.example.com", req.URL.Host)
@@ -201,6 +201,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 	require.NoError(t, err)
 	httpRouter := mux.NewRouter()
 	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
+	pollDiscovery(t, cloud.singleTenantFallback)
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	recorder := httptest.NewRecorder()
 	httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis", nil))

@@ -93,7 +93,9 @@ func TestProxyTracing(t *testing.T) {
 			default:
 				handler, err = newSingleTenantFallback(singleTenantFallbackOptions{
 					cacheSize: 10, transport: transport,
-					resolveHost: func(context.Context, int64) (string, error) { return upstream.URL, nil },
+					resolveHost: func(context.Context, int64) (singleTenantStack, error) {
+						return singleTenantStack{URL: upstream.URL}, nil
+					},
 				})
 			}
 			require.NoError(t, err)
