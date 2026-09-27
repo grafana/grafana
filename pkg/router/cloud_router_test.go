@@ -653,3 +653,30 @@ func TestAPIGroupPreferredVersion(t *testing.T) {
 		require.Equal(t, "v1", group.PreferredVersion.Version)
 	})
 }
+
+func TestCombineByNameDropsUnusedTransports(t *testing.T) {
+	loader := &cloudLoader{transports: map[tlsCacheKey]*http.Transport{}}
+	manifests := []v1alpha2.AppManifest{
+		{Spec: v1alpha2.AppManifestSpec{AppName: "secure", Group: "secure.ext.grafana.app", Versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}}}},
+		{Spec: v1alpha2.AppManifestSpec{AppName: "insecure", Group: "insecure.ext.grafana.app", Versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}}}},
+	}
+	routeBackend := func(name string, skipVerify bool) v1alpha2.RouteBackend {
+		rb := v1alpha2.RouteBackend{Spec: v1alpha2.RouteBackendSpec{
+			Mode:    v1alpha2.RouteBackendSpecModeForward,
+			Forward: &v1alpha2.RouteBackendCommonBackendConfig{Url: "https://" + name + ".example.com", Tls: v1alpha2.RouteBackendTLSOptions{SkipTLSVerify: skipVerify}},
+		}}
+		rb.Name = name
+		return rb
+	}
+
+	both := loader.combineByName(t.Context(), manifests, []v1alpha2.RouteBackend{routeBackend("secure", false), routeBackend("insecure", true)})
+	require.Len(t, both, 2)
+	require.Len(t, loader.transports, 2)
+	secure := loader.transports[tlsCacheKey{}]
+
+	// The insecure backend is gone, so its transport is dropped; the other is kept.
+	one := loader.combineByName(t.Context(), manifests, []v1alpha2.RouteBackend{routeBackend("secure", false)})
+	require.Len(t, one, 1)
+	require.Len(t, loader.transports, 1)
+	require.Same(t, secure, loader.transports[tlsCacheKey{}])
+}

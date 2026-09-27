@@ -651,6 +651,18 @@ func (l *cloudLoader) transportFor(key tlsCacheKey) (*http.Transport, error) {
 	return t, nil
 }
 
+// retainTransports drops the cached transports that no current route
+// backend uses. A retired backend may still be finishing requests on one, so
+// only its idle connections are closed.
+func (l *cloudLoader) retainTransports(used map[tlsCacheKey]struct{}) {
+	for key, t := range l.transports {
+		if _, ok := used[key]; !ok {
+			t.CloseIdleConnections()
+			delete(l.transports, key)
+		}
+	}
+}
+
 // aggregateMaxIdleConnsPerHost raises net/http's stingy default of 2 for the
 // aggregate targets' transports. Each transport talks to exactly one upstream,
 // which fronts every group discovered there, so 2 idle connections per host is
@@ -717,6 +729,8 @@ func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.Ap
 
 	// 2. Iterate the second slice and correlate
 	var combined []Backend
+	usedTransports := map[tlsCacheKey]struct{}{}
+	defer l.retainTransports(usedTransports)
 	for _, b := range backends {
 		m, ok := manifestMap[b.Name]
 		if !ok {
@@ -743,6 +757,7 @@ func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.Ap
 				logging.FromContext(ctx).Warn("router.NewForwardBackend failed to create or fetch cached transport", "Group", m.group.Name, "err", err)
 				continue
 			}
+			usedTransports[transportKey] = struct{}{}
 			current, err := NewForwardBackend(m.group, b.Spec, b.ResourceVersion+"-"+m.key, transport)
 			if err != nil {
 				logging.FromContext(ctx).Warn("router.NewForwardBackend failed", "Group", m.group.Name, "err", err)
