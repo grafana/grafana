@@ -141,8 +141,8 @@ import { createTextBoxVariableAdapter } from './features/variables/textbox/adapt
 import { configureStore } from './store/configureStore';
 import { dispatch } from './store/store';
 
-// import symlinked extensions
-const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
+// Only the top-level overlay entrypoint is loaded; scanning the entire app follows pnpm workspace symlinks.
+const extensionsIndex = require.context('./extensions', false, /^\.\/index\.ts$/);
 const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });

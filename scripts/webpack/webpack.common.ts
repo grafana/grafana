@@ -1,5 +1,6 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import { globSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,11 +15,20 @@ import { esbuildRule, sassRule } from './rules.ts';
 const require = createRequire(import.meta.url);
 const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const envConfig = getEnvConfig(grafanaRoot);
+// pnpm links workspace dependencies inside each workspace's node_modules. Treat those directories
+// as managed so webpack does not recursively snapshot cyclic workspace links.
+const managedNodeModules = [
+  path.join(grafanaRoot, 'node_modules'),
+  ...['packages/*', 'public/app/plugins/*/*', 'e2e-playwright/test-plugins/*'].flatMap((workspace) =>
+    globSync(`${workspace}/node_modules`, { cwd: grafanaRoot }).map((directory) => path.join(grafanaRoot, directory))
+  ),
+];
 
 export type Env = Record<string, string | true | undefined>;
 
 export default (env: Env = {}): Configuration => ({
   target: 'web',
+  snapshot: { managedPaths: managedNodeModules },
   entry: {
     // Polyfills — webpack build only. See public/app/polyfills.ts.
     app: ['./public/app/polyfills.ts', './public/app/index.ts'],
