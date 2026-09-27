@@ -84,13 +84,11 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 	require.LessOrEqual(t, attempts.Load(), int64(2))
 	require.Empty(t, target.Backends())
 
-	// A poll that only ever fails must never signal dirty: there is no
-	// discovered key set to change.
-	select {
-	case <-dirty:
-		t.Fatal("dirty must not be signaled while every poll fails")
-	default:
-	}
+	// The first failed poll wakes the router once, so it sees the failure;
+	// later failures change nothing it would read.
+	require.Len(t, dirty, 1)
+	_, err = target.current()
+	require.Error(t, err)
 }
 
 // TestAggregateTarget_BackoffLadderDrivesRetries pins down the fix for the

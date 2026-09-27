@@ -367,7 +367,7 @@ func TestProvideCloudRoutesLoader_PluginsURLAloneActivatesWithoutCapToken(t *tes
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
 	require.NotNil(t, loader.pluginsTarget)
-	require.Nil(t, loader.routeBackendClient)
+	require.Nil(t, loader.routeBackends)
 	require.Empty(t, loader.aggregateTargets)
 }
 
@@ -474,7 +474,7 @@ func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
 
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.Nil(t, loader.routeBackendClient) // CRD side must stay unconfigured
+	require.Nil(t, loader.routeBackends) // CRD side must stay unconfigured
 
 	svc, ok := loaderIface.(services.Service)
 	require.True(t, ok)
@@ -655,7 +655,7 @@ func TestAPIGroupPreferredVersion(t *testing.T) {
 }
 
 func TestCombineByNameDropsUnusedTransports(t *testing.T) {
-	loader := &cloudLoader{transports: map[tlsCacheKey]*http.Transport{}}
+	loader := &routeBackendSource{transports: map[tlsCacheKey]*http.Transport{}}
 	manifests := []v1alpha2.AppManifest{
 		{Spec: v1alpha2.AppManifestSpec{AppName: "secure", Group: "secure.ext.grafana.app", Versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}}}},
 		{Spec: v1alpha2.AppManifestSpec{AppName: "insecure", Group: "insecure.ext.grafana.app", Versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}}}},

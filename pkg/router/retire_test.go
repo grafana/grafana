@@ -37,7 +37,7 @@ func (h *destroyableHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	if h.release != nil {
 		<-h.release
 	}
-	_, _ = w.Write([]byte(h.name))
+	_, _ = w.Write([]byte(h.name)) // nolint:gosec // G705: a fixed test name
 }
 
 func (h *destroyableHandler) Destroy() { close(h.destroyed) }

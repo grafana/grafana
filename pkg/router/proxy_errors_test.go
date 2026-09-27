@@ -134,7 +134,7 @@ func TestResponseHeaderTimeout(t *testing.T) {
 }
 
 func TestProxyTransportsHaveAResponseHeaderTimeout(t *testing.T) {
-	loader := &cloudLoader{transports: map[tlsCacheKey]*http.Transport{}}
+	loader := &routeBackendSource{transports: map[tlsCacheKey]*http.Transport{}}
 	forward, err := loader.transportFor(tlsCacheKey{})
 	require.NoError(t, err)
 	st, err := newSingleTenantFallback(singleTenantFallbackOptions{

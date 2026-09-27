@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"regexp"
 	"sync"
-	"sync/atomic"
-	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
@@ -35,17 +33,13 @@ import (
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
 type pluginManifestsTarget struct {
+	*polledSource
+
 	url      string
 	client   *http.Client
 	patterns []*regexp.Regexp
 	deps     PluginDependencies
 	authn    authn.TokenAuthenticator
-
-	cooldown *cooldown
-	status   pollStatus
-
-	snapshot atomic.Pointer[[]Backend]
-	lastKeys atomic.Pointer[map[string]struct{}]
 
 	connectionsMu sync.Mutex
 	connections   map[string]*pluginConnection
@@ -81,58 +75,27 @@ func newPluginManifestsTarget(
 		client:   client,
 		patterns: patterns,
 		authn:    authn,
-		cooldown: newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
-	empty := []Backend{}
-	t.snapshot.Store(&empty)
-	emptyKeys := map[string]struct{}{}
-	t.lastKeys.Store(&emptyKeys)
+	t.polledSource = newPolledSource(sourcePluginsURL,
+		newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff), t.discover)
 	return t, nil
 }
 
-// Backends returns the current polled-and-filtered backend snapshot. Safe
-// to call from any goroutine.
-func (t *pluginManifestsTarget) Backends() []Backend {
-	return *t.snapshot.Load()
-}
-
-// run polls until ctx is done, paced entirely by t.cooldown -- identical
-// shape to aggregateTarget.run; see that method's doc for why there is
-// deliberately only one timing source.
+// run polls until ctx is done, then closes the target's connections.
 func (t *pluginManifestsTarget) run(ctx context.Context, dirty chan<- struct{}) {
 	defer t.closeConnections()
-	timer := time.NewTimer(0) // fire immediately; don't wait an interval for the first attempt
-	defer timer.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			t.poll(ctx, dirty)
-			timer.Reset(t.cooldown.Until(time.Now()))
-		}
-	}
+	t.polledSource.run(ctx, dirty)
 }
 
-// poll performs one fetch-and-decode attempt and records its outcome on the
-// cooldown, which schedules the next attempt. No pacing check of its own --
-// run()'s timer is the only gate.
-func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{}) {
-	now := time.Now()
-
+// discover fetches the plugin deployments and builds a backend for each one
+// that matches the target's patterns.
+func (t *pluginManifestsTarget) discover(ctx context.Context) ([]Backend, error) {
 	deployment, err := fetchPluginManifests(ctx, t.client, t.url)
 	if err != nil {
-		t.cooldown.OnFailure(now)
-		t.status.recordFailure()
-		logging.FromContext(ctx).Warn("router: plugin manifests poll failed, backing off", "url", t.url, "err", err)
-		return
+		return nil, err
 	}
-	t.cooldown.OnSuccess(now)
-	t.status.recordSuccess(now)
 
 	backends := make([]Backend, 0, len(deployment.Plugins))
-	keys := make(map[string]struct{}, len(deployment.Plugins))
 	for _, entry := range deployment.Plugins {
 		if entry.Definition.Manifest == nil {
 			continue
@@ -152,7 +115,6 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		deps.AccessControl = pluginManifestAccessControl{}
 
 		backend, err := NewPluginBackend(entry.Definition, connectionClients, deps)
-
 		if err != nil {
 			logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
 			continue
@@ -163,21 +125,9 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
 			continue
 		}
-		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key, host: entry.Host, target: t, authn: t.authn}
-		backends = append(backends, deploymentBackend)
-		keys[deploymentBackend.Key()] = struct{}{}
+		backends = append(backends, &pluginDeploymentBackend{Backend: backend, key: key, host: entry.Host, target: t, authn: t.authn})
 	}
-
-	t.snapshot.Store(&backends)
-
-	lastKeys := *t.lastKeys.Load()
-	if !sameKeySet(lastKeys, keys) {
-		t.lastKeys.Store(&keys)
-		select {
-		case dirty <- struct{}{}:
-		default: // already pending; coalesce
-		}
-	}
+	return backends, nil
 }
 
 // acquireConnection returns the connection to host, and a release that the

@@ -285,7 +285,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 	// failed poll doesn't clear it -- same last-known-good invariant as
 	// aggregateTarget.
 	seeded := []Backend{&pluginDeploymentBackend{key: "seeded"}}
-	target.snapshot.Store(&seeded)
+	target.setBackends(seeded)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Equal(t, seeded, target.Backends())

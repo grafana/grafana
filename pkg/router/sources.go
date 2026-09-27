@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"sync/atomic"
 	"time"
 )
@@ -68,3 +69,54 @@ func (p *pollStatus) status(source string) sourceStatus {
 	}
 	return s
 }
+
+// routeSource is one of the cloud loader's sources of backends.
+type routeSource interface {
+	// backends returns the source's current backends. An error fails the
+	// load, unless it is a *polledSourceError, which comes with the source's
+	// last-known-good backends.
+	backends(ctx context.Context) ([]Backend, error)
+	// run keeps the source current until ctx is done, waking the router when
+	// its backends may have changed. It releases the source's resources, such
+	// as connections, before it returns.
+	run(ctx context.Context) error
+	sourceStatus() sourceStatus
+}
+
+// polledSourceError is a polled source's latest error. Its backends are the
+// last-known-good ones, so the load goes on without it.
+type polledSourceError struct {
+	source string
+	err    error
+}
+
+func (e *polledSourceError) Error() string { return e.source + ": " + e.err.Error() }
+func (e *polledSourceError) Unwrap() error { return e.err }
+
+// polled is a route source kept current by a polledSource.
+type polled interface {
+	current() ([]Backend, error)
+	run(ctx context.Context, dirty chan<- struct{})
+	sourceStatus() sourceStatus
+}
+
+// polledRouteSource adapts a polled source to routeSource.
+type polledRouteSource struct {
+	source polled
+	dirty  chan<- struct{}
+}
+
+func (s polledRouteSource) backends(context.Context) ([]Backend, error) {
+	backends, err := s.source.current()
+	if err != nil {
+		return backends, &polledSourceError{source: s.source.sourceStatus().Source, err: err}
+	}
+	return backends, nil
+}
+
+func (s polledRouteSource) run(ctx context.Context) error {
+	s.source.run(ctx, s.dirty)
+	return nil
+}
+
+func (s polledRouteSource) sourceStatus() sourceStatus { return s.source.sourceStatus() }

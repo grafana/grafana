@@ -25,8 +25,8 @@ func priorityBackend(group, source string) Backend {
 }
 
 func priorityAggregate(backends ...Backend) *aggregateTarget {
-	target := &aggregateTarget{}
-	target.snapshot.Store(&backends)
+	target := &aggregateTarget{polledSource: newPolledSource(aggregateSource("test"), nil, nil)}
+	target.setBackends(backends)
 	return target
 }
 
@@ -53,10 +53,10 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 	loader, err := newCloudLoader(clients, []*aggregateTarget{
 		priorityAggregate(priorityBackend("shared", "first-aggregate"), priorityBackend("a-aggregate-only", "aggregate")),
 		priorityAggregate(priorityBackend("shared", "second-aggregate")),
-	}, &pluginManifestsTarget{}, st)
+	}, &pluginManifestsTarget{polledSource: newPolledSource(sourcePluginsURL, nil, nil)}, st)
 	require.NoError(t, err)
 	plugins := []Backend{priorityBackend("shared", "plugin"), priorityBackend("p-plugin-only", "plugin")}
-	loader.pluginsTarget.snapshot.Store(&plugins)
+	loader.pluginsTarget.setBackends(plugins)
 	pollDiscovery(t, st)
 
 	loadShared := func() Backend {
@@ -80,7 +80,7 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 	require.Equal(t, "plugin", loadShared().Key())
 	loader.pluginsTarget = nil
 	require.IsType(t, &forwardBackend{}, loadShared())
-	loader.routeBackendClient = nil
+	loader.routeBackends = nil
 	require.Equal(t, "second-aggregate", loadShared().Key())
 	loader.aggregateTargets = loader.aggregateTargets[:1]
 	require.Equal(t, "first-aggregate", loadShared().Key())
@@ -102,7 +102,7 @@ func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
 	loader, err := newCloudLoader(nil, nil, nil, st)
 	require.NoError(t, err)
 	_, err = loader.Load(t.Context())
-	require.ErrorIs(t, err, errSingleTenantDiscoveryPending)
+	require.ErrorIs(t, err, errPollPending)
 	pollDiscovery(t, st)
 	_, err = loader.Load(t.Context())
 	require.ErrorContains(t, err, "discovery unavailable")
@@ -123,7 +123,7 @@ func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
 	fail = true
 	pollDiscovery(t, st)
 	updated := []Backend{priorityBackend("shared", "mt-v2")}
-	mt.snapshot.Store(&updated)
+	mt.setBackends(updated)
 	backends, err = loader.Load(t.Context())
 	require.NoError(t, err)
 	require.Len(t, backends, 2)
@@ -204,24 +204,24 @@ func TestCloudLoaderReadsRouteResourcesFromInformerCache(t *testing.T) {
 		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), loader))
 	})
 	require.Eventually(t, func() bool {
-		return loader.rbInformer.SharedIndexInformer.HasSynced() && loader.amInformer.SharedIndexInformer.HasSynced()
+		return loader.routeBackends.rbInformer.SharedIndexInformer.HasSynced() && loader.routeBackends.amInformer.SharedIndexInformer.HasSynced()
 	}, 5*time.Second, 10*time.Millisecond)
 
 	// Once synced, reconciles are served from the caches, and reading them
 	// doesn't count as the source loading.
 	listsAfterSync := lists.Load()
-	successesAfterSync := loader.routeBackendStatus.successes.Load()
+	successesAfterSync := loader.routeBackends.status.successes.Load()
 	for range 5 {
 		requireExampleGroup()
 	}
 	require.Equal(t, listsAfterSync, lists.Load())
-	require.Equal(t, successesAfterSync, loader.routeBackendStatus.successes.Load())
+	require.Equal(t, successesAfterSync, loader.routeBackends.status.successes.Load())
 
 	// With the apiserver failing, the informers' list and watch errors are the
 	// source's failures. Dropping the open watches makes them reconnect.
 	down.Store(true)
 	api.CloseClientConnections()
-	require.Eventually(t, func() bool { return loader.routeBackendStatus.failures.Load() > 0 }, 10*time.Second, 10*time.Millisecond)
+	require.Eventually(t, func() bool { return loader.routeBackends.status.failures.Load() > 0 }, 10*time.Second, 10*time.Millisecond)
 }
 
 func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
@@ -240,6 +240,7 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	require.NoError(t, err)
 	aggregate := priorityAggregate(shared)
 	aggregate.name = "baas_apiserver"
+	aggregate.polledSource.name = aggregateSource("baas_apiserver")
 	loader, err := newCloudLoader(nil, []*aggregateTarget{aggregate}, nil, st)
 	require.NoError(t, err)
 
