@@ -1324,6 +1324,7 @@ func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBy
 		queueConfig:      QueueConfig{Timeout: time.Second, MinBackoff: time.Millisecond, MaxBackoff: time.Millisecond, MaxRetries: 1},
 		maxPageSizeBytes: maxPageSizeBytes,
 		log:              log.NewNopLogger(),
+		storageMetrics:   ProvideStorageMetrics(nil),
 	}
 }
 

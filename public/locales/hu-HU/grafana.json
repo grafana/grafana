@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Külső riasztáskezelők",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Nem található adatforrás"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurálás",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Nem lehet betölteni a szabályokat ehhez az adatforráshoz"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Nincs több találat – {{numberOfRules}} szabályt sikerült találni",
         "no-rules-found": "Egyetlen riasztási vagy felvételi szabály sem felelt meg az aktuális szűrőkészletének.",
         "results-loading": "Keresés – {{numberOfRules}} talált szabály",
-        "results-with-cancellation": "Keresés megszakítva – {{numberOfRules}} szabályt sikerült találni"
+        "results-with-cancellation": "Keresés megszakítva – {{numberOfRules}} szabályt sikerült találni",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Az importálás nem érhető el, amíg a Mimir-riasztáskezelő automatikus szinkronizálása aktív"
@@ -4392,6 +4405,7 @@
       "label-top": "Felül"
     },
     "name-show-unfilled-area": "Kitöltetlen terület megjelenítése",
+    "name-text-mode": "",
     "name-value-display": "Érték megjelenítése",
     "presets": {
       "basic": "Alap",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Sávdiagramos mérőeszköz",
       "lcd": "Sávdiagramos mérőeszköz – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Rejtett",
@@ -5764,6 +5785,7 @@
     "edit-actions": {
       "add": "{{typeName}} hozzáadása",
       "add-conditional-rule": "{{ruleDescription}} szabály hozzáadása",
+      "collapse-all-rows": "",
       "dashboard-description": "Irányítópult leírásának módosítása",
       "dashboard-title": "Irányítópult címének módosítása",
       "duplicate": "{{typeName}} duplikálása",
@@ -5771,6 +5793,7 @@
       "edit-query-result-rule": "Lekérdezési eredmény szabályának módosítása",
       "edit-template-variable-rule": "Sablonváltozó szabályának módosítása",
       "edit-time-range-rule": "Időtartomány szabályának módosítása",
+      "expand-all-rows": "",
       "group-into-row": "Csoportosítás sorba",
       "group-into-tab": "Csoportosítás lapra",
       "move": "{{typeName}} áthelyezése",
@@ -5803,9 +5826,7 @@
       "add-library-panel-header": "Panel importálása",
       "add-visualization-body": "Válasszon ki egy adatforrást, majd kérdezze le és jelenítse meg az adatait diagramokkal, statisztikákkal és táblázatokkal, vagy hozzon létre listákat, Markdown-elemeket és egyéb widgeteket.",
       "add-visualization-button": "Vizualizáció hozzáadása",
-      "add-visualization-description": "",
       "add-visualization-header": "Indítsa el az új irányítópultot vizualizáció hozzáadásával",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Automatikus rács",
       "auto-grid-description": "A panelek átméretezése, hogy illeszkedjenek és egységes rácsokat alkossanak",
@@ -5813,9 +5834,6 @@
       "custom-grid": "Egyéni rács",
       "custom-grid-description": "Az egyes panelek elhelyezése és méretezése külön-külön",
       "description": "Panel hozzáadása az adatok megjelenítéséhez",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Irányítópultok importálása fájlokból vagy a <2>grafana.com</2> webhelyről.",
       "import-a-dashboard-header": "Irányítópult importálása",
       "import-dashboard-button": "Irányítópult importálása",
@@ -6044,6 +6062,12 @@
       "ungroup-repeat-loss": "A szétbontott csoportokon konfigurált ismétlési beállítások elvesznek.",
       "ungroup-repeat-loss-title": "A csoport szétbontása?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{numberOfPages}}/{{currentPage}}",
       "tooltip-next": "Következő",
@@ -6143,9 +6167,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Az elérni kívánt irányítópult nem létezik",
@@ -6764,7 +6786,14 @@
         "title-remove": "Eltávolítás",
         "title-show-transform-help": "Transzformációs súgó megjelenítése"
       },
-      "title-delete": "Törli: {{name}}?"
+      "title-delete": "Törli: {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -6813,9 +6842,6 @@
     },
     "variable": {
       "description-tooltip": "Változó leírása"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
     },
     "view-panel": {
       "back-to-dashboard": "Vissza az irányítópultra",
@@ -7429,7 +7455,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "A módosítások elvesznek a bővítmény frissítésekor. Egyéni verzió létrehozásához használja a <strong>Mentés másként</strong> lehetőséget.",
-        "title-failed-to-save-dashboard": "Az irányítópult mentése sikertelen volt",
         "title-plugin-dashboard": "Bővítmény-irányítópult",
         "title-someone-else-has-updated-this-dashboard": "Valaki más frissítette ezt az irányítópultot",
         "would-still-dashboard": "Biztosan menti ezt az irányítópultot?"
@@ -7697,9 +7722,6 @@
       },
       "label-copy-tags": "Címkék másolása",
       "label-folder": "Mappa",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Az irányítópult mentése sikertelen volt"
-      },
       "required": "Kötelező"
     },
     "save-dashboard-drawer": {
@@ -7746,6 +7768,9 @@
       "save-variables-label-update-default-variable-values": "Alapértelmezett változóértékek frissítése",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Mégse",
@@ -9434,6 +9459,7 @@
     "flag-value": "Jelző értéke",
     "menu": "Menü megnyitása",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Mentés",
     "title": "Funkcióvezérlő"
   },
@@ -10556,7 +10582,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Riasztás",
       "alerting-settings-label": "Riasztási szabályok kezelése az Alerting kezelőfelületén",
-      "alerting-settings-tooltip": "Riasztási szabályok kezelése ehhez az adatforráshoz. Más Alerting-erőforrások kezeléséhez adjon hozzá egy Alertmanager-adatforrást.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Visszaállítás",
       "custom-headers-add": "Fejléc hozzáadása",
       "custom-headers-header": "Fejléc",
@@ -10681,6 +10707,7 @@
       "aria-label-sort-column": "{{columnName}} oszlop rendezése",
       "expand-row-header": "Sorkibontó",
       "expand-row-tooltip": "Sorkibontás váltása",
+      "loading": "",
       "tooltip-collapse-all": "Minden sor összecsukása",
       "tooltip-expand-all": "Minden sor kibontása"
     },
@@ -10776,6 +10803,9 @@
       "tooltip-hide": "Jelszó elrejtése",
       "tooltip-show": "Jelszó megjelenítése"
     },
+    "query-field": {
+      "loading": ""
+    },
     "query-input": {
       "loading": "Szerkesztő betöltése"
     },
@@ -10840,6 +10870,7 @@
       "placeholder": "Kiválasztás"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Érték szűrése",
       "cell-filter-out": "Érték kiszűrése",
       "cell-inspect": "Érték ellenőrzése",
@@ -10885,6 +10916,7 @@
         }
       },
       "inspect-drawer-title": "Érték ellenőrzése",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Beágyazott sorok kibontása",
         "no-data": "Nincs adat"
@@ -11199,10 +11231,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Aktív riasztások",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidensek",
       "team-filter-all": "Az összes csapat",
       "team-filter-label": "Riasztások szűrése csapat alapján",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Az Ön csapatai",
       "title": "Riasztások és incidensek",
       "title-alerts": "Riasztások",
@@ -13317,7 +13350,7 @@
       "count-truncated_other": "Az első {{count}} jegyzetfüzet betöltve"
     },
     "new": {
-      "default-title": "Jegyzetfüzet #{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Sikertelen mentés",
@@ -13687,10 +13720,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Lejátszási lista törlése",
-      "edit": "Lejátszási lista szerkesztése",
-      "start": "Lejátszási lista indítása",
-      "tooltip": "Lejátszási lista megosztása"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Új lejátszási lista"
@@ -14844,10 +14882,23 @@
     "repository-status": {
       "error": "Az adattár betöltése nem sikerült"
     },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Vissza az adattárakhoz",
       "cleaning-up-resources": "Adattári erőforrások tisztítása",
-      "not-found": "nem található",
       "not-found-message": "Nem található adattár",
       "repository-config-exists-configuration": "Győződjön meg arról, hogy a tároló konfigurációja létezik a konfigurációs fájlban.",
       "tab-overview": "Áttekintés",
@@ -15143,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Mielőtt nyilvánossá tenné az irányítópultot, vegye figyelembe a következőket:",
-      "data-src-ack-desc": "A közzététel jelenleg csak az adatforrások egy részhalmazával működik*",
-      "data-src-ack-tooltip": "További információ a nyilvános adatforrásokról",
-      "public-ack-desc": "A teljes irányítópultja nyilvános lesz*",
-      "public-ack-tooltip": "További információ a nyilvános irányítópultokról",
-      "usage-ack-desc": "Az irányítópult nyilvánossá tétele azt eredményezi, hogy a lekérdezések az irányítópult minden egyes megtekintéskor lefutnak, ami növelheti a költségeket*",
-      "usage-ack-desc-tooltip": "További információ a lekérdezések gyorsítótárazásáról"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Megtekintheti az irányítópultot",
-      "copy-button": "Másolás",
-      "dashboard-url-field-label": "Irányítópult URL-címe",
-      "email-share-type-option-label": "Csak meghatározott személyek",
-      "pause-sharing-dashboard-label": "Irányítópult megosztásának szüneteltetése",
-      "public-share-type-option-label": "Bárki, aki rendelkezik a hivatkozással",
-      "revoke-public-URL-button": "Nyilvános URL-cím visszavonása",
-      "revoke-public-URL-button-title": "Nyilvános URL-cím visszavonása",
-      "settings-title": "Beállítások"
-    },
     "configuration": {
       "display-annotations-description": "Jegyzetek megjelenítése ezen az irányítópulton",
       "display-annotations-label": "Jegyzetek megjelenítése",
@@ -15175,21 +15206,11 @@
       "time-range-label": "Időtartomány",
       "time-range-tooltip": "A megosztott irányítópult az irányítópult alapértelmezett időtartomány-beállításait használja"
     },
-    "create-page": {
-      "generate-public-url-button": "Nyilvános URL-cím generálása",
-      "unsupported-features-desc": "Jelenleg nem támogatjuk a sablonváltozókat vagy a frontend-adatforrásokat",
-      "welcome-title": "Üdvözöljük a nyilvános irányítópultoknál!"
-    },
     "email-sharing": {
       "accept-button": "Elfogadás",
       "alert-text": "Az irányítópultok e-mailben történő megosztása felhasználónként lesz kiszámlázva a 30 napos token időtartamára, függetlenül a megosztott irányítópultok számától. A számlázás 30 nap elteltével leáll, kivéve, ha megújítja a tokent.",
       "bill-ack": "Tudomásul veszem, hogy a felhasználók hozzáadásához fizetés szükséges.*",
       "cancel-button": "Mégse",
-      "input-invalid-email-text": "Érvénytelen e-mail-cím",
-      "input-required-email-text": "Az e-mail-cím megadása kötelező",
-      "invite-button": "Meghívás",
-      "invite-field-desc": "Személyek meghívása e-mailben",
-      "invite-field-label": "Meghívás",
       "learn-more-button": "További információk",
       "recipient-email-placeholder": "E-mail",
       "recipient-invalid-email-text": "Érvénytelen e-mail-cím",
@@ -15199,17 +15220,12 @@
       "recipient-list-description": "Csak az Ön által közvetlenül meghívott személyek férhetnek hozzá ehhez az irányítópulthoz",
       "recipient-list-title": "Hozzáféréssel rendelkező személyek",
       "recipient-required-email-text": "Az e-mail-cím megadása kötelező",
-      "resend-button": "Újraküldés",
-      "resend-button-title": "Újraküldés",
       "resend-invite-label": "Meghívó újraküldése",
       "revoke-access-label": "Hozzáférés visszavonása",
-      "revoke-button": "Visszavonás",
-      "revoke-button-title": "Visszavonás",
       "success-creation": "Az irányítópult készen áll a külső megosztásra",
       "success-share-type-change": "Irányítópult-hozzáférés frissítve: mostantól csak bizonyos személyek férhetnek hozzá a hivatkozás birtokában"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Kérjük, mentse az irányítópult módosításait a nyilvános konfiguráció frissítése előtt",
       "unsupport-data-source-alert-readmore-link": "További információ a támogatott adatforrásokról",
       "unsupported-data-source-alert-title": "Nem támogatott adatforrások",
       "unsupported-template-variable-alert-desc": "Előfordulhat, hogy ez a nyilvános irányítópult nem működik, mivel sablonváltozókat használ",
@@ -15223,25 +15239,6 @@
       "public-ack": "Tudomásul veszem, hogy ez a teljes irányítópult nyilvános lesz.*",
       "success-creation": "Az irányítópult mostantól nyilvánosan elérhető",
       "success-share-type-change": "Irányítópult-hozzáférés frissítve: mostantól bárki hozzáférhet a hivatkozás birtokában"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Beállítások összecsukása",
-      "expand-settings-tooltip": "Beállítások kibontása"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Alapértelmezett időtartomány",
-      "default-time-range-label-desc": "A nyilvános irányítópult az irányítópult alapértelmezett időtartomány-beállításait használja",
-      "show-annotations-label": "Jegyzetek megjelenítése",
-      "show-annotations-label-desc": "Jegyzetek megjelenítése a nyilvános irányítópulton",
-      "time-range-picker-label": "Időtartomány-választó engedélyezve",
-      "time-range-picker-label-desc": "Lehetővé teszi a megtekintők számára az időtartomány módosítását"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Jegyzetek = elrejtés",
-      "annotations-show-text": "Jegyzetek = megjelenítés",
-      "time-range-picker-disabled-text": "Időtartomány-választó = letiltva",
-      "time-range-picker-enabled-text": "Időtartomány-választó = engedélyezve",
-      "time-range-text": "Időtartomány = "
     },
     "share": {
       "success-delete": "Az irányítópult már nem osztható meg"
@@ -15590,6 +15587,10 @@
       "label": "Transzformáció alkalmazása erre:",
       "series": "Lekérdezési és transzformációs eredmények"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "A lekérdezés neve már létezik",
       "empty-name": "Üres lekérdezésnév nem engedélyezett"
@@ -15769,6 +15770,12 @@
     "title": "Nem található az alkalmazásfájl"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Az üzenet {{messageLength}} karakter hosszú, amely meghaladja a maximális 500 karaktert. Kérjük, mentés előtt rövidítse le.",
       "title": "Az üzenet túl hosszú"
@@ -16016,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Megosztás"
-    },
     "embed": {
       "copy": "Másolás vágólapra",
       "html": "HTML beágyazása",
@@ -16065,9 +16069,6 @@
       "time-range-description": "Az aktuális relatív időtartományt abszolút időtartománnyá alakítja",
       "time-range-label": "Időtartomány zárolása"
     },
-    "panel": {
-      "title": "Panel megosztása"
-    },
     "snapshot": {
       "cancel-button": "Mégse",
       "copy-link-button": "Másolás",
@@ -16083,16 +16084,11 @@
       "local-button": "Pillanatkép közzététele",
       "mistake-message": "Hibázott? ",
       "name": "Pillanatkép neve",
-      "timeout": "Időtúllépés (másodpercben)",
-      "timeout-description": "Előfordulhat, hogy konfigurálnia kell az időtúllépés értékét, ha hosszú időt vesz igénybe az irányítópult-metrikák összegyűjtése.",
       "url-label": "Pillanatkép URL-címe"
     },
     "tab-title": {
-      "embed": "Beágyazás",
       "export": "Exportálás",
-      "library-panel": "Könyvtárpanel",
       "link": "Hivatkozás",
-      "public-dashboard-title": "Nyilvános irányítópult",
       "snapshot": "Pillanatkép"
     },
     "theme-picker": {
@@ -16520,7 +16516,9 @@
     }
   },
   "swagger": {
-    "login": "Bejelentkezés"
+    "login": "Bejelentkezés",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17743,6 +17741,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Mező",
+      "label-keep-unjoined": "",
       "label-mode": "Üzemmód",
       "modes": {
         "description": {
@@ -17755,7 +17754,8 @@
           "outer-tabular": "Külső (táblázatos)",
           "outer-time-series": "Külső (idősor)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {

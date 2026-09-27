@@ -249,6 +249,21 @@ func TestConnection(t *testing.T) {
 			// token is left unset even though one is present.
 			require.NotNil(t, o.TokenHandler)
 			require.Empty(t, o.Token)
+			require.True(t, o.IgnoreAuthErrorAbort)
+		})
+
+		t.Run("subscriber does not ignore auth error aborts in token_exchange mode", func(t *testing.T) {
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
+				Mode:                   setting.NATSAuthModeTokenExchange,
+				TokenExchangeAudiences: []string{"us-nats"},
+				TokenExchangeURL:       "http://signer/sign",
+				TokenExchangeToken:     "boot-token",
+			}}
+			c := newConnection(roleSubscriber, log.NewNopLogger(), newConnectionMetrics(roleSubscriber), newConfig(cfg, nil), func() string { return "" })
+
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			require.False(t, applyOptions(t, opts).IgnoreAuthErrorAbort)
 		})
 
 		t.Run("credentials mode uses the creds file", func(t *testing.T) {

@@ -1137,11 +1137,6 @@ export interface FeatureToggles {
   */
   secretsManagementAppPlatformAwsKeeper?: boolean;
   /**
-  * Enables profiles exemplars support in profiles drilldown
-  * @default true
-  */
-  profilesExemplars?: boolean;
-  /**
   * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
   * @default false
   */
@@ -1347,7 +1342,7 @@ export interface FeatureToggles {
   */
   ['alerting.notificationsAPIV1Beta1']?: boolean;
   /**
-  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+  * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;

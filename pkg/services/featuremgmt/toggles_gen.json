@@ -190,15 +190,17 @@
     {
       "metadata": {
         "name": "alerting.syncExternalAlertmanager",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1790102317847",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-22 18:38:37.847569524 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
-        "stage": "experimental",
+        "description": "Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source",
+        "stage": "privatePreview",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2830,6 +2832,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.savedQueriesSearch",
+        "resourceVersion": "1789728622393",
+        "creationTimestamp": "2026-09-18T10:50:22Z"
+      },
+      "spec": {
+        "description": "Enables unified search for saved queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -2974,12 +2989,15 @@
     {
       "metadata": {
         "name": "grafana.visualDesignRefresh",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1790165282594",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-23 12:08:02.594434 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new visual design refresh for the Grafana UI",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "hideFromDocs": true,
@@ -4325,7 +4343,8 @@
       "metadata": {
         "name": "profilesExemplars",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "deletionTimestamp": "2026-09-16T07:06:39Z"
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",

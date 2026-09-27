@@ -69,6 +69,7 @@ func newTestPublisher(t *testing.T, srv *natsserver.Server) *PublisherService {
 	cfg := setting.NATSSettings{Enabled: true}
 	p := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newTestConfig(srv, cfg))
 	t.Cleanup(p.close)
+	require.NoError(t, p.starting(context.Background()))
 	return p
 }
 

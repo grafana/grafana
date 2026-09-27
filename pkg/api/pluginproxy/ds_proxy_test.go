@@ -20,6 +20,8 @@ import (
 	"golang.org/x/oauth2"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -602,7 +604,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		proxy.director(req)
 
 		assert.Equal(t, "Bearer testtoken", req.Header.Get("Authorization"))
-		assert.Equal(t, "testidtoken", req.Header.Get("X-ID-Token"))
+		assert.Equal(t, "testidtoken", req.Header.Get(backend.OAuthIdentityIDTokenHeaderName))
 	})
 
 	t.Run("When SendUserHeader config is enabled", func(t *testing.T) {
