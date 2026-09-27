@@ -195,7 +195,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "generate-apis": "yarn workspace @grafana/openapi process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
+    "generate-apis": "npm run --prefix ../grafana-openapi process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
     "generate:api-client": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/generator/generate.ts"
   },
   "devDependencies": {
