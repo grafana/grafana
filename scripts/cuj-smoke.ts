@@ -225,7 +225,7 @@ function ensureLoggedIn(): void {
   if (result.status !== 0) {
     throw new Error(
       `playwright authenticate project failed (exit ${result.status}). ` +
-        `Run \`GRAFANA_URL=${GRAFANA_URL} yarn playwright test --project=authenticate\` manually to see what's wrong.`
+        `Run \`GRAFANA_URL=${GRAFANA_URL} pnpm exec playwright test --project=authenticate\` manually to see what's wrong.`
     );
   }
   if (!fs.existsSync(STORAGE_STATE)) {

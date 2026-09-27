@@ -70,7 +70,7 @@ export default (env: Env = {}) => {
     ],
   };
 
-  // `rspack build --json` serialises `compiler.options.stats`. yarn stats:rspack asks for the
+  // `rspack build --json` serialises `compiler.options.stats`. pnpm stats:rspack asks for the
   // whole graph; a normal build leaves it off so the console output stays short.
   if (env.fullStats) {
     prodConfig.stats = fullStatsOptions;

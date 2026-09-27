@@ -42,7 +42,7 @@ const config: KnipConfig = {
   workspaces: {
     '.': {
       ignoreDependencies: [
-        // used by yarn test:ci
+        // used by the test:ci script
         'jest-junit',
 
         // used by coverage script, see jest.config.codeowner.js
@@ -52,7 +52,7 @@ const config: KnipConfig = {
         '@grafana/levitate',
         'wait-on',
 
-        // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
+        // invoked by scripts/validate-npm-packages.sh — knip doesn't detect shell-invoked binaries
         '@arethetypeswrong/cli',
         'publint',
 

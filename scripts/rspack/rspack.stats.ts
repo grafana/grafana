@@ -24,13 +24,13 @@ export default (env: Env = {}) => {
     ],
   };
 
-  // yarn build:stats:rspack --env doctor
+  // pnpm build:stats:rspack --env doctor
   if (env.doctor) {
     config.plugins?.push(new RsdoctorRspackPlugin());
   }
 
   // disable hashing in output filenames to make them easier to identify
-  // yarn build:stats:rspack --env doctor --env namedChunks
+  // pnpm build:stats:rspack --env doctor --env namedChunks
   if (env.namedChunks) {
     config.optimization = {
       chunkIds: 'named',

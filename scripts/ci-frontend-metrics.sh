@@ -47,7 +47,7 @@ do
   I18N_STATS+="\"grafana.ci-code.i18n.${name}\": \"${value}\","
 done <<< "$(npm run --silent i18n:stats)"
 
-# Requires the frontend to have been built (npm run build) so the assets manifests exist.
+# Requires the frontend to have been built (pnpm build) so the assets manifests exist.
 # Assigned separately from the herestring below so that set -e catches a failure here.
 BUNDLE_SIZES="$(npm run --silent bundle-size:stats)"
 BUNDLE_SIZE_STATS=""

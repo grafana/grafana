@@ -55,7 +55,7 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
     child.on('error', (err) => {
       outputStream.end();
       if (err.code === 'ENOENT') {
-        reject(new Error('yarn command not found. Please ensure yarn and github-codeowners are available'));
+        reject(new Error('npm command not found. Please ensure npm and github-codeowners are available'));
       } else {
         reject(err);
       }
