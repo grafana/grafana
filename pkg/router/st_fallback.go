@@ -512,8 +512,25 @@ func (f *fallbackBackend) Load(context.Context) (http.Handler, error) {
 	return f.st, nil
 }
 
+// defaultSingleTenantStackURL is where the router reaches a stack by default,
+// with {slug} replaced by the stack's slug.
+const defaultSingleTenantStackURL = "http://{slug}-grafana-http.hosted-grafana.svc.cluster.local.:80"
+
+// checkSingleTenantStackURL checks a stack URL template: it must contain
+// {slug} and give an absolute HTTP(S) URL.
+func checkSingleTenantStackURL(template string) error {
+	if !strings.Contains(template, "{slug}") {
+		return fmt.Errorf("stack URL template %q must contain {slug}", template)
+	}
+	u, err := url.Parse(strings.ReplaceAll(template, "{slug}", "stack"))
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return fmt.Errorf("stack URL template %q must give an absolute HTTP(S) URL", template)
+	}
+	return nil
+}
+
 // The results of this call are cached
-func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Context, int64) (singleTenantStack, error) {
+func newGComURLResolver(gcomBaseURL, gcomToken, stackURLTemplate string) func(context.Context, int64) (singleTenantStack, error) {
 	// mirroring grafana's pkg/services/gcom
 	type instance struct {
 		ID   int    `json:"id"`
@@ -552,7 +569,7 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 			return singleTenantStack{}, fmt.Errorf("decoding gcom instance: %w", err)
 		}
 		return singleTenantStack{
-			URL:       fmt.Sprintf("http://%s-grafana-http.%s.svc.cluster.local.:80", result.Slug, "hosted-grafana"),
+			URL:       strings.ReplaceAll(stackURLTemplate, "{slug}", result.Slug),
 			PublicURL: result.URL,
 			Slug:      result.Slug,
 		}, nil

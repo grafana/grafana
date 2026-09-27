@@ -690,7 +690,7 @@ func TestNewGComURLResolver(t *testing.T) {
 			}))
 			t.Cleanup(server.Close)
 
-			resolve := newGComURLResolver(server.URL+tc.basePath, "test-token")
+			resolve := newGComURLResolver(server.URL+tc.basePath, "test-token", defaultSingleTenantStackURL)
 			stack, err := resolve(t.Context(), 123)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)

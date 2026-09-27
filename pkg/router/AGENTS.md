@@ -176,11 +176,14 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target is set. The CAP token is exchanged per request. |
 | `<target>.url` | Base URL for `baas_apiserver` or `cloud_app_platform_apiserver`. Unset skips that target. |
 | `<target>.audience` | Required when `<target>.url` is set. |
-| `<target>.group_regex` | Comma-separated globs that narrow the discovered groups. Unset matches all. |
+| `<target>.auth` | Header for the exchanged CAP token: `bearer` (`Authorization`) or `access_token` (`X-Access-Token`). Defaults to `access_token` for `baas_apiserver` and `bearer` for `cloud_app_platform_apiserver`. |
+| `<target>.group_patterns` | Comma-separated globs that narrow the discovered groups. Unset matches all. The former name `<target>.group_regex` is still read, with a warning. |
 | `<target>.ca_file`, `<target>.insecure` | Per-target TLS settings. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
-| `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
+| `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The former name `plugins_group_regex` is still read, with a warning. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
+| `st_stack_url` | Where the ST fallback reaches a stack, with `{slug}` replaced by its slug. Defaults to `http://{slug}-grafana-http.hosted-grafana.svc.cluster.local.:80`. |
+| `st_cache_size`, `st_breaker_cache_size`, `st_lookup_rate`, `st_lookup_burst` | Bounds on the ST fallback's stack cache, breaker cache and grafana.com lookup rate. |
 
 Every URL must be absolute; a trailing slash is tolerated.
 

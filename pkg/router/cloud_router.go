@@ -41,14 +41,14 @@ import (
 // unified-storage/authz settings.
 const cloudRouterSection = "cloud_router"
 
-// ProvideCloudRoutesLoaderFactory builds the cloud RoutesLoader from the
+// ProvideCloudRoutesLoader builds the cloud RoutesLoader from the
 // [cloud_router] section. It returns (nil, nil) when no source is configured
 // (appmanifest_apiserver_url, an aggregate target url, plugins_url or
 // st_discovery_url), and the caller falls back to another loader.
 //
 // The remote apiservers are called with a CAP token exchanged for a signed
 // access token on every request.
-func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
+func ProvideCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
 	appManifestApiserverURL := section.Key("appmanifest_apiserver_url").MustString("")
@@ -68,7 +68,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 	// endpoint), so it stays out of the cap_token gate below.
 	var pluginsTarget *pluginManifestsTarget
 	if pluginsURL := section.Key("plugins_url").MustString(""); pluginsURL != "" {
-		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
+		patterns, err := compileGroupPatterns(splitGroupPatterns(groupPatternsKey(section, "plugins_group_patterns", "plugins_group_regex")))
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
@@ -127,7 +127,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 			// TLS is set on the transport because client-go rejects a custom
 			// Transport combined with TLSClientConfig.
 			Transport:     newAggregateBaseTransport(tlsCfg),
-			WrapTransport: aggregateTokenWrapper(targetCfg.Name, tokenExchanger, targetCfg.Audience),
+			WrapTransport: aggregateTokenWrapper(targetCfg.Auth, tokenExchanger, targetCfg.Audience),
 			Timeout:       defaultAggregateDiscoveryTimeout,
 		}
 		httpClient, err := rest.HTTPClientFor(restCfg)
@@ -165,12 +165,16 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
 		}
 
+		stackURL := section.Key("st_stack_url").MustString(defaultSingleTenantStackURL)
+		if err := checkSingleTenantStackURL(stackURL); err != nil {
+			return nil, fmt.Errorf("%s: st_stack_url: %w", cloudRouterSection, err)
+		}
 		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
 			cacheSize:        section.Key("st_cache_size").MustInt(defaultSingleTenantCacheSize),
 			breakerCacheSize: section.Key("st_breaker_cache_size").MustInt(defaultSingleTenantBreakerCacheSize),
 			lookupRate:       section.Key("st_lookup_rate").MustFloat64(defaultSingleTenantLookupRate),
 			lookupBurst:      section.Key("st_lookup_burst").MustInt(defaultSingleTenantLookupBurst),
-			resolveHost:      newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
+			resolveHost:      newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken, stackURL),
 			discoveryHost:    discoURL,
 		})
 		if err != nil {
@@ -669,11 +673,10 @@ func (l *cloudLoader) retainTransports(used map[tlsCacheKey]struct{}) {
 // far too few to keep keepalive useful under concurrent proxied traffic.
 const aggregateMaxIdleConnsPerHost = 100
 
-// aggregateTokenWrapper picks the header for the exchanged CAP token:
-// cloud_app_platform_apiserver expects a standard Authorization bearer token,
-// while baas_apiserver expects X-Access-Token.
-func aggregateTokenWrapper(name string, tokenExchanger authnlib.TokenExchanger, audience string) transport.WrapperFunc {
-	if name == "cloud_app_platform_apiserver" {
+// aggregateTokenWrapper sets the exchanged CAP token on the header the
+// target's auth names.
+func aggregateTokenWrapper(auth aggregateAuth, tokenExchanger authnlib.TokenExchanger, audience string) transport.WrapperFunc {
+	if auth == aggregateAuthBearer {
 		return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(tokenExchanger, audience, clientauth.WildcardNamespace)
 	}
 	return clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, audience, clientauth.WildcardNamespace)
