@@ -18,6 +18,22 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 )
 
+// drainWake consumes a wake already queued on dirty, if any. It returns nil
+// once dirty is closed, so the caller stops selecting on it.
+func drainWake(dirty <-chan struct{}) <-chan struct{} {
+	if dirty == nil {
+		return nil
+	}
+	select {
+	case _, ok := <-dirty:
+		if !ok {
+			return nil
+		}
+	default:
+	}
+	return dirty
+}
+
 // Backoff for retrying a failed reconcile.
 const (
 	reconcileRetryMin = time.Second
@@ -115,8 +131,11 @@ type GrafanaRouter struct {
 	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
 	// "group/version". Serving goroutines write it on cache misses, so it is a
 	// sync.Map rather than an atomic swap. publish drops entries for groups
-	// that are gone or whose backend changed.
-	openapiDocs sync.Map
+	// that are gone or whose backend changed. openapiDocsMu serializes stores
+	// with that pruning, so a fetch that finishes afterwards can't put an old
+	// backend's document back; reads don't take it.
+	openapiDocs   sync.Map
+	openapiDocsMu sync.Mutex
 
 	// discoveryCache holds aggregated discovery fetched from backends that
 	// are not DiscoveryProviders, shared across callers.
@@ -358,7 +377,7 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	// private/no-cache responses instead of bypassing that check on a cache hit.
 	if rec.statusCode == http.StatusOK && cacheableRequest && cacheableOpenAPIResponse(rec.header) {
 		etag := quoteETag(hashHex(entry.key + "\x00" + rec.body.String()))
-		r.openapiDocs.Store(cacheKey, openapiCacheEntry{
+		r.storeOpenAPIDoc(group, cacheKey, openapiCacheEntry{
 			key: entry.key, etag: etag, body: rec.body.Bytes(), header: openAPICacheHeaders(rec.header),
 			accept: req.Header.Get("Accept"), encoding: req.Header.Get("Accept-Encoding"),
 		})
@@ -443,6 +462,8 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 				}
 				run()
 			case <-retryC:
+				// The retry reads full state, so a wake already queued is covered.
+				dirty = drainWake(dirty)
 				run()
 			}
 		}
@@ -605,6 +626,8 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 // retainOpenAPIDocs drops cached OpenAPI documents for groups that are no
 // longer served, or whose backend changed and would miss the cache anyway.
 func (r *GrafanaRouter) retainOpenAPIDocs(snapshot map[string]servingEntry) {
+	r.openapiDocsMu.Lock()
+	defer r.openapiDocsMu.Unlock()
 	r.openapiDocs.Range(func(k, v any) bool {
 		group, _, _ := strings.Cut(k.(string), "/")
 		if served, ok := snapshot[group]; !ok || served.key != v.(openapiCacheEntry).key {
@@ -612,6 +635,17 @@ func (r *GrafanaRouter) retainOpenAPIDocs(snapshot map[string]servingEntry) {
 		}
 		return true
 	})
+}
+
+// storeOpenAPIDoc caches a fetched document, unless the group's backend
+// changed or went away while it was being fetched.
+func (r *GrafanaRouter) storeOpenAPIDoc(group, cacheKey string, doc openapiCacheEntry) {
+	r.openapiDocsMu.Lock()
+	defer r.openapiDocsMu.Unlock()
+	if current, ok := (*r.snapshot.Load())[group]; !ok || current.key != doc.key {
+		return
+	}
+	r.openapiDocs.Store(cacheKey, doc)
 }
 
 // rejectBackendRedirects is a ReverseProxy ModifyResponse hook that turns a

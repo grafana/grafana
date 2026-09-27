@@ -433,3 +433,35 @@ func TestPublishDropsStaleOpenAPIDocs(t *testing.T) {
 	})
 	require.Equal(t, []string{"kept/v1"}, cached)
 }
+
+func TestDrainWake(t *testing.T) {
+	queued := make(chan struct{}, 1)
+	queued <- struct{}{}
+	require.Equal(t, (<-chan struct{})(queued), drainWake(queued))
+	require.Empty(t, queued, "a queued wake is consumed")
+
+	require.Equal(t, (<-chan struct{})(queued), drainWake(queued), "an empty channel is left alone")
+
+	closed := make(chan struct{})
+	close(closed)
+	require.Nil(t, drainWake(closed), "a closed channel is no longer selected")
+	require.Nil(t, drainWake(nil))
+}
+
+func TestStoreOpenAPIDocRevalidatesTheBackend(t *testing.T) {
+	router := withGroups("served")
+	current := router.served["served"].lastKey
+	stored := func(cacheKey string) bool {
+		_, ok := router.openapiDocs.Load(cacheKey)
+		return ok
+	}
+
+	router.storeOpenAPIDoc("served", "served/v1", openapiCacheEntry{key: current})
+	require.True(t, stored("served/v1"))
+
+	// Fetched from a backend that has since been replaced, or a group that is gone.
+	router.storeOpenAPIDoc("served", "served/v2", openapiCacheEntry{key: "old-key"})
+	require.False(t, stored("served/v2"))
+	router.storeOpenAPIDoc("removed", "removed/v1", openapiCacheEntry{key: current})
+	require.False(t, stored("removed/v1"))
+}
