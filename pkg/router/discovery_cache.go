@@ -109,6 +109,7 @@ func (c *discoveryCache) retain(snapshot map[string]servingEntry) {
 func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
 	c := &r.discoveryCache
 	if d, found, fresh := c.lookup(name, entry.key); found && fresh {
+		r.observeDiscovery(name, discoveryCached)
 		return d
 	}
 	key := name + "\x00" + entry.key
@@ -136,23 +137,24 @@ func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry ser
 	case result := <-results:
 		fetched := result.Val.(fetchedDiscovery)
 		if fetched.complete {
+			r.observeDiscovery(name, discoveryFetched)
 			return fetched.discovery
 		}
-		if d, found, _ := c.lookup(name, entry.key); found {
-			return staleDiscovery(d)
-		}
-		return fetched.discovery
+		return r.missedDiscovery(name, entry)
 	case <-timer.C:
 		return r.missedDiscovery(name, entry)
 	}
 }
 
-// missedDiscovery is what a caller serves when the group's fetch missed its
-// deadline: the last cached copy marked stale, or the group's versions alone.
+// missedDiscovery is what a caller serves when the group's fetch failed or
+// missed its deadline: the last cached copy marked stale, or the group's
+// versions alone.
 func (r *GrafanaRouter) missedDiscovery(name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
 	if d, found, _ := r.discoveryCache.lookup(name, entry.key); found {
+		r.observeDiscovery(name, discoveryStale)
 		return staleDiscovery(d)
 	}
+	r.observeDiscovery(name, discoveryUnavailable)
 	return unavailableDiscovery(name, entry)
 }
 
@@ -166,6 +168,22 @@ func unavailableDiscovery(name string, entry servingEntry) apidiscoveryv2.APIGro
 		})
 	}
 	return group
+}
+
+// How a group's aggregated discovery was obtained, for
+// grafana_router_discovery_results_total.
+const (
+	discoveryProvided    = "provided"    // from a DiscoveryProvider, no request
+	discoveryCached      = "cached"      // a fresh cache entry
+	discoveryFetched     = "fetched"     // a complete fetch from the backend
+	discoveryStale       = "stale"       // the last good copy, after a failed fetch
+	discoveryUnavailable = "unavailable" // nothing to serve but the group's versions
+)
+
+func (r *GrafanaRouter) observeDiscovery(group, result string) {
+	if r.onDiscovery != nil {
+		r.onDiscovery(group, result)
+	}
 }
 
 func staleDiscovery(d apidiscoveryv2.APIGroupDiscovery) apidiscoveryv2.APIGroupDiscovery {

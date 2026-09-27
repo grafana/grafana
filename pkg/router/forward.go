@@ -62,6 +62,8 @@ func (b *forwardBackend) Group() metav1.APIGroup {
 	return b.group
 }
 
+func (b *forwardBackend) Source() string { return sourceRouteBackend }
+
 func (b *forwardBackend) Key() string {
 	return b.key
 }
