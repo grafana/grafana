@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -136,6 +137,11 @@ type GrafanaRouter struct {
 	// loadFailures backs off each group whose backend failed to load, until
 	// its key changes or a load succeeds. Owned by reconcile.
 	loadFailures map[string]*loadFailure
+
+	// notAllowedGroups and duplicateGroups are the groups the last reconcile
+	// warned about, so a lasting problem is logged once. Owned by reconcile.
+	notAllowedGroups []string
+	duplicateGroups  []string
 
 	// snapshot is the immutable group -> servingEntry map used to serve
 	// requests. reconcile rebuilds and atomically stores it; serving loads it.
@@ -546,16 +552,21 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	var errs []error
 	retired := map[string]*handlerEntry{}
 	seen := make(map[string]struct{}, len(rawBackends))
+	var notAllowed, duplicates []string
+	defer func() {
+		warnOnChange(ctx, &r.notAllowedGroups, notAllowed, "router: group not allowed in this mode, skipping")
+		warnOnChange(ctx, &r.duplicateGroups, duplicates, "router: duplicate group in route set, overwriting")
+	}()
 	for _, b := range rawBackends {
 		group := b.Group().Name
 		if r.acceptGroup != nil && !r.acceptGroup(group) {
-			logging.FromContext(ctx).Warn("router: group not allowed in this mode, skipping", "group", group)
+			notAllowed = append(notAllowed, group)
 			continue
 		}
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group. A duplicate is a config
 			// error; the last one wins rather than crashing the router.
-			logging.FromContext(ctx).Warn("router: duplicate group in route set, overwriting", "group", group)
+			duplicates = append(duplicates, group)
 		}
 		seen[group] = struct{}{}
 
@@ -619,6 +630,21 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		destroyWhenDrained(ctx, group, e)
 	}
 	return errors.Join(errs...)
+}
+
+// warnOnChange logs msg for each of groups when they differ from the groups
+// last warned about, so a lasting problem is logged once rather than on every
+// reconcile.
+func warnOnChange(ctx context.Context, last *[]string, groups []string, msg string) {
+	slices.Sort(groups)
+	groups = slices.Compact(groups)
+	if slices.Equal(*last, groups) {
+		return
+	}
+	*last = groups
+	for _, group := range groups {
+		logging.FromContext(ctx).Warn(msg, "group", group)
+	}
 }
 
 // loadBackend turns a panic in one backend's Load into that group's error, so
