@@ -447,13 +447,6 @@
     "vis-network": "10.1.2",
     "whatwg-fetch": "3.6.20"
   },
-  "workspaces": {
-    "packages": [
-      "packages/*",
-      "public/app/plugins/*/*",
-      "e2e-playwright/test-plugins/*"
-    ]
-  },
   "engines": {
     "node": ">= 22 <25"
   },

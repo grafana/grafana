@@ -19,7 +19,7 @@ const permittedPinnedProductionDependencies = new Set([
 function pnpmWorkspacePatterns() {
   const path = join(rootDir, 'pnpm-workspace.yaml');
   if (!existsSync(path)) {
-    return [];
+    throw new Error('pnpm-workspace.yaml is missing');
   }
 
   const lines = readFileSync(path, 'utf8').split(/\r?\n/);
@@ -87,12 +87,7 @@ function coerceVersion(range) {
   return `${Number(match[1])}.${Number(match[2] ?? 0)}.${Number(match[3] ?? 0)}${match[4] ? `-${match[4]}` : ''}`;
 }
 
-const patterns = Array.isArray(rootManifest.workspaces) ? rootManifest.workspaces : rootManifest.workspaces?.packages;
-if (!Array.isArray(patterns)) {
-  throw new Error('package.json has no workspaces list');
-}
-
-const allPatterns = [...patterns, ...pnpmWorkspacePatterns()];
+const allPatterns = pnpmWorkspacePatterns();
 const directories = new Set(['.']);
 for (const pattern of allPatterns.filter((pattern) => !pattern.startsWith('!'))) {
   for (const directory of matchingWorkspaces(pattern)) {

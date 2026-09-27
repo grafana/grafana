@@ -11,18 +11,8 @@ EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
 DEPRECATED_DATA_SOURCE_SRV="$(grep -r -oE --include="*.ts*" --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir={__mocks__,mocks,spec,node_modules,dist,compiled} "get(DataSource|Datasource)Srv\(\)" public/app packages | grep -cvE "packages/grafana-runtime/src/services/|public/app/features/plugins/datasource_srv" || true)"
 SCSS_FILES="$(find public packages -name '*.scss' -not -path '*/node_modules/*' | wc -l)"
-PM="$(node -p "require('./package.json').packageManager.split('@')[0]")"
-if [ "$PM" = "yarn" ]; then
-  # ignore minimal age gate in this `yarn outdated` call
-  OUTDATED_DEPENDENCIES="$(YARN_NPM_MINIMAL_AGE_GATE=0 yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)' || true)"
-  TOTAL_OUTDATED_DEPENDENCIES="${OUTDATED_DEPENDENCIES:-0}"
-elif [ "$PM" = "pnpm" ]; then
-  OUTDATED_DEPENDENCIES="$(pnpm outdated --recursive --format json || true)"
-  TOTAL_OUTDATED_DEPENDENCIES="$(printf '%s' "$OUTDATED_DEPENDENCIES" | node -e "console.log(Object.keys(JSON.parse(require('fs').readFileSync(0, 'utf8') || '{}')).length)")"
-else
-  echo "Unsupported package manager: $PM" >&2
-  exit 1
-fi
+OUTDATED_DEPENDENCIES="$(pnpm outdated --recursive --format json || true)"
+TOTAL_OUTDATED_DEPENDENCIES="$(printf '%s' "$OUTDATED_DEPENDENCIES" | node -e "console.log(Object.keys(JSON.parse(require('fs').readFileSync(0, 'utf8') || '{}')).length)")"
 CIRCULAR_DEPENDENCIES="$(npm run --silent lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
 TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
 
@@ -57,7 +47,7 @@ do
   I18N_STATS+="\"grafana.ci-code.i18n.${name}\": \"${value}\","
 done <<< "$(npm run --silent i18n:stats)"
 
-# Requires the frontend to have been built (yarn build) so the assets manifests exist.
+# Requires the frontend to have been built (npm run build) so the assets manifests exist.
 # Assigned separately from the herestring below so that set -e catches a failure here.
 BUNDLE_SIZES="$(npm run --silent bundle-size:stats)"
 BUNDLE_SIZE_STATS=""

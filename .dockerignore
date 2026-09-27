@@ -17,13 +17,6 @@ node_modules
 **/node_modules
 /tmp
 *.yml
-!.yarnrc.yml
-*.md
-.yarn/*
-!.yarn/releases
-!.yarn/plugins
-!.yarn/versions
-!.yarn/cache
 devenv
 !devenv/frontend-service/build/grafana
 .nx

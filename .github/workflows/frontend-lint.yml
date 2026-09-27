@@ -385,25 +385,13 @@ jobs:
       with:
         hardened-mode: 'true'
 
-    # Keep the extra cache-integrity check for Yarn installations.
-    - name: Check Yarn cache
-      if: steps.frontend-install.outputs.package-manager == 'yarn'
-      run: yarn install --immutable --check-cache
-      env:
-        YARN_ENABLE_HARDENED_MODE: 1
-
     - name: Check lockfile is deduplicated
       id: dedupe
-      run: |
-        if [ "${{ steps.frontend-install.outputs.package-manager }}" = 'yarn' ]; then
-          yarn dedupe --check
-        else
-          pnpm dedupe --check
-        fi
+      run: pnpm dedupe --check
     - name: Report dedupe failure
       if: failure() && steps.dedupe.outcome == 'failure'
       run: |
-        echo "::error::The lockfile contains duplicate dependencies. Run your package manager's dedupe command locally, commit the updated lockfile, and push again."
+        echo "::error::The lockfile contains duplicate dependencies. Run pnpm dedupe locally, commit the updated lockfile, and push again."
         exit 1
 
     - name: Check workspace constraints

@@ -127,7 +127,7 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
 
       - name: Install Playwright browsers
@@ -159,7 +159,7 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
 
       # It's quicker to build them in each test shard then prebuild and upload/download them as artifacts
@@ -396,9 +396,7 @@ jobs:
           persist-credentials: false
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-        with:
-          cache: 'false' # Don't use setup-node's built-in caching; yarn-install handles it
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
       - name: Download frontend artifacts
         uses: actions/download-artifact@v8
