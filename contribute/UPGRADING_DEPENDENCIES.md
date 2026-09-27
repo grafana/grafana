@@ -43,21 +43,28 @@ To do so, execute `go mod tidy` to ensure that `go.mod` and `go.sum` are updated
 
 ## Node.js dependencies
 
-Updated using `yarn`:
+Install pnpm once with `npm install -g pnpm`. pnpm then runs the version pinned in the root `package.json`.
+Update the applicable `package.json` and `pnpm-lock.yaml` together.
 
-- `package.json`
+1. Run `pnpm add -w <package>` for a root dependency. Add `-D` for a development dependency.
+1. Run `pnpm --filter <workspace> add <package>` for a workspace dependency.
+1. Run `pnpm install --frozen-lockfile` to check that the lockfile matches the manifests.
 
-## Yarn
+Use `pnpm why <package>` to inspect a dependency and `pnpm dedupe` to reduce duplicate versions.
+Set dependency overrides in `pnpm-workspace.yaml` under `overrides`.
+To patch a dependency, run `pnpm patch <package>@<version>`, edit the temporary directory, and run `pnpm patch-commit <directory>`.
+pnpm writes the patch to `patches/` and records it under `patchedDependencies` in `pnpm-workspace.yaml`.
+The `minimumReleaseAge` setting in `pnpm-workspace.yaml` delays newly published versions by three days (4320 minutes).
 
-The Yarn version is set in the `packageManager` field in `package.json` and the `yarnPath` setting in `.yarnrc.yml`. Several workspaces (built-in plugins, e2e test plugins, and some packages) pin their own Yarn version in their `package.json`. A constraint in `yarn.config.cjs` keeps them in sync with the root.
+## pnpm
 
-To upgrade Yarn:
+The root `package.json` pins the pnpm version in its `packageManager` field. `pnpm-lock.yaml` records the same version with checksums.
 
-1. Run `yarn set version <version>`. This updates `yarnPath` in `.yarnrc.yml`, adds the new release to `.yarn/releases/`, and updates the `packageManager` field in the root `package.json`.
-1. Run `yarn constraints --fix` to propagate the new version to the `packageManager` field of every workspace that pins its own Yarn version. Running `yarn constraints` without `--fix` reports any files that are out of sync.
-1. Check that the previous release file was removed from `.yarn/releases/`.
-1. Update any documentation that mentions the Yarn version.
-1. Run `yarn install` to verify the new version installs dependencies cleanly.
+To upgrade pnpm:
+
+1. Update the `packageManager` field in the root `package.json`.
+1. Run `pnpm install` to update `pnpm-lock.yaml`. pnpm downloads the new version.
+1. Run `pnpm install --frozen-lockfile` to check that the lockfile matches the manifests.
 
 ## Where to make changes
 
