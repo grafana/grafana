@@ -8,6 +8,6 @@ See [package source](https://github.com/grafana/grafana/tree/main/packages/grafa
 
 ## Installation
 
-`yarn add @grafana/o11y-ds-frontend`
+`pnpm add @grafana/o11y-ds-frontend`
 
 `npm install @grafana/o11y-ds-frontend`
