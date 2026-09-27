@@ -38,6 +38,10 @@ func drainWake(dirty <-chan struct{}) <-chan struct{} {
 const (
 	reconcileRetryMin = time.Second
 	reconcileRetryMax = time.Minute
+
+	// A backend whose Load keeps failing is retried on its own, longer
+	// backoff, so a bad plugin isn't rebuilt on every reconcile retry.
+	backendRetryMax = 10 * time.Minute
 )
 
 const (
@@ -92,6 +96,13 @@ type servingEntry struct {
 	discovery *apidiscoveryv2.APIGroupDiscovery
 }
 
+// loadFailure is a group's latest backend load failure.
+type loadFailure struct {
+	key   string
+	err   error
+	retry *cooldown
+}
+
 type phase int
 
 const (
@@ -121,6 +132,10 @@ type GrafanaRouter struct {
 	// installed into the last reconcile's snapshot. Owned by reconcile (single
 	// goroutine); never read from the serving path.
 	served map[string]*handlerEntry
+
+	// loadFailures backs off each group whose backend failed to load, until
+	// its key changes or a load succeeds. Owned by reconcile.
+	loadFailures map[string]*loadFailure
 
 	// snapshot is the immutable group -> servingEntry map used to serve
 	// requests. reconcile rebuilds and atomically stores it; serving loads it.
@@ -172,8 +187,9 @@ type GrafanaRouter struct {
 
 func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
 	r := &GrafanaRouter{
-		loader: loader,
-		served: map[string]*handlerEntry{},
+		loader:       loader,
+		served:       map[string]*handlerEntry{},
+		loadFailures: map[string]*loadFailure{},
 	}
 	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
@@ -548,13 +564,27 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 			continue // unchanged: keep the live Backend (and its pool)
 		}
 
+		now := time.Now()
+		failure := r.loadFailures[group]
+		if failure != nil && failure.key == b.Key() && failure.retry.Until(now) > 0 {
+			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route, next attempt in %s: %w",
+				group, failure.retry.Until(now).Round(time.Second), failure.err))
+			continue
+		}
 		handler, err := loadBackend(ctx, b)
 		if err != nil {
 			// Keep last-known-good for this group. lastKey is not advanced, so
-			// a later wake retries.
+			// a later reconcile retries, once the group's backoff allows it.
+			if failure == nil || failure.key != b.Key() {
+				failure = &loadFailure{key: b.Key(), retry: newCooldown(0, reconcileRetryMin, backendRetryMax)}
+				r.loadFailures[group] = failure
+			}
+			failure.err = err
+			failure.retry.OnFailure(now)
 			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
 			continue
 		}
+		delete(r.loadFailures, group)
 
 		if !ok {
 			// New group: create the entry, starting with a fresh, closed breaker.
@@ -571,6 +601,11 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		if _, ok := seen[group]; !ok {
 			retired[group] = e
 			delete(r.served, group)
+		}
+	}
+	for group := range r.loadFailures {
+		if _, ok := seen[group]; !ok {
+			delete(r.loadFailures, group)
 		}
 	}
 

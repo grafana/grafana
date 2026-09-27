@@ -465,3 +465,59 @@ func TestStoreOpenAPIDocRevalidatesTheBackend(t *testing.T) {
 	router.storeOpenAPIDoc("removed", "removed/v1", openapiCacheEntry{key: current})
 	require.False(t, stored("removed/v1"))
 }
+
+// countingFailingBackend fails every Load and counts the attempts.
+type countingFailingBackend struct {
+	failingBackend
+	loads *atomic.Int32
+}
+
+func (b countingFailingBackend) Load(ctx context.Context) (http.Handler, error) {
+	b.loads.Add(1)
+	return b.failingBackend.Load(ctx)
+}
+
+func TestReconcileBacksOffAFailingBackend(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var loads atomic.Int32
+		loader := &swapLoader{}
+		loader.set(countingFailingBackend{failingBackend{group: "bad.ext.grafana.app", key: "1"}, &loads})
+		router := NewGrafanaRouter(loader)
+
+		require.Error(t, router.reconcile(t.Context()))
+		require.EqualValues(t, 1, loads.Load())
+		// Within the backoff, reconcile still reports the failure without
+		// loading the backend again.
+		err := router.reconcile(t.Context())
+		require.ErrorContains(t, err, "next attempt in")
+		require.ErrorContains(t, err, "load failed")
+		require.EqualValues(t, 1, loads.Load())
+
+		time.Sleep(reconcileRetryMin)
+		require.Error(t, router.reconcile(t.Context()))
+		require.EqualValues(t, 2, loads.Load())
+		time.Sleep(reconcileRetryMin)
+		require.Error(t, router.reconcile(t.Context()))
+		require.EqualValues(t, 2, loads.Load(), "the backoff doubled")
+
+		// A new key is loaded at once.
+		loader.set(countingFailingBackend{failingBackend{group: "bad.ext.grafana.app", key: "2"}, &loads})
+		require.Error(t, router.reconcile(t.Context()))
+		require.EqualValues(t, 3, loads.Load())
+
+		// The backoff is capped.
+		for range 20 {
+			time.Sleep(backendRetryMax)
+			_ = router.reconcile(t.Context())
+		}
+		before := loads.Load()
+		time.Sleep(backendRetryMax)
+		_ = router.reconcile(t.Context())
+		require.Equal(t, before+1, loads.Load())
+
+		// A removed group forgets its failure.
+		loader.set()
+		require.NoError(t, router.reconcile(t.Context()))
+		require.Empty(t, router.loadFailures)
+	})
+}
