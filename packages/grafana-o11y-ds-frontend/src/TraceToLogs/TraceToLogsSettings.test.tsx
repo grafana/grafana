@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
+import { getTraceToLogsOptions, type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
 
 const defaultOptionsOldFormat: DataSourceSettings<TraceToLogsData> = {
   jsonData: {
@@ -123,5 +123,21 @@ describe('TraceToLogsSettings', () => {
         },
       },
     ]);
+  });
+});
+
+describe('getTraceToLogsOptions', () => {
+  it('carries over custom query from legacy options', () => {
+    const options = getTraceToLogsOptions({
+      tracesToLogs: { datasourceUid: 'loki1_uid', customQuery: true, query: '{job="app"}' },
+    });
+    expect(options?.customQuery).toBe(true);
+    expect(options?.query).toBe('{job="app"}');
+  });
+
+  it('defaults customQuery to false for legacy options without a query', () => {
+    const options = getTraceToLogsOptions(defaultOptionsOldFormat.jsonData);
+    expect(options?.customQuery).toBe(false);
+    expect(options?.query).toBeUndefined();
   });
 });
