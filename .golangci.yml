@@ -214,7 +214,7 @@ linters:
         text: ST1001
       - linters:
           - staticcheck
-        text: 'SA1019: http.CloseNotifier'
+        text: 'SA1019: (net/)?http\.CloseNotifier'
       - linters:
           - staticcheck
         text: 'SA1019: strings.Title'
