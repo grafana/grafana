@@ -41,8 +41,6 @@ replace (
 // Direct requirements -- every entry needs an owner
 //
 // Internal module references (every entry should also have a replace in the section below)
-//
-// Indirect references
 require (
 	cloud.google.com/go/aiplatform v1.126.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/discoveryengine v1.33.0 // @grafana/grafana-search-and-storage
@@ -313,6 +311,7 @@ require (
 	xorm.io/builder v0.3.13 // @grafana/grafana-backend-group
 )
 
+// Indirect references
 require (
 	cel.dev/expr v0.25.3 // indirect
 	cloud.google.com/go v0.123.0 // indirect
@@ -712,6 +711,7 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
 
+// Replace imports
 replace (
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
 	// and makes non-cgo the default for developer builds.
