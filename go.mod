@@ -38,6 +38,42 @@ replace (
 	github.com/grafana/grafana/pkg/util/sqlite => ./pkg/util/sqlite
 )
 
+// Replace references to internal workspaces
+replace (
+	github.com/grafana/grafana/apps/advisor => ./apps/advisor
+	github.com/grafana/grafana/apps/alerting/alertenrichment => ./apps/alerting/alertenrichment
+	github.com/grafana/grafana/apps/alerting/alertrulequality => ./apps/alerting/alertrulequality
+	github.com/grafana/grafana/apps/alerting/notifications => ./apps/alerting/notifications
+	github.com/grafana/grafana/apps/alerting/rules => ./apps/alerting/rules
+	github.com/grafana/grafana/apps/annotation => ./apps/annotation
+	github.com/grafana/grafana/apps/collections => ./apps/collections
+	github.com/grafana/grafana/apps/correlations => ./apps/correlations
+	github.com/grafana/grafana/apps/dashboard => ./apps/dashboard
+	github.com/grafana/grafana/apps/dashvalidator => ./apps/dashvalidator
+	github.com/grafana/grafana/apps/example => ./apps/example
+	github.com/grafana/grafana/apps/folder => ./apps/folder
+	github.com/grafana/grafana/apps/iam => ./apps/iam
+	github.com/grafana/grafana/apps/live => ./apps/live
+	github.com/grafana/grafana/apps/logsdrilldown => ./apps/logsdrilldown
+	github.com/grafana/grafana/apps/playlist => ./apps/playlist
+	github.com/grafana/grafana/apps/plugins => ./apps/plugins
+	github.com/grafana/grafana/apps/preferences => ./apps/preferences
+	github.com/grafana/grafana/apps/provisioning => ./apps/provisioning
+	github.com/grafana/grafana/apps/quotas => ./apps/quotas
+	github.com/grafana/grafana/apps/scope => ./apps/scope
+	github.com/grafana/grafana/apps/secret => ./apps/secret
+	github.com/grafana/grafana/apps/shorturl => ./apps/shorturl
+
+	// Packages
+	github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
+	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
+	github.com/grafana/grafana/pkg/infra/features => ./pkg/infra/features
+	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
+	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ./pkg/storage/unified/resource/kv
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ./pkg/storage/unified/resourcepb
+	github.com/grafana/grafana/pkg/util/sqlite => ./pkg/util/sqlite
+)
+
 // Direct requirements -- every entry needs an owner
 require (
 	cloud.google.com/go/aiplatform v1.126.0 // @grafana/grafana-search-and-storage
