@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'pkg/registry/apps/annotation/proto/**'
+      - 'pkg/storage/unified/proto/**'
       - '.github/workflows/proto-breaking-changes.yml'
 
 concurrency:
@@ -27,6 +28,7 @@ jobs:
           # and to the `paths:` filter above. The breaking-change policy itself
           # lives in each module's buf.yaml under `breaking.use`.
           - pkg/registry/apps/annotation/proto
+          - pkg/storage/unified/proto
     steps:
       - uses: actions/checkout@v5
         with:
