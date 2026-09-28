@@ -448,16 +448,6 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
    - With `jaegeronly`: open `http://localhost:16686` to use the Jaeger UI.
    - With `self-instrumentation`: there is no standalone UI. In Grafana Explore, select the `gdev-tempo` data source and run a TraceQL query such as `{}` (search by service name `grafana`).
 
-### Trace the Live development pipeline
-
-Set `GF_LIVE_PIPELINE_TRACE=1` to enable detailed pipeline spans, including payloads and frame contents.
-The pipeline uses Grafana's configured OpenTelemetry provider, sharing its exporter, sampling, and resource attributes.
-Configure tracing as described above, then start Grafana with:
-
-```bash
-GF_LIVE_PIPELINE_TRACE=1 make run
-```
-
 ### Troubleshoot local tracing
 
 - **`http://localhost:16686` refused.** The `self-instrumentation` block has no Jaeger. Use Explore with the `gdev-tempo` data source instead.
