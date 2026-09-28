@@ -13,8 +13,10 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker/v2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
+	genericfilters "k8s.io/apiserver/pkg/server/filters"
 )
 
 func TestIsBackendFailure(t *testing.T) {
@@ -67,6 +69,36 @@ func TestStatusRecorderDefaultsToOKWithoutExplicitWriteHeader(t *testing.T) {
 	_, _ = rec.Write([]byte("hi"))
 	if rec.status != http.StatusOK {
 		t.Errorf("rec.status = %d, want %d", rec.status, http.StatusOK)
+	}
+}
+
+// TestStatusRecorderFlushesThroughAPIServerFilters is a regression test for
+// plugin backends, which serve through an embedded apiserver handler chain. Its
+// logging and timeout filters disagree about whether the writer can flush when
+// it lacks http.Flusher or http.CloseNotifier, and a flush then panics.
+func TestStatusRecorderFlushesThroughAPIServerFilters(t *testing.T) {
+	flushing := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("data: one\n\n"))
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+	})
+	notLongRunning := func(req *http.Request) (*http.Request, bool, func(), *apierrors.StatusError) {
+		return req, false, func() {}, apierrors.NewTimeoutError("timed out", 0)
+	}
+	backend := genericfilters.WithHTTPLogging(genericfilters.WithTimeout(flushing, notLongRunning))
+	s := withGroupHandler("demo.grafana.app", backend)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	rw := httptest.NewRecorder()
+	s.HandleFunc(rw, httptest.NewRequest(http.MethodGet, "/apis/demo.grafana.app/v1", nil).WithContext(ctx), nil)
+
+	if !rw.Flushed {
+		t.Error("the flush did not reach the client's writer")
+	}
+	if rw.Body.String() != "data: one\n\n" {
+		t.Errorf("body = %q", rw.Body.String())
 	}
 }
 
