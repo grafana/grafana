@@ -1864,7 +1864,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV2.OrgID, ruleV2.GUID)
 		require.NoError(t, err)
 		assert.Len(t, versions, 2)
-		assert.IsDecreasing(t, versions[0].ID, versions[1].ID)
+		assert.IsDecreasing(t, []int64{versions[0].ID, versions[1].ID})
 		diff := versions[1].Diff(&versions[0].AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
 		assert.ElementsMatch(t, []string{"Title", "RuleGroupIndex"}, diff.Paths())
 	})
