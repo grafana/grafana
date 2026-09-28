@@ -31,17 +31,19 @@ import {
   PERMISSIONS_TIME_INTERVALS,
   notificationsPermissions,
 } from './alertmanagerPermissions';
-import { getAllDataSources } from './config';
-import { GRAFANA_RULES_SOURCE_NAME } from './constants';
+import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from './constants';
 import { isGrafanaRuleIdentifier } from './rules';
 
 // Re-exported for backward compatibility. Moved to constants.ts to break a circular dependency
 // via k8s/utils.ts → datasource.ts → ability hooks → access-control.ts.
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { GRAFANA_RULES_SOURCE_NAME };
-export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
+export { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME };
 
 const collator = new Intl.Collator();
+
+function getAllDataSources(): Array<DataSourceInstanceSettings<DataSourceJsonData>> {
+  return Object.values(config.datasources);
+}
 
 export const GrafanaRulesSource: GrafanaRulesSourceIdentifier = {
   uid: GrafanaRulesSourceSymbol,

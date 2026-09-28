@@ -9,9 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	"github.com/grafana/authlib/types"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -345,6 +348,8 @@ func TestValidateOnDelete(t *testing.T) {
 		require.NoError(t, ValidateOnDelete(t.Context(), searcher, team))
 		require.NotNil(t, searcher.request)
 		assert.Equal(t, int64(1), searcher.request.Limit)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searcher.request.ResultFormat)
+		assert.Equal(t, []string{resource.SEARCH_FIELD_NAME}, searcher.request.Fields)
 		assert.Equal(t, &resourcepb.ResourceKey{
 			Namespace: team.Namespace,
 			Group:     foldersv1.FolderResourceInfo.GroupResource().Group,
@@ -373,9 +378,21 @@ func TestValidateOnDelete(t *testing.T) {
 		assert.ErrorContains(t, err, "remove folder ownership before deleting the team")
 	})
 
-	t.Run("blocks when the search backend returns a row without total hits", func(t *testing.T) {
+	t.Run("blocks when the search backend returns a table row without total hits", func(t *testing.T) {
 		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{}}},
+		}}
+
+		err := ValidateOnDelete(t.Context(), searcher, team)
+
+		require.Error(t, err)
+		assert.True(t, apierrors.IsConflict(err))
+	})
+
+	t.Run("blocks when the search backend returns a field-value row without total hits", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "folder-1"}}},
 		}}
 
 		err := ValidateOnDelete(t.Context(), searcher, team)
@@ -400,6 +417,16 @@ func TestValidateOnDelete(t *testing.T) {
 
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "search unavailable")
+	})
+
+	t.Run("does not expose unstructured search failures", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{err: status.Error(codes.Internal, "private database failure")}
+
+		err := ValidateOnDelete(t.Context(), searcher, team)
+
+		apiStatus := responsewriters.ErrorToAPIStatus(err)
+		require.Equal(t, int32(http.StatusInternalServerError), apiStatus.Code)
+		require.Equal(t, http.StatusText(http.StatusInternalServerError), apiStatus.Message)
 	})
 
 	t.Run("allows deletion when folder search is not configured", func(t *testing.T) {
@@ -483,7 +510,7 @@ func (s *stubReconciler) Validate(groups []string) error {
 // returns a fixed set of rows (or an error) with TotalHits derived from them,
 // regardless of the query, and records the last request. searchFunc, when set,
 // overrides the response so a test can decouple TotalHits from the rows (e.g. a
-// count-only response) — mirroring FakeUserLegacySearchClient's SearchFunc hook.
+// count-only response).
 type fakeTeamSearchClient struct {
 	resourcepb.ResourceIndexClient
 	rows          []*resourcepb.ResourceTableRow
@@ -512,6 +539,26 @@ func teamRow(name string) *resourcepb.ResourceTableRow {
 	return &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: name}}
 }
 
+func TestValidateTitleUniqueSearchErrors(t *testing.T) {
+	plainErr := errors.New("index down")
+	for name, client := range map[string]*deleteValidationSearchClient{
+		"embedded": {response: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+			Code: http.StatusServiceUnavailable, Message: "index unavailable",
+		}}},
+		"transport": {err: status.Error(codes.Unavailable, "index unavailable")},
+		"plain":     {err: plainErr},
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := validateTitleUnique(t.Context(), client, "stacks-1", "new-team", "Engineering")
+			if name == "plain" {
+				require.ErrorIs(t, err, plainErr)
+			} else {
+				require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
+			}
+		})
+	}
+}
+
 func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-1"}
 	newTeam := &iamv0alpha1.Team{
@@ -528,6 +575,21 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 	t.Run("existing team with the title is rejected as conflict", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), requester)
 		client := &fakeTeamSearchClient{rows: []*resourcepb.ResourceTableRow{teamRow("other-uid")}}
+		err := ValidateOnCreate(ctx, client, newTeam, legacy.NoopExternalGroupReconciler{})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsConflict(err), "expected a Conflict error, got %v", err)
+	})
+
+	t.Run("existing team returned as field values is rejected as conflict", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), requester)
+		client := &fakeTeamSearchClient{searchFunc: func(*resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			return &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key: &resourcepb.ResourceKey{Name: "other-uid"},
+				}},
+			}, nil
+		}}
 		err := ValidateOnCreate(ctx, client, newTeam, legacy.NoopExternalGroupReconciler{})
 		require.Error(t, err)
 		assert.True(t, apierrors.IsConflict(err), "expected a Conflict error, got %v", err)
@@ -577,7 +639,8 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 		require.Len(t, client.lastReq.Options.Fields, 1)
 		assert.Equal(t, resource.SEARCH_FIELD_TITLE, client.lastReq.Options.Fields[0].Key)
 		assert.Equal(t, string(selection.DoubleEquals), client.lastReq.Options.Fields[0].Operator)
-		assert.Equal(t, []string{resource.SEARCH_FIELD_TITLE}, client.lastReq.Fields)
+		assert.Equal(t, []string{resource.SEARCH_FIELD_NAME}, client.lastReq.Fields)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.lastReq.ResultFormat)
 	})
 
 	t.Run("unparseable requester namespace is an internal error", func(t *testing.T) {

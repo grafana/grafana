@@ -38,18 +38,16 @@ import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboar
 import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
-  getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
-  getVizPanelKeyForPanelId,
-  getGridItemKeyForPanelId,
   useDashboard,
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
-import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -494,16 +492,6 @@ export class DefaultGridLayoutManager
 
   public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
     return canGroupSelection(items, target);
-  }
-
-  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const groupEdit = buildGroupEdit(items, target);
-
-    if (!groupEdit) {
-      return;
-    }
-
-    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {

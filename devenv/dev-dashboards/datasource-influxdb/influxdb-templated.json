@@ -11,7 +11,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana-testdata-datasource",
             "version": "v0",
             "spec": {}
           },
@@ -240,7 +240,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana-testdata-datasource",
             "version": "v0",
             "datasource": {
               "name": "gdev-influxdb1-influxql"
@@ -271,7 +271,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana-testdata-datasource",
             "version": "v0",
             "datasource": {
               "name": "gdev-influxdb1-influxql"
@@ -365,7 +365,7 @@
       },
       {
         "kind": "AdhocVariable",
-        "group": "",
+        "group": "grafana-testdata-datasource",
         "datasource": {
           "name": "gdev-influxdb1-influxql"
         },

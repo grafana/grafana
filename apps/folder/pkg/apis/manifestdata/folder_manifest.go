@@ -24,6 +24,9 @@ var appManifestData = app.ManifestData{
 	AppDisplayName:   "folder",
 	Group:            "folder.grafana.app",
 	PreferredVersion: "v1",
+	Embed: map[string]app.ManifestResourceEmbed{
+		"folders": {ReembedVersion: 1},
+	},
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1",
@@ -34,6 +37,18 @@ var appManifestData = app.ManifestData{
 					Plural:     "Folders",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Embed: &app.ManifestVersionKindEmbed{
+						Fields: []app.ManifestVersionKindEmbedField{
+							{
+								Name: "title",
+								Path: "spec.title",
+							},
+							{
+								Name: "description",
+								Path: "spec.description",
+							},
+						},
+					},
 					SelectableFields: []string{
 						"spec.title",
 					},
@@ -55,6 +70,18 @@ var appManifestData = app.ManifestData{
 					Plural:     "Folders",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Embed: &app.ManifestVersionKindEmbed{
+						Fields: []app.ManifestVersionKindEmbedField{
+							{
+								Name: "title",
+								Path: "spec.title",
+							},
+							{
+								Name: "description",
+								Path: "spec.description",
+							},
+						},
+					},
 					SelectableFields: []string{
 						"spec.title",
 					},

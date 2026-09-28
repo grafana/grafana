@@ -18,7 +18,7 @@ import (
 // If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
 // The repository name and type are stored as labels
 type JobApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration    `json:",inline"`
+	v1.TypeMetaApplyConfiguration    `json:""`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *JobSpecApplyConfiguration   `json:"spec,omitempty"`
 	Status                           *JobStatusApplyConfiguration `json:"status,omitempty"`

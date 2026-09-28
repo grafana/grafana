@@ -32,6 +32,7 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { Actions } from './new-toolbar/Actions';
 import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
+import { PlanningBanner } from './new-toolbar/PlanningBanner';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -39,7 +40,15 @@ interface Props {
 }
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
+  const { planning } = dashboard.useState();
   const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
+
+  // A plan preview replaces the whole toolbar with just the banner: the preview never enters
+  // edit mode, so none of the normal actions (Edit, Save, Settings, Share) apply, and checking
+  // this before any other branching keeps both toolbar variants consistent.
+  if (planning) {
+    return <AppChromeUpdate actions={<PlanningBanner planning={planning} />} />;
+  }
 
   return hasNewToolbar ? (
     <AppChromeUpdate
@@ -124,15 +133,14 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  if (isReadOnlyRepo) {
-    toolbarActions.push({
-      group: 'icon-actions',
-      condition: true,
-      render: () => {
-        return <ReadOnlyBadge repoType={repoType} />;
-      },
-    });
-  }
+  // Only users who could otherwise edit need to know why they can't.
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isReadOnlyRepo && dashboard.canEditDashboard(),
+    render: () => {
+      return <ReadOnlyBadge key="read-only-badge" repoType={repoType} />;
+    },
+  });
 
   // Visible to viewers too, so they know the dashboard is externally managed;
   // the badge itself gates its actions (source/repo links) by permission.
@@ -173,8 +181,8 @@ export function ToolbarActions({ dashboard }: Props) {
               key="add-visualization"
               testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
               label={t('dashboard.add-menu.visualization', 'Visualization')}
-              onClick={() => {
-                const vizPanel = dashboard.onCreateNewPanel();
+              onClick={async () => {
+                const vizPanel = await dashboard.onCreateNewPanel();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
                 openPanelEditor(dashboard, vizPanel, true);
               }}

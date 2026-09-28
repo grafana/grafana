@@ -11,13 +11,13 @@ import (
 // Interface provides access to all the informers in this group version.
 type Interface interface {
 	// Connections returns a ConnectionInformer.
-	Connections() ConnectionInformer
+	Connections() TypedConnectionInformer
 	// HistoricJobs returns a HistoricJobInformer.
-	HistoricJobs() HistoricJobInformer
+	HistoricJobs() TypedHistoricJobInformer
 	// Jobs returns a JobInformer.
-	Jobs() JobInformer
+	Jobs() TypedJobInformer
 	// Repositories returns a RepositoryInformer.
-	Repositories() RepositoryInformer
+	Repositories() TypedRepositoryInformer
 }
 
 type version struct {
@@ -31,22 +31,22 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// Connections returns a ConnectionInformer.
-func (v *version) Connections() ConnectionInformer {
+// Connections returns a TypedConnectionInformer.
+func (v *version) Connections() TypedConnectionInformer {
 	return &connectionInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// HistoricJobs returns a HistoricJobInformer.
-func (v *version) HistoricJobs() HistoricJobInformer {
+// HistoricJobs returns a TypedHistoricJobInformer.
+func (v *version) HistoricJobs() TypedHistoricJobInformer {
 	return &historicJobInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// Jobs returns a JobInformer.
-func (v *version) Jobs() JobInformer {
+// Jobs returns a TypedJobInformer.
+func (v *version) Jobs() TypedJobInformer {
 	return &jobInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// Repositories returns a RepositoryInformer.
-func (v *version) Repositories() RepositoryInformer {
+// Repositories returns a TypedRepositoryInformer.
+func (v *version) Repositories() TypedRepositoryInformer {
 	return &repositoryInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

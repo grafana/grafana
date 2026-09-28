@@ -1,11 +1,15 @@
 import { type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
-import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/pluginBridgeProbe';
+import { canAccessPluginPage } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
 import { accessibleAppPage, drilldownActiveCta, isDrilldownAvailable } from './pluginPages';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   canAccessPluginPage: jest.fn(),
+}));
+
+jest.mock('app/features/alerting/unified/hooks/pluginBridgeProbe', () => ({
   isPluginEnabled: jest.fn(),
   probePlugin: jest.fn(),
 }));

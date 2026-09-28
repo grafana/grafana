@@ -22,6 +22,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { TableNG } from '@grafana/ui/unstable';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -40,6 +41,11 @@ type Props = {
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  // Render the top table with TableNG instead of the legacy Table.
+  useTableNG?: boolean;
+  // Feature-toggle values for TableNG, passed in by the host. See FlameGraphContainer's props.
+  tableRefreshEnabled?: boolean;
+  contentAwareWidthsEnabled?: boolean;
 };
 
 const FlameGraphTopTableContainer = memo(
@@ -53,10 +59,13 @@ const FlameGraphTopTableContainer = memo(
     onSandwich,
     onTableSort,
     colorScheme,
+    useTableNG,
+    tableRefreshEnabled,
+    contentAwareWidthsEnabled,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
-    const styles = useStyles2(getStyles);
+    const styles = useStyles2(getStyles, Boolean(useTableNG), tableRefreshEnabled);
     const theme = useTheme2();
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
@@ -78,22 +87,44 @@ const FlameGraphTopTableContainer = memo(
               onSandwich,
               theme,
               colorScheme,
+              Boolean(useTableNG),
               search,
               sandwichItem
             );
+
+            const onSortByChange = (s: TableSortByFieldState[]) => {
+              if (s && s.length) {
+                onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+              }
+              setSort(s);
+            };
+
+            if (useTableNG) {
+              // TableNG sizes its root grid to its container (CSS 100%) rather than the height prop directly,
+              // so it needs a definite-size ancestor here — AutoSizer's render prop doesn't provide one on its own.
+              return (
+                <div style={{ width, height }}>
+                  <TableNG
+                    sortBy={sort}
+                    sortByBehavior="managed"
+                    onSortByChange={onSortByChange}
+                    data={frame}
+                    width={width}
+                    height={height}
+                    tableRefreshEnabled={tableRefreshEnabled}
+                    contentAwareWidthsEnabled={contentAwareWidthsEnabled}
+                    // The pane's width is already divided up between the three fixed columns and
+                    // Symbol, so a horizontal scrollbar would hide columns rather than reveal them.
+                    // Symbol truncates to fit instead — its full value is a click away in the flame
+                    // graph, and in a narrow split pane it truncates either way.
+                    preventHorizontalOverflow
+                  />
+                </div>
+              );
+            }
+
             return (
-              <Table
-                initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-              />
+              <Table initialSortBy={sort} onSortByChange={onSortByChange} data={frame} width={width} height={height} />
             );
           }}
         </AutoSizer>
@@ -157,17 +188,24 @@ function buildTableDataFrame(
   onSandwich: (str?: string) => void,
   theme: GrafanaTheme2,
   colorScheme: ColorScheme | ColorSchemeDiff,
+  useTableNG: boolean,
   search?: string,
   sandwichItem?: string
 ): DataFrame {
-  const actionField: Field = createActionField(onSandwich, onSearch, search, sandwichItem);
+  const actionField: Field = createActionField(onSandwich, onSearch, useTableNG, search, sandwichItem);
 
   const symbolField: Field = {
     type: FieldType.string,
     name: 'Symbol',
     values: [],
     config: {
-      custom: { width: width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 2 },
+      // TableNG lays its columns out inside `width` minus its frame and vertical scrollbar, so
+      // spelling out a width here that fills `width` leaves the grid scrolling sideways. Leaving
+      // Symbol unsized instead makes it the one column TableNG sizes itself, which is the same "fill
+      // whatever the fixed columns don't use" intent without having to know those chrome widths —
+      // see `preventHorizontalOverflow` at the call site, which keeps Symbol inside the pane. The
+      // legacy table has no such notion, so it still gets told exactly how wide to make it.
+      custom: useTableNG ? {} : { width: width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 2 },
       links: [
         {
           title: 'Highlight symbol',
@@ -185,7 +223,9 @@ function buildTableDataFrame(
   let frame;
 
   if (data.isDiffFlamegraph()) {
-    symbolField.config.custom.width = width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 3;
+    if (!useTableNG) {
+      symbolField.config.custom.width = width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 3;
+    }
 
     const baselineField = createNumberField('Baseline', 'percent');
     const comparisonField = createNumberField('Comparison', 'percent');
@@ -284,6 +324,7 @@ const actionColumnWidth = 61;
 function createActionField(
   onSandwich: (str?: string) => void,
   onSearch: (str: string) => void,
+  useTableNG: boolean,
   search?: string,
   sandwichItem?: string
 ): Field {
@@ -298,6 +339,7 @@ function createActionField(
           search={search}
           sandwichItem={sandwichItem}
           rowIndex={props.rowIndex}
+          useTableNG={useTableNG}
         />
       );
     },
@@ -305,6 +347,8 @@ function createActionField(
 
   const actionFieldTableConfig: TableFieldOptions = {
     filterable: false,
+    resizable: false,
+    sortable: false,
     width: actionColumnWidth,
     hideHeader: true,
     inspect: false,
@@ -329,6 +373,7 @@ type ActionCellProps = {
   sandwichItem?: string;
   onSearch: (symbol: string) => void;
   onSandwich: (symbol: string) => void;
+  useTableNG: boolean;
 };
 
 function ActionCell(props: ActionCellProps) {
@@ -337,39 +382,70 @@ function ActionCell(props: ActionCellProps) {
   const isSearched = props.search === `^${escapeStringForRegex(String(symbol))}$`;
   const isSandwiched = props.sandwichItem === symbol;
 
+  const searchButton = (
+    <IconButton
+      key="search"
+      className={styles.actionCellButton}
+      name={'search'}
+      variant={isSearched ? 'primary' : 'secondary'}
+      tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
+      aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
+      onClick={() => {
+        props.onSearch(isSearched ? '' : symbol);
+      }}
+    />
+  );
+
+  const sandwichButton = (
+    <IconButton
+      key="sandwich"
+      className={styles.actionCellButton}
+      name={'gf-show-context'}
+      tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+      variant={isSandwiched ? 'primary' : 'secondary'}
+      aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+      onClick={() => {
+        props.onSandwich(isSandwiched ? undefined : symbol);
+      }}
+    />
+  );
+
+  // The legacy Table right-aligns numeric cells (this actions field is FieldType.number) by rendering its
+  // overflow container with direction: rtl, which flips the visual order of these two buttons to
+  // sandwich-then-search even though they're written search-then-sandwich below. TableNG doesn't do that
+  // right-align trick, so its custom cells render in DOM order — swap that order here for TableNG so both
+  // table implementations show the buttons in the same left-to-right order.
   return (
     <div className={styles.actionCellWrapper}>
-      <IconButton
-        className={styles.actionCellButton}
-        name={'search'}
-        variant={isSearched ? 'primary' : 'secondary'}
-        tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
-        aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
-        onClick={() => {
-          props.onSearch(isSearched ? '' : symbol);
-        }}
-      />
-      <IconButton
-        className={styles.actionCellButton}
-        name={'gf-show-context'}
-        tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
-        variant={isSandwiched ? 'primary' : 'secondary'}
-        aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
-        onClick={() => {
-          props.onSandwich(isSandwiched ? undefined : symbol);
-        }}
-      />
+      {props.useTableNG ? (
+        <>
+          {sandwichButton}
+          {searchButton}
+        </>
+      ) : (
+        <>
+          {searchButton}
+          {sandwichButton}
+        </>
+      )}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, useTableNG: boolean, tableRefreshEnabled?: boolean) => {
   return {
     topTableContainer: css({
       label: 'topTableContainer',
-      padding: theme.spacing(1),
-      backgroundColor: theme.colors.background.secondary,
+      padding: useTableNG ? 0 : theme.spacing(1),
+      backgroundColor: useTableNG ? 'transparent' : theme.colors.background.secondary,
       height: '100%',
+
+      '& .rdg': {
+        '--rdg-background-color': theme.colors.background.secondary,
+        '--rdg-header-background-color': tableRefreshEnabled
+          ? theme.components.table.headerBackground
+          : theme.colors.background.secondary,
+      },
     }),
   };
 };

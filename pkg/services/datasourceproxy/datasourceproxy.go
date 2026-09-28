@@ -141,8 +141,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	proxy, err := pluginproxy.NewDataSourceProxy(loader, plugin.Routes, hc, proxyPath, p.proxyCfg,
 		p.HTTPClientProvider, p.OAuthTokenService, p.tracer, p.features)
 	if err != nil {
-		var urlValidationError validation.URLValidationError
-		if errors.As(err, &urlValidationError) {
+		if _, ok := errors.AsType[validation.URLValidationError](err); ok {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.URL), err)
 		} else {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed creating data source proxy", err)

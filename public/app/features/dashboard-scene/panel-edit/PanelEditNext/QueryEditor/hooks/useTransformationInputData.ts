@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
-import { type DataFrame, type DataTransformContext, transformDataFrame } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { type DataFrame } from '@grafana/data';
 
 import { type Transformation } from '../types';
+
+import { NO_CONFIGS, precedingTransformations, useTransformedFrames } from './useTransformedFrames';
 
 interface UseTransformationInputDataOptions {
   selectedTransformation: Transformation | null;
@@ -12,8 +13,8 @@ interface UseTransformationInputDataOptions {
 }
 
 /**
- * Returns the input data for the selected transformation — the output of everything before it
- * in the pipeline. The first transformation gets raw query data.
+ * Returns the input data for the selected transformation — the output of everything before it in
+ * the pipeline (see {@link precedingTransformations}).
  *
  * Without this, editors always see raw query data regardless of where they sit in the pipeline.
  * That causes false errors like "Organize fields only works with a single frame" even when
@@ -29,37 +30,13 @@ export function useTransformationInputData({
   allTransformations,
   rawData,
 }: UseTransformationInputDataOptions): DataFrame[] {
-  const [inputData, setInputData] = useState<DataFrame[]>(rawData);
+  const precedingConfigs = useMemo(
+    () =>
+      // TransformationEditorRenderer won't render without a selected transformation, but the hook
+      // accepts null so we guard here too and fall back to rawData.
+      selectedTransformation ? precedingTransformations(selectedTransformation, allTransformations) : NO_CONFIGS,
+    [selectedTransformation, allTransformations]
+  );
 
-  useEffect(() => {
-    // TransformationEditorRenderer won't render without a selected transformation, but
-    // the hook accepts null so we guard here too and fall back to rawData.
-    if (!selectedTransformation) {
-      setInputData(rawData);
-      return;
-    }
-
-    // Where in the pipeline is this transformation? Everything before it needs to run first.
-    const selectedIndex = allTransformations.findIndex(
-      ({ transformId }) => transformId === selectedTransformation.transformId
-    );
-
-    // First in the pipeline (or not found) — raw query data is the input.
-    if (selectedIndex <= 0) {
-      setInputData(rawData);
-      return;
-    }
-
-    // Collect the DataTransformerConfig for every transformation that runs before the selected one.
-    const precedingConfigs = allTransformations.slice(0, selectedIndex).map(({ transformConfig }) => transformConfig);
-    // Provide template variable interpolation so transformers can resolve $variables in their options.
-    const ctx: DataTransformContext = { interpolate: (v: string) => getTemplateSrv().replace(v) };
-
-    // Run the pipeline up to (but not including) the selected transformation and update state when it emits.
-    const subscription = transformDataFrame(precedingConfigs, rawData, ctx).subscribe(setInputData);
-
-    return () => subscription.unsubscribe();
-  }, [selectedTransformation, allTransformations, rawData]);
-
-  return inputData;
+  return useTransformedFrames(precedingConfigs, rawData);
 }

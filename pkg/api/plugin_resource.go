@@ -118,8 +118,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 }
 
 func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
-	var maxBytesErr *http.MaxBytesError
-	if errors.As(err, &maxBytesErr) {
+	if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 		resp := response.Error(http.StatusRequestEntityTooLarge, "Request body too large", err)
 		resp.WriteTo(reqCtx)
 		return

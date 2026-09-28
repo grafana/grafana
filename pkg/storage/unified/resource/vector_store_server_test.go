@@ -291,6 +291,9 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 		{"oversized uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("u", 257) }},
 		{"oversized multibyte uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("ü", 257) }},
 		{"oversized subresource", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Subresource = strings.Repeat("s", 257) }},
+		{"oversized content", func(r *resourcepb.VectorUpsertRequest) {
+			r.Inputs[0].Content = strings.Repeat("x", maxContentBytes+1)
+		}},
 		{"oversized folder", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Folder = strings.Repeat("f", 257) }},
 	}
 	for _, tc := range cases {

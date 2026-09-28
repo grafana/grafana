@@ -7,11 +7,16 @@ import {
   mockPromRuleNamespace,
 } from 'app/features/alerting/unified/mocks';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
-import * as store from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { AlertStatesDataLayer } from './AlertStatesDataLayer';
+
+const mockGet = jest.fn();
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ get: mockGet }),
+}));
 
 jest.mock('../utils/utils', () => ({
   ...jest.requireActual('../utils/utils'),
@@ -22,8 +27,7 @@ function getTestContext() {
   jest.clearAllMocks();
   config.publicDashboardAccessToken = '';
   grantUserPermissions(Object.values(AccessControlAction));
-  const dispatchMock = jest.spyOn(store, 'dispatch');
-  return { dispatchMock };
+  return { getMock: mockGet };
 }
 
 describe('AlertStatesDataLayer', () => {
@@ -52,8 +56,8 @@ describe('AlertStatesDataLayer', () => {
       }),
     ];
 
-    const { dispatchMock } = getTestContext();
-    dispatchMock.mockResolvedValue({ data: nameSpaces });
+    const { getMock } = getTestContext();
+    getMock.mockResolvedValue({ data: { groups: nameSpaces.flatMap((namespace) => namespace.groups) } });
 
     const layer = new AlertStatesDataLayer({ name: 'Alert States' });
     layer.activate();
@@ -93,8 +97,8 @@ describe('AlertStatesDataLayer', () => {
       }),
     ];
 
-    const { dispatchMock } = getTestContext();
-    dispatchMock.mockResolvedValue({ data: nameSpaces });
+    const { getMock } = getTestContext();
+    getMock.mockResolvedValue({ data: { groups: nameSpaces.flatMap((namespace) => namespace.groups) } });
 
     const layer = new AlertStatesDataLayer({ name: 'Alert States' });
     layer.activate();

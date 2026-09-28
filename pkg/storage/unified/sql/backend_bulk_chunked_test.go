@@ -77,7 +77,7 @@ func buildMultiVersionBulk(names []string, versions, padBytes int, deleteLatest 
 	expected := map[string][]byte{}
 	for _, name := range names {
 		var lastValue []byte
-		for v := 0; v < versions; v++ {
+		for v := range versions {
 			action := resourcepb.BulkRequest_MODIFIED
 			if v == 0 {
 				action = resourcepb.BulkRequest_ADDED

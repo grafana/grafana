@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
@@ -294,7 +295,7 @@ func setupServiceWithFakeStore(t *testing.T, store accesscontrol.Store, zClient 
 	svc := ProvideOSSService(
 		cfg, store, resourcepermissions.NewActionSetService(), localcache.ProvideService(),
 		featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), tracing.InitializeTracerForTest(),
-		nil, permreg.ProvidePermissionRegistry(), nil,
+		nil, permreg.ProvidePermissionRegistry(), nil, iam.Features{},
 	)
 	if zClient != nil {
 		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc, nil, false)

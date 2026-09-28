@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import type { JSX } from 'react';
+import { useRef, type JSX } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { type ButtonVariant } from '../Button/Button';
@@ -71,18 +71,28 @@ export const ConfirmModal = ({
   disabled,
 }: ConfirmModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const confirmPromptRef = useRef<HTMLInputElement>(null);
 
   return (
-    <Modal className={cx(styles.modal, modalClass)} title={title} isOpen={isOpen} onDismiss={onDismiss}>
+    <Modal
+      className={cx(styles.modal, modalClass)}
+      title={title}
+      isOpen={isOpen}
+      onDismiss={onDismiss}
+      initialFocus={confirmationText && !disabled ? confirmPromptRef : confirmButtonRef}
+    >
       <ConfirmContent
         body={body}
         description={description}
         confirmButtonLabel={confirmText}
+        confirmButtonRef={confirmButtonRef}
+        confirmButtonVariant={confirmButtonVariant ?? confirmVariant}
         dismissButtonLabel={dismissText}
         dismissButtonVariant={dismissVariant}
         confirmPromptText={confirmationText}
+        confirmPromptRef={confirmPromptRef}
         alternativeButtonLabel={alternativeText}
-        confirmButtonVariant={confirmButtonVariant ?? confirmVariant}
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         onAlternative={onAlternative}

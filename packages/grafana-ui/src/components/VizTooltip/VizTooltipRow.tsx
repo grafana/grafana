@@ -4,13 +4,14 @@ import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { TimeCompareColorMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { VizTooltipColorPlacement, type VizTooltipItem } from './types';
+import { VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   /** The formatted value to display. Widened from `VizTooltipItem.value` to also accept numbers, null, and ReactNode. */
@@ -63,10 +64,15 @@ export const VizTooltipRow = ({
 
   const deltaDisplay = delta == null ? null : `(${delta.numeric > 0 ? '+' : ''}${delta.text})`;
 
+  // Same as value takes the series color, which is only known here as a prop, so it cannot come
+  // from a theme-derived class like the other modes.
+  const deltaTakesValueColor = delta?.colorMode === TimeCompareColorMode.SameAsValue;
+
   const deltaNode =
     delta == null ? null : (
       <span
-        className={delta.numeric > 0 ? styles.deltaPositive : delta.numeric < 0 ? styles.deltaNegative : undefined}
+        className={deltaTakesValueColor ? undefined : getDeltaClass(delta, styles)}
+        style={deltaTakesValueColor ? { color } : undefined}
       >{` ${deltaDisplay}`}</span>
     );
 
@@ -246,6 +252,22 @@ export const VizTooltipRow = ({
   );
 };
 
+/**
+ * Standard treats an increase as favorable, inverted flips that. A delta of zero is left in the
+ * default text color since it reads as neither an increase nor a decrease. Same as value never
+ * reaches here — its color comes from the row's series color instead of the theme.
+ */
+const getDeltaClass = (delta: VizTooltipDelta, styles: ReturnType<typeof getStyles>) => {
+  if (delta.numeric === 0 || Number.isNaN(delta.numeric)) {
+    return undefined;
+  }
+
+  const isIncrease = delta.numeric > 0;
+  const isFavorable = delta.colorMode === TimeCompareColorMode.Inverted ? !isIncrease : isIncrease;
+
+  return isFavorable ? styles.deltaFavorable : styles.deltaUnfavorable;
+};
+
 const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string) => ({
   contentWrapper: css({
     display: 'flex',
@@ -282,10 +304,10 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     fontWeight: theme.typography.fontWeightBold,
     color: theme.colors.text.maxContrast,
   }),
-  deltaPositive: css({
+  deltaFavorable: css({
     color: theme.colors.success.text,
   }),
-  deltaNegative: css({
+  deltaUnfavorable: css({
     color: theme.colors.error.text,
   }),
   copy: css({

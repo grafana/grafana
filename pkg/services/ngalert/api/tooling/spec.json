@@ -4595,7 +4595,7 @@
           },
           {
             "type": "string",
-            "description": "Filter by rule UID. Required the state history is configured to use annotations for storage.",
+            "description": "Filter by rule UID. Required when annotations is the state history read backend, including the primary of a multiple backend. Optional for Loki.",
             "name": "ruleUID",
             "in": "query"
           },
@@ -4616,6 +4616,12 @@
         "responses": {
           "200": {
             "$ref": "#/responses/StateHistory"
+          },
+          "400": {
+            "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           },
           "403": {
             "description": "ForbiddenError",

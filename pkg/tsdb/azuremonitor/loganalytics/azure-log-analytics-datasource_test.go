@@ -564,6 +564,134 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 	}
 }
 
+func TestBuildLogAnalyticsQueryRequiresMatchingTierSetting(t *testing.T) {
+	tests := []struct {
+		name                 string
+		logTierJSON          string
+		basicLogsEnabled     bool
+		auxiliaryLogsEnabled bool
+		expectedEnabled      bool
+		expectedError        string
+	}{
+		{
+			name:             "legacy query uses Basic Logs setting",
+			basicLogsEnabled: true,
+			expectedEnabled:  true,
+		},
+		{
+			name:                 "legacy query is not enabled by Auxiliary Logs setting",
+			auxiliaryLogsEnabled: true,
+			expectedEnabled:      false,
+			expectedError:        "Basic Logs queries are disabled for this data source",
+		},
+		{
+			name:             "Basic query uses Basic Logs setting",
+			logTierJSON:      `, "logTier": "Basic"`,
+			basicLogsEnabled: true,
+			expectedEnabled:  true,
+		},
+		{
+			name:                 "Basic query is not enabled by Auxiliary Logs setting",
+			logTierJSON:          `, "logTier": "Basic"`,
+			auxiliaryLogsEnabled: true,
+			expectedEnabled:      false,
+			expectedError:        "Basic Logs queries are disabled for this data source",
+		},
+		{
+			name:                 "Auxiliary query uses Auxiliary Logs setting",
+			logTierJSON:          `, "logTier": "Auxiliary"`,
+			auxiliaryLogsEnabled: true,
+			expectedEnabled:      true,
+		},
+		{
+			name:             "Auxiliary query is not enabled by Basic Logs setting",
+			logTierJSON:      `, "logTier": "Auxiliary"`,
+			basicLogsEnabled: true,
+			expectedEnabled:  false,
+			expectedError:    "Auxiliary Logs queries are disabled for this data source",
+		},
+		{
+			name:                 "unknown tier is disabled",
+			logTierJSON:          `, "logTier": "Unknown"`,
+			basicLogsEnabled:     true,
+			auxiliaryLogsEnabled: true,
+			expectedEnabled:      false,
+			expectedError:        `unsupported Logs query tier "Unknown"`,
+		},
+	}
+
+	appInsightsRegExp := regexp.MustCompile("(?i)providers/microsoft.insights/components")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			query := backend.DataQuery{
+				JSON: fmt.Appendf(nil, `{
+					"queryType": "Azure Log Analytics",
+					"azureLogAnalytics": {
+						"resources": ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/TestDataWorkspace"],
+						"query": "Perf",
+						"resultFormat": "table",
+						"basicLogsQuery": true%s
+					}
+				}`, tt.logTierJSON),
+				RefID:     "A",
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
+			}
+			dsInfo := types.DatasourceInfo{
+				JSONData: map[string]any{
+					"basicLogsEnabled":     tt.basicLogsEnabled,
+					"auxiliaryLogsEnabled": tt.auxiliaryLogsEnabled,
+				},
+			}
+
+			result, err := buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp, false)
+			if !tt.expectedEnabled {
+				require.EqualError(t, err, tt.expectedError)
+				require.Nil(t, result)
+				return
+			}
+
+			require.NoError(t, err)
+			require.True(t, result.BasicLogs)
+			require.Contains(t, result.URL, "/search")
+		})
+	}
+}
+
+func TestGetUsageQueryStart(t *testing.T) {
+	to := time.Date(2026, 9, 11, 0, 0, 0, 0, time.UTC)
+	from := to.Add(-10 * 24 * time.Hour)
+	basicTier := dataquery.AzureLogsQueryLogTierBasic
+	auxiliaryTier := dataquery.AzureLogsQueryLogTierAuxiliary
+
+	tests := []struct {
+		name     string
+		logTier  *dataquery.AzureLogsQueryLogTier
+		expected time.Time
+	}{
+		{
+			name:     "legacy usage requests retain the Basic Logs eight day limit",
+			expected: to.Add(-8 * 24 * time.Hour),
+		},
+		{
+			name:     "explicit Basic usage requests retain the eight day limit",
+			logTier:  &basicTier,
+			expected: to.Add(-8 * 24 * time.Hour),
+		},
+		{
+			name:     "Auxiliary usage requests retain the full dashboard range",
+			logTier:  &auxiliaryTier,
+			expected: from,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, getUsageQueryStart(from, to, tt.logTier))
+		})
+	}
+}
+
 func TestLogAnalyticsCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	url := "http://ds/"

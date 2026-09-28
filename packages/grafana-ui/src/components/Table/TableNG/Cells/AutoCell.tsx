@@ -31,7 +31,7 @@ type CellWhiteSpace = 'pre-line' | 'pre-wrap';
  * specificity, so the winner would come down to the order emotion happened to insert them.
  */
 function buildAutoCellStyles(
-  { textWrap, shouldOverflow, maxHeight }: TableCellStyleOptions,
+  { textWrap, shouldOverflow, hoverOverflow, maxHeight }: TableCellStyleOptions,
   whiteSpace: CellWhiteSpace,
   // Bounds the hover expansion. Worth it where a single value can be arbitrarily large, since an
   // unbounded cell grows past the panel and puts its own content out of reach. Applies in both the
@@ -61,7 +61,7 @@ function buildAutoCellStyles(
   return css({
     ...(textWrap && { whiteSpace }),
     ...(shouldOverflow && {
-      [getActiveCellSelector(Boolean(maxHeight))]: {
+      [getActiveCellSelector(Boolean(maxHeight), hoverOverflow)]: {
         whiteSpace,
         ...(boundExpansion && maxHeight == null && expansionBounds),
       },
@@ -73,7 +73,7 @@ function buildAutoCellStyles(
         display: '-webkit-box',
         WebkitBoxOrient: 'vertical',
         WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
-        [getActiveCellSelector(true)]: {
+        [getActiveCellSelector(true, hoverOverflow)]: {
           display: 'flex',
           WebkitLineClamp: 'none',
           WebkitBoxOrient: 'unset',

@@ -281,7 +281,7 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 		}
 
 		grStart := time.Now()
-		if err := td.dataStore.batchDelete(ctx, keys); err != nil {
+		if err := td.dataStore.BatchDelete(ctx, keys); err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, "batch delete failed")
 			return err

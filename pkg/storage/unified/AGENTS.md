@@ -8,6 +8,10 @@ Unified storage/search runs in-process (default), as a standalone storage server
 - **Server side** (may deploy separately): `resource/`, `sql/`, `search/`, `migrations/`, `parquet/`.
 - **Contract** (used by both sides): `proto/`, `resourcepb/`.
 
+## Backend selection
+
+When selecting between legacy and unified backends, use `dualwrite.NewSelector[T]` with a caller-defined interface and call `Resolve(ctx)` for each operation. Keep unified RPC translation in the unified implementation; legacy backends should not implement `resourcepb.ResourceIndexClient`. `resource.NewSearchClient` is retained for existing callers; do not add new uses.
+
 ## Compatibility rules
 
 Any mix of versions must work during rollout: new client ↔ old server and old client ↔ new server.

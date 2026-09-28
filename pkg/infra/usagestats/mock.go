@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"context"
+	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,9 +23,7 @@ func (usm *UsageStatsMock) GetUsageReport(ctx context.Context) (Report, error) {
 		fnMetrics, err := fn(ctx)
 		require.NoError(usm.T, err)
 
-		for name, value := range fnMetrics {
-			all[name] = value
-		}
+		maps.Copy(all, fnMetrics)
 	}
 	return Report{Metrics: all}, nil
 }

@@ -3,6 +3,7 @@ package builders
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"sort"
 
 	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
@@ -162,10 +163,8 @@ func appendSourceUID(uids []string, uid string) []string {
 	if expr.NodeTypeFromDatasourceUID(uid) != expr.TypeDatasourceNode {
 		return uids
 	}
-	for _, existing := range uids {
-		if existing == uid {
-			return uids
-		}
+	if slices.Contains(uids, uid) {
+		return uids
 	}
 	return append(uids, uid)
 }

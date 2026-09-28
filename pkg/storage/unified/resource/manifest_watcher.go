@@ -107,14 +107,14 @@ type ManifestWatcher struct {
 	log          log.Logger
 	client       dynamic.Interface
 	pollInterval time.Duration
-	onChange     func([]app.Manifest)
+	onChange     func([]*app.ManifestData)
 	metrics      *manifestWatcherMetrics
 
 	// byName is the current snapshot, keyed by apiserver object name. The name key
 	// lets a poll keep a known manifest when the same object later fails to
 	// convert. Manifests() derives the ordered slice from it.
 	mu       sync.RWMutex
-	byName   map[string]app.Manifest
+	byName   map[string]*app.ManifestData
 	lastHash string
 }
 
@@ -192,7 +192,7 @@ func manifestAuthWrapper(exchanger authnlib.TokenExchanger) transport.WrapperFun
 // NewManifestWatcher creates a ManifestWatcher as a dskit service. The initial
 // poll runs in the starting state, so anything that waits for Running observes a
 // populated snapshot. onChange may be nil.
-func NewManifestWatcher(cfg ManifestWatcherConfig, reg prometheus.Registerer, onChange func([]app.Manifest)) (*ManifestWatcher, error) {
+func NewManifestWatcher(cfg ManifestWatcherConfig, reg prometheus.Registerer, onChange func([]*app.ManifestData)) (*ManifestWatcher, error) {
 	restCfg, err := newManifestRESTConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("building manifest REST config: %w", err)
@@ -216,7 +216,7 @@ func NewManifestWatcher(cfg ManifestWatcherConfig, reg prometheus.Registerer, on
 
 // newManifestWatcher builds the watcher without a service, so tests can drive
 // poll cycles directly.
-func newManifestWatcher(client dynamic.Interface, pollInterval time.Duration, onChange func([]app.Manifest), logger log.Logger) *ManifestWatcher {
+func newManifestWatcher(client dynamic.Interface, pollInterval time.Duration, onChange func([]*app.ManifestData), logger log.Logger) *ManifestWatcher {
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}
@@ -230,7 +230,7 @@ func newManifestWatcher(client dynamic.Interface, pollInterval time.Duration, on
 }
 
 // Manifests returns the current snapshot as an ordered slice.
-func (w *ManifestWatcher) Manifests() []app.Manifest {
+func (w *ManifestWatcher) Manifests() []*app.ManifestData {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return sortedManifests(w.byName)
@@ -318,8 +318,8 @@ func (w *ManifestWatcher) runPollCycle(ctx context.Context) {
 // object fails to convert, its previously known version (from prev) is kept so a
 // transient parse failure can't drop its search fields; a genuinely unknown
 // object is skipped.
-func (w *ManifestWatcher) list(ctx context.Context, prev map[string]app.Manifest) (map[string]app.Manifest, error) {
-	result := make(map[string]app.Manifest)
+func (w *ManifestWatcher) list(ctx context.Context, prev map[string]*app.ManifestData) (map[string]*app.ManifestData, error) {
+	result := make(map[string]*app.ManifestData)
 	var continueToken string
 	for {
 		select {
@@ -362,13 +362,13 @@ func (w *ManifestWatcher) list(ctx context.Context, prev map[string]app.Manifest
 // sortedManifests returns the map values ordered by apiserver object name. The
 // name is unique, so the published snapshot and its hash are deterministic even
 // when two objects share a group and app name.
-func sortedManifests(byName map[string]app.Manifest) []app.Manifest {
+func sortedManifests(byName map[string]*app.ManifestData) []*app.ManifestData {
 	names := make([]string, 0, len(byName))
 	for name := range byName {
 		names = append(names, name)
 	}
 	sort.Strings(names)
-	out := make([]app.Manifest, 0, len(byName))
+	out := make([]*app.ManifestData, 0, len(byName))
 	for _, name := range names {
 		out = append(out, byName[name])
 	}
@@ -376,39 +376,39 @@ func sortedManifests(byName map[string]app.Manifest) []app.Manifest {
 }
 
 // ManifestFromUnstructured converts an AppManifest apiserver object (v1alpha2)
-// to an app.Manifest.
+// to app.ManifestData.
 //
 // Exported so a server that fetches AppManifests with its own client gets the
 // same conversion the watcher uses, rather than a second one that could disagree
 // about what a manifest means.
-func ManifestFromUnstructured(item *unstructured.Unstructured) (app.Manifest, error) {
+func ManifestFromUnstructured(item *unstructured.Unstructured) (*app.ManifestData, error) {
 	specRaw, ok := item.Object["spec"]
 	if !ok {
-		return app.Manifest{}, fmt.Errorf("appmanifest %q has no spec", item.GetName())
+		return nil, fmt.Errorf("appmanifest %q has no spec", item.GetName())
 	}
 	specJSON, err := json.Marshal(specRaw)
 	if err != nil {
-		return app.Manifest{}, fmt.Errorf("marshaling spec: %w", err)
+		return nil, fmt.Errorf("marshaling spec: %w", err)
 	}
 	var spec appmanifestv1alpha2.AppManifestSpec
 	if err := json.Unmarshal(specJSON, &spec); err != nil {
-		return app.Manifest{}, fmt.Errorf("unmarshaling spec: %w", err)
+		return nil, fmt.Errorf("unmarshaling spec: %w", err)
 	}
 	data, err := spec.ToManifestData()
 	if err != nil {
-		return app.Manifest{}, fmt.Errorf("converting spec to manifest data: %w", err)
+		return nil, fmt.Errorf("converting spec to manifest data: %w", err)
 	}
-	return app.NewEmbeddedManifest(data), nil
+	return &data, nil
 }
 
 // hashManifests returns a stable hash of the manifest set, used to skip
 // publishing when a poll returns no real change. The input is already ordered by
 // sortedManifests (by unique object name), so the hash is deterministic.
-func hashManifests(manifests []app.Manifest) (string, error) {
+func hashManifests(manifests []*app.ManifestData) (string, error) {
 	datas := make([]app.ManifestData, 0, len(manifests))
 	for _, m := range manifests {
-		if m.ManifestData != nil {
-			datas = append(datas, *m.ManifestData)
+		if m != nil {
+			datas = append(datas, *m)
 		}
 	}
 	b, err := json.Marshal(datas)

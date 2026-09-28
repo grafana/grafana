@@ -27,7 +27,7 @@ type EmbeddingInput struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Uid           string                 `protobuf:"bytes,1,opt,name=uid,proto3" json:"uid,omitempty"`                 // entity id (caller-chosen, deterministic)
 	Subresource   string                 `protobuf:"bytes,2,opt,name=subresource,proto3" json:"subresource,omitempty"` // chunk id within the entity (optional)
-	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`         // document content to embed (required)
+	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`         // document content to embed (required, max 128 KiB)
 	Metadata      []byte                 `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`       // JSON object, max 4 KiB
 	Title         string                 `protobuf:"bytes,5,opt,name=title,proto3" json:"title,omitempty"`             // human-readable display title, returned in search results (required)
 	Folder        string                 `protobuf:"bytes,6,opt,name=folder,proto3" json:"folder,omitempty"`           // parent folder UID; folder-scoped resources are denied at read time without it
