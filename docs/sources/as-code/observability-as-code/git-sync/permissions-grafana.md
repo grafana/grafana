@@ -127,18 +127,18 @@ Users with the `Viewer` role can view provisioned resources. Their access to spe
 
 ### Users with the None role
 
-The `None` basic role, also called **No Basic Role** in the UI, doesn't grant Git Sync permissions. It doesn't inherit the default permissions of Viewer, Editor, or Admin. Without explicit grants, you can't read Git Sync settings or repository configurations, configure repositories, submit jobs, or read and modify provisioned dashboards and folders.
+The `None` basic role, also called **No basic role** in the UI, doesn't have any Git Sync permissions by default, as it doesn't inherit the default permissions of Viewer, Editor, or Admin. Without explicit grants, as a `None` user you can't read Git Sync settings or repository configurations, configure repositories, submit jobs, or read and modify provisioned dashboards and folders.
 
 You can use Git Sync while keeping the `None` role if you receive the permissions required for each operation:
 
-- **Work with dashboards and folders:** Assign folder or dashboard permissions, or the corresponding resource actions through RBAC. You can save permitted resources through an existing repository without repository-management or job-creation permissions. Refer to [RBAC for dashboards and folders](#rbac-for-dashboards-and-folders).
-- **Read Git Sync configuration:** Grant `provisioning.settings:read` for settings and repository summaries, and `provisioning.repositories:read` for repository configurations and file listings. Neither grant provides dashboard-content access.
-- **Manage repositories and connections:** Grant the required provisioning create, read, write, or delete actions. Your basic role can remain `None`. Refer to the [provisioning permission tables](#how-basic-roles-map-to-rbac-permissions).
-- **Submit repository jobs:** Grant `provisioning.jobs:create` and the permissions required for the requested action. For example, manual sync also requires `provisioning.repositories:write`.
+- **Work with dashboards and folders:** You need folder or dashboard permissions, or the corresponding resource actions through RBAC. You can save permitted resources through an existing repository without repository-management or job-creation permissions. Refer to [RBAC for dashboards and folders](#rbac-for-dashboards-and-folders).
+- **Read Git Sync configuration:** You need the `provisioning.settings:read` permission for settings and repository summaries, and `provisioning.repositories:read` for repository configurations and file listings. However, neither grant provides access to dashboard content.
+- **Manage repositories and connections:** Your basic role can remain `None`, but you need the required provisioning permissions for the create, read, write, or delete operation. Refer to the [provisioning permission tables](#how-basic-roles-map-to-rbac-permissions).
+- **Submit repository jobs:** You need `provisioning.jobs:create` and the permissions required for the requested action. For example, manual sync also requires `provisioning.repositories:write`.
 
 For example, to let a `None` user create and edit dashboards in an existing provisioned folder, assign that user or their team **Edit** permission on the folder. With custom RBAC, you can instead grant `dashboards:read`, `dashboards:create`, and `dashboards:write` for that folder, and add `dashboards:delete` if deletion is required. The repository must allow the selected write or branch workflow.
 
-Basic-role permissions aren't required for an existing rendered image accessed through its valid URL or a webhook request with valid provider authentication. The `None` role doesn't bypass webhook signature verification.
+You don't need basic role permissions to access an existing rendered image through its valid URL or to send a webhook request with valid provider authentication. The `None` role doesn't bypass webhook signature verification.
 
 ## Configure folder and dashboard permissions
 
