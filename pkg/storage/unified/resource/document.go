@@ -81,6 +81,13 @@ type IndexableDocument struct {
 	// represent a value this large exactly (see SearchFieldTypeInt64).
 	RVString string `json:"_rv,omitempty"`
 
+	// The resource type as {group}/{resource}, set by UpdateCopyFields. Every
+	// document carries it, but only a namespace-wide index declares it as a field,
+	// and a document mapping is static: elsewhere the value reaches the index and
+	// is dropped without being indexed. Only there does a query have to pick out
+	// one resource type from an index holding several.
+	GroupResource string `json:"groupResource,omitempty"`
+
 	// The generic display name
 	Title string `json:"title,omitempty"`
 
@@ -179,6 +186,9 @@ type IndexableDocument struct {
 func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
 	m.TitleNgram = m.Title
 	m.TitlePhrase = strings.ToLower(m.Title) // Lowercase for case-insensitive sorting ?? in the analyzer?
+	if m.Key != nil {
+		m.GroupResource = m.Key.Group + "/" + m.Key.Resource
+	}
 	if m.RV > 0 {
 		m.RVString = strconv.FormatInt(m.RV, 10)
 	}
@@ -548,8 +558,8 @@ const (
 	SEARCH_FIELD_PREFIX             = "fields."
 	SEARCH_FIELD_ID                 = "_id" // {namespace}/{group}/{resource}/{name}
 	SEARCH_FIELD_LEGACY_ID          = utils.LabelKeyDeprecatedInternalID
-	SEARCH_FIELD_KIND               = "kind" // resource ( for federated index filtering )
-	SEARCH_FIELD_GROUP_RESOURCE     = "gr"   // group/resource
+	SEARCH_FIELD_KIND               = "kind"          // resource ( for federated index filtering )
+	SEARCH_FIELD_GROUP_RESOURCE     = "groupResource" // {group}/{resource}
 	SEARCH_FIELD_NAMESPACE          = "namespace"
 	SEARCH_FIELD_NAME               = "name"
 	SEARCH_FIELD_RV                 = "rv"

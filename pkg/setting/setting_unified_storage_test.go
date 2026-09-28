@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKVLeaseTTLBounds(t *testing.T) {
@@ -33,6 +34,16 @@ func TestKVLeaseTTLBounds(t *testing.T) {
 			assert.Equal(t, tc.expected, cfg.KVLeaseTTL)
 		})
 	}
+}
+
+func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
+	cfg := NewCfg()
+	cfg.setUnifiedStorageConfig()
+	require.False(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
+
+	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
+	cfg.setUnifiedStorageConfig()
+	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
 }
 
 func TestCfg_setUnifiedStorageConfig(t *testing.T) {
@@ -106,6 +117,18 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		// Test that index settings are correctly parsed
 		assert.Equal(t, 5, cfg.IndexMinCount)
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.SearchBackedListResources)
+	})
+
+	t.Run("authorize_before_fetch_enabled", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+		assert.False(t, cfg.AuthorizeBeforeFetchEnabled)
+
+		cfg.Raw.Section("unified_storage").Key("authorize_before_fetch_enabled").SetValue("true")
+		cfg.setUnifiedStorageConfig()
+		assert.True(t, cfg.AuthorizeBeforeFetchEnabled)
 	})
 
 	t.Run("search_ring_extend_replica_set", func(t *testing.T) {

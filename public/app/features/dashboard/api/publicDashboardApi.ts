@@ -13,7 +13,7 @@ import {
   type SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { isDashboardSceneLike, type DashboardSceneLike } from 'app/features/dashboard-scene/scene/types/dashboard';
 import {
   type PublicDashboardListWithPagination,
   type PublicDashboardListWithPaginationResponse,
@@ -52,10 +52,10 @@ export const publicDashboardApi = createApi({
     }),
     createPublicDashboard: builder.mutation<
       PublicDashboard,
-      { dashboard: DashboardModel | DashboardScene; payload: Partial<PublicDashboardSettings> }
+      { dashboard: DashboardModel | DashboardSceneLike; payload: Partial<PublicDashboardSettings> }
     >({
       query: (params) => {
-        const dashUid = params.dashboard instanceof DashboardScene ? params.dashboard.state.uid : params.dashboard.uid;
+        const dashUid = isDashboardSceneLike(params.dashboard) ? params.dashboard.state.uid : params.dashboard.uid;
         return {
           url: `/dashboards/uid/${dashUid}/public-dashboards`,
           method: 'POST',
@@ -70,7 +70,7 @@ export const publicDashboardApi = createApi({
             : t('public-dashboard.email-sharing.success-creation', 'Your dashboard is ready for external sharing');
         dispatch(notifyApp(createSuccessNotification(message)));
 
-        if (dashboard instanceof DashboardScene) {
+        if (isDashboardSceneLike(dashboard)) {
           dashboard.setState({
             meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled },
           });
@@ -81,18 +81,18 @@ export const publicDashboardApi = createApi({
         }
       },
       invalidatesTags: (result, error, { dashboard }) => [
-        { type: 'PublicDashboard', id: dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid },
+        { type: 'PublicDashboard', id: isDashboardSceneLike(dashboard) ? dashboard.state.uid : dashboard.uid },
       ],
     }),
     updatePublicDashboard: builder.mutation<
       PublicDashboard,
       {
-        dashboard: (Pick<DashboardModel, 'uid'> & Partial<Pick<DashboardModel, 'updateMeta'>>) | DashboardScene;
+        dashboard: (Pick<DashboardModel, 'uid'> & Partial<Pick<DashboardModel, 'updateMeta'>>) | DashboardSceneLike;
         payload: Partial<PublicDashboard>;
       }
     >({
       query: ({ payload, dashboard }) => {
-        const dashUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
+        const dashUid = isDashboardSceneLike(dashboard) ? dashboard.state.uid : dashboard.uid;
         return {
           url: `/dashboards/uid/${dashUid}/public-dashboards/${payload.uid}`,
           method: 'PATCH',
@@ -117,12 +117,12 @@ export const publicDashboardApi = createApi({
     pauseOrResumePublicDashboard: builder.mutation<
       PublicDashboard,
       {
-        dashboard: (Pick<DashboardModel, 'uid'> & Partial<Pick<DashboardModel, 'updateMeta'>>) | DashboardScene;
+        dashboard: (Pick<DashboardModel, 'uid'> & Partial<Pick<DashboardModel, 'updateMeta'>>) | DashboardSceneLike;
         payload: Partial<PublicDashboard>;
       }
     >({
       query: ({ payload, dashboard }) => {
-        const dashUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
+        const dashUid = isDashboardSceneLike(dashboard) ? dashboard.state.uid : dashboard.uid;
         return {
           url: `/dashboards/uid/${dashUid}/public-dashboards/${payload.uid}`,
           method: 'PATCH',
@@ -136,7 +136,7 @@ export const publicDashboardApi = createApi({
           : t('public-dashboard.configuration.success-pause', 'Your dashboard access has been paused');
         dispatch(notifyApp(createSuccessNotification(message)));
 
-        if (dashboard instanceof DashboardScene) {
+        if (isDashboardSceneLike(dashboard)) {
           dashboard.setState({
             meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled },
           });
@@ -154,12 +154,12 @@ export const publicDashboardApi = createApi({
     updatePublicDashboardAccess: builder.mutation<
       PublicDashboard,
       {
-        dashboard: (Pick<DashboardModel, 'uid'> & Partial<Pick<DashboardModel, 'updateMeta'>>) | DashboardScene;
+        dashboard: (Pick<DashboardModel, 'uid'> & Partial<Pick<DashboardModel, 'updateMeta'>>) | DashboardSceneLike;
         payload: Partial<PublicDashboard>;
       }
     >({
       query: ({ payload, dashboard }) => {
-        const dashUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
+        const dashUid = isDashboardSceneLike(dashboard) ? dashboard.state.uid : dashboard.uid;
         return {
           url: `/dashboards/uid/${dashUid}/public-dashboards/${payload.uid}`,
           method: 'PATCH',
@@ -227,7 +227,7 @@ export const publicDashboardApi = createApi({
     }),
     deletePublicDashboard: builder.mutation<
       void,
-      { dashboard?: DashboardModel | DashboardScene; dashboardUid: string; uid: string }
+      { dashboard?: DashboardModel | DashboardSceneLike; dashboardUid: string; uid: string }
     >({
       query: (params) => ({
         url: `/dashboards/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
@@ -244,7 +244,7 @@ export const publicDashboardApi = createApi({
         );
         dispatch(publicDashboardApi.util?.resetApiState());
 
-        if (dashboard instanceof DashboardScene) {
+        if (isDashboardSceneLike(dashboard)) {
           dashboard.setState({
             meta: { ...dashboard.state.meta, publicDashboardEnabled: false },
           });

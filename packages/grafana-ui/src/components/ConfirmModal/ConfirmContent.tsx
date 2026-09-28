@@ -13,6 +13,7 @@ import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 import { type JustifyContent } from '../Layout/types';
 import { type ResponsiveProp } from '../Layout/utils/responsiveness';
+import { Modal } from '../Modal/Modal';
 
 export interface ConfirmContentProps {
   /** Modal content */
@@ -124,27 +125,25 @@ export const ConfirmContent = ({
           </div>
         ) : null}
       </div>
-      <div className={styles.buttonsContainer}>
-        <Stack justifyContent={justifyButtons} gap={2} wrap="wrap">
-          <Button variant={dismissButtonVariant} onClick={onDismiss} fill="outline">
-            {dismissButtonLabel}
+      <Modal.ButtonRow>
+        <Button variant={dismissButtonVariant} onClick={onDismiss} fill="outline">
+          {dismissButtonLabel}
+        </Button>
+        <Button
+          type="submit"
+          variant={confirmButtonVariant}
+          disabled={isDisabled}
+          ref={confirmButtonRef}
+          data-testid={selectors.pages.ConfirmModal.delete}
+        >
+          {confirmButtonLabel}
+        </Button>
+        {onAlternative ? (
+          <Button variant="primary" onClick={onAlternative}>
+            {alternativeButtonLabel}
           </Button>
-          <Button
-            type="submit"
-            variant={confirmButtonVariant}
-            disabled={isDisabled}
-            ref={confirmButtonRef}
-            data-testid={selectors.pages.ConfirmModal.delete}
-          >
-            {confirmButtonLabel}
-          </Button>
-          {onAlternative ? (
-            <Button variant="primary" onClick={onAlternative}>
-              {alternativeButtonLabel}
-            </Button>
-          ) : null}
-        </Stack>
-      </div>
+        ) : null}
+      </Modal.ButtonRow>
     </form>
   );
 };
@@ -159,8 +158,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   confirmationInput: css({
     paddingTop: theme.spacing(1),
-  }),
-  buttonsContainer: css({
-    paddingTop: theme.spacing(3),
   }),
 });

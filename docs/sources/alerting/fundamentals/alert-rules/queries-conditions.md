@@ -117,7 +117,7 @@ The following expressions are available:
 
 Aggregates time series values within the selected time range into a single number.
 
-Reduce takes one or more time series and transform each series into a single number, which can then be compared in the alert condition.
+Reduce takes one or more time series and transforms each series into a single number, which can then be compared in the alert condition.
 
 The following aggregations functions are included: `Min`, `Max`, `Mean`, `Median`, `Sum`, `Count`, and `Last`. For more details, refer to the [Reduce documentation](ref:reduce-operation).
 
@@ -141,7 +141,7 @@ You can also use a Math expression to define the **alert condition**. For exampl
 
 ### Resample
 
-Realigns a time range to a new set of timestamps, this is useful when comparing time series data from different data sources where the timestamps would otherwise not align.
+Realigns a time range to a new set of timestamps. This is useful when comparing time series data from different data sources where the timestamps would otherwise not align.
 
 For more details, refer to the [Resample documentation](ref:resample-operation).
 
@@ -160,7 +160,7 @@ The threshold expression allows the comparison between two single values. Availa
 - **Is above**: `$A > 5`
 - **Is below**: `$B < 3`
 - **Is equal to**: `$A == 2`
-- **Is not equal to**: `$B =! 4`
+- **Is not equal to**: `$B != 4`
 - **Is above or equal to**: `$A >= 8`
 - **Is below or equal to**: `$B <= 16`
 - **Is within range**: `$A > 0 AND $A < 10`

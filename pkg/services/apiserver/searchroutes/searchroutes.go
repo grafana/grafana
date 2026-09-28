@@ -7,6 +7,8 @@
 package searchroutes
 
 import (
+	"slices"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -68,8 +70,9 @@ func BuildWithOptions(
 ) []builder.GroupVersionRoutes {
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
+	manifests := slices.Concat(resource.AppManifests(), builder.ManifestsFromBuilders(builders))
 	routes, err := BuildForServedGroupVersionsWithOptions(
-		resource.AppManifests(), builder.ServedGroupVersions(builders, installers),
+		manifests, builder.ServedGroupVersions(builders, installers),
 		searchEnabled, trashEnabled, tracer, index, options,
 	)
 	if err != nil {
@@ -97,6 +100,7 @@ func BuildFromManifests(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
+	manifests = slices.Concat(manifests, builder.ManifestsFromBuilders(builders))
 	routes, err := BuildForServedGroupVersions(
 		manifests,
 		builder.ServedGroupVersions(builders, installers),
@@ -153,6 +157,7 @@ func BuildForServedGroupVersionsWithOptions(
 	})
 
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
+	mounted := map[schema.GroupVersionResource]bool{}
 
 	for _, m := range manifests {
 		if m == nil {
@@ -171,6 +176,11 @@ func BuildForServedGroupVersionsWithOptions(
 					continue
 				}
 				resourceName := resource.ManifestResourceName(kind)
+				gvr := gv.WithResource(resourceName)
+				if mounted[gvr] {
+					continue
+				}
+				mounted[gvr] = true
 				// Answered separately so a kind can opt out of one endpoint
 				// without the other.
 				if searchEnabled && kind.HasSearchEndpoint() {

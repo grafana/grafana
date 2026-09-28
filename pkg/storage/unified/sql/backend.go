@@ -1100,6 +1100,12 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 	return resource.NewConflictStatusError(key.Group, key.Resource, key.Name, "requested RV does not match current RV")
 }
 
+// BatchReadResource is unsupported: the SQL backend is retiring, so batched
+// search-list reads live only on the KV backend.
+func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*resource.BackendReadResponse], error) {
+	return nil, resource.ErrBatchReadUnsupported
+}
+
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	b.logCall("ReadResource")
 	_, span := tracer.Start(ctx, "sql.backend.ReadResource")
@@ -1506,6 +1512,8 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	})
 	return iter.listRV, err
 }
+
+func (*backend) WatchInvalidation() <-chan struct{} { return nil }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	b.logCall("WatchWriteEvents")

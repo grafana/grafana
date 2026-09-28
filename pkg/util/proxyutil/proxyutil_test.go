@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -196,11 +198,22 @@ func TestApplyUserHeader(t *testing.T) {
 		require.NotContains(t, req.Header, "X-Grafana-User")
 	})
 
-	t.Run("Should apply user header for non-anonomous user", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, "/", nil)
-		require.NoError(t, err)
+	login := "identity"
+	testCases := []struct {
+		name string
+		user identity.Requester
+	}{
+		{name: "user", user: &identity.StaticRequester{Login: login, UserID: 5, Type: claims.TypeUser}},
+		{name: "service account", user: &identity.StaticRequester{Login: login, UserID: 77, Type: claims.TypeServiceAccount}},
+	}
 
-		ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin", UserID: 1, FallbackType: claims.TypeUser})
-		require.Equal(t, "admin", req.Header.Get("X-Grafana-User"))
-	})
+	for _, tc := range testCases {
+		t.Run("Should apply user header for "+tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, "/", nil)
+			require.NoError(t, err)
+
+			ApplyUserHeader(true, req, tc.user)
+			require.Equal(t, login, req.Header.Get("X-Grafana-User"))
+		})
+	}
 }

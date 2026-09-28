@@ -1,7 +1,6 @@
 package iam
 
 import (
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -30,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
@@ -88,8 +86,8 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
-	userSearchClient                  resourcepb.ResourceIndexClient
-	teamSearchClient                  resourcepb.ResourceIndexClient
+	userSearchClient                  *dualwrite.Selector[user.SearchBackend]
+	teamSearchClient                  *dualwrite.Selector[team.SearchBackend]
 	userSearchHandler                 *user.SearchHandler
 	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
@@ -101,7 +99,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	display         *display.DisplayHandler
 	userPermissions *userpermissions.Handler
 	// ssoLoginConfig serves the pre-auth login-config singleton. Constructed in
-	// RegisterAPIService; its route is gated by FlagKubernetesSsoSettingsApi in
+	// RegisterAPIService; its route is gated by the resolved IAM features in
 	// GetAPIRoutes. Nil in the standalone NewAPIService path.
 	ssoLoginConfig *sso.LoginConfigHandler
 
@@ -125,9 +123,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	// kind's storage mode engages MT-Settings.
 	ssoSettingsClient settingsvc.Service
 
-	// ofClient evaluates the feature flags gating the IAM APIs. The default
-	// client resolves the globally-registered provider at evaluation time.
-	ofClient openfeature.IClient
+	features Features
 
 	apiConfig Config
 }

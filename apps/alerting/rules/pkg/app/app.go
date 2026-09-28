@@ -84,17 +84,28 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-// buildSearchRoutes wires the rule search handler (provided by the registry) to
-// its namespaced POST /searchRules custom route. The route is skipped when the
-// handler is unset so manifest validation without a backing instance does not
-// register a nil handler. The path must match search.RouteResource, which the
-// apiserver authorizer matches on.
+// SearchRulesPathSegment is the final segment of the per-kind search routes. The
+// apiserver parses /{resource}/searchRules as a request on an object with this
+// name, which the rules authorizer relies on to treat the search as a read.
+const SearchRulesPathSegment = "searchRules"
+
+// buildSearchRoutes wires the per-kind rule search handlers
+// (provided by the registry) to their namespaced compatibility routes. A route
+// is skipped when its handler is unset, so manifest validation without a
+// backing instance does not register a nil handler.
 func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
-	if cfg.SearchRulesHandler == nil {
-		return nil
+	handlers := simple.AppVersionRouteHandlers{}
+	for path, handler := range map[string]simple.AppCustomRouteHandler{
+		"/alertrules/" + SearchRulesPathSegment:     cfg.SearchAlertRulesHandler,
+		"/recordingrules/" + SearchRulesPathSegment: cfg.SearchRecordingRulesHandler,
+	} {
+		if handler == nil {
+			continue
+		}
+		handlers[simple.AppVersionRoute{Namespaced: true, Path: path, Method: simple.AppCustomRouteMethodPost}] = handler
 	}
-	handlers := simple.AppVersionRouteHandlers{
-		simple.AppVersionRoute{Namespaced: true, Path: "/searchRules", Method: simple.AppCustomRouteMethodPost}: cfg.SearchRulesHandler,
+	if len(handlers) == 0 {
+		return nil
 	}
 	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
 }

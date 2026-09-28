@@ -42,7 +42,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
     case 'dashboards/variables':
-      return t('nav.global-variables.title', 'Variables');
+      return t('nav.global-variables.title', 'Cross-dashboard variables');
     case 'reports':
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
@@ -232,10 +232,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'dashboards/browse':
       return t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data');
     case 'notebooks':
-      return t(
-        'nav.notebooks.subtitle',
-        'Investigation notebooks created from workspaces, dashboards, alerts, and incidents.'
-      );
+      return t('nav.notebooks.subtitle', 'Create and manage notebooks to tell a story with your data');
     case 'manage-folder':
       return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
     case 'dashboards/playlists':

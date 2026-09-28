@@ -96,6 +96,7 @@ export const ThemeDemo = () => {
     t.colors.primary,
     t.colors.secondary,
     t.colors.tertiary,
+    t.colors.accent,
     t.colors.success,
     t.colors.error,
     t.colors.warning,

@@ -150,13 +150,14 @@ describe('syntheticsSolution alert', () => {
   });
 
   it('reports failing checks with the worst offender as detail', async () => {
-    mockFetchHealth.mockResolvedValue({ failing: 2, worstCheck: 'checkout-flow', worstRatio: 0.42 });
+    // A check name carries characters i18next would HTML-escape by default.
+    mockFetchHealth.mockResolvedValue({ failing: 2, worstCheck: 'Frontend: browser /login', worstRatio: 0.42 });
     const solution = syntheticsSolution();
 
     await expect(solution.needsAttention()).resolves.toBe(true);
     await expect(solution.alert()).resolves.toEqual({
       primary: '2 checks failing',
-      details: ['checkout-flow at 42%'],
+      details: ['Frontend: browser /login at 42%'],
     });
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
     expect(mockFetchHealth).toHaveBeenCalledWith(datasource);

@@ -114,6 +114,7 @@ export function getColumns(
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
+      disableResizing: fieldTableOptions.resizable === false,
       filter: memoize(filterByValue(field)),
       justifyContent: getTextAlign(field),
       Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),

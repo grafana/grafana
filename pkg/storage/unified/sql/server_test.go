@@ -2,6 +2,7 @@ package sql
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -9,6 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/require"
 )
+
+func TestBuildResourceServerOptionsGRPCErrorResultToStatus(t *testing.T) {
+	cfg := setting.NewCfg()
+	for _, enabled := range []bool{false, true} {
+		cfg.UnifiedStorageGRPCErrorResultToStatus = enabled
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg})
+		require.NoError(t, err)
+		require.Equal(t, enabled, opts.GRPCErrorResultToStatus)
+	}
+}
 
 func TestIsHighAvailabilityEnabled(t *testing.T) {
 	tests := []struct {
@@ -170,6 +181,44 @@ func TestWithAccessClientValidatesAuthzConfig(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestWithAuthorizeBeforeFetch(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AuthorizeBeforeFetchEnabled = true
+	resourceOpts := &resource.ResourceServerOptions{}
+	require.NoError(t, withAuthorizeBeforeFetch(&ServerOptions{Cfg: cfg}, resourceOpts))
+	require.True(t, resourceOpts.AuthorizeBeforeFetchEnabled)
+}
+
+func TestWithNatsWatchMaxAge(t *testing.T) {
+	const maxAge = 5 * time.Minute
+
+	tests := []struct {
+		name     string
+		enabled  bool
+		notifier bool
+		maxAge   time.Duration
+		want     time.Duration
+	}{
+		{name: "nats disabled leaves it off", notifier: true, maxAge: maxAge, want: 0},
+		{name: "notifier off leaves it off", enabled: true, maxAge: maxAge, want: 0},
+		{name: "enabled and notifier on propagates the age", enabled: true, notifier: true, maxAge: maxAge, want: maxAge},
+		{name: "zero leaves expiry off", enabled: true, notifier: true, maxAge: 0, want: 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.NATS.Enabled = tt.enabled
+			cfg.NATS.Notifier = tt.notifier
+			cfg.NATS.NotifierWatchMaxAge = tt.maxAge
+
+			resourceOpts := &resource.ResourceServerOptions{}
+			require.NoError(t, withNatsWatchMaxAge(&ServerOptions{Cfg: cfg}, resourceOpts))
+			require.Equal(t, tt.want, resourceOpts.NatsWatchMaxAge)
 		})
 	}
 }

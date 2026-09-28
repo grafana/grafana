@@ -178,59 +178,161 @@ func lexTableResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
 	return &resourcepb.ResourceSearchResponse{Results: table}
 }
 
-func managerTableResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
-	table := &resourcepb.ResourceTable{
-		Columns: []*resourcepb.ResourceTableColumnDefinition{
-			{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+func lexFieldValueResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
+	response := &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
 		},
 	}
-	for _, r := range rows {
-		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{
-			Key:   &resourcepb.ResourceKey{Name: r[0]},
-			Cells: [][]byte{[]byte(r[1]), []byte(r[2])},
+	for _, row := range rows {
+		response.Rows = append(response.Rows, &resourcepb.ResourceSearchRow{
+			Key: &resourcepb.ResourceKey{Name: row[0]},
+			Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{row[1]}},
+				{FieldIndex: 1, StringValues: []string{row[2]}},
+			},
 		})
 	}
-	return &resourcepb.ResourceSearchResponse{Results: table}
+	return response
+}
+
+func managerFieldValueResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
+	response := &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+		},
+	}
+	for _, row := range rows {
+		response.Rows = append(response.Rows, &resourcepb.ResourceSearchRow{
+			Key: &resourcepb.ResourceKey{Name: row[0]},
+			Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{row[1]}},
+				{FieldIndex: 1, StringValues: []string{row[2]}},
+			},
+		})
+	}
+	return response
+}
+
+func malformedFieldValueResponse() *resourcepb.ResourceSearchResponse {
+	return &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key: &resourcepb.ResourceKey{Name: "u1"},
+			Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{"one", "two"}},
+			},
+		}},
+	}
 }
 
 func TestLexicalHitsFromResponse(t *testing.T) {
-	hits := lexicalHitsFromResponse(lexTableResponse(
-		[3]string{"u1", "Title One", "f1"},
-		[3]string{"u2", "Title Two", "f2"},
-	))
-	require.Len(t, hits, 2)
-	assert.Equal(t, lexicalHit{uid: "u1", title: "Title One", folder: "f1"}, hits[0])
-	assert.Equal(t, lexicalHit{uid: "u2", title: "Title Two", folder: "f2"}, hits[1])
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{
+			name: "resource table",
+			response: lexTableResponse(
+				[3]string{"u1", "Title One", "f1"},
+				[3]string{"u2", "Title Two", "f2"},
+			),
+		},
+		{
+			name: "field values",
+			response: lexFieldValueResponse(
+				[3]string{"u1", "Title One", "f1"},
+				[3]string{"u2", "Title Two", "f2"},
+			),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			hits, err := lexicalHitsFromResponse(test.response)
+			require.NoError(t, err)
+			require.Len(t, hits, 2)
+			assert.Equal(t, lexicalHit{uid: "u1", title: "Title One", folder: "f1"}, hits[0])
+			assert.Equal(t, lexicalHit{uid: "u2", title: "Title Two", folder: "f2"}, hits[1])
+		})
+	}
 }
 
 func TestLexicalHitsFromResponse_ManagerColumns(t *testing.T) {
-	resp := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
-		Columns: []*resourcepb.ResourceTableColumnDefinition{
-			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{
+			name: "resource table",
+			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{{
+					Key:   &resourcepb.ResourceKey{Name: "u1"},
+					Cells: [][]byte{[]byte("Title"), []byte("repo"), []byte("m1")},
+				}},
+			}},
 		},
-		Rows: []*resourcepb.ResourceTableRow{{
-			Key:   &resourcepb.ResourceKey{Name: "u1"},
-			Cells: [][]byte{[]byte("Title"), []byte("repo"), []byte("m1")},
-		}},
-	}}
-	hits := lexicalHitsFromResponse(resp)
-	require.Len(t, hits, 1)
-	assert.Equal(t, lexicalHit{uid: "u1", title: "Title", managerKind: "repo", managerID: "m1"}, hits[0])
+		{
+			name: "field values",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields: []*resourcepb.ResourceSearchField{
+					{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+					{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+					{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+				},
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key: &resourcepb.ResourceKey{Name: "u1"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Title"}},
+						{FieldIndex: 1, StringValues: []string{"repo"}},
+						{FieldIndex: 2, StringValues: []string{"m1"}},
+					},
+				}},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			hits, err := lexicalHitsFromResponse(test.response)
+			require.NoError(t, err)
+			require.Len(t, hits, 1)
+			assert.Equal(t, lexicalHit{uid: "u1", title: "Title", managerKind: "repo", managerID: "m1"}, hits[0])
+		})
+	}
 }
 
 func TestLexicalHitsFromResponse_MissingColumnsAndNil(t *testing.T) {
-	assert.Empty(t, lexicalHitsFromResponse(nil))
-	assert.Empty(t, lexicalHitsFromResponse(&resourcepb.ResourceSearchResponse{}))
+	for _, response := range []*resourcepb.ResourceSearchResponse{
+		nil,
+		{},
+		{Results: &resourcepb.ResourceTable{
+			Rows: []*resourcepb.ResourceTableRow{{Key: &resourcepb.ResourceKey{Name: "u1"}}},
+		}},
+	} {
+		hits, err := lexicalHitsFromResponse(response)
+		require.NoError(t, err)
+		if response != nil && response.Results != nil {
+			require.Len(t, hits, 1)
+			assert.Equal(t, lexicalHit{uid: "u1"}, hits[0])
+		} else {
+			assert.Empty(t, hits)
+		}
+	}
+}
 
-	resp := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
-		Rows: []*resourcepb.ResourceTableRow{{Key: &resourcepb.ResourceKey{Name: "u1"}}},
-	}}
-	hits := lexicalHitsFromResponse(resp)
-	require.Len(t, hits, 1)
-	assert.Equal(t, lexicalHit{uid: "u1"}, hits[0])
+func TestLexicalHitsFromResponseRejectsMalformedFieldValues(t *testing.T) {
+	_, err := lexicalHitsFromResponse(malformedFieldValueResponse())
+	require.ErrorContains(t, err, `field "title": scalar has 2 values`)
 }
 
 func TestValidateHybridSearchRequest(t *testing.T) {
@@ -367,6 +469,7 @@ func TestHybridLexicalRequest(t *testing.T) {
 	assert.Equal(t, "cpu", out.Query)
 	assert.Equal(t, int64(40), out.Limit)
 	assert.Same(t, req.Key, out.Options.Key)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, out.ResultFormat)
 	assert.Equal(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID}, out.Fields)
 
 	require.Len(t, out.Options.Fields, 4)
@@ -491,7 +594,7 @@ func newHybridTestServer(lexResp *resourcepb.ResourceSearchResponse, backend *fa
 }
 
 func TestHybridSearch_FusesBothLegs(t *testing.T) {
-	lexResp := lexTableResponse(
+	lexResp := lexFieldValueResponse(
 		[3]string{"both", "Both Legs", "f1"},
 		[3]string{"lexonly", "Lex Only", "f2"},
 	)
@@ -525,6 +628,7 @@ func TestHybridSearch_FusesBothLegs(t *testing.T) {
 	idx.mu.Lock()
 	assert.Equal(t, "api latency", idx.gotReq.Query)
 	assert.Equal(t, int64(20), idx.gotReq.Limit)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, idx.gotReq.ResultFormat)
 	idx.mu.Unlock()
 	assert.Equal(t, 20, backend.gotLimit)
 }
@@ -627,15 +731,25 @@ func TestHybridSearch_ValidationErrorsAreInvalidArgument(t *testing.T) {
 }
 
 func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
-	backend := &fakeVectorBackend{}
-	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
-	idx.err = fmt.Errorf("index exploded")
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+		err      error
+	}{
+		{name: "search failure", response: lexTableResponse(), err: fmt.Errorf("index exploded")},
+		{name: "malformed field values", response: malformedFieldValueResponse()},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s, idx, _ := newHybridTestServer(test.response, &fakeVectorBackend{})
+			idx.err = test.err
 
-	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-		Key: validKey(), Query: "q",
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.Internal, status.Code(err))
+			_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: "q",
+			})
+			require.Error(t, err)
+			assert.Equal(t, codes.Internal, status.Code(err))
+		})
+	}
 }
 
 func TestHybridSearch_LexicalErrorCodes(t *testing.T) {
@@ -983,7 +1097,7 @@ func TestHybridSearch_ResolvesFolderTitlesInOneBatchedLookup(t *testing.T) {
 		[3]string{"d3", "Dash Three", "f1"}, // duplicate folder: must not repeat in the lookup
 	)
 	s, idx, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
-	idx.folderResp = lexTableResponse(
+	idx.folderResp = lexFieldValueResponse(
 		[3]string{"f1", "Folder One", ""},
 		[3]string{"f2", "Folder Two", ""},
 	)
@@ -1004,6 +1118,8 @@ func TestHybridSearch_ResolvesFolderTitlesInOneBatchedLookup(t *testing.T) {
 	defer idx.mu.Unlock()
 	require.NotNil(t, idx.gotFolderReq)
 	assert.Equal(t, "folder.grafana.app", idx.gotFolderReq.Options.Key.Group)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, idx.gotFolderReq.ResultFormat)
+	assert.Equal(t, []string{SEARCH_FIELD_TITLE}, idx.gotFolderReq.Fields)
 	require.Len(t, idx.gotFolderReq.Options.Fields, 1)
 	assert.ElementsMatch(t, []string{"f1", "f2"}, idx.gotFolderReq.Options.Fields[0].Values)
 	// lexical-leg request assertions stay untouched by the folder lookup
@@ -1040,6 +1156,9 @@ func TestHybridSearch_FolderTitleResolutionFailsOpen(t *testing.T) {
 				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
 			}
 		},
+		"malformed field values": func(idx *hybridFakeIndex) {
+			idx.folderResp = malformedFieldValueResponse()
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			lexResp := lexTableResponse([3]string{"d1", "Dash One", "f1"})
@@ -1065,7 +1184,7 @@ func TestHybridSearch_ResolvesManagedByForSemanticOnlyHits(t *testing.T) {
 		},
 	}
 	s, idx, _ := newHybridTestServer(lexResp, backend)
-	idx.managedByResp = managerTableResponse([3]string{"semonly", "repo", "m1"})
+	idx.managedByResp = managerFieldValueResponse([3]string{"semonly", "repo", "m1"})
 
 	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 		Key: validKey(), Query: "q",
@@ -1083,6 +1202,8 @@ func TestHybridSearch_ResolvesManagedByForSemanticOnlyHits(t *testing.T) {
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 	require.NotNil(t, idx.gotManagedByReq)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, idx.gotManagedByReq.ResultFormat)
+	assert.Equal(t, []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID}, idx.gotManagedByReq.Fields)
 	require.Len(t, idx.gotManagedByReq.Options.Fields, 1)
 	assert.Equal(t, []string{"semonly"}, idx.gotManagedByReq.Options.Fields[0].Values, "only the semantic-only uid is looked up")
 	assert.Equal(t, "q", idx.gotReq.Query, "lexical-leg request assertions stay untouched by the managed-by lookup")
@@ -1111,6 +1232,9 @@ func TestHybridSearch_ManagedByResolutionFailsOpen(t *testing.T) {
 			idx.managedByResp = &resourcepb.ResourceSearchResponse{
 				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
 			}
+		},
+		"malformed field values": func(idx *hybridFakeIndex) {
+			idx.managedByResp = malformedFieldValueResponse()
 		},
 	} {
 		t.Run(name, func(t *testing.T) {

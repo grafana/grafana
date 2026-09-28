@@ -1,6 +1,6 @@
 {
-  extends: ["config:recommended"],
-  enabledManagers: ["npm", "docker-compose"],
+  extends: ["config:recommended", "security:gomodIndirectSecurityUpdates"],
+  enabledManagers: ["npm", "docker-compose", "gomod", "github-actions"],
   ignorePresets: [
     "github>grafana/grafana-renovate-config//presets/labels",
   ],
@@ -16,13 +16,18 @@
     "@types/slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
   ],
-  includePaths: ["package.json", "packages/**", "public/app/plugins/**", "devenv/frontend-service/docker-compose.yaml"],
+  includePaths: [
+    "package.json", "packages/**", "public/app/plugins/**", "devenv/frontend-service/docker-compose.yaml",
+    "go.mod", "**/go.mod", ".citools/**/go.mod",
+    ".github/workflows/**", ".github/actions/**", "pkg/build/actions/**",
+  ],
   ignorePaths: ["emails/**", "**/mocks/**"],
   labels: ["area/frontend", "dependencies", "no-changelog"],
   postUpdateOptions: ["yarnDedupeHighest"],
   packageRules: [
     {
       automerge: true,
+      matchManagers: ["npm"],
       matchCurrentVersion: "!/^0/",
       matchUpdateTypes: ["patch"],
       matchPackageNames: ["!/^@?storybook/", "!/^@locker/", "!/^@grafana/"],
@@ -30,6 +35,7 @@
     },
     {
       automerge: true,
+      matchManagers: ["npm"],
       matchCurrentVersion: "!/^0/",
       matchUpdateTypes: ["patch"],
       matchPackageNames: ["/^@grafana/"],
@@ -120,7 +126,25 @@
       matchDepTypes: ["devDependencies"],
       prPriority: -1,
     },
+    {
+      matchManagers: ["gomod"],
+      automerge: false,
+      labels: ["area/backend", "dependencies", "no-changelog"],
+      reviewers: [],
+    },
+    {
+      matchManagers: ["github-actions"],
+      automerge: false,
+      labels: ["dependencies", "no-changelog"],
+      reviewers: [],
+    },
+    {
+      matchManagers: ["gomod", "github-actions"],
+      matchUpdateTypes: ["major", "minor", "patch", "pin", "digest", "pinDigest", "lockFileMaintenance", "rollback", "replacement"],
+      enabled: false,
+    },
   ],
+  osvVulnerabilityAlerts: true,
   pin: {
     enabled: false,
   },
@@ -129,6 +153,7 @@
   reviewers: ["team:grafana/grafana-frontend-platform"],
   separateMajorMinor: false,
   vulnerabilityAlerts: {
+    enabled: true,
     addLabels: ["area/security"],
   },
 }

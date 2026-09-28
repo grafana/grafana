@@ -93,6 +93,7 @@ export function metricsSolution(): Solution {
         t('home.solutions.metrics.disk-worst', '{{host}} at {{percent}}%', {
           host: disk.worstInstance.replace(/:\d+$/, ''),
           percent: Math.round(disk.worstRatio * 100),
+          interpolation: { escapeValue: false },
         })
       );
     }

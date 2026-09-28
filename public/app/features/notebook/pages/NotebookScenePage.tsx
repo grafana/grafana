@@ -13,7 +13,6 @@ import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { type NotebookScene } from '../scene/NotebookScene';
-import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
 
 import { NotebookPageError } from './NotebookPageError';
@@ -101,10 +100,6 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
-      {/* Rendered before the notebook exists too, with its actions disabled. Hiding it until the
-          first save produced a uid meant the bar appeared under someone who was already typing and
-          pushed the whole document down. The toolbar owns that distinction, not this page. */}
-      <NotebookToolbar uid={uid} scene={scene} />
       <scene.Component model={scene} />
     </Page>
   );
