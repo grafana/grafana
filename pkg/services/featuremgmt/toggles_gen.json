@@ -1512,6 +1512,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardOverwriteOnCreate",
+        "resourceVersion": "1790624503085",
+        "creationTimestamp": "2026-09-28T19:41:43Z"
+      },
+      "spec": {
+        "description": "Allow Create to overwrite an existing dashboard.grafana.app resource when the grafana.app/overwrite-existing annotation is set",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardTemplates",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-10-28T20:05:32Z"

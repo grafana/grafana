@@ -239,6 +239,10 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
+	// FlagDashboardOverwriteOnCreate
+	// Allow Create to overwrite an existing dashboard.grafana.app resource when the grafana.app/overwrite-existing annotation is set
+	FlagDashboardOverwriteOnCreate = "dashboardOverwriteOnCreate"
+
 	// FlagDashboardNotebooks
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
