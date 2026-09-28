@@ -543,7 +543,7 @@ func TestRouterPreservesFlusherForWatches(t *testing.T) {
 // ResponseWriter only after ServeHTTP returns), so a no-op Flush is correct
 // here, not Unwrap.
 func TestCaptureWriterSupportsFlush(t *testing.T) {
-	rec := newCaptureWriter()
+	rec := newCaptureWriter(maxCachedOpenAPIDocBytes, nil)
 	if err := http.NewResponseController(rec).Flush(); err != nil {
 		t.Errorf("Flush() via ResponseController = %v, want nil (captureWriter must expose a no-op Flush)", err)
 	}

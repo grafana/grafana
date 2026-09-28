@@ -216,6 +216,10 @@ func (t *pluginManifestsTarget) closeConnections() {
 	t.connections = nil
 }
 
+// maxPluginManifestsBytes bounds the plugin manifests response, which holds
+// every deployment's manifest and schemas.
+const maxPluginManifestsBytes = 32 << 20 // 32MB
+
 // fetchPluginManifests fetches the plugin-manifests operator's GET /plugins
 // response, decoded as definition.PluginDeployments.
 func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL string) (*definition.PluginDeployments, error) {
@@ -233,7 +237,7 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 	}
 
 	deployment := &definition.PluginDeployments{}
-	if err := json.NewDecoder(resp.Body).Decode(deployment); err != nil {
+	if err := decodeLimitedJSON(resp.Body, maxPluginManifestsBytes, deployment); err != nil {
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
 	return deployment, nil

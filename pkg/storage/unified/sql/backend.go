@@ -1513,6 +1513,8 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	return iter.listRV, err
 }
 
+func (*backend) WatchInvalidation() <-chan struct{} { return nil }
+
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	b.logCall("WatchWriteEvents")
 	if b.disableStorageServices {
