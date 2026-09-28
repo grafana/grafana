@@ -13,25 +13,17 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/codes"
-	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/util/errhttp"
-
-	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
@@ -40,9 +32,9 @@ type pluginManifestsTarget struct {
 	client   *http.Client
 	patterns []*regexp.Regexp
 	deps     PluginDependencies
-	authn    authn.TokenAuthenticator
 
 	cooldown *cooldown
+	status   pollStatus
 
 	snapshot atomic.Pointer[[]Backend]
 	lastKeys atomic.Pointer[map[string]struct{}]
@@ -57,7 +49,6 @@ func newPluginManifestsTarget(
 	patterns []*regexp.Regexp,
 	client *http.Client,
 	deps PluginDependencies,
-	authn authn.TokenAuthenticator,
 ) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
@@ -73,7 +64,6 @@ func newPluginManifestsTarget(
 		url:      rawURL,
 		client:   client,
 		patterns: patterns,
-		authn:    authn,
 		cooldown: newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
 	empty := []Backend{}
@@ -117,10 +107,12 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	deployment, err := fetchPluginManifests(ctx, t.client, t.url)
 	if err != nil {
 		t.cooldown.OnFailure(now)
+		t.status.recordFailure()
 		logging.FromContext(ctx).Warn("router: plugin manifests poll failed, backing off", "url", t.url, "err", err)
 		return
 	}
 	t.cooldown.OnSuccess(now)
+	t.status.recordSuccess(now)
 
 	backends := make([]Backend, 0, len(deployment.Plugins))
 	keys := make(map[string]struct{}, len(deployment.Plugins))
@@ -152,13 +144,14 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
 			continue
 		}
+
 		// The host is outside PluginDefinition, but changing it must reload the backend.
 		key, keyErr := pluginDeploymentKey(entry)
 		if keyErr != nil {
 			logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
 			continue
 		}
-		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key, authn: t.authn}
+		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
 		backends = append(backends, deploymentBackend)
 		keys[deploymentBackend.Key()] = struct{}{}
 	}
@@ -255,68 +248,11 @@ func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
 	return "managed:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
 }
 
-// Standard plugin, but with OBO authentication and custom key
+// pluginDeploymentBackend includes the remote host in the deployment key.
 type pluginDeploymentBackend struct {
 	Backend
-	key   string
-	authn authn.TokenAuthenticator
+	key string
 }
 
-func (b *pluginDeploymentBackend) Key() string { return b.key }
-
-func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error) {
-	if b.authn == nil {
-		return nil, fmt.Errorf("router: plugin deployment requires a token authenticator")
-	}
-
-	handler, err := b.Backend.Load(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &authenticatingWrapper{
-		Handler: handler,
-		authn:   b.authn,
-	}, nil
-}
-
-type authenticatingWrapper struct {
-	http.Handler
-	authn authn.TokenAuthenticator
-}
-
-func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	info := a.authenticate(w, req)
-	if info == nil {
-		return
-	}
-	ctx := identity.WithRequester(req.Context(), info)
-	a.Handler.ServeHTTP(w, req.WithContext(ctx))
-}
-
-func (a *authenticatingWrapper) authenticate(w http.ResponseWriter, req *http.Request) identity.Requester {
-	ctx, span := otel.Tracer("github.com/grafana/grafana/pkg/router").Start(routerTraceContext(req), "router.plugin.authenticate")
-	defer span.End()
-
-	token := req.Header.Get("X-Access-Token")
-	if token == "" {
-		span.SetAttributes(semconv.ErrorTypeKey.String("missing_token"))
-		span.SetStatus(codes.Error, "")
-		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing access token header"), w)
-		return nil
-	}
-
-	info, err := a.authn.AuthenticateToken(ctx, token)
-	if err != nil {
-		errorType := "authentication_failure"
-		if apierrors.IsUnauthorized(err) {
-			errorType = "invalid_token"
-		}
-		span.SetAttributes(semconv.ErrorTypeKey.String(errorType))
-		span.SetStatus(codes.Error, "")
-		_ = errhttp.Write(ctx, err, w)
-		return nil
-	}
-
-	return info
-}
+func (b *pluginDeploymentBackend) Key() string    { return b.key }
+func (b *pluginDeploymentBackend) Source() string { return sourcePluginsURL }

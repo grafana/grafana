@@ -2028,6 +2028,15 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	return key
 }
 
+// HasKey reports whether k is set either in the ini file or via its environment variable override.
+func (s *DynamicSection) HasKey(k string) bool {
+	envKey := EnvKey(s.section.Name(), k)
+	if len(s.env.Getenv(envKey)) > 0 {
+		return true
+	}
+	return s.section.HasKey(k)
+}
+
 func (s *DynamicSection) KeysHash() map[string]string {
 	hash := s.section.KeysHash()
 	for k := range hash {
