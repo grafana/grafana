@@ -24,6 +24,16 @@ When a plugin is marked for loading, grafana decides if it should load it in the
 In either case, Grafana receives a pluginExport object that later uses to initialize plugins. For Grafana's core, this
 pluginExport is identical in functionality and properties regardless of the loading method.
 
+## Shared UI dependency
+
+The shared `@grafana/ui` dependency loads through an asynchronous factory in `../loader/sharedDependencies.ts`.
+SystemJS and the sandbox loader await this factory before plugin execution.
+Plugins receive the complete namespace with synchronous exports, including `QueryField`, Slate utilities, and the legacy plugin classes.
+The exports use the same component, function, and class instances as core.
+
+This keeps QueryField and Slate out of the initial JavaScript chunks without changing the public package API.
+The first plugin that imports `@grafana/ui` still loads the complete namespace, even if that plugin does not use QueryField.
+
 # Plugin execution
 
 The plugin execution from Grafana's perspective doesn't change in anyway when loaded inside a sandbox.
