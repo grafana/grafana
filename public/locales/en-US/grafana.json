@@ -13301,6 +13301,7 @@
       "default-title-with-date": "Notebook {{date}}"
     },
     "panel": {
+      "add-title": "Add title",
       "change-visualization": "Change visualization",
       "edit-query": "Edit query",
       "hide-query": "Hide query editor",
