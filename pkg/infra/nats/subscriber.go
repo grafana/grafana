@@ -18,9 +18,12 @@ const subscriberName = "nats-subscriber"
 // mirrors Publish's (subject, data) shape so callers never touch nats.go types.
 type MessageHandler func(subject string, data []byte)
 
-// Subscription is a handle to an active subscription. Unsubscribe stops delivery
-// and releases the server-side interest.
+// Subscription is a handle to a subscription that may still be pending.
 type Subscription interface {
+	// WaitReady must succeed before relying on delivery for a snapshot-to-live
+	// handoff. The context must have a deadline.
+	WaitReady(ctx context.Context) error
+	// Unsubscribe stops delivery and releases the server-side interest.
 	Unsubscribe() error
 }
 
@@ -68,7 +71,7 @@ type SubscriberService struct {
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
 	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
 	s := &SubscriberService{connection: conn, metrics: m}
-	s.NamedService = services.NewBasicService(nil, s.running, s.stopping).WithName(subscriberName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(subscriberName)
 	return s
 }
 
@@ -93,11 +96,6 @@ func (s *SubscriberService) Run(ctx context.Context) error {
 		return err
 	}
 	return s.AwaitTerminated(ctx)
-}
-
-func (s *SubscriberService) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
 }
 
 // stopping drains the connection, which auto-unsubscribes any active
@@ -172,5 +170,16 @@ func (s *SubscriberService) subscribe(ctx context.Context, subject string, sub f
 			"status", nc.Status(),
 			"last_err", nc.LastError())
 	}
-	return natsSub, nil
+	return &readySubscription{Subscription: natsSub, conn: nc}, nil
+}
+
+type readySubscription struct {
+	*natsclient.Subscription
+	conn *natsclient.Conn
+}
+
+// WaitReady lets snapshot-to-live consumers wait until the server has processed
+// SUB. Ordinary subscribers can still queue subscriptions while disconnected.
+func (s *readySubscription) WaitReady(ctx context.Context) error {
+	return s.conn.FlushWithContext(ctx)
 }

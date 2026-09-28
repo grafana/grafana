@@ -26,6 +26,8 @@ type fakeSubscription struct {
 	unsubscribed bool
 }
 
+func (f *fakeSubscription) WaitReady(ctx context.Context) error { return ctx.Err() }
+
 func (f *fakeSubscription) Unsubscribe() error {
 	f.mu.Lock()
 	defer f.mu.Unlock()

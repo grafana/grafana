@@ -86,6 +86,7 @@ var (
 	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
 	_ builder.APIGroupValidation            = (*APIBuilder)(nil)
 	_ builder.APIGroupRouteProvider         = (*APIBuilder)(nil)
+	_ builder.APIGroupResourceProvider      = (*APIBuilder)(nil)
 	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
@@ -750,6 +751,18 @@ func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
 }
 
+func (b *APIBuilder) GetResourceInfos(schema.GroupVersion) []apiutils.ResourceInfo {
+	infos := []apiutils.ResourceInfo{
+		provisioning.RepositoryResourceInfo,
+		provisioning.ConnectionResourceInfo,
+		provisioning.JobResourceInfo,
+	}
+	if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
+		infos = append(infos, provisioning.HistoricJobResourceInfo)
+	}
+	return infos
+}
+
 func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
 	return b.client
 }
@@ -1297,13 +1310,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
-	// Hide the internal historic jobs endpoint from the OpenAPI spec.
-	historicjobs := root + "namespaces/{namespace}/historicjobs"
-	for path := range oas.Paths.Paths {
-		if strings.HasPrefix(path, historicjobs) {
-			delete(oas.Paths.Paths, path)
-		}
-	}
+	hideHistoricJobPaths(oas.Paths.Paths, root)
 
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
@@ -1765,6 +1772,23 @@ spec:
 	}
 
 	return oas, nil
+}
+
+// Historic jobs are internal. Keep both resource routes and any cross-namespace
+// subresource routes out of the public API description.
+func hideHistoricJobPaths(paths map[string]*spec3.Path, root string) {
+	prefixes := []string{
+		root + "historicjobs",
+		root + "namespaces/{namespace}/historicjobs",
+	}
+	for path := range paths {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(path, prefix) {
+				delete(paths, path)
+				break
+			}
+		}
+	}
 }
 
 // Helpers for fetching valid Repository objects

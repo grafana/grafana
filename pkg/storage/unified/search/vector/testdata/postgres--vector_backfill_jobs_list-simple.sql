@@ -3,6 +3,7 @@ SELECT
     "model",
     "resource",
     "stopping_rv",
+    "content_version",
     "last_seen_key",
     "is_complete",
     "last_error"

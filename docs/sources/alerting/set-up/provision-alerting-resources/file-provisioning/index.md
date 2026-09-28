@@ -61,7 +61,7 @@ This guide outlines the steps and references to provision alerting resources usi
 
 - [Provisioning Grafana](/docs/grafana/<GRAFANA_VERSION>/administration/provisioning) with configuration files is not available in Grafana Cloud.
 
-- You cannot edit provisioned resources from files in Grafana. You can only change the resource properties by changing the provisioning file and restarting Grafana or carrying out a hot reload. This prevents changes being made to the resource that would be overwritten if a file is provisioned again or a hot reload is carried out.
+- You cannot edit provisioned resources from files in Grafana. You can only change the resource properties by changing the provisioning file and restarting Grafana or carrying out a hot reload. This prevents changes from being made to the resource that would be overwritten if a file is provisioned again or a hot reload is carried out.
 
 - Provisioning using configuration files takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin#reload-provisioning-configurations).
 
@@ -96,7 +96,7 @@ groups:
     name: my_rule_group
     # <string, required> name of the folder the rule group will be stored in
     folder: my_first_folder
-    # <duration, required> interval that the rule group should evaluated at
+    # <duration, required> interval that the rule group should be evaluated at
     interval: 60s
     # <list, required> list of rules that are part of the rule group
     rules:

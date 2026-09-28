@@ -52,6 +52,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
+    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
     const hasTitle = Boolean(title);
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
@@ -79,16 +80,20 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           alignItems="stretch"
           boxShadow={elevated ? 'z3' : undefined}
         >
-          <Box paddingTop={1} paddingRight={2}>
-            <div className={styles.icon}>
-              <Icon size="xl" name={getIconFromSeverity(severity)} />
+          <Box display="flex" paddingY={0.5} paddingRight={2}>
+            <div className={styles.iconBox}>
+              <Icon
+                size={visualRefreshEnabled ? 'lg' : 'xl'}
+                name={getIconFromSeverity(severity)}
+                className={styles.icon}
+              />
             </div>
           </Box>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box paddingY={1} flex={1} minWidth="50%">
-              <Text color="primary" weight="medium">
-                {title}
+            <Box flex={1} minWidth="50%">
+              <Text weight="medium">
+                <span className={styles.title}>{title}</span>
               </Text>
               {children && <div className={styles.content}>{children}</div>}
             </Box>
@@ -144,6 +149,12 @@ const getStyles = (
   topSpacing?: number
 ) => {
   const color = theme.colors[severity];
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  // In light mode, color.text is claimed by the matching solid button (a different shade), so the
+  // alert's icon and text (title + body) use mainEmphasis instead - in dark mode, color.text is
+  // free and matches what the alert needs directly. Legacy (non-refresh) theme is untouched.
+  const iconColor = color.text;
+  const textColor = visualRefreshEnabled ? color.textEmphasis : theme.colors.text.primary;
 
   return {
     wrapper: css({
@@ -164,24 +175,50 @@ const getStyles = (
         zIndex: -1,
       },
     }),
-    icon: css({
-      color: color.text,
-      position: 'relative',
-      top: '-1px',
+    iconBox: css(
+      {
+        alignSelf: 'flex-start',
+        display: 'inline-flex',
+        borderRadius: theme.shape.radius.default,
+      },
+      visualRefreshEnabled && {
+        backgroundColor: `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`,
+        padding: theme.spacing(1),
+      }
+    ),
+    icon: css(
+      {
+        color: iconColor,
+      },
+      !visualRefreshEnabled && {
+        position: 'relative',
+        top: '-1px',
+      }
+    ),
+    title: css({
+      color: textColor,
     }),
     content: css({
-      color: theme.colors.text.primary,
-      paddingTop: hasTitle ? theme.spacing(0.5) : 0,
+      color: textColor,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),
-    close: css({
-      position: 'relative',
-      color: theme.colors.text.secondary,
-      background: 'none',
-      display: 'flex',
-      top: '-6px',
-      right: '-14px',
-    }),
+    close: css(
+      {
+        position: 'relative',
+        color: theme.colors.text.secondary,
+        background: 'none',
+        display: 'flex',
+        top: '-6px',
+        right: '-14px',
+      },
+      visualRefreshEnabled && {
+        button: {
+          '&:hover, &:focus': {
+            backgroundColor: `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`,
+          },
+        },
+      }
+    ),
   };
 };

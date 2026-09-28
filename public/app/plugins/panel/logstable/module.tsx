@@ -43,6 +43,7 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
           'Expand overflowing cell content on hover. Selected cells always expand.'
         ),
         editor: HoverOverflowEditor,
+        defaultValue: false,
       })
       .addBooleanSwitch({
         path: 'showControls',

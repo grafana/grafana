@@ -283,9 +283,14 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
+		// The Kubernetes readiness probe reads the aggregate health status. This is
+		// the only probe registered for this target, so it decides pod readiness.
 		s.grpcService.Health.Register(
 			grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
-				return svc.State() == services.Running, nil
+				if svc.State() != services.Running {
+					return false, nil
+				}
+				return svc.CheckHealth(ctx)
 			}),
 			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
@@ -348,7 +353,7 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 // that needs more than one background lifecycle can still register as a
 // single services.Service. A failure in any of them fails the composite;
 // starting awaits all healthy, stopping awaits all stopped.
-func newCompositeService(svcs ...services.Service) (services.Service, error) {
+func newCompositeService(svcs ...services.Service) (*services.BasicService, error) {
 	manager, err := services.NewManager(svcs...)
 	if err != nil {
 		return nil, fmt.Errorf("composing services: %w", err)
@@ -356,9 +361,28 @@ func newCompositeService(svcs ...services.Service) (services.Service, error) {
 	failureWatcher := services.NewFailureWatcher()
 	failureWatcher.WatchManager(manager)
 
+	stop := func(_ error) error {
+		// Close waits for listener callbacks, so keep receiving failures after running exits.
+		drained := make(chan struct{})
+		go func() {
+			defer close(drained)
+			for range failureWatcher.Chan() {
+			}
+		}()
+		err := services.StopManagerAndAwaitStopped(context.Background(), manager)
+		failureWatcher.Close()
+		<-drained
+		return err
+	}
+
 	return services.NewBasicService(
 		func(ctx context.Context) error {
-			return services.StartManagerAndAwaitHealthy(ctx, manager)
+			if err := services.StartManagerAndAwaitHealthy(ctx, manager); err != nil {
+				// BasicService does not call its stopping hook after startup failure.
+				_ = stop(err)
+				return err
+			}
+			return nil
 		},
 		func(ctx context.Context) error {
 			select {
@@ -368,9 +392,7 @@ func newCompositeService(svcs ...services.Service) (services.Service, error) {
 				return err
 			}
 		},
-		func(_ error) error {
-			return services.StopManagerAndAwaitStopped(context.Background(), manager)
-		},
+		stop,
 	), nil
 }
 
@@ -386,9 +408,9 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	// The publisher connects lazily on first publish, so no server is started
-	// here; in external mode the embedded server is inert. Returning it as the
-	// module service drains the connection on shutdown.
+	// The publisher establishes its connection when this service starts; in
+	// external mode the embedded server is inert. Returning it as the module
+	// service also drains the connection on shutdown.
 	natsCfg := nats.ProvideNATSConfig(s.cfg, natsServer)
 	publisher := nats.ProvidePublisher(natsCfg, s.registerer)
 	s.natsPublisher = publisher
@@ -401,15 +423,11 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	}
 	subscriber := nats.ProvideSubscriber(natsCfg, s.registerer)
 	s.natsSubscriber = subscriber
-	group, err := services.NewManager(publisher, subscriber)
+	group, err := newCompositeService(publisher, subscriber)
 	if err != nil {
 		return nil, err
 	}
-	return services.NewBasicService(
-		func(ctx context.Context) error { return services.StartManagerAndAwaitHealthy(ctx, group) },
-		func(ctx context.Context) error { <-ctx.Done(); return nil },
-		func(_ error) error { return services.StopManagerAndAwaitStopped(context.Background(), group) },
-	).WithName(modules.NATS), nil
+	return group.WithName(modules.NATS), nil
 }
 
 func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) func() (services.Service, error) {
@@ -478,15 +496,11 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	probe, ok := svc.(grpcserver.HealthProbe)
 	s.grpcService.Health.Register(grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
 		if svc.State() != services.Running {
 			return false, nil
 		}
-		if ok {
-			return probe.CheckHealth(ctx)
-		}
-		return true, nil
+		return svc.CheckHealth(ctx)
 	}),
 		resourcepb.ResourceStore_ServiceDesc.ServiceName,
 		resourcepb.ResourceStats_ServiceDesc.ServiceName,
@@ -525,15 +539,11 @@ func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	probe, ok := svc.(grpcserver.HealthProbe)
 	s.grpcService.Health.Register(grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
 		if svc.State() != services.Running {
 			return false, nil
 		}
-		if ok {
-			return probe.CheckHealth(ctx)
-		}
-		return true, nil
+		return svc.CheckHealth(ctx)
 	}),
 		resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 		resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,

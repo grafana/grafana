@@ -398,10 +398,10 @@ func TestSecureLifecycle(t *testing.T) {
 			Return(nil).Once()
 
 		s := &Storage{
-			codec:     unstructured.UnstructuredJSONScheme,
-			newFunc:   func() runtime.Object { return &unstructured.Unstructured{} },
-			versioner: &storage.APIObjectVersioner{},
-			store:     &conflictOnceClient{prev: raw.Bytes()},
+			serializer: &jsonSerializer{},
+			newFunc:    func() runtime.Object { return &unstructured.Unstructured{} },
+			versioner:  &storage.APIObjectVersioner{},
+			store:      &conflictOnceClient{prev: raw.Bytes()},
 			getKey: func(string) (*resourcepb.ResourceKey, error) {
 				return &resourcepb.ResourceKey{Namespace: "default", Group: "example.grafana.app", Resource: "examples", Name: "test"}, nil
 			},
@@ -514,11 +514,11 @@ func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
 
 	// store is left nil: the object must never be written, so any store access would panic.
 	s := &Storage{
+		serializer: &jsonSerializer{},
 		getKey: func(string) (*resourcepb.ResourceKey, error) {
 			return &resourcepb.ResourceKey{Namespace: "default", Resource: "customkinds", Name: "test"}, nil
 		},
 		opts: StorageOptions{
-			// Declared so encode serializes the object directly; this Storage has no codec.
 			GVK:                  schema.GroupVersionKind{Group: "something.grafana.app", Version: "v1beta1", Kind: "CustomKind"},
 			SecureValues:         secureStore,
 			MaximumNameLength:    100,
