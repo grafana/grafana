@@ -1,13 +1,4 @@
 import jquery from 'jquery';
-import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.selection';
-import 'vendor/flot/jquery.flot.time';
-import 'vendor/flot/jquery.flot.stack';
-import 'vendor/flot/jquery.flot.stackpercent';
-import 'vendor/flot/jquery.flot.fillbelow';
-import 'vendor/flot/jquery.flot.crosshair';
-import 'vendor/flot/jquery.flot.dashes';
-import 'vendor/flot/jquery.flot.gauge';
 
 import { AppPlugin, DataSourceApi, DataSourcePlugin, PanelPlugin, dateMath } from '@grafana/data';
 import TableModel from 'app/core/TableModel';
@@ -21,6 +12,8 @@ import { arrayMove } from 'app/core/utils/arrayMove';
 import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
+
+import './jqueryWithFlot';
 
 const jQueryFlotDeps = [
   'jquery.flot.crosshair',
