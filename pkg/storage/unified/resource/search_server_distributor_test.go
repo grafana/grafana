@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -215,6 +217,7 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 		searchRingRead: newSearchRingReadOp(false),
 		clientPool:     pool,
 		tracing:        noop.NewTracerProvider().Tracer("test"),
+		log:            log.NewNopLogger(),
 	}
 
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-access-token", "the-token"))
@@ -225,6 +228,140 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"the-token"}, gotMD.Get("x-access-token"))
+}
+
+// failoverTestClient records which instances were called and returns the
+// error chosen by errFn for each call.
+type failoverTestClient struct {
+	ResourceClient
+	id    string
+	state *failoverTestState
+}
+
+type failoverTestState struct {
+	mu    sync.Mutex
+	calls []string
+	errFn func(call int, id string) error
+}
+
+func (s *failoverTestState) record(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	n := len(s.calls)
+	s.calls = append(s.calls, id)
+	if s.errFn == nil {
+		return nil
+	}
+	return s.errFn(n, id)
+}
+
+func (c *failoverTestClient) Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if err := c.state.record(c.id); err != nil {
+		return nil, err
+	}
+	return &resourcepb.ResourceSearchResponse{TotalHits: 1}, nil
+}
+
+func (c *failoverTestClient) RebuildIndexes(context.Context, *resourcepb.RebuildIndexesRequest, ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	if err := c.state.record(c.id); err != nil {
+		return nil, err
+	}
+	return &resourcepb.RebuildIndexesResponse{RebuildCount: 1}, nil
+}
+
+func newFailoverTestDistributor(t *testing.T, replicationFactor int, state *failoverTestState) *distributorServer {
+	t.Helper()
+	states := make([]ring.InstanceState, max(3, replicationFactor))
+	for i := range states {
+		states[i] = ring.ACTIVE
+	}
+	testRing, _ := newSearchRingWithDescForTest(t, replicationFactor, searchRingDescForTest(time.Now(), states...), true)
+	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+		ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
+			return &RingClient{Client: &failoverTestClient{id: inst.Id, state: state}}, nil
+		}), nil, gokitlog.NewNopLogger())
+
+	return &distributorServer{
+		ring:           testRing,
+		searchRingRead: newSearchRingReadOp(false),
+		clientPool:     pool,
+		tracing:        noop.NewTracerProvider().Tracer("test"),
+		log:            log.NewNopLogger(),
+	}
+}
+
+func TestDistributorSearchFailover(t *testing.T) {
+	unavailable := status.Error(codes.Unavailable, "connection refused")
+	exhausted := status.Error(codes.ResourceExhausted, "too many requests")
+	invalid := status.Error(codes.InvalidArgument, "bad request")
+
+	tests := []struct {
+		name              string
+		replicationFactor int
+		// errors returned by each call, in call order
+		errs        []error
+		wantCalls   int
+		wantErrCode codes.Code
+	}{
+		{name: "first replica succeeds", replicationFactor: 2, wantCalls: 1, wantErrCode: codes.OK},
+		{name: "first replica unavailable", replicationFactor: 2, errs: []error{unavailable}, wantCalls: 2, wantErrCode: codes.OK},
+		{name: "first replica exhausted", replicationFactor: 2, errs: []error{exhausted}, wantCalls: 2, wantErrCode: codes.OK},
+		{name: "both replicas fail, first succeeds on retry", replicationFactor: 2, errs: []error{unavailable, exhausted}, wantCalls: 3, wantErrCode: codes.OK},
+		{name: "all attempts fail", replicationFactor: 2, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 3, wantErrCode: codes.Unavailable},
+		{name: "non-retryable error", replicationFactor: 2, errs: []error{invalid}, wantCalls: 1, wantErrCode: codes.InvalidArgument},
+		{name: "single replica retried", replicationFactor: 1, errs: []error{unavailable, unavailable}, wantCalls: 3, wantErrCode: codes.OK},
+		{name: "every replica tried before retrying", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 4, wantErrCode: codes.OK},
+		{name: "four replicas all fail", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable, unavailable, unavailable}, wantCalls: 5, wantErrCode: codes.Unavailable},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := &failoverTestState{errFn: func(n int, _ string) error {
+				if n < len(tt.errs) {
+					return tt.errs[n]
+				}
+				return nil
+			}}
+			ds := newFailoverTestDistributor(t, tt.replicationFactor, state)
+
+			resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+			})
+			require.Equal(t, tt.wantErrCode, status.Code(err))
+			if tt.wantErrCode == codes.OK {
+				require.Equal(t, int64(1), resp.TotalHits)
+			}
+
+			calls := state.calls
+			require.Len(t, calls, tt.wantCalls)
+			// Each replica is tried once before the first one is retried.
+			for i := range calls {
+				require.Equal(t, calls[i%tt.replicationFactor], calls[i])
+			}
+			require.Len(t, slices.Compact(slices.Sorted(slices.Values(calls))), min(len(calls), tt.replicationFactor))
+		})
+	}
+}
+
+func TestDistributorRebuildIndexesRetriesSameInstance(t *testing.T) {
+	var failed bool
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		if id == "instance-a" && !failed {
+			failed = true
+			return status.Error(codes.Unavailable, "connection refused")
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.True(t, resp.ContactedAllInstances)
+	require.Equal(t, int64(3), resp.RebuildCount)
+
+	slices.Sort(state.calls)
+	require.Equal(t, []string{"instance-a", "instance-a", "instance-b", "instance-c"}, state.calls)
 }
 
 func requireSearchReplicaSetIDs(t *testing.T, testRing *ring.Ring, extendReplicaSet bool, expectedIDs []string) {
