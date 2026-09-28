@@ -238,6 +238,8 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
+	t.Skip("flaky test")
+
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)

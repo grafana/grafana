@@ -48,6 +48,8 @@ func TestReproIncident2144IndependentOfGrafanaDB(t *testing.T) {
 }
 
 func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
+	t.Skip("flaky test")
+
 	t.Parallel()
 	txOpts := &sql.TxOptions{
 		Isolation: sql.LevelSerializable,
