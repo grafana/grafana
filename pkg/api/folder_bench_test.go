@@ -299,7 +299,7 @@ func setupDB(b testing.TB) benchScenario {
 				OrgID:     signedInUser.OrgID,
 				IsFolder:  false,
 				UID:       str,
-				FolderID:  f0.ID,
+				FolderID:  f0.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 				FolderUID: f0.UID,
 				Slug:      str,
 				Title:     str,
@@ -327,7 +327,7 @@ func setupDB(b testing.TB) benchScenario {
 					OrgID:     signedInUser.OrgID,
 					IsFolder:  false,
 					UID:       str,
-					FolderID:  f1.ID,
+					FolderID:  f1.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 					FolderUID: f1.UID,
 					Slug:      str,
 					Title:     str,
@@ -355,7 +355,7 @@ func setupDB(b testing.TB) benchScenario {
 						OrgID:     signedInUser.OrgID,
 						IsFolder:  false,
 						UID:       str,
-						FolderID:  f1.ID,
+						FolderID:  f1.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 						FolderUID: f2.UID,
 						Slug:      str,
 						Title:     str,

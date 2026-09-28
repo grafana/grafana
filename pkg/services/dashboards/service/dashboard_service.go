@@ -1531,7 +1531,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			IsFolder:    false,
 			FolderUID:   folder.ToLegacyFolderUID(hit.Folder),
 			FolderTitle: folderTitle,
-			FolderID:    folderID,
+			FolderID:    folderID, //nolint:staticcheck // Preserve legacy field compatibility.
 			FolderSlug:  slugify.Slugify(folderTitle),
 			ManagedBy:   hit.ManagedBy.Kind,
 			ManagerId:   hit.ManagedBy.ID,

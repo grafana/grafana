@@ -6796,9 +6796,6 @@
     "variable": {
       "description-tooltip": "变量描述"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "回到数据面板",
       "not-found": ""
@@ -13258,7 +13255,7 @@
       "count-truncated_other": "已加载前 {{count}} 个笔记本"
     },
     "new": {
-      "default-title": "笔记本 #{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "保存失败",
@@ -14779,12 +14776,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "回到存储库",
       "cleaning-up-resources": "清理存储库资源",
-      "not-found": "找不到",
       "not-found-message": "找不到存储库",
       "repository-config-exists-configuration": "确保存储库配置存在于配置文件中。",
       "tab-overview": "概述",
@@ -15080,26 +15081,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "在发布仪表板前，请确认以下内容：",
-      "data-src-ack-desc": "发布当前仅适用于数据源子集*",
-      "data-src-ack-tooltip": "了解更多关于公共数据源的信息",
-      "public-ack-desc": "您的整个仪表板将公开*",
-      "public-ack-tooltip": "了解更多关于公共仪表板的信息",
-      "usage-ack-desc": "公布仪表板将导致其每次被查看时运行查询，这可能会增加费用*",
-      "usage-ack-desc-tooltip": "了解更多关于查询缓存的信息"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "可以查看仪表板",
-      "copy-button": "复制",
-      "dashboard-url-field-label": "仪表板网址",
-      "email-share-type-option-label": "仅指定人员",
-      "pause-sharing-dashboard-label": "暂停共享仪表板",
-      "public-share-type-option-label": "任何有链接的人",
-      "revoke-public-URL-button": "撤销公共网址",
-      "revoke-public-URL-button-title": "注销公共网址",
-      "settings-title": "设置"
-    },
     "configuration": {
       "display-annotations-description": "在此数据面板上显示注释",
       "display-annotations-label": "显示注释",
@@ -15112,21 +15093,11 @@
       "time-range-label": "时间范围",
       "time-range-tooltip": "共享数据面板使用数据面板的默认时间范围设置"
     },
-    "create-page": {
-      "generate-public-url-button": "生成公共网址",
-      "unsupported-features-desc": "目前，我们不支持模板变量或前端数据源",
-      "welcome-title": "欢迎使用公共仪表板 ！"
-    },
     "email-sharing": {
       "accept-button": "接受",
       "alert-text": "通过电子邮件共享数据面板的费用将按每位用户的 30 天有效的令牌的持续时间收取，无论共享了多少个数据面板。除非您续订令牌，否则系统将在 30 天后停止计费。",
       "bill-ack": "我了解添加用户需要付款。*",
       "cancel-button": "取消",
-      "input-invalid-email-text": "无效电子邮箱",
-      "input-required-email-text": "电子邮箱是必填项",
-      "invite-button": "邀请",
-      "invite-field-desc": "通过电子邮件邀请人员",
-      "invite-field-label": "邀请",
       "learn-more-button": "了解更多",
       "recipient-email-placeholder": "电子邮箱",
       "recipient-invalid-email-text": "无效电子邮箱",
@@ -15136,17 +15107,12 @@
       "recipient-list-description": "只有您直接邀请的人才能访问此数据面板",
       "recipient-list-title": "有访问权限的人",
       "recipient-required-email-text": "电子邮箱是必填项",
-      "resend-button": "重新发送",
-      "resend-button-title": "重新发送",
       "resend-invite-label": "重新发送邀请",
       "revoke-access-label": "注销访问权限",
-      "revoke-button": "注销",
-      "revoke-button-title": "注销",
       "success-creation": "您的数据面板已准备好进行外部共享",
       "success-share-type-change": "数据面板访问权限已更新：现在只有特定人员才能通过链接访问"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "请在更新公共配置之前保存您的仪表板更改",
       "unsupport-data-source-alert-readmore-link": "阅读更多关于支持的数据源的信息",
       "unsupported-data-source-alert-title": "不受支持的数据源",
       "unsupported-template-variable-alert-desc": "此公共仪表板可能无法工作，因为其使用了模板变量",
@@ -15160,25 +15126,6 @@
       "public-ack": "我了解整个数据面板将被公开。*",
       "success-creation": "您的数据面板现在可以公开访问",
       "success-share-type-change": "数据面板访问权限已更新：现在拥有链接的任何人都可以访问"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "折叠设置",
-      "expand-settings-tooltip": "展开设置"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "默认时间范围",
-      "default-time-range-label-desc": "公共仪表板使用仪表板的默认时间范围设置",
-      "show-annotations-label": "显示注释",
-      "show-annotations-label-desc": "在公共仪表板上显示注释",
-      "time-range-picker-label": "已启用时间范围选择器",
-      "time-range-picker-label-desc": "允许查看者更改时间范围"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "注释 = 隐藏",
-      "annotations-show-text": "注释 = 显示",
-      "time-range-picker-disabled-text": "时间范围选择器 = 已禁用",
-      "time-range-picker-enabled-text": "时间范围选择器 = 已启用",
-      "time-range-text": "时间范围 = "
     },
     "share": {
       "success-delete": "您的数据面板不再可共享"
@@ -15952,9 +15899,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "分享"
-    },
     "embed": {
       "copy": "复制到剪贴板",
       "html": "嵌入 HTML",
@@ -16001,9 +15945,6 @@
       "time-range-description": "将当前相对时间范围转换为绝对时间范围",
       "time-range-label": "锁定时间范围"
     },
-    "panel": {
-      "title": "分享面板"
-    },
     "snapshot": {
       "cancel-button": "取消",
       "copy-link-button": "复制",
@@ -16019,16 +15960,11 @@
       "local-button": "发布快照",
       "mistake-message": "是不是弄错了什么？",
       "name": "快照名称",
-      "timeout": "超时（秒）",
-      "timeout-description": "如果需要很长时间才能收集仪表板指标，则可能需要配置超时值。",
       "url-label": "网址快照"
     },
     "tab-title": {
-      "embed": "嵌入",
       "export": "导出",
-      "library-panel": "库面板",
       "link": "链接",
-      "public-dashboard-title": "公共仪表板",
       "snapshot": "快照"
     },
     "theme-picker": {

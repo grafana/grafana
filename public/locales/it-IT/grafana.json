@@ -6843,9 +6843,6 @@
     "variable": {
       "description-tooltip": "Descrizione della variabile"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Torna alla dashboard",
       "not-found": ""
@@ -13353,7 +13350,7 @@
       "count-truncated_other": "Primi {{count}} blocchi appunti caricati"
     },
     "new": {
-      "default-title": "Blocco appunti n. {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Salvataggio non riuscito",
@@ -14892,12 +14889,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Torna ai repository",
       "cleaning-up-resources": "Pulizia delle risorse del repository",
-      "not-found": "non trovato",
       "not-found-message": "Repository non trovato",
       "repository-config-exists-configuration": "Assicurati che la configurazione del repository esista nel file di configurazione.",
       "tab-overview": "Panoramica",
@@ -15193,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Prima di rendere pubblico il dashboard, conferma quanto segue:",
-      "data-src-ack-desc": "La pubblicazione attualmente funziona solo con un sottoinsieme di origini dati*",
-      "data-src-ack-tooltip": "Scopri di più sulle origini dati pubbliche",
-      "public-ack-desc": "L'intero dashboard sarà pubblico*",
-      "public-ack-tooltip": "Scopri di più sui dashboard pubblici",
-      "usage-ack-desc": "Rendere pubblico un dashboard comporterà l'esecuzione di query ogni volta che viene visualizzato, il che potrebbe aumentare i costi*",
-      "usage-ack-desc-tooltip": "Scopri di più sulla memorizzazione nella cache delle query"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Può visualizzare il dashboard",
-      "copy-button": "Copia",
-      "dashboard-url-field-label": "URL dashboard",
-      "email-share-type-option-label": "Solo persone specificate",
-      "pause-sharing-dashboard-label": "Sospendi la condivisione del dashboard",
-      "public-share-type-option-label": "Chiunque abbia un link",
-      "revoke-public-URL-button": "Revoca URL pubblico",
-      "revoke-public-URL-button-title": "Revoca URL pubblico",
-      "settings-title": "Impostazioni"
-    },
     "configuration": {
       "display-annotations-description": "Annotazioni presenti su questo dashboard",
       "display-annotations-label": "Visualizza annotazioni",
@@ -15225,21 +15206,11 @@
       "time-range-label": "Intervallo di tempo",
       "time-range-tooltip": "Il dashboard condiviso utilizza le impostazioni dell'intervallo di tempo predefinite del dashboard"
     },
-    "create-page": {
-      "generate-public-url-button": "Genera URL pubblico",
-      "unsupported-features-desc": "Al momento non supportiamo variabili di modello o origini dati frontend",
-      "welcome-title": "Ti diamo il benvenuto nei dashboard pubblici!"
-    },
     "email-sharing": {
       "accept-button": "Accetta",
       "alert-text": "La condivisione dei dashboard tramite email viene addebitata per utente per la durata del token di 30 giorni, indipendentemente dal numero di dashboard condivise. La fatturazione si interrompe dopo 30 giorni, a meno che non si rinnovi il token.",
       "bill-ack": "Comprendo che l'aggiunta di utenti richiede un pagamento.*",
       "cancel-button": "Annulla",
-      "input-invalid-email-text": "Email non valida",
-      "input-required-email-text": "Email è un campo obbligatorio",
-      "invite-button": "Invito",
-      "invite-field-desc": "Invita persone tramite email",
-      "invite-field-label": "Invito",
       "learn-more-button": "Scopri di più",
       "recipient-email-placeholder": "Email",
       "recipient-invalid-email-text": "Email non valida",
@@ -15249,17 +15220,12 @@
       "recipient-list-description": "Solo le persone che hai invitato direttamente possono accedere a questo dashboard",
       "recipient-list-title": "Persone con accesso",
       "recipient-required-email-text": "Email è un campo obbligatorio",
-      "resend-button": "Invia nuovamente",
-      "resend-button-title": "Invia nuovamente",
       "resend-invite-label": "Rinvia invito",
       "revoke-access-label": "Revoca accesso",
-      "revoke-button": "Revoca",
-      "revoke-button-title": "Revoca",
       "success-creation": "Il tuo dashboard è pronto per la condivisione esterna",
       "success-share-type-change": "Accesso al dashboard aggiornato: solo alcune persone possono ora accedere con il link"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Salva le modifiche al dashboard prima di aggiornare la configurazione pubblica",
       "unsupport-data-source-alert-readmore-link": "Scopri di più sulle origini dati supportate",
       "unsupported-data-source-alert-title": "Origini dati non supportate",
       "unsupported-template-variable-alert-desc": "Questo dashboard pubblico potrebbe non funzionare poiché utilizza variabili di modello",
@@ -15273,25 +15239,6 @@
       "public-ack": "Sono consapevole che l'intero dashboard sarà pubblico.*",
       "success-creation": "Il tuo dashboard è ora accessibile al pubblico",
       "success-share-type-change": "Accesso al dashboard aggiornato: chiunque sia in possesso del link ora può accedere"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Riduci impostazioni",
-      "expand-settings-tooltip": "Espandi impostazioni"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Intervallo di tempo predefinito",
-      "default-time-range-label-desc": "Il dashboard pubblico utilizza le impostazioni dell'intervallo di tempo predefinite del dashboard",
-      "show-annotations-label": "Mostra annotazioni",
-      "show-annotations-label-desc": "Mostra annotazioni sul dashboard pubblico",
-      "time-range-picker-label": "Selettore intervallo di tempo abilitato",
-      "time-range-picker-label-desc": "Consenti agli spettatori di modificare l'intervallo di tempo"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Annotazioni = nascondi",
-      "annotations-show-text": "Annotazioni = mostra",
-      "time-range-picker-disabled-text": "Selettore intervallo di tempo = disabilitato",
-      "time-range-picker-enabled-text": "Selettore intervallo di tempo = abilitato",
-      "time-range-text": "Intervallo di tempo = "
     },
     "share": {
       "success-delete": "Il tuo dashboard non è più condivisibile"
@@ -16076,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Condividi"
-    },
     "embed": {
       "copy": "Copia negli appunti",
       "html": "Incorpora HTML",
@@ -16125,9 +16069,6 @@
       "time-range-description": "Trasforma l'intervallo di tempo relativo corrente in un intervallo di tempo assoluto",
       "time-range-label": "Blocca intervallo di tempo"
     },
-    "panel": {
-      "title": "Condividi pannello"
-    },
     "snapshot": {
       "cancel-button": "Annulla",
       "copy-link-button": "Copia",
@@ -16143,16 +16084,11 @@
       "local-button": "Pubblica istantanea",
       "mistake-message": "Hai commesso un errore? ",
       "name": "Nome istantanea",
-      "timeout": "Timeout (secondi)",
-      "timeout-description": "Potrebbe essere necessario configurare il valore Timeout se la raccolta delle metriche del dashboard richiede molto tempo.",
       "url-label": "URL istantanea"
     },
     "tab-title": {
-      "embed": "Incorpora",
       "export": "Esporta",
-      "library-panel": "Pannello della libreria",
       "link": "Link",
-      "public-dashboard-title": "Dashboard pubblico",
       "snapshot": "Istantanea"
     },
     "theme-picker": {
