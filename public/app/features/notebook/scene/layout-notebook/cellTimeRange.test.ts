@@ -7,7 +7,7 @@ import { NotebookScene } from '../NotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
-import { buildCellSceneTimeRange, buildDraftTimeRangeHost } from './cellTimeRange';
+import { buildCellSceneTimeRange } from './cellTimeRange';
 
 // A day-rounded ("now/d") preset lands on a different calendar day depending on the timezone it's
 // evaluated in. Pacific/Kiritimati (UTC+14) is chosen specifically because it's already the next
@@ -124,17 +124,5 @@ describe('buildCellSceneTimeRange', () => {
     expect(cell.state.$timeRange?.state.value.to.toISOString()).toBe('2024-01-05T23:59:59.999Z');
 
     deactivate();
-  });
-
-  it("resolves a week-rounded draft range using the notebook's week start", () => {
-    // SceneTimeRange only applies weekStart when it differs from the last one it applied. Pin that
-    // cache to Sunday, then clear the locale, so the draft has to apply Saturday itself.
-    new SceneTimeRange({ from: 'now-6h', to: 'now', weekStart: 'sunday' });
-    setWeekStart();
-
-    const host = buildDraftTimeRangeHost('now/w', 'now/w', 'utc', 'saturday');
-
-    expect(host.state.$timeRange.state.value.from.toISOString()).toBe('2023-12-30T00:00:00.000Z');
-    expect(host.state.$timeRange.state.value.to.toISOString()).toBe('2024-01-05T23:59:59.999Z');
   });
 });

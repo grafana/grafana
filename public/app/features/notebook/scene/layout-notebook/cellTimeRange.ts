@@ -1,14 +1,5 @@
-import { getDefaultTimeRange, rangeUtil, setWeekStart, type TimeOption, type TimeRange } from '@grafana/data';
-import {
-  SceneObjectBase,
-  SceneTimePicker,
-  SceneTimeRange,
-  SceneTimeRangeTransformerBase,
-  type SceneObjectState,
-  type SceneObjectUrlSyncHandler,
-  type SceneTimeRangeLike,
-  type SceneTimeRangeState,
-} from '@grafana/scenes';
+import { getDefaultTimeRange, rangeUtil, setWeekStart, type TimeRange } from '@grafana/data';
+import { SceneTimeRangeTransformerBase, type SceneTimeRangeLike, type SceneTimeRangeState } from '@grafana/scenes';
 
 import { type PanelKind } from '../../types';
 
@@ -60,17 +51,6 @@ export function buildCellTimeRangeSpec(timeRange: SceneTimeRangeLike): CellTimeR
   return { from, to };
 }
 
-/**
- * Only for the popover's own draft: a scratch SceneTimeRange detached from the notebook's scene
- * tree, so it has no real ancestor to delegate timezone to — unlike the committed
- * NotebookCellTimeRange above, it needs its own explicit, one-time-snapshotted zone.
- */
-class DraftCellTimeRange extends SceneTimeRange {
-  public get urlSync(): SceneObjectUrlSyncHandler | undefined {
-    return undefined;
-  }
-}
-
 export function withQueryOptionsTimeRange(element: PanelKind, range: CellTimeRangeSpec | undefined): PanelKind {
   return {
     ...element,
@@ -89,30 +69,4 @@ export function withQueryOptionsTimeRange(element: PanelKind, range: CellTimeRan
       },
     },
   };
-}
-
-interface DraftTimeRangeHostState extends SceneObjectState {
-  $timeRange: SceneTimeRange;
-  // Rendered directly via timePicker.Component: resolves sceneGraph.getTimeRange(timePicker) to
-  // $timeRange above, since SceneObjectBase auto-parents timePicker under this host.
-  timePicker: SceneTimePicker;
-}
-
-/**
- * A scene-graph fragment used only inside the time-range popover, never attached to the notebook's
- * own tree
- */
-export class DraftTimeRangeHost extends SceneObjectBase<DraftTimeRangeHostState> {}
-
-export function buildDraftTimeRangeHost(
-  from: string,
-  to: string,
-  timeZone: string,
-  weekStart: SceneTimeRangeState['weekStart'],
-  quickRanges?: TimeOption[]
-): DraftTimeRangeHost {
-  return new DraftTimeRangeHost({
-    $timeRange: new DraftCellTimeRange({ from, to, timeZone, weekStart }),
-    timePicker: new SceneTimePicker({ hideTimeSettings: true, quickRanges }),
-  });
 }
