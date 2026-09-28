@@ -52,7 +52,7 @@ Before you begin, ensure you have the following:
 Rate limits usually depend on how often your tooling reads resources and how many requests each read takes, not on how many resources you manage. The following factors compound each other:
 
 - **Reconciliation loops re-read every resource:** Tools poll Grafana on a fixed interval to compare the live state against the desired state, even when nothing changed. Request volume scales with the number of resources multiplied by the polling frequency.
-- **The legacy provisioning API reads alert rules individually:** The API only returns provenance, which marks a resource as provisioned, when you fetch a single rule. To read provenance for a rule group, the Grafana Terraform provider calls `GET /api/v1/provisioning/folder/{folderUID}/rule-groups/{group}`, then calls `GET /api/v1/provisioning/alert-rules/{UID}` once per rule. A group of 50 rules costs 51 requests per reconcile.
+- **Reading provenance takes a request per rule:** Provenance, which marks a resource as provisioned, is returned per rule. To determine it for a rule group, the Grafana Terraform provider fetches the group with `GET /api/v1/provisioning/folder/{folderUID}/rule-groups/{group}`, then fetches each rule with `GET /api/v1/provisioning/alert-rules/{UID}`. A group of 50 rules makes 51 requests per reconcile.
 - **Multiple tools share one stack:** Running provider pods in several Kubernetes clusters, or Terraform in CI alongside a Crossplane controller, counts every request against the same limits.
 
 ## Identify rate limit errors
@@ -63,7 +63,7 @@ Rate limited requests fail with the `429 Too Many Requests` status code. Check y
 observe failed: failed to observe the resource: [{0 [GET /v1/provisioning/alert-rules/acefead6586dbc] GetAlertRule (status 429): {} []}]
 ```
 
-In Grafana Cloud, `429` responses include an `x-rate-limit-limit` header with the maximum requests allowed and an `x-rate-limit-duration` header with the window length in seconds. Limits differ by endpoint and deployment, so use these headers to determine your request budget.
+Rate limits differ by endpoint and deployment. If requests are throttled, reduce your request volume using the following sections, and contact Grafana Support to confirm which limits apply to your stack.
 
 ## Retry rate limited requests in Terraform
 
@@ -91,17 +91,17 @@ The retry arguments control the following behavior:
 - **`retry_wait`:** The number of seconds to wait between retries.
 - **`retry_status_codes`:** The status codes that trigger a retry, where `x` is a digit wildcard. The default is `429` and any `5xx` code.
 
-You can also set these values with the `GRAFANA_RETRIES`, `GRAFANA_RETRY_WAIT`, and `GRAFANA_RETRY_STATUS_CODES` environment variables.
+You can also set these values with the `GRAFANA_RETRIES`, `GRAFANA_RETRY_WAIT`, and `GRAFANA_RETRY_STATUS_CODES` environment variables. Default values can change between provider versions, so confirm them in the provider documentation.
 
 ## Tune the Crossplane provider
 
 Retries don't help a Crossplane controller, because it polls continuously. Lower the request rate instead with the following flags:
 
-- **`--poll`:** How often a resource is checked for drift. The default is `10m`. Increasing it cuts steady-state request volume proportionally.
-- **`--max-reconcile-rate`:** The global maximum rate per second at which resources are checked for drift. The default is `100`. Lowering it smooths the burst that occurs when the controller starts and reconciles everything at once.
-- **`--sync`:** The controller manager sync period. The default is `1h`.
+- **`--poll`:** How often a resource is checked for drift. Increasing it cuts steady-state request volume proportionally.
+- **`--max-reconcile-rate`:** The global maximum rate per second at which resources are checked for drift. Lowering it smooths the burst that occurs when the controller starts and reconciles everything at once.
+- **`--sync`:** The controller manager sync period.
 
-Set the flags through a `DeploymentRuntimeConfig`, then reference it from the provider:
+The following example sets a longer poll interval and a lower reconcile rate than the provider defaults. Confirm the current defaults in the Crossplane provider documentation, as they can change between versions. Set the flags through a `DeploymentRuntimeConfig`, then reference it from the provider:
 
 ```yaml
 apiVersion: pkg.crossplane.io/v1beta1
@@ -140,9 +140,7 @@ GitOps engines add reconcile cycles on top of the controller's polling. To skip 
 
 ## Migrate to the Grafana App Platform alerting APIs
 
-The legacy provisioning endpoints under `/api/v1/provisioning/` are deprecated but still supported, so you can keep using tuned legacy configurations while you plan a migration. The Grafana App Platform alerting APIs expose each alert rule as its own resource under `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}`, which avoids the extra per-rule provenance request. In Terraform, the equivalent resource is `grafana_apps_rules_alertrule_v0alpha1`.
-
-If you still hit rate limits after tuning your tools, contact Grafana Support to confirm which limits apply to your stack.
+The legacy provisioning endpoints under `/api/v1/provisioning/` are deprecated and will be removed in a future release. Until then, you can keep using tuned legacy configurations while you plan a migration. The Grafana App Platform alerting APIs expose each alert rule as its own resource under `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}`, which avoids the extra per-rule provenance request. In Terraform, the equivalent resource is `grafana_apps_rules_alertrule_v0alpha1`.
 
 ## Next steps
 
