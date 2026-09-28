@@ -881,6 +881,8 @@ func schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref common.ReferenceCall
 					"badValue": {
 						SchemaProps: spec.SchemaProps{
 							Description: "BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant.",
+							Type:        []string{"object"},
+							Format:      "",
 						},
 					},
 				},
