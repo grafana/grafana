@@ -3,10 +3,12 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"reflect"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,7 +18,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -31,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -615,6 +622,74 @@ func TestDashboardStorageDeclaresPerVersionGVK(t *testing.T) {
 		{Group: group, Version: "v2beta1", Kind: "Dashboard"},
 		{Group: group, Version: "v2", Kind: "Dashboard"},
 	}, got, "each version declares itself, and v1 is not conflated with v1beta1")
+}
+
+func TestDashboardStorageNameValidationStandaloneOnly(t *testing.T) {
+	migration.ResetForTesting()
+	migration.Initialize(testutil.NewDataSourceProvider(testutil.StandardTestConfig), testutil.NewLibraryElementProvider(), migration.DefaultCacheTTL)
+
+	for _, standalone := range []bool{true, false} {
+		t.Run(fmt.Sprintf("standalone=%t", standalone), func(t *testing.T) {
+			b := &DashboardsAPIBuilder{
+				isStandalone: standalone,
+				features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
+			}
+			scheme := runtime.NewScheme()
+			require.NoError(t, b.InstallSchema(scheme))
+
+			for _, info := range []utils.ResourceInfo{
+				dashv0.DashboardResourceInfo,
+				dashv1beta1.DashboardResourceInfo,
+				dashv1.DashboardResourceInfo,
+				dashv2alpha1.DashboardResourceInfo,
+				dashv2beta1.DashboardResourceInfo,
+				dashv2.DashboardResourceInfo,
+			} {
+				t.Run(info.GroupVersion().Version, func(t *testing.T) {
+					client := resource.NewMockResourceClient(t)
+					opts := apiserverbuilder.APIGroupOptions{
+						Scheme: scheme,
+						OptsGetter: apistore.NewRESTOptionsGetterForClient(client, nil,
+							storagebackend.Config{}, nil, nil),
+					}
+					groupInfo := &genericapiserver.APIGroupInfo{
+						VersionedResourcesStorageMap: map[string]map[string]rest.Storage{},
+					}
+					require.NoError(t, b.storageForVersion(groupInfo, opts, info, nil, nil, nil))
+					storage := groupInfo.VersionedResourcesStorageMap[info.GroupVersion().Version]
+					t.Cleanup(storage[info.StoragePath()].Destroy)
+
+					getters := map[string]rest.Getter{
+						"dashboard": storage[info.StoragePath()].(rest.Getter),
+						"dto":       storage[info.StoragePath("dto")].(*DTOConnector).getter,
+					}
+					for route, getter := range getters {
+						t.Run(route, func(t *testing.T) {
+							for _, name := range []string{"Player Resolver (ext_proc)", "valid-missing-name"} {
+								t.Run(name, func(t *testing.T) {
+									reject := standalone && name == "Player Resolver (ext_proc)"
+									if !reject {
+										client.On("Read", mock.Anything, mock.MatchedBy(func(req *resourcepb.ReadRequest) bool {
+											return req.Key.Name == name
+										})).Return(&resourcepb.ReadResponse{
+											Error: &resourcepb.ErrorResult{Code: http.StatusNotFound},
+										}, nil).Once()
+									}
+									ctx := apirequest.WithNamespace(t.Context(), "default")
+									_, err := getter.Get(ctx, name, &metav1.GetOptions{})
+									if reject {
+										require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got: %v", err)
+									} else {
+										require.True(t, apierrors.IsNotFound(err), "expected storage response, got: %v", err)
+									}
+								})
+							}
+						})
+					}
+				})
+			}
+		})
+	}
 }
 
 // Library panels are keyed by their own GroupResource and served only in
