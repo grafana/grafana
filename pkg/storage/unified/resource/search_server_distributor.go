@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -381,10 +382,14 @@ func callWithRetries[Req, Resp any](
 	maxAttempts := max(minDistributeAttempts, len(instances)+1)
 	b := backoff.New(ctx, distributeBackoff)
 	for attempt := range maxAttempts {
-		if attempt > 0 && attempt%len(instances) == 0 {
-			b.Wait()
-			if ctx.Err() != nil {
-				break
+		if attempt > 0 {
+			if attempt%len(instances) == 0 {
+				b.Wait()
+			}
+			// The caller gave up, so report that instead of the previous replica's failure.
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				var zero Resp
+				return zero, instID, status.FromContextError(ctxErr).Err()
 			}
 		}
 
@@ -399,8 +404,10 @@ func callWithRetries[Req, Resp any](
 
 		code, failure := callFailure(resp, err)
 		// A client pool error means we could not connect to the instance.
-		retryable := clientErr != nil || code == http.StatusServiceUnavailable || code == http.StatusTooManyRequests
-		if !retryable || attempt == maxAttempts-1 || ctx.Err() != nil {
+		// 429 is not retried: search rate limits are shared by all replicas, and
+		// each retry would use up more of the tenant's limit.
+		retryable := clientErr != nil || code == http.StatusServiceUnavailable
+		if !retryable || attempt == maxAttempts-1 {
 			break
 		}
 		logger.Warn("search instance failed, retrying", "err", failure, "searchApiInstanceId", inst.Id, "attempt", attempt+1)

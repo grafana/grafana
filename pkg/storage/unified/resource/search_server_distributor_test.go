@@ -319,12 +319,12 @@ func TestDistributorSearchFailover(t *testing.T) {
 	}{
 		{name: "first replica succeeds", replicationFactor: 2, wantCalls: 1},
 		{name: "first replica unavailable", replicationFactor: 2, errs: []error{unavailable}, wantCalls: 2},
-		{name: "first replica exhausted", replicationFactor: 2, errs: []error{exhausted}, wantCalls: 2},
-		{name: "both replicas fail, first succeeds on retry", replicationFactor: 2, errs: []error{unavailable, exhausted}, wantCalls: 3},
+		{name: "rate limited, not retried", replicationFactor: 2, errs: []error{exhausted}, wantCalls: 1, wantCode: http.StatusTooManyRequests},
+		{name: "both replicas fail, first succeeds on retry", replicationFactor: 2, errs: []error{unavailable, unavailable}, wantCalls: 3},
 		{name: "all attempts fail", replicationFactor: 2, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
 		{name: "non-retryable error", replicationFactor: 2, errs: []error{invalid}, wantCalls: 1, wantCode: http.StatusBadRequest},
 		{name: "first replica embedded unavailable", replicationFactor: 2, errs: []error{embeddedUnavailable}, wantCalls: 2},
-		{name: "first replica embedded exhausted", replicationFactor: 2, errs: []error{embeddedExhausted}, wantCalls: 2},
+		{name: "embedded rate limited, not retried", replicationFactor: 2, errs: []error{embeddedExhausted}, wantCalls: 1, wantCode: http.StatusTooManyRequests},
 		{name: "all attempts fail with embedded error", replicationFactor: 2, errs: []error{embeddedUnavailable, embeddedUnavailable, embeddedUnavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
 		{name: "embedded non-retryable error", replicationFactor: 2, errs: []error{embeddedInternal}, wantCalls: 1, wantCode: http.StatusInternalServerError},
 		{name: "single replica retried", replicationFactor: 1, errs: []error{unavailable, unavailable}, wantCalls: 3},
@@ -360,6 +360,22 @@ func TestDistributorSearchFailover(t *testing.T) {
 			require.Len(t, slices.Compact(slices.Sorted(slices.Values(calls))), min(len(calls), tt.replicationFactor))
 		})
 	}
+}
+
+func TestDistributorSearchReportsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	state := &failoverTestState{errFn: func(int, string) error {
+		// The caller gives up while the first replica is failing.
+		cancel()
+		return status.Error(codes.Unavailable, "connection refused")
+	}}
+	ds := newFailoverTestDistributor(t, 2, state)
+
+	_, err := ds.Search(ctx, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+	})
+	require.Equal(t, codes.Canceled, status.Code(err))
+	require.Len(t, state.calls, 1)
 }
 
 func TestDistributorRebuildIndexesRetriesSameInstance(t *testing.T) {
