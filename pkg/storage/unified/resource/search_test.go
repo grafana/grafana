@@ -755,16 +755,6 @@ func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 	for _, postRankAuthz := range []bool{false, true} {
 		require.Equal(t, TrashIndexFeatures(), MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
 	}
-
-	// An index built before trash resource versions had an exact sort key must
-	// rebuild before the List(TRASH) path can use it as an ordered cursor.
-	oldTrashIndex := IndexBuildInfo{Features: []IndexFeature{
-		IndexFeatureDeletedMarker,
-		IndexFeatureTrashFields,
-	}}
-	for _, postRankAuthz := range []bool{false, true} {
-		require.Contains(t, MissingIndexFeatures(oldTrashIndex, RequiredIndexFeatures(postRankAuthz)), IndexFeatureSortableTrashResourceVersion)
-	}
 }
 
 func TestShouldRebuildIndex(t *testing.T) {
@@ -2300,15 +2290,6 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 	// order. Treated the same as no markers at all: wait for the rebuild.
 	t.Run("an index with the markers but not the trash fields", func(t *testing.T) {
 		index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}}
-		require.False(t, server.keepsDeletedDocuments(key, index, log.NewNopLogger()))
-	})
-
-	t.Run("an index whose trash documents have no sortable resource version", func(t *testing.T) {
-		index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{
-			IndexFeatureDeletedMarker,
-			IndexFeatureHoldsDeletedDocuments,
-			IndexFeatureTrashFields,
-		}}}
 		require.False(t, server.keepsDeletedDocuments(key, index, log.NewNopLogger()))
 	})
 }

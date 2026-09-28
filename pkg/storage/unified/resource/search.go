@@ -162,11 +162,6 @@ const IndexFeatureTrashFields IndexFeature = "trash-fields"
 // arrived together, so an index has either both or neither.
 const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 
-// IndexFeatureSortableTrashResourceVersion means deleted documents carry an
-// exact, fixed-width resource version that can be sorted without float64
-// rounding or lexical misordering.
-const IndexFeatureSortableTrashResourceVersion IndexFeature = "sortable-trash-resource-version"
-
 // IndexFeatureStoredFacets means every facet-capable field is stored, so the
 // post-rank authorization path can aggregate facets app-side. Native bleve
 // faceting reads the index, not the stored values, so this is required only
@@ -192,7 +187,7 @@ const IndexFeatureHoldsDeletedDocuments IndexFeature = "holds-deleted-documents"
 // be kept in it. Read by the writers and by requiredIndexFeatures, so nothing can
 // disagree about what makes an index usable for trash.
 func TrashIndexFeatures() []IndexFeature {
-	return []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureSortableTrashResourceVersion, IndexFeatureTrashFields}
+	return []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureTrashFields}
 }
 
 // currentIndexFeatures is recorded in every index this binary builds.
@@ -207,7 +202,6 @@ var currentIndexFeatures = []IndexFeature{
 	IndexFeatureStoredFacets,
 	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
-	IndexFeatureSortableTrashResourceVersion,
 }
 
 // knownIndexFeatures is every feature this binary can read. A feature belongs here
@@ -219,7 +213,6 @@ var knownIndexFeatures = []IndexFeature{
 	IndexFeatureStoredFacets,
 	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
-	IndexFeatureSortableTrashResourceVersion,
 }
 
 // requiredIndexFeatures is the subset an index must already have to be used. An

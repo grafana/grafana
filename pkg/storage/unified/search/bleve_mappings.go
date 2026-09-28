@@ -365,11 +365,6 @@ func (k kindSearchFields) storedFacetField(name string) string {
 // getBleveDocMappings), so IncludeInAll has no runtime effect; setting it
 // false keeps the emitted JSON consistent.
 func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.SearchFieldDefinition) {
-	if def.Name == resource.SEARCH_FIELD_DELETED_RV {
-		addDeletedResourceVersionMappings(parent)
-		return
-	}
-
 	hasFilter := def.HasCapability(resource.SearchCapabilityFilter)
 	hasText := def.HasCapability(resource.SearchCapabilityText)
 	hasPartial := def.HasCapability(resource.SearchCapabilityPartial)
@@ -445,27 +440,6 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.IncludeInAll = false
 		parent.AddFieldMappingsAt(def.Name, m)
 	}
-}
-
-// addDeletedResourceVersionMappings keeps the value returned to callers in its
-// original form and indexes a separate fixed-width copy for exact sorting.
-func addDeletedResourceVersionMappings(parent *mapping.DocumentMapping) {
-	value := bleve.NewKeywordFieldMapping()
-	value.Index = false
-	value.Store = true
-	value.DocValues = false
-	value.IncludeInAll = false
-	value.IncludeTermVectors = false
-	value.SkipFreqNorm = true
-	parent.AddFieldMappingsAt(resource.SEARCH_FIELD_DELETED_RV, value)
-
-	sortValue := bleve.NewKeywordFieldMapping()
-	sortValue.Store = false
-	sortValue.DocValues = true
-	sortValue.IncludeInAll = false
-	sortValue.IncludeTermVectors = false
-	sortValue.SkipFreqNorm = true
-	parent.AddFieldMappingsAt(resource.SEARCH_FIELD_DELETED_RV_SORT, sortValue)
 }
 
 // nonStringFieldMapping returns a bleve field mapping matching a
@@ -641,6 +615,7 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_DELETED, internalBoolField())
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_PROVISIONED, internalBoolField())
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_RV_STRING, internalStoredStringField())
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_DELETED_RV_SORT, internalSortableStringField())
 
 	// Trash fields sit at the top level next to the standard ones, so /trash reads
 	// them by the names the API layer already uses.
@@ -723,6 +698,17 @@ func internalStoredStringField() *mapping.FieldMapping {
 	m.Store = true
 	m.Index = false
 	m.DocValues = false
+	m.IncludeInAll = false
+	m.IncludeTermVectors = false
+	m.SkipFreqNorm = true
+	return m
+}
+
+// internalSortableStringField maps a fixed-width value used only for ordering.
+func internalSortableStringField() *mapping.FieldMapping {
+	m := bleve.NewKeywordFieldMapping()
+	m.Store = false
+	m.DocValues = true
 	m.IncludeInAll = false
 	m.IncludeTermVectors = false
 	m.SkipFreqNorm = true
