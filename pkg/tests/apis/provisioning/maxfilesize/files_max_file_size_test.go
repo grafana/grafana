@@ -25,11 +25,10 @@ func TestIntegrationProvisioning_MaxFileSize_RawRead(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "max-file-size-raw-read"
-	helper.CreateLocalRepo(t, common.TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
+		Path:                   helper.ProvisioningPath,
+		Target:                 "instance",
 		SkipResourceAssertions: true,
 	})
 
@@ -91,11 +90,10 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "max-file-size-write"
-	helper.CreateLocalRepo(t, common.TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
+		Path:                   helper.ProvisioningPath,
+		Target:                 "instance",
 		SkipResourceAssertions: true,
 	})
 
@@ -137,11 +135,10 @@ func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "max-file-size-pull"
-	helper.CreateLocalRepo(t, common.TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
+		Path:                   helper.ProvisioningPath,
+		Target:                 "instance",
 		SkipResourceAssertions: true,
 	})
 
