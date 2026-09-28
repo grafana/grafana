@@ -391,9 +391,9 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	// The publisher connects lazily on first publish, so no server is started
-	// here; in external mode the embedded server is inert. Returning it as the
-	// module service drains the connection on shutdown.
+	// The publisher establishes its connection when this service starts; in
+	// external mode the embedded server is inert. Returning it as the module
+	// service also drains the connection on shutdown.
 	natsCfg := nats.ProvideNATSConfig(s.cfg, natsServer)
 	publisher := nats.ProvidePublisher(natsCfg, s.registerer)
 	s.natsPublisher = publisher

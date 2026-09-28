@@ -8,9 +8,11 @@ import { SceneTimeRange, UrlSyncContextProvider } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { render } from '../../../../../test/test-utils';
+import { ExportFormat } from '../../../dashboard/api/types';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
+import { ExportAsCode } from '../ExportButton/ExportAsCode';
 
 import { ShareDrawer } from './ShareDrawer';
 
@@ -24,16 +26,49 @@ jest.mock('@grafana/runtime', () => ({
   useChromeHeaderHeight: jest.fn(),
 }));
 
-describe('ShareDrawer', () => {
-  beforeEach(() => {
-    // New layouts mount the sidebar extension point, which calls usePluginLinks. This test renders the scene without starting that hook.
-    setTestFlags({ dashboardNewLayouts: false });
-  });
+const mockShareRenderersLoaded = jest.fn();
 
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
+jest.mock('../ShareRenderers', () => {
+  mockShareRenderersLoaded();
+  return jest.requireActual('../ShareRenderers');
+});
+
+describe('ShareDrawer', () => {
+  it('builds export state synchronously without loading its content until render', async () => {
+    const drawer = new ShareDrawer({ shareView: shareDashboardType.export });
+    const dashboard = new DashboardScene({
+      title: 'Export dashboard',
+      uid: 'dash-1',
+      meta: {},
+      overlay: drawer,
     });
+    const deactivate = drawer.activate();
+
+    const activeShare = drawer.state.activeShare;
+    if (!(activeShare instanceof ExportAsCode)) {
+      throw new Error('Expected the export scene to be ready on activation');
+    }
+
+    expect(activeShare.getTabLabel()).toBe('Export dashboard');
+    expect(activeShare.state.onDismiss).toBe(drawer.onDismiss);
+    activeShare.onExportFormatChange(ExportFormat.V2Resource);
+    expect(activeShare.state.exportFormat).toBe(ExportFormat.V2Resource);
+    expect(mockShareRenderersLoaded).not.toHaveBeenCalled();
+
+    jest.spyOn(activeShare, 'getExportableDashboardJson').mockResolvedValue({
+      json: { title: dashboard.state.title, schemaVersion: 41 },
+      initialSaveModelVersion: 'v1',
+    });
+    locationService.partial({ shareView: shareDashboardType.export });
+    render(<drawer.Component model={drawer} />);
+
+    expect(await screen.findByRole('button', { name: 'Download file' })).toBeInTheDocument();
+    expect(mockShareRenderersLoaded).toHaveBeenCalledTimes(1);
+    expect(drawer.state.activeShare).toBe(activeShare);
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(locationService.getSearch().get('shareView')).toBe(null);
+
+    deactivate();
   });
 
   it('removes shareView query param from url when it is closed', async () => {

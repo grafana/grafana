@@ -416,6 +416,38 @@ describe('ShareExportTab', () => {
     });
   });
 
+  it('downloads a YAML resource after loading the YAML serializer', async () => {
+    config.featureToggles.dashboardNewLayouts = true;
+    const tab = buildV2DashboardScenario();
+    tab.setState({ exportFormat: ExportFormat.V2Resource, isViewingYAML: true });
+    jest.mocked(saveAs).mockClear();
+
+    await tab.onSaveAsFile();
+
+    expect(saveAs).toHaveBeenCalledTimes(1);
+    const [blob, filename] = jest.mocked(saveAs).mock.calls[0];
+    expect(filename).toMatch(/^Test Dashboard V2-\d+\.yaml$/);
+    if (!(blob instanceof Blob)) {
+      throw new Error('Expected the exported resource to be a Blob');
+    }
+    const text = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(blob);
+    });
+    expect(text).toMatch(/^apiVersion: dashboard\.grafana\.app\/v2beta1$/m);
+    const { load } = await import('js-yaml');
+    expect(load(text)).toEqual(
+      expect.objectContaining({
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'Dashboard',
+        metadata: expect.objectContaining({ name: 'test-uid-v2' }),
+        spec: mockV2Spec,
+      })
+    );
+  });
+
   describe('Export mode state management', () => {
     it('should disable YAML viewing when switching to Classic mode', () => {
       const tab = buildV1DashboardScenario();
