@@ -415,6 +415,52 @@ describe('TooltipPlugin2', () => {
       removeSpy.mockRestore();
     });
 
+    it('removes window scroll listener on unmount', () => {
+      const addSpy = jest.spyOn(window, 'addEventListener');
+      const { view } = setUp();
+
+      const onscroll = addSpy.mock.calls.find((call) => call[0] === 'scroll')![1];
+      addSpy.mockRestore();
+
+      const removeSpy = jest.spyOn(window, 'removeEventListener');
+      view.unmount();
+
+      expect(removeSpy).toHaveBeenCalledWith('scroll', onscroll, true);
+      removeSpy.mockRestore();
+    });
+
+    it('ignores window scroll before uPlot init, then dismisses the hovered tooltip on scroll after init', async () => {
+      const addSpy = jest.spyOn(window, 'addEventListener');
+      const { view, setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp();
+
+      const onscroll = addSpy.mock.calls.find((call) => call[0] === 'scroll')![1] as (e: Event) => void;
+      addSpy.mockRestore();
+
+      const scrollEvent = new Event('scroll');
+      Object.defineProperty(scrollEvent, 'target', { value: document.body });
+      expect(() => onscroll(scrollEvent)).not.toThrow();
+
+      document.body.appendChild(mockUPlot.root);
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+        setLegendCallback(mockUPlot);
+      });
+
+      expect(screen.getByText('Tooltip content')).toBeInTheDocument();
+      jest.mocked(mockUPlot.setCursor).mockClear();
+
+      await act(async () => {
+        onscroll(scrollEvent);
+      });
+
+      expect(mockUPlot.setCursor).toHaveBeenCalledWith({ left: -10, top: -10 });
+
+      document.body.removeChild(mockUPlot.root);
+      view.unmount();
+    });
+
     it('should disconnect sizeRef observable on config change', async () => {
       const disconnectSpy = jest.spyOn(ResizeObserver.prototype, 'disconnect');
       const { view } = setUp();
@@ -493,6 +539,26 @@ describe('TooltipPlugin2', () => {
       expect(mockUPlot.setCursor).toHaveBeenCalledWith({ left: -10, top: -10 });
 
       document.body.removeChild(scrollContainer);
+      view.unmount();
+    });
+
+    it('does not throw on window scroll or resize before uPlot init', () => {
+      const errors: unknown[] = [];
+      const onError = (e: ErrorEvent) => {
+        errors.push(e.error);
+        e.preventDefault();
+      };
+      window.addEventListener('error', onError);
+
+      const { view } = setUp();
+
+      document.body.dispatchEvent(new Event('scroll'));
+      window.dispatchEvent(new Event('scroll'));
+      window.dispatchEvent(new Event('resize'));
+
+      window.removeEventListener('error', onError);
+      expect(errors).toEqual([]);
+
       view.unmount();
     });
 
