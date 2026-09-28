@@ -44,6 +44,9 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		runErr = errors.Join(runErr, stopSubscriber())
 	}()
 	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
+		if errors.Is(err, context.Canceled) && ctx.Err() != nil {
+			err = context.Cause(ctx)
+		}
 		return fmt.Errorf("failed to start NATS subscriber: %w", err)
 	}
 

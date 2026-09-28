@@ -361,9 +361,28 @@ func newCompositeService(svcs ...services.Service) (*services.BasicService, erro
 	failureWatcher := services.NewFailureWatcher()
 	failureWatcher.WatchManager(manager)
 
+	stop := func(_ error) error {
+		// Close waits for listener callbacks, so keep receiving failures after running exits.
+		drained := make(chan struct{})
+		go func() {
+			defer close(drained)
+			for range failureWatcher.Chan() {
+			}
+		}()
+		err := services.StopManagerAndAwaitStopped(context.Background(), manager)
+		failureWatcher.Close()
+		<-drained
+		return err
+	}
+
 	return services.NewBasicService(
 		func(ctx context.Context) error {
-			return services.StartManagerAndAwaitHealthy(ctx, manager)
+			if err := services.StartManagerAndAwaitHealthy(ctx, manager); err != nil {
+				// BasicService does not call its stopping hook after startup failure.
+				_ = stop(err)
+				return err
+			}
+			return nil
 		},
 		func(ctx context.Context) error {
 			select {
@@ -373,9 +392,7 @@ func newCompositeService(svcs ...services.Service) (*services.BasicService, erro
 				return err
 			}
 		},
-		func(_ error) error {
-			return services.StopManagerAndAwaitStopped(context.Background(), manager)
-		},
+		stop,
 	), nil
 }
 

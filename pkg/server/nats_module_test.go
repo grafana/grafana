@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	natstest "github.com/nats-io/nats-server/v2/test"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -150,3 +152,52 @@ func TestManagedServiceFailure(t *testing.T) {
 type natsLifecycleRegistry []registry.BackgroundService
 
 func (r natsLifecycleRegistry) GetServices() []registry.BackgroundService { return r }
+
+func TestCompositeServiceFailureCleanup(t *testing.T) {
+	for _, phase := range []string{"startup", "running"} {
+		t.Run(phase, func(t *testing.T) {
+			defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
+			failure := errors.New("child failed")
+			fail := make(chan struct{})
+			release := sync.OnceFunc(func() { close(fail) })
+			defer release()
+			childCount := 3
+			if phase == "startup" {
+				childCount = 1
+			}
+			children := make([]services.Service, childCount)
+			for i := range children {
+				children[i] = services.NewBasicService(func(context.Context) error {
+					if phase == "startup" {
+						return failure
+					}
+					return nil
+				}, func(context.Context) error {
+					<-fail
+					return failure
+				}, nil)
+			}
+			composite, err := newCompositeService(children...)
+			require.NoError(t, err)
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			defer func() {
+				release()
+				_ = services.StopAndAwaitTerminated(ctx, composite)
+			}()
+			err = services.StartAndAwaitRunning(ctx, composite)
+			if phase == "startup" {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				release()
+			}
+			require.Error(t, composite.AwaitTerminated(ctx))
+			require.Equal(t, services.Failed, composite.State())
+			for _, child := range children {
+				require.Equal(t, services.Failed, child.State())
+				require.ErrorIs(t, child.FailureCase(), failure)
+			}
+		})
+	}
+}

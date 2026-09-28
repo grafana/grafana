@@ -76,6 +76,9 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 			runErr = errors.Join(runErr, stopSubscriber())
 		}()
 		if err := services.StartAndAwaitRunning(ctx, subscriber); err != nil {
+			if errors.Is(err, context.Canceled) && ctx.Err() != nil {
+				err = context.Cause(ctx)
+			}
 			return fmt.Errorf("failed to start NATS subscriber: %w", err)
 		}
 
@@ -109,7 +112,7 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 
 	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		logger.Error("failed to sync folder informer cache")
-		return ctx.Err()
+		return context.Cause(ctx)
 	}
 
 	logger.Info("folder controller is ready")
