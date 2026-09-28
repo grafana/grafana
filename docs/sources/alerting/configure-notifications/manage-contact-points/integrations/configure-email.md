@@ -14,17 +14,6 @@ labels:
 menuTitle: Email
 title: Configure email for alert notifications
 weight: 110
-refs:
-  configure-contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
-  notification-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
 ---
 
 # Configure email for alert notifications
@@ -60,7 +49,7 @@ To create a contact point with a email integration, complete the following steps
 1. Set up the required [settings](#email-settings) for your Email configuration.
 1. Click **Save contact point**.
 
-For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](ref:configure-contact-points).
+For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/).
 
 ## Email settings
 
@@ -84,8 +73,8 @@ In Grafana OSS and Enterprise, you can edit the full email template. However, th
 
 | Option  | Description                                                                                                                             |
 | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Subject | Sets the email subject, replacing the default template. Supports [notification templates](ref:notification-templates).                  |
-| Message | Sets the main section of the email body, replacing the default template. Supports [notification templates](ref:notification-templates). |
+| Subject | Sets the email subject, replacing the default template. Supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/).                  |
+| Message | Sets the main section of the email body, replacing the default template. Supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/). |
 
 {{< figure src="/media/docs/alerting/custom-email-message5.png" caption="Email notification with custom message." max-width="750px" >}}
 

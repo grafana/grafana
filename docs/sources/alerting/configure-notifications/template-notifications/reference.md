@@ -16,39 +16,13 @@ labels:
 title: Notification template reference
 menuTitle: Template reference
 weight: 102
-refs:
-  label-types:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#label-types
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#label-types
-  alert-rule-template-reference:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/
-  alert-grouping:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
-  template-language:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
-  template-language-functions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#functions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#functions
 ---
 
 # Notification template reference
 
 By default, Grafana provides predefined templates to format notification messages.
 
-You can also customize your notifications with custom templates, which are based on the [Go template language](ref:template-language).
+You can also customize your notifications with custom templates, which are based on the [Go template language](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/).
 
 This documentation lists the data available for use in notification templates.
 
@@ -70,7 +44,7 @@ In notification templates, dot (`.`) is initialized with the following data:
 | `GroupKey`          | string            | The key used to identify this alert group.                                                              |
 | `TruncatedAlerts`   | integer           | The number of alerts, if any, that were truncated in the notification. Supported by Webhook and OnCall. |
 
-It's important to remember that [a single notification can group multiple alerts](ref:alert-grouping) to reduce the number of alerts you receive. `Alerts` is an array that includes all the alerts in the notification.
+It's important to remember that [a single notification can group multiple alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/) to reduce the number of alerts you receive. `Alerts` is an array that includes all the alerts in the notification.
 
 Here's an example that prints all available notification data from dot (`.`):
 
@@ -101,7 +75,7 @@ You can execute this template by passing the dot (`.`):
 | Name           | Type          | Description                                                                                                                                         |
 | -------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Status`       | string        | Firing or resolved.                                                                                                                                 |
-| `Labels`       | [KV](#kv)     | The labels associated with this alert. <br/> It includes all [types of labels](ref:label-types), but only query labels used in the alert condition. |
+| `Labels`       | [KV](#kv)     | The labels associated with this alert. <br/> It includes all [types of labels](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#label-types), but only query labels used in the alert condition. |
 | `Annotations`  | [KV](#kv)     | The annotations for this alert.                                                                                                                     |
 | `StartsAt`     | [Time](#time) | The time the alert fired                                                                                                                            |
 | `EndsAt`       | [Time](#time) | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received.      |
@@ -207,7 +181,7 @@ When accessing a `Time` object, you can use various [`Time` functions](https://p
 
 Functions can perform actions in templates such as transforming or formatting data.
 
-Note that the [functions provided by Go's template language](ref:template-language-functions), such as `index`, `and`, `printf`, and `len`, are available, along with many others.
+Note that the [functions provided by Go's template language](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#functions), such as `index`, `and`, `printf`, and `len`, are available, along with many others.
 
 In addition, the following functions are also available for templating notifications:
 
@@ -449,4 +423,4 @@ In the alert rule, you can also template annotations and labels to include addit
 
 Annotation and label templates add relevant information to individual alert instances, while notification templates inform about a group of alert instances.
 
-Since both types of templates operate in distinct contexts, the [functions and variables available in annotation and label templates](ref:alert-rule-template-reference) differ from those used in notification templates.
+Since both types of templates operate in distinct contexts, the [functions and variables available in annotation and label templates](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/) differ from those used in notification templates.
