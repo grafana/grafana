@@ -3,13 +3,12 @@ package rbac
 import (
 	"context"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"k8s.io/apiserver/pkg/endpoints/request"
-
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
