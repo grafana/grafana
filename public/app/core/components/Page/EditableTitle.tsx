@@ -181,6 +181,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       height: theme.spacing(theme.components.height.md),
+
+      h1: {
+        height: theme.spacing(theme.components.height.md),
+      },
     }),
     buttons: css({
       display: 'flex',

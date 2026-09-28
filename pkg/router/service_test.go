@@ -201,6 +201,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 	require.NoError(t, err)
 	httpRouter := mux.NewRouter()
 	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
+	pollDiscovery(t, cloud.singleTenantFallback)
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	recorder := httptest.NewRecorder()
 	httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis", nil))

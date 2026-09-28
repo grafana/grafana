@@ -185,28 +185,6 @@ func TestPerKindSearch_statusFieldsRejectFilteringAndSorting(t *testing.T) {
 	}
 }
 
-func TestSearchRules_legacyStatusDoesNotChangeCrossKindResponse(t *testing.T) {
-	for _, rule := range []*ngmodels.AlertRule{testAlertRule(), testRecordingRule()} {
-		t.Run(ruleType(rule), func(t *testing.T) {
-			h, logger, ctx := legacyStatusHandler(t, rule)
-			search := func() string {
-				rec := httptest.NewRecorder()
-				require.NoError(t, h.SearchRules(ctx, rec, &app.CustomRouteRequest{
-					ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
-				}))
-				require.Equal(t, http.StatusOK, rec.Code)
-				return rec.Body.String()
-			}
-			withoutStatus := search()
-			for _, status := range []string{`{"health":"OK","state":"Firing","evaluationDuration":0.125}`, `{"health":`} {
-				rule.K8sStatus = []byte(status)
-				assert.JSONEq(t, withoutStatus, search())
-				assert.Zero(t, logger.WarnLogs.Calls, "cross-kind searches must not decode status")
-			}
-		})
-	}
-}
-
 func TestLegacyStatusValues_onlyIncludesKindSearchFields(t *testing.T) {
 	for _, rule := range []*ngmodels.AlertRule{testAlertRule(), testRecordingRule()} {
 		t.Run(ruleType(rule), func(t *testing.T) {

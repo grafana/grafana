@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/kv"
@@ -596,9 +597,13 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 		handler = &searchServerWithAuth{SearchServer: server, ServiceWithAuth: sa}
 	}
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceIndexServer(srv, handler)
-	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
-	resourcepb.RegisterDiagnosticsServer(srv, handler)
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+	} {
+		srv.RegisterService(s.withErrorResultConversion(desc), handler)
+	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 	return nil
 }
@@ -629,15 +634,22 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	// Storage services. ResourceStore is wrapped with the request-duration interceptor
 	// so we get group/resource-labeled metrics for Read/Create/Update/Delete/List.
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
-	srv.RegisterService(grpchan.InterceptServer(&resourcepb.ResourceStore_ServiceDesc, metricsInt, nil), handler)
-	resourcepb.RegisterResourceStatsServer(srv, handler)
-	resourcepb.RegisterBulkStoreServer(srv, handler)
-	resourcepb.RegisterBlobStoreServer(srv, handler)
-	resourcepb.RegisterDiagnosticsServer(srv, handler)
-	resourcepb.RegisterQuotasServer(srv, handler)
-	// Search services
-	resourcepb.RegisterResourceIndexServer(srv, handler)
-	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceStore_ServiceDesc,
+		&resourcepb.ResourceStats_ServiceDesc,
+		&resourcepb.BulkStore_ServiceDesc,
+		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+		&resourcepb.Quotas_ServiceDesc,
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+	} {
+		wrapped := s.withErrorResultConversion(desc)
+		if desc == &resourcepb.ResourceStore_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+		}
+		srv.RegisterService(wrapped, handler)
+	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 
 	// VectorStore write service: storage-server surface only (standalone
@@ -649,6 +661,13 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		}
 		resourcepb.RegisterVectorStoreServer(srv, vsHandler)
 	}
+}
+
+func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
+	if s.cfg != nil && s.cfg.UnifiedStorageGRPCErrorResultToStatus {
+		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), nil)
+	}
+	return desc
 }
 
 // BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV
