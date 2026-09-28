@@ -32,8 +32,17 @@ SELECT value FROM A
 
 `value` and `A` are identifiers.
 
-This code currently handles unquoted identifiers. SQL generally treats unquoted identifiers as
-case-insensitive, so `A` and `a` should resolve to the same table name.
+Identifiers can be unquoted or quoted. SQL generally treats unquoted identifiers as case-insensitive,
+so `A` and `a` resolve to the same table name. Names that contain spaces or other special characters
+must be quoted to be parsed as a single identifier:
+
+```sql
+SELECT * FROM `table A`
+```
+
+The MySQL dialect uses backticks. Quoted names are unquoted (and any doubled quote characters
+unescaped) before they are matched against table refs, so `` `table A` `` resolves to the table
+`table A`.
 
 ### Table Ref
 

@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "configured",
       "reset-symbol-client-secret": "Reset"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "Auxiliary Logs",
+      "description-auxiliary-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Auxiliary Logs</2>. Auxiliary logs have no response time SLAs, are intended for ad-hoc queries and data exploration only, and should not be used for dashboards requiring real-time data or for alerting.",
+      "label-enable-auxiliary-logs": "Enable Auxiliary Logs"
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} raw query",
       "aria-label-use-query": "Use this query button",
@@ -78,6 +83,11 @@
       "description-basic-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Basic Logs</2>.",
       "label-enable-basic-logs": "Enable Basic Logs"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "Batch API",
+      "description-batch-api": "Queries multiple resources in a single request, improving performance for large dashboards. Requires the <2>Monitoring Reader</2> role at the subscription scope on <6>metrics.monitor.azure.com</6>. Additional <9>costs may apply</9> beyond the free tier.",
+      "label-enable-batch-api": "Enable Batch API"
+    },
     "config-editor": {
       "description-additional-settings": "Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.",
       "title-additional-settings": "Additional settings"
@@ -100,7 +110,11 @@
       "load-subscriptions": "Load Subscriptions"
     },
     "dimension-fields": {
-      "aria-label-remove": "Remove",
+      "aria-label-field": "Dimension {{position}} field",
+      "aria-label-operator": "Dimension {{position}} operator",
+      "aria-label-remove": "Remove dimension {{position}}",
+      "aria-label-value": "Dimension {{position}} value",
+      "aria-label-values": "Dimension {{position}} values",
       "label-dimensions": "Dimensions",
       "placeholder-field": "Field",
       "placeholder-operation": "Operation",
@@ -173,25 +187,60 @@
       "tooltip-limit": "Restrict the number of rows returned (default is 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "Are you sure you want to switch to Auxiliary Logs?",
       "body-basic-logs-queries": "Are you sure you want to switch to Basic Logs?",
       "confirmText-confirm": "Confirm",
+      "description-auxiliary-logs-queries": "Auxiliary Logs queries incur cost based on the amount of data scanned. Auxiliary logs have no response time SLAs and should not be used for dashboards requiring real-time data or for alerting.",
       "description-basic-logs-queries": "Basic Logs queries incur cost based on the amount of data scanned.",
+      "label-analytics": "Analytics",
+      "label-auxiliary": "Auxiliary",
+      "label-basic": "Basic",
       "label-logs": "Logs",
+      "title-auxiliary-logs-queries": "Auxiliary Logs Queries",
       "title-basic-logs-queries": "Basic Logs Queries",
-      "tooltip-logs": "Specifies whether to run a Basic or Analytics Logs query."
+      "tooltip-logs": "Specifies whether to run a Basic or Analytics Logs query.",
+      "tooltip-logs-all": "Specifies whether to run an Analytics, Basic, or Auxiliary Logs query.",
+      "tooltip-logs-aux": "Specifies whether to run an Analytics or Auxiliary Logs query."
     },
     "logs-query-builder": {
       "title-no-tables": "Resource loaded successfully but without any tables"
     },
     "logs-query-editor": {
       "learn-more": "Learn More",
-      "view-query": "View query in Azure Portal"
+      "notice-auxiliary-single-resource": "When using Auxiliary Logs, you may only select one resource at a time.",
+      "notice-basic-single-resource": "When using Basic Logs, you may only select one resource at a time.",
+      "notice-same-resource-type": "You may only choose items of the same resource type.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> is an Analytics table.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> is an Auxiliary Logs table — incurs cost per GiB scanned, has no response-time SLA, and isn't suitable for real-time or alerting scenarios.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> is a Basic Logs table — incurs cost per GiB scanned.",
+      "tier-switch-revert": "Revert to {{fromTier}}",
+      "tier-switch-title": "Query tier set to {{toTier}}",
+      "view-query": "View query in Azure Portal",
+      "warning-auxiliary-data-ingested": "This Auxiliary Logs query is processing {{dataIngested}} GiB when run. Auxiliary Logs have no response-time SLA and aren't suitable for real-time or alerting scenarios. ",
+      "warning-auxiliary-raw": "This is an Auxiliary Logs query — uses the search endpoint, incurs cost per GiB scanned, has no response-time SLA, and isn't suitable for real-time or alerting scenarios. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). ",
+      "warning-basic-raw": "This is a Basic Logs query — uses the search endpoint and incurs cost per GiB scanned. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). ",
+      "warning-data-ingested": "This query is processing {{dataIngested}} GiB when run. "
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "This table is on the Auxiliary Logs plan. Enable \"Auxiliary Logs\" in the data source settings to query it.",
+      "description-auxiliary-enabled": "Selecting this table will switch the query mode to Auxiliary Logs",
+      "description-basic-disabled": "This table is on the Basic Logs plan. Enable \"Basic Logs\" in the data source settings to query it.",
+      "description-basic-enabled": "Selecting this table will switch the query mode to Basic Logs",
+      "description-plan-unavailable": "This table cannot be selected because its Logs plan could not be determined.",
+      "label-all-columns": "All Columns"
     },
     "metric-name-field": {
       "label-metric": "Metric"
     },
     "metric-namespace-field": {
       "label-metric-namespace": "Metric namespace"
+    },
+    "metrics-query-editor": {
+      "selection-notice-batch": "You can select items of the same resource type across subscriptions and regions. Resources in different subscriptions or regions are queried in separate requests and may fail independently. To select resources of a different resource type, please first uncheck your current selection.",
+      "selection-notice-standard": "You can select items of the same resource type and location. To select resources of a different resource type or location, please first uncheck your current selection."
+    },
+    "monitor-config": {
+      "title-features": "Features"
     },
     "nested-row": {
       "text-loading": "Loading..."
@@ -204,6 +253,10 @@
       "label-by": "BY",
       "label-order-by": "Order By",
       "tooltip-order-by": "Sort results based on one or more columns in ascending or descending order."
+    },
+    "pagination": {
+      "results-truncated-message": "Stopped loading after {{maxPages}} pages; some results may be omitted.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "An error occurred while requesting metadata from Azure Monitor"

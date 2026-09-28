@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type RuleNamespace } from '../../../types/unified-alerting';
 import { type RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { type ImportMethod } from './components/import-to-gma/Wizard/types';
 import { type Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
 import { type FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { type RulesFilter } from './search/rulesSearchParser';
@@ -174,10 +175,6 @@ export const trackAlertRuleFormSaved = (props: { formAction: 'create' | 'update'
   reportInteraction('grafana_alerting_rule_creation', props);
 };
 
-export const trackAlertRuleFormCancelled = (props: { formAction: 'create' | 'update' }) => {
-  reportInteraction('grafana_alerting_rule_aborted', props);
-};
-
 export const trackAlertRuleFormError = (
   props: AlertRuleTrackingProps & { error: string; formAction: 'create' | 'update' }
 ) => {
@@ -254,18 +251,20 @@ export const trackDeletedRuleRestoreFail = async () => {
 };
 
 export const trackImportToGMASuccess = async (payload: {
+  importMethod?: ImportMethod;
   notificationsSource?: 'yaml' | 'datasource';
   rulesSource?: 'yaml' | 'datasource';
-  isRootFolder: boolean;
+  isRootFolder?: boolean;
   namespace?: string;
   ruleGroup?: string;
-  pauseRecordingRules: boolean;
-  pauseAlertingRules: boolean;
+  pauseRecordingRules?: boolean;
+  pauseAlertingRules?: boolean;
 }) => {
   reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
 };
 
 export const trackImportToGMAError = async (payload: {
+  importMethod?: ImportMethod;
   notificationsSource?: 'yaml' | 'datasource';
   rulesSource?: 'yaml' | 'datasource';
 }) => {
@@ -407,35 +406,6 @@ export type AlertRuleTrackingProps = {
   grafana_version?: string;
   org_id?: number;
 };
-
-// ============================================================================
-// Alerts Activity Banner & View Experience Telemetry
-// ============================================================================
-
-/**
- * Track banner impression - fired once per session when banner is first shown.
- * Note: user_id, org_id, grafana_version, and other common properties are automatically
- * tracked by the analytics infrastructure.
- */
-export function trackAlertsActivityBannerImpression() {
-  reportInteraction('grafana_alerting_alerts_activity_banner_impression');
-}
-
-/**
- * Track when user clicks "Open Alerts Activity" CTA
- */
-export function trackAlertsActivityBannerClickTry() {
-  reportInteraction('grafana_alerting_alerts_activity_banner_click');
-}
-
-/**
- * Track when user dismisses the banner
- */
-export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
-  reportInteraction('grafana_alerting_alerts_activity_banner_dismiss', {
-    dismissed_until: dismissedUntil,
-  });
-}
 
 // ============================================================================
 // View Experience Toggle Telemetry (persistent control near page title)

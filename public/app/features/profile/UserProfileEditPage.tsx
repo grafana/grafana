@@ -2,12 +2,13 @@ import { connect, type ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
 import { PluginExtensionPoints } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
-import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
-import { Stack } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { type StoreState } from 'app/types/store';
+
+import { SharedPreferences } from '../../core/components/SharedPreferences/SharedPreferences';
 
 import UserOrganizations from './UserOrganizations';
 import UserProfileEditForm from './UserProfileEditForm';
@@ -63,20 +64,56 @@ export function UserProfileEditPage({
   const { components, isLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.UserProfileTab,
   });
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
-  const userResourceUri = newPrefsEnabled && user?.uid ? `user-${user.uid}` : 'user';
+  const userResourceUri = user?.uid ? `user-${user.uid}` : 'user';
   return (
     <Page navId="profile/settings">
       <Page.Contents isLoading={!user || isLoading}>
         <UserProfileEditTabs components={components}>
-          <Stack direction="column" gap={2} data-testid="user-profile-edit-page">
+          <Stack direction="column" gap={6} data-testid="user-profile-edit-page">
             <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
-            <SharedPreferences resourceUri={userResourceUri} preferenceType="user" />
-            <Stack direction="column" gap={6}>
-              <UserTeams isLoading={teamsAreLoading} teams={teams} />
-              <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
-              <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
-            </Stack>
+
+            <SharedPreferences
+              resourceUri={userResourceUri}
+              preferenceType="user"
+              legend={
+                <Text element="h2" variant="h2">
+                  <Trans i18nKey="shared-preferences.title">Preferences</Trans>
+                </Text>
+              }
+            />
+
+            <UserTeams
+              isLoading={teamsAreLoading}
+              teams={teams}
+              heading={
+                <Text element="h2" variant="h2">
+                  <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
+                </Text>
+              }
+            />
+
+            <UserOrganizations
+              isLoading={orgsAreLoading}
+              setUserOrg={changeUserOrg}
+              orgs={orgs}
+              user={user}
+              heading={
+                <Text variant="h2" element="h2">
+                  <Trans i18nKey="user-orgs.title">Organizations</Trans>
+                </Text>
+              }
+            />
+
+            <UserSessions
+              isLoading={sessionsAreLoading}
+              revokeUserSession={revokeUserSession}
+              sessions={sessions}
+              heading={
+                <Text variant="h2" element="h2">
+                  <Trans i18nKey="profile.user-sessions.sessions">Sessions</Trans>
+                </Text>
+              }
+            />
           </Stack>
         </UserProfileEditTabs>
       </Page.Contents>

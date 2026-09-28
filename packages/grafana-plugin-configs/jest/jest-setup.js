@@ -36,6 +36,41 @@ Object.defineProperty(document, 'fonts', {
   value: { ready: Promise.resolve({}) },
 });
 
+// jsdom's URL predates URL.canParse, which @braintree/sanitize-url calls. Only the
+// static method is added - core-js's polyfill swaps out the whole URL implementation.
+if (typeof URL.canParse !== 'function') {
+  URL.canParse = (url, base) => {
+    try {
+      new URL(url, base);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+}
+
+// jsdom doesn't implement Range client-rect measurement, which CodeMirror uses
+// to position its cursor and tooltips. Provide inert stubs so editors render in
+// tests without measurement errors.
+if (typeof Range !== 'undefined') {
+  if (!Range.prototype.getClientRects) {
+    Range.prototype.getClientRects = () => ({ length: 0, item: () => null, [Symbol.iterator]: function* () {} });
+  }
+  if (!Range.prototype.getBoundingClientRect) {
+    Range.prototype.getBoundingClientRect = () => ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: 0,
+      height: 0,
+      toJSON: () => ({}),
+    });
+  }
+}
+
 // Used by useMeasure
 global.ResizeObserver = class ResizeObserver {
   static #observationEntry = {

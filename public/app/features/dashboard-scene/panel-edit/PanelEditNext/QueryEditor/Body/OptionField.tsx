@@ -72,7 +72,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexShrink: 0,
       color: theme.colors.text.primary,
       fontSize: theme.typography.bodySmall.fontSize,
-      fontFamily: theme.typography.fontFamilyMonospace,
       whiteSpace: 'nowrap',
     }),
     fieldContent: css({
@@ -93,7 +92,6 @@ function getStyles(theme: GrafanaTheme2) {
     hint: css({
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
-      fontFamily: theme.typography.fontFamilyMonospace,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',

@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -13,11 +12,10 @@ import (
 
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true,
+		Name: repo, SyncTarget: "instance", Workflows: []string{"write"},
 		Copies: map[string]string{
 			"../testdata/.keep": "no-meta-existing-folder/.keep",
 		},
@@ -29,13 +27,13 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		resp := files.Post(t, "meta-test-folder/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
 
-		uid, title := files.RequireValidFolderMetadata(t, ctx, "meta-test-folder/_folder.json")
+		uid, title := files.RequireValidFolderMetadata(t, "meta-test-folder/_folder.json")
 		require.Equal(t, "meta-test-folder", title)
 
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
+		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
 		require.Error(t, err, ".keep should not exist when flag is enabled")
 
-		_, err = helper.Folders.Resource.Get(ctx, uid, metav1.GetOptions{})
+		_, err = helper.Folders.Resource.Get(t.Context(), uid, metav1.GetOptions{})
 		require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
 	})
 
@@ -43,13 +41,13 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		resp := files.Post(t, "parent-folder/child-folder/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
 
-		parentUID, _ := files.RequireValidFolderMetadata(t, ctx, "parent-folder/_folder.json")
-		childUID, childTitle := files.RequireValidFolderMetadata(t, ctx, "parent-folder/child-folder/_folder.json")
+		parentUID, _ := files.RequireValidFolderMetadata(t, "parent-folder/_folder.json")
+		childUID, childTitle := files.RequireValidFolderMetadata(t, "parent-folder/child-folder/_folder.json")
 
 		require.NotEqual(t, parentUID, childUID, "each folder gets a distinct UID")
 		require.Equal(t, "child-folder", childTitle)
 
-		_, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		_, err := helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child Grafana folder should exist with the stable UID")
 	})
 
@@ -66,10 +64,10 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		resp := files.Post(t, "implicit-folder/dashboard.json", body)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating dashboard in new folder should succeed")
 
-		uid, title := files.RequireValidFolderMetadata(t, ctx, "implicit-folder/_folder.json")
+		uid, title := files.RequireValidFolderMetadata(t, "implicit-folder/_folder.json")
 		require.Equal(t, "implicit-folder", title)
 
-		_, err := helper.Folders.Resource.Get(ctx, uid, metav1.GetOptions{})
+		_, err := helper.Folders.Resource.Get(t.Context(), uid, metav1.GetOptions{})
 		require.NoError(t, err, "Grafana folder should exist with the UID from _folder.json")
 	})
 
@@ -78,13 +76,13 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		resp := files.Post(t, "reuse-folder/dashboard.json", body)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating dashboard should succeed")
 
-		uid := files.ReadFolderUID(t, ctx, "reuse-folder/_folder.json")
+		uid := files.ReadFolderUID(t, "reuse-folder/_folder.json")
 		require.NotEmpty(t, uid, "implicit _folder.json should have a UID")
 
 		resp2 := files.Post(t, "reuse-folder/", nil)
 		require.Equal(t, http.StatusConflict, resp2.StatusCode, "explicit folder creation should return 409 because folder already exists")
 
-		uid2 := files.ReadFolderUID(t, ctx, "reuse-folder/_folder.json")
+		uid2 := files.ReadFolderUID(t, "reuse-folder/_folder.json")
 		require.Equal(t, uid, uid2, "UID must not change after explicit folder creation attempt")
 	})
 
@@ -93,14 +91,14 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		resp := files.Post(t, "ancestor-a/ancestor-b/dashboard.json", body)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested dashboard should succeed: %s", string(resp.Body))
 
-		parentUID, _ := files.RequireValidFolderMetadata(t, ctx, "ancestor-a/_folder.json")
-		childUID, _ := files.RequireValidFolderMetadata(t, ctx, "ancestor-a/ancestor-b/_folder.json")
+		parentUID, _ := files.RequireValidFolderMetadata(t, "ancestor-a/_folder.json")
+		childUID, _ := files.RequireValidFolderMetadata(t, "ancestor-a/ancestor-b/_folder.json")
 
 		require.NotEqual(t, parentUID, childUID, "each folder gets a distinct UID")
 
-		_, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		_, err := helper.Folders.Resource.Get(t.Context(), parentUID, metav1.GetOptions{})
 		require.NoError(t, err, "parent Grafana folder should exist")
-		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		_, err = helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child Grafana folder should exist")
 	})
 
@@ -109,11 +107,11 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		resp := files.Post(t, "no-meta-existing-folder/should-have-meta/dashboard.json", body)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested dashboard should succeed: %s", string(resp.Body))
 
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "no-meta-existing-folder/_folder.json")
+		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "no-meta-existing-folder/_folder.json")
 		require.Error(t, err, "_folder.json should not exist when flag is enabled")
 
-		childUID, _ := files.RequireValidFolderMetadata(t, ctx, "no-meta-existing-folder/should-have-meta/_folder.json")
-		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		childUID, _ := files.RequireValidFolderMetadata(t, "no-meta-existing-folder/should-have-meta/_folder.json")
+		_, err = helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child Grafana folder should exist")
 	})
 
@@ -121,22 +119,22 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		resp := files.Post(t, "managed-parent/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating parent folder should succeed")
 
-		parentUID := files.ReadFolderUID(t, ctx, "managed-parent/_folder.json")
+		parentUID := files.ReadFolderUID(t, "managed-parent/_folder.json")
 		require.NotEmpty(t, parentUID, "parent should have a non-empty stable UID")
 
 		resp2 := files.Post(t, "managed-parent/child-folder/", nil)
 		require.Equal(t, http.StatusOK, resp2.StatusCode, "creating child folder should succeed")
 
-		childUID := files.ReadFolderUID(t, ctx, "managed-parent/child-folder/_folder.json")
+		childUID := files.ReadFolderUID(t, "managed-parent/child-folder/_folder.json")
 		require.NotEmpty(t, childUID, "child should have a non-empty stable UID")
 		require.NotEqual(t, parentUID, childUID, "child and parent UIDs must differ")
 
-		parentUID2 := files.ReadFolderUID(t, ctx, "managed-parent/_folder.json")
+		parentUID2 := files.ReadFolderUID(t, "managed-parent/_folder.json")
 		require.Equal(t, parentUID, parentUID2, "parent UID must be unchanged after child creation")
 
-		_, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		_, err := helper.Folders.Resource.Get(t.Context(), parentUID, metav1.GetOptions{})
 		require.NoError(t, err, "parent Grafana folder should exist")
-		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		_, err = helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child Grafana folder should exist")
 	})
 }

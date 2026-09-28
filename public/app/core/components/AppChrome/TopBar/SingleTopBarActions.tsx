@@ -5,6 +5,7 @@ import { Components } from '@grafana/e2e-selectors';
 import { type ScopesContextValue } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Stack, useStyles2 } from '@grafana/ui';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
@@ -22,11 +23,12 @@ export function SingleTopBarActions({ actions, breadcrumbActions, scopes }: Prop
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { isOpen: isExtensionSidebarOpen, extensionSidebarWidth } = useExtensionSidebarContext();
   const styles = useStyles2(getStyles, extensionSidebarWidth, visualRefreshEnabled);
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   return (
     <div
       data-testid={Components.NavToolbar.container}
-      className={cx(styles.actionsBar, isExtensionSidebarOpen && styles.constrained)}
+      className={cx(styles.actionsBar, isExtensionSidebarOpen && !isSmallScreen && styles.constrained)}
     >
       <Stack alignItems="center" justifyContent="flex-start" flex={1} wrap="nowrap" minWidth={0}>
         {scopes?.state.enabled ? <ScopesSelector /> : undefined}

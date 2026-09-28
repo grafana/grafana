@@ -114,6 +114,7 @@ export function getColumns(
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
+      disableResizing: fieldTableOptions.resizable === false,
       filter: memoize(filterByValue(field)),
       justifyContent: getTextAlign(field),
       Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
@@ -276,8 +277,10 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
   return options.filter((option) => filterValues.some((filtered) => filtered.value === option.value));
 }
 
+const caseInsensitiveCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
+
 export function sortCaseInsensitive(a: Row, b: Row, id: string) {
-  return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
+  return caseInsensitiveCollator.compare(String(a.values[id]), String(b.values[id]));
 }
 
 // sortNumber needs to have great performance as it is called a lot

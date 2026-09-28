@@ -27,7 +27,7 @@ import {
   SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
-import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
@@ -194,6 +194,40 @@ describe('DashboardDatasource', () => {
     expect(emissions).toHaveLength(1);
     expect(emissions[0].state).toBe(LoadingState.Done);
     expect(emissions[0].data[0].fields[0].values).toEqual([42]);
+  });
+
+  it('Once a stale Done is latched, a later fresh frame on the same stream is dropped', async () => {
+    // A chained dashboard-DS panel re-stamps a stale frame with the current range,
+    // so it passes the Mixed stale-Done filter and is latched by first(Done). A
+    // later fresh frame on the same (completed) stream is then dropped, so recovery
+    // must come from DashboardDatasourceBehaviour re-running the consumer.
+    const range = makeRange('2026-05-04T00:00:00Z', '2026-05-08T00:00:00Z');
+
+    const { observable, upstreamStream } = setupWithControllableUpstream(
+      { refId: 'A', panelId: 1 },
+      `${MIXED_REQUEST_PREFIX}1`,
+      range
+    );
+
+    // Stale content stamped with the current range: kept by the filter, latched by first(Done).
+    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([1]), range));
+
+    const emissions: DataQueryResponse[] = [];
+    observable.subscribe({ next: (data) => emissions.push(data) });
+
+    await waitForDebounce();
+
+    expect(emissions).toHaveLength(1);
+    expect(emissions[0].state).toBe(LoadingState.Done);
+    expect(emissions[0].data[0].fields[0].values).toEqual([1]);
+
+    // A later fresh frame on the same (completed) substream is dropped: the consumer stays stale.
+    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([2, 3]), range));
+
+    await waitForDebounce();
+
+    expect(emissions).toHaveLength(1);
+    expect(emissions[0].data[0].fields[0].values).toEqual([1]);
   });
 
   it('Should still emit Done on the Mixed path when the source range differs from the chain (PanelTimeRange override, #22618)', async () => {

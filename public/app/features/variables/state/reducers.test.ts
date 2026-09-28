@@ -5,7 +5,6 @@ import { type QueryVariableModel, type VariableType } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { type VariableAdapter, variableAdapters } from '../adapters';
-import { type VariableEditorProps } from '../editor/types';
 import { type VariablePickerProps } from '../pickers/types';
 import { toVariablePayload } from '../utils';
 
@@ -24,7 +23,6 @@ const variableAdapter: VariableAdapter<QueryVariableModel> = {
   getValueForUrl: jest.fn(),
   getSaveModel: jest.fn(),
   picker: null as unknown as ComponentType<VariablePickerProps<QueryVariableModel>>,
-  editor: null as unknown as ComponentType<VariableEditorProps<QueryVariableModel>>,
   setValue: jest.fn(),
   setValueFromUrl: jest.fn(),
 };

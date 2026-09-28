@@ -18,7 +18,12 @@ async function assertPreviewValues(
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: true,
+  },
+  openFeature: {
+    flags: {
+      'grafana.dashboardSettingsRedesign': false,
+    },
   },
 });
 

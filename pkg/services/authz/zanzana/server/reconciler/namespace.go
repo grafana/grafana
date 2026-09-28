@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -19,6 +20,30 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+)
+
+// anonymousSettingsGVR is the setting.grafana.app resource that holds per-namespace
+// (per-tenant) INI-style configuration, including the [auth.anonymous] section.
+var anonymousSettingsGVR = schema.GroupVersionResource{
+	Group:    "setting.grafana.app",
+	Version:  "v1beta1",
+	Resource: "settings",
+}
+
+const (
+	// anonymousSettingsSection is the config section carrying anonymous-access settings.
+	anonymousSettingsSection = "auth.anonymous"
+	// anonymousSettingsSectionSelector filters Setting resources down to the anonymous section.
+	anonymousSettingsSectionSelector = "section=" + anonymousSettingsSection
+	anonymousSettingKeyEnabled       = "enabled"
+	anonymousSettingKeyOrgRole       = "org_role"
+
+	// anonymousUserID matches the identifier used for the anonymous subject at check time
+	// (and by the legacy reconciler): anonymous:0.
+	anonymousUserID = "0"
+	// anonymousDefaultOrgRole mirrors the [auth.anonymous] org_role ini default.
+	anonymousDefaultOrgRole = "Viewer"
 )
 
 // tupleKey generates a unique string key for a tuple based on user, relation, and object.
@@ -93,6 +118,102 @@ func resolveAllGlobalRolePermissions(
 	return resolved, nil
 }
 
+// fetchAnonymousTuples reads the per-namespace anonymous-access config from the
+// setting.grafana.app apiserver and, when anonymous access is enabled, injects the
+// anonymous role assignment tuple (anonymous:0#assignee@role:basic_<org_role>) into dest.
+//
+// In a multi-tenant deployment there is no single instance config: each namespace (tenant)
+// can enable anonymous access with a different org role. This mirrors the legacy
+// anonymousRoleBindingsCollector, but sources the config per-namespace instead of from
+// process-global cfg.Anonymous.
+//
+// It is a no-op when the settings apiserver is not wired into the client factory (no
+// settings_apiserver_url in standalone mode, or the setting.grafana.app apiserver is not
+// registered in the embedded loopback client). In that case the anonymous role is simply
+// not reconciled. Anonymous reconciliation is therefore automatically active whenever the
+// settings apiserver is reachable, without a separate feature switch.
+//
+// When anonymous access is disabled (or unset), no tuple is added; because the reconciler
+// performs a full-store sync, any previously-written anonymous tuple is then pruned.
+func (r *Reconciler) fetchAnonymousTuples(ctx context.Context, namespace string, dest map[string]*openfgav1.TupleKey) error {
+	ctx, span := r.tracer.Start(ctx, "reconciler.addAnonymousTuples", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
+	clients, err := r.clientFactory.Clients(ctx, namespace)
+	if err != nil {
+		// Client acquisition is shared with the CRD fetch (which already ran and would have
+		// surfaced this). Skip anonymous reconciliation rather than failing on it here.
+		r.logger.Debug("skipping anonymous reconcile: failed to get clients",
+			"namespace", namespace, "error", err)
+		return nil
+	}
+
+	resourceClient, _, err := clients.ForResource(ctx, anonymousSettingsGVR)
+	if err != nil {
+		// The settings apiserver is not wired for this deployment; anonymous access is not
+		// reconciled. This is the expected path when settings_apiserver_url is unset (standalone)
+		// or the setting.grafana.app apiserver is absent (embedded OSS).
+		r.logger.Debug("skipping anonymous reconcile: settings apiserver unavailable",
+			"namespace", namespace, "error", err)
+		return nil
+	}
+
+	list, err := resourceClient.List(ctx, metav1.ListOptions{LabelSelector: anonymousSettingsSectionSelector})
+	if err != nil {
+		// The settings client exists but the list failed (transient error, apiserver down, etc.).
+		// Break the error chain (%v, not %w) so a NotFound is never misinterpreted by
+		// reconcileNamespace as "namespace deleted" (which would delete the store). Returning an
+		// error aborts this namespace's reconcile, leaving existing tuples untouched to avoid
+		// flapping the anonymous tuple.
+		return tracing.Errorf(span, "failed to list anonymous settings: %v", err)
+	}
+
+	var enabled bool
+	orgRole := ""
+	for i := range list.Items {
+		obj := list.Items[i].Object
+		section, _, _ := unstructured.NestedString(obj, "spec", "section")
+		if section != anonymousSettingsSection {
+			continue
+		}
+		key, _, _ := unstructured.NestedString(obj, "spec", "key")
+		value, _, _ := unstructured.NestedString(obj, "spec", "value")
+		switch key {
+		case anonymousSettingKeyEnabled:
+			enabled, _ = strconv.ParseBool(value)
+		case anonymousSettingKeyOrgRole:
+			orgRole = value
+		}
+	}
+
+	if !enabled {
+		return nil
+	}
+
+	if orgRole == "" {
+		orgRole = anonymousDefaultOrgRole
+	}
+
+	basicRole := common.TranslateBasicRole(orgRole)
+	if basicRole == "" {
+		r.logger.Warn("skipping anonymous role tuple: invalid org_role",
+			"namespace", namespace, "org_role", orgRole)
+		return nil
+	}
+
+	tuple := &openfgav1.TupleKey{
+		User:     common.NewTupleEntry(common.TypeAnonymous, anonymousUserID, ""),
+		Relation: common.RelationAssignee,
+		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
+	}
+	dest[tupleKey(tuple)] = tuple
+
+	span.SetAttributes(attribute.String("anonymous.basic_role", basicRole))
+	return nil
+}
+
 // fetchAndTranslateTuples fetches CRDs from Unistore and translates them directly into a
 // map keyed by tupleKey.
 //
@@ -157,6 +278,13 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 		for _, t := range tuples {
 			expectedMap[tupleKey(t)] = t
 		}
+	}
+
+	// Inject the per-namespace anonymous role assignment. This is a no-op when the settings
+	// apiserver is not wired (see fetchAnonymousTuples). A genuine failure aborts the reconcile
+	// (and is never a NotFound), so reconcileNamespace won't misread it as "namespace deleted".
+	if err := r.fetchAnonymousTuples(ctx, namespace, expectedMap); err != nil {
+		return nil, tracing.Errorf(span, "failed to reconcile anonymous settings: %w", err)
 	}
 
 	return expectedMap, nil

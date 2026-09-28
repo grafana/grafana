@@ -10,11 +10,13 @@
  *
  */
 
+export { LegacyDataSourcePicker, setDataSourcePicker } from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 
-export { ExpressionDatasourceRef } from '../utils/DataSourceWithBackend';
+export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
+export { ExpressionDatasourceRef } from '../utils/expressionRef';
 export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';
 
 export {
@@ -63,6 +65,7 @@ export {
   replaceCachedPromise,
   getCacheKeyFromPromise,
 } from '../utils/getCachedPromise';
+export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from '../services/JourneyTracker';
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,
@@ -79,12 +82,15 @@ export { invalidatePluginSettingsCache } from '../services/pluginSettings/invali
 
 export {
   initDataSourceInstanceSettings,
+  setDataSourceInstanceSettings,
   syncDataSourceInstanceSettings,
-  getDataSourceInstanceSettingsList,
 } from '../services/dataSource/settings';
 export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
-export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
+// Exported so test helpers can assert a suite never resolved through the legacy fallback.
+// Delete along with the fallbacks themselves once `DataSourceSrv` is gone.
 export {
-  useDataSourceInstanceSettingsList,
-  type UseDataSourceInstanceSettingsListResult,
-} from '../services/dataSource/hooks';
+  FALLBACK_TO_LEGACY_INSTANCE_WARNING,
+  FALLBACK_TO_LEGACY_LIST_WARNING,
+  FALLBACK_TO_LEGACY_SETTINGS_WARNING,
+} from '../services/dataSource/constants';
+export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';

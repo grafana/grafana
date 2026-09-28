@@ -12,9 +12,11 @@ import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -42,7 +44,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     mode: 'onBlur',
   });
   const { handleSubmit, watch, register, formState } = methods;
-  const [workflow] = watch(['workflow']);
+  const [workflow, ref] = watch(['workflow', 'ref']);
 
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
@@ -60,11 +62,20 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    value: ref ?? '',
+    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+  });
+
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
   const showError = (error: unknown) => {
     setError(
       getProvisionedRequestError(
         error,
-        'folder',
         t('browse-dashboards.rename-provisioned-folder-form.error-saving', 'Failed to rename folder')
       )
     );
@@ -90,6 +101,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       pull_request_url: null,
       repo_type: info.repoType ?? null,
       action: 'update',
+      pr_title: prTitle || null,
     };
 
     updateUrlParams(params);
@@ -182,6 +194,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
             hiddenFields={['path']}
             lockComment={locked}
             commitMessage={message}
+            lockBranch={lockBranch}
           />
 
           {error && <ProvisioningAlert error={error} />}

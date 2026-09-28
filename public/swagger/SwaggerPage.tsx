@@ -1,13 +1,13 @@
+import { Global } from '@emotion/react';
 import getDefaultMonacoLanguages from 'lib/monaco-languages';
 import { useState } from 'react';
 import { useAsync } from 'react-use';
 import SwaggerUI from 'swagger-ui-react';
 
-import { createTheme, monacoLanguageRegistry, type SelectableValue } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Select, UserIcon, type UserView, Button } from '@grafana/ui';
+import { createTheme, monacoLanguageRegistry, ThemeContext, type SelectableValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { Alert, Button, Icon, Select, Stack, UserIcon, type UserView } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
-import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
 import { NamespaceContext, WrappedPlugins } from './plugins';
 
@@ -56,7 +56,7 @@ export const Page = () => {
     const response = await fetch('api/frontend/settings');
     if (!response.ok) {
       console.warn('No settings found');
-      return 'default';
+      return;
     }
     const val = await response.json();
     return val.namespace;
@@ -80,10 +80,21 @@ export const Page = () => {
 
   return (
     <div>
-      <ThemeProvider value={theme}>
+      <ThemeContext.Provider value={theme}>
+        <Global
+          styles={{
+            html: {
+              fontSize: `${theme.typography.htmlFontSize}px`,
+            },
+            body: {
+              margin: 0,
+              ...theme.typography.body,
+            },
+          }}
+        />
         <NamespaceContext.Provider value={namespace.value}>
           <div style={{ backgroundColor: '#000', padding: '10px' }}>
-            <Stack justifyContent={'space-between'}>
+            <Stack alignItems="center" justifyContent="space-between">
               <Icon name="grafana" size="xxl" />
               <Select
                 options={urls.value}
@@ -102,7 +113,7 @@ export const Page = () => {
                 value={url}
                 isLoading={urls.loading}
               />
-              <div style={{ marginTop: '5px' }}>
+              <div>
                 {userView ? (
                   <UserIcon userView={userView} />
                 ) : (
@@ -116,7 +127,14 @@ export const Page = () => {
             </Stack>
           </div>
 
-          {url?.value && (
+          {!namespace.loading && !namespace.value && (
+            <Alert title={t('swagger.namespace-unavailable-title', 'Unable to load namespace')} severity="warning">
+              <Trans i18nKey="swagger.namespace-unavailable">
+                Check the namespace before sending requests, or reload the page to try again.
+              </Trans>
+            </Alert>
+          )}
+          {url?.value && !namespace.loading && (
             <SwaggerUI
               url={url.value}
               presets={[WrappedPlugins]}
@@ -127,9 +145,9 @@ export const Page = () => {
               displayOperationId
             />
           )}
-          {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
+          {(!url?.value || namespace.loading) && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
         </NamespaceContext.Provider>
-      </ThemeProvider>
+      </ThemeContext.Provider>
     </div>
   );
 };

@@ -11,8 +11,13 @@ export const getFocusStyle = (theme: GrafanaTheme2) =>
   });
 
 export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
-  const borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
-  const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  let borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
+  let borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
+  if (visualRefreshEnabled) {
+    borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
+    borderColorHover = invalid ? theme.colors.error.borderEmphasis : theme.components.input.borderHover;
+  }
   const background = theme.components.input.background;
   const textColor = theme.components.input.text;
 
@@ -25,6 +30,7 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
     css({
       background,
       lineHeight: theme.typography.body.lineHeight,
+      minHeight: theme.spacing(theme.components.height.md),
       fontSize: theme.typography.size.md,
       color: textColor,
       border: `1px solid ${borderColor}`,

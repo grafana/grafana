@@ -204,7 +204,6 @@ function getStyles(theme: GrafanaTheme2) {
     value: css({
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
-      fontFamily: theme.typography.fontFamilyMonospace,
     }),
     valueActive: css({
       color: theme.colors.success.text,

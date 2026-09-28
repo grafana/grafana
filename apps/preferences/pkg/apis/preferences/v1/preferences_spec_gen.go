@@ -1,0 +1,66 @@
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
+package v1
+
+// +k8s:openapi-gen=true
+type PreferencesQueryHistoryPreference struct {
+	// one of: '' | 'query' | 'starred';
+	HomeTab *string `json:"homeTab,omitempty"`
+}
+
+// NewPreferencesQueryHistoryPreference creates a new PreferencesQueryHistoryPreference object.
+func NewPreferencesQueryHistoryPreference() *PreferencesQueryHistoryPreference {
+	return &PreferencesQueryHistoryPreference{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for PreferencesQueryHistoryPreference.
+func (PreferencesQueryHistoryPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.PreferencesQueryHistoryPreference"
+}
+
+// +k8s:openapi-gen=true
+type PreferencesNavbarPreference struct {
+	BookmarkUrls []string `json:"bookmarkUrls"`
+}
+
+// NewPreferencesNavbarPreference creates a new PreferencesNavbarPreference object.
+func NewPreferencesNavbarPreference() *PreferencesNavbarPreference {
+	return &PreferencesNavbarPreference{
+		BookmarkUrls: []string{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for PreferencesNavbarPreference.
+func (PreferencesNavbarPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.PreferencesNavbarPreference"
+}
+
+// +k8s:openapi-gen=true
+type PreferencesSpec struct {
+	// Explicit home URL (NOTE: this can only be modified in the system settings)
+	HomeURL *string `json:"homeURL,omitempty"`
+	// UID for the home dashboard
+	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
+	// The timezone selection
+	Timezone *string `json:"timezone,omitempty"`
+	// day of the week (sunday, monday, etc)
+	WeekStart *string `json:"weekStart,omitempty"`
+	// user interface theme
+	Theme *string `json:"theme,omitempty"`
+	// Selected language
+	Language *string `json:"language,omitempty"`
+	// Explore query history preferences
+	QueryHistory *PreferencesQueryHistoryPreference `json:"queryHistory,omitempty"`
+	// Navigation preferences
+	Navbar *PreferencesNavbarPreference `json:"navbar,omitempty"`
+}
+
+// NewPreferencesSpec creates a new PreferencesSpec object.
+func NewPreferencesSpec() *PreferencesSpec {
+	return &PreferencesSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for PreferencesSpec.
+func (PreferencesSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.PreferencesSpec"
+}

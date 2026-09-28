@@ -153,6 +153,7 @@ func buildKeyPath(key *resourcepb.ResourceKey, rv int64, action resourcepb.BulkR
 }
 
 func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+	b.logCall("ProcessBulk")
 	if b.disableStorageServices {
 		return &resourcepb.BulkResponse{
 			Error: resource.AsErrorResult(errors.New("storage backend is not enabled")),
@@ -697,10 +698,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 	insertStart := time.Now()
 	maxRows := bulkHistoryInsertRowLimit(b.dialect.DialectName())
 	for start := 0; start < len(rows); start += maxRows {
-		end := start + maxRows
-		if end > len(rows) {
-			end = len(rows)
-		}
+		end := min(start+maxRows, len(rows))
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsertBulk, sqlBulkResourceHistoryInsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Rows:        rows[start:end],

@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -57,10 +58,13 @@ func RegisterAppInstaller(
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
 	restConfigProvider apiserver.RestConfigProvider,
-	tracer trace.Tracer,
 	reg prometheus.Registerer,
+	tracer tracing.Tracer,
 ) (*AppInstaller, error) {
-	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient, NewDashboardFolderResolver(restConfigProvider.GetRestConfig), tracer, reg)
+	config := newConfigFromSettings(cfg)
+	metrics := ProvideMetrics(reg)
+	folderResolver := NewDashboardFolderResolver(restConfigProvider.GetRestConfig, tracer, metrics, config.FolderCacheEnabled, config.FolderCacheTTL)
+	return NewAppInstaller(config, service, cleaner, accessClient, folderResolver, tracer, metrics, reg)
 }
 
 // NewAppInstaller Layers (from bottom to top):
@@ -77,13 +81,13 @@ func NewAppInstaller(
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
 	tracer trace.Tracer,
+	metrics *Metrics,
 	reg prometheus.Registerer,
 ) (*AppInstaller, error) {
 	if folderResolver == nil {
 		return nil, fmt.Errorf("annotation service requires folder resolver")
 	}
 	logger := log.New("annotation.app")
-	metrics := ProvideMetrics(reg)
 	installer := &AppInstaller{
 		logger:  logger,
 		tracer:  tracer,
@@ -120,12 +124,13 @@ func NewAppInstaller(
 
 	installer.k8sAdapter = &k8sRESTAdapter{
 		store:          instrumentedStore,
+		tracer:         installer.tracer,
 		accessClient:   accessClient,
 		folderResolver: folderResolver,
 		installer:      installer,
 		snowflakeNode:  sfNode,
 		maxScopeCount:  cfg.MaxScopeCount,
-		tracer:         installer.tracer,
+		retentionTTL:   cfg.RetentionTTL,
 		metrics:        installer.metrics,
 		logger:         logger,
 	}
@@ -135,10 +140,13 @@ func NewAppInstaller(
 		// We could consider combining the TagProvider with the Store interface to avoid this type assertion?
 		return nil, fmt.Errorf("store does not implement TagProvider, cannot serve tags API")
 	}
-	tagHandler := newTagsHandler(tagProvider, installer.tracer, installer.metrics, logger)
+	tagHandler := withAPIStatusErrorResponse(newTagsHandler(tagProvider, installer.tracer, accessClient, installer.metrics, logger))
 
 	// Create the search handler
-	searchHandler := newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger)
+	searchHandler := withAPIStatusErrorResponse(newSearchHandler(instrumentedStore, installer.tracer, accessClient, folderResolver, installer.metrics, logger))
+
+	// Create the graphite handler
+	graphiteHandler := withAPIStatusErrorResponse(newGraphiteHandler(installer.k8sAdapter, installer.tracer, installer.metrics, logger))
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
@@ -146,8 +154,9 @@ func NewAppInstaller(
 		KubeConfig:   restclient.Config{},
 		ManifestData: *apis.LocalManifest().ManifestData,
 		SpecificConfig: &annotationapp.AnnotationConfig{
-			TagHandler:    tagHandler,
-			SearchHandler: searchHandler,
+			TagHandler:      tagHandler,
+			SearchHandler:   searchHandler,
+			GraphiteHandler: graphiteHandler,
 		},
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())
@@ -232,7 +241,6 @@ func newPostgresStore(ctx context.Context, cfg Config, m *Metrics) (Store, error
 		MaxConnections:   cfg.PostgresMaxConnections,
 		MaxIdleConns:     cfg.PostgresMaxIdleConns,
 		ConnMaxLifetime:  cfg.PostgresConnMaxLifetime,
-		RetentionTTL:     cfg.RetentionTTL,
 		TagCacheTTL:      cfg.PostgresTagCacheTTL,
 		TagCacheSize:     cfg.PostgresTagCacheSize,
 	}

@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { EmptyState, ScrollContainer, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { createQueryText, mapQueriesToHeadings } from 'app/core/utils/richHistory';
 import { type SortOrder } from 'app/core/utils/richHistoryTypes';
@@ -50,7 +50,7 @@ export const RecentQueriesList = memo(function RecentQueriesList({
     const entries = await Promise.all(
       uniqueDsUids.map(async (uid) => {
         try {
-          const dsApi = await getDataSourceSrv().get(uid);
+          const dsApi = await getDataSourceInstance(uid);
           return [uid, dsApi] as const;
         } catch {
           return [uid, undefined] as const;

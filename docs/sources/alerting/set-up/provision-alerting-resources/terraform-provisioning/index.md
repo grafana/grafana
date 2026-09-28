@@ -70,6 +70,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/testdata/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata/
+  manage-multiple-notification-policy-trees:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
 ---
 
 # Use Terraform to provision alerting resources
@@ -360,6 +365,52 @@ In this section, we'll create Terraform configurations for each alerting resourc
    To configure the mute timing and contact point previously created in the notification policy tree, replace the following field values:
    - `<terraform_data_source_name>` with the terraform name of the previously defined contact point.
    - `<terraform_folder_name>` with the terraform name of the previously defined mute timing.
+
+1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
+
+### Enable multiple notification policy trees
+
+By default, Grafana routes all alerts to the default notification policy tree using the `grafana_notification_policy` resource as shown above.
+
+[Multiple notification policy trees](ref:manage-multiple-notification-policy-trees) let you split routing logic into separate routing trees, for example, one per team. Each routing tree is provisioned using its own [`grafana_apps_notifications_routingtree_v1beta1` Terraform resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_notifications_routingtree_v1beta1).
+
+1. Create a routing tree for each scope.
+
+   ```terraform
+   resource "grafana_apps_notifications_routingtree_v1beta1" "team_platform" {
+       metadata {
+           uid = "platform-routing-tree"
+       }
+       spec {
+            # ...
+       }
+   }
+   ```
+
+   - `metadata.uid` sets the routing tree's unique identifier. Alert rules reference this value to route into this tree instead of the default policy tree.
+   - For routing tree settings, refer to the [`grafana_apps_notifications_routingtree_v1beta1` Terraform resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_notifications_routingtree_v1beta1).
+
+1. To route notifications from an alert rule to a specific tree, define the alert rule using the [`grafana_apps_rules_alertrule_v0alpha1` Terraform resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_rules_alertrule_v0alpha1) and set `notification_settings.named_routing_tree.routing_tree` to the tree's `metadata.uid`.
+
+   ```terraform
+   resource "grafana_apps_rules_alertrule_v0alpha1" "platform_rule_test" {
+       metadata {
+           uid        = "platform_rule_test"
+           folder_uid = grafana_folder.platform_alert_folder.uid
+       }
+       spec {
+           title = "rule_test"
+           # ...
+           notification_settings {
+               named_routing_tree {
+                   routing_tree = "platform-routing-tree"
+               }
+           }
+       }
+   }
+   ```
+
+   Alert rules that don't set `notification_settings.named_routing_tree` continue to route through the default notification policy tree.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 

@@ -58,7 +58,7 @@ You use the token in all requests in the `Authorization` header, for example:
 ```http
 GET http://your.grafana.com/api/dashboards/db/mydash HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 The `Authorization` header value should be _`Bearer <YOUR_SERVICE_ACCOUNT_TOKEN>`_.
@@ -79,7 +79,7 @@ Include the service account token in the `Authorization` header for all requests
 ```http
 GET http://your.grafana.com/api/dashboards/db/mydash HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 Requests to the HTTP API are authenticated using the `Authorization` header:
@@ -99,5 +99,5 @@ GET /api/org/ HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 X-Grafana-Org-Id: 2
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```

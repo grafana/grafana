@@ -1,5 +1,4 @@
 import { type FeatureLike } from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
@@ -8,15 +7,7 @@ import { Fill, Stroke, Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type PanelData,
-  type GrafanaTheme2,
-  PluginState,
-  type EventBus,
-  type DataFrame,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData, PluginState, type DataFrame } from '@grafana/data';
 import { findField } from 'app/features/dimensions/utils';
 
 import { StyleEditor } from '../../editor/StyleEditor';
@@ -27,7 +18,6 @@ import { type FeatureRuleConfig, type FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getStyleDimension, getPublicGeoJSONFiles } from '../../utils/utils';
-
 
 export interface DynamicGeoJSONMapperConfig {
   // URL for a geojson file
@@ -69,7 +59,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<DynamicGeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (_map, options, _eventBus, theme) => {
     const config = { ...defaultOptions, ...options.config };
 
     const source = new VectorSource({
@@ -113,7 +103,6 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
     styles.push({
       state: s,
     });
-
 
     const style = await getStyleConfigState(config.style);
     const idToIdx = new Map<string, number>();
@@ -228,7 +217,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
               layerInfo,
             },
             defaultValue: defaultOptions.style,
-          })
+          });
       },
     };
   },

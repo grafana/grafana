@@ -29,6 +29,10 @@ func (r *mutableStatusReader) GetStorageMode(_ context.Context, _ schema.GroupRe
 	return r.mode, nil
 }
 
+func (r *mutableStatusReader) GetFloorVersion(_ schema.GroupResource) (string, bool) {
+	return "", false
+}
+
 func (r *mutableStatusReader) setMode(m unifiedmigrations.StorageMode) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -233,8 +237,6 @@ func (f *fakeStorage) DeleteCollection(ctx context.Context, deleteValidation res
 type updatedObjInfoObj struct{}
 
 func (u updatedObjInfoObj) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) { // nolint:staticcheck
-	// nolint:staticcheck
-	oldObj = exampleObj
-	return oldObj, nil
+	return exampleObj.DeepCopy(), nil
 }
 func (u updatedObjInfoObj) Preconditions() *metav1.Preconditions { return &metav1.Preconditions{} }

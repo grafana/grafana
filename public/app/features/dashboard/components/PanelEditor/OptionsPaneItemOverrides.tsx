@@ -42,7 +42,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     rule: css({
       ...common,
       position: 'relative',
-      backgroundColor: theme.colors.primary.main,
+      backgroundColor: theme.colors.info.main,
     }),
     data: css({
       ...common,

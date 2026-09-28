@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -277,26 +279,8 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 			return nil, err
 		}
 		if ds != nil {
-			// If both name+plugin exist, we need to verify the type
-			if query.Plugin != "" && ds.Type != query.Plugin {
-				p, _ := s.pluginStore.Plugin(ctx, ds.Type)
-				if !(slices.Contains(p.AliasIDs, query.Plugin)) {
-					return result, nil
-				}
-			}
 			dss = []*datasources.DataSource{ds} // will check authz before returning
 		}
-	} else if query.Plugin != "" {
-		q := &datasources.GetDataSourcesByTypeQuery{
-			OrgID: ns.OrgID,
-			Type:  query.Plugin,
-		}
-		p, found := s.pluginStore.Plugin(ctx, query.Plugin)
-		if !found {
-			return nil, fmt.Errorf("plugin %s not found", query.Plugin)
-		}
-		q.AliasIDs = p.AliasIDs
-		dss, err = s.SQLStore.GetDataSourcesByType(ctx, q) // Authz NOT applied
 	} else {
 		dss, err = s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
 			OrgID:           ns.OrgID,
@@ -386,6 +370,13 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		if err != nil {
 			return nil, err
 		}
+	}
+	if cmd.JsonData == nil {
+		cmd.JsonData = simplejson.New()
+	}
+	// Run after the store assigns the final UID so the minted ID matches what is inserted.
+	cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+		awsexternalid.BeforeSave(ctx, uid, s.cfg, nil, jsonData)
 	}
 
 	var dataSource *datasources.DataSource
@@ -668,6 +659,13 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				return err
 			}
 		}
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+		existingJSON := dataSource.JsonData
+		cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+			awsexternalid.BeforeSave(ctx, uid, s.cfg, existingJSON, jsonData)
+		}
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource
@@ -853,9 +851,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		opts.CustomOptions = ds.JsonDataMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
 		deepJsonDataCopy := make(map[string]any, len(opts.CustomOptions))
-		for k, v := range opts.CustomOptions {
-			deepJsonDataCopy[k] = v
-		}
+		maps.Copy(deepJsonDataCopy, opts.CustomOptions)
 		opts.CustomOptions["grafanaData"] = deepJsonDataCopy
 	}
 	if ds.BasicAuth {

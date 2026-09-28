@@ -22,6 +22,9 @@
         "workflows": {{ .WorkflowsJSON }}{{ if .WebhookBaseURL }},
         "webhook": {
             "baseUrl": "{{ .WebhookBaseURL }}"
+        }{{ else if .WebhookDisabled }},
+        "webhook": {
+            "disabled": true
         }{{ end }}
     },
     "secure": {

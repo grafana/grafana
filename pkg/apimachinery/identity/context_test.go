@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/authz"
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -65,6 +66,60 @@ func TestWithProvisioningIdentity(t *testing.T) {
 		perms := requester.GetPermissions()
 		require.Contains(t, perms, "playlists:read")
 		require.Contains(t, perms, "playlists:write")
+	})
+}
+
+// fakeAuthInfo drives GetUID and GetAudience independently. It embeds StaticRequester to satisfy
+// the rest of the authtypes.AuthInfo interface; StaticRequester.GetAudience returns an org-scoped
+// value, so it cannot exercise the token-audience branch on its own.
+type fakeAuthInfo struct {
+	*identity.StaticRequester
+	uid      string
+	audience []string
+}
+
+func (f fakeAuthInfo) GetUID() string        { return f.uid }
+func (f fakeAuthInfo) GetAudience() []string { return f.audience }
+
+func TestIsProvisioningServiceIdentity(t *testing.T) {
+	t.Run("nil is not the provisioning identity", func(t *testing.T) {
+		require.False(t, identity.IsProvisioningServiceIdentity(nil))
+	})
+
+	t.Run("matches by access-policy:provisioning UID", func(t *testing.T) {
+		r := &identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: "provisioning"}
+		require.Equal(t, "access-policy:provisioning", r.GetUID())
+		require.True(t, identity.IsProvisioningServiceIdentity(r))
+	})
+
+	t.Run("matches by provisioning group audience", func(t *testing.T) {
+		// UID is unrelated, so only the audience branch can satisfy the check.
+		auth := fakeAuthInfo{
+			StaticRequester: &identity.StaticRequester{},
+			uid:             "user:42",
+			audience:        []string{"org:1", "provisioning.grafana.app"},
+		}
+		require.True(t, identity.IsProvisioningServiceIdentity(auth))
+	})
+
+	t.Run("the generic service identity does not match", func(t *testing.T) {
+		r := &identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: "service"}
+		require.False(t, identity.IsProvisioningServiceIdentity(r))
+	})
+
+	t.Run("an unrelated identity does not match", func(t *testing.T) {
+		auth := fakeAuthInfo{
+			StaticRequester: &identity.StaticRequester{},
+			uid:             "user:42",
+			audience:        []string{"org:1"},
+		}
+		require.False(t, identity.IsProvisioningServiceIdentity(auth))
+	})
+
+	t.Run("the requester from WithProvisioningIdentity matches", func(t *testing.T) {
+		_, requester, err := identity.WithProvisioningIdentity(context.Background(), "default")
+		require.NoError(t, err)
+		require.True(t, identity.IsProvisioningServiceIdentity(requester))
 	})
 }
 

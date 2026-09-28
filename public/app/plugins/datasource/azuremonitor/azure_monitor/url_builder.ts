@@ -80,9 +80,15 @@ export default class UrlBuilder {
     query: GetMetricNamesQuery,
     templateSrv: TemplateSrv,
     multipleResources?: boolean,
-    region?: string
+    region?: string,
+    batchAPIEnabled?: boolean
   ) {
     let resourceUri: string;
+    // The subscription-level metricdefinitions API is not used when the batch API is enabled,
+    // as the batch API handles multi-resource queries via regional endpoints.
+    if (batchAPIEnabled) {
+      multipleResources = false;
+    }
     const { customNamespace, metricNamespace } = query;
     if ('resourceUri' in query) {
       resourceUri = query.resourceUri;

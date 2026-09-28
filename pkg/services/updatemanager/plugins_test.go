@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type mockPluginPreinstall struct {
@@ -243,6 +244,61 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 
 		require.Empty(t, svc.availableUpdates["test-core-panel"])
 	})
+
+	t.Run("sends the grafana.com token when configured", func(t *testing.T) {
+		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
+		client := &fakeHTTPClient{fakeResp: "[]"}
+		svc := PluginsService{
+			availableUpdates: map[string]availableUpdate{},
+			pluginStore:      &pluginstore.FakePluginStore{},
+			httpClient:       client,
+			log:              log.NewNopLogger(),
+			tracer:           tracing.InitializeTracerForTest(),
+			updateCheckURL:   updateCheckURL,
+			updateCheckToken: "token",
+		}
+
+		err := svc.checkForUpdates(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "Bearer token", client.authHeader)
+	})
+
+	t.Run("does not send an authorization header without a token", func(t *testing.T) {
+		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
+		client := &fakeHTTPClient{fakeResp: "[]"}
+		svc := PluginsService{
+			availableUpdates: map[string]availableUpdate{},
+			pluginStore:      &pluginstore.FakePluginStore{},
+			httpClient:       client,
+			log:              log.NewNopLogger(),
+			tracer:           tracing.InitializeTracerForTest(),
+			updateCheckURL:   updateCheckURL,
+		}
+
+		err := svc.checkForUpdates(context.Background())
+		require.NoError(t, err)
+		require.Empty(t, client.authHeader)
+	})
+}
+
+func TestProvidePluginsService(t *testing.T) {
+	t.Run("wires the grafana.com token and update check URL from the config", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			GrafanaComAPIURL:        "https://grafana.com/api",
+			GrafanaComProxyAPIToken: "token",
+		}
+
+		svc, err := ProvidePluginsService(cfg,
+			&pluginstore.FakePluginStore{},
+			&pluginfakes.FakePluginInstaller{},
+			tracing.InitializeTracerForTest(),
+			&featuremgmt.FeatureManager{},
+			pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+		)
+		require.NoError(t, err)
+		require.Equal(t, "token", svc.updateCheckToken)
+		require.Equal(t, "https://grafana.com/api/plugins/versioncheck", svc.updateCheckURL.String())
+	})
 }
 
 func TestPluginUpdateChecker_updateAll(t *testing.T) {
@@ -294,10 +350,12 @@ type fakeHTTPClient struct {
 	fakeResp string
 
 	requestURL string
+	authHeader string
 }
 
 func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	c.requestURL = req.URL.String()
+	c.authHeader = req.Header.Get("Authorization")
 
 	resp := &http.Response{
 		Body: io.NopCloser(strings.NewReader(c.fakeResp)),

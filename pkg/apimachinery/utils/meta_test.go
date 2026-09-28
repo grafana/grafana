@@ -783,6 +783,41 @@ func TestMetaAccessor(t *testing.T) {
 				},
 				wantOK: true,
 			},
+			{
+				// Classic shim kinds have no meaningful identity, so unlike other kinds
+				// they must still be reported as managed when the identity is empty.
+				name: "classic file-provisioning kind without identity is managed",
+				setProperties: &utils.ManagerProperties{
+					Kind: utils.ManagerKindClassicFP, //nolint:staticcheck
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity: "",
+					Kind:     utils.ManagerKindClassicFP, //nolint:staticcheck
+				},
+				wantOK: true,
+			},
+			{
+				name: "classic api-provisioning kind without identity is managed",
+				setProperties: &utils.ManagerProperties{
+					Kind: utils.ManagerKindClassicAPI, //nolint:staticcheck
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity: "",
+					Kind:     utils.ManagerKindClassicAPI, //nolint:staticcheck
+				},
+				wantOK: true,
+			},
+			{
+				name: "classic converted-prometheus kind without identity is managed",
+				setProperties: &utils.ManagerProperties{
+					Kind: utils.ManagerKindClassicConvertedPrometheus, //nolint:staticcheck
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity: "",
+					Kind:     utils.ManagerKindClassicConvertedPrometheus, //nolint:staticcheck
+				},
+				wantOK: true,
+			},
 		}
 
 		for _, tt := range tests {

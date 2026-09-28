@@ -6,9 +6,11 @@ import { t, Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QueryEditorType } from '../../constants';
 import { EditableQueryName } from '../Header/EditableQueryName';
+import { TransformationIdentifier } from '../Header/TransformationIdentifier';
 import {
   useActionsContext,
   useDatasourceContext,
@@ -20,6 +22,7 @@ import { QueryEditorPanel } from '../QueryEditorRenderer';
 import { TransformationEditorPanel } from '../TransformationEditorRenderer';
 import { useQueryDatasource } from '../hooks/useQueryDatasource';
 import { type Transformation } from '../types';
+import { getExpressionSectionLabel } from '../utils';
 
 import { getStackedQueryEditorType } from './utils';
 
@@ -73,7 +76,7 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
   const { dsSettings } = useDatasourceContext();
   const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
-  const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
+  const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
   const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings, panel);
 
   const editorType = getStackedQueryEditorType(query);
@@ -85,7 +88,7 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
     <DataSourceLogo dataSource={queryDsData?.dsSettings} size={18} />
   );
 
-  const label = isExpression ? typeConfig[editorType].getLabel() : queryDsData?.dsSettings.name;
+  const label = isExpressionQuery(query) ? getExpressionSectionLabel(query) : queryDsData?.dsSettings.name;
 
   return (
     <>
@@ -108,6 +111,7 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
           updateQuery={updateSelectedQuery}
           addQuery={addQuery}
           runQueries={runQueries}
+          startQueryPreview={startQueryPreview}
         />
       </div>
     </>
@@ -139,7 +143,15 @@ export function StackedTransformationItem({ transformation, headingId }: Stacked
       <StackedItemHeader
         icon={icon}
         label={<Trans i18nKey="query-editor-next.stacked.transformation">Transformation</Trans>}
-        identifier={transformationName}
+        identifier={
+          <TransformationIdentifier
+            transformation={transformation}
+            transformations={transformations}
+            data={data}
+            fallbackName={transformationName}
+            onUpdate={updateTransformation}
+          />
+        }
         headingId={headingId}
         isHidden={Boolean(transformation.transformConfig.disabled)}
       />
@@ -181,7 +193,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
   headerRefId: css({
-    ...theme.typography.code,
+    ...theme.typography.body,
   }),
   headerHiddenIcon: css({
     marginLeft: 'auto',

@@ -1,13 +1,12 @@
-import { type DataSourceRef, type DataQuery, type TypedVariableModel } from '@grafana/data';
+import { type DataSourceApi, type DataSourceRef, type DataQuery } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import {
   type PublicDashboard,
-  dashboardHasTemplateVariables,
-  publicDashboardPersisted,
   generatePublicDashboardUrl,
   getUnsupportedDashboardDatasources,
 } from './SharePublicDashboardUtils';
@@ -17,34 +16,22 @@ const mockDS = mockDataSource({
   type: 'mock-ds-type',
 });
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    get: () =>
-      Promise.resolve(
-        new DataSourceWithBackend({
-          ...mockDS,
-          meta: {
-            ...mockDS.meta,
-            alerting: true,
-            backend: true,
-          },
-        })
-      ),
-  }),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
-describe('dashboardHasTemplateVariables', () => {
-  it('false', () => {
-    let variables: TypedVariableModel[] = [];
-    expect(dashboardHasTemplateVariables(variables)).toBe(false);
-  });
-
-  it('true', () => {
-    //@ts-ignore
-    let variables: TypedVariableModel[] = ['a'];
-    expect(dashboardHasTemplateVariables(variables)).toBe(true);
-  });
+beforeEach(() => {
+  jest.mocked(getDataSourceInstance).mockResolvedValue(
+    new DataSourceWithBackend({
+      ...mockDS,
+      meta: {
+        ...mockDS.meta,
+        alerting: true,
+        backend: true,
+      },
+    }) as unknown as DataSourceApi
+  );
 });
 
 describe('generatePublicDashboardUrl', () => {
@@ -55,20 +42,6 @@ describe('generatePublicDashboardUrl', () => {
     let pubdash = { accessToken } as PublicDashboard;
 
     expect(generatePublicDashboardUrl(pubdash.accessToken!)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
-  });
-});
-
-describe('publicDashboardPersisted', () => {
-  it('true', () => {
-    let pubdash = { uid: 'abcd1234' } as PublicDashboard;
-    expect(publicDashboardPersisted(pubdash)).toBe(true);
-  });
-
-  it('false', () => {
-    let pubdash = { uid: '' } as PublicDashboard;
-    expect(publicDashboardPersisted(pubdash)).toBe(false);
-    pubdash = {} as PublicDashboard;
-    expect(publicDashboardPersisted(pubdash)).toBe(false);
   });
 });
 

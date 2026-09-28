@@ -1,8 +1,0 @@
-#group,false,false,true,true,true,true,false,false,false,true,true
-#datatype,string,long,string,string,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,double,string,string
-#default,_result,,,,,,,,,,
-,result,table,_field,_measurement,_start,_stop,_time,_time2,_value,cpu,host
-,,0,usage_guest,cpu,2021-05-08T14:59:57Z,2021-05-08T15:00:57Z,2021-05-08T15:00:00Z,2021-05-08T15:10:00Z,0,cpu1,hst
-,,1,usage_guest,cpu,2021-05-08T14:59:57Z,2021-05-08T15:00:57Z,2021-05-08T15:00:00Z,2021-05-08T15:10:00Z,0,cpu2,hst
-,,2,usage_idle,cpu,2021-05-08T14:59:57Z,2021-05-08T15:00:57Z,2021-05-08T15:00:00Z,2021-05-08T15:10:00Z,98,cpu1,hst
-,,3,usage_idle,cpu,2021-05-08T14:59:57Z,2021-05-08T15:00:57Z,2021-05-08T15:00:00Z,2021-05-08T15:10:00Z,99,cpu2,hst

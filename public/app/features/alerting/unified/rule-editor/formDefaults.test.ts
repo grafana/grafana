@@ -1,5 +1,3 @@
-import { testWithFeatureToggles } from 'test/test-utils';
-
 import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
@@ -90,16 +88,7 @@ describe('formValuesFromQueryParams', () => {
     expect(rest).toContainEqual({ key: 'custom-3', value: 'custom annotation v3' });
   });
 
-  it('should disable simplified query editor when query switch mode is disabled', () => {
-    const result = formValuesFromQueryParams(JSON.stringify({}), RuleFormType.grafana);
-
-    expect(result.editorSettings).toBeDefined();
-    expect(result.editorSettings!.simplifiedQueryEditor).toBe(false);
-  });
-
   describe('when simplified query editor is enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingQueryAndExpressionsStepMode'] });
-
     it('should enable simplified query editor if queries are transformable to simple condition', () => {
       const result = formValuesFromQueryParams(
         JSON.stringify({

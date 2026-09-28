@@ -285,11 +285,17 @@ export function applyFieldOverrides(
         const newValues: DataFrame[] = Array(field.values.length);
         for (let idx = 0; idx < field.values.length; idx++) {
           const nestedFrame: DataFrame = field.values[idx] ?? createDataFrame({ fields: [] });
+          // Nested frames share field objects with the source query, so merging in place
+          // would write this panel's config onto data other panels read.
+          const newFields = Array(nestedFrame.fields.length);
           for (let fieldIndex = 0; fieldIndex < nestedFrame.fields.length; fieldIndex++) {
             const valueField = nestedFrame.fields[fieldIndex];
-            valueField.config = defaultsDeep(valueField.config || {}, config);
+            newFields[fieldIndex] = {
+              ...valueField,
+              config: defaultsDeep(cloneDeep(valueField.config) || {}, config),
+            };
           }
-          newValues[idx] = nestedFrame;
+          newValues[idx] = { ...nestedFrame, fields: newFields };
         }
         // @todo should this be scoped?
         field.values = applyFieldOverrides(options, newValues);
@@ -423,6 +429,11 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
   if (config.links && defaults.links) {
     // Combine the data source links and the panel default config links. mutate rather than allocate new for perf reasons.
     config.links.push(...defaults.links);
+  }
+
+  const configBaseStep = config.thresholds?.steps[0];
+  if (configBaseStep?.value === null) {
+    configBaseStep.value = -Infinity;
   }
 
   // if we have a base threshold set by default but not on the config, we need to merge it in

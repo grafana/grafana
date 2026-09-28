@@ -87,6 +87,9 @@ type API struct {
 	AppUrl                *url.URL
 	UserService           user.Service
 	SilenceLimitsProvider notifier.LimitsProvider
+	// ExternalRulerSync gates manual convert-API rule imports when external
+	// ruler sync owns the org's rules. Always set in RegisterAPIEndpoints.
+	ExternalRulerSync ExternalRulerSyncChecker
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -110,6 +113,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.FeatureManager,
 		api.MultiOrgAlertmanager,
 		accesscontrol.NewAlertmanagerImportsAccess(api.AccessControl),
+		api.ExternalRulerSync,
 	)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
@@ -128,7 +132,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			ruleAuthzService,
 			api.SilenceLimitsProvider,
 		),
-		receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
+		receiverService: api.ReceiverService,
 	}), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(

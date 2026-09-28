@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "configurados",
       "reset-symbol-client-secret": "Redefinir"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Consulta bruta de {{queryDisplayName}}",
       "aria-label-use-query": "Usar este botão de consulta",
@@ -78,6 +83,11 @@
       "description-basic-logs": "A ativação deste recurso incorre em custos por consulta do Azure Monitor em painéis que consultam tabelas configuradas para <2>logs básicos</2>.",
       "label-enable-basic-logs": "Ativar logs básicos"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "API em lote",
+      "description-batch-api": "Consulta vários recursos em uma única solicitação, melhorando o desempenho para painéis grandes. Requer a função <2>Monitoring Reader</2> no escopo da assinatura em <6>metrics.monitor.azure.com</6>. <9>Podem ser aplicados custos</9> adicionais além da modalidade gratuita.",
+      "label-enable-batch-api": "Ativar API em lote"
+    },
     "config-editor": {
       "description-additional-settings": "As configurações adicionais são opcionais, e você pode defini-las para ter mais controle sobre sua fonte de dados. Isso inclui o Secure Socks Proxy, o tempo limite de solicitação e os cookies encaminhados.",
       "title-additional-settings": "Configurações adicionais"
@@ -100,7 +110,11 @@
       "load-subscriptions": "Carregar assinaturas"
     },
     "dimension-fields": {
-      "aria-label-remove": "Remover",
+      "aria-label-field": "Campo {{position}} de dimensão",
+      "aria-label-operator": "Operador {{position}} de dimensão",
+      "aria-label-remove": "Remover {{position}} de dimensão",
+      "aria-label-value": "Valor {{position}} de dimensão",
+      "aria-label-values": "Valores {{position}} de dimensão",
       "label-dimensions": "Dimensões",
       "placeholder-field": "Campo",
       "placeholder-operation": "Operação",
@@ -173,25 +187,60 @@
       "tooltip-limit": "Restrinja a quantidade de linhas retornadas (o valor padrão é 1.000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Tem certeza de que deseja mudar para os registros básicos?",
       "confirmText-confirm": "Confirmar",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "As consultas de logs básicos incorrem em custos com base na quantidade de dados verificados.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Logs",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Consultas de logs básicos",
-      "tooltip-logs": "Especifica se será executada uma consulta de logs básicos ou de análise."
+      "tooltip-logs": "Especifica se será executada uma consulta de logs básicos ou de análise.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Recurso carregado com sucesso, mas sem tabelas"
     },
     "logs-query-editor": {
       "learn-more": "Saiba mais",
-      "view-query": "Visualizar consulta no Portal do Azure"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Visualizar consulta no Portal do Azure",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Métrica"
     },
     "metric-namespace-field": {
       "label-metric-namespace": "Namespace métrico"
+    },
+    "metrics-query-editor": {
+      "selection-notice-batch": "Você pode selecionar itens do mesmo tipo de recurso em todas as assinaturas e regiões. Os recursos em diferentes assinaturas ou regiões são consultados em solicitações separadas e podem apresentar erro de forma independente. Para selecionar recursos de outro tipo de recurso, desmarque sua seleção atual primeiro.",
+      "selection-notice-standard": "Você pode selecionar itens do mesmo tipo de recurso e localização. Para selecionar recursos de outro tipo de recurso ou local, desmarque sua seleção atual primeiro."
+    },
+    "monitor-config": {
+      "title-features": "Recursos"
     },
     "nested-row": {
       "text-loading": "Carregando..."
@@ -204,6 +253,10 @@
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Classifique os resultados com base em uma ou mais colunas em ordem crescente ou decrescente."
+    },
+    "pagination": {
+      "results-truncated-message": "Parou de carregar após {{maxPages}} páginas. Alguns resultados podem ser omitidos.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Ocorreu um erro ao solicitar metadados do Azure Monitor"

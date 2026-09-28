@@ -22,8 +22,8 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
-import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
+import { getMockFrames } from 'app/features/loki-helpers/mocks';
+import { LokiQueryDirection } from 'app/features/loki-helpers/types';
 
 import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv';
 

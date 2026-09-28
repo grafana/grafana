@@ -21,7 +21,7 @@ import {
   hasQueryModificationSupport,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { PanelChrome } from '@grafana/ui';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -35,7 +35,7 @@ import { updateTimeRange, loadMoreLogs } from '../state/time';
 import { LiveTailControls } from '../useLiveTailControls';
 import { getFieldLinksForExplore } from '../utils/links';
 
-import { LiveLogsWithTheme } from './LiveLogs';
+import { LiveLogs } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 
@@ -124,15 +124,7 @@ const LogsContainer = memo(function LogsContainer({
       }
       const mustCheck = !instances[query.refId] || instances[query.refId].uid !== query.datasource.uid;
       if (mustCheck) {
-        dsPromises.push(
-          new Promise((resolve) => {
-            getDataSourceSrv()
-              .get(query.datasource)
-              .then((ds) => {
-                resolve({ ds, refId: query.refId });
-              });
-          })
-        );
+        dsPromises.push(getDataSourceInstance(query.datasource).then((ds) => ({ ds, refId: query.refId })));
       }
     }
 
@@ -271,7 +263,7 @@ const LogsContainer = memo(function LogsContainer({
         <PanelChrome title={t('explore.logs-container.label-logs', 'Logs')}>
           <LiveTailControls exploreId={exploreId}>
             {(controls) => (
-              <LiveLogsWithTheme
+              <LiveLogs
                 logRows={logRows}
                 timeZone={timeZone}
                 stopLive={controls.stop}
@@ -285,7 +277,7 @@ const LogsContainer = memo(function LogsContainer({
           </LiveTailControls>
         </PanelChrome>
       </LogsCrossFadeTransition>
-      <LogsCrossFadeTransition visible={!isLive}>
+      {!isLive && (
         <Logs
           exploreId={exploreId}
           datasourceType={datasourceInstance?.type}
@@ -326,7 +318,7 @@ const LogsContainer = memo(function LogsContainer({
           onClickFilterString={filterValueAvailable() ? onClickFilterString : undefined}
           onClickFilterOutString={filterOutValueAvailable() ? onClickFilterOutString : undefined}
         />
-      </LogsCrossFadeTransition>
+      )}
     </>
   );
 });

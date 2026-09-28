@@ -10,6 +10,8 @@
 
 import { type Observable } from 'rxjs';
 
+import { type BackendSrvRequest, type FetchError, isFetchError } from '@grafana/runtime';
+
 /** The object type and version */
 interface TypeMeta<K = string> {
   apiVersion: string;
@@ -69,6 +71,12 @@ export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 // Grant permissions to the created resource
 export const AnnoKeyGrantPermissions = 'grafana.app/grant-permissions';
 
+// Attribution of provisioning jobs to the identity that triggered them
+export const AnnoKeyProvisioningAuthor = 'provisioning.grafana.app/author';
+export const AnnoKeyProvisioningAuthorEmail = 'provisioning.grafana.app/authorEmail';
+export const AnnoKeyProvisioningAuthorId = 'provisioning.grafana.app/authorId';
+export const AnnoKeyProvisioningAuthorOrigin = 'provisioning.grafana.app/authorOrigin';
+
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeySlug = 'grafana.app/slug';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
@@ -87,6 +95,14 @@ export const AnnoKeyEmbedded = 'grafana.app/embedded';
 /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
 /** Not intended to be used in production, we will be removing this in short-term future */
 export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
+
+/**
+ * JSON annotation selecting which cross-dashboard (global/folder) variables to inject.
+ * Value shape: `{"global":"all"|"none"|string[],"folder":"all"|"none"|string[]}`.
+ * Absent or invalid JSON → inject none (not opted in). `"all"` in a scope auto-includes new vars;
+ * a name array does not. Empty array is `"none"`. Both scopes `"none"` → omit this key.
+ */
+export const AnnoKeyUseCrossDashboardVariables = 'grafana.app/useCrossDashboardVariables';
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
@@ -126,6 +142,8 @@ type GrafanaClientAnnotations = {
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
+
+  [AnnoKeyUseCrossDashboardVariables]?: string;
 };
 
 // Labels
@@ -268,9 +286,30 @@ export interface WatchOptions {
   fieldSelector?: ListOptionsFieldSelector;
 }
 
+// A single field-level explanation attached to a MetaStatus, as produced by
+// apierrors.NewInvalid on the backend.
+export interface MetaStatusCause {
+  message?: string;
+  field?: string;
+  reason?: string;
+}
+
+interface MetaStatusDetails {
+  uid?: string;
+  name?: string;
+  group?: string;
+  kind?: string;
+  retryAfterSeconds?: number;
+  causes?: MetaStatusCause[];
+}
+
 export interface MetaStatus {
   // Status of the operation. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
   status: 'Success' | 'Failure';
+
+  kind?: 'Status';
+
+  apiVersion?: string;
 
   // A human-readable description of the status of this operation.
   message: string;
@@ -282,7 +321,13 @@ export interface MetaStatus {
   reason?: string;
 
   // Extended data associated with the reason
-  details?: object;
+  details?: MetaStatusDetails;
+}
+
+// Failed writes to an apiserver reject with a FetchError whose body is a Status object. The
+// discriminator lives in `data.reason`, not `data.status` (which is always 'Failure').
+export function isApiMachineryError(error: unknown): error is FetchError<MetaStatus> {
+  return isFetchError(error) && error.data?.kind === 'Status' && error.data?.status === 'Failure';
 }
 
 export interface ResourceEvent<T = object, S = object, K = string> {
@@ -295,10 +340,24 @@ export type ResourceClientWriteParams = {
   fieldValidation?: 'Ignore' | 'Warn' | 'Strict';
 };
 
+/**
+ * Request level options, as opposed to query parameters. Callers that render the failure in their
+ * own UI pass `showErrorAlert: false` to suppress the global error toast.
+ */
+export type ResourceClientRequestOptions = Pick<BackendSrvRequest, 'showErrorAlert'>;
+
 export interface ResourceClient<T = object, S = object, K = string> {
   get(name: string, params?: Record<string, unknown>): Promise<Resource<T, S, K>>;
-  create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
-  update(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
+  create(
+    obj: ResourceForCreate<T, K>,
+    params?: ResourceClientWriteParams,
+    requestOptions?: ResourceClientRequestOptions
+  ): Promise<Resource<T, S, K>>;
+  update(
+    obj: ResourceForCreate<T, K>,
+    params?: ResourceClientWriteParams,
+    requestOptions?: ResourceClientRequestOptions
+  ): Promise<Resource<T, S, K>>;
   delete(name: string, showSuccessAlert?: boolean): Promise<MetaStatus>;
   list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
   subresource<S>(name: string, path: string, params?: Record<string, unknown>): Promise<S>;

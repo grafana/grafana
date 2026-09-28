@@ -4,17 +4,25 @@ import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
   type DataFrame,
+  type DataQuery,
   type DataQueryRequest,
   type DataSourceApi,
   type GrafanaTheme2,
   type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
-import { SearchTableType, type TempoQuery } from 'app/plugins/datasource/tempo/dataquery.gen';
+
+interface TempoQuery extends DataQuery {
+  query?: string;
+  queryType?: string;
+  tableType?: string;
+  filters: unknown[];
+}
 
 import { useLogListContext } from './LogListContext';
 import { getTraceIdFromTraceQlQuery, type EmbeddedInternalLink } from './links';
@@ -33,15 +41,13 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
 
   useEffect(() => {
     setDataSource(null);
-    getDataSourceSrv()
-      .get(traceRef.dsUID)
-      .then((dataSource) => {
-        if (dataSource) {
-          setDataSource(dataSource);
-        } else {
-          setDataFrames(null);
-        }
-      });
+    getDataSourceInstance(traceRef.dsUID).then((dataSource) => {
+      if (dataSource) {
+        setDataSource(dataSource);
+      } else {
+        setDataFrames(null);
+      }
+    });
   }, [traceRef.dsUID]);
 
   useEffect(() => {
@@ -59,7 +65,7 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
           query: traceQuery,
           queryType: 'traceql',
           refId: `log-details-trace-${traceQuery}`,
-          tableType: SearchTableType.Traces,
+          tableType: 'traces',
           filters: [],
         },
       ],

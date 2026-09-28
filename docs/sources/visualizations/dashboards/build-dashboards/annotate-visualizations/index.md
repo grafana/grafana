@@ -5,10 +5,14 @@ aliases:
   - ../../../panels/visualizations/annotations/ # /docs/grafana/next/panels/visualizations/annotations/
   - ../../../reference/annotations/ # /docs/grafana/latest/reference/annotations/
 keywords:
-  - grafana
   - annotations
-  - documentation
-  - guide
+  - annotation query
+  - built-in query
+  - region annotation
+  - time regions
+  - tags
+  - dashboard
+  - saved queries
 labels:
   products:
     - cloud
@@ -30,7 +34,7 @@ You can annotate visualizations in three ways:
 
 - Directly in the panel, using the [built-in annotations query](#built-in-query)
 - Using the HTTP API
-- Configuring annotation queries in the dashboard settings
+- Configuring annotation queries
 
 In the first two cases, you're creating new annotations, while in the last you're querying existing annotations from data sources. The built-in annotation query also supports this.
 
@@ -102,63 +106,143 @@ To add an annotation query to a dashboard, follow these steps:
 
 {{< docs/list >}}
 
-1. Click **Edit** in the top-right corner of the dashboard.
-1. In the toolbar, click the **Dashboard options** icon to open the sidebar.
-1. In the sidebar, click **Settings**.
-1. On the **Settings** page, go to the **Annotations** tab.
-1. Click **Add annotation query**.
+{{< shared id="add-annotation-query" >}}
 
-   If you've added a query before, the **+ New query** button is displayed.
-
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Annotation query**.
 1. Enter a name for the annotation query.
 
    This name is given to the toggle that allows you to enable/disable showing annotation events from this query.
 
-1. Select the data source for the annotations.
-
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
-
-{{< shared id="add-annotation-query" >}}
-
 1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
-1. Select a color for the event markers.
-1. Select one of the following options in the **Show annotation controls in** drop-down list to control where annotations are displayed:
+1. Select a color for the annotation event markers.
+1. Select one of the following options in the **Show annotation controls in** drop-down list to control where the annotation is displayed:
    - **Above dashboard** - The annotation toggle is displayed above the dashboard. This is the default.
    - **Controls menu** - The annotation toggle is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
-   - **Hidden** - The annotation toggle is not displayed on the dashboard.
+   - **Hidden** - The annotation toggle isn't displayed on the dashboard.
 
-1. In the **Show in** drop-down, choose one of the following options:
+1. Select one of the following options in the **Show in** drop-down list to control the panels in which the annotation is displayed:
    - **All panels** - The annotations are displayed on all panels that support annotations.
    - **Selected panels** - The annotations are displayed on all the panels you select.
    - **All panels except** - The annotations are displayed on all panels except the ones you select.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}}
 
-   {{< /shared >}}
-
-1. To create a query, do one of the following:
-   - Write or construct a query in the query language of your data source. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) topic.
-   - Open the **Saved queries** drop-down menu and click **Replace query** to reuse a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries).
-
-1. (Optional) To [save the query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query) for reuse, open the **Saved queries** drop-down menu and click the **Save query** option.
-1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
-1. (Optional) To add subsequent queries, click **+ Add query** or **+ Add from saved queries**, and test them as many times as needed.
+1. To add a query, do one of the following:
+   - Click **Open query editor** to open the **Annotation Query** dialog box, select an option in the **Data source** drop-down list, and write or construct a query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) topic. Proceed to the next step.
+   - Click **Use saved query** to open the **Saved queries** drawer. Choose a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) to reuse, click **Select query**, and proceed to step 13.
 
    {{< admonition type="note" >}}
-   [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+   [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is only available on Grafana Enterprise and Grafana Cloud.
    {{< /admonition >}}
 
+1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
+1. Click **Close** when you've completed the query setup.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Exit edit**.
+
+{{< /shared >}}
 
 {{< /docs/list >}}
 
-{{< admonition type="tip" >}}
-To create annotation queries without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Annotation query**.
-For more information, refer to the [Dashboard controls documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
+### Saved queries
+
+{{< admonition type="note" >}}
+Saved queries is only available on Grafana Enterprise and Grafana Cloud.
 {{< /admonition >}}
+
+You can reuse queries you and others in your organization have saved in annotations.
+This helps users across your organization create annotations without having to create their own queries or know a query language.
+It also helps you avoid having several users build the same queries for the same data sources multiple times.
+
+Saved queries are supported in:
+
+- [Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#create-a-dashboard)
+- [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/query-editor/)
+- [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries)
+
+Learn more about saved queries:
+
+- [Saved queries dialog box](#saved-queries-dialog-box)
+- [Roles, permissions, and RBAC](#roles-permissions-and-rbac)
+- [Variables in saved queries](#variables-in-saved-queries)
+- [Manage saved queries as code](#manage-saved-queries-as-code)
+- [Known limitations](#known-limitations)
+
+#### Saved queries dialog box
+
+The **Saved queries** dialog box gives you access to all the saved queries in your organization:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v13.0.png" max-width="750px" alt="List of saved queries" >}}
+
+To access saved queries, click **Use saved query** in the annotations configuration.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-saved-query-v13.2.png" max-width="450px" alt="Access saved queries" >}}
+
+{{< admonition type="note" >}}
+To review your saved queries, press `Ctrl + K` or `Cmd + K` to open the command palette and search "Saved queries".
+From this view, you can also select a query to open in Explore.
+{{< /admonition >}}
+
+From the **Saved queries** dialog box, you can:
+
+- Search for queries by data source name, query content, title, or description.
+- Sort queries alphabetically or by creation date.
+- Filter by data source name, author name, and tags. The tag filter uses the `OR` operator, while the others use the `AND` operator. Use the **Remember filters** switch to persist your filter selections across sessions in your local storage.
+- Star queries so that they appear in the **Starred queries** filter view.
+- Duplicate or delete a saved query.
+- Edit a query title, description, or tags.
+
+You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
+
+{{< admonition type="tip">}}
+When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the **Saved queries** dialog box displays a **Drilldown** button.
+Click the button to open the associated Drilldown app, while maintaining the context of the query.
+Learn more about these apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
+{{< /admonition >}}
+
+#### Roles, permissions, and RBAC
+
+Saved queries support role-based access controls.
+By default, saved queries have two RBAC roles:
+
+- **Writer**: Create, update, and delete all saved queries.
+- **Reader**: Reuse saved queries.
+
+If you used saved queries prior to the addition of RBAC support in Grafana v12.4, Grafana user roles are mapped as follows:
+
+- Admin > Writer
+- Editor > Writer
+- Viewer > Reader
+
+#### Variables in saved queries
+
+If a saved query includes variables, you can substitute the variables in the query without modifying it.
+This is useful in environments where variable names or available values differ between dashboards.
+
+You can map the original variables to either:
+
+- A variable in your dashboard
+- A custom value that you enter
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-query-variable-v13.0.png" max-width="450px" alt="A saved query with substituted variables" >}}
+
+Grafana applies your selections to the query before inserting it into the dashboard.
+However, the substitutions only apply to the query when it's reused, and the original saved query remains unchanged.
+
+#### Manage saved queries as code
+
+You can manage saved queries as code with the Grafana Terraform provider, which lets you version-control your query library and keep it consistent across instances.
+For more information, refer to [Manage saved queries using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/infrastructure-as-code/terraform/manage-saved-queries/).
+
+#### Known limitations
+
+- No validation is performed when you save a query, so it's possible to save an invalid query. You should confirm the query is working properly before you save it.
+- You can save a maximum of 1000 queries.
 
 ## Built-in query
 
@@ -172,8 +256,8 @@ To confirm if the built-in query is enabled, take the following steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the **Dashboard options** icon in the toolbar.
-1. In the sidebar, click **Settings**.
-1. On the **Settings** page, go to the **Annotations** tab.
+1. In the sidebar, expand the **Annotations** section.
+1. Expand the **Hidden** section of annotations.
 1. Select the **Annotations & Alerts (Built-in query)**.
 1. Check if the **Enabled** checkbox is selected.
 

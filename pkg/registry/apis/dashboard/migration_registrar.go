@@ -3,8 +3,10 @@ package dashboard
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 )
@@ -17,8 +19,17 @@ func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) mig
 		ID:          migrations.FoldersDashboardsMigrationID,
 		MigrationID: "folders and dashboards migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: folderGR, LockTables: []string{"dashboard", "dashboard_version", "dashboard_provisioning"}},
-			{GroupResource: dashboardGR, LockTables: []string{"dashboard", "dashboard_version", "dashboard_provisioning"}},
+			{
+				GroupResource: folderGR,
+				LockTables:    []string{"dashboard", "dashboard_version", "dashboard_provisioning"},
+				// Earlier migrations left folders as v1beta1 and do not re-run.
+				FloorVersion: foldersV1beta1.APIVersion,
+			},
+			{
+				GroupResource: dashboardGR,
+				LockTables:    []string{"dashboard", "dashboard_version", "dashboard_provisioning"},
+				FloorVersion:  dashV0.VERSION,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			folderGR:    migrator.MigrateFolders,

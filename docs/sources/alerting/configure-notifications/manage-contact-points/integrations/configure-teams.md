@@ -73,4 +73,4 @@ To add this contact point to your alert, complete the following steps.
 
 ## Troubleshooting
 
-- If Grafana reports that notification was sent successfully but it was not delivered to the channel, check the workflow's run history. You can find it in the workflow details page.
+- If Grafana reports that the notification was sent successfully but it was not delivered to the channel, check the workflow's run history. You can find it in the workflow details page.

@@ -1,10 +1,60 @@
 #!/usr/bin/env node
 
+// Compares one codeowner's coverage between main and PR branches, then writes the
+// result straight to this matrix leg's own $GITHUB_STEP_SUMMARY — each of the
+// `coverage` job's legs in check-frontend-test-coverage.yml runs this independently,
+// so every opted-in team's block lands on the run's Summary page under its own job,
+// with no separate fan-in job or intermediate artifact tying them together.
+
 const fs = require('fs');
 
 const COVERAGE_MAIN_PATH = './coverage-main/coverage-summary.json';
 const COVERAGE_PR_PATH = './coverage-pr/coverage-summary.json';
-const COMPARISON_OUTPUT_PATH = './coverage-comparison.md';
+
+// Drops of this many percentage points or less do not fail the check. A single
+// added branch or line in a large codebase can move the percentage by 0.01-0.02
+// without meaningfully reducing test coverage.
+const DROP_TOLERANCE_PCT = 0.02;
+
+const METRICS = ['lines', 'statements', 'functions', 'branches'];
+const METRIC_LABELS = { lines: 'Lines', statements: 'Statements', functions: 'Functions', branches: 'Branches' };
+
+// Bounds on how many files are embedded in the job summary. There's no hard size
+// pressure (this isn't a PR comment), but a pathological diff could otherwise
+// generate a huge summary — the full HTML report link covers anything truncated.
+const MAX_DECREASED_FILES = 200;
+const MAX_INCREASED_FILES_SHOWN = 5;
+
+/**
+ * Rounds a percentage to 2 decimal places to match display precision
+ * @param {number} value - Percentage value
+ * @returns {number} Rounded percentage
+ */
+function roundPct(value) {
+  return Number(value.toFixed(2));
+}
+
+/**
+ * Classifies a coverage change as improved/unchanged, a tolerated drop, or a regression
+ * @param {number} mainValue - Main branch coverage percentage
+ * @param {number} prValue - PR branch coverage percentage
+ * @returns {'pass'|'tolerated'|'fail'}
+ */
+function classifyChange(mainValue, prValue) {
+  // Round each side first so the drop matches what's displayed (see formatDelta).
+  // Subtracting two already-rounded numbers can still leave binary floating point
+  // error right at the tolerance boundary (e.g. 79.96 - 79.94 === 0.020000000000010232),
+  // so round the difference once more instead of comparing against it directly.
+  const drop = roundPct(roundPct(mainValue) - roundPct(prValue));
+
+  if (drop <= 0) {
+    return 'pass';
+  }
+  if (drop <= DROP_TOLERANCE_PCT) {
+    return 'tolerated';
+  }
+  return 'fail';
+}
 
 /**
  * Reads and parses a coverage summary JSON file
@@ -37,31 +87,34 @@ function formatPercentage(value) {
  * @returns {string} Status icon and text
  */
 function getStatusIcon(mainValue, prValue) {
-  // Round to 2 decimal places for comparison to match display precision
-  const prPct = Math.round(prValue * 100) / 100;
-  const mainPct = Math.round(mainValue * 100) / 100;
-
-  if (prPct >= mainPct) {
-    return '✅ Pass';
+  switch (classifyChange(mainValue, prValue)) {
+    case 'pass':
+      return '✅ Pass';
+    case 'tolerated':
+      return '🟡 Within tolerance';
+    default:
+      return '❌ Fail';
   }
-  return '❌ Fail';
 }
 
 /**
  * Determines overall pass/fail status for all coverage metrics
  * @param {Object} mainSummary - Main branch coverage summary
  * @param {Object} prSummary - PR branch coverage summary
- * @returns {boolean} True if all metrics maintained or improved
+ * @returns {boolean} True if no metric dropped by more than the tolerance
  */
 function getOverallStatus(mainSummary, prSummary) {
-  const metrics = ['lines', 'statements', 'functions', 'branches'];
-  const allPass = metrics.every((metric) => {
-    // Round to 2 decimal places for comparison to match display precision
-    const prPct = Math.round(prSummary[metric].pct * 100) / 100;
-    const mainPct = Math.round(mainSummary[metric].pct * 100) / 100;
-    return prPct >= mainPct;
-  });
-  return allPass;
+  return METRICS.every((metric) => classifyChange(mainSummary[metric].pct, prSummary[metric].pct) !== 'fail');
+}
+
+/**
+ * Reports whether any metric dropped within the tolerated range
+ * @param {Object} mainSummary - Main branch coverage summary
+ * @param {Object} prSummary - PR branch coverage summary
+ * @returns {boolean} True if at least one metric had a tolerated drop
+ */
+function hasToleratedDrop(mainSummary, prSummary) {
+  return METRICS.some((metric) => classifyChange(mainSummary[metric].pct, prSummary[metric].pct) === 'tolerated');
 }
 
 /**
@@ -71,13 +124,15 @@ function getOverallStatus(mainSummary, prSummary) {
  * @returns {string} Formatted delta (e.g., "+1.2%" or "-0.5%")
  */
 function formatDelta(prValue, mainValue) {
-  const delta = prValue - mainValue;
+  // Round each side first, same as classifyChange, so the displayed delta never
+  // disagrees with the status/tolerance columns near the rounding boundary.
+  const delta = roundPct(prValue) - roundPct(mainValue);
   if (delta > 0) {
     return `+${delta.toFixed(2)}%`;
   } else if (delta < 0) {
     return `${delta.toFixed(2)}%`;
   }
-  return '—';
+  return '±0.00%';
 }
 
 /**
@@ -89,7 +144,6 @@ function formatDelta(prValue, mainValue) {
 function getFilesWithDecreasedCoverage(mainCoverage, prCoverage) {
   const mainFiles = mainCoverage.files || {};
   const prFiles = prCoverage.files || {};
-  const metrics = ['lines', 'statements', 'functions', 'branches'];
   const decreased = [];
 
   for (const [filePath, prFile] of Object.entries(prFiles)) {
@@ -98,11 +152,7 @@ function getFilesWithDecreasedCoverage(mainCoverage, prCoverage) {
       continue; // new file — not a regression
     }
 
-    const anyDecreased = metrics.some((metric) => {
-      const prPct = Math.round(prFile[metric].pct * 100) / 100;
-      const mainPct = Math.round(mainFile[metric].pct * 100) / 100;
-      return prPct < mainPct;
-    });
+    const anyDecreased = METRICS.some((metric) => roundPct(prFile[metric].pct) < roundPct(mainFile[metric].pct));
 
     if (anyDecreased) {
       decreased.push({ path: filePath, main: mainFile, pr: prFile });
@@ -114,131 +164,227 @@ function getFilesWithDecreasedCoverage(mainCoverage, prCoverage) {
 }
 
 /**
- * Generates the "files with decreased coverage" markdown section
- * @param {Array} decreasedFiles - Output of getFilesWithDecreasedCoverage
- * @param {string} artifactUrl - URL to the uploaded HTML coverage artifact
- * @param {string} prSha - PR head commit SHA for GitHub file links
- * @param {string} repo - GitHub repository in "owner/repo" format
- * @returns {string} Markdown section
+ * Identifies files whose coverage improved between main and PR branches, with no
+ * metric regressing. A file with a mix of increases and decreases is surfaced only
+ * via getFilesWithDecreasedCoverage, so a single file's change is never split
+ * across both the regression and improvement sections of the summary.
+ * @param {Object} mainCoverage - Main branch coverage data (with optional .files map)
+ * @param {Object} prCoverage - PR branch coverage data (with optional .files map)
+ * @returns {Array<{path: string, main: Object, pr: Object, totalIncrease: number}>} Sorted by totalIncrease descending
  */
-function generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo) {
-  const lines = [];
-  if (decreasedFiles.length === 0) {
-    return lines.join('\n');
+function getFilesWithIncreasedCoverage(mainCoverage, prCoverage) {
+  const mainFiles = mainCoverage.files || {};
+  const prFiles = prCoverage.files || {};
+  const increased = [];
+
+  for (const [filePath, prFile] of Object.entries(prFiles)) {
+    const mainFile = mainFiles[filePath];
+    if (!mainFile) {
+      continue; // new file — nothing to compare against
+    }
+
+    const anyDecreased = METRICS.some((metric) => roundPct(prFile[metric].pct) < roundPct(mainFile[metric].pct));
+    if (anyDecreased) {
+      continue;
+    }
+
+    const anyIncreased = METRICS.some((metric) => roundPct(prFile[metric].pct) > roundPct(mainFile[metric].pct));
+    if (!anyIncreased) {
+      continue;
+    }
+
+    const totalIncrease = roundPct(
+      METRICS.reduce((sum, metric) => sum + (roundPct(prFile[metric].pct) - roundPct(mainFile[metric].pct)), 0)
+    );
+    increased.push({ path: filePath, main: mainFile, pr: prFile, totalIncrease });
   }
 
-  lines.push(`### Files with Decreased Coverage\n`);
-
-  if (artifactUrl) {
-    lines.push(`📊 [View full HTML coverage report](${artifactUrl})\n`);
-  }
-
-  const MAX_FILES = 20;
-  const metrics = ['lines', 'statements', 'functions', 'branches'];
-  const headers = ['File', 'Lines', 'Statements', 'Functions', 'Branches'];
-
-  lines.push(`| ${headers.join(' | ')} |`);
-  lines.push(`|------|-------|------------|-----------|----------|`);
-
-  const shown = decreasedFiles.slice(0, MAX_FILES);
-  for (const { path, main, pr } of shown) {
-    const metricCells = metrics.map((metric) => {
-      const prPct = Math.round(pr[metric].pct * 100) / 100;
-      const mainPct = Math.round(main[metric].pct * 100) / 100;
-      return prPct < mainPct ? `${formatPercentage(mainPct)} → ${formatPercentage(prPct)}` : '—';
-    });
-
-    lines.push(`| ${path} | ${metricCells.join(' | ')} |`);
-  }
-
-  if (decreasedFiles.length > MAX_FILES) {
-    lines.push(`\n_...and ${decreasedFiles.length - MAX_FILES} more files. See the full report for details._`);
-  }
-
-  return lines.join('\n');
+  return increased.sort((a, b) => b.totalIncrease - a.totalIncrease);
 }
 
 /**
- * Generates markdown report comparing main and PR coverage
+ * Reduces a {path, main, pr} file entry down to the rounded per-metric cells the
+ * summary renderer needs, without dragging the full coverage-summary shape along.
+ * @param {{path: string, main: Object, pr: Object}} entry
+ * @returns {{path: string, cells: Object}} cells is keyed by metric id; a metric
+ *   with no change is null so the renderer can show "—"
+ */
+function toFileRow(entry) {
+  const cells = {};
+  for (const metric of METRICS) {
+    const prPct = roundPct(entry.pr[metric].pct);
+    const mainPct = roundPct(entry.main[metric].pct);
+    cells[metric] = prPct !== mainPct ? { main: mainPct, pr: prPct } : null;
+  }
+  return { path: entry.path, cells };
+}
+
+/**
+ * Builds the metrics comparison rows shared by the pass/fail decision and the summary table
+ * @param {Object} mainSummary - Main branch coverage summary
+ * @param {Object} prSummary - PR branch coverage summary
+ * @returns {Array<{metric: string, main: number, pr: number, delta: string, status: string}>}
+ */
+function buildMetricRows(mainSummary, prSummary) {
+  return METRICS.map((metric) => ({
+    metric: METRIC_LABELS[metric],
+    main: roundPct(mainSummary[metric].pct),
+    pr: roundPct(prSummary[metric].pct),
+    delta: formatDelta(prSummary[metric].pct, mainSummary[metric].pct),
+    status: getStatusIcon(mainSummary[metric].pct, prSummary[metric].pct),
+  }));
+}
+
+/**
+ * Builds the structured comparison result for one codeowner. This is the single
+ * source of truth for both the pass/fail decision and the job-summary markdown
+ * rendered by renderTeamMarkdown.
  * @param {Object} mainCoverage - Main branch coverage data
  * @param {Object} prCoverage - PR branch coverage data
- * @returns {string} Markdown formatted report
+ * @param {{artifactUrl?: string, prSha?: string, repo?: string}} meta
+ * @returns {Object} Structured coverage comparison result
  */
-function generateMarkdown(mainCoverage, prCoverage) {
-  const teamName = prCoverage.team;
+function buildCoverageResult(mainCoverage, prCoverage, meta = {}) {
+  const team = prCoverage.team;
   const mainSummary = mainCoverage.summary;
   const prSummary = prCoverage.summary;
 
   const overallPass = getOverallStatus(mainSummary, prSummary);
+  const tolerated = hasToleratedDrop(mainSummary, prSummary);
 
-  const rows = [
-    {
-      metric: 'Lines',
-      main: mainSummary.lines.pct,
-      pr: prSummary.lines.pct,
-    },
-    {
-      metric: 'Statements',
-      main: mainSummary.statements.pct,
-      pr: prSummary.statements.pct,
-    },
-    {
-      metric: 'Functions',
-      main: mainSummary.functions.pct,
-      pr: prSummary.functions.pct,
-    },
-    {
-      metric: 'Branches',
-      main: mainSummary.branches.pct,
-      pr: prSummary.branches.pct,
-    },
-  ];
-
-  const tableRows = rows
-    .map((row) => {
-      const status = getStatusIcon(row.main, row.pr);
-      const delta = formatDelta(row.pr, row.main);
-      return `| ${row.metric} | ${formatPercentage(row.main)} | ${formatPercentage(row.pr)} | ${delta} | ${status} |`;
-    })
-    .join('\n');
-
-  const overallStatus = overallPass ? '✅ Passed' : '❌ Failed';
-
-  let failureDetails = '';
+  let status = 'pass';
   if (!overallPass) {
-    const artifactUrl = process.env.COVERAGE_ARTIFACT_URL || '';
-    const prSha = process.env.PR_SHA || '';
-    const repo = process.env.GITHUB_REPOSITORY || '';
-    const decreasedFiles = getFilesWithDecreasedCoverage(mainCoverage, prCoverage);
-    failureDetails = generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo);
+    status = 'fail';
+  } else if (tolerated) {
+    status = 'tolerated';
   }
 
-  return `## Test Coverage Checks ${overallStatus} for \`${teamName}\`
+  const allDecreased = getFilesWithDecreasedCoverage(mainCoverage, prCoverage);
+  const allIncreased = getFilesWithIncreasedCoverage(mainCoverage, prCoverage);
 
-| Metric | Main | PR | Change | Status |
-|--------|------|----|----|--------|
-${tableRows}
-
-${failureDetails}
-
-**Run locally:** 💻 \`yarn test:coverage:by-codeowner ${teamName}\`
-
-**Break glass:** 🚨 In case of emergency, adding the \`no-check-frontend-test-coverage\` label to this PR will skip checks.
-`;
+  return {
+    team,
+    affected: true,
+    status,
+    metrics: buildMetricRows(mainSummary, prSummary),
+    decreasedFiles: allDecreased.slice(0, MAX_DECREASED_FILES).map(toFileRow),
+    decreasedFilesTotal: allDecreased.length,
+    increasedFilesTop: allIncreased.slice(0, MAX_INCREASED_FILES_SHOWN).map(({ path, totalIncrease }) => ({
+      path,
+      totalIncrease,
+    })),
+    increasedFilesTotal: allIncreased.length,
+    artifactUrl: meta.artifactUrl || '',
+    prSha: meta.prSha || '',
+    repo: meta.repo || '',
+  };
 }
 
 /**
- * Compares coverage between main and PR branches and generates a markdown report
+ * Renders the metrics comparison table for one codeowner
+ * @param {Array} metrics - Output of buildMetricRows
+ * @returns {string} Markdown table
+ */
+function renderMetricsTable(metrics) {
+  const lines = ['| Metric | Main | PR | Change | Status |', '|--------|------|----|----|--------|'];
+  for (const row of metrics) {
+    lines.push(
+      `| ${row.metric} | ${formatPercentage(row.main)} | ${formatPercentage(row.pr)} | ${row.delta} | ${row.status} |`
+    );
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Renders the file-by-file decreased coverage table for one codeowner
+ * @param {Object} result - Structured coverage result (see buildCoverageResult)
+ * @returns {string} Markdown table, wrapped in a <details> block
+ */
+function renderDecreasedFilesDetails(result) {
+  const headers = ['File', 'Lines', 'Statements', 'Functions', 'Branches'];
+  const lines = [
+    `<details><summary>Files with decreased coverage (${result.decreasedFilesTotal})</summary>`,
+    '',
+    `| ${headers.join(' | ')} |`,
+    `|------|-------|------------|-----------|----------|`,
+  ];
+
+  for (const file of result.decreasedFiles) {
+    const cells = METRICS.map((metric) => {
+      const cell = file.cells[metric];
+      return cell ? `${formatPercentage(cell.main)} → ${formatPercentage(cell.pr)}` : '—';
+    });
+    lines.push(`| ${file.path} | ${cells.join(' | ')} |`);
+  }
+
+  if (result.decreasedFilesTotal > result.decreasedFiles.length) {
+    lines.push('');
+    lines.push(`_...and ${result.decreasedFilesTotal - result.decreasedFiles.length} more files._`);
+  }
+
+  lines.push('');
+  lines.push('</details>');
+  return lines.join('\n');
+}
+
+/**
+ * Renders one codeowner's coverage-increase note as a single compact line — increases
+ * are a nice-to-have, so they don't get the same file-by-file detail as decreases.
+ * @param {Object} result - Structured coverage result
+ * @returns {string} Markdown line
+ */
+function renderIncreaseNote(result) {
+  const top = result.increasedFilesTop.map((file) => `\`${file.path}\` (+${file.totalIncrease.toFixed(2)}pp)`);
+  const remaining = result.increasedFilesTotal - result.increasedFilesTop.length;
+  const more = remaining > 0 ? `, and ${remaining} more` : '';
+  return `📈 ${result.increasedFilesTotal} file(s) improved: ${top.join(', ')}${more}`;
+}
+
+/**
+ * Renders one codeowner's job-summary block: status heading, metrics, the HTML
+ * report link, and the file-by-file breakdown. Each `coverage` matrix leg writes
+ * its own block via this function — there's no separate fan-in step, so every
+ * status (pass, tolerated, fail) needs to be fully self-contained here.
+ *
+ * The skip-label reminder and the run-locally command are the same for every team,
+ * so they're written once by the coverage-summary job instead of repeated here —
+ * this block sticks to what's actually specific to this codeowner.
+ * @param {Object} result - Structured coverage result
+ * @returns {string} Markdown for this leg's $GITHUB_STEP_SUMMARY
+ */
+function renderTeamMarkdown(result) {
+  const icon = { fail: '❌', tolerated: '🟡', pass: '✅' }[result.status];
+  const lines = [`### ${icon} ${result.team}`, '', renderMetricsTable(result.metrics), ''];
+
+  if (result.status === 'tolerated') {
+    lines.push(
+      `_Drops of ${formatPercentage(DROP_TOLERANCE_PCT)} or less are tolerated and do not fail the check._`,
+      ''
+    );
+  }
+
+  if (result.artifactUrl) {
+    lines.push(`📊 [Full HTML coverage report](${result.artifactUrl})`, '');
+  }
+
+  if (result.decreasedFiles.length > 0) {
+    lines.push(renderDecreasedFilesDetails(result), '');
+  }
+
+  if (result.increasedFilesTotal > 0) {
+    lines.push(renderIncreaseNote(result));
+  }
+
+  return lines.join('\n').trimEnd();
+}
+
+/**
+ * Compares coverage between main and PR branches for one codeowner
  * @param {string} mainPath - Path to main branch coverage summary JSON
  * @param {string} prPath - Path to PR branch coverage summary JSON
- * @param {string} outputPath - Path to write comparison markdown
- * @returns {boolean} True if coverage check passed
+ * @returns {Object} Structured coverage comparison result
  */
-function compareCoverageByCodeowner(
-  mainPath = COVERAGE_MAIN_PATH,
-  prPath = COVERAGE_PR_PATH,
-  outputPath = COMPARISON_OUTPUT_PATH
-) {
+function compareCoverageByCodeowner(mainPath = COVERAGE_MAIN_PATH, prPath = COVERAGE_PR_PATH) {
   const mainCoverage = readCoverageFile(mainPath);
   const prCoverage = readCoverageFile(prPath);
 
@@ -247,33 +393,40 @@ function compareCoverageByCodeowner(
     process.exit(1);
   }
 
-  const markdown = generateMarkdown(mainCoverage, prCoverage);
-  const overallPass = getOverallStatus(mainCoverage.summary, prCoverage.summary);
-
-  try {
-    fs.writeFileSync(outputPath, markdown, 'utf8');
-    console.log(`✅ Coverage comparison written to ${outputPath}`);
-  } catch (err) {
-    console.error(`Error writing output file: ${err.message}`);
-    process.exit(1);
-  }
-
-  return overallPass;
+  return buildCoverageResult(mainCoverage, prCoverage, {
+    artifactUrl: process.env.COVERAGE_ARTIFACT_URL || '',
+    prSha: process.env.PR_SHA || '',
+    repo: process.env.GITHUB_REPOSITORY || '',
+  });
 }
 
 if (require.main === module) {
-  const passed = compareCoverageByCodeowner();
-  if (!passed) {
-    console.error('❌ Coverage check failed: One or more metrics decreased');
+  const result = compareCoverageByCodeowner();
+  console.log(renderTeamMarkdown(result));
+  if (result.status === 'fail') {
+    console.error(
+      `❌ Coverage check failed: One or more metrics dropped by more than ${formatPercentage(DROP_TOLERANCE_PCT)}`
+    );
     process.exit(1);
   }
-  console.log('✅ Coverage check passed: All metrics maintained or improved');
 }
 
 module.exports = {
+  DROP_TOLERANCE_PCT,
+  METRICS,
+  METRIC_LABELS,
   compareCoverageByCodeowner,
-  generateMarkdown,
+  buildCoverageResult,
+  buildMetricRows,
+  formatDelta,
+  formatPercentage,
+  getStatusIcon,
   getOverallStatus,
+  hasToleratedDrop,
   getFilesWithDecreasedCoverage,
-  generateFailureDetailsSection,
+  getFilesWithIncreasedCoverage,
+  renderMetricsTable,
+  renderDecreasedFilesDetails,
+  renderIncreaseNote,
+  renderTeamMarkdown,
 };

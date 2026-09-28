@@ -190,7 +190,7 @@ describe('DataSourceDropdown with virtualized list', () => {
 
   it('should render only a subset of items in the DOM', async () => {
     setup({ current: largeMockDSList[0] });
-    const cards = await screen.findAllByTestId('data-source-card');
+    const cards = await screen.findAllByTestId(/^data-testid data source card/);
     expect(cards.length).toBeGreaterThan(0);
     expect(cards.length).toBeLessThan(100);
   });
@@ -200,7 +200,7 @@ describe('DataSourceDropdown with virtualized list', () => {
     const onChange = jest.fn();
     setup({ onChange, current: largeMockDSList[0] });
 
-    const cards = await screen.findAllByTestId('data-source-card');
+    const cards = await screen.findAllByTestId(/^data-testid data source card/);
     const button = cards[1].querySelector('button')!;
     await user.click(button);
     expect(onChange).toHaveBeenCalledTimes(1);
@@ -215,7 +215,7 @@ describe('DataSourceDropdown with virtualized list', () => {
     await user.keyboard('datasource-50');
 
     expect(await screen.findByText('datasource-50', { selector: 'span' })).toBeInTheDocument();
-    const cards = screen.getAllByTestId('data-source-card');
+    const cards = screen.getAllByTestId(/^data-testid data source card/);
     // Search should narrow the list significantly
     expect(cards.length).toBeLessThan(10);
   });

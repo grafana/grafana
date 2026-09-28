@@ -17,7 +17,6 @@ import (
 
 func TestIntegrationGit_DeleteJob_CommitMessage(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const (
 		repoName = "delete-commit-msg"
@@ -42,7 +41,7 @@ func TestIntegrationGit_DeleteJob_CommitMessage(t *testing.T) {
 	require.Equal(t, expectedMessage, common.LatestCommitSubject(t, local, "main"))
 
 	// TODO Fcai
-	require.False(t, helper.GitFileExists(t, ctx, repoName, dashFn),
+	require.False(t, helper.GitFileExists(t, repoName, dashFn),
 		"deleted file should be gone from the remote")
 }
 
@@ -75,16 +74,16 @@ func TestIntegrationGit_MoveJob_CommitMessage(t *testing.T) {
 
 func TestIntegrationGit_ExportJob_CommitMessage(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "export-commit-msg"
 
 	// Seed an unmanaged dashboard in storage so the export job has something to push.
 	dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err := helper.DashboardsV1.Resource.Create(ctx, dash, metav1.CreateOptions{})
+	_, err := helper.DashboardsV1.Resource.Create(t.Context(), dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 	t.Cleanup(func() {
-		_ = helper.DashboardsV1.Resource.Delete(ctx, dash.GetName(), metav1.DeleteOptions{})
+		cleanupCtx := context.WithoutCancel(t.Context())
+		_ = helper.DashboardsV1.Resource.Delete(cleanupCtx, dash.GetName(), metav1.DeleteOptions{})
 	})
 
 	_, local := helper.CreateGitRepo(t, repoName, nil)
@@ -101,16 +100,16 @@ func TestIntegrationGit_ExportJob_CommitMessage(t *testing.T) {
 
 func TestIntegrationGit_MigrateJob_CommitMessage(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "migrate-commit-msg"
 
 	// Seed an unmanaged dashboard in storage so migration has something to take over.
 	dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err := helper.DashboardsV1.Resource.Create(ctx, dash, metav1.CreateOptions{})
+	_, err := helper.DashboardsV1.Resource.Create(t.Context(), dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 	t.Cleanup(func() {
-		_ = helper.DashboardsV1.Resource.Delete(ctx, dash.GetName(), metav1.DeleteOptions{})
+		cleanupCtx := context.WithoutCancel(t.Context())
+		_ = helper.DashboardsV1.Resource.Delete(cleanupCtx, dash.GetName(), metav1.DeleteOptions{})
 	})
 
 	_, local := helper.CreateGitRepo(t, repoName, nil)

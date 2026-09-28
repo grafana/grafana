@@ -21,6 +21,9 @@ type RepositoryViewList struct {
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 
+	// AvailableConnectionTypes is the list of connection types supported in this instance
+	AvailableConnectionTypes []ConnectionType `json:"availableConnectionTypes,omitempty"`
+
 	// AvailableResources is the list of resource types declared for provisioning in this
 	// instance, including disabled ones (see SupportedResource.Disabled).
 	AvailableResources []SupportedResource `json:"availableResources,omitempty"`

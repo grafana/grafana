@@ -15,34 +15,31 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// viewerLogin generates a unique login per test so the viewer user does not
+// collide with another test's viewer when using the shared Grafana env.
+func uniqueViewerLogin() string { return "viewer-" + util.GenerateShortUID() }
+
 func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Setup Grafana and its Database
-
 	testinfra.SQLiteIntegrationTest(t)
 
-	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-	})
+	grafanaListedAddr, env := getStandardSharedEnv(t)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-
+	viewerLogin := uniqueViewerLogin()
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
-		Password:       "viewer",
-		Login:          "viewer",
+		Password:       user.Password(viewerLogin),
+		Login:          viewerLogin,
 	})
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	viewerClient := newAlertingApiClient(grafanaListedAddr, "viewer", "viewer")
+	viewerClient := newAlertingApiClient(grafanaListedAddr, viewerLogin, viewerLogin)
 
 	// Create the folder we'll save our alerts to
 	folderUID := util.GenerateShortUID()
 	apiClient.CreateFolder(t, folderUID, "folder1")
+	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, folderUID) })
 
 	// Create multiple rule groups in the folder
 	group1 := generateAlertRuleGroup(2, alertRuleGen())

@@ -32,6 +32,8 @@ TableColorTextCellOptions: {
 // Json view cell options
 TableJsonViewCellOptions: {
 	type: TableCellDisplayMode & "json-view"
+	// Enables syntax highlighting. Defaults to true when omitted.
+	syntaxHighlighting?: bool
 } @cuetsy(kind="interface")
 
 // Json view cell options
@@ -122,6 +124,8 @@ TableOptions: {
 	sortBy?: [...TableSortByFieldState]
 	// Enable pagination on the table
 	enablePagination?: bool
+	// When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
+	pageSize?: number
 	// Controls the height of the rows
 	cellHeight?: TableCellHeight & (*"sm" | _)
 	// limits the maximum height of a row, if text wrapping or dynamic height is enabled
@@ -132,6 +136,11 @@ TableOptions: {
 	}
 	// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 	disableKeyboardEvents?: bool
+	// Controls whether cells overflow when hovered. Selected cells always overflow.
+	hoverOverflow?: bool | *true
+	// Alternates the background color of every other row. Only applies when the
+	// `table.refreshNewFeatures` feature toggle is enabled.
+	zebraStriping?: bool | *false
 } @cuetsy(kind="interface")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
@@ -145,6 +154,8 @@ TableFieldOptions: {
 	cellOptions:  TableCellOptions
 	inspect:      bool | *false
 	filterable?:  bool
+	// Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
+	sortable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
 	// if true, wrap the text content of the cell

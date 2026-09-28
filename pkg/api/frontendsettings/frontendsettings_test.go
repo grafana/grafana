@@ -48,6 +48,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		cfg.AppURL = "https://grafana.example.com/"
 		cfg.AppSubURL = "/grafana"
 		cfg.Anonymous.Enabled = true
+		cfg.PluginImportTelemetryPackages = []string{"custom-router", "custom-history"}
 
 		license := &licensing.OSSLicensingService{Cfg: cfg}
 
@@ -58,6 +59,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		assert.Equal(t, "https://grafana.example.com/", settings.AppUrl)
 		assert.Equal(t, "/grafana", settings.AppSubUrl)
 		assert.True(t, settings.AnonymousEnabled)
+		assert.Equal(t, []string{"custom-router", "custom-history"}, settings.PluginImportTelemetryPackages)
 	})
 
 	t.Run("enables trusted types policy when CSP template requires it", func(t *testing.T) {

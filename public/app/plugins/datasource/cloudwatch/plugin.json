@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "CloudWatch",
   "id": "cloudwatch",
+  "executable": "gpx_cloudwatch",
   "category": "cloud",
   "metrics": true,
   "logs": true,
@@ -31,9 +32,14 @@
       "small": "img/amazon-web-services.png",
       "large": "img/amazon-web-services.png"
     },
+    "version": "%VERSION%",
     "links": [
       { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
       { "name": "Documentation", "url": "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/" }
     ]
+  },
+  "dependencies": {
+    "grafanaDependency": ">=12.3.0",
+    "plugins": []
   }
 }

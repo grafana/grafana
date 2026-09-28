@@ -89,6 +89,29 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.decimals).toBe(5);
   });
 
+  it.each([
+    ['negative', -3],
+    ['non-integer', 2.5],
+    ['out of the editor range', 42],
+  ])('Skips a decimals mapping with a %s value', (_name, value) => {
+    const decimalsConfig = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1] },
+        { name: 'Decimals', type: FieldType.number, values: [value] },
+      ],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Decimals', handlerKey: 'decimals' }],
+    };
+
+    const results = extractConfigFromQuery(options, [decimalsConfig, seriesA]);
+    expect(results.length).toBe(1);
+    expect(results[0].fields[1].config.decimals).toBeUndefined();
+  });
+
   it('With custom reducer', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
@@ -112,6 +135,27 @@ describe('config from data', () => {
     expect(thresholdConfig).toBeDefined();
     expect(thresholdConfig?.color).toBe('orange');
     expect(thresholdConfig?.value).toBe(50);
+  });
+
+  it('With multiple thresholds, steps are sorted ascending by value', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      // 'Max' (50) appears before 'Min' (5) in the frame, so the steps are
+      // pushed out of order. They must be sorted before reaching consumers
+      // that assume ascending steps.
+      configRefId: 'A',
+      mappings: [
+        { fieldName: 'Max', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'orange' } } },
+        { fieldName: 'Min', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'blue' } } },
+      ],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results.length).toBe(1);
+    const steps = results[0].fields[1].config.thresholds?.steps;
+    expect(steps).toEqual([
+      { value: 5, color: 'blue' },
+      { value: 50, color: 'orange' },
+    ]);
   });
 
   it('With custom matcher and displayName mapping', () => {

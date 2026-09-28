@@ -131,6 +131,8 @@ composableKinds: DataQuery: {
 					timeColumn?: string
 					// If set to true the query will be run as a basic logs query
 					basicLogsQuery?: bool
+					// Discriminates which Logs tier the query targets: "Basic" or "Auxiliary". Both tiers share the /search endpoint (gated by basicLogsQuery). When basicLogsQuery is true and logTier is unset, the query is treated as Basic for back-compat with dashboards saved before Auxiliary support was added.
+					logTier?: "Basic" | "Auxiliary"
 					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 					workspace?: string
 					// Denotes if logs query editor is in builder mode

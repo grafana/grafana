@@ -2,14 +2,10 @@ import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import type { ConvertAlertmanagerResponse } from '../components/import-to-gma/types';
 
-import { alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 
 export const convertToGMAApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    /**
-     * Convert Prometheus/Mimir rules to Grafana-managed alert rules
-     * POST /api/convert/prometheus/config/v1/rules
-     */
     convertToGMA: build.mutation<
       void,
       {
@@ -20,8 +16,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         payload: RulerRulesConfigDTO;
         /** Target data source UID to store recording rules in */
         targetDatasourceUID?: string;
-        /** Extra labels to add to all imported rules (format: key=value,key2=value2) */
-        extraLabels?: string;
         /** JSON-encoded notification settings applied to all imported alerting rules */
         notificationSettings?: string;
       }
@@ -33,7 +27,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         pauseAlerts,
         dataSourceUID,
         targetDatasourceUID,
-        extraLabels,
         notificationSettings,
       }) => ({
         url: `/api/convert/prometheus/config/v1/rules`,
@@ -46,33 +39,26 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           'X-Disable-Provenance': true,
           ...(targetFolderUID ? { 'X-Grafana-Alerting-Folder-UID': targetFolderUID } : {}),
           ...(targetDatasourceUID ? { 'X-Grafana-Alerting-Target-Datasource-UID': targetDatasourceUID } : {}),
-          ...(extraLabels ? { 'X-Grafana-Alerting-Extra-Labels': extraLabels } : {}),
           ...(notificationSettings ? { 'X-Grafana-Alerting-Notification-Settings': notificationSettings } : {}),
         },
       }),
     }),
 
-    /**
-     * Import Alertmanager config (contact points, policies, templates, time intervals) to Grafana.
-     * POST /api/convert/api/v1/alerts
-     *
-     * Supports force-replace via X-Grafana-Alerting-Config-Force-Replace header
-     * to overwrite an existing config with a different identifier.
-     */
+    /** Stage an Alertmanager config (contact points, policies, templates, time intervals) in Grafana. */
     convertAlertmanagerConfig: build.mutation<
       ConvertAlertmanagerResponse,
       {
-        /** Alertmanager config as JSON string or YAML string */
         alertmanagerConfig: string;
-        /** Template files map */
         templateFiles?: Record<string, string>;
-        /** Configuration identifier - used as the extra config name (e.g., "prometheus-prod") */
+        /** Names the staged extra config, and the managed policy tree it produces (e.g. "prometheus-prod"). */
         configIdentifier: string;
-        /** If true, forcibly replace existing configuration regardless of identifier */
+        /** Overwrite an existing staged config even when its identifier differs. */
         forceReplace?: boolean;
+        /** Merge straight into the live config as editable resources instead of only staging. */
+        promote?: boolean;
       }
     >({
-      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, forceReplace }) => ({
+      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, forceReplace, promote }) => ({
         url: `/api/convert/api/v1/alerts`,
         method: 'POST',
         body: {
@@ -80,52 +66,74 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           template_files: templateFiles,
         },
         headers: {
-          // The config identifier is the name of the extra configuration (policy tree name)
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
-          // TODO: Remove this header once the backend no longer requires it
-          'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
           ...(forceReplace ? { 'X-Grafana-Alerting-Config-Force-Replace': 'true' } : {}),
+          ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },
+      }),
+      // Staged imports land on the AM config's extra_config, so the config query has to refetch —
+      // otherwise the Import tab renders its cached, pre-import config and shows the empty state.
+      invalidatesTags: ['AlertmanagerConfiguration'],
+    }),
+
+    /**
+     * Validate an Alertmanager config without saving it, reporting conflicts and resources that would be
+     * renamed. Same endpoint as the real import, distinguished only by the dry-run header.
+     */
+    dryRunAlertmanagerConfig: build.mutation<
+      ConvertAlertmanagerResponse,
+      WithNotificationOptions<{
+        alertmanagerConfig: string;
+        templateFiles?: Record<string, string>;
+        configIdentifier: string;
+        /** Also validate the merge into the live config, and the caller's permissions for it. */
+        promote?: boolean;
+      }>
+    >({
+      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, promote, notificationOptions }) => ({
+        url: `/api/convert/api/v1/alerts`,
+        method: 'POST',
+        body: {
+          alertmanager_config: alertmanagerConfig,
+          template_files: templateFiles,
+        },
+        headers: {
+          'X-Grafana-Alerting-Config-Identifier': configIdentifier,
+          'X-Grafana-Alerting-Dry-Run': 'true',
+          // Force-replace so validation isn't blocked by a 409 from an existing identifier.
+          'X-Grafana-Alerting-Config-Force-Replace': 'true',
+          ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
+        },
+        notificationOptions,
       }),
     }),
 
     /**
-     * Dry-run validation for Alertmanager config import.
-     * Uses the same endpoint as the real import but with the X-Grafana-Alerting-Dry-Run header.
-     * Validates the config, checks for conflicts, and returns info about resources that would be renamed
-     * without actually saving anything.
-     *
-     * POST /api/convert/api/v1/alerts (with X-Grafana-Alerting-Dry-Run: true)
-     * Returns 200 OK on success (vs 202 Accepted for real imports)
+     * Merge a staged Alertmanager config into the live one as editable resources. The backend removes the
+     * staged extra config on success, so the staged card empties.
      */
-    dryRunAlertmanagerConfig: build.mutation<
-      ConvertAlertmanagerResponse,
-      {
-        /** Alertmanager config as JSON string or YAML string */
-        alertmanagerConfig: string;
-        /** Template files map */
-        templateFiles?: Record<string, string>;
-        /** Configuration identifier - used as the extra config name */
-        configIdentifier: string;
-      }
-    >({
-      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier }) => ({
-        url: `/api/convert/api/v1/alerts`,
+    promoteAlertmanagerConfig: build.mutation<ConvertAlertmanagerResponse, { configIdentifier: string }>({
+      query: ({ configIdentifier }) => ({
+        url: `/api/convert/api/v1/alerts/${encodeURIComponent(configIdentifier)}/promote`,
         method: 'POST',
-        body: {
-          alertmanager_config: alertmanagerConfig,
-          template_files: templateFiles,
-        },
+      }),
+      // Promote merges into the live config, so invalidate the same tags the config-update mutation
+      // does (alertmanagerApi updateAlertmanagerConfiguration). Invalidating AlertmanagerConfiguration
+      // also refetches the staged-config query (extra_config lives inside the AM config).
+      invalidatesTags: ['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus', 'Receiver'],
+    }),
+
+    /** Discard a staged Alertmanager config. The live Grafana Alertmanager config is not affected. */
+    deleteStagedAlertmanagerConfig: build.mutation<void, { configIdentifier: string }>({
+      query: ({ configIdentifier }) => ({
+        url: `/api/convert/api/v1/alerts`,
+        method: 'DELETE',
         headers: {
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
-          // TODO: Remove this header once the backend no longer requires it
-          'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
-          'X-Grafana-Alerting-Dry-Run': 'true',
-          // Always force-replace during dry-run to avoid 409 conflicts —
-          // we want to validate the config regardless of existing identifiers
-          'X-Grafana-Alerting-Config-Force-Replace': 'true',
         },
       }),
+      // The staged config lives inside the AM config, so refetching it removes the staged card.
+      invalidatesTags: ['AlertmanagerConfiguration'],
     }),
   }),
 });

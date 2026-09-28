@@ -3,53 +3,63 @@ import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  ConfirmModal,
-  Field,
-  LinkButton,
-  Select,
-  Stack,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import {
-  type AutoSyncState,
-  hasConfiguredUid,
-  isOperatorManaged,
-  useAutoSyncConfiguration,
-} from './useAutoSyncConfiguration';
+import { describeSyncHealth, hasAutoSyncSource, isOperatorManaged } from '../../utils/autoSync';
 
-export function AutoSyncConfiguration() {
+import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
+import { useAutoSyncConfiguration } from './useAutoSyncConfiguration';
+
+interface AutoSyncConfigurationProps {
+  /** Identifier of the staged import occupying the shared `extra_config` slot, if there is one. */
+  stagedConfigIdentifier?: string;
+}
+
+export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfigurationProps) {
   const styles = useStyles2(getStyles);
-  const { state, mimirCortexDatasources, selectedUid, setSelectedUid, save, disableSync, isPending, isLoading } =
-    useAutoSyncConfiguration();
+  const {
+    state,
+    syncHealth,
+    autoSyncEligibleAlertmanagers,
+    selectedUid,
+    setSelectedUid,
+    save,
+    disableSync,
+    isPending,
+    isLoading,
+    notReadyMessage,
+  } = useAutoSyncConfiguration();
 
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
   const options = useMemo<Array<SelectableValue<string>>>(
     () =>
-      mimirCortexDatasources.map((ds) => ({
+      autoSyncEligibleAlertmanagers.map((ds) => ({
         value: ds.uid,
         label: ds.name,
         imgUrl: ds.typeLogoUrl,
       })),
-    [mimirCortexDatasources]
+    [autoSyncEligibleAlertmanagers]
   );
 
   const operatorManaged = isOperatorManaged(state);
+  // Health only means something once a UID is configured — including an operator-managed one: the
+  // admin cannot change that UID from here, but a stopped or failing sync is still theirs to know
+  // about, and the badge is spent on saying who owns the setting.
+  const showsSyncHealth = hasAutoSyncSource(state);
   const showDisableSync = state.kind === 'configured' || state.kind === 'orphan-uid';
   const showSave = state.kind === 'unconfigured' || state.kind === 'orphan-uid';
-  const savedUid = hasConfiguredUid(state) ? state.uid : '';
-  const saveDisabled = !selectedUid || selectedUid === savedUid;
-  const saveDisabledTooltip = t(
-    'alerting.settings.auto-sync.save-disabled-no-selection',
-    'Select a Mimir or Cortex Alertmanager datasource to enable saving.'
-  );
+  const savedUid = hasAutoSyncSource(state) ? state.uid : '';
+
+  // A sync tick writes its datasource UID into the single extra_config slot without replacing what is
+  // already there, so it fails server-side unless the slot is empty or holds that same UID.
+  const slotBlocksSyncFrom = (uid: string) => Boolean(stagedConfigIdentifier) && stagedConfigIdentifier !== uid;
+
+  const savingWouldBreakSync = slotBlocksSyncFrom(selectedUid);
+  const runningSyncIsBroken = Boolean(savedUid) && slotBlocksSyncFrom(savedUid);
+  const hasStagedConflict = runningSyncIsBroken || (showSave && savingWouldBreakSync);
+
+  const saveDisabledReason = getSaveDisabledReason({ notReadyMessage, selectedUid, savedUid, savingWouldBreakSync });
 
   const handleDisableConfirm = async () => {
     setShowDisableConfirm(false);
@@ -66,7 +76,7 @@ export function AutoSyncConfiguration() {
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           <Trans i18nKey="alerting.settings.auto-sync.title">Auto-sync configuration</Trans>
-          <StatusBadge state={state} />
+          <AutoSyncStatusBadge state={state} syncHealth={syncHealth} />
         </Stack>
       </Card.Heading>
       <Card.Description>
@@ -87,6 +97,29 @@ export function AutoSyncConfiguration() {
               </Trans>
             </Alert>
           )}
+          {/* The badge only summarises the failure; the reason itself must not live in a hover-only
+              tooltip, so it gets the same callout treatment as a missing datasource. */}
+          {showsSyncHealth && syncHealth.kind === 'failing' && (
+            <Alert
+              severity="error"
+              title={t('alerting.settings.auto-sync.sync-failed-title', 'Last sync attempt failed')}
+            >
+              {describeSyncHealth(syncHealth)}
+            </Alert>
+          )}
+          {/* The merge is terminal and the badge only labels it, so the explanation of why nothing is
+              syncing any more gets its own callout rather than a hover-only tooltip. */}
+          {showsSyncHealth && syncHealth.kind === 'merge-committed' && (
+            <Alert
+              severity="info"
+              title={t('alerting.settings.auto-sync.merge-committed-title', 'Configuration merged into Grafana')}
+            >
+              <Trans i18nKey="alerting.settings.auto-sync.merge-committed-info">
+                The external Alertmanager configuration has been merged into Grafana. Automatic sync from this
+                datasource has stopped.
+              </Trans>
+            </Alert>
+          )}
           {operatorManaged && (
             <Alert
               severity="info"
@@ -98,6 +131,9 @@ export function AutoSyncConfiguration() {
                 manage sync from here.
               </Trans>
             </Alert>
+          )}
+          {hasStagedConflict && (
+            <StagedConflictAlert identifier={stagedConfigIdentifier} isRunningSyncBroken={runningSyncIsBroken} />
           )}
           <div className={styles.formRow}>
             <Field
@@ -129,7 +165,9 @@ export function AutoSyncConfiguration() {
                   options={options}
                   value={selectedUid || null}
                   onChange={(option) => option?.value && setSelectedUid(option.value)}
-                  disabled={operatorManaged || isLoading}
+                  // Locked during a conflict too: resolving it means promoting or reverting the staged
+                  // config below, not repointing the slot from here.
+                  disabled={operatorManaged || isLoading || hasStagedConflict}
                   isLoading={isLoading}
                   width={50}
                   placeholder={t(
@@ -157,9 +195,13 @@ export function AutoSyncConfiguration() {
                   </Button>
                 )}
                 {showSave && (
-                  <Tooltip content={saveDisabled ? saveDisabledTooltip : ''} show={saveDisabled ? undefined : false}>
+                  <Tooltip content={saveDisabledReason ?? ''} show={saveDisabledReason ? undefined : false}>
                     <span className={styles.tooltipTarget}>
-                      <Button variant="primary" onClick={save} disabled={saveDisabled || isPending}>
+                      <Button
+                        variant="primary"
+                        onClick={() => save()}
+                        disabled={Boolean(saveDisabledReason) || isPending}
+                      >
                         <Trans i18nKey="common.save">Save</Trans>
                       </Button>
                     </span>
@@ -174,7 +216,7 @@ export function AutoSyncConfiguration() {
         isOpen={showDisableConfirm}
         title={t('alerting.settings.auto-sync.disable-confirm-title', 'Disable Mimir Alertmanager auto-sync?')}
         body={
-          hasConfiguredUid(state)
+          hasAutoSyncSource(state)
             ? t(
                 'alerting.settings.auto-sync.disable-confirm-body',
                 'Disabling will stop continuous sync from datasource {{uid}}. You can re-enable it later by selecting a datasource again.',
@@ -193,23 +235,62 @@ export function AutoSyncConfiguration() {
   );
 }
 
-function StatusBadge({ state }: { state: AutoSyncState }) {
-  if (state.kind === 'operator-managed') {
-    return (
-      <Badge
-        text={t('alerting.settings.auto-sync.badge-operator-managed', 'Managed by operator')}
-        color="blue"
-        icon="lock"
-      />
+interface StagedConflictAlertProps {
+  identifier?: string;
+  /** Sync is enabled and its ticks are already failing, rather than a save being blocked before the fact. */
+  isRunningSyncBroken: boolean;
+}
+
+function StagedConflictAlert({ identifier, isRunningSyncBroken }: StagedConflictAlertProps) {
+  return (
+    <Alert
+      severity={isRunningSyncBroken ? 'error' : 'warning'}
+      title={
+        isRunningSyncBroken
+          ? t('alerting.settings.auto-sync.staged-conflict-active-title', 'Auto-sync is not running')
+          : t(
+              'alerting.settings.auto-sync.staged-conflict-title',
+              'Auto-sync is unavailable while a configuration is staged'
+            )
+      }
+    >
+      <Trans i18nKey="alerting.settings.auto-sync.staged-conflict-body" values={{ identifier }}>
+        Grafana holds one imported configuration at a time, and {'{{identifier}}'} currently occupies that slot. Promote
+        or revert it below to free auto-sync.
+      </Trans>
+    </Alert>
+  );
+}
+
+function getSaveDisabledReason({
+  notReadyMessage,
+  selectedUid,
+  savedUid,
+  savingWouldBreakSync,
+}: {
+  notReadyMessage: string | undefined;
+  selectedUid: string;
+  savedUid: string;
+  savingWouldBreakSync: boolean;
+}): string | undefined {
+  // Set exactly when the hook is not ready, and already distinguishes an unseeded singleton from a
+  // failed read — the second is not something waiting fixes.
+  if (notReadyMessage) {
+    return notReadyMessage;
+  }
+  if (savingWouldBreakSync) {
+    return t(
+      'alerting.settings.auto-sync.save-disabled-staged-config',
+      'Promote or revert the staged configuration before enabling auto-sync.'
     );
   }
-  if (state.kind === 'configured' || state.kind === 'orphan-uid') {
-    return <Badge text={t('alerting.settings.auto-sync.badge-active', 'Active')} color="green" />;
+  if (!selectedUid || selectedUid === savedUid) {
+    return t(
+      'alerting.settings.auto-sync.save-disabled-no-selection',
+      'Select a Mimir or Cortex Alertmanager datasource to enable saving.'
+    );
   }
-  if (state.kind === 'unconfigured') {
-    return <Badge text={t('alerting.settings.auto-sync.badge-not-configured', 'Not configured')} color="blue" />;
-  }
-  return null;
+  return undefined;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -4,10 +4,10 @@ import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features
 
 import { isRootFolderUID } from '../../search/constants';
 import { type BrowseDashboardsState } from '../types';
-import { isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
+import { isNonSelectableVirtualFolder } from '../utils/dashboards';
 
 import { type fetchNextChildrenPage, type refetchChildren } from './actions';
-import { findItem } from './utils';
+import { ancestorsOf } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
@@ -92,7 +92,7 @@ export function setItemSelectionState(
   const { item, isSelected } = action.payload;
 
   // UI shouldn't allow it, but also prevent sharedwithme/teamfolders from being selected
-  if (isSharedWithMe(item.uid) || isVirtualTeamFolder(item.uid)) {
+  if (isNonSelectableVirtualFolder(item.uid)) {
     return;
   }
 
@@ -113,23 +113,10 @@ export function setItemSelectionState(
 
   markChildren(item.kind, item.uid);
 
-  // If we're unselecting a child, we also need to unselect all ancestors.
+  // A folder cannot stay selected once one of its descendants is unselected
   if (!isSelected) {
-    let nextParentUID = item.parentUID;
-
-    while (nextParentUID) {
-      const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, nextParentUID);
-
-      // This case should not happen, but a find can theortically return undefined, and it
-      // helps limit infinite loops
-      if (!parent) {
-        break;
-      }
-
-      // A folder cannot be selected if any of it's children are unselected
-      state.selectedItems[parent.kind][parent.uid] = false;
-
-      nextParentUID = parent.parentUID;
+    for (const parent of ancestorsOf(item, state.rootItems?.items ?? [], state.childrenByParentUID)) {
+      state.selectedItems.folder[parent.uid] = false;
     }
   }
 
@@ -139,13 +126,13 @@ export function setItemSelectionState(
 
 export function setAllSelection(
   state: BrowseDashboardsState,
-  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined; excludeUIDs?: string[] }>
+  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined; excludeFolderUIDs?: string[] }>
 ) {
-  const { isSelected, folderUID: folderUIDArg, excludeUIDs } = action.payload;
+  const { isSelected, folderUID: folderUIDArg, excludeFolderUIDs } = action.payload;
 
   // If we're in the folder view for sharedwithme or teamfolders (currently not supported)
   // bail and don't select anything
-  if (folderUIDArg && (isSharedWithMe(folderUIDArg) || isVirtualTeamFolder(folderUIDArg))) {
+  if (folderUIDArg && isNonSelectableVirtualFolder(folderUIDArg)) {
     return;
   }
 
@@ -161,7 +148,7 @@ export function setAllSelection(
     // Recursively select the children of the folder in view
     function selectChildrenOfFolder(folderUID: string | undefined) {
       // Don't descend into the sharedwithme or teamfolders folder
-      if (folderUID && (isSharedWithMe(folderUID) || isVirtualTeamFolder(folderUID))) {
+      if (folderUID && isNonSelectableVirtualFolder(folderUID)) {
         return;
       }
 
@@ -174,12 +161,11 @@ export function setAllSelection(
 
       for (const child of collection.items) {
         // Don't traverse into the sharedwithme or teamfolders folder
-        if (isSharedWithMe(child.uid) || isVirtualTeamFolder(child.uid)) {
+        if (isNonSelectableVirtualFolder(child.uid)) {
           continue;
         }
 
-        // Skip items in the exclude list
-        if (excludeUIDs?.includes(child.uid)) {
+        if (child.kind === 'folder' && excludeFolderUIDs?.includes(child.uid)) {
           continue;
         }
 

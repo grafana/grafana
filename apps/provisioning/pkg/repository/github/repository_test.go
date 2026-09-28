@@ -289,6 +289,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -337,6 +338,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "nonexistent.json",
@@ -399,6 +401,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -452,6 +455,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -486,6 +490,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -504,6 +509,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -522,6 +528,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -540,6 +547,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -558,6 +566,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -588,8 +597,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				var statusErr *apierrors.StatusError
-				if errors.As(tt.expectedError, &statusErr) {
+				if statusErr, ok := errors.AsType[*apierrors.StatusError](tt.expectedError); ok {
 					var actualStatusErr *apierrors.StatusError
 					require.True(t, errors.As(err, &actualStatusErr))
 					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
@@ -631,6 +639,49 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			expectedURLs: &provisioning.RepositoryURLs{
 				RepositoryURL:     "https://github.com/grafana/grafana",
 				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/test.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
+			name: "scoped repo includes configured path",
+			file: &repo.FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/grafana/dashboards/test.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
+			name: "path with URL-reserved characters is encoded",
+			file: &repo.FileInfo{
+				Path: "dashboards/a #b?.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/a%20%23b%3F.json",
 				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
 				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
 			},
@@ -1869,7 +1920,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			getRepoError:  repo.ErrFileNotFound,
 			expectGetRepo: true,
 			expectedResult: &provisioning.TestResults{
-				Code:    http.StatusBadRequest,
+				Code:    http.StatusNotFound,
 				Success: false,
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,

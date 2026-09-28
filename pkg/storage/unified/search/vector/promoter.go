@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"regexp"
 	"strings"
 	"time"
@@ -28,12 +29,24 @@ func subtreeName(resource string) string {
 	return fmt.Sprintf("%s_%s", unifiedParent, resource)
 }
 
-// partialHNSWName builds the per-tenant partial HNSW index name. Format is
-// `<resource>_<sanitized_namespace>_hnsw`. Postgres caps identifiers at 63
-// chars: with `stacks_<int64>` namespaces (max 26 chars), resource names up
-// to ~31 chars are safe.
+// pgMaxIdentifierLen is Postgres's identifier limit. Names past it are
+// silently truncated, which breaks lookups against the untruncated name and
+// lets namespaces sharing a truncated prefix collide.
+const pgMaxIdentifierLen = 63
+
+// partialHNSWName builds the per-tenant partial HNSW index name,
+// `<resource>_<sanitized_namespace>_hnsw`. When that would exceed Postgres's
+// identifier limit, the namespace collapses to a bounded hash so the name
+// stays unique and lookupable (resource ≤ maxPartitionKeyLen keeps the hash
+// form under the limit).
 func partialHNSWName(resource, namespace string) string {
-	return fmt.Sprintf("%s_%s_hnsw", resource, sanitizeIdentifier(namespace))
+	name := fmt.Sprintf("%s_%s_hnsw", resource, sanitizeIdentifier(namespace))
+	if len(name) <= pgMaxIdentifierLen {
+		return name
+	}
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(namespace))
+	return fmt.Sprintf("%s_%016x_hnsw", resource, h.Sum64())
 }
 
 // Promoter creates per-tenant partial HNSW indexes on each resource sub-tree

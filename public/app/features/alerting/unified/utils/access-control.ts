@@ -8,13 +8,12 @@
  *    Safe to call at module load time or in non-React contexts.
  *
  * 2. **Ability-calling utilities**: functions that delegate to the central ability system
- *    (`evaluateAccess`, `getRulesAccess`, `getCreateAlertInMenuAvailability`). These are
+ *    (`getRulesAccess`). These are
  *    intentionally plain functions (not hooks) because they are also used in non-React
  *    contexts (route guards, panel menus). When used inside React components, wrap them
  *    in `useMemo` or call them via the `useRulesAccess()` hook in `accessControlHooks.ts`.
  */
 
-import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -56,25 +55,6 @@ export const instancesPermissions = {
   },
 };
 
-export const notificationsPermissions = {
-  read: {
-    grafana: AccessControlAction.AlertingNotificationsRead,
-    external: AccessControlAction.AlertingNotificationsExternalRead,
-  },
-  create: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  update: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  delete: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-};
-
 export const silencesPermissions = {
   read: {
     grafana: AccessControlAction.AlertingSilenceRead,
@@ -88,12 +68,6 @@ export const silencesPermissions = {
     grafana: AccessControlAction.AlertingSilenceUpdate,
     external: AccessControlAction.AlertingInstancesExternalWrite,
   },
-};
-
-const provisioningPermissions = {
-  read: AccessControlAction.AlertingProvisioningRead,
-  readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,
-  write: AccessControlAction.AlertingProvisioningWrite,
 };
 
 const rulesPermissions = {
@@ -130,18 +104,6 @@ export function getInstancesPermissions(rulesSourceName: string) {
   };
 }
 
-export function getNotificationsPermissions(rulesSourceName: string) {
-  const sourceType = getRulesSourceType(rulesSourceName);
-
-  return {
-    read: notificationsPermissions.read[sourceType],
-    create: notificationsPermissions.create[sourceType],
-    update: notificationsPermissions.update[sourceType],
-    delete: notificationsPermissions.delete[sourceType],
-    provisioning: provisioningPermissions,
-  };
-}
-
 export function getRulesPermissions(rulesSourceName: string) {
   const sourceType = getRulesSourceType(rulesSourceName);
 
@@ -156,20 +118,8 @@ export function getRulesPermissions(rulesSourceName: string) {
 // ── Runtime utilities ─────────────────────────────────────────────────────────
 // Plain functions (not hooks) for non-React contexts (route guards, panel menus).
 // RBAC checks delegate to get*Ability() from the central ability system.
-// evaluateAccess uses contextSrv.evaluatePermission directly (route-guard API).
 // getRulesAccess retains direct contextSrv calls only for the auxiliary
 // FoldersRead / DataSourcesRead workflow-feasibility guards.
-
-/**
- * Returns a route-guard thunk for Grafana's route config.
- * The returned function is called at navigation time to check if the user can
- * access the route.
- */
-export function evaluateAccess(actions: AccessControlAction[]) {
-  return () => {
-    return contextSrv.evaluatePermission(actions);
-  };
-}
 
 /**
  * Returns an object describing what rule-creation actions the current user can
@@ -200,16 +150,4 @@ export function getRulesAccess() {
         : canUpdateCloudRules;
     },
   };
-}
-
-/**
- * Returns whether the "Create alert rule" option should appear in panel menus.
- * Called in non-React panel-menu utilities; not a hook.
- */
-export function getCreateAlertInMenuAvailability() {
-  const { unifiedAlertingEnabled } = getConfig();
-  const canRead = isGranted(getGlobalRuleAbility(RuleAction.View));
-  const canUpdate = isGranted(getGlobalRuleAbility(RuleAction.Update));
-
-  return unifiedAlertingEnabled && canRead && canUpdate;
 }

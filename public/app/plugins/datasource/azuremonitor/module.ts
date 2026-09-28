@@ -1,20 +1,23 @@
 import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
 import { initPluginTranslations } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
 import AzureMonitorQueryEditor from './components/QueryEditor/QueryEditor';
 import { AzureQueryType, ResultFormat } from './dataquery.gen';
 import Datasource from './datasource';
+import { initFeatureFlags, isBatchAPIFlagEnabled } from './featureFlags';
 import pluginJson from './plugin.json';
 import { trackAzureMonitorDashboardLoaded } from './tracking';
 import { type AzureMonitorQuery } from './types/query';
 import { type AzureMonitorDataSourceJsonData } from './types/types';
 
-// don't load plugin translations in test environments
-// we don't use them anyway, and top-level await won't work currently in jest
+// skip in tests: top-level await doesn't work in jest, and tests control
+// flags via mocks or the config.featureToggles fallback rather than the
+// host's OFREP provider
 if (process.env.NODE_ENV !== 'test') {
   await initPluginTranslations(pluginJson.id);
+  initFeatureFlags();
 }
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureMonitorDataSourceJsonData>(Datasource)
@@ -27,6 +30,25 @@ interface Statistics {
   multiResource: number;
   count: number;
   [key: string]: number;
+}
+
+// queryUsesBatchAPI reports whether a metrics query targets a datasource with
+// the Metrics Batch API setting enabled, i.e. whether it will execute via the
+// batch path when the feature flag is on (callers check the flag once per
+// dashboard, not per query). Settings resolve synchronously from bootstrap
+// config, so provisioned datasources are included — which config-editor
+// interactions alone cannot capture.
+function queryUsesBatchAPI(query: AzureMonitorQuery): boolean {
+  if (!query.datasource) {
+    return false;
+  }
+  try {
+    const settings = getDataSourceSrv().getInstanceSettings(query.datasource);
+    const jsonData: AzureMonitorDataSourceJsonData | undefined = settings?.jsonData;
+    return !!jsonData?.batchAPIEnabled;
+  } catch {
+    return false;
+  }
 }
 
 // Track dashboard loads to RudderStack
@@ -43,6 +65,7 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
     let stats: { [key in AzureQueryType | string]: Statistics } = {
       [AzureQueryType.AzureMonitor]: {
         ...common,
+        batchAPI: 0,
       },
       [AzureQueryType.LogAnalytics]: {
         ...common,
@@ -71,11 +94,17 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
       unknown: { ...common },
     };
 
+    // Evaluated once per dashboard load; the flag cannot change mid-loop.
+    const batchAPIFlagEnabled = isBatchAPIFlagEnabled();
+
     azureQueries.forEach((query) => {
       if (query.queryType === AzureQueryType.AzureMonitor) {
         stats[AzureQueryType.AzureMonitor][query.hide ? 'hidden' : 'visible']++;
         if (query.azureMonitor?.resources && query.azureMonitor.resources.length > 1) {
           stats[AzureQueryType.AzureMonitor].multiResource++;
+        }
+        if (batchAPIFlagEnabled && queryUsesBatchAPI(query)) {
+          stats[AzureQueryType.AzureMonitor].batchAPI++;
         }
       }
       if (query.queryType === AzureQueryType.LogAnalytics) {
@@ -144,6 +173,7 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
         azure_monitor_queries_hidden: stats[AzureQueryType.AzureMonitor].hidden,
         azure_monitor_multiple_resource: stats[AzureQueryType.AzureMonitor].multiResource,
         azure_monitor_query: stats[AzureQueryType.AzureMonitor].count,
+        azure_monitor_batch_api_queries: stats[AzureQueryType.AzureMonitor].batchAPI,
 
         // Logs queries stats
         azure_log_analytics_queries: stats[AzureQueryType.LogAnalytics].visible,

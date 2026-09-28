@@ -1,9 +1,10 @@
 import { type ReactNode } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { edit } from '../../actions/utils/edit';
 import { DashboardInteractions } from '../../utils/interactions';
 import { type GroupConditionConditionType } from '../group/types';
 
@@ -30,7 +31,7 @@ export function ConditionalRenderingConditionWrapper({
   const onDeleteconditionalRenderingRule = () => {
     const index = getConditionIndex(model);
     DashboardInteractions.clickRemoveConditionalRuleButton({ ruleId });
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.conditional-rendering.conditions.wrapper.delete-condition', 'Delete Condition'),
       source: model,
       perform: () => removeCondition(model),
@@ -42,7 +43,11 @@ export function ConditionalRenderingConditionWrapper({
     });
   };
   return (
-    <Stack direction="column" key={model.state.key!}>
+    <Stack
+      direction="column"
+      key={model.state.key!}
+      data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.rule(ruleId)}
+    >
       <Stack direction="row" gap={1}>
         <Text variant="bodySmall">{title}</Text>
         {info && (

@@ -55,10 +55,16 @@ it('renders an empty panel with required props only', () => {
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 });
 
+it('renders a panel with subtitle and title', () => {
+  setup({ title: 'A', subtitle: 'B' });
+
+  expect(screen.getByText("Panel's Content").parentElement).toHaveStyle({ padding: '0px 8px 8px 8px' });
+});
+
 it('renders an empty panel without padding', () => {
   setup({ padding: 'none' });
 
-  expect(screen.getByText("Panel's Content").parentElement).toHaveStyle({ padding: '0px' });
+  expect(screen.getByText("Panel's Content").parentElement).toHaveStyle({ padding: '0px 0px 0px 0px' });
 });
 
 it('renders an empty panel with padding', () => {

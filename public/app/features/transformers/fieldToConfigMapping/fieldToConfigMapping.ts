@@ -8,12 +8,15 @@ import {
   getFieldDisplayName,
   MappingType,
   ReducerID,
+  sortThresholds,
   ThresholdsMode,
   type ValueMapping,
   type ValueMap,
   type Field,
   FieldType,
 } from '@grafana/data';
+
+const MAX_DECIMALS = 15;
 
 interface ThresholdArguments {
   color: string;
@@ -76,6 +79,14 @@ export function getFieldConfigFromFrame(
 
   if (context.mappingValues) {
     config.mappings = combineValueMappings(context);
+  }
+
+  // Threshold steps are pushed in the order their fields appear in the frame.
+  // Downstream consumers (getActiveThreshold, the filled-region gradient, ...)
+  // assume steps are sorted ascending by value, so mapping more than one field
+  // to a threshold could otherwise emit out-of-order steps and break rendering.
+  if (config.thresholds) {
+    config.thresholds.steps = sortThresholds(config.thresholds.steps);
   }
 
   return config;
@@ -144,7 +155,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'decimals',
-    processor: toNumericOrUndefined,
+    processor: toDecimalsOrUndefined,
   },
   {
     key: 'displayName',
@@ -266,6 +277,21 @@ function toNumericOrUndefined(value: unknown) {
   const numeric = anyToNumber(value);
 
   if (isNaN(numeric)) {
+    return;
+  }
+
+  return numeric;
+}
+
+// The Decimals field option only accepts whole numbers from 0 to MAX_DECIMALS.
+// A value outside that range reaches Number.prototype.toFixed through the
+// display processor, which throws a RangeError for negative values and blanks
+// the panel, so skip the mapping rather than write a value the option itself
+// would reject.
+function toDecimalsOrUndefined(value: unknown) {
+  const numeric = anyToNumber(value);
+
+  if (!Number.isInteger(numeric) || numeric < 0 || numeric > MAX_DECIMALS) {
     return;
   }
 

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 const (
@@ -18,22 +18,22 @@ const (
 
 // RepositoryQuotaChecker checks if a namespace exceeds its repository quota limits.
 type RepositoryQuotaChecker struct {
-	repoLister listers.RepositoryLister
+	repos informer.RepositoryGetter
 }
 
 // NewRepositoryQuotaChecker creates a new RepositoryQuotaChecker.
 func NewRepositoryQuotaChecker(
-	repoLister listers.RepositoryLister,
+	repos informer.RepositoryGetter,
 ) *RepositoryQuotaChecker {
 	return &RepositoryQuotaChecker{
-		repoLister: repoLister,
+		repos: repos,
 	}
 }
 
 // RepositoryQuotaConditions checks if a namespace has more repositories than allowed by its quota.
 // It returns the conditions based on the check result.
 func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
-	_ context.Context,
+	ctx context.Context,
 	namespace string,
 	quotaStatus provisioning.QuotaStatus,
 ) (metav1.Condition, error) {
@@ -50,8 +50,8 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 		}, nil
 	}
 
-	// List all repositories from informer cache
-	repos, err := c.repoLister.Repositories(namespace).List(labels.Everything())
+	// List all repositories from the read seam. The count tolerates staleness.
+	repos, err := c.repos.List(ctx, namespace)
 	if err != nil {
 		return metav1.Condition{}, err
 	}

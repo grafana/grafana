@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type SVGProps, useEffect, useRef } from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -16,9 +16,10 @@ const MAX_ARM_TRANSLATION = 5;
 export interface Props {
   width?: SVGProps<SVGElement>['width'];
   height?: SVGProps<SVGElement>['height'];
+  className?: SVGProps<SVGElement>['className'];
 }
 
-export const GrotNotFound = ({ width = 'auto', height }: Props) => {
+export const GrotNotFound = ({ width = 'auto', height, className }: Props) => {
   const svgRef = useRef<SVGElement>(null);
   const styles = useStyles2(getStyles);
 
@@ -31,6 +32,7 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
 
       const grotArm = svgRef.current?.querySelector('#grot-not-found-arm');
       const grotMagnifier = svgRef.current?.querySelector('#grot-not-found-magnifier');
+      const grotLensScene = svgRef.current?.querySelector('#grot-not-found-lens-scene');
 
       const { clientX, clientY } = event;
       const { innerWidth, innerHeight } = window;
@@ -40,8 +42,11 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
       const translation = getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION);
 
       window.requestAnimationFrame(() => {
-        grotArm?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
-        grotMagnifier?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
+        const transform = `transform: rotate(${rotation}deg) translateX(${translation}%)`;
+        grotArm?.setAttribute('style', transform);
+        grotMagnifier?.setAttribute('style', transform);
+        // Cancel the magnifier transform so its contents stay aligned with the static artwork.
+        grotLensScene?.setAttribute('style', `transform: translateX(${-translation}%) rotate(${-rotation}deg)`);
       });
     };
 
@@ -52,8 +57,9 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
     };
   }, []);
 
-  // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
-  return <SVG innerRef={svgRef} src={notFoundSvg} className={styles.svg} height={height} width={width} />;
+  return (
+    <SVG innerRef={svgRef} src={notFoundSvg} className={cx(styles.svg, className)} height={height} width={width} />
+  );
 };
 
 GrotNotFound.displayName = 'GrotNotFound';
@@ -61,7 +67,8 @@ GrotNotFound.displayName = 'GrotNotFound';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     svg: css({
-      '#grot-not-found-arm, #grot-not-found-magnifier': {
+      '--grot-lens-backing': theme.colors.background.primary,
+      '#grot-not-found-arm, #grot-not-found-magnifier, #grot-not-found-lens-scene': {
         transformOrigin: 'center',
       },
     }),

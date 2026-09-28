@@ -448,7 +448,7 @@ func (sch *schedule) runJobFn(next readyToRunItem, prev ...readyToRunItem) func(
 		if dropped != nil {
 			sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", next.scheduledAt, "droppedTick", dropped.scheduledAt)...)
 			orgID := fmt.Sprint(key.OrgID)
-			sch.metrics.EvaluationMissed.WithLabelValues(orgID, next.rule.Title).Inc()
+			sch.metrics.EvaluationMissed.WithLabelValues(orgID, next.rule.Title, "slow_evaluation").Inc()
 		}
 	}
 }

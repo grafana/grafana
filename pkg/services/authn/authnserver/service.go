@@ -12,6 +12,7 @@ import (
 
 	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -59,13 +60,15 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 	defer span.End()
 
 	if req == nil || req.Namespace == "" {
-		s.log.Error("Authenticate request error", "error", errExpectedNamespace)
+		s.log.FromContext(ctx).Error("Authenticate request error", "error", errExpectedNamespace)
 		return &authnv1.AuthenticateResponse{
 			Code: authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED,
 		}, errExpectedNamespace
 	}
 
 	ctx = request.WithNamespace(ctx, req.Namespace)
+	ctx = log.WithContextualAttributes(ctx, []any{"namespace", req.Namespace})
+	ctx = features.WithTransactionContextFromBaggage(ctx)
 	span.SetAttributes(attribute.String("authn.namespace", req.Namespace))
 
 	grpclog.AddFields(ctx, grpclog.Fields{"authn.headers", headerNames(req.GetHttpHeaders())})
@@ -79,7 +82,7 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 
 		resp, err := c.Authenticate(ctx, req)
 		if err != nil {
-			s.log.Error("Client authentication error", "client", c.Name(), "error", err)
+			s.log.FromContext(ctx).Error("Client authentication error", "client", c.Name(), "error", err)
 			grpclog.AddFields(ctx, grpclog.Fields{"authn.client", c.Name(), "authn.namespace", req.GetNamespace()})
 			return nil, err
 		}

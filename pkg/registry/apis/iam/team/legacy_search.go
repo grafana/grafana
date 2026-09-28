@@ -33,7 +33,7 @@ const (
 func TeamSortFieldMapping() map[string]string {
 	return map[string]string{
 		resource.SEARCH_FIELD_TITLE: "name",
-		fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.TEAM_SEARCH_EMAIL): "email",
+		builders.TEAM_SEARCH_EMAIL:  "email",
 	}
 }
 
@@ -136,6 +136,8 @@ func getResourceKey(t *team.TeamDTO, namespace string) *resourcepb.ResourceKey {
 	}
 }
 
+var teamColumns = resource.TableColumnsByName(builders.TeamSearchFields)
+
 func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	columns := getDefaultColumns()
 
@@ -148,7 +150,7 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 			continue
 		}
 		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
-		if col, ok := builders.TeamSearchTableColumnDefinitions[fieldName]; ok {
+		if col, ok := teamColumns[fieldName]; ok {
 			columns = append(columns, col)
 		}
 	}

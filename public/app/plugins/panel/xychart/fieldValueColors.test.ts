@@ -110,4 +110,106 @@ describe('fieldValueColors (golden baseline)', () => {
     // empty palette, all values fall through to the -1 fallback (null here)
     expect(resolve(config, ['foobar', 'baz'], { type: FieldType.string })).toMatchSnapshot();
   });
+
+  it('ValueToText mapping on a string field (compares against quoted keys)', () => {
+    const config = {
+      mappings: [
+        {
+          type: MappingType.ValueToText,
+          options: {
+            a: { text: 'Apple', color: 'green' },
+            b: { text: 'Banana', color: 'yellow' },
+          },
+        },
+      ],
+    };
+    expect(resolve(config, ['a', 'b', 'c'], { type: FieldType.string })).toMatchSnapshot();
+  });
+
+  it('ValueToText mapping entries without a color are skipped', () => {
+    const config = {
+      mappings: [
+        {
+          type: MappingType.ValueToText,
+          options: {
+            '1': { text: 'one' }, // no color -> skipped, palette not advanced
+            '2': { text: 'two', color: 'red' },
+          },
+        },
+      ],
+    };
+    expect(resolve(config, [1, 2])).toMatchSnapshot();
+  });
+
+  it('RangeToText with open-ended (from-only / to-only) and unbounded ranges', () => {
+    const config = {
+      mappings: [
+        { type: MappingType.RangeToText, options: { from: 10, result: { color: 'green' } } }, // v >= 10
+        { type: MappingType.RangeToText, options: { to: 5, result: { color: 'blue' } } }, // v <= 5
+        { type: MappingType.RangeToText, options: { result: { color: 'red' } } }, // no bounds -> skipped
+      ],
+    };
+    expect(resolve(config, [3, 7, 20])).toMatchSnapshot();
+  });
+
+  it('SpecialValue mapping (NullAndNaN / Empty)', () => {
+    const config = {
+      mappings: [
+        {
+          type: MappingType.SpecialValue,
+          options: { match: SpecialValueMatch.NullAndNaN, result: { color: 'green' } },
+        },
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Empty, result: { color: 'blue' } } },
+      ],
+    };
+    expect(resolve(config, [null, NaN, '', 5])).toMatchSnapshot();
+  });
+
+  it('SpecialValue mapping (True / False)', () => {
+    const config = {
+      mappings: [
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.True, result: { color: 'green' } } },
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.False, result: { color: 'red' } } },
+      ],
+    };
+    expect(resolve(config, [true, false], { type: FieldType.boolean })).toMatchSnapshot();
+  });
+
+  it('SpecialValue mapping result without a color is skipped', () => {
+    const config = {
+      mappings: [
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.NaN, result: {} } }, // no color -> skipped
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Null, result: { color: 'purple' } } },
+      ],
+    };
+    expect(resolve(config, [NaN, null])).toMatchSnapshot();
+  });
+
+  it('SpecialValue Null matches both null and undefined (loose ==)', () => {
+    const config = {
+      mappings: [
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Null, result: { color: 'purple' } } },
+      ],
+    };
+    expect(resolve(config, [null, undefined, 0])).toMatchSnapshot();
+  });
+
+  it('no color branch taken yields the empty defaults (getAll -> [], getOne -> -1)', () => {
+    // color field present but no mappings, no thresholds mode, no continuous mode:
+    // conds stays empty so getAll returns [] regardless of input length. discrete=false
+    // because getOne (-1) and getAll ([]) cannot agree here by construction.
+    const config = {};
+    expect(resolve(config, [1, 2, 3], { discrete: false })).toMatchSnapshot();
+  });
+
+  it('single-step absolute thresholds (every value gets the base step)', () => {
+    const config = {
+      color: { mode: FieldColorModeId.Thresholds },
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: 'green' }],
+      },
+    };
+    expect(resolve(config, [1, 100])).toMatchSnapshot();
+  });
 });

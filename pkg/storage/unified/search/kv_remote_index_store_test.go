@@ -39,7 +39,7 @@ func newTestBadgerKV(t *testing.T) kv.KV {
 
 func newTestLeaseManager(t *testing.T, store kv.KV, holder string) *lease.Manager {
 	t.Helper()
-	mgr := lease.NewManager(store, holder, nil,
+	mgr := lease.NewManager(store, holder, "test", nil,
 		lease.WithInternalMinTTL(kvTestMinTTL),
 		lease.WithGarbageCollectionDisabled,
 	)
@@ -477,7 +477,10 @@ func TestKVRemoteIndexStore_LockBuildIndex_Contention(t *testing.T) {
 
 	_, err = store2.LockBuildIndex(ctx, ns, "11.5.0")
 	require.Error(t, err)
-	require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
+	// Build coordination keeps waiting only for errLockHeld. The lease
+	// sentinel stays internal to the store.
+	require.ErrorIs(t, err, errLockHeld)
+	require.NotErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
 
 	require.NoError(t, lock1.Release())
 
@@ -539,7 +542,7 @@ func TestKVRemoteIndexStore_LockNamespaceForCleanup_Contention(t *testing.T) {
 	t.Cleanup(func() { _ = lock1.Release() })
 
 	_, err = store2.LockNamespaceForCleanup(ctx, "stack-1")
-	require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
+	require.ErrorIs(t, err, errLockHeld)
 
 	// Different namespace must be acquirable independently.
 	lock2, err := store2.LockNamespaceForCleanup(ctx, "stack-2")

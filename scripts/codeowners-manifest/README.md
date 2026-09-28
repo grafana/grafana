@@ -16,6 +16,16 @@ node raw.js       # Generate raw audit data
 node generate.js  # Process raw data into manifest files
 ```
 
+## Listing a codeowner's tests
+
+`list-tests.mts` resolves the test files owned by a codeowner (via `jest --listTests` against `jest.config.codeowner.js`) and prints one JSON object per test case on stdout — `{ file, startLine, endLine, name }` — without running any test bodies.
+
+```bash
+yarn test:by-codeowner:list '@grafana/dataviz-squad' > dataviz-tests.jsonl
+```
+
+Progress and parse failures go to stderr, so stdout stays valid JSONL.
+
 ## Control flow of `index.js`
 
 ```mermaid

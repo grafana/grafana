@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +18,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -29,8 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -49,7 +49,12 @@ type DataSourceAPIBuilderConfig struct {
 	UseDualWriter               bool
 	EnableResourceEndpoint      bool
 	EnableHealthEndpoint        bool
+	EnableProxyEndpoint         bool
 	EnableChunkedQueryStreaming bool
+
+	// HandlerOrigin, when non-empty, is written as the X-Grafana-DS-Apiserver
+	// response header on every subresource request. Set to "remote" when MultiTenancy is enabled.
+	HandlerOrigin string
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -95,11 +100,13 @@ func RegisterAPIService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	flags := DataSourceAPIBuilderConfig{
+		HandlerOrigin:               "local",
 		LoadQueryTypes:              features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
 		LoadOpenAPISpec:             features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
 		UseDualWriter:               features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
 		EnableResourceEndpoint:      features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
 		EnableHealthEndpoint:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+		EnableProxyEndpoint:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableProxyEndpoint),
 		EnableChunkedQueryStreaming: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesChunkedQueryStreaming),
 	}
 
@@ -116,16 +123,19 @@ func RegisterAPIService(
 		return nil, regErr
 	}
 
-	pluginInfos, err := pluginspec.LoadPlugins(context.Background(), pluginSources,
-		func(jsonData plugins.JSONData) bool {
+	pluginDefs, err := definition.LoadPluginDefinition(context.Background(), pluginSources, definition.Options{
+		Filter: func(jsonData plugins.JSONData) bool {
 			return jsonData.Type == plugins.TypeDataSource
-		}, flags.LoadOpenAPISpec || flags.LoadQueryTypes)
+		},
+		Schemas:     flags.LoadOpenAPISpec || flags.LoadQueryTypes,
+		AppManifest: false, // not yet
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
 	}
 
-	for _, plugin := range pluginInfos {
+	for _, plugin := range pluginDefs {
 		client, ok := pluginClient.(PluginClient)
 		if !ok {
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
@@ -260,21 +270,6 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	if opts.StorageOptsRegister != nil {
-		opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
-			Index: nil, // TODO, required to check that they are unique
-
-			// Keep them for now, but we should get rid of them when possible
-			DeprecatedInternalID: apistore.DeprecatedID_Required,
-
-			// Setting the schema explicitly will force the apistore to explicitly marshal with a matching Group+version
-			// This is required because we map the same go type (DataSourceConfig) across multiple api groups
-			// and the default k8s codec will pick the first one registered, regardless which group is set
-			// See: https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
-			Scheme: opts.Scheme,
-		})
-	}
-
 	storage := map[string]rest.Storage{}
 
 	// Register the raw datasource connection
@@ -296,8 +291,17 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			resourceInfo:                    &ds,
 			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
 		}
+		optsGetter := opts.StorageOptsGetterFor(ds, apistore.StorageOptions{
+			Index: nil, // TODO, required to check that they are unique
+
+			// Keep them for now, but we should get rid of them when possible
+			DeprecatedInternalID: apistore.DeprecatedID_Required,
+
+			// Avoid using the codec serializer -- we have multiple GVKs registered to the same go type
+			Serializer: apistore.JSONSerializer(),
+		})
 		// NOTE! there is currently NO PATH that is using unified storage to read!
-		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
+		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, optsGetter)
 		if err != nil {
 			return err
 		}
@@ -319,7 +323,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Frontend proxy
-	if len(b.pluginJSON.Routes) > 0 {
+	if b.cfg.EnableProxyEndpoint && len(b.pluginJSON.Routes) > 0 {
 		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b}
 	}
 

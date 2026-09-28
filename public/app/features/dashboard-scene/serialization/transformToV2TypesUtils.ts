@@ -107,6 +107,14 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
       return 'palette-classic';
     case FieldColorModeIdV1.PaletteClassicByName:
       return 'palette-classic-by-name';
+    case 'palette-colorblind':
+      return 'palette-colorblind';
+    case 'palette-categorical-next':
+      return 'palette-categorical-next';
+    case 'palette-categorical-next-2':
+      return 'palette-categorical-next-2';
+    case 'palette-categorical-next-3':
+      return 'palette-categorical-next-3';
     case FieldColorModeIdV1.ContinuousGrYlRd:
       return 'continuous-GrYlRd';
     case FieldColorModeIdV1.ContinuousRdYlGr:
@@ -141,6 +149,8 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
       return 'fixed';
     case FieldColorModeIdV1.Shades:
       return 'shades';
+    case 'gradient':
+      return 'gradient';
     default:
       return undefined;
   }

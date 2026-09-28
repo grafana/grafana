@@ -2,6 +2,14 @@ import { expect, test } from '@grafana/plugin-e2e';
 
 import { formatExpectError } from '../errors';
 
+test.use({
+  openFeature: {
+    flags: {
+      'grafana.dashboardSettingsRedesign': false,
+    },
+  },
+});
+
 test.describe(
   'plugin-e2e-api-tests admin',
   {

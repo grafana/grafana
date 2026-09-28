@@ -87,6 +87,123 @@ func newTestAuthInfo() types.AuthInfo {
 	)
 }
 
+func TestAllowSelfAuthorizerAllowsCurrentUserPermissions(t *testing.T) {
+	base := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		return authorizer.DecisionDeny, "base authorizer", nil
+	})
+	authz := allowSelfAuthorizer(base)
+	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+	attr := authorizer.AttributesRecord{
+		ResourceRequest: true,
+		Verb:            "get",
+		APIGroup:        iamv0.UserResourceInfo.GroupResource().Group,
+		Resource:        iamv0.UserResourceInfo.GroupResource().Resource,
+		Subresource:     "permissions",
+		Namespace:       "org-1",
+		Name:            "~",
+	}
+
+	decision, _, err := authz.Authorize(ctx, attr)
+
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionAllow, decision)
+}
+
+func TestAllowSelfAuthorizerDelegatesOtherRequests(t *testing.T) {
+	base := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		return authorizer.DecisionDeny, "base authorizer", nil
+	})
+	authz := allowSelfAuthorizer(base)
+	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+
+	for _, attr := range []authorizer.AttributesRecord{
+		{ResourceRequest: true, Verb: "update", Resource: "users", Subresource: "permissions", Name: "~"},
+		{ResourceRequest: true, Verb: "get", Resource: "users", Subresource: "permissions", Name: "u1"},
+		{ResourceRequest: true, Verb: "get", Resource: "users", Subresource: "other", Name: "~"},
+	} {
+		decision, reason, err := authz.Authorize(ctx, attr)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "base authorizer", reason)
+	}
+}
+
+func TestTeamLBACRuleAuthorizer(t *testing.T) {
+	baseCalled := false
+	base := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		baseCalled = true
+		return authorizer.DecisionAllow, "", nil
+	})
+	authz := newTeamLBACRuleAuthorizer(base)
+	forSubject := authorizer.AttributesRecord{
+		ResourceRequest: true,
+		Verb:            "get",
+		APIGroup:        "iam.grafana.app",
+		Resource:        "teamlbacrules",
+		Subresource:     "for-subject",
+		Namespace:       "default",
+		Name:            "prometheus.datasource-a",
+	}
+
+	t.Run("denies a request without an authenticated identity", func(t *testing.T) {
+		decision, reason, err := authz.Authorize(context.Background(), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "for-subject requires an authenticated service identity", reason)
+	})
+
+	t.Run("allows the internal Grafana service permission", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app:*"}},
+		})
+		decision, _, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("allows an MT service with TeamLBACRule read permission", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app/teamlbacrules:get"}},
+		})
+		decision, _, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("denies a service without TeamLBACRule read permission", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app/teams:get"}},
+		})
+		decision, reason, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "calling service lacks TeamLBACRule read permission", reason)
+	})
+
+	t.Run("denies a user even with delegated TeamLBACRule read permission", func(t *testing.T) {
+		authInfo := authn.NewIDTokenAuthInfo(
+			authn.Claims[authn.AccessTokenClaims]{
+				Rest: authn.AccessTokenClaims{DelegatedPermissions: []string{"iam.grafana.app/teamlbacrules:get"}},
+			},
+			&authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{Type: types.TypeUser}},
+		)
+		decision, reason, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "for-subject only accepts direct service calls", reason)
+	})
+
+	t.Run("keeps base CRUD delegated to its existing authorizer", func(t *testing.T) {
+		baseCalled = false
+		baseGet := forSubject
+		baseGet.Subresource = ""
+		decision, _, err := authz.Authorize(context.Background(), baseGet)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.True(t, baseCalled)
+	})
+}
+
 // TestAuthorizerCheckRequest verifies that each authorizer builds the correct
 // CheckRequest when its custom subresources are accessed.
 func TestAuthorizerCheckRequest(t *testing.T) {
@@ -236,6 +353,71 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 					assert.Equal(t, tt.wantCheckCalled, checkCalled, "Check call mismatch")
 				})
 			}
+		})
+	}
+}
+
+// TestAuthorizerListDefersToStorage verifies that a nameless collection list
+// (no subresource, no name) is allowed at the authorizer layer without a
+// per-request RBAC Check, so unified storage can filter results per-item.
+// Zanzana maps a nameless list to a group_resource (wildcard) check, so routing
+// it through the ResourceAuthorizer would 403 any user who cannot read every
+// item. Named get and named list stay strict.
+func TestAuthorizerListDefersToStorage(t *testing.T) {
+	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+
+	for _, sc := range authorizerScenarios {
+		t.Run(sc.name, func(t *testing.T) {
+			attr := func(verb, name string) authorizer.AttributesRecord {
+				return authorizer.AttributesRecord{
+					ResourceRequest: true,
+					APIGroup:        sc.group,
+					Resource:        sc.resource,
+					Name:            name,
+					Verb:            verb,
+					Namespace:       "org-1",
+				}
+			}
+			newAuth := func(checkCalled *bool) authorizer.Authorizer {
+				return sc.newAuthorizer(&fakeAccessClient{
+					checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
+						*checkCalled = true
+						return types.CheckResponse{Allowed: false}, nil
+					},
+				})
+			}
+
+			t.Run("nameless list denied without identity", func(t *testing.T) {
+				checkCalled := false
+				decision, _, err := newAuth(&checkCalled).Authorize(context.Background(), attr("list", ""))
+				require.NoError(t, err)
+				assert.Equal(t, authorizer.DecisionDeny, decision)
+				assert.False(t, checkCalled)
+			})
+
+			t.Run("nameless list is allowed without calling Check", func(t *testing.T) {
+				checkCalled := false
+				decision, _, err := newAuth(&checkCalled).Authorize(ctx, attr("list", ""))
+				require.NoError(t, err)
+				assert.Equal(t, authorizer.DecisionAllow, decision)
+				assert.False(t, checkCalled, "nameless list must not perform a group-resource Check; storage filters per-item")
+			})
+
+			t.Run("named list still delegates to Check", func(t *testing.T) {
+				checkCalled := false
+				decision, _, err := newAuth(&checkCalled).Authorize(ctx, attr("list", sc.resourceName))
+				require.NoError(t, err)
+				assert.Equal(t, authorizer.DecisionDeny, decision)
+				assert.True(t, checkCalled, "named list must still be authorized")
+			})
+
+			t.Run("named get still delegates to Check", func(t *testing.T) {
+				checkCalled := false
+				decision, _, err := newAuth(&checkCalled).Authorize(ctx, attr("get", sc.resourceName))
+				require.NoError(t, err)
+				assert.Equal(t, authorizer.DecisionDeny, decision)
+				assert.True(t, checkCalled, "named get must still be authorized per-item")
+			})
 		})
 	}
 }

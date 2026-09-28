@@ -4,21 +4,27 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { LocationServiceProvider, locationService } from '@grafana/runtime';
+import { config, LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import {
+  RepoViewStatus,
+  type RepositoryViewData,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
-import { ToolbarActions } from './NavToolbarActions';
+import { NavToolbarActions, ToolbarActions } from './NavToolbarActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     editButtonClicked: jest.fn(),
   },
 }));
@@ -41,6 +47,30 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
   },
 }));
 
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useGetResourceRepositoryView'),
+  useGetResourceRepositoryView: jest.fn(),
+}));
+
+// Same as what the real hook returns with provisioning off, so the existing toolbar tests keep
+// their baseline. Only the read-only badge tests care about this mock.
+const noRepositoryView: RepositoryViewData = {
+  isLoading: false,
+  isInstanceManaged: false,
+  isReadOnlyRepo: false,
+  isMissingRepo: false,
+  status: RepoViewStatus.Disabled,
+};
+
+const readOnlyRepositoryView: RepositoryViewData = {
+  repository: { name: 'repo-1', title: 'Repo 1', type: 'github', target: 'folder', workflows: [] },
+  repoType: 'github',
+  status: RepoViewStatus.Ready,
+  isInstanceManaged: false,
+  isReadOnlyRepo: true,
+  isMissingRepo: false,
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -53,6 +83,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('NavToolbarActions', () => {
+  beforeEach(() => {
+    jest.mocked(useGetResourceRepositoryView).mockReturnValue(noRepositoryView);
+  });
+
   describe('Given an already saved dashboard', () => {
     it('Should show correct buttons when not in editing', async () => {
       setup();
@@ -129,21 +163,7 @@ describe('NavToolbarActions', () => {
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
     });
 
-    it('Should show correct buttons when editing a new panel', async () => {
-      const { dashboard } = setup();
-
-      await act(() => {
-        dashboard.onEnterEditMode();
-        const panel = dashboard.state.body.getVizPanels()[0];
-        dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
-      });
-
-      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
-      expect(await screen.findByText('Discard panel')).toBeInTheDocument();
-      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
-    });
-
-    it('Should show correct buttons when editing an existing panel', async () => {
+    it('shows Save dashboard but not the panel-edit back button while editing a panel', async () => {
       const { dashboard } = setup();
 
       await act(() => {
@@ -153,11 +173,14 @@ describe('NavToolbarActions', () => {
       });
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
-      expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
-      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
+      // The panel-edit back button lives in the dashboard controls row, not the toolbar. Match it by
+      // its stable selector — its visible text is shared with the view-panel and settings back buttons.
+      expect(
+        screen.queryByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).not.toBeInTheDocument();
     });
     describe('edit dashboard button tracking', () => {
-      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.sidebar.outline.collapsed is undefined', async () => {
         setup();
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
         expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
@@ -166,8 +189,8 @@ describe('NavToolbarActions', () => {
         });
       });
 
-      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {
-        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'false');
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.sidebar.outline.collapsed is false', async () => {
+        localStorageMock.setItem('grafana.dashboard.sidebar.outline.collapsed', 'false');
         setup();
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
         expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
@@ -176,8 +199,8 @@ describe('NavToolbarActions', () => {
         });
       });
 
-      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.edit-pane.outline.collapsed is true', async () => {
-        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'true');
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.sidebar.outline.collapsed is true', async () => {
+        localStorageMock.setItem('grafana.dashboard.sidebar.outline.collapsed', 'true');
         setup();
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
         expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
@@ -221,6 +244,26 @@ describe('NavToolbarActions', () => {
       });
 
       expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
+    });
+  });
+
+  describe('Read-only badge', () => {
+    beforeEach(() => {
+      jest.mocked(useGetResourceRepositoryView).mockReturnValue(readOnlyRepositoryView);
+    });
+
+    it('shows the badge next to the disabled Edit button for a user who could otherwise edit', async () => {
+      setup();
+
+      expect(await screen.findByRole('button', { name: 'Edit' })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByText('Read only')).toBeInTheDocument();
+    });
+
+    it('hides the badge from a user who cannot edit the dashboard anyway', async () => {
+      setup({ canEdit: false, canMakeEditable: false });
+
+      expect(await screen.findByText('Share')).toBeInTheDocument();
+      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
     });
   });
 });
@@ -275,3 +318,67 @@ function setup(meta?: DashboardMeta, editable?: boolean) {
 
   return { dashboard, actions };
 }
+
+describe('when previewing an unbuilt dashboard plan', () => {
+  // Render through the shared wrapper to cover planning behavior in both toolbar variants.
+  function setupPlanning() {
+    const onBuild = jest.fn();
+    const onDismiss = jest.fn();
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      meta: { canEdit: true, canSave: true, canShare: true, canStar: true },
+      title: 'hello',
+      editable: true,
+      uid: 'dash-1',
+      isEditing: true,
+      planning: {
+        planId: 'plan-1',
+        planTitle: 'Kafka overview',
+        onBuild,
+        onDismiss,
+      },
+      body: DefaultGridLayoutManager.fromVizPanels([
+        new VizPanel({ title: 'Panel A', key: 'panel-1', pluginId: 'table' }),
+      ]),
+    });
+
+    const context = getGrafanaContextMock();
+    locationService.push('/');
+
+    render(
+      <TestProvider grafanaContext={context}>
+        <LocationServiceProvider service={locationService}>
+          <UrlSyncContextProvider scene={dashboard}>
+            <NavToolbarActions dashboard={dashboard} />
+          </UrlSyncContextProvider>
+        </LocationServiceProvider>
+      </TestProvider>
+    );
+
+    // AppChromeUpdate hands the toolbar to app chrome rather than rendering it in place.
+    render(<TestProvider grafanaContext={context}>{context.chrome.state.getValue().actions}</TestProvider>);
+
+    return { dashboard, onBuild, onDismiss };
+  }
+
+  it.each([true, false])('offers only Build and Dismiss (dashboardNewLayouts=%s)', async (newLayouts) => {
+    config.featureToggles.dashboardNewLayouts = newLayouts;
+    setupPlanning();
+
+    expect(await screen.findByText('Kafka overview')).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningDismissButton)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.settingsButton)).not.toBeInTheDocument();
+  });
+
+  it('wires the banner actions to the plan callbacks', async () => {
+    const { onBuild, onDismiss } = setupPlanning();
+
+    await userEvent.click(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton));
+    expect(onBuild).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningDismissButton));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+});

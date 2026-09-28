@@ -65,8 +65,9 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
-// LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
-// Deprecated: will be removed in grafana 13
+// LabelKeyDeprecatedInternalID holds the deprecated internal ID of a resource.
+// Resources are now identified by their metadata.name (previously grafana UID)
+// Deprecated: This label will be removed when legacy support via internal IDs is no longer required.
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
 
 // Accessor functions for k8s objects
@@ -679,11 +680,16 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 			}, true
 		}
 
-		// If the identity is not set, we should ignore the other annotations and return the default values.
-		//
-		// This is to prevent inadvertently marking resources as managed,
-		// since that can potentially block updates from other sources.
-		return res, false
+		// Classic shim kinds (legacy file/API provisioning) have no meaningful identity,
+		// so allow them through without one.
+		kind := ParseManagerKindString(annot[AnnoKeyManagerKind])
+		if !kind.IsClassic() {
+			// If the identity is not set, we should ignore the other annotations and return the default values.
+			//
+			// This is to prevent inadvertently marking resources as managed,
+			// since that can potentially block updates from other sources.
+			return res, false
+		}
 	}
 	res.Identity = id
 

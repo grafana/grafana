@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
@@ -45,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -72,9 +74,11 @@ var WireSet = wire.NewSet(
 	pluginconfig.NewRequestConfigProvider,
 	wire.Bind(new(pluginconfig.PluginRequestConfigProvider), new(*pluginconfig.RequestConfigProvider)),
 	pluginstore.ProvideService,
+	installsync.ProvideClientGenerator,
 	installsync.ProvideSyncer,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
+	wire.Bind(new(v3.ClientV3Loader), new(*pluginstore.Service)),
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
@@ -157,6 +161,7 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
 	pluginassets2.NewLocalProvider,
 	wire.Bind(new(pluginassets2.Provider), new(*pluginassets2.LocalProvider)),
+	marketplacelicensing.Provide,
 )
 
 func ProvideClientWithMiddlewares(
@@ -213,6 +218,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewHostedGrafanaACHeaderMiddleware(cfg))
 	}
 
+	middlewares = append(middlewares, clientmiddleware.NewHTTPCaptureMiddleware())
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
 	// ErrorSourceMiddleware should be at the very bottom, or any middlewares below it won't see the

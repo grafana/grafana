@@ -88,6 +88,17 @@ describe('PullRequestOptionsSection', () => {
     expect(screen.queryByText('Pull request title template')).not.toBeInTheDocument();
   });
 
+  it('renders the dashboard previews toggle for GitHub Enterprise even when the gitConventions flag is off', async () => {
+    setTestFlags({ 'provisioning.gitConventions': false });
+    const { user } = render(<Wrapper repoType="githubEnterprise" dashboardPreviewName="generateDashboardPreviews" />);
+
+    await user.click(screen.getByText('Pull request options'));
+
+    expect(screen.getByRole('checkbox', { name: /Enable dashboard previews in pull requests/i })).toBeInTheDocument();
+    // Template fields stay hidden while the flag is off.
+    expect(screen.queryByText('Pull request title template')).not.toBeInTheDocument();
+  });
+
   it('does not render the dashboard previews toggle for non-GitHub providers', () => {
     setTestFlags({ 'provisioning.gitConventions': false });
     const { container } = render(<Wrapper repoType="gitlab" dashboardPreviewName="generateDashboardPreviews" />);

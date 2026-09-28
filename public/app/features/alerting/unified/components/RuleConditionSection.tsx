@@ -7,7 +7,6 @@ import { Trans, t } from '@grafana/i18n';
 import {
   Combobox,
   type ComboboxOption,
-  Icon,
   InlineField,
   InlineFieldRow,
   Input,
@@ -41,8 +40,7 @@ interface RuleConditionSectionProps {
 
 export function RuleConditionSection({ hideEvaluationGroup = false }: RuleConditionSectionProps = {}) {
   const base = useStyles2(getStyles);
-  const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
-  const evaluateFor = watch('evaluateFor') || '0s';
+  const { setValue, getValues } = useFormContext<RuleFormValues>();
 
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(DEFAULT_SIMPLE_CONDITION);
 
@@ -184,17 +182,6 @@ export function RuleConditionSection({ hideEvaluationGroup = false }: RuleCondit
             <RuleEvaluationIntervalField />
           ) : (
             <EvaluationGroupFieldRow enableProvisionedGroups={false} />
-          )}
-
-          {evaluateFor === '0s' && (
-            <Stack direction="row" gap={0.5} alignItems="center">
-              <Icon name="exclamation-triangle" aria-hidden="true" />
-              <Text variant="bodySmall" color="secondary">
-                <Trans i18nKey="alerting.simplified.evaluation.immediate-warning">
-                  Immediate firing might lead to unnecessary alerts being sent for temporary issues
-                </Trans>
-              </Text>
-            </Stack>
           )}
         </Stack>
       </div>

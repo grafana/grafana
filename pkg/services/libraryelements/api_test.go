@@ -4,19 +4,300 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	clientrest "k8s.io/client-go/rest"
 
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+type testDirectRestConfigProvider struct {
+	host string
+}
+
+func (p testDirectRestConfigProvider) GetDirectRestConfig(*contextmodel.ReqContext) *clientrest.Config {
+	return &clientrest.Config{Host: p.host}
+}
+
+func (testDirectRestConfigProvider) DirectlyServeHTTP(http.ResponseWriter, *http.Request) {}
+func (testDirectRestConfigProvider) IsReady() bool                                        { return true }
+
+var _ grafanaapiserver.DirectRestConfigProvider = testDirectRestConfigProvider{}
+
+func TestWriteErrorPreservesLegacyFolderNotFoundMessage(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	reqContext := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  httptest.NewRequest(http.MethodPost, "/api/library-elements", nil),
+			Resp: web.NewResponseWriter("", recorder),
+		},
+		Logger: log.NewNopLogger(),
+	}
+	err := k8serrors.NewNotFound(schema.GroupResource{Group: folderV1.GROUP, Resource: folderV1.RESOURCE}, "does-not-exist")
+
+	(&libraryElementsK8sHandler{}).writeError(reqContext, err)
+
+	require.Equal(t, http.StatusNotFound, recorder.Code)
+	require.JSONEq(t, `{"message":"folder not found","traceID":""}`, recorder.Body.String())
+}
+
+func TestWriteErrorMapsCreateNotFoundToMissingFolderWhenAggregationStripsDetails(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	reqContext := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  httptest.NewRequest(http.MethodPost, "/api/library-elements", nil),
+			Resp: web.NewResponseWriter("", recorder),
+		},
+		Logger: log.NewNopLogger(),
+	}
+	err := &k8serrors.StatusError{ErrStatus: metav1.Status{
+		Code:    http.StatusNotFound,
+		Reason:  metav1.StatusReasonNotFound,
+		Message: "the server could not find the requested resource",
+	}}
+
+	(&libraryElementsK8sHandler{}).writeError(reqContext, err)
+
+	require.Equal(t, http.StatusNotFound, recorder.Code)
+	require.JSONEq(t, `{"message":"folder not found","traceID":""}`, recorder.Body.String())
+}
+
+type panelFolderCaptureAccessControl struct {
+	actest.FakeAccessControl
+	uid       string
+	folderUID string
+}
+
+func (a *panelFolderCaptureAccessControl) Evaluate(ctx context.Context, _ identity.Requester, _ accesscontrol.Evaluator) (bool, error) {
+	a.folderUID, _ = panelFolderFromContext(ctx, a.uid)
+	return a.folderUID != "", nil
+}
+
+func TestAuthorizeLibraryPanelUIDUsesK8sFolderForRBAC(t *testing.T) {
+	flag := featuremgmt.FlagLibraryelementsKubernetesLibraryPanels
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		flag: {
+			Key:            flag,
+			DefaultVariant: "enabled",
+			Variants:       map[string]any{"enabled": true},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"apiVersion":"dashboard.grafana.app/v0alpha1",
+			"kind":"LibraryPanel",
+			"metadata":{"name":"panel-uid","annotations":{"grafana.app/folder":"folder-uid"}}
+		}`))
+	}))
+	t.Cleanup(server.Close)
+
+	accessControl := &panelFolderCaptureAccessControl{uid: "panel-uid"}
+	service := &LibraryElementService{
+		AccessControl: accessControl,
+		k8sHandler: newLibraryElementsK8sHandler(
+			nil,
+			testDirectRestConfigProvider{host: server.URL},
+			nil,
+			nil,
+			nil,
+		),
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/library-elements/panel-uid/connections", nil)
+	req = web.SetURLParams(req, map[string]string{":uid": "panel-uid"})
+	ctx := &contextmodel.ReqContext{
+		Context: &web.Context{Req: req},
+		SignedInUser: &user.SignedInUser{
+			OrgID: 1,
+		},
+	}
+
+	service.authorizeLibraryPanelUID(accesscontrol.EvalPermission(ActionLibraryPanelsRead)).(func(*contextmodel.ReqContext))(ctx)
+
+	require.Equal(t, "folder-uid", accessControl.folderUID)
+}
+
+func TestFilterK8sLibraryPanelsEmptyFolderFilter(t *testing.T) {
+	handler := &libraryElementsK8sHandler{}
+	items := []unstructured.Unstructured{{Object: map[string]interface{}{
+		"metadata": map[string]interface{}{"name": "panel"},
+		"spec":     map[string]interface{}{"type": "text", "title": "Panel"},
+	}}}
+
+	require.Len(t, handler.filterK8sLibraryPanels(nil, items, model.SearchLibraryElementsQuery{}, nil), 1)
+	require.Empty(t, handler.filterK8sLibraryPanels(nil, items, model.SearchLibraryElementsQuery{}, []string{}))
+}
+
+func TestSortK8sLibraryPanelsByTitleCaseInsensitive(t *testing.T) {
+	makeItems := func() []unstructured.Unstructured {
+		return []unstructured.Unstructured{
+			{Object: map[string]interface{}{"spec": map[string]interface{}{"title": "charlie"}}},
+			{Object: map[string]interface{}{"spec": map[string]interface{}{"title": "Bravo"}}},
+			{Object: map[string]interface{}{"spec": map[string]interface{}{"title": "alpha"}}},
+		}
+	}
+	titles := func(items []unstructured.Unstructured) []string {
+		result := make([]string, 0, len(items))
+		for _, item := range items {
+			title, _, _ := unstructured.NestedString(item.Object, "spec", "title")
+			result = append(result, title)
+		}
+		return result
+	}
+
+	ascending := makeItems()
+	sortK8sLibraryPanelsByTitle(ascending, true)
+	require.Equal(t, []string{"alpha", "Bravo", "charlie"}, titles(ascending))
+
+	descending := makeItems()
+	sortK8sLibraryPanelsByTitle(descending, false)
+	require.Equal(t, []string{"charlie", "Bravo", "alpha"}, titles(descending))
+}
+
+func TestPaginateK8sLibraryPanelsHandlesExtremePage(t *testing.T) {
+	items := []unstructured.Unstructured{
+		{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": "first"}}},
+		{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": "second"}}},
+	}
+
+	require.Equal(t, items, paginateK8sLibraryPanels(items, 2, 1))
+	require.Empty(t, paginateK8sLibraryPanels(items, 2, int(^uint(0)>>1)))
+}
+
+func TestValidateK8sLibraryPanelUID(t *testing.T) {
+	tests := []struct {
+		name string
+		uid  string
+		err  error
+	}{
+		{name: "valid", uid: "valid-library-panel", err: nil},
+		{name: "legacy uppercase and underscore", uid: "Legacy_UID", err: model.ErrLibraryElementInvalidUID},
+		{name: "legacy invalid character", uid: "invalid.uid", err: model.ErrLibraryElementInvalidUID},
+		{name: "legacy length limit", uid: strings.Repeat("a", 41), err: model.ErrLibraryElementUIDTooLong},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateK8sLibraryPanelUID(tt.uid)
+			if tt.err == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorIs(t, err, tt.err)
+		})
+	}
+}
+
+func TestFilterK8sLibraryPanelsFolderTitleSearchWithDeprecatedIDFilter(t *testing.T) {
+	handler := &libraryElementsK8sHandler{folderService: &foldertest.FakeService{ExpectedFolder: &folder.Folder{
+		ID: 42, UID: "folder-uid", Title: "Matching folder", OrgID: 1,
+	}}}
+	items := []unstructured.Unstructured{{Object: map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name":        "panel",
+			"annotations": map[string]interface{}{"grafana.app/folder": "folder-uid"},
+		},
+		"spec": map[string]interface{}{"type": "text", "title": "Panel"},
+	}}}
+	reqContext := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: &http.Request{}},
+		SignedInUser: &user.SignedInUser{OrgID: 1},
+	}
+
+	deprecatedFilter := model.SearchLibraryElementsQuery{SearchString: "matching", FolderFilter: "42"} // nolint:staticcheck
+	require.Len(t, handler.filterK8sLibraryPanels(reqContext, items, deprecatedFilter, []string{"folder-uid"}), 1)
+
+	uidFilter := model.SearchLibraryElementsQuery{SearchString: "matching", FolderFilterUIDs: "folder-uid"}
+	require.Empty(t, handler.filterK8sLibraryPanels(reqContext, items, uidFilter, []string{"folder-uid"}))
+}
+
+func TestFolderUIDFromLegacyID(t *testing.T) {
+	reqContext := &contextmodel.ReqContext{
+		Context: &web.Context{Req: &http.Request{}},
+		SignedInUser: &user.SignedInUser{
+			OrgID: 1,
+		},
+	}
+
+	t.Run("root folder", func(t *testing.T) {
+		handler := &libraryElementsK8sHandler{}
+
+		uid, ok := handler.folderUIDFromLegacyID(reqContext, 0)
+
+		require.True(t, ok)
+		require.Equal(t, accesscontrol.GeneralFolderUID, uid)
+	})
+
+	t.Run("folder", func(t *testing.T) {
+		handler := &libraryElementsK8sHandler{
+			folderService: &foldertest.FakeService{
+				ExpectedFolder: &folder.Folder{ID: 42, UID: "folder-uid", OrgID: 1},
+			},
+		}
+
+		uid, ok := handler.folderUIDFromLegacyID(reqContext, 42)
+
+		require.True(t, ok)
+		require.Equal(t, "folder-uid", uid)
+	})
+}
+
+func TestResolveFolderTitlesUsesLegacyRootName(t *testing.T) {
+	handler := &libraryElementsK8sHandler{}
+	items := []unstructured.Unstructured{
+		{Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"grafana.app/folder": accesscontrol.GeneralFolderUID,
+				},
+			},
+		}},
+		{Object: map[string]interface{}{
+			"metadata": map[string]interface{}{},
+		}},
+	}
+
+	titles := handler.resolveFolderTitles(&contextmodel.ReqContext{}, items)
+
+	require.Equal(t, dashboards.RootFolderName, titles[accesscontrol.GeneralFolderUID])
+	require.Equal(t, dashboards.RootFolderName, titles[""])
+}
+
+func TestFilterK8sLibraryPanelsSearchesEmptyFolderUIDAsGeneral(t *testing.T) {
+	handler := &libraryElementsK8sHandler{}
+	items := []unstructured.Unstructured{{Object: map[string]interface{}{
+		"metadata": map[string]interface{}{"name": "panel"},
+		"spec":     map[string]interface{}{"type": "text", "title": "Panel"},
+	}}}
+
+	query := model.SearchLibraryElementsQuery{SearchString: "general"}
+
+	require.Len(t, handler.filterK8sLibraryPanels(nil, items, query, nil), 1)
+}
 
 func TestFilterLibraryPanelsByPermission(t *testing.T) {
 	panels := []model.LibraryElementDTO{

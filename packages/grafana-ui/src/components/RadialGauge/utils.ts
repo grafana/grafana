@@ -59,7 +59,14 @@ export function getValueAngleForValue(
   neutral?: number
 ) {
   const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
-  const value = fieldDisplay.display.numeric;
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+  // getFieldConfigMinMax can invert bounds when min === max < 0; order before clamping.
+  const low = Math.min(min, max);
+  const high = Math.max(min, max);
+
+  // Clamp arc geometry to [low, high]. Center text still uses the real value;
+  // without this, overflow with a neutral point can produce invalid SVG arcs (#130075).
+  const value = Math.min(Math.max(fieldDisplay.display.numeric, low), high);
 
   const valueAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
 
@@ -67,8 +74,7 @@ export function getValueAngleForValue(
 
   let startValueAngle = 0;
   if (typeof neutral === 'number') {
-    const [min, max] = getFieldConfigMinMax(fieldDisplay);
-    const clampedNeutral = Math.min(Math.max(min, neutral), max);
+    const clampedNeutral = Math.min(Math.max(neutral, low), high);
     const neutralAngle = getValuePercentageForValue(fieldDisplay, clampedNeutral) * angleRange;
     if (neutralAngle <= valueAngle) {
       startValueAngle = neutralAngle;
@@ -324,7 +330,7 @@ export function getFormattedThresholds(
     }
     const prev = steps[i - 1];
     formatted.push({
-      value: isFinite(step.value) ? step.value : 0,
+      value: isFinite(step.value) ? step.value : min,
       color: theme.visualization.getColorByName((offsetColor ? prev : step).color),
     });
     if (step === last) {

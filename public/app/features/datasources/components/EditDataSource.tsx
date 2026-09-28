@@ -11,7 +11,8 @@ import {
   type PluginExtensionDataSourceConfigContext,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv, usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
+import { usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DataSourceSettingsState } from 'app/types/datasources';
@@ -111,6 +112,9 @@ export function EditDataSourceView({
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0 && dataSource.uid;
   const { components, isLoading } = useDataSourceConfigPluginExtensions();
+  const { settings: instanceSettings, isLoading: isLoadingInstanceSettings } = useDataSourceInstanceSettings(
+    dataSource.uid
+  );
 
   // Validation API passed to the config editor. validate() is called in onSubmit
   // — if it returns false the save and health check are both skipped.
@@ -167,8 +171,6 @@ export function EditDataSourceView({
     },
   };
 
-  const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
-
   const onSubmit = useCallback(
     async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -201,14 +203,14 @@ export function EditDataSourceView({
     [validation, onUpdate, dataSource, onTest, dispatch, retryAdvisorCheck]
   );
 
-  if (loading || isLoading) {
+  if (loading || isLoading || isLoadingInstanceSettings) {
     return <PageLoader />;
   }
 
-  if (loadError || !hasDataSource || !dsi) {
+  if (loadError || !hasDataSource || !instanceSettings) {
     return (
       <DataSourceLoadError
-        notFound={!hasDataSource || !dsi}
+        notFound={!hasDataSource || !instanceSettings}
         errorMsg={loadError}
         dataSourceRights={dataSourceRights}
         onDelete={() => {
@@ -221,7 +223,7 @@ export function EditDataSourceView({
 
   if (pageId) {
     return (
-      <DataSourcePluginContextProvider instanceSettings={dsi}>
+      <DataSourcePluginContextProvider instanceSettings={instanceSettings}>
         <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />
       </DataSourcePluginContextProvider>
     );
@@ -236,7 +238,7 @@ export function EditDataSourceView({
       <CloudInfoBox dataSource={dataSource} />
 
       {plugin && (
-        <DataSourcePluginContextProvider instanceSettings={dsi}>
+        <DataSourcePluginContextProvider instanceSettings={instanceSettings}>
           <DataSourcePluginSettings
             plugin={plugin}
             dataSource={dataSourceWithIsPDCInjected}

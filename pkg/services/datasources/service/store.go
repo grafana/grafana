@@ -222,6 +222,7 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 				ID:        ds.ID,
 				UID:       ds.UID,
 				OrgID:     ds.OrgID,
+				Type:      ds.Type,
 			})
 		}
 
@@ -299,6 +300,10 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 		}
 
+		if cmd.BeforeSave != nil {
+			cmd.BeforeSave(ctx, cmd.UID, cmd.JsonData)
+		}
+
 		ds = &datasources.DataSource{
 			OrgID:           cmd.OrgID,
 			Name:            cmd.Name,
@@ -369,6 +374,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
 				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 			}
+		}
+
+		if cmd.BeforeSave != nil {
+			cmd.BeforeSave(ctx, cmd.UID, cmd.JsonData)
 		}
 
 		ds = &datasources.DataSource{
@@ -444,7 +453,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 }
 
 func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		uid := generateNewUid()
 
 		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&datasources.DataSource{})

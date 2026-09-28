@@ -15,11 +15,12 @@ import { useDispatch } from 'app/types/store';
 
 import { ensureFolderPathTrailingSlash } from '../components/utils/path';
 import { getRepoFileUrl } from '../utils/git';
+import { type ResourceKindKey } from '../utils/resourceKinds';
 
 import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
-type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
+type ResourceType = ResourceKindKey;
 
 // Information object that gets passed to all handlers
 interface ProvisionedOperationInfo {

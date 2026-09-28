@@ -33,6 +33,7 @@ type alertRule struct {
 	AlertRoutingPolicy          *string `xorm:"alert_routing_policy"`
 	Metadata                    string  `xorm:"metadata"`
 	MissingSeriesEvalsToResolve *int64  `xorm:"missing_series_evals_to_resolve"`
+	K8sStatus                   []byte  `xorm:"k8s_status"`
 }
 
 func (a alertRule) TableName() string {

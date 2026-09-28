@@ -9,7 +9,6 @@ import {
   serializeStateToUrlParam,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 import { type RichHistoryQuery } from 'app/types/explore';
@@ -282,20 +281,6 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   });
 
   return mappedQueriesToHeadings;
-}
-
-/*
- * Create a list of all available data sources
- */
-export function createDatasourcesList() {
-  return getDataSourceSrv()
-    .getList({ mixed: true })
-    .map((dsSettings) => {
-      return {
-        name: dsSettings.name,
-        uid: dsSettings.uid,
-      };
-    });
 }
 
 function notEmptyQuery(query: DataQuery) {

@@ -9,7 +9,7 @@ import {
   type PanelPluginVisualizationSuggestion,
   type TimeRange,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { SceneDataTransformer, SceneQueryRunner, type SceneObject, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
@@ -28,7 +28,7 @@ export async function getVizSuggestionForQuery(
   query: DataQuery,
   timeRange: TimeRange = getDefaultTimeRange()
 ): Promise<PanelPluginVisualizationSuggestion | undefined> {
-  const datasource = await getDataSourceSrv().get(query.datasource ?? null);
+  const datasource = await getDataSourceInstance(query.datasource ?? null);
 
   const request = {
     requestId: getNextRequestId(),

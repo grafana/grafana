@@ -13,7 +13,9 @@ const regexValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<string>> = {
 
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      return regex.test(value);
+      // RegExp.test coerces its argument to a string, so without this guard null/undefined
+      // become "null"/"undefined" and match patterns like .* or .+
+      return value != null && regex.test(value);
     };
   },
   getOptionsDisplayText: (options) => {

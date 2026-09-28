@@ -3,17 +3,53 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { type DataFrame, MutableDataFrame } from '@grafana/data';
+import { type DataFrame, MutableDataFrame, type TraceSearchProps } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
-import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
+import {
+  setPluginLinksHook,
+  setPluginComponentsHook,
+  useAppPluginInstalled,
+  reportInteraction,
+} from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
+import { DEFAULT_SPAN_FILTERS } from '../state/constants';
 
 import { TraceView } from './TraceView';
+import { SPAN_NAME } from './components/constants/span';
 import { type TraceData, type TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
-function getTraceView(frames: DataFrame[]) {
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useAppPluginInstalled: jest.fn(),
+  reportInteraction: jest.fn(),
+}));
+
+// The summary-span minimap gradient emits fractional rgb() channels that real browsers accept
+// but jest-canvas-mock rejects. The canvas render is not exercised by these tests, so stub it.
+jest.mock('./components/TracePageHeader/SpanGraph/render-into-canvas', () => ({
+  ...jest.requireActual('./components/TracePageHeader/SpanGraph/render-into-canvas'),
+  __esModule: true,
+  default: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+}));
+
+const mockUseAppPluginInstalled = jest.mocked(useAppPluginInstalled);
+
+function mockPluginInstalled(installedPluginIds: string[] = []) {
+  mockUseAppPluginInstalled.mockImplementation((pluginId: string) => ({
+    loading: false,
+    error: undefined,
+    value: installedPluginIds.includes(pluginId),
+  }));
+}
+
+function getTraceView(frames: DataFrame[], spanFilters?: TraceSearchProps) {
   const store = configureStore();
   const topOfViewRef = createRef<HTMLDivElement>();
 
@@ -26,13 +62,14 @@ function getTraceView(frames: DataFrame[]) {
         datasource={undefined}
         topOfViewRef={topOfViewRef}
         timeRange={mockTimeRange()}
+        spanFilters={spanFilters}
       />
     </Provider>
   );
 }
 
-function renderTraceView(frames = [frameOld]) {
-  const { container, baseElement } = render(getTraceView(frames));
+function renderTraceView(frames = [frameOld], spanFilters?: TraceSearchProps) {
+  const { container, baseElement } = render(getTraceView(frames, spanFilters));
 
   return {
     header: container.children[0],
@@ -47,6 +84,13 @@ function renderTraceViewNew() {
 }
 
 describe('TraceView', () => {
+  beforeEach(() => {
+    mockPluginInstalled();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
   beforeAll(() => {
     setPluginLinksHook(() => ({
       isLoading: false,
@@ -57,12 +101,6 @@ describe('TraceView', () => {
       isLoading: false,
       components: [],
     }));
-
-    setDataSourceSrv({
-      getInstanceSettings() {
-        return undefined;
-      },
-    } as DataSourceSrv);
   });
 
   it('renders TraceTimelineViewer', () => {
@@ -101,6 +139,104 @@ describe('TraceView', () => {
     expect(screen.queryByText(/Span attributes/)).toBeFalsy();
   });
 
+  it('reports opening the detail of a summary span', async () => {
+    renderTraceView([frameSummary]);
+    const summarySpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
+    await userEvent.click(summarySpan);
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_traces_summary_span_detail_opened',
+      expect.objectContaining({ spanCount: 4 })
+    );
+  });
+
+  it('does not report a summary detail open for a normal span', async () => {
+    renderTraceViewNew();
+    const normalSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
+    await userEvent.click(normalSpan);
+    expect(reportInteraction).not.toHaveBeenCalledWith('grafana_traces_summary_span_detail_opened', expect.anything());
+  });
+
+  it('reports toggling the Summary attributes accordion', async () => {
+    renderTraceView([frameSummary]);
+    const summarySpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
+    await userEvent.click(summarySpan);
+    await userEvent.click(screen.getByText(/Summary attributes/));
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_traces_summary_attributes_toggled',
+      expect.objectContaining({ isOpen: true })
+    );
+  });
+
+  describe('Go to span', () => {
+    // client-uuid-3 belongs to the errored span the banner points at, so finding it in a
+    // resource attributes table proves the right span's detail is the one that opened.
+    const bannerSpanIsOpen = () =>
+      screen
+        .getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' })
+        .some((table) => table.innerHTML.includes('client-uuid-3'));
+
+    it('opens the detail of the banner span', async () => {
+      renderTraceView([frameError]);
+      expect(screen.queryByText(/Span attributes/)).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+      expect(screen.getByText(/Span attributes/)).toBeInTheDocument();
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+
+    it('leaves the detail open when clicked again', async () => {
+      renderTraceView([frameError]);
+      const goToSpan = screen.getByRole('button', { name: 'Go to span' });
+
+      await userEvent.click(goToSpan);
+      await userEvent.click(goToSpan);
+
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+
+    it('leaves the detail open when the user already opened it from the timeline', async () => {
+      renderTraceView([frameError]);
+      const erroredSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
+      await userEvent.click(erroredSpan);
+      expect(bannerSpanIsOpen()).toBe(true);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+
+    // "Show all spans" is off exactly when the matches-only filter is on.
+    const matchesOnly = (spanName: string): TraceSearchProps => ({
+      ...DEFAULT_SPAN_FILTERS,
+      matchesOnly: true,
+      adhocFilters: [{ key: SPAN_NAME, operator: '=', value: spanName }],
+    });
+
+    it('turns matches-only off when the banner span is hidden by the filter', async () => {
+      // Only the root span matches, so the errored banner span is filtered out of the timeline.
+      renderTraceView([frameError], matchesOnly('HTTP POST - api_prom_push'));
+      const showAllSpans = screen.getByRole('switch', { name: 'Show all spans' });
+      expect(showAllSpans).not.toBeChecked();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+      expect(showAllSpans).toBeChecked();
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+
+    it('leaves matches-only on when the banner span already matches the filter', async () => {
+      renderTraceView([frameError], matchesOnly('/logproto.Pusher/Push'));
+      const showAllSpans = screen.getByRole('switch', { name: 'Show all spans' });
+      expect(showAllSpans).not.toBeChecked();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+      expect(showAllSpans).not.toBeChecked();
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+  });
+
   it('shows timeline ticks', () => {
     renderTraceViewNew();
     function ticks() {
@@ -112,28 +248,34 @@ describe('TraceView', () => {
 
   it('correctly shows processes for each span', async () => {
     renderTraceView();
-    let table: HTMLElement;
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
 
     const firstSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(firstSpan);
-    await userEvent.click(screen.getByText(/Resource/));
-    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
-    expect(table.innerHTML).toContain('client-uuid-1');
+    // Resource attributes are open by default alongside span attributes
+    expect(
+      screen
+        .getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' })
+        .some((table) => table.innerHTML.includes('client-uuid-1'))
+    ).toBe(true);
     await userEvent.click(firstSpan);
 
     const secondSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[1];
     await userEvent.click(secondSpan);
-    await userEvent.click(screen.getByText(/Resource/));
-    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
-    expect(table.innerHTML).toContain('client-uuid-2');
+    expect(
+      screen
+        .getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' })
+        .some((table) => table.innerHTML.includes('client-uuid-2'))
+    ).toBe(true);
     await userEvent.click(secondSpan);
 
     const thirdSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(thirdSpan);
-    await userEvent.click(screen.getByText(/Resource/));
-    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
-    expect(table.innerHTML).toContain('client-uuid-3');
+    expect(
+      screen
+        .getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' })
+        .some((table) => table.innerHTML.includes('client-uuid-3'))
+    ).toBe(true);
   });
 
   it('resets detail view for new trace with the identical spanID', async () => {
@@ -145,6 +287,50 @@ describe('TraceView', () => {
 
     rerender(getTraceView([frameNew]));
     expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
+  });
+
+  describe('Adaptive Traces restored banner', () => {
+    const restoredBannerTitle = /Trace restored by Adaptive Traces/;
+
+    it('does not render the banner when no span has the restored attribute', async () => {
+      renderTraceView();
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+    });
+
+    it('does not render the banner when grafana-adaptivetraces-app is not installed', async () => {
+      mockPluginInstalled();
+      renderTraceView([frameRestoredByAdaptiveTraces]);
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+    });
+
+    it('renders the banner when at least one span has grafana.adaptivetraces.restored=true', async () => {
+      mockPluginInstalled(['grafana-adaptivetraces-app']);
+      renderTraceView([frameRestoredByAdaptiveTraces]);
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /documentation/ })).toBeInTheDocument();
+    });
+
+    it('hides the banner after the user dismisses it', async () => {
+      mockPluginInstalled(['grafana-adaptivetraces-app']);
+      renderTraceView([frameRestoredByAdaptiveTraces]);
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+    });
+
+    it('shows the banner again after dismiss when navigating directly to a different restored trace', async () => {
+      mockPluginInstalled(['grafana-adaptivetraces-app']);
+      const { rerender } = render(getTraceView([frameRestoredByAdaptiveTraces]));
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+
+      // Navigating straight from one restored trace to another must surface the banner again.
+      rerender(getTraceView([frameRestoredByAdaptiveTracesB]));
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+    });
   });
 });
 
@@ -357,6 +543,96 @@ const frameNew = new MutableDataFrame({
     },
     { name: 'warnings', values: [undefined, undefined] },
     { name: 'stackTraces', values: [undefined, undefined] },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
+
+const restoredResponse: TraceData & { spans: TraceSpanData[] } = {
+  ...response,
+  spans: response.spans.map((span, index) =>
+    index === 0
+      ? {
+          ...span,
+          tags: [...(span.tags ?? []), { key: 'grafana.adaptivetraces.restored', type: 'bool', value: true }],
+        }
+      : span
+  ),
+};
+
+const summaryResponse: TraceData & { spans: TraceSpanData[] } = {
+  ...response,
+  spans: response.spans.map((span, index) =>
+    index === 0
+      ? {
+          ...span,
+          tags: [
+            ...(span.tags ?? []),
+            { key: 'aggregation.is_summary', type: 'bool', value: true },
+            { key: 'aggregation.span_count', type: 'int64', value: 4 },
+          ],
+        }
+      : span
+  ),
+};
+
+// The deepest span carries the error tag, so the header renders a trace banner pointing at it.
+const errorResponse: TraceData & { spans: TraceSpanData[] } = {
+  ...response,
+  spans: response.spans.map((span, index) =>
+    index === 2 ? { ...span, tags: [...(span.tags ?? []), { key: 'error', type: 'bool', value: true }] } : span
+  ),
+};
+
+export const frameError = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [errorResponse],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
+
+const frameSummary = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [summaryResponse],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
+
+const frameRestoredByAdaptiveTraces = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [restoredResponse],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
+
+const restoredResponseB: TraceData & { spans: TraceSpanData[] } = {
+  ...restoredResponse,
+  traceID: '2bc49126597198db',
+  spans: restoredResponse.spans.map((span) => ({ ...span, traceID: '2bc49126597198db' })),
+};
+
+const frameRestoredByAdaptiveTracesB = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [restoredResponseB],
+    },
   ],
   meta: {
     preferredVisualisationType: 'trace',

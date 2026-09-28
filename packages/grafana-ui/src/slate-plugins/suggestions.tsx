@@ -1,7 +1,7 @@
 import { debounce, sortBy } from 'lodash';
 import { type Editor, type Plugin as SlatePlugin } from 'slate-react';
 
-import { Typeahead } from '../components/Typeahead/Typeahead';
+import { Typeahead, type TypeaheadMenu } from '../components/Typeahead/Typeahead';
 import {
   type CompletionItem,
   type SuggestionsState,
@@ -32,7 +32,7 @@ export function SuggestionsPlugin({
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   portalOrigin: string;
 }): SlatePlugin {
-  let typeaheadRef: Typeahead;
+  let typeaheadRef: TypeaheadMenu;
   let state: SuggestionsState = {
     groupedItems: [],
     typeaheadPrefix: '',
@@ -206,7 +206,7 @@ export function SuggestionsPlugin({
         <>
           {children}
           <Typeahead
-            menuRef={(menu: Typeahead) => (typeaheadRef = menu)}
+            menuRef={(menu) => (typeaheadRef = menu)}
             origin={portalOrigin}
             prefix={state.typeaheadPrefix}
             isOpen={!!state.groupedItems.length}

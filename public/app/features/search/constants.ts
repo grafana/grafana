@@ -31,3 +31,5 @@ export const RECENTLY_DELETED_SORT_VALUES = [
 ] as const;
 
 export const TEAM_FOLDERS_UID = 'teamfolders';
+
+export const STARRED_FOLDERS_UID = 'starred_folders';

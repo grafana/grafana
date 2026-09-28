@@ -21,7 +21,7 @@ import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { type MediaType, type ResourceFolderName, ResourcePickerSize } from '../types';
 
-import { ResourcePickerPopover } from './ResourcePickerPopover';
+import { ResourcePickerPopover } from './ResourcePickerPopoverLazy';
 
 interface Props {
   onChange: (value?: string) => void;
@@ -144,7 +144,9 @@ export const ResourcePicker = (props: Props) => {
 
 // strip the SVG off icons in the icons folder
 function getDisplayName(src?: string, name?: string): string | undefined {
-  if (src?.startsWith('public/build/img/icons')) {
+  // `src` is a resolved URL, so match on the folder rather than on a build directory that
+  // varies by bundler and CDN.
+  if (src?.includes('img/icons/')) {
     const idx = name?.lastIndexOf('.svg') ?? 0;
     if (idx > 0) {
       return name!.substring(0, idx);

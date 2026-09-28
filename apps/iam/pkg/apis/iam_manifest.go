@@ -72,12 +72,88 @@ var appManifestData = app.ManifestData{
 						"spec.email",
 						"spec.login",
 					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "email",
+							Path:         "spec.email",
+							Type:         "string",
+							Capabilities: []string{"filter", "sort", "retrieve"},
+							Description:  "The email address of the user",
+						},
+						{
+							Name:         "login",
+							Path:         "spec.login",
+							Type:         "string",
+							Capabilities: []string{"filter", "sort", "retrieve"},
+							Description:  "The login of the user",
+						},
+						{
+							Name:             "lastSeenAt",
+							Path:             "status.lastSeenAt",
+							Type:             "int64",
+							Capabilities:     []string{"sort", "retrieve"},
+							EmitZeroIfAbsent: true,
+							Description:      "The last seen timestamp of the user",
+						},
+						{
+							Name:         "role",
+							Path:         "spec.role",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The role of the user",
+						},
+						{
+							Name:             "disabled",
+							Path:             "spec.disabled",
+							Type:             "boolean",
+							Capabilities:     []string{"filter", "retrieve"},
+							EmitZeroIfAbsent: true,
+							Description:      "Whether the user is disabled",
+						},
+						{
+							Name:         "externalAuthModules",
+							Path:         "spec.externalAuthInfo[*].module",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"retrieve"},
+							Description:  "Auth module identifiers the user is externally synced with",
+						},
+					},
 					Routes: map[string]spec3.PathProps{
 						"/teams": {
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
 
 									OperationId: "getUserTeams",
+
+									Parameters: []*spec3.Parameter{
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:     "continue",
+												In:       "query",
+												Required: true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:     "limit",
+												In:       "query",
+												Required: true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"integer"},
+													},
+												},
+											},
+										},
+									},
 
 									Responses: &spec3.Responses{
 										ResponsesProps: spec3.ResponsesProps{
@@ -171,6 +247,45 @@ var appManifestData = app.ManifestData{
 					Plural:     "Teams",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "email",
+							Path:         "spec.email",
+							Type:         "string",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Email of the team",
+						},
+						{
+							Name:         "provisioned",
+							Path:         "spec.provisioned",
+							Type:         "boolean",
+							Capabilities: []string{"retrieve"},
+							Description:  "Whether the team is provisioned",
+						},
+						{
+							Name:         "externalUID",
+							Path:         "spec.externalUID",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "External UID of the team",
+						},
+						{
+							Name:         "members",
+							Path:         "spec.members[*].name",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "UIDs of users that are members of the team",
+						},
+						{
+							Name:         "externalGroups",
+							Path:         "spec.externalGroups",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "External group identifiers mapped to the team",
+						},
+					},
 					Routes: map[string]spec3.PathProps{
 						"/addmember": {
 							Post: &spec3.Operation{
@@ -484,6 +599,33 @@ var appManifestData = app.ManifestData{
 						"spec.subject.name",
 						"spec.external",
 					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "subject",
+							Path:         "spec.subject.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+						},
+						{
+							Name:         "team",
+							Path:         "spec.teamRef.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+						},
+						{
+							Name:         "permission",
+							Path:         "spec.permission",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+						},
+						{
+							Name:             "external",
+							Path:             "spec.external",
+							Type:             "boolean",
+							Capabilities:     []string{"retrieve"},
+							EmitZeroIfAbsent: true,
+						},
+					},
 				},
 
 				{
@@ -491,6 +633,71 @@ var appManifestData = app.ManifestData{
 					Plural:     "TeamLBACRules",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Routes: map[string]spec3.PathProps{
+						"/for-subject/{type}/{uid}": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "getTeamLBACRulesForSubjectRoute",
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																			"team_filters": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"object"},
+																					AdditionalProperties: &spec.SchemaOrBool{
+																						Schema: &spec.Schema{
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"array"},
+																								Items: &spec.SchemaOrArray{
+																									Schema: &spec.Schema{
+																										SchemaProps: spec.SchemaProps{
+																											Type: []string{"string"},
+																										}},
+																								},
+																							},
+																						},
+																					},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"team_filters",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+					},
 				},
 
 				{
@@ -789,6 +996,64 @@ var appManifestData = app.ManifestData{
 					SelectableFields: []string{
 						"spec.teamRef.name",
 						"spec.externalGroupId",
+					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "team",
+							Path:         "spec.teamRef.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The team name associated with the external group mapping",
+						},
+						{
+							Name:         "external_group",
+							Path:         "spec.externalGroupId",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The external group name/id associated with the external group mapping",
+						},
+					},
+				},
+
+				{
+					Kind:       "AuthInfo",
+					Plural:     "AuthInfos",
+					Scope:      "Namespaced",
+					Conversion: false,
+					SelectableFields: []string{
+						"spec.userRef.name",
+						"spec.authModule",
+						"spec.authID",
+					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "user",
+							Path:         "spec.userRef.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The UID of the user this auth link belongs to",
+						},
+						{
+							Name:         "authModule",
+							Path:         "spec.authModule",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The external auth provider the user is linked through",
+						},
+						{
+							Name:         "authID",
+							Path:         "spec.authID",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The identifier the auth provider returns at login",
+						},
+						{
+							Name:         "externalUID",
+							Path:         "spec.externalUID",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The external unique identifier of the user",
+						},
 					},
 				},
 			},
@@ -1250,6 +1515,18 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"externalAuthModules": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Auth module identifiers the user is externally synced with.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
 								"internalId": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"integer"},
@@ -1339,6 +1616,7 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"TeamLBACRule/v0alpha1":         v0alpha1.TeamLBACRuleKind(),
 	"ServiceAccount/v0alpha1":       v0alpha1.ServiceAccountKind(),
 	"ExternalGroupMapping/v0alpha1": v0alpha1.ExternalGroupMappingKind(),
+	"AuthInfo/v0alpha1":             v0alpha1.AuthInfoKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
@@ -1358,6 +1636,8 @@ var customRouteToGoResponseType = map[string]any{
 	"v0alpha1|Team|members|GET": v0alpha1.GetTeamMembersResponse{},
 
 	"v0alpha1|Team|removemember|POST": v0alpha1.DeleteTeamMemberResponse{},
+
+	"v0alpha1|TeamLBACRule|for-subject/{type}/{uid}|GET": v0alpha1.GetTeamLBACRulesForSubjectRouteResponse{},
 
 	"v0alpha1|ServiceAccount|tokens|GET":  v0alpha1.ListServiceAccountTokensResponse{},
 	"v0alpha1|ServiceAccount|tokens|POST": v0alpha1.CreateServiceAccountTokenResponse{},
@@ -1383,6 +1663,7 @@ func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (g
 }
 
 var customRouteToGoParamsType = map[string]runtime.Object{
+	"v0alpha1|User|teams|GET": &v0alpha1.GetUserTeamsRequestParamsObject{},
 
 	"v0alpha1|ServiceAccount|tokens|GET": &v0alpha1.ListServiceAccountTokensRequestParamsObject{},
 }

@@ -43,11 +43,11 @@ func SetLegacyID(obj metav1.Object, id int64) {
 	obj.SetLabels(labels)
 }
 
-// getLegacyData reads the grafana.app/legacyData annotation from the object.
+// GetLegacyData reads the grafana.app/legacyData annotation from the object.
 // The boolean reports whether the annotation was present, letting callers
 // distinguish an omitted value (preserve existing) from an explicit empty
 // value (clear) — mirroring the legacy API's omitted-vs-null data semantics.
-func getLegacyData(obj metav1.Object) (string, bool) {
+func GetLegacyData(obj metav1.Object) (string, bool) {
 	annotations := obj.GetAnnotations()
 	if annotations == nil {
 		return "", false
@@ -56,10 +56,10 @@ func getLegacyData(obj metav1.Object) (string, bool) {
 	return v, ok
 }
 
-// setLegacyData writes the given data string to the grafana.app/legacyData
+// SetLegacyData writes the given data string to the grafana.app/legacyData
 // annotation on the object. An empty string is written verbatim so callers can
 // signal an explicit clear.
-func setLegacyData(obj metav1.Object, data string) {
+func SetLegacyData(obj metav1.Object, data string) {
 	annotations := obj.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string, 1)

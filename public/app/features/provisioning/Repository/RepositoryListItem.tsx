@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
@@ -16,7 +17,7 @@ import { exportResourceAsJson } from '../utils/export';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
-import { getKindInfoByStatGroup, getRepositoryRoute } from '../utils/resourceKinds';
+import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 import { getProvisionedFromFileTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -70,7 +71,7 @@ export function RepositoryListItem({ repository }: Props) {
   return (
     <Card noMargin key={name} className={styles.card}>
       <Card.Figure className={styles.figure}>
-        <RepoIcon type={spec?.type} />
+        <RepoIcon type={spec?.type} autoHeight />
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center" wrap>
@@ -87,7 +88,7 @@ export function RepositoryListItem({ repository }: Props) {
           {status?.stats?.length && (
             <Stack gap={1} direction="row" wrap>
               {status.stats.map((stat, index) => {
-                const info = getKindInfoByStatGroup(stat.group);
+                const info = getKindInfoByStat(stat);
                 const icon = info?.icon ?? 'file-alt';
                 const label = `${stat.count} ${stat.resource}`;
                 // Known kinds link to where the repository's resources live; unknown
@@ -113,7 +114,13 @@ export function RepositoryListItem({ repository }: Props) {
 
       <Card.Actions>
         <Stack gap={1} direction="row">
-          <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="primary" size="md">
+          <LinkButton
+            icon="eye"
+            href={`${PROVISIONING_URL}/${name}`}
+            variant="primary"
+            size="md"
+            data-testid={selectors.pages.Provisioning.RepositoryList.viewLink(name)}
+          >
             <Trans i18nKey="provisioning.repository-card.view">View</Trans>
           </LinkButton>
           <SyncRepository repository={repository} />

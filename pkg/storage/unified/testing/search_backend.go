@@ -63,7 +63,7 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 	require.Nil(t, index)
 
 	// Build the index
-	index, err := backend.BuildIndex(ctx, ns, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, ns, 0, "test", func(index resource.ResourceIndex) (int64, error) {
 		// Write a test document
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
@@ -111,7 +111,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 	const resourceVersion = 23
 
 	// Build initial index with some test documents
-	index, err := backend.BuildIndex(ctx, ns, 3, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, ns, 3, "test", func(index resource.ResourceIndex) (int64, error) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
@@ -276,7 +276,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		const newResourceVersion = 444
 
 		// Build index with dashboards that have LibraryPanel references
-		index, err := backend.BuildIndex(ctx, ns, 3, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+		index, err := backend.BuildIndex(ctx, ns, 3, "test", func(index resource.ResourceIndex) (int64, error) {
 			err := index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
-import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { Input, usePanelContext, useStyles2 } from '@grafana/ui';
 import { type DimensionContext } from 'app/features/dimensions/context';

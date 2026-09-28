@@ -84,8 +84,7 @@ image_maps:
 Custom branding enables you to replace the Grafana Labs brand and logo with your corporate brand and logo.
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team. For Cloud customers, please provide custom elements and logos to our Support team. We will help you host your images and update your custom branding.
-
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and Grafana Cloud paid accounts. Grafana Cloud Free plans support login title and footer link customization only. For Cloud users, click **Open a Support Ticket** from the Cloud Portal to create a ticket to configure custom branding.
 {{< /admonition >}}
 
 The `grafana.ini` file includes Grafana Enterprise custom branding. As with all configuration options, you can use environment variables to set custom branding.

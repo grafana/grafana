@@ -65,7 +65,7 @@ See note in the [introduction](#data-source-permissions-api) for an explanation.
 GET /api/access-control/datasources/my_datasource HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example request (with `ds_type` when the UID is not unique):**
@@ -74,7 +74,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 GET /api/access-control/datasources/my_datasource?ds_type=prometheus HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**
@@ -171,7 +171,7 @@ See note in the [introduction](#data-source-permissions-api) for an explanation.
 POST /api/access-control/datasources/my_datasource/users/1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "permission": "Query",
@@ -196,7 +196,7 @@ Content-Length: 35
 POST /api/access-control/datasources/my_datasource/users/1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "permission": "",
@@ -249,7 +249,7 @@ See note in the [introduction](#data-source-permissions-api) for an explanation.
 POST /api/access-control/datasources/my_datasource/teams/1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "permission": "Edit",
@@ -272,7 +272,7 @@ Content-Length: 35
 POST /api/access-control/datasources/my_datasource/teams/1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "permission": "",
@@ -325,7 +325,7 @@ See note in the [introduction](#data-source-permissions-api) for an explanation.
 POST /api/access-control/datasources/my_datasource/builtInRoles/Admin
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "permission": "Edit",
@@ -348,7 +348,7 @@ Content-Length: 35
 POST /api/access-control/datasources/my_datasource/builtInRoles/Viewer
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "permission": "",

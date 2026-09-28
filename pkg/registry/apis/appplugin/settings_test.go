@@ -127,6 +127,28 @@ func TestSettingsCreate(t *testing.T) {
 	require.True(t, settings.Spec.Pinned)
 }
 
+func TestSettingsCreate_DryRunDoesNotPersist(t *testing.T) {
+	plugins := map[string]*pluginsettings.DTO{}
+	storage := newTestStorage(plugins)
+
+	ctx := request.WithNamespace(context.Background(), "default")
+	input := &apppluginV0.Settings{
+		ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
+		Spec: apppluginV0.SettingsSpec{
+			Enabled: true,
+			Pinned:  true,
+		},
+	}
+
+	obj, err := storage.Create(ctx, input, nil, &metav1.CreateOptions{DryRun: []string{metav1.DryRunAll}})
+	require.NoError(t, err)
+
+	settings := obj.(*apppluginV0.Settings)
+	require.True(t, settings.Spec.Enabled)
+	require.True(t, settings.Spec.Pinned)
+	require.Empty(t, plugins)
+}
+
 func TestSettingsCreate_WithValidation(t *testing.T) {
 	storage := newTestStorage(map[string]*pluginsettings.DTO{})
 
@@ -174,6 +196,40 @@ func TestSettingsUpdate(t *testing.T) {
 	settings := obj.(*apppluginV0.Settings)
 	require.False(t, settings.Spec.Enabled)
 	require.True(t, settings.Spec.Pinned)
+}
+
+func TestSettingsUpdate_DryRunDoesNotPersist(t *testing.T) {
+	plugins := map[string]*pluginsettings.DTO{
+		"test-app": {
+			PluginID: "test-app",
+			OrgID:    1,
+			Enabled:  true,
+			Pinned:   false,
+		},
+	}
+	storage := newTestStorage(plugins)
+
+	ctx := request.WithNamespace(context.Background(), "default")
+
+	updater := rest.DefaultUpdatedObjectInfo(
+		&apppluginV0.Settings{
+			ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
+			Spec: apppluginV0.SettingsSpec{
+				Enabled: false,
+				Pinned:  true,
+			},
+		},
+	)
+
+	obj, created, err := storage.Update(ctx, "instance", updater, nil, nil, false, &metav1.UpdateOptions{DryRun: []string{metav1.DryRunAll}})
+	require.NoError(t, err)
+	require.False(t, created)
+
+	settings := obj.(*apppluginV0.Settings)
+	require.False(t, settings.Spec.Enabled)
+	require.True(t, settings.Spec.Pinned)
+	require.True(t, plugins["test-app"].Enabled)
+	require.False(t, plugins["test-app"].Pinned)
 }
 
 func TestSettingsDelete_Noop(t *testing.T) {

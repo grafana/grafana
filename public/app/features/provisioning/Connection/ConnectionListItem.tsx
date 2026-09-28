@@ -1,5 +1,5 @@
 import { textUtil } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -7,6 +7,7 @@ import { RepoIcon } from '../Shared/RepoIcon';
 import { type RepoType } from '../Wizard/types';
 import { ManagedBadge } from '../components/ManagedBadge';
 import { CONNECTIONS_URL } from '../constants';
+import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { exportResourceAsJson } from '../utils/export';
 import { getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
 
@@ -24,13 +25,16 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
   const title = spec?.title || name;
   const description = spec?.description;
   const url = spec?.url;
-  const providerType: RepoType = spec?.type ?? 'github';
+  const providerType: RepoType = connectionProviderType(spec?.type) ?? 'github';
+  const kindLabel = isOAuthConnectionType(spec?.type)
+    ? t('provisioning.connections.kind-oauth-app', 'OAuth App')
+    : t('provisioning.connections.kind-github-app', 'GitHub App');
   // File-provisioned connections are managed from disk and read-only in the UI.
   const isProvisioned = isManagedResourceReadOnly(connection);
   return (
     <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>
-        <RepoIcon type={providerType} />
+        <RepoIcon type={providerType} autoHeight />
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">
@@ -40,18 +44,17 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
         </Stack>
       </Card.Heading>
 
-      {(description || url) && (
-        <Card.Meta>
-          <Stack direction="column">
-            {description && <Text color="secondary">{description}</Text>}
-            {url && (
-              <TextLink external href={textUtil.sanitizeUrl(url)}>
-                {url}
-              </TextLink>
-            )}
-          </Stack>
-        </Card.Meta>
-      )}
+      <Card.Meta>
+        <Stack direction="column">
+          <Text color="secondary">{kindLabel}</Text>
+          {description && <Text color="secondary">{description}</Text>}
+          {url && (
+            <TextLink external href={textUtil.sanitizeUrl(url)}>
+              {url}
+            </TextLink>
+          )}
+        </Stack>
+      </Card.Meta>
 
       {!onClick && (
         <Card.Actions>

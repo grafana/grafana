@@ -85,6 +85,8 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 			return
 		}
 
+		backend.Logger.Debug("[mt-debug] subResourceREST.Connect", "userIsNil", pluginCtx.User == nil, "path", clonedReq.URL.Path)
+
 		err = r.client.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,
 			Path:          clonedReq.URL.Path,

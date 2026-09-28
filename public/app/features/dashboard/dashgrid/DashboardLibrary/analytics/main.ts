@@ -3,10 +3,12 @@ import { defineFeatureEvents } from '@grafana/runtime/unstable';
 import { isTemplateDashboardAssistantEnabled } from '../utils/assistantHelpers';
 
 import {
+  type DropdownMenuClickedProperties,
   type CompatibilityCheckCompletedProperties,
   type CompatibilityCheckTriggeredProperties,
   type CreateFromScratchClickedProperties,
   type EntryPointClickedProperties,
+  type FiltersAppliedProperties,
   type ItemClickedProperties,
   type LoadedProperties,
   type MappingFormCompletedProperties,
@@ -48,6 +50,8 @@ export const NewDashboardLibraryInteractions = {
   compatibilityCheckCompleted: newDashboardLibraryInteraction<CompatibilityCheckCompletedProperties>(
     'compatibility_check_completed'
   ),
+  /** Fired when the user changes a filter (tags / creators / sort) in a library view. */
+  filtersApplied: newDashboardLibraryInteraction<FiltersAppliedProperties>('filters_applied'),
 };
 
 /**
@@ -65,4 +69,6 @@ export const NewTemplateDashboardInteractions = {
     const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
     NewDashboardLibraryInteractions.itemClicked({ ...properties, isDashboardTemplatesAssistantEnabled });
   },
+  /** Fired when the user clicks the dropdown menu on a custom template card. */
+  dropdownMenuClicked: newDashboardLibraryInteraction<DropdownMenuClickedProperties>('dropdown_menu_clicked'),
 };

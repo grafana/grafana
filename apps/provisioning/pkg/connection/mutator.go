@@ -12,7 +12,9 @@ import (
 	"github.com/google/uuid"
 	"k8s.io/apiserver/pkg/admission"
 
+	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // AdmissionMutator handles mutation for Connection resources
@@ -29,6 +31,10 @@ func NewAdmissionMutator(factory Factory) *AdmissionMutator {
 
 // Mutate applies mutations to Connection resources
 func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)mutate
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
@@ -42,6 +48,12 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	namePrefix := fmt.Sprintf("%s-", c.Spec.Type)
 	if a.GetOperation() == admission.Create && c.GetName() == "" {
 		c.SetName(cmp.Or(c.GetGenerateName(), namePrefix) + generateShortUID())
+	}
+
+	if a.GetOperation() == admission.Update {
+		if old, ok := a.GetOldObject().(*provisioning.Connection); ok && oauthAppChanged(c, old) {
+			c.Secure.Token = common.InlineSecureValue{Remove: true}
+		}
 	}
 
 	return m.factory.Mutate(ctx, c)
@@ -62,6 +74,34 @@ func CopySecureValues(new, old *provisioning.Connection) {
 	if new.Secure.ClientSecret.IsZero() {
 		new.Secure.ClientSecret = old.Secure.ClientSecret
 	}
+}
+
+// oauthAppChanged reports whether an update changes the OAuth app the
+// stored token was minted by: its credentials or the provider it lives on
+// (type and, for self-hosted providers, URL). The token is removed in that
+// case: it belongs to the previous app and the user must authorize again.
+func oauthAppChanged(new, old *provisioning.Connection) bool {
+	if new.Spec.OAuth == nil && old.Spec.OAuth == nil {
+		return false
+	}
+	if new.Spec.OAuth == nil || old.Spec.OAuth == nil {
+		return true
+	}
+	if new.Spec.Type != old.Spec.Type || new.Spec.URL != old.Spec.URL || new.Spec.OAuth.ClientID != old.Spec.OAuth.ClientID {
+		return true
+	}
+	if githubEnterpriseServerURL(new) != githubEnterpriseServerURL(old) {
+		return true
+	}
+	return !new.Secure.ClientSecret.Create.IsZero() ||
+		(new.Secure.ClientSecret.Name != "" && new.Secure.ClientSecret.Name != old.Secure.ClientSecret.Name)
+}
+
+func githubEnterpriseServerURL(c *provisioning.Connection) string {
+	if c.Spec.GitHubEnterpriseOAuth == nil {
+		return ""
+	}
+	return c.Spec.GitHubEnterpriseOAuth.ServerURL
 }
 
 /*

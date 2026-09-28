@@ -3,7 +3,13 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"iter"
 	"os"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -13,6 +19,7 @@ import (
 	"go.uber.org/goleak"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -228,24 +235,46 @@ func testEventStoreSaveGet(t *testing.T, ctx context.Context, store *eventStore)
 		PreviousRV:      999,
 	}
 
-	// Save the event
-	err := store.Save(ctx, event)
-	require.NoError(t, err)
+	for _, tc := range []struct {
+		name           string
+		previousRV     int64
+		previousAction kv.DataAction
+		previousFolder string
+	}{
+		{name: "no previous revision"},
+		{name: "legacy event", previousRV: 999},
+		{name: "bulk exclusion", previousRV: -1},
+		{name: "empty previous folder", previousRV: 999, previousAction: DataActionCreated},
+		{name: "previous folder", previousRV: 999, previousAction: DataActionUpdated, previousFolder: "old-folder"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			event.PreviousRV = tc.previousRV
+			event.PreviousAction = tc.previousAction
+			event.PreviousFolder = tc.previousFolder
+			require.NoError(t, store.Save(ctx, event))
 
-	// Get the event back
-	eventKey := EventKey{
-		Namespace:       event.Namespace,
-		Group:           event.Group,
-		Resource:        event.Resource,
-		Name:            event.Name,
-		ResourceVersion: event.ResourceVersion,
-		Action:          event.Action,
-		Folder:          event.Folder,
+			eventKey := EventKey{
+				Namespace:       event.Namespace,
+				Group:           event.Group,
+				Resource:        event.Resource,
+				Name:            event.Name,
+				ResourceVersion: event.ResourceVersion,
+				Action:          event.Action,
+				Folder:          event.Folder,
+			}
+
+			retrievedEvent, err := store.Get(ctx, eventKey)
+			require.NoError(t, err)
+			assert.Equal(t, event, retrievedEvent)
+
+			var listed []Event
+			for listedEvent, err := range store.ListSince(ctx, 0) {
+				require.NoError(t, err)
+				listed = append(listed, listedEvent)
+			}
+			require.Equal(t, []Event{event}, listed)
+		})
 	}
-
-	retrievedEvent, err := store.Get(ctx, eventKey)
-	require.NoError(t, err)
-	assert.Equal(t, event, retrievedEvent)
 }
 
 func TestIntegrationEventStore_Get_NotFound(t *testing.T) {
@@ -455,7 +484,7 @@ func testEventStoreListSince(t *testing.T, ctx context.Context, store *eventStor
 
 	// List events since RV 1500 (should get events with RV 2000 and 3000)
 	retrievedEvents := make([]Event, 0, 2)
-	for event, err := range store.ListSince(ctx, 1500, SortOrderAsc) {
+	for event, err := range store.ListSince(ctx, 1500) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
 	}
@@ -479,7 +508,7 @@ func testEventStoreListSinceEmpty(t *testing.T, ctx context.Context, store *even
 	testutil.SkipIntegrationTestInShortMode(t)
 	// List events when store is empty
 	retrievedEvents := make([]Event, 0) //nolint:prealloc
-	for event, err := range store.ListSince(ctx, 0, SortOrderAsc) {
+	for event, err := range store.ListSince(ctx, 0) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
 	}
@@ -487,28 +516,485 @@ func testEventStoreListSinceEmpty(t *testing.T, ctx context.Context, store *even
 	assert.Empty(t, retrievedEvents)
 }
 
-func TestEvent_JSONSerialization(t *testing.T) {
-	event := Event{
-		Namespace:       "default",
-		Group:           "apps",
-		Resource:        "resource",
-		Name:            "test-resource",
-		ResourceVersion: 1000,
-		Action:          DataActionCreated,
-		Folder:          "test-folder",
-		PreviousRV:      999,
+func TestIntegrationEventStore_ListSince_Pages(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreListSincePages)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreListSincePages)
+}
+
+func testEventStoreListSincePages(t *testing.T, ctx context.Context, store *eventStore) {
+	events := eventStoreTestEvents(623)
+	for _, event := range slices.Backward(events) {
+		require.NoError(t, store.Save(ctx, event))
 	}
 
-	// Serialize to JSON
-	data, err := json.Marshal(event)
-	require.NoError(t, err)
+	for _, since := range []int64{0, 1000, 1016, 1166, 1207, 1208} {
+		t.Run(fmt.Sprintf("since=%d", since), func(t *testing.T) {
+			probe := &eventStoreKVProbe{KV: store.kv, t: t}
+			var expected []Event
+			for _, event := range events {
+				if event.ResourceVersion >= since {
+					expected = append(expected, event)
+				}
+			}
+			var actual []Event
+			for event, err := range newEventStore(probe).ListSince(ctx, since) {
+				require.NoError(t, err)
+				probe.assertClosed()
+				actual = append(actual, event)
+			}
+			require.Equal(t, expected, actual)
+			require.Zero(t, probe.gets)
+			require.Len(t, probe.batches, (len(expected)+49)/50)
+			require.Len(t, probe.scans, len(expected)/500+1)
+			for i, batch := range probe.batches {
+				require.Len(t, batch, min(50, len(expected)-i*50))
+			}
+			for i, scan := range probe.scans {
+				require.Equal(t, SortOrderAsc, scan.Sort)
+				require.Equal(t, int64(500), scan.Limit)
+				if i == 0 {
+					require.Equal(t, fmt.Sprint(since), scan.StartKey)
+				} else {
+					cursor := eventStoreTestKey(expected[i*500-1])
+					require.Equal(t, PrefixRangeEnd(cursor), scan.StartKey)
+				}
+			}
+			probe.assertClosed()
+		})
+	}
+}
 
-	// Deserialize from JSON
-	var deserializedEvent Event
-	err = json.Unmarshal(data, &deserializedEvent)
-	require.NoError(t, err)
+func TestIntegrationEventStore_ListSince_PageBoundaries(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, count := range []int{0, 1, 49, 50, 51, 100, 101, 123, 499, 500, 501} {
+		t.Run(fmt.Sprint(count), func(t *testing.T) {
+			test := func(t *testing.T, ctx context.Context, store *eventStore) {
+				events := eventStoreTestEvents(count)
+				for _, event := range events {
+					require.NoError(t, store.Save(ctx, event))
+				}
+				probe := &eventStoreKVProbe{KV: store.kv, t: t}
+				actual := make([]Event, 0, count)
+				for event, err := range newEventStore(probe).ListSince(ctx, 0) {
+					require.NoError(t, err)
+					probe.assertClosed()
+					actual = append(actual, event)
+				}
+				require.Equal(t, events, actual)
+				require.Len(t, probe.batches, (count+49)/50)
+				require.Len(t, probe.scans, count/500+1)
+				require.Zero(t, probe.gets)
+			}
+			runEventStoreTestWith(t, "badger", setupTestEventStore, test)
+			runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, test)
+		})
+	}
+}
 
-	assert.Equal(t, event, deserializedEvent)
+func TestIntegrationEventStore_ListSince_Stop(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, tc := range []struct {
+		mode  string
+		count int
+	}{
+		{mode: "early stop", count: 1},
+		{mode: "stop at batch boundary", count: 50},
+		{mode: "stop at page boundary", count: 500},
+		{mode: "cancel and stop", count: 1},
+		{mode: "deleted cursor", count: 623},
+	} {
+		t.Run(tc.mode, func(t *testing.T) {
+			test := func(t *testing.T, ctx context.Context, store *eventStore) {
+				ctx, cancel := context.WithCancel(ctx)
+				defer cancel()
+				events := eventStoreTestEvents(623)
+				for _, event := range events {
+					require.NoError(t, store.Save(ctx, event))
+				}
+				probe := &eventStoreKVProbe{KV: store.kv, t: t}
+				var actual []Event
+				for event, err := range newEventStore(probe).ListSince(ctx, 0) {
+					probe.assertClosed()
+					require.NoError(t, err)
+					actual = append(actual, event)
+					if tc.mode == "cancel and stop" {
+						cancel()
+					}
+					if tc.mode == "deleted cursor" && len(actual) == 500 {
+						key := eventStoreTestKey(event)
+						require.NoError(t, store.kv.Delete(ctx, eventsSection, key))
+					}
+					if tc.mode != "deleted cursor" && len(actual) == tc.count {
+						break
+					}
+				}
+				probe.assertClosed()
+				require.Equal(t, events[:tc.count], actual)
+				require.Len(t, probe.scans, (tc.count+499)/500)
+				require.Len(t, probe.batches, (tc.count+49)/50)
+			}
+			runEventStoreTestWith(t, "badger", setupTestEventStore, test)
+			runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, test)
+		})
+	}
+}
+
+func TestIntegrationEventStore_ListSince_MissingRecords(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, mode := range []string{"partial batches", "first batch", "first key page", "all records"} {
+		t.Run(mode, func(t *testing.T) {
+			test := func(t *testing.T, ctx context.Context, store *eventStore) {
+				events := eventStoreTestEvents(623)
+				partial := make(map[string]bool)
+				for i, event := range events {
+					require.NoError(t, store.Save(ctx, event))
+					partial[eventStoreTestKey(event)] = i%3 == 0
+				}
+				removed := make(map[string]bool)
+				probe := &eventStoreKVProbe{KV: store.kv, t: t}
+				probe.batch = func(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+					for _, key := range keys {
+						if mode == "all records" ||
+							(mode == "first batch" && len(probe.batches) == 1) ||
+							(mode == "first key page" && len(probe.batches) <= 10) ||
+							(mode == "partial batches" && partial[key]) {
+							// Delete after enumeration to exercise successful BatchGet omissions.
+							require.NoError(t, store.kv.Delete(ctx, section, key))
+							removed[key] = true
+						}
+					}
+					return store.kv.BatchGet(ctx, section, keys)
+				}
+				actual := make([]Event, 0, len(events))
+				for event, err := range newEventStore(probe).ListSince(ctx, 0) {
+					require.NoError(t, err)
+					probe.assertClosed()
+					actual = append(actual, event)
+				}
+				expected := make([]Event, 0, len(events))
+				for _, event := range events {
+					if !removed[eventStoreTestKey(event)] {
+						expected = append(expected, event)
+					}
+				}
+				require.Equal(t, expected, actual)
+				require.Len(t, probe.scans, 2)
+				require.Len(t, probe.batches, 13)
+				require.Zero(t, probe.gets)
+				probe.assertClosed()
+			}
+			runEventStoreTestWith(t, "badger", setupTestEventStore, test)
+			runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, test)
+		})
+	}
+}
+
+func TestIntegrationEventStore_ListSince_Failures(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	backendErr := errors.New("backend unavailable")
+	for _, mode := range []string{
+		"keys error", "batch error", "late batch error", "batch not found", "batch timeout",
+		"unexpected key", "wrong identity", "wrong RV", "invalid action", "invalid JSON", "reader error",
+		"cancel before scan", "cancel keys", "cancel batch", "cancel reader",
+	} {
+		t.Run(mode, func(t *testing.T) {
+			test := func(t *testing.T, ctx context.Context, store *eventStore) {
+				ctx, cancel := context.WithCancel(ctx)
+				defer cancel()
+				events := eventStoreTestEvents(2)
+				for _, event := range events {
+					require.NoError(t, store.Save(ctx, event))
+				}
+				probe := &eventStoreKVProbe{KV: store.kv, t: t}
+				probe.keys = func(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
+					return func(yield func(string, error) bool) {
+						for key, err := range store.kv.Keys(ctx, section, opts) {
+							if !yield(key, err) {
+								return
+							}
+							if mode == "keys error" {
+								yield("", backendErr)
+								return
+							}
+							if mode == "cancel keys" {
+								cancel()
+								return
+							}
+						}
+					}
+				}
+				probe.batch = func(context.Context, string, []string) iter.Seq2[kv.KeyValue, error] {
+					return eventStoreFailureBatch(t, mode, events, cancel, backendErr)
+				}
+				if mode == "cancel before scan" {
+					cancel()
+				}
+				failures := 0
+				for event, err := range newEventStore(probe).ListSince(ctx, 0) {
+					probe.assertClosed()
+					require.Error(t, err)
+					require.Equal(t, Event{}, event)
+					switch mode {
+					case "keys error", "batch error", "late batch error", "reader error":
+						require.ErrorIs(t, err, backendErr)
+					case "batch not found":
+						require.ErrorIs(t, err, ErrNotFound)
+					case "batch timeout":
+						require.ErrorIs(t, err, context.DeadlineExceeded)
+					default:
+						require.NotErrorIs(t, err, ErrNotFound)
+						if strings.HasPrefix(mode, "cancel") {
+							require.ErrorIs(t, err, context.Canceled)
+						}
+					}
+					failures++
+				}
+				require.Equal(t, 1, failures)
+				if mode == "cancel before scan" {
+					require.Empty(t, probe.scans)
+				}
+				if mode == "cancel before scan" || mode == "cancel keys" || mode == "keys error" {
+					require.Empty(t, probe.batches)
+				}
+				probe.assertClosed()
+				require.Zero(t, probe.gets)
+			}
+			runEventStoreTestWith(t, "badger", setupTestEventStore, test)
+			runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, test)
+		})
+	}
+}
+
+func eventStoreFailureBatch(t *testing.T, mode string, events []Event, cancel context.CancelFunc, backendErr error) iter.Seq2[kv.KeyValue, error] {
+	t.Helper()
+	return func(yield func(kv.KeyValue, error) bool) {
+		switch mode {
+		case "batch error":
+			yield(kv.KeyValue{Value: io.NopCloser(strings.NewReader(""))}, backendErr)
+			return
+		case "batch not found":
+			yield(kv.KeyValue{}, ErrNotFound)
+			return
+		case "batch timeout":
+			yield(kv.KeyValue{}, context.DeadlineExceeded)
+			return
+		case "cancel batch":
+			cancel()
+			return
+		}
+		for _, event := range events {
+			key := eventStoreTestKey(event)
+			switch mode {
+			case "unexpected key":
+				key = "unexpected"
+			case "wrong identity":
+				event.Name = "wrong"
+			case "wrong RV":
+				event.ResourceVersion++
+			case "invalid action":
+				event.Action = "invalid"
+			}
+			data, err := json.Marshal(event)
+			require.NoError(t, err)
+			var reader io.Reader = strings.NewReader(string(data))
+			switch mode {
+			case "invalid JSON":
+				reader = strings.NewReader("{")
+			case "reader error":
+				reader = eventStoreErrorReader{err: backendErr}
+			case "cancel reader":
+				reader = eventStoreErrorReader{err: context.Canceled, cancel: cancel}
+			}
+			if !yield(kv.KeyValue{Key: key, Value: io.NopCloser(reader)}, nil) {
+				return
+			}
+		}
+		if mode == "late batch error" {
+			yield(kv.KeyValue{}, backendErr)
+		}
+	}
+}
+
+func eventStoreTestEvents(count int) []Event {
+	events := make([]Event, count)
+	actions := []kv.DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted}
+	for i := range events {
+		events[i] = Event{
+			Namespace: "default", Group: "apps", Resource: "resource", Name: fmt.Sprintf("test-%03d", i),
+			ResourceVersion: 1000 + int64(i/3), Action: actions[i%len(actions)], Folder: "folder",
+		}
+	}
+	return events
+}
+
+func eventStoreTestKey(event Event) string {
+	return EventKey{
+		Namespace: event.Namespace, Group: event.Group, Resource: event.Resource, Name: event.Name,
+		ResourceVersion: event.ResourceVersion, Action: event.Action, Folder: event.Folder,
+	}.String()
+}
+
+type eventStoreKVProbe struct {
+	KV
+	t         *testing.T
+	gets      int
+	scans     []ListOptions
+	batches   [][]string
+	keysOpen  bool
+	batchOpen bool
+	readers   int
+	closed    int
+	keys      func(context.Context, string, ListOptions) iter.Seq2[string, error]
+	batch     func(context.Context, string, []string) iter.Seq2[kv.KeyValue, error]
+}
+
+func (p *eventStoreKVProbe) assertClosed() {
+	p.t.Helper()
+	assert.False(p.t, p.keysOpen, "key cursor is still open")
+	assert.False(p.t, p.batchOpen, "batch cursor is still open")
+	assert.Equal(p.t, p.readers, p.closed, "readers are still open")
+}
+
+func (p *eventStoreKVProbe) Get(ctx context.Context, section, key string) (io.ReadCloser, error) {
+	p.gets++
+	return p.KV.Get(ctx, section, key)
+}
+
+func (p *eventStoreKVProbe) Keys(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
+	return func(yield func(string, error) bool) {
+		p.assertClosed()
+		assert.Equal(p.t, eventsSection, section)
+		p.scans = append(p.scans, opts)
+		p.keysOpen = true
+		defer func() { p.keysOpen = false }()
+		keys := p.KV.Keys
+		if p.keys != nil {
+			keys = p.keys
+		}
+		keys(ctx, section, opts)(yield)
+	}
+}
+
+func (p *eventStoreKVProbe) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	return func(yield func(kv.KeyValue, error) bool) {
+		p.assertClosed()
+		assert.Equal(p.t, eventsSection, section)
+		p.batches = append(p.batches, slices.Clone(keys))
+		p.batchOpen = true
+		defer func() { p.batchOpen = false }()
+		batch := p.KV.BatchGet
+		if p.batch != nil {
+			batch = p.batch
+		}
+		for pair, err := range batch(ctx, section, keys) {
+			if pair.Value != nil {
+				p.readers++
+				pair.Value = &eventStoreProbeReader{ReadCloser: pair.Value, closed: &p.closed}
+			}
+			more := yield(pair, err)
+			assert.Equal(p.t, p.readers, p.closed)
+			if !more {
+				return
+			}
+		}
+	}
+}
+
+type eventStoreProbeReader struct {
+	io.ReadCloser
+	closed *int
+}
+
+func (r *eventStoreProbeReader) Close() error {
+	*r.closed++
+	return r.ReadCloser.Close()
+}
+
+type eventStoreErrorReader struct {
+	err    error
+	cancel context.CancelFunc
+}
+
+func (r eventStoreErrorReader) Read([]byte) (int, error) {
+	if r.cancel != nil {
+		r.cancel()
+	}
+	return 0, r.err
+}
+
+func TestEvent_JSONSerialization(t *testing.T) {
+	const fields = `"namespace":"default","group":"apps","resource":"resource","name":"test-resource","resource_version":1000,"action":"updated","folder":"new-folder","previous_rv":999`
+	// Match the pre-enrichment reader to verify it can still read new records.
+	type legacyEvent struct {
+		Namespace       string `json:"namespace"`
+		Group           string `json:"group"`
+		Resource        string `json:"resource"`
+		Name            string `json:"name"`
+		ResourceVersion int64  `json:"resource_version"`
+		Action          string `json:"action"`
+		Folder          string `json:"folder"`
+		PreviousRV      int64  `json:"previous_rv"`
+	}
+	var expectedLegacy legacyEvent
+	require.NoError(t, json.Unmarshal([]byte("{"+fields+"}"), &expectedLegacy))
+
+	for _, tc := range []struct {
+		name           string
+		previous       string
+		previousAction kv.DataAction
+		previousFolder string
+	}{
+		{name: "legacy record"},
+		{name: "null metadata", previous: `,"previous_action":null,"previous_folder":null`},
+		{name: "empty action", previous: `,"previous_action":"","previous_folder":""`},
+		{
+			name:           "empty folder",
+			previous:       `,"previous_action":"created","previous_folder":""`,
+			previousAction: DataActionCreated,
+		},
+		{
+			name:           "created",
+			previous:       `,"previous_action":"created","previous_folder":"old-folder"`,
+			previousAction: DataActionCreated,
+			previousFolder: "old-folder",
+		},
+		{
+			name:           "updated",
+			previous:       `,"previous_action":"updated","previous_folder":"old-folder"`,
+			previousAction: DataActionUpdated,
+			previousFolder: "old-folder",
+		},
+		{
+			name:           "deleted",
+			previous:       `,"previous_action":"deleted","previous_folder":"old-folder"`,
+			previousAction: DataActionDeleted,
+			previousFolder: "old-folder",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var event Event
+			require.NoError(t, json.Unmarshal([]byte("{"+fields+tc.previous+"}"), &event))
+			require.Equal(t, tc.previousAction, event.PreviousAction)
+			require.Equal(t, tc.previousFolder, event.PreviousFolder)
+
+			data, err := json.Marshal(event)
+			require.NoError(t, err)
+			if tc.previousAction == "" {
+				require.JSONEq(t, "{"+fields+`,"previous_folder":""}`, string(data))
+			} else {
+				require.JSONEq(t, "{"+fields+tc.previous+"}", string(data))
+			}
+
+			var roundTrip Event
+			require.NoError(t, json.Unmarshal(data, &roundTrip))
+			require.Equal(t, event, roundTrip)
+
+			var legacy legacyEvent
+			require.NoError(t, json.Unmarshal(data, &legacy))
+			require.Equal(t, expectedLegacy, legacy)
+		})
+	}
 }
 
 func TestEventKey_Struct(t *testing.T) {
@@ -703,7 +1189,7 @@ func testEventStoreBatchDelete(t *testing.T, ctx context.Context, store *eventSt
 	testutil.SkipIntegrationTestInShortMode(t)
 	// Create multiple events (more than batch size to test batching)
 	eventKeys := make([]string, 75)
-	for i := 0; i < 75; i++ {
+	for i := range 75 {
 		event := Event{
 			Namespace:       "default",
 			Group:           "apps",
@@ -733,7 +1219,7 @@ func testEventStoreBatchDelete(t *testing.T, ctx context.Context, store *eventSt
 	require.NoError(t, err)
 
 	// Verify all events were deleted
-	for i := 0; i < 75; i++ {
+	for i := range 75 {
 		_, err := store.Get(ctx, EventKey{
 			Namespace:       "default",
 			Group:           "apps",

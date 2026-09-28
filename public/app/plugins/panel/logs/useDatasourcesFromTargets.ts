@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 
 export const useDatasourcesFromTargets = (targets: DataQuery[] | undefined): Map<string, DataSourceApi> => {
@@ -17,11 +17,7 @@ export const useDatasourcesFromTargets = (targets: DataQuery[] | undefined): Map
     const raw = await Promise.all(
       targets
         .filter((target) => !!target.datasource?.uid)
-        .map((target) =>
-          getDataSourceSrv()
-            .get(target.datasource?.uid)
-            .then((ds) => ({ key: target.refId, ds }))
-        )
+        .map((target) => getDataSourceInstance(target.datasource?.uid).then((ds) => ({ key: target.refId, ds })))
     );
 
     setDataSourcesMap(new Map<string, DataSourceApi>(raw.map(({ key, ds }) => [key, ds])));

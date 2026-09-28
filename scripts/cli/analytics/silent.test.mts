@@ -1,6 +1,5 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-
 import { Project, type SourceFile } from 'ts-morph';
 
 import { findAllEvents } from './findAllEvents.mts';
