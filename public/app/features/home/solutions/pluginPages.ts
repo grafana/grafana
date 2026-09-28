@@ -53,7 +53,7 @@ export function openAppLabel(appName: string): string {
   return t('home.solutions.cta.open-app', 'Open {{appName}}', { appName });
 }
 
-export function openExploreLabel(): string {
+function openExploreLabel(): string {
   return t('home.solutions.cta.open-explore', 'Open in Explore');
 }
 
