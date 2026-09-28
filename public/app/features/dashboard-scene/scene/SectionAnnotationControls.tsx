@@ -25,7 +25,7 @@ export function SectionControlsRow({ variableSet, data }: { variableSet?: SceneV
   );
 }
 
-export function SectionAnnotationControls({ data }: { data?: SceneObject }) {
+function SectionAnnotationControls({ data }: { data?: SceneObject }) {
   if (!(data instanceof DashboardDataLayerSet)) {
     return null;
   }
