@@ -220,7 +220,7 @@ linters:
         text: 'SA1019: strings.Title'
       - linters:
           - staticcheck
-        text: 'SA1019: "go.opentelemetry.io/otel/exporters/jaeger"'
+        text: 'SA1019: "?go\.opentelemetry\.io/otel/exporters/jaeger"? is deprecated:'
       - linters:
           - staticcheck
         text: use fake service and real access control evaluator instead

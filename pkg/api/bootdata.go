@@ -192,6 +192,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		hs.log.Error("Failed to load OAuth providers", "error", err)
 		oauthProviders = map[string]*social.OAuthInfo{}
 	}
+	//nolint:staticcheck // Preserve the existing auth fields in bootdata during the toolchain upgrade.
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
 		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
 		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
