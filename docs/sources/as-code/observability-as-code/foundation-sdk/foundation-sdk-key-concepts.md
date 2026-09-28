@@ -80,7 +80,7 @@ Most builder methods accept simple values like strings or numbers, but others ex
 
 - `ReduceDataOptions` - How to reduce time series data into single values (e.g. last, avg).
 - `VizLegendOptions` - Configure how the legend of a panel is displayed.
-- `CanvasElementOptions` - Define how the the various components of a Canvas panel should be displayed.
+- `CanvasElementOptions` - Define how the various components of a Canvas panel should be displayed.
 
 Example using options:
 
