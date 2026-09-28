@@ -37,48 +37,42 @@ refs:
 
 # Avoid API rate limits when provisioning alerting resources
 
-When you manage Grafana Alerting resources as code, controllers such as Terraform, the Crossplane Grafana provider, and GitOps engines repeatedly read your resources to detect drift. At scale, these reconciliation loops can send enough requests to hit an API rate limit, and Grafana rejects the extra requests with the `429 Too Many Requests` status code.
+When you manage Grafana Alerting resources as code, tools such as Terraform, the Crossplane Grafana provider, and GitOps engines repeatedly read your resources to detect drift. At scale, these reconciliation loops can hit an API rate limit, and Grafana rejects the extra requests with the `429 Too Many Requests` status code.
 
-This page explains why provisioning at scale amplifies API requests, how to recognize rate limit errors, and how to tune your tooling to stay under the limits.
+This page explains why provisioning amplifies API requests and how to tune your tooling to stay under the limits.
 
 Before you begin, ensure you have the following:
 
 - A Grafana instance or Grafana Cloud stack where you provision alerting resources.
-- Administrative access to the Terraform configuration, Crossplane provider, or GitOps engine that manages those resources.
-- Access to the logs of the controller that reports the errors.
+- Administrative access to the Terraform, Crossplane, or GitOps configuration that manages those resources.
+- Access to the logs of the tool that reports the errors.
 
 ## Why provisioning at scale triggers rate limits
 
-Rate limits usually aren't caused by the number of alerting resources you manage. They're caused by how often your tooling reads those resources, and by how many API requests each read takes.
+Rate limits usually depend on how often your tooling reads resources and how many requests each read takes, not on how many resources you manage. The following factors compound each other:
 
-The following factors compound each other:
-
-- **Reconciliation loops re-read every resource:** Controllers poll Grafana on a fixed interval to compare the live state against the desired state. The request volume scales with the number of resources multiplied by the polling frequency, whether or not anything changed.
-- **The legacy provisioning API reads alert rules individually:** Provenance, which marks a resource as provisioned, is only returned when you fetch a single rule. To determine provenance for a rule group, the Grafana Terraform provider first calls `GET /api/v1/provisioning/folder/{folderUID}/rule-groups/{group}`, then calls `GET /api/v1/provisioning/alert-rules/{UID}` once per rule in that group. A single rule group with 50 rules costs 51 requests per reconcile.
-- **Multiple controllers share one stack:** Running provider pods in several Kubernetes clusters, or running Terraform in CI alongside a Crossplane controller, means every controller's requests count against the same limits.
+- **Reconciliation loops re-read every resource:** Tools poll Grafana on a fixed interval to compare the live state against the desired state, even when nothing changed. Request volume scales with the number of resources multiplied by the polling frequency.
+- **The legacy provisioning API reads alert rules individually:** The API only returns provenance, which marks a resource as provisioned, when you fetch a single rule. To read provenance for a rule group, the Grafana Terraform provider calls `GET /api/v1/provisioning/folder/{folderUID}/rule-groups/{group}`, then calls `GET /api/v1/provisioning/alert-rules/{UID}` once per rule. A group of 50 rules costs 51 requests per reconcile.
+- **Multiple tools share one stack:** Running provider pods in several Kubernetes clusters, or Terraform in CI alongside a Crossplane controller, counts every request against the same limits.
 
 ## Identify rate limit errors
 
-Rate limited requests fail with the `429 Too Many Requests` status code. Check your controller logs for that status code alongside a provisioning endpoint.
-
-The Crossplane Grafana provider reports the failure when it tries to observe a resource:
+Rate limited requests fail with the `429 Too Many Requests` status code. Check your tool's logs for that code alongside a provisioning endpoint. For example, the Crossplane Grafana provider reports:
 
 ```text
 observe failed: failed to observe the resource: [{0 [GET /v1/provisioning/alert-rules/acefead6586dbc] GetAlertRule (status 429): {} []}]
 ```
 
-In Grafana Cloud, `429` responses include headers that describe the limit that was applied:
+In Grafana Cloud, `429` responses include headers that describe the applied limit:
 
 - **`x-rate-limit-limit`:** The maximum number of requests allowed within the window.
 - **`x-rate-limit-duration`:** The length of the window in seconds.
 
-Limits differ by endpoint and deployment, so treat these headers as the source of truth for the request budget you have to work with.
+Limits differ by endpoint and deployment, so use these headers to determine your request budget.
 
 ## Retry rate limited requests in Terraform
 
-The Grafana Terraform provider retries failed API calls, and retries on `429` by default. Raising the retry count and wait time helps a plan or apply ride out short bursts of throttling instead of failing.
-
-Configure the retry behavior in the provider block:
+The Grafana Terraform provider retries failed API calls, including `429`, by default. Raise the retry count and wait time to let a plan or apply recover from short bursts of throttling:
 
 ```terraform
 provider "grafana" {
@@ -106,15 +100,13 @@ You can also set these values with the `GRAFANA_RETRIES`, `GRAFANA_RETRY_WAIT`, 
 
 ## Tune the Crossplane provider
 
-Retries alone don't help a Crossplane controller, because it polls continuously. Lower the request rate instead by increasing the poll interval and reducing the reconcile rate.
+Retries don't help a Crossplane controller, because it polls continuously. Lower the request rate instead with the following flags:
 
-The Crossplane Grafana provider accepts the following flags:
+- **`--poll`:** How often a resource is checked for drift. The default is `10m`. Increasing it cuts steady-state request volume proportionally.
+- **`--max-reconcile-rate`:** The global maximum rate per second at which resources are checked for drift. The default is `100`. Lowering it smooths the burst that occurs when the controller starts and reconciles everything at once.
+- **`--sync`:** The controller manager sync period. The default is `1h`.
 
-- **`--poll`:** Controls how often an individual resource is checked for drift. The default is `10m`. Increasing it to `30m` or more cuts the steady-state request volume proportionally.
-- **`--max-reconcile-rate`:** Sets the global maximum rate per second at which resources are checked for drift. The default is `100`. Lowering it to a single-digit value smooths bursts, which matters most right after the controller starts and reconciles everything at once.
-- **`--sync`:** Sets the controller manager sync period. The default is `1h`.
-
-Set the flags through a `DeploymentRuntimeConfig`:
+Set the flags through a `DeploymentRuntimeConfig`, then reference it from the provider:
 
 ```yaml
 apiVersion: pkg.crossplane.io/v1beta1
@@ -132,13 +124,7 @@ spec:
               args:
                 - --poll=30m
                 - --max-reconcile-rate=5
-```
-
-The container must be named `package-runtime`. Crossplane adds any other container as a sidecar instead of applying the arguments to the provider.
-
-Reference the runtime config from the provider so the settings apply:
-
-```yaml
+---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
@@ -149,31 +135,29 @@ spec:
     name: tuned-grafana-provider-config
 ```
 
-Replace `<PROVIDER_PACKAGE>` with the package reference and version of the Crossplane Grafana provider you run.
+Replace `<PROVIDER_PACKAGE>` with the package reference and version of the provider you run.
 
-Start from longer intervals in non-production environments, where drift detection is less urgent, and tighten them only where you need faster reconciliation.
+The container must be named `package-runtime`, or Crossplane adds it as a sidecar instead of tuning the provider. Use longer intervals in non-production environments and tighten them only where you need faster reconciliation.
 
 ## Reduce redundant syncs in GitOps engines
 
-GitOps engines add their own reconcile cycles on top of the controller's polling. Configure them to skip work that isn't needed:
+GitOps engines add reconcile cycles on top of the controller's polling. Configure them to skip unneeded work:
 
-- **Apply only changed resources:** In Argo CD, enable the `ApplyOutOfSyncOnly=true` sync option so unchanged resources aren't re-applied.
-- **Avoid forced re-applies:** Options such as `Force=true` and `Replace=true` recreate resources that haven't changed, which triggers extra observe cycles against Grafana.
-- **Lengthen the sync interval:** Align the engine's reconcile interval with the provider's `--poll` value so the two don't overlap unnecessarily.
+- **Apply only changed resources:** In Argo CD, enable the `ApplyOutOfSyncOnly=true` sync option.
+- **Avoid forced re-applies:** Options such as `Force=true` and `Replace=true` recreate unchanged resources, which triggers extra observe cycles.
+- **Lengthen the sync interval:** Align the engine's reconcile interval with the provider's `--poll` value.
 
 ## Separate credentials per environment
 
-Some rate limits apply per credential. If you run controllers in several clusters, create a dedicated [service account](ref:service-accounts) and token for each one, rather than sharing a single token.
-
-Separate credentials give each cluster its own request budget where per-credential limits apply, and they make it far easier to tell which controller is generating the traffic.
+Some rate limits apply per credential. If you run tools in several clusters, create a dedicated [service account](ref:service-accounts) and token for each one instead of sharing a single token. Separate credentials give each cluster its own request budget where per-credential limits apply, and show which tool generates the traffic.
 
 ## Migrate to the Grafana App Platform alerting APIs
 
-The legacy provisioning endpoints under `/api/v1/provisioning/` are deprecated. They remain available and supported, and Grafana gives advance notice before removing them, so you can keep using tuned legacy configurations while you plan a migration.
+The legacy provisioning endpoints under `/api/v1/provisioning/` are deprecated. They remain available and supported, with advance notice before removal, so you can keep using tuned legacy configurations while you plan a migration.
 
-The Grafana App Platform alerting APIs expose each alert rule as its own resource under `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}`, which avoids the extra per-rule request needed to read provenance from the legacy API. In Terraform, the equivalent resource is `grafana_apps_rules_alertrule_v0alpha1`.
+The Grafana App Platform alerting APIs expose each alert rule as its own resource under `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}`, which avoids the extra per-rule request for provenance. In Terraform, the equivalent resource is `grafana_apps_rules_alertrule_v0alpha1`.
 
-If you still hit rate limits after tuning your controllers, contact Grafana Support to confirm which limits apply to your stack.
+If you still hit rate limits after tuning your tools, contact Grafana Support to confirm which limits apply to your stack.
 
 ## Next steps
 
