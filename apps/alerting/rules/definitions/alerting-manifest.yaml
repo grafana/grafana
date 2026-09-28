@@ -57,13 +57,6 @@ spec:
               type: integer
             recovering:
               type: integer
-          required:
-          - healthy
-          - firing
-          - pending
-          - recovering
-          - nodata
-          - error
           type: object
         AlertRuleState:
           enum:

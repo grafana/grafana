@@ -185,8 +185,8 @@ func TestSyncer_sync_totalsUseSpecExecErrState(t *testing.T) {
 	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, states, &fakeStatus{}, nil)
 
 	require.NoError(t, s.sync(context.Background()))
-	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{Error: 1}, gen.alert.updated["default"].(*model.AlertRule).Status.Totals)
-	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{Healthy: 1, Error: 1}, gen.alert.updated["ok"].(*model.AlertRule).Status.Totals)
+	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{Error: new(int64(1))}, gen.alert.updated["default"].(*model.AlertRule).Status.Totals)
+	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{Healthy: new(int64(1)), Error: new(int64(1))}, gen.alert.updated["ok"].(*model.AlertRule).Status.Totals)
 }
 
 func TestSyncer_sync_skipsDisabledOrgs(t *testing.T) {

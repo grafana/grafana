@@ -49,21 +49,15 @@ export const defaultOperatorState = (): OperatorState => ({
  * errored but were mapped to another state via execErrState, so it can overlap.
  */
 export interface AlertRuleInstanceTotals {
-	healthy: number;
-	firing: number;
-	pending: number;
-	recovering: number;
-	nodata: number;
-	error: number;
+	healthy?: number;
+	firing?: number;
+	pending?: number;
+	recovering?: number;
+	nodata?: number;
+	error?: number;
 }
 
 export const defaultAlertRuleInstanceTotals = (): AlertRuleInstanceTotals => ({
-	healthy: 0,
-	firing: 0,
-	pending: 0,
-	recovering: 0,
-	nodata: 0,
-	error: 0,
 });
 
 export interface Status {

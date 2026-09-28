@@ -41,7 +41,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
 			wantHealth: model.AlertRuleAlertRuleHealthOK,
 			wantEval:   true,
-			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Firing: 1},
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Firing: new(int64(1))},
 		},
 		{
 			name:       "pending",
@@ -50,7 +50,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
 			wantHealth: model.AlertRuleAlertRuleHealthOK,
 			wantEval:   true,
-			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Pending: 1},
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Pending: new(int64(1))},
 		},
 		{
 			name:       "normal is healthy",
@@ -59,7 +59,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
 			wantHealth: model.AlertRuleAlertRuleHealthOK,
 			wantEval:   true,
-			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Healthy: 1},
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Healthy: new(int64(1))},
 		},
 		{
 			name:         "error keeps healthy state with error health",
@@ -70,7 +70,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantHealth:   model.AlertRuleAlertRuleHealthError,
 			wantError:    "boom",
 			wantEval:     true,
-			wantTotals:   &model.AlertRuleAlertRuleInstanceTotals{Error: 1},
+			wantTotals:   &model.AlertRuleAlertRuleInstanceTotals{Error: new(int64(1))},
 		},
 		{
 			name:       "nodata keeps healthy state with nodata health",
@@ -79,7 +79,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
 			wantHealth: model.AlertRuleAlertRuleHealthNoData,
 			wantEval:   true,
-			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Nodata: 1},
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Nodata: new(int64(1))},
 		},
 		{
 			name:       "keep-last reason (comma-joined) maps to KeepLast",
@@ -88,7 +88,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantReason: model.AlertRuleAlertRuleStateReasonKeepLast,
 			wantHealth: model.AlertRuleAlertRuleHealthOK,
 			wantEval:   true,
-			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Firing: 1},
+			wantTotals: &model.AlertRuleAlertRuleInstanceTotals{Firing: new(int64(1))},
 		},
 		{
 			name: "exec error mapped to another state is also counted as error",
@@ -102,7 +102,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantHealth:   model.AlertRuleAlertRuleHealthError,
 			wantError:    "boom",
 			wantEval:     true,
-			wantTotals:   &model.AlertRuleAlertRuleInstanceTotals{Firing: 1, Healthy: 1, Error: 1},
+			wantTotals:   &model.AlertRuleAlertRuleInstanceTotals{Firing: new(int64(1)), Healthy: new(int64(1)), Error: new(int64(1))},
 		},
 		{
 			name:       "paused overrides health",
@@ -225,7 +225,7 @@ func TestToAlertRuleStatus_preservesBaseAndClearsStaleFields(t *testing.T) {
 		State:            new(model.AlertRuleAlertRuleStateFiring),
 		Health:           new(model.AlertRuleAlertRuleHealthError),
 		LastError:        &staleErr,
-		Totals:           &model.AlertRuleAlertRuleInstanceTotals{Firing: 3},
+		Totals:           &model.AlertRuleAlertRuleInstanceTotals{Firing: new(int64(3))},
 		OperatorStates:   map[string]model.AlertRulestatusOperatorState{"other-op": {}},
 		AdditionalFields: map[string]any{"foo": "bar"},
 	}
@@ -265,18 +265,17 @@ func TestAlertRuleTotalsFromMap(t *testing.T) {
 	got := AlertRuleTotalsFromMap(map[string]int64{
 		"normal":     1,
 		"alerting":   2,
-		"pending":    3,
+		"pending":    0,
 		"recovering": 4,
 		"nodata":     5,
 		"error":      6,
 		"unknown":    7,
 	})
 	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{
-		Healthy:    1,
-		Firing:     2,
-		Pending:    3,
-		Recovering: 4,
-		Nodata:     5,
-		Error:      6,
+		Healthy:    new(int64(1)),
+		Firing:     new(int64(2)),
+		Recovering: new(int64(4)),
+		Nodata:     new(int64(5)),
+		Error:      new(int64(6)),
 	}, got)
 }

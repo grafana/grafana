@@ -1569,12 +1569,12 @@ export type AlertRuleOperatorState = {
 export type AlertRuleAlertRuleState = 'Inactive' | 'Healthy' | 'Firing' | 'Pending' | 'Recovering';
 export type AlertRuleAlertRuleStateReason = 'Evaluated' | 'KeepLast';
 export type AlertRuleAlertRuleInstanceTotals = {
-  error: number;
-  firing: number;
-  healthy: number;
-  nodata: number;
-  pending: number;
-  recovering: number;
+  error?: number;
+  firing?: number;
+  healthy?: number;
+  nodata?: number;
+  pending?: number;
+  recovering?: number;
 };
 export type AlertRuleStatus = {
   /** additionalFields is reserved for future use */

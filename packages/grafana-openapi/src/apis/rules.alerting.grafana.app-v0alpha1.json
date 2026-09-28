@@ -3939,7 +3939,6 @@
       "AlertRuleAlertRuleInstanceTotals": {
         "description": "Count of alert instances per state. error also counts instances whose evaluation\nerrored but were mapped to another state via execErrState, so it can overlap.",
         "type": "object",
-        "required": ["healthy", "firing", "pending", "recovering", "nodata", "error"],
         "properties": {
           "error": {
             "type": "integer"

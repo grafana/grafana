@@ -9,12 +9,12 @@ import "time"
 // Count of alert instances per state. error also counts instances whose evaluation
 // errored but were mapped to another state via execErrState, so it can overlap.
 #AlertRuleInstanceTotals: {
-	healthy:    int
-	firing:     int
-	pending:    int
-	recovering: int
-	nodata:     int
-	error:      int
+	healthy?:    int
+	firing?:     int
+	pending?:    int
+	recovering?: int
+	nodata?:     int
+	error?:      int
 }
 
 #AlertRuleStatus: {

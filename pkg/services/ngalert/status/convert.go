@@ -58,16 +58,24 @@ func toAlertRuleStatus(base model.AlertRuleStatus, states []*state.State, execEr
 }
 
 // AlertRuleTotalsFromMap converts Prometheus rules API instance totals, keyed by
-// lowercased eval state, into the AlertRule status totals. Unknown keys are ignored.
+// lowercased eval state, into the AlertRule status totals. Zero counts are omitted
+// and unknown keys are ignored.
 func AlertRuleTotalsFromMap(m map[string]int64) *model.AlertRuleAlertRuleInstanceTotals {
 	return &model.AlertRuleAlertRuleInstanceTotals{
-		Healthy:    m["normal"],
-		Firing:     m["alerting"],
-		Pending:    m["pending"],
-		Recovering: m["recovering"],
-		Nodata:     m["nodata"],
-		Error:      m["error"],
+		Healthy:    nonZero(m["normal"]),
+		Firing:     nonZero(m["alerting"]),
+		Pending:    nonZero(m["pending"]),
+		Recovering: nonZero(m["recovering"]),
+		Nodata:     nonZero(m["nodata"]),
+		Error:      nonZero(m["error"]),
 	}
+}
+
+func nonZero(n int64) *int64 {
+	if n == 0 {
+		return nil
+	}
+	return new(n)
 }
 
 // toRecordingRuleStatus builds the k8s RecordingRule status from the scheduler's

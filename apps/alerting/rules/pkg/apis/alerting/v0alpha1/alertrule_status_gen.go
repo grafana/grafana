@@ -78,12 +78,12 @@ func (AlertRulestatusOperatorState) OpenAPIModelName() string {
 // errored but were mapped to another state via execErrState, so it can overlap.
 // +k8s:openapi-gen=true
 type AlertRuleAlertRuleInstanceTotals struct {
-	Healthy    int64 `json:"healthy"`
-	Firing     int64 `json:"firing"`
-	Pending    int64 `json:"pending"`
-	Recovering int64 `json:"recovering"`
-	Nodata     int64 `json:"nodata"`
-	Error      int64 `json:"error"`
+	Healthy    *int64 `json:"healthy,omitempty"`
+	Firing     *int64 `json:"firing,omitempty"`
+	Pending    *int64 `json:"pending,omitempty"`
+	Recovering *int64 `json:"recovering,omitempty"`
+	Nodata     *int64 `json:"nodata,omitempty"`
+	Error      *int64 `json:"error,omitempty"`
 }
 
 // NewAlertRuleAlertRuleInstanceTotals creates a new AlertRuleAlertRuleInstanceTotals object.
