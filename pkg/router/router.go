@@ -346,6 +346,11 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 		return
 	}
 	setRoute(req, routeBackend)
+	if req.Method != http.MethodGet && req.Method != http.MethodHead {
+		w.Header().Set("Allow", "GET, HEAD")
+		http.Error(w, "OpenAPI documents are read-only", http.StatusMethodNotAllowed)
+		return
+	}
 
 	cacheKey := group + "/" + version
 	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
@@ -369,8 +374,11 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	proxyReq := req.Clone(req.Context())
 	stripConditionalHeaders(proxyReq)
 	stripHashQueryParam(proxyReq)
-	rec := newCaptureWriter()
+	rec := newCaptureWriter(maxCachedOpenAPIDocBytes, w)
 	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)
+	if rec.overflowed {
+		return // too large to cache; already streamed to the client
+	}
 
 	maps.Copy(w.Header(), rec.header)
 	// Private schemas pass through authorization on every request. Honor their

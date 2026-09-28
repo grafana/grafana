@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -245,4 +246,25 @@ grafana_router_stack_lookups_total{result="resolved"} 1
 		"grafana_router_shadowed_groups", "grafana_router_source_last_success_timestamp_seconds",
 		"grafana_router_source_polls_total", "grafana_router_stack_lookups_total"))
 	require.Equal(t, 1, testutil.CollectAndCount(reg, "grafana_router_last_reconcile_timestamp_seconds"))
+}
+
+func TestRequestMetricsVerbLabelIsBounded(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))
+	t.Cleanup(upstream.Close)
+	svc := metricsService(t, "test-app", upstream.URL)
+
+	for i := range 20 {
+		for _, target := range []string{"/apis", "/apis/test-app/v1/namespaces/ns/things"} {
+			req := httptest.NewRequest(http.MethodGet, target, nil)
+			req.Method = fmt.Sprintf("FOO%d", i)
+			svc.metrics.instrument(svc.router, httptest.NewRecorder(), req, http.NotFoundHandler())
+		}
+	}
+	require.Equal(t, 2, testutil.CollectAndCount(svc.metrics.duration), "arbitrary methods must not create new series")
+	require.Equal(t, uint64(20), requestCount(t, svc, "", "other", routeDiscovery, "200"))
+	require.Equal(t, uint64(20), requestCount(t, svc, "test-app", "other", routeBackend, "204"))
+
+	for verb, want := range map[string]string{"list": "list", "watch": "watch", "deletecollection": "deletecollection", "head": "head", "foo": "other", "": "other"} {
+		require.Equal(t, want, metricVerb(verb), verb)
+	}
 }

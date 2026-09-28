@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -267,4 +268,110 @@ func TestOpenAPIGroupVersionIfNoneMatch304SetsETag(t *testing.T) {
 	if got := rec2.Header().Get("ETag"); got != etag {
 		t.Errorf("304 response ETag = %q, want %q (RFC 7232 requires it on 304)", got, etag)
 	}
+}
+
+func setLimit(t *testing.T, limit *int, value int) {
+	t.Helper()
+	previous := *limit
+	*limit = value
+	t.Cleanup(func() { *limit = previous })
+}
+
+func TestCaptureWriterLimit(t *testing.T) {
+	t.Run("under the limit it buffers", func(t *testing.T) {
+		out := httptest.NewRecorder()
+		c := newCaptureWriter(8, out)
+		_, _ = c.Write([]byte("12345678"))
+		require.False(t, c.overflowed)
+		require.Equal(t, "12345678", c.body.String())
+		require.Empty(t, out.Body.String())
+	})
+
+	t.Run("past the limit it streams to passthrough", func(t *testing.T) {
+		out := httptest.NewRecorder()
+		c := newCaptureWriter(8, out)
+		c.Header().Set("Content-Type", "application/json")
+		c.WriteHeader(http.StatusAccepted)
+		for _, chunk := range []string{"12345", "67890", "abc"} {
+			n, err := c.Write([]byte(chunk))
+			require.NoError(t, err)
+			require.Equal(t, len(chunk), n)
+		}
+		c.Flush()
+		require.True(t, c.overflowed)
+		require.Zero(t, c.body.Len(), "nothing stays buffered")
+		require.Equal(t, http.StatusAccepted, out.Code)
+		require.Equal(t, "application/json", out.Header().Get("Content-Type"))
+		require.Equal(t, "1234567890abc", out.Body.String())
+		require.True(t, out.Flushed)
+	})
+
+	t.Run("past the limit without passthrough it discards", func(t *testing.T) {
+		c := newCaptureWriter(8, nil)
+		for range 3 {
+			n, err := c.Write([]byte("12345"))
+			require.NoError(t, err, "a failed write would abort the proxy")
+			require.Equal(t, 5, n)
+		}
+		require.True(t, c.overflowed)
+		require.Zero(t, c.body.Len())
+	})
+}
+
+func TestOpenAPIGroupVersionTooLargeToCache(t *testing.T) {
+	setLimit(t, &maxCachedOpenAPIDocBytes, 16)
+	body := `{"openapi":"3.0.0","paths":{"a":{}}}`
+	upstream := &countingHandler{body: body}
+	s := buildRouterWithBackend("test-app", "1", upstream)
+	for range 2 {
+		res := httptest.NewRecorder()
+		s.HandleFunc(res, httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test-app/v1", nil), http.NotFoundHandler())
+		require.Equal(t, http.StatusOK, res.Code)
+		require.Equal(t, body, res.Body.String(), "the whole document still reaches the client")
+		require.Empty(t, res.Header().Get("ETag"))
+	}
+	require.EqualValues(t, 2, upstream.hits.Load(), "a document past the limit is not cached")
+}
+
+func TestOpenAPIGroupVersionIsReadOnly(t *testing.T) {
+	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
+	s := buildRouterWithBackend("test-app", "1", upstream)
+	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch} {
+		res := httptest.NewRecorder()
+		s.HandleFunc(res, httptest.NewRequest(method, "/openapi/v3/apis/test-app/v1", nil), http.NotFoundHandler())
+		require.Equal(t, http.StatusMethodNotAllowed, res.Code, method)
+		require.Equal(t, "GET, HEAD", res.Header().Get("Allow"))
+	}
+	res := httptest.NewRecorder()
+	s.HandleFunc(res, httptest.NewRequest(http.MethodHead, "/openapi/v3/apis/test-app/v1", nil), http.NotFoundHandler())
+	require.Equal(t, http.StatusOK, res.Code)
+	require.EqualValues(t, 1, upstream.hits.Load(), "only the HEAD reached the backend")
+}
+
+func TestReadDiscoveryTooLarge(t *testing.T) {
+	setLimit(t, &maxDiscoveryDocBytes, 16)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"kind":"APIGroupList","groups":[]}`))
+	})
+	var into map[string]any
+	_, err := readDiscovery(httptest.NewRequest(http.MethodGet, "/apis", nil), handler, "/apis", "application/json", &into)
+	require.ErrorContains(t, err, "larger than 16 bytes")
+}
+
+func TestDecodeLimitedJSON(t *testing.T) {
+	var v map[string]int
+	require.NoError(t, decodeLimitedJSON(strings.NewReader(`{"a":1}`), 7, &v))
+	require.Equal(t, 1, v["a"])
+	require.ErrorContains(t, decodeLimitedJSON(strings.NewReader(`{"a":10}`), 7, &v), "larger than 7 bytes")
+}
+
+func TestAggregateDiscoveryTooLarge(t *testing.T) {
+	setLimit(t, &maxDiscoveryDocBytes, 16)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"kind":"APIGroupList","groups":[{"name":"a.ext.grafana.app"}]}`))
+	}))
+	t.Cleanup(srv.Close)
+	_, err := discoverGroupResources(t.Context(), srv.Client(), srv.URL)
+	require.ErrorContains(t, err, "larger than 16 bytes")
 }

@@ -100,7 +100,7 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 	if group != "" && !gr.KnownGroup(group) {
 		metricGroup = unknownGroupLabel
 	}
-	verb := requestVerb(req)
+	verb := metricVerb(requestVerb(req))
 	start := time.Now()
 	rec := newStatusRecorder(w)
 	req, outcome := withRequestOutcome(req)
@@ -134,6 +134,23 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 		Observe(duration.Seconds())
 	recordFailure()
 	logRequest(req, group, rec.status, duration)
+}
+
+// metricVerbs are the verb label's values: the Kubernetes verbs, plus the
+// lowercased HTTP methods that paths outside the resource API report.
+var metricVerbs = map[string]bool{
+	"get": true, "list": true, "watch": true, "create": true, "update": true, "patch": true,
+	"delete": true, "deletecollection": true, "proxy": true,
+	"head": true, "options": true, "post": true, "put": true, "connect": true, "trace": true,
+}
+
+// metricVerb limits verb to metricVerbs. A request can carry any method, and
+// each distinct value would otherwise create new series.
+func metricVerb(verb string) string {
+	if metricVerbs[verb] {
+		return verb
+	}
+	return "other"
 }
 
 // routerCollector exports route state, read from the router when scraped, so
