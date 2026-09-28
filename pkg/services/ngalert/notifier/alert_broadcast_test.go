@@ -170,7 +170,13 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 				return false
 			}
 		}, time.Second, 10*time.Millisecond)
-		require.NoError(t, <-mergeDone)
+		select {
+		case err := <-mergeDone:
+			require.NoError(t, err)
+		case <-time.After(time.Second):
+			close(release)
+			t.Fatal("Merge blocked while PutAlerts was blocked")
+		}
 		close(release)
 	})
 
