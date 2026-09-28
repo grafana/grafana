@@ -344,7 +344,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 6)
 
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
+				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 				require.Len(t, middlewares, 1)
 				require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 

@@ -245,6 +245,10 @@ func assertCookieForwardedOnWire(t *testing.T, ctx context.Context, baseReq *htt
 	require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 	reqClone := baseReq.Clone(baseReq.Context())
+	// CookiesMiddleware mutates baseReq's own Cookie header in place via ClearCookieHeader, so
+	// clear it here too: otherwise this assertion would pass even if HTTPClientMiddleware never
+	// forwarded anything, since the header would already be present from that side effect.
+	reqClone.Header.Del("Cookie")
 	res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: true}, finalRoundTripper).RoundTrip(reqClone)
 	require.NoError(t, err)
 	require.NoError(t, res.Body.Close())
