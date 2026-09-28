@@ -74,6 +74,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withBlobConfig,
 		withAccessClient,
 		withMaxPageSizeBytes,
+		withAuthorizeBeforeFetch,
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
@@ -137,8 +138,9 @@ func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceSe
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg:          opts.Reg,
-		SecureValues: opts.SecureValues,
+		Reg:                     opts.Reg,
+		SecureValues:            opts.SecureValues,
+		GRPCErrorResultToStatus: opts.Cfg != nil && opts.Cfg.UnifiedStorageGRPCErrorResultToStatus,
 	}
 	for _, optFn := range withOpts {
 		if err := optFn(opts, serverOptions); err != nil {
@@ -201,6 +203,11 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
 	resourceOpts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	return nil
+}
+
+func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.AuthorizeBeforeFetchEnabled = opts.Cfg.AuthorizeBeforeFetchEnabled
 	return nil
 }
 
@@ -314,11 +321,7 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 				configs = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
 				resourceOpts.Search.EmbeddingConfig = configs
 			}
-			var skipped *prometheus.CounterVec
-			if resourceOpts.VectorMetrics != nil {
-				skipped = resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal
-			}
-			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, skipped)
+			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal)
 			if err != nil {
 				return fmt.Errorf("embedding enrollment: %w", err)
 			}
@@ -381,6 +384,10 @@ func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServ
 
 func withVectorMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.VectorMetrics = opts.VectorMetrics
+	// Recording sites should not have to check for nil.
+	if resourceOpts.VectorMetrics == nil {
+		resourceOpts.VectorMetrics = resource.ProvideVectorMetrics(nil)
+	}
 	return nil
 }
 

@@ -57,6 +57,10 @@ jobs:
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
+    - name: Verify generated theme styles
+      run: |
+        yarn themes-generate
+        git diff --exit-code -- public/sass/grafana.dark.css public/sass/grafana.light.css
   lint-frontend-prettier-enterprise:
     needs: detect-changes
     permissions:
@@ -85,6 +89,10 @@ jobs:
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
+    - name: Verify generated theme styles
+      run: |
+        yarn themes-generate
+        git diff --exit-code -- public/sass/grafana.dark.css public/sass/grafana.light.css
   lint-frontend-typecheck:
     needs: detect-changes
     permissions:

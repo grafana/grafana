@@ -69,7 +69,7 @@ func TestGrafanaRouter_AggregatedGroupIsServedAndFiltered(t *testing.T) {
 	target.cooldown = newCooldown(10*time.Millisecond, 10*time.Millisecond, 100*time.Millisecond)
 
 	loader := &staticAggregateLoader{target: target}
-	r := NewGrafanaRouter(loader)
+	r := NewGrafanaRouter(loader, nil)
 
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
@@ -83,7 +83,7 @@ func TestGrafanaRouter_AggregatedGroupIsServedAndFiltered(t *testing.T) {
 	require.Eventually(t, func() bool { return r.KnownGroup("dashboard.grafana.app") }, 2*time.Second, 10*time.Millisecond)
 	require.False(t, r.KnownGroup("coordination.k8s.io"))
 
-	req := httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/things", nil)
+	req := newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/things", nil)
 	rec := httptest.NewRecorder()
 	r.HandleFunc(rec, req, http.NotFoundHandler())
 	require.Equal(t, http.StatusOK, rec.Code)

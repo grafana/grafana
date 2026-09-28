@@ -3447,6 +3447,10 @@
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
           },
+          "refId": {
+            "description": "Unique identifier of the instance of the transformer",
+            "type": "string"
+          },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
             "type": "string"
@@ -4836,6 +4840,12 @@
           "layout"
         ],
         "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAnnotationQueryKind"
+            }
+          },
           "collapse": {
             "type": "boolean"
           },
@@ -4861,12 +4871,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind"
-            }
-          },
-          "annotations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAnnotationQueryKind"
             }
           }
         }
@@ -5185,6 +5189,12 @@
           "layout"
         ],
         "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAnnotationQueryKind"
+            }
+          },
           "conditionalRendering": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardConditionalRenderingGroupKind"
           },
@@ -5201,12 +5211,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind"
-            }
-          },
-          "annotations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAnnotationQueryKind"
             }
           }
         }
@@ -7067,6 +7071,10 @@
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
           },
+          "refId": {
+            "description": "Unique identifier of the instance of the transformer",
+            "type": "string"
+          },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
             "type": "string"
@@ -7594,13 +7602,13 @@
             "type": "string"
           },
           "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
             "type": "integer",
             "format": "int64",
             "default": 0
           },
           "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
             "type": "string",
             "default": ""
           }

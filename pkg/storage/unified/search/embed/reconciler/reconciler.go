@@ -101,8 +101,8 @@ type Options struct {
 	// is a full aggregate scan of the embeddings table, so it belongs far
 	// above Interval. Zero disables the sampling entirely.
 	EmbeddingCountInterval time.Duration
-	// Metrics is optional; when nil the reconciler runs without
-	// observability instrumentation (handy for unit tests).
+	// Metrics are always recorded. Nil means unregistered metrics, for
+	// callers without a registry.
 	Metrics *resource.VectorMetrics
 }
 
@@ -178,6 +178,10 @@ func New(opts Options) (*Reconciler, error) {
 	if opts.LockRetryInterval <= 0 {
 		opts.LockRetryInterval = defaultLockRetryInterval
 	}
+	// Recording sites should not have to check for nil.
+	if opts.Metrics == nil {
+		opts.Metrics = resource.ProvideVectorMetrics(nil)
+	}
 	return &Reconciler{
 		storage:                opts.Storage,
 		vectorBackend:          opts.VectorBackend,
@@ -231,9 +235,7 @@ func (s *Reconciler) enqueue(ev *pendingEvent) {
 		return
 	}
 	s.pending[k] = ev
-	if s.metrics != nil {
-		s.metrics.ReconcilerPendingEvents.Set(float64(len(s.pending)))
-	}
+	s.metrics.ReconcilerPendingEvents.Set(float64(len(s.pending)))
 }
 
 func (s *Reconciler) drainPending() []*pendingEvent {
@@ -247,9 +249,7 @@ func (s *Reconciler) drainPending() []*pendingEvent {
 		out = append(out, ev)
 	}
 	s.pending = make(map[string]*pendingEvent)
-	if s.metrics != nil {
-		s.metrics.ReconcilerPendingEvents.Set(0)
-	}
+	s.metrics.ReconcilerPendingEvents.Set(0)
 	return out
 }
 
@@ -293,7 +293,7 @@ func (s *Reconciler) Run(ctx context.Context) error {
 
 	// Gauge sampling runs only on the lock holder so the aggregate scan
 	// happens once per cluster rather than once per replica.
-	if s.metrics != nil && s.embeddingCountInterval > 0 {
+	if s.embeddingCountInterval > 0 {
 		go s.runEmbeddingCounts(ctx)
 	}
 
@@ -656,9 +656,7 @@ func (s *Reconciler) dropPendingUpTo(ev *pendingEvent) {
 		return
 	}
 	delete(s.pending, k)
-	if s.metrics != nil {
-		s.metrics.ReconcilerPendingEvents.Set(float64(len(s.pending)))
-	}
+	s.metrics.ReconcilerPendingEvents.Set(float64(len(s.pending)))
 }
 
 // processPending drains the in-memory pending map (watch-sourced events,
@@ -850,12 +848,10 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, pa
 			span.RecordError(retErr)
 			span.SetStatus(codes.Error, retErr.Error())
 		}
-		if s.metrics != nil {
-			metricutil.ObserveWithExemplar(ctx,
-				s.metrics.ReconcilerProcessDuration.WithLabelValues(ev.group, ev.resource, statusLabel),
-				time.Since(start).Seconds(),
-			)
-		}
+		metricutil.ObserveWithExemplar(ctx,
+			s.metrics.ReconcilerProcessDuration.WithLabelValues(ev.group, ev.resource, statusLabel),
+			time.Since(start).Seconds(),
+		)
 	}()
 
 	switch ev.action {
@@ -957,9 +953,6 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, pa
 		attribute.Int("subresources.deleted", deleted),
 	)
 	recordCounts := func() {
-		if s.metrics == nil {
-			return
-		}
 		s.metrics.ReconcilerSubresourcesExtractedTotal.WithLabelValues(ev.group, ev.resource).Add(float64(extracted))
 		s.metrics.ReconcilerSubresourcesEmbeddedTotal.WithLabelValues(ev.group, ev.resource).Add(float64(embedded))
 		s.metrics.ReconcilerSubresourcesDeletedTotal.WithLabelValues(ev.group, ev.resource).Add(float64(deleted))
@@ -997,9 +990,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, pa
 func (s *Reconciler) requeue(events []*pendingEvent) {
 	for _, ev := range events {
 		s.enqueue(ev)
-		if s.metrics != nil {
-			s.metrics.ReconcilerRetriesTotal.WithLabelValues(ev.group, ev.resource).Inc()
-		}
+		s.metrics.ReconcilerRetriesTotal.WithLabelValues(ev.group, ev.resource).Inc()
 	}
 }
 
@@ -1011,11 +1002,9 @@ func (s *Reconciler) recordFailure(ev *pendingEvent, failed *[]*pendingEvent, lo
 		logger.Error("reconciler: dropping event past retry cap; cursor will advance past it",
 			"namespace", ev.namespace, "name", ev.name,
 			"rv", ev.rv, "attempts", ev.attempts, "action", ev.action)
-		if s.metrics != nil {
-			s.metrics.ReconcilerEventsDroppedTotal.
-				WithLabelValues(ev.group, ev.resource, "retries_exhausted").
-				Inc()
-		}
+		s.metrics.ReconcilerEventsDroppedTotal.
+			WithLabelValues(ev.group, ev.resource, "retries_exhausted").
+			Inc()
 		s.markExhausted(ev)
 		return lowestFailedRv
 	}

@@ -303,12 +303,6 @@ export const DashboardInteractions = {
   exportCopyJsonClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_export_copy_json_clicked', properties);
   },
-  exportSaveJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_save_json_clicked', properties);
-  },
-  exportViewJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_view_json_clicked', properties);
-  },
   generatePublicDashboardUrlClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_public_generate_url_clicked', properties);
   },
