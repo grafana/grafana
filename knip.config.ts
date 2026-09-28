@@ -42,8 +42,6 @@ const config: KnipConfig = {
   workspaces: {
     '.': {
       ignoreDependencies: [
-        // shared Rollup config lives in packages/, outside the root project analyzed by knip
-        ...packageIgnoreDeps,
         // used by yarn test:ci
         'jest-junit',
 
@@ -73,12 +71,14 @@ const config: KnipConfig = {
         // paths to ignore
         '!e2e-playwright/test-plugins/**',
         '!packages/**',
+        'packages/rollup.config.parts.ts',
         '!pkg/**',
         '!scripts/grafana-server/tmp/**',
         ...externalisedDatasources.map((ds) => `!public/app/plugins/datasource/${ds}/**`),
       ],
       entry: [
         ...defaultEntries,
+        'packages/rollup.config.parts.ts',
         'public/app/app.ts',
         'public/app/index.ts',
         'public/app/api/clients/**/index.ts',
