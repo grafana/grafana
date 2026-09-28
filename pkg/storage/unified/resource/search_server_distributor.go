@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fullstorydev/grpchan"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
@@ -46,8 +47,15 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 	}
 
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceIndexServer(srv, s)
-	resourcepb.RegisterManagedObjectIndexServer(srv, s)
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+	} {
+		if cfg.UnifiedStorageGRPCErrorResultToStatus {
+			desc = grpchan.InterceptServer(desc, UnaryErrorResultInterceptor(), nil)
+		}
+		srv.RegisterService(desc, s)
+	}
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
 	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
 		ringWatcher := services.NewFailureWatcher()

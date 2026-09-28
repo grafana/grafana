@@ -6843,9 +6843,6 @@
     "variable": {
       "description-tooltip": "Description de la variable"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Retour au tableau de bord",
       "not-found": ""
@@ -13353,7 +13350,7 @@
       "count-truncated_other": "{{count}} premiers notebooks chargés"
     },
     "new": {
-      "default-title": "Notebook nº {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Échec de l’enregistrement",
@@ -14892,12 +14889,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Retour aux référentiels",
       "cleaning-up-resources": "Nettoyage des ressources du référentiel",
-      "not-found": "introuvable",
       "not-found-message": "Référentiel introuvable",
       "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration.",
       "tab-overview": "Vue d’ensemble",
@@ -15193,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Avant de rendre le tableau de bord public, acceptez ce qui suit :",
-      "data-src-ack-desc": "La publication ne fonctionne actuellement qu'avec un sous-ensemble de sources de données*",
-      "data-src-ack-tooltip": "En savoir plus sur les sources de données publiques",
-      "public-ack-desc": "Votre tableau de bord sera entièrement public*",
-      "public-ack-tooltip": "En savoir plus sur les tableaux de bord publics",
-      "usage-ack-desc": "Si vous rendez le tableau de bord public, les requêtes seront exécutées à chaque fois qu'il sera affiché, ce qui peut augmenter les coûts*",
-      "usage-ack-desc-tooltip": "En savoir plus sur la mise en cache des requêtes"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Peut voir le tableau de bord",
-      "copy-button": "Copier",
-      "dashboard-url-field-label": "URL du tableau de bord",
-      "email-share-type-option-label": "Uniquement les personnes spécifiées",
-      "pause-sharing-dashboard-label": "Interrompre le partage du tableau de bord",
-      "public-share-type-option-label": "Toute personne ayant un lien",
-      "revoke-public-URL-button": "Désactiver l'URL publique",
-      "revoke-public-URL-button-title": "Désactiver l'URL publique",
-      "settings-title": "Paramètres"
-    },
     "configuration": {
       "display-annotations-description": "Afficher les annotations sur ce tableau de bord",
       "display-annotations-label": "Afficher les annotations",
@@ -15225,21 +15206,11 @@
       "time-range-label": "Plage temporelle",
       "time-range-tooltip": "Le tableau de bord partagé utilise les paramètres de plage temporelle par défaut du tableau de bord"
     },
-    "create-page": {
-      "generate-public-url-button": "Générer une URL publique",
-      "unsupported-features-desc": "Actuellement, nous ne prenons pas en charge les variables de modèle ou les données provenant des utilisateurs",
-      "welcome-title": "Bienvenue dans les tableaux de bord publics !"
-    },
     "email-sharing": {
       "accept-button": "Accepter",
       "alert-text": "Le partage de tableaux de bord par e-mail est facturé par utilisateur pour la durée du jeton de 30 jours, quel que soit le nombre de tableaux de bord partagés. La facturation s'arrête après 30 jours, sauf si vous renouvelez le jeton.",
       "bill-ack": "Je comprends que l'ajout d'utilisateurs nécessite un paiement.*",
       "cancel-button": "Annuler",
-      "input-invalid-email-text": "Adresse e-mail non valide",
-      "input-required-email-text": "Une adresse e-mail est obligatoire",
-      "invite-button": "Inviter",
-      "invite-field-desc": "Invitez des personnes par e-mail",
-      "invite-field-label": "Inviter",
       "learn-more-button": "En savoir plus",
       "recipient-email-placeholder": "Adresse e-mail",
       "recipient-invalid-email-text": "Adresse e-mail non valide",
@@ -15249,17 +15220,12 @@
       "recipient-list-description": "Seules les personnes que vous avez directement invitées peuvent accéder à ce tableau de bord",
       "recipient-list-title": "Personnes ayant accès",
       "recipient-required-email-text": "Une adresse e-mail est obligatoire",
-      "resend-button": "Renvoyer",
-      "resend-button-title": "Renvoyer",
       "resend-invite-label": "Renvoyer l'invitation",
       "revoke-access-label": "Révoquer l'accès",
-      "revoke-button": "Retirer",
-      "revoke-button-title": "Retirer",
       "success-creation": "Votre tableau de bord est prêt pour le partage externe",
       "success-share-type-change": "Accès au tableau de bord mis à jour : seules les personnes spécifiques peuvent désormais y accéder avec le lien"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Veuillez enregistrer les modifications de votre tableau de bord avant de modifier la configuration publique",
       "unsupport-data-source-alert-readmore-link": "En savoir plus sur les sources de données prises en charge",
       "unsupported-data-source-alert-title": "Sources de données non prises en charge",
       "unsupported-template-variable-alert-desc": "Ce tableau de bord public peut ne pas fonctionner car il utilise des variables de modèle",
@@ -15273,25 +15239,6 @@
       "public-ack": "Je comprends que l'intégralité de ce tableau de bord sera publique.*",
       "success-creation": "Votre tableau de bord est maintenant accessible au public",
       "success-share-type-change": "Accès au tableau de bord mis à jour : toute personne disposant du lien peut désormais y accéder"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Réduire les paramètres",
-      "expand-settings-tooltip": "Développer les paramètres"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Intervalle de temps par défaut",
-      "default-time-range-label-desc": "Le tableau de bord public utilise les paramètres d'intervalle de temps par défaut du tableau de bord",
-      "show-annotations-label": "Afficher les annotations",
-      "show-annotations-label-desc": "Afficher les annotations sur le tableau de bord public",
-      "time-range-picker-label": "Sélecteur de plage de temps activé",
-      "time-range-picker-label-desc": "Permettre de modifier la plage de temps pendant l'affichage"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Annotations = masquer",
-      "annotations-show-text": "Annotations = montrer",
-      "time-range-picker-disabled-text": "Sélecteur de plage de temps = désactivé",
-      "time-range-picker-enabled-text": "Sélecteur de plage de temps = activé",
-      "time-range-text": "Plage de temps = "
     },
     "share": {
       "success-delete": "Votre tableau de bord n'est plus partageable"
@@ -16076,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Partager"
-    },
     "embed": {
       "copy": "Copier dans le presse-papiers",
       "html": "Intégrer du HTML",
@@ -16125,9 +16069,6 @@
       "time-range-description": "Transforme la période temporelle relative actuelle en une période temporelle absolue",
       "time-range-label": "Verrouiller la période temporelle"
     },
-    "panel": {
-      "title": "Partager le panneau"
-    },
     "snapshot": {
       "cancel-button": "Annuler",
       "copy-link-button": "Copier",
@@ -16143,16 +16084,11 @@
       "local-button": "Publier un instantané",
       "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
-      "timeout": "Délai d’expiration (secondes)",
-      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
       "url-label": "Capturer l'URL"
     },
     "tab-title": {
-      "embed": "Intégrer",
       "export": "Exporter",
-      "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
-      "public-dashboard-title": "Tableau de bord public",
       "snapshot": "Instantané"
     },
     "theme-picker": {
