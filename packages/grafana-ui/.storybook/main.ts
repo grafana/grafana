@@ -1,10 +1,14 @@
 import path, { dirname, join } from 'node:path';
-import type { StorybookConfig } from '@storybook/react-webpack5';
+import { mergeRsbuildConfig } from '@rsbuild/core';
+import { pluginReact } from '@rsbuild/plugin-react';
+import type { StorybookConfig } from 'storybook-react-rsbuild';
 import remarkGfm from 'remark-gfm';
 import { copyAssetsSync } from './copyAssets.ts';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
+
+const themeCss = /grafana\.(dark|light)\.css$/;
 
 const coreComponentsGlobs: StorybookConfig['stories'] = [
   // Specific high-level documentation pages
@@ -50,32 +54,11 @@ const mainConfig: StorybookConfig = {
       },
     },
     getAbsolutePath('@storybook/addon-a11y'),
-    {
-      name: '@storybook/preset-scss',
-      options: {
-        styleLoaderOptions: {
-          // this is required for theme switching .use() and .unuse()
-          injectType: 'lazyStyleTag',
-        },
-        cssLoaderOptions: {
-          url: false,
-          importLoaders: 2,
-        },
-        sassLoaderOptions: {
-          sassOptions: {
-            // silencing these warnings since we're planning to remove sass when angular is gone
-            silenceDeprecations: ['import', 'global-builtin'],
-          },
-        },
-      },
-    },
-    getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
   ],
 
   framework: {
-    name: getAbsolutePath('@storybook/react-webpack5'),
+    name: getAbsolutePath('storybook-react-rsbuild'),
     options: {
-      fastRefresh: true,
       builder: {
         fsCache: true,
       },
@@ -89,7 +72,7 @@ const mainConfig: StorybookConfig = {
     check: true,
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {
-      tsconfigPath: path.resolve(import.meta.dirname, 'tsconfig.json'),
+      tsconfigPath: path.resolve(import.meta.dirname, 'tsconfig.docgen.json'),
       shouldExtractLiteralValuesFromEnum: true,
       shouldRemoveUndefinedFromOptional: true,
       propFilter: (prop) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
@@ -97,38 +80,67 @@ const mainConfig: StorybookConfig = {
     },
   },
 
-  swc: () => ({
-    jsc: {
-      transform: {
-        react: {
-          runtime: 'automatic',
+  rsbuildFinal: async (config) =>
+    mergeRsbuildConfig(config, {
+      // pluginReact provides the automatic JSX runtime and, in dev, React Fast Refresh.
+      // Neither storybook-react-rsbuild nor storybook-builder-rsbuild registers it.
+      plugins: [pluginReact()],
+
+      tools: {
+        bundlerChain: (chain, { CHAIN_ID }) => {
+          chain.module.rule(CHAIN_ID.RULE.CSS).exclude.add(themeCss);
+        },
+        rspack: (rspackConfig) => {
+          rspackConfig.module ??= {};
+          rspackConfig.module.rules ??= [];
+          rspackConfig.module.rules.push(
+            // expose jquery as a global so jquery plugins don't break at runtime.
+            {
+              test: require.resolve('jquery'),
+              loader: 'expose-loader',
+              options: {
+                exposes: ['$', 'jQuery'],
+              },
+            },
+            // Rsbuild's own CSS pipeline has no `lazyStyleTag` equivalent, so the generated
+            // theme stylesheets get their own chain. `url: false` keeps relative url() refs
+            // (fonts, checkbox sprites) unresolved so they resolve at runtime against the
+            // assets copyAssets.ts puts in staticDirs.
+            {
+              test: themeCss,
+              type: 'javascript/auto',
+              use: [
+                {
+                  loader: require.resolve('style-loader'),
+                  options: {
+                    // this is required for theme switching .use() and .unuse()
+                    injectType: 'lazyStyleTag',
+                  },
+                },
+                {
+                  loader: require.resolve('css-loader'),
+                  options: {
+                    url: false,
+                  },
+                },
+              ],
+            }
+          );
+
+          // Tell storybook to resolve imports with the @grafana-app/source condition for
+          // the packages in this repo. Set here rather than via rsbuild's
+          // resolve.conditionNames, which replaces the defaults instead of extending them.
+          rspackConfig.resolve ??= {};
+          if (Array.isArray(rspackConfig.resolve.conditionNames)) {
+            rspackConfig.resolve.conditionNames.unshift('@grafana-app/source');
+          } else {
+            rspackConfig.resolve.conditionNames = ['@grafana-app/source', '...'];
+          }
+
+          return rspackConfig;
         },
       },
-    },
-  }),
-
-  webpackFinal: async (config) => {
-    // expose jquery as a global so jquery plugins don't break at runtime.
-    config.module?.rules?.push({
-      test: require.resolve('jquery'),
-      loader: 'expose-loader',
-      options: {
-        exposes: ['$', 'jQuery'],
-      },
-    });
-
-    // Tell storybook to resolve imports with the @grafana-app/source condition for
-    // the packages in this repo.
-    if (config && config.resolve) {
-      if (Array.isArray(config.resolve.conditionNames)) {
-        config.resolve.conditionNames.unshift('@grafana-app/source');
-      } else {
-        config.resolve.conditionNames = ['@grafana-app/source', '...'];
-      }
-    }
-
-    return config;
-  },
+    }),
 
   features: {
     backgrounds: false,

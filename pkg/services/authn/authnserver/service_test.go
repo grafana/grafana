@@ -62,7 +62,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "bespoke-token",
+				Token: "bespoke-token", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -98,7 +98,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "should-not-reach",
+				Token: "should-not-reach", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -121,7 +121,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "handled",
+				Token: "handled", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -142,7 +142,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "from-second",
+				Token: "from-second", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -164,7 +164,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "should-not-reach",
+				Token: "should-not-reach", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -213,7 +213,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "ok",
+				Token: "ok", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		}
 		svc.RegisterClient(client)
@@ -294,7 +294,7 @@ func TestAuthenticate_GRPCLogFields(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "tok",
+				Token: "tok", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 

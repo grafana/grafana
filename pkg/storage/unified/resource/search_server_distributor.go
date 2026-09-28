@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fullstorydev/grpchan"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
@@ -29,6 +30,7 @@ import (
 
 type UnifiedStorageGrpcService interface {
 	services.NamedService
+	grpcserver.HealthProbe
 }
 
 var (
@@ -45,8 +47,15 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 	}
 
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceIndexServer(srv, s)
-	resourcepb.RegisterManagedObjectIndexServer(srv, s)
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+	} {
+		if cfg.UnifiedStorageGRPCErrorResultToStatus {
+			desc = grpchan.InterceptServer(desc, UnaryErrorResultInterceptor(), nil)
+		}
+		srv.RegisterService(desc, s)
+	}
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
 	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
 		ringWatcher := services.NewFailureWatcher()
@@ -96,6 +105,24 @@ type distributorServer struct {
 	searchRingRead ring.Operation
 	log            log.Logger
 	tracing        trace.Tracer
+}
+
+// Search servers register as JOINING and become ACTIVE only after building
+// their indexes. Requiring an ACTIVE entry would keep distributors unready
+// during a cold start or full search-server rollout.
+func (ds *distributorServer) ringPopulated() error {
+	if state := ds.ring.State(); state != services.Running {
+		return fmt.Errorf("ring is not running: state=%s", state)
+	}
+	if ds.ring.InstancesCount() == 0 {
+		return errors.New("search server ring has no instances")
+	}
+	return nil
+}
+
+func (ds *distributorServer) CheckHealth(_ context.Context) (bool, error) {
+	err := ds.ringPopulated()
+	return err == nil, err
 }
 
 func newSearchRingReadOp(extendReplicaSet bool) ring.Operation {
@@ -214,10 +241,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	errorCh := make(chan error, expectedInstances)
 
 	for _, inst := range rs.Instances {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			client, err := ds.clientPool.GetClientForInstance(inst)
 			if err != nil {
 				errorCh <- fmt.Errorf("instance %s: failed to get client, %w", inst.Id, err)
@@ -225,13 +249,8 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
-			if err != nil {
-				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
-				return
-			}
-
-			if rsp.Error != nil {
-				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, rsp.Error.Message)
+			if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %w", inst.Id, err)
 				return
 			}
 
@@ -241,7 +260,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			responseCh <- rsp
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -357,7 +376,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	if ds.ring.State() == services.Running {
+	if err := ds.ringPopulated(); err == nil {
 		return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 	}
 

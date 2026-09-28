@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/app"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 )
 
@@ -16,7 +17,7 @@ func forwardSpec(url string) v1alpha2.RouteBackendSpec {
 }
 
 func TestNewForwardBackendAcceptsValidURL(t *testing.T) {
-	_, err := NewForwardBackend(app.ManifestData{Group: "dashboard.grafana.app"}, forwardSpec("https://backend.internal:8080"), "1", &http.Transport{})
+	_, err := NewForwardBackend(metav1.APIGroup{Name: "dashboard.grafana.app"}, forwardSpec("https://backend.internal:8080"), "1", &http.Transport{})
 	if err != nil {
 		t.Fatalf("NewForwardBackend() = %v, want nil for a valid absolute URL", err)
 	}
@@ -35,7 +36,7 @@ func TestNewForwardBackendRejectsURLsWithoutHost(t *testing.T) {
 		"backend:8080", // no scheme -- url.Parse treats "backend" as the scheme, not the host
 	}
 	for _, url := range cases {
-		_, err := NewForwardBackend(app.ManifestData{Group: "dashboard.grafana.app"}, forwardSpec(url), "1", &http.Transport{})
+		_, err := NewForwardBackend(metav1.APIGroup{Name: "dashboard.grafana.app"}, forwardSpec(url), "1", &http.Transport{})
 		if err == nil {
 			t.Errorf("NewForwardBackend(url=%q) = nil error, want an error (no scheme/host)", url)
 		}

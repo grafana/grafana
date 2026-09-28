@@ -3,7 +3,6 @@ package search
 import (
 	"fmt"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
@@ -36,6 +35,12 @@ const (
 	fieldRoutingTree         = "routingTree"
 	fieldMetric              = "metric"
 	fieldTargetDatasourceUID = "targetDatasourceUID"
+	fieldHealth              = "health"
+	fieldLastEvaluationTime  = "lastEvaluationTime"
+	fieldLastError           = "lastError"
+	fieldEvaluationDuration  = "evaluationDuration"
+	fieldState               = "state"
+	fieldStateReason         = "stateReason"
 )
 
 // resultColumns are the columns every search result table carries, in order.
@@ -45,6 +50,7 @@ var resultColumns = []string{
 	fieldAnnotations, fieldFor, fieldKeepFiringFor,
 	fieldDashboardUID, fieldPanelID, fieldReceiver, fieldNotificationType, fieldRoutingTree,
 	fieldMetric, fieldTargetDatasourceUID,
+	fieldHealth, fieldLastEvaluationTime, fieldLastError, fieldEvaluationDuration, fieldState, fieldStateReason,
 }
 
 // searchColumns is the column definition for every field a rule hit can carry,
@@ -59,7 +65,7 @@ func buildSearchColumns() map[string]*resourcepb.ResourceTableColumnDefinition {
 		fieldFolder: std.Field(fieldFolder),
 	}
 
-	provider := resource.NewManifestBackedProvider([]app.Manifest{rulesmanifest.LocalManifest()})
+	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
 	for _, gr := range []schema.GroupResource{
 		alertrule.ResourceInfo.GroupResource(),
 		recordingrule.ResourceInfo.GroupResource(),

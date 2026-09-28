@@ -87,6 +87,47 @@ func newTestAuthInfo() types.AuthInfo {
 	)
 }
 
+func TestAllowSelfAuthorizerAllowsCurrentUserPermissions(t *testing.T) {
+	base := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		return authorizer.DecisionDeny, "base authorizer", nil
+	})
+	authz := allowSelfAuthorizer(base)
+	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+	attr := authorizer.AttributesRecord{
+		ResourceRequest: true,
+		Verb:            "get",
+		APIGroup:        iamv0.UserResourceInfo.GroupResource().Group,
+		Resource:        iamv0.UserResourceInfo.GroupResource().Resource,
+		Subresource:     "permissions",
+		Namespace:       "org-1",
+		Name:            "~",
+	}
+
+	decision, _, err := authz.Authorize(ctx, attr)
+
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionAllow, decision)
+}
+
+func TestAllowSelfAuthorizerDelegatesOtherRequests(t *testing.T) {
+	base := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		return authorizer.DecisionDeny, "base authorizer", nil
+	})
+	authz := allowSelfAuthorizer(base)
+	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+
+	for _, attr := range []authorizer.AttributesRecord{
+		{ResourceRequest: true, Verb: "update", Resource: "users", Subresource: "permissions", Name: "~"},
+		{ResourceRequest: true, Verb: "get", Resource: "users", Subresource: "permissions", Name: "u1"},
+		{ResourceRequest: true, Verb: "get", Resource: "users", Subresource: "other", Name: "~"},
+	} {
+		decision, reason, err := authz.Authorize(ctx, attr)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "base authorizer", reason)
+	}
+}
+
 func TestTeamLBACRuleAuthorizer(t *testing.T) {
 	baseCalled := false
 	base := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {

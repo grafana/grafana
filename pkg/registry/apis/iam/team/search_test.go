@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,9 +34,39 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-func TestTeamSearchFallback(t *testing.T) {
-	t.Skip("Skipping team search fallback test: https://github.com/grafana/identity-access-team/issues/2048")
+func TestSearchErrorStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{Name: "team", Group: "iam.grafana.app", Kind: "teams", Uid: "uid", RetryAfterSeconds: 12},
+	}
+	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
+	require.NoError(t, err)
+	for name, client := range map[string]*MockClient{
+		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
+		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
+		"plain":     {MockError: fmt.Errorf("private database failure")},
+		"internal":  {MockError: status.Error(codes.Internal, "private database failure")},
+	} {
+		t.Run(name, func(t *testing.T) {
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), selectorForBackend(NewUnifiedSearchClient(client)), nil)
+			req := httptest.NewRequest("GET", "/searchTeams", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+			recorder := httptest.NewRecorder()
+			handler.DoTeamSearch(recorder, req)
+			if name == "plain" || name == "internal" {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+				require.NotContains(t, recorder.Body.String(), "private database failure")
+				return
+			}
+			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
+			var got metav1.Status
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
+			require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), got)
+		})
+	}
+}
 
+func TestTeamSearchBackendSelection(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		mode                  rest.DualWriterMode
@@ -50,8 +82,8 @@ func TestTeamSearchFallback(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			mockClient := &MockClient{}
-			mockLegacyClient := &MockClient{}
+			mockClient := &fakeSearchBackend{}
+			mockLegacyClient := &fakeSearchBackend{}
 
 			cfg := &setting.Cfg{
 				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
@@ -59,7 +91,7 @@ func TestTeamSearchFallback(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
-			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), mockClient, mockLegacyClient)
+			searchClient := dualwrite.NewSelector[SearchBackend](dual, iamv0alpha1.TeamResourceInfo.GroupResource(), mockLegacyClient, mockClient)
 			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil)
 
 			rr := httptest.NewRecorder()
@@ -69,28 +101,25 @@ func TestTeamSearchFallback(t *testing.T) {
 
 			searchHandler.DoTeamSearch(rr, req)
 
-			if !testCase.expectedUnifiedCalled && mockClient.LastSearchRequest != nil {
-				t.Fatalf("expected Unified Search NOT to be called, but it was")
-			}
-			if testCase.expectedLegacyCalled && mockLegacyClient.LastSearchRequest == nil {
-				t.Fatalf("expected Legacy Search to be called, but it was not")
-			}
+			require.Equal(t, http.StatusOK, rr.Code)
+			require.Equal(t, testCase.expectedUnifiedCalled, mockClient.lastQuery != nil)
+			require.Equal(t, testCase.expectedLegacyCalled, mockLegacyClient.lastQuery != nil)
 		})
 	}
 }
 
 func TestSearchHandler(t *testing.T) {
-	t.Run("search using default team search fields", func(t *testing.T) {
+	t.Run("search using default team search fields without explain", func(t *testing.T) {
 		mockClient := &MockClient{}
 
 		searchHandler := SearchHandler{
 			log:    log.New("grafana-apiserver.teams.search"),
-			client: mockClient,
+			client: selectorForBackend(NewUnifiedSearchClient(mockClient)),
 			tracer: tracing.NewNoopTracerService(),
 		}
 
 		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/teams/search", nil)
+		req := httptest.NewRequest("GET", "/teams/search?explain=true", nil)
 		req.Header.Add("content-type", "application/json")
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 
@@ -99,6 +128,7 @@ func TestSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
+		require.False(t, mockClient.LastSearchRequest.Explain)
 		expectedFields := []string{
 			resource.SEARCH_FIELD_TITLE,
 			builders.TEAM_SEARCH_EMAIL,
@@ -109,6 +139,7 @@ func TestSearchHandler(t *testing.T) {
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, mockClient.LastSearchRequest.ResultFormat)
 	})
 
 	t.Run("returns error if search fails", func(t *testing.T) {
@@ -118,7 +149,7 @@ func TestSearchHandler(t *testing.T) {
 
 		searchHandler := SearchHandler{
 			log:    log.New("grafana-apiserver.teams.search"),
-			client: mockClient,
+			client: selectorForBackend(NewUnifiedSearchClient(mockClient)),
 			tracer: tracing.NewNoopTracerService(),
 		}
 
@@ -199,7 +230,7 @@ func TestSearchHandler(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
-			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), mockClient, mockClient)
+			searchClient := dualwrite.NewSelector[SearchBackend](dual, iamv0alpha1.TeamResourceInfo.GroupResource(), NewUnifiedSearchClient(mockClient), NewUnifiedSearchClient(mockClient))
 			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil)
 
 			rr := httptest.NewRecorder()
@@ -231,7 +262,7 @@ func TestSearchHandler(t *testing.T) {
 
 		searchHandler := &SearchHandler{
 			log:    log.New("grafana-apiserver.teams.search"),
-			client: mockClient,
+			client: selectorForBackend(NewUnifiedSearchClient(mockClient)),
 			tracer: tracing.NewNoopTracerService(),
 		}
 
@@ -253,7 +284,7 @@ func TestSearchHandler(t *testing.T) {
 
 				searchHandler := &SearchHandler{
 					log:    log.New("grafana-apiserver.teams.search"),
-					client: mockClient,
+					client: selectorForBackend(NewUnifiedSearchClient(mockClient)),
 					tracer: tracing.NewNoopTracerService(),
 				}
 
@@ -756,21 +787,9 @@ func (m *MockClient) GetQuotaUsage(ctx context.Context, in *resourcepb.QuotaUsag
 	return nil, nil
 }
 
-func mockTeamClientWithHits() *MockClient {
-	return &MockClient{
-		MockResponses: []*resourcepb.ResourceSearchResponse{
-			{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: "title"},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "team-1"}, Cells: [][]byte{[]byte("Team One")}},
-						{Key: &resourcepb.ResourceKey{Name: "team-2"}, Cells: [][]byte{[]byte("Team Two")}},
-					},
-				},
-				TotalHits: 2,
-			},
-		},
-	}
+func mockTeamClientWithHits() *dualwrite.Selector[SearchBackend] {
+	return selectorForBackend(&fakeSearchBackend{hits: []iamv0alpha1.GetSearchTeamsTeamHit{
+		{Name: "team-1", Title: "Team One"},
+		{Name: "team-2", Title: "Team Two"},
+	}})
 }

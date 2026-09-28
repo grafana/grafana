@@ -2,9 +2,9 @@ package builders
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,11 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// rulesManifests is the rule kinds' manifest; the tests derive the rule search
-// fields from it the way the shared registry does in production.
-var rulesManifests = []app.Manifest{rulesmanifest.LocalManifest()}
+// rulesManifestData is the rule kinds' manifest; the tests derive the rule
+// search fields from it the way the shared registry does in production.
+var rulesManifestData = rulesmanifest.LocalManifest().ManifestData
 
-var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifests)
+var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifestData)
 
 // Field names as declared in apps/alerting/rules/kinds/{alertRule,recordingRule}.cue.
 // Only type, labels, annotations and datasourceUIDs remain as Go constants in
@@ -38,6 +38,12 @@ const (
 	testFieldRoutingTree         = "routingTree"
 	testFieldMetric              = "metric"
 	testFieldTargetDatasourceUID = "targetDatasourceUID"
+	testFieldHealth              = "health"
+	testFieldLastEvaluationTime  = "lastEvaluationTime"
+	testFieldEvaluationDuration  = "evaluationDuration"
+	testFieldLastError           = "lastError"
+	testFieldState               = "state"
+	testFieldStateReason         = "stateReason"
 )
 
 func alertRuleKey(name string) *resourcepb.ResourceKey {
@@ -62,7 +68,7 @@ func recordingRuleKey(name string) *resourcepb.ResourceKey {
 // registry-backed builders extract them, as they do in production.
 func rulesTestRegistry(t *testing.T) *resource.SearchFieldsRegistry {
 	t.Helper()
-	sel, hashes, providers, err := resource.SearchFieldsForManifests(rulesManifests)
+	sel, hashes, providers, err := resource.SearchFieldsForManifests(rulesManifestData)
 	require.NoError(t, err)
 	return resource.NewSearchFieldsRegistry(sel, hashes, providers)
 }
@@ -290,4 +296,147 @@ func TestRuleSearchFields_hashDiffersPerKind(t *testing.T) {
 
 	// The two kinds declare different fields, so their hashes must differ.
 	assert.NotEqual(t, alertHash, recordingHash)
+}
+
+func TestRuleBuilders_extract_status_fields(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		build       func(*testing.T, string) *resource.IndexableDocument
+		kind        string
+		duration    float64
+		alertStatus string
+	}{
+		{
+			name:     "alert rule preserves fractional duration",
+			build:    buildAlertRuleDoc,
+			kind:     "AlertRule",
+			duration: 0.125,
+			alertStatus: `,
+				"state": "Alerting",
+				"stateReason": "threshold exceeded"`,
+		},
+		{
+			name:     "recording rule preserves zero duration",
+			build:    buildRecordingRuleDoc,
+			kind:     "RecordingRule",
+			duration: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			status := fmt.Sprintf(`{
+				"health": "ok",
+				"lastEvaluationTime": "2026-09-17T12:34:56Z",
+				"evaluationDuration": %v,
+				"lastError": "query timed out"%s
+			}`, tc.duration, tc.alertStatus)
+
+			doc := tc.build(t, fmt.Sprintf(`{
+				"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+				"kind": %q,
+				"metadata": {"name": "r1"},
+				"spec": {"trigger": {"interval": "1m"}, "expressions": {}},
+				"status": %s
+			}`, tc.kind, status))
+
+			assert.Equal(t, "ok", doc.Fields[testFieldHealth])
+			assert.Equal(t, "2026-09-17T12:34:56Z", doc.Fields[testFieldLastEvaluationTime])
+			assert.Equal(t, tc.duration, doc.Fields[testFieldEvaluationDuration])
+			assert.Equal(t, "query timed out", doc.Fields[testFieldLastError])
+			if tc.alertStatus != "" {
+				assert.Equal(t, "Alerting", doc.Fields[testFieldState])
+				assert.Equal(t, "threshold exceeded", doc.Fields[testFieldStateReason])
+			}
+		})
+	}
+}
+
+func TestRuleBuilders_omit_missing_status_fields(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		build func(*testing.T, string) *resource.IndexableDocument
+		kind  string
+	}{
+		{name: "alert rule", build: buildAlertRuleDoc, kind: "AlertRule"},
+		{name: "recording rule", build: buildRecordingRuleDoc, kind: "RecordingRule"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc := tc.build(t, fmt.Sprintf(`{
+				"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+				"kind": %q,
+				"metadata": {"name": "r1"},
+				"spec": {"trigger": {"interval": "1m"}, "expressions": {}}
+			}`, tc.kind))
+
+			assert.NotContains(t, doc.Fields, testFieldHealth)
+			assert.NotContains(t, doc.Fields, testFieldLastEvaluationTime)
+			assert.NotContains(t, doc.Fields, testFieldEvaluationDuration)
+			assert.NotContains(t, doc.Fields, testFieldLastError)
+		})
+	}
+}
+
+func TestRecordingRuleBuilder_omits_alert_only_status_fields(t *testing.T) {
+	doc := buildRecordingRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "RecordingRule",
+		"metadata": {"name": "r1"},
+		"spec": {"trigger": {"interval": "1m"}, "expressions": {}},
+		"status": {"state": "Alerting", "stateReason": "threshold exceeded"}
+	}`)
+
+	assert.NotContains(t, doc.Fields, testFieldState)
+	assert.NotContains(t, doc.Fields, testFieldStateReason)
+}
+
+func TestRuleSearchFields_status_fields_are_retrieve_only(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		gvr  schema.GroupVersionResource
+	}{
+		{
+			name: "alert rule",
+			gvr:  rulesv0alpha1.AlertRuleKind().GroupVersionResource(),
+		},
+		{
+			name: "recording rule",
+			gvr:  rulesv0alpha1.RecordingRuleKind().GroupVersionResource(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			byName := make(map[string]resource.SearchFieldDefinition)
+			for _, field := range rulesSearchFieldsProvider.Fields(tc.gvr) {
+				byName[field.Name] = field
+			}
+
+			for _, name := range []string{testFieldHealth, testFieldLastEvaluationTime, testFieldLastError} {
+				field, ok := byName[name]
+				require.True(t, ok, "%s should be declared", name)
+				assert.Equal(t, resource.SearchFieldTypeString, field.Type)
+				assert.Equal(t, []resource.SearchCapability{resource.SearchCapabilityRetrieve}, field.Capabilities)
+			}
+
+			duration, ok := byName[testFieldEvaluationDuration]
+			require.True(t, ok, "evaluationDuration should be declared")
+			assert.Equal(t, resource.SearchFieldTypeDouble, duration.Type)
+			assert.Equal(t, []resource.SearchCapability{resource.SearchCapabilityRetrieve}, duration.Capabilities)
+		})
+	}
 }

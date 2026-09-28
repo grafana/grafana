@@ -2,6 +2,7 @@ package authn
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -282,12 +283,7 @@ func (i *Identity) HasUniqueId() bool {
 }
 
 func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
-	for _, p := range providers {
-		if i.AuthenticatedBy == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(providers, i.AuthenticatedBy)
 }
 
 func (i *Identity) IsNil() bool {
@@ -311,7 +307,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IsAnonymous:       i.IsIdentityType(claims.TypeAnonymous),
 		IsDisabled:        i.IsDisabled,
 		LastSeenAt:        i.LastSeenAt,
-		TeamIDs:           i.TeamIDs,
+		TeamIDs:           i.TeamIDs, //nolint:staticcheck // Preserve legacy field compatibility.
 		TeamUIDs:          i.Groups,
 		ExternalGroups:    i.ExternalGroups,
 		Permissions:       i.Permissions,

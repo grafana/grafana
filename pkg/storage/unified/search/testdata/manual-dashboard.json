@@ -214,7 +214,7 @@
           "aa"
         ],
         "zzz",
-        null,
+        3,
         0,
         null,
         "repo",
@@ -245,7 +245,8 @@
         "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "ccc",
-          "namespace": "ns"
+          "namespace": "ns",
+          "resourceVersion": "3"
         }
       }
     },
@@ -257,7 +258,7 @@
           "aa"
         ],
         "xxx",
-        null,
+        2,
         0,
         11,
         "repo",
@@ -290,7 +291,8 @@
         "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "bbb",
-          "namespace": "ns"
+          "namespace": "ns",
+          "resourceVersion": "2"
         }
       }
     },
@@ -303,7 +305,7 @@
           "bb"
         ],
         "xxx",
-        null,
+        1,
         0,
         10,
         "repo",
@@ -337,7 +339,8 @@
         "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "aaa",
-          "namespace": "ns"
+          "namespace": "ns",
+          "resourceVersion": "1"
         }
       }
     }

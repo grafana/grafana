@@ -75,13 +75,17 @@ describe('browse-dashboards services', () => {
     beforeEach(() => {
       jest.clearAllMocks();
       mockContextSrv.hasPermission = jest.fn().mockReturnValue(true);
-      config.featureToggles.foldersAppPlatformAPI = false;
+      setTestFlags({ foldersAppPlatformAPI: false });
       config.sharedWithMeFolderUID = 'sharedwithme';
+    });
+
+    afterEach(() => {
+      setTestFlags({});
     });
 
     describe('old API (foldersAppPlatformAPI = false)', () => {
       beforeEach(() => {
-        config.featureToggles.foldersAppPlatformAPI = false;
+        setTestFlags({ foldersAppPlatformAPI: false });
       });
 
       it('returns folders in correct format', async () => {
@@ -118,7 +122,7 @@ describe('browse-dashboards services', () => {
 
     describe('new API (foldersAppPlatformAPI = true)', () => {
       beforeEach(() => {
-        config.featureToggles.foldersAppPlatformAPI = true;
+        setTestFlags({ foldersAppPlatformAPI: true });
       });
 
       it('returns the correct folders for the requested page', async () => {
@@ -226,13 +230,9 @@ describe('browse-dashboards services', () => {
     });
 
     describe('starred folders virtual item', () => {
+      // One call — putConfiguration replaces the whole flag set, so a second call would drop the first.
       beforeEach(() => {
-        config.featureToggles.foldersAppPlatformAPI = true;
-        setTestFlags({ 'grafana.starredFolders': true });
-      });
-
-      afterEach(() => {
-        setTestFlags({});
+        setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
       });
 
       it('inserts the starred folders item after team folders and before real folders', async () => {

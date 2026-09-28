@@ -18,13 +18,10 @@ import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboard
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
-import {
-  ExtensionSidebar,
-  MAX_EXTENSION_SIDEBAR_WIDTH,
-  MIN_EXTENSION_SIDEBAR_WIDTH,
-} from './ExtensionSidebar/ExtensionSidebar';
+import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
-import { FeatureControlFloating } from './FeatureControl/FeatureControlFloating';
+import { MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar/constants';
+import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl';
 import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspace/FullscreenWorkspacePlatformBar';
 import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorkspaceShell';
 import { useFullscreenWorkspace } from './FullscreenWorkspace/useFullscreenWorkspace';
@@ -223,7 +220,7 @@ export function AppChrome({ children }: Props) {
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
-      {!state.chromeless && <FeatureControlFloating />}
+      {!state.chromeless && <LazyFeatureControlFloating />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}

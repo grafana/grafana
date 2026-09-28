@@ -122,8 +122,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+										Ref: ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -195,9 +194,8 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceApiServer(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -245,8 +243,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceApiServerList(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DataSourceApiServer{}.OpenAPIModelName()),
+										Ref: ref(DataSourceApiServer{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -344,8 +341,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnectionList(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DataSourceConnection{}.OpenAPIModelName()),
+										Ref: ref(DataSourceConnection{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -396,13 +392,6 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnectionQuery(ref common.Re
 							Format:      "",
 						},
 					},
-					"plugin": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The plugin ID",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
 				Required: []string{"namespace"},
 			},
@@ -442,8 +431,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DataSource{}.OpenAPIModelName()),
+										Ref: ref(DataSource{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -485,9 +473,8 @@ func schema_pkg_apis_datasource_v0alpha1_DatasourceAccessInfo(ref common.Referen
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: false,
-										Type:    []string{"boolean"},
-										Format:  "",
+										Type:   []string{"boolean"},
+										Format: "",
 									},
 								},
 							},
@@ -736,8 +723,7 @@ func schema_pkg_apis_datasource_v0alpha1_QueryDataResponse(ref common.ReferenceC
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(backend.DataResponse{}.OpenAPIModelName()),
+										Ref: ref(backend.DataResponse{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -781,8 +767,7 @@ func schema_pkg_apis_datasource_v0alpha1_QueryResponseSQLSchemas(ref common.Refe
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SchemaInfo{}.OpenAPIModelName()),
+										Ref: ref(SchemaInfo{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -870,8 +855,7 @@ func schema_pkg_apis_datasource_v0alpha1_QueryTypeDefinitionList(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(QueryTypeDefinition{}.OpenAPIModelName()),
+										Ref: ref(QueryTypeDefinition{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -904,8 +888,7 @@ func schema_pkg_apis_datasource_v0alpha1_SchemaInfo(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(BasicColumn{}.OpenAPIModelName()),
+										Ref: ref(BasicColumn{}.OpenAPIModelName()),
 									},
 								},
 							},

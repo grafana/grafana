@@ -768,6 +768,10 @@ type grafanaComPluginManifest struct {
 // grafanaComChildPluginVersionToMetaSpec converts a child plugin version to a MetaSpec.
 // It inherits most information from the parent plugin.
 func grafanaComChildPluginVersionToMetaSpec(logger logging.Logger, child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) (pluginsv0alpha1.MetaSpec, error) {
+	if parent.CDNURL == "" {
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("grafana.com response for parent of plugin %s is missing cdnUrl", child.Slug)
+	}
+
 	cdnURL, err := url.JoinPath(parent.CDNURL, child.Path)
 	if err != nil {
 		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("failed to build CDN URL for child plugin %s: %w", child.Slug, err)
@@ -870,6 +874,10 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 		}
 
 		metaSpec.Signature = signature
+	}
+
+	if gcomMeta.CDNURL == "" {
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("grafana.com response for plugin %s is missing cdnUrl", gcomMeta.PluginSlug)
 	}
 
 	moduleURL, err := url.JoinPath(gcomMeta.CDNURL, "module.js")

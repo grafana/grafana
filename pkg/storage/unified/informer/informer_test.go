@@ -91,7 +91,8 @@ func (f *fakeSubscriber) deliver(t *testing.T, subject string, data []byte) {
 
 type fakeSubscription struct{}
 
-func (fakeSubscription) Unsubscribe() error { return nil }
+func (fakeSubscription) WaitReady(ctx context.Context) error { return ctx.Err() }
+func (fakeSubscription) Unsubscribe() error                  { return nil }
 
 var _ nats.Subscriber = (*fakeSubscriber)(nil)
 
@@ -588,7 +589,7 @@ func TestInformer_SignalReconnectDoesNotBlock(t *testing.T) {
 	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
 	// The run loop is not started, so nothing drains the channel; every call must
 	// still return immediately.
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		n.signalReconnect()
 	}
 }

@@ -16,12 +16,12 @@ import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
-import { type DashboardChangeInfo } from '../saving/shared';
+import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { hasPredefinedVariablesAnnotationChanges } from '../utils/predefinedVariablesMetadata';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
@@ -214,6 +214,7 @@ export class V1DashboardSerializer
       hasFolderChanges,
       hasPredefinedVariablesChanges,
       hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges,
+      isNew: isNewDashboard(scene.state),
       hasMigratedToV2: false,
     };
   }
@@ -443,14 +444,13 @@ export class V2DashboardSerializer
 
     const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
     const hasPredefinedVariablesChanges = hasPredefinedVariablesAnnotationChanges(scene);
-    const isNew = !Boolean(scene.getInitialState()?.uid);
 
     return {
       ...changeInfo,
       hasFolderChanges,
       hasPredefinedVariablesChanges,
       hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges,
-      isNew,
+      isNew: isNewDashboard(scene.state),
       hasMigratedToV2: !!changeInfo.hasMigratedToV2,
     };
   }

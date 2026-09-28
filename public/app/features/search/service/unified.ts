@@ -34,7 +34,7 @@ import {
   type SearchQuery,
   type SearchResultMeta,
 } from './types';
-import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
+import { appendFrame, replaceCurrentFolderQuery } from './utils';
 
 const searchURI = `${v0alphaBaseURL}/search`;
 
@@ -145,8 +145,9 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let rsp: SearchAPIResponse;
 
     if (query.deleted) {
-      const data = await deletedDashboardsCache.get();
-      const results = filterSearchResults(data, query);
+      // Both the filtering and the sorting happen behind this call: in the browser today,
+      // on the server once the trash endpoint is switched on.
+      const results = await deletedDashboardsCache.search(query);
       rsp = { hits: results, totalHits: results.length };
     } else {
       rsp = await this.fetchResponse(uri);
@@ -338,7 +339,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (query.sort) {
-      const sort = query.sort.replace('_sort', '').replace('name', 'title');
+      const sort = toSortParam(query.sort);
       uri += `&sort=${sort}`;
       const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
 
@@ -370,6 +371,30 @@ export class UnifiedSearcher implements GrafanaSearcher {
 }
 
 const pageSize = 50;
+
+// Sort values the search UI has used over time, mapped to the index field the backend
+// sorts on, with "-" for descending. "name_sort" is this searcher's own option value;
+// the rest are the sort names of the older /api/search endpoint. Both keep arriving
+// because the selected sort is kept in browser storage and in the page URL.
+const uiSortValues: Record<string, string> = {
+  name_sort: 'title',
+  '-name_sort': '-title',
+  'alpha-asc': 'title',
+  'alpha-desc': '-title',
+  'viewed-recently-asc': 'views_last_30_days',
+  'viewed-recently-desc': '-views_last_30_days',
+  'viewed-asc': 'views_total',
+  'viewed-desc': '-views_total',
+  'errors-recently-asc': 'errors_last_30_days',
+  'errors-recently-desc': '-errors_last_30_days',
+  'errors-asc': 'errors_total',
+  'errors-desc': '-errors_total',
+};
+
+/** Translates a sort value into the index field name the search API expects. */
+function toSortParam(sort: string): string {
+  return uiSortValues[sort] ?? sort;
+}
 
 // Enterprise only sort field values for dashboards
 const sortFields = [

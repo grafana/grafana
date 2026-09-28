@@ -9,7 +9,6 @@ import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafan
 import { selectors } from '@grafana/e2e-selectors';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
-import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/hooks/abilities/alertmanager/useNotificationPolicyAbility';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   getErrorResponse,
@@ -28,6 +27,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/utils/alertmanagerPermissions';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,

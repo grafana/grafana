@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -12,7 +12,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { DashboardInteractions } from '../utils/interactions';
-import { activateFullSceneTree } from '../utils/test-utils';
+import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
 import { DashboardSidebarSplitter } from './DashboardSidebarSplitter';
 
@@ -97,6 +97,41 @@ describe('DashboardSidebarRenderer', () => {
     render(<DashboardSidebarSplitter dashboard={scene} />);
 
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+  });
+
+  it('opens a cancellable loading pane and keeps it closed after the request settles', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+    const pending = createDeferred<void>();
+    act(() => activateFullSceneTree(scene));
+    const { user } = render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+    let opening!: Promise<void>;
+    act(() => {
+      opening = sidebar.runPaneRequest(() => pending.promise);
+    });
+
+    expect(await screen.findByRole('status', { name: 'Loading sidebar' })).toBeVisible();
+    await user.click(screen.getByTestId(selectors.components.Sidebar.closePane));
+    expect(screen.queryByRole('status', { name: 'Loading sidebar' })).not.toBeInTheDocument();
+    await act(async () => {
+      pending.resolve();
+      await opening;
+    });
+    expect(screen.queryByTestId(selectors.components.Sidebar.closePane)).not.toBeInTheDocument();
+    await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
+    expect(await screen.findByTestId(selectors.components.Sidebar.headerTitle)).toHaveTextContent('Content outline');
+  });
+
+  it('opens the add pane when the Add button is clicked', async () => {
+    const user = userEvent.setup();
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+    await user.click(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.addButton));
+
+    await waitFor(() => expect(scene.state.sidebar.state.openPane?.getId()).toBe('add'));
   });
 
   it('Should sync sidebar docked state with sidebar state', async () => {
@@ -188,7 +223,7 @@ describe('DashboardSidebarRenderer', () => {
 
       // Select the panel programmatically (clicking a panel in real UX)
       const panel = scene.state.body.getVizPanels()[0];
-      act(() => scene.state.sidebar.selectObject(panel));
+      await act(async () => scene.state.sidebar.selectObject(panel));
 
       // Sidebar pops up — effective isDocked is false during temp-show
       expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
