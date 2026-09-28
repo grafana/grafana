@@ -22,14 +22,14 @@ func metricsService(t *testing.T, group, upstream string) *Service {
 	t.Helper()
 	backend, err := NewForwardBackend(metav1.APIGroup{Name: group}, forwardSpec(upstream), "1", &http.Transport{})
 	require.NoError(t, err)
-	svc := newService(&mutableLoader{backends: []Backend{backend}}, prometheus.NewRegistry())
+	svc := newService(&mutableLoader{backends: []Backend{backend}}, nil, prometheus.NewRegistry())
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	return svc
 }
 
 func instrumented(svc *Service, target string) int {
 	recorder := httptest.NewRecorder()
-	svc.metrics.instrument(svc.router, recorder, httptest.NewRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+	svc.metrics.instrument(svc.router, recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
 	return recorder.Code
 }
 
@@ -118,7 +118,7 @@ func TestDiscoveryResultMetrics(t *testing.T) {
 			discovery:   thingsDiscovery("provided.ext.grafana.app"),
 		},
 		&fakeBackend{group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: &countingDiscoveryBackend{group: cachedGroup}},
-	}}, prometheus.NewRegistry())
+	}}, nil, prometheus.NewRegistry())
 	require.NoError(t, svc.router.reconcile(t.Context()))
 
 	aggregatedDiscovery(t, svc.router)
@@ -181,7 +181,7 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 		},
 	}
 	reg := prometheus.NewRegistry()
-	svc := newService(loader, reg)
+	svc := newService(loader, nil, reg)
 	svc.router.storeServing(t.Context(), svc.router.reconcile(t.Context()))
 	return svc, loader, reg
 }

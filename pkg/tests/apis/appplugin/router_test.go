@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/router"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -145,7 +146,9 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	t.Cleanup(cancel)
 	require.NoError(t, services.StartAndAwaitRunning(ctx, lifecycle))
 	t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), lifecycle)) })
-	apiRouter := router.NewGrafanaRouter(folderRoutesLoader{RoutesLoader: loader, folder: folderBackend})
+	tokens, err := authn.NewGrafanaTokenAuthenticator(cfg)
+	require.NoError(t, err)
+	apiRouter := router.NewGrafanaRouter(folderRoutesLoader{RoutesLoader: loader, folder: folderBackend}, tokens)
 	require.NoError(t, apiRouter.Run(ctx))
 	routerHandler.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		apiRouter.HandleFunc(w, r, http.NotFoundHandler())

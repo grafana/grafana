@@ -12,11 +12,9 @@ import (
 var callerCredentialHeaders = []string{"Cookie", "Authorization", "X-Access-Token", "X-Grafana-Id"}
 
 // rewriteOutbound is the ReverseProxy Rewrite shared by every proxy the router
-// builds. When the request carries a requester (the router runs as middleware
-// after Grafana authentication), Grafana has already consumed the caller's
-// credentials: they are replaced by tokens derived from the requester, so a
-// session cookie or API key never reaches a backend. Without a requester
-// (the standalone router), the caller's credentials pass through unchanged.
+// builds. Authenticated requests forward tokens from the requester, so a
+// session cookie or API key never reaches a backend. Internal discovery requests
+// without a requester retain their service credentials.
 func rewriteOutbound(pr *httputil.ProxyRequest, target *url.URL) {
 	pr.SetURL(target)
 	pr.SetXForwarded()
