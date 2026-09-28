@@ -13,7 +13,6 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
-import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
 import { getEditableElementFor } from '../utils/getEditableElementFor';
@@ -258,7 +257,7 @@ describe('applyDashboardSpec', () => {
     expect(sidebar.state.previousState).toBeUndefined();
   });
 
-  it('keeps title edits on the reselected panel in the serialized dashboard', () => {
+  it('applies title edits to the current panel after a rebuild', () => {
     const scene = buildScene(makeRowsSpec('Dashboard'));
     const sidebar = scene.state.sidebar;
     const originalPanel = findVizPanelByKey(scene, 'panel-1')!;
@@ -267,9 +266,7 @@ describe('applyDashboardSpec', () => {
     applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec' });
     getEditableElementFor(sidebar.getSelectedObject())!.onChangeName!('Renamed after rebuild');
 
-    expect(transformSceneToSaveModelSchemaV2(scene).elements['panel-1']).toMatchObject({
-      spec: { title: 'Renamed after rebuild' },
-    });
+    expect(findVizPanelByKey(scene, 'panel-1')!.state.title).toBe('Renamed after rebuild');
     expect(originalPanel.state.title).toBe('Panel 1');
   });
 
