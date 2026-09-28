@@ -83,10 +83,14 @@ describe('SavedViewsPane', () => {
     partialSpy.mockRestore();
   });
 
-  it('disables Overwrite when no view is selected', () => {
-    renderPane([buildView('view-1', { name: 'My view' })]);
+  it('disables Overwrite until a view is active for the dashboard, then enables it', () => {
+    const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
 
-    expect(screen.getByRole('button', { name: 'Overwrite selected view' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Overwrite' })).toHaveAttribute('aria-disabled', 'true');
+
+    act(() => scene.setState({ viewFilter: 'view-1' }));
+
+    expect(screen.getByRole('button', { name: 'Overwrite' })).not.toHaveAttribute('aria-disabled', 'true');
   });
 
   it('deletes a view after confirming, and clears the selection if it was selected', async () => {
@@ -95,7 +99,8 @@ describe('SavedViewsPane', () => {
     const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
     act(() => scene.setState({ viewFilter: 'view-1' }));
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete' }));
     await userEvent.click(screen.getByTestId('data-testid Confirm Modal Danger Button'));
 
     await waitFor(() => expect(api.remove).toHaveBeenCalledWith('view-1'));
@@ -103,18 +108,71 @@ describe('SavedViewsPane', () => {
     partialSpy.mockRestore();
   });
 
-  it('saves the current state as a new view', async () => {
+  it('renames a view via the actions menu', async () => {
+    const updated = buildView('view-1', { name: 'Renamed view' });
+    api.update.mockResolvedValue(updated);
+    renderPane([buildView('view-1', { name: 'My view' })]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Rename' }));
+
+    const input = screen.getByDisplayValue('My view');
+    await userEvent.clear(input);
+    await userEvent.type(input, 'Renamed view{Enter}');
+
+    await waitFor(() => expect(api.update).toHaveBeenCalled());
+    expect(screen.getByText('Renamed view')).toBeInTheDocument();
+  });
+
+  it('filters the list by search query', async () => {
+    renderPane([buildView('view-1', { name: 'Production' }), buildView('view-2', { name: 'Staging' })]);
+
+    expect(screen.getByText('Production')).toBeInTheDocument();
+    expect(screen.getByText('Staging')).toBeInTheDocument();
+
+    await userEvent.type(screen.getByPlaceholderText('Search views'), 'prod');
+
+    expect(screen.getByText('Production')).toBeInTheDocument();
+    expect(screen.queryByText('Staging')).not.toBeInTheDocument();
+  });
+
+  it('shows a no-results message when the search query matches nothing', async () => {
+    renderPane([buildView('view-1', { name: 'Production' })]);
+
+    await userEvent.type(screen.getByPlaceholderText('Search views'), 'nonexistent');
+
+    expect(screen.queryByText('Production')).not.toBeInTheDocument();
+    expect(screen.getByText('No results found for your query')).toBeInTheDocument();
+  });
+
+  it('opens a modal to save the current state as a new view', async () => {
     const created = buildView('view-2', { name: 'New view' });
     api.create.mockResolvedValue(created);
     const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
     renderPane([]);
 
+    await userEvent.click(screen.getByRole('button', { name: 'Save new' }));
+    expect(screen.getByRole('heading', { name: 'Save new view' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+
     await userEvent.type(screen.getByPlaceholderText('New view name'), 'New view');
-    await userEvent.click(screen.getByText('Save as new view'));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(api.create).toHaveBeenCalled());
     expect(api.create).toHaveBeenCalledWith(expect.objectContaining({ dashboardUID: 'dash-1', name: 'New view' }));
     expect(partialSpy).toHaveBeenCalledWith({ viewFilter: 'view-2' });
+    expect(screen.queryByRole('heading', { name: 'Save new view' })).not.toBeInTheDocument();
     partialSpy.mockRestore();
+  });
+
+  it('cancels the save-new modal without creating a view', async () => {
+    renderPane([]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save new' }));
+    await userEvent.type(screen.getByPlaceholderText('New view name'), 'Discarded');
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('heading', { name: 'Save new view' })).not.toBeInTheDocument();
+    expect(api.create).not.toHaveBeenCalled();
   });
 });

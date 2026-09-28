@@ -270,7 +270,7 @@ function SavedViewsSidebarButton({
     <Sidebar.Button
       icon="saved-views"
       onClick={onClick}
-      title={t('dashboard.sidebar.saved-views.title', 'Saved views')}
+      title={t('dashboard.sidebar.saved-views.title', 'Views')}
       tooltip={t('dashboard.sidebar.saved-views.tooltip', 'Saved views')}
       active={openPane?.getId() === 'saved-views'}
     />
