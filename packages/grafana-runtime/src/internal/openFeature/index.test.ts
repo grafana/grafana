@@ -2,6 +2,8 @@ import { FlagKeys } from './openfeature.gen';
 
 import type * as Runtime from './index';
 
+const [providedFlag, missingFlag] = Object.values(FlagKeys);
+
 let runtime: typeof Runtime;
 
 beforeEach(async () => {
@@ -10,7 +12,7 @@ beforeEach(async () => {
   runtime = await import('./index');
   jest.spyOn(window, 'fetch').mockImplementation(
     async () =>
-      new Response(JSON.stringify({ flags: [{ key: 'dashboardNewLayouts', value: true, reason: 'STATIC' }] }), {
+      new Response(JSON.stringify({ flags: [{ key: providedFlag, value: true, reason: 'STATIC' }] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -37,7 +39,7 @@ it('does not load the adapter when the Meticulous global is absent', async () =>
 
   await runtime.initOpenFeature();
 
-  expect(runtime.getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
+  expect(runtime.getFeatureFlagClient().getBooleanValue(providedFlag, false)).toBe(true);
   expect(loadAdapter).not.toHaveBeenCalled();
 });
 
@@ -46,12 +48,12 @@ it('awaits the adapter when the Meticulous global is present and applies overrid
   window.Meticulous = {
     context: { getFlagOverride: () => ({ overridden: true, value: false }), recordFeatureFlag },
   };
-  runtime.getLocalStorageProvider().setFlags({ dashboardNewLayouts: true });
+  runtime.getLocalStorageProvider().setFlags({ [providedFlag]: true });
 
   await runtime.initOpenFeature();
 
-  expect(runtime.getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true)).toBe(false);
-  expect(recordFeatureFlag.mock.calls).toEqual([['dashboardNewLayouts', false]]);
+  expect(runtime.getFeatureFlagClient().getBooleanValue(providedFlag, true)).toBe(false);
+  expect(recordFeatureFlag.mock.calls).toEqual([[providedFlag, false]]);
 });
 
 it('falls back to OFREP when the enabled adapter chunk cannot load', async () => {
@@ -62,7 +64,7 @@ it('falls back to OFREP when the enabled adapter chunk cannot load', async () =>
   });
   const log = jest.spyOn(console, 'error').mockImplementation();
   await runtime.initOpenFeature();
-  expect(runtime.getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
+  expect(runtime.getFeatureFlagClient().getBooleanValue(providedFlag, false)).toBe(true);
   expect(log).toHaveBeenCalledWith('Failed to load Meticulous OpenFeature integration', error);
 });
 
@@ -77,18 +79,18 @@ it('reports final fallback values once per evaluation through the shared core cl
   jest.spyOn(runtime.getOFREPWebProvider(), 'onClose').mockResolvedValue();
   await runtime.initOpenFeature();
 
-  runtime.getLocalStorageProvider().setFlags({ dashboardNewLayouts: false });
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, true)).toBe(false);
+  runtime.getLocalStorageProvider().setFlags({ [providedFlag]: false });
+  expect(client.getBooleanValue(providedFlag, true)).toBe(false);
   runtime.getLocalStorageProvider().clearFlags();
-  expect(runtime.getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
-  expect(client.getBooleanValue(FlagKeys.CanvasPanelNesting, false)).toBe(false);
-  runtime.getLocalStorageProvider().setFlags({ dashboardNewLayouts: 'invalid' });
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(false);
+  expect(runtime.getFeatureFlagClient().getBooleanValue(providedFlag, false)).toBe(true);
+  expect(client.getBooleanValue(missingFlag, false)).toBe(false);
+  runtime.getLocalStorageProvider().setFlags({ [providedFlag]: 'invalid' });
+  expect(client.getBooleanValue(providedFlag, false)).toBe(false);
   expect(recordFeatureFlag.mock.calls).toEqual([
-    ['dashboardNewLayouts', false],
-    ['dashboardNewLayouts', true],
-    ['canvasPanelNesting', false],
-    ['dashboardNewLayouts', false],
+    [providedFlag, false],
+    [providedFlag, true],
+    [missingFlag, false],
+    [providedFlag, false],
   ]);
 });
 
@@ -100,10 +102,10 @@ it('does not report evaluations from plugin domains', async () => {
   await OpenFeature.setProviderAndWait(
     'plugin-domain',
     new InMemoryProvider({
-      dashboardNewLayouts: { variants: { enabled: true }, defaultVariant: 'enabled', disabled: false },
+      [providedFlag]: { variants: { enabled: true }, defaultVariant: 'enabled', disabled: false },
     })
   );
 
-  expect(OpenFeature.getClient('plugin-domain').getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
+  expect(OpenFeature.getClient('plugin-domain').getBooleanValue(providedFlag, false)).toBe(true);
   expect(recordFeatureFlag).not.toHaveBeenCalled();
 });
