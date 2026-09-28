@@ -192,16 +192,16 @@ describe('applyDashboardSpec', () => {
 
     const appliedPane = scene.state.sidebar.state.openPane!;
     expect(appliedPane.getId()).toBe('code');
-    expect(appliedPane.state.key).not.toBe(originalPane.state.key);
+    expect(appliedPane).not.toBe(originalPane);
 
     scene.state.sidebar.undoAction();
     const restoredPane = scene.state.sidebar.state.openPane!;
     expect(restoredPane.getId()).toBe('code');
-    expect(restoredPane.state.key).not.toBe(appliedPane.state.key);
+    expect(restoredPane).not.toBe(appliedPane);
 
     scene.state.sidebar.redoAction();
     expect(scene.state.sidebar.state.openPane?.getId()).toBe('code');
-    expect(scene.state.sidebar.state.openPane?.state.key).not.toBe(restoredPane.state.key);
+    expect(scene.state.sidebar.state.openPane).not.toBe(restoredPane);
   });
 
   it('closes an open pane even when there is no selection', () => {
@@ -230,17 +230,17 @@ describe('applyDashboardSpec', () => {
     expect(sidebar.state.selectionContext.selected).toEqual([{ id: 'panel-1' }]);
     expect(sidebar.state.selectionContext.selected).not.toBe(originalSelection);
     expect(sidebar.state.openPane?.getId()).toBe('element');
-    expect(sidebar.state.openPane?.state.key).not.toBe(originalPane.state.key);
-    expect(sidebar.getSelectedObject() === appliedPanel).toBe(true);
-    expect(sidebar.getSelectedObject() === originalPanel).toBe(false);
+    expect(sidebar.state.openPane).not.toBe(originalPane);
+    expect(sidebar.getSelectedObject()).toBe(appliedPanel);
+    expect(sidebar.getSelectedObject()).not.toBe(originalPanel);
     expect(sidebar.state.previousState).toBeUndefined();
 
     sidebar.undoAction();
-    expect(sidebar.getSelectedObject() === originalPanel).toBe(true);
+    expect(sidebar.getSelectedObject()).toBe(originalPanel);
     expect(sidebar.state.openPane?.getId()).toBe('element');
 
     sidebar.redoAction();
-    expect(sidebar.getSelectedObject() === appliedPanel).toBe(true);
+    expect(sidebar.getSelectedObject()).toBe(appliedPanel);
     expect(sidebar.state.openPane?.getId()).toBe('element');
   });
 
