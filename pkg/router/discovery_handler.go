@@ -3,9 +3,9 @@ package router
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"sort"
+	"sync"
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	apidiscoveryv2beta1 "k8s.io/api/apidiscovery/v2beta1"
@@ -17,6 +17,8 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
 	"k8s.io/kube-openapi/pkg/handler3"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 const aggregatedDiscoveryJSON = "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList"
@@ -64,10 +66,34 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 			groups[group.Name] = group
 		}
 	}
-	for name, entry := range *r.snapshot.Load() {
-		// A backend owns the entire group, including which versions are served.
-		// Never keep fallback versions of a group the router has taken over.
-		groups[name] = backendDiscovery(req, name, entry)
+	// A backend owns the entire group, including which versions are served.
+	// Never keep fallback versions of a group the router has taken over.
+	// Fetches run in parallel, each writing only its own result slot, and the
+	// groups map is written on this goroutine alone.
+	type fetch struct {
+		name   string
+		result apidiscoveryv2.APIGroupDiscovery
+	}
+	snapshot := *r.snapshot.Load()
+	fetches := make([]*fetch, 0, len(snapshot))
+	var wg sync.WaitGroup
+	for name, entry := range snapshot {
+		if entry.discovery != nil {
+			groups[name] = *entry.discovery
+			r.observeDiscovery(name, discoveryProvided)
+			continue
+		}
+		f := &fetch{name: name}
+		fetches = append(fetches, f)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			f.result = r.groupDiscovery(req, name, entry)
+		}()
+	}
+	wg.Wait()
+	for _, f := range fetches {
+		groups[f.name] = f.result
 	}
 	items := make([]apidiscoveryv2.APIGroupDiscovery, 0, len(groups))
 	for _, group := range groups {
@@ -83,7 +109,9 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	manager.ServeHTTP(w, req)
 }
 
-func backendDiscovery(req *http.Request, name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
+// backendDiscovery asks a backend for its group's aggregated discovery.
+// complete is false when any version could not be read and is marked stale.
+func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ apidiscoveryv2.APIGroupDiscovery, complete bool) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		serveThroughBreaker(entry.breaker, name, entry.handler, w, r)
 	})
@@ -92,12 +120,16 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) apidis
 	if err == nil && list.Kind == "APIGroupDiscoveryList" {
 		for _, group := range list.Items {
 			if group.Name == name {
-				return group
+				return group, true
 			}
 		}
 	}
 
 	group := apidiscoveryv2.APIGroupDiscovery{ObjectMeta: metav1.ObjectMeta{Name: name}}
+	// Only a real answer from /apis can be complete: a decoded document, or a
+	// 404 from an older backend. Otherwise a group with no versions would be
+	// cached empty after a failed or refused fetch.
+	complete = err == nil || status == http.StatusNotFound
 	for _, gv := range entry.group.Versions {
 		version := apidiscoveryv2.APIVersionDiscovery{Version: gv.Version, Freshness: apidiscoveryv2.DiscoveryFreshnessStale}
 		// Older backends may only support per-version resource discovery. An
@@ -111,9 +143,10 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) apidis
 				}
 			}
 		}
+		complete = complete && version.Freshness == apidiscoveryv2.DiscoveryFreshnessCurrent
 		group.Versions = append(group.Versions, version)
 	}
-	return group
+	return group, complete
 }
 
 func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Request, next http.Handler) {
@@ -141,7 +174,7 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 }
 
 func readDiscovery(req *http.Request, handler http.Handler, path, accept string, into any) (int, error) {
-	proxyReq := req.Clone(req.Context())
+	proxyReq := req.Clone(withoutRequestOutcome(req.Context()))
 	proxyReq.Method = http.MethodGet
 	proxyReq.Body = nil
 	proxyReq.ContentLength = 0
@@ -152,8 +185,11 @@ func readDiscovery(req *http.Request, handler http.Handler, path, accept string,
 	proxyReq.Header.Set("Accept", accept)
 	proxyReq.Header.Set("Accept-Encoding", "identity")
 	stripConditionalHeaders(proxyReq)
-	rec := newCaptureWriter()
+	rec := newCaptureWriter(maxDiscoveryDocBytes, nil)
 	handler.ServeHTTP(rec, proxyReq)
+	if rec.overflowed {
+		return rec.statusCode, fmt.Errorf("discovery %s is larger than %d bytes", path, maxDiscoveryDocBytes)
+	}
 	if rec.statusCode != http.StatusOK {
 		return rec.statusCode, fmt.Errorf("discovery %s returned HTTP %d", path, rec.statusCode)
 	}
@@ -163,7 +199,7 @@ func readDiscovery(req *http.Request, handler http.Handler, path, accept string,
 func serveDiscoveryJSON(w http.ResponseWriter, req *http.Request, value any) {
 	body, err := json.Marshal(value)
 	if err != nil {
-		slog.Error("router: failed to marshal discovery", "error", err)
+		logging.FromContext(req.Context()).Error("router: failed to marshal discovery", "error", err)
 		http.Error(w, "failed to marshal discovery", http.StatusInternalServerError)
 		return
 	}

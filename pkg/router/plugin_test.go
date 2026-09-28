@@ -65,7 +65,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				},
 			})
 			require.NoError(t, err)
-			router := NewGrafanaRouter(loader)
+			router := NewGrafanaRouter(loader, nil)
 			require.NoError(t, router.reconcile(t.Context()))
 			for _, entry := range router.served {
 				t.Cleanup(entry.handler.(interface{ Destroy() }).Destroy)
@@ -220,4 +220,40 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 		router.HandleFunc(denied, req, http.NotFoundHandler())
 		require.Equal(t, http.StatusForbidden, denied.Code, denied.Body.String())
 	}
+}
+
+func TestPluginLoaderSkipsInvalidPlugins(t *testing.T) {
+	valid := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "valid-app", Type: plugins.TypeApp},
+		FS:       plugins.NewFakeFS(),
+	}}
+	// Claims a core group; building its API would panic, and serving it
+	// would shadow the embedded server's dashboards.
+	invalid := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "invalid-app", Type: plugins.TypeApp},
+		FS: plugins.NewInMemoryFS(map[string][]byte{
+			"app-sdk-manifest.json": []byte(`{
+				"apiVersion": "apps.grafana.app/v1alpha2",
+				"spec": {"appName": "invalid", "group": "dashboard.grafana.app",
+					"versions": [{"name": "v1", "served": true, "kinds": [{"kind": "Thing", "plural": "things", "scope": "Namespaced"}]}]}
+			}`),
+		}),
+	}}
+	sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+			return []*plugins.FoundBundle{invalid, valid}, nil
+		}}}
+	}}
+	loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
+		PluginSources: sources,
+		PluginDependencies: PluginDependencies{
+			PluginClient:    struct{ plugins.Client }{},
+			ContextProvider: struct{ appplugin.PluginContextWrapper }{},
+		},
+	})
+	require.NoError(t, err)
+	backends, err := loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Len(t, backends, 1)
+	require.Equal(t, "valid-app", backends[0].Group().Name)
 }

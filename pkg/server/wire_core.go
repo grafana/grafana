@@ -204,6 +204,7 @@ var withOTelSet = wire.NewSet(
 
 var wireBasicSet = wire.NewSet(
 	iam.ProvideFeatures,
+	wire.Bind(new(acimpl.IAMFeatures), new(iam.Features)),
 	annotationsimpl.ProvideService,
 	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
 	New,

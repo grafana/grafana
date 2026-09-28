@@ -319,3 +319,49 @@ func TestStreamDecoderSerializerContext(t *testing.T) {
 	_, err = decoder.toObject(client.events[0].Resource)
 	require.ErrorIs(t, err, context.Canceled)
 }
+
+func TestStreamDecoderDeletedEvents(t *testing.T) {
+	deleted := []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"deleted","resourceVersion":"12"}}`)
+	for name, event := range map[string]*resourcepb.WatchEvent{
+		// Servers remove the deletion marker and send the deleted object as Previous.
+		"empty value with previous": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Version: 13},
+			Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
+		},
+		"previous takes precedence over value": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Value: []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"current"}}`), Version: 13},
+			Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
+		},
+		"value without previous": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 13},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{event}}
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), func() {}, false)
+			t.Cleanup(decoder.Close)
+			action, obj, err := decoder.Decode()
+			require.NoError(t, err)
+			require.Equal(t, watch.Deleted, action)
+			require.Equal(t, "deleted", obj.(*unstructured.Unstructured).GetName())
+			require.Equal(t, "13", obj.(*unstructured.Unstructured).GetResourceVersion(), "a delete carries the deletion's resource version")
+		})
+	}
+}
+
+func TestStreamDecoderDeletedEventWithoutObject(t *testing.T) {
+	client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{{
+		Type:     resourcepb.WatchEvent_DELETED,
+		Resource: &resourcepb.WatchEvent_Resource{Version: 13},
+	}}}
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), func() {}, false)
+	t.Cleanup(decoder.Close)
+
+	action, obj, err := decoder.Decode()
+	require.Error(t, err)
+	require.Equal(t, watch.Error, action)
+	require.Nil(t, obj)
+}

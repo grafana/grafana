@@ -2,7 +2,7 @@
 
 ## Overview
 
-Themes in Grafana are implemented in TypeScript. We chose the TypeScript language in part because it shares variables between Grafana TypeScript and [Sass](https://sass-lang.com/) code.
+Themes in Grafana are implemented in TypeScript. The theme generator compiles the remaining Sass styles to CSS.
 
 Theme definitions are located in the following files:
 
@@ -177,14 +177,13 @@ describe('MyComponent', () => {
 });
 ```
 
-### Modify Sass variables
+### Legacy Sass styles
 
-If you need to modify the Sass variable files, we recommend that you migrate the styles to [Emotion](https://emotion.sh/docs/introduction).
+Sass styles are deprecated. Use [Emotion](https://emotion.sh/docs/introduction) for new or modified component styles.
 
-For the following variables to apply, you need to run this `yarn dev` task:
+`yarn themes-generate` creates these committed CSS files:
 
-- `[_variables|_variables.dark|_variables.light].generated.scss`: These files must be referenced in the main Sass files for Sass variables to be available.
+- `public/sass/grafana.dark.css`
+- `public/sass/grafana.light.css`
 
-If you need to modify the Sass variable files, be sure to update the files that end with `.tmpl.ts` and not the `.generated.scss` files.
-
-> **Important:** These variable files are automatically generated and should never be modified by hand.
+The generator also writes Sass variable files in `public/sass/`. Git ignores these temporary files. Do not modify them.

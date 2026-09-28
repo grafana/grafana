@@ -84,8 +84,8 @@ type natsEventSubscriber struct {
 
 func (a natsEventSubscriber) Enabled() bool { return a.sub.Enabled() }
 
-func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (resource.Subscription, error) {
-	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
+func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (resource.Subscription, error) {
+	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
 
 func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber) []sql.StorageBackendOption {
@@ -174,7 +174,8 @@ func newClient(opts options.StorageOptions,
 		}
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
+			Backend:                 backend,
+			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
 			},
