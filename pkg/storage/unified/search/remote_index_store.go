@@ -49,11 +49,25 @@ const (
 	snapshotStoreOpDeleteIndex                      = "delete_index"
 )
 
+// snapshotStoreRetryBackoffConfig covers the per-file transfers, which only retry
+// on transient errors (see isRetryableSnapshotStoreError). Up to 10s each. Files
+// are fetched one after another, so a snapshot whose every file keeps failing costs
+// this once per file.
 var snapshotStoreRetryBackoffConfig = backoff.Config{
 	MinBackoff: 100 * time.Millisecond,
-	MaxBackoff: time.Second,
-	// dskit/backoff counts retries after the initial attempt, so this is at most three tries total.
-	MaxRetries: 2,
+	MaxBackoff: 4 * time.Second,
+	// dskit/backoff counts retries after the initial attempt, so this is seven tries.
+	MaxRetries: 6,
+}
+
+// snapshotStoreMetadataRetryBackoffConfig covers listing and manifest reads, which
+// run a few times per download rather than once per file. Failing them leaves no
+// candidate and the caller builds from scratch, which costs far more than waiting,
+// so these get about 30s against 10s for a file.
+var snapshotStoreMetadataRetryBackoffConfig = backoff.Config{
+	MinBackoff: 200 * time.Millisecond,
+	MaxBackoff: 5 * time.Second,
+	MaxRetries: 10,
 }
 
 // remoteIndexStoreRetryLogger is used only when callers do not have a contextual logger to pass in.
@@ -264,11 +278,20 @@ func retryRemoteIndexStore(ctx context.Context, operation string, logger log.Log
 }
 
 func retryRemoteIndexStoreValue[T any](ctx context.Context, operation string, logger log.Logger, fn func() (T, error)) (T, error) {
+	return retryRemoteIndexStoreValueWithBackoff(ctx, snapshotStoreRetryBackoffConfig, operation, logger, fn)
+}
+
+// retryMetadataRemoteIndexStoreValue retries with the longer metadata budget.
+func retryMetadataRemoteIndexStoreValue[T any](ctx context.Context, operation string, logger log.Logger, fn func() (T, error)) (T, error) {
+	return retryRemoteIndexStoreValueWithBackoff(ctx, snapshotStoreMetadataRetryBackoffConfig, operation, logger, fn)
+}
+
+func retryRemoteIndexStoreValueWithBackoff[T any](ctx context.Context, cfg backoff.Config, operation string, logger log.Logger, fn func() (T, error)) (T, error) {
 	if logger == nil {
 		logger = remoteIndexStoreRetryLogger
 	}
 
-	bo := backoff.New(ctx, snapshotStoreRetryBackoffConfig)
+	bo := backoff.New(ctx, cfg)
 	for {
 		result, err := fn()
 		if err == nil || !isRetryableSnapshotStoreError(ctx, err) {
@@ -748,7 +771,7 @@ func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns 
 // wrapping ErrInvalidManifest if the manifest is structurally invalid
 // (oversized, unparseable, empty file list, or non-canonical paths).
 func ReadIndexSnapshotManifest(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
-	manifest, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpReadManifest, nil, func() ([]byte, error) {
+	manifest, err := retryMetadataRemoteIndexStoreValue(ctx, snapshotStoreOpReadManifest, nil, func() ([]byte, error) {
 		return store.ReadSnapshotManifest(ctx, nsResource, indexKey)
 	})
 	if err != nil {
@@ -797,7 +820,7 @@ func ValidateIndexSnapshotManifest(meta *IndexMeta) error {
 // (e.g. by a concurrent cleanup pass); callers acting on the returned
 // snapshots must handle ErrSnapshotNotFound from follow-up calls.
 func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, logger log.Logger) (map[ulid.ULID]*IndexMeta, error) {
-	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, logger, func() ([]ulid.ULID, error) {
+	keys, err := retryMetadataRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, logger, func() ([]ulid.ULID, error) {
 		return store.ListIndexKeys(ctx, nsResource)
 	})
 	if err != nil {

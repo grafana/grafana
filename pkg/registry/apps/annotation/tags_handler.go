@@ -27,8 +27,8 @@ type TagItem struct {
 
 func newTagsHandler(
 	tagProvider TagProvider,
-	accessClient authtypes.AccessClient,
 	tracer trace.Tracer,
+	accessClient authtypes.AccessClient,
 	metrics *Metrics,
 	logger log.Logger,
 ) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {

@@ -961,6 +961,7 @@ contactPoints:
           type: webhook
           settings:
             authorization_scheme: basic
+            headers: null
             hmacConfig:
                 header: X-Grafana-Alerting-Signature
                 secret: '[REDACTED]'
@@ -991,6 +992,9 @@ contactPoints:
             maxAlerts: "2"
             message: test-message
             password: '[REDACTED]'
+            payload:
+                template: ""
+                vars: null
             title: test-title
             tlsConfig:
                 caCertificate: '[REDACTED]'

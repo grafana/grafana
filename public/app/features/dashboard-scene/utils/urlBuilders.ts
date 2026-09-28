@@ -5,7 +5,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 
 import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
-import { getQueryRunnerFor } from './utils';
+import { getQueryRunnerFor } from './getQueryRunnerFor';
 
 export function getEditPanelUrl(panelId: number) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });

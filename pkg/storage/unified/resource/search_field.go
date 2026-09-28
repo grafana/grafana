@@ -32,8 +32,8 @@ const (
 	// SearchCapabilityPartial enables substring matching (Bleve ngram
 	// analyzer). Requires SearchCapabilityText.
 	SearchCapabilityPartial SearchCapability = "partial"
-	// SearchCapabilitySort makes the field sortable. It also enables DocValues
-	// on the keyword variant for column-wise reads and stable sort tie-breakers.
+	// SearchCapabilitySort enables sorting on the field. A search request can only
+	// sort on fields that declare it.
 	SearchCapabilitySort     SearchCapability = "sort"
 	SearchCapabilityFacet    SearchCapability = "facet"    // facetable on the keyword variant
 	SearchCapabilityRetrieve SearchCapability = "retrieve" // value is stored and returned in search results
@@ -62,6 +62,11 @@ const (
 	// into a single int64. Standard fields never use INT32 today, and
 	// numeric search behaviour is identical (bleve indexes through float64
 	// internally).
+	//
+	// That float64 is exact only up to 2^53, which is far above a timestamp in
+	// millis but below a resource version. Declare a field whose values can reach
+	// that far as a string, the way SEARCH_FIELD_DELETED_RV is: filters and sorts
+	// on a larger int64 cannot tell neighbouring values apart.
 	SearchFieldTypeInt64 SearchFieldType = "int64"
 	// SearchFieldTypeDouble covers floating-point fields. The protobuf-level
 	// distinction between FLOAT and DOUBLE is similarly collapsed; SFDs use
@@ -612,7 +617,27 @@ func (r *SearchFieldsRegistry) Replace(
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.warnRemovedKinds(searchFieldsProvider)
 	r.selectableFields = selectableFields
 	r.searchFieldsHashes = searchFieldsHashes
 	r.searchFieldsProvider = searchFieldsProvider
+}
+
+// warnRemovedKinds logs kinds that have search fields now but would not after
+// the swap. Losing a kind's search fields is silent otherwise: searches on
+// those fields still succeed and simply match nothing, and the index has to be
+// rebuilt to get them back. Caller holds the lock.
+func (r *SearchFieldsRegistry) warnRemovedKinds(next map[LowerGroupResource]SearchFieldsProvider) {
+	var removed []string
+	for key := range r.searchFieldsProvider {
+		if _, ok := next[key]; !ok {
+			removed = append(removed, key.Group+"/"+key.Resource)
+		}
+	}
+	if len(removed) == 0 {
+		return
+	}
+	slices.Sort(removed)
+	searchFieldLogger.Warn("search fields removed for kinds that had them; searches on those fields will match nothing until the manifests declaring them are restored and the index is rebuilt",
+		"kinds", strings.Join(removed, ","))
 }

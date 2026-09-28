@@ -9,17 +9,20 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -71,9 +74,9 @@ func TestIntegrationSetIndexViewData_clientNavTree(t *testing.T) {
 		_, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil, nil)
 		navService := &fakeNavTreeService{}
 		hs.navTreeService = navService
-		hs.preferenceService = &preftest.FakePreferenceService{
-			ExpectedPreference: &pref.Preference{JSONData: &pref.PreferenceJSONData{}},
-		}
+		prefClient := prefapi.NewMockK8sClient(t)
+		prefClient.EXPECT().GetMerged(mock.Anything).Return(&preferences.PreferencesSpec{}, nil)
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(prefClient, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		hs.HooksService = hooks.ProvideService()
 		hs.orgService = &orgtest.FakeOrgService{}
 		hs.accesscontrolService = accesscontrolmock.New()

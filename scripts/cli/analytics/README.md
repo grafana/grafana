@@ -38,6 +38,32 @@ export interface ThemeChanged extends EventProperty {
 }
 ```
 
+The report fails if any property reaches it without a description, so an undocumented property is a build error rather than a blank cell in the published table.
+
+#### Properties that vary by variant
+
+When one event's valid property combinations differ — a `surface` that only allows certain `action` values — use `EventVariants` to pair a documented base with the union of allowed shapes:
+
+```ts
+import { type EventProperty, type EventVariants } from '@grafana/runtime/unstable';
+
+interface CtaClickedBase extends EventProperty {
+  /** Which widget fired the CTA. */
+  surface: string;
+  /** What the user asked for. */
+  action: string;
+}
+
+export type CtaClicked = EventVariants<
+  CtaClickedBase,
+  { surface: 'alerts_card'; action: 'create_rule' } | { surface: 'news_card'; action: 'read_more_news' }
+>;
+```
+
+`EventVariants` distributes over the union so each variant intersects the base, which keeps the base's JSDoc attached to every variant. Constraining the union yourself (`type Constrained<B, T extends B> = T`) discards the base from the resulting type, leaving every shared property undocumented. Document variant-only properties on the variant that declares them.
+
+The report merges the variants into one row per property: the type is the union of what the property holds across the variants that declare it.
+
 ### 2. Create the factory
 
 Call `defineFeatureEvents` with two required string literal arguments — the repo name and the feature name. There is an optional third argument to set default properties (merged into every event in the namespace):

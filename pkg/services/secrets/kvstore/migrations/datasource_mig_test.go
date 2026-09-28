@@ -50,7 +50,7 @@ func TestIntegrationMigrate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))

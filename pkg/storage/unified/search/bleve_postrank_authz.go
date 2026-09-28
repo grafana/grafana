@@ -71,10 +71,7 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 // limit * OverFetchFactor clamped to MaxWindow. Ranking is unaffected: bleve
 // ranks the full match set and returns the top-N regardless of Size.
 func (c PostRankAuthzConfig) windowSize(limit int) int {
-	w := limit * c.OverFetchFactor
-	if w > c.MaxWindow {
-		w = c.MaxWindow
-	}
+	w := min(limit*c.OverFetchFactor, c.MaxWindow)
 	return w
 }
 
@@ -87,10 +84,7 @@ func (c PostRankAuthzConfig) windowSize(limit int) int {
 // defaults (FacetSampleSize == MaxWindow == 10000) the whole sample is one
 // window.
 func (c PostRankAuthzConfig) facetWindowSize() int {
-	w := c.FacetSampleSize
-	if w > c.MaxWindow {
-		w = c.MaxWindow
-	}
+	w := min(c.FacetSampleSize, c.MaxWindow)
 	return w
 }
 
@@ -101,10 +95,7 @@ func (c PostRankAuthzConfig) facetWindowSize() int {
 // MaxWindow) until it exhausts the match set — giving an exact authorized
 // total — or reaches MaxCandidates.
 func (c PostRankAuthzConfig) countWindowSize() int {
-	w := c.MaxCandidates
-	if w > c.MaxWindow {
-		w = c.MaxWindow
-	}
+	w := min(c.MaxCandidates, c.MaxWindow)
 	return w
 }
 
@@ -120,7 +111,7 @@ func (c PostRankAuthzConfig) countWindowSize() int {
 // kicks in when early windows come back sparse.
 func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 	w := base
-	for i := 0; i < nextWindow; i++ {
+	for range nextWindow {
 		w <<= 1
 		if w >= c.MaxWindow {
 			return c.MaxWindow
@@ -132,6 +123,11 @@ func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 // ensureSearchFields makes bleve load every stored field when the caller did not
 // request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
 // hitsToTable to use the curated allFields column list.
+//
+// It also adds the resource version, which every result carries regardless of the
+// requested fields. Both happen here rather than in toBleveSearchRequest because
+// Search snapshots the response field list before calling this, so what is added
+// is loaded without becoming a response column.
 func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) error {
 	if len(req.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
@@ -139,6 +135,10 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 			return err
 		}
 		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
+		return nil
+	}
+	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING)
 	}
 	return nil
 }
@@ -170,13 +170,22 @@ func authzLoadFields(trash bool) []string {
 // authzResources builds the resource-type -> verb map used to authorize hits.
 // The primary resource uses the verb implied by req.Permission; federated
 // resources are read-only.
+//
+// A hit whose resource type is absent from the map is dropped, so a
+// namespace-wide index has to list every type it covers. Each hit is still
+// authorized against its own type and group, read from its document id.
 func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[string]string {
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
 		verb = utils.VerbUpdate
 	}
-	resources := map[string]string{
-		b.key.Resource: verb,
+	resources := map[string]string{}
+	if b.key.IsGlobal() {
+		for _, gr := range resource.GlobalSearchResourceTypes() {
+			resources[gr.Resource] = verb
+		}
+	} else {
+		resources[b.key.Resource] = verb
 	}
 	for _, federated := range req.Federated {
 		resources[federated.Resource] = utils.VerbGet
@@ -242,6 +251,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	index bleve.Index,
 	firstReq *bleve.SearchRequest,
 	selectFields []string,
+	fieldValueSchema *fieldValueResultSchema,
 	stats *resource.SearchStats,
 	response *resourcepb.ResourceSearchResponse,
 	trashAuthz *resource.TrashAuthorizer,
@@ -318,7 +328,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 
 	windowReq := firstReq
 	for window := 0; ; window++ {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, err
 		}
@@ -412,7 +422,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		authorized = max(authorized, facetAuthorized)
 		exhausted = facetExhausted
 	}
-	return response, b.finalizePostFilter(ctx, response, page, selectFields, firstReq.Sort, req, firstRes,
+	return response, b.finalizePostFilter(ctx, response, page, selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
 }
 
@@ -469,7 +479,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 func (b *bleveIndex) facetScanFields(facets map[string]*resourcepb.ResourceSearchRequest_Facet, trash bool) []string {
 	fields := make([]string, 0, len(facets)+2)
 	for _, facet := range facets {
-		field := b.searchFields.storedFacetFields[facet.Field]
+		field := b.searchFields.storedFacetField(facet.Field)
 		if field != "" && !slices.Contains(fields, field) {
 			fields = append(fields, field)
 		}
@@ -489,7 +499,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	stats *resource.SearchStats,
 	trashAuthz *resource.TrashAuthorizer,
 ) (*facetAggregator, int64, bool, error) {
-	agg := newFacetAggregator(facets, b.searchFields.storedFacetFields)
+	agg := newFacetAggregator(facets, b.searchFields.storedFacetField)
 	cfg := b.postRankAuthz
 	maxCandidates := int64(cfg.FacetSampleSize)
 	var candidates int64
@@ -504,7 +514,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 
 	var firstRes *bleve.SearchResult
 	for {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, 0, false, err
 		}
@@ -581,6 +591,7 @@ func (b *bleveIndex) finalizePostFilter(
 	response *resourcepb.ResourceSearchResponse,
 	page search.DocumentMatchCollection,
 	selectFields []string,
+	fieldValueSchema *fieldValueResultSchema,
 	sort search.SortOrder,
 	req *resourcepb.ResourceSearchRequest,
 	firstRes *bleve.SearchResult,
@@ -627,11 +638,9 @@ func (b *bleveIndex) finalizePostFilter(
 	}
 
 	resultsConversionStart := time.Now()
-	results, err := b.hitsToTable(ctx, selectFields, page, sort, req.Explain)
-	if err != nil {
+	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, page, sort, req.Explain); err != nil {
 		return err
 	}
-	response.Results = results
 	if wantFacets {
 		// Counts are the exact authorized term counts within the bounded sample;
 		// see facetAggregator.build for why we don't extrapolate.
@@ -646,7 +655,7 @@ func (b *bleveIndex) finalizePostFilter(
 type facetAggregator struct {
 	fields map[string]*resourcepb.ResourceSearchRequest_Facet
 	// requested field -> stored Bleve field
-	storedFields map[string]string
+	storedField func(string) string
 	// facet name -> term -> count
 	counts map[string]map[string]int64
 	// facet name -> number of authorized hits missing that field
@@ -657,14 +666,14 @@ type facetAggregator struct {
 
 func newFacetAggregator(
 	facets map[string]*resourcepb.ResourceSearchRequest_Facet,
-	storedFields map[string]string,
+	storedField func(string) string,
 ) *facetAggregator {
 	a := &facetAggregator{
-		fields:       facets,
-		storedFields: storedFields,
-		counts:       make(map[string]map[string]int64, len(facets)),
-		missing:      make(map[string]int64, len(facets)),
-		total:        make(map[string]int64, len(facets)),
+		fields:      facets,
+		storedField: storedField,
+		counts:      make(map[string]map[string]int64, len(facets)),
+		missing:     make(map[string]int64, len(facets)),
+		total:       make(map[string]int64, len(facets)),
 	}
 	for name := range facets {
 		a.counts[name] = make(map[string]int64)
@@ -674,7 +683,7 @@ func newFacetAggregator(
 
 func (a *facetAggregator) add(doc *search.DocumentMatch) {
 	for name, f := range a.fields {
-		v, ok := doc.Fields[a.storedFields[f.Field]]
+		v, ok := doc.Fields[a.storedField(f.Field)]
 		if !ok || v == nil {
 			a.missing[name]++
 			continue

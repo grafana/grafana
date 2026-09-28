@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -27,14 +28,10 @@ var callerSuppliedFields = map[string]string{
 	"EnableNatsNotifier":       "set together with EventSubscriber by the caller",
 	"EnableNatsNotifierShadow": "set together with EventSubscriber by the caller",
 	"EmbeddingDeleter":         "vector backend injected by the caller",
-	"DisableStorageServices":   "derived from which modules the process runs, not from a setting",
-
-	// The lease options are set together, and the holder comes from
-	// sql.ResolveLeaseHolder, which this package cannot import.
-	"EnableKVLeases": "set together with Holder, which the caller resolves",
-	"Holder":         "resolved by sql.ResolveLeaseHolder, which this package cannot call",
-	"LeaseTTL":       "set together with Holder, which the caller resolves",
-	"LeaseAutoRenew": "set together with Holder, which the caller resolves",
+	// Derived from cfg.Target rather than a setting of its own, and false for a
+	// process that runs everything, so the non-zero walk cannot check it.
+	// TestNewKVBackendOptionsDisableStorageServices covers it instead.
+	"DisableStorageServices": "derived from cfg.Target, and false when this process runs the storage server",
 
 	"WatchOptions.BufferSize": "no setting; defaulted in WatchOptions.normalize",
 	"WatchOptions.MinBackoff": "no setting; defaulted in WatchOptions.normalize",
@@ -86,6 +83,40 @@ func requirePopulated(t *testing.T, v reflect.Value, path string) {
 	}
 }
 
+func TestNewKVBackendOptionsDisableStorageServices(t *testing.T) {
+	// Garbage collection refuses a zero interval, so a backend that starts it
+	// fails to build. That is what makes "did it start" observable here without
+	// waiting on the loop.
+	buildBackend := func(t *testing.T, target ...string) error {
+		cfg := setting.NewCfg()
+		cfg.Target = target
+		cfg.EnableGarbageCollection = true
+		cfg.GarbageCollectionMaxAge = time.Hour
+
+		opts := NewKVBackendOptions(cfg)
+		opts.KvStore = setupBadgerKV(t)
+		backend, err := NewKVStorageBackend(opts)
+		if err == nil {
+			t.Cleanup(func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer cancel()
+				_ = backend.Stop(ctx)
+			})
+		}
+		return err
+	}
+
+	t.Run("collection starts where the storage server runs", func(t *testing.T) {
+		require.ErrorContains(t, buildBackend(t, "storage-server"), "garbage collection")
+	})
+
+	// Otherwise every replica of a process that only reads collects, and
+	// collection deletes.
+	t.Run("and not where it does not", func(t *testing.T) {
+		require.NoError(t, buildBackend(t, "core"))
+	})
+}
+
 // The walk above only checks for non-zero, so it cannot catch two settings
 // swapped between options. These assertions can.
 func TestNewKVBackendOptionsValues(t *testing.T) {
@@ -103,6 +134,7 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	cfg.GarbageCollectionBatchWait = 7 * time.Minute
 	cfg.GarbageCollectionMaxAge = 8 * time.Minute
 	cfg.DashboardsGarbageCollectionMaxAge = 9 * time.Minute
+	cfg.KVLeaseTTL = 9 * time.Minute
 
 	opts := NewKVBackendOptions(cfg)
 
@@ -112,6 +144,8 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	require.Equal(t, 4*time.Minute, opts.SearchLookback)
 	require.Equal(t, WatchOptions{SettleDelay: 5 * time.Minute}, opts.WatchOptions)
 	require.Equal(t, 7, opts.DashboardVersionsToKeep)
+	require.NotEmpty(t, opts.Holder)
+	require.Equal(t, 9*time.Minute, opts.LeaseTTL)
 	require.Equal(t, GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           true,

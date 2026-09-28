@@ -68,6 +68,21 @@ func TestLegacyStore_Create(t *testing.T) {
 			},
 		},
 		{
+			name: "returns the raw secret so the dual-writer forwards it to MT-Settings",
+			svc:  &fakeSSOService{},
+			op: func(s *LegacyStore) (runtime.Object, error) {
+				return s.Create(reqCtx(), ssoObj("generic_oauth", map[string]any{"client_id": "abc", "client_secret": "topsecret"}), nil, &metav1.CreateOptions{})
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, err error, svc *fakeSSOService) {
+				require.NoError(t, err)
+				require.NotNil(t, sso)
+				assert.Equal(t, "topsecret", sso.Spec.Settings.Object["client_secret"])
+				assert.Equal(t, "abc", sso.Spec.Settings.Object["client_id"])
+				require.NotNil(t, svc.upserted)
+				assert.Equal(t, "topsecret", svc.upserted.Settings["client_secret"])
+			},
+		},
+		{
 			name: "fails without an identity and does not upsert",
 			svc:  &fakeSSOService{},
 			op: func(s *LegacyStore) (runtime.Object, error) {

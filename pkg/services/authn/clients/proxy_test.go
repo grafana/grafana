@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -219,6 +220,15 @@ func TestProxy_Authenticate_CacheHitExternalGroups(t *testing.T) {
 	}
 }
 
+func TestGetProxyCacheKey_NoCollision(t *testing.T) {
+	key1, ok1 := getProxyCacheKey("admin", map[string]string{proxyFieldEmail: "admin@corp.com"})
+	key2, ok2 := getProxyCacheKey("admina", map[string]string{proxyFieldEmail: "dmin@corp.com"})
+
+	require.True(t, ok1)
+	require.True(t, ok2)
+	assert.NotEqual(t, key1, key2)
+}
+
 func TestProxy_Test(t *testing.T) {
 	type testCase struct {
 		desc       string
@@ -294,6 +304,7 @@ func (f fakeCache) Delete(ctx context.Context, key string) error {
 func TestProxy_Hook(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.AuthProxy.HeaderName = "X-Username"
+	cfg.AuthProxy.SyncTTL = 15
 	cfg.AuthProxy.Headers = map[string]string{
 		proxyFieldRole: "X-Role",
 	}
@@ -324,7 +335,7 @@ func TestProxy_Hook(t *testing.T) {
 			assert.NoError(t, err)
 			expectedCache := map[string][]byte{
 				cacheKey: []byte("1"),
-				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): []byte(fmt.Sprintf("users:johndoe-%s", role)),
+				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): fmt.Appendf(nil, "users:johndoe-%s", role),
 			}
 			assert.Equal(t, expectedCache, cache.data)
 		}
@@ -333,4 +344,33 @@ func TestProxy_Hook(t *testing.T) {
 	t.Run("step 1: new user with role Admin", withRole("Admin"))
 	t.Run("step 2: cached user with new Role Viewer", withRole("Viewer"))
 	t.Run("step 3: cached user get changed back to Admin", withRole("Admin"))
+}
+
+func TestProxy_Hook_SyncTTLDisabled(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AuthProxy.HeaderName = "X-Username"
+	cfg.AuthProxy.SyncTTL = 0
+	cache := &fakeCache{data: make(map[string][]byte)}
+
+	c, err := ProvideProxy(cfg, cache, tracing.InitializeTracerForTest(), authntest.MockProxyClient{})
+	require.NoError(t, err)
+
+	userIdentity := &authn.Identity{
+		ID:   "1",
+		Type: claims.TypeUser,
+		ClientParams: authn.ClientParams{
+			CacheAuthProxyKey: "users:johndoe-Admin",
+		},
+	}
+	userReq := &authn.Request{
+		HTTPRequest: &http.Request{
+			Header: map[string][]string{
+				"X-Username": {"johndoe"},
+			},
+		},
+	}
+
+	err = c.Hook(context.Background(), userIdentity, userReq)
+	assert.NoError(t, err)
+	assert.Empty(t, cache.data, "no cache entry should be written when sync_ttl is 0")
 }

@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Stack } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../../GrafanaRuleQueryViewer';
-import { useAlertQueriesStatus } from '../../../hooks/useAlertQueriesStatus';
+import { getAlertQueriesStatus, useAlertQueryDataSources } from '../../../hooks/alertQueriesStatus';
 import { alertRuleToQueries } from '../../../utils/query';
 import { isFederatedRuleGroup, rulerRuleType } from '../../../utils/rules';
 import { useAlertQueryRunner } from '../../rule-editor/query-and-alert-condition/useAlertQueryRunner';
-import { NoQueryToRun } from '../EvalStatus';
+import { EvalLoadingBar, NoQueryToRun } from '../EvalStatus';
 
 interface Props {
   rule: CombinedRule;
@@ -57,51 +56,40 @@ const QueryAndCondition = ({ rule }: Props) => {
       });
   }, [queries]);
 
-  const { allDataSourcesAvailable, isLoading: isDsLoading } = useAlertQueriesStatus(queries);
+  const { dataSourcesByUid, isLoading: isDsLoading } = useAlertQueryDataSources(queries);
+  const { allDataSourcesAvailable } = getAlertQueriesStatus(queries, dataSourcesByUid);
 
-  // Tracks whether a run has been initiated but both runners have not yet emitted their first
-  // LoadingState.Loading value. Without this, isPreviewLoading is transiently false between the
-  // moment onRunQueries fires and the moment the runners populate queryPreviewData.
-  const [isRunning, setIsRunning] = useState(false);
+  // isPreviewLoading only turns true once a runner emits, which skips query preparation entirely
+  // and lags the request by up to 200ms. Counted, so overlapping runs don't clear each other.
+  const [activeRuns, setActiveRuns] = useState(0);
 
   const onRunQueries = useCallback(() => {
     if (queries.length === 0 || isDsLoading || !allDataSourcesAvailable) {
       return;
     }
 
-    let condition;
-    if (rule && rulerRuleType.grafana.rule(rule.rulerRule)) {
-      condition = rule.rulerRule.grafana_alert.condition;
-    }
-    setIsRunning(true);
-    // Run original queries for expression evaluation
-    runExpressionQueries(queries, condition ?? 'A');
-    // Run range-converted data source queries for visualization
-    runVisualizationQueries(visualizationQueries, '');
+    const condition = rulerRuleType.grafana.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.condition : 'A';
+
+    setActiveRuns((runs) => runs + 1);
+    void Promise.allSettled([
+      runExpressionQueries(queries, condition),
+      runVisualizationQueries(visualizationQueries, ''),
+    ]).then(() => {
+      setActiveRuns((runs) => runs - 1);
+    });
   }, [
     queries,
     visualizationQueries,
     isDsLoading,
     allDataSourcesAvailable,
-    rule,
+    rule.rulerRule,
     runExpressionQueries,
     runVisualizationQueries,
   ]);
 
   useEffect(() => {
-    if (!isDsLoading && allDataSourcesAvailable) {
-      onRunQueries();
-    }
-  }, [isDsLoading, allDataSourcesAvailable, onRunQueries]);
-
-  // Clear isRunning once both runners have settled (neither is in a loading state anymore).
-  // isExpressionLoading and isVisualizationLoading stay false until the runners emit their first
-  // LoadingState.Loading, so we only clear isRunning after at least one run has been kicked off.
-  useEffect(() => {
-    if (isRunning && !isExpressionLoading && !isVisualizationLoading) {
-      setIsRunning(false);
-    }
-  }, [isRunning, isExpressionLoading, isVisualizationLoading]);
+    onRunQueries();
+  }, [onRunQueries]);
 
   // Merge: visualization (range) data for data source queries, expression data for expressions
   const mergedPreviewData = useMemo(() => {
@@ -114,23 +102,28 @@ const QueryAndCondition = ({ rule }: Props) => {
   // the expression runner runs the original raw queries + expression DAG that yield the result data.
   // Both include isDsLoading because the runners can only start once the data source availability
   // check has resolved — without it there is a gap where nothing reports loading yet.
-  const queryGraphLoading = isDsLoading || isRunning || isVisualizationLoading;
-  const queryDataLoading = isDsLoading || isRunning || isExpressionLoading;
+  const queryGraphLoading = isDsLoading || activeRuns > 0 || isVisualizationLoading;
+  const queryDataLoading = isDsLoading || activeRuns > 0 || isExpressionLoading;
 
   return (
     <>
-      {rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
+      {/* Held above both branches: a preview without its data source renders nothing, not even a loading bar.
+          Federated rules render neither branch regardless of loading state, so they're excluded here too. */}
+      {!isFederatedRule && isDsLoading && <EvalLoadingBar />}
+
+      {!isDsLoading && rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
         <GrafanaRuleQueryViewer
           rule={rule}
           condition={rule.rulerRule.grafana_alert.condition}
           queries={queries}
+          dataSourcesByUid={dataSourcesByUid}
           evalDataByQuery={mergedPreviewData}
           queryGraphLoading={queryGraphLoading}
           queryDataLoading={queryDataLoading}
         />
       )}
 
-      {!rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
+      {!isDsLoading && !rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
         <Stack direction="column" gap={1}>
           {queries.map((query) => {
             return (
@@ -139,7 +132,7 @@ const QueryAndCondition = ({ rule }: Props) => {
                 rule={rule}
                 refId={query.refId}
                 model={query.model}
-                dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
+                dataSource={dataSourcesByUid.get(query.datasourceUid)}
                 queryData={mergedPreviewData[query.refId]}
                 relativeTimeRange={query.relativeTimeRange}
                 isLoading={queryGraphLoading}

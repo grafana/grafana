@@ -211,7 +211,7 @@ func TestIntegrationBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
 }
 
 func setupTest(t *testing.T) *store {
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretService := fakes.NewFakeSecretsService()
 	tracer := tracing.InitializeTracerForTest()
 	externalSessionStore := provideExternalSessionStore(legacysql.NewDatabaseProvider(sqlStore), secretService, tracer).(*store)

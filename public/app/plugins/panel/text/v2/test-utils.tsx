@@ -32,7 +32,10 @@ export function createData(series: DataFrame[] = [{ fields: [], length: 0 }]): P
   };
 }
 
-export function createProps(replaceVariables: Props['replaceVariables'], overrides: Partial<Props> = {}): Props {
+type PropsOverrides = Partial<Omit<Props, 'options'>> & { options?: Partial<Props['options']> };
+
+export function createProps(replaceVariables: Props['replaceVariables'], overrides: PropsOverrides = {}): Props {
+  const { options, ...rest } = overrides;
   return {
     id: 1,
     data: createData(),
@@ -55,12 +58,12 @@ export function createProps(replaceVariables: Props['replaceVariables'], overrid
     renderCounter: 1,
     title: 'Test Text Panel',
     eventBus: new EventBusSrv(),
-    options: { content: '', mode: TextMode.Markdown },
+    options: { content: '', mode: TextMode.Markdown, frameIndex: 0, ...options },
     onOptionsChange: jest.fn(),
     onFieldConfigChange: jest.fn(),
     replaceVariables,
     onChangeTimeRange: jest.fn(),
-    ...overrides,
+    ...rest,
   };
 }
 

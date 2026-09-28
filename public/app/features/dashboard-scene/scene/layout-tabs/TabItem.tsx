@@ -18,11 +18,11 @@ import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
@@ -31,7 +31,6 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -152,7 +151,7 @@ export class TabItem
       return;
     }
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.switch-layout-tab', 'Switch layout'),
       source: this,
       perform,
@@ -202,7 +201,10 @@ export class TabItem
   }
 
   public createMultiSelectedElement(items: SceneObject[]): TabItems {
-    return new TabItems(items.filter((item) => item instanceof TabItem));
+    return new TabItems(
+      items.filter((item) => item instanceof TabItem),
+      getDashboardSceneFor(this)
+    );
   }
 
   public onDuplicate(): void {
@@ -292,48 +294,6 @@ export class TabItem
     }
     this.setIsDropTarget(false);
 
-    const parentLayout = this.getParentLayout();
-    if (parentLayout.state.currentTabSlug !== this.getSlug()) {
-      parentLayout.setState({ currentTabSlug: this.getSlug() });
-    }
-  }
-
-  /**
-   * Accept a dropped row into this tab.
-   * If the tab doesn't have a RowsLayoutManager, convert the layout first.
-   */
-  public acceptDroppedRow(row: RowItem): void {
-    const currentLayout = this.getLayout();
-
-    // Clear the parent reference from the row before adding to new layout
-    row.clearParent();
-
-    if (currentLayout instanceof RowsLayoutManager) {
-      // Already has a RowsLayoutManager, just add the row
-      currentLayout.addNewRow(row);
-    } else {
-      // Need to convert the layout to RowsLayoutManager
-      let rowsLayout: RowsLayoutManager;
-
-      // If the current layout is empty, just create a new RowsLayoutManager with only the dropped row
-      if (currentLayout.getVizPanels().length === 0) {
-        rowsLayout = new RowsLayoutManager({ rows: [row] });
-      } else {
-        // Convert existing layout and add the dropped row
-        // Use direct state update instead of addNewRow because the rowsLayout
-        // isn't connected to the scene yet, so dashboardEditActions won't work
-        rowsLayout = RowsLayoutManager.createFromLayout(currentLayout);
-        rowsLayout.setState({ rows: [...rowsLayout.state.rows, row] });
-      }
-
-      // Clear the parent reference from the old layout
-      currentLayout.clearParent();
-
-      // Switch to the new rows layout
-      this.setState({ layout: rowsLayout });
-    }
-
-    // Ensure this tab is active after the drop
     const parentLayout = this.getParentLayout();
     if (parentLayout.state.currentTabSlug !== this.getSlug()) {
       parentLayout.setState({ currentTabSlug: this.getSlug() });

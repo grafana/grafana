@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "установлен",
       "reset-symbol-client-secret": "Сброс"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Необработанный запрос {{queryDisplayName}}",
       "aria-label-use-query": "Использовать кнопку запроса",
@@ -79,9 +84,9 @@
       "label-enable-basic-logs": "Включить базовые журналы"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Пакетный API",
+      "description-batch-api": "Объединяет запросы к нескольким ресурсам в один, повышая производительность для больших дашбордов. Требуется роль <2>Monitoring Reader</2> на уровне подписки для <6>metrics.monitor.azure.com</6>. <9>Дополнительная плата может взиматься</9> сверх бесплатного тарифа.",
+      "label-enable-batch-api": "Включить пакетный API"
     },
     "config-editor": {
       "description-additional-settings": "Дополнительные параметры — это необязательные настройки, которые позволяют получить больший контроль над источником данных. К таким параметрам относятся Secure Socks Proxy, время ожидания запроса и пересылаемые файлы cookie.",
@@ -105,7 +110,11 @@
       "load-subscriptions": "Загрузить подписки"
     },
     "dimension-fields": {
-      "aria-label-remove": "Удалить",
+      "aria-label-field": "Поле измерения {{position}}",
+      "aria-label-operator": "Оператор измерения {{position}}",
+      "aria-label-remove": "Удалить измерение {{position}}",
+      "aria-label-value": "Значение измерения {{position}}",
+      "aria-label-values": "Значения измерения {{position}}",
       "label-dimensions": "Размеры",
       "placeholder-field": "Поле",
       "placeholder-operation": "Операция",
@@ -178,19 +187,47 @@
       "tooltip-limit": "Установите ограничение по количеству возвращаемых строк (по умолчанию — 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Действительно перейти на базовые журналы?",
       "confirmText-confirm": "Подтвердить",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Запросы базовых журналов являются платными. Затраты зависят от объема сканируемых данных.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Журналы",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Запросы базовых журналов",
-      "tooltip-logs": "Указывает, следует ли выполнять запросы базовых или аналитических журналов."
+      "tooltip-logs": "Указывает, следует ли выполнять запросы базовых или аналитических журналов.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Ресурс загружен, но без таблиц"
     },
     "logs-query-editor": {
       "learn-more": "Подробнее",
-      "view-query": "Просмотр запроса на портале Azure"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Просмотр запроса на портале Azure",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Метрика"
@@ -199,11 +236,11 @@
       "label-metric-namespace": "Пространство имен метрик"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Вы можете выбирать элементы ресурса одного типа из разных подписок и регионов. Ресурсы из разных подписок или регионов запрашиваются по отдельности. Ошибка в одном запросе не влияет на остальные. Чтобы выбрать ресурсы другого типа, сначала отмените текущий выбор.",
+      "selection-notice-standard": "Вы можете выбирать элементы ресурса одного типа и местоположения. Чтобы выбрать ресурсы другого типа или местоположения, сначала отмените текущий выбор."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Особенности"
     },
     "nested-row": {
       "text-loading": "Загрузка…"
@@ -218,8 +255,8 @@
       "tooltip-order-by": "Сортируйте результаты по одному или нескольким столбцам в порядке возрастания или убывания"
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Загрузка остановлена после стр. {{maxPages}}. Некоторые результаты могут быть пропущены.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Ошибка при запросе метаданных из Azure Monitor"

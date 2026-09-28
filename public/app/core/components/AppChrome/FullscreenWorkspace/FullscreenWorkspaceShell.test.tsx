@@ -1,5 +1,5 @@
 import { type RefCallback } from 'react';
-import { act, fireEvent, getWrapper, render, screen, userEvent } from 'test/test-utils';
+import { act, fireEvent, getWrapper, render, screen } from 'test/test-utils';
 
 import { usePluginComponent } from '@grafana/runtime';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
@@ -138,11 +138,11 @@ describe('FullscreenWorkspaceShell', () => {
     it('exits when a profile menu link is followed', async () => {
       mockPluginWorkspaceWithTopBarSlot();
 
-      const { chrome } = renderShell(jest.fn(), storeWithProfileNav());
+      const { chrome, user } = renderShell(jest.fn(), storeWithProfileNav());
       act(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true }));
 
-      await userEvent.click(await screen.findByRole('button', { name: 'Profile' }));
-      await userEvent.click(await screen.findByRole('menuitem', { name: 'Profile settings' }));
+      await user.click(await screen.findByRole('button', { name: 'Profile' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Profile settings' }));
 
       // Otherwise the destination would open inside the workspace's Platform tab.
       expect(chrome.state.getValue().fullscreenWorkspace).toBe(false);
@@ -155,10 +155,10 @@ describe('FullscreenWorkspaceShell', () => {
     ])('stays in the workspace for a %s click, which opens a new tab', async (_label, modifier) => {
       mockPluginWorkspaceWithTopBarSlot();
 
-      const { chrome } = renderShell(jest.fn(), storeWithProfileNav());
+      const { chrome, user } = renderShell(jest.fn(), storeWithProfileNav());
       act(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true }));
 
-      await userEvent.click(await screen.findByRole('button', { name: 'Profile' }));
+      await user.click(await screen.findByRole('button', { name: 'Profile' }));
       fireEvent.click(await screen.findByRole('menuitem', { name: 'Profile settings' }), modifier);
 
       expect(chrome.state.getValue().fullscreenWorkspace).toBe(true);
@@ -167,11 +167,11 @@ describe('FullscreenWorkspaceShell', () => {
     it('stays in the workspace for items that open a drawer in place', async () => {
       mockPluginWorkspaceWithTopBarSlot();
 
-      const { chrome } = renderShell(jest.fn(), storeWithProfileNav());
+      const { chrome, user } = renderShell(jest.fn(), storeWithProfileNav());
       act(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true }));
 
-      await userEvent.click(await screen.findByRole('button', { name: 'Profile' }));
-      await userEvent.click(await screen.findByRole('menuitem', { name: /change theme/i }));
+      await user.click(await screen.findByRole('button', { name: 'Profile' }));
+      await user.click(await screen.findByRole('menuitem', { name: /change theme/i }));
 
       expect(chrome.state.getValue().fullscreenWorkspace).toBe(true);
     });

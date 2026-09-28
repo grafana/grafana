@@ -15,8 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
-// Subscription handle; Unsubscribe stops delivery. Matches infra/nats.Subscription.
+// Subscription matches infra/nats.Subscription.
 type Subscription interface {
+	// WaitReady must succeed before relying on delivery for a snapshot-to-live
+	// handoff. The context must have a deadline.
+	WaitReady(ctx context.Context) error
 	Unsubscribe() error
 }
 
@@ -183,10 +186,13 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 			for bo.Ongoing() {
 				bo.Wait()
 				if n.trySubscribe(ctx, handler) {
+					opts.captured(nil)
 					return
 				}
 			}
 		}()
+	} else {
+		opts.captured(nil)
 	}
 
 	return out
@@ -199,6 +205,16 @@ func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject st
 	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAllResources, handler)
 	if err != nil {
 		n.log.Error("failed to subscribe to nats, will retry", "error", err)
+		return false
+	}
+	// The bus can accept SUB locally while disconnected. Wait for its
+	// round-trip acknowledgment before declaring live capture ready.
+	readyCtx, cancel := context.WithTimeout(ctx, defaultMaxBackoff)
+	err = sub.WaitReady(readyCtx)
+	cancel()
+	if err != nil {
+		_ = sub.Unsubscribe()
+		n.log.Error("nats watch capture not ready, will retry", "error", err)
 		return false
 	}
 	n.log.Info("subscribed to nats watch stream")
@@ -223,6 +239,8 @@ func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 		n.drop(dropReasonUnknownType, "dropped watch notification with unknown type", "subject", subject)
 		return Event{}, false
 	}
+	// Older publishers omit previous metadata; keep those live events deliverable.
+	previousAction, _ := watchNotificationTypeToAction(notification.PreviousType)
 	return Event{
 		Namespace:       notification.Namespace,
 		Group:           notification.Group,
@@ -232,6 +250,8 @@ func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 		Action:          action,
 		Folder:          notification.Folder,
 		PreviousRV:      notification.PreviousResourceVersion,
+		PreviousAction:  previousAction,
+		PreviousFolder:  notification.PreviousFolder,
 	}, true
 }
 

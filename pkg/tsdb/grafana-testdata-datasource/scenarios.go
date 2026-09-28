@@ -787,10 +787,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 			continue
 		}
 
-		lines := model.Lines
-		if lines > 10000 {
-			lines = 10000
-		}
+		lines := min(model.Lines, 10000)
 		includeLevelColumn := model.LevelColumn
 
 		logLevelGenerator := newRandomStringProvider([]string{
@@ -1116,13 +1113,7 @@ func Exemplars(query backend.DataQuery, model kinds.TestDataQuery) *data.Frame {
 		intervalMs = 1000
 	}
 
-	gridPoints := int((toMs - fromMs) / intervalMs)
-	if gridPoints < 1 {
-		gridPoints = 1
-	}
-	if gridPoints > maxExemplarCount {
-		gridPoints = maxExemplarCount
-	}
+	gridPoints := min(max(int((toMs-fromMs)/intervalMs), 1), maxExemplarCount)
 
 	minValue, maxValue := exemplarValueRange(query, model, r)
 
@@ -1295,10 +1286,7 @@ func randomWalkTable(query backend.DataQuery, model kinds.TestDataQuery) *data.F
 	var info strings.Builder
 	state := data.EnumItemIndex(0)
 
-	maxDataPoints := query.MaxDataPoints
-	if maxDataPoints > 10000 {
-		maxDataPoints = 10000
-	}
+	maxDataPoints := min(query.MaxDataPoints, 10000)
 	for i := int64(0); i < maxDataPoints && timeWalkerMs < to; i++ {
 		delta := rand.Float64() - 0.5
 		walker += delta

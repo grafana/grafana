@@ -186,7 +186,7 @@ To display the filter icons, hover your cursor over the cell that has the value 
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
 
-For more information about applying filters this way, refer to [Dashboard drilldown with filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
+For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->

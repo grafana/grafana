@@ -34,7 +34,9 @@ export function deserializeNotebookLayout(
   const cells: NotebookCellItem[] = [];
   for (const item of layout.spec.cells) {
     const elementName = item.spec.element.name;
-    const element = elements[elementName];
+    // hasOwn, not a bare lookup: `elements` is caller-supplied JSON, so a cell named `constructor`
+    // would resolve to an inherited member and reach the unknown-kind throw instead of being skipped.
+    const element = Object.hasOwn(elements, elementName) ? elements[elementName] : undefined;
     if (!element) {
       continue;
     }

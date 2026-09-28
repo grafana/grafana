@@ -22,19 +22,25 @@ type lockBackend interface {
 	Create(ctx context.Context, key string, info lockInfo) error
 
 	// Update atomically updates an existing lock, verifying ownership.
-	// Returns error if lock does not exist or is owned by a different owner.
+	// Returns errLockNotOwned once it is someone else's, errLeaseExpired once ours
+	// has run out, errLockNotFound if it is gone.
 	Update(ctx context.Context, key string, info lockInfo) error
 
 	// Delete atomically deletes a lock, verifying ownership.
-	// Returns error if lock does not exist or is owned by a different owner.
+	// Returns errLockNotOwned once it is someone else's, errLockNotFound if it is gone.
 	Delete(ctx context.Context, key string, owner string) error
 
 	// Read returns the current lock info, or errLockNotFound if no lock exists.
 	Read(ctx context.Context, key string) (*lockInfo, error)
 }
 
-// errLockHeld is returned when a lock cannot be acquired because it is held by another owner.
+// errLockHeld means another owner has the lock, so a caller waiting for a leader
+// keeps waiting.
 var errLockHeld = errors.New("lock is held by another owner")
+
+// errLockNotOwned means a lock we believed we held is no longer ours, so work under
+// it must stop. The opposite response to errLockHeld.
+var errLockNotOwned = errors.New("lock is not owned by this instance")
 
 // errLockNotFound is returned when a lock operation targets a non-existent lock.
 var errLockNotFound = errors.New("lock not found")
@@ -171,7 +177,7 @@ func (l *objectStorageLock) Acquire(ctx context.Context) error {
 // Release stops the heartbeat and deletes the lock object.
 // After Lost is signaled, Release is best-effort cleanup; a nil return does not mean
 // this caller retained ownership until release.
-// Non-retriable errors: errLockHeld, errLockNotFound
+// Non-retriable errors: errLockNotOwned, errLockNotFound
 func (l *objectStorageLock) Release() error {
 	if !l.held {
 		return nil
@@ -182,7 +188,7 @@ func (l *objectStorageLock) Release() error {
 	ctx, cancel := context.WithTimeout(context.Background(), l.releaseDeleteTimeout)
 	defer cancel()
 	err := l.backend.Delete(ctx, l.key, l.owner)
-	if err == nil || errors.Is(err, errLockNotFound) || errors.Is(err, errLockHeld) {
+	if err == nil || errors.Is(err, errLockNotFound) || errors.Is(err, errLockNotOwned) {
 		l.held = false
 	}
 	// On transient Delete errors, keep held=true so a retry re-enters this path
@@ -230,7 +236,7 @@ func (l *objectStorageLock) runHeartbeat(ctx context.Context, done chan struct{}
 					return
 				}
 				// Definitive loss: another owner took the lock, it was deleted, or our lease expired.
-				if errors.Is(err, errLockHeld) || errors.Is(err, errLockNotFound) || errors.Is(err, errLeaseExpired) {
+				if errors.Is(err, errLockNotOwned) || errors.Is(err, errLockNotFound) || errors.Is(err, errLeaseExpired) {
 					close(l.lostCh)
 					return
 				}

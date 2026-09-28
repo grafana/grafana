@@ -44,10 +44,8 @@ func toBackfillRecord(namespace string, a LegacyAnnotation) BackfillRecord {
 		LegacyID:  a.ID,
 	}
 
-	if a.EpochEnd > a.Epoch {
-		end := a.EpochEnd
-		rec.TimeEnd = &end
-	}
+	end := max(a.EpochEnd, a.Epoch)
+	rec.TimeEnd = &end
 
 	// Match the live write path, which stores the typed identifier
 	// (e.g. "user:<uid>" or "service-account:<uid>") via Requester.GetUID().

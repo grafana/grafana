@@ -154,10 +154,10 @@ func setOpenFeatureFlags(t *testing.T, flags map[string]bool) {
 }
 
 func TestBuildNotebooksNavLink(t *testing.T) {
-	newService := func(canReadDashboards bool) *ServiceImpl {
+	newService := func(canReadNotebooks bool) *ServiceImpl {
 		return &ServiceImpl{
 			cfg:           setting.NewCfg(),
-			accessControl: actest.FakeAccessControl{ExpectedEvaluate: canReadDashboards},
+			accessControl: actest.FakeAccessControl{ExpectedEvaluate: canReadNotebooks},
 			features:      featuremgmt.WithFeatures(),
 		}
 	}
@@ -171,7 +171,7 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 		}
 	}
 
-	t.Run("Should show Notebooks for a signed-in user with dashboard read access when the flag is on", func(t *testing.T) {
+	t.Run("Should show Notebooks for a signed-in user with notebook read access when the flag is on", func(t *testing.T) {
 		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
 
 		link := newService(true).buildNotebooksNavLink(newReqCtx(true))
@@ -187,7 +187,7 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 		require.Nil(t, newService(true).buildNotebooksNavLink(newReqCtx(true)))
 	})
 
-	t.Run("Should not show Notebooks without dashboard read access", func(t *testing.T) {
+	t.Run("Should not show Notebooks without notebook read access", func(t *testing.T) {
 		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
 
 		require.Nil(t, newService(false).buildNotebooksNavLink(newReqCtx(true)))

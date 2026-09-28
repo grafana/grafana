@@ -2,7 +2,7 @@ import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import type { ConvertAlertmanagerResponse } from '../components/import-to-gma/types';
 
-import { alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 
 export const convertToGMAApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -82,15 +82,15 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
      */
     dryRunAlertmanagerConfig: build.mutation<
       ConvertAlertmanagerResponse,
-      {
+      WithNotificationOptions<{
         alertmanagerConfig: string;
         templateFiles?: Record<string, string>;
         configIdentifier: string;
         /** Also validate the merge into the live config, and the caller's permissions for it. */
         promote?: boolean;
-      }
+      }>
     >({
-      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, promote }) => ({
+      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, promote, notificationOptions }) => ({
         url: `/api/convert/api/v1/alerts`,
         method: 'POST',
         body: {
@@ -104,7 +104,23 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           'X-Grafana-Alerting-Config-Force-Replace': 'true',
           ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },
+        notificationOptions,
       }),
+    }),
+
+    /**
+     * Merge a staged Alertmanager config into the live one as editable resources. The backend removes the
+     * staged extra config on success, so the staged card empties.
+     */
+    promoteAlertmanagerConfig: build.mutation<ConvertAlertmanagerResponse, { configIdentifier: string }>({
+      query: ({ configIdentifier }) => ({
+        url: `/api/convert/api/v1/alerts/${encodeURIComponent(configIdentifier)}/promote`,
+        method: 'POST',
+      }),
+      // Promote merges into the live config, so invalidate the same tags the config-update mutation
+      // does (alertmanagerApi updateAlertmanagerConfiguration). Invalidating AlertmanagerConfiguration
+      // also refetches the staged-config query (extra_config lives inside the AM config).
+      invalidatesTags: ['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus', 'Receiver'],
     }),
 
     /** Discard a staged Alertmanager config. The live Grafana Alertmanager config is not affected. */

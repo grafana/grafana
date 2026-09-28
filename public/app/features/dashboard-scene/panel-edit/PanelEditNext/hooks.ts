@@ -141,8 +141,9 @@ export function usePanelEditorShell(model: PanelEditor) {
 
   const splitter = useSnappingSplitter({
     direction: 'row',
-    dragPosition: 'end',
+    dragPosition: 'middle',
     initialSize: 330,
+    handleSize: 'sm',
     usePixels: true,
     collapsed: isInitiallyCollapsed,
     collapseBelowPixels: MIN_SUGGESTIONS_PANE_WIDTH + panePadding,

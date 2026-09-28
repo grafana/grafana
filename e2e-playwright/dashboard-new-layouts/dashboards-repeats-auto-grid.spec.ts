@@ -44,8 +44,7 @@ test.describe(
 
         await expectRepeatedPanelTitlesToBe(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelTitlesToBe(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -61,8 +60,7 @@ test.describe(
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
         await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // verify 6 panels are present (4 repeats and 2 normal)
         await expect(panels.getHeaders()).toHaveCount(6);
@@ -77,8 +75,7 @@ test.describe(
         // verify only 3 panels are present
         await expect(panels.getHeaders()).toHaveCount(3);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
 
@@ -99,8 +96,7 @@ test.describe(
         await sidebar.toolbar.clickButton('Options');
         await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await controls.variables.deselectOption('c1', `${REPEAT_OPTIONS.at(-1)}`);
         await page.locator('body').click({ position: { x: 0, y: 0 } }); // blur select
@@ -131,8 +127,7 @@ test.describe(
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -157,8 +152,7 @@ test.describe(
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
         await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await controls.enterEditMode();
 
@@ -188,8 +182,7 @@ test.describe(
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -213,7 +206,7 @@ test.describe(
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
         await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
+        await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false });
 
         // loading directly into panel editor
         await page.goto(`${page.url()}&editPanel=1`);
@@ -238,8 +231,7 @@ test.describe(
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -270,8 +262,7 @@ test.describe(
         let normalPanelBox = await getPanelBox(panels, 'New panel');
         expect(normalPanelBox.x).toBeLessThan(repeatedPanelBox.x);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         repeatedPanelBox = await getPanelBox(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
         normalPanelBox = await getPanelBox(panels, 'New panel');
@@ -294,8 +285,7 @@ test.describe(
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
         await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
         await page.keyboard.press('v');
@@ -337,8 +327,7 @@ test.describe(
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
         await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
         await page.keyboard.press('p+e');

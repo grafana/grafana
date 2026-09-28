@@ -11,7 +11,7 @@ import (
 // Interface provides access to all the informers in this group version.
 type Interface interface {
 	// ExternalNames returns a ExternalNameInformer.
-	ExternalNames() ExternalNameInformer
+	ExternalNames() TypedExternalNameInformer
 }
 
 type version struct {
@@ -25,7 +25,7 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// ExternalNames returns a ExternalNameInformer.
-func (v *version) ExternalNames() ExternalNameInformer {
+// ExternalNames returns a TypedExternalNameInformer.
+func (v *version) ExternalNames() TypedExternalNameInformer {
 	return &externalNameInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

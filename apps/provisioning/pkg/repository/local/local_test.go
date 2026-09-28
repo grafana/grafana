@@ -74,7 +74,7 @@ func TestLocalResolver(t *testing.T) {
 				Path: tempDir,
 			},
 		},
-	}, resolver)
+	}, resolver, nil)
 
 	// Verify we can read the tree
 	tree, err := repo.ReadTree(context.Background(), "")
@@ -131,7 +131,7 @@ func TestLocal(t *testing.T) {
 						Path: tc.Path,
 					},
 				},
-			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
+			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"}, nil)
 
 			assert.Equal(t, tc.ExpectedPath, r.path, "expected path to be resolved")
 			// Validation is now handled by the validator function, not the repository instance
@@ -156,7 +156,7 @@ func TestLocal(t *testing.T) {
 						Path: tc.Path,
 					},
 				},
-			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
+			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"}, nil)
 
 			require.Empty(t, r.path, "no path should be resolved")
 
@@ -237,7 +237,7 @@ func TestLocalRepository_Test(t *testing.T) {
 						Path: tc.path,
 					},
 				},
-			}, resolver)
+			}, resolver, nil)
 
 			// If we're testing a valid path, set it to our test path
 			if tc.path != "" {

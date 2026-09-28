@@ -1,17 +1,20 @@
-import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
-import { Box, Button } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
 
+import { edit } from '../../actions/utils/edit';
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { openAddLinkPane, openEditLinkPane } from '../../settings/links/LinkAddEditableElement';
+import { LinkEditEditableElement, openAddLinkPane } from '../../settings/links/LinkAddEditableElement';
+import { LinkEdit, linkSelectionId, openEditLinkPane } from '../../settings/links/LinkEdit';
 import { DashboardInteractions } from '../../utils/interactions';
-import { dashboardEditActions } from '../shared';
 
 import { DraggableList } from './DraggableList';
+import { SidebarAddButton } from './SidebarAddButton';
+import { toDraggableListItemActions } from './helpers';
 
 const ID_VISIBLE_LIST = 'links-list-visible';
 const ID_CONTROLS_MENU_LIST = 'links-list-controls-menu';
@@ -22,6 +25,7 @@ const DROPPABLE_TO_PLACEMENT: Record<string, DashboardLinkPlacement | undefined>
 };
 
 export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene }) {
+  const { DragDropContext } = useDragAndDrop();
   const { links } = dashboard.useState();
   const { visible, controlsMenu } = useMemo(() => partitionLinksByPlacement(links), [links]);
 
@@ -31,6 +35,31 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
     },
     [dashboard]
   );
+
+  const getLinkEditableElement = useCallback(
+    (link: PseudoSceneLink) => {
+      const linkIndex = Number(link.state.key);
+      const linkEdit = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: linkSelectionId(linkIndex) });
+      return new LinkEditEditableElement(linkEdit);
+    },
+    [dashboard]
+  );
+
+  const onDuplicateLink = useCallback(
+    (link: PseudoSceneLink) => {
+      getLinkEditableElement(link).onDuplicate();
+    },
+    [getLinkEditableElement]
+  );
+
+  const onDeleteLink = useCallback(
+    (link: PseudoSceneLink) => {
+      getLinkEditableElement(link).onConfirmDelete();
+    },
+    [getLinkEditableElement]
+  );
+
+  const linkActions = toDraggableListItemActions<PseudoSceneLink>(onClickLink, onDuplicateLink, onDeleteLink);
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -58,7 +87,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
 
       const newPlacement = DROPPABLE_TO_PLACEMENT[destination.droppableId];
 
-      dashboardEditActions.edit({
+      edit({
         source: dashboard,
         description: t('dashboard.sidebar.links.reorder-description', 'Reorder links list'),
         perform: () => {
@@ -82,24 +111,16 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard.sidebar.links.title-above-dashboard', '', {
-          count: visible.length,
-          defaultValue_one: 'Above dashboard ({{count}})',
-          defaultValue_other: 'Above dashboard ({{count}})',
-        })}
-        onClickItem={onClickLink}
+        title={t('dashboard.sidebar.links.title-above-dashboard', 'Above dashboard')}
         renderItemLabel={renderItemLabel}
+        {...linkActions}
       />
       <DraggableList
         items={controlsMenu}
         droppableId={ID_CONTROLS_MENU_LIST}
-        title={t('dashboard.sidebar.links.title-controls-menu', '', {
-          count: controlsMenu.length,
-          defaultValue_one: 'Controls menu ({{count}})',
-          defaultValue_other: 'Controls menu ({{count}})',
-        })}
-        onClickItem={onClickLink}
+        title={t('dashboard.sidebar.links.title-controls-menu', 'Controls menu')}
         renderItemLabel={renderItemLabel}
+        {...linkActions}
       />
     </DragDropContext>
   );
@@ -114,18 +135,11 @@ export function AddLinkButton({ dashboard }: { dashboard: DashboardScene }) {
   }, [dashboard]);
 
   return (
-    <Box display="flex" paddingTop={1} paddingBottom={1}>
-      <Button
-        fullWidth
-        icon="plus"
-        size="sm"
-        variant="secondary"
-        onClick={onAddLink}
-        data-testid={selectors.components.PanelEditor.ElementEditPane.addLinkButton}
-      >
-        <Trans i18nKey="dashboard.sidebar.links.add-link">Add link</Trans>
-      </Button>
-    </Box>
+    <SidebarAddButton
+      onAdd={onAddLink}
+      tooltip={t('dashboard.sidebar.links.add-link', 'Add link')}
+      dataTestId={selectors.components.PanelEditor.ElementEditPane.addLinkButton}
+    />
   );
 }
 

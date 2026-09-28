@@ -252,7 +252,11 @@ class DataSourceWithBackend<
         types: [],
       });
       if (isQueryServiceCompatible(datasources, allowedTypes)) {
-        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+        let apiGroup = 'query.grafana.app';
+        if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesQuerierNewName, false)) {
+          apiGroup = 'datasource.grafana.app';
+        }
+        url = `/apis/${apiGroup}/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
       }
     }
 
@@ -428,7 +432,7 @@ class DataSourceWithBackend<
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
-      return `/apis/${this.type}.datasource.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/resources/${path}`;
+      return `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/resources/${path}`;
     }
     return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }
@@ -442,7 +446,7 @@ class DataSourceWithBackend<
       false
     );
     const healthCheckURL = useNewApi
-      ? `/apis/${this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
+      ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
       : `/api/datasources/uid/${this.uid}/health`;
 
     if (useNewApi) {

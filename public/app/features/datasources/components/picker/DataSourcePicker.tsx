@@ -364,6 +364,7 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
       pointerEvents: props.disabled ? 'none' : 'auto',
     }),
     input: css({
+      cursor: 'pointer',
       'input::placeholder': {
         color: props.disabled ? theme.colors.action.disabledText : theme.colors.text.primary,
       },
@@ -427,28 +428,36 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 PickerContent.displayName = 'PickerContent';
 
 function getStylesPickerContent(theme: GrafanaTheme2) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    container: css({
-      display: 'flex',
-      flexDirection: 'column',
-      background: theme.colors.background.elevated,
-      borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
-      overflow: 'hidden',
-      minWidth: calculateMinWidth('97vw'),
-      [theme.breakpoints.up('md')]: {
-        minWidth: calculateMinWidth('80vw'),
+    container: css(
+      {
+        display: 'flex',
+        flexDirection: 'column',
+        background: theme.colors.background.elevated,
+        borderRadius: theme.shape.radius.default,
+        boxShadow: theme.shadows.z3,
+        overflow: 'hidden',
+        minWidth: calculateMinWidth('97vw'),
+        [theme.breakpoints.up('md')]: {
+          minWidth: calculateMinWidth('80vw'),
+        },
+        [theme.breakpoints.up('lg')]: {
+          minWidth: calculateMinWidth('60vw'),
+        },
+        [theme.breakpoints.up('xl')]: {
+          minWidth: calculateMinWidth('50vw'),
+        },
+        [theme.breakpoints.up('xxl')]: {
+          minWidth: calculateMinWidth('40vw'),
+        },
       },
-      [theme.breakpoints.up('lg')]: {
-        minWidth: calculateMinWidth('60vw'),
-      },
-      [theme.breakpoints.up('xl')]: {
-        minWidth: calculateMinWidth('50vw'),
-      },
-      [theme.breakpoints.up('xxl')]: {
-        minWidth: calculateMinWidth('40vw'),
-      },
-    }),
+      visualRefreshEnabled && {
+        boxShadow: theme.shadows.z2,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+      }
+    ),
     picker: css({
       background: theme.colors.background.secondary,
     }),

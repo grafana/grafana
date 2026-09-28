@@ -499,7 +499,7 @@ function getStyles(
     }),
 
     ghostCardLabel: css({
-      fontFamily: theme.typography.fontFamilyMonospace,
+      ...theme.typography.body,
       fontStyle: 'italic',
       color: theme.colors.text.secondary,
       overflow: 'hidden',

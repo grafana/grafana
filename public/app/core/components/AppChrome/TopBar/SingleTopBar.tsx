@@ -19,7 +19,7 @@ import { HomeLogo } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
-import { FeatureControlButton } from '../FeatureControl/FeatureControlButton';
+import { LazyFeatureControlButton } from '../FeatureControl/LazyFeatureControl';
 import { AssistantToolbarButtons } from '../FullscreenWorkspace/AssistantToolbarButtons';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
@@ -103,7 +103,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
           {!isSmallScreen && <QuickAdd />}
-          <FeatureControlButton />
+          <LazyFeatureControlButton />
           <HelpTopBarButton isSmallScreen={isSmallScreen} />
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
@@ -128,7 +128,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean, visualRefre
     gap: theme.spacing(2),
     alignItems: 'center',
     padding: theme.spacing(0, 1),
-    paddingLeft: menuDockedAndOpen ? theme.spacing(visualRefreshEnabled ? 0.5 : 3.5) : theme.spacing(0.75),
+    paddingLeft: menuDockedAndOpen ? theme.spacing(visualRefreshEnabled ? 0.5 : 3.5) : theme.spacing(1),
     borderBottom: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
   }),

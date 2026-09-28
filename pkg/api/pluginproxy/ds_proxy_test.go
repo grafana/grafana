@@ -20,6 +20,8 @@ import (
 	"golang.org/x/oauth2"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -602,7 +604,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		proxy.director(req)
 
 		assert.Equal(t, "Bearer testtoken", req.Header.Get("Authorization"))
-		assert.Equal(t, "testidtoken", req.Header.Get("X-ID-Token"))
+		assert.Equal(t, "testidtoken", req.Header.Get(backend.OAuthIdentityIDTokenHeaderName))
 	})
 
 	t.Run("When SendUserHeader config is enabled", func(t *testing.T) {
@@ -647,7 +649,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying data source proxy should handle authentication", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
@@ -1240,7 +1242,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 
 	var routes []*plugins.Route
 	cfg := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	features := featuremgmt.WithFeatures()

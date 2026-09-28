@@ -293,8 +293,8 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
   if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'divider') {
     return (
-      <div key={key} {...rowProps}>
-        <hr className={styles.divider} />
+      <div key={key} {...rowProps} role="presentation">
+        <hr className={styles.divider} aria-hidden />
       </div>
     );
   }

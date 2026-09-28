@@ -49,9 +49,9 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
             </td>
             <td className="text-right">
               <Button
-                variant="destructive"
+                variant="secondary"
                 size="sm"
-                icon="times"
+                icon="trash-alt"
                 onClick={() => setDeleteOrg(org)}
                 aria-label={t('admin.admin-orgs-table.aria-label-delete-org', 'Delete org')}
                 disabled={!canDeleteOrgs}

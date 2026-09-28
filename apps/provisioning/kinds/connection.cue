@@ -26,6 +26,10 @@ connection: {
 					// GitHub App installation ID
 					installationID: int
 				}
+				#GitHubEnterpriseOAuthConnectionConfig: {
+					// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+					serverUrl: string
+				}
 				#GitHubEnterpriseConnectionConfig: {
 					// App-level information
 					// GitHub App ID
@@ -63,7 +67,7 @@ connection: {
 				}
 				spec: {
 					// The connection provider type
-					type: "github" | "githubEnterprise" | "bitbucket" | "gitlab"
+					type: "github" | "githubEnterprise" | "githubOAuth" | "githubEnterpriseOAuth" | "bitbucketOAuth" | "gitlabOAuth"
 					// The connection URL.
 					url: *"" | string
 					// GitHub connection configuration.
@@ -72,8 +76,11 @@ connection: {
 					// GitHub Enterprise Server connection configuration.
 					// Only applicable when provider is "githubEnterprise".
 					githubEnterprise?: #GitHubEnterpriseConnectionConfig
+					// GitHub Enterprise Server OAuth app connection configuration.
+					// Only applicable when provider is "githubEnterpriseOAuth".
+					githubEnterpriseOAuth?: #GitHubEnterpriseOAuthConnectionConfig
 					// Bitbucket connection configuration
-					// Only applicable when provider is "bitbucket"
+					// Only applicable when provider is "bitbucketOAuth"
 					bitbucket?: #BitbucketConnectionConfig
 					// OAuth app configuration shared by all OAuth app providers
 					oauth?: #ConnectionOAuthConfig

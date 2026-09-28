@@ -22,7 +22,7 @@ import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesDat
 import { config, getTemplateSrv, reportInteraction, useAppPluginInstalled } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -40,6 +40,7 @@ import { type SpanLinkFunc } from './components/types/links';
 import { type Trace } from './components/types/trace';
 import { isSummarySpan } from './components/utils/summary-span';
 import { createSpanLinkFactory } from './createSpanLink';
+import { createTraceLogsLink } from './createTraceLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
@@ -92,6 +93,7 @@ export function TraceView(props: Props) {
   const {
     detailStates,
     toggleDetail,
+    openDetail,
     detailLogItemToggle,
     detailLogsToggle,
     detailProcessToggle,
@@ -105,7 +107,9 @@ export function TraceView(props: Props) {
 
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
-  const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
+  const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll, revealSpan } =
+    useChildrenState();
+  const { app = CoreApp.Unknown } = usePanelContext();
 
   const criticalPath = useMemo(() => memoizedTraceCriticalPath(traceProp), [traceProp]);
   const { value: isAdaptiveTracesAppInstalled } = useAppPluginInstalled(ADAPTIVE_TRACES_APP_PLUGIN_ID);
@@ -119,7 +123,16 @@ export function TraceView(props: Props) {
   }, [isAdaptiveTracesAppInstalled, traceProp]);
   const { search, setSearch, spanFilterMatches } = useSearch(exploreId, traceProp?.spans, spanFilters, criticalPath);
 
-  const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
+  // Search next/prev re-applies the current match whenever the matches Set is rebuilt
+  // (every filter keystroke). Reuse the object when the id is unchanged so the timeline
+  // does not jump. Go to span always allocates a new object so a repeat click still scrolls.
+  const [focusedSpanForSearch, setFocusedSpanForSearch] = useState<{ spanID: string } | undefined>();
+  const focusSpanForSearch = useCallback((spanID: string) => {
+    setFocusedSpanForSearch((current) => (current?.spanID === spanID ? current : { spanID }));
+  }, []);
+  const refocusSpanForSearch = useCallback((spanID: string) => {
+    setFocusedSpanForSearch({ spanID });
+  }, []);
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [headerHeight, setHeaderHeight] = useState(100);
   const [traceFlameGraphs, setTraceFlameGraphs] = useState<TraceFlameGraphs>({});
@@ -206,6 +219,28 @@ export function TraceView(props: Props) {
       profilesDataSourceSettings,
     ]
   );
+
+  const logsLinkModel = useMemo(
+    () =>
+      createTraceLogsLink({
+        splitOpenFn: props.splitOpenFn,
+        traceToLogsOptions,
+        trace: traceProp,
+        dataFrame: props.dataFrames[0],
+        dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
+        logsDataSourceSettings,
+        traceDataSourceSettings: instanceSettings,
+      }),
+    [
+      props.splitOpenFn,
+      props.dataFrames,
+      traceToLogsOptions,
+      traceProp,
+      dataLinksContext?.dataLinkPostProcessor,
+      logsDataSourceSettings,
+      instanceSettings,
+    ]
+  );
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
   const datasourceName = datasource ? datasource?.name : 'unknown';
@@ -232,6 +267,25 @@ export function TraceView(props: Props) {
       toggleDetail(spanID);
     },
     [detailStates, toggleDetail, traceProp, datasourceType]
+  );
+
+  // Navigating to a span has to line up three independent pieces of state: its ancestors must be
+  // expanded for its row to exist, its detail must be open, and the timeline must scroll to it.
+  // A span hidden by the matches-only filter also has to be made visible first.
+  const goToSpan = useCallback(
+    (spanID: string) => {
+      const span = traceProp?.spans.find((s) => s.spanID === spanID);
+      if (!span) {
+        return;
+      }
+      revealSpan(span);
+      openDetail(spanID);
+      if (search.matchesOnly && spanFilterMatches && !spanFilterMatches.has(spanID)) {
+        setSearch({ ...search, matchesOnly: false });
+      }
+      refocusSpanForSearch(spanID);
+    },
+    [openDetail, refocusSpanForSearch, revealSpan, search, setSearch, spanFilterMatches, traceProp]
   );
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
@@ -263,17 +317,19 @@ export function TraceView(props: Props) {
             setSearch={setSearch}
             showSpanFilters={showSpanFilters}
             setShowSpanFilters={setShowSpanFilters}
-            setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+            setFocusedSpanIdForSearch={focusSpanForSearch}
+            onGoToSpan={goToSpan}
             spanFilterMatches={spanFilterMatches}
             datasourceType={datasourceType}
             datasourceName={datasourceName}
             datasourceUid={datasourceUid}
             setHeaderHeight={setHeaderHeight}
-            app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+            app={exploreId ? CoreApp.Explore : app}
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
             viewRange={viewRange}
             hideHeaderDetails={hideHeaderDetails}
+            logsLinkModel={logsLinkModel}
           />
 
           <TraceTimelineViewer
@@ -309,7 +365,7 @@ export function TraceView(props: Props) {
             createSpanLink={createSpanLink}
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
-            focusedSpanIdForSearch={focusedSpanIdForSearch}
+            focusedSpanForSearch={focusedSpanForSearch}
             showSpanFilterMatchesOnly={search.matchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
@@ -320,7 +376,7 @@ export function TraceView(props: Props) {
             redrawListView={redrawListView}
             setRedrawListView={setRedrawListView}
             timeRange={props.timeRange}
-            app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+            app={exploreId ? CoreApp.Explore : app}
           />
         </>
       ) : (

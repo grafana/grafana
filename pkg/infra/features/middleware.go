@@ -2,8 +2,6 @@ package features
 
 import (
 	"net/http"
-
-	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // WithTransactionContextMiddleware is an HTTP middleware that reads OTel baggage
@@ -11,8 +9,7 @@ import (
 // Register it in each MT service's HTTP middleware chain.
 func WithTransactionContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		evalCtx := EvaluationContextFromBaggage(r.Context())
-		ctx := openfeature.MergeTransactionContext(r.Context(), evalCtx)
+		ctx := WithTransactionContextFromBaggage(r.Context())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

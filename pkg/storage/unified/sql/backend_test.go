@@ -105,6 +105,36 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 	}, ctx
 }
 
+func TestContinueTokenMatchesListRequest(t *testing.T) {
+	request := func(keysOnly bool, namespace string) *resourcepb.ListRequest {
+		return &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: namespace}},
+			KeysOnly: keysOnly,
+		}
+	}
+
+	tests := []struct {
+		name  string
+		token *ContinueToken
+		req   *resourcepb.ListRequest
+		want  bool
+	}{
+		{name: "legacy cluster-wide keys-only token", token: &ContinueToken{}, req: request(true, ""), want: true},
+		{name: "legacy namespaced keys-only token", token: &ContinueToken{}, req: request(true, "ns-one"), want: false},
+		{name: "cluster-wide token", token: &ContinueToken{KeysOnly: true, ClusterWide: true}, req: request(true, ""), want: true},
+		{name: "cluster-wide token used namespaced", token: &ContinueToken{KeysOnly: true, ClusterWide: true}, req: request(true, "ns-one"), want: false},
+		{name: "namespaced token", token: &ContinueToken{KeysOnly: true, Namespace: "ns-one"}, req: request(true, "ns-one"), want: true},
+		{name: "namespaced token used in another namespace", token: &ContinueToken{KeysOnly: true, Namespace: "ns-one"}, req: request(true, "ns-two"), want: false},
+		{name: "keys-only token used for regular list", token: &ContinueToken{KeysOnly: true, Namespace: "ns-one"}, req: request(false, "ns-one"), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, continueTokenMatchesListRequest(tt.token, tt.req))
+		})
+	}
+}
+
 func TestNewBackend(t *testing.T) {
 	t.Parallel()
 
@@ -720,7 +750,6 @@ func TestBackend_getHistory(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			b, ctx := setupBackendTest(t)
@@ -777,14 +806,14 @@ func TestBackend_getHistory(t *testing.T) {
 				historyRows := sqlmock.NewRows(cols)
 				for _, rv := range tc.expectedVersions {
 					historyRows.AddRow(
-						"guid",                           // guid
-						rv,                               // resource_version
-						"ns",                             // namespace
-						"gr",                             // group
-						"rs",                             // resource
-						"nm",                             // name
-						"folder",                         // folder
-						[]byte(fmt.Sprintf("rv-%d", rv)), // value
+						"guid",                        // guid
+						rv,                            // resource_version
+						"ns",                          // namespace
+						"gr",                          // group
+						"rs",                          // resource
+						"nm",                          // name
+						"folder",                      // folder
+						fmt.Appendf(nil, "rv-%d", rv), // value
 					)
 				}
 				b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
@@ -956,14 +985,14 @@ func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64, e
 	historyRows := sqlmock.NewRows(cols)
 	for _, rv := range resourceVersions {
 		historyRows.AddRow(
-			"guid",                           // guid
-			rv,                               // resource_version
-			"ns",                             // namespace
-			"gr",                             // group
-			"rs",                             // resource
-			"nm",                             // name
-			"folder",                         // folder
-			[]byte(fmt.Sprintf("rv-%d", rv)), // value
+			"guid",                        // guid
+			rv,                            // resource_version
+			"ns",                          // namespace
+			"gr",                          // group
+			"rs",                          // resource
+			"nm",                          // name
+			"folder",                      // folder
+			fmt.Appendf(nil, "rv-%d", rv), // value
 		)
 	}
 

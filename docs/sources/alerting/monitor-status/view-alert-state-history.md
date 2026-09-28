@@ -15,6 +15,11 @@ labels:
 title: View alert state history
 weight: 440
 refs:
+  view-notification-history:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-notification-history/
   time-series-visualizations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
@@ -45,6 +50,8 @@ Grafana OSS and Grafana Enterprise users must [configure alert state history in 
 ## View from the History page
 
 The History page shows the history and state changes of all Grafana-managed alert rules. You can filter by labels and alert states.
+
+The **History** page also includes a **Notifications** tab for [notification history](ref:view-notification-history).
 
 Users can only view the history of alert rules they have permission to access (RBAC).
 

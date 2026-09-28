@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAuthInfoStore(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store, err := ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sql), secretstest.NewFakeSecretsService())
 	require.NoError(t, err)
 
@@ -112,6 +112,29 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 
 		require.ErrorIs(t, err, user.ErrUserNotFound)
 		require.Nil(t, info)
+	})
+
+	t.Run("should delete only the targeted auth module", func(t *testing.T) {
+		ctx := context.Background()
+		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+			AuthModule: login.LDAPAuthModule,
+			AuthId:     "20",
+			UserId:     20,
+			UserUID:    "20",
+		}))
+		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+			AuthModule: login.AzureADAuthModule,
+			AuthId:     "20",
+			UserId:     20,
+			UserUID:    "20",
+		}))
+
+		require.NoError(t, store.DeleteAuthInfo(ctx, &login.DeleteAuthInfoCommand{
+			UserAuth: &login.UserAuth{UserId: 20, AuthModule: login.LDAPAuthModule},
+		}))
+
+		require.Equal(t, 0, countEntries(t, sql, login.LDAPAuthModule, "20", 20))
+		require.Equal(t, 1, countEntries(t, sql, login.AzureADAuthModule, "20", 20))
 	})
 
 	t.Run("should remove duplicates on update", func(t *testing.T) {
@@ -294,6 +317,17 @@ func TestTemplates(t *testing.T) {
 						SQLTemplate:   queryTemplate(),
 						UserAuthTable: userAuthTable,
 						UserID:        42,
+					},
+				},
+			},
+			deleteAuthInfoTemplate: {
+				{
+					Name: "delete_auth_info",
+					Data: deleteAuthInfoQuery{
+						SQLTemplate:   queryTemplate(),
+						UserAuthTable: userAuthTable,
+						UserID:        42,
+						AuthModule:    "ldap",
 					},
 				},
 			},
