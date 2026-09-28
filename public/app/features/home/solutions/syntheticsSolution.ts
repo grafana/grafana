@@ -3,10 +3,9 @@ import memoize from 'micro-memoize';
 import { formattedValueToString, getValueFormat, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { contextSrv } from 'app/core/services/context_srv';
-import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
 import { SYNTHETIC_MONITORING_APP_ID, SYNTHETIC_MONITORING_CHECKS_WRITE } from './appPluginIds';
-import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
+import { accessibleAppPage, exploreFallbackCta, openAppLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
@@ -138,11 +137,7 @@ export function syntheticsSolution(): Solution {
             href: locationUtil.assureBaseUrl(homePage),
             action: 'open_solution',
           }
-        : {
-            label: openExploreLabel(),
-            href: constructDataSourceExploreUrl({ name: ds.name }),
-            action: 'open_solution',
-          };
+        : exploreFallbackCta(ds);
     },
   };
 }
