@@ -6796,9 +6796,6 @@
     "variable": {
       "description-tooltip": "Deskripsi variabel"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Kembali ke dasbor",
       "not-found": "Panel tidak ditemukan"
@@ -13258,7 +13255,7 @@
       "count-truncated_other": "{{count}} notebook pertama dimuat"
     },
     "new": {
-      "default-title": "Notebook #{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Penyimpanan gagal",
@@ -14779,12 +14776,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Kembali ke repositori",
       "cleaning-up-resources": "Membersihkan sumber daya repositori",
-      "not-found": "tidak ditemukan",
       "not-found-message": "Repositori tidak ditemukan",
       "repository-config-exists-configuration": "Pastikan konfigurasi repositori ada dalam file konfigurasi.",
       "tab-overview": "Gambaran Umum",
@@ -15080,26 +15081,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Sebelum Anda menjadikan dasbor publik, ketahui hal berikut:",
-      "data-src-ack-desc": "Publikasi saat ini hanya berfungsi dengan subset sumber data*",
-      "data-src-ack-tooltip": "Pelajari selengkapnya tentang sumber data publik",
-      "public-ack-desc": "Seluruh dasbor Anda akan menjadi publik*",
-      "public-ack-tooltip": "Pelajari selengkapnya tentang dasbor publik",
-      "usage-ack-desc": "Menjadikan dasbor publik akan menyebabkan kueri berjalan setiap kali dilihat, yang dapat meningkatkan biaya*",
-      "usage-ack-desc-tooltip": "Pelajari selengkapnya tentang caching kueri"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Dapat melihat dasbor",
-      "copy-button": "Salin",
-      "dashboard-url-field-label": "URL Dasbor",
-      "email-share-type-option-label": "Hanya orang yang disebutkan",
-      "pause-sharing-dashboard-label": "Jeda berbagi dasbor",
-      "public-share-type-option-label": "Siapa saja yang memiliki tautan",
-      "revoke-public-URL-button": "Cabut URL publik",
-      "revoke-public-URL-button-title": "Cabut URL publik",
-      "settings-title": "Pengaturan"
-    },
     "configuration": {
       "display-annotations-description": "Presentasikan anotasi di dasbor ini",
       "display-annotations-label": "Tampilkan anotasi",
@@ -15112,21 +15093,11 @@
       "time-range-label": "Rentang waktu",
       "time-range-tooltip": "Dasbor bersama menggunakan pengaturan rentang waktu default dasbor"
     },
-    "create-page": {
-      "generate-public-url-button": "Buat URL publik",
-      "unsupported-features-desc": "Saat ini, kami tidak mendukung variabel templat atau sumber data frontend",
-      "welcome-title": "Selamat datang di dasbor publik!"
-    },
     "email-sharing": {
       "accept-button": "Setuju",
       "alert-text": "Berbagi dasbor melalui email ditagih per pengguna selama token 30 hari, terlepas dari berapa banyak dasbor yang dibagikan. Penagihan berhenti setelah 30 hari kecuali jika Anda memperpanjang token.",
       "bill-ack": "Saya memahami bahwa menambahkan pengguna memerlukan pembayaran.*",
       "cancel-button": "Batalkan",
-      "input-invalid-email-text": "Email tidak valid",
-      "input-required-email-text": "Email wajib diisi",
-      "invite-button": "Undang",
-      "invite-field-desc": "Undang orang melalui email",
-      "invite-field-label": "Undang",
       "learn-more-button": "Pelajari lebih lanjut",
       "recipient-email-placeholder": "Email",
       "recipient-invalid-email-text": "Email tidak valid",
@@ -15136,17 +15107,12 @@
       "recipient-list-description": "Hanya orang yang Anda undang langsung yang dapat mengakses dasbor ini",
       "recipient-list-title": "Orang dengan akses",
       "recipient-required-email-text": "Email wajib diisi",
-      "resend-button": "Kirim ulang",
-      "resend-button-title": "Kirim ulang",
       "resend-invite-label": "Kirim Ulang Undangan",
       "revoke-access-label": "Cabut akses",
-      "revoke-button": "Cabut",
-      "revoke-button-title": "Cabut",
       "success-creation": "Dasbor Anda siap untuk berbagi eksternal",
       "success-share-type-change": "Akses dasbor diperbarui: Hanya orang tertentu yang sekarang dapat mengakses dengan tautan"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Simpan perubahan dasbor Anda sebelum memperbarui konfigurasi publik",
       "unsupport-data-source-alert-readmore-link": "Baca selengkapnya tentang sumber data yang didukung",
       "unsupported-data-source-alert-title": "Sumber data yang tidak didukung",
       "unsupported-template-variable-alert-desc": "Dasbor publik ini mungkin tidak berfungsi karena menggunakan variabel templat",
@@ -15160,25 +15126,6 @@
       "public-ack": "Saya memahami bahwa seluruh dasbor ini akan menjadi publik.*",
       "success-creation": "Dasbor Anda sekarang dapat diakses publik",
       "success-share-type-change": "Akses dasbor diperbarui: Siapa pun yang memiliki tautan sekarang dapat mengakses"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Ciutkan pengaturan",
-      "expand-settings-tooltip": "Perluas pengaturan"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Rentang waktu default",
-      "default-time-range-label-desc": "Dasbor publik menggunakan pengaturan rentang waktu default dasbor",
-      "show-annotations-label": "Tampilkan anotasi",
-      "show-annotations-label-desc": "Tampilkan anotasi di dasbor publik",
-      "time-range-picker-label": "Pemilih rentang waktu diaktifkan",
-      "time-range-picker-label-desc": "Izinkan pemirsa mengubah rentang waktu"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Anotasi = sembunyikan",
-      "annotations-show-text": "Anotasi = tampilkan",
-      "time-range-picker-disabled-text": "Pemilih rentang waktu = dinonaktifkan",
-      "time-range-picker-enabled-text": "Pemilih rentang waktu = diaktifkan",
-      "time-range-text": "Rentang waktu = "
     },
     "share": {
       "success-delete": "Dasbor Anda tidak lagi dapat dibagikan"
@@ -15952,9 +15899,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Bagikan"
-    },
     "embed": {
       "copy": "Salin ke papan klip",
       "html": "Sematkan HTML",
@@ -16001,9 +15945,6 @@
       "time-range-description": "Mengubah rentang waktu relatif saat ini menjadi rentang waktu absolut",
       "time-range-label": "Kunci rentang waktu"
     },
-    "panel": {
-      "title": "Bagikan Panel"
-    },
     "snapshot": {
       "cancel-button": "Batalkan",
       "copy-link-button": "Salin",
@@ -16019,16 +15960,11 @@
       "local-button": "Publikasikan Snapshot",
       "mistake-message": "Apakah Anda melakukan kesalahan? ",
       "name": "Nama snapshot",
-      "timeout": "Waktu habis (detik)",
-      "timeout-description": "Anda mungkin perlu mengonfigurasi nilai batas waktu jika membutuhkan waktu lama untuk mengumpulkan metrik dasbor.",
       "url-label": "URL Snapshot"
     },
     "tab-title": {
-      "embed": "Sematkan",
       "export": "Ekspor",
-      "library-panel": "Panel pustaka",
       "link": "Tautan",
-      "public-dashboard-title": "Dasbor publik",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
