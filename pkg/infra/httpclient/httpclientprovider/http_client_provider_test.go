@@ -2,6 +2,7 @@ package httpclientprovider
 
 import (
 	"testing"
+	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
@@ -92,4 +93,17 @@ func TestHTTPClientProvider(t *testing.T) {
 		require.Equal(t, HTTPLoggerMiddlewareName, o.Middlewares[8].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, sdkhttpclient.ErrorSourceMiddlewareName, o.Middlewares[9].(sdkhttpclient.MiddlewareName).MiddlewareName())
 	})
+}
+
+func TestNewForConfigKeepsTenantTimeoutsIsolated(t *testing.T) {
+	original := sdkhttpclient.DefaultTimeoutOptions
+	first := NewForConfig(&setting.Cfg{DataProxyTimeout: 11}, validations.ProvideURLValidator(), tracing.InitializeTracerForTest())
+	second := NewForConfig(&setting.Cfg{DataProxyTimeout: 37}, validations.ProvideURLValidator(), tracing.InitializeTracerForTest())
+	firstClient, err := first.New()
+	require.NoError(t, err)
+	secondClient, err := second.New()
+	require.NoError(t, err)
+	require.Equal(t, 11*time.Second, firstClient.Timeout)
+	require.Equal(t, 37*time.Second, secondClient.Timeout)
+	require.Equal(t, original, sdkhttpclient.DefaultTimeoutOptions)
 }

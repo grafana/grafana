@@ -2,9 +2,12 @@ package datasource
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	krequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -22,8 +25,11 @@ type datasourceLoader struct {
 	// The datasource and its decrypted settings are immutable for the lifetime
 	// of a single proxied request, so cache them to avoid repeated lookups and
 	// decryptions (DataSource is read both for validation and inside the proxy).
-	datasource *datasourceV0.DataSource
-	settings   *backend.DataSourceInstanceSettings
+	datasource         *datasourceV0.DataSource
+	settings           *backend.DataSourceInstanceSettings
+	transports         *proxyTransportCache
+	transportConfigKey string
+	timeoutDefaults    *sdkhttpclient.TimeoutOptions
 }
 
 var _ pluginproxy.DataSourceLoader = (*datasourceLoader)(nil)
@@ -93,5 +99,36 @@ func (l *datasourceLoader) GetHTTPTransport(ctx context.Context, clientProvider 
 	if err != nil {
 		return nil, err
 	}
-	return clientProvider.GetTransport(opts)
+	if l.timeoutDefaults != nil {
+		var data map[string]json.RawMessage
+		if len(settings.JSONData) > 0 {
+			if err := json.Unmarshal(settings.JSONData, &data); err != nil {
+				return nil, err
+			}
+		}
+		applyProxyTimeoutDefaults(&opts, data, *l.timeoutDefaults)
+	}
+	// Without a namespace, do not risk sharing connections between tenants.
+	namespace := krequest.NamespaceValue(ctx)
+	if l.transports == nil || namespace == "" {
+		return clientProvider.GetTransport(opts)
+	}
+	fingerprint, err := proxyTransportFingerprint(settings, opts, l.transportConfigKey)
+	if err != nil {
+		return nil, err
+	}
+	key := proxyTransportKey{namespace: namespace, plugin: l.pluginType, uid: l.uid}
+	return l.transports.get(key, fingerprint, func() (http.RoundTripper, func(), error) {
+		// SDK middleware wrappers do not expose CloseIdleConnections. Capture the
+		// underlying transport so eviction can release its connection pool.
+		var transport *http.Transport
+		opts.ConfigureTransport = func(_ sdkhttpclient.Options, t *http.Transport) { transport = t }
+		rt, err := clientProvider.GetTransport(opts)
+		closeIdle := func() {
+			if transport != nil {
+				transport.CloseIdleConnections()
+			}
+		}
+		return rt, closeIdle, err
+	})
 }

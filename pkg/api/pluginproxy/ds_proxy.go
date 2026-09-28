@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -26,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -51,20 +52,35 @@ type HTTPContext struct {
 	UserToken *usertoken.UserToken
 }
 
+// OAuthTokenProvider resolves upstream credentials for the authenticated user.
+type OAuthTokenProvider interface {
+	GetCurrentOAuthToken(context.Context, identity.Requester, *usertoken.UserToken) *oauth2.Token
+}
+
+// RouteAccessChecker checks a plugin route action for the requested datasource.
+type RouteAccessChecker func(context.Context, identity.Requester, string, string) (bool, error)
+
+type DataSourceProxyOption func(*DataSourceProxy)
+
+func WithRouteAccessChecker(check RouteAccessChecker) DataSourceProxyOption {
+	return func(p *DataSourceProxy) { p.routeAccessChecker = check }
+}
+
 type DataSourceProxy struct {
-	ds                *datasourcesV0.DataSource
-	requester         identity.Requester
-	dataSource        DataSourceLoader
-	ctx               HTTPContext
-	targetUrl         *url.URL
-	proxyPath         string
-	matchedRoute      *plugins.Route
-	pluginRoutes      []*plugins.Route
-	settings          *DataSourceProxySettings
-	clientProvider    httpclient.Provider
-	oAuthTokenService oauthtoken.OAuthTokenService
-	tracer            tracing.Tracer
-	features          featuremgmt.FeatureToggles
+	routeAccessChecker RouteAccessChecker
+	ds                 *datasourcesV0.DataSource
+	requester          identity.Requester
+	dataSource         DataSourceLoader
+	ctx                HTTPContext
+	targetUrl          *url.URL
+	proxyPath          string
+	matchedRoute       *plugins.Route
+	pluginRoutes       []*plugins.Route
+	settings           *DataSourceProxySettings
+	clientProvider     httpclient.Provider
+	oAuthTokenService  OAuthTokenProvider
+	tracer             tracing.Tracer
+	features           featuremgmt.FeatureToggles
 }
 
 type httpClient interface {
@@ -75,8 +91,9 @@ type httpClient interface {
 func NewDataSourceProxy(dataSource DataSourceLoader,
 	pluginRoutes []*plugins.Route, ctx HTTPContext,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
-	oAuthTokenService oauthtoken.OAuthTokenService,
+	oAuthTokenService OAuthTokenProvider,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+	opts ...DataSourceProxyOption,
 ) (*DataSourceProxy, error) {
 	ds, err := dataSource.DataSource(ctx.Req.Context())
 	if err != nil {
@@ -93,7 +110,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		return nil, fmt.Errorf("failed to get requester from context: %w", err)
 	}
 
-	return &DataSourceProxy{
+	p := &DataSourceProxy{
 		ds:                ds,
 		requester:         requester,
 		dataSource:        dataSource,
@@ -106,7 +123,11 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		oAuthTokenService: oAuthTokenService,
 		tracer:            tracer,
 		features:          features,
-	}, nil
+	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p, nil
 }
 
 func newHTTPClient() httpClient {
@@ -401,6 +422,14 @@ func (proxy *DataSourceProxy) validateRequest() error {
 func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	if route.ReqAction != "" {
+		if proxy.routeAccessChecker != nil {
+			allowed, err := proxy.routeAccessChecker(proxy.ctx.Req.Context(), proxy.requester, proxy.ds.Name, route.ReqAction)
+			if err != nil {
+				ctxLogger.Error("Failed to authorize datasource proxy route", "action", route.ReqAction, "error", err)
+				return false
+			}
+			return allowed
+		}
 		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.Name, route.ReqAction)
 		hasAccess := routeEval.Evaluate(proxy.requester.GetPermissions())
 		if !hasAccess {

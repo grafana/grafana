@@ -49,3 +49,9 @@ func IsValidVerb(verb string) bool {
 	_, ok := validVerbs[verb]
 	return ok
 }
+
+// Datasource route authorization probes, rather than Kubernetes request verbs.
+const (
+	VerbGetExternalRules = "get_external_rules"
+	VerbSetExternalRules = "set_external_rules"
+)
