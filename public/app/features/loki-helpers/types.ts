@@ -71,7 +71,7 @@ export interface LokiQuery extends LokiQueryFromSchema {
   supportingQueryType?: SupportingQueryType;
   /**
    * Inclusive nanosecond lower bound for an infinite-scroll page.
-   * Set when loading newer logs; omitted so the other edge stays the dashboard bound.
+   * Set to the reference log's timestamp when loading newer logs; omitted so the other edge stays the dashboard bound.
    */
   startNs?: string;
   /**
