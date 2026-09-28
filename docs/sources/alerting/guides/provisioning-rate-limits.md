@@ -63,12 +63,7 @@ Rate limited requests fail with the `429 Too Many Requests` status code. Check y
 observe failed: failed to observe the resource: [{0 [GET /v1/provisioning/alert-rules/acefead6586dbc] GetAlertRule (status 429): {} []}]
 ```
 
-In Grafana Cloud, `429` responses include headers that describe the applied limit:
-
-- **`x-rate-limit-limit`:** The maximum number of requests allowed within the window.
-- **`x-rate-limit-duration`:** The length of the window in seconds.
-
-Limits differ by endpoint and deployment, so use these headers to determine your request budget.
+In Grafana Cloud, `429` responses include an `x-rate-limit-limit` header with the maximum requests allowed and an `x-rate-limit-duration` header with the window length in seconds. Limits differ by endpoint and deployment, so use these headers to determine your request budget.
 
 ## Retry rate limited requests in Terraform
 
@@ -143,15 +138,9 @@ The container must be named `package-runtime`, or Crossplane adds it as a sideca
 
 GitOps engines add reconcile cycles on top of the controller's polling. To skip unneeded work, apply only changed resources (`ApplyOutOfSyncOnly=true` in Argo CD), avoid forced re-applies (`Force=true` or `Replace=true`), and align the engine's reconcile interval with the provider's `--poll` value.
 
-## Separate credentials per environment
-
-Some rate limits apply per credential. If you run tools in several clusters, create a dedicated [service account](ref:service-accounts) and token for each one instead of sharing a single token. This gives each cluster its own request budget and shows which tool generates the traffic.
-
 ## Migrate to the Grafana App Platform alerting APIs
 
-The legacy provisioning endpoints under `/api/v1/provisioning/` are deprecated. They remain available and supported, with advance notice before removal, so you can keep using tuned legacy configurations while you plan a migration.
-
-The Grafana App Platform alerting APIs expose each alert rule as its own resource under `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}`, which avoids the extra per-rule request for provenance. In Terraform, the equivalent resource is `grafana_apps_rules_alertrule_v0alpha1`.
+The legacy provisioning endpoints under `/api/v1/provisioning/` are deprecated but still supported, so you can keep using tuned legacy configurations while you plan a migration. The Grafana App Platform alerting APIs expose each alert rule as its own resource under `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}`, which avoids the extra per-rule provenance request. In Terraform, the equivalent resource is `grafana_apps_rules_alertrule_v0alpha1`.
 
 If you still hit rate limits after tuning your tools, contact Grafana Support to confirm which limits apply to your stack.
 
