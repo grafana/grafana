@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -13,10 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	clientrest "k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -67,6 +70,15 @@ func writeJSON(t *testing.T, w http.ResponseWriter, v any) {
 
 func usersResponse(t *testing.T, w http.ResponseWriter, uid string) {
 	writeJSON(t, w, iamv0alpha1.UserList{Items: []iamv0alpha1.User{{ObjectMeta: metav1.ObjectMeta{Name: uid}}}})
+}
+
+func userByUIDResponse(t *testing.T, w http.ResponseWriter, uid string, userID int64) {
+	writeJSON(t, w, iamv0alpha1.User{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   uid,
+			Labels: map[string]string{utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(userID, 10)},
+		},
+	})
 }
 
 func noUsersResponse(t *testing.T, w http.ResponseWriter) {
@@ -139,6 +151,25 @@ func TestStore_GetAuthInfo(t *testing.T) {
 			want: &login.UserAuth{UserId: 42, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "github-42", Created: created},
 		},
 		{
+			name:  "with module, reads UserAuth.Id from the DeprecatedInternalID label",
+			query: &login.GetAuthInfoQuery{UserId: 42, AuthModule: "oauth_github"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.Contains(r.URL.Path, "/users"):
+					usersResponse(t, w, "user-uid")
+				case strings.Contains(r.URL.Path, "/authinfos/"):
+					item := authInfoItem("user-uid.oauth-github", "user-uid", "oauth_github", "github-42", created)
+					item.Labels = map[string]string{utils.LabelKeyDeprecatedInternalID: "123"}
+					writeJSON(t, w, item)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+			check: func(t *testing.T, result *login.UserAuth) {
+				assert.Equal(t, int64(123), result.Id)
+			},
+		},
+		{
 			name:  "without module, picks the most recently linked one",
 			query: &login.GetAuthInfoQuery{UserId: 42},
 			handler: func(w http.ResponseWriter, r *http.Request) {
@@ -161,12 +192,109 @@ func TestStore_GetAuthInfo(t *testing.T) {
 			},
 		},
 		{
-			name:  "requires a non-zero UserId",
-			query: &login.GetAuthInfoQuery{AuthId: "some-id"},
+			name:  "requires UserId or AuthId",
+			query: &login.GetAuthInfoQuery{},
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				t.Fatalf("no HTTP call should be made, got: %s %s", r.Method, r.URL.Path)
 			},
 			wantErr: true,
+		},
+		{
+			name:  "AuthId only, no UserId, resolves the user from the matched object",
+			query: &login.GetAuthInfoQuery{AuthId: "github-99"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/authinfos"):
+					assert.Equal(t, "spec.authID=github-99", r.URL.Query().Get("fieldSelector"))
+					writeJSON(t, w, iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{
+						authInfoItem("user-uid.oauth-github", "user-uid", "oauth_github", "github-99", created),
+					}})
+				case strings.Contains(r.URL.Path, "/users/"):
+					userByUIDResponse(t, w, "user-uid", 99)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+			want: &login.UserAuth{UserId: 99, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "github-99", Created: created},
+		},
+		{
+			name:  "AuthId and AuthModule, no UserId",
+			query: &login.GetAuthInfoQuery{AuthId: "github-99", AuthModule: "oauth_github"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/authinfos"):
+					fs := r.URL.Query().Get("fieldSelector")
+					assert.Contains(t, fs, "spec.authID=github-99")
+					assert.Contains(t, fs, "spec.authModule=oauth_github")
+					writeJSON(t, w, iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{
+						authInfoItem("user-uid.oauth-github", "user-uid", "oauth_github", "github-99", created),
+					}})
+				case strings.Contains(r.URL.Path, "/users/"):
+					userByUIDResponse(t, w, "user-uid", 99)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+			want: &login.UserAuth{UserId: 99, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "github-99", Created: created},
+		},
+		{
+			name:  "AuthId with selector metacharacters, no UserId",
+			query: &login.GetAuthInfoQuery{AuthId: "cn=test,ou=people,dc=example,dc=com", AuthModule: "ldap"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/authinfos"):
+					fs := r.URL.Query().Get("fieldSelector")
+					assert.Contains(t, fs, `spec.authID=cn\=test\,ou\=people\,dc\=example\,dc\=com`)
+					sel, err := fields.ParseSelector(fs)
+					require.NoError(t, err)
+					authID, ok := sel.RequiresExactMatch("spec.authID")
+					require.True(t, ok)
+					assert.Equal(t, "cn=test,ou=people,dc=example,dc=com", authID, "the selector must round-trip back to the literal AuthId")
+
+					writeJSON(t, w, iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{
+						authInfoItem("user-uid.ldap", "user-uid", "ldap", "cn=test,ou=people,dc=example,dc=com", created),
+					}})
+				case strings.Contains(r.URL.Path, "/users/"):
+					userByUIDResponse(t, w, "user-uid", 99)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+			want: &login.UserAuth{UserId: 99, UserUID: "user-uid", AuthModule: "ldap", AuthId: "cn=test,ou=people,dc=example,dc=com", Created: created},
+		},
+		{
+			name:  "AuthId only, no match",
+			query: &login.GetAuthInfoQuery{AuthId: "missing-id"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/authinfos"):
+					writeJSON(t, w, iamv0alpha1.AuthInfoList{})
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+			wantErrIs: user.ErrUserNotFound,
+		},
+		{
+			name:  "AuthId only, picks the most recently created match across users",
+			query: &login.GetAuthInfoQuery{AuthId: "shared-id"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/authinfos"):
+					writeJSON(t, w, iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{
+						authInfoItem("user-a.ldap", "user-a", "ldap", "shared-id", older),
+						authInfoItem("user-b.oauth-github", "user-b", "oauth_github", "shared-id", created),
+					}})
+				case strings.Contains(r.URL.Path, "/users/"):
+					userByUIDResponse(t, w, "user-b", 7)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+			check: func(t *testing.T, result *login.UserAuth) {
+				assert.Equal(t, "user-b", result.UserUID)
+				assert.Equal(t, created, result.Created)
+			},
 		},
 		{
 			name:  "not found",
@@ -646,6 +774,80 @@ func TestStore_DeleteUserAuthInfo(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := newTestStore(t, tc.handler)
 			err := store.DeleteUserAuthInfo(contextWithReqContext(7), 42)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tc.check != nil {
+				tc.check(t)
+			}
+		})
+	}
+}
+
+func TestStore_DeleteAuthInfo(t *testing.T) {
+	type testCase struct {
+		name    string
+		cmd     *login.DeleteAuthInfoCommand
+		handler http.HandlerFunc
+		wantErr bool
+		check   func(t *testing.T)
+	}
+
+	cases := []testCase{
+		func() testCase {
+			var deleted string
+			return testCase{
+				name: "deletes only the named module",
+				cmd:  &login.DeleteAuthInfoCommand{UserAuth: &login.UserAuth{UserId: 42, AuthModule: "oauth_github"}},
+				handler: func(w http.ResponseWriter, r *http.Request) {
+					switch {
+					case strings.Contains(r.URL.Path, "/users"):
+						usersResponse(t, w, "user-uid")
+					case r.Method == http.MethodDelete:
+						deleted = r.URL.Path
+						w.WriteHeader(http.StatusOK)
+					default:
+						t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+					}
+				},
+				check: func(t *testing.T) {
+					assert.Equal(t, "/apis/iam.grafana.app/v0alpha1/namespaces/org-7/authinfos/user-uid.oauth-github", deleted)
+				},
+			}
+		}(),
+		{
+			name: "user not found is a no-op",
+			cmd:  &login.DeleteAuthInfoCommand{UserAuth: &login.UserAuth{UserId: 42, AuthModule: "oauth_github"}},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				if strings.Contains(r.URL.Path, "/users") {
+					noUsersResponse(t, w)
+					return
+				}
+				t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+			},
+		},
+		{
+			name: "object not found is a no-op",
+			cmd:  &login.DeleteAuthInfoCommand{UserAuth: &login.UserAuth{UserId: 42, AuthModule: "oauth_github"}},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.Contains(r.URL.Path, "/users"):
+					usersResponse(t, w, "user-uid")
+				case r.Method == http.MethodDelete:
+					writeStatus(w, http.StatusNotFound, metav1.StatusReasonNotFound)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newTestStore(t, tc.handler)
+			err := store.DeleteAuthInfo(contextWithReqContext(7), tc.cmd)
 			if tc.wantErr {
 				require.Error(t, err)
 				return

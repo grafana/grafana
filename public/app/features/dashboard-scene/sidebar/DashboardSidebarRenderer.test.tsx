@@ -12,7 +12,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { DashboardInteractions } from '../utils/interactions';
-import { activateFullSceneTree } from '../utils/test-utils';
+import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
 import { DashboardSidebarSplitter } from './DashboardSidebarSplitter';
 
@@ -97,6 +97,29 @@ describe('DashboardSidebarRenderer', () => {
     render(<DashboardSidebarSplitter dashboard={scene} />);
 
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+  });
+
+  it('opens a cancellable loading pane and keeps it closed after the request settles', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+    const pending = createDeferred<void>();
+    act(() => activateFullSceneTree(scene));
+    const { user } = render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+    let opening!: Promise<void>;
+    act(() => {
+      opening = sidebar.runPaneRequest(() => pending.promise);
+    });
+
+    expect(await screen.findByRole('status', { name: 'Loading sidebar' })).toBeVisible();
+    await user.click(screen.getByTestId(selectors.components.Sidebar.closePane));
+    expect(screen.queryByRole('status', { name: 'Loading sidebar' })).not.toBeInTheDocument();
+    await act(async () => {
+      pending.resolve();
+      await opening;
+    });
+    expect(screen.queryByTestId(selectors.components.Sidebar.closePane)).not.toBeInTheDocument();
+    await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
+    expect(await screen.findByTestId(selectors.components.Sidebar.headerTitle)).toHaveTextContent('Content outline');
   });
 
   it('opens the add pane when the Add button is clicked', async () => {

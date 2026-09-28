@@ -8,14 +8,13 @@ import (
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v4"
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -33,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -60,18 +58,8 @@ func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
 		{name: "route registered when enabled", enabled: true, want: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-				featuremgmt.FlagAuthzUserPermissions: {
-					Key:            featuremgmt.FlagAuthzUserPermissions,
-					DefaultVariant: "default",
-					Variants:       map[string]any{"default": tt.enabled},
-				},
-			})
-			require.NoError(t, openfeature.SetProviderAndWait(provider))
-			t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
-
 			b := &IdentityAccessManagementAPIBuilder{
-				ofClient:        openfeature.NewDefaultClient(),
+				features:        Features{UserPermissionsAPI: tt.enabled},
 				display:         display.NewDisplayHandler(),
 				userPermissions: userpermissions.NewHandler(noopUserPermissionsClient{}, false),
 			}
@@ -88,6 +76,7 @@ func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
 }
 
 func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
+	features := Features{TeamsAPI: true, UsersAPI: true}
 	b := NewAPIService(
 		nil,
 		nil,
@@ -103,9 +92,77 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 		tracing.InitializeTracerForTest(),
 		resourcepermission.NewMappersRegistry(),
 		nil,
+		features,
 	)
 
 	require.NotNil(t, b.legacyTeamStore)
+	require.Equal(t, features, b.features)
+}
+
+func TestNewAPIService_WiresSSOStore(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	// Standalone must wire the read-only SSO store so the SSOSetting kind is served
+	// once kubernetesSsoSettingsApi is enabled.
+	require.NotNil(t, b.ssoLegacyStore)
+}
+
+func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	// Serving the kind is moot unless the standalone authorizer allows it; the
+	// flat fall-through would otherwise deny every ssosettings request.
+	attrs := authorizer.AttributesRecord{
+		Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
+		ResourceRequest: true,
+		Verb:            "get",
+	}
+
+	t.Run("allows an authenticated identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAccessPolicy})
+		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("denies an anonymous identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAnonymous})
+		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+	})
 }
 
 func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
@@ -175,32 +232,18 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-				featuremgmt.FlagKubernetesAuthzResourcePermissionApis: {
-					Key:            featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
-					DefaultVariant: "default",
-					Variants:       map[string]any{"default": tt.flagEnabled},
-				},
-			})
-			require.NoError(t, openfeature.SetProviderAndWait(provider))
-
-			b := &IdentityAccessManagementAPIBuilder{ofClient: openfeature.NewDefaultClient()}
+			b := &IdentityAccessManagementAPIBuilder{features: Features{ResourcePermissionsAPI: tt.flagEnabled}}
 
 			scheme := runtime.NewScheme()
 			require.NoError(t, b.InstallSchema(scheme))
-			require.Equal(t, tt.wantRegistered, scheme.Recognizes(gvk),
-				"ResourcePermission kind registration should match %s=%v", featuremgmt.FlagKubernetesAuthzResourcePermissionApis, tt.flagEnabled)
+			require.Equal(t, tt.wantRegistered, scheme.Recognizes(gvk))
 		})
 	}
 }
 
-func TestInstallSchema_ConfiguredFeaturesOverrideOpenFeature(t *testing.T) {
-	require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
-	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
-
+func TestInstallSchema_UsesResolvedFeatures(t *testing.T) {
 	b := &IdentityAccessManagementAPIBuilder{
-		ofClient: openfeature.NewDefaultClient(),
-		features: &Features{ResourcePermissionsAPI: true},
+		features: Features{ResourcePermissionsAPI: true},
 	}
 	scheme := runtime.NewScheme()
 
@@ -214,20 +257,11 @@ func TestInstallSchema_ConfiguredFeaturesOverrideOpenFeature(t *testing.T) {
 // so any resource - not just a hardcoded list - fails here if it starts sharing a Go struct across
 // versions. See the dashboard package's test of the same name for the other codec-path group.
 func TestCodecPathResourcesRegisterOneVersionPerType(t *testing.T) {
-	allOn := map[string]memprovider.InMemoryFlag{}
-	for _, flag := range []string{
-		featuremgmt.FlagKubernetesAuthzRolesApi,
-		featuremgmt.FlagKubernetesAuthzRoleBindingsApi,
-		featuremgmt.FlagKubernetesAuthzGlobalRolesApi,
-		featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi,
-		featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
-	} {
-		allOn[flag] = memprovider.InMemoryFlag{Key: flag, DefaultVariant: "default", Variants: map[string]any{"default": true}}
-	}
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(allOn)))
-
 	scheme := runtime.NewScheme()
-	b := &IdentityAccessManagementAPIBuilder{ofClient: openfeature.NewDefaultClient()}
+	b := &IdentityAccessManagementAPIBuilder{features: Features{
+		RolesAPI: true, RoleBindingsAPI: true, GlobalRolesAPI: true,
+		TeamLBACRulesAPI: true, ResourcePermissionsAPI: true,
+	}}
 	require.NoError(t, b.InstallSchema(scheme))
 
 	assertNoTypeSpansMultipleGVKs(t, scheme)

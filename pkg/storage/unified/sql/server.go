@@ -74,20 +74,22 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withBlobConfig,
 		withAccessClient,
 		withMaxPageSizeBytes,
+		withAuthorizeBeforeFetch,
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
 		withReranker,
 		withVectorMetrics,
-		withVectorIndexers,
 		withQOSQueue,
 		withOverridesService,
 		withSearch,
+		withVectorIndexers,
 		withSearchClient,
 		withQuotaConfig,
 		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
+		withNatsWatchMaxAge,
 	)
 	if err != nil {
 		return nil, err
@@ -136,8 +138,9 @@ func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceSe
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg:          opts.Reg,
-		SecureValues: opts.SecureValues,
+		Reg:                     opts.Reg,
+		SecureValues:            opts.SecureValues,
+		GRPCErrorResultToStatus: opts.Cfg != nil && opts.Cfg.UnifiedStorageGRPCErrorResultToStatus,
 	}
 	for _, optFn := range withOpts {
 		if err := optFn(opts, serverOptions); err != nil {
@@ -203,9 +206,22 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 	return nil
 }
 
+func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.AuthorizeBeforeFetchEnabled = opts.Cfg.AuthorizeBeforeFetchEnabled
+	return nil
+}
+
 func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
+	return nil
+}
+
+func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.Cfg == nil || !opts.Cfg.NATS.Enabled || !opts.Cfg.NATS.Notifier {
+		return nil
+	}
+	resourceOpts.NatsWatchMaxAge = opts.Cfg.NATS.NotifierWatchMaxAge
 	return nil
 }
 
@@ -243,45 +259,40 @@ func withReranker(opts *ServerOptions, resourceOpts *resource.ResourceServerOpti
 	return nil
 }
 
-// withVectorIndexers builds the optional vector backfiller and
-// reconciler. Both providers return (nil, nil) when their feature is
-// off, so nil is normal and propagates through to the resource server
-// which simply doesn't start the goroutine.
+// withVectorIndexers runs after withSearch so generation and queries share the
+// same enrollment provider. Workers snapshot it after initial manifests load.
 func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if !opts.Cfg.VectorIndexingEnabled ||
+		len(opts.Cfg.VectorAllowedInternalCollections) == 0 ||
 		opts.Cfg.EmbeddingProvider == "" ||
 		opts.Backend == nil ||
 		opts.VectorBackend == nil ||
 		opts.Embedder == nil {
 		return nil
 	}
-	allowlist := vector.NewCollectionAllowlist(opts.Cfg.VectorAllowedInternalCollections, nil)
-	if !allowlist.Allows(vector.Collection{Group: "dashboard.grafana.app", Resource: "dashboards"}) {
-		return nil
-	}
 	batchEmbedder := embedder.NewBatchEmbedder(*opts.Embedder)
-	builders := []embed.Builder{dashboard.New()}
 
 	backfiller, err := backfill.NewVectorBackfiller(backfill.Options{
-		Storage:        opts.Backend,
-		VectorBackend:  opts.VectorBackend,
-		BatchEmbedder:  batchEmbedder,
-		Builders:       builders,
-		DashboardStats: opts.DashboardStats,
-		Metrics:        resourceOpts.VectorMetrics,
+		Storage:         opts.Backend,
+		VectorBackend:   opts.VectorBackend,
+		BatchEmbedder:   batchEmbedder,
+		BuilderProvider: resourceOpts.Search.EmbeddingBuilders,
+		DashboardStats:  opts.DashboardStats,
+		Metrics:         resourceOpts.VectorMetrics,
+		PageSize:        opts.Cfg.VectorBackfillPageSize,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector backfiller: %w", err)
 	}
 
 	resourceOpts.VectorReconciler, err = reconciler.New(reconciler.Options{
-		Storage:       opts.Backend,
-		VectorBackend: opts.VectorBackend,
-		BatchEmbedder: batchEmbedder,
-		Builders:      builders,
-		Backfiller:    backfiller,
-		Interval:      opts.Cfg.VectorReconcilerInterval,
-		Metrics:       resourceOpts.VectorMetrics,
+		Storage:         opts.Backend,
+		VectorBackend:   opts.VectorBackend,
+		BatchEmbedder:   batchEmbedder,
+		BuilderProvider: resourceOpts.Search.EmbeddingBuilders,
+		Backfiller:      backfiller,
+		Interval:        opts.Cfg.VectorReconcilerInterval,
+		Metrics:         resourceOpts.VectorMetrics,
 
 		EmbeddingCountInterval: opts.Cfg.VectorEmbeddingCountInterval,
 	})
@@ -310,11 +321,7 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 				configs = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
 				resourceOpts.Search.EmbeddingConfig = configs
 			}
-			var skipped *prometheus.CounterVec
-			if resourceOpts.VectorMetrics != nil {
-				skipped = resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal
-			}
-			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, skipped)
+			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal)
 			if err != nil {
 				return fmt.Errorf("embedding enrollment: %w", err)
 			}
@@ -377,6 +384,10 @@ func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServ
 
 func withVectorMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.VectorMetrics = opts.VectorMetrics
+	// Recording sites should not have to check for nil.
+	if resourceOpts.VectorMetrics == nil {
+		resourceOpts.VectorMetrics = resource.ProvideVectorMetrics(nil)
+	}
 	return nil
 }
 

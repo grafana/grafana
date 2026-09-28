@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const threshold = 9999
@@ -599,8 +600,16 @@ func TestFieldValueSearchResults(t *testing.T) {
 			RV:      1,
 			Name:    "dashboard-1",
 			Title:   "Hello dashboard",
+			Folder:  "folder-1",
 			Tags:    []string{"production", "overview"},
 			Created: 1234,
+			References: resource.ResourceReferences{{
+				Group:    "dashboard.grafana.app",
+				Kind:     "LibraryPanel",
+				Name:     "library-panel-1",
+				Relation: "depends-on",
+			}},
+			Labels: map[string]string{utils.LabelKeyDeprecatedInternalID: "42"}, // nolint:staticcheck
 			Key: &resourcepb.ResourceKey{
 				Namespace: key.Namespace,
 				Group:     key.Group,
@@ -632,6 +641,33 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.Equal(t, []string{"Hello dashboard"}, fields[resource.SEARCH_FIELD_TITLE].StringValues)
 		require.Equal(t, []string{"production", "overview"}, fields[resource.SEARCH_FIELD_TAGS].StringValues)
 		require.Equal(t, []int64{1234}, fields[resource.SEARCH_FIELD_CREATED].Int64Values)
+	})
+
+	t.Run("library panel search", func(t *testing.T) {
+		req := newTestQuery("")
+		req.Options.Fields = []*resourcepb.Requirement{{
+			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+			Operator: "=",
+			Values:   []string{"library-panel-1"},
+		}}
+		req.Fields = []string{
+			resource.SEARCH_FIELD_FOLDER,
+			resource.SEARCH_FIELD_LEGACY_ID,
+			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+		}
+		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, 1)
+		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
+
+		values, err := resource.DecodeSearchValues(res.Fields, res.Rows[0])
+		require.NoError(t, err)
+		require.Equal(t, "folder-1", values[resource.SEARCH_FIELD_FOLDER])
+		require.Equal(t, int64(42), values[resource.SEARCH_FIELD_LEGACY_ID])
+		require.Equal(t, "42", values[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID])
 	})
 
 	t.Run("explicit score with free-text query", func(t *testing.T) {
@@ -1415,9 +1451,8 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold, // use in-memory for tests
-		IndexDeletedDocuments: true,
+		Root:          t.TempDir(),
+		FileThreshold: threshold, // use in-memory for tests
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -1759,11 +1794,10 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold, // use in-memory for tests
-		IndexDeletedDocuments: true,
-		PostRankAuthzEnabled:  true,
-		PostRankAuthz:         cfg,
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold, // use in-memory for tests
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -4207,10 +4241,9 @@ func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, post
 	t.Helper()
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold,
-		IndexDeletedDocuments: true,
-		PostRankAuthzEnabled:  postRankAuthz,
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold,
+		PostRankAuthzEnabled: postRankAuthz,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource(key.Group, key.Resource): search.DashboardSearchFieldsProviderForTest(),
 		}),

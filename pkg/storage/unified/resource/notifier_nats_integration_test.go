@@ -30,7 +30,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 
 	t.Run("committed write round-trips through NATS with every field intact", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
 		out := notifier.Watch(ctx, WatchOptions{})
 
@@ -65,7 +65,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 
 	t.Run("every action type survives the marshal/transport/unmarshal round trip", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
 		out := notifier.Watch(ctx, WatchOptions{})
 
@@ -102,7 +102,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 
 	t.Run("publisher targets the resource-specific subject a per-resource consumer subscribes to", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 
 		const namespace = "default"
 		gvr := schema.GroupVersionResource{Group: "provisioning.grafana.app", Resource: "repositories"}
@@ -141,7 +141,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 
 	t.Run("malformed and unknown-type notifications are dropped, not delivered", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "nats_notifier_dropped_total"}, []string{"reason"})
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, dropped, log.NewNopLogger())
 		out := notifier.Watch(ctx, WatchOptions{})
@@ -177,8 +177,8 @@ type natsSubscriberAdapter struct{ sub nats.Subscriber }
 
 func (a natsSubscriberAdapter) Enabled() bool { return a.sub.Enabled() }
 
-func (a natsSubscriberAdapter) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (Subscription, error) {
-	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
+func (a natsSubscriberAdapter) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error) {
+	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
 
 // startNatsRoundTrip boots an embedded NATS server plus a real publisher and

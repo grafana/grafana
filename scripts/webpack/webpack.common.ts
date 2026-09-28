@@ -54,7 +54,7 @@ export default (env: Env = {}): Configuration => ({
     alias: {
       // some of data source plugins use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
-      prismjs: require.resolve('prismjs'),
+      prismjs$: require.resolve('prismjs'),
       // Core injects the real implementation during bootstrap only when Luxon is disabled.
       'moment-timezone$': path.resolve(grafanaRoot, 'public/app/core/legacyMomentShim.ts'),
       // due to our webpack configuration not understanding package.json `exports`

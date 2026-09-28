@@ -3,6 +3,7 @@ SELECT
     {{ .Ident "model"         | .Into .Response.Model }},
     {{ .Ident "resource"      | .Into .Response.Resource }},
     {{ .Ident "stopping_rv"   | .Into .Response.StoppingRV }},
+    {{ .Ident "content_version" | .Into .Response.ContentVersion }},
     {{ .Ident "last_seen_key" | .Into .Response.LastSeenKey }},
     {{ .Ident "is_complete"   | .Into .Response.IsComplete }},
     {{ .Ident "last_error"    | .Into .Response.LastError }}
