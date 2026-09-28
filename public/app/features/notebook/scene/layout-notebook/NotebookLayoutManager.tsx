@@ -38,6 +38,7 @@ import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
+import { isDiscardableContent, isEmptyMarkdown } from './cellEmptiness';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
 import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
@@ -46,7 +47,6 @@ import {
   NOTEBOOK_CELL_CONTROLS_PINNED_CLASS,
   NOTEBOOK_CELL_FRAME_CLASS,
 } from './edit/cellClassNames';
-import { isEmptyMarkdown } from './isEmptyMarkdown';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
@@ -1022,42 +1022,9 @@ export function splitSeed(
   return { text: marker + remainder, caretOffset: marker.length };
 }
 
-/**
- * Bare markdown a block can be seeded with rather than have typed into it: the heading marker
- * contentForBlockType starts a new heading on, and the list/quote markers MarkdownCellEditor carries
- * over to a continuation item (see nextListContinuation) that was then left unfilled.
- */
-const BARE_MARKDOWN_MARKER = /^(#{1,6}|>|[-*+]|\d+\.)$/;
-
-/**
- * Whether the cell holds nothing a reader would miss. A block starts out empty — that is the whole
- * point of adding one — so it stays empty for as long as it takes to notice the wrong type was picked,
- * which is exactly when the delete button gets used. A panel is never empty even without queries: it
- * carries a visualization someone chose.
- */
-function isCellEmpty(cell: NotebookCellItem): boolean {
-  const { body, content } = cell.state;
-
-  if (body) {
-    return false;
-  }
-
-  switch (content?.kind) {
-    case 'Markdown': {
-      const text = content.spec.text.trim();
-      return text === '' || BARE_MARKDOWN_MARKER.test(text);
-    }
-    case 'Code':
-      return content.spec.code.trim() === '';
-    default:
-      return false;
-  }
-}
-
 function confirmRemoveCell(model: NotebookLayoutManager, cell: NotebookCellItem) {
-  // Confirming a delete that destroys nothing only teaches people to click through the modal without
-  // reading it, which is what makes it useless on the deletes that do lose content.
-  if (isCellEmpty(cell)) {
+  // Nothing to lose, nothing to confirm — see isDiscardableContent for what that means per block type.
+  if (isDiscardableContent(cell.state.content)) {
     model.removeCell(cell);
     return;
   }
