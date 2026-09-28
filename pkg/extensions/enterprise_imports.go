@@ -64,6 +64,7 @@ import (
 	_ "github.com/grafana/dskit/instrument"
 	_ "github.com/grafana/dskit/limiter"
 	_ "github.com/grafana/dskit/middleware"
+	_ "github.com/grafana/dskit/modules"
 	_ "github.com/grafana/dskit/services"
 	_ "github.com/grafana/dskit/user"
 	_ "github.com/grafana/e2e"
