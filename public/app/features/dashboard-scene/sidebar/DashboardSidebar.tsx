@@ -18,7 +18,6 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardCodePane } from './DashboardCodePane';
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
@@ -556,7 +555,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     const { openPane, selectionContext, selectedDisconnectedObject } = this.state;
     if (openPane?.getId() === 'code') {
       this.setState({
-        openPane: new DashboardCodePane({}),
+        // force remount: we cannot call new DashboardCodePane({}) to ensure DashboardCodePane can be lazy loaded
+        openPane: openPane.clone({ key: undefined }),
         selectionContext: { ...selectionContext, selected: [] },
         selectedDisconnectedObject: undefined,
         isNewElement: false,
