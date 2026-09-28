@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"reflect"
 	"slices"
 	"testing"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -770,7 +772,6 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 		folderPermissions: folderPermService,
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  0,
 				UID: "general",
 			},
 		},
@@ -797,7 +798,7 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 		cfg: setting.NewCfg(),
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  0,
+				ID:  0, //nolint:staticcheck // Exercise legacy field compatibility.
 				UID: "general",
 			},
 		},
@@ -1574,6 +1575,41 @@ func TestQuotaCount(t *testing.T) {
 	require.Equal(t, c, int64(3))
 }
 
+func TestQuotaCountCanceled(t *testing.T) {
+	for name, failure := range map[string]error{
+		"canceled":         context.Canceled,
+		"wrapped canceled": fmt.Errorf("get stats: %w", context.Canceled),
+	} {
+		t.Run(name, func(t *testing.T) {
+			service := &DashboardServiceImpl{
+				orgService: &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 1}}},
+			}
+			ctx, k8sCliMock := setupK8sDashboardTests(service)
+			k8sCliMock.On("GetStats", mock.Anything, int64(1)).Return(nil, failure).Once()
+
+			_, err := service.Count(ctx, &quota.ScopeParameters{OrgID: 1})
+
+			require.ErrorIs(t, err, context.Canceled)
+			require.Same(t, failure, err)
+			require.Equal(t, 499, response.ErrOrFallback(http.StatusInternalServerError, "failed to get quota", err).Status())
+			k8sCliMock.AssertExpectations(t)
+		})
+	}
+}
+
+func TestCountDashboardsInOrgEmbeddedError(t *testing.T) {
+	service := &DashboardServiceImpl{}
+	ctx, k8sCliMock := setupK8sDashboardTests(service)
+	failure := resource.NewServiceUnavailableError("stats unavailable")
+	k8sCliMock.On("GetStats", mock.Anything, int64(1)).Return(&resourcepb.ResourceStatsResponse{Error: failure}, nil).Once()
+
+	count, err := service.CountDashboardsInOrg(ctx, 1)
+
+	require.Zero(t, count)
+	require.Equal(t, resource.GetError(failure), err)
+	k8sCliMock.AssertExpectations(t)
+}
+
 func TestCountDashboardsInOrg(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg: setting.NewCfg(),
@@ -2140,7 +2176,7 @@ func TestCleanUpDashboard(t *testing.T) {
 		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			item := annotations.Item{
 				OrgID:       orgID,
-				DashboardID: 0,
+				DashboardID: 0, //nolint:staticcheck // Exercise legacy field compatibility.
 				Text:        "org annotation",
 				Epoch:       1,
 				Created:     1,

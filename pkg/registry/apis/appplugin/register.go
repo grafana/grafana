@@ -451,6 +451,12 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			}
 		}
 
+		// Checked against the mounted routes rather than the manifest, since
+		// routes that shadow a resource or use unservable methods are dropped.
+		if len(storage) == 0 && hasRoutes(b.GetAPIRoutes(gv)) {
+			storage[routesOnlyStorageKey] = &routesOnlyStorage{}
+		}
+
 		if len(storage) > 0 {
 			apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 		}

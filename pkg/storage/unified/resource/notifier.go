@@ -23,7 +23,14 @@ const (
 	defaultBufferSize  = 10000
 )
 
+// WatchInvalidator exposes a generation that closes when watch delivery may
+// have gaps. Implementations without invalidation return nil.
+type WatchInvalidator interface {
+	WatchInvalidation() <-chan struct{}
+}
+
 type notifier interface {
+	WatchInvalidator
 	// Watch returns a channel that will receive events as they happen.
 	Watch(context.Context, WatchOptions) <-chan Event
 	// Publish lets callers to inform watchers about events. Some notifiers
@@ -32,6 +39,12 @@ type notifier interface {
 	// publishing a no-op.
 	Publish(Event)
 }
+
+var (
+	_ notifier = (*pollingNotifier)(nil)
+	_ notifier = (*channelNotifier)(nil)
+	_ notifier = (*natsNotifier)(nil)
+)
 
 type pollingNotifier struct {
 	eventStore *eventStore
@@ -106,6 +119,8 @@ func newChannelNotifier(log log.Logger) *channelNotifier {
 		subscribers: make(map[chan Event]struct{}),
 	}
 }
+
+func (*channelNotifier) WatchInvalidation() <-chan struct{} { return nil }
 
 func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	cn.log.Info("creating new notifier",
@@ -205,6 +220,8 @@ func (n *pollingNotifier) lastEventResourceVersion(ctx context.Context) (int64, 
 	}
 	return e.ResourceVersion, nil
 }
+
+func (*pollingNotifier) WatchInvalidation() <-chan struct{} { return nil }
 
 func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	n.log.Info("creating new notifier",

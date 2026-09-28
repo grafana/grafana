@@ -10,8 +10,9 @@ import config from 'app/core/config';
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 import { FOOTER_TEST_ID } from '../TextNGFooter';
 
-import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange, type ViewMode } from './TextNGEditor';
+import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
+import { type ViewMode } from './viewMode';
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });

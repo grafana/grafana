@@ -31,8 +31,8 @@ interface Props {
   cell: NotebookCellItem;
   /**
    * The cell's position in `cells`. This doubles as the Draggable index, so it must stay dense and
-   * 0-based — dnd derives every drop boundary from it. Also the base for the add button's insertion
-   * index: `index + 1`, since it always inserts directly below this cell.
+   * 0-based — dnd derives every drop boundary from it. Doubles as the add button's insertion index,
+   * since that button inserts directly above this cell.
    */
   index: number;
   isEditing?: boolean;
@@ -56,7 +56,7 @@ interface Props {
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
-  /** Forwarded to this cell's add button, which offsets it to `index + 1`. */
+  /** Forwarded to this cell's add button, which passes this cell's own `index` — an insert above it. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
   /**
    * Supplied by the layout, which owns the cells list. Optional so the frame stays renderable on its

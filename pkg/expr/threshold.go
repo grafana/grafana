@@ -1,7 +1,6 @@
 package expr
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -167,16 +166,6 @@ func UnmarshalThresholdCommand(rn *rawNode) (Command, error) {
 				}
 				d[data.Fingerprint(fp)] = struct{}{}
 			}
-		} else if len(firstCondition.LoadedDimensions) > 0 && string(firstCondition.LoadedDimensions) != "null" {
-			// TODO yuri: This is a temporary workaround. Delete it once everything is switched to loadedFingerprints field
-			frame, err := decodeLoadedDimensionsFrame(firstCondition.LoadedDimensions)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse loaded dimensions: %w", err)
-			}
-			d, err = fingerprintsFromFrame(frame)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse loaded dimensions: %w", err)
-			}
 		}
 		return NewHysteresisCommand(rn.RefID, referenceVar, *threshold, *unloading, d)
 	}
@@ -255,12 +244,8 @@ type ThresholdConditionJSON struct {
 	Evaluator       ConditionEvalJSON  `json:"evaluator"`
 	UnloadEvaluator *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
 
-	// Fingerprints of the series that are already firing, encoded as decimal strings to preserve their full uint64 precision through untyped JSON decoding. Supersedes LoadedDimensions
+	// Fingerprints of the series that are already firing, encoded as decimal strings to preserve their full uint64 precision through untyped JSON decoding.
 	LoadedFingerprints []string `json:"loadedFingerprints,omitempty"`
-
-	// Deprecated: use LoadedFingerprints. Kept raw and decoded only when LoadedFingerprints is
-	// absent, so an optional frame parsing error would not break everything
-	LoadedDimensions json.RawMessage `json:"loadedDimensions,omitempty"`
 }
 
 // IsHysteresisExpression returns true if the raw model describes a hysteresis command:
@@ -290,57 +275,6 @@ func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints F
 		fp = append(fp, strconv.FormatUint(uint64(fingerprint), 10))
 	}
 	condition["loadedFingerprints"] = fp
-	return nil
-}
-
-func decodeLoadedDimensionsFrame(raw json.RawMessage) (*data.Frame, error) {
-	schemaIndex := bytes.Index(raw, []byte(`"schema"`))
-	dataIndex := bytes.Index(raw, []byte(`"data"`))
-	if schemaIndex >= 0 && dataIndex >= 0 && dataIndex < schemaIndex {
-		// this is the last resort of fixing the frame. It's a temporary dirty hack to workaround shuffling of json keys
-		// by the querier pipeline until it's switched to loadedFingerprints array
-		reordered, ok := schemaBeforeData(raw)
-		if ok {
-			raw = reordered
-		}
-	}
-	frame := &data.Frame{}
-	if err := frame.UnmarshalJSON(raw); err != nil {
-		return nil, err
-	}
-	return frame, nil
-}
-
-func schemaBeforeData(frame json.RawMessage) (json.RawMessage, bool) {
-	var parts struct {
-		Schema json.RawMessage `json:"schema"`
-		Data   json.RawMessage `json:"data"`
-	}
-	if err := json.Unmarshal(frame, &parts); err != nil || parts.Schema == nil || parts.Data == nil {
-		return nil, false
-	}
-	out := make([]byte, 0, len(frame))
-	out = append(out, `{"schema":`...)
-	out = append(out, parts.Schema...)
-	out = append(out, `,"data":`...)
-	out = append(out, parts.Data...)
-	return append(out, '}'), true
-}
-
-// SetLoadedDimensionsToHysteresisCommandAsFrame mutates the input map and sets field
-// "conditions[0].loadedDimensions" with the data frame created from the provided fingerprints.
-//
-// Deprecated: use SetLoadedDimensionsToHysteresisCommand. Only for writing alongside it, so that a
-// reader that predates loadedFingerprints still finds something it understands.
-func SetLoadedDimensionsToHysteresisCommandAsFrame(query map[string]any, fingerprints Fingerprints) error {
-	condition, err := getConditionForHysteresisCommand(query)
-	if err != nil {
-		return err
-	}
-	if condition == nil {
-		return errors.New("not a hysteresis command")
-	}
-	condition["loadedDimensions"] = fingerprintsToFrame(fingerprints)
 	return nil
 }
 

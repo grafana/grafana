@@ -30,6 +30,71 @@ function setup(overrides: Partial<TableCellActionsProps> = {}) {
 }
 
 describe('TableCellActions', () => {
+  describe('refreshed menu', () => {
+    it('opens inspection with the cell value and closes the menu', async () => {
+      const { setInspectCell } = setup({ tableRefreshEnabled: true });
+      await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
+      await userEvent.click(screen.getByText('Inspect value'));
+      expect(setInspectCell).toHaveBeenCalledWith({ value: 'hello', mode: TableCellInspectorMode.text });
+      expect(screen.getByRole('button', { name: 'Cell actions' })).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it.each([
+      ['Filter for value', FILTER_FOR_OPERATOR, 'hello', 'hello'],
+      ['Filter out value', FILTER_OUT_OPERATOR, 42, '42'],
+      ['Filter for value', FILTER_FOR_OPERATOR, undefined, ''],
+    ])('applies %s with operator %s and value %s', async (label, operator, value, expected) => {
+      const { onCellFilterAdded } = setup({ tableRefreshEnabled: true, value });
+      await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
+      await userEvent.click(screen.getByText(label));
+      expect(onCellFilterAdded).toHaveBeenCalledWith({ key: 'Field1', operator, value: expected });
+    });
+
+    it.each([
+      [true, false, ['Inspect value']],
+      [false, true, ['Filter for value', 'Filter out value']],
+    ])('offers only enabled actions (inspect=%s, filters=%s)', async (cellInspect, showFilters, labels) => {
+      setup({ tableRefreshEnabled: true, cellInspect, showFilters });
+      await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(labels);
+    });
+
+    it('opens by keyboard and returns focus to the trigger on Escape', async () => {
+      setup({ tableRefreshEnabled: true });
+      const trigger = screen.getByRole('button', { name: 'Cell actions' });
+      await userEvent.tab();
+      expect(trigger).toHaveFocus();
+      await userEvent.keyboard('{Enter}');
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      await userEvent.keyboard('{Escape}');
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      expect(trigger).toHaveFocus();
+    });
+
+    it('does not activate cell links when using a portaled menu action', async () => {
+      const parentClick = jest.fn();
+      const setInspectCell = jest.fn();
+      render(
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+        <div onClick={parentClick}>
+          <TableCellActions
+            tableRefreshEnabled
+            field={{ name: 'value', type: FieldType.string, values: [], config: {} }}
+            value="hello"
+            displayName="value"
+            cellInspect
+            showFilters={false}
+            setInspectCell={setInspectCell}
+          />
+        </div>
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
+      await userEvent.click(screen.getByText('Inspect value'));
+      expect(setInspectCell).toHaveBeenCalledWith({ value: 'hello', mode: TableCellInspectorMode.text });
+      expect(parentClick).not.toHaveBeenCalled();
+    });
+  });
+
   it('renders the inspect button when cellInspect is true', () => {
     setup();
     expect(screen.getByLabelText('Inspect value')).toBeInTheDocument();

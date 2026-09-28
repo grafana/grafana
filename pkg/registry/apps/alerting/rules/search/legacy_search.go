@@ -51,8 +51,7 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	}
 
 	f := extractFilters(req)
-	perKindSearch := isPerKindSearch(ctx)
-	if perKindSearch && f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
+	if f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
 		return emptyResponse(), nil
 	}
 	rules, _, _, err := c.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
@@ -77,22 +76,18 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	filtered := rules[:0]
 	for _, r := range rules {
-		if perKindSearch && !matchTitle(r, f.title) {
+		if !matchTitle(r, f.title) {
 			continue
 		}
 		if !matchLabels(r, f.labelMatchers) {
 			continue
 		}
-		if perKindSearch && !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
+		if !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
 			continue
 		}
 		filtered = append(filtered, r)
 	}
-	if perKindSearch {
-		perKindSortRules(filtered, f.sortField, f.sortDesc)
-	} else {
-		sortRules(filtered, f.sortField, f.sortDesc)
-	}
+	perKindSortRules(filtered, f.sortField, f.sortDesc)
 
 	total := len(filtered)
 	page := applyOffset(filtered, req.Offset, req.Limit)
@@ -100,9 +95,7 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	table := &resourcepb.ResourceTable{Columns: resultColumnDefinitions()}
 	for _, r := range page {
 		values := ruleColumnValues(r)
-		if perKindSearch {
-			c.addStatusValues(r, values)
-		}
+		c.addStatusValues(r, values)
 		cells, err := ruleCells(values)
 		if err != nil {
 			return nil, err
@@ -229,12 +222,7 @@ func ruleType(r *ngmodels.AlertRule) string {
 }
 
 func ruleTypeForRequest(req *resourcepb.ResourceSearchRequest) ngmodels.RuleTypeFilter {
-	resourceName := req.Options.GetKey().GetResource()
-	// A federated request (cross-kind /search) carries the other kind too.
-	if len(req.Federated) > 0 {
-		return ngmodels.RuleTypeFilterAll
-	}
-	if resourceName == recordingrule.ResourceInfo.GroupResource().Resource {
+	if req.Options.GetKey().GetResource() == recordingrule.ResourceInfo.GroupResource().Resource {
 		return ngmodels.RuleTypeFilterRecording
 	}
 	return ngmodels.RuleTypeFilterAlerting

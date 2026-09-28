@@ -13,6 +13,7 @@ import {
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -60,6 +61,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.cancelPaneRequest();
     const controller = new AbortController();
     this._paneRequest = controller;
+    this.setState({ isLoading: true });
     if (!this.isActive) {
       this.cancelPaneRequest();
     }
@@ -67,10 +69,27 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     return controller.signal;
   }
 
-  private cancelPaneRequest() {
+  public async runPaneRequest(load: (signal: AbortSignal) => Promise<void>) {
+    const signal = this.beginPaneRequest();
+    try {
+      if (!signal.aborted) {
+        await load(signal);
+      }
+    } finally {
+      // An older load must not clear the indicator for a newer selection.
+      if (this._paneRequest?.signal === signal) {
+        this.cancelPaneRequest();
+      }
+    }
+  }
+
+  public cancelPaneRequest() {
     const request = this._paneRequest;
     this._paneRequest = undefined;
     request?.abort();
+    if (this.state.isLoading) {
+      this.setState({ isLoading: false });
+    }
   }
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
@@ -85,8 +104,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public clone(withState: Partial<DashboardSidebarState>): this {
-    // Clone without any undo/redo history
-    return super.clone({ ...withState, redoStack: [], undoStack: [] });
+    // Pending requests and edit history belong to the live sidebar, not its snapshots.
+    return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false });
   }
 
   private onActivate() {
@@ -94,12 +113,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     this._subs.add(
       dashboard.subscribeToState((state, previous) => {
-        if (
-          state.isEditing !== previous.isEditing ||
-          state.editview !== previous.editview ||
-          state.editPanel !== previous.editPanel ||
-          state.viewPanel !== previous.viewPanel
-        ) {
+        if (dashboardViewChanged(state, previous)) {
           this.cancelPaneRequest();
         }
       })
