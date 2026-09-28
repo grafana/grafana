@@ -86,11 +86,7 @@ export const sharedDependenciesMap = {
   emotion: () => import('@emotion/css'),
   // bundling grafana-ui in plugins requires sharing i18next state
   i18next: () => import('@grafana/i18n/internal').then((module) => module.getI18nInstance()),
-  jquery: async () => {
-    await loadJqueryWithFlot();
-    const { default: jqueryInstance } = await import('jquery');
-    return { default: jqueryInstance, __useDefault: true };
-  },
+  jquery: () => loadJqueryWithFlot().then((module) => ({ default: module.default, __useDefault: true })),
   ...jQueryFlotDeps,
   // add move to lodash for backward compatabilty with plugins
   lodash: () => import('lodash').then((module) => ({ ...module, move: arrayMove, __useDefault: true })),
