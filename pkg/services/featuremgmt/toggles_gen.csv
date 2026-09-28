@@ -304,6 +304,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-09-16,grafana.scenesFlickeringFix,GA,@grafana/dashboards-squad,false,false,true
 2026-09-16,grafana.viewPanelPane,preview,@grafana/dashboards-squad,false,false,true
+2026-09-28,grafana.dashboardInsights,experimental,@grafana/dashboards-squad,false,false,true
 2026-09-16,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-09-16,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-09-16,flameGraph.tableNg,experimental,@grafana/observability-traces-and-profiling,false,false,true

@@ -2429,6 +2429,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardInsights",
+        "resourceVersion": "1790597404838",
+        "creationTimestamp": "2026-09-28T12:10:04Z"
+      },
+      "spec": {
+        "description": "Enables the Insights dashboard sidebar pane for asking Assistant saved questions about selected panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardSettingsRedesign",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

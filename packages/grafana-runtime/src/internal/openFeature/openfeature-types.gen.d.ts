@@ -78,6 +78,7 @@ declare module "@openfeature/core" {
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
     | "grafana.viewPanelPane"
+    | "grafana.dashboardInsights"
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraph.tableNg"
     | "inlineLogDetailsNoScrolls"

@@ -98,6 +98,8 @@ export const FlagKeys = {
   GrafanaDashboardAutoGridDefault: "grafana.dashboardAutoGridDefault",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
+  /** Enables the Insights dashboard sidebar pane for asking Assistant saved questions about selected panels */
+  GrafanaDashboardInsights: "grafana.dashboardInsights",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables the auto-height feature for dashboard panels */
@@ -716,6 +718,17 @@ export const useFlagGrafanaDashboardAutoGridDefault = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardGlobalVariables", false, options).value;
+};
+
+/**
+ * Enables the Insights dashboard sidebar pane for asking Assistant saved questions about selected panels
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardInsights`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardInsights = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardInsights", false, options).value;
 };
 
 /**
