@@ -43,24 +43,10 @@ jobs:
 
           GOVULNCHECK=$(GOWORK=off go tool -n -modfile="$GITHUB_WORKSPACE/.citools/src/govulncheck/go.mod" govulncheck)
 
-          echo "::notice::Ignoring GO-2026-6443 only for patched google.golang.org/grpc@v1.84.0 until the Go vulnerability database is corrected."
-
           failed=0
           for dir in $(go list -m -f '{{.Dir}}'); do
             [ -f "$dir/.nolint" ] && continue
-            # JSON mode does not fail on findings; convert restores govulncheck's exit status.
-            if output=$(
-              {
-                cd "$dir" &&
-                  "$GOVULNCHECK" -json ./... |
-                  jq -c 'select((
-                    .finding.osv == "GO-2026-6443" and
-                    .finding.trace[0].module == "google.golang.org/grpc" and
-                    .finding.trace[0].version == "v1.84.0"
-                  ) | not)' |
-                  "$GOVULNCHECK" -mode=convert
-              } 2>&1
-            ); then
+            if output=$(cd "$dir" && "$GOVULNCHECK" ./... 2>&1); then
               echo "ok $dir"
             else
               echo ""
