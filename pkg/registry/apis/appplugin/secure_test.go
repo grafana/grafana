@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -37,6 +39,45 @@ func TestSecureValueLookupCache(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, map[string]string{"token": tc.value}, got)
 		require.Equal(t, tc.calls, calls)
+	}
+}
+
+func TestSecureValueLookupCacheExpiry(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		err  error
+	}{
+		{name: "rotated secret"},
+		{name: "revoked secret", err: errors.New("secret revoked")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			lookup := newSecureValueLookup(secureLookupDecrypter(func(context.Context, string, string, ...string) (map[string]decrypt.DecryptResult, error) {
+				calls++
+				if calls > 1 && tc.err != nil {
+					return nil, tc.err
+				}
+				return secureLookupResults(fmt.Sprintf("value-%d", calls)), nil
+			}))
+			const ttl = 50 * time.Millisecond
+			lookup.cache = expirable.NewLRU[secureValueCacheKey, map[string]string](100, nil, ttl)
+			obj := secureLookupObject(t, "uid", "1")
+			got, err := lookup.get(t.Context(), obj)
+			require.NoError(t, err)
+			require.Equal(t, map[string]string{"token": "value-1"}, got)
+
+			time.Sleep(2 * ttl)
+
+			got, err = lookup.get(t.Context(), obj)
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+				require.Nil(t, got)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, map[string]string{"token": "value-2"}, got)
+			}
+			require.Equal(t, 2, calls)
+		})
 	}
 }
 

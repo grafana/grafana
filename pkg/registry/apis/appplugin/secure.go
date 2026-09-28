@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"k8s.io/apimachinery/pkg/types"
-
-	lru "github.com/hashicorp/golang-lru/v2"
 
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -21,16 +20,13 @@ type secureValueCacheKey struct {
 
 type secureValueLookup struct {
 	decrypter decrypt.DecryptService
-	cache     *lru.Cache[secureValueCacheKey, map[string]string]
-	now       func() time.Time
+	cache     *expirable.LRU[secureValueCacheKey, map[string]string]
 }
 
 func newSecureValueLookup(decrypter decrypt.DecryptService) *secureValueLookup {
-	cache, err := lru.New[secureValueCacheKey, map[string]string](100)
-	if err != nil {
-		panic(err)
-	}
-	return &secureValueLookup{decrypter: decrypter, cache: cache, now: time.Now}
+	// Secrets can rotate without changing the parent object's resource version.
+	cache := expirable.NewLRU[secureValueCacheKey, map[string]string](100, nil, time.Minute)
+	return &secureValueLookup{decrypter: decrypter, cache: cache}
 }
 
 func (b *secureValueLookup) get(ctx context.Context, obj utils.GrafanaMetaAccessor) (map[string]string, error) {
