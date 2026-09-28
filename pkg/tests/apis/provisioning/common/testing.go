@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -790,7 +791,7 @@ func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *test
 	t.Helper()
 
 	// Check if folder is nested or not.
-	// If not, folder annotations should be empty as we have an "instance" sync target
+	// An instance sync target leaves top-level dashboards at the root.
 	for _, d := range dashboards {
 		sourcePath, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
 		isNested := strings.Contains(sourcePath, "/")
@@ -798,9 +799,9 @@ func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *test
 		folder, found, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
 		if isNested {
 			require.True(t, found, "dashboard should have a folder annotation")
-			require.NotEmpty(t, folder, "dashboard should be in a non-empty folder")
+			require.False(t, foldermodel.IsRootFolderUID(folder), "nested dashboard should have a real parent")
 		} else {
-			require.False(t, found, "dashboard should not have a folder annotation")
+			require.True(t, foldermodel.IsRootFolderUID(folder), "dashboard should be at the root")
 		}
 
 		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
@@ -2618,7 +2619,7 @@ func RequireRepoDashboardParent(t *testing.T, dashboardClient *apis.K8sResourceC
 			if annotations["grafana.app/sourcePath"] != sourcePath {
 				continue
 			}
-			assert.Equal(c, expectedFolderUID, annotations["grafana.app/folder"], "dashboard %q parent folder", sourcePath)
+			assert.Equal(c, foldermodel.ToLegacyFolderUID(expectedFolderUID), foldermodel.ToLegacyFolderUID(annotations["grafana.app/folder"]), "dashboard %q parent folder", sourcePath)
 			return
 		}
 		c.Errorf("dashboard with sourcePath %q not found for repo %q", sourcePath, repoName)
@@ -2917,7 +2918,7 @@ func RequireFolderState(t *testing.T, folderClient *apis.K8sResourceClient, fold
 
 		annotations := obj.GetAnnotations()
 		assert.Equal(c, expectedSourcePath, annotations["grafana.app/sourcePath"], "source path")
-		assert.Equal(c, expectedParent, annotations["grafana.app/folder"], "parent folder")
+		assert.Equal(c, foldermodel.ToLegacyFolderUID(expectedParent), foldermodel.ToLegacyFolderUID(annotations["grafana.app/folder"]), "parent folder")
 	}, 30*time.Second, 100*time.Millisecond,
 		"expected folder %q with title=%q sourcePath=%q parent=%q", folderUID, expectedTitle, expectedSourcePath, expectedParent)
 }

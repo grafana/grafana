@@ -2,6 +2,7 @@ package apistore
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -318,4 +319,31 @@ func TestStreamDecoderSerializerContext(t *testing.T) {
 	cancel()
 	_, err = decoder.toObject(client.events[0].Resource)
 	require.ErrorIs(t, err, context.Canceled)
+}
+
+func TestFolderNormalizationOnReadAndWatch(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		for _, parent := range []string{"", "general", "parent"} {
+			t.Run(fmt.Sprintf("enabled=%t,parent=%q", enabled, parent), func(t *testing.T) {
+				s := &Storage{serializer: JSONSerializer(), opts: StorageOptions{EnableFolderSupport: enabled}}
+				obj := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "example.com/v1", "kind": "Widget", "metadata": map[string]interface{}{"name": "test", "annotations": map[string]interface{}{utils.AnnoKeyFolder: parent}}}}
+				data, err := s.serializer.Encode(t.Context(), obj)
+				require.NoError(t, err)
+				expected := parent
+				if enabled && parent == "" {
+					expected = "general"
+				}
+				read, err := s.convertToObject(t.Context(), data, &unstructured.Unstructured{})
+				require.NoError(t, err)
+				require.Equal(t, expected, read.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
+				client := &mockWatchClient{ctx: t.Context()}
+				decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, s.serializer, func() {}, false)
+				decoder.decodeObject = s.convertToObject
+				watched, err := decoder.toObject(&resourcepb.WatchEvent_Resource{Value: data, Version: 42})
+				require.NoError(t, err)
+				require.Equal(t, expected, watched.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
+				require.Equal(t, "42", watched.(*unstructured.Unstructured).GetResourceVersion())
+			})
+		}
+	}
 }

@@ -11,7 +11,8 @@
           "text",
           "timeseries"
         ]
-      }
+      },
+      "folder": "general"
     }
   ],
   "maxScore": 0.373
