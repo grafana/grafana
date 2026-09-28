@@ -4,6 +4,9 @@
       - "6831:6831/udp"
       - "16686:16686"
       - "14268:14268"
+      - "4317:4317"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
   # Additional loki to generate some traces
   # datasource URL: http://localhost:3100/
   loki:

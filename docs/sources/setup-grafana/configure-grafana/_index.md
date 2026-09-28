@@ -2394,19 +2394,9 @@ Set via environment variable: `GF_GRAFANA_COM_PROXY_TOKEN`.
 
 ### `[tracing.jaeger]`
 
-[Deprecated - use `tracing.opentelemetry.jaeger` or `tracing.opentelemetry.otlp` instead]
-
-Configure a Jaeger client in Grafana for distributed tracing.
-
-You can also use the standard `JAEGER_*` environment variables to configure Jaeger.
-For the full list, refer to the table in [Trace configuration via environment variables](https://www.jaegertracing.io/docs/1.16/client-features/#tracer-configuration-via-environment-variables).
-Environment variables override any settings provided here.
-
-#### `address`
-
-The host:port destination for reporting spans. (ex: `localhost:6831`)
-
-Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
+Jaeger export is no longer supported. Configure an OTLP/gRPC endpoint in `tracing.opentelemetry.otlp.address`, for example `localhost:4317`.
+Legacy Jaeger addresses and `JAEGER_AGENT_HOST` or `JAEGER_AGENT_PORT` settings cause a startup error unless you configure an OTLP address.
+Legacy sampling and tag settings remain available, but use `tracing.opentelemetry` for new configurations.
 
 #### `always_included_tag`
 
@@ -2502,15 +2492,19 @@ Use a sampling server that supports the Jaeger remote sampling API, such as `jae
 
 ### `[tracing.opentelemetry.jaeger]`
 
-Configure Grafana with a Jaeger client for distributed tracing.
+Jaeger export is no longer supported. Use `[tracing.opentelemetry.otlp]` with Jaeger's OTLP/gRPC receiver or an OpenTelemetry Collector.
+Jaeger UDP ports and the HTTP `/api/traces` endpoint don't accept OTLP.
 
-#### `address`
+For a local receiver without TLS, use:
 
-The `<HOST>:<PORT>` destination for reporting spans. For example, `localhost:14268/api/traces`.
+```ini
+[tracing.opentelemetry.otlp]
+address = localhost:4317
+insecure = true
+```
 
-#### `propagation`
-
-The propagation specifies the text map propagation format. The values `jaeger` and `w3c` are supported. Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`). The default value is `w3c`.
+Move any `propagation` setting to the OTLP section. Both `jaeger` and `w3c` propagation remain supported, as does remote sampling.
+An explicit OTLP address takes precedence over legacy Jaeger addresses.
 
 <hr>
 

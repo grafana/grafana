@@ -56,18 +56,6 @@ func NewEmptyTracingConfig() *TracingConfig {
 	}
 }
 
-func NewJaegerTracingConfig(address string, propagation string) (*TracingConfig, error) {
-	if address == "" {
-		return nil, fmt.Errorf("address cannot be empty")
-	}
-
-	cfg := NewEmptyTracingConfig()
-	cfg.enabled = jaegerExporter
-	cfg.Address = address
-	cfg.Propagation = propagation
-	return cfg, nil
-}
-
 func NewOTLPTracingConfig(address string, propagation string, insecure bool) (*TracingConfig, error) {
 	if address == "" {
 		return nil, fmt.Errorf("address cannot be empty")
@@ -135,16 +123,7 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 
 	tc.FilterOperationalEndpoints = section.Key("filter_operational_endpoints").MustBool(false)
 
-	section = cfg.Raw.Section("tracing.opentelemetry.jaeger")
 	tc.enabled = noopExporter
-
-	// we default to legacy Jaeger agent address if the new config value is empty
-	tc.Address = section.Key("address").MustString(legacyAddress)
-	tc.Propagation = section.Key("propagation").MustString("")
-	if tc.Address != "" {
-		tc.enabled = jaegerExporter
-		return tc, nil
-	}
 
 	section = cfg.Raw.Section("tracing.opentelemetry.otlp")
 	tc.Address = section.Key("address").MustString("")
@@ -155,6 +134,11 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 	tc.Insecure = section.Key("insecure").MustBool(true)
 	if tc.enabled == otlpExporter {
 		return tc, nil
+	}
+
+	section = cfg.Raw.Section("tracing.opentelemetry.jaeger")
+	if section.Key("address").MustString(legacyAddress) != "" {
+		return nil, fmt.Errorf("Jaeger exporter is no longer supported; configure tracing.opentelemetry.otlp.address with an OTLP/gRPC endpoint (for example localhost:4317)")
 	}
 
 	// File exporter (only when no collector endpoint is configured): capture
