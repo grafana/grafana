@@ -26,6 +26,10 @@ const APP_RESOURCE_NAME = "app"
 //	/apis/{group}/{version}/namespaces/{namespace}/app/instance/resources
 const INSTANCE_NAME = "instance"
 
+// STORAGE_GROUP holds the settings of every app plugin in unified storage.
+// Each plugin's "instance" is stored as app/{pluginID}.
+const STORAGE_GROUP = "plugins.grafana.app"
+
 // SettingsResourceInfo describes the settings resource. The group is left empty
 // because it is dynamic (one per app plugin) and must be set via WithGroupAndShortName.
 var SettingsResourceInfo = utils.NewResourceInfo("", VERSION,

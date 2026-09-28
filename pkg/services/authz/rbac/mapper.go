@@ -271,6 +271,24 @@ func newDatasourceQueryTranslation() translation {
 	return dsTranslation
 }
 
+// newAppSettingsTranslation matches the legacy plugin settings permissions, scoped by plugin ID
+func newAppSettingsTranslation() translation {
+	return translation{
+		resource:  "plugins",
+		attribute: "id",
+		verbMapping: map[string]string{
+			utils.VerbGet:              "plugins.app:access",
+			utils.VerbList:             "plugins.app:access",
+			utils.VerbWatch:            "plugins.app:access",
+			utils.VerbCreate:           "plugins:write",
+			utils.VerbUpdate:           "plugins:write",
+			utils.VerbPatch:            "plugins:write",
+			utils.VerbDelete:           "plugins:write",
+			utils.VerbDeleteCollection: "plugins:write",
+		},
+	}
+}
+
 // newServiceAccountTranslation creates a translation for service accounts and maps actions to action sets.
 // Service accounts only have Edit and Admin permission levels — there is no View level.
 func newServiceAccountTranslation() translation {
@@ -708,7 +726,10 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
-		"datasource.grafana.app": { // duplicate the query group here
+		"datasource.grafana.app": {
+			// Unified storage keeps every datasource type under this group
+			"datasources": newDatasourceQueryTranslation(),
+			// duplicate the query group here
 			"query": translation{
 				resource:  "datasources",
 				attribute: "uid",
@@ -761,6 +782,8 @@ func NewMapperRegistry() MapperRegistry {
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
 			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
+			// Unified storage keeps every app plugin's settings here, named by plugin ID
+			"app": newAppSettingsTranslation(),
 		},
 		"advisor.grafana.app": {
 			"checks":       newResourceTranslation("advisor.checks", "uid", false, nil),

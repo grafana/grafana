@@ -44,6 +44,50 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 	assert.False(t, ok, "Get(datasource group, \"dashboards\") must not return a mapping")
 }
 
+// Unified storage stores every datasource type under datasource.grafana.app, so
+// storage checks must resolve to the same permissions as the per-plugin groups.
+func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	shared, ok := reg.Get("datasource.grafana.app", "datasources", "")
+	require.True(t, ok)
+	plugin, ok := reg.Get("loki.datasource.grafana.app", "datasources", "")
+	require.True(t, ok)
+
+	assert.Equal(t, plugin.Prefix(), shared.Prefix())
+	for _, verb := range []string{
+		utils.VerbGet, utils.VerbList, utils.VerbCreate, utils.VerbUpdate,
+		utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+	} {
+		sharedAction, sharedOK := shared.Action(verb)
+		pluginAction, pluginOK := plugin.Action(verb)
+		assert.Equal(t, pluginOK, sharedOK, "verb %q", verb)
+		assert.Equal(t, pluginAction, sharedAction, "verb %q", verb)
+		assert.Equal(t, plugin.ActionSets(verb), shared.ActionSets(verb), "verb %q", verb)
+	}
+}
+
+// App plugin settings are stored as plugins.grafana.app/app/{pluginID}, so the
+// name resolves to the legacy plugins:id:{pluginID} scope.
+func TestMapperRegistry_AppSettings(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("plugins.grafana.app", "app", "")
+	require.True(t, ok)
+	assert.Equal(t, "plugins:id:grafana-lokiexplore-app", mapping.Scope("grafana-lokiexplore-app"))
+
+	for verb, expected := range map[string]string{
+		utils.VerbGet:    "plugins.app:access",
+		utils.VerbList:   "plugins.app:access",
+		utils.VerbUpdate: "plugins:write",
+		utils.VerbDelete: "plugins:write",
+	} {
+		action, ok := mapping.Action(verb)
+		require.True(t, ok, "verb %q", verb)
+		assert.Equal(t, expected, action, "verb %q", verb)
+	}
+}
+
 func TestMapperRegistry_DatasourceCachingSubresource(t *testing.T) {
 	reg := NewMapperRegistry()
 
