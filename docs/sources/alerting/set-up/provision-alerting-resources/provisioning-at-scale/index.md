@@ -141,15 +141,11 @@ The container must be named `package-runtime`, or Crossplane adds it as a sideca
 
 ## Reduce redundant syncs in GitOps engines
 
-GitOps engines add reconcile cycles on top of the controller's polling. Configure them to skip unneeded work:
-
-- **Apply only changed resources:** In Argo CD, enable the `ApplyOutOfSyncOnly=true` sync option.
-- **Avoid forced re-applies:** Options such as `Force=true` and `Replace=true` recreate unchanged resources, which triggers extra observe cycles.
-- **Lengthen the sync interval:** Align the engine's reconcile interval with the provider's `--poll` value.
+GitOps engines add reconcile cycles on top of the controller's polling. To skip unneeded work, apply only changed resources (`ApplyOutOfSyncOnly=true` in Argo CD), avoid forced re-applies (`Force=true` or `Replace=true`), and align the engine's reconcile interval with the provider's `--poll` value.
 
 ## Separate credentials per environment
 
-Some rate limits apply per credential. If you run tools in several clusters, create a dedicated [service account](ref:service-accounts) and token for each one instead of sharing a single token. Separate credentials give each cluster its own request budget where per-credential limits apply, and show which tool generates the traffic.
+Some rate limits apply per credential. If you run tools in several clusters, create a dedicated [service account](ref:service-accounts) and token for each one instead of sharing a single token. This gives each cluster its own request budget and shows which tool generates the traffic.
 
 ## Migrate to the Grafana App Platform alerting APIs
 
