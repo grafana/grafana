@@ -47,6 +47,10 @@ export type GraphiteQueryEditorState = {
 const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise<GraphiteQueryEditorState> => {
   state = { ...state };
 
+  if (!state.target && !actions.init.match(action) && !actions.timeRangeChanged.match(action)) {
+    return state;
+  }
+
   if (actions.init.match(action)) {
     const deps = action.payload;
     deps.target.target = deps.target.target || '';
@@ -189,10 +193,15 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
 
 export const createStore = (onChange: (state: GraphiteQueryEditorState) => void): Dispatch<AnyAction> => {
   let state = {} as GraphiteQueryEditorState;
+  let queue: Promise<void> = Promise.resolve();
 
-  const dispatch = async (action: AnyAction) => {
-    state = await reducer(action, state);
-    onChange(state);
+  const dispatch = (action: AnyAction) => {
+    const result = queue.then(async () => {
+      state = await reducer(action, state);
+      onChange(state);
+    });
+    queue = result.catch(() => {});
+    return result;
   };
 
   return dispatch as Dispatch<AnyAction>;
