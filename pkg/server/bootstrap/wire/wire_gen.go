@@ -411,7 +411,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider)
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features)
 	if err != nil {
 		return nil, err
 	}
@@ -598,7 +598,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
 	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
+	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService, cfg, eventualRestConfigProvider, tracingService)
 	if err != nil {
 		return nil, err
 	}
@@ -1186,7 +1186,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider)
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features)
 	if err != nil {
 		return nil, err
 	}
@@ -1472,7 +1472,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
 	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
+	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService, cfg, eventualRestConfigProvider, tracingService)
 	if err != nil {
 		return nil, err
 	}
@@ -1948,7 +1948,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider)
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features)
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -2043,7 +2043,8 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, legacyDatabaseProvider, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
 	socialService := socialimpl.ProvideService(contextContext, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(contextContext, legacyDatabaseProvider, secretsService)
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	loginStore, err := authinfoimpl.ProvideStore(contextContext, legacyDatabaseProvider, secretsService, cfg, eventualRestConfigProvider, tracingService)
 	if err != nil {
 		return nil, err
 	}
@@ -2102,7 +2103,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
 	features, err := iam.ProvideFeatures(cfg)
 	if err != nil {
 		return nil, err
@@ -2128,7 +2128,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider)
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features)
 	if err != nil {
 		return nil, err
 	}

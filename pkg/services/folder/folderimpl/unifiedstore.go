@@ -293,7 +293,7 @@ func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64,
 	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
 		hits = append(hits, &folder.FolderReference{
-			ID:    item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			ID:    item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID), //nolint:staticcheck // Preserve legacy field compatibility.
 			UID:   item.Name,
 			Title: item.Title,
 			// Legacy responses convey root with an empty ParentUID; the apistore

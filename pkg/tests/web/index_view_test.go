@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -172,7 +173,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
-			authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(store), secretsService)
+			authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(store), secretsService, env.Cfg, nil, tracing.InitializeTracerForTest())
 			require.NoError(t, err)
 
 			// insert user_auth relationship

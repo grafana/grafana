@@ -233,6 +233,7 @@ type ResourceLastImportTime struct {
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
 type StorageBackend interface {
+	WatchInvalidator
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
@@ -387,6 +388,10 @@ type SearchOptions struct {
 	// setting. It selects the index features this server requires, so an index
 	// that predates them is rebuilt before that path serves a query.
 	PostRankAuthzEnabled bool
+
+	// GlobalIndexEnabled builds one index per namespace covering several resource
+	// types, alongside the per-resource indexes.
+	GlobalIndexEnabled bool
 
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
@@ -1720,9 +1725,21 @@ func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *reso
 	return nil
 }
 
-func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
+//nolint:gocyclo // Temporary list-path instrumentation
+func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *resourcepb.ListResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
-	defer span.End()
+	path := listPathUnknown
+	selectorType := listSelectorType(req)
+	requestedLimit := int64(0)
+	if req != nil {
+		requestedLimit = req.GetLimit()
+	}
+	searchFallback := false
+	defer func() {
+		setListRequestPath(ctx, path)
+		annotateListRequest(span, path, selectorType, requestedLimit, req, rsp)
+		span.End()
+	}()
 
 	if req.Options == nil {
 		return nil, status.Error(codes.InvalidArgument, "missing list options")
@@ -1764,6 +1781,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	// resolves names through Read, which fetches whole objects.
 	if !req.KeysOnly {
 		if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
+			path = listPathFieldSelector
 			return rsp, nil
 		}
 	}
@@ -1789,14 +1807,16 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if s.shouldUseSearchForList(req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
-		rsp, err := s.listWithSelectors(ctx, req)
+		rsp, err = s.listWithSelectors(ctx, req)
 		if !errors.Is(err, errSearchCannotAnswerList) {
+			path = listPathSearch
 			gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 			return rsp, err
 		}
 		// The store scan reads the objects themselves, so it answers what the index
 		// cannot. Slower, but right.
+		searchFallback = true
 		s.log.Warn("Search cannot answer List with selectors, falling back to the store", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 	}
 
@@ -1812,13 +1832,23 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	case resourcepb.ListRequest_STORE:
 		if s.authorizeBeforeFetchEnabled {
 			if backend, ok := s.backend.(KeyListBackend); ok {
+				path = listPathStoreAuthorizeFirst
+				if searchFallback {
+					path = listPathSearchFallbackAuthorizeFirst
+				}
 				return s.listAuthorizeBeforeFetch(ctx, req, backend)
 			}
 		}
+		path = listPathStoreFetchFirst
+		if searchFallback {
+			path = listPathSearchFallbackFetchFirst
+		}
 		return s.listAuthorized(ctx, req, s.backend.ListIterator)
 	case resourcepb.ListRequest_HISTORY:
+		path = listPathHistory
 		return s.listAuthorized(ctx, req, s.backend.ListHistory)
 	case resourcepb.ListRequest_TRASH:
+		path = listPathTrash
 		return s.listFromTrash(ctx, req)
 	default:
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
@@ -2324,6 +2354,10 @@ func (s *server) initWatcher() error {
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
 
+	// Capture before setup: reconnects during subscription or snapshot reads must
+	// expire this watch too, even if it has not entered the live loop yet.
+	reconnectC := s.backend.WatchInvalidation()
+
 	// Treat a closed client transport and cancellation of this watch's context
 	// as clean shutdowns. Errors from setup, storage, authorization, or another
 	// context are still propagated.
@@ -2496,10 +2530,23 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	for {
+		// Prioritize known delivery gaps over buffered live events.
+		select {
+		case <-reconnectC:
+			if ctx.Err() != nil {
+				return nil
+			}
+			return NewResourceVersionExpiredError(since)
+		default:
+		}
 		select {
 		case <-ctx.Done():
 			return nil
-
+		case <-reconnectC:
+			if ctx.Err() != nil {
+				return nil
+			}
+			return NewResourceVersionExpiredError(since)
 		case <-watchExpiryC:
 			// Unlike EOF, Expired forces clients to re-list.
 			s.log.Debug("watch: expiring stream to bound stale-state duration",

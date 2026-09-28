@@ -49,9 +49,11 @@ func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackend
 		routeBackend: routeBackend,
 		key:          key,
 		proxy: &httputil.ReverseProxy{
-			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(u) },
+			Rewrite:        func(pr *httputil.ProxyRequest) { rewriteOutbound(pr, u) },
 			Transport:      newBackendTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
+			ErrorHandler:   proxyErrorHandler,
+			FlushInterval:  streamingFlushInterval,
 		},
 	}, nil
 }
@@ -59,6 +61,8 @@ func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackend
 func (b *forwardBackend) Group() metav1.APIGroup {
 	return b.group
 }
+
+func (b *forwardBackend) Source() string { return sourceRouteBackend }
 
 func (b *forwardBackend) Key() string {
 	return b.key

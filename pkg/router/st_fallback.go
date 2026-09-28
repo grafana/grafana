@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -16,9 +15,9 @@ import (
 
 	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
-	"github.com/sony/gobreaker/v2"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -71,6 +70,31 @@ type singleTenantHost struct {
 // errStackOriginMismatch means the response came from a different stack than the one resolved.
 var errStackOriginMismatch = errors.New("router: response came from an unexpected stack")
 
+// stackLookupCounts counts grafana.com stack lookups by result, for metrics.
+type stackLookupCounts struct {
+	cacheHit, resolved, notFound, throttled, failed atomic.Uint64
+}
+
+func (c *stackLookupCounts) record(target *singleTenantTarget, err error) {
+	switch {
+	case errors.Is(err, errStackLookupThrottled):
+		c.throttled.Add(1)
+	case err != nil:
+		c.failed.Add(1)
+	case target == nil:
+		c.notFound.Add(1)
+	default:
+		c.resolved.Add(1)
+	}
+}
+
+func (c *stackLookupCounts) byResult() map[string]uint64 {
+	return map[string]uint64{
+		"cache_hit": c.cacheHit.Load(), "resolved": c.resolved.Load(), "not_found": c.notFound.Load(),
+		"throttled": c.throttled.Load(), "error": c.failed.Load(),
+	}
+}
+
 // errStackLookupThrottled means the lookup rate limit was reached. It is never cached.
 var errStackLookupThrottled = errors.New("router: stack lookup throttled")
 
@@ -91,7 +115,7 @@ type singleTenantDiscovery struct {
 type singleTenantFallback struct {
 	cache         *lru.Cache[int64, singleTenantHost]
 	breakerMu     sync.Mutex
-	breakers      *lru.Cache[string, *gobreaker.CircuitBreaker[struct{}]]
+	breakers      *lru.Cache[string, *groupBreaker]
 	lookups       singleflight.Group
 	lookupLimiter *rate.Limiter // nil means lookups are not rate limited
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
@@ -101,6 +125,8 @@ type singleTenantFallback struct {
 	// discovery is written only by run's goroutine; nil until the first poll.
 	discovery atomic.Pointer[singleTenantDiscovery]
 	cooldown  *cooldown
+	status    pollStatus
+	lookupsBy stackLookupCounts
 }
 
 type singleTenantFallbackOptions struct {
@@ -125,7 +151,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	if opts.breakerCacheSize == 0 {
 		opts.breakerCacheSize = opts.cacheSize
 	}
-	breakers, err := lru.New[string, *gobreaker.CircuitBreaker[struct{}]](opts.breakerCacheSize)
+	breakers, err := lru.New[string, *groupBreaker](opts.breakerCacheSize)
 	if err != nil {
 		return nil, fmt.Errorf("single-tenant breaker cache: %w", err)
 	}
@@ -150,6 +176,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 
 	if opts.transport == nil {
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
+		opts.transport.ResponseHeaderTimeout = backendResponseHeaderTimeout
 	}
 
 	return &singleTenantFallback{
@@ -177,6 +204,7 @@ func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace 
 		return nil, err
 	}
 	if host, ok := st.cachedHost(info.StackID); ok {
+		st.lookupsBy.cacheHit.Add(1)
 		return host, nil
 	}
 
@@ -194,10 +222,12 @@ func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace 
 	}
 }
 
-func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (*singleTenantTarget, error) {
+func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (target *singleTenantTarget, err error) {
 	if host, ok := st.cachedHost(stackID); ok {
+		st.lookupsBy.cacheHit.Add(1)
 		return host, nil
 	}
+	defer func() { st.lookupsBy.record(target, err) }()
 	// Fail fast rather than queue: waiting would hold requests open under a flood.
 	if st.lookupLimiter != nil && !st.lookupLimiter.Allow() {
 		return nil, errStackLookupThrottled
@@ -209,7 +239,6 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 	if err != nil {
 		return nil, err
 	}
-	var target *singleTenantTarget
 	if host.URL != "" {
 		u, err := url.Parse(host.URL)
 		if err != nil {
@@ -281,11 +310,13 @@ func isSingleTenantDiscoveryPath(path string) bool {
 func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, w http.ResponseWriter, req *http.Request) {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
-			pr.SetURL(host.url)
+			rewriteOutbound(pr, host.url)
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},
-		Transport: newBackendTransport(st.transport),
+		Transport:     newBackendTransport(st.transport),
+		ErrorHandler:  proxyErrorHandler,
+		FlushInterval: streamingFlushInterval,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err
@@ -313,7 +344,7 @@ func checkStackOrigin(resp *http.Response, slug string) error {
 // ST groups span multiple hosts, so their handler isolates breakers by destination and group.
 func (*singleTenantFallback) managesCircuitBreaking() {}
 
-func (st *singleTenantFallback) breakerForDestination(host *url.URL, group string) *gobreaker.CircuitBreaker[struct{}] {
+func (st *singleTenantFallback) breakerForDestination(host *url.URL, group string) *groupBreaker {
 	key := host.Scheme + "://" + host.Host + "#" + group
 	st.breakerMu.Lock()
 	defer st.breakerMu.Unlock()
@@ -352,21 +383,22 @@ func (st *singleTenantFallback) Backends() ([]Backend, error) {
 func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error) {
 	client := &http.Client{Transport: st.transport, Timeout: singleTenantLookupTimeout}
 
-	groups, err := discoverGroups(ctx, client, st.discoveryHost.String())
+	groups, err := discoverGroupResources(ctx, client, st.discoveryHost.String())
 	if err != nil {
 		return nil, err
 	}
 
 	backends := make([]Backend, 0, len(groups))
-	for _, group := range groups {
-		groupJSON, err := json.Marshal(group)
+	for _, discovered := range groups {
+		key, err := discoveredGroupKey(discovered)
 		if err != nil {
 			return nil, fmt.Errorf("fingerprinting single-tenant discovery: %w", err)
 		}
 		backends = append(backends, &fallbackBackend{
-			group: group,
-			key:   "st:" + hashHex(string(groupJSON)),
-			st:    st,
+			group:     discovered.group,
+			discovery: discovered.discovery,
+			key:       "st:" + key,
+			st:        st,
 		})
 	}
 	return backends, nil
@@ -411,6 +443,7 @@ func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{})
 	backends, err := st.discover(ctx)
 	if err != nil {
 		st.cooldown.OnFailure(now)
+		st.status.recordFailure()
 		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
 		next := &singleTenantDiscovery{err: err}
 		if prev != nil {
@@ -420,6 +453,7 @@ func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{})
 		return
 	}
 	st.cooldown.OnSuccess(now)
+	st.status.recordSuccess(now)
 	st.discovery.Store(&singleTenantDiscovery{backends: backends})
 
 	if prev != nil && prev.err == nil && sameKeySet(backendKeys(prev.backends), backendKeys(backends)) {
@@ -445,15 +479,27 @@ var (
 )
 
 type fallbackBackend struct {
-	group v1.APIGroup
-	key   string
-	st    http.Handler
+	group     v1.APIGroup
+	discovery *apidiscoveryv2.APIGroupDiscovery
+	key       string
+	st        http.Handler
+}
+
+// Discovery implements [DiscoveryProvider] with the resources from the last poll.
+func (f *fallbackBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
+	if f.discovery == nil {
+		return apidiscoveryv2.APIGroupDiscovery{}, false
+	}
+	return *f.discovery, true
 }
 
 // Group implements [Backend].
 func (f *fallbackBackend) Group() v1.APIGroup {
 	return f.group
 }
+
+// Source implements [Backend].
+func (f *fallbackBackend) Source() string { return sourceSingleTenant }
 
 // Key implements [Backend].
 func (f *fallbackBackend) Key() string {
@@ -464,6 +510,9 @@ func (f *fallbackBackend) Key() string {
 func (f *fallbackBackend) Load(context.Context) (http.Handler, error) {
 	return f.st, nil
 }
+
+// maxStackResponseBytes bounds a grafana.com instance response.
+const maxStackResponseBytes = 1 << 20 // 1MB
 
 // The results of this call are cached
 func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Context, int64) (singleTenantStack, error) {
@@ -501,7 +550,7 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 		}
 
 		var result instance
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		if err := decodeLimitedJSON(resp.Body, maxStackResponseBytes, &result); err != nil {
 			return singleTenantStack{}, fmt.Errorf("decoding gcom instance: %w", err)
 		}
 		return singleTenantStack{

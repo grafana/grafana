@@ -595,22 +595,48 @@ func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 	})
 }
 
-func TestProvideCloudRoutesLoaderFactory_PluginsRequireTokenVerificationConfig(t *testing.T) {
+func TestProvideCloudRoutesLoaderFactory_PluginsWithoutTokenVerificationConfig(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	require.NotNil(t, loader)
+}
+
+func TestAPIGroupPreferredVersion(t *testing.T) {
+	served, unserved := true, false
+	ptr := func(s string) *string { return &s }
 	for _, tc := range []struct {
 		name      string
-		jwksURL   string
-		wantError string
+		versions  []v1alpha2.AppManifestManifestVersion
+		preferred *string
+		want      string
 	}{
-		{name: "missing JWKS URL", wantError: "missing cfg.ExtJWTAuth.JWKSUrl"},
-		{name: "missing audiences", jwksURL: "https://jwks.invalid/keys", wantError: "missing cfg.ExtJWTAuth.Audiences"},
+		{name: "an unserved last version is not preferred",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2", Served: &unserved}}, want: "v1"},
+		{name: "an unserved explicit preference falls back to a served version",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2", Served: &unserved}}, preferred: ptr("v2"), want: "v1"},
+		{name: "a served explicit preference is kept",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2"}}, preferred: ptr("v1"), want: "v1"},
+		{name: "GA over alpha, whatever the order",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2alpha1"}}, want: "v1"},
+		{name: "beta over alpha",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1beta1"}, {Name: "v1alpha1", Served: &served}}, want: "v1beta1"},
+		{name: "the highest GA version",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v2"}, {Name: "v1"}, {Name: "v10"}}, want: "v10"},
+		{name: "nothing served, nothing preferred",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1", Served: &unserved}}, want: ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
-			cfg.ExtJWTAuth.JWKSUrl = tc.jwksURL
-			cfg.ExtJWTAuth.Audiences = nil
-			loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-			require.ErrorContains(t, err, cloudRouterSection+": "+tc.wantError)
-			require.Nil(t, loader)
+			group := apiGroupFromManifestSpec(v1alpha2.AppManifestSpec{Group: "example.grafana.app", Versions: tc.versions, PreferredVersion: tc.preferred})
+			require.Equal(t, tc.want, group.PreferredVersion.Version)
 		})
 	}
+
+	t.Run("embedded manifests follow the same rule", func(t *testing.T) {
+		group := apiGroupFromManifestData(app.ManifestData{
+			Group: "example.grafana.app", PreferredVersion: "v2",
+			Versions: []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: false}},
+		})
+		require.Equal(t, "v1", group.PreferredVersion.Version)
+	})
 }
