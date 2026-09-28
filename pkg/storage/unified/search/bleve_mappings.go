@@ -199,6 +199,13 @@ func (k keywordField) term(value string) string {
 func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) map[string]keywordField {
 	fields := map[string]keywordField{}
 	for _, f := range requestableFields(provider, group, kindResource) {
+		// This is backend support only: the public field declaration deliberately
+		// does not advertise sorting until its callers have an old-server fallback.
+		if f.prefix == "" && f.def.Name == resource.SEARCH_FIELD_DELETED_RV {
+			fields[f.key] = keywordField{name: resource.SEARCH_FIELD_DELETED_RV_SORT}
+			continue
+		}
+
 		name, ok := keywordVariant(f.def)
 		if !ok {
 			continue
@@ -234,6 +241,11 @@ var standardKeywordFields = keywordFieldsForMapping(nil, "", "", nil)
 func sortableFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]bool {
 	fields := map[string]bool{}
 	for _, f := range requestableFields(provider, group, kindResource) {
+		// Kept backend-only for mixed-version rollout; see keywordFieldsForMapping.
+		if f.prefix == "" && f.def.Name == resource.SEARCH_FIELD_DELETED_RV {
+			fields[f.key] = true
+			continue
+		}
 		if !f.def.HasCapability(resource.SearchCapabilitySort) {
 			continue
 		}
@@ -353,6 +365,11 @@ func (k kindSearchFields) storedFacetField(name string) string {
 // getBleveDocMappings), so IncludeInAll has no runtime effect; setting it
 // false keeps the emitted JSON consistent.
 func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.SearchFieldDefinition) {
+	if def.Name == resource.SEARCH_FIELD_DELETED_RV {
+		addDeletedResourceVersionMappings(parent)
+		return
+	}
+
 	hasFilter := def.HasCapability(resource.SearchCapabilityFilter)
 	hasText := def.HasCapability(resource.SearchCapabilityText)
 	hasPartial := def.HasCapability(resource.SearchCapabilityPartial)
@@ -428,6 +445,27 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.IncludeInAll = false
 		parent.AddFieldMappingsAt(def.Name, m)
 	}
+}
+
+// addDeletedResourceVersionMappings keeps the value returned to callers in its
+// original form and indexes a separate fixed-width copy for exact sorting.
+func addDeletedResourceVersionMappings(parent *mapping.DocumentMapping) {
+	value := bleve.NewKeywordFieldMapping()
+	value.Index = false
+	value.Store = true
+	value.DocValues = false
+	value.IncludeInAll = false
+	value.IncludeTermVectors = false
+	value.SkipFreqNorm = true
+	parent.AddFieldMappingsAt(resource.SEARCH_FIELD_DELETED_RV, value)
+
+	sortValue := bleve.NewKeywordFieldMapping()
+	sortValue.Store = false
+	sortValue.DocValues = true
+	sortValue.IncludeInAll = false
+	sortValue.IncludeTermVectors = false
+	sortValue.SkipFreqNorm = true
+	parent.AddFieldMappingsAt(resource.SEARCH_FIELD_DELETED_RV_SORT, sortValue)
 }
 
 // nonStringFieldMapping returns a bleve field mapping matching a
