@@ -25,10 +25,6 @@ grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
 const loadJqueryWithFlot = () => import('./jqueryWithFlot');
 
-// `jquery.flot.events` and `jquery.flot.pie` have no matching file in public/vendor/flot, so
-// they already resolve to a placeholder that only fails if a plugin calls into them. Dropping
-// them would turn that into a failure to resolve the specifier at plugin load, which is worse
-// for the plugins that still ask for them.
 const jQueryFlotDeps = [
   'jquery.flot.crosshair',
   'jquery.flot.events',
