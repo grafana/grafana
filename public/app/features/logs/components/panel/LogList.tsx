@@ -466,7 +466,9 @@ const LogListComponent = ({
         // Event handled by the parent.
         return;
       }
-      toggleDetails(log);
+      const modifierKeyPressed = e.ctrlKey || e.metaKey || e.shiftKey;
+
+      toggleDetails(log, modifierKeyPressed);
     },
     [handleTextSelection, toggleDetails]
   );

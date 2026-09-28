@@ -11,6 +11,8 @@ import { LearnMoreLink } from '../solutions/LearnMoreLink';
 import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
 import { type Solution, type SolutionOffer } from '../solutions/types';
 
+import { KubernetesFilterActions } from './KubernetesFilterActions';
+
 interface SolutionCardProps {
   solution: Solution;
   needsAttention: boolean;
@@ -48,7 +50,10 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
               {datasource && (
                 <span className={styles.viaDatasource}>
                   <Text variant="bodySmall" color="secondary" truncate>
-                    {t('home.solutions.via-datasource', 'via {{name}}', { name: datasource.name })}
+                    {t('home.solutions.via-datasource', 'via {{name}}', {
+                      name: datasource.name,
+                      interpolation: { escapeValue: false },
+                    })}
                   </Text>
                 </span>
               )}
@@ -67,7 +72,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         />
 
         {alert && (
-          <Stack direction="row" gap={1.5} alignItems="flex-start">
+          <Stack direction="row" gap={1.5} alignItems="center">
             <Icon name="exclamation-triangle" size="md" className={styles.warning} />
             <Text variant="body" color="secondary">
               {[alert.primary, ...(alert.details ?? [])].join(' · ')}
@@ -100,6 +105,11 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           </LinkButton>
         ) : null}
       </Card.Actions>
+      {solution.id === 'kubernetes' && datasource && (
+        <Card.SecondaryActions>
+          <KubernetesFilterActions datasource={datasource} attention={isAttentionCta} />
+        </Card.SecondaryActions>
+      )}
     </Card>
   );
 }

@@ -195,11 +195,11 @@ describe('NotebookLayoutManager', () => {
     expect(screen.getByText('hidden-panel')).toBeInTheDocument();
   });
 
-  describe('add cell affordances', () => {
+  describe('add cell controls', () => {
     it('does not offer them outside edit mode', () => {
       renderNotebook();
 
-      expect(screen.queryByRole('button', { name: 'Click to add below' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Click to add above' })).not.toBeInTheDocument();
     });
 
     // One "+" per cell — two real cells plus the trailing empty one the invariant appends.
@@ -207,7 +207,7 @@ describe('NotebookLayoutManager', () => {
       renderNotebook(true);
 
       await screen.findAllByRole('textbox', { name: 'Markdown' });
-      expect(screen.getAllByRole('button', { name: 'Click to add below' })).toHaveLength(3);
+      expect(screen.getAllByRole('button', { name: 'Click to add above' })).toHaveLength(3);
     });
 
     // Revealed by hovering the cell, and carried along when the cell is reordered.
@@ -217,7 +217,7 @@ describe('NotebookLayoutManager', () => {
       const frame = (await screen.findByText('Hello notebook')).closest<HTMLElement>('[data-rfd-draggable-id]');
 
       expect(frame).not.toBeNull();
-      expect(within(frame!).getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
+      expect(within(frame!).getByRole('button', { name: 'Click to add above' })).toBeInTheDocument();
     });
 
     // The trailing-invariant bootstrap gives an empty notebook a first cell immediately (see 'the
@@ -225,13 +225,13 @@ describe('NotebookLayoutManager', () => {
     it('renders an add button once an empty notebook gets its first cell', () => {
       renderManager(buildManager([], true));
 
-      expect(screen.getAllByRole('button', { name: 'Click to add below' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Click to add above' })).toHaveLength(1);
     });
 
     it('opens the block type menu', async () => {
       const { user } = renderNotebook(true);
 
-      await user.click(screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      await user.click(screen.getAllByRole('button', { name: 'Click to add above' })[0]);
 
       expect(screen.getByRole('menu')).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
@@ -269,7 +269,7 @@ describe('NotebookLayoutManager', () => {
   });
 
   // The "always one more empty block ready" invariant: unlike the old dedicated prompt component,
-  // there is no separate affordance any more — the trailing cell in `cells` itself is always an empty,
+  // there is no separate prompt any more. The trailing cell in `cells` itself is always an empty,
   // placeholder-showing markdown editor, and offers the same "/" menu any empty markdown cell does
   // (see NotebookCellRenderer/NotebookLayoutManager's own setCellContent doc comment).
   describe('the trailing empty cell', () => {
@@ -420,7 +420,7 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getAllByRole('button', { name: 'Delete block' })).toHaveLength(3);
     });
 
-    // Inside the frame, so the existing hover rule reveals them with the rest of the cell's affordances
+    // Inside the frame, so the existing hover rule reveals them with the rest of the cell's controls
     // rather than needing a second mechanism.
     it('places them inside the frame of their own cell', async () => {
       renderNotebook(true);
@@ -548,17 +548,18 @@ describe('NotebookLayoutManager', () => {
       await user.click(screen.getByRole('menuitem', { name: itemName }));
     }
 
-    // Cell 'a' own add button, clicked, inserts between 'a' and 'b'. 'paragraph-1' is the
-    // trailing-invariant cell the bootstrap effect appends after 'b' before any of this happens.
+    // Cell 'a' own add button, clicked, inserts above 'a' — the very first position, which the old
+    // insert-below behaviour could not reach at all. 'paragraph-1' is the trailing-invariant cell the
+    // bootstrap effect appends after 'b' before any of this happens.
     it('inserts an empty code cell where its own add button offered it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickCode(user, screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      await pickCode(user, screen.getAllByRole('button', { name: 'Click to add above' })[0]);
 
-      expect(cellNames(manager)).toEqual(['a', 'code-1', 'b', 'paragraph-1']);
-      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
+      expect(cellNames(manager)).toEqual(['code-1', 'a', 'b', 'paragraph-1']);
+      expect(manager.state.cells[0].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
       // Inserted because a person asked for it, not because the assistant proposed it.
-      expect(manager.state.cells[1].state.source).toBe('user');
+      expect(manager.state.cells[0].state.source).toBe('user');
     });
 
     it('inserts a visualization panel cell at the given index', () => {
@@ -571,12 +572,11 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.body?.state.pluginId).toBe('timeseries');
     });
 
-    // The trailing empty cell's own add button is offering to insert *past* it. Inserting after
-    // that slot would leave it stranded mid-document once the invariant appends a replacement;
-    // inserting before it keeps the empty cell at the tail and still records an "Add block".
-    it('inserts before the trailing empty slot when its add button offers a position past it', async () => {
+    // The trailing empty cell's own add button offers its own position, so the new block lands
+    // before that slot and the empty cell stays at the tail.
+    it("inserts before the trailing empty slot when that slot's own add button is used", async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
-      const addButtons = screen.getAllByRole('button', { name: 'Click to add below' });
+      const addButtons = screen.getAllByRole('button', { name: 'Click to add above' });
 
       await pickCode(user, addButtons[addButtons.length - 1]);
 
@@ -588,9 +588,9 @@ describe('NotebookLayoutManager', () => {
     // Same insert-before-trailing path as Code above — Paragraph's starter content is already
     // empty markdown, identical to the trailing slot, so a convert-in-place used to be a no-op
     // on the undo stack. A fresh cell still has to land before the slot.
-    it('inserts a paragraph before the trailing empty slot when its add button offers a position past it', async () => {
+    it("inserts a paragraph before the trailing empty slot when that slot's own add button is used", async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
-      const addButtons = screen.getAllByRole('button', { name: 'Click to add below' });
+      const addButtons = screen.getAllByRole('button', { name: 'Click to add above' });
 
       await pickParagraph(user, addButtons[addButtons.length - 1]);
 
@@ -648,7 +648,7 @@ describe('NotebookLayoutManager', () => {
       expect(sibling.state.elementName).toBe('shared');
     });
 
-    // The trailing-invariant bootstrap is the only affordance an empty notebook has, so this is the
+    // The trailing-invariant bootstrap is the only control an empty notebook has, so this is the
     // sole path to a first cell.
     it('gives an empty notebook its first cell', async () => {
       const { manager, user } = renderManager(buildManager([], true));
@@ -734,10 +734,10 @@ describe('NotebookLayoutManager', () => {
     it('inserts a heading cell seeded with a heading marker', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickHeading(user, screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      await pickHeading(user, screen.getAllByRole('button', { name: 'Click to add above' })[0]);
 
-      expect(cellNames(manager)).toEqual(['a', 'heading-1', 'b', 'paragraph-1']);
-      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '# ' } });
+      expect(cellNames(manager)).toEqual(['heading-1', 'a', 'b', 'paragraph-1']);
+      expect(manager.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: '# ' } });
     });
 
     // Unlike 'heading-1' above, this insert's own default name collides with the trailing-invariant
@@ -746,10 +746,10 @@ describe('NotebookLayoutManager', () => {
     it('inserts an empty paragraph cell', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickParagraph(user, screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      await pickParagraph(user, screen.getAllByRole('button', { name: 'Click to add above' })[0]);
 
-      expect(cellNames(manager)).toEqual(['a', 'paragraph-2', 'b', 'paragraph-1']);
-      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
+      expect(cellNames(manager)).toEqual(['paragraph-2', 'a', 'b', 'paragraph-1']);
+      expect(manager.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
     });
 
     // The cell arrives editable and focused, same as a freshly inserted code cell. There are two
@@ -792,7 +792,7 @@ describe('NotebookLayoutManager', () => {
     });
 
     // The handle is a tab stop, which is what gives keyboard users the reorder for free — and the
-    // reason the frame reveals affordances on :focus-within as well as :hover.
+    // reason the frame reveals controls on :focus-within as well as :hover.
     it('keeps the handle focusable', () => {
       const { container } = renderNotebook(true);
 
@@ -1635,7 +1635,7 @@ describe('NotebookLayoutManager', () => {
       expect(frame).toHaveFocus();
     });
 
-    // The rest of every other affordance on this frame (drag handle, actions bar, the add-block
+    // The rest of every other control on this frame (drag handle, actions bar, the add-block
     // button) is edit-mode-only too — arrow-key navigation follows the same rule rather than being
     // a special case, which is also why the frame is not even a tab stop outside edit mode.
     it('does not respond to arrow keys outside edit mode', () => {

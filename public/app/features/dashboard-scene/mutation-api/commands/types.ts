@@ -56,6 +56,14 @@ export interface MutationCommand<T = unknown, TScene = DashboardScene> {
   handler: (payload: T, context: MutationContext<TScene>) => Promise<MutationResult>;
 }
 
+export interface LazyMutationCommand<TScene = DashboardScene> {
+  name: string;
+  /** Mirrors the loaded command so guards can inspect it without loading its implementation. */
+  readOnly?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload types vary by lazily loaded command
+  load: () => Promise<MutationCommand<any, TScene>>;
+}
+
 /**
  * Requires edit permissions on the dashboard (pure check, no side effects).
  */

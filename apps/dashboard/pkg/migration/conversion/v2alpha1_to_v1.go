@@ -1148,6 +1148,10 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 				"id":      t.Spec.Id,
 				"options": t.Spec.Options,
 			}
+			// Add the static refId if set
+			if t.Spec.RefId != nil {
+				transformation["refId"] = *t.Spec.RefId
+			}
 			// Add disabled if set
 			if t.Spec.Disabled != nil {
 				transformation["disabled"] = *t.Spec.Disabled
