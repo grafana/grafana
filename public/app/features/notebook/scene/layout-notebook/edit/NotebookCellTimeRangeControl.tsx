@@ -1,130 +1,243 @@
-import { css, cx } from '@emotion/css';
-import { useState } from 'react';
+import { css } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
+import { uniqBy } from 'lodash';
+import { useRef, useState } from 'react';
 
-import { type GrafanaTheme2, rangeUtil, type TimeOption } from '@grafana/data';
+import {
+  isDateTime,
+  LocalStorageValueProvider,
+  type GrafanaTheme2,
+  rangeUtil,
+  type TimeOption,
+  type TimeRange,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
-import { Box, Button, IconButton, Stack, Switch, Toggletip, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
+import { TimePickerContent } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerContent';
+import { getQuickOptions } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
 import { isNotebookScene } from '../../isNotebookScene';
 import { type NotebookCellItem } from '../NotebookCellItem';
-import { buildCellTimeRangeSpec, buildDraftTimeRangeHost, type CellTimeRangeSpec } from '../cellTimeRange';
+import { buildCellTimeRangeSpec, type CellTimeRangeSpec } from '../cellTimeRange';
+
+// Same key TimePickerWithHistory uses, so "recently used absolute ranges" here is the same list a
+// reader already sees on every other Grafana time picker, not a separate notebook-only one.
+const HISTORY_LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
+const MAX_HISTORY_ITEMS = 4;
 
 interface Props {
   cell: NotebookCellItem;
 }
 
+// Same overlay mechanics TimeRangePicker itself uses for its own dropdown — an absolutely
+// positioned panel next to a `position: relative` container, not Toggletip's tooltip-bubble chrome
+// (border/background/arrow), which visually clashes with TimePickerContent's own panel styling.
 export function NotebookCellTimeRangeControl({ cell }: Props) {
   const { $timeRange } = cell.useState();
   const [open, setOpen] = useState(false);
+  const styles = useStyles2(getStyles);
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const overlayRef = useRef<HTMLElement>(null);
+
+  const { overlayProps } = useOverlay(
+    {
+      isOpen: open,
+      onClose: () => setOpen(false),
+      isDismissable: true,
+      shouldCloseOnInteractOutside: (element) => !containerRef.current?.contains(element),
+    },
+    overlayRef
+  );
+  const { dialogProps } = useDialog({}, overlayRef);
+
+  const trigger = $timeRange ? (
+    <button type="button" className={styles.label} onClick={() => setOpen((prev) => !prev)}>
+      <Icon name="lock" size="sm" />
+      {t('notebook.cell.time-range.locked', 'Locked: {{range}}', {
+        range: rangeUtil.describeTimeRange(
+          { from: $timeRange.state.from, to: $timeRange.state.to },
+          getAncestorTimeZone(cell),
+          getQuickRanges(cell)
+        ),
+        interpolation: { escapeValue: false },
+      })}
+    </button>
+  ) : (
+    <IconButton
+      name="clock-nine"
+      size="sm"
+      variant="secondary"
+      tooltip={t('notebook.cell.time-range.tooltip-default', "Uses the notebook's time range")}
+      aria-label={t('notebook.cell.time-range.button', 'Update time range')}
+      onClick={() => setOpen((prev) => !prev)}
+    />
+  );
 
   return (
-    <Toggletip
-      show={open}
-      onOpen={() => setOpen(true)}
-      onClose={() => setOpen(false)}
-      closeButton={false}
-      placement="bottom-end"
-      fitContent
-      content={<NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />}
-    >
+    <span className={styles.container} ref={containerRef}>
       {$timeRange ? (
-        <Button fill="solid" size="sm" icon="lock" variant="secondary">
-          {t('notebook.cell.time-range.locked', 'Locked: {{range}}', {
-            range: rangeUtil.describeTimeRange(
-              { from: $timeRange.state.from, to: $timeRange.state.to },
-              getAncestorTimeZone(cell),
-              getQuickRanges(cell)
-            ),
-            interpolation: { escapeValue: false },
-          })}
-        </Button>
+        <span className={styles.pill}>
+          {trigger}
+          <span className={styles.separator} />
+          <IconButton
+            name="times"
+            size="sm"
+            tooltip={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
+            aria-label={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
+            onClick={() => cell.onTimeRangeChange(undefined)}
+          />
+        </span>
       ) : (
-        <IconButton
-          name="clock-nine"
-          size="sm"
-          variant="secondary"
-          tooltip={t('notebook.cell.time-range.tooltip-default', "Uses the notebook's time range")}
-          aria-label={t('notebook.cell.time-range.button', 'Update time range')}
-        />
+        trigger
       )}
-    </Toggletip>
+      {open && (
+        <FocusScope contain autoFocus restoreFocus>
+          <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
+            <NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />
+          </section>
+        </FocusScope>
+      )}
+    </span>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    position: 'relative',
+    display: 'inline-flex',
+    alignItems: 'center',
+  }),
+  content: css({
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: theme.spacing(0.5),
+    zIndex: theme.zIndex.dropdown,
+  }),
+  pill: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: theme.spacing(theme.components.height.sm),
+    borderRadius: theme.shape.radius.default,
+    background: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    paddingRight: theme.spacing(0.5),
+  }),
+  label: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    height: '100%',
+    border: 'none',
+    background: 'transparent',
+    color: theme.colors.text.primary,
+    font: 'inherit',
+    cursor: 'pointer',
+    padding: theme.spacing(0, 1),
+    whiteSpace: 'nowrap',
+    '&:focus-visible': {
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '2px',
+    },
+  }),
+  separator: css({
+    width: '1px',
+    height: theme.spacing(2),
+    background: theme.colors.border.weak,
+    marginRight: theme.spacing(0.5),
+  }),
+});
 
 function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: NotebookCellItem; onClose: () => void }) {
-  const styles = useStyles2(getStyles);
-  // Timezone always follows the notebook, never the cell — same convention as a dashboard panel's
-  // own time override (PanelTimeRange), which never owns its timezone either.
   const ancestorTimeZone = getAncestorTimeZone(cell);
+  const fiscalYearStartMonth = getAncestorFiscalYearStartMonth(cell);
   const committed = cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : seedFromAncestor(cell);
 
-  const [host] = useState(() =>
-    buildDraftTimeRangeHost(
-      committed.from,
-      committed.to,
-      ancestorTimeZone,
-      getAncestorWeekStart(cell),
-      getQuickRanges(cell)
-    )
+  const [value, setValue] = useState<TimeRange>(() =>
+    rangeUtil.convertRawToRange({ from: committed.from, to: committed.to }, ancestorTimeZone, fiscalYearStartMonth)
   );
-  const [useNotebookTime, setUseNotebookTime] = useState(cell.state.$timeRange === undefined);
-
-  const onReset = () => {
-    const range = rangeUtil.convertRawToRange({ from: committed.from, to: committed.to }, ancestorTimeZone);
-    host.state.$timeRange.onTimeRangeChange(range);
-    setUseNotebookTime(cell.state.$timeRange === undefined);
-  };
-
-  const onApply = () => {
-    cell.onTimeRangeChange(useNotebookTime ? undefined : buildCellTimeRangeSpec(host.state.$timeRange));
-    onClose();
-  };
-
-  const onToggle = (checked: boolean) => {
-    setUseNotebookTime(checked);
-    if (checked) {
-      const ancestor = seedFromAncestor(cell);
-      const range = rangeUtil.convertRawToRange({ from: ancestor.from, to: ancestor.to }, ancestorTimeZone);
-      host.state.$timeRange.onTimeRangeChange(range);
-    }
-  };
 
   return (
-    <Stack direction="column" gap={2}>
-      <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
-        <span>{t('notebook.cell.time-range.use-notebook-time', 'Use notebook time range')}</span>
-        <Switch value={useNotebookTime} onChange={(e) => onToggle(e.currentTarget.checked)} />
-      </Box>
-      <div className={cx(styles.picker, useNotebookTime && styles.pickerDisabled)} aria-disabled={useNotebookTime}>
-        <host.state.timePicker.Component model={host.state.timePicker} />
-      </div>
-      <Box marginTop={1}>
-        <Stack justifyContent="flex-end">
-          <Button size="sm" variant="secondary" onClick={onReset}>
-            {t('notebook.cell.time-range.reset', 'Reset')}
-          </Button>
-          <Button size="sm" variant="primary" onClick={onApply}>
-            {t('common.apply', 'Apply')}
-          </Button>
-        </Stack>
-      </Box>
-    </Stack>
+    <LocalStorageValueProvider<TimePickerHistoryItem[]> storageKey={HISTORY_LOCAL_STORAGE_KEY} defaultValue={[]}>
+      {(storedHistory, onSaveToStore) => {
+        const validHistory = getValidHistory(storedHistory);
+
+        return (
+          <TimePickerContent
+            value={value}
+            onChange={(timeRange) => {
+              setValue(timeRange);
+              const spec = toRawSpec(timeRange);
+              if (isAbsolute(timeRange)) {
+                onSaveToStore(uniqBy([spec, ...validHistory], (v) => v.from + v.to).slice(0, MAX_HISTORY_ITEMS));
+              }
+              cell.onTimeRangeChange(spec);
+              onClose();
+            }}
+            onChangeTimeZone={() => {}}
+            timeZone={ancestorTimeZone}
+            fiscalYearStartMonth={fiscalYearStartMonth}
+            hideTimeZone
+            quickOptions={getQuickRanges(cell) ?? getQuickOptions()}
+            history={deserializeHistory(validHistory)}
+            showHistory
+            weekStart={getAncestorWeekStart(cell)}
+          />
+        );
+      }}
+    </LocalStorageValueProvider>
   );
 }
 
-// The range this cell would use with no override of its own. Starts from the cell's *parent*, since
-// sceneGraph.getTimeRange checks the object it's given first — starting at the cell would just
-// return its own still-set `$timeRange` instead of skipping to the notebook's ambient range.
+interface TimePickerHistoryItem {
+  from: string;
+  to: string;
+}
+
+function toRawSpec(timeRange: TimeRange): CellTimeRangeSpec {
+  return {
+    from: typeof timeRange.raw.from === 'string' ? timeRange.raw.from : timeRange.raw.from.toISOString(),
+    to: typeof timeRange.raw.to === 'string' ? timeRange.raw.to : timeRange.raw.to.toISOString(),
+  };
+}
+
+function isAbsolute(timeRange: TimeRange): boolean {
+  return isDateTime(timeRange.raw.from) || isDateTime(timeRange.raw.to);
+}
+
+function deserializeHistory(values: TimePickerHistoryItem[]): TimeRange[] {
+  return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
+}
+
+function getValidHistory(values: unknown): TimePickerHistoryItem[] {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  return values.filter(
+    (item): item is TimePickerHistoryItem =>
+      typeof item === 'object' &&
+      item !== null &&
+      Object.keys(item).length === 2 &&
+      typeof item.from === 'string' &&
+      typeof item.to === 'string'
+  );
+}
+
 function seedFromAncestor(cell: NotebookCellItem): CellTimeRangeSpec {
   const { from, to } = sceneGraph.getTimeRange(cell.parent ?? cell).state;
   return { from, to };
 }
 
-// As seedFromAncestor: starts from the cell's parent so a still-set override on the cell itself
-// isn't picked up in its place.
 function getAncestorTimeZone(cell: NotebookCellItem): string {
   return sceneGraph.getTimeRange(cell.parent ?? cell).getTimeZone();
+}
+
+function getAncestorFiscalYearStartMonth(cell: NotebookCellItem) {
+  return sceneGraph.getTimeRange(cell.parent ?? cell).state.fiscalYearStartMonth;
 }
 
 function getAncestorWeekStart(cell: NotebookCellItem) {
@@ -144,14 +257,3 @@ function getQuickRanges(cell: NotebookCellItem): TimeOption[] | undefined {
 
   return undefined;
 }
-
-const getStyles = (_theme: GrafanaTheme2) => ({
-  picker: css({
-    display: 'flex',
-    justifyContent: 'flex-end',
-  }),
-  pickerDisabled: css({
-    opacity: 0.5,
-    pointerEvents: 'none',
-  }),
-});
