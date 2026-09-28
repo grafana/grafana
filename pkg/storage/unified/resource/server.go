@@ -1561,9 +1561,8 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	// Don't validate the name format here: a lookup with an odd or
-	// invalid-looking name should fall through to the backend and surface as
-	// NotFound, matching K8s Get semantics. Strict name validation belongs on
+	// Don't validate the name format here: the backend reports invalid names as
+	// BadRequest, after the access check. Strict name validation belongs on
 	// writes (Create/Update/Delete).
 	if r := verifyRequestKeyCollection(req.Key); r != nil {
 		return nil, status.Error(codes.InvalidArgument, r.Message)
