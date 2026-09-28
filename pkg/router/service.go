@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -43,9 +44,18 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
 	}
+	standalone := slices.Contains(cfg.Target, "router")
+	var auth authn.TokenAuthenticator
+	if standalone {
+		var err error
+		auth, err = authn.NewGrafanaTokenAuthenticator(cfg)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	s := newService(loader, reg)
-	s.standalone = slices.Contains(cfg.Target, "router")
+	s := newService(loader, auth, reg)
+	s.standalone = standalone
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 	if s.middleware && !s.standalone {
 		// The middleware runs ahead of the embedded API server, so it hosts only
@@ -82,9 +92,9 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	return nil
 }
 
-func newService(loader RoutesLoader, reg prometheus.Registerer) *Service {
+func newService(loader RoutesLoader, tokens authn.TokenAuthenticator, reg prometheus.Registerer) *Service {
 	s := &Service{
-		router:  NewGrafanaRouter(loader),
+		router:  NewGrafanaRouter(loader, tokens),
 		metrics: newRouterMetrics(reg),
 	}
 	s.router.onBreakerChange = s.metrics.breakerChanged

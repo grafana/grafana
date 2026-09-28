@@ -22,7 +22,7 @@ func discoveryRouter(t *testing.T, group string, handler http.Handler) *GrafanaR
 			PreferredVersion: metav1.GroupVersionForDiscovery{GroupVersion: group + "/v1", Version: "v1"},
 		},
 	}
-	router := NewGrafanaRouter(stubLoader{})
+	router := NewGrafanaRouter(stubLoader{}, nil)
 	router.served[group] = &handlerEntry{
 		backend: backend, handler: handler, lastKey: backend.key, breaker: newGroupBreaker(group),
 	}
@@ -69,7 +69,7 @@ func TestDiscoveryIncludesFallbackGroups(t *testing.T) {
 	})
 	for _, accept := range []string{"application/json", aggregatedDiscoveryJSON + ",application/json", "application/vnd.kubernetes.protobuf;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList"} {
 		t.Run(accept, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/apis/", nil)
+			req := newAuthenticatedRequest(http.MethodGet, "/apis/", nil)
 			req.Header.Set("Accept", accept)
 			req.Header.Set("Authorization", "Bearer caller")
 			res := httptest.NewRecorder()
@@ -124,7 +124,7 @@ func TestAggregatedDiscoverySupportsLegacyBackends(t *testing.T) {
 	}))
 	router.served["broken.ext.grafana.app"] = broken.served["broken.ext.grafana.app"]
 	router.publish(t.Context())
-	req := httptest.NewRequest(http.MethodGet, "/apis", nil)
+	req := newAuthenticatedRequest(http.MethodGet, "/apis", nil)
 	req.Header.Set("Accept", aggregatedDiscoveryJSON)
 	res := httptest.NewRecorder()
 	router.HandleFunc(res, req, http.NotFoundHandler())
@@ -162,7 +162,7 @@ func TestOpenAPIIndexIncludesFallbackAndTracksItsChanges(t *testing.T) {
 			},
 		}))
 	})
-	req := httptest.NewRequest(http.MethodGet, "/openapi/v3", nil)
+	req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3", nil)
 	res := httptest.NewRecorder()
 	router.HandleFunc(res, req, fallback)
 	require.Equal(t, http.StatusOK, res.Code)

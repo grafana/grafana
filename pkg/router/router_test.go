@@ -24,7 +24,7 @@ func (stubLoader) Notify(context.Context) (<-chan struct{}, error) { return make
 // withGroups builds a router and seeds its snapshot with a handler per group
 // that writes the group name, so tests can assert which group served.
 func withGroups(groups ...string) *GrafanaRouter {
-	s := NewGrafanaRouter(stubLoader{})
+	s := NewGrafanaRouter(stubLoader{}, nil)
 	for _, g := range groups {
 		s.served[g] = &handlerEntry{
 			handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -70,7 +70,7 @@ func TestHandleFuncRoutesByGroup(t *testing.T) {
 	}
 	for _, tc := range cases {
 		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tc.path, nil))
+		h.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, tc.path, nil))
 		if rec.Code != tc.wantCode {
 			t.Errorf("path %q: got code %d, want %d", tc.path, rec.Code, tc.wantCode)
 		}
@@ -93,7 +93,7 @@ func TestHandleFuncRootDiscoveryNotProxied(t *testing.T) {
 
 	for _, path := range []string{"/apis", "/apis/"} {
 		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		h.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
 		if rec.Code == http.StatusTeapot {
 			t.Errorf("path %q fell through to next; root discovery must be router-owned", path)
 		}
@@ -113,7 +113,7 @@ func TestServeRootDocsWithETag(t *testing.T) {
 
 	for _, path := range []string{"/apis", "/openapi/v3"} {
 		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		h.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
 		if rec.Code != http.StatusOK {
 			t.Fatalf("path %q: got code %d, want 200", path, rec.Code)
 		}
@@ -124,7 +124,7 @@ func TestServeRootDocsWithETag(t *testing.T) {
 
 		// Conditional GET with the returned ETag must 304 with no body.
 		rec2 := httptest.NewRecorder()
-		req2 := httptest.NewRequest(http.MethodGet, path, nil)
+		req2 := newAuthenticatedRequest(http.MethodGet, path, nil)
 		req2.Header.Set("If-None-Match", etag)
 		h.ServeHTTP(rec2, req2)
 		if rec2.Code != http.StatusNotModified {
@@ -218,7 +218,7 @@ func TestOpenAPIV3MalformedSubpathFallsThrough(t *testing.T) {
 		s.HandleFunc(w, req, next)
 	})
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/dashboard.grafana.app", nil))
+	h.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/dashboard.grafana.app", nil))
 	if rec.Code != http.StatusTeapot {
 		t.Errorf("got code %d, want 418 (fell through to next)", rec.Code)
 	}
@@ -232,7 +232,7 @@ func TestOpenAPIV3MalformedSubpathFallsThrough(t *testing.T) {
 // misconfigured group, even though every other group is still proxying
 // fine.
 func TestReadyDoesNotFailOnPartialReconcileError(t *testing.T) {
-	r := NewGrafanaRouter(stubLoader{})
+	r := NewGrafanaRouter(stubLoader{}, nil)
 	r.state.Store(&routerState{phase: serving, err: errors.New("group x failed to load"), served: true})
 
 	if err := r.Ready(context.Background()); err != nil {
@@ -263,7 +263,7 @@ func (l *countingLoader) Notify(context.Context) (<-chan struct{}, error) {
 func TestRunDoesNotBusyLoopOnClosedNotifyChannel(t *testing.T) {
 	notifyCh := make(chan struct{}, 1)
 	loader := &countingLoader{notifyCh: notifyCh}
-	r := NewGrafanaRouter(loader)
+	r := NewGrafanaRouter(loader, nil)
 
 	ctx := t.Context()
 	if err := r.Run(ctx); err != nil {
@@ -292,7 +292,7 @@ func (erroringLoader) Notify(context.Context) (<-chan struct{}, error) {
 // /openapi/v3 with an empty snapshot, and readyz going green would send
 // clients an empty discovery document instead of waiting for a real load.
 func TestReadyFailsAfterTotallyFailedInitialReconcile(t *testing.T) {
-	r := NewGrafanaRouter(erroringLoader{})
+	r := NewGrafanaRouter(erroringLoader{}, nil)
 	r.storeServing(context.Background(), r.reconcile(context.Background()))
 
 	if err := r.Ready(context.Background()); err == nil {
@@ -321,7 +321,7 @@ func TestReadyOKWithPartialLoadFailureGivenAtLeastOneServedGroup(t *testing.T) {
 		&fakeBackend{group: metav1.APIGroup{Name: "good.grafana.app"}, key: "1"},
 		failingBackend{group: "bad.grafana.app", key: "1"},
 	}}
-	r := NewGrafanaRouter(loader)
+	r := NewGrafanaRouter(loader, nil)
 	r.storeServing(context.Background(), r.reconcile(context.Background()))
 
 	if err := r.Ready(context.Background()); err != nil {
@@ -361,7 +361,7 @@ func TestRouterFallbackOnlyForUnregisteredGroups(t *testing.T) {
 				w.WriteHeader(http.StatusAccepted)
 			})
 			recorder := httptest.NewRecorder()
-			router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil), http.NotFoundHandler())
+			router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, tc.path, nil), http.NotFoundHandler())
 			if recorder.Code != tc.status {
 				t.Errorf("status = %d, want %d", recorder.Code, tc.status)
 			}
@@ -393,7 +393,7 @@ func TestRunRetriesAFailedReconcile(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		loader := &flakyLoader{failures: 2}
-		router := NewGrafanaRouter(loader)
+		router := NewGrafanaRouter(loader, nil)
 		require.NoError(t, router.Run(ctx))
 		synctest.Wait()
 		require.Error(t, router.Ready(ctx), "the first load failed")

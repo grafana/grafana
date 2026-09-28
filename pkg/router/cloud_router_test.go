@@ -595,24 +595,11 @@ func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 	})
 }
 
-func TestProvideCloudRoutesLoaderFactory_PluginsRequireTokenVerificationConfig(t *testing.T) {
-	for _, tc := range []struct {
-		name      string
-		jwksURL   string
-		wantError string
-	}{
-		{name: "missing JWKS URL", wantError: "missing cfg.ExtJWTAuth.JWKSUrl"},
-		{name: "missing audiences", jwksURL: "https://jwks.invalid/keys", wantError: "missing cfg.ExtJWTAuth.Audiences"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
-			cfg.ExtJWTAuth.JWKSUrl = tc.jwksURL
-			cfg.ExtJWTAuth.Audiences = nil
-			loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-			require.ErrorContains(t, err, cloudRouterSection+": "+tc.wantError)
-			require.Nil(t, loader)
-		})
-	}
+func TestProvideCloudRoutesLoaderFactory_PluginsWithoutTokenVerificationConfig(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	require.NotNil(t, loader)
 }
 
 func TestAPIGroupPreferredVersion(t *testing.T) {
