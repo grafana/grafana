@@ -203,17 +203,6 @@ decode:
 		case resourcepb.WatchEvent_DELETED:
 			watchAction = watch.Deleted
 
-			if evt.Previous != nil {
-				// here k8s expects the previous object but with the new resource version
-				accessor, err := utils.MetaAccessor(obj)
-				if err != nil {
-					klog.Errorf("error getting object accessor: %s", err)
-					return watch.Error, nil, err
-				}
-
-				accessor.SetResourceVersionInt64(evt.Resource.Version)
-			}
-
 			// apply any predicates not handled in storage
 			matches, err := d.predicate.Matches(obj)
 			if err != nil {
