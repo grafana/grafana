@@ -664,6 +664,7 @@ func TestNATSStartupRecovery(t *testing.T) {
 				require.Same(t, subConn, currentSub)
 			}
 			assertDelivery("initial recovery")
+			require.Zero(t, reconnects.Load(), "initial connection is not a reconnect")
 			srv.Shutdown()
 			srv.WaitForShutdown()
 			require.Eventually(t, func() bool { return pubConn.IsReconnecting() && subConn.IsReconnecting() }, 5*time.Second, 10*time.Millisecond)
@@ -673,7 +674,9 @@ func TestNATSStartupRecovery(t *testing.T) {
 			require.Equal(t, services.Running, sub.State())
 			startLifecycleServer(t, port, "right-token")
 			assertDelivery("subscription restored")
-			require.Eventually(t, func() bool { return reconnects.Load() > 0 }, time.Second, time.Millisecond)
+			require.Eventually(t, func() bool { return reconnects.Load() == 1 }, time.Second, time.Millisecond)
+			require.NoError(t, services.StopAndAwaitTerminated(context.Background(), sub))
+			require.EqualValues(t, 1, reconnects.Load(), "normal shutdown must not reconcile")
 		})
 	}
 }
