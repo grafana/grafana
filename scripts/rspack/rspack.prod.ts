@@ -24,7 +24,7 @@ export default (env: Env = {}) => {
       minimize: Number(env.noMinify) !== 1,
       minimizer: [
         new rspack.SwcJsMinimizerRspackPlugin(),
-        // `targets: []` means "minify, do not transpile" — postcss already handles prefixes.
+        // `targets: []` means "minify, do not transpile".
         new rspack.LightningCssMinimizerRspackPlugin({ minimizerOptions: { targets: [] } }),
       ],
       runtimeChunk: 'single',

@@ -60,7 +60,6 @@
 }
 input:-webkit-autofill {
   animation-name: onAutoFillStart;
-  -webkit-transition: transform 1ms;
   transition: transform 1ms;
 }
 
@@ -462,7 +461,7 @@ input.invalid {
 .alert-handle-wrapper {
   position: absolute;
   -webkit-user-select: none;
-          user-select: none;
+  user-select: none;
 }
 .alert-handle-wrapper .alert-handle {
   z-index: 10;

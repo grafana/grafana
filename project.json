@@ -89,7 +89,6 @@
         "{workspaceRoot}/public/sass/_angular.scss",
         "{workspaceRoot}/public/sass/grafana.dark.scss",
         "{workspaceRoot}/public/sass/grafana.light.scss",
-        "{workspaceRoot}/.browserslistrc",
         "{workspaceRoot}/packages/grafana-data/src/themes/**",
         "{workspaceRoot}/packages/grafana-ui/src/themes/**",
         "{workspaceRoot}/package.json"

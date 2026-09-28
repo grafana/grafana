@@ -1,7 +1,5 @@
-import autoprefixer from 'autoprefixer';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'path';
-import postcss from 'postcss';
 import { compileAsync } from 'sass';
 
 import { createTheme } from '@grafana/data';
@@ -26,12 +24,7 @@ async function generateThemeCss(themeName: 'dark' | 'light') {
     silenceDeprecations: ['import', 'global-builtin'],
     style: 'expanded',
   });
-  const postcssResult = await postcss([autoprefixer()]).process(sassResult.css, {
-    from: sourcePath,
-    to: outputPath,
-  });
-
-  await writeFileOrThrow(outputPath, postcssResult.css);
+  await writeFileOrThrow(outputPath, sassResult.css);
 }
 
 async function generateThemeStyles() {
