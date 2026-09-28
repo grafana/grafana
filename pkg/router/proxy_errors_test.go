@@ -59,7 +59,7 @@ func proxiedRouter(t *testing.T, upstream string, transport *http.Transport) *Gr
 
 func serveRouter(router *GrafanaRouter, target string) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
-	router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+	router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
 	return recorder
 }
 

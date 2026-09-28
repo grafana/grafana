@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 
@@ -17,9 +17,9 @@ jest.mock('@grafana/runtime/internal', () => ({
   },
   getOFREPWebProvider: jest.fn().mockReturnValue({
     flagCache: {
-      'feature-alpha': { value: true, reason: 'DEFAULT' },
-      'feature-beta': { value: false, reason: 'TARGETING_MATCH' },
-      'feature-object': { value: { enabled: true, cohort: 'staff' }, reason: 'STATIC' },
+      'feature-alpha': { value: true, reason: 'DEFAULT', variant: 'enabled' },
+      'feature-beta': { value: false, reason: 'TARGETING_MATCH', variant: 'disabled' },
+      'feature-object': { value: { enabled: true, cohort: 'staff' }, reason: 'STATIC', variant: 'staff' },
       'feature-error': { errorCode: 'FLAG_NOT_FOUND', errorDetails: 'No provider result found for this flag.' },
     } as Record<string, unknown>,
     events: { addHandler: jest.fn(), removeHandler: jest.fn() },
@@ -220,7 +220,7 @@ describe('FeatureControlFlag', () => {
     expect(screen.getAllByText('true')).toHaveLength(2);
   });
 
-  it('shows the OFREP evaluation value and reason for an existing flag', async () => {
+  it('shows the OFREP evaluation value, variant and reason for an existing flag', async () => {
     renderComponent({ key: 'feature-alpha', value: 'false' });
     await expandFlag('feature-alpha');
 
@@ -228,7 +228,9 @@ describe('FeatureControlFlag', () => {
     expect(screen.getAllByText('true')).toHaveLength(2);
 
     await userEvent.hover(screen.getByTestId('icon-info-circle'));
-    expect(await screen.findByText('DEFAULT')).toBeInTheDocument();
+    const tooltip = await screen.findByRole('tooltip');
+    expect(within(tooltip).getByText('enabled')).toBeInTheDocument();
+    expect(within(tooltip).getByText('DEFAULT')).toBeInTheDocument();
   });
 
   it('shows the full OFREP object value in the badge tooltip', async () => {

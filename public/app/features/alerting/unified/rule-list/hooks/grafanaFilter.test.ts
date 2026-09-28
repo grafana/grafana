@@ -169,6 +169,41 @@ describe('grafana-managed rules', () => {
       expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(false);
     });
 
+    it('should filter by policy routing expressed only via the __grafana_managed_route__ label', () => {
+      // Rules routed purely off the legacy label (no typed notificationSettings.policy) still
+      // deliver correctly via Alertmanager, but must also match the list-view policy filter.
+      const ruleRoutedByLabelOnly = mockGrafanaPromAlertingRule({
+        name: 'Rule routed by label only',
+        labels: { __grafana_managed_route__: 'team-a-policy' },
+      });
+      const ruleRoutedByDifferentLabel = mockGrafanaPromAlertingRule({
+        name: 'Rule routed by a different label-only policy',
+        labels: { __grafana_managed_route__: 'team-b-policy' },
+      });
+      const ruleWithNoRouting = mockGrafanaPromAlertingRule({
+        name: 'Rule with no policy routing at all',
+      });
+
+      const { frontendFilter } = getGrafanaFilter(getFilter({ policy: 'team-a-policy' }));
+      expect(frontendFilter.ruleMatches(ruleRoutedByLabelOnly)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleRoutedByDifferentLabel)).toBe(false);
+      expect(frontendFilter.ruleMatches(ruleWithNoRouting)).toBe(false);
+    });
+
+    it('should prefer notificationSettings.policy over the legacy label when both are present', () => {
+      const rule = mockGrafanaPromAlertingRule({
+        name: 'Rule with both the typed field and a stale label',
+        notificationSettings: { policy: 'team-a-policy' },
+        labels: { __grafana_managed_route__: 'team-b-policy' },
+      });
+
+      const { frontendFilter } = getGrafanaFilter(getFilter({ policy: 'team-a-policy' }));
+      expect(frontendFilter.ruleMatches(rule)).toBe(true);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ policy: 'team-b-policy' }));
+      expect(frontendFilter2.ruleMatches(rule)).toBe(false);
+    });
+
     it('should match rules using the default policy when filtering by user-defined', () => {
       const ruleWithNoSettings = mockGrafanaPromAlertingRule({
         name: 'Rule with no notification settings',

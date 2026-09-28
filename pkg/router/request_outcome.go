@@ -14,6 +14,8 @@ const (
 	routeDiscovery = "discovery" // root discovery (/apis, /openapi/v3), built by the router
 	routeNext      = "next"      // not the router's; passed to the next handler
 	routeInvalid   = "invalid"   // rejected before routing, such as a non-canonical path
+
+	routeUnauthenticated = "unauthenticated" // rejected because the caller did not authenticate
 )
 
 // Why a request's backend failed, for grafana_router_backend_failures_total.

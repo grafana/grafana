@@ -66,7 +66,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	doneCh := make(chan struct{})
 
 	testPluginContext := backend.PluginContext{
-		OrgID:    1,
+		OrgID:    1, //nolint:staticcheck // Exercise the legacy plugin context.
 		PluginID: "test-plugin",
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 			UID: "xyz",
@@ -301,7 +301,7 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 	currentErrors := 0
 
 	testPluginContext := backend.PluginContext{
-		OrgID:    1,
+		OrgID:    1, //nolint:staticcheck // Exercise the legacy plugin context.
 		PluginID: "test-plugin",
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 			UID: "xyz",
@@ -386,7 +386,7 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 	}()
 
 	testPluginContext := backend.PluginContext{
-		OrgID:    1,
+		OrgID:    1, //nolint:staticcheck // Exercise the legacy plugin context.
 		PluginID: "test-plugin",
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 			UID: "xyz",
@@ -455,7 +455,7 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 	}()
 
 	testPluginContext := backend.PluginContext{
-		OrgID:    1,
+		OrgID:    1, //nolint:staticcheck // Exercise the legacy plugin context.
 		PluginID: "test-plugin",
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 			UID: "xyz",
