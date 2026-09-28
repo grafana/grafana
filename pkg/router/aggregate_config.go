@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,36 +15,71 @@ type aggregateTargetConfig struct {
 	Name               string
 	URL                string
 	Audience           string
+	Auth               aggregateAuth
 	GroupPatterns      []string
 	CAFile             string
 	InsecureSkipVerify bool
 }
 
-// aggregateTargetNames are the fixed upstream apiservers the router aggregates.
-// See specs/2026-09-11-router-aggregate-discovery-design.md for why this is
-// not a configurable list.
-var aggregateTargetNames = []string{"baas_apiserver", "cloud_app_platform_apiserver"}
+// aggregateAuth is the header a target reads the router's exchanged token from.
+type aggregateAuth string
 
-// parseAggregateTargets reads the <name>.url, .audience, .group_regex,
-// .ca_file and .insecure keys for each fixed target. Targets without a url
-// are skipped; an empty group_regex matches every group.
+const (
+	aggregateAuthBearer      aggregateAuth = "bearer"       // Authorization: Bearer
+	aggregateAuthAccessToken aggregateAuth = "access_token" // X-Access-Token
+)
+
+// aggregateTargetNames are the fixed upstream apiservers the router aggregates,
+// with the auth each expects unless <name>.auth says otherwise. See
+// specs/2026-09-11-router-aggregate-discovery-design.md for why this is not a
+// configurable list.
+var aggregateTargetNames = []struct {
+	name string
+	auth aggregateAuth
+}{
+	{"baas_apiserver", aggregateAuthAccessToken},
+	{"cloud_app_platform_apiserver", aggregateAuthBearer},
+}
+
+// parseAggregateTargets reads the <name>.url, .audience, .auth,
+// .group_patterns, .ca_file and .insecure keys for each fixed target. Targets
+// without a url are skipped; empty group_patterns match every group.
 func parseAggregateTargets(section *setting.DynamicSection) ([]aggregateTargetConfig, error) {
 	var targets []aggregateTargetConfig
-	for _, name := range aggregateTargetNames {
+	for _, target := range aggregateTargetNames {
+		name := target.name
 		url := section.Key(name + ".url").MustString("")
 		if url == "" {
 			continue
+		}
+		auth := aggregateAuth(section.Key(name + ".auth").MustString(string(target.auth)))
+		if auth != aggregateAuthBearer && auth != aggregateAuthAccessToken {
+			return nil, fmt.Errorf("%s.auth must be %q or %q, got %q", name, aggregateAuthBearer, aggregateAuthAccessToken, auth)
 		}
 		targets = append(targets, aggregateTargetConfig{
 			Name:               name,
 			URL:                url,
 			Audience:           section.Key(name + ".audience").MustString(""),
-			GroupPatterns:      splitGroupPatterns(section.Key(name + ".group_regex").MustString("")),
+			Auth:               auth,
+			GroupPatterns:      splitGroupPatterns(groupPatternsKey(section, name+".group_patterns", name+".group_regex")),
 			CAFile:             section.Key(name + ".ca_file").MustString(""),
 			InsecureSkipVerify: section.Key(name + ".insecure").MustBool(false),
 		})
 	}
 	return targets, nil
+}
+
+// groupPatternsKey reads a group patterns key, falling back to its former
+// name. The patterns are globs, so the "regex" names were misleading.
+func groupPatternsKey(section *setting.DynamicSection, key, formerKey string) string {
+	if value := section.Key(key).MustString(""); value != "" {
+		return value
+	}
+	value := section.Key(formerKey).MustString("")
+	if value != "" {
+		logging.DefaultLogger.Warn("router: config key was renamed, update your config", "section", cloudRouterSection, "key", formerKey, "renamedTo", key)
+	}
+	return value
 }
 
 // splitGroupPatterns splits a comma-separated list of glob patterns. Empty

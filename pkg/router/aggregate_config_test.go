@@ -60,7 +60,7 @@ func TestCompileGroupPatterns_NoPatternFailsToCompile(t *testing.T) {
 func TestParseAggregateTargets(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"baas_apiserver.url":                    "https://baas.example.invalid",
-		"baas_apiserver.group_regex":            "*.grafana.app, *.grafana.com",
+		"baas_apiserver.group_patterns":         "*.grafana.app, *.grafana.com",
 		"baas_apiserver.audience":               "baas",
 		"cloud_app_platform_apiserver.url":      "https://cap.example.invalid",
 		"cloud_app_platform_apiserver.audience": "cloud-app-platform",
@@ -117,4 +117,56 @@ func TestParseAggregateTargets_NoneConfigured(t *testing.T) {
 	targets, err := parseAggregateTargets(section)
 	require.NoError(t, err)
 	require.Empty(t, targets)
+}
+
+func TestParseAggregateTargets_Auth(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"baas_apiserver.url":               "https://baas.example.invalid",
+		"cloud_app_platform_apiserver.url": "https://cap.example.invalid",
+	})
+	targets, err := parseAggregateTargets(cfg.SectionWithEnvOverrides(cloudRouterSection))
+	require.NoError(t, err)
+	require.Equal(t, aggregateAuthAccessToken, targets[0].Auth, "baas_apiserver defaults to X-Access-Token")
+	require.Equal(t, aggregateAuthBearer, targets[1].Auth, "cloud_app_platform_apiserver defaults to a bearer token")
+
+	cfg = cfgWithCloudRouterSection(t, map[string]string{
+		"baas_apiserver.url":  "https://baas.example.invalid",
+		"baas_apiserver.auth": "bearer",
+	})
+	targets, err = parseAggregateTargets(cfg.SectionWithEnvOverrides(cloudRouterSection))
+	require.NoError(t, err)
+	require.Equal(t, aggregateAuthBearer, targets[0].Auth)
+
+	cfg = cfgWithCloudRouterSection(t, map[string]string{
+		"baas_apiserver.url":  "https://baas.example.invalid",
+		"baas_apiserver.auth": "basic",
+	})
+	_, err = parseAggregateTargets(cfg.SectionWithEnvOverrides(cloudRouterSection))
+	require.ErrorContains(t, err, "baas_apiserver.auth must be")
+}
+
+func TestParseAggregateTargets_FormerGroupRegexKey(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"baas_apiserver.url":         "https://baas.example.invalid",
+		"baas_apiserver.group_regex": "*.ext.grafana.app",
+	})
+	targets, err := parseAggregateTargets(cfg.SectionWithEnvOverrides(cloudRouterSection))
+	require.NoError(t, err)
+	require.Equal(t, []string{"*.ext.grafana.app"}, targets[0].GroupPatterns)
+
+	cfg = cfgWithCloudRouterSection(t, map[string]string{
+		"baas_apiserver.url":            "https://baas.example.invalid",
+		"baas_apiserver.group_regex":    "*.old.grafana.app",
+		"baas_apiserver.group_patterns": "*.new.grafana.app",
+	})
+	targets, err = parseAggregateTargets(cfg.SectionWithEnvOverrides(cloudRouterSection))
+	require.NoError(t, err)
+	require.Equal(t, []string{"*.new.grafana.app"}, targets[0].GroupPatterns, "the new key wins")
+}
+
+func TestCheckSingleTenantStackURL(t *testing.T) {
+	require.NoError(t, checkSingleTenantStackURL(defaultSingleTenantStackURL))
+	require.NoError(t, checkSingleTenantStackURL("https://{slug}.stacks.example.com"))
+	require.ErrorContains(t, checkSingleTenantStackURL("http://fixed.example.com"), "must contain {slug}")
+	require.ErrorContains(t, checkSingleTenantStackURL("{slug}-grafana"), "absolute HTTP(S) URL")
 }

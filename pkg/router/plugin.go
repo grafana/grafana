@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -150,12 +151,15 @@ func ProvidePluginLoaderDependenciesWithClients(
 	)
 }
 
-func newPluginLoader(deps PluginLoaderDependencies) (RoutesLoader, error) {
-	return &PluginLoader{deps: deps}, nil
+func newPluginLoader(deps PluginLoaderDependencies, authn authn.TokenAuthenticator) (RoutesLoader, error) {
+	return &PluginLoader{deps: deps, authn: authn}, nil
 }
 
 type PluginLoader struct {
 	deps PluginLoaderDependencies
+	// authn authenticates requests in the standalone router, where no Grafana
+	// authentication runs before the plugin; nil in middleware mode.
+	authn authn.TokenAuthenticator
 }
 
 func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
@@ -191,6 +195,10 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 			logging.FromContext(ctx).Warn("router: skipping app plugin", "pluginId", plugin.JSONData.ID, "err", err)
 			continue
 		}
+		if pl.authn != nil {
+			backends = append(backends, authenticatedPluginBackend{Backend: backend, authn: pl.authn})
+			continue
+		}
 		backends = append(backends, backend)
 	}
 	return backends, nil
@@ -209,6 +217,21 @@ func isPluginAPIGroup(group string) bool {
 		return name != ""
 	}
 	return strings.Contains(group, "-") && !strings.Contains(group, ".")
+}
+
+// authenticatedPluginBackend authenticates each request's access token before
+// a local plugin serves it.
+type authenticatedPluginBackend struct {
+	Backend
+	authn authn.TokenAuthenticator
+}
+
+func (b authenticatedPluginBackend) Load(ctx context.Context) (http.Handler, error) {
+	handler, err := b.Backend.Load(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &authenticatingWrapper{Handler: handler, authn: b.authn}, nil
 }
 
 func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {

@@ -130,7 +130,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 		}
 	}
 
-	svc := newService(&mutableLoader{backends: backends}, prometheus.NewRegistry())
+	svc := mustNewService(t, &mutableLoader{backends: backends}, prometheus.NewRegistry())
 	svc.middleware = middleware
 	svc.router.unregisteredGroupHandler = fallback
 	require.NoError(t, svc.router.reconcile(t.Context()))
@@ -356,6 +356,26 @@ func TestUpgradeRequestsAreRejected(t *testing.T) {
 			_ = resp.Body.Close()
 			require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 			require.Contains(t, string(body), "watch over WebSocket is not supported")
+			require.Empty(t, rig.backend.queries, "the backend must not be called")
+		})
+	}
+}
+
+func TestDeprecatedWatchPathIsRejected(t *testing.T) {
+	for _, kind := range []string{"forward", "single-tenant", "in-process"} {
+		t.Run(kind, func(t *testing.T) {
+			rig := newWatchRig(t, kind, false)
+			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+			defer cancel()
+			path := strings.Replace(watchPath, "/namespaces/", "/watch/namespaces/", 1)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, rig.url+path, nil)
+			require.NoError(t, err)
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			body, _ := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+			require.Contains(t, string(body), "deprecated /watch/ path is not supported")
 			require.Empty(t, rig.backend.queries, "the backend must not be called")
 		})
 	}

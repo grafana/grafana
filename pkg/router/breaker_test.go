@@ -514,7 +514,10 @@ func TestRouterPreservesFlusherForWatches(t *testing.T) {
 		<-release
 	})
 	gr := withGroupHandler(group, backend)
-	m := newRouterMetrics(prometheus.NewRegistry())
+	m, err := newRouterMetrics(prometheus.NewRegistry())
+	if err != nil {
+		t.Fatal(err)
+	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		m.instrument(gr, w, req, http.NotFoundHandler())
 	}))

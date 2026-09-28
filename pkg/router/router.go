@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -16,28 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-)
-
-// drainWake consumes a wake already queued on dirty, if any. It returns nil
-// once dirty is closed, so the caller stops selecting on it.
-func drainWake(dirty <-chan struct{}) <-chan struct{} {
-	if dirty == nil {
-		return nil
-	}
-	select {
-	case _, ok := <-dirty:
-		if !ok {
-			return nil
-		}
-	default:
-	}
-	return dirty
-}
-
-// Backoff for retrying a failed reconcile.
-const (
-	reconcileRetryMin = time.Second
-	reconcileRetryMax = time.Minute
 )
 
 const (
@@ -62,13 +41,16 @@ type handlerEntry struct {
 	// the handler is replaced or removed, so those watches move to the new one.
 	watches    context.Context
 	endWatches context.CancelFunc
+
+	// use is set when the handler must be destroyed once retired.
+	use *handlerUse
 }
 
 func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group string) *handlerEntry {
 	watches, endWatches := context.WithCancel(context.Background())
 	return &handlerEntry{
 		backend: b, handler: handler, lastKey: b.Key(), breaker: newObservedGroupBreaker(group, r.onBreakerChange),
-		watches: watches, endWatches: endWatches,
+		watches: watches, endWatches: endWatches, use: newHandlerUse(handler),
 	}
 }
 
@@ -82,10 +64,18 @@ type servingEntry struct {
 	breaker *groupBreaker
 	watches context.Context
 	source  string
+	use     *handlerUse
 
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
 	discovery *apidiscoveryv2.APIGroupDiscovery
+}
+
+// loadFailure is a group's latest backend load failure.
+type loadFailure struct {
+	key   string
+	err   error
+	retry *cooldown
 }
 
 type phase int
@@ -117,6 +107,15 @@ type GrafanaRouter struct {
 	// installed into the last reconcile's snapshot. Owned by reconcile (single
 	// goroutine); never read from the serving path.
 	served map[string]*handlerEntry
+
+	// loadFailures backs off each group whose backend failed to load, until
+	// its key changes or a load succeeds. Owned by reconcile.
+	loadFailures map[string]*loadFailure
+
+	// notAllowedGroups and duplicateGroups are the groups the last reconcile
+	// warned about, so a lasting problem is logged once. Owned by reconcile.
+	notAllowedGroups []string
+	duplicateGroups  []string
 
 	// snapshot is the immutable group -> servingEntry map used to serve
 	// requests. reconcile rebuilds and atomically stores it; serving loads it.
@@ -168,8 +167,9 @@ type GrafanaRouter struct {
 
 func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
 	r := &GrafanaRouter{
-		loader: loader,
-		served: map[string]*handlerEntry{},
+		loader:       loader,
+		served:       map[string]*handlerEntry{},
+		loadFailures: map[string]*loadFailure{},
 	}
 	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
@@ -222,13 +222,13 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		return
 	}
 	setRoute(req, routeBackend)
-	if rejectUpgrade(w, req) {
+	if rejectUpgrade(w, req) || rejectDeprecatedWatch(w, req) {
 		return
 	}
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
 	// single owning backend (one backend owns all versions of a group).
 	serve := func(w http.ResponseWriter, req *http.Request) {
-		serveThroughBreaker(entry.breaker, group, entry.handler, w, req)
+		entry.serve(group, w, req)
 	}
 	if requestVerb(req) == "watch" {
 		r.serveWatch(w, req, entry.watches, serve)
@@ -240,7 +240,7 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
 	if group != "" && r.unregisteredGroupHandler != nil {
 		setRoute(req, routeFallback)
-		if rejectUpgrade(w, req) {
+		if rejectUpgrade(w, req) || rejectDeprecatedWatch(w, req) {
 			return
 		}
 		if requestVerb(req) == "watch" {
@@ -266,9 +266,8 @@ func groupFromPath(path string) string {
 
 // owns reports whether the router answers req itself rather than passing it
 // to next: root discovery, which it builds, groups it serves, and paths it
-// rejects before routing. In
-// middleware mode everything else belongs to the embedded API server, which
-// has its own metrics.
+// rejects before routing. In middleware mode everything else belongs to the
+// embedded API server, which has its own metrics.
 func (r *GrafanaRouter) owns(req *http.Request) bool {
 	path := req.URL.Path
 	inTree := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/") ||
@@ -370,7 +369,7 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	stripConditionalHeaders(proxyReq)
 	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter()
-	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)
+	entry.serve(group, rec, proxyReq)
 
 	maps.Copy(w.Header(), rec.header)
 	// Private schemas pass through authorization on every request. Honor their
@@ -471,6 +470,32 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 	return nil
 }
 
+// Backoff for retrying a failed reconcile.
+const (
+	reconcileRetryMin = time.Second
+	reconcileRetryMax = time.Minute
+
+	// A backend whose Load keeps failing is retried on its own, longer
+	// backoff, so a bad plugin isn't rebuilt on every reconcile retry.
+	backendRetryMax = 10 * time.Minute
+)
+
+// drainWake consumes a wake already queued on dirty, if any. It returns nil
+// once dirty is closed, so the caller stops selecting on it.
+func drainWake(dirty <-chan struct{}) <-chan struct{} {
+	if dirty == nil {
+		return nil
+	}
+	select {
+	case _, ok := <-dirty:
+		if !ok {
+			return nil
+		}
+	default:
+	}
+	return dirty
+}
+
 // storeServing records a completed reconcile's outcome. Errors are logged
 // here; Ready decides whether they affect readiness.
 func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
@@ -524,18 +549,23 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	}
 
 	var errs []error
-	var retired []*handlerEntry
+	retired := map[string]*handlerEntry{}
 	seen := make(map[string]struct{}, len(rawBackends))
+	var notAllowed, duplicates []string
+	defer func() {
+		warnOnChange(ctx, &r.notAllowedGroups, notAllowed, "router: group not allowed in this mode, skipping")
+		warnOnChange(ctx, &r.duplicateGroups, duplicates, "router: duplicate group in route set, overwriting")
+	}()
 	for _, b := range rawBackends {
 		group := b.Group().Name
 		if r.acceptGroup != nil && !r.acceptGroup(group) {
-			logging.FromContext(ctx).Warn("router: group not allowed in this mode, skipping", "group", group)
+			notAllowed = append(notAllowed, group)
 			continue
 		}
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group. A duplicate is a config
 			// error; the last one wins rather than crashing the router.
-			logging.FromContext(ctx).Warn("router: duplicate group in route set, overwriting", "group", group)
+			duplicates = append(duplicates, group)
 		}
 		seen[group] = struct{}{}
 
@@ -544,13 +574,27 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 			continue // unchanged: keep the live Backend (and its pool)
 		}
 
+		now := time.Now()
+		failure := r.loadFailures[group]
+		if failure != nil && failure.key == b.Key() && failure.retry.Until(now) > 0 {
+			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route, next attempt in %s: %w",
+				group, failure.retry.Until(now).Round(time.Second), failure.err))
+			continue
+		}
 		handler, err := loadBackend(ctx, b)
 		if err != nil {
 			// Keep last-known-good for this group. lastKey is not advanced, so
-			// a later wake retries.
+			// a later reconcile retries, once the group's backoff allows it.
+			if failure == nil || failure.key != b.Key() {
+				failure = &loadFailure{key: b.Key(), retry: newCooldown(0, reconcileRetryMin, backendRetryMax)}
+				r.loadFailures[group] = failure
+			}
+			failure.err = err
+			failure.retry.OnFailure(now)
 			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
 			continue
 		}
+		delete(r.loadFailures, group)
 
 		if !ok {
 			// New group: create the entry, starting with a fresh, closed breaker.
@@ -559,26 +603,47 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		}
 		// Changed: replace the entry. Connection pools survive through the
 		// loader's shared transports; the breaker is reset (see handlerEntry).
-		retired = append(retired, e)
+		retired[group] = e
 		r.served[group] = r.newHandlerEntry(b, handler, group)
 	}
 
 	for group, e := range r.served {
 		if _, ok := seen[group]; !ok {
-			retired = append(retired, e)
+			retired[group] = e
 			delete(r.served, group)
+		}
+	}
+	for group := range r.loadFailures {
+		if _, ok := seen[group]; !ok {
+			delete(r.loadFailures, group)
 		}
 	}
 
 	r.publish(ctx)
 	// End retired watches only after publishing, so clients that re-watch
 	// reach the new backend.
-	for _, e := range retired {
+	for group, e := range retired {
 		if e.endWatches != nil {
 			e.endWatches()
 		}
+		destroyWhenDrained(ctx, group, e)
 	}
 	return errors.Join(errs...)
+}
+
+// warnOnChange logs msg for each of groups when they differ from the groups
+// last warned about, so a lasting problem is logged once rather than on every
+// reconcile.
+func warnOnChange(ctx context.Context, last *[]string, groups []string, msg string) {
+	slices.Sort(groups)
+	groups = slices.Compact(groups)
+	if slices.Equal(*last, groups) {
+		return
+	}
+	*last = groups
+	for _, group := range groups {
+		logging.FromContext(ctx).Warn(msg, "group", group)
+	}
 }
 
 // loadBackend turns a panic in one backend's Load into that group's error, so
@@ -599,7 +664,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches}
+		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches, use: e.use}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
 			entry.source = e.backend.Source()

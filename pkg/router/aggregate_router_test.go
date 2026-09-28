@@ -39,14 +39,14 @@ func (l *staticAggregateLoader) Notify(context.Context) (<-chan struct{}, error)
 // reaches a real GrafanaRouter's reconcile/serve pipeline: NewGrafanaRouter,
 // Run's initial reconcile plus its dirty-triggered reconcile, and HandleFunc
 // actually proxying a request -- with a non-matching group filtered out by
-// group_regex before it ever becomes a served group.
+// group_patterns before it ever becomes a served group.
 func TestGrafanaRouter_AggregatedGroupIsServedAndFiltered(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/apis":
 			list := metav1.APIGroupList{Groups: []metav1.APIGroup{
 				{Name: "dashboard.grafana.app"},
-				{Name: "coordination.k8s.io"}, // must be filtered out by group_regex
+				{Name: "coordination.k8s.io"}, // must be filtered out by group_patterns
 			}}
 			_ = json.NewEncoder(w).Encode(list)
 		default:

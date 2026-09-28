@@ -30,12 +30,26 @@ func requestVerb(req *http.Request) string {
 
 // rejectUpgrade answers an upgrade request, which is how a client asks for a
 // watch over WebSocket. The router does not proxy upgrades, so it says so
-// rather than failing some other way.
+// rather than failing some other way. Only the HTTP/1.1 Connection: Upgrade
+// form is checked: the listeners don't enable HTTP/2 extended CONNECT, so
+// enabling it must add a check here.
 func rejectUpgrade(w http.ResponseWriter, req *http.Request) bool {
 	if !httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
 		return false
 	}
 	http.Error(w, "the router does not support protocol upgrades; watch over WebSocket is not supported, use a streaming watch", http.StatusBadRequest)
+	return true
+}
+
+// rejectDeprecatedWatch answers a watch requested with the deprecated
+// /apis/<group>/<version>/watch/... path form, which the router does not
+// support, rather than proxying it as an ordinary request.
+func rejectDeprecatedWatch(w http.ResponseWriter, req *http.Request) bool {
+	parts := strings.SplitN(strings.TrimPrefix(req.URL.Path, apisPrefix+"/"), "/", 4)
+	if len(parts) < 3 || parts[2] != "watch" {
+		return false
+	}
+	http.Error(w, "the deprecated /watch/ path is not supported; use the watch query parameter", http.StatusBadRequest)
 	return true
 }
 

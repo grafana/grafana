@@ -532,7 +532,7 @@ func TestSingleTenantFallbackLoadError(t *testing.T) {
 		return nil, errors.New("discovery unavailable")
 	})
 	_, err := st.Load(t.Context())
-	require.ErrorIs(t, err, errSingleTenantDiscoveryPending)
+	require.ErrorIs(t, err, errPollPending)
 	pollDiscovery(t, st)
 	backends, err := st.Load(t.Context())
 	require.ErrorContains(t, err, "discovery unavailable")
@@ -690,7 +690,7 @@ func TestNewGComURLResolver(t *testing.T) {
 			}))
 			t.Cleanup(server.Close)
 
-			resolve := newGComURLResolver(server.URL+tc.basePath, "test-token")
+			resolve := newGComURLResolver(server.URL+tc.basePath, "test-token", defaultSingleTenantStackURL)
 			stack, err := resolve(t.Context(), 123)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)

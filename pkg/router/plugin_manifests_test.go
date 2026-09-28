@@ -285,7 +285,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 	// failed poll doesn't clear it -- same last-known-good invariant as
 	// aggregateTarget.
 	seeded := []Backend{&pluginDeploymentBackend{key: "seeded"}}
-	target.snapshot.Store(&seeded)
+	target.setBackends(seeded)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Equal(t, seeded, target.Backends())
@@ -322,12 +322,7 @@ func TestPluginManifestsTargetReloadsOnHostChange(t *testing.T) {
 }
 
 func TestPluginManifestsTargetRemoteClient(t *testing.T) {
-	body := pluginManifestsFixture
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(body))
-	}))
-	t.Cleanup(srv.Close)
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
+	target, err := newPluginManifestsTarget("http://plugins.invalid", nil, http.DefaultClient, PluginDependencies{}, nil)
 	require.NoError(t, err)
 	t.Cleanup(target.closeConnections)
 
@@ -346,11 +341,9 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		t.Cleanup(server.Stop)
 
 		host := listener.Addr().String()
-		body = strings.ReplaceAll(pluginManifestsFixture, "grafana-appsdktest-app-operator.grafana-router-plugins.svc.cluster.local.:50051", host)
-		target.poll(t.Context(), make(chan struct{}, 1))
-		require.Len(t, target.Backends(), 1)
-		plugin := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
-		legacy, client, err := plugin.client(t.Context(), plugin.plugin.JSONData.ID)
+		conn, release, err := target.acquireConnection(host)
+		require.NoError(t, err)
+		legacy, client, err := connectionClients(withPluginConnection(t.Context(), conn), "grafana-appsdktest-app")
 		require.NoError(t, err)
 		require.NotNil(t, legacy)
 		require.NotNil(t, client)
@@ -358,11 +351,11 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 		defer cancel()
 		health, err := legacy.CheckHealth(ctx, &sdkbackend.CheckHealthRequest{
-			PluginContext: sdkbackend.PluginContext{PluginID: plugin.plugin.JSONData.ID},
+			PluginContext: sdkbackend.PluginContext{PluginID: "grafana-appsdktest-app"},
 		})
 		require.NoError(t, err)
 		require.Equal(t, sdkbackend.HealthStatusOk, health.Status)
-		require.Equal(t, plugin.plugin.JSONData.ID, health.Message)
+		require.Equal(t, "grafana-appsdktest-app", health.Message)
 		var responses []*sdkbackend.CallResourceResponse
 		err = legacy.CallResource(ctx, &sdkbackend.CallResourceRequest{
 			Path: "test-resource",
@@ -391,31 +384,92 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		require.Equal(t, "conversion", <-backend.calls)
 		require.Equal(t, "route", <-backend.calls)
 
-		conn := target.connections[host]
-		target.poll(t.Context(), make(chan struct{}, 1))
-		plugin = target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
-		_, _, err = plugin.client(t.Context(), plugin.plugin.JSONData.ID)
+		// A second holder shares the connection; it closes with the last release.
+		shared, releaseShared, err := target.acquireConnection(host)
 		require.NoError(t, err)
-		require.Same(t, conn, target.connections[host])
+		require.Same(t, conn, shared)
+		release()
+		release() // releasing twice is a no-op
+		require.NotEqual(t, connectivity.Shutdown, conn.GetState())
+		releaseShared()
+		require.Equal(t, connectivity.Shutdown, conn.GetState())
+		require.Empty(t, target.connections)
 	}
 
-	connections := target.connections
+	held, _, err := target.acquireConnection("localhost:50051")
+	require.NoError(t, err)
 	target.closeConnections()
-	for _, conn := range connections {
-		require.Equal(t, connectivity.Shutdown, conn.GetState())
-	}
-	_, _, err = target.pluginClients("localhost:50051")
+	require.Equal(t, connectivity.Shutdown, held.GetState())
+	_, _, err = target.acquireConnection("localhost:50051")
 	require.ErrorContains(t, err, "closed")
 }
 
 func TestPluginManifestsTargetWithoutBackendClient(t *testing.T) {
 	target := &pluginManifestsTarget{}
-	clientV2, clientV3, err := target.pluginClients("")
+	conn, release, err := target.acquireConnection("")
+	require.NoError(t, err)
+	require.Nil(t, conn)
+	release()
+	clientV2, clientV3, err := connectionClients(t.Context(), "")
 	require.NoError(t, err)
 	require.Nil(t, clientV2)
 	require.Nil(t, clientV3)
 	require.Empty(t, target.connections)
 }
+
+type destroyRecorder struct {
+	http.Handler
+	destroyed int
+}
+
+func (d *destroyRecorder) Destroy() { d.destroyed++ }
+
+func TestPluginDeploymentHandlerHoldsItsConnection(t *testing.T) {
+	const host = "plugin.invalid:50051"
+	target, err := newPluginManifestsTarget("http://plugins.invalid", nil, http.DefaultClient, PluginDependencies{}, nil)
+	require.NoError(t, err)
+	t.Cleanup(target.closeConnections)
+	authenticator := manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+		return &identity.StaticRequester{}, nil
+	})
+
+	inner := &destroyRecorder{Handler: http.NotFoundHandler()}
+	var loadedWith *grpc.ClientConn
+	backend := &pluginDeploymentBackend{
+		Backend: manifestLoadFunc(func(ctx context.Context) (http.Handler, error) {
+			loadedWith, _ = ctx.Value(pluginConnectionKey{}).(*grpc.ClientConn)
+			return inner, nil
+		}),
+		host: host, target: target, authn: authenticator,
+	}
+	first, err := backend.Load(t.Context())
+	require.NoError(t, err)
+	require.NotNil(t, loadedWith, "the plugin's clients must use the held connection")
+	conn := loadedWith
+	second, err := backend.Load(t.Context())
+	require.NoError(t, err)
+	require.Same(t, conn, loadedWith, "handlers for one host share its connection")
+
+	first.(destroyer).Destroy()
+	require.Equal(t, 1, inner.destroyed)
+	require.NotEqual(t, connectivity.Shutdown, conn.GetState(), "the second handler still holds the connection")
+	second.(destroyer).Destroy()
+	require.Equal(t, 2, inner.destroyed)
+	require.Equal(t, connectivity.Shutdown, conn.GetState())
+	require.Empty(t, target.connections)
+
+	backend.Backend = failingBackend{}
+	_, err = backend.Load(t.Context())
+	require.ErrorContains(t, err, "load failed")
+	require.Empty(t, target.connections, "a failed load releases its connection")
+}
+
+type manifestLoadFunc func(context.Context) (http.Handler, error)
+
+func (manifestLoadFunc) Key() string                                      { return "test" }
+func (manifestLoadFunc) Group() metav1.APIGroup                           { return metav1.APIGroup{Name: "test.ext.grafana.app"} }
+func (manifestLoadFunc) Source() string                                   { return sourcePluginsURL }
+func (f manifestLoadFunc) Load(ctx context.Context) (http.Handler, error) { return f(ctx) }
 
 type manifestTestPluginServer struct {
 	pluginv3.UnimplementedAdmissionServiceServer

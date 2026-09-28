@@ -78,6 +78,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Area | Files |
 | --- | --- |
 | Engine: reconcile loop, dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
+| Retiring handlers: in-flight tracking, `Destroy` after the last request | `retire.go` |
 | Root discovery (`/apis`, `/openapi/v3`) | `discovery.go`, `discovery_handler.go` |
 | Per-group-version OpenAPI cache | `openapi_cache.go` |
 | Circuit breaker, status recorder | `breaker.go` |
@@ -85,7 +86,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
 | Loader selection | `loader_factory.go` |
 | Forward-mode backend (RouteBackend CR) | `forward.go` |
-| Cloud loader: RouteBackend/AppManifest CRs, source priority | `cloud_router.go` |
+| Cloud loader: config, source priority (`cloudLoader.sources`) | `cloud_router.go`, `sources.go` |
+| Polled sources: poll loop, last-known-good, wake rules | `polled_source.go` |
+| RouteBackend/AppManifest CR source | `route_backend_source.go` |
 | Aggregate targets (`baas_apiserver`, `cloud_app_platform_apiserver`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader and `PluginBackend` | `plugin.go` |
@@ -101,8 +104,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 2. **Otherwise the local plugin loader**, when plugin sources are available.
 3. **Otherwise the dummy loader**, which serves two static dummy groups.
 
-The cloud loader merges its sources by group. When sources conflict, later entries override
-earlier ones:
+The cloud loader merges its sources by group, in the order `cloudLoader.sources` returns them.
+When sources conflict, later entries override earlier ones:
 
 1. **ST fallback discovery** (`st_discovery_url`). Groups found on a single-tenant instance are
    routed to the right stack by the namespace in the path.
@@ -113,6 +116,11 @@ earlier ones:
    block (Operator and Plugin modes) are skipped with a warning.
 4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
+
+The ST fallback, the aggregate targets and managed plugins are polled sources (`polledSource`): a
+failed poll keeps the last-known-good backends, and fails the load only when no source has any. A
+failed RouteBackend list fails the whole load, since that source has no last-known-good routes of
+its own. Each source's `run` releases its resources, such as plugin connections, when it returns.
 
 Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<target>:<hash>`,
 `managed:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
@@ -176,11 +184,14 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target is set. The CAP token is exchanged per request. |
 | `<target>.url` | Base URL for `baas_apiserver` or `cloud_app_platform_apiserver`. Unset skips that target. |
 | `<target>.audience` | Required when `<target>.url` is set. |
-| `<target>.group_regex` | Comma-separated globs that narrow the discovered groups. Unset matches all. |
+| `<target>.auth` | Header for the exchanged CAP token: `bearer` (`Authorization`) or `access_token` (`X-Access-Token`). Defaults to `access_token` for `baas_apiserver` and `bearer` for `cloud_app_platform_apiserver`. |
+| `<target>.group_patterns` | Comma-separated globs that narrow the discovered groups. Unset matches all. The former name `<target>.group_regex` is still read, with a warning. |
 | `<target>.ca_file`, `<target>.insecure` | Per-target TLS settings. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
-| `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
+| `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The former name `plugins_group_regex` is still read, with a warning. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
+| `st_stack_url` | Where the ST fallback reaches a stack, with `{slug}` replaced by its slug. Defaults to `http://{slug}-grafana-http.hosted-grafana.svc.cluster.local.:80`. |
+| `st_cache_size`, `st_breaker_cache_size`, `st_lookup_rate`, `st_lookup_burst` | Bounds on the ST fallback's stack cache, breaker cache and grafana.com lookup rate. |
 
 Every URL must be absolute; a trailing slash is tolerated.
 
