@@ -11,6 +11,8 @@ saveddashboardviewv0alpha1: {
 			// name is the user-facing label for this view (distinct from metadata.name, which is the
 			// resource's system-generated identifier).
 			name: string
+			// description is an optional user-facing note about this view.
+			description?: string
 			timeRange: {
 				from:      string
 				to:        string

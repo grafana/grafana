@@ -64,9 +64,11 @@ type SavedDashboardViewSpec struct {
 	DashboardUID string `json:"dashboardUID"`
 	// name is the user-facing label for this view (distinct from metadata.name, which is the
 	// resource's system-generated identifier).
-	Name      string                                  `json:"name"`
-	TimeRange SavedDashboardViewV0alpha1SpecTimeRange `json:"timeRange"`
-	Variables []SavedDashboardViewSavedViewVariable   `json:"variables"`
+	Name string `json:"name"`
+	// description is an optional user-facing note about this view.
+	Description *string                                 `json:"description,omitempty"`
+	TimeRange   SavedDashboardViewV0alpha1SpecTimeRange `json:"timeRange"`
+	Variables   []SavedDashboardViewSavedViewVariable   `json:"variables"`
 	// sectionFilters captures ad-hoc filters scoped to a tab or row rather than the whole
 	// dashboard. Stretch goal — omitted entirely on dashboards that don't use tabs/rows.
 	SectionFilters []SavedDashboardViewSavedViewSectionFilter `json:"sectionFilters,omitempty"`
