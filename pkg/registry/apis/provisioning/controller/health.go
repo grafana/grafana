@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -150,7 +151,11 @@ func (hc *RepositoryHealthChecker) hasHealthStatusChanged(old, new provisioning.
 		return true
 	}
 
-	if len(old.Message) != len(new.Message) {
+	if old.Error != new.Error {
+		return true
+	}
+
+	if !slices.Equal(old.Message, new.Message) {
 		return true
 	}
 
@@ -160,12 +165,6 @@ func (hc *RepositoryHealthChecker) hasHealthStatusChanged(old, new provisioning.
 	}
 	if time.UnixMilli(new.Checked).Sub(time.UnixMilli(old.Checked)) > recent {
 		return true
-	}
-
-	for i, oldMsg := range old.Message {
-		if i >= len(new.Message) || oldMsg != new.Message[i] {
-			return true
-		}
 	}
 
 	return false

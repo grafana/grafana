@@ -41,9 +41,15 @@ func writeFakeSnapshot(dir string, meta *IndexMeta) error {
 	if err := setRV(idx, meta.LatestResourceVersion); err != nil {
 		return err
 	}
+	features := meta.Features
+	if features == nil {
+		// Otherwise the index is rejected after download for missing a required feature.
+		features = resource.CurrentIndexFeatures()
+	}
 	bi, err := json.Marshal(buildInfo{
 		BuildTime:          meta.UploadTimestamp.Unix(),
 		BuildVersion:       meta.BuildVersion,
+		Features:           features,
 		ReaderRequirements: meta.ReaderRequirements,
 	})
 	if err != nil {
@@ -1134,7 +1140,7 @@ func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "", false)
+	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(index, 42))

@@ -14,11 +14,12 @@ import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { type AdHocFiltersController } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch, Stack, useStyles2, FieldSet } from '@grafana/ui';
+import { Alert, Field, Switch, Stack, useStyles2, FieldSet } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
 import { DefaultGroupByValueEditor } from './DefaultGroupByValueEditor';
+import { StaticOptionsEditor } from './StaticOptionsEditor';
 import { VariableLegend } from './VariableLegend';
 
 export interface AdHocVariableFormProps {
@@ -170,17 +171,7 @@ export function AdHocVariableForm({
               />
             </Field>
 
-            {defaultKeys != null && (
-              <CodeEditor
-                height={300}
-                language="csv"
-                value={defaultKeys.map((o) => `${o.text},${o.value}`).join('\n')}
-                onBlur={updateStaticKeys}
-                onSave={updateStaticKeys}
-                showMiniMap={false}
-                showLineNumbers={true}
-              />
-            )}
+            {defaultKeys != null && <StaticOptionsEditor options={defaultKeys} onCommit={updateStaticKeys} />}
           </>
         )}
 

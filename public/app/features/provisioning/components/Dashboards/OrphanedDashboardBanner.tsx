@@ -1,9 +1,16 @@
+import { lazy, Suspense } from 'react';
+
 import { config } from '@grafana/runtime';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { RepoViewStatus, useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { OrphanedResourceBanner } from '../Shared/OrphanedResourceBanner';
+
+const OrphanedResourceBanner = lazy(() =>
+  import(/* webpackChunkName: "orphaned-resource-banner" */ '../Shared/OrphanedResourceBanner').then((m) => ({
+    default: m.OrphanedResourceBanner,
+  }))
+);
 
 interface Props {
   dashboard: DashboardScene;
@@ -29,5 +36,9 @@ export function OrphanedDashboardBanner({ dashboard }: Props) {
     return null;
   }
 
-  return <OrphanedResourceBanner repositoryName={name!} />;
+  return (
+    <Suspense fallback={null}>
+      <OrphanedResourceBanner repositoryName={name!} />
+    </Suspense>
+  );
 }

@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,10 +23,11 @@ import (
 type groupResource map[string]map[string]interface{}
 
 type accessMetrics struct {
-	checkDuration      *prometheus.HistogramVec
-	compileDuration    *prometheus.HistogramVec
-	batchCheckDuration *prometheus.HistogramVec
-	errorsTotal        *prometheus.CounterVec
+	checkDuration              *prometheus.HistogramVec
+	compileDuration            *prometheus.HistogramVec
+	batchCheckDuration         *prometheus.HistogramVec
+	errorsTotal                *prometheus.CounterVec
+	missingDelegatedPermission *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) *accessMetrics {
@@ -61,7 +64,45 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 				Name: "grafana_grpc_authz_limited_client_errors_total",
 				Help: "Number of errors",
 			}, []string{"group", "resource", "verb"}),
+		missingDelegatedPermission: promauto.With(reg).NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_grpc_authz_limited_client_missing_delegated_permission_total",
+				Help: "Number of access checks refused because this service's token cannot act on behalf of a user for the group and resource",
+			}, []string{"group", "resource", "verb"}),
 	}
+}
+
+// ErrServiceCannotDelegate is returned instead of the denial authlib would
+// answer on its own, without asking the authz service. That denial is
+// indistinguishable from the user lacking access, so a deployment mistake shows
+// up as missing results rather than as a failure.
+var ErrServiceCannotDelegate = errors.New("this service's token has no delegated permission for the resource")
+
+func (c authzLimitedClient) serviceCanDelegate(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
+	res := authz.CheckServicePermissions(id, group, resource, verb)
+	if res.ServiceCall || res.Allowed {
+		return nil
+	}
+
+	// An identity with no token permissions at all is not an access-token
+	// deployment (single-tenant and in-process callers look like this), and the
+	// underlying client decides on its own there. Only a token that carries
+	// permissions but not this one is a deployment mistake.
+	if len(id.GetTokenPermissions()) == 0 && len(id.GetTokenDelegatedPermissions()) == 0 {
+		return nil
+	}
+
+	permission := fmt.Sprintf("%s/%s:%s", group, resource, verb)
+	c.metrics.missingDelegatedPermission.WithLabelValues(group, resource, verb).Inc()
+	c.logger.FromContext(ctx).Error(
+		"Refusing access check: this service's token has no delegated permission for the resource",
+		"group", group,
+		"resource", resource,
+		"verb", verb,
+		"subject", id.GetSubject(),
+		"required_permission", permission,
+	)
+	return fmt.Errorf("%w: %s", ErrServiceCannotDelegate, permission)
 }
 
 // batchSizeBucket keeps the batch size out of the label value, which would
@@ -189,6 +230,12 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
 	}
+	if err := c.serviceCanDelegate(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
+		return claims.CheckResponse{Allowed: false}, err
+	}
+
 	resp, err := c.client.Check(ctx, id, req, folder)
 	if err != nil {
 		c.logger.FromContext(ctx).Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t))
@@ -225,6 +272,12 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			return true
 		}, claims.NoopZookie{}, nil
 	}
+	if err := c.serviceCanDelegate(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
+		return nil, claims.NoopZookie{}, err
+	}
+
 	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	checker, zookie, err := c.client.Compile(ctx, id, req)
 	if err != nil {
@@ -287,6 +340,21 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 	// If all items were allowed by default, return early
 	if len(itemsToCheck) == 0 {
 		return claims.BatchCheckResponse{Results: results}, nil
+	}
+
+	// Once per group, resource and verb: a page of hits repeats the same combination.
+	seen := make(map[string]struct{}, len(itemsToCheck))
+	for _, item := range itemsToCheck {
+		key := item.Group + "/" + item.Resource + ":" + item.Verb
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		if err := c.serviceCanDelegate(ctx, id, item.Group, item.Resource, item.Verb); err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+			return claims.BatchCheckResponse{}, err
+		}
 	}
 
 	// Forward to the underlying client

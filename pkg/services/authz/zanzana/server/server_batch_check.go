@@ -871,10 +871,7 @@ func (s *Server) doOpenFGABatchCheck(
 	// Split into sub-batches
 	allResults := make(map[string]*openfgav1.BatchCheckSingleResult, len(checks))
 	for i := 0; i < len(checks); i += maxChecks {
-		end := i + maxChecks
-		if end > len(checks) {
-			end = len(checks)
-		}
+		end := min(i+maxChecks, len(checks))
 		results, err := s.executeBatchCheck(ctx, store, checks[i:end])
 		if err != nil {
 			return nil, err

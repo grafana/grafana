@@ -3,6 +3,7 @@
 package search
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,20 +47,40 @@ func (k kindRef) gvr() schema.GroupVersionResource {
 	return schema.GroupVersionResource{Group: k.group, Version: k.version, Resource: k.resource}
 }
 
-// Handler serves the search envelope endpoints for one kind.
-type Handler struct {
-	client   resourcepb.ResourceIndexClient
-	provider resource.SearchFieldsProvider
-	tracer   trace.Tracer
-	log      log.Logger
+// FieldValueResultsEnabled decides whether a request uses field-value results.
+// Embedded Grafana can evaluate it per tenant; standalone servers can return a
+// process-level configuration value.
+type FieldValueResultsEnabled func(context.Context) bool
+
+type HandlerOptions struct {
+	FieldValueResultsEnabled FieldValueResultsEnabled
 }
 
-func NewHandler(client resourcepb.ResourceIndexClient, provider resource.SearchFieldsProvider, tracer trace.Tracer) *Handler {
+// SearchClient allows callers to wrap search without implementing unrelated index operations.
+type SearchClient interface {
+	Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error)
+}
+
+// Handler serves the search envelope endpoints for one kind.
+type Handler struct {
+	client                   SearchClient
+	provider                 resource.SearchFieldsProvider
+	tracer                   trace.Tracer
+	log                      log.Logger
+	fieldValueResultsEnabled FieldValueResultsEnabled
+}
+
+func NewHandler(client SearchClient, provider resource.SearchFieldsProvider, tracer trace.Tracer) *Handler {
+	return NewHandlerWithOptions(client, provider, tracer, HandlerOptions{})
+}
+
+func NewHandlerWithOptions(client SearchClient, provider resource.SearchFieldsProvider, tracer trace.Tracer, options HandlerOptions) *Handler {
 	return &Handler{
-		client:   client,
-		provider: provider,
-		tracer:   tracer,
-		log:      log.New("grafana-apiserver.search"),
+		client:                   client,
+		provider:                 provider,
+		tracer:                   tracer,
+		log:                      log.New("grafana-apiserver.search"),
+		fieldValueResultsEnabled: options.FieldValueResultsEnabled,
 	}
 }
 
@@ -71,6 +93,9 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 				return nil, nil, err
 			}
 			req, ferrs := TranslateSearchQuery(&q, kind.gvr(), namespace, h.provider)
+			if len(ferrs) == 0 && h.fieldValueResultsEnabled != nil && h.fieldValueResultsEnabled(r.Context()) {
+				req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+			}
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
@@ -88,6 +113,9 @@ func (h *Handler) TrashFor(kind kindRef) http.HandlerFunc {
 				return nil, nil, err
 			}
 			req, ferrs := TranslateTrashQuery(&q, kind.gvr(), namespace)
+			if len(ferrs) == 0 && h.fieldValueResultsEnabled != nil && h.fieldValueResultsEnabled(r.Context()) {
+				req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+			}
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {

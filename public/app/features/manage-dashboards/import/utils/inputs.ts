@@ -778,7 +778,6 @@ function replaceVariableDatasources(
           },
           options: [],
           current: { text: '', value: '' },
-          refresh: 'onDashboardLoad' as const,
         },
       };
     }

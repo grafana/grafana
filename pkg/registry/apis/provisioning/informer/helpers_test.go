@@ -56,7 +56,8 @@ func (f *fakeSubscriber) publish(t *testing.T, subject string, evt *resourcepb.W
 
 type fakeSubscription struct{}
 
-func (fakeSubscription) Unsubscribe() error { return nil }
+func (fakeSubscription) WaitReady(ctx context.Context) error { return ctx.Err() }
+func (fakeSubscription) Unsubscribe() error                  { return nil }
 
 var _ nats.Subscriber = (*fakeSubscriber)(nil)
 

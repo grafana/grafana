@@ -57,6 +57,10 @@ jobs:
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
+    - name: Verify generated theme styles
+      run: |
+        yarn themes-generate
+        git diff --exit-code -- public/sass/grafana.dark.css public/sass/grafana.light.css
   lint-frontend-prettier-enterprise:
     needs: detect-changes
     permissions:
@@ -85,6 +89,10 @@ jobs:
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
+    - name: Verify generated theme styles
+      run: |
+        yarn themes-generate
+        git diff --exit-code -- public/sass/grafana.dark.css public/sass/grafana.light.css
   lint-frontend-typecheck:
     needs: detect-changes
     permissions:
@@ -237,7 +245,9 @@ jobs:
     - name: Verify generated clients
       run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
-        file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum')"
+        # LICENSE is swapped to the Enterprise License Agreement by the "Setup Enterprise"
+        # step above (grafana-enterprise's build.sh overlay), not by API client generation.
+        file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum' ':!LICENSE')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -248,7 +258,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true' || needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
     name: Verify packed frontend packages
     runs-on: ubuntu-x64
     steps:

@@ -327,12 +327,12 @@ receivers:
 						Receiver: "initial-receiver",
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{
-						Name: "initial-receiver",
-					},
-				},
 			},
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+				{
+					Name: "initial-receiver",
+				},
+			}),
 		}
 
 		cfgToSave, err := legacy_storage.SerializeAlertmanagerConfig(cfg)

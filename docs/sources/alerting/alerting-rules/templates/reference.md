@@ -112,10 +112,24 @@ The `$values` variable is a table containing the labels and floating point value
 
 Each Ref IDs, such as `$values.A`, has the following properties
 
-| Property | Type            | Description                                                  |
-| -------- | --------------- | ------------------------------------------------------------ |
-| `Value`  | Float           | The value returned by the instant query or expression.       |
-| `Labels` | Key/value pairs | The labels associated with the instance query or expression. |
+| Property | Type            | Description                                                 |
+| -------- | --------------- | ----------------------------------------------------------- |
+| `Value`  | Float           | The value returned by the instant query or expression.      |
+| `Labels` | Key/value pairs | The labels associated with the instant query or expression. |
+
+To print labels from a specific query or expression, use its Ref ID and the `Labels` property:
+
+```
+{{ $values.A.Labels.instance }}
+```
+
+`$values` is indexed by Ref ID (`A`, `B`, `C`), not by the alert name.
+
+For most alert messages, use [`$labels`](#labels) instead. `$labels` contains the query labels for the alert instance, so you don't need the Ref ID:
+
+```
+{{ $labels.instance }}
+```
 
 Here's the previous example printing now the value of the instant query with Ref ID `A`:
 
@@ -191,14 +205,14 @@ In addition, the following functions are also available for templating annotatio
 
 **Numbers**
 
-| Name                                      | Arguments        | Returns | Description                                                      |
-| ----------------------------------------- | ---------------- | ------- | ---------------------------------------------------------------- |
-| [humanize](#humanize)                     | number or string | string  | Humanizes decimal numbers.                                       |
-| [humanize1024](#humanize1024)             | number or string | string  | Like `humanize`, but but uses 1024 as the base rather than 1000. |
-| [humanizeDuration](#humanizeduration)     | number or string | string  | Humanizes a duration in seconds.                                 |
-| [humanizePercentage](#humanizepercentage) | number or string | string  | Humanizes a ratio value to a percentage.                         |
-| [humanizeTimestamp](#humanizetimestamp)   | number or string | string  | Humanizes a Unix timestamp.                                      |
-| [toTime](#totime)                         | number or string | time    | Converts a Unix timestamp in seconds to time.                    |
+| Name                                      | Arguments        | Returns | Description                                                  |
+| ----------------------------------------- | ---------------- | ------- | ------------------------------------------------------------ |
+| [humanize](#humanize)                     | number or string | string  | Humanizes decimal numbers.                                   |
+| [humanize1024](#humanize1024)             | number or string | string  | Like `humanize`, but uses 1024 as the base rather than 1000. |
+| [humanizeDuration](#humanizeduration)     | number or string | string  | Humanizes a duration in seconds.                             |
+| [humanizePercentage](#humanizepercentage) | number or string | string  | Humanizes a ratio value to a percentage.                     |
+| [humanizeTimestamp](#humanizetimestamp)   | number or string | string  | Humanizes a Unix timestamp.                                  |
+| [toTime](#totime)                         | number or string | time    | Converts a Unix timestamp in seconds to time.                |
 
 **Strings**
 
@@ -240,7 +254,7 @@ The `humanize` function humanizes decimal numbers:
 
 #### humanize1024
 
-The `humanize1024` works similar to `humanize` but but uses 1024 as the base rather than 1000:
+The `humanize1024` function works similarly to `humanize` but uses 1024 as the base rather than 1000:
 
 ```
 {{ humanize1024 1024.0 }}

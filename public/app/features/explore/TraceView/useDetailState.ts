@@ -29,6 +29,19 @@ export function useDetailState(frame: DataFrame) {
     [detailStates]
   );
 
+  // Callers that navigate to a span (e.g. "Go to span") must end up with the detail open,
+  // so this opens rather than toggles and is a no-op when the detail is already open.
+  const openDetail = useCallback(function openDetail(spanID: string) {
+    setDetailStates((currentDetailStates) => {
+      if (currentDetailStates.has(spanID)) {
+        return currentDetailStates;
+      }
+      const newDetailStates = new Map(currentDetailStates);
+      newDetailStates.set(spanID, new DetailState());
+      return newDetailStates;
+    });
+  }, []);
+
   const detailLogItemToggle = useCallback(
     function detailLogItemToggle(spanID: string, log: TraceLog) {
       const old = detailStates.get(spanID);
@@ -60,6 +73,7 @@ export function useDetailState(frame: DataFrame) {
   return {
     detailStates,
     toggleDetail,
+    openDetail,
     detailLogItemToggle,
     detailLogsToggle: useCallback(
       (spanID: string) => makeDetailSubsectionToggle('logs', detailStates, setDetailStates)(spanID),

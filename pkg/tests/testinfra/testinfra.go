@@ -529,8 +529,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
-	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
-	require.NoError(t, err)
 	// Disable phone-home services in tests. Each of these makes outbound
 	// HTTP requests to grafana.com / stats.grafana.org on startup, which is
 	// a source of flakiness on CI runners and adds nothing to the tests.
@@ -972,6 +970,13 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.EnableKeysAPI {
+		apiserverSection, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = apiserverSection.NewKey("enable_keys_api", "true")
+		require.NoError(t, err)
+	}
+
 	if opts.SecretsManagerEnableDBMigrations {
 		apiserverSection, err := getOrCreateSection("secrets_manager")
 		require.NoError(t, err)
@@ -1183,6 +1188,9 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64
 	EnableSQLKVBackend          bool
+	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
+	EnableKeysAPI bool
+
 	// EnableSearchAPI turns on the per-resource /search endpoints, which are off
 	// by default.
 	EnableSearchAPI bool

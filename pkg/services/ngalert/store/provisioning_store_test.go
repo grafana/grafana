@@ -440,21 +440,17 @@ func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 		var wg sync.WaitGroup
 		// Mix SetProvenance and GetProvenance operations
 		for range concurrency {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
 				err := store.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
-			}()
+			})
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
 				_, err := store.GetProvenance(context.Background(), rule, orgID)
 				require.NoError(t, err)
-			}()
+			})
 		}
 		wg.Wait()
 	})

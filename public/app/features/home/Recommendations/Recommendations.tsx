@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 
 import { useStoredBoolean } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -25,6 +26,9 @@ interface RecommendationsProps {
 }
 
 export function Recommendations({ solutions }: RecommendationsProps) {
+  if (isOnPrem()) {
+    return null;
+  }
   // Unscoped pre-gate; each card re-checks its scoped permission. Plugin management or
   // datasource creation qualifies — everyone else is spared the recommendation work.
   const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
@@ -124,17 +128,20 @@ function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
   }
   const selectionEnabled = everExpanded.current;
 
+  // Keyed on the signal snapshot, not the solution set: the set changes when the Kubernetes filter
+  // changes, but the signals do not, and re-selecting would re-report the shown recommendations.
+  const { signals } = solutions;
   const selected = useAsync(async () => {
     if (!selectionEnabled) {
       return undefined;
     }
-    const [inventory, signals, guideEnabled] = await Promise.all([
+    const [inventory, state, guideEnabled] = await Promise.all([
       fetchInstalledPlugins().catch(() => []),
-      solutions.signals(),
+      signals(),
       setupGuideEnabled(),
     ]);
-    return selectRecommendationState(inventory, signals, guideEnabled);
-  }, [selectionEnabled, solutions]);
+    return selectRecommendationState(inventory, state, guideEnabled);
+  }, [selectionEnabled, signals]);
 
   // The region renders once the selection settles; recommendations only decide the right column.
   // Collapsed (gated-off) renders immediately as just the header row.

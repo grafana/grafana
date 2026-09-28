@@ -25,6 +25,11 @@ const (
 	VerbSetPermissions = "set_permissions"
 )
 
+// ListKeysPathSegment is the final segment of the list-keys endpoint. Kubernetes
+// parses a POST to it as a create on an object of that name, so the authorization
+// chain and the route that serves it both need the literal.
+const ListKeysPathSegment = "list-keys"
+
 // validVerbs is the set of Kubernetes request verbs Grafana recognizes.
 var validVerbs = map[string]struct{}{
 	VerbGet:              {},

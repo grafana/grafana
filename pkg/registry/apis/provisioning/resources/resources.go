@@ -42,14 +42,12 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 	}
 
 	// Check if it's already a validation error
-	var validationErr *ResourceValidationError
-	if errors.As(err, &validationErr) {
+	if _, ok := errors.AsType[*ResourceValidationError](err); ok {
 		return err
 	}
 
 	// Check if it's a field validation error (e.g., missing name)
-	var fieldErr *field.Error
-	if errors.As(err, &fieldErr) {
+	if _, ok := errors.AsType[*field.Error](err); ok {
 		return NewResourceValidationError(err)
 	}
 
@@ -64,8 +62,7 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 	}
 
 	// Check if it's a dashboard validation error (wrap all dashboard errors as validation errors)
-	var dashboardErr dashboardaccess.DashboardErr
-	if errors.As(err, &dashboardErr) {
+	if _, ok := errors.AsType[dashboardaccess.DashboardErr](err); ok {
 		return NewResourceValidationError(err)
 	}
 

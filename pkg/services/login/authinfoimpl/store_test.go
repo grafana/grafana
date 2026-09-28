@@ -15,10 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/login"
 	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
@@ -36,7 +38,7 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store, err := ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sql), secretstest.NewFakeSecretsService())
+	store, err := ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sql), secretstest.NewFakeSecretsService(), setting.NewCfg(), nil, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	t.Run("should be able to auth lables for users", func(t *testing.T) {
@@ -112,6 +114,29 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 
 		require.ErrorIs(t, err, user.ErrUserNotFound)
 		require.Nil(t, info)
+	})
+
+	t.Run("should delete only the targeted auth module", func(t *testing.T) {
+		ctx := context.Background()
+		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+			AuthModule: login.LDAPAuthModule,
+			AuthId:     "20",
+			UserId:     20,
+			UserUID:    "20",
+		}))
+		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+			AuthModule: login.AzureADAuthModule,
+			AuthId:     "20",
+			UserId:     20,
+			UserUID:    "20",
+		}))
+
+		require.NoError(t, store.DeleteAuthInfo(ctx, &login.DeleteAuthInfoCommand{
+			UserAuth: &login.UserAuth{UserId: 20, AuthModule: login.LDAPAuthModule},
+		}))
+
+		require.Equal(t, 0, countEntries(t, sql, login.LDAPAuthModule, "20", 20))
+		require.Equal(t, 1, countEntries(t, sql, login.AzureADAuthModule, "20", 20))
 	})
 
 	t.Run("should remove duplicates on update", func(t *testing.T) {
@@ -212,7 +237,7 @@ func TestStoreUsesProviderTables(t *testing.T) {
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "test_schema"."user_auth"`)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	store, err := ProvideStore(ctx, provider, secretstest.NewFakeSecretsService())
+	store, err := ProvideStore(ctx, provider, secretstest.NewFakeSecretsService(), setting.NewCfg(), nil, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	mock.ExpectQuery(regexp.QuoteMeta("FROM `test_schema`.`user_auth`")).
@@ -294,6 +319,17 @@ func TestTemplates(t *testing.T) {
 						SQLTemplate:   queryTemplate(),
 						UserAuthTable: userAuthTable,
 						UserID:        42,
+					},
+				},
+			},
+			deleteAuthInfoTemplate: {
+				{
+					Name: "delete_auth_info",
+					Data: deleteAuthInfoQuery{
+						SQLTemplate:   queryTemplate(),
+						UserAuthTable: userAuthTable,
+						UserID:        42,
+						AuthModule:    "ldap",
 					},
 				},
 			},

@@ -191,14 +191,10 @@ On mobile devices, the sidebar is docked by default in edit mode.
 
 The following table describes how the sidebar behaves when docked or undocked in _edit mode_:
 
-<!-- prettier-ignore-start -->
-
-| Docked  | Undocked |
-| ------- | -------- |
-| After the sidebar is open, it remains open regardless of where you click. | The sidebar closes if you don't select a dashboard element. |
+| Docked                                                                      | Undocked                                                                                   |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| After the sidebar is open, it remains open regardless of where you click.   | The sidebar closes if you don't select a dashboard element.                                |
 | The sidebar displays dashboard options when you click the dashboard canvas. | The sidebar only displays dashboard options when you click the **Dashboard options** icon. |
-
-<!-- prettier-ignore-end -->
 
 When you dock or undock the sidebar, your choice is persisted for all dashboards you use in that Grafana instance, across sessions, by way of your browser's local storage.
 You can clear this selection by clearing the following keys in your local storage:
@@ -231,16 +227,21 @@ To navigate the dashboard using the outline, follow these steps:
 
 To edit a dashboard, follow these steps:
 
+<!-- prettier-ignore-start -->
+
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Do one of the following:
 
-   | Update                 | Action                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-   | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | Edit existing elements | <p>Click the element to open the sidebar showing the relevant options. Click the **Dashboard options** icon to access dashboard settings.</p><p>If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.</p>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-   | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-   | Group panels           | <p>Click **Add new element** and select **Add row/Group into rows** or **Add tab/Group into tabs**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option or select a specific set of panels and group them into rows or tabs.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>                                                                                                                                                                                                                                                                                        |
+   | Update                 | Action                        |
+   | ---------------------- | ----------------------------- |
+   | Edit dashboard settings | Click the **Dashboard options** icon to access dashboard settings in the sidebar. |
+   | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>   |
    | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls)</li><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-links)</li></ul> |
+   | Group panels           | <p>Click the **Add new element** icon and select **Add row/Group into rows** or **Add tab/Group into tabs**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** button and select a grouping option or select a specific set of panels and group them into rows or tabs.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>   |
+   | Edit panels | <p>Hover your cursor over any part of a panel to display the actions tooltip, which has the following options: **Settings**, **Edit visualization**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Settings** to access high-level panel options in the sidebar, or **Edit visualization** to open the panel editor.</p>  |
+   | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
+   | Edit rows and tabs | Click a row or tab to access grouping settings in the sidebar. |
    | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 1. When you've finished making changes, click **Save**.
@@ -248,6 +249,8 @@ To edit a dashboard, follow these steps:
 1. Click **Save**.
 1. Click **Back**, if needed.
 1. Click **Exit edit**
+
+<!-- prettier-ignore-end -->
 
 ## Panel layouts
 
