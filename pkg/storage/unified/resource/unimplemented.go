@@ -63,6 +63,8 @@ func (UnimplementedStorageBackend) ListModifiedSince(context.Context, Namespaced
 	}
 }
 
+func (UnimplementedStorageBackend) WatchInvalidation() <-chan struct{} { return nil }
+
 // WatchWriteEvents returns an open channel that never emits, rather than an
 // error. The storage server's watcher treats a WatchWriteEvents error as fatal,
 // so a backend that produces no events must still return a usable channel.

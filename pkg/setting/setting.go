@@ -703,9 +703,10 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                      map[string]UnifiedStorageConfig
-	UnifiedStorageAuthzExemptionEnabled bool
-	UnifiedStorageAuthzExemptResources  []string
+	UnifiedStorage                        map[string]UnifiedStorageConfig
+	UnifiedStorageAuthzExemptionEnabled   bool
+	UnifiedStorageAuthzExemptResources    []string
+	UnifiedStorageGRPCErrorResultToStatus bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -737,6 +738,7 @@ type Cfg struct {
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
+	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
@@ -2025,6 +2027,15 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 
 	return key
+}
+
+// HasKey reports whether k is set either in the ini file or via its environment variable override.
+func (s *DynamicSection) HasKey(k string) bool {
+	envKey := EnvKey(s.section.Name(), k)
+	if len(s.env.Getenv(envKey)) > 0 {
+		return true
+	}
+	return s.section.HasKey(k)
 }
 
 func (s *DynamicSection) KeysHash() map[string]string {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKVLeaseTTLBounds(t *testing.T) {
@@ -33,6 +34,16 @@ func TestKVLeaseTTLBounds(t *testing.T) {
 			assert.Equal(t, tc.expected, cfg.KVLeaseTTL)
 		})
 	}
+}
+
+func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
+	cfg := NewCfg()
+	cfg.setUnifiedStorageConfig()
+	require.False(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
+
+	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
+	cfg.setUnifiedStorageConfig()
+	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
 }
 
 func TestCfg_setUnifiedStorageConfig(t *testing.T) {

@@ -6796,9 +6796,6 @@
     "variable": {
       "description-tooltip": "변수 설명"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "대시보드로 돌아가기",
       "not-found": ""
@@ -13258,7 +13255,7 @@
       "count-truncated_other": "처음 {{count}}개 노트북이 로드됨"
     },
     "new": {
-      "default-title": "노트북 #{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "저장 실패",
@@ -14779,12 +14776,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
       "cleaning-up-resources": "리포지토리 리소스 정리 및 삭제 중",
-      "not-found": "찾을 수 없음",
       "not-found-message": "리포지토리를 찾을 수 없습니다",
       "repository-config-exists-configuration": "리포지토리 구성이 구성 파일에 있는지 확인하세요.",
       "tab-overview": "개요",
@@ -15080,26 +15081,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "대시보드를 공개하기 전에 다음 사항을 확인하세요.",
-      "data-src-ack-desc": "게시는 현재 일부 데이터 소스에서만 작동합니다.*",
-      "data-src-ack-tooltip": "공개 데이터 소스에 대해 자세히 알아보기",
-      "public-ack-desc": "대시보드 전체가 공개됩니다.*",
-      "public-ack-tooltip": "공개 대시보드에 대해 자세히 알아보기",
-      "usage-ack-desc": "대시보드를 공개하면 조회할 때마다 쿼리가 실행되어 비용이 증가할 수 있습니다.*",
-      "usage-ack-desc-tooltip": "쿼리 캐싱에 대해 자세히 알아보기"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "대시보드 보기 권한 허용",
-      "copy-button": "복사",
-      "dashboard-url-field-label": "대시보드 URL",
-      "email-share-type-option-label": "지정된 사용자만",
-      "pause-sharing-dashboard-label": "대시보드 공유 일시 중지",
-      "public-share-type-option-label": "링크를 보유한 모든 사용자",
-      "revoke-public-URL-button": "공개 URL 철회",
-      "revoke-public-URL-button-title": "공개 URL 철회",
-      "settings-title": "설정"
-    },
     "configuration": {
       "display-annotations-description": "이 대시보드에 주석 표시",
       "display-annotations-label": "주석 표시",
@@ -15112,21 +15093,11 @@
       "time-range-label": "시간 범위",
       "time-range-tooltip": "공유 대시보드는 대시보드의 기본 시간 범위 설정을 사용합니다."
     },
-    "create-page": {
-      "generate-public-url-button": "공개 URL 생성",
-      "unsupported-features-desc": "현재 템플릿 변수 또는 프런트엔드 데이터 소스는 지원하지 않습니다.",
-      "welcome-title": "공개 대시보드에 오신 것을 환영합니다!"
-    },
     "email-sharing": {
       "accept-button": "수락",
       "alert-text": "이메일로 대시보드를 공유하면 공유하는 대시보드 수에 관계없이 30일의 토큰 기간 동안 사용자 1인당 비용이 청구됩니다. 토큰을 갱신하지 않으면 30일 후에 청구가 중지됩니다.",
       "bill-ack": "사용자를 추가하려면 결제가 필요하다는 것을 이해했습니다.*",
       "cancel-button": "취소",
-      "input-invalid-email-text": "유효하지 않은 이메일",
-      "input-required-email-text": "이메일은 필수 입력 사항입니다.",
-      "invite-button": "초대",
-      "invite-field-desc": "이메일로 사용자 초대",
-      "invite-field-label": "초대",
       "learn-more-button": "자세히 알아보기",
       "recipient-email-placeholder": "이메일",
       "recipient-invalid-email-text": "유효하지 않은 이메일",
@@ -15136,17 +15107,12 @@
       "recipient-list-description": "직접 초대한 사용자만 이 대시보드에 액세스할 수 있습니다.",
       "recipient-list-title": "액세스 권한이 있는 사용자",
       "recipient-required-email-text": "이메일은 필수 입력 사항입니다.",
-      "resend-button": "재전송",
-      "resend-button-title": "재전송",
       "resend-invite-label": "초대 재전송",
       "revoke-access-label": "액세스 권한 철회",
-      "revoke-button": "철회",
-      "revoke-button-title": "철회",
       "success-creation": "대시보드를 외부와 공유할 준비가 되었습니다.",
       "success-share-type-change": "대시보드 액세스 권한이 업데이트됨: 이제 특정한 사용자만 링크를 통해 액세스할 수 있습니다."
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "공개 구성을 업데이트하기 전에 대시보드 변경 사항을 저장하세요.",
       "unsupport-data-source-alert-readmore-link": "지원되는 데이터 소스에 대해 자세히 알아보기",
       "unsupported-data-source-alert-title": "지원되지 않는 데이터 소스",
       "unsupported-template-variable-alert-desc": "이 공개 대시보드는 템플릿 변수를 사용하고 있기 때문에  작동하지 않을 수 있습니다.",
@@ -15160,25 +15126,6 @@
       "public-ack": "이 대시보드가 전부 공개된다는 것을 이해했습니다.*",
       "success-creation": "이제 대시보드에 공개적으로 액세스할 수 있게 되었습니다.",
       "success-share-type-change": "대시보드 액세스 권한이 업데이트됨: 이제 링크를 보유한 모든 사용자가 액세스할 수 있습니다."
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "설정 접기",
-      "expand-settings-tooltip": "설정 펼치기"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "기본 시간 범위",
-      "default-time-range-label-desc": "공개 대시보드는 대시보드의 기본 시간 범위 설정을 사용합니다.",
-      "show-annotations-label": "주석 표시",
-      "show-annotations-label-desc": "공개 대시보드에 주석 표시",
-      "time-range-picker-label": "시간 범위 선택기 활성화됨",
-      "time-range-picker-label-desc": "조회자가 시간 범위를 변경할 수 있도록 허용"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "주석 = 숨기기",
-      "annotations-show-text": "주석 = 표시",
-      "time-range-picker-disabled-text": "시간 범위 선택기 = 비활성화됨",
-      "time-range-picker-enabled-text": "시간 범위 선택기 = 활성화됨",
-      "time-range-text": "시간 범위 = "
     },
     "share": {
       "success-delete": "대시보드를 더 이상 공유할 수 없습니다."
@@ -15952,9 +15899,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "공유"
-    },
     "embed": {
       "copy": "클립보드로 복사",
       "html": "HTML 임베드",
@@ -16001,9 +15945,6 @@
       "time-range-description": "현재 상대적 시간 범위를 절대적 시간 범위로 변환합니다.",
       "time-range-label": "시간 범위 잠그기"
     },
-    "panel": {
-      "title": "패널 공유"
-    },
     "snapshot": {
       "cancel-button": "취소",
       "copy-link-button": "복사",
@@ -16019,16 +15960,11 @@
       "local-button": "스냅샷 게시",
       "mistake-message": "혹시 실수로 게시하셨나요? ",
       "name": "스냅샷 이름",
-      "timeout": "타임아웃(초)",
-      "timeout-description": "대시보드 메트릭을 수집하는 데 시간이 오래 걸리는 경우 타임아웃 값을 구성해야 할 수 있습니다.",
       "url-label": "스냅샷 URL"
     },
     "tab-title": {
-      "embed": "임베드",
       "export": "내보내기",
-      "library-panel": "라이브러리 패널",
       "link": "링크",
-      "public-dashboard-title": "공개 대시보드",
       "snapshot": "스냅샷"
     },
     "theme-picker": {

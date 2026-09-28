@@ -138,8 +138,9 @@ func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceSe
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg:          opts.Reg,
-		SecureValues: opts.SecureValues,
+		Reg:                     opts.Reg,
+		SecureValues:            opts.SecureValues,
+		GRPCErrorResultToStatus: opts.Cfg != nil && opts.Cfg.UnifiedStorageGRPCErrorResultToStatus,
 	}
 	for _, optFn := range withOpts {
 		if err := optFn(opts, serverOptions); err != nil {

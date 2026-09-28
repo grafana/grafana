@@ -6796,9 +6796,6 @@
     "variable": {
       "description-tooltip": "変数の説明"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "ダッシュボードに戻る",
       "not-found": ""
@@ -13258,7 +13255,7 @@
       "count-truncated_other": "最初の{{count}}冊のノートブックが読み込まれました"
     },
     "new": {
-      "default-title": "ノートブック番号{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "保存に失敗しました",
@@ -14779,12 +14776,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "リポジトリに戻る",
       "cleaning-up-resources": "リポジトリリソースのクリーンアップ中",
-      "not-found": "見つかりません",
       "not-found-message": "リポジトリが見つかりません",
       "repository-config-exists-configuration": "リポジトリ設定が設定ファイルに含まれていることを確認してください。",
       "tab-overview": "概要",
@@ -15080,26 +15081,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "ダッシュボードを公開する前に、次のことを確認してください。",
-      "data-src-ack-desc": "現在、公開はデータソースのサブセットでのみ機能します*",
-      "data-src-ack-tooltip": "パブリックデータソースの詳細",
-      "public-ack-desc": "ダッシュボード全体が公開されます*",
-      "public-ack-tooltip": "公開ダッシュボードの詳細",
-      "usage-ack-desc": "ダッシュボードを公開すると、表示されるたびにクエリが実行され、コストが増加する可能性があります*",
-      "usage-ack-desc-tooltip": "クエリキャッシュの詳細"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "ダッシュボードを表示できます",
-      "copy-button": "コピー",
-      "dashboard-url-field-label": "ダッシュボードURL",
-      "email-share-type-option-label": "指定された人のみ",
-      "pause-sharing-dashboard-label": "ダッシュボードの共有を一時停止",
-      "public-share-type-option-label": "リンクをお持ちの方全員",
-      "revoke-public-URL-button": "公開URLを取り消す",
-      "revoke-public-URL-button-title": "公開URLを取り消す",
-      "settings-title": "設定"
-    },
     "configuration": {
       "display-annotations-description": "このダッシュボードに注釈を表示",
       "display-annotations-label": "注釈を表示",
@@ -15112,21 +15093,11 @@
       "time-range-label": "時間範囲",
       "time-range-tooltip": "共有ダッシュボードは、ダッシュボードのデフォルトの時間範囲設定を使用します"
     },
-    "create-page": {
-      "generate-public-url-button": "公開URLを生成する",
-      "unsupported-features-desc": "現在、テンプレート変数またはフロントエンドデータソースはサポートされていません",
-      "welcome-title": "公開ダッシュボードへようこそ！"
-    },
     "email-sharing": {
       "accept-button": "承諾",
       "alert-text": "メールでダッシュボードを共有する場合、共有するダッシュボードの数に関係なく、30日間のトークンの期間中、ユーザーごとに請求されます。トークンを更新しない限り、請求は30日後に停止します。",
       "bill-ack": "ユーザーを追加するには支払いが必要であることを理解しています。*",
       "cancel-button": "キャンセル",
-      "input-invalid-email-text": "メールアドレスが無効です",
-      "input-required-email-text": "メールアドレスを入力してください",
-      "invite-button": "招待",
-      "invite-field-desc": "メールでユーザーを招待",
-      "invite-field-label": "招待",
       "learn-more-button": "もっと詳しく",
       "recipient-email-placeholder": "メール",
       "recipient-invalid-email-text": "メールアドレスが無効です",
@@ -15136,17 +15107,12 @@
       "recipient-list-description": "直接招待したユーザーのみがこのダッシュボードにアクセスできます",
       "recipient-list-title": "アクセスできる人",
       "recipient-required-email-text": "メールアドレスを入力してください",
-      "resend-button": "再送信",
-      "resend-button-title": "再送信",
       "resend-invite-label": "招待状の再送",
       "revoke-access-label": "アクセス権を取り消す",
-      "revoke-button": "取消し",
-      "revoke-button-title": "取消し",
       "success-creation": "ダッシュボードを外部と共有できるようになりました",
       "success-share-type-change": "ダッシュボードへのアクセスが更新されました：特定のユーザーのみがリンクでアクセスできるようになりました"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "パブリック構成を更新する前に、ダッシュボードの変更を保存してください",
       "unsupport-data-source-alert-readmore-link": "サポートされているデータソースの詳細を読む",
       "unsupported-data-source-alert-title": "サポートされていないデータソース",
       "unsupported-template-variable-alert-desc": "この公開ダッシュボードは、テンプレート変数を使用しているため機能しない場合があります",
@@ -15160,25 +15126,6 @@
       "public-ack": "このダッシュボード全体が公開されることを理解しています。*",
       "success-creation": "ダッシュボードが公開されました",
       "success-share-type-change": "ダッシュボードへのアクセスが更新されました：リンクを知っている人なら誰でもアクセスできるようになりました"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "設定を折りたたむ",
-      "expand-settings-tooltip": "設定を展開"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "デフォルトの時間範囲",
-      "default-time-range-label-desc": "公開ダッシュボードは、ダッシュボードのデフォルトの時間範囲設定を使用します",
-      "show-annotations-label": "注釈の表示",
-      "show-annotations-label-desc": "公開ダッシュボードに注釈を表示",
-      "time-range-picker-label": "時間範囲ピッカーが有効になっています",
-      "time-range-picker-label-desc": "視聴者が時間範囲を変更できるようにする"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "注釈 = 非表示",
-      "annotations-show-text": "注釈 = 表示",
-      "time-range-picker-disabled-text": "時間範囲ピッカー = 無効",
-      "time-range-picker-enabled-text": "時間範囲ピッカー = 有効",
-      "time-range-text": "時間範囲 = "
     },
     "share": {
       "success-delete": "ダッシュボードは共有できなくなりました"
@@ -15952,9 +15899,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "共有"
-    },
     "embed": {
       "copy": "クリップボードにコピー",
       "html": "埋込みHTML",
@@ -16001,9 +15945,6 @@
       "time-range-description": "現在の相対的な時間範囲を絶対的な時間範囲に変換します",
       "time-range-label": "時間範囲をロック"
     },
-    "panel": {
-      "title": "パネルを共有"
-    },
     "snapshot": {
       "cancel-button": "キャンセル",
       "copy-link-button": "コピー",
@@ -16019,16 +15960,11 @@
       "local-button": "スナップショットを公開",
       "mistake-message": "間違えましたか？",
       "name": "スナップショット名",
-      "timeout": "タイムアウト（秒）",
-      "timeout-description": "ダッシュボードメトリックの収集に時間がかかる場合は、タイムアウト値を設定する必要があります。",
       "url-label": "スナップショットURL"
     },
     "tab-title": {
-      "embed": "埋め込み",
       "export": "エクスポート",
-      "library-panel": "ライブラリパネルを追加",
       "link": "リンク",
-      "public-dashboard-title": "公開ダッシュボード",
       "snapshot": "スナップショット"
     },
     "theme-picker": {
