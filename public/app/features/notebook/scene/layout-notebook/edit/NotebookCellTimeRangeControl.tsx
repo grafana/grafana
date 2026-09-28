@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
-import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { TimePickerContent } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerContent';
 import { getQuickOptions } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
@@ -40,65 +40,98 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
   const [open, setOpen] = useState(false);
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLSpanElement>(null);
+  const triggerRef = useRef<HTMLSpanElement>(null);
   const overlayRef = useRef<HTMLElement>(null);
 
-  const { overlayProps } = useOverlay(
+  const { overlayProps, underlayProps } = useOverlay(
     {
       isOpen: open,
       onClose: () => setOpen(false),
       isDismissable: true,
-      shouldCloseOnInteractOutside: (element) => !containerRef.current?.contains(element),
+      shouldCloseOnInteractOutside: (element) => !triggerRef.current?.contains(element),
     },
     overlayRef
   );
   const { dialogProps } = useDialog({}, overlayRef);
 
-  const trigger = $timeRange ? (
-    <button type="button" className={styles.label} onClick={() => setOpen((prev) => !prev)}>
+  const ancestorTimeZone = getAncestorTimeZone(cell);
+  const fiscalYearStartMonth = getAncestorFiscalYearStartMonth(cell);
+  const committed = $timeRange ? buildCellTimeRangeSpec($timeRange) : seedFromAncestor(cell);
+  const value = rangeUtil.convertRawToRange(
+    { from: committed.from, to: committed.to },
+    ancestorTimeZone,
+    fiscalYearStartMonth
+  );
+
+  const lockedLabel = t('notebook.cell.time-range.locked', 'Locked: {{range}}', {
+    range: rangeUtil.describeTimeRange(committed, ancestorTimeZone, getQuickRanges(cell)),
+    interpolation: { escapeValue: false },
+  });
+
+  const rawTrigger = $timeRange ? (
+    <button type="button" className={styles.label} aria-label={lockedLabel} onClick={() => setOpen((prev) => !prev)}>
       <Icon name="lock" size="sm" />
-      {t('notebook.cell.time-range.locked', 'Locked: {{range}}', {
-        range: rangeUtil.describeTimeRange(
-          { from: $timeRange.state.from, to: $timeRange.state.to },
-          getAncestorTimeZone(cell),
-          getQuickRanges(cell)
-        ),
-        interpolation: { escapeValue: false },
-      })}
+      <span className={styles.labelText}>{lockedLabel}</span>
     </button>
   ) : (
     <IconButton
       name="clock-nine"
       size="sm"
       variant="secondary"
-      tooltip={t('notebook.cell.time-range.tooltip-default', "Uses the notebook's time range")}
       aria-label={t('notebook.cell.time-range.button', 'Update time range')}
       onClick={() => setOpen((prev) => !prev)}
     />
   );
 
+  const trigger = (
+    <Tooltip
+      content={
+        $timeRange ? (
+          <TimePickerTooltip timeRange={value} timeZone={ancestorTimeZone} />
+        ) : (
+          t('notebook.cell.time-range.tooltip-default', 'Panel time settings')
+        )
+      }
+      placement="bottom"
+      interactive
+    >
+      {rawTrigger}
+    </Tooltip>
+  );
+
   return (
     <span className={styles.container} ref={containerRef}>
-      {$timeRange ? (
-        <span className={styles.pill}>
-          {trigger}
-          <span className={styles.separator} />
-          <IconButton
-            name="times"
-            size="sm"
-            tooltip={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
-            aria-label={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
-            onClick={() => cell.onTimeRangeChange(undefined)}
-          />
-        </span>
-      ) : (
-        trigger
-      )}
+      <span ref={triggerRef}>
+        {$timeRange ? (
+          <span className={styles.pill}>
+            {trigger}
+            <span className={styles.separator} />
+            <IconButton
+              name="times"
+              size="sm"
+              tooltip={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
+              aria-label={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
+              onClick={() => cell.onTimeRangeChange(undefined)}
+            />
+          </span>
+        ) : (
+          trigger
+        )}
+      </span>
       {open && (
-        <FocusScope contain autoFocus restoreFocus>
-          <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
-            <NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />
-          </section>
-        </FocusScope>
+        <>
+          <div
+            role="presentation"
+            data-testid="notebook-cell-time-range-backdrop"
+            className={styles.backdrop}
+            {...underlayProps}
+          />
+          <FocusScope contain autoFocus restoreFocus>
+            <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
+              <NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />
+            </section>
+          </FocusScope>
+        </>
       )}
     </span>
   );
@@ -116,6 +149,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
     right: 0,
     marginTop: theme.spacing(0.5),
     zIndex: theme.zIndex.dropdown,
+    [theme.breakpoints.down('sm')]: {
+      position: 'fixed',
+      top: '50%',
+      right: '50%',
+      marginTop: 0,
+      transform: 'translate(50%, -50%)',
+      zIndex: theme.zIndex.modal,
+    },
+  }),
+  backdrop: css({
+    display: 'none',
+    [theme.breakpoints.down('sm')]: {
+      display: 'block',
+      position: 'fixed',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      zIndex: theme.zIndex.modalBackdrop,
+      backgroundColor: theme.components.overlay.background,
+    },
   }),
   pill: css({
     display: 'inline-flex',
@@ -134,7 +188,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     background: 'transparent',
     color: theme.colors.text.primary,
-    font: 'inherit',
+    fontSize: theme.typography.sm.fontSize,
     cursor: 'pointer',
     padding: theme.spacing(0, 1),
     whiteSpace: 'nowrap',
@@ -143,11 +197,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
       outlineOffset: '2px',
     },
   }),
+  labelText: css({
+    [theme.breakpoints.down('md')]: {
+      display: 'none',
+    },
+  }),
   separator: css({
     width: '1px',
     height: theme.spacing(2),
     background: theme.colors.border.weak,
-    marginRight: theme.spacing(0.5),
+    marginRight: theme.spacing(1),
   }),
 });
 

@@ -1,6 +1,5 @@
-import { render, screen } from 'test/test-utils';
+import { fireEvent, render, screen } from 'test/test-utils';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
@@ -11,8 +10,6 @@ import { NotebookLayoutManager } from '../NotebookLayoutManager';
 
 import { NotebookCellTimeRangeControl } from './NotebookCellTimeRangeControl';
 
-// A cell needs a notebook scene above it for sceneGraph.getTimeRange to resolve an ambient range
-// (the "use notebook time" preview) — no activation required, only the parent chain that
 function buildCell(timeRange?: SceneTimeRange) {
   const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
   const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', body: panel, $timeRange: timeRange });
@@ -27,19 +24,115 @@ function buildCell(timeRange?: SceneTimeRange) {
 }
 
 describe('NotebookCellTimeRangeControl', () => {
-  it('reverts a from/to change made since opening the popover, on Reset', async () => {
+  it('shows a plain clock icon and no locked label when there is no override', () => {
+    const cell = buildCell();
+    render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    expect(screen.getByRole('button', { name: 'Update time range' })).toBeInTheDocument();
+    expect(screen.queryByText(/Locked:/)).not.toBeInTheDocument();
+  });
+
+  it('shows the locked label and a clear button when the cell has its own range', () => {
+    const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now' }));
+    render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    expect(screen.getByText('Locked: Last 24 hours')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sync back to notebook time range' })).toBeInTheDocument();
+  });
+
+  it('opens the real time range picker content in one click, with no separate nested trigger', async () => {
+    const cell = buildCell();
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    await user.click(screen.getByRole('button', { name: 'Update time range' }));
+
+    expect(await screen.findByRole('checkbox', { name: 'Last 5 minutes' })).toBeInTheDocument();
+  });
+
+  it('commits a picked quick range immediately, with no separate Apply step', async () => {
+    const cell = buildCell();
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    await user.click(screen.getByRole('button', { name: 'Update time range' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'Last 5 minutes' }));
+
+    expect(cell.state.$timeRange?.state.from).toBe('now-5m');
+    expect(cell.state.$timeRange?.state.to).toBe('now');
+    expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
+  });
+
+  it('clears the override from the clear button directly, without opening the popover', async () => {
     const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now' }));
     const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
 
-    await user.click(screen.getByRole('button'));
-    await user.click(screen.getByTestId(selectors.components.TimePicker.moveBackwardButton));
+    await user.click(screen.getByRole('button', { name: 'Sync back to notebook time range' }));
 
-    await user.click(screen.getByRole('button', { name: 'Reset' }));
-    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(cell.state.$timeRange).toBeUndefined();
+    expect(screen.queryByRole('checkbox', { name: /Last/ })).not.toBeInTheDocument();
+  });
 
-    // The real assertion that matters: Reset discarded the mid-session move, so Apply persists the
-    // committed range, not the shifted one.
-    expect(cell.state.$timeRange?.state.from).toBe('now-24h');
-    expect(cell.state.$timeRange?.state.to).toBe('now');
+  it('closes on clicking the trigger again', async () => {
+    const cell = buildCell();
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+    const openButton = screen.getByRole('button', { name: 'Update time range' });
+
+    await user.click(openButton);
+    expect(await screen.findByRole('checkbox', { name: 'Last 5 minutes' })).toBeInTheDocument();
+
+    await user.click(openButton);
+    expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
+  });
+
+  it('closes when clicking outside the popover', async () => {
+    const cell = buildCell();
+    const { user } = render(
+      <div>
+        <NotebookCellTimeRangeControl cell={cell} />
+        <button>Outside</button>
+      </div>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Update time range' }));
+    expect(await screen.findByRole('checkbox', { name: 'Last 5 minutes' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
+  });
+
+  // The backdrop only becomes visible below the mobile breakpoint, which jsdom won't match, so
+  // userEvent's visibility check would refuse the click — fireEvent bypasses that to exercise the
+  // actual dismiss logic (the backdrop must count as "outside" the trigger, not just any click).
+  it('treats a click on the mobile backdrop as outside, closing the popover', async () => {
+    const cell = buildCell();
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    await user.click(screen.getByRole('button', { name: 'Update time range' }));
+    expect(await screen.findByRole('checkbox', { name: 'Last 5 minutes' })).toBeInTheDocument();
+
+    const backdrop = screen.getByTestId('notebook-cell-time-range-backdrop');
+    fireEvent.mouseDown(backdrop);
+    fireEvent.mouseUp(backdrop);
+    fireEvent.click(backdrop);
+
+    expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
+  });
+
+  it('shows a tooltip explaining the button when there is no override', async () => {
+    const cell = buildCell();
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    await user.hover(screen.getByRole('button', { name: 'Update time range' }));
+
+    expect(await screen.findByText('Panel time settings')).toBeInTheDocument();
+  });
+
+  it('shows the resolved absolute range in the tooltip when the cell has its own range', async () => {
+    const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now' }));
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    await user.hover(screen.getByText('Locked: Last 24 hours'));
+
+    expect(await screen.findByText('to')).toBeInTheDocument();
+    expect(screen.queryByText('Panel time settings')).not.toBeInTheDocument();
   });
 });
