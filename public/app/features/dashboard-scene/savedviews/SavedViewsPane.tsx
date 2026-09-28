@@ -552,6 +552,9 @@ function getStyles(theme: GrafanaTheme2) {
       flex: 1,
       minWidth: 0,
       justifyContent: 'flex-start',
+      // Zeroed out so the title text lines up horizontally with the description/author text
+      // below it, which has no button chrome of its own.
+      padding: 0,
       // The row itself already highlights on hover -- suppress the Button's own
       // hover/focus background so it doesn't show as a second, differently-colored rectangle.
       '&:hover, &:focus': {
