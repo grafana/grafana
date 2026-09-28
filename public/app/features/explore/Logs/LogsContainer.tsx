@@ -223,9 +223,11 @@ const LogsContainer = memo(function LogsContainer({
     return hasLogsContextSupport(dsInstances[row.dataFrame.refId]);
   }
 
-  const getFieldLinks: GetFieldLinksFn = (field, rowIndex, dataFrame, vars) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame, vars });
-  };
+  const getFieldLinks = useCallback<GetFieldLinksFn>(
+    (field, rowIndex, dataFrame, vars) =>
+      getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame, vars }),
+    [splitOpenFn, range]
+  );
 
   function logDetailsFilterAvailable() {
     return Object.values(dsInstances).some(
