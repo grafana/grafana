@@ -6528,10 +6528,18 @@
       },
       "saved-views": {
         "actions-aria-label": "Actions",
+        "author": "Created by %AUTHOR%",
+        "author-unknown": "Unknown author",
         "delete": "Delete",
         "delete-confirm-body": "Delete \"%NAME%\"? This cannot be undone.",
         "delete-confirm-confirm": "Delete",
         "delete-confirm-title": "Delete saved view",
+        "description-label": "Description",
+        "description-placeholder": "Add a description (optional)",
+        "edit": "Edit",
+        "edit-modal-cancel": "Cancel",
+        "edit-modal-confirm": "Save",
+        "edit-modal-title": "Edit view",
         "empty": "No saved views yet",
         "loading": "Loading saved views…",
         "new-name-label": "View name",
@@ -6540,9 +6548,6 @@
         "overwrite-tooltip": "Overwrite \"%NAME%\"",
         "overwrite-tooltip-none": "Select a saved view to overwrite",
         "pane-header": "Saved views",
-        "rename": "Rename",
-        "rename-cancel": "Cancel",
-        "rename-save": "Save name",
         "save-new": "Save new",
         "save-new-modal-cancel": "Cancel",
         "save-new-modal-confirm": "Save",
@@ -6552,7 +6557,9 @@
         },
         "search-placeholder": "Search views",
         "title": "Views",
-        "tooltip": "Saved views"
+        "tooltip": "Saved views",
+        "view-mode-compact": "Show compact list",
+        "view-mode-expanded": "Show details"
       },
       "section-filters": {
         "title": "Filters"

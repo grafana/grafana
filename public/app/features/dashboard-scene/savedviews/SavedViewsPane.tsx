@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -23,8 +24,11 @@ import {
   Sidebar,
   Stack,
   Text,
+  TextArea,
   useStyles2,
 } from '@grafana/ui';
+import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
+import { AnnoKeyCreatedBy } from 'app/features/apiserver/types';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -32,15 +36,18 @@ import { savedDashboardViewsApi, type SavedDashboardView } from './api';
 import { loadSavedViews } from './loadSavedViews';
 import { captureSavedViewState } from './state';
 
+type ViewMode = 'compact' | 'expanded';
+
 interface SavedViewsPaneState extends SceneObjectState {
   searchQuery: string;
+  viewMode: ViewMode;
 }
 
 export class SavedViewsPane extends SceneObjectBase<SavedViewsPaneState> {
   public static Component = SavedViewsPaneRenderer;
 
   constructor(state?: Partial<SavedViewsPaneState>) {
-    super({ ...state, searchQuery: state?.searchQuery ?? '' });
+    super({ ...state, searchQuery: state?.searchQuery ?? '', viewMode: state?.viewMode ?? 'compact' });
   }
 
   public getId() {
@@ -52,22 +59,77 @@ export class SavedViewsPane extends SceneObjectBase<SavedViewsPaneState> {
       this.setState({ searchQuery });
     }
   }
+
+  public setViewMode(viewMode: ViewMode): void {
+    if (this.state.viewMode !== viewMode) {
+      this.setState({ viewMode });
+    }
+  }
 }
 
-interface RenameState {
+interface SavedViewFormFieldsProps {
   name: string;
-  draft: string;
+  onNameChange: (name: string) => void;
+  namePlaceholder: string;
+  description: string;
+  onDescriptionChange: (description: string) => void;
+}
+
+function SavedViewFormFields({
+  name,
+  onNameChange,
+  namePlaceholder,
+  description,
+  onDescriptionChange,
+}: SavedViewFormFieldsProps) {
+  return (
+    <>
+      <Field
+        noMargin
+        label={
+          <Label htmlFor="saved-view-name">{t('dashboard.sidebar.saved-views.new-name-label', 'View name')}</Label>
+        }
+      >
+        <Input
+          id="saved-view-name"
+          autoFocus
+          placeholder={namePlaceholder}
+          value={name}
+          onChange={(e) => onNameChange(e.currentTarget.value)}
+        />
+      </Field>
+      <Field
+        noMargin
+        label={
+          <Label htmlFor="saved-view-description">
+            {t('dashboard.sidebar.saved-views.description-label', 'Description')}
+          </Label>
+        }
+      >
+        <TextArea
+          id="saved-view-description"
+          rows={3}
+          placeholder={t('dashboard.sidebar.saved-views.description-placeholder', 'Add a description (optional)')}
+          value={description}
+          onChange={(e) => onDescriptionChange(e.currentTarget.value)}
+        />
+      </Field>
+    </>
+  );
 }
 
 function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
   const { savedViews, viewFilter, uid } = dashboard.useState();
-  const { searchQuery } = model.useState();
-  const [renaming, setRenaming] = useState<RenameState | undefined>();
+  const { searchQuery, viewMode } = model.useState();
   const [pendingDelete, setPendingDelete] = useState<SavedDashboardView | undefined>();
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [saveModalName, setSaveModalName] = useState('');
+  const [saveModalDescription, setSaveModalDescription] = useState('');
+  const [editingView, setEditingView] = useState<SavedDashboardView | undefined>();
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
@@ -78,6 +140,35 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       loadSavedViews(dashboard);
     }
   }, [dashboard, savedViews]);
+
+  const authorUids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (savedViews ?? [])
+            .map((v) => v.metadata.annotations?.[AnnoKeyCreatedBy])
+            .filter((uid): uid is string => Boolean(uid))
+        )
+      ),
+    [savedViews]
+  );
+  // Only asked for while the list is expanded -- collapsed rows never show an author, so there is
+  // nothing to justify the extra IAM lookup traffic.
+  const { data: displayMapping } = useGetDisplayMappingQuery(
+    viewMode === 'expanded' && authorUids.length > 0 ? { key: authorUids } : skipToken
+  );
+  const authorNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const entry of displayMapping?.display ?? []) {
+      if (entry.identity.name) {
+        map.set(`${entry.identity.type}:${entry.identity.name}`, entry.displayName);
+      }
+      if (entry.internalId) {
+        map.set(`${entry.identity.type}:${entry.internalId}`, entry.displayName);
+      }
+    }
+    return map;
+  }, [displayMapping]);
 
   if (savedViews === undefined) {
     return (
@@ -120,12 +211,14 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
 
   function openSaveModal() {
     setSaveModalName('');
+    setSaveModalDescription('');
     setIsSaveModalOpen(true);
   }
 
   function closeSaveModal() {
     setIsSaveModalOpen(false);
     setSaveModalName('');
+    setSaveModalDescription('');
   }
 
   function handleSaveModalConfirm() {
@@ -134,7 +227,13 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       if (!uid || !name) {
         return;
       }
-      const spec = { ...captureSavedViewState(dashboard), dashboardUID: uid, name };
+      const description = saveModalDescription.trim();
+      const spec = {
+        ...captureSavedViewState(dashboard),
+        dashboardUID: uid,
+        name,
+        description: description || undefined,
+      };
       const created = await savedDashboardViewsApi.create(spec);
       dashboard.setState({ savedViews: [...(dashboard.state.savedViews ?? []), created] });
       locationService.partial({ viewFilter: created.metadata.name });
@@ -151,6 +250,9 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
         ...captureSavedViewState(dashboard),
         dashboardUID: selectedView.spec.dashboardUID,
         name: selectedView.spec.name,
+        // Overwrite only replaces the described state (time range + variables), not the label/description --
+        // carry the existing one forward or update() would silently wipe it (it replaces the whole spec).
+        description: selectedView.spec.description,
       };
       const updated = await savedDashboardViewsApi.update(selectedView, spec);
       dashboard.setState({
@@ -161,19 +263,39 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
     });
   }
 
-  function handleRenameSubmit(view: SavedDashboardView) {
+  function openEditModal(view: SavedDashboardView) {
+    setEditingView(view);
+    setEditName(view.spec.name);
+    setEditDescription(view.spec.description ?? '');
+  }
+
+  function closeEditModal() {
+    setEditingView(undefined);
+    setEditName('');
+    setEditDescription('');
+  }
+
+  function handleEditConfirm() {
     return withBusy(async () => {
-      const name = renaming?.draft.trim();
+      if (!editingView) {
+        return;
+      }
+      const name = editName.trim();
       if (!name) {
         return;
       }
-      const updated = await savedDashboardViewsApi.update(view, { ...view.spec, name });
+      const description = editDescription.trim();
+      const updated = await savedDashboardViewsApi.update(editingView, {
+        ...editingView.spec,
+        name,
+        description: description || undefined,
+      });
       dashboard.setState({
         savedViews: (dashboard.state.savedViews ?? []).map((v) =>
           v.metadata.name === updated.metadata.name ? updated : v
         ),
       });
-      setRenaming(undefined);
+      closeEditModal();
     });
   }
 
@@ -195,13 +317,24 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       <Sidebar.PaneHeader title={t('dashboard.sidebar.saved-views.pane-header', 'Saved views')} />
       {savedViews.length > 0 && (
         <div className={styles.searchContainer}>
-          <FilterInput
-            placeholder={t('dashboard.sidebar.saved-views.search-placeholder', 'Search views')}
-            value={searchQuery}
-            onChange={(query) => model.setSearchQuery(query)}
-            escapeRegex={false}
-            className={styles.searchInput}
-          />
+          <Stack gap={1} alignItems="center">
+            <FilterInput
+              placeholder={t('dashboard.sidebar.saved-views.search-placeholder', 'Search views')}
+              value={searchQuery}
+              onChange={(query) => model.setSearchQuery(query)}
+              escapeRegex={false}
+              className={styles.searchInput}
+            />
+            <IconButton
+              name={viewMode === 'expanded' ? 'table-collapse-all' : 'table-expand-all'}
+              tooltip={
+                viewMode === 'expanded'
+                  ? t('dashboard.sidebar.saved-views.view-mode-compact', 'Show compact list')
+                  : t('dashboard.sidebar.saved-views.view-mode-expanded', 'Show details')
+              }
+              onClick={() => model.setViewMode(viewMode === 'expanded' ? 'compact' : 'expanded')}
+            />
+          </Stack>
         </div>
       )}
       <ScrollContainer showScrollIndicators>
@@ -222,76 +355,67 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
               <Stack direction="column" gap={0}>
                 {filteredViews.map((view) => {
                   const isSelected = view.metadata.name === viewFilter;
-                  const isRenaming = renaming?.name === view.metadata.name;
+                  const authorUid = view.metadata.annotations?.[AnnoKeyCreatedBy];
+                  const authorName = authorUid
+                    ? (authorNames.get(authorUid) ??
+                      t('dashboard.sidebar.saved-views.author-unknown', 'Unknown author'))
+                    : undefined;
 
                   return (
                     <div key={view.metadata.name} className={cx(styles.row, isSelected && styles.rowSelected)}>
                       <Stack alignItems="center" justifyContent="space-between" gap={1}>
-                        {isRenaming ? (
-                          <Input
-                            autoFocus
-                            value={renaming?.draft ?? ''}
-                            onChange={(e) => setRenaming({ name: view.metadata.name, draft: e.currentTarget.value })}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleRenameSubmit(view);
-                              }
-                            }}
-                          />
-                        ) : (
-                          <Button
-                            variant={isSelected ? 'primary' : 'secondary'}
-                            fill="text"
-                            className={styles.nameButton}
-                            onClick={() => handleSelect(view)}
-                          >
-                            {view.spec.name || view.metadata.name}
-                          </Button>
-                        )}
+                        <Button
+                          variant={isSelected ? 'primary' : 'secondary'}
+                          fill="text"
+                          className={styles.nameButton}
+                          onClick={() => handleSelect(view)}
+                        >
+                          {view.spec.name || view.metadata.name}
+                        </Button>
 
-                        <Stack gap={0.5}>
-                          {isRenaming ? (
-                            <>
-                              <IconButton
-                                name="check"
-                                tooltip={t('dashboard.sidebar.saved-views.rename-save', 'Save name')}
-                                onClick={() => handleRenameSubmit(view)}
-                                disabled={busy}
+                        <Dropdown
+                          overlay={
+                            <Menu>
+                              <Menu.Item
+                                label={t('dashboard.sidebar.saved-views.edit', 'Edit')}
+                                icon="pen"
+                                onClick={() => openEditModal(view)}
                               />
-                              <IconButton
-                                name="times"
-                                tooltip={t('dashboard.sidebar.saved-views.rename-cancel', 'Cancel')}
-                                onClick={() => setRenaming(undefined)}
+                              <Menu.Item
+                                label={t('dashboard.sidebar.saved-views.delete', 'Delete')}
+                                icon="trash-alt"
+                                destructive
+                                onClick={() => setPendingDelete(view)}
                               />
-                            </>
-                          ) : (
-                            <Dropdown
-                              overlay={
-                                <Menu>
-                                  <Menu.Item
-                                    label={t('dashboard.sidebar.saved-views.rename', 'Rename')}
-                                    icon="pen"
-                                    onClick={() => setRenaming({ name: view.metadata.name, draft: view.spec.name })}
-                                  />
-                                  <Menu.Item
-                                    label={t('dashboard.sidebar.saved-views.delete', 'Delete')}
-                                    icon="trash-alt"
-                                    destructive
-                                    onClick={() => setPendingDelete(view)}
-                                  />
-                                </Menu>
-                              }
-                              placement="bottom-end"
-                            >
-                              <IconButton
-                                name="ellipsis-v"
-                                aria-label={t('dashboard.sidebar.saved-views.actions-aria-label', 'Actions')}
-                                disabled={busy}
-                              />
-                            </Dropdown>
-                          )}
-                        </Stack>
+                            </Menu>
+                          }
+                          placement="bottom-end"
+                        >
+                          <IconButton
+                            name="ellipsis-v"
+                            aria-label={t('dashboard.sidebar.saved-views.actions-aria-label', 'Actions')}
+                            disabled={busy}
+                          />
+                        </Dropdown>
                       </Stack>
+
+                      {viewMode === 'expanded' && (view.spec.description || authorName) && (
+                        <div className={styles.rowMeta}>
+                          {view.spec.description && (
+                            <Text variant="bodySmall" color="secondary">
+                              {view.spec.description}
+                            </Text>
+                          )}
+                          {authorName && (
+                            <Text variant="bodySmall" color="secondary">
+                              {t('dashboard.sidebar.saved-views.author', 'Created by %AUTHOR%').replace(
+                                '%AUTHOR%',
+                                authorName
+                              )}
+                            </Text>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -333,33 +457,46 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
           onClickBackdrop={closeSaveModal}
         >
           <Stack direction="column" gap={2}>
-            <Field
-              noMargin
-              label={
-                <Label htmlFor="saved-view-name">
-                  {t('dashboard.sidebar.saved-views.new-name-label', 'View name')}
-                </Label>
-              }
-            >
-              <Input
-                id="saved-view-name"
-                autoFocus
-                placeholder={t('dashboard.sidebar.saved-views.new-name-placeholder', 'New view name')}
-                value={saveModalName}
-                onChange={(e) => setSaveModalName(e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && saveModalName.trim()) {
-                    handleSaveModalConfirm();
-                  }
-                }}
-              />
-            </Field>
+            <SavedViewFormFields
+              name={saveModalName}
+              onNameChange={setSaveModalName}
+              namePlaceholder={t('dashboard.sidebar.saved-views.new-name-placeholder', 'New view name')}
+              description={saveModalDescription}
+              onDescriptionChange={setSaveModalDescription}
+            />
             <Modal.ButtonRow>
               <Button variant="secondary" onClick={closeSaveModal}>
                 <Trans i18nKey="dashboard.sidebar.saved-views.save-new-modal-cancel">Cancel</Trans>
               </Button>
               <Button onClick={handleSaveModalConfirm} disabled={!saveModalName.trim() || busy}>
                 <Trans i18nKey="dashboard.sidebar.saved-views.save-new-modal-confirm">Save</Trans>
+              </Button>
+            </Modal.ButtonRow>
+          </Stack>
+        </Modal>
+      )}
+
+      {editingView && (
+        <Modal
+          isOpen
+          title={t('dashboard.sidebar.saved-views.edit-modal-title', 'Edit view')}
+          onDismiss={closeEditModal}
+          onClickBackdrop={closeEditModal}
+        >
+          <Stack direction="column" gap={2}>
+            <SavedViewFormFields
+              name={editName}
+              onNameChange={setEditName}
+              namePlaceholder={t('dashboard.sidebar.saved-views.new-name-placeholder', 'New view name')}
+              description={editDescription}
+              onDescriptionChange={setEditDescription}
+            />
+            <Modal.ButtonRow>
+              <Button variant="secondary" onClick={closeEditModal}>
+                <Trans i18nKey="dashboard.sidebar.saved-views.edit-modal-cancel">Cancel</Trans>
+              </Button>
+              <Button onClick={handleEditConfirm} disabled={!editName.trim() || busy}>
+                <Trans i18nKey="dashboard.sidebar.saved-views.edit-modal-confirm">Save</Trans>
               </Button>
             </Modal.ButtonRow>
           </Stack>
@@ -389,7 +526,7 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1, 1, 0, 1),
     }),
     searchInput: css({
-      width: '100%',
+      flex: 1,
     }),
     footer: css({
       flexShrink: 0,
@@ -424,6 +561,12 @@ function getStyles(theme: GrafanaTheme2) {
         minWidth: 0,
         textOverflow: 'ellipsis',
       },
+    }),
+    rowMeta: css({
+      marginTop: theme.spacing(0.5),
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.25),
     }),
   };
 }
