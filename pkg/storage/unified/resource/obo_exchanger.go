@@ -17,11 +17,17 @@ import (
 
 var _ authnlib.TokenExchanger = (*onBehalfOfExchanger)(nil)
 
-// onBehalfOfExchanger decorates a TokenExchanger so that calls whose verified access
-// token already carries the caller (a user actor) are exchanged on behalf of that
-// caller: the caller's token becomes the exchange subject and the exchange is scoped
-// to the caller's namespace. Every other call, meaning service identities, classic callers
-// whose ID token the interceptor forwards, passes through to the delegate untouched.
+// onBehalfOfExchanger decorates a TokenExchanger so that storage calls carry the caller
+// whose verified access token is in the context, instead of flattening it into the
+// plain service exchange:
+//   - a user or service account in the token's actor chain becomes the exchange
+//     subject, and the exchange is scoped to the caller's namespace;
+//   - a service calling on its own behalf becomes the exchange subject, so the signer
+//     caps the exchanged token at the caller's permissions.
+//
+// Every other call, meaning internal service identities without a token of their own
+// and classic callers whose ID token the interceptor forwards, passes through to the
+// delegate untouched.
 type onBehalfOfExchanger struct {
 	delegate authnlib.TokenExchanger
 	enabled  func(context.Context) bool
@@ -33,20 +39,26 @@ func (e *onBehalfOfExchanger) Exchange(ctx context.Context, req authnlib.TokenEx
 		return e.delegate.Exchange(ctx, req)
 	}
 
-	subject := onBehalfOfSubjectToken(info)
-	if subject == "" || !e.enabled(ctx) {
+	if subject := onBehalfOfSubjectToken(info); subject != "" && e.enabled(ctx) {
+		namespace := info.GetNamespace()
+		if namespace == "" || namespace == "*" {
+			// The signer rejects user exchanges without a concrete namespace; failing here
+			// keeps the doomed round trip out of the request path.
+			return nil, status.Error(codes.PermissionDenied, "on-behalf-of exchange requires a caller scoped to a single namespace")
+		}
+		req.SubjectToken = subject
+		req.Namespace = namespace
 		return e.delegate.Exchange(ctx, req)
 	}
 
-	namespace := info.GetNamespace()
-	if namespace == "" || namespace == "*" {
-		// The signer rejects user exchanges without a concrete namespace; failing here
-		// keeps the doomed round trip out of the request path.
-		return nil, status.Error(codes.PermissionDenied, "on-behalf-of exchange requires a caller scoped to a single namespace")
+	if subject := serviceSubjectToken(info); subject != "" && e.enabled(ctx) {
+		req.SubjectToken = subject
+		if ns := info.GetNamespace(); ns != "" && ns != "*" {
+			req.Namespace = ns
+		}
+		return e.delegate.Exchange(ctx, req)
 	}
 
-	req.SubjectToken = subject
-	req.Namespace = namespace
 	return e.delegate.Exchange(ctx, req)
 }
 
@@ -71,6 +83,15 @@ func onBehalfOfSubjectToken(info types.AuthInfo) string {
 		return ""
 	}
 	return token
+}
+
+// serviceSubjectToken returns the caller's access token when the caller is a service
+// calling on its own behalf.
+func serviceSubjectToken(info types.AuthInfo) string {
+	if !types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
+		return ""
+	}
+	return info.GetAccessToken()
 }
 
 // onBehalfOfFlag reads the OBO policy from OpenFeature per request, mirroring

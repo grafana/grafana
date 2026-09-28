@@ -189,6 +189,46 @@ func TestOnBehalfOfExchanger(t *testing.T) {
 			assert.Zero(t, delegate.calls, "the signer must not be called")
 		})
 	}
+
+	serviceCallerToken := signAccessToken(t, authnlib.AccessTokenClaims{Namespace: "*"})
+
+	for _, tc := range []struct{ name, callerNS, wantNS string }{
+		{name: "wildcard service caller becomes the exchange subject", callerNS: "*", wantNS: "*"},
+		{name: "namespaced service caller narrows the exchange to its namespace", callerNS: "stacks-1", wantNS: "stacks-1"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			delegate := &recordingExchanger{}
+			e := &onBehalfOfExchanger{delegate: delegate, enabled: enabled}
+			ctx := withInfo(&identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: tc.callerNS, AccessToken: serviceCallerToken})
+
+			_, err := e.Exchange(ctx, serviceReq)
+
+			require.NoError(t, err)
+			assert.Equal(t, serviceCallerToken, delegate.req.SubjectToken)
+			assert.Equal(t, tc.wantNS, delegate.req.Namespace)
+		})
+	}
+
+	t.Run("internal service identity without a token passes through untouched", func(t *testing.T) {
+		delegate := &recordingExchanger{}
+		e := &onBehalfOfExchanger{delegate: delegate, enabled: enabled}
+
+		_, err := e.Exchange(identity.WithServiceIdentityContext(context.Background(), 0), serviceReq)
+
+		require.NoError(t, err)
+		assert.Equal(t, serviceReq, delegate.req)
+	})
+
+	t.Run("service caller with policy off passes through untouched", func(t *testing.T) {
+		delegate := &recordingExchanger{}
+		e := &onBehalfOfExchanger{delegate: delegate, enabled: func(context.Context) bool { return false }}
+		ctx := withInfo(&identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: "*", AccessToken: serviceCallerToken})
+
+		_, err := e.Exchange(ctx, serviceReq)
+
+		require.NoError(t, err)
+		assert.Equal(t, serviceReq, delegate.req)
+	})
 }
 
 // The obo decision must hold across the whole interceptor: the exchange carries the caller
