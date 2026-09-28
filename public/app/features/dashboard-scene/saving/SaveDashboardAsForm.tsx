@@ -5,10 +5,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
+import { AnnoKeyInsights, AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { getInsightsAnnotation } from '../sidebar/insights/insightsStorage';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { getSaveDashboardErrorInfo } from './saveErrors';
@@ -125,11 +126,18 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
 
     const data = getValues();
 
-    // Only forward the selection annotation. Spreading full getK8SMetadata() would include
+    // Only forward the selection and Insights annotations. Spreading full getK8SMetadata() would include
     // name/resourceVersion and turn Save As into an update of the source dashboard.
     const useCrossDashboardVariables =
       dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables] ??
       dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyUseCrossDashboardVariables];
+    const insights = getInsightsAnnotation(dashboard);
+    const annotations: Record<string, string> = {
+      ...(useCrossDashboardVariables !== undefined
+        ? { [AnnoKeyUseCrossDashboardVariables]: useCrossDashboardVariables }
+        : {}),
+      ...(insights !== undefined ? { [AnnoKeyInsights]: insights } : {}),
+    };
 
     const result = await onSaveDashboard(dashboard, {
       overwrite,
@@ -142,15 +150,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
       copyTags: data.copyTags,
       title: data.title,
       description: data.description,
-      ...(useCrossDashboardVariables !== undefined
-        ? {
-            k8s: {
-              annotations: {
-                [AnnoKeyUseCrossDashboardVariables]: useCrossDashboardVariables,
-              },
-            },
-          }
-        : {}),
+      ...(Object.keys(annotations).length > 0 ? { k8s: { annotations } } : {}),
     });
 
     if (result.status === 'success') {

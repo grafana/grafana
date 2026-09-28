@@ -33,6 +33,7 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isSceneVariableInstance } from '../settings/variables/utils';
+import { hasInsightsAnnotationChanges } from '../sidebar/insights/insightsStorage';
 import { hasPredefinedVariablesAnnotationChanges } from '../utils/predefinedVariablesMetadata';
 
 import { type DashboardChangeInfo } from './shared';
@@ -184,7 +185,8 @@ export class DashboardSceneChangeTracker {
   private hasMetadataChanges() {
     return (
       this._dashboard.state.meta.folderUid !== this._dashboard.getInitialState()?.meta.folderUid ||
-      hasPredefinedVariablesAnnotationChanges(this._dashboard)
+      hasPredefinedVariablesAnnotationChanges(this._dashboard) ||
+      hasInsightsAnnotationChanges(this._dashboard)
     );
   }
 

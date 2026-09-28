@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
 
+import { useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   useFlagDashboardUndoRedo,
+  useFlagGrafanaDashboardInsights,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
@@ -26,6 +28,7 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
 import { ToggleViewPanePaneEvent } from './events';
+import { readInsightQuestions } from './insights/insightsStorage';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
 
@@ -165,6 +168,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
+          <InsightsButton dashboard={dashboard} openPane={openPane} />
           {dashboardNewLayoutsEnabled && config.featureToggles.dashboardUnifiedDrilldownControls && (
             <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />
           )}
@@ -234,6 +238,49 @@ function FiltersOverviewButton({
       title={t('dashboard.sidebar.filters.title', 'Filters')}
       tooltip={t('dashboard.sidebar.filters.tooltip', 'Filters overview')}
       active={openPane?.getId() === 'filters'}
+    />
+  );
+}
+
+function InsightsButton({ dashboard, openPane }: { dashboard: DashboardScene; openPane?: DashboardSidebarPane }) {
+  const insightsEnabled = useFlagGrafanaDashboardInsights();
+  const { isAvailable } = useAssistant();
+  const { isEditing, meta } = dashboard.useState();
+  const sidebar = dashboard.state.sidebar;
+
+  const onClick = useCallback(async () => {
+    const existing = sidebar.state.insightsPane;
+    if (existing) {
+      sidebar.openPane(existing);
+      return;
+    }
+    await sidebar.runPaneRequest(async (signal) => {
+      const { DashboardInsightsPane } = await import(
+        /* webpackChunkName: "dashboard-insights-pane" */ './insights/DashboardInsightsPane'
+      );
+      if (!signal.aborted) {
+        const pane = sidebar.state.insightsPane ?? new DashboardInsightsPane();
+        sidebar.setState({ insightsPane: pane });
+        sidebar.openPane(pane);
+      }
+    });
+  }, [sidebar]);
+
+  // Questions live in a k8s annotation, so dashboards without k8s metadata cannot persist them.
+  if (!insightsEnabled || !isAvailable || !meta.k8s) {
+    return null;
+  }
+  if (!isEditing && readInsightQuestions(dashboard).questions.length === 0) {
+    return null;
+  }
+
+  return (
+    <Sidebar.Button
+      icon="ai-sparkle"
+      onClick={onClick}
+      title={t('dashboard.sidebar.insights.title', 'Insights')}
+      tooltip={t('dashboard.sidebar.insights.tooltip', 'Ask Assistant saved questions about this dashboard')}
+      active={openPane?.getId() === 'insights'}
     />
   );
 }
