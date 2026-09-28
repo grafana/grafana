@@ -3,7 +3,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { searchNotebookTitles } from './notebookSearchApi';
-import { __resetSearchAvailabilityForTests } from './notebookSearchAvailability';
+import { __resetSearchAvailabilityForTests, markNotebookSearchUnavailable } from './notebookSearchAvailability';
 
 setBackendSrv(backendSrv);
 
@@ -36,11 +36,30 @@ describe('searchNotebookTitles', () => {
     );
   });
 
-  it.each([404, 405])('does not fetch full notebooks when search returns %i', async (status) => {
-    jest.spyOn(backendSrv, 'post').mockRejectedValue({ status, data: {} });
+  it.each([404, 405])('skips later searches without fetching full notebooks after a %i', async (status) => {
+    const post = jest.spyOn(backendSrv, 'post').mockRejectedValue({ status, data: {} });
     const get = jest.spyOn(backendSrv, 'get');
 
-    await expect(searchNotebookTitles('incident', 10)).rejects.toEqual({ status, data: {} });
+    await expect(searchNotebookTitles('incident', 10)).resolves.toEqual([]);
+    await expect(searchNotebookTitles('another', 10)).resolves.toEqual([]);
+    expect(post).toHaveBeenCalledTimes(1);
     expect(get).not.toHaveBeenCalled();
+  });
+
+  it('skips search when the notebook list already found the route missing', async () => {
+    markNotebookSearchUnavailable({ status: 404, data: {} });
+    const post = jest.spyOn(backendSrv, 'post');
+
+    await expect(searchNotebookTitles('incident', 10)).resolves.toEqual([]);
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('does not hide a 404 after search has succeeded', async () => {
+    const post = jest.spyOn(backendSrv, 'post').mockResolvedValueOnce({ items: [] });
+    await searchNotebookTitles('incident', 10);
+    post.mockRejectedValue({ status: 404, data: {} });
+
+    await expect(searchNotebookTitles('another', 10)).rejects.toEqual({ status: 404, data: {} });
+    expect(post).toHaveBeenCalledTimes(2);
   });
 });
