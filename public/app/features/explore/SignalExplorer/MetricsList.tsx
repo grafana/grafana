@@ -116,7 +116,8 @@ export const MetricsList = memo(function MetricsList({
   const reportedTermRef = useRef<string | null>(null);
 
   // `FilterInput` fires per keystroke, so a term only becomes an event once the user stops typing.
-  // Filtering is synchronous, so `metrics` already matches `searchTerm` by the time this runs.
+  // `loading` also covers a search still waiting on the datasource, so once it drops `metrics`
+  // matches `searchTerm`.
   useDebounce(
     () => {
       if (!searchTerm) {
