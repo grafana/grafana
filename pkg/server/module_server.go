@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"sync"
 
@@ -492,7 +493,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 			return nil, err
 		}
 	}
-	serviceOptions := append([]sql.ServiceOption{sql.WithWatchExpiry(s.watchExpiry)}, s.StorageServiceOptions...)
+	serviceOptions := append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry))
 	if dashboardStats != nil {
 		serviceOptions = append(serviceOptions, sql.WithDashboardStats(dashboardStats))
 	}
@@ -539,7 +540,7 @@ func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	serviceOptions := append([]sql.ServiceOption{sql.WithWatchExpiry(s.watchExpiry)}, s.StorageServiceOptions...)
+	serviceOptions := append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry))
 	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, serviceOptions...)
 	if err != nil {
 		return nil, err
