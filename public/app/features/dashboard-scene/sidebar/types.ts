@@ -2,6 +2,7 @@ import { type SceneObjectState, type SceneObject } from '@grafana/scenes';
 import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 
 import { type DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
+import { type DashboardInsightsPane } from './insights/DashboardInsightsPane';
 import { type DashboardOutline } from './outline/DashboardOutline';
 
 export interface DashboardSidebarState extends SceneObjectState {
@@ -10,6 +11,8 @@ export interface DashboardSidebarState extends SceneObjectState {
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
   outlinePane?: DashboardOutline;
+  /** Created on first open and kept so answers and in-flight requests survive closing the pane */
+  insightsPane?: DashboardInsightsPane;
   openPane?: DashboardSidebarPane;
   isLoading?: boolean;
   /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */

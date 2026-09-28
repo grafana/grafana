@@ -19,6 +19,7 @@ import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getD
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
+import { hasInsightsAnnotationChanges } from '../sidebar/insights/insightsStorage';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { hasPredefinedVariablesAnnotationChanges } from '../utils/predefinedVariablesMetadata';
 import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
@@ -208,12 +209,14 @@ export class V1DashboardSerializer
 
     const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
     const hasPredefinedVariablesChanges = hasPredefinedVariablesAnnotationChanges(scene);
+    const hasInsightsChanges = hasInsightsAnnotationChanges(scene);
 
     return {
       ...changeInfo,
       hasFolderChanges,
       hasPredefinedVariablesChanges,
-      hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges,
+      hasInsightsChanges,
+      hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges || hasInsightsChanges,
       isNew: isNewDashboard(scene.state),
       hasMigratedToV2: false,
     };
@@ -444,12 +447,14 @@ export class V2DashboardSerializer
 
     const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
     const hasPredefinedVariablesChanges = hasPredefinedVariablesAnnotationChanges(scene);
+    const hasInsightsChanges = hasInsightsAnnotationChanges(scene);
 
     return {
       ...changeInfo,
       hasFolderChanges,
       hasPredefinedVariablesChanges,
-      hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges,
+      hasInsightsChanges,
+      hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges || hasInsightsChanges,
       isNew: isNewDashboard(scene.state),
       hasMigratedToV2: !!changeInfo.hasMigratedToV2,
     };

@@ -475,7 +475,12 @@ export const dashboardLog = createLogger('Dashboard');
  */
 export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
-  return !!changes.diffCount || !!changes.hasFolderChanges || !!changes.hasPredefinedVariablesChanges;
+  return (
+    !!changes.diffCount ||
+    !!changes.hasFolderChanges ||
+    !!changes.hasPredefinedVariablesChanges ||
+    !!changes.hasInsightsChanges
+  );
 }
 
 export function useScenesFlickeringFix() {
