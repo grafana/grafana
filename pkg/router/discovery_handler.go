@@ -185,8 +185,11 @@ func readDiscovery(req *http.Request, handler http.Handler, path, accept string,
 	proxyReq.Header.Set("Accept", accept)
 	proxyReq.Header.Set("Accept-Encoding", "identity")
 	stripConditionalHeaders(proxyReq)
-	rec := newCaptureWriter()
+	rec := newCaptureWriter(maxDiscoveryDocBytes, nil)
 	handler.ServeHTTP(rec, proxyReq)
+	if rec.overflowed {
+		return rec.statusCode, fmt.Errorf("discovery %s is larger than %d bytes", path, maxDiscoveryDocBytes)
+	}
 	if rec.statusCode != http.StatusOK {
 		return rec.statusCode, fmt.Errorf("discovery %s returned HTTP %d", path, rec.statusCode)
 	}
