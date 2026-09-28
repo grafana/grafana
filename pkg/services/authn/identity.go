@@ -307,7 +307,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IsAnonymous:       i.IsIdentityType(claims.TypeAnonymous),
 		IsDisabled:        i.IsDisabled,
 		LastSeenAt:        i.LastSeenAt,
-		TeamIDs:           i.TeamIDs,
+		TeamIDs:           i.TeamIDs, //nolint:staticcheck // Preserve legacy field compatibility.
 		TeamUIDs:          i.Groups,
 		ExternalGroups:    i.ExternalGroups,
 		Permissions:       i.Permissions,
