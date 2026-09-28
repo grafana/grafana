@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,13 +39,19 @@ type Store interface {
 }
 
 type SqlStore struct {
-	db       db.DB
-	logger   log.Logger
-	features featuremgmt.FeatureToggles
+	db         db.DB
+	logger     log.Logger
+	features   featuremgmt.FeatureToggles
+	dbProvider legacysql.LegacyDatabaseProvider
 }
 
-func CreateStore(db db.DB, logger log.Logger) *SqlStore {
-	return &SqlStore{db: db, logger: logger}
+func CreateStore(db db.DB, logger log.Logger, dbProvider legacysql.LegacyDatabaseProvider) *SqlStore {
+	return &SqlStore{db: db, logger: logger, dbProvider: dbProvider}
+}
+
+// quoteTable resolves a table name and quotes it for use in raw SQL.
+func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
+	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
@@ -62,7 +69,7 @@ func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDat
 	})
 }
 
-func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
+func (ss *SqlStore) getDataSource(ctx context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
 	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) { // nolint:staticcheck
 		return nil, datasources.ErrDataSourceIdentifierNotSet
 	}
@@ -73,6 +80,11 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		}
 	}
 
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	datasource := &datasources.DataSource{
 		OrgID: query.OrgID,
 		UID:   query.UID,
@@ -80,7 +92,7 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		ID:    query.ID,   // nolint:staticcheck
 		Type:  query.Type,
 	}
-	has, err := sess.Get(datasource)
+	has, err := sess.Table(dbHelper.Table("data_source")).Get(datasource)
 
 	if err != nil {
 		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
@@ -109,13 +121,18 @@ func (ss *SqlStore) GetDataSourceInNamespace(ctx context.Context, namespace, nam
 	})
 }
 
-func (ss *SqlStore) getDataSourceInGroup(_ context.Context, orgID int64, name, group string, sess *db.Session) (*datasources.DataSource, error) {
+func (ss *SqlStore) getDataSourceInGroup(ctx context.Context, orgID int64, name, group string, sess *db.Session) (*datasources.DataSource, error) {
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	datasource := &datasources.DataSource{
 		OrgID: orgID,
 		Type:  group,
 		UID:   name,
 	}
-	has, err := sess.Get(datasource)
+	has, err := sess.Table(dbHelper.Table("data_source")).Get(datasource)
 
 	if err != nil {
 		ss.logger.Error("Failed getting data source", "err", err, "name", name, "orgId", orgID, "group", group)
@@ -129,15 +146,21 @@ func (ss *SqlStore) getDataSourceInGroup(_ context.Context, orgID int64, name, g
 }
 
 func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var (
 		sess        *xorm.Session
 		dataSources []*datasources.DataSource
 	)
 	return dataSources, ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
+		sess = dbSess.Table(dbHelper.Table("data_source"))
 		if query.DataSourceLimit <= 0 {
-			sess = dbSess.Where("org_id=?", query.OrgID).Asc("name")
+			sess = sess.Where("org_id=?", query.OrgID).Asc("name")
 		} else {
-			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgID).Asc("name")
+			sess = sess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgID).Asc("name")
 		}
 
 		return sess.Find(&dataSources)
@@ -145,9 +168,14 @@ func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDa
 }
 
 func (ss *SqlStore) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		res = make([]*datasources.DataSource, 0)
-		return sess.Asc("name").Find(&res)
+		return sess.Table(dbHelper.Table("data_source")).Asc("name").Find(&res)
 	})
 	return res, err
 }
@@ -166,13 +194,19 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 	}
 	typeQuery = "(" + typeQuery + ")"
 
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		dsSess := sess.Table(dbHelper.Table("data_source"))
 		if query.OrgID > 0 {
 			args = append([]interface{}{query.OrgID}, args...)
-			return sess.Where("org_id=? AND "+typeQuery, args...).Asc("id").Find(&dataSources)
+			return dsSess.Where("org_id=? AND "+typeQuery, args...).Asc("id").Find(&dataSources)
 		}
-		return sess.Where(typeQuery, args...).Asc("id").Find(&dataSources)
+		return dsSess.Where(typeQuery, args...).Asc("id").Find(&dataSources)
 	})
 }
 
@@ -180,15 +214,25 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
 	prunableQuery := "is_prunable  = ?"
 
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Where(prunableQuery, ss.db.GetDialect().BooleanValue(true)).Asc("id").Find(&dataSources)
+		return sess.Table(dbHelper.Table("data_source")).Where(prunableQuery, ss.db.GetDialect().BooleanValue(true)).Asc("id").Find(&dataSources)
 	})
 }
 
 // DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
 // and is added to the bus. It also removes permissions related to the datasource.
 func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return err
+	}
+
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		dsQuery := &datasources.GetDataSourceQuery{ID: cmd.ID, UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID}
 		ds, errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
@@ -199,7 +243,8 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 
 		if ds != nil {
 			// Delete the data source
-			result, err := sess.Exec("DELETE FROM data_source WHERE org_id=? AND id=?", ds.OrgID, ds.ID)
+			rawSQL := fmt.Sprintf("DELETE FROM %s WHERE org_id=? AND id=?", quoteTable(dbHelper, "data_source"))
+			result, err := sess.Exec(rawSQL, ds.OrgID, ds.ID)
 			if err != nil {
 				return err
 			}
@@ -231,6 +276,11 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 }
 
 func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	u := &quota.Map{}
 	type result struct {
 		Count int64
@@ -238,7 +288,7 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 
 	r := result{}
 	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := "SELECT COUNT(*) AS count FROM data_source"
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s", quoteTable(dbHelper, "data_source"))
 		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
 			return err
 		}
@@ -255,7 +305,7 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 
 	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			rawSQL := "SELECT COUNT(*) AS count FROM data_source WHERE org_id=?"
+			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s WHERE org_id=?", quoteTable(dbHelper, "data_source"))
 			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
 				return err
 			}
@@ -275,11 +325,16 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 }
 
 func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var ds *datasources.DataSource
 
 	return ds, ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existing := datasources.DataSource{OrgID: cmd.OrgID, Name: cmd.Name}
-		has, _ := sess.Get(&existing)
+		has, _ := sess.Table(dbHelper.Table("data_source")).Get(&existing)
 
 		if has {
 			return datasources.ErrDataSourceNameExists
@@ -290,7 +345,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 		}
 
 		if cmd.UID == "" {
-			uid, err := generateNewDatasourceUid(sess, cmd.OrgID)
+			uid, err := generateNewDatasourceUid(sess, dbHelper.Table("data_source"), cmd.OrgID)
 			if err != nil {
 				return fmt.Errorf("failed to generate UID for datasource %q: %w", cmd.Name, err)
 			}
@@ -327,13 +382,13 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			APIVersion:      cmd.APIVersion,
 		}
 
-		if _, err := sess.Insert(ds); err != nil {
+		if _, err := sess.Table(dbHelper.Table("data_source")).Insert(ds); err != nil {
 			if ss.db.GetDialect().IsUniqueConstraintViolation(err) && strings.Contains(strings.ToLower(ss.db.GetDialect().ErrorMessage(err)), "uid") {
 				return datasources.ErrDataSourceUidExists
 			}
 			return err
 		}
-		if err := updateIsDefaultFlag(ds, sess); err != nil {
+		if err := updateIsDefaultFlag(ds, sess, dbHelper); err != nil {
 			return err
 		}
 
@@ -347,10 +402,10 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 	})
 }
 
-func updateIsDefaultFlag(ds *datasources.DataSource, sess *db.Session) error {
+func updateIsDefaultFlag(ds *datasources.DataSource, sess *db.Session, dbHelper *legacysql.LegacyDatabaseHelper) error {
 	// Handle is default flag
 	if ds.IsDefault {
-		rawSQL := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
+		rawSQL := fmt.Sprintf("UPDATE %s SET is_default=? WHERE org_id=? AND id <> ?", quoteTable(dbHelper, "data_source"))
 		if _, err := sess.Exec(rawSQL, false, ds.OrgID, ds.ID); err != nil {
 			return err
 		}
@@ -359,6 +414,11 @@ func updateIsDefaultFlag(ds *datasources.DataSource, sess *db.Session) error {
 }
 
 func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var ds *datasources.DataSource
 	return ds, ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if cmd.JsonData == nil {
@@ -421,13 +481,14 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		sess.MustCols("api_version")
 
 		var updateSession *xorm.Session
+		dsSess := sess.Table(dbHelper.Table("data_source"))
 		if cmd.Version != 0 {
 			// the reason we allow cmd.version > db.version is make it possible for people to force
 			// updates to datasources using the datasource.yaml file without knowing exactly what version
 			// a datasource have in the db.
-			updateSession = sess.Where("id=? and org_id=? and version < ?", ds.ID, ds.OrgID, ds.Version)
+			updateSession = dsSess.Where("id=? and org_id=? and version < ?", ds.ID, ds.OrgID, ds.Version)
 		} else {
-			updateSession = sess.Where("id=? and org_id=?", ds.ID, ds.OrgID)
+			updateSession = dsSess.Where("id=? and org_id=?", ds.ID, ds.OrgID)
 		}
 
 		affected, err := updateSession.Update(ds)
@@ -439,7 +500,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			return datasources.ErrDataSourceUpdatingOldVersion
 		}
 
-		err = updateIsDefaultFlag(ds, sess)
+		err = updateIsDefaultFlag(ds, sess, dbHelper)
 
 		if cmd.UpdateSecretFn != nil {
 			if err := cmd.UpdateSecretFn(); err != nil {
@@ -452,11 +513,11 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 	})
 }
 
-func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {
+func generateNewDatasourceUid(sess *db.Session, table string, orgId int64) (string, error) {
 	for range 3 {
 		uid := generateNewUid()
 
-		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&datasources.DataSource{})
+		exists, err := sess.Table(table).Where("org_id=? AND uid=?", orgId, uid).Get(&datasources.DataSource{})
 		if err != nil {
 			return "", err
 		}

@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 const (
@@ -86,7 +87,7 @@ func ProvideService(
 	retriever DataSourceRetriever,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
-	store := &SqlStore{db: db, logger: dslogger, features: features}
+	store := &SqlStore{db: db, logger: dslogger, features: features, dbProvider: legacysql.NewDatabaseProvider(db)}
 	s := &Service{
 		SQLStore:       store,
 		SecretsStore:   secretsStore,
