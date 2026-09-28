@@ -21,6 +21,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/
+  alerting_provisioning_at_scale:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/provisioning-at-scale/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/provisioning-at-scale/
   contact-points:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
@@ -473,6 +478,8 @@ To create the previous alerting resources in Grafana with the Terraform CLI, com
    ```
 
 You can now access Grafana to verify the creation of the distinct resources.
+
+If you manage a large number of alerting resources and API calls fail with the `429 Too Many Requests` status code, refer to [Avoid API rate limits when provisioning alerting resources](ref:alerting_provisioning_at_scale).
 
 ## More examples
 
