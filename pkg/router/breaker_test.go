@@ -13,8 +13,10 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker/v2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
+	genericfilters "k8s.io/apiserver/pkg/server/filters"
 )
 
 func TestIsBackendFailure(t *testing.T) {
@@ -67,6 +69,36 @@ func TestStatusRecorderDefaultsToOKWithoutExplicitWriteHeader(t *testing.T) {
 	_, _ = rec.Write([]byte("hi"))
 	if rec.status != http.StatusOK {
 		t.Errorf("rec.status = %d, want %d", rec.status, http.StatusOK)
+	}
+}
+
+// TestStatusRecorderFlushesThroughAPIServerFilters is a regression test for
+// plugin backends, which serve through an embedded apiserver handler chain. Its
+// logging and timeout filters disagree about whether the writer can flush when
+// it lacks http.Flusher or http.CloseNotifier, and a flush then panics.
+func TestStatusRecorderFlushesThroughAPIServerFilters(t *testing.T) {
+	flushing := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("data: one\n\n"))
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+	})
+	notLongRunning := func(req *http.Request) (*http.Request, bool, func(), *apierrors.StatusError) {
+		return req, false, func() {}, apierrors.NewTimeoutError("timed out", 0)
+	}
+	backend := genericfilters.WithHTTPLogging(genericfilters.WithTimeout(flushing, notLongRunning))
+	s := withGroupHandler("demo.grafana.app", backend)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	rw := httptest.NewRecorder()
+	s.HandleFunc(rw, httptest.NewRequest(http.MethodGet, "/apis/demo.grafana.app/v1", nil).WithContext(ctx), nil)
+
+	if !rw.Flushed {
+		t.Error("the flush did not reach the client's writer")
+	}
+	if rw.Body.String() != "data: one\n\n" {
+		t.Errorf("body = %q", rw.Body.String())
 	}
 }
 
@@ -161,7 +193,7 @@ func TestHandleFuncBreakerIgnoresPlain500(t *testing.T) {
 	}
 }
 
-func withGroupHandlerAndBreaker(group string, h http.Handler, cb *gobreaker.CircuitBreaker[struct{}]) *GrafanaRouter {
+func withGroupHandlerAndBreaker(group string, h http.Handler, cb *groupBreaker) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
 	s.served[group] = &handlerEntry{handler: h, lastKey: "1", breaker: cb}
 	s.publish(context.Background())
@@ -182,7 +214,7 @@ func TestHandleFuncBreakerHalfOpenRecovers(t *testing.T) {
 		}
 	})
 
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        "test",
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 		Timeout:     timeout,
@@ -246,7 +278,7 @@ func TestHandleFuncBreakerHalfOpenCapRejectsConcurrentTrial(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        "test",
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 		Timeout:     timeout,
@@ -295,8 +327,10 @@ func (l staticLoader) Notify(context.Context) (<-chan struct{}, error) {
 // a ReadyToTrip that opens on the first one, independent of production
 // thresholds -- these lifecycle tests care about whether trip *state*
 // survives reconcile, not how many failures it takes to get there.
-func tripBreaker(cb *gobreaker.CircuitBreaker[struct{}]) {
-	_, _ = cb.Execute(func() (struct{}, error) { return struct{}{}, errors.New("forced failure") })
+func tripBreaker(cb *groupBreaker) {
+	if done, err := cb.Allow(); err == nil {
+		done(errors.New("forced failure"))
+	}
 }
 
 // TestReconcileUnchangedKeyPreservesBreakerState pins that a group whose key
@@ -305,7 +339,7 @@ func tripBreaker(cb *gobreaker.CircuitBreaker[struct{}]) {
 // preservation.
 func TestReconcileUnchangedKeyPreservesBreakerState(t *testing.T) {
 	group := "dashboard.grafana.app"
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})
@@ -337,7 +371,7 @@ func TestReconcileUnchangedKeyPreservesBreakerState(t *testing.T) {
 // the old one was open -- because the target may have moved.
 func TestReconcileChangedKeyResetsBreaker(t *testing.T) {
 	group := "dashboard.grafana.app"
-	oldCB := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	oldCB := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})
@@ -402,7 +436,7 @@ func TestOpenAPIGroupVersionRoutesThroughBreaker(t *testing.T) {
 func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 	group := "dashboard.grafana.app"
 	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})

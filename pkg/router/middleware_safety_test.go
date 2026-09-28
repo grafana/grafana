@@ -111,6 +111,7 @@ func (l *mutableLoader) Notify(context.Context) (<-chan struct{}, error) {
 type panickingBackend struct{ group string }
 
 func (b panickingBackend) Key() string            { return "1" }
+func (b panickingBackend) Source() string         { return "test" }
 func (b panickingBackend) Group() metav1.APIGroup { return metav1.APIGroup{Name: b.group} }
 func (b panickingBackend) Load(context.Context) (http.Handler, error) {
 	panic(errors.New("boom"))
