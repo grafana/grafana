@@ -18,7 +18,7 @@ CIRCULAR_DEPENDENCIES="$(yarn lint:circular 2>&1 >/dev/null | sed -n 's/.*Found 
 TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
 # Count direct and total resolved third-party package versions across all workspaces, including dev dependencies.
 DEPENDENCY_METRICS="$(node ./scripts/cli/reportDependencyMetrics.mjs)"
-read -r DIRECT_DEPENDENCIES RESOLVED_DEPENDENCIES <<< "$DEPENDENCY_METRICS"
+read -r DIRECT_DEPENDENCIES TOTAL_DEPENDENCIES <<< "$DEPENDENCY_METRICS"
 
 echo -e "Typescript errors: $ERROR_COUNT"
 echo -e "Directives: $DIRECTIVES"
@@ -76,7 +76,7 @@ echo "Metrics: {
   $I18N_STATS
   $BUNDLE_STATS
   \"grafana.ci-code.dependencies.direct\": \"${DIRECT_DEPENDENCIES}\",
-  \"grafana.ci-code.dependencies.resolved\": \"${RESOLVED_DEPENDENCIES}\",
+  \"grafana.ci-code.dependencies.total\": \"${TOTAL_DEPENDENCIES}\",
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
