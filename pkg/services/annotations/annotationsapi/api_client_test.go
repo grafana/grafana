@@ -174,6 +174,7 @@ func TestBuildRESTConfig_TracesRateLimiterWait(t *testing.T) {
 
 	restCfg := buildRESTConfig("http://annotations.example", &fakeTokenExchanger{}, request.GetNamespaceMapper(&setting.Cfg{}), rest.TLSClientConfig{})
 	require.IsType(t, tracedRateLimiter{}, restCfg.RateLimiter)
+	assert.Equal(t, defaultQPS, restCfg.RateLimiter.QPS(), "rate limiter must be configured with the default QPS")
 
 	ctx, parent := tracer.Start(context.Background(), "caller")
 	require.NoError(t, restCfg.RateLimiter.Wait(ctx))

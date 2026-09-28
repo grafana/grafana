@@ -281,12 +281,17 @@ func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) 
 	return tc, nil
 }
 
+const (
+	defaultQPS   = float32(200)
+	defaultBurst = 300
+)
+
 func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, tlsConfig rest.TLSClientConfig) *rest.Config {
 	cfg := dynamic.ConfigFor(&rest.Config{
 		Host:            url,
 		WrapTransport:   newBearerTokenExchangeWrapper(exchanger, nsMapper),
 		TLSClientConfig: tlsConfig,
-		RateLimiter:     tracedRateLimiter{flowcontrol.NewTokenBucketRateLimiter(rest.DefaultQPS, rest.DefaultBurst)},
+		RateLimiter:     tracedRateLimiter{flowcontrol.NewTokenBucketRateLimiter(defaultQPS, defaultBurst)},
 	})
 	cfg.APIPath = "apis"
 	cfg.GroupVersion = &annotationV0.GroupVersion
