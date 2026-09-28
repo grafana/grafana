@@ -1254,11 +1254,12 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 	unified.AfterDelete = b.afterDelete
+	dashboardStore := dashboardReadStorage{Store: unified}
 
 	if b.isStandalone {
-		storage[dashboards.StoragePath()] = unified
+		storage[dashboards.StoragePath()] = dashboardStore
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
-			unified,
+			dashboardStore,
 			b.unified,
 			b.accessClient,
 			newDTOFunc,
@@ -1290,7 +1291,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	}
 
 	storage[dashboards.StoragePath()] = dashboardStorageWrapper{
-		Storage:                 unified,
+		Storage:                 dashboardStore,
 		homeDashboard:           b.homeDashboard,
 		apiVersion:              apiVersion,
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,

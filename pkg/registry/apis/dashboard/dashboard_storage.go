@@ -2,13 +2,18 @@ package dashboard
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -16,6 +21,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
 )
+
+// dashboardReadStorage rejects malformed lookup names before KV storage can
+// turn a name validation failure into an internal server error.
+type dashboardReadStorage struct {
+	*registry.Store
+}
+
+func (d dashboardReadStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	if errs := validation.IsValidGrafanaName(name); len(errs) > 0 {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("Name parameter invalid: %q: %s", name, strings.Join(errs, "; ")))
+	}
+	return d.Store.Get(ctx, name, options)
+}
 
 // dashboardStorageWrapper is a wrapper around the grafanarest.Storage so it will:
 // 1. support adds dashboard permissions handling
