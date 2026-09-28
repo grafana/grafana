@@ -2046,6 +2046,31 @@ describe('vizPanelToSchemaV2 time range fields', () => {
   });
 });
 
+describe('vizPanelToSchemaV2 subtitle', () => {
+  it('should preserve the panel subtitle when the description is used as subtitle', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      subtitle: 'hello',
+    });
+
+    const result = vizPanelToSchemaV2(vizPanel, undefined, false);
+
+    expect(result.kind).toBe('Panel');
+    expect((result.spec as PanelSpec).subtitle).toBe('hello');
+    expect((result.spec as PanelSpec).description).toBe('');
+  });
+
+  it('should omit subtitle when the panel has none', () => {
+    const vizPanel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+
+    const result = vizPanelToSchemaV2(vizPanel, undefined, false);
+
+    expect((result.spec as PanelSpec).subtitle).toBeUndefined();
+  });
+});
+
 // Instead of reusing annotation layer objects, create a factory function to generate new ones each time
 function createAnnotationLayers() {
   return [
