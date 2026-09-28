@@ -1,8 +1,11 @@
+import type { BooleanFlagKey } from '@openfeature/core';
+
 import { FlagKeys } from './openfeature.gen';
 
 import type * as Runtime from './index';
 
-const [providedFlag, missingFlag] = Object.values(FlagKeys);
+// The test providers define these arbitrary keys as boolean flags.
+const [providedFlag, missingFlag] = Object.values(FlagKeys) as BooleanFlagKey[];
 
 let runtime: typeof Runtime;
 

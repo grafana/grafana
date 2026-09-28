@@ -1,4 +1,5 @@
 import type { FeatureFlagOverride } from '@alwaysmeticulous/sdk-bundles-api';
+import type { BooleanFlagKey } from '@openfeature/core';
 import { LocalStorageProvider } from '@openfeature/localstorage-provider';
 import { InMemoryProvider, MultiProvider, OpenFeature, OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -11,9 +12,10 @@ import * as generatedFlags from './openfeature.gen';
 const [firstFlagName, secondFlagName, missingFlagName] = Object.keys(generatedFlags.FlagKeys) as Array<
   keyof typeof generatedFlags.FlagKeys
 >;
-const providedFlag = generatedFlags.FlagKeys[firstFlagName];
-const secondProvidedFlag = generatedFlags.FlagKeys[secondFlagName];
-const missingFlag = generatedFlags.FlagKeys[missingFlagName];
+// The test providers define these arbitrary keys as boolean flags.
+const [providedFlag, secondProvidedFlag, missingFlag] = [firstFlagName, secondFlagName, missingFlagName].map(
+  (name) => generatedFlags.FlagKeys[name] as BooleanFlagKey
+);
 const useFirstFlag = generatedFlags[`useFlag${firstFlagName}`];
 const useSecondFlag = generatedFlags[`useFlag${secondFlagName}`];
 
