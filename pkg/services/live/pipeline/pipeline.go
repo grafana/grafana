@@ -8,7 +8,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
@@ -29,12 +29,11 @@ const (
 )
 
 // tracerProvider returns an OpenTelemetry TracerProvider configured to use
-// the Jaeger exporter that will send spans to the provided url. The returned
+// the OTLP/gRPC exporter that sends spans to the configured collector. The returned
 // TracerProvider will also use a Resource configured with all the information
 // about the application.
-func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
-	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
+func tracerProvider() (*tracesdk.TracerProvider, error) {
+	exp, err := otlptracegrpc.New(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -192,11 +191,9 @@ func New(ruleGetter ChannelRuleGetter) (*Pipeline, error) {
 	}
 
 	if os.Getenv("GF_LIVE_PIPELINE_TRACE") != "" {
-		// Traces for development only at the moment.
-		// Start local Jaeger and then run Grafana with GF_LIVE_PIPELINE_TRACE:
-		// docker run --rm -it --name jaeger -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 -p 5775:5775/udp -p 6831:6831/udp -p 6832:6832/udp -p 5778:5778 -p 16686:16686 -p 14268:14268 -p 14250:14250 -p 9411:9411 jaegertracing/all-in-one:1.26
-		// Then visit http://localhost:16686/ where Jaeger UI is served.
-		tp, err := tracerProvider("http://localhost:14268/api/traces")
+		// Development tracing uses OTEL_EXPORTER_OTLP_* environment variables
+		// so the collector endpoint and TLS settings can be configured.
+		tp, err := tracerProvider()
 		if err != nil {
 			return nil, err
 		}
