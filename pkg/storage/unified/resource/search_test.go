@@ -223,6 +223,8 @@ func featuresForTestIndex(keepsDeletedDocuments bool) []IndexFeature {
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
+	// What the previous run left recorded as open, returned by LoadOpenIndexStats.
+	openIndexStats []ResourceStats
 
 	// Recorded on every index this backend builds, standing in for the decision the
 	// real backend makes from its options at creation.
@@ -249,7 +251,7 @@ type buildIndexCall struct {
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
-	return nil, nil
+	return m.openIndexStats, nil
 }
 
 // TestStartupIndexStatsCountLimit checks the cap the startup prebuild passes to
@@ -2264,7 +2266,7 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 
 	// An index reporting no features: what a binary from before the mapping built.
 	older := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{}}}
-	require.False(t, server.keepsDeletedDocuments(older, log.NewNopLogger()))
+	require.False(t, server.keepsDeletedDocuments(key, older, log.NewNopLogger()))
 
 	require.NoError(t, server.indexTrash(t.Context(), key, older, log.NewNopLogger()))
 	require.Empty(t, older.indexedItems(), "trash listing should be skipped entirely")
@@ -2288,7 +2290,7 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 	// order. Treated the same as no markers at all: wait for the rebuild.
 	t.Run("an index with the markers but not the trash fields", func(t *testing.T) {
 		index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}}
-		require.False(t, server.keepsDeletedDocuments(index, log.NewNopLogger()))
+		require.False(t, server.keepsDeletedDocuments(key, index, log.NewNopLogger()))
 	})
 }
 
