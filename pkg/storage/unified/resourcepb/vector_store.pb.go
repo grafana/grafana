@@ -577,9 +577,11 @@ type VectorDeleteRequest_Uids struct {
 
 type VectorDeleteRequest_Filter struct {
 	// Metadata filter: a JSON expression with Mongo-style operators.
-	//   logical:    $and, $or
-	//   comparison: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin
-	//   existence:  $exists
+	//
+	//	logical:    $and, $or
+	//	comparison: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin
+	//	existence:  $exists
+	//
 	// Example: {"$and":[{"kind":"incident"},{"embeddedAt":{"$lt":1750000000}}]}
 	// Unknown operators are INVALID_ARGUMENT. Deletes are paged (10k/page).
 	Filter []byte `protobuf:"bytes,5,opt,name=filter,proto3,oneof"`

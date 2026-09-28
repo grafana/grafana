@@ -773,8 +773,10 @@ type ErrorCause struct {
 	// Optional.
 	//
 	// Examples:
-	//   "name" - the field "name" on the current resource
-	//   "items[0].name" - the field "name" on the first array entry in "items"
+	//
+	//	"name" - the field "name" on the current resource
+	//	"items[0].name" - the field "name" on the first array entry in "items"
+	//
 	// +optional
 	Field         string `protobuf:"bytes,3,opt,name=field,proto3" json:"field,omitempty"`
 	unknownFields protoimpl.UnknownFields
