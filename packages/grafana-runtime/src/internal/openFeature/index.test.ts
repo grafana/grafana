@@ -8,11 +8,12 @@ beforeEach(async () => {
   // OFREP providers cannot be reused after shutdown; each test models a fresh page load.
   jest.resetModules();
   runtime = await import('./index');
-  jest.spyOn(window, 'fetch').mockResolvedValue(
-    new Response(JSON.stringify({ flags: [{ key: 'dashboardNewLayouts', value: true, reason: 'STATIC' }] }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+  jest.spyOn(window, 'fetch').mockImplementation(
+    async () =>
+      new Response(JSON.stringify({ flags: [{ key: 'dashboardNewLayouts', value: true, reason: 'STATIC' }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
   );
 });
 
@@ -63,4 +64,46 @@ it('falls back to OFREP when the enabled adapter chunk cannot load', async () =>
   await runtime.initOpenFeature();
   expect(runtime.getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
   expect(log).toHaveBeenCalledWith('Failed to load Meticulous OpenFeature integration', error);
+});
+
+it('reports final fallback values once per evaluation through the shared core client', async () => {
+  const recordFeatureFlag = jest.fn(() => ({ success: true }));
+  window.Meticulous = {
+    context: { getFlagOverride: () => ({ overridden: false }), recordFeatureFlag },
+  };
+  const client = runtime.getFeatureFlagClient();
+  await runtime.initOpenFeature();
+  // Keep the OFREP transport open while exercising repeated hook registration.
+  jest.spyOn(runtime.getOFREPWebProvider(), 'onClose').mockResolvedValue();
+  await runtime.initOpenFeature();
+
+  runtime.getLocalStorageProvider().setFlags({ dashboardNewLayouts: false });
+  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, true)).toBe(false);
+  runtime.getLocalStorageProvider().clearFlags();
+  expect(runtime.getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
+  expect(client.getBooleanValue(FlagKeys.CanvasPanelNesting, false)).toBe(false);
+  runtime.getLocalStorageProvider().setFlags({ dashboardNewLayouts: 'invalid' });
+  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(false);
+  expect(recordFeatureFlag.mock.calls).toEqual([
+    ['dashboardNewLayouts', false],
+    ['dashboardNewLayouts', true],
+    ['canvasPanelNesting', false],
+    ['dashboardNewLayouts', false],
+  ]);
+});
+
+it('does not report evaluations from plugin domains', async () => {
+  const recordFeatureFlag = jest.fn(() => ({ success: true }));
+  window.Meticulous = { context: { recordFeatureFlag } };
+  await runtime.initOpenFeature();
+  const { InMemoryProvider, OpenFeature } = await import('@openfeature/react-sdk');
+  await OpenFeature.setProviderAndWait(
+    'plugin-domain',
+    new InMemoryProvider({
+      dashboardNewLayouts: { variants: { enabled: true }, defaultVariant: 'enabled', disabled: false },
+    })
+  );
+
+  expect(OpenFeature.getClient('plugin-domain').getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
+  expect(recordFeatureFlag).not.toHaveBeenCalled();
 });

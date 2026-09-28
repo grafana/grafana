@@ -41,6 +41,8 @@ function checkDefaultProvider(event?: EventDetails) {
 // to ensure tests work correctly.
 const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 const GRAFANA_OPEN_FEATURE_LOCALSTORAGE_PREFIX = 'grafana.openfeature.';
+const featureFlagClient = OpenFeature.getClient(GRAFANA_CORE_OPEN_FEATURE_DOMAIN);
+let meticulousReportingHookInstalled = false;
 
 // Allow direct access to a singleton localStorage provider,
 //  to allow the feature control developer UI to override flags via the provider
@@ -73,14 +75,19 @@ export async function initOpenFeature() {
 
   const lsProvider = getLocalStorageProvider();
   const ofProvider = getOFREPWebProvider();
-  let provider: Provider | undefined;
+  let meticulousProvider: Provider | undefined;
 
   if (window.Meticulous != null) {
     try {
-      const { createMeticulousProvider } = await import(
+      const { MeticulousProvider, meticulousReportingHook } = await import(
         /* webpackChunkName: "meticulous-openfeature" */ './meticulous'
       );
-      provider = createMeticulousProvider([lsProvider, ofProvider]);
+      meticulousProvider = new MeticulousProvider();
+      if (!meticulousReportingHookInstalled) {
+        // Report the final value after all providers resolve, including caller defaults.
+        featureFlagClient.addHooks(meticulousReportingHook);
+        meticulousReportingHookInstalled = true;
+      }
     } catch (error) {
       console.error('Failed to load Meticulous OpenFeature integration', error);
     }
@@ -88,7 +95,11 @@ export async function initOpenFeature() {
 
   await OpenFeature.setProviderAndWait(
     GRAFANA_CORE_OPEN_FEATURE_DOMAIN,
-    provider ?? new MultiProvider([{ provider: lsProvider }, { provider: ofProvider }]),
+    new MultiProvider([
+      ...(meticulousProvider ? [{ provider: meticulousProvider }] : []),
+      { provider: lsProvider },
+      { provider: ofProvider },
+    ]),
     {
       targetingKey: config.namespace,
       ...config.openFeatureContext,
@@ -103,5 +114,5 @@ export async function initOpenFeature() {
  * in time when you use it to ensure you get the latest value.
  */
 export function getFeatureFlagClient() {
-  return OpenFeature.getClient(GRAFANA_CORE_OPEN_FEATURE_DOMAIN);
+  return featureFlagClient;
 }

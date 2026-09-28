@@ -3,7 +3,6 @@ import {
   FlagNotFoundError,
   type Hook,
   type JsonValue,
-  MultiProvider,
   type Provider,
   type ResolutionDetails,
   StandardResolutionReasons,
@@ -17,7 +16,7 @@ declare global {
   }
 }
 
-class MeticulousOverrideProvider implements Provider {
+export class MeticulousProvider implements Provider {
   readonly runsOn = 'client';
   readonly metadata = { name: 'Meticulous overrides' };
 
@@ -56,7 +55,7 @@ class MeticulousOverrideProvider implements Provider {
   }
 }
 
-const reportingHook: Hook = {
+export const meticulousReportingHook: Hook = {
   finally(_context, details) {
     if (typeof details.value !== 'boolean' && typeof details.value !== 'string') {
       return;
@@ -69,17 +68,3 @@ const reportingHook: Hook = {
     }
   },
 };
-
-class MeticulousProvider extends MultiProvider {
-  override get hooks(): Hook[] {
-    // Report the final resolution, not intermediate misses or values from individual providers.
-    return [...super.hooks, reportingHook];
-  }
-}
-
-export function createMeticulousProvider(providers: Provider[]): MultiProvider {
-  return new MeticulousProvider([
-    { provider: new MeticulousOverrideProvider() },
-    ...providers.map((provider) => ({ provider })),
-  ]);
-}

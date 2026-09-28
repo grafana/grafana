@@ -1,15 +1,16 @@
 import type { FeatureFlagOverride } from '@alwaysmeticulous/sdk-bundles-api';
 import { LocalStorageProvider } from '@openfeature/localstorage-provider';
-import { InMemoryProvider, OpenFeature, OpenFeatureProvider } from '@openfeature/react-sdk';
+import { InMemoryProvider, MultiProvider, OpenFeature, OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { config } from '../../config';
 
-import { createMeticulousProvider } from './meticulous';
+import { MeticulousProvider, meticulousReportingHook } from './meticulous';
 import { FlagKeys, useFlagCanvasPanelPanZoom, useFlagDashboardNewLayouts } from './openfeature.gen';
 
 const domain = 'meticulous-integration-test';
 const client = OpenFeature.getClient(domain);
+client.addHooks(meticulousReportingHook);
 const getFlagOverride = jest.fn<FeatureFlagOverride, [string]>();
 const recordFeatureFlag = jest.fn(() => ({ success: true }));
 const local = new LocalStorageProvider({ prefix: 'meticulous-test.' });
@@ -17,18 +18,21 @@ const local = new LocalStorageProvider({ prefix: 'meticulous-test.' });
 async function install() {
   await OpenFeature.setProviderAndWait(
     domain,
-    createMeticulousProvider([
-      local,
-      new InMemoryProvider({
-        dashboardNewLayouts: { variants: { recorded: true }, defaultVariant: 'recorded', disabled: false },
-        canvasPanelPanZoom: { variants: { recorded: true }, defaultVariant: 'recorded', disabled: false },
-        'meticulous.test.number': { variants: { recorded: 42 }, defaultVariant: 'recorded', disabled: false },
-        'grafana.mtFallback': {
-          variants: { recorded: { enabled: true } },
-          defaultVariant: 'recorded',
-          disabled: false,
-        },
-      }),
+    new MultiProvider([
+      { provider: new MeticulousProvider() },
+      { provider: local },
+      {
+        provider: new InMemoryProvider({
+          dashboardNewLayouts: { variants: { recorded: true }, defaultVariant: 'recorded', disabled: false },
+          canvasPanelPanZoom: { variants: { recorded: true }, defaultVariant: 'recorded', disabled: false },
+          'meticulous.test.number': { variants: { recorded: 42 }, defaultVariant: 'recorded', disabled: false },
+          'grafana.mtFallback': {
+            variants: { recorded: { enabled: true } },
+            defaultVariant: 'recorded',
+            disabled: false,
+          },
+        }),
+      },
     ])
   );
 }
