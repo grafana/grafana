@@ -63,7 +63,7 @@ The outcome of this template would be:
 CPU usage for server1 has exceeded 80% for the last 5 minutes
 ```
 
-> If you are using a classic condition then `$labels` will not contain any labels from the query. Classic conditions discard these labels in order to enforce uni-dimensional behavior (at most one alert per alert rule). If you want to use labels from the query in your template then use the example [here](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/examples/#print-all-labels-from-a-classic-condition).
+> If you are using a classic condition then `$labels` will not contain any labels from the query. Classic conditions discard these labels to enforce uni-dimensional behavior (at most one alert per alert rule). If you want to use labels from the query in your template then use the example [here](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/examples/#print-all-labels-from-a-classic-condition).
 
 ### $values
 
