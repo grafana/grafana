@@ -545,6 +545,16 @@ func TestTranslateTrashQuery_SortByDeletionTimeAllowed(t *testing.T) {
 	assert.True(t, req.SortBy[0].Desc)
 }
 
+func TestTranslateTrashQuery_SortByDeletedResourceVersionAllowed(t *testing.T) {
+	q := trashQuery(nil)
+	q.Sort = []searchv0.SortField{{Field: trashFieldDeletedRV, Direction: "asc"}}
+	req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+	require.Empty(t, errs)
+	require.Len(t, req.SortBy, 1)
+	assert.Equal(t, trashFieldDeletedRV, req.SortBy[0].Field)
+	assert.False(t, req.SortBy[0].Desc)
+}
+
 // Kinds declare sortable numeric fields (dashboard usage counters, user
 // lastSeenAt), and the index gives them doc values, so sorting on one is valid.
 func TestTranslateSearchQuery_SortByNumericFieldAllowed(t *testing.T) {

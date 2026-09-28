@@ -150,7 +150,7 @@ func textQueryKindsForMapping(provider resource.SearchFieldsProvider, group, kin
 			if name != def.Name {
 				kind = textQueryTermLowered
 			}
-			kinds[prefix+name] = kind
+			kinds[keywordIndexFieldName(def, prefix, name)] = kind
 		}
 	}
 
@@ -204,7 +204,7 @@ func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kind
 			continue
 		}
 		fields[f.key] = keywordField{
-			name: f.prefix + name,
+			name: keywordIndexFieldName(f.def, f.prefix, name),
 			// A keyword form under a different name is a lowercased copy.
 			lowered:    name != f.def.Name,
 			filterable: f.def.HasCapability(resource.SearchCapabilityFilter),
@@ -353,6 +353,11 @@ func (k kindSearchFields) storedFacetField(name string) string {
 // getBleveDocMappings), so IncludeInAll has no runtime effect; setting it
 // false keeps the emitted JSON consistent.
 func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.SearchFieldDefinition) {
+	if def.Name == resource.SEARCH_FIELD_DELETED_RV {
+		addDeletedResourceVersionMappings(parent)
+		return
+	}
+
 	hasFilter := def.HasCapability(resource.SearchCapabilityFilter)
 	hasText := def.HasCapability(resource.SearchCapabilityText)
 	hasPartial := def.HasCapability(resource.SearchCapabilityPartial)
@@ -430,6 +435,27 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 	}
 }
 
+// addDeletedResourceVersionMappings keeps the value returned to callers in its
+// original form and indexes a separate fixed-width copy for exact sorting.
+func addDeletedResourceVersionMappings(parent *mapping.DocumentMapping) {
+	value := bleve.NewKeywordFieldMapping()
+	value.Index = false
+	value.Store = true
+	value.DocValues = false
+	value.IncludeInAll = false
+	value.IncludeTermVectors = false
+	value.SkipFreqNorm = true
+	parent.AddFieldMappingsAt(resource.SEARCH_FIELD_DELETED_RV, value)
+
+	sortValue := bleve.NewKeywordFieldMapping()
+	sortValue.Store = false
+	sortValue.DocValues = true
+	sortValue.IncludeInAll = false
+	sortValue.IncludeTermVectors = false
+	sortValue.SkipFreqNorm = true
+	parent.AddFieldMappingsAt(resource.SEARCH_FIELD_DELETED_RV_SORT, sortValue)
+}
+
 // nonStringFieldMapping returns a bleve field mapping matching a
 // non-string search field's type, so the value is indexed and stored in its
 // native form instead of being coerced through keyword analysis (which drops
@@ -477,6 +503,13 @@ func keywordVariant(def resource.SearchFieldDefinition) (string, bool) {
 		return "", false
 	}
 	return keywordVariantName(def.Name, def.HasCapability(resource.SearchCapabilityText)), true
+}
+
+func keywordIndexFieldName(def resource.SearchFieldDefinition, prefix, variant string) string {
+	if prefix == "" && def.Name == resource.SEARCH_FIELD_DELETED_RV {
+		return resource.SEARCH_FIELD_DELETED_RV_SORT
+	}
+	return prefix + variant
 }
 
 // ngramVariant returns the field def's ngram form is mapped to, and false when
