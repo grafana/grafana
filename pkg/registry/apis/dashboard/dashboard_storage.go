@@ -77,6 +77,13 @@ func (d dashboardStorageWrapper) Create(ctx context.Context, obj runtime.Object,
 		return nil, apierrors.NewBadRequest(dashboards.ErrDashboardCannotSaveProvisionedDashboard.Reason)
 	}
 
+	// The failed optimistic Create above may have let PrepareForCreate stamp a fresh
+	// UID/resourceVersion onto obj before the conflict was detected. Clear them so the
+	// Update below carries no stale identity precondition — same reset saveDashboardViaK8s
+	// does before its own Update call in pkg/api/dashboard.go.
+	meta.SetUID("")
+	meta.SetResourceVersion("")
+
 	updated, _, updateErr := d.Update(
 		ctx, name, rest.DefaultUpdatedObjectInfo(obj), createValidation,
 		func(ctx context.Context, obj, old runtime.Object) error { return createValidation(ctx, obj) },
