@@ -1,13 +1,8 @@
-import { BASE_URL, type NotebookList } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
+import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { getBackendSrv } from '@grafana/runtime';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 
-import {
-  NOTEBOOKS_PAGE_LIMIT,
-  confirmNotebookSearchAvailable,
-  isNotebookSearchUnavailable,
-  markNotebookSearchUnavailable,
-} from './notebookSearchAvailability';
+import { confirmNotebookSearchAvailable } from './notebookSearchAvailability';
 
 /**
  * Client for `POST .../notebooks/search`, the per-kind search endpoint mounted by
@@ -200,46 +195,19 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
 });
 
 export async function searchNotebookTitles(query: string, limit: number): Promise<ResultItem[]> {
-  if (!isNotebookSearchUnavailable()) {
-    try {
-      const results = await getBackendSrv().post<SearchResults>(
-        `${BASE_URL}/notebooks/search`,
-        {
-          apiVersion: SEARCH_API_VERSION,
-          kind: SEARCH_QUERY_KIND,
-          where: { text: { value: query, fields: ['title'] } },
-          fields: ['title'],
-          limit,
-        },
-        { showErrorAlert: false }
-      );
-      confirmNotebookSearchAvailable();
-      return results.items;
-    } catch (error) {
-      if (!markNotebookSearchUnavailable(error)) {
-        throw error;
-      }
-    }
-  }
-
-  const list = await getBackendSrv().get<NotebookList>(
-    `${BASE_URL}/notebooks`,
-    { limit: NOTEBOOKS_PAGE_LIMIT },
-    undefined,
+  const results = await getBackendSrv().post<SearchResults>(
+    `${BASE_URL}/notebooks/search`,
+    {
+      apiVersion: SEARCH_API_VERSION,
+      kind: SEARCH_QUERY_KIND,
+      where: { text: { value: query, fields: ['title'] } },
+      fields: ['title'],
+      limit,
+    },
     { showErrorAlert: false }
   );
-  return list.items
-    .filter((notebook) => notebook.spec.title.toLowerCase().includes(query.toLowerCase()))
-    .slice(0, limit)
-    .map((notebook) => ({
-      resource: {
-        group: 'dashboard.grafana.app',
-        resource: 'notebooks',
-        kind: 'Notebook',
-        name: notebook.metadata.name ?? '',
-      },
-      fields: { title: notebook.spec.title },
-    }));
+  confirmNotebookSearchAvailable();
+  return results.items;
 }
 
 export const { useSearchNotebooksInfiniteQuery, useLazyNotebookFieldFacetQuery } = notebookSearchAPI;
