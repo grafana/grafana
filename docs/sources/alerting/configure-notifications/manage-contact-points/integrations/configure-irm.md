@@ -67,7 +67,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-irm
 ---
 
-[//]: <> (The IRM instructions are different for Grafana Cloud, so this page is currently skipped from Cloud docs.)
+[//]: <> 'The IRM instructions are different for Grafana Cloud, so this page is currently skipped from Cloud docs.'
 
 # Configure Grafana IRM for Alerting
 
@@ -157,11 +157,11 @@ You can now click the **Test** button to send an alert to the heartbeat endpoint
 Create a [Grafana-managed alert rule](ref:configure-grafana-alerts) with the following settings:
 
 - **Always firing** – Use a query and alert condition that constantly fire. For example, select a Prometheus data source and set the query to `vector(1) > 0`.
-- Configure a [pending period](ref:pending-period) that is shorter than the **hearbeat interval**.
+- Configure a [pending period](ref:pending-period) that is shorter than the **heartbeat interval**.
 - Choose the **webhook contact point** you created for the heartbeat to forward alerts.
 - Adjust [timing options](ref:timing-options) in the alert rule or notification policy to ensure alerts are forwarded before the **heartbeat interval** elapses:
   - **Group wait**: `0s`
   - **Group interval**: `1s`
-  - **Repeat interval**: shorter than the **hearbeat interval**.
+  - **Repeat interval**: shorter than the **heartbeat interval**.
 
 After it's created, the alert rule acts as a heartbeat, verifying that Grafana Alerting is running and sending alerts to Grafana IRM.
