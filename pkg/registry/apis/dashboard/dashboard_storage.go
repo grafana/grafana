@@ -22,8 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 )
 
-// dashboardReadStorage rejects malformed lookup names before KV storage can
-// turn a name validation failure into an internal server error.
+// dashboardReadStorage rejects malformed lookup names in both deployment modes
+// before KV storage can turn a name validation failure into an internal server error.
 type dashboardReadStorage struct {
 	*registry.Store
 }

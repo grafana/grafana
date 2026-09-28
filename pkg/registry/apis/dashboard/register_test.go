@@ -624,7 +624,7 @@ func TestDashboardStorageDeclaresPerVersionGVK(t *testing.T) {
 	}, got, "each version declares itself, and v1 is not conflated with v1beta1")
 }
 
-func TestDashboardStorageNameValidationStandaloneOnly(t *testing.T) {
+func TestDashboardStorageNameValidation(t *testing.T) {
 	migration.ResetForTesting()
 	migration.Initialize(testutil.NewDataSourceProvider(testutil.StandardTestConfig), testutil.NewLibraryElementProvider(), migration.DefaultCacheTTL)
 
@@ -667,7 +667,7 @@ func TestDashboardStorageNameValidationStandaloneOnly(t *testing.T) {
 						t.Run(route, func(t *testing.T) {
 							for _, name := range []string{"Player Resolver (ext_proc)", "valid-missing-name"} {
 								t.Run(name, func(t *testing.T) {
-									reject := standalone && name == "Player Resolver (ext_proc)"
+									reject := name == "Player Resolver (ext_proc)"
 									if !reject {
 										client.On("Read", mock.Anything, mock.MatchedBy(func(req *resourcepb.ReadRequest) bool {
 											return req.Key.Name == name
