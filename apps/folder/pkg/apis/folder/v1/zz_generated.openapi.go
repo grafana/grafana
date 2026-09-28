@@ -14,6 +14,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		CascadeDeleteStatus{}.OpenAPIModelName():                                    schema_pkg_apis_folder_v1_CascadeDeleteStatus(ref),
 		DescendantCounts{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_DescendantCounts(ref),
 		Folder{}.OpenAPIModelName():                                                 schema_pkg_apis_folder_v1_Folder(ref),
 		FolderAccessInfo{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_FolderAccessInfo(ref),
@@ -23,7 +24,65 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderJSONCodec": schema_pkg_apis_folder_v1_FolderJSONCodec(ref),
 		FolderList{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderList(ref),
 		FolderSpec{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderSpec(ref),
+		FolderStatus{}.OpenAPIModelName():                                           schema_pkg_apis_folder_v1_FolderStatus(ref),
 		ResourceStats{}.OpenAPIModelName():                                          schema_pkg_apis_folder_v1_ResourceStats(ref),
+	}
+}
+
+func schema_pkg_apis_folder_v1_CascadeDeleteStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CascadeDeleteStatus reports the progress of an async, finalizer-driven cascade deletion of a folder's subtree. Written by the cascade delete controller via the folder's status subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "State is the current phase of the cascade delete.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"remaining": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Remaining is the count of direct children (subfolders + dashboards) not yet deleted.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"errors": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Errors accumulates non-fatal errors encountered while deleting children.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"started": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Started is the unix milli timestamp the cascade delete began.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"finished": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Finished is the unix milli timestamp the cascade delete completed (success or error).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"remaining"},
+			},
+		},
 	}
 }
 
@@ -101,12 +160,18 @@ func schema_pkg_apis_folder_v1_Folder(ref common.ReferenceCallback) common.OpenA
 							Ref:         ref(FolderSpec{}.OpenAPIModelName()),
 						},
 					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(FolderStatus{}.OpenAPIModelName()),
+						},
+					},
 				},
-				Required: []string{"metadata", "spec"},
+				Required: []string{"metadata", "spec", "status"},
 			},
 		},
 		Dependencies: []string{
-			FolderSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			FolderSpec{}.OpenAPIModelName(), FolderStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -389,6 +454,28 @@ func schema_pkg_apis_folder_v1_FolderSpec(ref common.ReferenceCallback) common.O
 				Required: []string{"title"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_folder_v1_FolderStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "FolderStatus is the status of the Folder kind.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"cascadeDelete": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CascadeDelete tracks async cascade-deletion progress for this folder's subtree. PoC: the only field on FolderStatus today.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(CascadeDeleteStatus{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			CascadeDeleteStatus{}.OpenAPIModelName()},
 	}
 }
 

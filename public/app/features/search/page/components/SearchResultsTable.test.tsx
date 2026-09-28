@@ -28,6 +28,16 @@ jest.mock('@grafana/runtime/unstable', () => ({
   useDataSourceInstanceSettings: jest.fn(),
 }));
 
+// Not under test here (this file predates Redux involvement in this table entirely, and none of
+// these cases are about cascade-delete behaviour) -- stub out the cascade-delete badge's data
+// dependencies rather than pulling in a full Provider just for this.
+jest.mock('app/features/browse-dashboards/state/hooks', () => ({
+  useIsItemCascadeDeleting: () => false,
+}));
+jest.mock('app/features/browse-dashboards/utils/useDiscoverCascadeDeleting', () => ({
+  useDiscoverCascadeDeleting: () => {},
+}));
+
 const usePanelPluginMetasMapMock = jest.mocked(usePanelPluginMetasMap);
 const useDataSourceInstanceSettingsMock = jest.mocked(useDataSourceInstanceSettings);
 

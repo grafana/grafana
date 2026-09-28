@@ -10,9 +10,10 @@ import { BulkMoveProvisionedResource } from 'app/features/provisioning/component
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
 import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
+import { type DashboardViewItem } from 'app/features/search/types';
 import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
-import { useDispatch } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import {
   useDeleteMultipleFoldersMutationFacade,
@@ -22,7 +23,7 @@ import { useDeleteDashboardsMutation, useMoveDashboardsMutation } from '../../ap
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { type DashboardTreeSelection } from '../../types';
-import { getSelectedUIDs } from '../../utils/dashboards';
+import { getSelectedUIDs, getTopLevelSelectedUIDs } from '../../utils/dashboards';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
@@ -31,6 +32,10 @@ import { SelectedMixResourcesMsgModal } from './SelectedMixResourcesMsgModal';
 export interface Props {
   folderDTO?: FolderDTO;
 }
+
+// Stable reference so the useSelector below doesn't warn about returning a new array every call
+// when rootItems hasn't loaded yet.
+const EMPTY_ITEMS: DashboardViewItem[] = [];
 
 export function BrowseActions({ folderDTO }: Props) {
   const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
@@ -44,6 +49,8 @@ export function BrowseActions({ folderDTO }: Props) {
   const [moveDashboards] = useMoveDashboardsMutation();
   const [, stateManager] = useSearchStateManager();
   const provisioningEnabled = config.provisioningEnabled;
+  const rootItems = useSelector((state) => state.browseDashboards.rootItems?.items ?? EMPTY_ITEMS);
+  const childrenByParentUID = useSelector((state) => state.browseDashboards.childrenByParentUID);
 
   const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
     selectedItems,
@@ -62,8 +69,14 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const onDelete = async () => {
-    const selectedDashboards = getSelectedUIDs(selectedItems, 'dashboard');
-    const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
+    // Selecting a folder visually cascades the selection to everything beneath it, but deleting
+    // it already cascades on its own -- only call delete on the top of each selected subtree, not
+    // every visually-selected descendant too (see getTopLevelSelectedUIDs).
+    const { folders: selectedFolders, dashboards: selectedDashboards } = getTopLevelSelectedUIDs(
+      selectedItems,
+      rootItems,
+      childrenByParentUID
+    );
     await deleteDashboards({ dashboardUIDs: selectedDashboards });
     await deleteFolders({ folderUIDs: selectedFolders });
     trackAction('delete', selectedItems);

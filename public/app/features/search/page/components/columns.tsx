@@ -17,6 +17,10 @@ import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
+import { DeletingDashboardBadge } from 'app/features/browse-dashboards/components/DeletingDashboardBadge';
+import { DeletingFolderBadge } from 'app/features/browse-dashboards/components/DeletingFolderBadge';
+import { useIsItemCascadeDeleting } from 'app/features/browse-dashboards/state/hooks';
+import { useDiscoverCascadeDeleting } from 'app/features/browse-dashboards/utils/useDiscoverCascadeDeleting';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -122,6 +126,8 @@ export const generateColumns = (
       let name = access.name.values[p.row.index];
       const isDeleted = access.isDeleted?.values[p.row.index];
       const description = access.description?.values[p.row.index];
+      const uid = uidField?.values[p.row.index];
+      const kind = kindField ? kindField.values[p.row.index] : 'dashboard'; // HACK for now, mirrors the checkbox column above
 
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
@@ -143,6 +149,7 @@ export const generateColumns = (
             </a>
           )}
           {isLoaded ? <DescriptionTooltip description={description} /> : null}
+          {isLoaded && uid && <CascadeDeleteBadge uid={uid} kind={kind} />}
         </div>
       );
     },
@@ -356,6 +363,28 @@ export const generateColumns = (
 
   return columns;
 };
+
+/**
+ * Flat-list counterpart of the folder tree's NameCell -- same badge, same discovery-of-a-delete-
+ * this-session-never-triggered-or-watched fallback (see useDiscoverCascadeDeleting), just wired
+ * into the search-results table instead of the tree's own row data. Skipped for panels (`kind`
+ * true only for a folder/dashboard row here).
+ */
+function CascadeDeleteBadge({ uid, kind }: { uid: string; kind: string }) {
+  const isCascadeDeleting = useIsItemCascadeDeleting(uid);
+  useDiscoverCascadeDeleting(uid, isCascadeDeleting || kind !== 'folder');
+
+  if (!isCascadeDeleting) {
+    return null;
+  }
+  if (kind === 'folder') {
+    return <DeletingFolderBadge folderUID={uid} />;
+  }
+  if (kind === 'dashboard') {
+    return <DeletingDashboardBadge dashboardUID={uid} />;
+  }
+  return null;
+}
 
 function hasValue(f: Field): boolean {
   for (let i = 0; i < f.values.length; i++) {

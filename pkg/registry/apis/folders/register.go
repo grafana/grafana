@@ -3,8 +3,10 @@ package folders
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +19,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
@@ -48,8 +52,9 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder    = (*FolderAPIBuilder)(nil)
-	_ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
+	_ builder.APIGroupBuilder               = (*FolderAPIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*FolderAPIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*FolderAPIBuilder)(nil)
 )
 
 // This is used just so wire has something unique to return
@@ -272,6 +277,12 @@ func (b *FolderAPIBuilder) storageForVersion(
 	b.registerPermissionHooks(unified)
 	b.storage = unified
 
+	// Status subresource for the PoC async cascade delete controller (see
+	// cascade_delete_controller.go), which writes progress here rather than to the main object.
+	// Wired against the unwrapped store (before the cascade-delete Delete() wrapper below) since
+	// status updates don't need cascade-on-delete behavior.
+	statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, unified)
+
 	// This is the ST wrapper
 	if b.folderPermissionsSvc != nil {
 		b.storage = &folderStorage{
@@ -289,6 +300,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
+	storage[folders.StoragePath("status")] = statusStore
 
 	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{
@@ -349,6 +361,65 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	return nil
+}
+
+// cascadeDeleteControllerResync is the informer's periodic full re-list, acting as a backstop that
+// catches anything the live watch missed (e.g. an event delivered while the controller was down).
+const cascadeDeleteControllerResync = 5 * time.Minute
+
+// cascadeDeleteControllerWorkers is deliberately small: this is a PoC, not a tuned production
+// controller, and folder deletes are not a high-QPS path.
+const cascadeDeleteControllerWorkers = 2
+
+// cascadeDeleteControllerHookName identifies the post-start hook below; must be unique among all
+// apiserver post-start hooks.
+const cascadeDeleteControllerHookName = "grafana-folder-cascade-delete-controller"
+
+// GetPostStartHooks starts the PoC async cascade delete controller once the apiserver is up,
+// mirroring how pkg/registry/apis/provisioning starts its repository/connection controllers off a
+// post-start hook. This requires no new Wire providers: everything the controller needs
+// (b.searcher, b.dashboardClient) is already available on FolderAPIBuilder, and the hook itself is
+// picked up automatically by builder.AddPostStartHooks for any builder implementing
+// builder.APIGroupPostStartHookProvider.
+//
+// Known PoC limitation: the feature flag is evaluated once here, at server startup, not
+// per-request. Toggling kubernetesFolderCascadeDeleteAsync at runtime (e.g. via GrowthBook) will
+// not start or stop the controller without a process restart -- unlike the finalizer-stamping
+// admission mutator and the existing synchronous cascade delete, which both check the flag live.
+func (b *FolderAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	return map[string]genericapiserver.PostStartHookFunc{
+		cascadeDeleteControllerHookName: func(hookCtx genericapiserver.PostStartHookContext) error {
+			if !kubernetesFolderCascadeDeleteAsyncEnabled(hookCtx.Context) {
+				return nil
+			}
+
+			dynClient, err := dynamic.NewForConfig(hookCtx.LoopbackClientConfig)
+			if err != nil {
+				return fmt.Errorf("cascade delete controller: build dynamic client: %w", err)
+			}
+			gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
+
+			ctrl := NewCascadeDeleteController(dynClient.Resource(gvr), b.dashboardClient, b.searcher)
+
+			factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynClient, cascadeDeleteControllerResync, metav1.NamespaceAll, nil)
+			informer := factory.ForResource(gvr).Informer()
+			reg, err := informer.AddEventHandler(ctrl.EventHandler())
+			if err != nil {
+				return fmt.Errorf("cascade delete controller: add event handler: %w", err)
+			}
+			go informer.Run(hookCtx.Done())
+
+			// Off the hot path: don't block apiserver startup on the informer's initial list.
+			go func() {
+				if !cache.WaitForCacheSync(hookCtx.Done(), reg.HasSynced) {
+					return
+				}
+				ctrl.Run(hookCtx.Context, cascadeDeleteControllerWorkers, func() {}, func() {})
+			}()
+
+			return nil
+		},
+	}, nil
 }
 
 var defaultPermissions = []map[string]any{
@@ -543,9 +614,29 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 			return fmt.Errorf("obj is not folders.Folder")
 		}
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
+		if verb == admission.Create {
+			stampCascadeDeleteFinalizer(ctx, f)
+		}
 		return nil
 	}
 	return nil
+}
+
+// stampCascadeDeleteFinalizer adds the async cascade-delete finalizer to a newly created folder
+// when kubernetesFolderCascadeDeleteAsync is enabled. PoC limitation: this only runs on create, so
+// there is no backfill for folders that already existed before the flag was turned on -- those
+// folders are unaffected and keep using the existing synchronous cascade delete.
+func stampCascadeDeleteFinalizer(ctx context.Context, f *foldersv1.Folder) {
+	if !kubernetesFolderCascadeDeleteAsyncEnabled(ctx) {
+		return
+	}
+	if f.DeletionTimestamp != nil && !f.DeletionTimestamp.IsZero() {
+		return
+	}
+	if slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer) {
+		return
+	}
+	f.Finalizers = append(f.Finalizers, foldersv1.CascadeDeleteFinalizer)
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {

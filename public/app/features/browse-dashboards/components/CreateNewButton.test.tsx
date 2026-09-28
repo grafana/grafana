@@ -93,6 +93,12 @@ describe('NewActionsButton', () => {
     expect(within(drawer).getByText(`Location: ${mockParentFolder.title}`)).toBeInTheDocument();
   });
 
+  it('disables the button while the parent folder is being cascade-deleted', () => {
+    render(<CreateNewButton canCreateDashboard canCreateFolder isReadOnlyRepo={false} isFolderDeleting />);
+
+    expect(screen.getByRole('button', { name: /new/i })).toHaveAttribute('aria-disabled', 'true');
+  });
+
   it('renders dashboard items under a Dashboard group', async () => {
     await renderAndOpen();
 

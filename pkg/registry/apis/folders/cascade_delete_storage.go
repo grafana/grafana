@@ -275,6 +275,15 @@ func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, nam
 // dashboardsInFolder lists the names of all dashboards whose grafana.app/folder annotation points at
 // folderUID, paging through the search results.
 func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace, folderUID string) ([]string, error) {
+	return listDashboardsInFolder(ctx, s.searcher, namespace, folderUID)
+}
+
+// listDashboardsInFolder lists the names of all dashboards whose grafana.app/folder annotation
+// points at folderUID, paging through the search results. Extracted from the (formerly
+// cascadeDeleteStorage-only) dashboardsInFolder so the async cascade delete controller
+// (cascade_delete_controller.go) can enumerate a folder's direct dashboard children without
+// depending on cascadeDeleteStorage itself.
+func listDashboardsInFolder(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace, folderUID string) ([]string, error) {
 	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
 
 	var (
@@ -282,7 +291,7 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 		offset int64
 	)
 	for {
-		resp, err := s.searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
+		resp, err := searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: namespace,
@@ -440,6 +449,13 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string,
 // childFolders returns the UIDs of all direct child folders of parentUID, paging through the search
 // results.
 func (s *cascadeDeleteStorage) childFolders(ctx context.Context, namespace, parentUID string) ([]string, error) {
+	return listChildFolders(ctx, s.searcher, namespace, parentUID)
+}
+
+// listChildFolders returns the UIDs of all direct child folders of parentUID, paging through the
+// search results. Extracted from the (formerly cascadeDeleteStorage-only) childFolders so the
+// async cascade delete controller (cascade_delete_controller.go) can reuse the same enumeration.
+func listChildFolders(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace, parentUID string) ([]string, error) {
 	var (
 		all     []string
 		offset  int64
@@ -447,7 +463,7 @@ func (s *cascadeDeleteStorage) childFolders(ctx context.Context, namespace, pare
 	)
 
 	for hasMore {
-		children, more, err := getChildrenBatch(ctx, s.searcher, namespace, []string{parentUID}, childFolderPageSize, offset)
+		children, more, err := getChildrenBatch(ctx, searcher, namespace, []string{parentUID}, childFolderPageSize, offset)
 		if err != nil {
 			return nil, err
 		}

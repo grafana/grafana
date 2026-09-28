@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagKubernetesFolderCascadeDeleteAsync } from '@grafana/runtime/internal';
 import { ConfirmModal, Space } from '@grafana/ui';
 
 import { type DashboardTreeSelection } from '../../types';
@@ -21,6 +22,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const [isDeleting, setIsDeleting] = useState(false);
 
   const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
+  const cascadeDeleteAsyncEnabled = useFlagKubernetesFolderCascadeDeleteAsync();
 
   const onDelete = async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
@@ -33,7 +35,12 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     setIsDeleting(true);
     try {
       await onConfirm();
-      setIsDeleting(false);
+      // Any cascade this kicks off keeps running in the background from here -- see
+      // FolderCascadeStatusBanner (on the folder's own page) and DeletingFolderBadge/
+      // DeletingDashboardBadge (in the browse tree) for its ongoing progress, and the same banner
+      // for surfacing a cascade that gets stuck. This modal doesn't wait around for any of that,
+      // and deliberately doesn't navigate anywhere either -- staying put is what lets
+      // FolderCascadeStatusBanner actually be seen.
       onDismiss();
     } catch {
       setIsDeleting(false);
@@ -44,9 +51,11 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <>
-          <DeletedDashboardsInfo target="folder" />
+          <DeletedDashboardsInfo
+            target="folder"
+            cascadeAsync={selectedFolders.length > 0 && cascadeDeleteAsyncEnabled}
+          />
           <Space v={2} />
-
           <AffectedFolderContents
             selectedItems={selectedItems}
             emptyMessage={t('browse-dashboards.action.delete-modal-folder-empty', '', {

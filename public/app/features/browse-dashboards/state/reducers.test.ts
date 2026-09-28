@@ -5,7 +5,15 @@ import { sharedWithMeFolder, wellFormedDashboard, wellFormedFolder } from '../fi
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { type BrowseDashboardsState } from '../types';
 
-import { fetchNextChildrenPageFulfilled, setAllSelection, setFolderOpenState, setItemSelectionState } from './reducers';
+import {
+  fetchNextChildrenPageFulfilled,
+  itemCascadeDeleteFinished,
+  itemCascadeDeleteStarted,
+  refetchChildrenFulfilled,
+  setAllSelection,
+  setFolderOpenState,
+  setItemSelectionState,
+} from './reducers';
 
 function createInitialState(): BrowseDashboardsState {
   return {
@@ -18,6 +26,8 @@ function createInitialState(): BrowseDashboardsState {
       folder: {},
       panel: {},
     },
+    cascadeDeletingUIDs: {},
+    cascadeDeleteErrors: {},
   };
 }
 
@@ -179,6 +189,59 @@ describe('browse-dashboards reducers', () => {
         },
         panel: {},
       });
+    });
+  });
+
+  describe('refetchChildrenFulfilled', () => {
+    function makeAction(parentUID: string | undefined, children: ReturnType<typeof wellFormedFolder>['item'][]) {
+      return {
+        payload: { children, kind: 'folder' as const, page: 1, lastPageOfKind: true },
+        type: 'action-type',
+        meta: {
+          arg: { parentUID, pageSize: 50 },
+          requestId: 'abc-123',
+          requestStatus: 'fulfilled' as const,
+        },
+      };
+    }
+
+    it('keeps a cascade-deleting child that dropped out of the fresh results (ghost row)', () => {
+      const state = createInitialState();
+      const parentUID = 'parent-uid';
+      const staying = wellFormedFolder(1).item;
+      const deleting = wellFormedFolder(2).item;
+      state.childrenByParentUID[parentUID] = fullyLoadedViewItemCollection([staying, deleting]);
+      state.cascadeDeletingUIDs[deleting.uid] = true;
+
+      // The fresh search results no longer include `deleting` -- it dropped out of search the
+      // instant its deletionTimestamp was set, well before the cascade actually finished.
+      refetchChildrenFulfilled(state, makeAction(parentUID, [staying]));
+
+      expect(state.childrenByParentUID[parentUID]?.items).toEqual([staying, deleting]);
+    });
+
+    it('does not keep a child that is missing but not tracked as cascade-deleting', () => {
+      const state = createInitialState();
+      const parentUID = 'parent-uid';
+      const staying = wellFormedFolder(1).item;
+      const goneForSomeOtherReason = wellFormedFolder(2).item;
+      state.childrenByParentUID[parentUID] = fullyLoadedViewItemCollection([staying, goneForSomeOtherReason]);
+
+      refetchChildrenFulfilled(state, makeAction(parentUID, [staying]));
+
+      expect(state.childrenByParentUID[parentUID]?.items).toEqual([staying]);
+    });
+
+    it('applies the same ghost-row preservation to root items', () => {
+      const state = createInitialState();
+      const staying = wellFormedFolder(1).item;
+      const deleting = wellFormedFolder(2).item;
+      state.rootItems = fullyLoadedViewItemCollection([staying, deleting]);
+      state.cascadeDeletingUIDs[deleting.uid] = true;
+
+      refetchChildrenFulfilled(state, makeAction(undefined, [staying]));
+
+      expect(state.rootItems?.items).toEqual([staying, deleting]);
     });
   });
 
@@ -535,6 +598,37 @@ describe('browse-dashboards reducers', () => {
 
       expect(state.selectedItems.folder[STARRED_FOLDERS_UID]).toBeFalsy();
       expect(state.selectedItems.folder[starredChild.uid]).toBeFalsy();
+    });
+  });
+
+  describe('itemCascadeDeleteStarted and itemCascadeDeleteFinished', () => {
+    it('tracks and clears a UID undergoing cascade delete', () => {
+      const state = createInitialState();
+      const uid = 'folder-being-deleted';
+
+      itemCascadeDeleteStarted(state, { type: 'itemCascadeDeleteStarted', payload: uid });
+      expect(state.cascadeDeletingUIDs).toEqual({ [uid]: true });
+
+      itemCascadeDeleteFinished(state, { type: 'itemCascadeDeleteFinished', payload: uid });
+      expect(state.cascadeDeletingUIDs).toEqual({});
+    });
+
+    it('tracks multiple UIDs independently', () => {
+      const state = createInitialState();
+
+      itemCascadeDeleteStarted(state, { type: 'itemCascadeDeleteStarted', payload: 'folder-a' });
+      itemCascadeDeleteStarted(state, { type: 'itemCascadeDeleteStarted', payload: 'dashboard-b' });
+      expect(state.cascadeDeletingUIDs).toEqual({ 'folder-a': true, 'dashboard-b': true });
+
+      itemCascadeDeleteFinished(state, { type: 'itemCascadeDeleteFinished', payload: 'folder-a' });
+      expect(state.cascadeDeletingUIDs).toEqual({ 'dashboard-b': true });
+    });
+
+    it('is a no-op when finishing a UID that was never started', () => {
+      const state = createInitialState();
+
+      itemCascadeDeleteFinished(state, { type: 'itemCascadeDeleteFinished', payload: 'unknown' });
+      expect(state.cascadeDeletingUIDs).toEqual({});
     });
   });
 });

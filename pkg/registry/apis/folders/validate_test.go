@@ -1059,12 +1059,13 @@ func TestValidateDelete(t *testing.T) {
 	zeroGrace := int64(0)
 
 	tests := []struct {
-		name                 string
-		folder               *folders.Folder
-		searcher             *mockSearchClient
-		deleteOptions        *metav1.DeleteOptions
-		cascadeDeleteEnabled bool
-		expectedErr          string
+		name                      string
+		folder                    *folders.Folder
+		searcher                  *mockSearchClient
+		deleteOptions             *metav1.DeleteOptions
+		cascadeDeleteEnabled      bool
+		cascadeDeleteAsyncEnabled bool
+		expectedErr               string
 	}{{
 		name: "simple delete",
 		folder: &folders.Folder{
@@ -1319,10 +1320,51 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty is allowed under async cascade delete when finalizer present",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{folders.CascadeDeleteFinalizer},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    10,
+					},
+				},
+			},
+		},
+		cascadeDeleteAsyncEnabled: true,
+	}, {
+		name: "folder not empty is blocked under async cascade delete without the finalizer",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    10,
+					},
+				},
+			},
+		},
+		cascadeDeleteAsyncEnabled: true,
+		expectedErr:               "[folder.not-empty]",
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setKubernetesFolderCascadeDeleteAsyncToggle(t, tt.cascadeDeleteAsyncEnabled)
 			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled)
 
 			if tt.expectedErr == "" {

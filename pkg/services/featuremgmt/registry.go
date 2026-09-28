@@ -406,6 +406,17 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:         "kubernetesFolderCascadeDeleteAsync",
+			Description:  "PoC: async, finalizer-driven cascade deletion of a folder's subtree, done by a background controller instead of inline in the delete request. Stamps new folders with a cascade-delete finalizer on create; has no backfill for existing folders",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			// React: true so the frontend can gate on this specifically, rather than only on the
+			// broader foldersAppPlatformAPI flag -- see useDeleteFolderMutationFacade.
+			Generate: Generate{LegacyGo: true, React: true},
+		},
+		{
 			Name:            "kubernetesFolderCountsLegacyStorage",
 			Description:     "Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
 			Stage:           FeatureStageExperimental,

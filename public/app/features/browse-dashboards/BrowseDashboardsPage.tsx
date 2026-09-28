@@ -28,6 +28,8 @@ import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
+import { DeletingFolderBadge } from './components/DeletingFolderBadge';
+import { FolderCascadeStatusBanner } from './components/FolderCascadeStatusBanner';
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
@@ -35,6 +37,7 @@ import { SearchView } from './components/SearchView';
 import { canEditItemType, getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
+import { useIsFolderCascadeDeleting } from './utils/useIsFolderCascadeDeleting';
 
 // New Browse/Manage/Search Dashboards views for nested folders
 const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
@@ -113,6 +116,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const navModel = useNavModel(folderDTO, 'dashboards');
+  const isFolderDeleting = useIsFolderCascadeDeleting(folderDTO?.uid);
 
   const [saveFolder] = useUpdateFolder();
   const hasSelection = useHasSelection();
@@ -156,7 +160,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     return (
       <Stack alignItems={'center'} gap={2}>
         <Text element={'h1'}>{title}</Text>
-        {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && (
+        {isFolderDeleting && folderDTO && <DeletingFolderBadge folderUID={folderDTO.uid} />}
+        {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && !isFolderDeleting && (
           <IconButton
             name="pen"
             size="lg"
@@ -178,9 +183,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     <Page
       navId={isStarredView ? 'starred' : 'dashboards/browse'}
       pageNav={navModel}
-      onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
+      onEditTitle={showEditTitle && !isProvisionedFolder && !isFolderDeleting ? onEditTitle : undefined}
       renderTitle={renderTitle}
-      actions={<FolderDetailsActions folderDTO={folderDTO} />}
+      actions={<FolderDetailsActions folderDTO={folderDTO} isFolderDeleting={isFolderDeleting} />}
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
@@ -189,6 +194,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         {repoViewStatus === RepoViewStatus.Orphaned && orphanedRepoName && (
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
+        {/* Only shown when viewing a folder whose own async cascade delete is in progress or stuck. */}
+        {folderDTO && <FolderCascadeStatusBanner folderUID={folderDTO.uid} parentUID={folderDTO.parentUid} />}
         <QuotaLimitBanner />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
