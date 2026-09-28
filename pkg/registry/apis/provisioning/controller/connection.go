@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
@@ -99,7 +100,7 @@ func NewConnectionController(
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
 		tokenMetrics:      registerConnectionTokenMetrics(registry),
-		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
+		logger:            log.NewSlogLogger(connectionLoggerName),
 		resyncInterval:    resyncInterval,
 		drainTimeout:      drainTimeout,
 	}
