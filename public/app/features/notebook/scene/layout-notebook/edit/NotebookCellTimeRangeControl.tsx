@@ -79,6 +79,7 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
       name="clock-nine"
       size="sm"
       variant="secondary"
+      className={styles.clockIcon}
       aria-label={t('notebook.cell.time-range.button', 'Update time range')}
       onClick={() => setOpen((prev) => !prev)}
     />
@@ -90,7 +91,7 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
         $timeRange ? (
           <TimePickerTooltip timeRange={value} timeZone={ancestorTimeZone} />
         ) : (
-          t('notebook.cell.time-range.tooltip-default', 'Panel time settings')
+          t('notebook.cell.time-range.tooltip-default', 'Lock panel time range')
         )
       }
       placement="bottom"
@@ -102,7 +103,7 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
 
   return (
     <span className={styles.container} ref={containerRef}>
-      <span ref={triggerRef}>
+      <span ref={triggerRef} className={styles.trigger}>
         {$timeRange ? (
           <span className={styles.pill}>
             {trigger}
@@ -144,6 +145,11 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     position: 'relative',
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: theme.spacing(theme.components.height.sm),
+  }),
+  trigger: css({
     display: 'inline-flex',
     alignItems: 'center',
   }),

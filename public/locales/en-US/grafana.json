@@ -13222,7 +13222,7 @@
         "button": "Update time range",
         "locked": "Locked: {{range}}",
         "sync-back": "Sync back to notebook time range",
-        "tooltip-default": "Panel time settings"
+        "tooltip-default": "Lock panel time range"
       }
     },
     "errors": {
