@@ -3,8 +3,6 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
 	"sync"
 	"time"
 
@@ -25,9 +23,7 @@ import (
 const jobClaimExpiry = 60 * time.Second
 
 func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) error {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-jobqueue-controller")
+	logger := logging.DefaultLogger.With("logger", "provisioning-jobqueue-controller")
 	logger.Info("Starting provisioning job queue controller")
 
 	controllerCfg, err := setupJobQueueControllerFromConfig(deps.Config, deps.Registerer)
