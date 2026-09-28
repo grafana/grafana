@@ -118,7 +118,7 @@ function getNextRange(visibleRange: VisibleLogsRange, currentRange: TimeRange, t
   return {
     from: visibleRange.to,
     to: currentRange.to.valueOf(),
-    startNs: (BigInt(visibleRange.newestNs) + 1n).toString(),
+    startNs: (BigInt(visibleRange.newestNs) + BigInt(1)).toString(),
   };
 }
 
@@ -169,7 +169,7 @@ export function loadMoreRangeFromVisible(
   return {
     from: visibleRange.from,
     to: visibleRange.to,
-    startNs: (BigInt(visibleRange.newestNs) + 1n).toString(),
+    startNs: (BigInt(visibleRange.newestNs) + BigInt(1)).toString(),
   };
 }
 

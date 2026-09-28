@@ -42,11 +42,11 @@ describe('canScrollBottom', () => {
     });
   });
 
-  it('sets an inclusive startNs one nanosecond after the newest line when loading newer logs', () => {
+  it('sets startNs to the newest line when loading newer logs', () => {
     expect(canScrollBottom(getVisibleRange(rows), currentRange, timeZone, LogsSortOrder.Ascending)).toEqual({
       from: 40_000,
       to: 100_000,
-      startNs: '40000000001',
+      startNs: '40000000000',
     });
   });
 });
@@ -56,7 +56,7 @@ describe('canScrollTop', () => {
     expect(canScrollTop(getVisibleRange(rows), currentRange, timeZone, LogsSortOrder.Descending)).toEqual({
       from: 40_000,
       to: 100_000,
-      startNs: '40000000001',
+      startNs: '40000000000',
     });
   });
 
@@ -84,12 +84,12 @@ describe('withLokiInfiniteScrollBound', () => {
     expect(
       withLokiInfiniteScrollBound(
         { refId: 'A' },
-        { from: 1, to: 2, startNs: '40000000001' },
+        { from: 1, to: 2, startNs: '40000000000' },
         'loki'
       )
     ).toEqual({
       refId: 'A',
-      startNs: '40000000001',
+      startNs: '40000000000',
     });
   });
 
