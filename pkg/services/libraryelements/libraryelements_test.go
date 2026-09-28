@@ -315,7 +315,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	folderSvc := foldertest.NewFakeService()
 	f := &folder.Folder{
-		ID:    1,
+		ID:    1, //nolint:staticcheck // Exercise legacy field compatibility.
 		OrgID: 1,
 		UID:   "uid_for_ScenarioFolder",
 		Title: "ScenarioFolder",
