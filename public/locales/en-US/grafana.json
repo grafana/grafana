@@ -5983,6 +5983,83 @@
       "title-get-help-with-this-panel": "Get help with this panel",
       "troubleshooting-docs": "Troubleshooting docs"
     },
+    "insights": {
+      "answer": {
+        "caveat-title": "Keep in mind",
+        "follow-up": "Ask a follow-up",
+        "footer_one": "{{count}} source panel · Answered {{time}}",
+        "footer_other": "{{count}} source panels · Answered {{time}}",
+        "time-range": "Time range (UTC): {{from}} to {{to}}",
+        "unreadable": "Assistant returned an unreadable insight. Ask again to retry."
+      },
+      "ask": {
+        "no-answer": "Assistant returned no answer. Try asking again."
+      },
+      "edit-action": {
+        "add": "Add insight question",
+        "delete": "Delete insight question",
+        "edit": "Edit insight question",
+        "move": "Move insight question"
+      },
+      "follow-up": {
+        "title": "Insight: {{question}}",
+        "title-stale": "Out-of-date insight: {{question}}"
+      },
+      "form": {
+        "cancel-edit": "Cancel",
+        "question-label": "Question",
+        "question-placeholder": "What changed in error rates this week?",
+        "save-question": "Save",
+        "source-unavailable": "{{key}} (unavailable)",
+        "sources-description": "Assistant answers using only the data these panels show.",
+        "sources-label": "Source panels",
+        "sources-placeholder": "Select panels"
+      },
+      "item": {
+        "ask": "Ask Assistant",
+        "ask-again": "Ask Assistant again",
+        "ask-hint": "Get a takeaway and supporting findings from the source panels. Answers stay in this session.",
+        "delete": "Delete question",
+        "edit": "Edit question",
+        "error-title": "Assistant could not answer",
+        "follow-up-error-title": "Could not open Assistant",
+        "move-down": "Move down",
+        "move-up": "Move up",
+        "running": "Analyzing selected panels…",
+        "sources-label": "Source panels",
+        "stale-title": "Out of date"
+      },
+      "pane": {
+        "add-question": "Add question",
+        "empty-edit": "Save questions about this dashboard. Viewers can ask Assistant to answer them from the panels you select.",
+        "empty-view": "This dashboard has no saved questions.",
+        "invalid-body": "Adding or changing a question replaces the saved questions. Undo restores them.",
+        "invalid-title": "Saved questions could not be read",
+        "title": "Insights"
+      },
+      "snapshot": {
+        "empty-question": "This question is empty. Edit it to add text.",
+        "no-sources": "This question has no source panels. Edit it to select at least one.",
+        "source-empty": "“{{title}}” has no data for this selection. Adjust the filters or time range.",
+        "source-error": "“{{title}}” has a query error. Resolve it before asking Assistant.",
+        "source-not-ready": "“{{title}}” is not ready. Wait for its query to finish successfully, then try again.",
+        "source-time-range": "“{{title}}” uses a different time range. Wait for it to refresh or select matching panels.",
+        "source-unavailable": "A source panel is no longer on this dashboard. Edit the question to update its source panels.",
+        "too-large": "The selected data is too large to send. Select fewer panels or a shorter time range."
+      },
+      "sources": {
+        "unavailable": "{{title}} (unavailable)",
+        "view-panel": "View panel"
+      },
+      "stale": {
+        "data": "Source data changed",
+        "filters": "Filters changed",
+        "question": "Question changed",
+        "sources": "Source selection changed",
+        "time-range": "Time range changed",
+        "unavailable": "Source data unavailable"
+      }
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Errors and notices",
@@ -6498,6 +6575,10 @@
         "into-row": "Group into row",
         "into-tab": "Group into tab",
         "title": "Group"
+      },
+      "insights": {
+        "title": "Insights",
+        "tooltip": "Ask Assistant saved questions about this dashboard"
       },
       "links": {
         "add-link": "Add link",

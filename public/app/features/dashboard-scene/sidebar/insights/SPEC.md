@@ -1,6 +1,6 @@
 # Dashboard Insights sidebar (prototype)
 
-Status: design approved, not yet implemented.
+Status: implemented, pending browser verification.
 
 ## Purpose
 
@@ -64,22 +64,23 @@ The **Insights** sidebar button (icon `ai-sparkle`) appears in the sidebar's vie
 - An empty list removes the annotation.
 - A missing annotation reads as no questions. A malformed or unknown-version value also reads as no questions, and edit mode shows a warning that saved questions could not be read, so authors do not overwrite them unknowingly.
 - Writes follow the cross-dashboard variables path (`utils/persistUseCrossDashboardVariables.ts`): merge with existing annotations, call `serializer.setK8SAnnotations`, and update `meta.k8s.annotations` on the scene. The module takes a narrow host type instead of importing `DashboardScene`, to avoid import cycles.
-- Change detection mirrors `hasPredefinedVariablesAnnotationChanges`: a new `hasInsightsAnnotationChanges` compares the current annotation with the initial state and is included in `DashboardSceneChangeTracker.hasMetadataChanges` and in both serializers' change info, so Save enables and Discard restores.
+- Change detection mirrors `hasPredefinedVariablesAnnotationChanges`: a new `hasInsightsAnnotationChanges` compares the current annotation with the initial state and is included in `DashboardSceneChangeTracker.hasMetadataChanges`, in both serializers' change info (`hasInsightsChanges`), and in `hasActualSaveChanges`, so Save enables and leaving edit mode or the dashboard warns about unsaved questions.
+- Discard restores the serializer's copy of the annotation from the edit-session baseline (`DashboardScene.restoreSerializerAnnotationsFromInitialState`), because Save merges serializer and scene annotations. Save As forwards the annotation to the copy.
 
-Known limitations of annotation storage: questions do not appear in the JSON model or code pane, and are not included in JSON export, file provisioning, or Git Sync. Moving to a schema field later only replaces `insightsStorage.ts` and the change detection.
+Known limitations of annotation storage: questions do not appear in the JSON model or code pane, the save drawer's **Changes** tab does not list them, and they are not included in JSON export, file provisioning, or Git Sync. Moving to a schema field later only replaces `insightsStorage.ts` and the change detection.
 
 ## Architecture
 
 All code lives in `public/app/features/dashboard-scene/sidebar/insights/`.
 
-- **Pane.** `DashboardInsightsPane` is a light scene object (`getId()` returns `'insights'`) that holds per-question session state: running flag, last answer, and last error. Its renderer is loaded lazily, following `DashboardOutline`. The sidebar keeps one instance in a new optional `insightsPane` field of `DashboardSidebarState`, created on first open, so answers and in-flight requests survive closing the pane. The sidebar aborts pending insight requests when it deactivates.
-- **Sidebar button.** An `InsightsButton` in `DashboardSidebarRenderer` follows `FiltersOverviewButton`: it applies the availability rules, loads the pane with `runPaneRequest` and a dynamic import, and shows as active while the pane is open.
+- **Pane.** `DashboardInsightsPane` is a scene object (`getId()` returns `'insights'`) that holds per-question session state: running flag, last answer, and last error. Abort controllers live outside scene state, and `clone()` clears running flags, so edit-session snapshots of the sidebar never look busy. The sidebar keeps one instance in a new optional `insightsPane` field of `DashboardSidebarState`, created on first open, so answers and in-flight requests survive closing the pane. The sidebar aborts pending insight requests when it deactivates.
+- **Sidebar button.** An `InsightsButton` in `DashboardSidebarRenderer` follows `FiltersOverviewButton`: it applies the availability rules, loads the whole pane module with `runPaneRequest` and a dynamic import on first open, and shows as active while the pane is open.
 - **Edit actions.** Question changes use `edit({ source, description, perform, undo })` from `actions/utils/edit.ts`. `perform` and `undo` write the next and previous question lists through `insightsStorage.ts`.
-- **Sources.** `sources.ts` reads panels from the scene with `dashboardSceneGraph.getVizPanels`. For each panel it reads the outer data provider (`sceneGraph.getData(panel)`), so transformations are included, and applies field overrides for display names and units.
+- **Sources.** `sources.ts` lists panels from the layout's `getVizPanels()`. When capturing, it reads the outer data provider (`sceneGraph.getData(panel)`) of the selected panels only, so transformations are included, and applies field overrides for display names and units.
 - **Snapshot.** `snapshot.ts` builds one frozen input from the question, dashboard UID, time range, variable values, and the selected panels only. It refuses to build, with a message naming the panel, when a selected panel is missing, still loading, errored, has no rows, or uses a different time range from the dashboard, and when the serialized input exceeds 100,000 characters. It never truncates silently.
 - **Assistant request.** `askAssistant.ts` calls `ensureInlineAssistantInitialized()`, creates a fresh inline assistant with `getInlineAssistantFactory()('grafana/dashboard/insights')` for every ask, sends the serialized snapshot as the prompt with the insight system prompt and `tools: []`, and disposes the assistant afterwards. An `AbortSignal` maps to `cancel()`. This keeps the Assistant's authentication, provider configuration, and usage metering.
 - **Answer validation.** `answer.ts` parses the model output as `{ headline, findings[1..3] of { label, detail }, caveat }` and rejects anything else before it can replace a previous answer.
-- **Staleness.** `staleness.ts` compares the answer's captured snapshot with the current inputs and returns the reasons listed in the viewer flow. The pane re-evaluates when the dashboard time range, the variable set, or the data provider of a source panel belonging to an answered question changes. Observation never runs queries or model requests.
+- **Staleness.** `staleness.ts` compares the answer's captured snapshot with the current inputs and returns the reasons listed in the viewer flow. While open, the pane re-renders at most once per animation frame when panel data, the time range, or a variable value changes anywhere on the dashboard, and only expanded questions are re-evaluated. Observation never runs queries or model requests.
 - **Follow-up.** `followUp.ts` calls `openAssistant({ origin: 'grafana/dashboard/insights/follow-up', mode: 'assistant', prompt: '', autoSend: false, context })` with one structured context item that carries the answer, the captured snapshot, the answer time, the dashboard URL, and whether the answer was out of date at handoff.
 - **UI.** Built with `@grafana/ui` components, `useStyles2`, and `t()` / `<Trans>` for all user-facing strings.
 

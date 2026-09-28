@@ -187,6 +187,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
         this.clearSelection(true);
       }
       this.disableSelection();
+      this.state.insightsPane?.cancelPendingRequests();
     };
   }
 
