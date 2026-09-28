@@ -198,7 +198,6 @@ require (
 	go.opentelemetry.io/contrib/propagators/jaeger v1.46.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.3 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel v1.46.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.46.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.46.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.46.0 // @grafana/grafana-backend-group
@@ -481,6 +480,7 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.20 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
+	github.com/grafana/grafana-enterprise v0.0.0
 	github.com/grafana/nanogit v1.7.0 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
 	github.com/grafana/sqlds/v5 v5.3.1 // indirect
@@ -667,6 +667,7 @@ require (
 	go.opentelemetry.io/contrib/bridges/prometheus v0.71.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.44.0 // indirect
 	go.opentelemetry.io/contrib/exporters/autoexport v0.71.0 // indirect
+	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.22.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.22.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.46.0 // indirect
@@ -729,3 +730,5 @@ replace (
 // This was retracted, but seems to be known by the Go module proxy,
 // and is otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
+
+replace github.com/grafana/grafana-enterprise => ../grafana-enterprise

@@ -404,14 +404,7 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
 
    There is no `enabled` flag, to turn tracing on you need to set an exporter `address`. Tracing configuration is read at **startup**, so restart the backend after editing `custom.ini`.
 
-   For the `jaegeronly` block, use the Jaeger exporter:
-
-   ```ini
-   [tracing.opentelemetry.jaeger]
-   address = http://localhost:14268/api/traces
-   ```
-
-   For the `self-instrumentation` (Tempo) block, use the OTLP exporter:
+   For the `jaegeronly` and `self-instrumentation` (Tempo) blocks, use the OTLP/gRPC exporter:
 
    ```ini
    [tracing.opentelemetry.otlp]
@@ -447,6 +440,16 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
 1. Search or browse collected traces
    - With `jaegeronly`: open `http://localhost:16686` to use the Jaeger UI.
    - With `self-instrumentation`: there is no standalone UI. In Grafana Explore, select the `gdev-tempo` data source and run a TraceQL query such as `{}` (search by service name `grafana`).
+
+### Trace the Live development pipeline
+
+The `GF_LIVE_PIPELINE_TRACE` development switch exports traces using OTLP/gRPC.
+Configure its receiver with the standard OpenTelemetry environment variables.
+For a local Jaeger or Tempo receiver without TLS, start Grafana with:
+
+```bash
+GF_LIVE_PIPELINE_TRACE=1 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://localhost:4317 make run
+```
 
 ### Troubleshoot local tracing
 

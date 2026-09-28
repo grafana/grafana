@@ -130,6 +130,7 @@ func TestTracingConfig(t *testing.T) {
 		Name               string
 		Cfg                string
 		Env                map[string]string
+		ExpectedError      string
 		ExpectedExporter   string
 		ExpectedAddress    string
 		ExpectedInsecure   bool
@@ -158,14 +159,12 @@ func TestTracingConfig(t *testing.T) {
 			ExpectedAttrs:    []attribute.KeyValue{attribute.String("key1", "value1"), attribute.String("key2", "value2")},
 		},
 		{
-			Name: "jaeger address is parsed",
+			Name: "removed jaeger exporter reports migration instructions",
 			Cfg: `
 			[tracing.opentelemetry.jaeger]
 			address = jaeger.example.com:6831
 			`,
-			ExpectedExporter: jaegerExporter,
-			ExpectedAddress:  "jaeger.example.com:6831",
-			ExpectedAttrs:    []attribute.KeyValue{},
+			ExpectedError: "Jaeger exporter is no longer supported",
 		},
 		{
 			Name: "OTLP address is parsed",
@@ -191,25 +190,21 @@ func TestTracingConfig(t *testing.T) {
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
 		{
-			Name: "legacy config format is supported",
+			Name: "legacy config reports migration instructions",
 			Cfg: `
 			[tracing.jaeger]
 			address = jaeger.example.com:6831
 			`,
-			ExpectedExporter: jaegerExporter,
-			ExpectedAddress:  "jaeger.example.com:6831",
-			ExpectedAttrs:    []attribute.KeyValue{},
+			ExpectedError: "Jaeger exporter is no longer supported",
 		},
 		{
-			Name: "legacy env variables are supported",
+			Name: "legacy env variables report migration instructions",
 			Cfg:  `[tracing.jaeger]`,
 			Env: map[string]string{
 				"JAEGER_AGENT_HOST": "example.com",
 				"JAEGER_AGENT_PORT": "12345",
 			},
-			ExpectedExporter: jaegerExporter,
-			ExpectedAddress:  "example.com:12345",
-			ExpectedAttrs:    []attribute.KeyValue{},
+			ExpectedError: "Jaeger exporter is no longer supported",
 		},
 		{
 			Name: "opentelemetry config format is prioritised over legacy jaeger",
@@ -223,9 +218,12 @@ func TestTracingConfig(t *testing.T) {
 			sampler_param = 1
 			[tracing.opentelemetry.jaeger]
 			address = bar.com:6831
+			[tracing.opentelemetry.otlp]
+			address = bar.com:4317
 			`,
-			ExpectedExporter:     jaegerExporter,
-			ExpectedAddress:      "bar.com:6831",
+			ExpectedExporter:     otlpExporter,
+			ExpectedInsecure:     true,
+			ExpectedAddress:      "bar.com:4317",
 			ExpectedAttrs:        []attribute.KeyValue{attribute.String("c", "d")},
 			ExpectedSamplerParam: 1.0,
 		},
@@ -263,7 +261,12 @@ func TestTracingConfig(t *testing.T) {
 			cfgProvider, err := configprovider.ProvideService(cfg)
 			assert.NoError(t, err)
 			tracingConfig, err := ProvideTracingConfig(cfgProvider)
-			assert.NoError(t, err)
+			if test.ExpectedError != "" {
+				require.ErrorContains(t, err, test.ExpectedError)
+				require.ErrorContains(t, err, "tracing.opentelemetry.otlp.address")
+				return
+			}
+			require.NoError(t, err)
 			// make sure tracker is properly configured
 			assert.Equal(t, test.ExpectedExporter, tracingConfig.enabled)
 			assert.Equal(t, test.ExpectedAddress, tracingConfig.Address)

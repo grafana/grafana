@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -16,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
@@ -41,10 +39,9 @@ const (
 )
 
 const (
-	jaegerExporter string = "jaeger"
-	otlpExporter   string = "otlp"
-	fileExporter   string = "file"
-	noopExporter   string = "noop"
+	otlpExporter string = "otlp"
+	fileExporter string = "file"
+	noopExporter string = "noop"
 
 	jaegerPropagator string = "jaeger"
 	w3cPropagator    string = "w3c"
@@ -126,54 +123,6 @@ type noopTracerProvider struct {
 
 func (noopTracerProvider) Shutdown(ctx context.Context) error {
 	return nil
-}
-
-func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
-	var ep jaeger.EndpointOption
-	// Create the Jaeger exporter: address can be either agent address (host:port) or collector URL
-	if strings.HasPrefix(ots.cfg.Address, "http://") || strings.HasPrefix(ots.cfg.Address, "https://") {
-		ots.log.Debug("using jaeger collector", "address", ots.cfg.Address)
-		ep = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.cfg.Address))
-	} else if host, port, err := net.SplitHostPort(ots.cfg.Address); err == nil {
-		ots.log.Debug("using jaeger agent", "host", host, "port", port)
-		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port), jaeger.WithMaxPacketSize(64000))
-	} else {
-		return nil, fmt.Errorf("invalid tracer address: %s", ots.cfg.Address)
-	}
-	exp, err := jaeger.New(ep)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := resource.New(
-		context.Background(),
-		resource.WithAttributes(
-			// TODO: why are these attributes different from ones added to the
-			// OTLP provider?
-			semconv.ServiceNameKey.String(ots.cfg.ServiceName),
-			attribute.String("environment", "production"),
-		),
-		resource.WithAttributes(ots.cfg.CustomAttribs...),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	sampler, err := ots.initSampler()
-	if err != nil {
-		return nil, err
-	}
-	if ots.cfg.FilterOperationalEndpoints {
-		sampler = newInfraEndpointFilterSampler(sampler)
-	}
-
-	tp := tracesdk.NewTracerProvider(
-		tracesdk.WithBatcher(exp),
-		tracesdk.WithResource(res),
-		tracesdk.WithSampler(sampler),
-	)
-
-	return tp, nil
 }
 
 func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
@@ -300,11 +249,6 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 	var tp tracerProvider
 	var err error
 	switch ots.cfg.enabled {
-	case jaegerExporter:
-		tp, err = ots.initJaegerTracerProvider()
-		if err != nil {
-			return err
-		}
 	case otlpExporter:
 		tp, err = ots.initOTLPTracerProvider()
 		if err != nil {
