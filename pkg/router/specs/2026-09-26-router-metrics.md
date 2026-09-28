@@ -9,8 +9,14 @@ scrapes (`routerCollector`, also in `metrics.go`).
 
 ## Label rules
 
+Every label has a bounded set of values, so no request can create new series:
+
 - `group` is always a group the router serves. Any other value becomes `unknown`, so arbitrary
   client paths can't create series.
+- `verb` is one of a fixed set (`metricVerbs` in `metrics.go`); anything else becomes `other`. See
+  [Requests](#requests).
+- `route`, `reason`, `state` and `result` take only the values listed in their tables.
+- `status_code` is the response's HTTP status code, so it is limited to the three-digit codes.
 - In middleware mode, requests for groups the router doesn't serve belong to the embedded API
   server, and are not counted here. The API server's own `apiserver_request_*` metrics cover them.
 - Watches are long-running requests. They are counted in `grafana_router_longrunning_requests`,
@@ -64,8 +70,20 @@ Groups on the single-tenant fallback keep one breaker per stack, so they have no
 | `grafana_router_http_requests_in_flight` | gauge | | Requests other than watches in progress |
 | `grafana_router_longrunning_requests` | gauge | `group` | Watches in progress |
 
-`verb` is the Kubernetes verb (`get`, `list`, `create`, `update`, `patch`, `delete`, ...), or the
-lowercased HTTP method for discovery. `route` says how the router dispatched the request:
+`verb` is one of:
+
+- a Kubernetes verb, for resource requests: `get`, `list`, `watch`, `create`, `update`, `patch`,
+  `delete`, `deletecollection` or `proxy`;
+- the lowercased HTTP method, for paths outside the resource API such as `/apis`, `/apis/<group>`
+  and `/openapi/v3`: `get`, `head`, `options`, `post`, `put`, `patch`, `delete`, `connect` or
+  `trace`;
+- `other`, for any other method. Go's server accepts any token as a method, so an unrecognized one
+  must not become a label value.
+
+`watch` never appears in the histogram, since watches are counted only in
+`grafana_router_longrunning_requests`.
+
+`route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
 discovery the router builds), `next` (not the router's; passed on) or `invalid` (rejected before
 routing).
@@ -88,6 +106,7 @@ routing).
 | Error ratio by group | `sum by (group) (rate(grafana_router_http_request_duration_seconds_count{route="backend",status_code=~"5.."}[5m])) / sum by (group) (rate(grafana_router_http_request_duration_seconds_count{route="backend"}[5m]))` |
 | p99 latency by group | `histogram_quantile(0.99, sum by (group, le) (rate(grafana_router_http_request_duration_seconds_bucket{route="backend"}[5m])))` |
 | Watches by group | `sum by (group) (grafana_router_longrunning_requests)` |
+| Unrecognized methods | `sum by (group) (rate(grafana_router_http_request_duration_seconds_count{verb="other"}[5m]))` |
 | Discovery served stale | `sum by (group) (rate(grafana_router_discovery_results_total{result=~"stale|unavailable"}[5m]))` |
 | Stack lookup cache hit ratio | `rate(grafana_router_stack_lookups_total{result="cache_hit"}[5m]) / sum(rate(grafana_router_stack_lookups_total[5m]))` |
 | Throttled stack lookups | `rate(grafana_router_stack_lookups_total{result="throttled"}[5m])` |
