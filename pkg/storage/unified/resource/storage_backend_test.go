@@ -1269,6 +1269,42 @@ func TestKvStorageBackend_ReadResource_NotFound(t *testing.T) {
 	require.Nil(t, response.Value)
 }
 
+func TestKvStorageBackend_ReadResource_InvalidName(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+
+	for _, name := range []string{"invalid/name", "has space", strings.Repeat("a", 300)} {
+		t.Run(name[:min(len(name), 20)], func(t *testing.T) {
+			response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "resources",
+					Name:      name,
+				},
+			})
+			require.NotNil(t, response.Error)
+			require.Equal(t, int32(404), response.Error.Code)
+			require.Equal(t, "NotFound", response.Error.Reason)
+		})
+	}
+
+	t.Run("too high resource version wins", func(t *testing.T) {
+		_, rv := createAndWriteTestObject(t, backend)
+		response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "invalid/name",
+			},
+			ResourceVersion: rv + 1000000000000,
+		})
+		require.NotNil(t, response.Error)
+		require.Equal(t, int32(400), response.Error.Code)
+		require.Contains(t, response.Error.Message, "too large resource version")
+	})
+}
+
 func TestKvStorageBackend_ReadResource_MissingKey(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -1408,6 +1444,32 @@ func TestKvStorageBackend_BatchReadResource_YieldsInRequestOrder(t *testing.T) {
 		require.Nil(t, response.Error)
 		require.Equal(t, requests[i].Key.Name, response.Key.Name)
 	}
+}
+
+func TestKvStorageBackend_BatchReadResource_InvalidName(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	obj, err := createTestObjectWithName("a", appsNamespace, "value-a")
+	require.NoError(t, err)
+	rv, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+
+	invalidKey := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "invalid/name"}
+	requests := []*resourcepb.ReadRequest{
+		{Key: invalidKey},
+		{Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "a"}},
+		{Key: invalidKey, ResourceVersion: rv + 1000000000000},
+	}
+	responses, err := backend.BatchReadResource(t.Context(), requests)
+	require.NoError(t, err)
+	got := collectBatchReadResponses(t, responses)
+	require.Len(t, got, 3)
+	require.NotNil(t, got[0].Error)
+	require.Equal(t, int32(404), got[0].Error.Code)
+	require.Nil(t, got[1].Error)
+	require.Equal(t, "a", got[1].Key.Name)
+	require.NotNil(t, got[2].Error, "too-high RV should be rejected before the name check")
+	require.Equal(t, int32(400), got[2].Error.Code)
+	require.Contains(t, got[2].Error.Message, "too large resource version")
 }
 
 func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(t *testing.T) {

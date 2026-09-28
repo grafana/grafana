@@ -1259,6 +1259,12 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		}
 	}
 
+	// An invalid name can never be stored, so reading one is a not-found rather than a
+	// server error. server.Read skips name validation for exactly this outcome.
+	if validation.IsValidGrafanaName(req.Key.Name) != nil {
+		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+	}
+
 	meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
@@ -1346,6 +1352,13 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 			rv := ToSnowflakeRV(req.ResourceVersion)
 			if rv > latestRV {
 				entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
+				entries = append(entries, entry)
+				continue
+			}
+
+			// Same as ReadResource: an invalid name can never be stored.
+			if validation.IsValidGrafanaName(req.Key.Name) != nil {
+				entry.response = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 				entries = append(entries, entry)
 				continue
 			}
