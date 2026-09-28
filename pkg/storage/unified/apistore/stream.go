@@ -203,6 +203,16 @@ decode:
 		case resourcepb.WatchEvent_DELETED:
 			watchAction = watch.Deleted
 
+			if evt.Previous != nil {
+				// Watch clients must resume from the deletion's version, not the previous object's.
+				accessor, err := utils.MetaAccessor(obj)
+				if err != nil {
+					klog.Errorf("error getting object accessor: %s", err)
+					return watch.Error, nil, err
+				}
+				accessor.SetResourceVersionInt64(evt.Resource.Version)
+			}
+
 			// apply any predicates not handled in storage
 			matches, err := d.predicate.Matches(obj)
 			if err != nil {
