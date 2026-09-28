@@ -5,7 +5,6 @@ import * as React from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
-  type AbsoluteTimeRange,
   CoreApp,
   type DataFrame,
   DataHoverClearEvent,
