@@ -309,7 +309,6 @@ require (
 	xorm.io/builder v0.3.13 // @grafana/grafana-backend-group
 )
 
-// Indirect references
 require (
 	cel.dev/expr v0.25.3 // indirect
 	cloud.google.com/go v0.123.0 // indirect
