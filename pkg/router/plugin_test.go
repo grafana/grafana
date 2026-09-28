@@ -65,7 +65,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				},
 			})
 			require.NoError(t, err)
-			router := NewGrafanaRouter(loader)
+			router := NewGrafanaRouter(loader, nil)
 			require.NoError(t, router.reconcile(t.Context()))
 			for _, entry := range router.served {
 				t.Cleanup(entry.handler.(interface{ Destroy() }).Destroy)

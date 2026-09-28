@@ -50,13 +50,15 @@ done <<< "$(yarn i18n:stats)"
 
 # Requires the frontend to have been built (yarn build) so the assets manifests exist.
 # Assigned separately from the herestring below so that set -e catches a failure here.
-BUNDLE_SIZES="$(yarn bundle-size:stats)"
-BUNDLE_SIZE_STATS=""
-while read -r name value
-do
-  BUNDLE_SIZE_STATS+=$'\n  '
-  BUNDLE_SIZE_STATS+="\"grafana.ci-code.bundleSize.${name}\": \"${value}\","
-done <<< "$BUNDLE_SIZES"
+BUNDLE_METRICS="$(yarn bundle-metrics)"
+BUNDLE_STATS=""
+if [[ -n "$BUNDLE_METRICS" ]]; then
+  while read -r name value
+  do
+    BUNDLE_STATS+=$'\n  '
+    BUNDLE_STATS+="\"grafana.ci-code.${name}\": \"${value}\","
+  done <<< "$BUNDLE_METRICS"
+fi
 
 THEME_TOKEN_USAGE=""
 while read -r name value
@@ -69,7 +71,7 @@ echo "Metrics: {
   $THEME_TOKEN_USAGE
   $ESLINT_STATS
   $I18N_STATS
-  $BUNDLE_SIZE_STATS
+  $BUNDLE_STATS
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
