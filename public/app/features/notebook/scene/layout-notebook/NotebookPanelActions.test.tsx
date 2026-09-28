@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, SceneReactObject, SceneTimeRange, type SceneObject, VizPanel } from '@grafana/scenes';
 import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -25,10 +25,12 @@ jest.mock('app/features/panel/components/VizTypePicker/VisualizationSuggestionCa
   VisualizationSuggestionCard: ({ suggestion }: { suggestion: { name: string } }) => <div>{suggestion.name}</div>,
 }));
 
-function buildPanelCell() {
+function buildPanelCell(title = 'Latency') {
   const panel = new VizPanel({
     key: 'panel-1',
-    title: 'Latency',
+    title,
+    hoverHeader: !title,
+    titleItems: [],
     pluginId: 'timeseries',
     $data: new SceneQueryRunner({ queries: [{ refId: 'A', datasource: { uid: 'prometheus' } }] }),
   });
@@ -38,6 +40,15 @@ function buildPanelCell() {
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
   });
   return { cell, panel };
+}
+
+function renderTitleAction(panel: VizPanel) {
+  const titleAction = (panel.state.titleItems as SceneObject[]).find(
+    (item): item is SceneReactObject => item instanceof SceneReactObject
+  );
+  expect(titleAction).toBeDefined();
+  const TitleAction = titleAction!.Component;
+  return render(<TitleAction model={titleAction!} />);
 }
 
 describe('NotebookPanelActions', () => {
@@ -59,6 +70,7 @@ describe('NotebookPanelActions', () => {
     expect(explore).toHaveAttribute('href', '/explore?panel=1');
     expect(explore).toHaveAttribute('target', '_blank');
     expect(screen.queryByRole('button', { name: 'Edit panel title' })).not.toBeInTheDocument();
+    expect(panel.state.titleItems).toEqual([]);
     expect(screen.queryByRole('button', { name: 'Change visualization' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Duplicate block' })).not.toBeInTheDocument();
     expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, (panel.state.$data as SceneQueryRunner).state.queries);
@@ -116,7 +128,11 @@ describe('NotebookPanelActions', () => {
     );
 
     await screen.findByRole('link', { name: 'Open in Explore' });
-    const toolbar = screen.getByRole('button', { name: 'Edit panel title' }).closest('[data-notebook-panel-actions]');
+    renderTitleAction(panel);
+    const toolbar = screen
+      .getByRole('button', { name: 'Change visualization' })
+      .closest('[data-notebook-panel-actions]');
+    expect(toolbar).not.toContainElement(screen.getByRole('button', { name: 'Edit panel title' }));
     expect(toolbar).toContainElement(screen.getByRole('button', { name: 'Change visualization' }));
     expect(toolbar).toContainElement(screen.getByRole('link', { name: 'Open in Explore' }));
     expect(toolbar).toContainElement(screen.getByRole('button', { name: 'Duplicate block' }));
@@ -218,10 +234,11 @@ describe('NotebookPanelActions', () => {
     const { user } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
 
     expect(screen.getByRole('button', { name: 'Change visualization' })).toBeInTheDocument();
+    renderTitleAction(panel);
     fireEvent.click(screen.getByRole('button', { name: 'Edit panel title' }));
     const title = screen.getByRole('textbox', { name: 'Panel title' });
     expect(
-      screen.getByRole('button', { name: 'Edit panel title' }).closest('[data-notebook-panel-actions]')
+      screen.getByRole('button', { name: 'Change visualization' }).closest('[data-notebook-panel-actions]')
     ).not.toContainElement(title);
     await user.clear(title);
     await user.type(title, 'Error rate{Enter}');
@@ -234,6 +251,7 @@ describe('NotebookPanelActions', () => {
     const { cell, panel } = buildPanelCell();
     const { user } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
 
+    renderTitleAction(panel);
     fireEvent.click(screen.getByRole('button', { name: 'Edit panel title' }));
     const title = screen.getByRole('textbox', { name: 'Panel title' });
     await user.clear(title);
@@ -248,6 +266,7 @@ describe('NotebookPanelActions', () => {
     render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
 
     await screen.findByRole('link', { name: 'Open in Explore' });
+    renderTitleAction(panel);
     fireEvent.click(screen.getByRole('button', { name: 'Edit panel title' }));
     const title = screen.getByRole('textbox', { name: 'Panel title' });
     fireEvent.change(title, { target: { value: 'Wrong title' } });
@@ -257,5 +276,64 @@ describe('NotebookPanelActions', () => {
     });
 
     expect(panel.state.title).toBe('Latency');
+  });
+
+  it('shows Add title in the panel header for an untitled panel', async () => {
+    const { cell, panel } = buildPanelCell('');
+    const { user } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+
+    expect(panel.state.hoverHeader).toBe(false);
+    await screen.findByRole('link', { name: 'Open in Explore' });
+    const titleAction = renderTitleAction(panel);
+    expect(
+      screen.getByRole('button', { name: 'Change visualization' }).closest('[data-notebook-panel-actions]')
+    ).not.toContainElement(screen.getByRole('button', { name: 'Add title' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add title' }));
+    titleAction.unmount();
+    expect(panel.state.hoverHeader).toBe(false);
+    await user.type(screen.getByRole('textbox', { name: 'Panel title' }), 'Error rate{Enter}');
+
+    expect(panel.state.title).toBe('Error rate');
+    expect(panel.state.hoverHeader).toBe(false);
+    expect(screen.queryByRole('button', { name: 'Add title' })).not.toBeInTheDocument();
+    renderTitleAction(panel);
+    expect(screen.getByRole('button', { name: 'Edit panel title' })).toBeInTheDocument();
+  });
+
+  it('treats Add title as a normal panel title when saved', async () => {
+    const { cell, panel } = buildPanelCell('Add title');
+    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+
+    await screen.findByRole('link', { name: 'Open in Explore' });
+    renderTitleAction(panel);
+    expect(panel.state.title).toBe('Add title');
+    expect(screen.queryByRole('button', { name: 'Add title' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit panel title' })).toBeInTheDocument();
+  });
+
+  it('restores the untitled panel hover header in view mode', async () => {
+    const { cell, panel } = buildPanelCell('');
+    const { rerender } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+
+    await screen.findByRole('link', { name: 'Open in Explore' });
+    expect(panel.state.hoverHeader).toBe(false);
+    expect(panel.state.titleItems).toHaveLength(1);
+    rerender(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
+
+    expect(panel.state.hoverHeader).toBe(true);
+    expect(panel.state.titleItems).toEqual([]);
+  });
+
+  it('removes the title action in view mode without changing existing title items', async () => {
+    const { cell, panel } = buildPanelCell();
+    const existingItem = new SceneReactObject({ reactNode: <span>Existing title item</span> });
+    panel.setState({ titleItems: [existingItem] });
+    const { rerender } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+
+    await screen.findByRole('link', { name: 'Open in Explore' });
+    expect(panel.state.titleItems).toHaveLength(2);
+    rerender(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
+
+    expect(panel.state.titleItems).toEqual([existingItem]);
   });
 });

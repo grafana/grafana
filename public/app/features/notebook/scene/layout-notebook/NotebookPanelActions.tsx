@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { sceneGraph, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneReactObject, type SceneObject, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { IconButton, Input, LinkButton, Spinner, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, Input, LinkButton, Spinner, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
+import { getUpdatedHoverHeader } from 'app/features/dashboard-scene/scene/panel-timerange/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
@@ -47,6 +48,53 @@ export function NotebookPanelActions({
   const [originalTitle, setOriginalTitle] = useState(title);
   const renameFinished = useRef(false);
   const canEditPanel = isEditing && !isLibraryPanel(panel);
+  const startRename = useCallback(() => {
+    renameFinished.current = false;
+    setOriginalTitle(panel.state.title);
+    setDraft(panel.state.title);
+    setRenaming(true);
+  }, [panel]);
+  const titleAction = useMemo(
+    () =>
+      new SceneReactObject({
+        reactNode: title ? (
+          <IconButton
+            name="pen"
+            size="sm"
+            tooltip={t('notebooks.panel.rename', 'Edit panel title')}
+            onClick={startRename}
+          />
+        ) : (
+          <Button variant="secondary" fill="text" size="sm" onClick={startRename}>
+            {t('notebooks.panel.add-title', 'Add title')}
+          </Button>
+        ),
+      }),
+    [startRename, title]
+  );
+
+  useEffect(() => {
+    if (!canEditPanel || renaming || !Array.isArray(panel.state.titleItems)) {
+      return;
+    }
+    panel.setState({ titleItems: [...panel.state.titleItems, titleAction] });
+    return () => {
+      const titleItems = panel.state.titleItems;
+      if (Array.isArray(titleItems) && titleItems.includes(titleAction)) {
+        panel.setState({ titleItems: titleItems.filter((item: SceneObject) => item !== titleAction) });
+      }
+    };
+  }, [panel, canEditPanel, title, renaming, titleAction]);
+
+  useEffect(() => {
+    if (!canEditPanel || title) {
+      return;
+    }
+    panel.setState({ hoverHeader: false });
+    return () => {
+      panel.setState({ hoverHeader: getUpdatedHoverHeader(panel.state.title, panel.state.$timeRange?.state) });
+    };
+  }, [panel, canEditPanel, title]);
 
   const finishRename = () => {
     if (renameFinished.current) {
@@ -110,19 +158,6 @@ export function NotebookPanelActions({
               }
               aria-pressed={queryEditorOpen}
               onClick={onToggleQueryEditor}
-            />
-          )}
-          {canEditPanel && (
-            <IconButton
-              name="pen"
-              size="sm"
-              tooltip={t('notebooks.panel.rename', 'Edit panel title')}
-              onClick={() => {
-                renameFinished.current = false;
-                setOriginalTitle(title);
-                setDraft(title);
-                setRenaming(true);
-              }}
             />
           )}
           {canEditPanel && (
