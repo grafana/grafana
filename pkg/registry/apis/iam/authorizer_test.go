@@ -440,7 +440,7 @@ func ssoSettingAttr(verb, name string) authorizer.AttributesRecord {
 // TestSSOSettingAuthorizerCheckRequest asserts the Check targets the foreign
 // setting.grafana.app/settings resource named auth.<provider>, verb forwarded.
 func TestSSOSettingAuthorizerCheckRequest(t *testing.T) {
-	for _, verb := range []string{"get", "list", "watch", "create", "update", "patch", "delete"} {
+	for _, verb := range []string{"get", "list", "watch", "update", "patch", "delete"} {
 		t.Run(verb, func(t *testing.T) {
 			var capturedReq *types.CheckRequest
 			client := &fakeAccessClient{
@@ -463,6 +463,23 @@ func TestSSOSettingAuthorizerCheckRequest(t *testing.T) {
 			assert.Equal(t, "org-1", capturedReq.Namespace)
 		})
 	}
+}
+
+// TestSSOSettingAuthorizerCreateDefersToStorage asserts a collection create is allowed
+// at the API authorizer without a per-provider Check (there is no name at authz time);
+// the redacting store enforces settings:write on the decoded provider instead.
+func TestSSOSettingAuthorizerCreateDefersToStorage(t *testing.T) {
+	checkCalled := false
+	client := &fakeAccessClient{checkFunc: func(context.Context, types.AuthInfo, types.CheckRequest, string) (types.CheckResponse, error) {
+		checkCalled = true
+		return types.CheckResponse{Allowed: false}, nil
+	}}
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser})
+
+	decision, _, err := newSSOSettingAuthorizer(client).Authorize(ctx, ssoSettingAttr("create", ""))
+	require.NoError(t, err)
+	assert.Equal(t, authorizer.DecisionAllow, decision)
+	assert.False(t, checkCalled, "create must not run the per-provider Check")
 }
 
 // TestSSOSettingAuthorizerDecisions covers the deny/allow/error paths for a named verb.

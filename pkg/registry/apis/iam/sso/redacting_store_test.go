@@ -8,6 +8,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,8 +89,11 @@ type fakeAccessClient struct {
 	compileErr error
 }
 
-func (f *fakeAccessClient) Check(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
-	return authlib.CheckResponse{Allowed: true}, nil
+func (f *fakeAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	if f.allow == nil {
+		return authlib.CheckResponse{Allowed: true}, nil
+	}
+	return authlib.CheckResponse{Allowed: f.allow[req.Name]}, nil
 }
 
 func (f *fakeAccessClient) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
@@ -149,6 +153,28 @@ func TestRedactingStore_ListCompileErrorPropagates(t *testing.T) {
 
 	_, err = store.(rest.Lister).List(listCtx(), nil)
 	require.Error(t, err)
+}
+
+func TestRedactingStore_CreateAllowedForGrantedProvider(t *testing.T) {
+	inner := &fakeInner{created: ssoObj("github", map[string]any{"client_id": "gh", "client_secret": "topsecret"})}
+	ac := &fakeAccessClient{allow: map[string]bool{"auth.github": true}}
+	store, err := NewRedactingStore(inner, ac)
+	require.NoError(t, err)
+
+	out, err := store.(rest.Creater).Create(listCtx(), ssoObj("github", map[string]any{}), nil, &metav1.CreateOptions{})
+	require.NoError(t, err)
+	got, ok := out.(*iamv0.SSOSetting)
+	require.True(t, ok)
+	assert.Equal(t, setting.RedactedPassword, got.Spec.Settings.Object["client_secret"])
+}
+
+func TestRedactingStore_CreateDeniedForUngrantedProvider(t *testing.T) {
+	ac := &fakeAccessClient{allow: map[string]bool{"auth.github": true}}
+	store, err := NewRedactingStore(&fakeInner{created: ssoObj("google", map[string]any{})}, ac)
+	require.NoError(t, err)
+
+	_, err = store.(rest.Creater).Create(listCtx(), ssoObj("google", map[string]any{}), nil, &metav1.CreateOptions{})
+	require.True(t, apierrors.IsForbidden(err), "per-provider write must be denied with 403")
 }
 
 type onlyStorage struct{}
