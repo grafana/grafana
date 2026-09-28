@@ -6,7 +6,16 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { config } from '../../config';
 
 import { MeticulousProvider, meticulousReportingHook } from './meticulous';
-import { FlagKeys, useFlagCanvasPanelPanZoom, useFlagDashboardNewLayouts } from './openfeature.gen';
+import * as generatedFlags from './openfeature.gen';
+
+const [firstFlagName, secondFlagName, missingFlagName] = Object.keys(generatedFlags.FlagKeys) as Array<
+  keyof typeof generatedFlags.FlagKeys
+>;
+const providedFlag = generatedFlags.FlagKeys[firstFlagName];
+const secondProvidedFlag = generatedFlags.FlagKeys[secondFlagName];
+const missingFlag = generatedFlags.FlagKeys[missingFlagName];
+const useFirstFlag = generatedFlags[`useFlag${firstFlagName}`];
+const useSecondFlag = generatedFlags[`useFlag${secondFlagName}`];
 
 const domain = 'meticulous-integration-test';
 const client = OpenFeature.getClient(domain);
@@ -23,10 +32,10 @@ async function install() {
       { provider: local },
       {
         provider: new InMemoryProvider({
-          dashboardNewLayouts: { variants: { recorded: true }, defaultVariant: 'recorded', disabled: false },
-          canvasPanelPanZoom: { variants: { recorded: true }, defaultVariant: 'recorded', disabled: false },
+          [providedFlag]: { variants: { recorded: true }, defaultVariant: 'recorded', disabled: false },
+          [secondProvidedFlag]: { variants: { recorded: true }, defaultVariant: 'recorded', disabled: false },
           'meticulous.test.number': { variants: { recorded: 42 }, defaultVariant: 'recorded', disabled: false },
-          'grafana.mtFallback': {
+          'meticulous.test.object': {
             variants: { recorded: { enabled: true } },
             defaultVariant: 'recorded',
             disabled: false,
@@ -52,24 +61,24 @@ afterEach(async () => {
 });
 
 it.each([true, false])('uses and reports override %s over localStorage and recorded flags', (value) => {
-  local.setFlags({ dashboardNewLayouts: !value });
+  local.setFlags({ [providedFlag]: !value });
   getFlagOverride.mockReturnValue({ overridden: true, value });
 
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, !value)).toBe(value);
-  expect(getFlagOverride).toHaveBeenCalledWith('dashboardNewLayouts');
-  expect(recordFeatureFlag.mock.calls).toEqual([['dashboardNewLayouts', value]]);
+  expect(client.getBooleanValue(providedFlag, !value)).toBe(value);
+  expect(getFlagOverride).toHaveBeenCalledWith(providedFlag);
+  expect(recordFeatureFlag.mock.calls).toEqual([[providedFlag, value]]);
 });
 
 it('reports localStorage, recorded and default values when no override exists', () => {
-  local.setFlags({ dashboardNewLayouts: false });
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, true)).toBe(false);
+  local.setFlags({ [providedFlag]: false });
+  expect(client.getBooleanValue(providedFlag, true)).toBe(false);
   local.clearFlags();
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
-  expect(client.getBooleanValue(FlagKeys.CanvasPanelNesting, false)).toBe(false);
+  expect(client.getBooleanValue(providedFlag, false)).toBe(true);
+  expect(client.getBooleanValue(missingFlag, false)).toBe(false);
   expect(recordFeatureFlag.mock.calls).toEqual([
-    ['dashboardNewLayouts', false],
-    ['dashboardNewLayouts', true],
-    ['canvasPanelNesting', false],
+    [providedFlag, false],
+    [providedFlag, true],
+    [missingFlag, false],
   ]);
 });
 
@@ -84,39 +93,40 @@ it.each(['', 'treatment'])('preserves string override %j and dotted flag keys', 
 it('ignores incorrectly typed overrides instead of coercing them', () => {
   const warn = jest.spyOn(console, 'warn').mockImplementation();
   getFlagOverride.mockReturnValue({ overridden: true, value: 'false' });
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
-  expect(recordFeatureFlag).toHaveBeenCalledWith('dashboardNewLayouts', true);
-  expect(warn).toHaveBeenCalledWith('Ignoring Meticulous override for "dashboardNewLayouts": expected boolean');
+  expect(client.getBooleanValue(providedFlag, false)).toBe(true);
+  expect(recordFeatureFlag).toHaveBeenCalledWith(providedFlag, true);
+  expect(warn).toHaveBeenCalledWith(`Ignoring Meticulous override for "${providedFlag}": expected boolean`);
 });
 
 it('leaves number and object evaluations to the existing providers without reporting them', () => {
   getFlagOverride.mockReturnValue({ overridden: true, value: false });
   // @ts-expect-error Test a numeric flag outside the generated registry.
   expect(client.getNumberValue('meticulous.test.number', 0)).toBe(42);
-  expect(client.getObjectValue(FlagKeys.GrafanaMtFallback, {})).toEqual({ enabled: true });
+  // @ts-expect-error Test an object flag outside the generated registry.
+  expect(client.getObjectValue('meticulous.test.object', {})).toEqual({ enabled: true });
   expect(getFlagOverride).not.toHaveBeenCalled();
   expect(recordFeatureFlag).not.toHaveBeenCalled();
 });
 
 it('reports the caller default when the existing provider returns a type error', () => {
-  local.setFlags({ dashboardNewLayouts: 'not a boolean' });
-  const result = client.getBooleanDetails(FlagKeys.DashboardNewLayouts, false);
+  local.setFlags({ [providedFlag]: 'not a boolean' });
+  const result = client.getBooleanDetails(providedFlag, false);
   expect(result).toMatchObject({ value: false, reason: 'ERROR', errorCode: 'GENERAL' });
-  expect(recordFeatureFlag.mock.calls).toEqual([['dashboardNewLayouts', false]]);
+  expect(recordFeatureFlag.mock.calls).toEqual([[providedFlag, false]]);
 });
 
 it.each([undefined, {}, { context: {} }])('preserves recorded values with unavailable recorder APIs: %j', (api) => {
   window.Meticulous = api;
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
+  expect(client.getBooleanValue(providedFlag, false)).toBe(true);
 });
 
 it('uses recorder APIs that become available after provider initialization', () => {
   delete window.Meticulous;
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
+  expect(client.getBooleanValue(providedFlag, false)).toBe(true);
   window.Meticulous = { context: { getFlagOverride, recordFeatureFlag } };
   getFlagOverride.mockReturnValue({ overridden: true, value: false });
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, true)).toBe(false);
-  expect(recordFeatureFlag).toHaveBeenCalledWith('dashboardNewLayouts', false);
+  expect(client.getBooleanValue(providedFlag, true)).toBe(false);
+  expect(recordFeatureFlag).toHaveBeenCalledWith(providedFlag, false);
 });
 
 it('preserves flag resolution when either recorder API throws', () => {
@@ -124,18 +134,18 @@ it('preserves flag resolution when either recorder API throws', () => {
   getFlagOverride.mockImplementation(() => {
     throw new Error('Recorder unavailable');
   });
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
-  expect(recordFeatureFlag).toHaveBeenCalledWith('dashboardNewLayouts', true);
+  expect(client.getBooleanValue(providedFlag, false)).toBe(true);
+  expect(recordFeatureFlag).toHaveBeenCalledWith(providedFlag, true);
   recordFeatureFlag.mockImplementationOnce(() => {
     throw new Error('Reporting unavailable');
   });
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
+  expect(client.getBooleanValue(providedFlag, false)).toBe(true);
 });
 
 it('does not duplicate reporting after replacing the provider', async () => {
   await install();
-  expect(client.getBooleanValue(FlagKeys.DashboardNewLayouts, false)).toBe(true);
-  expect(recordFeatureFlag.mock.calls).toEqual([['dashboardNewLayouts', true]]);
+  expect(client.getBooleanValue(providedFlag, false)).toBe(true);
+  expect(recordFeatureFlag.mock.calls).toEqual([[providedFlag, true]]);
 });
 
 it('updates generated hooks through provider events without accessing legacy toggle maps', async () => {
@@ -147,15 +157,14 @@ it('updates generated hooks through provider events without accessing legacy tog
   Object.defineProperty(config, 'featureToggles', { configurable: true, get: rejectLegacy });
   Object.defineProperty(window, 'grafanaBootData', { configurable: true, get: rejectLegacy });
   try {
-    const { result } = renderHook(
-      () => ({ canvas: useFlagCanvasPanelPanZoom(), layouts: useFlagDashboardNewLayouts() }),
-      { wrapper: ({ children }) => <OpenFeatureProvider client={client}>{children}</OpenFeatureProvider> }
-    );
-    expect(result.current).toEqual({ canvas: true, layouts: true });
-    act(() => local.setFlags({ canvasPanelPanZoom: false, dashboardNewLayouts: false }));
-    await waitFor(() => expect(result.current).toEqual({ canvas: false, layouts: false }));
-    expect(recordFeatureFlag).toHaveBeenCalledWith('canvasPanelPanZoom', false);
-    expect(recordFeatureFlag).toHaveBeenCalledWith('dashboardNewLayouts', false);
+    const { result } = renderHook(() => ({ first: useFirstFlag(), second: useSecondFlag() }), {
+      wrapper: ({ children }) => <OpenFeatureProvider client={client}>{children}</OpenFeatureProvider>,
+    });
+    expect(result.current).toEqual({ first: true, second: true });
+    act(() => local.setFlags({ [secondProvidedFlag]: false, [providedFlag]: false }));
+    await waitFor(() => expect(result.current).toEqual({ first: false, second: false }));
+    expect(recordFeatureFlag).toHaveBeenCalledWith(secondProvidedFlag, false);
+    expect(recordFeatureFlag).toHaveBeenCalledWith(providedFlag, false);
   } finally {
     if (legacy) {
       Object.defineProperty(config, 'featureToggles', legacy);
