@@ -69,6 +69,9 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   if (actions.timeRangeChanged.match(action)) {
     state.range = action.payload;
   }
+  if (!isInitialized(state)) {
+    return state;
+  }
   if (actions.queriesChanged.match(action)) {
     state.queries = action.payload;
     handleTargetChanged(state);
@@ -185,6 +188,10 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   }
 
   return { ...state };
+};
+
+export const isInitialized = (state?: Partial<GraphiteQueryEditorState>): state is GraphiteQueryEditorState => {
+  return Boolean(state?.target && state?.queryModel);
 };
 
 export const createStore = (onChange: (state: GraphiteQueryEditorState) => void): Dispatch<AnyAction> => {

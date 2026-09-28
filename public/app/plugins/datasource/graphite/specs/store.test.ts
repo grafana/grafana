@@ -1,3 +1,4 @@
+import { dateTime, type TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { GraphiteDatasource } from '../datasource';
@@ -9,7 +10,7 @@ import {
   getTagsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { createStore } from '../state/store';
+import { createStore, type GraphiteQueryEditorState } from '../state/store';
 import { type GraphiteSegment } from '../types';
 
 const mockPublish = jest.fn();
@@ -162,6 +163,50 @@ describe('Graphite actions', () => {
 
     it('should add function param', () => {
       expect(ctx.state.queryModel.functions[0].params.length).toBe(1);
+    });
+  });
+
+  describe('when actions are dispatched before init completes', () => {
+    it('should not throw and should keep the state uninitialized', async () => {
+      let state: Partial<GraphiteQueryEditorState> = {};
+      const dispatch = createStore((newState) => {
+        state = newState;
+      });
+      const range: TimeRange = { from: dateTime(0), to: dateTime(1), raw: { from: 'now-1h', to: 'now' } };
+
+      await dispatch(actions.timeRangeChanged(range));
+      await expect(dispatch(actions.queryChanged({ target: 'new.metrics.*', refId: 'A' }))).resolves.not.toThrow();
+      await expect(dispatch(actions.updateQuery({ query: 'new.metrics.*' }))).resolves.not.toThrow();
+      await expect(dispatch(actions.queriesChanged([]))).resolves.not.toThrow();
+
+      expect(state.range).toBe(range);
+      expect(state.target).toBeUndefined();
+      expect(state.queryModel).toBeUndefined();
+    });
+
+    it('should apply init after an early time range change', async () => {
+      let state: Partial<GraphiteQueryEditorState> = {};
+      const dispatch = createStore((newState) => {
+        state = newState;
+      });
+
+      await dispatch(
+        actions.timeRangeChanged({ from: dateTime(0), to: dateTime(1), raw: { from: 'now-1h', to: 'now' } })
+      );
+      await dispatch(
+        actions.init({
+          datasource: ctx.datasource,
+          target: { refId: 'A', target: 'test.prod.*' },
+          refresh: jest.fn(),
+          queries: [],
+          //@ts-ignore
+          templateSrv: getTemplateSrv(),
+        })
+      );
+      await dispatch(actions.queryChanged({ target: 'new.metrics.*', refId: 'A' }));
+
+      expect(state.target?.target).toBe('new.metrics.*');
+      expect(state.queryModel?.target.target).toBe('new.metrics.*');
     });
   });
 

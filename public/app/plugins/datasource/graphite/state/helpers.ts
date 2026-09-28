@@ -154,7 +154,7 @@ export function removeTagPrefix(value: string): string {
 }
 
 export function handleTargetChanged(state: GraphiteQueryEditorState): void {
-  if (state.queryModel.error) {
+  if (!state.queryModel || state.queryModel.error) {
     return;
   }
 

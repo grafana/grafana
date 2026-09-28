@@ -9,7 +9,7 @@ import { type GraphiteDatasource } from '../datasource';
 import { type GraphiteOptions, type GraphiteQuery } from '../types';
 
 import { actions } from './actions';
-import { createStore, type GraphiteQueryEditorState } from './store';
+import { createStore, type GraphiteQueryEditorState, isInitialized } from './store';
 
 const DispatchContext = createContext<Dispatch<AnyAction>>({} as Dispatch<AnyAction>);
 const GraphiteStateContext = createContext<GraphiteQueryEditorState>({} as GraphiteQueryEditorState);
@@ -45,14 +45,16 @@ export const GraphiteQueryEditorContext = ({
   // synchronise changes provided in props with editor's state
   const previousRange = usePrevious(range);
   useEffect(() => {
-    if (JSON.stringify(previousRange?.raw) !== JSON.stringify(range?.raw)) {
+    if (isInitialized(state) && JSON.stringify(previousRange?.raw) !== JSON.stringify(range?.raw)) {
       dispatch(actions.timeRangeChanged(range));
     }
+    // adding state to dependencies causes infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, range, previousRange]);
 
   useEffect(
     () => {
-      if (state) {
+      if (isInitialized(state)) {
         dispatch(actions.queriesChanged(queries));
       }
     },
@@ -63,7 +65,7 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (state && state.target?.target !== query.target) {
+      if (isInitialized(state) && state.target.target !== query.target) {
         dispatch(actions.queryChanged(query));
       }
     },
@@ -74,7 +76,7 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (needsRefresh && state) {
+      if (needsRefresh && isInitialized(state)) {
         setNeedsRefresh(false);
         onChange({ ...query, target: state.target.target, targetFull: state.target.targetFull });
         onRunQuery();
@@ -85,7 +87,7 @@ export const GraphiteQueryEditorContext = ({
     [needsRefresh, JSON.stringify(query)]
   );
 
-  if (!state) {
+  if (!isInitialized(state)) {
     dispatch(
       actions.init({
         target: { ...query },
