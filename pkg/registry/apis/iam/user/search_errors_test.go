@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -113,17 +114,14 @@ func TestUserTeamReadErrorStatus(t *testing.T) {
 		"plain": plainErr,
 	} {
 		t.Run(name, func(t *testing.T) {
-			client := &mockSearchClient{Response: &resourcepb.ResourceSearchResponse{
+			client := &userTeamsIndexClient{response: &resourcepb.ResourceSearchResponse{
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 				Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "team-a"}}},
 			}}
-			rest := NewUserTeamREST(client, &mockGetter{err: readErr}, tracing.NewNoopTracerService())
+			getter := &userTeamsGetter{get: func(context.Context, string) (runtime.Object, error) { return nil, readErr }}
+			backend := NewUnifiedUserTeamsBackend(client, getter)
 			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "stacks-1"})
-			responder := &mockResponder{}
-			handler, err := rest.Connect(ctx, "alice", nil, responder)
-			require.NoError(t, err)
-			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/teams", nil).WithContext(ctx))
-			require.True(t, responder.called)
+			responder, _ := serveUserTeams(t, ctx, userTeamsSelector(backend), "")
 			require.ErrorIs(t, responder.err, readErr)
 			require.Equal(t, responsewriters.ErrorToAPIStatus(readErr), responsewriters.ErrorToAPIStatus(responder.err))
 		})
@@ -145,19 +143,15 @@ func TestUserTeamSearchErrorStatus(t *testing.T) {
 	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
 	require.NoError(t, err)
 	plainErr := errors.New("search failed")
-	for name, client := range map[string]*mockSearchClient{
-		"embedded":  {Response: &resourcepb.ResourceSearchResponse{Error: failure}},
-		"transport": {Err: fmt.Errorf("search: %w", st.Err())},
-		"plain":     {Err: plainErr},
+	for name, client := range map[string]*userTeamsIndexClient{
+		"embedded":  {response: &resourcepb.ResourceSearchResponse{Error: failure}},
+		"transport": {err: fmt.Errorf("search: %w", st.Err())},
+		"plain":     {err: plainErr},
 	} {
 		t.Run(name, func(t *testing.T) {
-			rest := NewUserTeamREST(client, &mockGetter{}, tracing.NewNoopTracerService())
+			backend := NewUnifiedUserTeamsBackend(client, nil)
 			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "stacks-1"})
-			responder := &mockResponder{}
-			handler, err := rest.Connect(ctx, "alice", nil, responder)
-			require.NoError(t, err)
-			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/teams", nil).WithContext(ctx))
-			require.True(t, responder.called)
+			responder, _ := serveUserTeams(t, ctx, userTeamsSelector(backend), "")
 			require.Error(t, responder.err)
 			if name == "plain" {
 				require.ErrorIs(t, responder.err, plainErr)

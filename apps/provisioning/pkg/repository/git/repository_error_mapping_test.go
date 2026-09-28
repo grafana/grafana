@@ -70,6 +70,25 @@ func TestMapNanogitError(t *testing.T) {
 	}
 }
 
+// TestWrapNanogitError verifies that wrapNanogitError prefixes the operation
+// context, routes the underlying error through mapNanogitError, and handles nil.
+func TestWrapNanogitError(t *testing.T) {
+	t.Run("nil error returns nil", func(t *testing.T) {
+		require.NoError(t, wrapNanogitError("list refs", nil))
+	})
+
+	t.Run("unknown error keeps context prefix", func(t *testing.T) {
+		got := wrapNanogitError("list refs", errors.New("boom"))
+		require.EqualError(t, got, "list refs: boom")
+	})
+
+	t.Run("nanogit error is mapped and prefixed", func(t *testing.T) {
+		got := wrapNanogitError("list refs", client.NewUnauthorizedError("GET", "/info/refs", nil))
+		require.ErrorIs(t, got, repository.ErrUnauthorized)
+		require.Contains(t, got.Error(), "list refs")
+	})
+}
+
 // TestMapNanogitError_HTTPStatusCodes verifies that mapped errors have correct HTTP status codes
 func TestMapNanogitError_HTTPStatusCodes(t *testing.T) {
 	tests := []struct {

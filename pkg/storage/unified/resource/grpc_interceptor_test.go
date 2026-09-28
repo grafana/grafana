@@ -89,7 +89,8 @@ func TestUnaryRequestDurationInterceptor(t *testing.T) {
 			require.Equal(t, tt.err, err)
 			families, gatherErr := reg.Gather()
 			require.NoError(t, gatherErr)
-			found := false
+			foundStatus := false
+			foundListPath := false
 			for _, family := range families {
 				if family.GetName() != "storage_server_grpc_request_duration_seconds" {
 					continue
@@ -97,15 +98,55 @@ func TestUnaryRequestDurationInterceptor(t *testing.T) {
 				require.Len(t, family.Metric, 1)
 				require.Equal(t, uint64(1), family.Metric[0].GetHistogram().GetSampleCount())
 				for _, label := range family.Metric[0].Label {
-					if label.GetName() == "status_code" {
-						found = true
+					switch label.GetName() {
+					case "status_code":
+						foundStatus = true
 						require.Equal(t, tt.want.String(), label.GetValue())
+					case "list_path":
+						foundListPath = true
+						require.Equal(t, listPathNotApplicable, label.GetValue())
 					}
 				}
 			}
-			require.True(t, found, "status_code metric label missing")
+			require.True(t, foundStatus, "status_code metric label missing")
+			require.True(t, foundListPath, "list_path metric label missing")
 		})
 	}
+}
+
+func TestUnaryRequestDurationInterceptorRecordsListPath(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	req := &resourcepb.ListRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Group: "dashboard.grafana.app", Resource: "dashboards",
+	}}}
+
+	_, err := UnaryRequestDurationInterceptor(metrics)(
+		t.Context(),
+		req,
+		&grpc.UnaryServerInfo{FullMethod: "/resource.ResourceStore/List"},
+		func(ctx context.Context, _ any) (any, error) {
+			setListRequestPath(ctx, listPathTrash)
+			return &resourcepb.ListResponse{}, nil
+		},
+	)
+	require.NoError(t, err)
+
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	for _, family := range families {
+		if family.GetName() != "storage_server_grpc_request_duration_seconds" {
+			continue
+		}
+		require.Len(t, family.Metric, 1)
+		for _, label := range family.Metric[0].Label {
+			if label.GetName() == "list_path" {
+				require.Equal(t, listPathTrash, label.GetValue())
+				return
+			}
+		}
+	}
+	t.Fatal("list_path metric label missing")
 }
 
 type panickingResourceStore struct {

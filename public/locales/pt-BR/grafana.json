@@ -6843,9 +6843,6 @@
     "variable": {
       "description-tooltip": "Descrição da variável"
     },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
     "view-panel": {
       "back-to-dashboard": "Voltar para o painel de controle",
       "not-found": "Painel não encontrado"
@@ -13353,7 +13350,7 @@
       "count-truncated_other": "Primeiros {{count}} blocos de anotações carregados"
     },
     "new": {
-      "default-title": "Bloco de anotações nº{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Falha ao salvar",
@@ -14892,12 +14889,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Voltar para os repositórios",
       "cleaning-up-resources": "Limpando recursos do repositório",
-      "not-found": "não encontrado",
       "not-found-message": "Repositório não encontrado",
       "repository-config-exists-configuration": "Verifique se a configuração do repositório existe no arquivo de configuração.",
       "tab-overview": "Visão geral",
@@ -15193,26 +15194,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Antes de tornar público o painel de controle, reconheça o seguinte:",
-      "data-src-ack-desc": "A publicação atualmente só funciona com um subconjunto de fontes de dados*",
-      "data-src-ack-tooltip": "Saiba mais sobre os dados públicos",
-      "public-ack-desc": "Todo o seu painel de controle será público*",
-      "public-ack-tooltip": "Saiba mais sobre painéis de controle públicos",
-      "usage-ack-desc": "Tornar um painel de controle público fará com que as consultas sejam executadas cada vez que forem visualizadas, o que pode aumentar os custos*",
-      "usage-ack-desc-tooltip": "Saiba mais sobre consultas de cache"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Pode visualizar o painel de controle",
-      "copy-button": "Copiar",
-      "dashboard-url-field-label": "URL do painel de controle",
-      "email-share-type-option-label": "Apenas pessoas especificadas",
-      "pause-sharing-dashboard-label": "Pausar compartilhamento de painel de controle",
-      "public-share-type-option-label": "Qualquer pessoa com um link",
-      "revoke-public-URL-button": "Revogar URL público",
-      "revoke-public-URL-button-title": "Revogar URL público",
-      "settings-title": "Configurações"
-    },
     "configuration": {
       "display-annotations-description": "Apresentar anotações neste painel de controle",
       "display-annotations-label": "Exibir anotações",
@@ -15225,21 +15206,11 @@
       "time-range-label": "Intervalo de tempo",
       "time-range-tooltip": "O painel de controle compartilhado usa as configurações de intervalo de tempo padrão do painel de controle"
     },
-    "create-page": {
-      "generate-public-url-button": "Gerar URL público",
-      "unsupported-features-desc": "Atualmente, não oferecemos suporte a variáveis de modelo ou fontes de dados frontend",
-      "welcome-title": "Boas-vindas aos painéis de controle públicos!"
-    },
     "email-sharing": {
       "accept-button": "Aceitar",
       "alert-text": "O compartilhamento de painéis de controle por e-mail é cobrado por usuário durante o período de validade do token (30 dias), independentemente da quantidade de painéis de controle compartilhados. A cobrança é interrompida após 30 dias, a menos que você renove o token.",
       "bill-ack": "Estou ciente de que é necessário pagar para adicionar usuários.*",
       "cancel-button": "Cancelar",
-      "input-invalid-email-text": "E-mail inválido",
-      "input-required-email-text": "O e-mail é obrigatório",
-      "invite-button": "Convidar",
-      "invite-field-desc": "Convidar pessoas por e-mail",
-      "invite-field-label": "Convidar",
       "learn-more-button": "Saiba mais",
       "recipient-email-placeholder": "E-mail",
       "recipient-invalid-email-text": "E-mail inválido",
@@ -15249,17 +15220,12 @@
       "recipient-list-description": "Apenas as pessoas que você convidou diretamente podem acessar este painel de controle",
       "recipient-list-title": "Pessoas com acesso",
       "recipient-required-email-text": "O e-mail é obrigatório",
-      "resend-button": "Reenviar",
-      "resend-button-title": "Reenviar",
       "resend-invite-label": "Enviar convite novamente",
       "revoke-access-label": "Revogar acesso",
-      "revoke-button": "Revogar",
-      "revoke-button-title": "Revogar",
       "success-creation": "Seu painel de controle está pronto para compartilhamento externo",
       "success-share-type-change": "Acesso ao painel de controle atualizado: agora, apenas pessoas específicas podem acessar com o link"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Salve as alterações do seu painel de controle antes de atualizar a configuração pública",
       "unsupport-data-source-alert-readmore-link": "Leia mais sobre as fontes de dados suportadas",
       "unsupported-data-source-alert-title": "Fontes de dados não suportadas",
       "unsupported-template-variable-alert-desc": "Este painel de controle público pode não funcionar, pois ele usa variáveis de modelo",
@@ -15273,25 +15239,6 @@
       "public-ack": "Estou ciente de que todas as informações deste painel de controle serão públicas.*",
       "success-creation": "Agora é possível acessar seu painel de controle publicamente",
       "success-share-type-change": "Acesso ao painel de controle atualizado: qualquer pessoa com o link já pode acessar"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Recolher configurações",
-      "expand-settings-tooltip": "Expandir configurações"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Intervalo de tempo padrão",
-      "default-time-range-label-desc": "O painel de controle público usa as configurações padrão do intervalo de tempo do painel de controle",
-      "show-annotations-label": "Mostrar anotações",
-      "show-annotations-label-desc": "Mostrar anotações no painel de controle público",
-      "time-range-picker-label": "Seletor de intervalo de tempo ativado",
-      "time-range-picker-label-desc": "Permitir que os espectadores alterem o intervalo de tempo"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Anotações = ocultar",
-      "annotations-show-text": "Anotações = mostrar",
-      "time-range-picker-disabled-text": "Seletor de intervalo de tempo = desativado",
-      "time-range-picker-enabled-text": "Seletor de intervalo de tempo = ativado",
-      "time-range-text": "Intervalo de tempo = "
     },
     "share": {
       "success-delete": "Não é mais possível compartilhar seu painel de controle"
@@ -16076,9 +16023,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Compartilhar"
-    },
     "embed": {
       "copy": "Copiar para a área de transferência",
       "html": "HTML incorporado",
@@ -16125,9 +16069,6 @@
       "time-range-description": "Transforma o intervalo de tempo relativo atual para um intervalo de tempo absoluto",
       "time-range-label": "Bloquear intervalo de tempo"
     },
-    "panel": {
-      "title": "Compartilhar painel"
-    },
     "snapshot": {
       "cancel-button": "Cancelar",
       "copy-link-button": "Copiar",
@@ -16143,16 +16084,11 @@
       "local-button": "Publicar captura",
       "mistake-message": "Você cometeu um erro? ",
       "name": "Nome da captura",
-      "timeout": "Tempo limite (segundos)",
-      "timeout-description": "Talvez você precise configurar o valor de tempo limite se demorar muito para coletar as métricas do painel de controle.",
       "url-label": "URL da captura"
     },
     "tab-title": {
-      "embed": "Incorporado",
       "export": "Exportar",
-      "library-panel": "Painel de biblioteca",
       "link": "Link",
-      "public-dashboard-title": "Painel de controle público",
       "snapshot": "Captura"
     },
     "theme-picker": {
