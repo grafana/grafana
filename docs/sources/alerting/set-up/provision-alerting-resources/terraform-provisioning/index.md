@@ -23,9 +23,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/
   alerting_provisioning_at_scale:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/provisioning-at-scale/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/provisioning-rate-limits/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/provisioning-at-scale/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/guides/provisioning-rate-limits/
   contact-points:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/

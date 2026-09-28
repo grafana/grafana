@@ -40,9 +40,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning/
   alerting_provisioning_at_scale:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/provisioning-at-scale/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/provisioning-rate-limits/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/provisioning-at-scale/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/guides/provisioning-rate-limits/
   provisioning:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/

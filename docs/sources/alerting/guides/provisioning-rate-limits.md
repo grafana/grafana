@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/provisioning-at-scale/
+canonical: https://grafana.com/docs/grafana/latest/alerting/guides/provisioning-rate-limits/
 description: Avoid and resolve HTTP 429 rate limit errors when you provision Grafana Alerting resources at scale with Terraform, Crossplane, or GitOps tools
 keywords:
   - grafana
@@ -16,7 +16,7 @@ labels:
     - oss
 menuTitle: Avoid API rate limits
 title: Avoid API rate limits when provisioning alerting resources
-weight: 500
+weight: 1060
 refs:
   alerting_tf_provisioning:
     - pattern: /docs/grafana/
