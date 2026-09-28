@@ -150,7 +150,10 @@ export function InsightQuestionItem({
               <Trans i18nKey="dashboard.insights.item.sources-label">Source panels</Trans>
             </Text>
             <InsightSourceLinks
-              items={question.sourcePanelKeys.map((key) => ({ key, title: key }))}
+              items={question.sourcePanelKeys.map((key) => ({
+                key,
+                title: result?.snapshot.panels.find((panel) => panel.key === key)?.title ?? key,
+              }))}
               sources={sources}
             />
           </div>
