@@ -32,9 +32,15 @@ const dataSourceVariableSlice = createSlice({
   reducers: {
     createDataSourceOptions: (
       state: VariablesState,
-      action: PayloadAction<VariablePayload<{ sources: DataSourceInstanceListItem[]; regex: RegExp | undefined }>>
+      action: PayloadAction<
+        VariablePayload<{
+          sources: DataSourceInstanceListItem[];
+          regex: RegExp | undefined;
+          defaultDataSourceUid: string | undefined;
+        }>
+      >
     ) => {
-      const { sources, regex } = action.payload.data;
+      const { sources, regex, defaultDataSourceUid } = action.payload.data;
       const options: VariableOption[] = [];
       const instanceState = getInstanceState(state, action.payload.id);
       if (instanceState.type !== 'datasource') {
@@ -52,7 +58,7 @@ const dataSourceVariableSlice = createSlice({
           options.push({ text: source.name, value: source.uid, selected: false });
         }
 
-        if (isDefault(source, regex)) {
+        if (isDefault(source, defaultDataSourceUid, regex)) {
           options.push({
             text: t('variables.data-source-variable-slice.text.default', 'default'),
             value: 'default',
@@ -86,8 +92,8 @@ function isValid(source: DataSourceInstanceListItem, regex?: RegExp) {
   return regex.exec(source.name);
 }
 
-function isDefault(source: DataSourceInstanceListItem, regex?: RegExp) {
-  if (!source.isDefault) {
+function isDefault(source: DataSourceInstanceListItem, defaultDataSourceUid: string | undefined, regex?: RegExp) {
+  if (!defaultDataSourceUid || source.uid !== defaultDataSourceUid) {
     return false;
   }
 
