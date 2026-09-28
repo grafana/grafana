@@ -169,6 +169,7 @@ type ModuleServer struct {
 	storageBackend   resource.StorageBackend
 	kvStore          resourcekv.KV
 	experimentalKV   *resource.ExperimentalKVOptions
+	watchExpiry      resource.WatchExpiry
 	natsPublisher    nats.Publisher
 	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
@@ -432,6 +433,9 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 
 func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) func() (services.Service, error) {
 	return func() (services.Service, error) {
+		if s.watchExpiry == nil {
+			s.watchExpiry = resource.NewWatchExpiry()
+		}
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
 			disableStorageServices := !storageServicesEnabled
@@ -447,7 +451,7 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) fun
 				}
 			}
 			opts := append([]sql.StorageBackendOption{sql.WithVectorBackend(s.vectorBackend)},
-				unified.NatsStorageBackendOptions(s.cfg, s.natsPublisher, s.natsSubscriber)...)
+				unified.NatsStorageBackendOptions(s.cfg, s.natsPublisher, s.natsSubscriber, s.watchExpiry)...)
 			if s.experimentalKV != nil {
 				opts = append(opts, sql.WithExperimentalKV(s.experimentalKV))
 			}
@@ -488,7 +492,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 			return nil, err
 		}
 	}
-	serviceOptions := s.StorageServiceOptions
+	serviceOptions := append([]sql.ServiceOption{sql.WithWatchExpiry(s.watchExpiry)}, s.StorageServiceOptions...)
 	if dashboardStats != nil {
 		serviceOptions = append(serviceOptions, sql.WithDashboardStats(dashboardStats))
 	}
@@ -535,7 +539,8 @@ func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, s.StorageServiceOptions...)
+	serviceOptions := append([]sql.ServiceOption{sql.WithWatchExpiry(s.watchExpiry)}, s.StorageServiceOptions...)
+	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, serviceOptions...)
 	if err != nil {
 		return nil, err
 	}

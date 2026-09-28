@@ -131,7 +131,8 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			sub := &fakeEventSubscriber{enabled: true}
-			n := newNatsNotifier(sub, nil, log.NewNopLogger())
+			expiry := NewWatchExpiry()
+			n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
 
 			ctx := t.Context()
 			out := n.Watch(ctx, WatchOptions{})
@@ -178,7 +179,8 @@ func TestNatsNotifierDecode_PreviousMetadata(t *testing.T) {
 		{name: "unrecognized previous type still delivers current event", previousType: resourcepb.WatchNotification_Type(99), previousFolder: "old-folder"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			n := newNatsNotifier(nil, nil, log.NewNopLogger())
+			expiry := NewWatchExpiry()
+			n := newNatsNotifier(nil, expiry, nil, log.NewNopLogger())
 			data := mustMarshalNotification(t, &resourcepb.WatchNotification{
 				Type:                    resourcepb.WatchNotification_MODIFIED,
 				Group:                   "playlist.grafana.app",
@@ -212,7 +214,8 @@ func TestNatsNotifierDecode_PreviousMetadata(t *testing.T) {
 
 func TestNatsNotifierWatch_EmitsInResourceVersionOrder(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
-	n := newNatsNotifier(sub, nil, log.NewNopLogger())
+	expiry := NewWatchExpiry()
+	n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
 
 	ctx := t.Context()
 	out := n.Watch(ctx, WatchOptions{})
@@ -241,7 +244,8 @@ func TestNatsNotifierWatch_EmitsInResourceVersionOrder(t *testing.T) {
 func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
-	n := newNatsNotifier(sub, dropped, log.NewNopLogger())
+	expiry := NewWatchExpiry()
+	n := newNatsNotifier(sub, expiry, dropped, log.NewNopLogger())
 
 	ctx := t.Context()
 	out := n.Watch(ctx, WatchOptions{})
@@ -260,7 +264,8 @@ func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
-	n := newNatsNotifier(sub, dropped, log.NewNopLogger())
+	expiry := NewWatchExpiry()
+	n := newNatsNotifier(sub, expiry, dropped, log.NewNopLogger())
 
 	ctx := t.Context()
 	out := n.Watch(ctx, WatchOptions{})
@@ -318,7 +323,8 @@ func TestNatsNotifierDrop_CountsEveryDropWhileThrottlingLogs(t *testing.T) {
 		sub := &fakeEventSubscriber{enabled: true}
 		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
 		logger := &logtest.Fake{}
-		n := newNatsNotifier(sub, dropped, logger)
+		expiry := NewWatchExpiry()
+		n := newNatsNotifier(sub, expiry, dropped, logger)
 
 		// The counter is the source of truth for drop rates, so it must stay exact
 		// even though the warning is throttled to one line per interval.
@@ -340,7 +346,8 @@ func TestNatsNotifierDrop_CountsEveryDropWhileThrottlingLogs(t *testing.T) {
 
 func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
-	n := newNatsNotifier(sub, nil, log.NewNopLogger())
+	expiry := NewWatchExpiry()
+	n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	out := n.Watch(ctx, WatchOptions{})
@@ -363,7 +370,8 @@ func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 	// Bus unreachable at first, then available: Watch must keep the channel open
 	// and re-subscribe rather than closing it and losing the watch.
 	sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("boom")}
-	n := newNatsNotifier(sub, nil, log.NewNopLogger())
+	expiry := NewWatchExpiry()
+	n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
 
 	ctx := t.Context()
 	// Small backoff bounds keep the subscription retry loop fast for the test.
@@ -394,7 +402,8 @@ func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 }
 
 func TestNatsNotifierPublishIsNoOp(t *testing.T) {
-	n := newNatsNotifier(&fakeEventSubscriber{enabled: true}, nil, log.NewNopLogger())
+	expiry := NewWatchExpiry()
+	n := newNatsNotifier(&fakeEventSubscriber{enabled: true}, expiry, nil, log.NewNopLogger())
 	assert.NotPanics(t, func() {
 		n.Publish(Event{Group: "g", Resource: "r", ResourceVersion: 1})
 	})
@@ -547,7 +556,8 @@ func TestNATSWatchReconnectDuringSetup(t *testing.T) {
 func TestNATSNotifierInvalidatesAfterEachReconnect(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := &fakeEventSubscriber{enabled: true}
-		n := newNatsNotifier(sub, nil, log.NewNopLogger())
+		expiry := NewWatchExpiry()
+		n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		n.Watch(ctx, WatchOptions{})
@@ -557,7 +567,7 @@ func TestNATSNotifierInvalidatesAfterEachReconnect(t *testing.T) {
 
 		// A replacement watch must also expire if the bus disconnects again.
 		for reconnectNumber := 1; reconnectNumber <= 2; reconnectNumber++ {
-			watchBeforeReconnect := n.WatchInvalidation()
+			watchBeforeReconnect := expiry.WatchInvalidation()
 			select {
 			case <-watchBeforeReconnect:
 				t.Fatal("new watch is already expired")
@@ -584,4 +594,56 @@ func (p unbufferedWatchPublisher) Publish(ctx context.Context, subject string, d
 		return err
 	}
 	return p.conn.Publish(subject, data)
+}
+
+// A send hook lets shutdown and expiry happen while the watch is outside select.
+type shutdownWatchStream struct {
+	*mockWatchServer
+	onEvent func(*resourcepb.WatchEvent)
+}
+
+func (s *shutdownWatchStream) Send(event *resourcepb.WatchEvent) error {
+	s.onEvent(event)
+	return s.mockWatchServer.Send(event)
+}
+
+func TestWatchShutdownDoesNotExpire(t *testing.T) {
+	for _, trigger := range []string{"shutdown", "pending invalidation"} {
+		t.Run(trigger, func(t *testing.T) {
+			srv := newWatchTestServer(t, watchTestServerOpts{})
+			expiry := srv.watchExpiry
+			ctx, cancel := context.WithTimeout(authlib.WithAuthInfo(t.Context(), newWatchTestUser()), 5*time.Second)
+			defer cancel()
+			stream := &shutdownWatchStream{mockWatchServer: newMockWatchServer(ctx), onEvent: func(event *resourcepb.WatchEvent) {
+				if event.Type == resourcepb.WatchEvent_ADDED {
+					// Stop cancels this context before draining writes and closing NATS.
+					// Keep the client context live, as it is during gRPC shutdown.
+					srv.cancel()
+					if trigger != "shutdown" {
+						expiry.Invalidate()
+					}
+				}
+			}}
+			req := &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace,
+			}}, SendInitialEvents: true, AllowWatchBookmarks: true}
+			done := make(chan error, 1)
+			go func() {
+				defer close(done)
+				done <- srv.Watch(req, stream)
+			}()
+			t.Cleanup(func() { cancel(); <-done })
+			requireNatsRecoveryEvent(t, stream.mockWatchServer, resourcepb.WatchEvent_BOOKMARK)
+			require.NoError(t, createTestPlaylist(ctx, srv))
+			select {
+			case err := <-done:
+				require.NoError(t, err, "shutdown must end the watch without a 410")
+			case <-ctx.Done():
+				t.Fatal("watch did not stop with the storage server")
+			}
+			require.NoError(t, ctx.Err(), "client transport must still be live")
+			require.ErrorIs(t, srv.ctx.Err(), context.Canceled)
+			require.NoError(t, srv.Watch(req, newMockWatchServer(ctx)), "a draining server must not start another watch")
+		})
+	}
 }

@@ -67,11 +67,11 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 // retried in the background with exponential backoff bounded by the watch's
 // MinBackoff/MaxBackoff.
 type natsNotifier struct {
-	subscriber EventSubscriber
-	expiry     *watchExpiry
-	dropped    *prometheus.CounterVec // by reason; nil is allowed (no accounting)
-	dropLog    *throttledLog
-	log        log.Logger
+	subscriber  EventSubscriber
+	invalidator Invalidator
+	dropped     *prometheus.CounterVec // by reason; nil is allowed (no accounting)
+	dropLog     *throttledLog
+	log         log.Logger
 }
 
 const (
@@ -88,18 +88,18 @@ const dropLogInterval = 10 * time.Second
 
 var dropReasons = []string{dropReasonBufferFull, dropReasonUnmarshalError, dropReasonUnknownType}
 
-func newNatsNotifier(subscriber EventSubscriber, dropped *prometheus.CounterVec, logger log.Logger) *natsNotifier {
+func newNatsNotifier(subscriber EventSubscriber, invalidator Invalidator, dropped *prometheus.CounterVec, logger log.Logger) *natsNotifier {
 	if dropped != nil {
 		for _, r := range dropReasons {
 			dropped.WithLabelValues(r)
 		}
 	}
 	return &natsNotifier{
-		subscriber: subscriber,
-		expiry:     newWatchExpiry(),
-		dropped:    dropped,
-		dropLog:    newThrottledLog(dropLogInterval),
-		log:        logger,
+		subscriber:  subscriber,
+		invalidator: invalidator,
+		dropped:     dropped,
+		dropLog:     newThrottledLog(dropLogInterval),
+		log:         logger,
 	}
 }
 
@@ -153,10 +153,6 @@ func (n *natsNotifier) drop(reason, msg string, logCtx ...any) {
 	}
 }
 
-func (n *natsNotifier) WatchInvalidation() <-chan struct{} {
-	return n.expiry.current()
-}
-
 func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	opts = opts.normalize()
 	n.log.Info("creating new nats notifier", "buffer_size", opts.BufferSize)
@@ -200,7 +196,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 					}
 					// Watches may have opened while capture was unavailable. The first
 					// successful connection does not necessarily emit a reconnect callback.
-					n.expiry.expire()
+					n.invalidate()
 					opts.captured(nil)
 					return
 				}
@@ -265,7 +261,7 @@ func (n *natsNotifier) invalidateOnReconnect(ctx context.Context, sub Subscripti
 				cancel()
 				if err == nil {
 					if ctx.Err() == nil {
-						n.expiry.expire()
+						n.invalidate()
 					}
 					break
 				}
@@ -274,6 +270,12 @@ func (n *natsNotifier) invalidateOnReconnect(ctx context.Context, sub Subscripti
 				bo.Wait()
 			}
 		}
+	}
+}
+
+func (n *natsNotifier) invalidate() {
+	if n.invalidator != nil {
+		n.invalidator.Invalidate()
 	}
 }
 

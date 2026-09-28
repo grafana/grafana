@@ -88,7 +88,7 @@ func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, hand
 	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
 
-func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber) []sql.StorageBackendOption {
+func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber, invalidator resource.Invalidator) []sql.StorageBackendOption {
 	var opts []sql.StorageBackendOption
 	if publisher != nil {
 		opts = append(opts, sql.WithEventPublisher(publisher))
@@ -98,7 +98,7 @@ func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subsc
 	}
 	switch {
 	case cfg.NATS.Notifier:
-		opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{sub: subscriber}))
+		opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{sub: subscriber}, invalidator))
 	case cfg.NATS.NotifierShadow:
 		opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: subscriber}))
 	}
@@ -233,8 +233,9 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
+		watchExpiry := resource.NewWatchExpiry()
 		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
-			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber)...)
+			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber, watchExpiry)...)
 		if experimentalKV != nil {
 			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
 		}
@@ -250,6 +251,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		serverOptions := sql.ServerOptions{
+			WatchExpiry:    watchExpiry,
 			Backend:        backend,
 			VectorBackend:  vectorBackend,
 			Embedder:       embedderInstance,
