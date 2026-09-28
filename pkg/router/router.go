@@ -281,6 +281,7 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 		}
 	}
 	if err != nil {
+		setRoute(req, routeUnauthenticated)
 		span.SetAttributes(semconv.ErrorTypeKey.String(errorType))
 		span.SetStatus(codes.Error, "")
 		_ = errhttp.Write(ctx, err, w)

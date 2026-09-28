@@ -67,8 +67,9 @@ Groups on the single-tenant fallback keep one breaker per stack, so they have no
 `verb` is the Kubernetes verb (`get`, `list`, `create`, `update`, `patch`, `delete`, ...), or the
 lowercased HTTP method for discovery. `route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
-discovery the router builds), `next` (not the router's; passed on) or `invalid` (rejected before
-routing).
+discovery the router builds), `next` (not the router's; passed on), `invalid` (rejected before
+routing) or `unauthenticated` (rejected because the caller did not authenticate, in the standalone
+router).
 
 ## Dashboard queries
 

@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -245,4 +246,35 @@ grafana_router_stack_lookups_total{result="resolved"} 1
 		"grafana_router_shadowed_groups", "grafana_router_source_last_success_timestamp_seconds",
 		"grafana_router_source_polls_total", "grafana_router_stack_lookups_total"))
 	require.Equal(t, 1, testutil.CollectAndCount(reg, "grafana_router_last_reconcile_timestamp_seconds"))
+}
+
+func TestRequestMetricsAuthenticationFailures(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))
+	t.Cleanup(upstream.Close)
+	svc := metricsService(t, "test-app", upstream.URL)
+	svc.router.authn = tokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+		return nil, apierrors.NewUnauthorized("invalid token")
+	})
+	nextCalled := false
+	next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) { nextCalled = true })
+
+	for _, tc := range []struct{ target, group, verb, token string }{
+		{"/apis/test-app/v1/namespaces/ns/things", "test-app", "list", ""},
+		{"/apis/test-app/v1/namespaces/ns/things", "test-app", "list", "bad-token"},
+		{"/apis", "", "get", ""},
+		{"/apis/other-app/v1/things", unknownGroupLabel, "list", ""},
+	} {
+		req := httptest.NewRequest(http.MethodGet, tc.target, nil)
+		if tc.token != "" {
+			req.Header.Set("X-Access-Token", tc.token)
+		}
+		recorder := httptest.NewRecorder()
+		svc.metrics.instrument(svc.router, recorder, req, next)
+		require.Equal(t, http.StatusUnauthorized, recorder.Code, tc.target)
+	}
+	require.False(t, nextCalled, "a rejected request never reaches next")
+	require.Equal(t, uint64(2), requestCount(t, svc, "test-app", "list", routeUnauthenticated, "401"))
+	require.Equal(t, uint64(1), requestCount(t, svc, "", "get", routeUnauthenticated, "401"))
+	require.Equal(t, uint64(1), requestCount(t, svc, unknownGroupLabel, "list", routeUnauthenticated, "401"))
+	require.Zero(t, requestCount(t, svc, "test-app", "list", routeNext, "401"))
 }
