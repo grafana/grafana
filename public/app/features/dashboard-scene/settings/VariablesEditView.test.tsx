@@ -218,8 +218,6 @@ describe('VariablesEditView', () => {
     let variableView: VariablesEditView;
 
     beforeEach(async () => {
-      // New layouts plus the settings redesign replace this list with a sidebar redirect.
-      setTestFlags({ dashboardNewLayouts: false });
       const result = await buildTestScene();
       variableView = result.variableView;
     });

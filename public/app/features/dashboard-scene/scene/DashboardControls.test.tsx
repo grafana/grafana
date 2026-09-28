@@ -167,7 +167,6 @@ describe('DashboardControls', () => {
     });
 
     it('should render with hidden controls', async () => {
-      setTestFlags({ dashboardNewLayouts: false });
       const scene = buildTestScene({
         hideTimeControls: true,
         hideVariableControls: true,

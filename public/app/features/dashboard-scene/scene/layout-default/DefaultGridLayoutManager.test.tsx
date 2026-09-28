@@ -7,8 +7,6 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
-
 import { findVizPanelByKey } from '../../utils/findVizPanel';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardScene } from '../DashboardScene';
@@ -41,15 +39,6 @@ describe('DefaultGridLayoutManager', () => {
   });
 
   describe('addPanel', () => {
-    beforeEach(() => {
-      // addPanel parents the panel through the edit-action bus when new layouts are on, and these tests never activate the sidebar.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('Should add a new panel', () => {
       const { manager } = setup();
 
@@ -159,15 +148,6 @@ describe('DefaultGridLayoutManager', () => {
   });
 
   describe('removePanel', () => {
-    beforeEach(() => {
-      // removePanel goes through the edit-action bus when new layouts are on, and these tests never activate the sidebar.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('Should remove grid item', () => {
       const { manager } = setup();
       const panel = findVizPanelByKey(manager, 'panel-1')!;
@@ -188,15 +168,6 @@ describe('DefaultGridLayoutManager', () => {
   });
 
   describe('duplicatePanel', () => {
-    beforeEach(() => {
-      // duplicatePanel goes through the edit-action bus when new layouts are on, and these tests never activate the sidebar.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('Should duplicate a panel', () => {
       const { manager, grid } = setup();
       const vizPanel = findVizPanelByKey(manager, 'panel-1')!;

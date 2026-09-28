@@ -1,10 +1,7 @@
-import { act } from '@testing-library/react';
 import { noop } from 'lodash';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
-
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
@@ -30,8 +27,6 @@ const ui = {
 
 describe('DashboardPicker', () => {
   beforeEach(() => {
-    // The dashboard mock is a v1 resource. New layouts select the v2 dashboard API, which rejects that shape.
-    setTestFlags({ dashboardNewLayouts: false });
     mockDashboardApi(server).search([
       mockDashboardSearchItem({ uid: 'dash-1', type: DashboardSearchItemType.DashDB, title: 'Dashboard 1' }),
       mockDashboardSearchItem({ uid: 'dash-2', type: DashboardSearchItemType.DashDB, title: 'Dashboard 2' }),
@@ -60,12 +55,6 @@ describe('DashboardPicker', () => {
         ],
       })
     );
-  });
-
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
   });
 
   it('Renders panels without ids', async () => {

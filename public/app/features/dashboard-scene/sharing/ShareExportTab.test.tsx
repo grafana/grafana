@@ -417,7 +417,7 @@ describe('ShareExportTab', () => {
   });
 
   it('downloads a YAML resource after loading the YAML serializer', async () => {
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
     const tab = buildV2DashboardScenario();
     tab.setState({ exportFormat: ExportFormat.V2Resource, isViewingYAML: true });
     jest.mocked(saveAs).mockClear();

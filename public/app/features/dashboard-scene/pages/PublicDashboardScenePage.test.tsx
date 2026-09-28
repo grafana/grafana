@@ -1,4 +1,4 @@
-import { act, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
@@ -9,7 +9,6 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { type Dashboard } from '@grafana/schema';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -95,16 +94,11 @@ const panelPlugin = getPanelPlugin(
 );
 
 beforeEach(() => {
-  // setupLoadDashboardMock replaces the v1 loader. New layouts construct a v2 loader that ignores it.
-  setTestFlags({ dashboardNewLayouts: false });
   setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
 });
 
 afterEach(() => {
   setPanelPluginMetas({});
-  act(() => {
-    setTestFlags({});
-  });
 });
 
 setPluginImportUtils({

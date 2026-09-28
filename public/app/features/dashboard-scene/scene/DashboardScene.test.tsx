@@ -761,20 +761,14 @@ describe('DashboardScene', () => {
       });
 
       it('Should create and add a new panel to the dashboard', async () => {
-        // addPanel parents the panel through the edit-action bus when new layouts are on, and this scene never activates the sidebar.
-        setTestFlags({ dashboardNewLayouts: false });
-        try {
-          scene.exitEditMode({ skipConfirm: true });
-          expect(scene.state.isEditing).toBe(false);
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.isEditing).toBe(false);
 
-          const panel = await scene.onCreateNewPanel();
+        const panel = await scene.onCreateNewPanel();
 
-          expect(scene.state.isEditing).toBe(true);
-          expect(scene.state.body.getVizPanels().length).toBe(7);
-          expect(panel.state.key).toBe('panel-7');
-        } finally {
-          setTestFlags({});
-        }
+        expect(scene.state.isEditing).toBe(true);
+        expect(scene.state.body.getVizPanels().length).toBe(7);
+        expect(panel.state.key).toBe('panel-7');
       });
 
       it('Should select new row', () => {
@@ -785,40 +779,28 @@ describe('DashboardScene', () => {
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
-        // With new layouts on, a panel with no grid parent throws instead of returning.
-        setTestFlags({ dashboardNewLayouts: false });
-        try {
-          const vizPanel = new VizPanel({
-            title: 'Panel Title',
-            key: 'panel-5',
-            pluginId: 'timeseries',
-          });
+        const vizPanel = new VizPanel({
+          title: 'Panel Title',
+          key: 'panel-5',
+          pluginId: 'timeseries',
+        });
 
-          scene.copyPanel(vizPanel);
+        scene.copyPanel(vizPanel);
 
-          expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-        } finally {
-          setTestFlags({});
-        }
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should fail to copy a library panel if it does not have a grid item parent', () => {
-        // With new layouts on, a panel with no grid parent throws instead of returning.
-        setTestFlags({ dashboardNewLayouts: false });
-        try {
-          const libVizPanel = new VizPanel({
-            title: 'Library Panel',
-            pluginId: 'table',
-            key: 'panel-4',
-            $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
-          });
+        const libVizPanel = new VizPanel({
+          title: 'Library Panel',
+          pluginId: 'table',
+          key: 'panel-4',
+          $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
+        });
 
-          scene.copyPanel(libVizPanel);
+        scene.copyPanel(libVizPanel);
 
-          expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-        } finally {
-          setTestFlags({});
-        }
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should copy a panel', () => {
@@ -861,32 +843,26 @@ describe('DashboardScene', () => {
       });
 
       it('Should paste a library viz panel', () => {
-        // New layouts paste through the layout manager, which does not use the buildGridItemForPanel mock.
-        setTestFlags({ dashboardNewLayouts: false });
-        try {
-          store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-          jest.mocked(buildGridItemForPanel).mockReturnValue(
-            new DashboardGridItem({
-              body: new VizPanel({
-                title: 'Library Panel',
-                pluginId: 'table',
-                key: 'panel-4',
-                $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
-              }),
-            })
-          );
+        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
+        jest.mocked(buildGridItemForPanel).mockReturnValue(
+          new DashboardGridItem({
+            body: new VizPanel({
+              title: 'Library Panel',
+              pluginId: 'table',
+              key: 'panel-4',
+              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
+            }),
+          })
+        );
 
-          scene.pastePanel();
+        scene.pastePanel();
 
-          expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
+        expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
 
-          const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
-          expect(addedPanel).toBeDefined();
-          expect(addedPanel.state.key).toBe('panel-7');
-          expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-        } finally {
-          setTestFlags({});
-        }
+        const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
+        expect(addedPanel).toBeDefined();
+        expect(addedPanel.state.key).toBe('panel-7');
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should do nothing when pasting with an empty clipboard', () => {

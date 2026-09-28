@@ -1,10 +1,8 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
-
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardPlanningState } from '../types/dashboard';
@@ -35,17 +33,6 @@ function renderRow({
 }
 
 describe('RowItemRenderer', () => {
-  beforeEach(() => {
-    // New layouts mount the sidebar extension point, which calls usePluginLinks. These tests render the scene without starting that hook.
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
-  });
-
   it('stamps data-dashboard-element-key and data-dashboard-element-type on the row header', () => {
     renderRow({ collapse: false });
 

@@ -1,7 +1,6 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { behaviors, SceneQueryRunner, SceneTimeRange, VizPanel, SceneDataTransformer } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -88,19 +87,13 @@ describe('DashboardModelCompatibilityWrapper', () => {
   });
 
   it('Can remove panel', () => {
-    // removePanel goes through the edit-action bus when new layouts are on, and this scene never activates the sidebar.
-    setTestFlags({ dashboardNewLayouts: false });
-    try {
-      const { wrapper } = setup();
+    const { wrapper } = setup();
 
-      expect(wrapper.panels.length).toBe(5);
+    expect(wrapper.panels.length).toBe(5);
 
-      wrapper.removePanel(wrapper.getPanelById(1)!);
+    wrapper.removePanel(wrapper.getPanelById(1)!);
 
-      expect(wrapper.panels.length).toBe(4);
-    } finally {
-      setTestFlags({});
-    }
+    expect(wrapper.panels.length).toBe(4);
   });
 
   it('Checks if annotations are editable', () => {
