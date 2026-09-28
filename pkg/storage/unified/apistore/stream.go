@@ -125,15 +125,15 @@ decode:
 			return watch.Bookmark, obj, nil
 		}
 
-		// A delete carries the deleted object in Previous, and servers send its
-		// value empty. Decode Resource only when there is no Previous to use.
-		var obj runtime.Object
-		if evt.Type != resourcepb.WatchEvent_DELETED || evt.Previous == nil {
-			obj, err = d.toObject(evt.Resource)
-			if err != nil {
-				klog.Errorf("error decoding entity: %s", err)
-				return watch.Error, nil, err
-			}
+		// Deletes may carry an empty value with the deleted object in Previous.
+		decodeSource := evt.Resource
+		if evt.Type == resourcepb.WatchEvent_DELETED && evt.Previous != nil {
+			decodeSource = evt.Previous
+		}
+		obj, err := d.toObject(decodeSource)
+		if err != nil {
+			klog.Errorf("error decoding entity: %s", err)
+			return watch.Error, nil, err
 		}
 
 		var watchAction watch.EventType
@@ -203,14 +203,7 @@ decode:
 		case resourcepb.WatchEvent_DELETED:
 			watchAction = watch.Deleted
 
-			// if we have a previous object, return that in the deleted event
 			if evt.Previous != nil {
-				obj, err = d.toObject(evt.Previous)
-				if err != nil {
-					klog.Errorf("error decoding entity: %s", err)
-					return watch.Error, nil, err
-				}
-
 				// here k8s expects the previous object but with the new resource version
 				accessor, err := utils.MetaAccessor(obj)
 				if err != nil {

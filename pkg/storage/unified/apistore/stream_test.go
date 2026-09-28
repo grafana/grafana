@@ -329,6 +329,11 @@ func TestStreamDecoderDeletedEvents(t *testing.T) {
 			Resource: &resourcepb.WatchEvent_Resource{Version: 13},
 			Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
 		},
+		"previous takes precedence over value": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Value: []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"current"}}`), Version: 13},
+			Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
+		},
 		"value without previous": {
 			Type:     resourcepb.WatchEvent_DELETED,
 			Resource: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 13},
@@ -345,4 +350,18 @@ func TestStreamDecoderDeletedEvents(t *testing.T) {
 			require.Equal(t, "13", obj.(*unstructured.Unstructured).GetResourceVersion(), "a delete carries the deletion's resource version")
 		})
 	}
+}
+
+func TestStreamDecoderDeletedEventWithoutObject(t *testing.T) {
+	client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{{
+		Type:     resourcepb.WatchEvent_DELETED,
+		Resource: &resourcepb.WatchEvent_Resource{Version: 13},
+	}}}
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), func() {}, false)
+	t.Cleanup(decoder.Close)
+
+	action, obj, err := decoder.Decode()
+	require.Error(t, err)
+	require.Equal(t, watch.Error, action)
+	require.Nil(t, obj)
 }
