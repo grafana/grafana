@@ -46,7 +46,7 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 			Namespace:                       "grafana",
 			Subsystem:                       "router",
 			Name:                            "http_request_duration_seconds",
-			Help:                            "Latency of requests, other than watches, served by the router, by group, verb, route (backend, fallback, discovery, next or invalid) and status code.",
+			Help:                            "Latency of requests, other than watches, served by the router, by group, verb, route (backend, fallback, discovery, next, invalid or unauthenticated) and status code.",
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
