@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"slices"
 	"sync"
 	"testing"
@@ -255,8 +256,16 @@ func (s *failoverTestState) record(id string) error {
 	return s.errFn(n, id)
 }
 
+// embeddedTestError makes the fake client return the error inside the response.
+type embeddedTestError struct{ res *resourcepb.ErrorResult }
+
+func (e embeddedTestError) Error() string { return e.res.Message }
+
 func (c *failoverTestClient) Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	if err := c.state.record(c.id); err != nil {
+		if e, ok := err.(embeddedTestError); ok {
+			return &resourcepb.ResourceSearchResponse{Error: e.res}, nil
+		}
 		return nil, err
 	}
 	return &resourcepb.ResourceSearchResponse{TotalHits: 1}, nil
@@ -294,24 +303,32 @@ func TestDistributorSearchFailover(t *testing.T) {
 	unavailable := status.Error(codes.Unavailable, "connection refused")
 	exhausted := status.Error(codes.ResourceExhausted, "too many requests")
 	invalid := status.Error(codes.InvalidArgument, "bad request")
+	embeddedUnavailable := embeddedTestError{NewServiceUnavailableError("index not ready")}
+	embeddedExhausted := embeddedTestError{NewTooManyRequestsError("queue full")}
+	embeddedInternal := embeddedTestError{&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "failed"}}
 
 	tests := []struct {
 		name              string
 		replicationFactor int
 		// errors returned by each call, in call order
-		errs        []error
-		wantCalls   int
-		wantErrCode codes.Code
+		errs      []error
+		wantCalls int
+		// HTTP code of the final error, 0 for success
+		wantCode int32
 	}{
-		{name: "first replica succeeds", replicationFactor: 2, wantCalls: 1, wantErrCode: codes.OK},
-		{name: "first replica unavailable", replicationFactor: 2, errs: []error{unavailable}, wantCalls: 2, wantErrCode: codes.OK},
-		{name: "first replica exhausted", replicationFactor: 2, errs: []error{exhausted}, wantCalls: 2, wantErrCode: codes.OK},
-		{name: "both replicas fail, first succeeds on retry", replicationFactor: 2, errs: []error{unavailable, exhausted}, wantCalls: 3, wantErrCode: codes.OK},
-		{name: "all attempts fail", replicationFactor: 2, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 3, wantErrCode: codes.Unavailable},
-		{name: "non-retryable error", replicationFactor: 2, errs: []error{invalid}, wantCalls: 1, wantErrCode: codes.InvalidArgument},
-		{name: "single replica retried", replicationFactor: 1, errs: []error{unavailable, unavailable}, wantCalls: 3, wantErrCode: codes.OK},
-		{name: "every replica tried before retrying", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 4, wantErrCode: codes.OK},
-		{name: "four replicas all fail", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable, unavailable, unavailable}, wantCalls: 5, wantErrCode: codes.Unavailable},
+		{name: "first replica succeeds", replicationFactor: 2, wantCalls: 1},
+		{name: "first replica unavailable", replicationFactor: 2, errs: []error{unavailable}, wantCalls: 2},
+		{name: "first replica exhausted", replicationFactor: 2, errs: []error{exhausted}, wantCalls: 2},
+		{name: "both replicas fail, first succeeds on retry", replicationFactor: 2, errs: []error{unavailable, exhausted}, wantCalls: 3},
+		{name: "all attempts fail", replicationFactor: 2, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
+		{name: "non-retryable error", replicationFactor: 2, errs: []error{invalid}, wantCalls: 1, wantCode: http.StatusBadRequest},
+		{name: "first replica embedded unavailable", replicationFactor: 2, errs: []error{embeddedUnavailable}, wantCalls: 2},
+		{name: "first replica embedded exhausted", replicationFactor: 2, errs: []error{embeddedExhausted}, wantCalls: 2},
+		{name: "all attempts fail with embedded error", replicationFactor: 2, errs: []error{embeddedUnavailable, embeddedUnavailable, embeddedUnavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
+		{name: "embedded non-retryable error", replicationFactor: 2, errs: []error{embeddedInternal}, wantCalls: 1, wantCode: http.StatusInternalServerError},
+		{name: "single replica retried", replicationFactor: 1, errs: []error{unavailable, unavailable}, wantCalls: 3},
+		{name: "every replica tried before retrying", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 4},
+		{name: "four replicas all fail", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable, unavailable, unavailable}, wantCalls: 5, wantCode: http.StatusServiceUnavailable},
 	}
 
 	for _, tt := range tests {
@@ -327,8 +344,9 @@ func TestDistributorSearchFailover(t *testing.T) {
 			resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
 			})
-			require.Equal(t, tt.wantErrCode, status.Code(err))
-			if tt.wantErrCode == codes.OK {
+			code, _ := callFailure(resp, err)
+			require.Equal(t, tt.wantCode, code)
+			if tt.wantCode == 0 {
 				require.Equal(t, int64(1), resp.TotalHits)
 			}
 

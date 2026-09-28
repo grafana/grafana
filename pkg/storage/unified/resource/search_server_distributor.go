@@ -7,6 +7,7 @@ import (
 	"hash/fnv"
 	"maps"
 	"math/rand"
+	"net/http"
 	"slices"
 	"sync"
 	"time"
@@ -19,10 +20,8 @@ import (
 	userutils "github.com/grafana/dskit/user"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -398,18 +397,31 @@ func callWithRetries[Req, Resp any](
 			resp, err = call(client.(*RingClient).Client, ctx, req)
 		}
 
+		code, failure := callFailure(resp, err)
 		// A client pool error means we could not connect to the instance.
-		retryable := clientErr != nil || isRetryableCode(status.Code(err))
+		retryable := clientErr != nil || code == http.StatusServiceUnavailable || code == http.StatusTooManyRequests
 		if !retryable || attempt == maxAttempts-1 || ctx.Err() != nil {
 			break
 		}
-		logger.Warn("search instance failed, retrying", "err", err, "searchApiInstanceId", inst.Id, "attempt", attempt+1)
+		logger.Warn("search instance failed, retrying", "err", failure, "searchApiInstanceId", inst.Id, "attempt", attempt+1)
 	}
 	return resp, instID, err
 }
 
-func isRetryableCode(code codes.Code) bool {
-	return code == codes.Unavailable || code == codes.ResourceExhausted
+// callFailure returns the HTTP code and error of a failed call, or 0 and nil
+// on success. Search servers can report errors as a gRPC status or inside the
+// response, depending on the grpc_error_result_to_status setting.
+func callFailure(resp any, err error) (int32, error) {
+	if err != nil {
+		return AsErrorResult(err).GetCode(), err
+	}
+	r, ok := resp.(interface {
+		GetError() *resourcepb.ErrorResult
+	})
+	if !ok || r.GetError() == nil {
+		return 0, nil
+	}
+	return r.GetError().GetCode(), GetError(r.GetError())
 }
 
 // shuffled returns the instances in random order, which spreads the load
