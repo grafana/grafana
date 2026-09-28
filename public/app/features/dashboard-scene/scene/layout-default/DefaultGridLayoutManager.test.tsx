@@ -7,6 +7,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+
 import { findVizPanelByKey } from '../../utils/findVizPanel';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardScene } from '../DashboardScene';

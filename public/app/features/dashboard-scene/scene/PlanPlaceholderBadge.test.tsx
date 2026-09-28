@@ -9,6 +9,7 @@ import {
   VizPanel,
   type SceneDataProvider,
 } from '@grafana/scenes';
+
 import { DashboardScene } from './DashboardScene';
 import { PlanPlaceholderBadge } from './PlanPlaceholderBadge';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';

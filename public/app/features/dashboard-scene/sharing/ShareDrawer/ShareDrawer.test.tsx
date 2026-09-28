@@ -5,6 +5,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, UrlSyncContextProvider } from '@grafana/scenes';
+
 import { render } from '../../../../../test/test-utils';
 import { ExportFormat } from '../../../dashboard/api/types';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';

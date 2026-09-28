@@ -2,6 +2,7 @@ import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { SceneTimeRange } from '@grafana/scenes';
+
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 
