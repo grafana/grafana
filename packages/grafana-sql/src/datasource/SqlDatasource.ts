@@ -74,13 +74,9 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return this.responseParser;
   }
 
-  interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
+  interpolateVariable = (value: string | string[] | number, _variable: VariableWithMultiSupport) => {
     if (typeof value === 'string') {
-      if (variable.multi || variable.includeAll) {
-        return this.getQueryModel().quoteLiteral(value);
-      } else {
-        return String(value).replace(/'/g, "''");
-      }
+      return String(value).replace(/'/g, "''");
     }
 
     if (typeof value === 'number') {
