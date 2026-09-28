@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -111,9 +112,26 @@ func TestDashboardStorageWrapperCreate(t *testing.T) {
 		require.True(t, apierrors.IsAlreadyExists(err))
 	})
 
-	t.Run("toggle on, annotation set, name free -> normal create, annotation stripped", func(t *testing.T) {
+	t.Run("toggle on, annotation set (non-'true' value), name exists -> plain 409, annotation still stripped", func(t *testing.T) {
 		storage := grafanarest.NewMockStorage(t)
 		obj := newObj("dash-uid", true)
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetAnnotation(utils.AnnoKeyOverwriteExisting, "false")
+		storage.On("Create", mock.Anything, obj, mock.Anything, mock.Anything).
+			Return(nil, apierrors.NewAlreadyExists(dashv2beta1Resource(), "dash-uid"))
+		w := dashboardStorageWrapper{Storage: storage, features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardOverwriteOnCreate)}
+
+		_, err = w.Create(ctx, obj, noValidation, &metav1.CreateOptions{})
+		require.True(t, apierrors.IsAlreadyExists(err))
+		require.Equal(t, "", meta.GetAnnotation(utils.AnnoKeyOverwriteExisting))
+	})
+
+	t.Run("toggle on, annotation set, name free -> Get 404s then normal create, annotation stripped", func(t *testing.T) {
+		storage := grafanarest.NewMockStorage(t)
+		obj := newObj("dash-uid", true)
+		storage.On("Get", mock.Anything, "dash-uid", mock.Anything).
+			Return(nil, apierrors.NewNotFound(dashv2beta1Resource(), "dash-uid"))
 		storage.On("Create", mock.Anything, obj, mock.Anything, mock.Anything).
 			Return(obj, nil)
 		w := dashboardStorageWrapper{Storage: storage, features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardOverwriteOnCreate)}
@@ -123,15 +141,12 @@ func TestDashboardStorageWrapperCreate(t *testing.T) {
 		require.Same(t, obj, out)
 		meta, _ := utils.MetaAccessor(obj)
 		require.Equal(t, "", meta.GetAnnotation(utils.AnnoKeyOverwriteExisting))
-		storage.AssertNotCalled(t, "Get", mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	t.Run("toggle on, annotation set, existing editable dashboard -> overwritten via Update", func(t *testing.T) {
+	t.Run("toggle on, annotation set, existing editable dashboard -> overwritten via Update, no Create attempted", func(t *testing.T) {
 		storage := grafanarest.NewMockStorage(t)
 		obj := newObj("dash-uid", true)
 		old := existing(false, false)
-		storage.On("Create", mock.Anything, obj, mock.Anything, mock.Anything).
-			Return(nil, apierrors.NewAlreadyExists(dashv2beta1Resource(), "dash-uid"))
 		storage.On("Get", mock.Anything, "dash-uid", mock.Anything).
 			Return(old, nil)
 		storage.On("Update", mock.Anything, "dash-uid", mock.Anything, mock.Anything, mock.Anything, false, mock.Anything).
@@ -142,14 +157,13 @@ func TestDashboardStorageWrapperCreate(t *testing.T) {
 		require.NoError(t, err)
 		require.Same(t, obj, out)
 		storage.AssertCalled(t, "Update", mock.Anything, "dash-uid", mock.Anything, mock.Anything, mock.Anything, false, mock.Anything)
+		storage.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	t.Run("toggle on, annotation set, existing provisioning-locked dashboard -> rejected", func(t *testing.T) {
+	t.Run("toggle on, annotation set, existing provisioning-locked dashboard -> rejected, no Update attempted", func(t *testing.T) {
 		storage := grafanarest.NewMockStorage(t)
 		obj := newObj("dash-uid", true)
 		old := existing(true, false) // managed, AllowsEdits: false
-		storage.On("Create", mock.Anything, obj, mock.Anything, mock.Anything).
-			Return(nil, apierrors.NewAlreadyExists(dashv2beta1Resource(), "dash-uid"))
 		storage.On("Get", mock.Anything, "dash-uid", mock.Anything).
 			Return(old, nil)
 		w := dashboardStorageWrapper{Storage: storage, features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardOverwriteOnCreate)}
@@ -165,8 +179,6 @@ func TestDashboardStorageWrapperCreate(t *testing.T) {
 		obj := newObj("dash-uid", true)
 		old := existing(false, false)
 		forbidden := apierrors.NewForbidden(dashv2beta1Resource(), "dash-uid", nil)
-		storage.On("Create", mock.Anything, obj, mock.Anything, mock.Anything).
-			Return(nil, apierrors.NewAlreadyExists(dashv2beta1Resource(), "dash-uid"))
 		storage.On("Get", mock.Anything, "dash-uid", mock.Anything).
 			Return(old, nil)
 		storage.On("Update", mock.Anything, "dash-uid", mock.Anything, mock.Anything, mock.Anything, false, mock.Anything).
@@ -176,6 +188,48 @@ func TestDashboardStorageWrapperCreate(t *testing.T) {
 		_, err := w.Create(ctx, obj, noValidation, &metav1.CreateOptions{})
 		require.True(t, apierrors.IsForbidden(err))
 	})
+
+	t.Run("toggle on, annotation set, existing dashboard but caller can't even read it -> Forbidden propagates, not masked as 409", func(t *testing.T) {
+		storage := grafanarest.NewMockStorage(t)
+		obj := newObj("dash-uid", true)
+		forbidden := apierrors.NewForbidden(dashv2beta1Resource(), "dash-uid", nil)
+		storage.On("Get", mock.Anything, "dash-uid", mock.Anything).
+			Return(nil, forbidden)
+		w := dashboardStorageWrapper{Storage: storage, features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardOverwriteOnCreate)}
+
+		_, err := w.Create(ctx, obj, noValidation, &metav1.CreateOptions{})
+		require.True(t, apierrors.IsForbidden(err), "expected the real Get error, got: %v", err)
+		storage.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		storage.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+}
+
+func TestDashboardStorageWrapperUpdateStripsOverwriteAnnotation(t *testing.T) {
+	ctx := apirequest.WithNamespace(context.Background(), "default")
+
+	obj := &unstructured.Unstructured{Object: map[string]interface{}{
+		"spec": map[string]interface{}{"title": "resent config"},
+	}}
+	obj.SetName("dash-uid")
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetAnnotation(utils.AnnoKeyOverwriteExisting, "true")
+
+	storage := grafanarest.NewMockStorage(t)
+	storage.On("Update", mock.Anything, "dash-uid", mock.MatchedBy(func(info rest.UpdatedObjectInfo) bool {
+		updated, uErr := info.UpdatedObject(ctx, nil)
+		if uErr != nil {
+			return false
+		}
+		m, mErr := utils.MetaAccessor(updated)
+		return mErr == nil && m.GetAnnotation(utils.AnnoKeyOverwriteExisting) == ""
+	}), mock.Anything, mock.Anything, false, mock.Anything).
+		Return(obj, false, nil)
+	w := dashboardStorageWrapper{Storage: storage, features: featuremgmt.WithFeatures()}
+
+	_, _, err = w.Update(ctx, "dash-uid", rest.DefaultUpdatedObjectInfo(obj), noValidation,
+		func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+	require.NoError(t, err)
 }
 
 func noValidation(ctx context.Context, obj runtime.Object) error { return nil }

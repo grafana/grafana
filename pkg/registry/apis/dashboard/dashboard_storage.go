@@ -40,35 +40,58 @@ type dashboardStorageWrapper struct {
 	features featuremgmt.FeatureToggles
 }
 
+// stripOverwriteAnnotation wraps an UpdatedObjectInfo so the grafana.app/overwrite-existing
+// annotation is never persisted through Update either — a client may keep sending it on
+// every apply after an overwrite (e.g. Terraform re-sending unchanged config).
+type stripOverwriteAnnotation struct {
+	rest.UpdatedObjectInfo
+}
+
+func (s stripOverwriteAnnotation) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
+	obj, err := s.UpdatedObjectInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return obj, err
+	}
+	if meta, mErr := utils.MetaAccessor(obj); mErr == nil && meta.GetAnnotation(utils.AnnoKeyOverwriteExisting) != "" {
+		meta.SetAnnotation(utils.AnnoKeyOverwriteExisting, "")
+	}
+	return obj, nil
+}
+
 // Create overrides the embedded Storage's Create so a caller can opt into overwriting
 // an existing dashboard of the same name instead of getting AlreadyExists, by setting
 // the grafana.app/overwrite-existing annotation. The annotation is always stripped
 // before any write is attempted, whether or not the overwrite path ends up firing.
+//
+// Existence is checked with a Get rather than attempting Create optimistically: an
+// optimistic Create would run CREATE-flavored admission (including the dashboard quota
+// check) against an object that already exists, and would require folder-create
+// permission even when the caller already has edit rights on the specific dashboard —
+// neither of which is the right check for what is really an update. This also matches
+// how the legacy /api/dashboards/db endpoint's saveDashboardViaK8s already behaves.
 func (d dashboardStorageWrapper) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return nil, err
 	}
-	overwrite := meta.GetAnnotation(utils.AnnoKeyOverwriteExisting) == "true"
-	if overwrite {
+	raw := meta.GetAnnotation(utils.AnnoKeyOverwriteExisting)
+	if raw != "" {
 		meta.SetAnnotation(utils.AnnoKeyOverwriteExisting, "")
 	}
-	if !overwrite || !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardOverwriteOnCreate) {
+	overwrite := raw == "true"
+	if !overwrite || !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardOverwriteOnCreate) { //nolint:staticcheck
 		return d.Storage.Create(ctx, obj, createValidation, options)
-	}
-
-	created, err := d.Storage.Create(ctx, obj, createValidation, options)
-	if err == nil || !apierrors.IsAlreadyExists(err) {
-		return created, err
 	}
 
 	name := meta.GetName()
 	old, getErr := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if getErr != nil {
-		// The original AlreadyExists is the more useful error here; the resource
-		// clearly exists even if we can't read it back (e.g. a permission edge case).
-		return nil, err
+	if apierrors.IsNotFound(getErr) {
+		return d.Storage.Create(ctx, obj, createValidation, options)
 	}
+	if getErr != nil {
+		return nil, getErr
+	}
+
 	oldMeta, metaErr := utils.MetaAccessor(old)
 	if metaErr != nil {
 		return nil, metaErr
@@ -77,10 +100,10 @@ func (d dashboardStorageWrapper) Create(ctx context.Context, obj runtime.Object,
 		return nil, apierrors.NewBadRequest(dashboards.ErrDashboardCannotSaveProvisionedDashboard.Reason)
 	}
 
-	// The failed optimistic Create above may have let PrepareForCreate stamp a fresh
-	// UID/resourceVersion onto obj before the conflict was detected. Clear them so the
-	// Update below carries no stale identity precondition — same reset saveDashboardViaK8s
-	// does before its own Update call in pkg/api/dashboard.go.
+	// A client's Create payload normally carries no UID/resourceVersion, but clear them
+	// defensively so DefaultUpdatedObjectInfo's precondition check never trips on stale
+	// identity — same reset saveDashboardViaK8s does before its own Update call in
+	// pkg/api/dashboard.go.
 	meta.SetUID("")
 	meta.SetResourceVersion("")
 
@@ -98,7 +121,7 @@ func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInf
 		return nil, false, err
 	}
 
-	obj, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	obj, created, err := d.Storage.Update(ctx, name, stripOverwriteAnnotation{objInfo}, createValidation, updateValidation, forceAllowCreate, options)
 	if err == nil && ns.OrgID > 0 && d.live != nil {
 		m, err := utils.MetaAccessor(obj)
 		if err == nil {
