@@ -2346,9 +2346,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	// as clean shutdowns. Errors from setup, storage, authorization, or another
 	// context are still propagated.
 	defer func() {
-		// Shutdown must not turn a pending expiry into a client relist. The
-		// request context can remain live until gRPC drains after storage stops.
-		if IsResourceVersionExpired(retErr) && (s.ctx.Err() != nil || ctx.Err() != nil) {
+		// A canceled request can no longer receive the expiry response.
+		if IsResourceVersionExpired(retErr) && ctx.Err() != nil {
 			retErr = nil
 		}
 		if errors.Is(retErr, errWatchSendUnavailable) {
@@ -2512,7 +2511,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	expired := func() error {
-		if ctx.Err() != nil || s.ctx.Err() != nil {
+		if ctx.Err() != nil {
 			return nil
 		}
 		s.log.Debug("watch: expiring stream to bound stale-state duration",
@@ -2529,8 +2528,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		}
 		select {
 		case <-ctx.Done():
-			return nil
-		case <-s.ctx.Done():
 			return nil
 		case <-watchExpiryC:
 			return expired()

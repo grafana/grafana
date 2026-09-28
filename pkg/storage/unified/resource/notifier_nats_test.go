@@ -607,8 +607,8 @@ func (s *shutdownWatchStream) Send(event *resourcepb.WatchEvent) error {
 	return s.mockWatchServer.Send(event)
 }
 
-func TestWatchShutdownDoesNotExpire(t *testing.T) {
-	for _, trigger := range []string{"shutdown", "pending invalidation"} {
+func TestWatchShutdownPreservesInvalidation(t *testing.T) {
+	for _, trigger := range []string{"shutdown", "invalidation before shutdown", "invalidation after shutdown"} {
 		t.Run(trigger, func(t *testing.T) {
 			srv := newWatchTestServer(t, watchTestServerOpts{})
 			expiry := srv.watchExpiry
@@ -618,8 +618,11 @@ func TestWatchShutdownDoesNotExpire(t *testing.T) {
 				if event.Type == resourcepb.WatchEvent_ADDED {
 					// Stop cancels this context before draining writes and closing NATS.
 					// Keep the client context live, as it is during gRPC shutdown.
+					if trigger == "invalidation before shutdown" {
+						expiry.Invalidate()
+					}
 					srv.cancel()
-					if trigger != "shutdown" {
+					if trigger == "invalidation after shutdown" {
 						expiry.Invalidate()
 					}
 				}
@@ -637,7 +640,11 @@ func TestWatchShutdownDoesNotExpire(t *testing.T) {
 			require.NoError(t, createTestPlaylist(ctx, srv))
 			select {
 			case err := <-done:
-				require.NoError(t, err, "shutdown must end the watch without a 410")
+				if trigger == "shutdown" {
+					require.NoError(t, err, "shutdown alone must end the watch without a 410")
+				} else {
+					require.True(t, IsResourceVersionExpired(err), "shutdown must preserve a pending expiry: %v", err)
+				}
 			case <-ctx.Done():
 				t.Fatal("watch did not stop with the storage server")
 			}
