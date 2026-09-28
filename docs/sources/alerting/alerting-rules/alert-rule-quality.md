@@ -1,7 +1,8 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alert-rule-quality/
-description: Configure an alert rule quality policy, review findings, and optionally enforce annotation and label requirements for Grafana-managed alert rules.
+description: Use Alert Advisor to define required labels and annotations, review findings, and optionally enforce annotation and label requirements for Grafana-managed alert rules.
 keywords:
+  - alert advisor
   - alerting
   - annotations
   - enforcement
@@ -12,7 +13,7 @@ labels:
   products:
     - enterprise
     - cloud
-title: Improve alert rule quality
+title: Improve alert rule quality with Alert Advisor
 weight: 600
 draft: true
 refs:
@@ -45,28 +46,29 @@ refs:
 
 <!--
 Draft pending release confirmation. Target: Grafana Enterprise 13.3.x and Grafana Cloud.
-Before publishing: confirm product naming, Grafana Cloud rollout, and the release stage.
+Before publishing: confirm Grafana Cloud rollout and the release stage.
 Set labels.stage, remove draft: true, and link this page from Configure alert rules.
 Keep feature-toggle and rollout procedures in the internal runbook.
 -->
 
-# Improve alert rule quality
+# Improve alert rule quality with Alert Advisor
 
-Missing context can make alerts harder to act on.
+Alerts are easier to act on when they carry the right context.
 A runbook URL helps you investigate an issue, and a team label helps you route your notifications.
 
-With alert rule quality in Grafana, you can:
+Alert Advisor checks your Grafana-managed alert rules against a quality policy of required labels and annotations, so you can find and fix rules that are missing that context.
+With Alert Advisor, you can:
 
-- Define which labels and annotations are required for Grafana-managed alert rules.
-- Find rules with missing required labels or annotations and update them.
-- Optionally enforce selected requirements on supported provisioning writes.
+- Define which labels and annotations your Grafana-managed alert rules must have.
+- Find rules that are missing required labels or annotations and update them.
+- Optionally block supported provisioning writes that don't meet selected requirements.
 
 ## Before you begin
 
 Before you begin, check that you have the following permissions in your Grafana organization:
 
 - **Rule access:** Have permission to view the Grafana-managed alert rules you want to assess.
-- **Policy permissions:** To configure the policy, have the Admin role in your organization or a role with `alert.rules.quality:write` and `alert.rules:read`.
+- **Policy permissions:** To configure the quality policy, have the Admin role in your organization or a role with `alert.rules.quality:write` and `alert.rules:read`.
 - **Rule updates:** To fix findings, have permission to update the affected rules.
   For provisioned rules, you also need access to their source configuration and permission to reapply it.
 
@@ -77,7 +79,7 @@ For more information about alerting permissions and folder access, refer to [Con
 A single quality policy applies to Grafana-managed alert rules across folders in your organization.
 Data source-managed alert rules and recording rules are excluded.
 
-The policy reports a finding when a required label or annotation is missing, empty, or contains only whitespace.
+Alert Advisor reports a finding when a required label or annotation is missing, empty, or contains only whitespace.
 These checks validate presence, not content.
 For example, requiring a runbook URL doesn't check whether the link works.
 
@@ -136,7 +138,7 @@ A policy with no required annotations or labels checks nothing.
 
 ## Review alert quality
 
-The **Alert quality** tab lists rules that don't meet your policy and shows an overall quality score.
+In Alert Advisor, the **Alert quality** tab lists rules that don't meet your policy and shows an overall quality score.
 
 To review the findings, follow these steps:
 
