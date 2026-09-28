@@ -2,7 +2,7 @@ module github.com/grafana/grafana
 
 go 1.27.1
 
-// Replace references to internal workspaces
+// Internal module references (every entry is replaced with a relative path
 replace (
 	github.com/grafana/grafana/apps/advisor => ./apps/advisor
 	github.com/grafana/grafana/apps/alerting/alertenrichment => ./apps/alerting/alertenrichment
@@ -38,9 +38,7 @@ replace (
 	github.com/grafana/grafana/pkg/util/sqlite => ./pkg/util/sqlite
 )
 
-// Direct requirements -- every entry needs an owner
-//
-// Internal module references (every entry should also have a replace in the section below)
+// Direct requirements -- every entry needs an team owner
 require (
 	cloud.google.com/go/aiplatform v1.126.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/discoveryengine v1.33.0 // @grafana/grafana-search-and-storage
