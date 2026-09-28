@@ -8,6 +8,8 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 
+const themeCss = /grafana\.(dark|light)\.css$/;
+
 const coreComponentsGlobs: StorybookConfig['stories'] = [
   // Specific high-level documentation pages
   '../src/Intro.mdx',
@@ -85,6 +87,9 @@ const mainConfig: StorybookConfig = {
       plugins: [pluginReact()],
 
       tools: {
+        bundlerChain: (chain, { CHAIN_ID }) => {
+          chain.module.rule(CHAIN_ID.RULE.CSS).exclude.add(themeCss);
+        },
         rspack: (rspackConfig) => {
           rspackConfig.module ??= {};
           rspackConfig.module.rules ??= [];
@@ -102,7 +107,7 @@ const mainConfig: StorybookConfig = {
             // (fonts, checkbox sprites) unresolved so they resolve at runtime against the
             // assets copyAssets.ts puts in staticDirs.
             {
-              test: /grafana\.(dark|light)\.css$/,
+              test: themeCss,
               type: 'javascript/auto',
               use: [
                 {
