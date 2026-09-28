@@ -1084,6 +1084,7 @@ github.com/maxatome/go-testdeep v1.12.0 h1:Ql7Go8Tg0C1D/uMMX59LAoYK7LffeJQ6X2T04
 github.com/maxatome/go-testdeep v1.14.0 h1:rRlLv1+kI8eOI3OaBXZwb3O7xY3exRzdW5QyX48g9wI=
 github.com/maxbrunsfeld/counterfeiter/v6 v6.12.1 h1:D4O2wLxB384TS3ohBJMfolnxb4qGmoZ1PnWNtit8LYo=
 github.com/maxbrunsfeld/counterfeiter/v6 v6.12.1/go.mod h1:RuJdxo0oI6dClIaMzdl3hewq3a065RH65dofJP03h8I=
+github.com/maxbrunsfeld/counterfeiter/v6 v6.12.2/go.mod h1:Mr897yU9FmyKaQDPtRlVKibrjz40XXyOHUfyZBPSyZU=
 github.com/mfridman/tparse v0.18.0 h1:wh6dzOKaIwkUGyKgOntDW4liXSo37qg5AXbIhkMV3vE=
 github.com/mfridman/tparse v0.18.0/go.mod h1:gEvqZTuCgEhPbYk/2lS3Kcxg1GmTxxU7kTC8DvP0i/A=
 github.com/mfridman/xflag v0.1.0 h1:TWZrZwG1QklFX5S4j1vxfF1sZbZeZSGofMwPMLAF29M=
