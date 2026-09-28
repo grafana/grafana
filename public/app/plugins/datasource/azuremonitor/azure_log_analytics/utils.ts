@@ -57,6 +57,7 @@ export function transformMetadataToKustoSchema(
     majorVersion: 0,
     minorVersion: 0,
     entityGroups: [],
+    graphs: [],
   };
 
   // Adding macros as known functions

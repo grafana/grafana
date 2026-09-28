@@ -2,6 +2,8 @@ import { type Locator, type Page } from '@playwright/test';
 
 import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
+import { fillMonacoEditor } from '../utils/monaco';
+
 test.use({
   featureToggles: {
     sqlExpressions: true,
@@ -377,14 +379,11 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
       await expect(page.getByTestId('sql-expression-editor')).toBeVisible({ timeout: 15_000 });
     }
 
-    const fillActiveSqlEditor = (text: string) =>
-      page.getByTestId('sql-expression-editor').locator('.monaco-editor textarea').fill(text);
+    await addSqlExpression();
+    await fillMonacoEditor(page.getByTestId('sql-expression-editor').locator('.monaco-editor'), 'SELECT 1 FROM A');
 
     await addSqlExpression();
-    await fillActiveSqlEditor('SELECT 1 FROM A');
-
-    await addSqlExpression();
-    await fillActiveSqlEditor('SELECT 2 FROM A');
+    await fillMonacoEditor(page.getByTestId('sql-expression-editor').locator('.monaco-editor'), 'SELECT 2 FROM A');
 
     const cardB = page.locator('[data-query-sidebar-card="B"]');
     const cardC = page.locator('[data-query-sidebar-card="C"]');
@@ -415,8 +414,8 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     await switchDatasource(dashboardPage, page, selectors, 'gdev-prometheus');
     await page.getByRole('radio', { name: 'Code' }).click();
 
-    const monacoTextarea = page.locator('.monaco-editor textarea').first();
-    await expect(monacoTextarea).toBeVisible({ timeout: 15_000 });
+    const monacoEditor = page.locator('.monaco-editor').first();
+    await expect(monacoEditor).toBeVisible({ timeout: 15_000 });
 
     await addQueryOrExpressionButton(page).click();
     await page.getByRole('menuitem', { name: 'Add query' }).click();
@@ -429,7 +428,7 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     await expect(cardA).toHaveAttribute('aria-pressed', 'true');
 
     const queryText = 'up{job="grafana"}';
-    await monacoTextarea.fill(queryText);
+    await fillMonacoEditor(monacoEditor, queryText);
 
     // Switch straight to B without clicking outside the editor first. The editor is still
     // focused at this point, so this is the exact path that previously lost edits. The

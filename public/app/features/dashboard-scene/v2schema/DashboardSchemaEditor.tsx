@@ -313,7 +313,7 @@ function isValidJson(value: string): boolean {
 }
 
 function configureSchemaDiagnostics(monaco: typeof MonacoEditorModule, schema: JSONSchema): void {
-  monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+  monaco.json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
     allowComments: false,
     schemaValidation: 'error',

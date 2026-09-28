@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import type * as monacoType from 'monaco-editor';
 import { useCallback, useRef } from 'react';
 
 import { CodeEditor, getInputStyles, type Monaco, useTheme2 } from '@grafana/ui';

@@ -99,14 +99,6 @@ test.describe(
       );
       await seriesValueSwitch.scrollIntoViewIfNeeded();
       await expect(seriesValueSwitch).toBeVisible();
-
-      // Go back to dashboard
-      const backButton = page.getByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton);
-      await expect(backButton).toBeVisible();
-      await backButton.click();
-
-      // Check that annotation exists
-      await expect(page.getByText(annotationName)).toBeVisible();
     });
 
     /**

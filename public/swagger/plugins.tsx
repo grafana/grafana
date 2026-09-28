@@ -144,7 +144,7 @@ export const WrappedPlugins = function () {
                     onBlur={cb}
                     onSave={cb}
                     onBeforeEditorMount={(monaco: Monaco) => {
-                      monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+                      monaco.json.jsonDefaults.setDiagnosticsOptions({
                         validate: true,
                         schemas: [
                           {

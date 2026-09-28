@@ -1,4 +1,4 @@
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import type * as monacoType from 'monaco-editor';
 import { useCallback, useRef } from 'react';
 
 import { CodeEditor, type Monaco } from '@grafana/ui';

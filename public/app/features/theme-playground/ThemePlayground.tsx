@@ -160,7 +160,7 @@ export default function ThemePlayground() {
             containerStyles={styles.codeEditor}
             onBlur={onEditorBlur}
             onBeforeEditorMount={(monaco) => {
-              monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+              monaco.json.jsonDefaults.setDiagnosticsOptions({
                 validate: true,
                 schemas: [
                   {

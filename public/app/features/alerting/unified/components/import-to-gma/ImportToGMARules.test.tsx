@@ -1,8 +1,10 @@
+import { type ComponentProps } from 'react';
 import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import { type CodeEditor } from '@grafana/ui';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -10,6 +12,14 @@ import { grantUserPermissions } from '../../mocks';
 import { alertingFactory } from '../../mocks/server/db';
 
 import ImportToGMARules from './ImportToGMARules';
+
+type CodeEditorProps = ComponentProps<typeof CodeEditor>;
+
+// The preview editor is exercised by grafana-ui. Mounting Monaco is outside this form test's contract.
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: ({ value }: CodeEditorProps) => <pre>{value}</pre>,
+}));
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));

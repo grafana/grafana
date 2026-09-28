@@ -1,4 +1,4 @@
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor';
 
 import { type CustomVariableModel } from '@grafana/data';
 import { type monacoTypes } from '@grafana/ui';

@@ -372,6 +372,7 @@ export default class FakeSchemaData {
       ],
       functions: [],
       entityGroups: [],
+      graphs: [],
       majorVersion: 0,
       minorVersion: 0,
     };

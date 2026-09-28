@@ -42,6 +42,10 @@ jest.mock('@grafana/ui', () => ({
     return <pre>{value}</pre>;
   },
 }));
+
+jest.mock('@kusto/monaco-kusto', () => ({
+  getKustoWorker: jest.fn().mockResolvedValue(async () => ({ setSchema: jest.fn() })),
+}));
 const variableOptionGroup = {
   label: 'Template variables',
   options: [],
@@ -808,6 +812,7 @@ describe('LogsQueryEditor', () => {
         majorVersion: 0,
         minorVersion: 0,
         entityGroups: [],
+        graphs: [],
       };
       const mockSchema: EngineSchema = {
         clusterType: 'Engine',
@@ -944,6 +949,7 @@ describe('LogsQueryEditor', () => {
               majorVersion: 0,
               minorVersion: 0,
               entityGroups: [],
+              graphs: [],
             },
           ],
         },
@@ -981,6 +987,7 @@ describe('LogsQueryEditor', () => {
           majorVersion: 0,
           minorVersion: 0,
           entityGroups: [],
+          graphs: [],
         },
       };
       const mockDatasource = createMockDatasource();
@@ -1058,6 +1065,7 @@ describe('LogsQueryEditor', () => {
         majorVersion: 0,
         minorVersion: 0,
         entityGroups: [],
+        graphs: [],
       };
       const mockSchema: EngineSchema = {
         clusterType: 'Engine',
@@ -1168,6 +1176,7 @@ describe('LogsQueryEditor', () => {
         majorVersion: 0,
         minorVersion: 0,
         entityGroups: [],
+        graphs: [],
       },
     });
 

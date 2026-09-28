@@ -1,3 +1,5 @@
+import { type Page } from 'playwright-core';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { test, expect } from '@grafana/plugin-e2e';
 
@@ -5,6 +7,12 @@ import { normalTableName } from './mocks/mysql.mocks';
 import { mockDataSourceRequest } from './utils';
 
 test.beforeEach(mockDataSourceRequest);
+
+async function getExecutedRawSql(page: Page) {
+  const request = page.waitForRequest(/\/api\/ds\/query/);
+  await page.getByRole('button', { name: 'Run query' }).last().click();
+  return (await request).postDataJSON().queries[0].rawSql;
+}
 
 test.describe(
   'mysql',
@@ -44,11 +52,8 @@ test.describe(
         .click();
       await select.locator(page.getByText('bigint')).click();
 
-      // Validate the query
-      await expect(
-        explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
-      ).toHaveValue(
-        `SELECT\n  $__timeGroupAlias(createdAt, $__interval),\n  AVG(\`bigint\`)\nFROM\n  grafana.normalTable\nLIMIT\n  50`
+      await expect(getExecutedRawSql(page)).resolves.toBe(
+        'SELECT $__timeGroupAlias(createdAt,1m), AVG(`bigint`) FROM grafana.normalTable LIMIT 50 '
       );
     });
 
@@ -80,10 +85,9 @@ test.describe(
       await explorePage.getByGrafanaSelector('Macros value selector').click();
       await select.locator(page.getByText('timeFilter', { exact: true })).click();
 
-      // Validate that the timeFilter macro was added
-      await expect(
-        explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
-      ).toHaveValue(`SELECT\n  createdAt\nFROM\n  grafana.normalTable\nWHERE\n  $__timeFilter(createdAt)\nLIMIT\n  50`);
+      await expect(getExecutedRawSql(page)).resolves.toBe(
+        'SELECT createdAt FROM grafana.normalTable WHERE $__timeFilter(createdAt) LIMIT 50 '
+      );
 
       // Validate that the timeFilter macro was removed when changed to equals operator
       await explorePage.getByGrafanaSelector(selectors.components.SQLQueryEditor.filterOperator).click();
@@ -92,9 +96,9 @@ test.describe(
       await explorePage.getByGrafanaSelector(selectors.components.DateTimePicker.input).click();
       await explorePage.getByGrafanaSelector(selectors.components.DateTimePicker.input).blur();
 
-      await expect(
-        explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
-      ).not.toHaveValue(`SELECT\n  createdAt\nFROM\n  grafana.normalTable\nWHERE\n  createdAt = NULL\nLIMIT\n  50`);
+      await expect(getExecutedRawSql(page)).resolves.toMatch(
+        /^SELECT createdAt FROM grafana\.normalTable WHERE createdAt = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}' LIMIT 50 $/
+      );
     });
 
     test('visual query builder should not crash when filter is set to select_any_in', async ({ explorePage, page }) => {
@@ -165,10 +169,9 @@ test.describe(
 
       await explorePage.goto({ queryParams });
 
-      // Validate the query
-      await expect(
-        explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
-      ).toHaveValue(`SELECT\n  *\nFROM\n  grafana.normalTable\nWHERE\n  name IN ('a')\nLIMIT\n  50`);
+      await expect(getExecutedRawSql(page)).resolves.toBe(
+        "SELECT * FROM grafana.normalTable WHERE name IN ('a') LIMIT 50 "
+      );
     });
   }
 );
