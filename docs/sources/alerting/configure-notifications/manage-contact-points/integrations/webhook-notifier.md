@@ -46,8 +46,8 @@ For more details on contact points, including how to test them and enable notifi
 
 ## Webhook settings
 
-| Option | Description                                                                                                  |
-| ------ | ------------------------------------------------------------------------------------------------------------ |
+| Option | Description                                                                                                                                                             |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | URL    | The Webhook URL. This field is [protected](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) from modification in Grafana Cloud. |
 
 {{< admonition type="caution" >}}
@@ -120,25 +120,25 @@ If you configure OAuth2 authentication, it takes precedence over HTTP Basic Auth
 
 {{< /admonition >}}
 
-| Option              | Description                                                                                                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Option              | Description                                                                                                                                                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Token URL           | The URL of the OAuth2 token endpoint. This field is [protected](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) from modification in Grafana Cloud.                                        |
-| Client ID           | The OAuth2 client ID.                                                                                                                                                    |
-| Client Secret       | The OAuth2 client secret.                                                                                                                                                |
-| Scopes              | Optional list of OAuth2 scopes to request when obtaining an access token.                                                                                                |
-| Endpoint Parameters | Optional key-value pairs to include in the access token request.                                                                                                         |
-| TLS                 | Optional TLS configuration used only for the OAuth2 token request, including CA certificate, client certificate, and client key.                                         |
+| Client ID           | The OAuth2 client ID.                                                                                                                                                                                                               |
+| Client Secret       | The OAuth2 client secret.                                                                                                                                                                                                           |
+| Scopes              | Optional list of OAuth2 scopes to request when obtaining an access token.                                                                                                                                                           |
+| Endpoint Parameters | Optional key-value pairs to include in the access token request.                                                                                                                                                                    |
+| TLS                 | Optional TLS configuration used only for the OAuth2 token request, including CA certificate, client certificate, and client key.                                                                                                    |
 | Proxy               | Optional HTTP proxy configuration used only for the OAuth2 token request. The proxy URL is [protected](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) from modification in Grafana Cloud. |
 
 #### Optional settings using templates
 
 Use the following settings to include custom data within the [JSON payload](#body). Both options support using [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/).
 
-| Option                            | Description                                                                                                                                     |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Option                            | Description                                                                                                                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Title                             | Sends the value as a string in the `title` field of the [JSON payload](#body). Supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/).   |
 | Message                           | Sends the value as a string in the `message` field of the [JSON payload](#body). Supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/). |
-| [Custom Payload](#custom-payload) | Optionally override the default payload format with a custom template.                                                                          |
+| [Custom Payload](#custom-payload) | Optionally override the default payload format with a custom template.                                                                                                                                        |
 
 #### Optional notification settings
 
@@ -265,10 +265,10 @@ For detailed information about how to create and manage notification templates, 
 
 {{< /admonition >}}
 
-| Option            | Description                                                                                               |
-| ----------------- | --------------------------------------------------------------------------------------------------------- |
-| Payload Template  | [Notification template](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) that defines the structure of the webhook payload.    |
-| Payload Variables | Key-value pairs that define additional variables available in the template under `.Vars.<variable_name>`. |
+| Option            | Description                                                                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Payload Template  | [Notification template](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) that defines the structure of the webhook payload. |
+| Payload Variables | Key-value pairs that define additional variables available in the template under `.Vars.<variable_name>`.                                                            |
 
 Example of a custom payload template that includes variables:
 

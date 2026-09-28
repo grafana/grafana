@@ -71,8 +71,8 @@ You can customize the email subject and main section of the email body, but you 
 In Grafana OSS and Enterprise, you can edit the full email template. However, this is not officially supported because it's an internal API that may change without prior notice.
 {{</admonition>}}
 
-| Option  | Description                                                                                                                             |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Option  | Description                                                                                                                                                                                           |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Subject | Sets the email subject, replacing the default template. Supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/).                  |
 | Message | Sets the main section of the email body, replacing the default template. Supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/). |
 

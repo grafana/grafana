@@ -48,8 +48,8 @@ For more details on contact points, including how to test them and enable notifi
 
 ## Alertmanager settings
 
-| Option | Description                                                                                                       |
-| ------ | ----------------------------------------------------------------------------------------------------------------- |
+| Option | Description                                                                                                                                                                  |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | URL    | The Alertmanager URL. This field is [protected](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) from modification in Grafana Cloud. |
 
 #### Optional settings

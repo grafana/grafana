@@ -36,11 +36,11 @@ First, identify which metric reports the number of active time series.
 
 Prometheus, Mimir, and Grafana Cloud expose this information differently:
 
-| Environment             | Metric                                | Description                                                                                                                                                                                 |
-| :---------------------- | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Prometheus**          | `prometheus_tsdb_head_series`         | Reports the number of active series currently stored in memory (the head block) of a single Prometheus instance. It includes series that have stopped receiving samples for up to one hour. |
-| **Grafana Cloud**       | `grafanacloud_instance_active_series` | Tracks the number of [active series in your Grafana Cloud Metrics backend (Mimir](/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/metrics-invoice/)).                                                                              |
-| **Prometheus or Mimir** | `count({__name__!=""})`               | Counts the number of series with recent samples by scanning the TSDB index. This query is expensive and should be exposed through a recording rule.                                         |
+| Environment             | Metric                                | Description                                                                                                                                                                                   |
+| :---------------------- | :------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Prometheus**          | `prometheus_tsdb_head_series`         | Reports the number of active series currently stored in memory (the head block) of a single Prometheus instance. It includes series that have stopped receiving samples for up to one hour.   |
+| **Grafana Cloud**       | `grafanacloud_instance_active_series` | Tracks the number of [active series in your Grafana Cloud Metrics backend (Mimir](/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/metrics-invoice/)). |
+| **Prometheus or Mimir** | `count({__name__!=""})`               | Counts the number of series with recent samples by scanning the TSDB index. This query is expensive and should be exposed through a recording rule.                                           |
 
 ## Detect total active series near limits
 

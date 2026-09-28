@@ -74,13 +74,13 @@ For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack wi
 
 [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) enables you to manage the following alerting resources.
 
-| Alerting resource                                   | Terraform resource                                                                                                               |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/)                   | [grafana_rule_group](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/rule_group)                   |
+| Alerting resource                                                                                                        | Terraform resource                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/)                                                  | [grafana_rule_group](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/rule_group)                   |
 | [Contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/)                | [grafana_contact_point](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/contact_point)             |
-| [Notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) | [grafana_message_template](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/message_template)       |
+| [Notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/)       | [grafana_message_template](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/message_template)       |
 | [Notification policy tree](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/) | [grafana_notification_policy](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/notification_policy) |
-| [Mute timings](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/)                    | [grafana_mute_timing](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/mute_timing)                 |
+| [Mute timings](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/)                           | [grafana_mute_timing](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/mute_timing)                 |
 
 In this section, we'll create Terraform configurations for each alerting resource and demonstrate how to link them together.
 
