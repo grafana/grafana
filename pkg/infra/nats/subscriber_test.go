@@ -34,6 +34,7 @@ func TestSubscriber(t *testing.T) {
 		}
 		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(cfg, nil))
 		t.Cleanup(s.close)
+		require.NoError(t, s.starting(context.Background()))
 
 		sub, err := s.Subscribe(context.Background(), "grafana.test.a", func(string, []byte) {})
 		require.NoError(t, err)
@@ -119,6 +120,7 @@ func TestSubscriber(t *testing.T) {
 		cfg := setting.NATSSettings{Enabled: true}
 		sub := newSubscriber(log.NewNopLogger(), m, newTestConfig(srv, cfg))
 		t.Cleanup(sub.close)
+		require.NoError(t, sub.starting(context.Background()))
 		pub := newTestPublisher(t, srv)
 
 		received := make(chan struct{}, 1)
@@ -155,8 +157,6 @@ func TestSubscriber(t *testing.T) {
 	t.Run("subscribe honours a cancelled context", func(t *testing.T) {
 		sub := newTestSubscriber(t, startTestServer(t))
 
-		// Warm the connection so get() succeeds and the cancellation is observed by
-		// the explicit ctx.Err() check rather than during connect.
 		_, err := sub.Subscribe(context.Background(), "grafana.test.a", func(string, []byte) {})
 		require.NoError(t, err)
 

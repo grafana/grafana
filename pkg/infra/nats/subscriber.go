@@ -71,7 +71,7 @@ type SubscriberService struct {
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
 	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
 	s := &SubscriberService{connection: conn, metrics: m}
-	s.NamedService = services.NewBasicService(nil, s.running, s.stopping).WithName(subscriberName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(subscriberName)
 	return s
 }
 
@@ -96,11 +96,6 @@ func (s *SubscriberService) Run(ctx context.Context) error {
 		return err
 	}
 	return s.AwaitTerminated(ctx)
-}
-
-func (s *SubscriberService) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
 }
 
 // stopping drains the connection, which auto-unsubscribes any active

@@ -42,7 +42,7 @@ func TestReconcileSkipsGroupsNotAccepted(t *testing.T) {
 		&fakeBackend{group: metav1.APIGroup{Name: "dashboard.grafana.app"}, key: "1"},
 		&fakeBackend{group: metav1.APIGroup{Name: "grafana-example-app"}, key: "1"},
 	}}
-	router := NewGrafanaRouter(loader)
+	router := NewGrafanaRouter(loader, nil)
 	router.acceptGroup = isPluginAPIGroup
 	require.NoError(t, router.reconcile(t.Context()))
 	require.False(t, router.KnownGroup("dashboard.grafana.app"))
@@ -53,7 +53,7 @@ func TestReconcileRecoversFromBackendPanic(t *testing.T) {
 	router := NewGrafanaRouter(&mutableLoader{backends: []Backend{
 		panickingBackend{group: "grafana-broken-app"},
 		&fakeBackend{group: metav1.APIGroup{Name: "grafana-example-app"}, key: "1"},
-	}})
+	}}, nil)
 	err := router.reconcile(t.Context())
 	require.ErrorContains(t, err, `group "grafana-broken-app"`)
 	require.ErrorContains(t, err, "panic: boom")
@@ -75,6 +75,10 @@ func TestMiddlewareServesOnlyPluginGroups(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.Target = tc.target
+			if len(tc.target) > 0 {
+				cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+				cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+			}
 			svc, err := ProvideService(cfg, featuremgmt.WithFeatures(tc.flags...), stubLoader{}, prometheus.NewRegistry())
 			require.NoError(t, err)
 			require.Equal(t, tc.restricts, svc.router.acceptGroup != nil)
@@ -111,6 +115,7 @@ func (l *mutableLoader) Notify(context.Context) (<-chan struct{}, error) {
 type panickingBackend struct{ group string }
 
 func (b panickingBackend) Key() string            { return "1" }
+func (b panickingBackend) Source() string         { return "test" }
 func (b panickingBackend) Group() metav1.APIGroup { return metav1.APIGroup{Name: b.group} }
 func (b panickingBackend) Load(context.Context) (http.Handler, error) {
 	panic(errors.New("boom"))

@@ -55,6 +55,11 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
   Without a requester (standalone), they pass through. `X-Forwarded-*` is always set.
+  - Identity-assertion headers (`X-Remote-User`, `X-Remote-Group`, `X-Remote-Extra-*`,
+    `X-Webauth-*`) are always dropped: the router never asserts identity that way.
+  - With a requester, `Impersonate-*` and `X-Grafana-Org-Id` are dropped too, so only the
+    requester's tokens decide who the request acts as. Without one, the backend authorizes them
+    against the caller's own credentials.
 - **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
   `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
   function that logs has no context, pass one in from its caller (a request's `Context()`, or the
@@ -141,8 +146,13 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
-- **Metrics:** unknown groups are labelled `unknown` (`KnownGroup`) so arbitrary client paths can't
-  create new series. The duration histogram is labelled by group, verb and status code.
+- **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric and example dashboard
+  queries; keep it in sync. Request metrics are recorded in `metrics.go`; route state is read at
+  scrape time by `routerCollector` (also in `metrics.go`), from atomics and the snapshot, so reconcile and
+  serving never update gauges. Labels stay bounded: `group` only for served groups, a fixed set of
+  values for `route`, `reason`, `state` and `result`; any other group is `unknown` (`KnownGroup`). In middleware mode, only requests the router
+  owns (`owns`) are instrumented. New backends must name their source (`Backend.Source`), and new sources
+  should report through `loaderStatus`, or their loads don't appear in the metrics.
 
 ## Lifecycle
 
