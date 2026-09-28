@@ -128,7 +128,7 @@ Use [alert rule evaluation](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamental
 
    The [pending period](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period) is the period in which an alert rule can be in breach of the condition until it fires.
 
-   Once a condition is met, the alert goes into the **Pending** state. If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
+   After a condition is met, the alert goes into the **Pending** state. If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
 
 ### Configure labels and notifications
 
