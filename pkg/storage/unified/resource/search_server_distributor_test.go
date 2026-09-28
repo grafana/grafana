@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -263,7 +264,7 @@ func (e embeddedTestError) Error() string { return e.res.Message }
 
 func (c *failoverTestClient) Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	if err := c.state.record(c.id); err != nil {
-		if e, ok := err.(embeddedTestError); ok {
+		if e, ok := errors.AsType[embeddedTestError](err); ok {
 			return &resourcepb.ResourceSearchResponse{Error: e.res}, nil
 		}
 		return nil, err
