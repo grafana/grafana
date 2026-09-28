@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Input, FieldValidationMessage, Icon, Text } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 import { SIDEBAR_CARD_DATA_ATTR } from '../../constants';
 
@@ -134,9 +135,9 @@ export function EditableName({
           {value || placeholder || ''}
         </Text>
       </span>
-      <div className={styles.hoverAction}>
+      <span className={styles.hoverAction}>
         <Icon name="pen" size="sm" />
-      </div>
+      </span>
     </button>
   );
 }
@@ -146,33 +147,26 @@ function isSidebarCardElement(target: EventTarget | null) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const fadeToHoverBackground = [
-    `linear-gradient(270deg, ${theme.colors.action.hover} 80%, transparent)`,
-    `linear-gradient(270deg, ${theme.colors.background.secondary} 80%, transparent)`,
-  ].join(', ');
-
   // Keep on a plain element: Icon runs className through emotion's cx, which merges
   // registered classes into a new one, so this name would never reach the DOM.
   const hoverAction = css({
-    position: 'absolute',
-    inset: '0 0 0 auto',
     display: 'flex',
-    alignItems: 'center',
-    padding: theme.spacing(0, 0.5, 0, 1.5),
     color: theme.colors.text.secondary,
-    background: fadeToHoverBackground,
     opacity: 0,
-    transform: 'translateX(8px)',
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+    [theme.transitions.handleMotion('no-preference')]: {
+      transform: `translateX(${theme.spacing(1)})`,
       transition: theme.transitions.create(['opacity', 'transform']),
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      transition: theme.transitions.create('opacity'),
     },
   });
 
   return {
     nameWrapper: css({
-      position: 'relative',
       display: 'flex',
       alignItems: 'center',
+      gap: theme.spacing(0.75),
       cursor: 'pointer',
       // Dashed at rest so hover only changes the color; border-style cannot transition.
       border: '1px dashed transparent',
@@ -192,9 +186,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         borderColor: theme.colors.border.strong,
       },
 
-      '&:focus-visible': {
-        border: `2px solid ${theme.colors.primary.border}`,
-      },
+      '&:focus-visible': getFocusStyles(theme),
 
       [`&:hover .${hoverAction}, &:focus-visible .${hoverAction}`]: {
         opacity: 1,
@@ -204,8 +196,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     nameText: css({
       display: 'block',
       maxWidth: '180px',
-      // Keeps a single-character name clear of the icon and its gradient.
-      minWidth: theme.spacing(4),
+      minWidth: 0,
       overflow: 'hidden',
     }),
     placeholderText: css({
