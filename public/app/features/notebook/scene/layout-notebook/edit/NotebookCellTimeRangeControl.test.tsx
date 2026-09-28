@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from 'test/test-utils';
 
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { Portal, PortalContainer } from '@grafana/ui';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 
@@ -71,6 +72,19 @@ describe('NotebookCellTimeRangeControl', () => {
     expect(screen.queryByRole('checkbox', { name: /Last/ })).not.toBeInTheDocument();
   });
 
+  it('closes the popover when the clear button is clicked while it is open', async () => {
+    const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now' }));
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    await user.click(screen.getByRole('button', { name: 'Locked: Last 24 hours' }));
+    expect(await screen.findByRole('checkbox', { name: 'Last 24 hours' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Sync back to notebook time range' }));
+
+    expect(cell.state.$timeRange).toBeUndefined();
+    expect(screen.queryByRole('checkbox', { name: 'Last 24 hours' })).not.toBeInTheDocument();
+  });
+
   it('closes on clicking the trigger again', async () => {
     const cell = buildCell();
     const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
@@ -87,6 +101,7 @@ describe('NotebookCellTimeRangeControl', () => {
     const cell = buildCell();
     const { user } = render(
       <div>
+        <PortalContainer />
         <NotebookCellTimeRangeControl cell={cell} />
         <button>Outside</button>
       </div>
@@ -99,12 +114,41 @@ describe('NotebookCellTimeRangeControl', () => {
     expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
   });
 
-  // The backdrop only becomes visible below the mobile breakpoint, which jsdom won't match, so
-  // userEvent's visibility check would refuse the click — fireEvent bypasses that to exercise the
-  // actual dismiss logic (the backdrop must count as "outside" the trigger, not just any click).
+  it('does not close when clicking a portaled element, e.g. the calendar', async () => {
+    const cell = buildCell();
+    const { user, rerender } = render(
+      <div>
+        <PortalContainer />
+        <NotebookCellTimeRangeControl cell={cell} />
+      </div>
+    );
+
+    rerender(
+      <div>
+        <PortalContainer />
+        <NotebookCellTimeRangeControl cell={cell} />
+        <Portal>
+          <button>Portaled calendar day</button>
+        </Portal>
+      </div>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Update time range' }));
+    expect(await screen.findByRole('checkbox', { name: 'Last 5 minutes' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Portaled calendar day' }));
+
+    expect(screen.getByRole('checkbox', { name: 'Last 5 minutes' })).toBeInTheDocument();
+  });
+
   it('treats a click on the mobile backdrop as outside, closing the popover', async () => {
     const cell = buildCell();
-    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+    const { user } = render(
+      <div>
+        <PortalContainer />
+        <NotebookCellTimeRangeControl cell={cell} />
+      </div>
+    );
 
     await user.click(screen.getByRole('button', { name: 'Update time range' }));
     expect(await screen.findByRole('checkbox', { name: 'Last 5 minutes' })).toBeInTheDocument();

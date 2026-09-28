@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
-import { Icon, IconButton, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, getPortalContainer, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { TimePickerContent } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerContent';
 import { getQuickOptions } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
@@ -48,7 +48,8 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
       isOpen: open,
       onClose: () => setOpen(false),
       isDismissable: true,
-      shouldCloseOnInteractOutside: (element) => !triggerRef.current?.contains(element),
+      shouldCloseOnInteractOutside: (element) =>
+        !triggerRef.current?.contains(element) && !getPortalContainer().contains(element),
     },
     overlayRef
   );
@@ -111,7 +112,10 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
               size="sm"
               tooltip={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
               aria-label={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
-              onClick={() => cell.onTimeRangeChange(undefined)}
+              onClick={() => {
+                cell.onTimeRangeChange(undefined);
+                setOpen(false);
+              }}
             />
           </span>
         ) : (
