@@ -55,6 +55,7 @@ The following features are not available on-premise:
 - SQL table discovery
 - Automations and sandbox settings
 - Anonymous access to the Assistant app
+- Assistant Watchers
 
 ## Use Assistant on-prem
 
