@@ -325,27 +325,56 @@ func TestOpenAPIGroupVersionTooLargeToCache(t *testing.T) {
 	s := buildRouterWithBackend("test-app", "1", upstream)
 	for range 2 {
 		res := httptest.NewRecorder()
-		s.HandleFunc(res, httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test-app/v1", nil), http.NotFoundHandler())
+		s.HandleFunc(res, newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test-app/v1", nil), http.NotFoundHandler())
 		require.Equal(t, http.StatusOK, res.Code)
 		require.Equal(t, body, res.Body.String(), "the whole document still reaches the client")
-		require.Empty(t, res.Header().Get("ETag"))
+		require.Empty(t, res.Header().Get("ETag"), "an uncached document has no router ETag")
 	}
 	require.EqualValues(t, 2, upstream.hits.Load(), "a document past the limit is not cached")
 }
 
 func TestOpenAPIGroupVersionIsReadOnly(t *testing.T) {
-	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
-	s := buildRouterWithBackend("test-app", "1", upstream)
-	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch} {
-		res := httptest.NewRecorder()
-		s.HandleFunc(res, httptest.NewRequest(method, "/openapi/v3/apis/test-app/v1", nil), http.NotFoundHandler())
-		require.Equal(t, http.StatusMethodNotAllowed, res.Code, method)
-		require.Equal(t, "GET, HEAD", res.Header().Get("Allow"))
+	const path = "/openapi/v3/apis/test-app/v1"
+	for _, tc := range []struct {
+		method        string
+		authenticated bool
+		status        int
+		reachesBack   bool
+	}{
+		{method: http.MethodGet, authenticated: true, status: http.StatusOK, reachesBack: true},
+		{method: http.MethodHead, authenticated: true, status: http.StatusOK, reachesBack: true},
+		{method: http.MethodPost, authenticated: true, status: http.StatusMethodNotAllowed},
+		{method: http.MethodPut, authenticated: true, status: http.StatusMethodNotAllowed},
+		{method: http.MethodPatch, authenticated: true, status: http.StatusMethodNotAllowed},
+		{method: http.MethodDelete, authenticated: true, status: http.StatusMethodNotAllowed},
+		// Authentication runs first, so an unauthenticated caller learns nothing
+		// about the document, including which methods it allows.
+		{method: http.MethodPost, status: http.StatusUnauthorized},
+	} {
+		name := tc.method
+		if !tc.authenticated {
+			name += " unauthenticated"
+		}
+		t.Run(name, func(t *testing.T) {
+			upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
+			s := buildRouterWithBackend("test-app", "1", upstream)
+			req := httptest.NewRequest(tc.method, path, nil)
+			if tc.authenticated {
+				req = newAuthenticatedRequest(tc.method, path, nil)
+			}
+			res := httptest.NewRecorder()
+			s.HandleFunc(res, req, http.NotFoundHandler())
+			require.Equal(t, tc.status, res.Code)
+			if tc.status == http.StatusMethodNotAllowed {
+				require.Equal(t, "GET, HEAD", res.Header().Get("Allow"))
+			}
+			wantHits := int64(0)
+			if tc.reachesBack {
+				wantHits = 1
+			}
+			require.Equal(t, wantHits, upstream.hits.Load(), "backend hits")
+		})
 	}
-	res := httptest.NewRecorder()
-	s.HandleFunc(res, httptest.NewRequest(http.MethodHead, "/openapi/v3/apis/test-app/v1", nil), http.NotFoundHandler())
-	require.Equal(t, http.StatusOK, res.Code)
-	require.EqualValues(t, 1, upstream.hits.Load(), "only the HEAD reached the backend")
 }
 
 func TestReadDiscoveryTooLarge(t *testing.T) {
