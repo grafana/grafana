@@ -6,10 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
