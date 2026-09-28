@@ -233,11 +233,10 @@ const LogsContainer = memo(function LogsContainer({
     [dsInstances]
   );
 
-  const getFieldLinks: GetFieldLinksFn = useCallback(
-    (field, rowIndex, dataFrame, vars) => {
-      return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame, vars });
-    },
-    [range, splitOpenFn]
+  const getFieldLinks = useCallback<GetFieldLinksFn>(
+    (field, rowIndex, dataFrame, vars) =>
+      getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame, vars }),
+    [splitOpenFn, range]
   );
 
   const logDetailsFilterAvailable = useMemo(
