@@ -2,64 +2,62 @@ package pipeline
 
 import (
 	"context"
-	"net"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
-	collectortrace "go.opentelemetry.io/proto/otlp/collector/trace/v1"
-	"google.golang.org/grpc"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )
 
-type traceReceiver struct {
-	collectortrace.UnimplementedTraceServiceServer
-	requests chan *collectortrace.ExportTraceServiceRequest
-}
+func TestPipelineTracingUsesConfiguredProvider(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		enabled string
+		sampler sdktrace.Sampler
+		want    int
+	}{
+		{name: "enabled", enabled: "1", sampler: sdktrace.AlwaysSample(), want: 2},
+		{name: "disabled", sampler: sdktrace.AlwaysSample()},
+		{name: "respects sampling", enabled: "1", sampler: sdktrace.NeverSample()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("GF_LIVE_PIPELINE_TRACE", tc.enabled)
+			t.Setenv("GF_LIVE_PIPELINE_DEV", "")
+			recorder := tracetest.NewSpanRecorder()
+			tp := sdktrace.NewTracerProvider(
+				sdktrace.WithSpanProcessor(recorder),
+				sdktrace.WithSampler(tc.sampler),
+				sdktrace.WithResource(resource.NewSchemaless(attribute.String("service.name", "configured-grafana"))),
+			)
+			previous := otel.GetTracerProvider()
+			otel.SetTracerProvider(tp)
+			t.Cleanup(func() {
+				otel.SetTracerProvider(previous)
+				require.NoError(t, tp.Shutdown(context.Background()))
+			})
 
-func (r *traceReceiver) Export(_ context.Context, req *collectortrace.ExportTraceServiceRequest) (*collectortrace.ExportTraceServiceResponse, error) {
-	r.requests <- req
-	return &collectortrace.ExportTraceServiceResponse{}, nil
-}
+			p, err := New(&testRuleGetter{})
+			require.NoError(t, err)
+			ctx, parent := tp.Tracer("test").Start(context.Background(), "parent")
+			_, err = p.ProcessInput(ctx, "default", "test", []byte("{}"))
+			require.NoError(t, err)
 
-func TestTracerProviderExportsOTLP(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	server := grpc.NewServer()
-	receiver := &traceReceiver{requests: make(chan *collectortrace.ExportTraceServiceRequest, 1)}
-	collectortrace.RegisterTraceServiceServer(server, receiver)
-	t.Cleanup(server.Stop)
-	go func() { _ = server.Serve(listener) }()
-
-	t.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://"+listener.Addr().String())
-	t.Setenv("OTEL_TRACES_SAMPLER", "always_on")
-	tp, err := tracerProvider()
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		require.NoError(t, tp.Shutdown(ctx))
-	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_, span := tp.Tracer("gf.live.pipeline").Start(ctx, "pipeline-test")
-	span.End()
-	require.NoError(t, tp.ForceFlush(ctx))
-
-	select {
-	case req := <-receiver.requests:
-		require.Len(t, req.ResourceSpans, 1)
-		resource := req.ResourceSpans[0]
-		require.Len(t, resource.ScopeSpans, 1)
-		require.Equal(t, "gf.live.pipeline", resource.ScopeSpans[0].Scope.Name)
-		require.Len(t, resource.ScopeSpans[0].Spans, 1)
-		require.Equal(t, "pipeline-test", resource.ScopeSpans[0].Spans[0].Name)
-		attrs := map[string]string{}
-		for _, attr := range resource.Resource.Attributes {
-			attrs[attr.Key] = attr.Value.GetStringValue()
-		}
-		require.Equal(t, "grafana", attrs["service.name"])
-	case <-ctx.Done():
-		t.Fatal("OTLP receiver did not receive spans")
+			spans := recorder.Ended()
+			require.Len(t, spans, tc.want)
+			for _, span := range spans {
+				require.Equal(t, parent.SpanContext().TraceID(), span.SpanContext().TraceID())
+				require.Equal(t, "github.com/grafana/grafana/pkg/services/live/pipeline", span.InstrumentationScope().Name)
+				require.Contains(t, span.Resource().Attributes(), attribute.String("service.name", "configured-grafana"))
+			}
+			if tc.want > 0 {
+				require.Equal(t, "live.pipeline.process_input", spans[1].Name())
+				require.Equal(t, parent.SpanContext().SpanID(), spans[1].Parent().SpanID())
+				require.Equal(t, spans[1].SpanContext().SpanID(), spans[0].Parent().SpanID())
+			}
+			parent.End()
+		})
 	}
 }

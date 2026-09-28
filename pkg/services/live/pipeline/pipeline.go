@@ -6,12 +6,9 @@ import (
 	"fmt"
 	"os"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/sdk/resource"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -21,35 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/live/model"
 )
-
-const (
-	service     = "grafana"
-	environment = "dev"
-	id          = 1
-)
-
-// tracerProvider returns an OpenTelemetry TracerProvider configured to use
-// the OTLP/gRPC exporter that sends spans to the configured collector. The returned
-// TracerProvider will also use a Resource configured with all the information
-// about the application.
-func tracerProvider() (*tracesdk.TracerProvider, error) {
-	exp, err := otlptracegrpc.New(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	tp := tracesdk.NewTracerProvider(
-		// Always be sure to batch in production.
-		tracesdk.WithBatcher(exp),
-		// Record information about this application in an Resource.
-		tracesdk.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(service),
-			attribute.String("environment", environment),
-			attribute.Int64("ID", id),
-		)),
-	)
-	return tp, nil
-}
 
 // ChannelData is a wrapper over raw data with additional channel information.
 // Channel is used for rule routing, if the channel is empty then data processing
@@ -191,14 +159,9 @@ func New(ruleGetter ChannelRuleGetter) (*Pipeline, error) {
 	}
 
 	if os.Getenv("GF_LIVE_PIPELINE_TRACE") != "" {
-		// Development tracing uses OTEL_EXPORTER_OTLP_* environment variables
-		// so the collector endpoint and TLS settings can be configured.
-		tp, err := tracerProvider()
-		if err != nil {
-			return nil, err
-		}
-		tracer := tp.Tracer("gf.live.pipeline")
-		p.tracer = tracer
+		// Keep payload and frame capture opt-in while sharing Grafana's
+		// configured exporter, sampling, and provider lifecycle.
+		p.tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/live/pipeline")
 	}
 
 	if os.Getenv("GF_LIVE_PIPELINE_DEV") != "" {
