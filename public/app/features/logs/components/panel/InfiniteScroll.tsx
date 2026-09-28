@@ -11,7 +11,7 @@ import {
   canScrollBottom,
   canScrollTop,
   getVisibleRange,
-  type LoadMoreLogsRange,
+  type LogsNanoSecondTimeRange,
   loadMoreRangeFromVisible,
   ScrollDirection,
   shouldLoadMore,
@@ -35,7 +35,7 @@ export interface Props {
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteScrollMode: InfiniteScrollMode;
   loadingState?: LoadingState;
-  loadMore?: LoadMoreLogsType;
+  logsInfiniteScrollLoadMore?: LogsInfiniteScrollLoadMoreType;
   logs: LogListModel[];
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
@@ -50,9 +50,9 @@ export interface Props {
 
 type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll-top' | 'pre-scroll-bottom' | 'loading';
 export type InfiniteScrollMode = 'interval' | 'unlimited';
-export type LoadMoreLogsType =
-  | ((range: LoadMoreLogsRange) => void)
-  | ((range: LoadMoreLogsRange, scrollDirection: ScrollDirection) => void);
+export type LogsInfiniteScrollLoadMoreType =
+  | ((nanoSecondTimeRange: LogsNanoSecondTimeRange) => void)
+  | ((nanoSecondTimeRange: LogsNanoSecondTimeRange, scrollDirection: ScrollDirection) => void);
 
 export const InfiniteScroll = ({
   children,
@@ -60,7 +60,7 @@ export const InfiniteScroll = ({
   handleOverflow,
   infiniteScrollMode,
   loadingState,
-  loadMore,
+  logsInfiniteScrollLoadMore,
   logs,
   onClick,
   scrollElement,
@@ -143,7 +143,7 @@ export const InfiniteScroll = ({
     }
   }, [autoScroll, requestInFlight, setInitialScrollPosition]);
 
-  const onLoadMore = useCallback(
+  const onLogsInfiniteScrollLoadMore = useCallback(
     (scrollDirection: ScrollDirection) => {
       const visibleRange = getVisibleRange(logs);
       const newRange =
@@ -163,25 +163,28 @@ export const InfiniteScroll = ({
       // Snapshot the row count so the completion effect can tell whether new rows arrived.
       loadMoreCountRef.current = logs.length;
       setInfiniteLoaderState('loading');
-      loadMore?.(newRange ?? loadMoreRangeFromVisible(visibleRange, scrollDirection, sortOrder), scrollDirection);
+      logsInfiniteScrollLoadMore?.(
+        newRange ?? loadMoreRangeFromVisible(visibleRange, scrollDirection, sortOrder),
+        scrollDirection
+      );
 
       reportInteraction('grafana_logs_infinite_scrolling', {
         direction: scrollDirection,
         sort_order: sortOrder,
       });
     },
-    [infiniteScrollMode, loadMore, logs, sortOrder, timeRange, timeZone]
+    [infiniteScrollMode, logsInfiniteScrollLoadMore, logs, sortOrder, timeRange, timeZone]
   );
 
   useEffect(() => {
-    if (!scrollElement || !loadMore) {
+    if (!scrollElement || !logsInfiniteScrollLoadMore) {
       return;
     }
 
     function handleScroll(event: Event | WheelEvent) {
       if (
         !scrollElement ||
-        !loadMore ||
+        !logsInfiniteScrollLoadMore ||
         !logs.length ||
         noScrollRef.current === undefined ||
         noScrollRef.current === true
@@ -202,7 +205,7 @@ export const InfiniteScroll = ({
         return;
       }
       if (scrollDirection !== ScrollDirection.NoScroll) {
-        onLoadMore(scrollDirection);
+        onLogsInfiniteScrollLoadMore(scrollDirection);
       }
     }
 
@@ -213,7 +216,14 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [infiniteLoaderState, infiniteScrollMode, loadMore, logs.length, onLoadMore, scrollElement]);
+  }, [
+    infiniteLoaderState,
+    infiniteScrollMode,
+    logsInfiniteScrollLoadMore,
+    logs.length,
+    onLogsInfiniteScrollLoadMore,
+    scrollElement,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -227,12 +237,12 @@ export const InfiniteScroll = ({
     if (resetStateTimeout.current) {
       clearTimeout(resetStateTimeout.current);
     }
-    onLoadMore(ScrollDirection.Top);
-  }, [onLoadMore]);
+    onLogsInfiniteScrollLoadMore(ScrollDirection.Top);
+  }, [onLogsInfiniteScrollLoadMore]);
 
   const loadMoreBottom = useCallback(() => {
-    onLoadMore(ScrollDirection.Bottom);
-  }, [onLoadMore]);
+    onLogsInfiniteScrollLoadMore(ScrollDirection.Bottom);
+  }, [onLogsInfiniteScrollLoadMore]);
 
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
@@ -311,7 +321,8 @@ export const InfiniteScroll = ({
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uniqueKey : index.toString()), [logs]);
 
-  const itemCount = logs.length && loadMore && infiniteLoaderState !== 'idle' ? logs.length + 1 : logs.length;
+  const itemCount =
+    logs.length && logsInfiniteScrollLoadMore && infiniteLoaderState !== 'idle' ? logs.length + 1 : logs.length;
 
   return (
     <>

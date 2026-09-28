@@ -25,7 +25,7 @@ const defaultRange = rangeUtil.convertRawToRange({
 const theme = createTheme();
 const virtualization = new LogLineVirtualization(theme, 'default');
 const defaultProps: Omit<Props, 'children' | 'scrollElement'> = {
-  loadMore: jest.fn(),
+  logsInfiniteScrollLoadMore: jest.fn(),
   timeRange: defaultRange,
   logs: [],
   sortOrder: LogsSortOrder.Descending,
@@ -86,7 +86,7 @@ function setup(
       sortOrder={order}
       logs={logs}
       scrollElement={element as unknown as HTMLDivElement}
-      loadMore={loadMoreMock}
+      logsInfiniteScrollLoadMore={loadMoreMock}
       infiniteScrollMode={infiniteScrollMode}
     >
       {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
@@ -339,7 +339,7 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
         sortOrder={LogsSortOrder.Ascending}
         logs={currentLogs}
         scrollElement={element as unknown as HTMLDivElement}
-        loadMore={loadMore}
+        logsInfiniteScrollLoadMore={loadMore}
         loadingState={loadingState}
         infiniteScrollMode="interval"
       >

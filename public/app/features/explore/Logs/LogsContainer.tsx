@@ -29,10 +29,10 @@ import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { type ExploreItemState } from 'app/types/explore';
 import { type StoreState } from 'app/types/store';
 
-import { type LoadMoreLogsRange } from '../../logs/components/infiniteScrollUtils';
+import { type LogsNanoSecondTimeRange } from '../../logs/components/infiniteScrollUtils';
 import { getTimeZone } from '../../profile/state/selectors';
 import { loadSupplementaryQueryData, selectIsWaitingForData, setSupplementaryQueryEnabled } from '../state/query';
-import { updateTimeRange, loadMoreLogs } from '../state/time';
+import { updateTimeRange, logsInfiniteScrollLoadMore } from '../state/time';
 import { LiveTailControls } from '../useLiveTailControls';
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -95,7 +95,7 @@ const LogsContainer = memo(function LogsContainer({
   onClickFilterOutString,
   eventBus,
   updateTimeRange,
-  loadMoreLogs,
+  logsInfiniteScrollLoadMore,
   loadSupplementaryQueryData,
   setSupplementaryQueryEnabled,
 }: LogsContainerProps) {
@@ -149,8 +149,8 @@ const LogsContainer = memo(function LogsContainer({
     updateTimeRange({ exploreId, absoluteRange });
   }
 
-  function handleLoadMoreLogs(absoluteRange: LoadMoreLogsRange) {
-    loadMoreLogs({ exploreId, absoluteRange });
+  function handleLogsInfiniteScrollLoadMore(nanoSecondTimeRange: LogsNanoSecondTimeRange) {
+    logsInfiniteScrollLoadMore({ exploreId, nanoSecondTimeRange });
   }
 
   function getQuery(
@@ -295,7 +295,7 @@ const LogsContainer = memo(function LogsContainer({
           loadingState={loadingState}
           loadLogsVolumeData={loadLogsVolumeData}
           onChangeTime={onChangeTime}
-          loadMoreLogs={handleLoadMoreLogs}
+          logsInfiniteScrollLoadMore={handleLogsInfiniteScrollLoadMore}
           onClickFilterLabel={logDetailsFilterAvailable() ? onClickFilterLabel : undefined}
           onClickFilterOutLabel={logDetailsFilterAvailable() ? onClickFilterOutLabel : undefined}
           onStartScanning={onStartScanning}
@@ -366,7 +366,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 
 const mapDispatchToProps = {
   updateTimeRange,
-  loadMoreLogs,
+  logsInfiniteScrollLoadMore,
   loadSupplementaryQueryData,
   setSupplementaryQueryEnabled,
 };

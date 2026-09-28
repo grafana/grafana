@@ -63,7 +63,7 @@ import { type ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
 
 import { getDefaultFieldSelectorWidth } from '../../logs/components/fieldSelector/FieldSelector';
-import { type LoadMoreLogsRange } from '../../logs/components/infiniteScrollUtils';
+import { type LogsNanoSecondTimeRange } from '../../logs/components/infiniteScrollUtils';
 import { isLokiQuery } from '../../loki-helpers/queryUtils';
 import { LokiQueryDirection } from '../../loki-helpers/types';
 import {
@@ -131,7 +131,7 @@ interface Props extends Themeable2 {
   range: TimeRange;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
-  loadMoreLogs?(range: LoadMoreLogsRange): void;
+  logsInfiniteScrollLoadMore?(nanoSecondTimeRange: LogsNanoSecondTimeRange): void;
   onPinLineCallback?: () => void;
 }
 
@@ -177,7 +177,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     getRowContext,
     getLogRowContextUi,
     getRowContextQuery,
-    loadMoreLogs,
+    logsInfiniteScrollLoadMore,
     panelState,
     eventBus,
     onPinLineCallback,
@@ -946,7 +946,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   getRowContextQuery={getRowContextQuery}
                   isLabelFilterActive={props.isFilterLabelActive}
                   loadingState={loadingState}
-                  loadMore={infiniteScrollAvailable ? loadMoreLogs : undefined}
+                  logsInfiniteScrollLoadMore={infiniteScrollAvailable ? logsInfiniteScrollLoadMore : undefined}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}
                   logsMeta={logsMeta}

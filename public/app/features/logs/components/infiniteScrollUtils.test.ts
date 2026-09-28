@@ -1,12 +1,7 @@
 import { dateTime, rangeUtil, type DataQuery } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
-import {
-  canScrollBottom,
-  canScrollTop,
-  getVisibleRange,
-  withLokiInfiniteScrollBound,
-} from './infiniteScrollUtils';
+import { canScrollBottom, canScrollTop, getVisibleRange, withLokiNsBound } from './infiniteScrollUtils';
 import { createLogRow } from './mocks/logRow';
 
 const timeZone = 'utc';
@@ -69,11 +64,11 @@ describe('canScrollTop', () => {
   });
 });
 
-describe('withLokiInfiniteScrollBound', () => {
+describe('withLokiNsBound', () => {
   const lokiQuery: DataQuery = { refId: 'A', datasource: { type: 'loki', uid: 'loki' } };
 
   it('copies endNs onto a Loki query and omits startNs', () => {
-    expect(withLokiInfiniteScrollBound(lokiQuery, { from: 1, to: 2, endNs: '20000000010' })).toEqual({
+    expect(withLokiNsBound(lokiQuery, { from: 1, to: 2, endNs: '20000000010' })).toEqual({
       refId: 'A',
       datasource: { type: 'loki', uid: 'loki' },
       endNs: '20000000010',
@@ -81,13 +76,7 @@ describe('withLokiInfiniteScrollBound', () => {
   });
 
   it('copies startNs onto a Loki query and omits endNs', () => {
-    expect(
-      withLokiInfiniteScrollBound(
-        { refId: 'A' },
-        { from: 1, to: 2, startNs: '40000000000' },
-        'loki'
-      )
-    ).toEqual({
+    expect(withLokiNsBound({ refId: 'A' }, { from: 1, to: 2, startNs: '40000000000' }, 'loki')).toEqual({
       refId: 'A',
       startNs: '40000000000',
     });
@@ -95,6 +84,6 @@ describe('withLokiInfiniteScrollBound', () => {
 
   it('leaves a non-Loki query unchanged', () => {
     const query: DataQuery = { refId: 'B', datasource: { type: 'loki-not', uid: 'other' } };
-    expect(withLokiInfiniteScrollBound(query, { from: 1, to: 2, endNs: '20000000010' })).toBe(query);
+    expect(withLokiNsBound(query, { from: 1, to: 2, endNs: '20000000010' })).toBe(query);
   });
 });

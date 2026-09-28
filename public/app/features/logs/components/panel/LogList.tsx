@@ -27,7 +27,7 @@ import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LogListFieldSelector } from '../fieldSelector/LogListFieldSelector';
 
-import { type InfiniteScrollMode, InfiniteScroll, type LoadMoreLogsType } from './InfiniteScroll';
+import { type InfiniteScrollMode, InfiniteScroll, type LogsInfiniteScrollLoadMoreType } from './InfiniteScroll';
 import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsContext';
 import { getGridTemplateColumns, type LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, type LogLineDetailsMode } from './LogLineDetails';
@@ -60,7 +60,7 @@ export interface Props {
   initialScrollPosition?: 'top' | 'bottom';
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   loadingState?: LoadingState;
-  loadMore?: LoadMoreLogsType;
+  logsInfiniteScrollLoadMore?: LogsInfiniteScrollLoadMoreType;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
@@ -143,7 +143,7 @@ export const LogList = ({
   initialScrollPosition = 'top',
   isLabelFilterActive,
   loadingState,
-  loadMore,
+  logsInfiniteScrollLoadMore,
   logLineMenuCustomItems,
   logs,
   logsMeta,
@@ -245,7 +245,7 @@ export const LogList = ({
             initialScrollPosition={initialScrollPosition}
             infiniteScrollMode={infiniteScrollMode}
             loadingState={loadingState}
-            loadMore={loadMore}
+            logsInfiniteScrollLoadMore={logsInfiniteScrollLoadMore}
             logs={logs}
             showControls={showControls}
             showFieldSelector={showFieldSelector}
@@ -267,7 +267,7 @@ const LogListComponent = ({
   initialScrollPosition = 'top',
   infiniteScrollMode = 'interval',
   loadingState,
-  loadMore,
+  logsInfiniteScrollLoadMore,
   logs,
   showControls,
   showFieldSelector,
@@ -553,7 +553,7 @@ const LogListComponent = ({
           infiniteScrollMode={infiniteScrollMode}
           loadingState={loadingState}
           logs={filteredLogs}
-          loadMore={loadMore}
+          logsInfiniteScrollLoadMore={logsInfiniteScrollLoadMore}
           onClick={handleLogLineClick}
           scrollElement={scrollRef.current}
           showTime={showTime}

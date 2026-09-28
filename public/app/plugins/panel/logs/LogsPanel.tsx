@@ -33,7 +33,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import { type LoadMoreLogsRange, withLokiInfiniteScrollBound } from 'app/features/logs/components/infiniteScrollUtils';
+import { type LogsNanoSecondTimeRange, withLokiNsBound } from 'app/features/logs/components/infiniteScrollUtils';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
@@ -397,8 +397,8 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     }
   }, [options.displayedFields]);
 
-  const loadMoreLogs = useCallback(
-    async (scrollRange: LoadMoreLogsRange) => {
+  const logsInfiniteScrollLoadMore = useCallback(
+    async (nanoSecondTimeRange: LogsNanoSecondTimeRange) => {
       if (!data.request || loadingRef.current) {
         return;
       }
@@ -411,7 +411,13 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
       let newSeries: DataFrame[] = [];
       let errored = false;
       try {
-        newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone, onNewLogsReceivedCallback);
+        newSeries = await requestMoreLogs(
+          dataSourcesMap,
+          panelData,
+          nanoSecondTimeRange,
+          timeZone,
+          onNewLogsReceivedCallback
+        );
         const panel = getDashboardSrv().getCurrent()?.getPanelById(id);
         if (panel?.transformations) {
           newSeries = await lastValueFrom(transformDataFrame(panel?.transformations, newSeries));
@@ -517,7 +523,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
             }
             logs={deduplicatedRows}
             logSupportsContext={showContextToggle}
-            loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+            logsInfiniteScrollLoadMore={enableInfiniteScrolling ? logsInfiniteScrollLoadMore : undefined}
             noInteractions={noInteractions}
             onClickFilterLabel={
               isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
@@ -597,7 +603,7 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
 async function requestMoreLogs(
   dataSourcesMap: Map<string, DataSourceApi>,
   panelData: PanelData,
-  timeRange: LoadMoreLogsRange,
+  nanoSecondTimeRange: LogsNanoSecondTimeRange,
   timeZone: TimeZone,
   onNewLogsReceived?: onNewLogsReceivedType
 ) {
@@ -606,8 +612,8 @@ async function requestMoreLogs(
   }
 
   const range: TimeRange = rangeUtil.convertRawToRange({
-    from: dateTimeForTimeZone(timeZone, timeRange.from),
-    to: dateTimeForTimeZone(timeZone, timeRange.to),
+    from: dateTimeForTimeZone(timeZone, nanoSecondTimeRange.from),
+    to: dateTimeForTimeZone(timeZone, nanoSecondTimeRange.to),
   });
 
   const targetGroups = groupBy(panelData.request.targets, 'datasource.uid');
@@ -624,12 +630,12 @@ async function requestMoreLogs(
         ...panelData.request,
         range,
         targets: targetGroups[uid].map((target) =>
-          withLokiInfiniteScrollBound(
+          withLokiNsBound(
             {
               ...target,
               supportingQueryType: SupportingQueryType.InfiniteScroll,
             },
-            timeRange,
+            nanoSecondTimeRange,
             dataSource.type
           )
         ),

@@ -49,7 +49,7 @@ import {
 import { createAsyncThunk, type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { withLokiInfiniteScrollBound, type LoadMoreLogsRange } from '../../logs/components/infiniteScrollUtils';
+import { withLokiNsBound, type LogsNanoSecondTimeRange } from '../../logs/components/infiniteScrollUtils';
 import { SupportingQueryType } from '../../loki-helpers/types';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
@@ -719,14 +719,14 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
 interface RunLoadMoreLogsQueriesOptions {
   exploreId: string;
-  absoluteRange: LoadMoreLogsRange;
+  nanoSecondTimeRange: LogsNanoSecondTimeRange;
 }
 /**
  * Dedicated action to run log queries requesting more results.
  */
 export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQueriesOptions>(
   'explore/runLoadMoreQueries',
-  async ({ exploreId, absoluteRange }, { dispatch, getState }) => {
+  async ({ exploreId, nanoSecondTimeRange }, { dispatch, getState }) => {
     dispatch(cancelQueries(exploreId));
 
     const { datasourceInstance, containerWidth, queryResponse } = getState().explore.panes[exploreId]!;
@@ -743,14 +743,14 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     const logQueries = queries
       .filter((query) => logRefIds.includes(query.refId))
       .map((query: DataQuery) =>
-        withLokiInfiniteScrollBound(
+        withLokiNsBound(
           {
             ...query,
             datasource: query.datasource || datasourceInstance?.getRef(),
             refId: query.refId,
             supportingQueryType: SupportingQueryType.InfiniteScroll,
           },
-          absoluteRange,
+          nanoSecondTimeRange,
           datasourceInstance?.type
         )
       );
@@ -768,8 +768,8 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     const range = getTimeRange(
       timeZone,
       {
-        from: dateTimeForTimeZone(timeZone, absoluteRange.from),
-        to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+        from: dateTimeForTimeZone(timeZone, nanoSecondTimeRange.from),
+        to: dateTimeForTimeZone(timeZone, nanoSecondTimeRange.to),
       },
       getFiscalYearStartMonth(getState().user)
     );
@@ -788,7 +788,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
           // This shouldn't be needed after https://github.com/grafana/grafana/issues/57327 is fixed
           combinePanelData(queryResponse, data),
           queryResponse,
-          decorateWithLogsResult({ absoluteRange, queries, deduplicate: true }),
+          decorateWithLogsResult({ absoluteRange: nanoSecondTimeRange, queries, deduplicate: true }),
           logQueries,
           correlations,
           showCorrelationEditorLinks,

@@ -77,7 +77,7 @@ export interface VisibleLogsRange extends AbsoluteTimeRange {
  * Millisecond range infinite scroll already sends, plus one Loki nanosecond bound.
  * The unused side is omitted so that edge stays the dashboard range.
  */
-export interface LoadMoreLogsRange extends AbsoluteTimeRange {
+export interface LogsNanoSecondTimeRange extends AbsoluteTimeRange {
   startNs?: string;
   endNs?: string;
 }
@@ -107,12 +107,16 @@ export function getVisibleRange(rows: LogRowModel[]): VisibleLogsRange {
   return visibleRange;
 }
 
-function getPrevRange(visibleRange: VisibleLogsRange, currentRange: TimeRange): LoadMoreLogsRange {
+function getPrevRange(visibleRange: VisibleLogsRange, currentRange: TimeRange): LogsNanoSecondTimeRange {
   // Loki's end is exclusive, so this line is not returned again and older lines in the same millisecond are.
   return { from: currentRange.from.valueOf(), to: visibleRange.from, endNs: visibleRange.oldestNs };
 }
 
-function getNextRange(visibleRange: VisibleLogsRange, currentRange: TimeRange, timeZone: TimeZone): LoadMoreLogsRange {
+function getNextRange(
+  visibleRange: VisibleLogsRange,
+  currentRange: TimeRange,
+  timeZone: TimeZone
+): LogsNanoSecondTimeRange {
   currentRange = updateCurrentRange(currentRange, timeZone);
   // Loki's start is inclusive, so begin one nanosecond after the newest visible line.
   return {
@@ -127,7 +131,7 @@ export function canScrollTop(
   currentRange: TimeRange,
   timeZone: TimeZone,
   sortOrder: LogsSortOrder
-): LoadMoreLogsRange | undefined {
+): LogsNanoSecondTimeRange | undefined {
   if (sortOrder === LogsSortOrder.Descending) {
     currentRange = updateCurrentRange(currentRange, timeZone);
     const canScroll = currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
@@ -143,7 +147,7 @@ export function canScrollBottom(
   currentRange: TimeRange,
   timeZone: TimeZone,
   sortOrder: LogsSortOrder
-): LoadMoreLogsRange | undefined {
+): LogsNanoSecondTimeRange | undefined {
   if (sortOrder === LogsSortOrder.Descending) {
     const canScroll = Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
     return canScroll ? getPrevRange(visibleRange, currentRange) : undefined;
@@ -158,7 +162,7 @@ export function loadMoreRangeFromVisible(
   visibleRange: VisibleLogsRange,
   scrollDirection: ScrollDirection,
   sortOrder: LogsSortOrder
-): LoadMoreLogsRange {
+): LogsNanoSecondTimeRange {
   const loadingOlder =
     sortOrder === LogsSortOrder.Descending
       ? scrollDirection === ScrollDirection.Bottom
@@ -180,9 +184,9 @@ function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
 }
 
 /** Copies the single nanosecond bound onto a Loki query. Other datasources are unchanged. */
-export function withLokiInfiniteScrollBound<T extends DataQuery & { supportingQueryType?: string }>(
+export function withLokiNsBound<T extends DataQuery & { supportingQueryType?: string }>(
   query: T,
-  range: LoadMoreLogsRange,
+  nanoSecondTimeRange: LogsNanoSecondTimeRange,
   datasourceType?: string
 ): T & { startNs?: string; endNs?: string } {
   const configured = query.datasource;
@@ -191,11 +195,11 @@ export function withLokiInfiniteScrollBound<T extends DataQuery & { supportingQu
   if ((typeof configuredType === 'string' ? configuredType : datasourceType) !== 'loki') {
     return query;
   }
-  if (range.endNs !== undefined) {
-    return { ...query, endNs: range.endNs };
+  if (nanoSecondTimeRange.endNs !== undefined) {
+    return { ...query, endNs: nanoSecondTimeRange.endNs };
   }
-  if (range.startNs !== undefined) {
-    return { ...query, startNs: range.startNs };
+  if (nanoSecondTimeRange.startNs !== undefined) {
+    return { ...query, startNs: nanoSecondTimeRange.startNs };
   }
   return query;
 }
