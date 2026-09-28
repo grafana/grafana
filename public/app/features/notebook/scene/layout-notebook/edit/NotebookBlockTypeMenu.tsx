@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Menu, type IconName } from '@grafana/ui';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 
 /** The block types the add-block menu offers. Insertion itself belongs to edit mode. */
 export type NotebookBlockType = 'heading' | 'paragraph' | 'code' | 'visualization';
@@ -22,14 +24,64 @@ export function getNotebookBlockTypeOptions(): NotebookBlockTypeOption[] {
 
 interface Props {
   onPick?: (type: NotebookBlockType) => void;
+  /** Visualization sub-option, only offered when saved queries are available. */
+  onPickSavedQuery?: () => void;
 }
 
-export function NotebookBlockTypeMenu({ onPick }: Props) {
+export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
+  const { queryLibraryEnabled } = useQueryLibraryContext();
+  const savedQueriesAvailable = queryLibraryEnabled && hasSavedQueryReadPermissions();
+
   return (
     <Menu>
-      {getNotebookBlockTypeOptions().map((option) => (
-        <Menu.Item key={option.type} icon={option.icon} label={option.label} onClick={() => onPick?.(option.type)} />
-      ))}
+      {getNotebookBlockTypeOptions().map((option) => {
+        if (option.type !== 'visualization' || !savedQueriesAvailable || !onPickSavedQuery) {
+          return (
+            <Menu.Item
+              key={option.type}
+              icon={option.icon}
+              label={option.label}
+              onClick={() => onPick?.(option.type)}
+            />
+          );
+        }
+
+        // A plain array, not a component that could render null: Menu.Item opens a submenu based on
+        // childItems.length alone, which would still be > 0 for a null child.
+        //
+        // Each child stops propagation itself, or the click bubbles to the parent's own onClick
+        // (its guard only holds while its submenu is closed) and fires the plain insert too.
+        const childItems = [
+          <Menu.Item
+            key="new-visualization"
+            icon="plus"
+            label={t('notebook.add-block.new-visualization', 'New Visualization')}
+            onClick={(event) => {
+              event.stopPropagation();
+              onPick?.(option.type);
+            }}
+          />,
+          <Menu.Item
+            key="new-from-saved-queries"
+            icon="book-open"
+            label={t('notebook.add-block.new-from-saved-queries', 'New from Saved Queries')}
+            onClick={(event) => {
+              event.stopPropagation();
+              onPickSavedQuery();
+            }}
+          />,
+        ];
+
+        return (
+          <Menu.Item
+            key={option.type}
+            icon={option.icon}
+            label={option.label}
+            onClick={() => onPick?.(option.type)}
+            childItems={childItems}
+          />
+        );
+      })}
     </Menu>
   );
 }
