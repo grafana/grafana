@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
@@ -30,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errhttp"
-
-	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
@@ -43,6 +42,7 @@ type pluginManifestsTarget struct {
 	authn    authn.TokenAuthenticator
 
 	cooldown *cooldown
+	status   pollStatus
 
 	snapshot atomic.Pointer[[]Backend]
 	lastKeys atomic.Pointer[map[string]struct{}]
@@ -117,10 +117,12 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	deployment, err := fetchPluginManifests(ctx, t.client, t.url)
 	if err != nil {
 		t.cooldown.OnFailure(now)
+		t.status.recordFailure()
 		logging.FromContext(ctx).Warn("router: plugin manifests poll failed, backing off", "url", t.url, "err", err)
 		return
 	}
 	t.cooldown.OnSuccess(now)
+	t.status.recordSuccess(now)
 
 	backends := make([]Backend, 0, len(deployment.Plugins))
 	keys := make(map[string]struct{}, len(deployment.Plugins))
@@ -263,6 +265,9 @@ type pluginDeploymentBackend struct {
 }
 
 func (b *pluginDeploymentBackend) Key() string { return b.key }
+
+// Source implements [Backend]. It overrides the embedded PluginBackend's.
+func (b *pluginDeploymentBackend) Source() string { return sourcePluginsURL }
 
 func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error) {
 	if b.authn == nil {
