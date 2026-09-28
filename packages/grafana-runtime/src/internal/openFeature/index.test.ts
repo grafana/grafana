@@ -28,6 +28,7 @@ afterEach(async () => {
   const { OpenFeature } = await import('@openfeature/react-sdk');
   await OpenFeature.clearProviders();
   OpenFeature.clearHandlers();
+  OpenFeature.clearHooks();
   jest.restoreAllMocks();
   jest.dontMock('./meticulous');
 });
@@ -49,6 +50,7 @@ it('does not load the adapter when the Meticulous global is absent', async () =>
 it('awaits the adapter when the Meticulous global is present and applies overrides ahead of localStorage and OFREP', async () => {
   const recordFeatureFlag = jest.fn(() => ({ success: true }));
   window.Meticulous = {
+    isRunningAsTest: true,
     context: { getFlagOverride: () => ({ overridden: true, value: false }), recordFeatureFlag },
   };
   runtime.getLocalStorageProvider().setFlags({ [providedFlag]: true });
@@ -71,31 +73,57 @@ it('falls back to OFREP when the enabled adapter chunk cannot load', async () =>
   expect(log).toHaveBeenCalledWith('Failed to load Meticulous OpenFeature integration', error);
 });
 
-it('reports final fallback values once per evaluation through the shared core client', async () => {
-  const recordFeatureFlag = jest.fn(() => ({ success: true }));
-  window.Meticulous = {
-    context: { getFlagOverride: () => ({ overridden: false }), recordFeatureFlag },
-  };
-  const client = runtime.getFeatureFlagClient();
-  await runtime.initOpenFeature();
-  // Keep the OFREP transport open while exercising repeated hook registration.
-  jest.spyOn(runtime.getOFREPWebProvider(), 'onClose').mockResolvedValue();
-  await runtime.initOpenFeature();
+it.each([false, true])(
+  'reports once across core clients after reinitialization (hooks cleared: %s)',
+  async (clearHooks) => {
+    const recordFeatureFlag = jest.fn(() => ({ success: true }));
+    window.Meticulous = {
+      isRunningAsTest: true,
+      context: { getFlagOverride: () => ({ overridden: false }), recordFeatureFlag },
+    };
+    const client = runtime.getFeatureFlagClient();
+    const { OpenFeature } = await import('@openfeature/react-sdk');
+    const independentClient = OpenFeature.getClient('internal-grafana-core');
+    await runtime.initOpenFeature();
+    // Keep the OFREP transport open while exercising repeated hook registration.
+    jest.spyOn(runtime.getOFREPWebProvider(), 'onClose').mockResolvedValue();
+    if (clearHooks) {
+      OpenFeature.clearHooks();
+    }
+    await runtime.initOpenFeature();
 
-  runtime.getLocalStorageProvider().setFlags({ [providedFlag]: false });
-  expect(client.getBooleanValue(providedFlag, true)).toBe(false);
-  runtime.getLocalStorageProvider().clearFlags();
-  expect(runtime.getFeatureFlagClient().getBooleanValue(providedFlag, false)).toBe(true);
-  expect(client.getBooleanValue(missingFlag, false)).toBe(false);
-  runtime.getLocalStorageProvider().setFlags({ [providedFlag]: 'invalid' });
-  expect(client.getBooleanValue(providedFlag, false)).toBe(false);
-  expect(recordFeatureFlag.mock.calls).toEqual([
-    [providedFlag, false],
-    [providedFlag, true],
-    [missingFlag, false],
-    [providedFlag, false],
-  ]);
-});
+    expect(recordFeatureFlag).not.toHaveBeenCalled();
+    runtime.getLocalStorageProvider().setFlags({ [providedFlag]: false });
+    expect(client.getBooleanValue(providedFlag, true)).toBe(false);
+    runtime.getLocalStorageProvider().clearFlags();
+    expect(runtime.getFeatureFlagClient().getBooleanValue(providedFlag, false)).toBe(true);
+    expect(independentClient.getBooleanValue(missingFlag, false)).toBe(false);
+    runtime.getLocalStorageProvider().setFlags({ [providedFlag]: 'invalid' });
+    expect(client.getBooleanValue(providedFlag, false)).toBe(false);
+    expect(recordFeatureFlag.mock.calls).toEqual([
+      [providedFlag, false],
+      [providedFlag, true],
+      [missingFlag, false],
+      [providedFlag, false],
+    ]);
+  }
+);
+
+it.each([false, undefined])(
+  'records actual values without querying overrides outside replay (%s)',
+  async (isRunningAsTest) => {
+    const getFlagOverride = jest.fn(() => ({ overridden: true as const, value: false }));
+    const recordFeatureFlag = jest.fn(() => ({ success: true }));
+    window.Meticulous = { isRunningAsTest, context: { getFlagOverride, recordFeatureFlag } };
+
+    await runtime.initOpenFeature();
+
+    expect(recordFeatureFlag).not.toHaveBeenCalled();
+    expect(runtime.getFeatureFlagClient().getBooleanValue(providedFlag, false)).toBe(true);
+    expect(getFlagOverride).not.toHaveBeenCalled();
+    expect(recordFeatureFlag.mock.calls).toEqual([[providedFlag, true]]);
+  }
+);
 
 it('does not report evaluations from plugin domains', async () => {
   const recordFeatureFlag = jest.fn(() => ({ success: true }));
@@ -110,5 +138,6 @@ it('does not report evaluations from plugin domains', async () => {
   );
 
   expect(OpenFeature.getClient('plugin-domain').getBooleanValue(providedFlag, false)).toBe(true);
+  expect(OpenFeature.getClient().getBooleanValue(providedFlag, false)).toBe(false);
   expect(recordFeatureFlag).not.toHaveBeenCalled();
 });

@@ -5,20 +5,21 @@ test.use({
   openFeature: { flags: { dashboardNewLayouts: true, 'grafana.dashboardSettingsRedesign': true } },
 });
 
-for (const enabled of [true, false]) {
-  test(`Meticulous adapter loading follows recorder presence: ${enabled}`, async ({ page, gotoDashboardPage }) => {
+for (const mode of ['absent', 'recording', 'replay'] as const) {
+  test(`Meticulous integration in ${mode} mode`, async ({ page, gotoDashboardPage }) => {
     const adapterRequests: string[] = [];
     page.on('request', (request) => {
       if (request.resourceType() === 'script' && request.url().includes('meticulous-openfeature')) {
         adapterRequests.push(request.url());
       }
     });
-    await page.addInitScript((enabled) => {
-      if (!enabled) {
+    await page.addInitScript((mode) => {
+      if (mode === 'absent') {
         delete window.Meticulous;
         return;
       }
       window.Meticulous = {
+        isRunningAsTest: mode === 'replay',
         context: {
           getFlagOverride(key) {
             sessionStorage.setItem('meticulous-test-queried', 'true');
@@ -32,22 +33,26 @@ for (const enabled of [true, false]) {
           },
         },
       };
-    }, enabled);
+    }, mode);
 
     await gotoDashboardPage({
       uid: 'kVi2Gex7z',
       queryParams: new URLSearchParams({ editview: 'variables' }),
     });
-    if (enabled) {
+    if (mode === 'replay') {
       await expect(page.getByRole('button', { name: 'Add variable', exact: true })).toBeVisible();
+      expect(await page.evaluate(() => sessionStorage.getItem('meticulous-test-queried'))).toBe('true');
+    } else {
+      await expect(page.getByText('Looking for variable settings?', { exact: true })).toBeVisible();
+      expect(await page.evaluate(() => sessionStorage.getItem('meticulous-test-queried'))).toBeNull();
+    }
+    if (mode !== 'absent') {
       expect(adapterRequests).toHaveLength(1);
       await expect
         .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('meticulous-test-reported') ?? '{}')))
-        .toMatchObject({ dashboardNewLayouts: false, 'grafana.dashboardSettingsRedesign': true });
+        .toMatchObject({ dashboardNewLayouts: mode !== 'replay', 'grafana.dashboardSettingsRedesign': true });
     } else {
-      await expect(page.getByText('Looking for variable settings?', { exact: true })).toBeVisible();
       expect(adapterRequests).toEqual([]);
-      expect(await page.evaluate(() => sessionStorage.getItem('meticulous-test-queried'))).toBeNull();
       expect(await page.evaluate(() => sessionStorage.getItem('meticulous-test-reported'))).toBeNull();
     }
   });

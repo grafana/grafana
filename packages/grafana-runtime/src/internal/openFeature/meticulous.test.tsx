@@ -6,7 +6,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { config } from '../../config';
 
-import { MeticulousProvider, meticulousReportingHook } from './meticulous';
+import { MeticulousProvider, createMeticulousReportingHook } from './meticulous';
 import * as generatedFlags from './openfeature.gen';
 
 const [firstFlagName, secondFlagName, missingFlagName] = Object.keys(generatedFlags.FlagKeys) as Array<
@@ -21,7 +21,6 @@ const useSecondFlag = generatedFlags[`useFlag${secondFlagName}`];
 
 const domain = 'meticulous-integration-test';
 const client = OpenFeature.getClient(domain);
-client.addHooks(meticulousReportingHook);
 const getFlagOverride = jest.fn<FeatureFlagOverride, [string]>();
 const recordFeatureFlag = jest.fn(() => ({ success: true }));
 const local = new LocalStorageProvider({ prefix: 'meticulous-test.' });
@@ -49,9 +48,10 @@ async function install() {
 }
 
 beforeEach(async () => {
+  OpenFeature.addHooks(createMeticulousReportingHook(domain));
   getFlagOverride.mockReset().mockReturnValue({ overridden: false });
   recordFeatureFlag.mockClear();
-  window.Meticulous = { context: { getFlagOverride, recordFeatureFlag } };
+  window.Meticulous = { isRunningAsTest: true, context: { getFlagOverride, recordFeatureFlag } };
   await install();
 });
 
@@ -59,6 +59,7 @@ afterEach(async () => {
   local.clearFlags();
   delete window.Meticulous;
   await OpenFeature.clearProviders();
+  OpenFeature.clearHooks();
   jest.restoreAllMocks();
 });
 
@@ -125,7 +126,7 @@ it.each([undefined, {}, { context: {} }])('preserves recorded values with unavai
 it('uses recorder APIs that become available after provider initialization', () => {
   delete window.Meticulous;
   expect(client.getBooleanValue(providedFlag, false)).toBe(true);
-  window.Meticulous = { context: { getFlagOverride, recordFeatureFlag } };
+  window.Meticulous = { isRunningAsTest: true, context: { getFlagOverride, recordFeatureFlag } };
   getFlagOverride.mockReturnValue({ overridden: true, value: false });
   expect(client.getBooleanValue(providedFlag, true)).toBe(false);
   expect(recordFeatureFlag).toHaveBeenCalledWith(providedFlag, false);

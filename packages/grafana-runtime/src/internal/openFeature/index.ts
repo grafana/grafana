@@ -7,7 +7,7 @@ import {
   type EventDetails,
   MultiProvider,
   type Provider,
-  type Client,
+  type Hook,
 } from '@openfeature/react-sdk';
 
 import { config } from '../../config';
@@ -42,8 +42,7 @@ function checkDefaultProvider(event?: EventDetails) {
 // to ensure tests work correctly.
 const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 const GRAFANA_OPEN_FEATURE_LOCALSTORAGE_PREFIX = 'grafana.openfeature.';
-let featureFlagClient: Client;
-let meticulousReportingHookInstalled = false;
+let meticulousReportingHook: Hook | undefined;
 
 // Allow direct access to a singleton localStorage provider,
 //  to allow the feature control developer UI to override flags via the provider
@@ -80,14 +79,14 @@ export async function initOpenFeature() {
 
   if (window.Meticulous != null) {
     try {
-      const { MeticulousProvider, meticulousReportingHook } = await import(
+      const { MeticulousProvider, createMeticulousReportingHook } = await import(
         /* webpackChunkName: "meticulous-openfeature" */ './meticulous'
       );
       meticulousProvider = new MeticulousProvider();
-      if (!meticulousReportingHookInstalled) {
+      meticulousReportingHook ??= createMeticulousReportingHook(GRAFANA_CORE_OPEN_FEATURE_DOMAIN);
+      if (!OpenFeature.getHooks().includes(meticulousReportingHook)) {
         // Report the final value after all providers resolve, including caller defaults.
-        getFeatureFlagClient().addHooks(meticulousReportingHook);
-        meticulousReportingHookInstalled = true;
+        OpenFeature.addHooks(meticulousReportingHook);
       }
     } catch (error) {
       console.error('Failed to load Meticulous OpenFeature integration', error);
@@ -115,5 +114,5 @@ export async function initOpenFeature() {
  * in time when you use it to ensure you get the latest value.
  */
 export function getFeatureFlagClient() {
-  return (featureFlagClient ??= OpenFeature.getClient(GRAFANA_CORE_OPEN_FEATURE_DOMAIN));
+  return OpenFeature.getClient(GRAFANA_CORE_OPEN_FEATURE_DOMAIN);
 }

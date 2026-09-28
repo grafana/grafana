@@ -12,7 +12,7 @@ type MeticulousFlagContext = Partial<Pick<MeticulousPublicApi['context'], 'getFl
 
 declare global {
   interface Window {
-    Meticulous?: { context?: MeticulousFlagContext };
+    Meticulous?: Partial<Pick<MeticulousPublicApi, 'isRunningAsTest'>> & { context?: MeticulousFlagContext };
   }
 }
 
@@ -39,6 +39,10 @@ export class MeticulousProvider implements Provider {
   private resolveOverride(flagKey: string, type: 'boolean'): ResolutionDetails<boolean>;
   private resolveOverride(flagKey: string, type: 'string'): ResolutionDetails<string>;
   private resolveOverride(flagKey: string, type: 'boolean' | 'string'): ResolutionDetails<boolean | string> {
+    if (window.Meticulous?.isRunningAsTest !== true) {
+      throw new FlagNotFoundError();
+    }
+
     try {
       const override = window.Meticulous?.context?.getFlagOverride?.(flagKey);
       if (override?.overridden === true) {
@@ -55,16 +59,21 @@ export class MeticulousProvider implements Provider {
   }
 }
 
-export const meticulousReportingHook: Hook = {
-  finally(_context, details) {
-    if (typeof details.value !== 'boolean' && typeof details.value !== 'string') {
-      return;
-    }
+export function createMeticulousReportingHook(domain: string): Hook {
+  return {
+    finally(context, details) {
+      if (context.clientMetadata.domain !== domain) {
+        return;
+      }
+      if (typeof details.value !== 'boolean' && typeof details.value !== 'string') {
+        return;
+      }
 
-    try {
-      window.Meticulous?.context?.recordFeatureFlag?.(details.flagKey, details.value);
-    } catch (error) {
-      console.warn(`Failed to report Meticulous feature flag "${details.flagKey}"`, error);
-    }
-  },
-};
+      try {
+        window.Meticulous?.context?.recordFeatureFlag?.(details.flagKey, details.value);
+      } catch (error) {
+        console.warn(`Failed to report Meticulous feature flag "${details.flagKey}"`, error);
+      }
+    },
+  };
+}
