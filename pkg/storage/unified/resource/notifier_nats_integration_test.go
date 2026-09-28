@@ -177,8 +177,8 @@ type natsSubscriberAdapter struct{ sub nats.Subscriber }
 
 func (a natsSubscriberAdapter) Enabled() bool { return a.sub.Enabled() }
 
-func (a natsSubscriberAdapter) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (Subscription, error) {
-	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
+func (a natsSubscriberAdapter) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error) {
+	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
 
 // startNatsRoundTrip boots an embedded NATS server plus a real publisher and

@@ -49,7 +49,7 @@ func TestSingleTenantDiscoveryRefreshesWithoutOtherSources(t *testing.T) {
 					defer func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), cloud)) }()
 					loader = cloud
 				}
-				router := NewGrafanaRouter(loader)
+				router := NewGrafanaRouter(loader, nil)
 				require.NoError(t, router.Run(ctx))
 				synctest.Wait()
 				require.Error(t, router.Ready(ctx))
@@ -114,14 +114,14 @@ func TestSingleTenantDiscoveryDoesNotHandleResources(t *testing.T) {
 	} {
 		t.Run(path, func(t *testing.T) {
 			recorder := httptest.NewRecorder()
-			st.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+			st.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, path, nil))
 			require.Equal(t, http.StatusNotFound, recorder.Code)
 		})
 	}
 	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 		for _, path := range []string{"/apis", "/apis/example/v1", "/openapi/v3/apis/example/v1"} {
 			recorder := httptest.NewRecorder()
-			st.ServeHTTP(recorder, httptest.NewRequest(method, path, nil))
+			st.ServeHTTP(recorder, newAuthenticatedRequest(method, path, nil))
 			require.Equal(t, http.StatusNotFound, recorder.Code)
 		}
 	}

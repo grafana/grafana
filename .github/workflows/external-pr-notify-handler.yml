@@ -25,7 +25,7 @@ env:
   # community-triage logic version this repo is pinned to.
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 223e8b1d8f7923f34919d09c32aed0644f3ed9ae # trufflehog:ignore
+  TRIAGE_REF: e3fc97ce0d62a994ce9a80647f2d2c4f9ac3c003 # trufflehog:ignore
 
 jobs:
   triage:
@@ -494,7 +494,7 @@ jobs:
       # The script skips the greeting when the review already delivered it, and
       # comments nothing when there is nothing outstanding.
       - name: Post welcome comment and contributor checklist
-        if: steps.notify.outputs.notification_sent == 'true'
+        if: steps.notify.outputs.post_welcome == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
