@@ -1,6 +1,6 @@
 # Dashboard Insights sidebar (prototype)
 
-Status: implemented, pending browser verification.
+Status: implemented and verified in the browser, except real answer quality (see Validation).
 
 ## Purpose
 
@@ -101,7 +101,7 @@ The inline assistant runs on the Assistant's weak model with reasoning disabled.
 ## Error handling
 
 - Source problems are detected before any request. The row shows the snapshot message and **Ask Assistant** stays disabled until the problem clears.
-- Assistant failures (network, permission, usage limit) show the backend message inline. The previous answer stays and the viewer can retry.
+- Assistant failures show inline and the viewer can retry. The previous answer stays. Errors the inline SDK reports through `onError` show their message. A backend failure that ends the stream without text (for example, a rejected provider request) reaches the pane as an empty completion and shows "Assistant returned no answer. Try asking again."
 - Invalid structured output shows "Assistant returned an unreadable insight. Ask again to retry." and keeps the previous answer.
 - A response that completes after its inputs changed is shown and immediately marked **Out of date**.
 - A follow-up that cannot open the Assistant shows an inline error in the row.
@@ -109,4 +109,25 @@ The inline assistant runs on the Assistant's weak model with reasoning disabled.
 ## Validation
 
 - `yarn typecheck` and `yarn lint` on the changed files, `yarn lint:circular` for new cycles, and `make i18n-extract` for new strings.
-- Manual browser verification with the local Assistant app: author two questions, save and reload, ask in view mode, change the time range and a variable to see stale reasons, re-ask, remove a source panel to see the refusal, open a follow-up, and check undo, Discard, light and dark themes.
+- Manual browser verification with the local Assistant app: author two questions, save and reload, ask in view mode, change the time range and a variable to see stale reasons, re-ask, remove a source panel to see the refusal, open a follow-up, and check undo and Discard.
+
+### Verification results
+
+Verified in the browser with the flag enabled through the feature-control overrides:
+
+- The button is hidden in view mode until the dashboard has a question, and shown in edit mode.
+- Adding, reordering, and deleting questions write the annotation to both dashboard metadata and the serializer. Undo and redo restore the previous order.
+- Save persists `grafana.app/insights` on the dashboard resource. After a reload, viewers see the questions without authoring controls.
+- A change to questions alone marks the dashboard dirty with no other diffs, and **Exit edit** asks to save or discard.
+- Discard restores the saved questions and any removed panel. The pane closes because the sidebar returns to its pre-edit state, the same as other panes.
+- The snapshot sent to the Assistant contains the question, ISO time range, interpolated variables, panel descriptions, display names, units, and values.
+- Changing a variable shows "Filters changed", moving the time range shows "Time range changed", and both also show "Source data changed". Reverting clears the warning, and **Ask Assistant again** refreshes the answer.
+- Removing a source panel shows the refusal and labels the source "(unavailable)", using its title from the last answer when there is one.
+- **Ask a follow-up** opens the Assistant with the insight attached as context.
+
+Not verified:
+
+- Real answers and their quality. The local Assistant backend rejected every request because its provider key was not scoped to a workspace. Answer rendering, staleness after an answer, and follow-up were checked with a stubbed inline assistant in the browser session.
+- Light theme. Only dark theme was checked.
+
+Known limitation shared with the Assistant-app prototype: panel default units apply to every field, so the time field in the snapshot can carry the panel's unit.
