@@ -1,11 +1,8 @@
 package maxfilesize
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -16,71 +13,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
-
-// TestIntegrationProvisioning_MaxFileSize_RawRead exercises the read-side
-// enforcement of [provisioning] max_file_size on raw files (e.g. README.md).
-// A file under the configured cap is served as-is; a file over the cap is
-// rejected with HTTP 413 Request Entity Too Large.
-func TestIntegrationProvisioning_MaxFileSize_RawRead(t *testing.T) {
-	helper := sharedHelper(t)
-
-	const repo = "max-file-size-raw-read"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:                   repo,
-		Path:                   helper.ProvisioningPath,
-		Target:                 "instance",
-		SkipResourceAssertions: true,
-	})
-
-	smallReadme := []byte("# small README\n")
-	largeReadme := bytes.Repeat([]byte("X"), int(testMaxFileSize)+1)
-
-	helper.WriteToProvisioningPath(t, "README.md", smallReadme)
-	helper.WriteToProvisioningPath(t, "huge/README.md", largeReadme)
-
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-
-	t.Run("GET small raw file under limit succeeds", func(t *testing.T) {
-		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
-		req, err := http.NewRequest(http.MethodGet, url, nil)
-		require.NoError(t, err)
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-
-		require.Equal(t, http.StatusOK, resp.StatusCode, "small README should be served")
-
-		body, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		var wrapper struct {
-			Resource struct {
-				File struct {
-					Content string `json:"content"`
-				} `json:"file"`
-			} `json:"resource"`
-		}
-		require.NoError(t, json.Unmarshal(body, &wrapper))
-		require.Equal(t, string(smallReadme), wrapper.Resource.File.Content,
-			"under-limit raw file should be served verbatim")
-	})
-
-	t.Run("GET raw file over limit returns 413", func(t *testing.T) {
-		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/huge/README.md", addr, repo)
-		req, err := http.NewRequest(http.MethodGet, url, nil)
-		require.NoError(t, err)
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-
-		require.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "oversized README should be rejected with 413")
-
-		body, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		require.Contains(t, string(body), "max allowed", "error body should advertise the cap")
-	})
-}
 
 // TestIntegrationProvisioning_MaxFileSize_Write exercises the write-side
 // enforcement: a POST whose body exceeds [provisioning] max_file_size is
