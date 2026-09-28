@@ -1,5 +1,3 @@
-import jquery from 'jquery';
-
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
@@ -16,8 +14,6 @@ import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
 
-import './jqueryWithFlot';
-
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
 // This exposes the same classes on both import paths
@@ -27,6 +23,12 @@ grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
+const loadJqueryWithFlot = () => import('./jqueryWithFlot');
+
+// `jquery.flot.events` and `jquery.flot.pie` have no matching file in public/vendor/flot, so
+// they already resolve to a placeholder that only fails if a plugin calls into them. Dropping
+// them would turn that into a failure to resolve the specifier at plugin load, which is worse
+// for the plugins that still ask for them.
 const jQueryFlotDeps = [
   'jquery.flot.crosshair',
   'jquery.flot.events',
@@ -38,7 +40,7 @@ const jQueryFlotDeps = [
   'jquery.flot.stackpercent',
   'jquery.flot.time',
   'jquery.flot',
-].reduce((acc, flotDep) => ({ ...acc, [flotDep]: { fakeDep: 1 } }), {});
+].reduce((acc, flotDep) => ({ ...acc, [flotDep]: () => loadJqueryWithFlot().then(() => ({ fakeDep: 1 })) }), {});
 
 export const sharedDependenciesMap = {
   '@emotion/css': () => import('@emotion/css'),
@@ -84,9 +86,10 @@ export const sharedDependenciesMap = {
   emotion: () => import('@emotion/css'),
   // bundling grafana-ui in plugins requires sharing i18next state
   i18next: () => import('@grafana/i18n/internal').then((module) => module.getI18nInstance()),
-  jquery: {
-    default: jquery,
-    __useDefault: true,
+  jquery: async () => {
+    await loadJqueryWithFlot();
+    const { default: jqueryInstance } = await import('jquery');
+    return { default: jqueryInstance, __useDefault: true };
   },
   ...jQueryFlotDeps,
   // add move to lodash for backward compatabilty with plugins
