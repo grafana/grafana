@@ -2293,6 +2293,8 @@ __metadata:
     "@grafana/i18n": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@reduxjs/toolkit": "npm:^2.10.1"
+    "@storybook/addon-docs": "npm:10.3.6"
+    "@storybook/react": "npm:10.3.6"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.3.0"
     "@testing-library/user-event": "npm:^14.6.1"
@@ -2484,11 +2486,13 @@ __metadata:
   resolution: "@grafana/eslint-plugin@workspace:packages/grafana-eslint-rules"
   dependencies:
     "@typescript-eslint/utils": "npm:^8.9.0"
+    "@typescript/native": "npm:typescript@^7.0.2"
     eslint: "npm:9.32.0"
     eslint-no-restricted: "npm:^0.1.1"
     html-tags: "npm:^5.1.0"
     jest: "npm:29.7.0"
     known-css-properties: "npm:^0.37.0"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   languageName: unknown
   linkType: soft
 
@@ -2745,6 +2749,7 @@ __metadata:
     "@types/react": "npm:19.2.18"
     "@types/webpack-bundle-analyzer": "npm:^4.7.0"
     copy-webpack-plugin: "npm:^14.0.0"
+    css-loader: "npm:7.1.2"
     eslint: "npm:9.32.0"
     eslint-webpack-plugin: "npm:5.0.2"
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
@@ -2754,6 +2759,7 @@ __metadata:
     jest-environment-jsdom: "npm:29.7.0"
     react: "npm:19.2.8"
     replace-in-file-webpack-plugin: "npm:1.0.6"
+    style-loader: "npm:4.0.0"
     swc-loader: "npm:0.2.6"
     terser-webpack-plugin: "npm:^5.4.0"
     typescript: "npm:6.0.2"
@@ -11653,7 +11659,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/webpack-bundle-analyzer@npm:^4.7.0":
+"@types/webpack-bundle-analyzer@npm:4.7.0, @types/webpack-bundle-analyzer@npm:^4.7.0":
   version: 4.7.0
   resolution: "@types/webpack-bundle-analyzer@npm:4.7.0"
   dependencies:
@@ -19873,6 +19879,7 @@ __metadata:
     "@react-awesome-query-builder/ui": "npm:6.6.15"
     "@react-types/shared": "npm:3.31.0"
     "@reduxjs/toolkit": "npm:2.10.1"
+    "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@rsdoctor/rspack-plugin": "npm:^1.0.0"
     "@rsdoctor/webpack-plugin": "npm:^1.0.0"
     "@rspack/cli": "npm:^2"
@@ -19929,7 +19936,9 @@ __metadata:
     "@types/slate-react": "npm:0.22.9"
     "@types/swagger-ui-react": "npm:5.18.0"
     "@types/systemjs": "npm:^6.15.4"
+    "@types/tinycolor2": "npm:1.4.6"
     "@types/trusted-types": "npm:^2.0.7"
+    "@types/webpack-bundle-analyzer": "npm:4.7.0"
     "@types/webpack-env": "npm:^1.18.4"
     "@types/yargs": "npm:^17.0.35"
     "@typescript-eslint/eslint-plugin": "npm:8.56.0"
@@ -20053,6 +20062,7 @@ __metadata:
     ora: "npm:^9.0.0"
     papaparse: "npm:5.5.3"
     pdf-parse: "npm:^1.1.1"
+    playwright: "npm:1.56.1"
     pluralize: "npm:^8.0.0"
     prettier: "npm:3.6.2"
     prismjs: "npm:1.30.0"
@@ -20091,6 +20101,8 @@ __metadata:
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:5.3.0"
     rimraf: "npm:6.0.1"
+    rollup-plugin-esbuild: "npm:6.2.1"
+    rollup-plugin-node-externals: "npm:^8.0.0"
     rspack-manifest-plugin: "npm:5.2.2"
     rxjs: "npm:7.8.2"
     sass: "npm:1.89.2"
