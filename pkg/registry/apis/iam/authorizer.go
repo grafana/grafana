@@ -220,6 +220,11 @@ func newSSOSettingAuthorizer(accessClient authlib.AccessClient) authorizer.Autho
 			return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
 		}
 
+		// Collection create has no object name at authz time; the redacting store enforces per-provider write.
+		if attr.GetVerb() == utils.VerbCreate {
+			return authorizer.DecisionAllow, "", nil
+		}
+
 		res, err := accessClient.Check(ctx, requester, authlib.CheckRequest{
 			Verb:      attr.GetVerb(),
 			Group:     sso.SettingsAuthzGroup,

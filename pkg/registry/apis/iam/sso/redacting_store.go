@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -59,6 +60,12 @@ func NewRedactingStore(storage rest.Storage, accessClient authlib.AccessClient) 
 }
 
 func (s *redactingStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	// Collection create has no name at authz time; enforce per-provider write on the decoded object.
+	if setting, ok := obj.(*iamv0.SSOSetting); ok {
+		if err := s.authorizeProviderWrite(ctx, setting.GetName()); err != nil {
+			return nil, err
+		}
+	}
 	out, err := s.ssoStorage.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		return nil, err
@@ -67,6 +74,35 @@ func (s *redactingStore) Create(ctx context.Context, obj runtime.Object, createV
 		return redactSecrets(setting), nil
 	}
 	return out, nil
+}
+
+// authorizeProviderWrite enforces settings:write on auth.<provider>; a nil accessClient is a no-op, mirroring List.
+func (s *redactingStore) authorizeProviderWrite(ctx context.Context, provider string) error {
+	if s.accessClient == nil {
+		return nil
+	}
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return err
+	}
+	ident, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	res, err := s.accessClient.Check(ctx, ident, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     SettingsAuthzGroup,
+		Resource:  SettingsAuthzResource,
+		Namespace: ns.Value,
+		Name:      "auth." + provider,
+	}, "")
+	if err != nil {
+		return err
+	}
+	if !res.Allowed {
+		return apierrors.NewForbidden(iamv0.SSOSettingResourceInfo.GroupResource(), provider, fmt.Errorf("requires settings permission for the provider"))
+	}
+	return nil
 }
 
 // List drops providers the caller can't read and redacts secrets on the rest.
