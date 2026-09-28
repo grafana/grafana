@@ -130,7 +130,7 @@ func (s *Service) getAllIdentityPermissions(ctx context.Context, ns types.Namesp
 			Namespace:        ns.Value,
 			IsGrafanaAdmin:   basicRole.IsAdmin,
 			IsServiceAccount: identityType == types.TypeServiceAccount,
-			TeamIDs:          teamIDs,
+			TeamIDs:          teamIDs, //nolint:staticcheck // Preserve legacy field compatibility.
 			TeamUIDs:         contextualTeams,
 			ExternalGroups:   contextualTeams,
 		}

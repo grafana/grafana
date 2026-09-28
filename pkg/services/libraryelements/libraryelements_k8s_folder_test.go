@@ -50,7 +50,7 @@ func TestIntegration_K8sWritePath_FolderConsistency(t *testing.T) {
 	t.Run("create resolves the legacy folder_id from folder_uid", func(t *testing.T) {
 		sc := setupTestScenario(t)
 		const folderUID = "uid_for_target"
-		sc.folderSvc.ExpectedFolder = &folder.Folder{ID: 42, OrgID: sc.user.OrgID, UID: folderUID, Title: "target"}
+		sc.folderSvc.ExpectedFolder = &folder.Folder{ID: 42, OrgID: sc.user.OrgID, UID: folderUID, Title: "target"} //nolint:staticcheck // Exercise legacy field compatibility.
 
 		fuid := folderUID
 		dto, err := sc.service.CreateElement(sc.reqContext.Req.Context(), &sc.user, model.CreateLibraryElementCommand{
@@ -80,7 +80,7 @@ func TestIntegration_K8sWritePath_FolderConsistency(t *testing.T) {
 	t.Run("patch with only folder_uid keeps the panel in its folder", func(t *testing.T) {
 		sc := setupTestScenario(t)
 		const folderUID = "uid_for_target"
-		sc.folderSvc.ExpectedFolder = &folder.Folder{ID: 42, OrgID: sc.user.OrgID, UID: folderUID, Title: "target"}
+		sc.folderSvc.ExpectedFolder = &folder.Folder{ID: 42, OrgID: sc.user.OrgID, UID: folderUID, Title: "target"} //nolint:staticcheck // Exercise legacy field compatibility.
 		createK8sPanel(t, sc, "k8s-patch", folderUID)
 
 		// Mirror the k8s update path: only folder_uid set, folder_id unset, version
@@ -104,11 +104,11 @@ func TestIntegration_K8sWritePath_FolderConsistency(t *testing.T) {
 	t.Run("patch to a different folder updates both columns", func(t *testing.T) {
 		sc := setupTestScenario(t)
 		const srcUID, dstUID = "uid_src", "uid_dst"
-		sc.folderSvc.ExpectedFolder = &folder.Folder{ID: 42, OrgID: sc.user.OrgID, UID: srcUID, Title: "src"}
+		sc.folderSvc.ExpectedFolder = &folder.Folder{ID: 42, OrgID: sc.user.OrgID, UID: srcUID, Title: "src"} //nolint:staticcheck // Exercise legacy field compatibility.
 		createK8sPanel(t, sc, "k8s-move", srcUID)
 
 		// Move to the destination folder.
-		sc.folderSvc.ExpectedFolder = &folder.Folder{ID: 99, OrgID: sc.user.OrgID, UID: dstUID, Title: "dst"}
+		sc.folderSvc.ExpectedFolder = &folder.Folder{ID: 99, OrgID: sc.user.OrgID, UID: dstUID, Title: "dst"} //nolint:staticcheck // Exercise legacy field compatibility.
 		fuid := dstUID
 		_, err := sc.service.PatchLibraryElement(sc.reqContext.Req.Context(), &sc.user, model.PatchLibraryElementCommand{
 			UID:       "k8s-move",
