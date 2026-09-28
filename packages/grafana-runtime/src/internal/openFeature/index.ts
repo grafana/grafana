@@ -7,6 +7,7 @@ import {
   type EventDetails,
   MultiProvider,
   type Provider,
+  type Client,
 } from '@openfeature/react-sdk';
 
 import { config } from '../../config';
@@ -41,7 +42,7 @@ function checkDefaultProvider(event?: EventDetails) {
 // to ensure tests work correctly.
 const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 const GRAFANA_OPEN_FEATURE_LOCALSTORAGE_PREFIX = 'grafana.openfeature.';
-const featureFlagClient = OpenFeature.getClient(GRAFANA_CORE_OPEN_FEATURE_DOMAIN);
+let featureFlagClient: Client;
 let meticulousReportingHookInstalled = false;
 
 // Allow direct access to a singleton localStorage provider,
@@ -85,7 +86,7 @@ export async function initOpenFeature() {
       meticulousProvider = new MeticulousProvider();
       if (!meticulousReportingHookInstalled) {
         // Report the final value after all providers resolve, including caller defaults.
-        featureFlagClient.addHooks(meticulousReportingHook);
+        getFeatureFlagClient().addHooks(meticulousReportingHook);
         meticulousReportingHookInstalled = true;
       }
     } catch (error) {
@@ -114,5 +115,5 @@ export async function initOpenFeature() {
  * in time when you use it to ensure you get the latest value.
  */
 export function getFeatureFlagClient() {
-  return featureFlagClient;
+  return (featureFlagClient ??= OpenFeature.getClient(GRAFANA_CORE_OPEN_FEATURE_DOMAIN));
 }
