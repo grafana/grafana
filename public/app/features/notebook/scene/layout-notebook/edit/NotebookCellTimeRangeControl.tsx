@@ -153,6 +153,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'inline-flex',
     alignItems: 'center',
   }),
+  clockIcon: css({
+    transform: 'translateY(1px)',
+  }),
   content: css({
     position: 'absolute',
     top: '100%',
