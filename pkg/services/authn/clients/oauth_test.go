@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -9,15 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/oauth2"
-
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -29,6 +30,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestFromSocialErrPreservesCause(t *testing.T) {
+	cause := &connectors.SocialError{}
+	err := fromSocialErr(cause)
+
+	require.ErrorIs(t, err, cause)
+	actual, ok := errors.AsType[*connectors.SocialError](err)
+	require.True(t, ok)
+	require.Same(t, cause, actual)
+}
 
 func TestOAuth_Authenticate(t *testing.T) {
 	type testCase struct {

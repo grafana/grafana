@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"testing"
 
+	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 	grpclog "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
-
-	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
