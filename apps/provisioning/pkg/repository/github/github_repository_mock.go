@@ -1129,6 +1129,11 @@ func (_c *MockGithubRepository_Update_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// WithMaxFileSize provides a mock function with given fields: maxBytes
+func (_m *MockGithubRepository) WithMaxFileSize(maxBytes int64) {
+	_m.Called(maxBytes)
+}
+
 // Write provides a mock function with given fields: ctx, path, ref, data, message
 func (_m *MockGithubRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
 	ret := _m.Called(ctx, path, ref, data, message)

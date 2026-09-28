@@ -59,6 +59,11 @@ const zoneInfo = "ZONEINFO"
 // Default renderer auth token from [rendering]renderer_token.
 const DefaultRendererAuthToken = "-"
 
+// ProvisioningMaxFileSizeDefault is the default value for the
+// [provisioning] max_file_size key (5 MiB). It bounds files read from or
+// written to a provisioning repository through the files API.
+const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -157,6 +162,7 @@ type Cfg struct {
 	ProvisioningMaxRepositories           int64  // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningFolderAPIVersion          string // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningPublicRootURL             string // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
+	ProvisioningMaxFileSize               int64  // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningWebhookTrustedIPHeader    string // name of the proxy-set header carrying the real client IP for webhook rate-limiting; empty falls back to the real TCP peer
 	ProvisioningWebhookRateLimitRPS       int    // sustained requests per second allowed per client by the webhook rate limiter; <= 0 disables rate limiting
 	DataPath                              string
@@ -2395,6 +2401,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
+	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 	cfg.ProvisioningWebhookTrustedIPHeader = iniFile.Section("provisioning").Key("webhook_trusted_ip_header").MustString("")
 	cfg.ProvisioningWebhookRateLimitRPS = iniFile.Section("provisioning").Key("webhook_rate_limit_rps").MustInt(0)
