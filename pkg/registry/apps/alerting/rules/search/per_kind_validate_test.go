@@ -272,14 +272,21 @@ func TestPerKindValidateQuery_filterLeaf(t *testing.T) {
 		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldFolder, perKindFilterOperatorIn, "f1", "f2")))
 	})
 
-	// NotIn only round-trips negation on the labels field; on any other field the
-	// legacy backend ignores the operator and would invert the result.
-	t.Run("rejects NotIn except on labels", func(t *testing.T) {
+	// NotIn only round-trips negation on labels, state and health; on any other
+	// field the legacy backend ignores the operator and would invert the result.
+	t.Run("rejects NotIn except on negatable fields", func(t *testing.T) {
 		for _, name := range []string{fieldName, fieldFolder, fieldDatasourceUIDs, fieldReceiver} {
 			assert.Equal(t, []string{"where.filter.operator"},
 				leafErrs(t, perKindFilterLeaf(name, perKindFilterOperatorNotIn, "x")), "field %q", name)
 		}
 		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldLabels, perKindFilterOperatorNotIn, "team=a")))
+		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldState, perKindFilterOperatorNotIn, "firing")))
+		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldHealth, perKindFilterOperatorNotIn, "error")))
+	})
+
+	t.Run("state and health accept a set", func(t *testing.T) {
+		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldState, perKindFilterOperatorIn, "firing", "pending")))
+		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldHealth, perKindFilterOperatorIn, "ok", "error")))
 	})
 
 	t.Run("paused must be a boolean", func(t *testing.T) {
