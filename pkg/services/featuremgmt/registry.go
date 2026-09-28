@@ -2578,6 +2578,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.dashboardInsights",
+			Description: "Enables the Insights dashboard sidebar pane for asking Assistant saved questions about selected panels",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:            "datasourcesApiServerEnableHealthEndpointRedirect",
 			Description:     "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
 			Stage:           FeatureStageExperimental,

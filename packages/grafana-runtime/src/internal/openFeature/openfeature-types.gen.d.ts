@@ -135,6 +135,7 @@ declare module "@openfeature/core" {
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
     | "grafana.viewPanelPane"
+    | "grafana.dashboardInsights"
     | "flameGraph.tableNg"
     | "inlineLogDetailsNoScrolls"
     | "logsTablePanelNG"
