@@ -78,7 +78,6 @@
     "@types/lodash": "^4.17.25",
     "@types/node": "24.10.1",
     "@types/react": "19.2.18",
-    "@types/react-table": "^7.7.20",
     "@types/tinycolor2": "1.4.6",
     "@typescript/native": "npm:typescript@^7.0.2",
     "css-loader": "7.1.2",
@@ -98,8 +97,8 @@
   },
   "peerDependencies": {
     "@grafana/assistant": "^0.1.1",
+    "@tanstack/react-table": "^8.21.3",
     "react": ">=19",
-    "react-dom": ">=19",
-    "react-table": "^7.8.0"
+    "react-dom": ">=19"
   }
 }

@@ -1,16 +1,62 @@
 import { css } from '@emotion/css';
-import { type Column as RTColumn } from 'react-table';
+import {
+  flexRender,
+  type BuiltInSortingFn,
+  type CellContext,
+  type ColumnDef,
+  type HeaderContext,
+  type Row,
+  type SortingFnOption,
+} from '@tanstack/react-table';
+import { get } from 'lodash';
 
 import { EmptyExpanderHeader, ExpanderCell, ExpanderHeader } from './Expander';
-import { type Column } from './types';
+import { type CellProps, type Column, type SortType } from './types';
 
 export const EXPANDER_CELL_ID = '__expander' as const;
 
-type InternalColumn<T extends object> = RTColumn<T> & {
-  visible?: (data: T[]) => boolean;
+type InternalColumn<T extends object> = ColumnDef<T> & {
+  id: string;
 };
 
-// Returns the columns in a "react-table" acceptable format
+// react-table v7 sort types mapped onto the TanStack Table sorting functions
+const SORTING_FNS: Record<Exclude<SortType, 'number'>, BuiltInSortingFn> = {
+  string: 'text',
+  datetime: 'datetime',
+  basic: 'basic',
+  alphanumeric: 'alphanumeric',
+};
+
+function sortNumber<T extends object>(rowA: Row<T>, rowB: Row<T>, columnId: string) {
+  const replaceNonNumeric = /[^0-9.]/gi;
+  const a = Number(String(rowA.getValue(columnId)).replace(replaceNonNumeric, ''));
+  const b = Number(String(rowB.getValue(columnId)).replace(replaceNonNumeric, ''));
+
+  return a === b ? 0 : a > b ? 1 : -1;
+}
+
+function toCellProps<T extends object, Value>(context: CellContext<T, Value>): CellProps<T, Value> {
+  const value = context.getValue();
+  return {
+    ...context,
+    cell: { ...context.cell, value },
+    value,
+  };
+}
+
+function getSortingFn<K extends object>(column: Column<K>): SortingFnOption<K> {
+  if (typeof column.sortType === 'function') {
+    const sortType = column.sortType;
+    return (rowA, rowB, columnId) => sortType(rowA, rowB, columnId);
+  }
+
+  if (column.sortType === 'number') {
+    return sortNumber;
+  }
+
+  return column.sortType ? SORTING_FNS[column.sortType] : 'alphanumeric';
+}
+
 export function getColumns<K extends object>(
   columns: Array<Column<K>>,
   showExpandAll = false
@@ -18,31 +64,38 @@ export function getColumns<K extends object>(
   return [
     {
       id: EXPANDER_CELL_ID,
-      Cell: ExpanderCell,
-      Header: showExpandAll ? ExpanderHeader : EmptyExpanderHeader,
-      disableSortBy: true,
-      width: 0,
+      cell: (context) => ExpanderCell(toCellProps(context)),
+      header: showExpandAll ? ExpanderHeader : EmptyExpanderHeader,
+      enableSorting: false,
+      size: 0,
     },
-    // @ts-expect-error react-table expects each column key(id) to have data associated with it and therefore complains about
-    // column.id being possibly undefined and not keyof T (where T is the data object)
-    // We do not want to be that strict as we simply pass undefined to cells that do not have data associated with them.
     ...columns.map((column) => ({
       id: column.id,
-      accessor: column.id,
-      Header: column.header || (() => null),
-      sortType: column.sortType || 'alphanumeric',
-      disableSortBy: !Boolean(column.sortType),
-      width: column.width ?? (column.disableGrow ? 0 : undefined),
-      minWidth: column.minWidth,
-      maxWidth: column.maxWidth,
-      widthClass: css({
-        width: typeof column.width === 'number' && column.width > 0 ? column.width : undefined,
-        minWidth: typeof column.minWidth === 'number' && column.minWidth > 0 ? column.minWidth : undefined,
-        maxWidth: typeof column.maxWidth === 'number' && column.maxWidth > 0 ? column.maxWidth : undefined,
-      }),
-      visible: column.visible,
+      accessorFn: (row: K) => get(row, column.id),
+      // TanStack Table only accepts strings and render functions, so headers that are nodes or components are
+      // wrapped in a function and rendered by flexRender
+      header:
+        typeof column.header === 'string'
+          ? column.header
+          : (context: HeaderContext<K, unknown>) => flexRender(column.header, context) ?? null,
+      sortingFn: getSortingFn(column),
+      enableSorting: Boolean(column.sortType),
+      size: column.width ?? (column.disableGrow ? 0 : undefined),
+      minSize: column.minWidth,
+      maxSize: column.maxWidth,
+      meta: {
+        visible: column.visible,
+        widthClass: css({
+          width: typeof column.width === 'number' && column.width > 0 ? column.width : undefined,
+          minWidth: typeof column.minWidth === 'number' && column.minWidth > 0 ? column.minWidth : undefined,
+          maxWidth: typeof column.maxWidth === 'number' && column.maxWidth > 0 ? column.maxWidth : undefined,
+        }),
+      },
       ...(column.sortDescFirst !== undefined && { sortDescFirst: column.sortDescFirst }),
-      ...(column.cell && { Cell: column.cell }),
+      ...(column.cell && {
+        // flexRender is used because cell renderers can be components (e.g. wrapped in `memo`) and not plain functions
+        cell: (context: CellContext<K, unknown>) => flexRender(column.cell, toCellProps(context)),
+      }),
     })),
   ];
 }

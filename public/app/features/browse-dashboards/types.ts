@@ -1,4 +1,4 @@
-import { type CellProps, type Column, type HeaderProps } from 'react-table';
+import { type CellContext, type ColumnDef, type HeaderContext } from '@tanstack/react-table';
 
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
@@ -50,8 +50,6 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
 }
 
 interface RendererUserProps {
-  // Note: userProps for cell renderers (e.g. second argument in `cell.render('Cell', foo)` )
-  // aren't typed, so we must be careful when accessing this
   isSelected?: (kind: DashboardViewItem | '$all') => SelectionState;
   onAllSelectionChange?: (newState: boolean) => void;
   onItemSelectionChange?: (item: DashboardViewItem, newState: boolean) => void;
@@ -59,9 +57,12 @@ interface RendererUserProps {
   permissions?: BrowseDashboardsPermissions;
 }
 
-export type DashboardsTreeColumn = Column<DashboardsTreeItem>;
-export type DashboardsTreeCellProps = CellProps<DashboardsTreeItem, unknown> & RendererUserProps;
-export type DashboardTreeHeaderProps = HeaderProps<DashboardsTreeItem> & RendererUserProps;
+export type DashboardsTreeColumn = ColumnDef<DashboardsTreeItem> & {
+  /** Flex grow factor of the column, see `getColumnFlexStyle` */
+  size: number;
+};
+export type DashboardsTreeCellProps = CellContext<DashboardsTreeItem, unknown> & RendererUserProps;
+export type DashboardTreeHeaderProps = HeaderContext<DashboardsTreeItem, unknown> & RendererUserProps;
 
 export enum SelectionState {
   Unselected,

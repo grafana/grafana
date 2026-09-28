@@ -1,23 +1,25 @@
-import { type Cell } from 'react-table';
+import { type Cell } from '@tanstack/react-table';
+import { type CSSProperties, type HTMLAttributes } from 'react';
 
 import { type TimeRange, type DataFrame, type InterpolateFunction } from '@grafana/data';
 
 import { type TableStyles } from '../TableRT/styles';
 import {
   type GetActionsFunction,
-  type GrafanaTableColumn,
+  type TableCellUserProps,
   type TableFilterActionCallback,
   type TableInspectCellCallback,
 } from '../types';
 
 export interface Props {
-  cell: Cell;
+  cell: Cell<unknown, unknown>;
   tableStyles: TableStyles;
   onCellFilterAdded?: TableFilterActionCallback;
   columnIndex: number;
   columnCount: number;
   timeRange?: TimeRange;
-  userProps?: object;
+  userProps?: TableCellUserProps;
+  cellStyle?: CSSProperties;
   frame: DataFrame;
   rowStyled?: boolean;
   rowExpanded?: boolean;
@@ -34,6 +36,7 @@ export const TableCell = ({
   onCellFilterAdded,
   timeRange,
   userProps,
+  cellStyle,
   frame,
   rowStyled,
   rowExpanded,
@@ -43,17 +46,23 @@ export const TableCell = ({
   replaceVariables,
   setInspectCell,
 }: Props) => {
-  const cellProps = cell.getCellProps();
-  const field = (cell.column as unknown as GrafanaTableColumn).field;
+  const { field, justifyContent, cellComponent: CellComponent } = cell.column.columnDef.meta ?? {};
+  const cellProps: HTMLAttributes<HTMLDivElement> = {
+    role: 'cell',
+    style: cellStyle ?? {
+      position: 'absolute',
+      left: cell.column.getStart(),
+      width: cell.column.getSize(),
+    },
+  };
 
-  if (!field?.display) {
+  if (!field?.display || !CellComponent) {
     return null;
   }
 
   if (cellProps.style) {
     cellProps.style.wordBreak = 'break-word';
     cellProps.style.minWidth = cellProps.style.width;
-    const justifyContent = (cell.column as any).justifyContent;
 
     if (justifyContent === 'flex-end' && !field.config.unit) {
       // justify-content flex-end is not compatible with cellLink overflow; use direction instead
@@ -65,28 +74,27 @@ export const TableCell = ({
     }
   }
 
-  let innerWidth = (typeof cell.column.width === 'number' ? cell.column.width : 24) - tableStyles.cellPadding * 2;
-
+  const innerWidth = cell.column.getSize() - tableStyles.cellPadding * 2;
   const actions = getActions ? getActions(frame, field, cell.row.index, replaceVariables) : [];
 
   return (
-    <>
-      {cell.render('Cell', {
-        field,
-        tableStyles,
-        onCellFilterAdded,
-        cellProps,
-        innerWidth,
-        timeRange,
-        userProps,
-        frame,
-        rowStyled,
-        rowExpanded,
-        textWrapped,
-        height,
-        actions,
-        setInspectCell,
-      })}
-    </>
+    <CellComponent
+      {...cell.getContext()}
+      cell={{ ...cell, value: cell.getValue() }}
+      field={field}
+      tableStyles={tableStyles}
+      onCellFilterAdded={onCellFilterAdded}
+      cellProps={cellProps}
+      innerWidth={innerWidth}
+      timeRange={timeRange}
+      userProps={userProps}
+      frame={frame}
+      rowStyled={rowStyled}
+      rowExpanded={rowExpanded}
+      textWrapped={textWrapped}
+      height={height}
+      actions={actions}
+      setInspectCell={setInspectCell}
+    />
   );
 };

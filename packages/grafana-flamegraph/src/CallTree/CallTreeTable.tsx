@@ -1,13 +1,6 @@
 import { css, cx } from '@emotion/css';
+import { flexRender, type Table } from '@tanstack/react-table';
 import { useEffect } from 'react';
-import {
-  type Row,
-  type HeaderGroup,
-  type TablePropGetter,
-  type TableBodyPropGetter,
-  type TableProps,
-  type TableBodyProps,
-} from 'react-table';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
@@ -21,11 +14,7 @@ type CallTreeTableProps = {
   isCompact: boolean;
   setIsCompact: (compact: boolean) => void;
   getFunctionColumnWidth: (availableWidth: number, compactMode: boolean) => number | undefined;
-  getTableProps: (propGetter?: TablePropGetter<CallTreeNode>) => TableProps;
-  getTableBodyProps: (propGetter?: TableBodyPropGetter<CallTreeNode>) => TableBodyProps;
-  headerGroups: Array<HeaderGroup<CallTreeNode>>;
-  rows: Array<Row<CallTreeNode>>;
-  prepareRow: (row: Row<CallTreeNode>) => void;
+  table: Table<CallTreeNode>;
   currentSearchMatchId?: string;
   searchMatchRowRef: (node: HTMLTableRowElement | null) => void;
   scrollContainerRef: { current: HTMLDivElement | null };
@@ -40,11 +29,7 @@ export function CallTreeTable({
   isCompact,
   setIsCompact,
   getFunctionColumnWidth,
-  getTableProps,
-  getTableBodyProps,
-  headerGroups,
-  rows,
-  prepareRow,
+  table,
   currentSearchMatchId,
   searchMatchRowRef,
   scrollContainerRef,
@@ -66,6 +51,8 @@ export function CallTreeTable({
   }, [availableWidth, shouldBeCompact, isCompact, setIsCompact]);
 
   const functionColumnWidth = getFunctionColumnWidth(availableWidth, isCompact);
+  const headerGroups = table.getHeaderGroups();
+  const rows = table.getRowModel().rows;
 
   if (width < 3 || height < 3) {
     return null;
@@ -73,30 +60,30 @@ export function CallTreeTable({
 
   return (
     <div style={{ width, height, display: 'flex', flexDirection: 'column' }}>
-      <table {...getTableProps()} className={styles.table} style={{ flexShrink: 0 }}>
+      <table className={styles.table} style={{ flexShrink: 0 }}>
         <thead className={styles.thead}>
           {headerGroups.map((headerGroup) => {
-            const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
             return (
-              <tr key={key} {...headerGroupProps}>
-                {headerGroup.headers.map((column) => {
-                  const { key: headerKey, ...headerProps } = column.getHeaderProps(column.getSortByToggleProps());
-                  const columnWidth = column.id === 'label' ? functionColumnWidth : column.width;
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  const { column } = header;
+                  const columnWidth = column.id === 'label' ? functionColumnWidth : column.columnDef.size;
+                  const sorted = column.getIsSorted();
                   return (
                     <th
-                      key={headerKey}
-                      {...headerProps}
+                      key={header.id}
+                      onClick={column.getToggleSortingHandler()}
                       className={styles.th}
                       style={{
                         ...(columnWidth !== undefined && { width: columnWidth }),
                         textAlign: column.id === 'self' || column.id === 'total' ? 'right' : undefined,
-                        ...(column.minWidth !== undefined && { minWidth: column.minWidth }),
+                        ...(column.columnDef.minSize !== undefined && { minWidth: column.columnDef.minSize }),
                       }}
                     >
-                      {column.render('Header')}
-                      {column.isSorted && (
+                      {flexRender(column.columnDef.header, header.getContext())}
+                      {sorted && (
                         <Icon
-                          name={column.isSortedDesc ? 'arrow-down' : 'arrow-up'}
+                          name={sorted === 'desc' ? 'arrow-down' : 'arrow-up'}
                           size="lg"
                           className={styles.sortIcon}
                         />
@@ -114,19 +101,16 @@ export function CallTreeTable({
         style={{ flex: 1, overflowY: 'scroll', overflowX: 'auto' }}
         className={styles.scrollContainer}
       >
-        <table {...getTableProps()} className={styles.table}>
-          <tbody {...getTableBodyProps()} className={styles.tbody}>
+        <table className={styles.table}>
+          <tbody className={styles.tbody}>
             {rows.map((row, rowIndex) => {
-              prepareRow(row);
-              const { key, ...rowProps } = row.getRowProps();
               const isFocusedRow = row.original.id === focusedNodeId;
               const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
               const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
 
               return (
                 <tr
-                  key={key}
-                  {...rowProps}
+                  key={row.id}
                   ref={isSearchMatchRow ? searchMatchRowRef : null}
                   className={cx(
                     styles.tr,
@@ -137,15 +121,13 @@ export function CallTreeTable({
                     isSearchMatchRow && styles.searchMatchRow
                   )}
                 >
-                  {row.cells.map((cell) => {
-                    const { key: cellKey, ...cellProps } = cell.getCellProps();
+                  {row.getVisibleCells().map((cell) => {
                     const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
                     const isActionsColumn = cell.column.id === 'actions';
-                    const columnWidth = cell.column.id === 'label' ? functionColumnWidth : cell.column.width;
+                    const columnWidth = cell.column.id === 'label' ? functionColumnWidth : cell.column.columnDef.size;
                     return (
                       <td
-                        key={cellKey}
-                        {...cellProps}
+                        key={cell.id}
                         className={cx(
                           styles.td,
                           isActionsColumn && styles.actionsColumnCell,
@@ -153,10 +135,12 @@ export function CallTreeTable({
                         )}
                         style={{
                           ...(columnWidth !== undefined && { width: columnWidth }),
-                          ...(cell.column.minWidth !== undefined && { minWidth: cell.column.minWidth }),
+                          ...(cell.column.columnDef.minSize !== undefined && {
+                            minWidth: cell.column.columnDef.minSize,
+                          }),
                         }}
                       >
-                        {cell.render('Cell', { rowIndex })}
+                        {flexRender(cell.column.columnDef.cell, { ...cell.getContext(), rowIndex })}
                       </td>
                     );
                   })}

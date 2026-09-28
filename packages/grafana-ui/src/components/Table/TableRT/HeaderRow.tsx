@@ -1,4 +1,4 @@
-import { type HeaderGroup, type Column } from 'react-table';
+import { flexRender, type Header, type HeaderGroup } from '@tanstack/react-table';
 
 import { type Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,7 +12,7 @@ import { Filter } from './Filter';
 import { type TableStyles } from './styles';
 
 export interface HeaderRowProps {
-  headerGroups: HeaderGroup[];
+  headerGroups: Array<HeaderGroup<unknown>>;
   showTypeIcons?: boolean;
   tableStyles: TableStyles;
 }
@@ -23,20 +23,21 @@ export const HeaderRow = (props: HeaderRowProps) => {
 
   return (
     <div role="rowgroup" className={tableStyles.headerRow}>
-      {headerGroups.map((headerGroup: HeaderGroup) => {
-        const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
+      {headerGroups.map((headerGroup) => {
+        // TanStack Table always builds a header group, even when there are no columns
+        if (headerGroup.headers.length === 0) {
+          return null;
+        }
+
         return (
           <div
             className={tableStyles.thead}
-            {...headerGroupProps}
-            key={key}
+            key={headerGroup.id}
             aria-label={e2eSelectorsTable.header}
             aria-rowindex={1}
             role="row"
           >
-            {headerGroup.headers.map((column: Column, index: number) =>
-              renderHeaderCell(column, tableStyles, showTypeIcons)
-            )}
+            {headerGroup.headers.map((header) => renderHeaderCell(header, tableStyles, showTypeIcons))}
           </div>
         );
       })}
@@ -44,55 +45,72 @@ export const HeaderRow = (props: HeaderRowProps) => {
   );
 };
 
-function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?: boolean) {
-  const { key, ...headerProps } = column.getHeaderProps();
-  const field: Field = column.field ?? null;
+function renderHeaderCell(header: Header<unknown, unknown>, tableStyles: TableStyles, showTypeIcons?: boolean) {
+  const { column } = header;
+  const field: Field | undefined = column.columnDef.meta?.field;
   const tableFieldOptions: TableFieldOptions | undefined = field?.config.custom;
+  const isSorted = column.getIsSorted();
+  const canResize = column.getCanResize();
 
-  if (column.canResize) {
-    headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
-  }
-
-  headerProps.style.position = 'absolute';
-  headerProps.style.justifyContent = column.justifyContent;
-  headerProps.style.left = column.totalLeft;
-
-  let headerContent = column.render('Header');
+  let headerContent = flexRender(column.columnDef.header, header.getContext());
 
   const ariaLabel =
     typeof headerContent === 'string'
-      ? getAriaLabel(headerContent, column.isSortedDesc, column.isSorted, t)
+      ? getAriaLabel(headerContent, isSorted === 'desc', Boolean(isSorted), t)
       : t('grafana-ui.table.sort-column', 'Sort column');
 
-  let sortHeaderContent = column.canSort && (
+  let sortHeaderContent = column.getCanSort() && (
     <>
-      <button {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel} aria-label={ariaLabel}>
+      <button onClick={column.getToggleSortingHandler()} className={tableStyles.headerCellLabel} aria-label={ariaLabel}>
         {showTypeIcons && (
           <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={tableStyles.typeIcon} />
         )}
         <div>{headerContent}</div>
-        {column.isSorted &&
-          (column.isSortedDesc ? (
+        {isSorted &&
+          (isSorted === 'desc' ? (
             <Icon size="lg" name="arrow-down" className={tableStyles.sortIcon} />
           ) : (
             <Icon name="arrow-up" size="lg" className={tableStyles.sortIcon} />
           ))}
       </button>
-      {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
+      {column.getCanFilter() && <Filter column={column} tableStyles={tableStyles} field={field} />}
     </>
   );
-  if (sortHeaderContent && tableFieldOptions?.headerComponent) {
-    sortHeaderContent = <tableFieldOptions.headerComponent field={field} defaultContent={sortHeaderContent} />;
-  } else if (tableFieldOptions?.headerComponent) {
-    headerContent = <tableFieldOptions.headerComponent field={field} defaultContent={headerContent} />;
+  if (field && tableFieldOptions?.headerComponent) {
+    if (sortHeaderContent) {
+      sortHeaderContent = <tableFieldOptions.headerComponent field={field} defaultContent={sortHeaderContent} />;
+    } else {
+      headerContent = <tableFieldOptions.headerComponent field={field} defaultContent={headerContent} />;
+    }
   }
 
   return (
-    <div className={tableStyles.headerCell} key={key} {...headerProps} role="columnheader">
-      {column.canSort && sortHeaderContent}
-      {!column.canSort && headerContent}
-      {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
-      {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
+    <div
+      className={tableStyles.headerCell}
+      key={header.id}
+      role="columnheader"
+      style={{
+        position: 'absolute',
+        justifyContent: column.columnDef.meta?.justifyContent,
+        left: column.getStart(),
+        width: column.getSize(),
+        userSelect: canResize && column.getIsResizing() ? 'none' : 'auto',
+      }}
+    >
+      {column.getCanSort() && sortHeaderContent}
+      {!column.getCanSort() && headerContent}
+      {!column.getCanSort() && column.getCanFilter() && (
+        <Filter column={column} tableStyles={tableStyles} field={field} />
+      )}
+      {canResize && (
+        // resizing is a pointer only affordance, column widths are not keyboard adjustable
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+        <div
+          onMouseDown={header.getResizeHandler()}
+          onTouchStart={header.getResizeHandler()}
+          className={tableStyles.resizeHandle}
+        />
+      )}
     </div>
   );
 }

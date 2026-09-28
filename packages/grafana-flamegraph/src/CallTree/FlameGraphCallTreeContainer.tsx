@@ -1,6 +1,14 @@
 import { css } from '@emotion/css';
-import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { useTable, useSortBy, useExpanded, type Column, type Row, type UseExpandedRowProps } from 'react-table';
+import {
+  getCoreRowModel,
+  getExpandedRowModel,
+  getSortedRowModel,
+  type ColumnDef,
+  type ExpandedState,
+  type Row,
+  useReactTable,
+} from '@tanstack/react-table';
+import { memo, type ReactNode, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -403,7 +411,7 @@ const FlameGraphCallTreeContainer = memo(
       return Math.max(availableWidth - fixedWidth, FUNCTION_MIN_WIDTH);
     };
 
-    const commonColumns = useMemo<Array<Column<CallTreeNode>>>(() => {
+    const commonColumns = useMemo<CallTreeColumn[]>(() => {
       return [
         {
           Header: '',
@@ -440,8 +448,7 @@ const FlameGraphCallTreeContainer = memo(
           accessor: 'label',
           Cell: ({ row, value, rowIndex }: { row: Row<CallTreeNode>; value: string; rowIndex?: number }) => (
             <FunctionCellWithExpander
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
+              row={row}
               value={value}
               depth={row.original.depth - depthOffset}
               hasChildren={Boolean(row.original.children?.length)}
@@ -473,9 +480,9 @@ const FlameGraphCallTreeContainer = memo(
       viewMode,
     ]);
 
-    const columns = useMemo<Array<Column<CallTreeNode>>>(() => {
+    const columns = useMemo<CallTreeColumn[]>(() => {
       if (data.isDiffFlamegraph()) {
-        const cols: Array<Column<CallTreeNode>> = [...commonColumns];
+        const cols: CallTreeColumn[] = [...commonColumns];
 
         if (!isCompact) {
           cols.push({
@@ -525,7 +532,7 @@ const FlameGraphCallTreeContainer = memo(
 
         return cols;
       } else {
-        const cols: Array<Column<CallTreeNode>> = [...commonColumns];
+        const cols: CallTreeColumn[] = [...commonColumns];
 
         if (!isCompact) {
           cols.push(
@@ -587,33 +594,41 @@ const FlameGraphCallTreeContainer = memo(
       }
     }, [commonColumns, data, isCompact, theme, styles, focusedNode]);
 
-    // currentSearchMatchId is intentionally in the deps despite not being used in the body.
-    // Creating a new array identity forces react-table (with autoResetExpanded: true) to
-    // recalculate the expanded state from initialState, which includes the path to the
-    // current search match.
-    const tableNodes = useMemo(() => {
-      return [...nodes];
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [nodes, currentSearchMatchId]);
+    const tableColumns = useMemo(() => columns.map(toCallTreeColumn), [columns]);
 
-    const tableInstance = useTable<CallTreeNode>(
-      {
-        columns,
-        data: tableNodes,
-        getSubRows: (row) => row.children || [],
-        initialState: {
-          sortBy: [{ id: 'total', desc: true }],
-          expanded: expandedState,
-        },
-        autoResetExpanded: true,
-        autoResetSortBy: false,
+    const [expanded, setExpanded] = useState<ExpandedState>(expandedState);
+    useEffect(() => {
+      setExpanded(expandedState);
+    }, [expandedState]);
+
+    const tableInstance = useReactTable<CallTreeNode>({
+      columns: tableColumns,
+      data: nodes,
+      getSubRows: (row) => row.children || [],
+      getRowId: (row) => row.id,
+      getCoreRowModel: getCoreRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      getExpandedRowModel: getExpandedRowModel(),
+      state: { expanded },
+      onExpandedChange: setExpanded,
+      initialState: {
+        sorting: [{ id: 'total', desc: true }],
       },
-      useSortBy,
-      useExpanded
-    );
+      autoResetExpanded: false,
+    });
 
-    tableInstanceRef.current = tableInstance;
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
+    tableInstanceRef.current = {
+      rows: tableInstance.getRowModel().rows,
+      toggleRowExpanded: (ids, value) => {
+        setExpanded((current) => {
+          const next = current === true ? {} : { ...current };
+          for (const id of ids) {
+            next[id] = value ?? !next[id];
+          }
+          return next;
+        });
+      },
+    };
 
     return (
       <div className={styles.container} data-testid="callTree">
@@ -702,11 +717,7 @@ const FlameGraphCallTreeContainer = memo(
                 isCompact={isCompact}
                 setIsCompact={setIsCompact}
                 getFunctionColumnWidth={getFunctionColumnWidth}
-                getTableProps={getTableProps}
-                getTableBodyProps={getTableBodyProps}
-                headerGroups={headerGroups}
-                rows={rows}
-                prepareRow={prepareRow}
+                table={tableInstance}
                 currentSearchMatchId={currentSearchMatchId}
                 searchMatchRowRef={searchMatchRowRef}
                 scrollContainerRef={scrollContainerRef}
@@ -843,6 +854,44 @@ function getStyles(theme: GrafanaTheme2) {
     modePillCloseButton: css({
       verticalAlign: 'text-bottom',
       margin: theme.spacing(0, 0.5),
+    }),
+  };
+}
+
+interface CallTreeColumn {
+  id?: string;
+  Header: string;
+  accessor?: keyof CallTreeNode;
+  // Cells keep the react-table v7 arguments. `any` lets each column type its own value.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Cell?: (props: any) => ReactNode;
+  width?: number;
+  minWidth?: number;
+  disableSortBy?: boolean;
+  sortType?: 'basic';
+}
+
+function rowIndexFromContext(context: object): number | undefined {
+  return 'rowIndex' in context && typeof context.rowIndex === 'number' ? context.rowIndex : undefined;
+}
+
+function toCallTreeColumn(column: CallTreeColumn): ColumnDef<CallTreeNode> {
+  const { Cell } = column;
+  return {
+    ...(column.id && { id: column.id }),
+    header: column.Header,
+    ...(column.accessor && { accessorKey: column.accessor }),
+    ...(column.width !== undefined && { size: column.width }),
+    ...(column.minWidth !== undefined && { minSize: column.minWidth }),
+    enableSorting: !column.disableSortBy,
+    ...(column.sortType && { sortingFn: column.sortType }),
+    ...(Cell && {
+      cell: (context) =>
+        Cell({
+          row: context.row,
+          value: context.getValue(),
+          rowIndex: rowIndexFromContext(context),
+        }),
     }),
   };
 }

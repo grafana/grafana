@@ -63,7 +63,7 @@ const renderWithContext = async (
       const matches = url.match(/^\/api\/datasources\/uid\/(?<sourceUID>[a-zA-Z0-9]+)\/correlations$/);
       if (matches?.groups) {
         const { sourceUID } = matches.groups;
-        const correlation = { sourceUID, ...data, uid: uniqueId(), provisioned: false };
+        const correlation = { sourceUID, ...data, uid: uniqueId('created-'), provisioned: false };
         correlations.push(correlation);
         return createCreateCorrelationResponse(correlation);
       }

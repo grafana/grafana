@@ -37,8 +37,8 @@ export function useFixScrollbarContainer(
 }
 
 /**
-  react-table caches the height of cells, so we need to reset them when expanding/collapsing rows.
-  We use `lastExpandedOrCollapsedIndex` since collapsed rows disappear from `expandedIndexes` but still keep their expanded
+  VariableSizeList caches row heights, so we need to reset them when expanding/collapsing rows.
+  We use `lastExpandedOrCollapsedIndex` since collapsed rows disappear from the expanded map but still keep their expanded
   height.
  */
 export function useResetVariableListSizeCache(
@@ -48,7 +48,7 @@ export function useResetVariableListSizeCache(
   hasUniqueId: boolean
 ) {
   // Make sure we trigger the reset when keys change in any way
-  const expandedRowsRepr = JSON.stringify(Object.keys(extendedState.expanded));
+  const expandedRowsRepr = JSON.stringify(extendedState.expanded === true ? true : Object.keys(extendedState.expanded));
 
   useEffect(() => {
     // By default, reset all rows
@@ -64,17 +64,19 @@ export function useResetVariableListSizeCache(
 
       // Account for paging.
       resetIndex =
-        extendedState.pageIndex === 0
+        extendedState.pagination.pageIndex === 0
           ? resetIndex - 1
-          : resetIndex - extendedState.pageIndex - extendedState.pageIndex * extendedState.pageSize;
+          : resetIndex -
+            extendedState.pagination.pageIndex -
+            extendedState.pagination.pageIndex * extendedState.pagination.pageSize;
     }
 
     listRef.current?.resetAfterIndex(Math.max(resetIndex, 0));
     return;
   }, [
     extendedState.lastExpandedOrCollapsedIndex,
-    extendedState.pageSize,
-    extendedState.pageIndex,
+    extendedState.pagination.pageSize,
+    extendedState.pagination.pageIndex,
     listRef,
     data,
     expandedRowsRepr,

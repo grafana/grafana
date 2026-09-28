@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { type Column } from '@tanstack/react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
@@ -12,7 +13,7 @@ import { FilterPopup } from './FilterPopup';
 import { type TableStyles } from './styles';
 
 interface Props {
-  column: any;
+  column: Column<unknown, unknown>;
   tableStyles: TableStyles;
   field?: Field;
 }
@@ -21,7 +22,8 @@ export const Filter = ({ column, field, tableStyles }: Props) => {
   const ref = useRef<HTMLButtonElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
   const styles = useStyles2(getStyles);
-  const filterEnabled = useMemo(() => Boolean(column.filterValue), [column.filterValue]);
+  const filterValue = column.getFilterValue();
+  const filterEnabled = useMemo(() => Boolean(filterValue), [filterValue]);
   const onShowPopover = useCallback(() => setPopoverVisible(true), [setPopoverVisible]);
   const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);
   const [searchFilter, setSearchFilter] = useState('');

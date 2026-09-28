@@ -1,6 +1,5 @@
+import { type Header, type Row } from '@tanstack/react-table';
 import { clone, sampleSize } from 'lodash';
-import memoize from 'micro-memoize';
-import { type HeaderGroup, type Row } from 'react-table';
 
 import {
   type DataFrame,
@@ -55,19 +54,16 @@ export function getColumns(
   if (expander) {
     columns.push({
       // Make an expander cell
-      Header: () => null, // No header
+      header: () => null, // No header
       id: 'expander', // It needs an ID
-      // @ts-expect-error
-      // TODO fix type error here
-      Cell: RowExpander,
-      width: EXPANDER_WIDTH,
-      minWidth: EXPANDER_WIDTH,
-      filter: (_rows: Row[], _id: string, _filterValues?: SelectableValue[]) => {
-        return [];
+      size: EXPANDER_WIDTH,
+      minSize: EXPANDER_WIDTH,
+      sortingFn: 'basic',
+      meta: {
+        cellComponent: RowExpander,
+        justifyContent: 'left',
+        field: data.fields[0],
       },
-      justifyContent: 'left',
-      field: data.fields[0],
-      sortType: 'basic',
     });
 
     availableWidth -= EXPANDER_WIDTH;
@@ -94,30 +90,29 @@ export function getColumns(
       switch (type) {
         case FieldType.number:
         case FieldType.frame:
-          return 'number';
+          return sortNumber;
         case FieldType.time:
-          return 'basic';
+          return 'basic' as const;
         default:
-          return 'alphanumeric-insensitive';
+          return sortCaseInsensitive;
       }
     };
 
-    const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
-      // @ts-expect-error
-      // TODO fix type error here
-      Cell,
       id: fieldIndex.toString(),
-      field: field,
-      Header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
-      accessor: (_row, i) => field.values[i],
-      sortType: selectSortType(field.type),
-      width: fieldTableOptions.width,
-      minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
-      disableResizing: fieldTableOptions.resizable === false,
-      filter: memoize(filterByValue(field)),
-      justifyContent: getTextAlign(field),
-      Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
+      header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
+      accessorFn: (_row, i) => field.values[i],
+      sortingFn: selectSortType(field.type),
+      size: fieldTableOptions.width,
+      minSize: fieldTableOptions.minWidth ?? columnMinWidth,
+      enableResizing: fieldTableOptions.resizable !== false,
+      filterFn: (row, id, filterValues) => matchesFilterValues(row, id, field, filterValues),
+      footer: () => getFooterValue(fieldIndex, footerValues, isCountRowsSet),
+      meta: {
+        cellComponent: getCellComponent(fieldTableOptions.cellOptions?.type, field),
+        justifyContent: getTextAlign(field),
+        field: field,
+      },
     });
   }
 
@@ -125,9 +120,9 @@ export function getColumns(
   let sharedWidth = availableWidth / fieldCountWithoutWidth;
   for (let i = fieldCountWithoutWidth; i > 0; i--) {
     for (const column of columns) {
-      if (!column.width && column.minWidth > sharedWidth) {
-        column.width = column.minWidth;
-        availableWidth -= column.width;
+      if (!column.size && column.minSize > sharedWidth) {
+        column.size = column.minSize;
+        availableWidth -= column.size;
         fieldCountWithoutWidth -= 1;
         sharedWidth = availableWidth / fieldCountWithoutWidth;
       }
@@ -136,10 +131,10 @@ export function getColumns(
 
   // divide up the rest of the space
   for (const column of columns) {
-    if (!column.width) {
-      column.width = sharedWidth;
+    if (!column.size) {
+      column.size = sharedWidth;
     }
-    column.minWidth = 50;
+    column.minSize = 50;
   }
 
   return columns;
@@ -189,7 +184,7 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field): Cell
 }
 
 export function filterByValue(field?: Field) {
-  return function (rows: Row[], id: string, filterValues?: SelectableValue[]) {
+  return function (rows: Array<Row<unknown>>, id: string, filterValues?: SelectableValue[]) {
     if (rows.length === 0) {
       return rows;
     }
@@ -202,14 +197,17 @@ export function filterByValue(field?: Field) {
       return rows;
     }
 
-    return rows.filter((row) => {
-      if (!row.values.hasOwnProperty(id)) {
-        return false;
-      }
-      const value = rowToFieldValue(row, field);
-      return filterValues.find((filter) => filter.value === value) !== undefined;
-    });
+    return rows.filter((row) => matchesFilterValues(row, id, field, filterValues));
   };
+}
+
+function matchesFilterValues(row: Row<unknown>, id: string, field: Field, filterValues?: SelectableValue[]): boolean {
+  if (!filterValues || !row.getAllCells().some((cell) => cell.column.id === id)) {
+    return false;
+  }
+
+  const value = rowToFieldValue(row, field);
+  return filterValues.find((filter) => filter.value === value) !== undefined;
 }
 
 export function calculateUniqueFieldValues(rows: any[], field?: Field) {
@@ -279,14 +277,14 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
 
 const caseInsensitiveCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
-export function sortCaseInsensitive(a: Row, b: Row, id: string) {
-  return caseInsensitiveCollator.compare(String(a.values[id]), String(b.values[id]));
+export function sortCaseInsensitive(a: Row<unknown>, b: Row<unknown>, id: string) {
+  return caseInsensitiveCollator.compare(String(a.getValue(id)), String(b.getValue(id)));
 }
 
 // sortNumber needs to have great performance as it is called a lot
-export function sortNumber(rowA: Row, rowB: Row, id: string) {
-  const a = toNumber(rowA.values[id]);
-  const b = toNumber(rowB.values[id]);
+export function sortNumber(rowA: Row<unknown>, rowB: Row<unknown>, id: string) {
+  const a = toNumber(rowA.getValue(id));
+  const b = toNumber(rowB.getValue(id));
   return a === b ? 0 : a > b ? 1 : -1;
 }
 
@@ -388,15 +386,16 @@ function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2
 }
 
 // This strips the raw vales from the `rows` object.
-export function createFooterCalculationValues(rows: Row[]): any[number] {
+export function createFooterCalculationValues(rows: Array<Row<unknown>>): any[number] {
   const values: any[number] = [];
 
-  for (const key in rows) {
-    for (const [valKey, val] of Object.entries(rows[key].values)) {
+  for (const row of rows) {
+    for (const cell of row.getAllCells()) {
+      const valKey = cell.column.id;
       if (values[valKey] === undefined) {
         values[valKey] = [];
       }
-      values[valKey].push(val);
+      values[valKey].push(cell.getValue());
     }
   }
 
@@ -466,13 +465,13 @@ export function calculateAroundPointThreshold(timeField: Field): number {
  */
 export function guessTextBoundingBox(
   text: string,
-  headerGroup: HeaderGroup,
+  headerGroup: Header<unknown, unknown> | undefined,
   osContext: OffscreenCanvasRenderingContext2D | null,
   lineHeight: number,
   defaultRowHeight: number,
   padding = 0
 ) {
-  const width = Number(headerGroup?.width ?? 300);
+  const width = Number(headerGroup?.getSize() ?? 300);
   const LINE_SCALE_FACTOR = 1.17;
   const LOW_LINE_PAD = 42;
   const PADDING = padding * 2;

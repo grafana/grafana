@@ -1,18 +1,34 @@
+import { type Cell, type CellContext, type HeaderContext, type Row, type RowData } from '@tanstack/react-table';
 import { type ReactNode } from 'react';
-import {
-  type CellProps,
-  type DefaultSortTypes,
-  type HeaderProps,
-  type IdType,
-  type Renderer,
-  type SortByFn,
-} from 'react-table';
+
+/**
+ * Props passed to a custom cell renderer.
+ *
+ * This uses the TanStack Table v8 context. `value` and `cell.value` are compatibility aliases for the
+ * equivalent react-table v7 properties; other v7 table-instance properties are not available.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` keeps cell renderers typed for a specific value assignable, as in react-table v7
+export type CellProps<TableData extends object, Value = any> = Omit<CellContext<TableData, Value>, 'cell'> & {
+  cell: Cell<TableData, Value> & { value: Value };
+  value: Value;
+};
+
+export type HeaderProps<TableData extends object> = HeaderContext<TableData, unknown>;
+
+/** Custom sorting function using TanStack Table v8 rows. */
+export type SortByFn<TableData extends object> = (
+  rowA: Row<TableData>,
+  rowB: Row<TableData>,
+  columnId: string
+) => number;
+
+export type SortType = 'alphanumeric' | 'basic' | 'datetime' | 'number' | 'string';
 
 export interface Column<TableData extends object> {
   /**
    * ID of the column. Must be unique among all other columns
    */
-  id: IdType<TableData>;
+  id: string;
   /**
    * Custom render function for te cell
    */
@@ -20,11 +36,11 @@ export interface Column<TableData extends object> {
   /**
    * Header name. Can be a string, renderer function, or undefined. If `undefined` the header will be empty. Useful for action columns.
    */
-  header?: Renderer<HeaderProps<TableData>>;
+  header?: ReactNode | ((props: HeaderProps<TableData>) => ReactNode);
   /**
    * Column sort type. If `undefined` the column will not be sortable.
    * */
-  sortType?: DefaultSortTypes | SortByFn<TableData>;
+  sortType?: SortType | SortByFn<TableData>;
   /**
    * If `true` prevents the column from growing more than its content. Ignored when `width` is set.
    */
@@ -49,4 +65,17 @@ export interface Column<TableData extends object> {
    * Determines starting sort direction when the column header is clicked.
    */
   sortDescFirst?: boolean;
+}
+
+declare module '@tanstack/react-table' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface TableMeta<TData extends RowData> {
+    getRowHTMLID?: (rowId: string) => string;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    visible?: (data: TData[]) => boolean;
+    widthClass?: string;
+  }
 }
