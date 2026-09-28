@@ -19,6 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"k8s.io/client-go/rest"
 )
 
 type fakeTokenExchanger struct {
@@ -160,6 +163,26 @@ func TestNewAnnotationAPIClient_PropagatesTraceContext(t *testing.T) {
 	assert.Contains(t, next.gotTraceparent, span.SpanContext().TraceID().String(),
 		"outbound request must carry the caller's trace ID")
 	assert.Equal(t, "signed-token", next.gotToken, "token exchange must still apply")
+}
+
+func TestBuildRESTConfig_TracesRateLimiterWait(t *testing.T) {
+	recorder := tracetest.NewSpanRecorder()
+	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	orig := tracer
+	tracer = &annotationTracer{tp.Tracer("test")}
+	t.Cleanup(func() { tracer = orig })
+
+	restCfg := buildRESTConfig("http://annotations.example", &fakeTokenExchanger{}, request.GetNamespaceMapper(&setting.Cfg{}), rest.TLSClientConfig{})
+	require.IsType(t, tracedRateLimiter{}, restCfg.RateLimiter)
+
+	ctx, parent := tracer.Start(context.Background(), "caller")
+	require.NoError(t, restCfg.RateLimiter.Wait(ctx))
+	parent.End()
+
+	spans := recorder.Ended()
+	require.Len(t, spans, 2)
+	assert.Equal(t, "annotations.apiclient.rateLimiterWait", spans[0].Name())
+	assert.Equal(t, parent.SpanContext().SpanID(), spans[0].Parent().SpanID(), "the wait is attributed to the caller's span")
 }
 
 func TestAnnotationAPIClient_Requests(t *testing.T) {
