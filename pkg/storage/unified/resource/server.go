@@ -148,6 +148,32 @@ type ResourceServerStopper interface {
 	Stop(ctx context.Context) error
 }
 
+type BackendListKey struct {
+	Key             *resourcepb.ResourceKey
+	ResourceVersion int64
+	Folder          string
+	ContinueToken   string
+
+	// dataKey identifies the exact stored revision selected by ListKeys. It is
+	// intentionally private so callers cannot construct references to values that
+	// were not returned by the backend.
+	dataKey DataKey
+}
+
+type ListKeyIterator interface {
+	Next() bool
+	Error() error
+	Item() BackendListKey
+}
+
+// KeyListBackend is an optional capability for authorizing list metadata before
+// fetching values. Keep it separate from StorageBackend while the legacy SQL
+// backend remains supported.
+type KeyListBackend interface {
+	ListKeys(context.Context, *resourcepb.ListRequest, func(ListKeyIterator) error) (int64, error)
+	FetchValues(context.Context, []BackendListKey) (iter.Seq2[*BackendReadResponse, error], error)
+}
+
 type ListIterator interface {
 	// Next advances iterator and returns true if there is next value is available from the iterator.
 	// Error() should be checked after every call of Next(), even when Next() returns true.
@@ -455,12 +481,19 @@ type ResourceServerOptions struct {
 
 	StorageMetrics *StorageMetrics
 
+	// GRPCErrorResultToStatus enables conversion of embedded ErrorResults on in-process calls.
+	GRPCErrorResultToStatus bool
+
 	IndexMetrics *BleveIndexMetrics
 
 	VectorMetrics *VectorMetrics
 
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
+
+	// AuthorizeBeforeFetchEnabled authorizes list metadata before fetching resource values
+	// when the backend implements KeyListBackend.
+	AuthorizeBeforeFetchEnabled bool
 
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue  QOSEnqueuer
@@ -650,7 +683,9 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		ctx:                            ctx,
 		cancel:                         cancel,
 		storageMetrics:                 opts.StorageMetrics,
+		grpcErrorResultToStatus:        opts.GRPCErrorResultToStatus,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
+		authorizeBeforeFetchEnabled:    opts.AuthorizeBeforeFetchEnabled,
 		reg:                            opts.Reg,
 		queue:                          opts.QOSQueue,
 		queueConfig:                    opts.QOSConfig,
@@ -759,6 +794,7 @@ type server struct {
 	now                       func() int64
 	mostRecentRV              atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics            *StorageMetrics
+	grpcErrorResultToStatus   bool
 	overridesService          *OverridesService
 	quotasConfig              QuotasConfig
 	searchBackedListResources SearchBackedListConfig
@@ -784,10 +820,11 @@ type server struct {
 	once    sync.Once
 	initErr error
 
-	maxPageSizeBytes int
-	reg              prometheus.Registerer
-	queue            QOSEnqueuer
-	queueConfig      QueueConfig
+	maxPageSizeBytes            int
+	authorizeBeforeFetchEnabled bool
+	reg                         prometheus.Registerer
+	queue                       QOSEnqueuer
+	queueConfig                 QueueConfig
 
 	// This value is used by storage server to artificially delay returning response after successful
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
@@ -1683,9 +1720,21 @@ func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *reso
 	return nil
 }
 
-func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
+//nolint:gocyclo // Temporary list-path instrumentation
+func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *resourcepb.ListResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
-	defer span.End()
+	path := listPathUnknown
+	selectorType := listSelectorType(req)
+	requestedLimit := int64(0)
+	if req != nil {
+		requestedLimit = req.GetLimit()
+	}
+	searchFallback := false
+	defer func() {
+		setListRequestPath(ctx, path)
+		annotateListRequest(span, path, selectorType, requestedLimit, req, rsp)
+		span.End()
+	}()
 
 	if req.Options == nil {
 		return nil, status.Error(codes.InvalidArgument, "missing list options")
@@ -1727,6 +1776,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	// resolves names through Read, which fetches whole objects.
 	if !req.KeysOnly {
 		if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
+			path = listPathFieldSelector
 			return rsp, nil
 		}
 	}
@@ -1752,14 +1802,16 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if s.shouldUseSearchForList(req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
-		rsp, err := s.listWithSelectors(ctx, req)
+		rsp, err = s.listWithSelectors(ctx, req)
 		if !errors.Is(err, errSearchCannotAnswerList) {
+			path = listPathSearch
 			gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 			return rsp, err
 		}
 		// The store scan reads the objects themselves, so it answers what the index
 		// cannot. Slower, but right.
+		searchFallback = true
 		s.log.Warn("Search cannot answer List with selectors, falling back to the store", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 	}
 
@@ -1773,10 +1825,25 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 	switch req.Source {
 	case resourcepb.ListRequest_STORE:
+		if s.authorizeBeforeFetchEnabled {
+			if backend, ok := s.backend.(KeyListBackend); ok {
+				path = listPathStoreAuthorizeFirst
+				if searchFallback {
+					path = listPathSearchFallbackAuthorizeFirst
+				}
+				return s.listAuthorizeBeforeFetch(ctx, req, backend)
+			}
+		}
+		path = listPathStoreFetchFirst
+		if searchFallback {
+			path = listPathSearchFallbackFetchFirst
+		}
 		return s.listAuthorized(ctx, req, s.backend.ListIterator)
 	case resourcepb.ListRequest_HISTORY:
+		path = listPathHistory
 		return s.listAuthorized(ctx, req, s.backend.ListHistory)
 	case resourcepb.ListRequest_TRASH:
+		path = listPathTrash
 		return s.listFromTrash(ctx, req)
 	default:
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
@@ -1918,6 +1985,216 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 	})
 
 	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
+}
+
+type authorizedListKeyPull func() (BackendListKey, error, bool)
+
+func (s *server) listAuthorizeBeforeFetch(ctx context.Context, req *resourcepb.ListRequest, backend KeyListBackend) (*resourcepb.ListResponse, error) {
+	rsp := &resourcepb.ListResponse{}
+	var nextToken string
+
+	rv, err := backend.ListKeys(ctx, req, func(keyIter ListKeyIterator) error {
+		nextAuthorized, stop := iter.Pull2(authz.FilterAuthorized(
+			ctx,
+			s.access,
+			listKeyCandidates(keyIter),
+			func(item BackendListKey) authz.BatchCheckItem {
+				return listKeyAuthorizationItem(req, item)
+			},
+			authz.WithTracer(tracer),
+		))
+		defer stop()
+
+		if req.KeysOnly {
+			var err error
+			nextToken, err = s.listAuthorizedKeysOnlyPage(req, rsp, keyIter, nextAuthorized)
+			return err
+		}
+
+		var err error
+		nextToken, err = s.listAuthorizedValuesPage(ctx, req, rsp, backend, keyIter, nextAuthorized)
+		return err
+	})
+
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
+}
+
+func listKeyCandidates(keyIter ListKeyIterator) iter.Seq[BackendListKey] {
+	return func(yield func(BackendListKey) bool) {
+		for keyIter.Next() {
+			if keyIter.Error() != nil || !yield(keyIter.Item()) {
+				return
+			}
+		}
+	}
+}
+
+func listKeyAuthorizationItem(req *resourcepb.ListRequest, item BackendListKey) authz.BatchCheckItem {
+	key := req.Options.Key
+	namespace := key.Namespace
+	if req.KeysOnly && namespace == "" {
+		namespace = item.Key.Namespace
+	}
+	return authz.BatchCheckItem{
+		Name:               item.Key.Name,
+		Folder:             item.Folder,
+		Verb:               utils.VerbGet,
+		Group:              key.Group,
+		Resource:           key.Resource,
+		Namespace:          namespace,
+		FreshnessTimestamp: ResourceVersionTime(item.ResourceVersion),
+	}
+}
+
+func (s *server) listAuthorizedKeysOnlyPage(
+	req *resourcepb.ListRequest,
+	rsp *resourcepb.ListResponse,
+	keyIter ListKeyIterator,
+	nextAuthorized authorizedListKeyPull,
+) (string, error) {
+	var (
+		pageBytes         int
+		lastContinueToken string
+	)
+	for {
+		item, authErr, ok := nextAuthorized()
+		if authErr != nil {
+			return "", authErr
+		}
+		if !ok {
+			return "", keyIter.Error()
+		}
+		if s.listPageFull(req, rsp, pageBytes) {
+			if err := keyIter.Error(); err != nil {
+				return "", err
+			}
+			return lastContinueToken, nil
+		}
+
+		rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+			ResourceVersion: item.ResourceVersion,
+			Namespace:       item.Key.Namespace,
+			Name:            item.Key.Name,
+			Folder:          item.Folder,
+		})
+		pageBytes += proto.Size(rsp.Items[len(rsp.Items)-1])
+		lastContinueToken = item.ContinueToken
+	}
+}
+
+func (s *server) listAuthorizedValuesPage(
+	ctx context.Context,
+	req *resourcepb.ListRequest,
+	rsp *resourcepb.ListResponse,
+	backend KeyListBackend,
+	keyIter ListKeyIterator,
+	nextAuthorized authorizedListKeyPull,
+) (string, error) {
+	pageBytes := 0
+	for {
+		remaining := int(req.Limit) - len(rsp.Items)
+		if req.Limit > 0 && remaining <= 0 {
+			return "", fmt.Errorf("list page reached its item limit before fetching values")
+		}
+
+		batchSize := dataBatchSize
+		if req.Limit > 0 {
+			batchSize = min(batchSize, remaining)
+		}
+		batch, noMoreAuthorizedItems, err := pullAuthorizedListKeyBatch(nextAuthorized, batchSize)
+		if err != nil {
+			return "", err
+		}
+		if len(batch) == 0 {
+			return "", keyIter.Error()
+		}
+
+		values, err := backend.FetchValues(ctx, batch)
+		if err != nil {
+			return "", err
+		}
+
+		for value, err := range values {
+			if err != nil {
+				return "", err
+			}
+			if value == nil || value.Key == nil {
+				return "", fmt.Errorf("list value fetch returned an empty response")
+			}
+			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+				ResourceVersion: value.ResourceVersion,
+				Value:           value.Value,
+			})
+			pageBytes += len(value.Value)
+
+			if s.listPageFull(req, rsp, pageBytes) {
+				nextToken, err := continueTokenAfterFetchedValue(batch, value, noMoreAuthorizedItems, nextAuthorized)
+				if err != nil {
+					return "", err
+				}
+				if err := keyIter.Error(); err != nil {
+					return "", err
+				}
+				return nextToken, nil
+			}
+		}
+		if noMoreAuthorizedItems {
+			if err := keyIter.Error(); err != nil {
+				return "", err
+			}
+			return "", nil
+		}
+	}
+}
+
+func pullAuthorizedListKeyBatch(nextAuthorized authorizedListKeyPull, batchSize int) ([]BackendListKey, bool, error) {
+	batch := make([]BackendListKey, 0, batchSize)
+	for len(batch) < batchSize {
+		item, authErr, ok := nextAuthorized()
+		if authErr != nil {
+			return nil, false, authErr
+		}
+		if !ok {
+			return batch, true, nil
+		}
+		batch = append(batch, item)
+	}
+	return batch, false, nil
+}
+
+func continueTokenAfterFetchedValue(
+	batch []BackendListKey,
+	value *BackendReadResponse,
+	noMoreAuthorizedItems bool,
+	nextAuthorized authorizedListKeyPull,
+) (string, error) {
+	batchIndex := -1
+	for idx, item := range batch {
+		if item.ResourceVersion == value.ResourceVersion && proto.Equal(item.Key, value.Key) {
+			batchIndex = idx
+			break
+		}
+	}
+	if batchIndex < 0 {
+		return "", fmt.Errorf("list value fetch returned an unexpected resource")
+	}
+
+	hasMore := batchIndex+1 < len(batch)
+	if !hasMore && !noMoreAuthorizedItems {
+		_, authErr, ok := nextAuthorized()
+		if authErr != nil {
+			return "", authErr
+		}
+		hasMore = ok
+	}
+	if hasMore {
+		return batch[batchIndex].ContinueToken, nil
+	}
+	return "", nil
+}
+
+func (s *server) listPageFull(req *resourcepb.ListRequest, rsp *resourcepb.ListResponse, pageBytes int) bool {
+	return (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization

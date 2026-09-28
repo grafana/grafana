@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -26,7 +27,7 @@ func TestOpenAPIGroupVersionDoesNotCachePrivateResponses(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				_, _ = w.Write([]byte(`{"openapi":"3.0.0"}`))
 			}))
-			req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
+			req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
 			for range 2 {
 				res := httptest.NewRecorder()
 				s.HandleFunc(res, req, http.NotFoundHandler())
@@ -50,7 +51,7 @@ func TestOpenAPIGroupVersionRechecksAuthorization(t *testing.T) {
 		_, _ = w.Write([]byte(`{"openapi":"3.0.0"}`))
 	})
 	router := buildRouterWithBackend("example.grafana.app", "revision", backend)
-	req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/example.grafana.app/v1", nil)
+	req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/example.grafana.app/v1", nil)
 	req.Header.Set("Authorization", "Bearer allowed")
 	res := httptest.NewRecorder()
 	router.HandleFunc(res, req, http.NotFoundHandler())
@@ -78,7 +79,7 @@ func TestOpenAPIGroupVersionPreservesRepresentation(t *testing.T) {
 			}))
 			previousETag := ""
 			for _, accept := range []string{first, "application/json", "application/com.github.proto-openapi.spec.v3@v1.0+protobuf"} {
-				req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
+				req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
 				req.Header.Set("Accept", accept)
 				for range 2 {
 					res := httptest.NewRecorder()
@@ -91,7 +92,7 @@ func TestOpenAPIGroupVersionPreservesRepresentation(t *testing.T) {
 				}
 			}
 			require.LessOrEqual(t, hits, 3)
-			req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
+			req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
 			req.Header.Set("Accept", "application/json")
 			req.Header.Set("If-None-Match", previousETag)
 			res := httptest.NewRecorder()
@@ -113,9 +114,9 @@ func (h *countingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // upstream handler + given key) via publish, so snapshot carries a real key —
 // unlike withGroups' fixed lastKey:"1", these tests need to bump it mid-test.
 func buildRouterWithBackend(group, key string, upstream http.Handler) *GrafanaRouter {
-	s := NewGrafanaRouter(stubLoader{})
+	s := NewGrafanaRouter(stubLoader{}, nil)
 	s.served[group] = &handlerEntry{handler: upstream, lastKey: key, breaker: newGroupBreaker(group)}
-	s.publish()
+	s.publish(context.Background())
 	return s
 }
 
@@ -129,7 +130,7 @@ func TestOpenAPIGroupVersionCachesUntilKeyChanges(t *testing.T) {
 
 	// First request: cache miss, proxies through.
 	rec1 := httptest.NewRecorder()
-	h.ServeHTTP(rec1, httptest.NewRequest(http.MethodGet, path, nil))
+	h.ServeHTTP(rec1, newAuthenticatedRequest(http.MethodGet, path, nil))
 	if rec1.Code != http.StatusOK || rec1.Body.String() != upstream.body {
 		t.Fatalf("first request: got code=%d body=%q, want 200 %q", rec1.Code, rec1.Body.String(), upstream.body)
 	}
@@ -139,7 +140,7 @@ func TestOpenAPIGroupVersionCachesUntilKeyChanges(t *testing.T) {
 
 	// Second request, same key: served from cache, no new upstream hit.
 	rec2 := httptest.NewRecorder()
-	h.ServeHTTP(rec2, httptest.NewRequest(http.MethodGet, path, nil))
+	h.ServeHTTP(rec2, newAuthenticatedRequest(http.MethodGet, path, nil))
 	if rec2.Code != http.StatusOK || rec2.Body.String() != upstream.body {
 		t.Fatalf("second request: got code=%d body=%q, want 200 %q", rec2.Code, rec2.Body.String(), upstream.body)
 	}
@@ -150,9 +151,9 @@ func TestOpenAPIGroupVersionCachesUntilKeyChanges(t *testing.T) {
 	// Bump the key (simulates reconcile picking up a route change) and re-request:
 	// cache must be treated as stale, upstream hit again.
 	s.served["dashboard.grafana.app"] = &handlerEntry{handler: upstream, lastKey: "6", breaker: newGroupBreaker("dashboard.grafana.app")}
-	s.publish()
+	s.publish(t.Context())
 	rec3 := httptest.NewRecorder()
-	h.ServeHTTP(rec3, httptest.NewRequest(http.MethodGet, path, nil))
+	h.ServeHTTP(rec3, newAuthenticatedRequest(http.MethodGet, path, nil))
 	if rec3.Code != http.StatusOK {
 		t.Fatalf("third request: got code=%d, want 200", rec3.Code)
 	}
@@ -169,14 +170,14 @@ func TestOpenAPIGroupVersionIfNoneMatch304(t *testing.T) {
 	path := "/openapi/v3/apis/dashboard.grafana.app/v1alpha1"
 
 	rec1 := httptest.NewRecorder()
-	h.ServeHTTP(rec1, httptest.NewRequest(http.MethodGet, path, nil))
+	h.ServeHTTP(rec1, newAuthenticatedRequest(http.MethodGet, path, nil))
 	etag := rec1.Header().Get("ETag")
 	if etag == "" {
 		t.Fatal("missing ETag on first response")
 	}
 
 	rec2 := httptest.NewRecorder()
-	req2 := httptest.NewRequest(http.MethodGet, path, nil)
+	req2 := newAuthenticatedRequest(http.MethodGet, path, nil)
 	req2.Header.Set("If-None-Match", etag)
 	h.ServeHTTP(rec2, req2)
 	if rec2.Code != http.StatusNotModified {
@@ -195,7 +196,7 @@ func TestOpenAPIGroupVersionUnknownGroupFallsThrough(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req, next) })
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/unknown.grafana.app/v1", nil))
+	h.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/unknown.grafana.app/v1", nil))
 	if rec.Code != http.StatusTeapot {
 		t.Errorf("got code %d, want 418 (fell through)", rec.Code)
 	}
@@ -224,7 +225,7 @@ func TestOpenAPIGroupVersionStripsConditionalHeaders(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req, next) })
 
-	req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/dashboard.grafana.app/v1alpha1", nil)
+	req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/dashboard.grafana.app/v1alpha1", nil)
 	// A stale/foreign If-None-Match that does NOT match our current key-based
 	// ETag, so the router proceeds to proxy — the case that must strip it.
 	req.Header.Set("If-None-Match", `"some-other-etag"`)
@@ -250,14 +251,14 @@ func TestOpenAPIGroupVersionIfNoneMatch304SetsETag(t *testing.T) {
 	path := "/openapi/v3/apis/dashboard.grafana.app/v1alpha1"
 
 	rec1 := httptest.NewRecorder()
-	h.ServeHTTP(rec1, httptest.NewRequest(http.MethodGet, path, nil))
+	h.ServeHTTP(rec1, newAuthenticatedRequest(http.MethodGet, path, nil))
 	etag := rec1.Header().Get("ETag")
 	if etag == "" {
 		t.Fatal("missing ETag on first response")
 	}
 
 	rec2 := httptest.NewRecorder()
-	req2 := httptest.NewRequest(http.MethodGet, path, nil)
+	req2 := newAuthenticatedRequest(http.MethodGet, path, nil)
 	req2.Header.Set("If-None-Match", etag)
 	h.ServeHTTP(rec2, req2)
 	if rec2.Code != http.StatusNotModified {

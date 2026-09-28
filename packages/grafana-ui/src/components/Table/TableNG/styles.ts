@@ -483,19 +483,40 @@ export const getMaxHeightCellStyles: TableCellStyles = memoize(
   { isMatchingKey: isTableCellStylesKeyEqual }
 );
 
-export const getCellActionStyles = memoize((theme: GrafanaTheme2, textAlign: TextAlign) =>
-  css({
-    display: 'none',
-    position: 'absolute',
-    top: 0,
-    margin: 'auto',
-    height: '100%',
-    color: theme.colors.text.primary,
-    background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-    padding: theme.spacing.x0_5,
-    paddingInlineStart: theme.spacing.x1,
-    [textAlign === 'right' ? 'left' : 'right']: 0,
-  })
+export const getCellActionStyles = memoize((theme: GrafanaTheme2, textAlign: TextAlign, tableRefreshEnabled = false) =>
+  tableRefreshEnabled
+    ? css({
+        display: 'flex',
+        position: 'absolute',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        [textAlign === 'right' ? 'left' : 'right']: theme.spacing(0.5),
+        borderRadius: theme.shape.radius.default,
+        padding: theme.spacing(0.5),
+        color: theme.colors.text.primary,
+        background: colorManipulator.alpha(theme.colors.background.primary, 0.9),
+        opacity: 0,
+        pointerEvents: 'none',
+        // Limit hover to the owning cell, including its optional height wrapper, not an outer nested grid.
+        // Mouse focus remains on the trigger after dismissal; only keyboard focus should keep actions visible.
+        '.rdg-cell:hover > &, .rdg-cell:hover > div > &, &:has(:focus-visible), &:has([aria-expanded="true"])': {
+          opacity: 1,
+          pointerEvents: 'auto',
+        },
+        button: { margin: 0 },
+      })
+    : css({
+        display: 'none',
+        position: 'absolute',
+        top: 0,
+        margin: 'auto',
+        height: '100%',
+        color: theme.colors.text.primary,
+        background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+        padding: theme.spacing.x0_5,
+        paddingInlineStart: theme.spacing.x1,
+        [textAlign === 'right' ? 'left' : 'right']: 0,
+      })
 );
 
 export const getLinkStyles = memoize((theme: GrafanaTheme2, canBeColorized: boolean) =>

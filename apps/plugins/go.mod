@@ -14,6 +14,8 @@ replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
+	github.com/grafana/authlib v0.0.0-20260814184937-0d62418c2815
+	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.60.2
 	github.com/grafana/grafana-app-sdk/logging v0.60.2
@@ -124,8 +126,6 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/alerting v0.0.0-20260923145145-361f525b0497 // indirect
-	github.com/grafana/authlib v0.0.0-20260814184937-0d62418c2815 // indirect
-	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grafana/grafana-app-sdk/plugin v0.60.2 // indirect

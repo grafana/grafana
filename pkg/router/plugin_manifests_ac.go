@@ -9,7 +9,7 @@ import (
 )
 
 // Remote deployments bypass the legacy app-access permission check because local
-// plugin settings are unavailable. Authentication remains in authenticatingWrapper;
+// plugin settings are unavailable. Authentication is handled by the router;
 // this implementation grants app access regardless of the requester or scope.
 type pluginManifestAccessControl struct{}
 
