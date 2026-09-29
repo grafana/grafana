@@ -16,4 +16,11 @@ notebookV2beta1: {
 	schema: {
 		spec: v2beta1.NotebookSpec
 	}
+	searchFields: [{
+		name:  "content"
+		type:  "string"
+		array: true
+		capabilities: ["text"]
+		description: "Authored markdown and code cell content"
+	}]
 }

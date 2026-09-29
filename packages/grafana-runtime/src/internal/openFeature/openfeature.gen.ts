@@ -46,6 +46,8 @@ export const FlagKeys = {
   CanvasPanelPanZoom: "canvasPanelPanZoom",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
+  /** Search saved notebook markdown and code after the unified search server supports content indexing */
+  DashboardNotebooksContentSearch: "dashboard.notebooksContentSearch",
   /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
   DashboardRecentlyDeletedViaTrash: "dashboard.recentlyDeletedViaTrash",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -430,6 +432,17 @@ export const useFlagCanvasPanelPanZoom = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboard.notebooks", false, options).value;
+};
+
+/**
+ * Search saved notebook markdown and code after the unified search server supports content indexing
+ *
+ * **Details:**
+ * - flag key: `dashboard.notebooksContentSearch`
+ * - default value: `false`
+ */
+export const useFlagDashboardNotebooksContentSearch = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.notebooksContentSearch", false, options).value;
 };
 
 /**
