@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	searchV0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -43,6 +44,7 @@ func TestIntegrationSearchAPI(t *testing.T) {
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		EnableSearchAPI:      true,
+		EnableFeatureToggles: []string{featuremgmt.FlagSearchApiFieldValueResults},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
@@ -267,6 +269,63 @@ func TestIntegrationSearchAPI(t *testing.T) {
 			Limit: 10,
 		})
 		assert.Equal(t, http.StatusUnprocessableEntity, code)
+	})
+
+	// A regex leaf on a keyword field matches the way a Prometheus =~ matcher
+	// does on the same values: whole-term and case-sensitive. It does not claim
+	// full parity (empty-value and missing-field semantics differ).
+	t.Run("regex matches whole-term and case-sensitive", func(t *testing.T) {
+		eu, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "tags", Pattern: "eu.*"},
+			},
+			Limit: 10,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.Equal(t, []string{"searchapi-tags-both"}, names(eu))
+
+		prod, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "tags", Pattern: "pro(d|dy)"},
+			},
+			Limit: 10,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.ElementsMatch(t, []string{"searchapi-tags-both", "searchapi-tags-prod"}, names(prod))
+
+		// notregex also matches documents that have no such tag at all, so the
+		// negation includes the tag-less dashboards, not just the mismatching one.
+		notEu, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "tags", Pattern: "eu.*", Negate: true},
+			},
+			Limit: 20,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.Contains(t, names(notEu), "searchapi-tags-prod")
+		assert.NotContains(t, names(notEu), "searchapi-tags-both")
+	})
+
+	// The backend owns the regex subset and the case-preservation rule, and reports
+	// a violation as a plain bad request, never a 500 and never an empty 200.
+	t.Run("rejects a pattern the backend cannot honour", func(t *testing.T) {
+		// Lazy quantifiers are outside the supported subset.
+		_, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "tags", Pattern: "prod.*?"},
+			},
+			Limit: 10,
+		})
+		assert.Equal(t, http.StatusBadRequest, code)
+
+		// title is indexed lowercased, so a case-sensitive regex cannot be honoured.
+		_, code = search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "title", Pattern: "CPU.*"},
+			},
+			Limit: 10,
+		})
+		assert.Equal(t, http.StatusBadRequest, code)
 	})
 
 	// A malformed body cannot be validated at all, so it is a bad request.

@@ -32,6 +32,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/leaderelection/kvlease"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -114,12 +115,34 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 		return nil, fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs, elector)
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs, elector,
+		newReconcilerState(kvstore.ProvideService(db)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
 	return srv, nil
+}
+
+// newReconcilerState points the MT reconciler at Grafana's kv_store table, so
+// the record of what it has reconciled outlives the process and survives a
+// rebuild of the Zanzana store.
+func newReconcilerState(kvStore kvstore.KVStore) reconciler.StateStore {
+	return kvstore.WithNamespace(kvStore, reconciler.StateKVOrgID, reconciler.StateKVNamespace)
+}
+
+// ProvideZanzanaReconcilerState supplies the standalone zanzana module with the
+// same reconciliation records the embedded server keeps.
+func ProvideZanzanaReconcilerState(kvStore kvstore.KVStore) reconciler.StateStore {
+	return newReconcilerState(kvStore)
+}
+
+// ProvideDeferredZanzanaReconcilerState leaves the state store to the OSS
+// module server, whose graph has no SQL store: it builds one from its own
+// injector when the zanzana module starts, so that targets which need no
+// database don't open one.
+func ProvideDeferredZanzanaReconcilerState() reconciler.StateStore {
+	return nil
 }
 
 // ProvideEmbeddedZanzanaElector builds the leader-election Elector for the
@@ -390,7 +413,7 @@ type ZanzanaService interface {
 var _ ZanzanaService = (*Zanzana)(nil)
 
 // ProvideZanzanaService is used to register zanzana as a module so we can run it separately from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource) (*Zanzana, error) {
+func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource, reconcilerState reconciler.StateStore) (*Zanzana, error) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide config: %w", err)
@@ -408,12 +431,13 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 	}
 
 	s := &Zanzana{
-		cfg:           cfg,
-		logger:        log.New("zanzana.server"),
-		reg:           reg,
-		tracer:        tracer,
-		storeProvider: storeProvider,
-		reconcileCRDs: reconcileCRDs,
+		cfg:             cfg,
+		logger:          log.New("zanzana.server"),
+		reg:             reg,
+		tracer:          tracer,
+		storeProvider:   storeProvider,
+		reconcileCRDs:   reconcileCRDs,
+		reconcilerState: reconcilerState,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -424,14 +448,15 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 type Zanzana struct {
 	*services.BasicService
 
-	cfg           *setting.Cfg
-	zanzanaServer zanzana.ServerInternal
-	logger        log.Logger
-	tracer        tracing.Tracer
-	handle        grpcserver.Provider
-	reg           prometheus.Registerer
-	storeProvider zStore.StoreProvider
-	reconcileCRDs []schema.GroupVersionResource
+	cfg             *setting.Cfg
+	zanzanaServer   zanzana.ServerInternal
+	logger          log.Logger
+	tracer          tracing.Tracer
+	handle          grpcserver.Provider
+	reg             prometheus.Registerer
+	storeProvider   zStore.StoreProvider
+	reconcileCRDs   []schema.GroupVersionResource
+	reconcilerState reconciler.StateStore
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
@@ -445,7 +470,8 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return err
 	}
 
-	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs, elector)
+	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs, elector,
+		z.reconcilerState)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}

@@ -22,6 +22,9 @@ type DualWriter interface {
 	Status(ctx context.Context, gr schema.GroupResource) (dualwrite.StorageStatus, error)
 }
 
+// NewSearchClient preserves routing for existing ResourceIndexClient callers.
+// For new callers, use dualwrite.NewSelector with a caller-defined interface so
+// legacy backends do not need to implement the unified-storage RPC interface.
 func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient resourcepb.ResourceIndexClient,
 	legacyClient resourcepb.ResourceIndexClient) resourcepb.ResourceIndexClient {
 	return &searchWrapper{
@@ -29,6 +32,7 @@ func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient res
 		groupResource: gr,
 		unifiedClient: unifiedClient,
 		legacyClient:  legacyClient,
+		selector:      dualwrite.NewSelector(dual, gr, legacyClient, unifiedClient),
 		logger:        log.New("unified-storage.search-client"),
 	}
 }
@@ -39,6 +43,7 @@ type searchWrapper struct {
 
 	unifiedClient resourcepb.ResourceIndexClient
 	legacyClient  resourcepb.ResourceIndexClient
+	selector      *dualwrite.Selector[resourcepb.ResourceIndexClient]
 	logger        log.Logger
 }
 
@@ -98,13 +103,9 @@ func (s *searchWrapper) HybridSearch(ctx context.Context, in *resourcepb.HybridS
 
 func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest,
 	opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	client := s.legacyClient
-	unified, err := s.dual.ReadFromUnified(ctx, s.groupResource)
+	client, err := s.selector.Resolve(ctx)
 	if err != nil {
 		return nil, err
-	}
-	if unified {
-		client = s.unifiedClient
 	}
 
 	return client.Search(ctx, in, opts...)

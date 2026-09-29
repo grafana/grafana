@@ -4,6 +4,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import AlertGroups from './AlertGroups';
@@ -22,7 +23,7 @@ const dataSources = {
 };
 
 /** Override the alert groups endpoint for the test alertmanager datasource. */
-function mockAlertGroupsResponse(groups: object[]) {
+function mockAlertGroupsResponse(groups: AlertmanagerGroup[]) {
   server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', () => HttpResponse.json(groups)));
 }
 

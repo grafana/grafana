@@ -245,6 +245,33 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
     // The review notifications card lists the uploaded template files by name.
     expect(await screen.findByText('email.tmpl, slack.tmpl')).toBeInTheDocument();
   });
+
+  it("opens the matching preview modal from each card's Preview button on the review step", async () => {
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      )
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+    // Complete Rules instead of skipping it, so its card also renders a Preview control on Review.
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+
+    // aria-label disambiguates the two cards' otherwise-identical "Preview" buttons.
+    await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+    const notificationsDialog = await screen.findByRole('dialog', { name: /notifications config preview/i });
+    // Modal renders both its own close-icon button and the explicit "Close" button below the content.
+    const closeButtons = within(notificationsDialog).getAllByRole('button', { name: /close/i });
+    await user.click(closeButtons[closeButtons.length - 1]);
+
+    await user.click(await screen.findByRole('button', { name: /preview alert rules/i }));
+    expect(await screen.findByRole('dialog', { name: /alert rules preview/i })).toBeInTheDocument();
+  });
 });
 
 describe('ImportToGMA wizard — auto-sync confirm flow', () => {
@@ -277,6 +304,9 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
     await screen.findByText(/review import/i);
     expect(screen.getByText(/will sync continuously/i)).toBeInTheDocument();
+    // Both cards are in a static, non-interactive state here (auto-sync badge, Skipped) — neither
+    // should render a Preview control.
+    expect(screen.queryByRole('button', { name: /preview/i })).not.toBeInTheDocument();
   });
 
   it('does not enable Auto-sync when Notifications is skipped, even though Auto-sync was selected', async () => {

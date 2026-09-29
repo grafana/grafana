@@ -104,7 +104,7 @@ To add a silence, complete the following steps.
 
 Use [labels](ref:shared-alert-labels) and label matchers to link alert rules to [notification policies](ref:shared-notification-policies) and [silences](ref:shared-silences). This allows for a flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
 
-A label matchers consists of 3 distinct parts, the **label**, the **value** and the **operator**.
+A label matcher consists of 3 distinct parts, the **label**, the **value** and the **operator**.
 
 - The **Label** field is the name of the label to match. It must exactly match the label name.
 

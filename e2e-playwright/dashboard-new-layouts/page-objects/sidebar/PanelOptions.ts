@@ -36,8 +36,12 @@ export class PanelOptions extends PageObject {
   /** Returns the panel description textarea */
   getDescriptionTextarea(): Locator {
     return this.getByGrafanaSelector(
-      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description')
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('Panel options Description')
     ).locator('textarea');
+  }
+
+  getSubtitleSwitch() {
+    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('subtitle-switch'));
   }
 
   /** Toggles the panel's transparent background switch */

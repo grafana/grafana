@@ -63,9 +63,10 @@ type jobProgressRecorder struct {
 	resultReasons       map[string]struct{}
 	metrics             *JobMetrics
 	action              provisioning.JobAction
+	variance            string
 }
 
-func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
+func NewJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:             time.Now(),
 		notifyImmediatelyFn: maybeNotifyProgress(NotifyThrottleInterval, progressFn),
@@ -79,6 +80,22 @@ func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action p
 
 func (r *jobProgressRecorder) Started() time.Time {
 	return r.started
+}
+
+// SetVariance tags the job with a sub-type of its action (e.g. full vs incremental
+// for a pull job) so the driver's throughput metric can break the action down
+// further. It is optional: jobs that leave it unset report an empty variance.
+func (r *jobProgressRecorder) SetVariance(variance string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.variance = variance
+}
+
+// Variance returns the action sub-type set via SetVariance, or "" if none was set.
+func (r *jobProgressRecorder) Variance() string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.variance
 }
 
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
@@ -134,8 +151,7 @@ func (r *jobProgressRecorder) record(ctx context.Context, result JobResourceResu
 
 		// Automatically track failed operations based on error type and action
 		// Check if this is a PathCreationError (folder creation failure)
-		var pathErr *resources.PathCreationError
-		if errors.As(result.Error(), &pathErr) {
+		if pathErr, ok := errors.AsType[*resources.PathCreationError](result.Error()); ok {
 			r.failedCreations = append(r.failedCreations, pathErr.Path)
 		}
 
@@ -169,8 +185,7 @@ func (r *jobProgressRecorder) record(ctx context.Context, result JobResourceResu
 			}
 
 			// Folder creation failures may be surfaced as warnings.
-			var pathErr *resources.PathCreationError
-			if errors.As(result.Warning(), &pathErr) {
+			if pathErr, ok := errors.AsType[*resources.PathCreationError](result.Warning()); ok {
 				r.failedCreations = append(r.failedCreations, pathErr.Path)
 			}
 		}
@@ -443,7 +458,8 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 			jobStatus.Message = "completed with errors"
 		}
 		jobStatus.State = provisioning.JobStateError
-	} else if len(jobStatus.Warnings) > 0 {
+	} else if len(jobStatus.Warnings) > 0 && len(jobStatus.Errors) == 0 &&
+		(jobStatus.State != provisioning.JobStateError || isWarningError(err)) {
 		jobStatus.State = provisioning.JobStateWarning
 		jobStatus.Message = "completed with warnings"
 	}

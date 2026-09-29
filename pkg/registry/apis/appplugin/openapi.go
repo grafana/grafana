@@ -56,7 +56,15 @@ func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) c
 	if len(gvks) > 0 {
 		s.AddExtension("x-kubernetes-group-version-kind", gvks)
 	}
-	return common.OpenAPIDefinition{Schema: s}
+	// Manifest post-processing adds metadata references even when no settings
+	// routes pull these schemas into the generated document.
+	return common.OpenAPIDefinition{
+		Schema: s,
+		Dependencies: []string{
+			v1.ObjectMeta{}.OpenAPIModelName(),
+			v1.ListMeta{}.OpenAPIModelName(),
+		},
+	}
 }
 
 func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -93,6 +101,11 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 
 	b.postProcessManifestKinds(oas, root, version)
 	b.dropUnstructuredModels(oas, version)
+
+	// Manifest-only handlers have no settings schema to augment.
+	if !b.includeSettings() {
+		return oas, nil
+	}
 
 	// Hide the resource+proxy routes -- explicit ones will be added if defined below
 	for _, v := range []string{"resources", "proxy"} {
@@ -133,6 +146,10 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 		Path:     root + "namespaces/{namespace}/app",
 		IsApp:    true,
 	})
+}
+
+func (b *AppPluginAPIBuilder) includeSettings() bool {
+	return b.client != nil && b.contextProvider != nil
 }
 
 // specVersion reads the group version from the title set by the API builder.

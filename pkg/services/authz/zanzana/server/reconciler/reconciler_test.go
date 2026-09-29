@@ -126,17 +126,22 @@ func TestEnsureNamespace_ShortCircuitsOnCachedNamespace(t *testing.T) {
 	assert.Equal(t, int32(0), srv.getStoreIdx.Load(), "GetStore should not be called for a cached namespace")
 }
 
-func TestEnsureNamespace_ExistingStoreIsCachedWithoutReconcile(t *testing.T) {
-	// Store already exists → GetOrCreateStore and reconcile must be skipped,
-	// but the namespace should still be cached.
+func TestEnsureNamespace_ExistingStoreWithoutStateStoreIsReconciled(t *testing.T) {
+	// A reconciler built without a state store has no record to consult, which
+	// must mean "not reconciled" — reading an existing store as reconciled is
+	// the bug the state exists to fix.
+	//
+	// notFoundClientFactory drives reconcileNamespace into its "namespace
+	// deleted" branch, so reaching it is observable through DeleteStore.
 	srv := &stubServer{getStoreResults: []*zanzana.StoreInfo{{ID: "store-1", Name: "existing-ns"}}}
 	r := newReconcilerForTest(srv, notFoundClientFactory{})
 
-	require.NoError(t, r.EnsureNamespace(context.Background(), "existing-ns"))
+	require.ErrorContains(t, r.EnsureNamespace(context.Background(), "existing-ns"), "store disappeared")
 
-	_, cached := r.ensuredNamespaces.Load("existing-ns")
-	assert.True(t, cached)
+	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
 	assert.Equal(t, int32(0), srv.getOrCreateCalls.Load(), "GetOrCreateStore should not be called when store already exists")
+	_, cached := r.ensuredNamespaces.Load("existing-ns")
+	assert.False(t, cached)
 }
 
 func TestReconcileNamespace_EvictsCacheOnNotFound(t *testing.T) {

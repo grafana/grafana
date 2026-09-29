@@ -32,7 +32,6 @@ import (
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -542,9 +541,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		t.Helper()
 		routeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 		require.NoError(t, err)
-		managedRoute := legacy_storage.NewManagedRoute(models.DefaultRoutingTreeName, &route)
+		managedRoute := v1model.NewManagedRoute(models.DefaultRoutingTreeName, &route)
 		managedRoute.Version = "" // Avoid version conflict.
-		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" }, nil)
+		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, managedRoute.GetUID(), func(int64) string { return "default" }, nil)
 		require.NoError(t, err)
 		_, err = routeClient.Update(ctx, v1Route, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -890,7 +889,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
-	createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
+	createReceiverStubs(t, admin, cfg.GetReceivers())
 	createTimeIntervalStubs(t, admin, cfg.SortedTimeIntervals())
 
 	// Sanity check there aren't any existing managed routes other than the default.
@@ -961,10 +960,10 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Helper()
 		// Delete/reset any remaining routes.
 		for name := range cfg.ManagedRoutes {
-			_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "") // Just in case it was provisioned.
+			_ = db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "") // Just in case it was provisioned.
 			_ = adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{})
 		}
-		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(models.DefaultRoutingTreeName, &v1model.Route{}), org1.OrgID, "")
+		_ = db.SetProvenance(ctx, v1model.NewManagedRoute(models.DefaultRoutingTreeName, &v1model.Route{}), org1.OrgID, "")
 		_ = adminClient.Delete(ctx, nameToIdentifier(models.DefaultRoutingTreeName), resource.DeleteOptions{})
 
 		// Recreate them.
@@ -982,7 +981,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		allCreatedRoutes[models.DefaultRoutingTreeName] = k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)
 
 		for name, route := range allCreatedRoutes {
-			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+			require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 				got, err := adminClient.Get(ctx, nameToIdentifier(name))
@@ -1066,7 +1065,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
 					require.NoError(t, err)
@@ -1088,14 +1087,14 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				})
 
 				t.Run("Delete provisioned should fail", func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
 					assert.Error(t, err)
 					assert.ErrorContains(t, err, "provenance")
 
 					// Reset provenance.
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
 				})
 
 				t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
@@ -1122,6 +1121,44 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				})
 			})
 		}
+	})
+
+	t.Run("Default routing tree alias", func(t *testing.T) {
+		resetPolicies(t)
+
+		t.Run("Get resolves to the default route and echoes the alias name", func(t *testing.T) {
+			got, err := adminClient.Get(ctx, nameToIdentifier(models.DefaultRoutingTreeNameAlias))
+			require.NoError(t, err)
+
+			expected := k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)
+			assert.Equal(t, expected.Spec, got.Spec)
+			assert.Equal(t, models.DefaultRoutingTreeNameAlias, got.Name)
+		})
+
+		t.Run("Update modifies the root route and echoes the alias name", func(t *testing.T) {
+			updated, err := adminClient.Update(ctx, k8sRoute(t, models.DefaultRoutingTreeNameAlias, policy_exports.Legacy()), resource.UpdateOptions{ResourceVersion: ""})
+			require.NoError(t, err)
+			assert.Equal(t, models.DefaultRoutingTreeNameAlias, updated.Name)
+
+			// Same behavior as updating via the canonical name: the root route itself was modified,
+			// not a new managed route created under the alias.
+			viaCanonicalName, err := adminClient.Get(ctx, nameToIdentifier(models.DefaultRoutingTreeName))
+			require.NoError(t, err)
+			assert.Equal(t, updated.Spec, viaCanonicalName.Spec)
+			assert.Equal(t, models.DefaultRoutingTreeName, viaCanonicalName.Name)
+		})
+
+		t.Run("Create fails", func(t *testing.T) {
+			_, err := adminClient.Create(ctx, k8sRoute(t, models.DefaultRoutingTreeNameAlias, &defaultPolicy), resource.CreateOptions{})
+			require.Error(t, err)
+		})
+
+		t.Run("Delete resets the default route, same as deleting via the canonical name", func(t *testing.T) {
+			err := adminClient.Delete(ctx, nameToIdentifier(models.DefaultRoutingTreeNameAlias), resource.DeleteOptions{})
+			require.NoError(t, err)
+
+			validateGetEqual(t, models.DefaultRoutingTreeName, k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy))
+		})
 	})
 }
 
@@ -1414,12 +1451,13 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
-	receivers := createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
+	sortedReceivers := cfg.GetReceivers()
+	receivers := createReceiverStubs(t, admin, sortedReceivers)
 	sortedIntervals := cfg.SortedTimeIntervals()
 	timeIntervals := createTimeIntervalStubs(t, admin, sortedIntervals)
 
-	recv0 := cfg.AlertmanagerConfig.Receivers[0].Name
-	recv1 := cfg.AlertmanagerConfig.Receivers[1].Name
+	recv0 := sortedReceivers[0].Name
+	recv1 := sortedReceivers[1].Name
 	ti0 := sortedIntervals[0].Title
 	ti1 := sortedIntervals[1].Title
 
@@ -1509,12 +1547,12 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 func k8sRoute(t *testing.T, name string, r *v1model.Route) *v1beta1.RoutingTree {
 	err := r.Validate()
 	require.NoError(t, err)
-	managedRoute := legacy_storage.NewManagedRoute(name, r)
+	managedRoute := v1model.NewManagedRoute(name, r)
 	allPermissions := models.NewRoutePermissionSet()
 	allPermissions.Set(models.RoutePermissionWrite, true)
 	allPermissions.Set(models.RoutePermissionDelete, true)
 	allPermissions.Set(models.RoutePermissionAdmin, true)
-	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, func(int64) string { return apis.DefaultNamespace }, &allPermissions)
+	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, name, func(int64) string { return apis.DefaultNamespace }, &allPermissions)
 	require.NoError(t, err)
 	v1Route.TypeMeta = v1.TypeMeta{
 		Kind:       v1beta1.RoutingTreeKind().Kind(),

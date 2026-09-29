@@ -93,7 +93,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 }
 
 func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
-	// Marketplace plugins require feature toggle and a valid Enterprise license
+	// Marketplace plugins require the feature toggle and a valid Grafana Pro/Enterprise license.
 	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] {
 		return nil
 	}

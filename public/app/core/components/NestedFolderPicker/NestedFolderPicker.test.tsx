@@ -1,15 +1,18 @@
-import { fireEvent, render, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
 import { useFoldersQuery } from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
+import { getCustomRootFolderItem } from './utils';
 
 const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
 
@@ -45,12 +48,20 @@ describe('NestedFolderPicker', () => {
   const useStarredItemsMock = useStarredItems as jest.Mock;
   const resolveStarredFoldersMock = resolveStarredFolders as jest.Mock;
   const useFoldersQueryMock = useFoldersQuery as jest.Mock;
+  let originalProvisioningEnabled: boolean;
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
   });
 
   beforeEach(() => {
+    originalProvisioningEnabled = config.provisioningEnabled;
+    // These tests were written against the legacy folder tree, so pin the flag off by default.
+    // The describes below that need the app-platform tree opt in explicitly.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
+    setTestFlags({ foldersAppPlatformAPI: false });
+
     const { useFoldersQuery: realUseFoldersQuery } = jest.requireActual('./useFoldersQuery');
     useFoldersQueryMock.mockImplementation(realUseFoldersQuery);
 
@@ -77,7 +88,11 @@ describe('NestedFolderPicker', () => {
     window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    config.provisioningEnabled = originalProvisioningEnabled;
+    await act(async () => {
+      setTestFlags({});
+    });
     jest.resetAllMocks();
   });
 
@@ -122,6 +137,39 @@ describe('NestedFolderPicker', () => {
 
     await user.click(screen.getByLabelText(folderA.item.title));
     expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
+  });
+
+  it('shows the repository badge on nested folder search results', async () => {
+    config.provisioningEnabled = false;
+    server.use(
+      getCustomSearchHandler([
+        {
+          resource: 'folders',
+          name: 'repo-root',
+          title: 'Repo root',
+          managedBy: { kind: 'repo', id: 'repo-1' },
+        },
+        {
+          resource: 'folders',
+          name: 'git-sync-child',
+          title: 'Git Sync child',
+          folder: 'repo-root',
+          managedBy: { kind: 'repo', id: 'repo-1' },
+        },
+        { resource: 'folders', name: 'local-folder', title: 'Local folder' },
+      ])
+    );
+
+    const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+    fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'folder' } });
+
+    const managedRow = await screen.findByRole('treeitem', { name: 'Git Sync child' });
+    const unmanagedRow = await screen.findByRole('treeitem', { name: 'Local folder' });
+
+    expect(within(managedRow).getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(within(managedRow).getByText('/Repo root')).toBeInTheDocument();
+    expect(within(unmanagedRow).queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('can clear a selection if clearable is specified', async () => {
@@ -174,6 +222,172 @@ describe('NestedFolderPicker', () => {
     await screen.findByLabelText(folderA.item.title);
 
     expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
+  });
+
+  it('applies the folder filter while browsing and keeps the owning root selectable', async () => {
+    setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
+
+    const rootFolderItem = getCustomRootFolderItem({
+      title: 'Infra dashboards',
+      managedBy: ManagerKind.Repo,
+      managerId: 'infra-dashboards',
+      uid: '',
+    });
+    const ownedFolder = {
+      isOpen: false,
+      level: 1,
+      item: {
+        kind: 'folder' as const,
+        uid: 'net-core',
+        title: 'Network core',
+        managedBy: ManagerKind.Repo,
+        managerId: 'infra-dashboards',
+      },
+    };
+    const otherRepositoryFolder = {
+      isOpen: false,
+      level: 1,
+      item: {
+        kind: 'folder' as const,
+        uid: 'billing',
+        title: 'Billing',
+        managedBy: ManagerKind.Repo,
+        managerId: 'finance-dashboards',
+      },
+    };
+    useFoldersQueryMock.mockReturnValue({
+      emptyFolders: new Set<string>(),
+      items: [
+        rootFolderItem,
+        ownedFolder,
+        otherRepositoryFolder,
+        { isOpen: false, level: 1, item: { kind: 'folder', uid: 'local', title: 'Local' } },
+        {
+          isOpen: false,
+          level: 1,
+          disabled: true,
+          item: { kind: 'folder', uid: 'sharedwithme', title: 'Shared with me' },
+        },
+      ],
+      isLoading: false,
+      error: undefined,
+      requestNextPage: jest.fn(),
+    });
+    const folderFilter = (folder: { managedBy?: ManagerKind; managerId?: string }) =>
+      folder.managedBy === ManagerKind.Repo && folder.managerId === 'infra-dashboards';
+
+    const { user } = render(
+      <NestedFolderPicker rootFolderItem={rootFolderItem} folderFilter={folderFilter} onChange={mockOnChange} />
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+    expect(screen.getByLabelText('Network core')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Billing')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Local')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Starred folders')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Shared with me')).not.toBeInTheDocument();
+
+    await user.click(screen.getByLabelText('Infra dashboards'));
+    expect(mockOnChange).toHaveBeenCalledWith('', 'Infra dashboards');
+  });
+
+  it('labels a selected custom root with its own title', async () => {
+    config.provisioningEnabled = false;
+    const rootFolderItem = getCustomRootFolderItem({
+      title: 'Infra dashboards',
+      managedBy: ManagerKind.Repo,
+      managerId: 'infra-dashboards',
+      uid: '',
+    });
+
+    render(<NestedFolderPicker value="" rootFolderItem={rootFolderItem} onChange={mockOnChange} />);
+
+    expect(
+      await screen.findByRole('button', { name: 'Select folder: Infra dashboards currently selected' })
+    ).toBeInTheDocument();
+  });
+
+  it('applies the folder filter to typed search results', async () => {
+    config.provisioningEnabled = false;
+    server.use(
+      getCustomSearchHandler([
+        {
+          resource: 'folders',
+          name: 'active-repo-folder',
+          title: 'Active repository folder',
+          managedBy: { kind: 'repo', id: 'folderless-repo' },
+        },
+        {
+          resource: 'folders',
+          name: 'other-repo-folder',
+          title: 'Other repository folder',
+          managedBy: { kind: 'repo', id: 'other-repo' },
+        },
+        { resource: 'folders', name: 'unmanaged-folder', title: 'Unmanaged folder' },
+      ])
+    );
+
+    const folderFilter = (folder: { managedBy?: ManagerKind; managerId?: string }) =>
+      folder.managedBy === ManagerKind.Repo && folder.managerId === 'folderless-repo';
+    const { user } = render(<NestedFolderPicker folderFilter={folderFilter} onChange={mockOnChange} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+    fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'repository' } });
+
+    expect(await screen.findByLabelText('Active repository folder')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Other repository folder')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Unmanaged folder')).not.toBeInTheDocument();
+  });
+
+  it('keeps the team and starred sections for a local move and hides their managed children', async () => {
+    setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
+    useGetTeamFoldersMock.mockReturnValue({
+      foldersByTeam: [
+        {
+          team: { name: 'Team A' },
+          folders: [
+            { name: 'team-local', title: 'Team local' },
+            {
+              name: 'team-managed',
+              title: 'Team managed',
+              managedBy: { kind: ManagerKind.Repo, id: 'infra-dashboards' },
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+      error: undefined,
+    });
+    resolveStarredFoldersMock.mockResolvedValue([
+      { kind: 'folder', uid: 'starred-local', title: 'Starred local' },
+      {
+        kind: 'folder',
+        uid: 'starred-managed',
+        title: 'Starred managed',
+        managedBy: ManagerKind.Repo,
+        managerId: 'infra-dashboards',
+      },
+    ]);
+    useFoldersQueryMock.mockReturnValue({
+      emptyFolders: new Set<string>(),
+      items: [{ isOpen: true, level: 0, item: { kind: 'folder', uid: '', title: 'Dashboards' } }],
+      isLoading: false,
+      error: undefined,
+      requestNextPage: jest.fn(),
+    });
+    const folderFilter = (folder: { managedBy?: ManagerKind }) => folder.managedBy !== ManagerKind.Repo;
+
+    const { user } = render(<NestedFolderPicker folderFilter={folderFilter} onChange={mockOnChange} />);
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+    expect(await screen.findByLabelText('Team folders')).toBeInTheDocument();
+    expect(screen.getByLabelText('Team local')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Team managed')).not.toBeInTheDocument();
+    expect(await screen.findByLabelText('Starred folders')).toBeInTheDocument();
+    expect(screen.getByLabelText('Starred local')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Starred managed')).not.toBeInTheDocument();
   });
 
   it('by default only shows items the user can edit', async () => {
@@ -339,14 +553,14 @@ describe('NestedFolderPicker', () => {
   });
 
   describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
-
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('shows the starred folders virtual root with its selectable children', async () => {
@@ -389,14 +603,14 @@ describe('NestedFolderPicker', () => {
   });
 
   describe('when starredFolders is enabled but foldersAppPlatformAPI is disabled', () => {
-    testWithFeatureToggles({ disable: ['foldersAppPlatformAPI'] });
-
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: false });
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('does not render starred folders (hard gate on the app-platform folder API)', async () => {

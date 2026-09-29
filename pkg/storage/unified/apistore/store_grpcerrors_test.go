@@ -35,10 +35,10 @@ func grpcErrorWithResult(code grpccodes.Code, res *resourcepb.ErrorResult) error
 func testStorage(t *testing.T, client resource.ResourceClient) *Storage {
 	t.Helper()
 	return &Storage{
-		codec:     unstructured.UnstructuredJSONScheme,
-		newFunc:   func() runtime.Object { return &unstructured.Unstructured{} },
-		versioner: &storage.APIObjectVersioner{},
-		store:     client,
+		serializer: &jsonSerializer{},
+		newFunc:    func() runtime.Object { return &unstructured.Unstructured{} },
+		versioner:  &storage.APIObjectVersioner{},
+		store:      client,
 		getKey: func(string) (*resourcepb.ResourceKey, error) {
 			return &resourcepb.ResourceKey{Namespace: "default", Group: "example.grafana.app", Resource: "examples", Name: "test"}, nil
 		},

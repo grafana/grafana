@@ -7,7 +7,7 @@ import { useTheme2 } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
-import { getQueryRunnerFor } from '../../../utils/utils';
+import { getQueryRunnerFor } from '../../../utils/getQueryRunnerFor';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 import { getQueryEditorTypeConfig } from '../constants';
 

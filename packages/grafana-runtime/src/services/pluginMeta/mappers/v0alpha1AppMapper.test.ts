@@ -81,4 +81,19 @@ describe('v0alpha1AppMapper', () => {
     expect(Object.keys(result)).toHaveLength(4);
     expect(Object.keys(result)).toEqual(Object.keys(apps));
   });
+
+  it('should skip a meta it cannot map and keep its siblings', () => {
+    const logWarning = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const malformed = structuredClone(v0alpha1Response);
+    const app = malformed.items.find((item) => item.spec.pluginJson.type === 'app')!;
+    // specMapper reads info.logos, so dropping info is enough to make it throw
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    app.spec.pluginJson.info = undefined as unknown as typeof app.spec.pluginJson.info;
+
+    const result = v0alpha1AppMapper(malformed);
+
+    expect(Object.keys(result)).toHaveLength(Object.keys(apps).length - 1);
+    expect(result[app.spec.pluginJson.id]).toBeUndefined();
+    logWarning.mockRestore();
+  });
 });

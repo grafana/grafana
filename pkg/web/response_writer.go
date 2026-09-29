@@ -19,6 +19,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"slices"
 
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 )
@@ -144,8 +145,8 @@ func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 func (rw *responseWriter) callBefore() {
-	for i := len(rw.beforeFuncs) - 1; i >= 0; i-- {
-		rw.beforeFuncs[i](rw)
+	for _, v := range slices.Backward(rw.beforeFuncs) {
+		v(rw)
 	}
 }
 

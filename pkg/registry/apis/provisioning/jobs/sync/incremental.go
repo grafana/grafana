@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -245,7 +246,7 @@ func applyIncrementalChanges(
 				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
 				ensureOpts := []resources.EnsurePathOption{resources.WithForceWalk()}
 				if uids, ok := relocations[change.Path]; ok {
-					ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(uids...))
+					ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(change.Path, uids...))
 				}
 				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path, change.Ref, ensureOpts...)
 				if fErr != nil {
@@ -274,6 +275,9 @@ func applyIncrementalChanges(
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			name, gvk, size, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
+				if utils.IsForbiddenManagerKindChangeError(err) {
+					quotaTracker.Release()
+				}
 				writeSpan.RecordError(err)
 				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 			}
@@ -331,7 +335,7 @@ func applyIncrementalChanges(
 				var folderRenameOpts []resources.EnsurePathOption
 				for dir := safepath.Dir(change.Path); dir != ""; dir = safepath.Dir(dir) {
 					if uids, ok := relocations[dir]; ok {
-						folderRenameOpts = append(folderRenameOpts, resources.WithRelocatingUIDs(uids...))
+						folderRenameOpts = append(folderRenameOpts, resources.WithRelocatingUIDs(dir, uids...))
 					}
 				}
 				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, folderRenameOpts...)
@@ -348,7 +352,7 @@ func applyIncrementalChanges(
 				var renameOpts []resources.EnsurePathOption
 				for dir := safepath.EnsureTrailingSlash(safepath.Dir(change.Path)); dir != ""; dir = safepath.Dir(dir) {
 					if uids, ok := relocations[dir]; ok {
-						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(uids...))
+						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(dir, uids...))
 					}
 				}
 				name, oldFolderName, gvk, size, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)

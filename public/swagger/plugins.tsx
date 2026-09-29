@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { createContext, useContext, useEffect, useRef } from 'react';
 
 import { CodeEditor, type Monaco } from '@grafana/ui';
 
@@ -21,6 +21,24 @@ export type ResourceInfo = {
 export const SchemaContext = createContext<SchemaType>(undefined);
 export const NamespaceContext = createContext<string | undefined>(undefined);
 export const ResourceContext = createContext<ResourceInfo | undefined>(undefined);
+
+function NamespaceInput({ Original, ...props }: UntypedProps & { Original: React.ElementType }) {
+  const namespace = useContext(NamespaceContext);
+  const initialized = useRef(false);
+  const { disabled, value, onChange } = props;
+
+  useEffect(() => {
+    if (!disabled && namespace && !initialized.current) {
+      initialized.current = true;
+      // Swagger may have populated the schema's generic default before settings arrived.
+      if (!value || value === 'default') {
+        onChange(namespace);
+      }
+    }
+  }, [disabled, namespace, value, onChange]);
+
+  return <Original {...props} />;
+}
 
 /* eslint-disable react/display-name */
 export const WrappedPlugins = function () {
@@ -63,9 +81,8 @@ export const WrappedPlugins = function () {
           if (mime) {
             v = mime.get('schema').toJS();
           }
-          console.log('RequestBody', v, mime, props);
+          // console.log('RequestBody', v, mime, props);
         }
-        // console.log('RequestBody PROPS', props);
         return (
           <SchemaContext.Provider value={v}>
             <Original {...props} />
@@ -87,23 +104,11 @@ export const WrappedPlugins = function () {
 
       JsonSchemaForm: (Original: React.ElementType) => (props: UntypedProps) => {
         const { description, disabled, required, onChange, value } = props;
+        if (required && description === 'namespace') {
+          return <NamespaceInput Original={Original} {...props} />;
+        }
         if (!disabled && required) {
           switch (description) {
-            case 'namespace': {
-              return (
-                <NamespaceContext.Consumer>
-                  {(namespace) => {
-                    if (!value && namespace) {
-                      setTimeout(() => {
-                        // Fake type in the value
-                        onChange(namespace);
-                      }, 100);
-                    }
-                    return <Original {...props} />;
-                  }}
-                </NamespaceContext.Consumer>
-              );
-            }
             case 'name': {
               return <K8sNameLookup onChange={onChange} value={value} Original={Original} props={props} />;
             }

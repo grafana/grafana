@@ -2,6 +2,7 @@ package builders
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,6 +38,12 @@ const (
 	testFieldRoutingTree         = "routingTree"
 	testFieldMetric              = "metric"
 	testFieldTargetDatasourceUID = "targetDatasourceUID"
+	testFieldHealth              = "health"
+	testFieldLastEvaluationTime  = "lastEvaluationTime"
+	testFieldEvaluationDuration  = "evaluationDuration"
+	testFieldLastError           = "lastError"
+	testFieldState               = "state"
+	testFieldStateReason         = "stateReason"
 )
 
 func alertRuleKey(name string) *resourcepb.ResourceKey {
@@ -289,4 +296,106 @@ func TestRuleSearchFields_hashDiffersPerKind(t *testing.T) {
 
 	// The two kinds declare different fields, so their hashes must differ.
 	assert.NotEqual(t, alertHash, recordingHash)
+}
+
+func TestRuleBuilders_extract_status_fields(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		build       func(*testing.T, string) *resource.IndexableDocument
+		kind        string
+		duration    float64
+		alertStatus string
+	}{
+		{
+			name:     "alert rule preserves fractional duration",
+			build:    buildAlertRuleDoc,
+			kind:     "AlertRule",
+			duration: 0.125,
+			alertStatus: `,
+				"state": "Alerting",
+				"stateReason": "threshold exceeded"`,
+		},
+		{
+			name:     "recording rule preserves zero duration",
+			build:    buildRecordingRuleDoc,
+			kind:     "RecordingRule",
+			duration: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			status := fmt.Sprintf(`{
+				"health": "ok",
+				"lastEvaluationTime": "2026-09-17T12:34:56Z",
+				"evaluationDuration": %v,
+				"lastError": "query timed out"%s
+			}`, tc.duration, tc.alertStatus)
+
+			doc := tc.build(t, fmt.Sprintf(`{
+				"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+				"kind": %q,
+				"metadata": {"name": "r1"},
+				"spec": {"trigger": {"interval": "1m"}, "expressions": {}},
+				"status": %s
+			}`, tc.kind, status))
+
+			assert.Equal(t, "ok", doc.Fields[testFieldHealth])
+			assert.Equal(t, "2026-09-17T12:34:56Z", doc.Fields[testFieldLastEvaluationTime])
+			assert.Equal(t, tc.duration, doc.Fields[testFieldEvaluationDuration])
+			assert.Equal(t, "query timed out", doc.Fields[testFieldLastError])
+			if tc.alertStatus != "" {
+				assert.Equal(t, "Alerting", doc.Fields[testFieldState])
+				assert.Equal(t, "threshold exceeded", doc.Fields[testFieldStateReason])
+			}
+		})
+	}
+}
+
+func TestRuleBuilders_omit_missing_status_fields(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		build func(*testing.T, string) *resource.IndexableDocument
+		kind  string
+	}{
+		{name: "alert rule", build: buildAlertRuleDoc, kind: "AlertRule"},
+		{name: "recording rule", build: buildRecordingRuleDoc, kind: "RecordingRule"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc := tc.build(t, fmt.Sprintf(`{
+				"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+				"kind": %q,
+				"metadata": {"name": "r1"},
+				"spec": {"trigger": {"interval": "1m"}, "expressions": {}}
+			}`, tc.kind))
+
+			assert.NotContains(t, doc.Fields, testFieldHealth)
+			assert.NotContains(t, doc.Fields, testFieldLastEvaluationTime)
+			assert.NotContains(t, doc.Fields, testFieldEvaluationDuration)
+			assert.NotContains(t, doc.Fields, testFieldLastError)
+		})
+	}
+}
+
+func TestRecordingRuleBuilder_omits_alert_only_status_fields(t *testing.T) {
+	doc := buildRecordingRuleDoc(t, `{
+		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
+		"kind": "RecordingRule",
+		"metadata": {"name": "r1"},
+		"spec": {"trigger": {"interval": "1m"}, "expressions": {}},
+		"status": {"state": "Alerting", "stateReason": "threshold exceeded"}
+	}`)
+
+	assert.NotContains(t, doc.Fields, testFieldState)
+	assert.NotContains(t, doc.Fields, testFieldStateReason)
 }

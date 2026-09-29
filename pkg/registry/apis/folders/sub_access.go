@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -58,102 +59,141 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
-// folderTier mirrors the legacy folder permission levels (View / Edit / Admin)
-// that folder.go uses to bundle dashboard, alerting, library-panel, and
-// annotation actions onto a folder scope.
-type folderTier int
-
+// API groups probed below. Spelled out rather than imported so the apiserver
+// edge does not depend on every app's registration package.
 const (
-	tierNone folderTier = iota
-	tierViewer
-	tierEditor
-	tierAdmin
+	dashboardGroup     = "dashboard.grafana.app"
+	alertRulesGroup    = "rules.alerting.grafana.app"
+	notificationsGroup = "notifications.alerting.grafana.app"
 )
 
-// folderTierCheck is one of the five folder-resource probes we send. The
-// CorrelationID must match the [\w-]{1,36} regex enforced downstream, so we
-// use a short stable slug instead of the legacy "domain:verb" action key.
-type folderTierCheck struct {
+// folderProbe is one item sent to BatchCheck. Each probe asks a single yes/no
+// question and, when allowed, contributes exactly one RBAC action to the
+// AccessControl map.
+//
+// The CorrelationID must match the [\w-]{1,36} regex enforced downstream, so we
+// use a short stable slug instead of the "domain:verb" action key.
+type folderProbe struct {
 	correlationID string
+	group         string
+	resource      string
+	subresource   string
 	verb          string
+	// action is the RBAC action key this probe contributes to AccessControl.
+	action string
+	// inFolder asks "may the user do this to a resource inside this folder"
+	// (empty Name, Folder set to this folder's UID). When false the probe asks
+	// about the folder object itself (Name is the folder UID, Folder is its
+	// parent).
+	//
+	// Folder-scoped questions with an empty Name are only honoured for
+	// resources whose mapper translation sets folderSupport — otherwise the
+	// check falls back to "does the user hold this action anywhere in the
+	// namespace". Every resource probed below has folder support. See
+	// checkPermissionWithMapping in pkg/services/authz/rbac/service.go.
+	inFolder bool
 }
 
-// folderTierChecks are the only items we send to BatchCheck. Sub-resource
-// permissions (dashboards, alerts, library panels, annotations) are inferred
-// from the resulting tier — they are NOT checked individually, matching the
-// legacy folder View/Edit/Admin bundling in
-// pkg/services/accesscontrol/ossaccesscontrol/folder.go.
-var folderTierChecks = []folderTierCheck{
-	{correlationID: "get", verb: utils.VerbGet},
-	{correlationID: "create", verb: utils.VerbCreate},
-	{correlationID: "update", verb: utils.VerbUpdate},
-	{correlationID: "delete", verb: utils.VerbDelete},
-	{correlationID: "setperms", verb: utils.VerbSetPermissions},
+// item builds the BatchCheck item for folder `name`, using `parent` as the
+// folder hint for probes about the folder object itself.
+func (p folderProbe) item(name, parent string) authlib.BatchCheckItem {
+	item := authlib.BatchCheckItem{
+		CorrelationID: p.correlationID,
+		Verb:          p.verb,
+		Group:         p.group,
+		Resource:      p.resource,
+		Subresource:   p.subresource,
+	}
+	if p.inFolder {
+		item.Folder = name
+	} else {
+		item.Name = name
+		item.Folder = parent
+	}
+	return item
 }
 
-// Action bundles below mirror FolderViewActions / FolderEditActions /
-// FolderAdminActions, DashboardViewActions / DashboardEditActions /
-// DashboardAdminActions, and NotebookViewActions / NotebookEditActions /
-// NotebookAdminActions in pkg/services/accesscontrol/ossaccesscontrol/. They
-// are inlined to avoid pulling that package's heavy DI graph into the apiserver
-// edge. Keep in sync if either bundle changes.
-var (
-	folderViewActions = []string{
-		"folders:read",
-		"alert.rules:read",
-		"library.panels:read",
-		"alert.silences:read",
-		"variables:read",
-	}
-	folderEditActions = append(append([]string{}, folderViewActions...), []string{
-		"folders:write",
-		"folders:delete",
-		"folders:create",
-		"dashboards:create",
-		"notebooks:create",
-		"alert.rules:create",
-		"alert.rules:write",
-		"alert.rules:delete",
-		"alert.silences:create",
-		"alert.silences:write",
-		"library.panels:create",
-		"library.panels:write",
-		"library.panels:delete",
-		"variables:create",
-		"variables:write",
-		"variables:delete",
-	}...)
-	folderAdminActions = append(append([]string{}, folderEditActions...), []string{
-		"folders.permissions:read",
-		"folders.permissions:write",
-	}...)
+// folderAccessProbes covers every action the legacy
+// /api/folders/:uid?accesscontrol=true endpoint could report for a folder, so
+// the response is the user's real permission set rather than a bundle inferred
+// from their folder role. The action list mirrors FolderViewActions /
+// FolderEditActions / FolderAdminActions and their dashboard and notebook
+// counterparts in pkg/services/accesscontrol/ossaccesscontrol/; keep in sync if
+// those bundles gain actions.
+var folderAccessProbes = []folderProbe{
+	// This folder object.
+	{correlationID: "folder-get", group: foldersV1.GROUP, resource: foldersV1.RESOURCE, verb: utils.VerbGet, action: "folders:read"},
+	{correlationID: "folder-write", group: foldersV1.GROUP, resource: foldersV1.RESOURCE, verb: utils.VerbUpdate, action: "folders:write"},
+	{correlationID: "folder-delete", group: foldersV1.GROUP, resource: foldersV1.RESOURCE, verb: utils.VerbDelete, action: "folders:delete"},
+	{correlationID: "folder-getperms", group: foldersV1.GROUP, resource: foldersV1.RESOURCE, verb: utils.VerbGetPermissions, action: "folders.permissions:read"},
+	{correlationID: "folder-setperms", group: foldersV1.GROUP, resource: foldersV1.RESOURCE, verb: utils.VerbSetPermissions, action: "folders.permissions:write"},
 
-	dashboardViewActions = []string{
-		"dashboards:read",
-		"annotations:read",
-	}
-	dashboardEditActions = append(append([]string{}, dashboardViewActions...), []string{
-		"dashboards:write",
-		"dashboards:delete",
-		"annotations:write",
-		"annotations:delete",
-		"annotations:create",
-	}...)
-	dashboardAdminActions = append(append([]string{}, dashboardEditActions...), []string{
-		"dashboards.permissions:read",
-		"dashboards.permissions:write",
-	}...)
+	// Subfolders.
+	{correlationID: "folder-create", group: foldersV1.GROUP, resource: foldersV1.RESOURCE, verb: utils.VerbCreate, action: "folders:create", inFolder: true},
 
-	notebookViewActions = []string{
-		"notebooks:read",
-	}
-	notebookEditActions = append(append([]string{}, notebookViewActions...), []string{
-		"notebooks:write",
-		"notebooks:delete",
-	}...)
-	// No notebook-specific admin actions (no per-notebook permissions management); Admin equals Edit.
-	notebookAdminActions = append([]string{}, notebookEditActions...)
-)
+	// Dashboards in this folder.
+	{correlationID: "dash-read", group: dashboardGroup, resource: "dashboards", verb: utils.VerbGet, action: "dashboards:read", inFolder: true},
+	{correlationID: "dash-create", group: dashboardGroup, resource: "dashboards", verb: utils.VerbCreate, action: "dashboards:create", inFolder: true},
+	{correlationID: "dash-write", group: dashboardGroup, resource: "dashboards", verb: utils.VerbUpdate, action: "dashboards:write", inFolder: true},
+	{correlationID: "dash-delete", group: dashboardGroup, resource: "dashboards", verb: utils.VerbDelete, action: "dashboards:delete", inFolder: true},
+	{correlationID: "dash-getperms", group: dashboardGroup, resource: "dashboards", verb: utils.VerbGetPermissions, action: "dashboards.permissions:read", inFolder: true},
+	{correlationID: "dash-setperms", group: dashboardGroup, resource: "dashboards", verb: utils.VerbSetPermissions, action: "dashboards.permissions:write", inFolder: true},
+
+	// Annotations are a dashboard subresource.
+	{correlationID: "anno-read", group: dashboardGroup, resource: "dashboards", subresource: "annotations", verb: utils.VerbGet, action: "annotations:read", inFolder: true},
+	{correlationID: "anno-create", group: dashboardGroup, resource: "dashboards", subresource: "annotations", verb: utils.VerbCreate, action: "annotations:create", inFolder: true},
+	{correlationID: "anno-write", group: dashboardGroup, resource: "dashboards", subresource: "annotations", verb: utils.VerbUpdate, action: "annotations:write", inFolder: true},
+	{correlationID: "anno-delete", group: dashboardGroup, resource: "dashboards", subresource: "annotations", verb: utils.VerbDelete, action: "annotations:delete", inFolder: true},
+
+	// Library panels in this folder.
+	{correlationID: "libpanel-read", group: dashboardGroup, resource: "librarypanels", verb: utils.VerbGet, action: "library.panels:read", inFolder: true},
+	{correlationID: "libpanel-create", group: dashboardGroup, resource: "librarypanels", verb: utils.VerbCreate, action: "library.panels:create", inFolder: true},
+	{correlationID: "libpanel-write", group: dashboardGroup, resource: "librarypanels", verb: utils.VerbUpdate, action: "library.panels:write", inFolder: true},
+	{correlationID: "libpanel-delete", group: dashboardGroup, resource: "librarypanels", verb: utils.VerbDelete, action: "library.panels:delete", inFolder: true},
+
+	// Variables in this folder.
+	{correlationID: "var-read", group: dashboardGroup, resource: "variables", verb: utils.VerbGet, action: "variables:read", inFolder: true},
+	{correlationID: "var-create", group: dashboardGroup, resource: "variables", verb: utils.VerbCreate, action: "variables:create", inFolder: true},
+	{correlationID: "var-write", group: dashboardGroup, resource: "variables", verb: utils.VerbUpdate, action: "variables:write", inFolder: true},
+	{correlationID: "var-delete", group: dashboardGroup, resource: "variables", verb: utils.VerbDelete, action: "variables:delete", inFolder: true},
+
+	// Notebooks in this folder. There is no per-notebook permissions management,
+	// so no permission verbs are probed.
+	{correlationID: "notebook-read", group: dashboardGroup, resource: "notebooks", verb: utils.VerbGet, action: "notebooks:read", inFolder: true},
+	{correlationID: "notebook-create", group: dashboardGroup, resource: "notebooks", verb: utils.VerbCreate, action: "notebooks:create", inFolder: true},
+	{correlationID: "notebook-write", group: dashboardGroup, resource: "notebooks", verb: utils.VerbUpdate, action: "notebooks:write", inFolder: true},
+	{correlationID: "notebook-delete", group: dashboardGroup, resource: "notebooks", verb: utils.VerbDelete, action: "notebooks:delete", inFolder: true},
+
+	// Alert rules in this folder.
+	{correlationID: "rule-read", group: alertRulesGroup, resource: "alertrules", verb: utils.VerbGet, action: "alert.rules:read", inFolder: true},
+	{correlationID: "rule-create", group: alertRulesGroup, resource: "alertrules", verb: utils.VerbCreate, action: "alert.rules:create", inFolder: true},
+	{correlationID: "rule-write", group: alertRulesGroup, resource: "alertrules", verb: utils.VerbUpdate, action: "alert.rules:write", inFolder: true},
+	{correlationID: "rule-delete", group: alertRulesGroup, resource: "alertrules", verb: utils.VerbDelete, action: "alert.rules:delete", inFolder: true},
+
+	// Silences for this folder's rules. There is no alert.silences:delete action.
+	{correlationID: "silence-read", group: notificationsGroup, resource: "silences", verb: utils.VerbGet, action: "alert.silences:read", inFolder: true},
+	{correlationID: "silence-create", group: notificationsGroup, resource: "silences", verb: utils.VerbCreate, action: "alert.silences:create", inFolder: true},
+	{correlationID: "silence-write", group: notificationsGroup, resource: "silences", verb: utils.VerbUpdate, action: "alert.silences:write", inFolder: true},
+}
+
+// probeBatch is the set of probes sharing one group/resource/subresource.
+type probeBatch struct {
+	probes []folderProbe
+}
+
+// folderAccessProbeBatches splits the probes by group/resource/subresource
+// because rolloutAccessClient picks one backend per BatchCheck call from the
+// first item, and falls back to RBAC for the whole batch when the items
+// disagree. Sending one homogeneous batch per resource keeps each call
+// routable, so folders participating in a Zanzana rollout are still answered
+// by Zanzana.
+var folderAccessProbeBatches = batchProbesByResource(folderAccessProbes)
+
+// maxConcurrentProbeBatches bounds the fan-out below. The authz server admits
+// requests with a non-blocking semaphore and rejects the overflow with
+// ResourceExhausted (zanzana.server.max_concurrent_requests_per_namespace), so
+// a single /access call should not try to occupy every slot a tenant has.
+const maxConcurrentProbeBatches = 4
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -191,101 +231,85 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	return r.checkAccess(ctx, ns.Value, user, name, parent)
 }
 
-// checkAccess runs the folder-tier probes for folder `name` (with `parent` as
-// the folder hint) and assembles the FolderAccessInfo, mirroring legacy
-// newToFolderDto in pkg/api/folder.go.
+// checkAccess runs every probe for folder `name` (with `parent` as the folder
+// hint for object-level probes) and assembles the FolderAccessInfo, mirroring
+// legacy newToFolderDto in pkg/api/folder.go.
 func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user identity.Requester, name, parent string) (*foldersV1.FolderAccessInfo, error) {
-	checks := make([]authlib.BatchCheckItem, len(folderTierChecks))
-	for i, c := range folderTierChecks {
-		checks[i] = authlib.BatchCheckItem{
-			CorrelationID: c.correlationID,
-			Verb:          c.verb,
-			Group:         foldersV1.GROUP,
-			Resource:      foldersV1.RESOURCE,
-			Name:          name,
-			Folder:        parent,
-		}
+	// The batches are independent, so they run concurrently and the endpoint
+	// costs a few round trips rather than one per resource.
+	responses := make([]authlib.BatchCheckResponse, len(folderAccessProbeBatches))
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxConcurrentProbeBatches)
+	for i, batch := range folderAccessProbeBatches {
+		g.Go(func() error {
+			checks := make([]authlib.BatchCheckItem, len(batch.probes))
+			for j, p := range batch.probes {
+				checks[j] = p.item(name, parent)
+			}
+			resp, err := r.accessClient.BatchCheck(gctx, user, authlib.BatchCheckRequest{
+				Namespace: namespace,
+				Checks:    checks,
+			})
+			if err != nil {
+				return err
+			}
+			responses[i] = resp
+			return nil
+		})
 	}
-
-	batchResp, err := r.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
-		Namespace: namespace,
-		Checks:    checks,
-	})
-	if err != nil {
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	allowed := make(map[string]bool, len(folderTierChecks))
-	for _, c := range folderTierChecks {
-		result := batchResp.Results[c.correlationID]
-		if result.Error != nil {
-			return nil, result.Error
+	allowed := make(map[string]bool, len(folderAccessProbes))
+	accessControl := make(map[string]bool, len(folderAccessProbes))
+	for i, batch := range folderAccessProbeBatches {
+		for _, p := range batch.probes {
+			result := responses[i].Results[p.correlationID]
+			if result.Error != nil {
+				return nil, result.Error
+			}
+			allowed[p.correlationID] = result.Allowed
+			if result.Allowed {
+				accessControl[p.action] = true
+			}
 		}
-		allowed[c.correlationID] = result.Allowed
 	}
 
 	// Can* mirrors the legacy pkg/api/folder.go newToFolderDto computation:
 	// canEdit / canSave both gate on folders:write, canDelete on folders:delete,
-	// canAdmin on the permissions verbs. CanAdmin implies the other three
-	// because the seeded Admin role bundles those actions.
-	canAdmin := allowed["setperms"]
+	// canAdmin on holding both permissions verbs. The flags are independent —
+	// the seeded Admin role bundles all of these actions, but a custom role
+	// granting only the permissions verbs must not report edit, save or delete.
 	rsp := &foldersV1.FolderAccessInfo{
-		CanAdmin:  canAdmin,
-		CanEdit:   canAdmin || allowed["update"],
-		CanSave:   canAdmin || allowed["update"],
-		CanDelete: canAdmin || allowed["delete"],
+		CanAdmin:  allowed["folder-getperms"] && allowed["folder-setperms"],
+		CanEdit:   allowed["folder-write"],
+		CanSave:   allowed["folder-write"],
+		CanDelete: allowed["folder-delete"],
 	}
 
-	if ac := actionsForTier(resolveTier(allowed)); len(ac) > 0 {
-		rsp.AccessControl = ac
+	if len(accessControl) > 0 {
+		rsp.AccessControl = accessControl
 	}
 
 	return rsp, nil
 }
 
-// resolveTier picks the highest tier the user qualifies for. Highest match
-// wins: setPermissions → Admin; create/update/delete → Editor; get → Viewer.
-func resolveTier(allowed map[string]bool) folderTier {
-	switch {
-	case allowed["setperms"]:
-		return tierAdmin
-	case allowed["create"] || allowed["update"] || allowed["delete"]:
-		return tierEditor
-	case allowed["get"]:
-		return tierViewer
-	default:
-		return tierNone
+// batchProbesByResource groups probes that share a group/resource/subresource,
+// preserving the order they are declared in. The subresource is part of the key
+// because the rollout map treats it as a distinct routable resource.
+func batchProbesByResource(probes []folderProbe) []probeBatch {
+	var batches []probeBatch
+	index := make(map[string]int)
+	for _, p := range probes {
+		key := p.group + "/" + p.resource + "/" + p.subresource
+		i, ok := index[key]
+		if !ok {
+			i = len(batches)
+			index[key] = i
+			batches = append(batches, probeBatch{})
+		}
+		batches[i].probes = append(batches[i].probes, p)
 	}
-}
-
-// actionsForTier extrapolates the full RBAC action map for the tier. The
-// returned set matches what the legacy /api/folders/:uid?accesscontrol=true
-// endpoint produces for a folder at View / Edit / Admin level.
-func actionsForTier(tier folderTier) map[string]bool {
-	var actions []string
-	switch tier {
-	case tierAdmin:
-		actions = make([]string, 0, len(folderAdminActions)+len(dashboardAdminActions)+len(notebookAdminActions))
-		actions = append(actions, folderAdminActions...)
-		actions = append(actions, dashboardAdminActions...)
-		actions = append(actions, notebookAdminActions...)
-	case tierEditor:
-		actions = make([]string, 0, len(folderEditActions)+len(dashboardEditActions)+len(notebookEditActions))
-		actions = append(actions, folderEditActions...)
-		actions = append(actions, dashboardEditActions...)
-		actions = append(actions, notebookEditActions...)
-	case tierViewer:
-		actions = make([]string, 0, len(folderViewActions)+len(dashboardViewActions)+len(notebookViewActions))
-		actions = append(actions, folderViewActions...)
-		actions = append(actions, dashboardViewActions...)
-		actions = append(actions, notebookViewActions...)
-	default:
-		return nil
-	}
-
-	out := make(map[string]bool, len(actions))
-	for _, a := range actions {
-		out[a] = true
-	}
-	return out
+	return batches
 }

@@ -3,7 +3,7 @@ package prefimpl
 import (
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
@@ -61,9 +61,7 @@ func (s *inmemStore) List(ctx context.Context, preference *pref.Preference) ([]*
 	}
 
 	// Org + Teams (teams are numerically ordered)
-	sort.Slice(preference.Teams, func(i, j int) bool {
-		return preference.Teams[i] < preference.Teams[j]
-	})
+	slices.Sort(preference.Teams)
 
 	for _, t := range preference.Teams {
 		p, ok := s.preference[preferenceKey{

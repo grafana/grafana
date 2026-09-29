@@ -1,10 +1,11 @@
 import { type DataSourceApi, type PanelData } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { getDataSourceWithErrorsAndNoticesInspector, hasErrorsOrNotices } from './hooks';
 
-jest.mock('@grafana/runtime', () => ({
-  getDataSourceSrv: jest.fn(),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
 function mockDataSource(withInspector: boolean): DataSourceApi {
@@ -14,7 +15,7 @@ function mockDataSource(withInspector: boolean): DataSourceApi {
 }
 
 function setDataSource(ds: DataSourceApi) {
-  (getDataSourceSrv as jest.Mock).mockReturnValue({ get: jest.fn().mockResolvedValue(ds) });
+  jest.mocked(getDataSourceInstance).mockResolvedValue(ds);
 }
 
 function buildData(overrides: Partial<PanelData>): PanelData {
