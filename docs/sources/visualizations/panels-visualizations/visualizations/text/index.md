@@ -73,3 +73,15 @@ Use the following options to refine your text visualization.
 | Show mini map | Displays a small outline of the embedded text in the panel preview when you choose **Code** as your text mode. |
 
 <!-- prettier-ignore-end -->
+
+### Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
