@@ -190,7 +190,7 @@
     "react-select-event": "^5.1.0",
     "remark-gfm": "^4.0.1",
     "rimraf": "6.0.1",
-    "rolldown": "1.2.9",
+    "rolldown": "1.2.11",
     "rolldown-plugin-dts": "0.28.6",
     "rollup-plugin-copy": "3.5.0",
     "sass-loader": "16.0.5",

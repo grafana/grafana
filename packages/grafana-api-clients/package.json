@@ -322,7 +322,7 @@
     "@typescript/native": "npm:typescript@^7.0.2",
     "enquirer": "^2.4.1",
     "openapi-types": "^12.1.3",
-    "rolldown": "1.2.9",
+    "rolldown": "1.2.11",
     "rolldown-plugin-dts": "0.28.6",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },

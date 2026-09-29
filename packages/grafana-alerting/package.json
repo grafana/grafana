@@ -91,7 +91,7 @@
     "react-dom": "19.2.8",
     "react-redux": "^9.2.0",
     "rimraf": "^6.0.1",
-    "rolldown": "1.2.9",
+    "rolldown": "1.2.11",
     "rolldown-plugin-dts": "0.28.6",
     "type-fest": "^4.40.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
