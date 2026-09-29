@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
@@ -43,6 +44,11 @@ type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client
 type PluginDependencies struct {
 	PluginClient       plugins.Client
 	ContextProvider    appplugin.PluginContextWrapper
+	// IDTokenDeriver mints X-Grafana-Id from a requester's OBO access token when
+	// the requester carries no id token of its own. Only the cloud loader sets
+	// this (see ProvideCloudRoutesLoaderFactory); the embedded router runs where
+	// the edge already mints an id token, so it stays nil there.
+	IDTokenDeriver     authnlib.IDTokenDeriver
 	AccessControl      accesscontrol.AccessControl
 	DualWrite          dualwrite.Service
 	SecureValues       secret.InlineSecureValueSupport
@@ -286,6 +292,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		Storage:         pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
 		PluginClient:    clientV2,
 		ClientV3:        clientV3,
+		IDTokenDeriver:  b.deps.IDTokenDeriver,
 		ContextProvider: b.deps.ContextProvider,
 		Decrypter:       b.deps.Decrypter,
 		Search:          b.deps.Unified,

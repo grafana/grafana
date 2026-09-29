@@ -199,6 +199,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `<target>.ca_file`, `<target>.insecure` | Per-target TLS settings. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
+| `derive_id_token_url` | Required when `plugins_url` is set. Mints X-Grafana-Id for the app-plugin backends `plugins_url` hosts, from the requester's OBO access token (the router receives no id token of its own). Uses `cap_token` as its own credential. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 
 Every URL must be absolute; a trailing slash is tolerated.

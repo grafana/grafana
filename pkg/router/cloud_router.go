@@ -63,14 +63,40 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 	}
 
-	// plugins_url needs no CAP token (it is an unauthenticated in-cluster
-	// endpoint), so it stays out of the cap_token gate below.
+	// Read once: cap_token backs both the token-exchange client below and the
+	// id-token-derive client, and plugins_url's own gate (unlike theirs) does
+	// not require it, so neither existing reader can be reused unconditionally.
+	capToken := section.Key("cap_token").MustString("")
+
+	// plugins_url needs no CAP token to be discovered (it is an unauthenticated
+	// in-cluster endpoint), so it stays out of the cap_token gate below. It does
+	// need one to derive X-Grafana-Id for the app-plugin backends it hosts --
+	// see the idTokenDeriveClient block after it.
 	var pluginsTarget *pluginManifestsTarget
 	if pluginsURL := section.Key("plugins_url").MustString(""); pluginsURL != "" {
 		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
+
+		// The router receives only an OBO access token per request (edge traffic
+		// mints no id token here), so plugin backends hosted locally need their
+		// own way to get X-Grafana-Id: derive one from that access token per
+		// request, close to where it is received, rather than forwarding the
+		// access token itself across the process boundary into the plugin.
+		deriveIDTokenURL := section.Key("derive_id_token_url").MustString("")
+		if capToken == "" || deriveIDTokenURL == "" {
+			return nil, fmt.Errorf("%s: cap_token and derive_id_token_url are required when plugins_url is set", cloudRouterSection)
+		}
+		idTokenDeriveClient, err := authnlib.NewIDTokenDeriveClient(authnlib.IDTokenDeriveConfig{
+			Token:            capToken,
+			DeriveIDTokenURL: deriveIDTokenURL,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("%s: id token derive client: %w", cloudRouterSection, err)
+		}
+		deps.IDTokenDeriver = idTokenDeriveClient
+
 		pluginsTarget, err = newPluginManifestsTarget(pluginsURL,
 			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps)
 		if err != nil {
@@ -83,12 +109,11 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		return nil, nil
 	}
 
-	// cap_token/token_exchange_url are only needed for the appmanifest
-	// apiserver and the two CAP-token-authenticated aggregate targets --
-	// pluginsTarget alone must be able to activate without them.
+	// token_exchange_url is only needed for the appmanifest apiserver and the
+	// two CAP-token-authenticated aggregate targets -- pluginsTarget alone must
+	// be able to activate without it.
 	var tokenExchanger *authnlib.TokenExchangeClient
 	if appManifestApiserverURL != "" || len(aggregateTargetConfigs) > 0 {
-		capToken := section.Key("cap_token").MustString("")
 		tokenExchangeURL := section.Key("token_exchange_url").MustString("")
 		if capToken == "" || tokenExchangeURL == "" {
 			return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url, baas_apiserver.url, or cloud_app_platform_apiserver.url is set", cloudRouterSection)

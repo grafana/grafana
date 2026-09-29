@@ -129,7 +129,7 @@ func (s *Store) admissionReview(ctx context.Context, a admission.Attributes) (*p
 		req.SetOldObjectBytes(raw)
 	}
 
-	rsp, err := s.admission.AdmissionReview(ctx, req)
+	rsp, err := s.admission.AdmissionReview(WithCallerIDToken(ctx, s.idTokenDeriver), req)
 	if err != nil {
 		// A kind that declares admission cannot be written without it, so a
 		// transport failure has to fail the request rather than admit silently.

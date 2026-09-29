@@ -16,6 +16,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authnlib "github.com/grafana/authlib/authn"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -91,6 +93,7 @@ type AppPluginAPIBuilder struct {
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
 	clientV3        v3.ClientV3
+	idTokenDeriver  authnlib.IDTokenDeriver
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       *secureValueLookup
@@ -118,6 +121,7 @@ func NewAppPluginAPIBuilder(
 	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
 	clientV3 v3.ClientV3,
+	idTokenDeriver authnlib.IDTokenDeriver, // mints X-Grafana-Id when the caller has no id token of its own; nil when it already does
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
@@ -138,6 +142,7 @@ func NewAppPluginAPIBuilder(
 		pluginJSON:      plugin.JSONData,
 		client:          client,
 		clientV3:        clientV3,
+		idTokenDeriver:  idTokenDeriver,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
 		decrypter:       newSecureValueLookup(decrypter),
@@ -207,6 +212,7 @@ func RegisterAPIService(
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
 			v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID),
+			nil, // Single-tenant Grafana mints its own id token at the edge; the derive fallback is never needed here.
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
@@ -429,6 +435,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 				for _, kind := range v.Kinds {
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, b.clientV3, kindstore.Options{
 						StorageOptsGetter: opts.StorageOptsGetter,
+						IDTokenDeriver:    b.idTokenDeriver,
 					}, defs)
 					if err != nil {
 						return err
