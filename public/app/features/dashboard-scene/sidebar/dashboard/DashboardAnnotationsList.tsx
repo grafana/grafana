@@ -29,7 +29,15 @@ const DROPPABLE_TO_PLACEMENT: Record<string, { isHidden: boolean; placement?: 'i
   [ID_HIDDEN_LIST]: { isHidden: true, placement: undefined },
 };
 
-export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
+export function DashboardAnnotationsList({
+  dataLayerSet,
+  visibleTitle,
+  hideControlsMenuList = false,
+}: {
+  dataLayerSet: DashboardDataLayerSet;
+  visibleTitle?: string;
+  hideControlsMenuList?: boolean;
+}) {
   const { DragDropContext } = useDragAndDrop();
   const { annotationLayers } = dataLayerSet.useState();
   const { visible, controlsMenu, hidden } = useMemo(
@@ -105,17 +113,19 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         <DraggableList
           items={visible}
           droppableId={ID_VISIBLE_LIST}
-          title={t('dashboard.sidebar.annotations.title-above-dashboard', 'Above dashboard')}
+          title={visibleTitle ?? t('dashboard.sidebar.annotations.title-above-dashboard', 'Above dashboard')}
           renderItemLabel={renderItemLabel}
           {...annotationActions}
         />
-        <DraggableList
-          items={controlsMenu}
-          droppableId={ID_CONTROLS_MENU_LIST}
-          title={t('dashboard.sidebar.annotations.title-controls-menu', 'Controls menu')}
-          renderItemLabel={renderItemLabel}
-          {...annotationActions}
-        />
+        {!hideControlsMenuList && (
+          <DraggableList
+            items={controlsMenu}
+            droppableId={ID_CONTROLS_MENU_LIST}
+            title={t('dashboard.sidebar.annotations.title-controls-menu', 'Controls menu')}
+            renderItemLabel={renderItemLabel}
+            {...annotationActions}
+          />
+        )}
         <DraggableList
           items={hidden}
           droppableId={ID_HIDDEN_LIST}

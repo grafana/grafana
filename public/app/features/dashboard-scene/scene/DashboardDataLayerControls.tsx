@@ -6,6 +6,7 @@ import { type SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { annotationEditActions } from '../settings/annotations/actions';
+import { getRepeatSourceObject } from '../utils/clone';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet, isDashboardDataLayerSet, isDashboardDataLayerSetState } from './DashboardDataLayerSet';
@@ -52,51 +53,53 @@ export function DashboardDataLayerControls({ dashboard, inMenu }: DashboardDataL
 export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDataLayerProvider; inMenu?: boolean }) {
   const styles = useStyles2(getStyles);
   const [isQueryEditorOpen, setIsQueryEditorOpen] = useState(false);
+  // Controls in a repeated row/tab render clone layers; edit the source so every repeat picks up the change
+  const sourceLayer = useMemo(() => getRepeatSourceObject(layer), [layer]);
 
   const onClickEditLayer = useCallback(() => {
-    const dashboard = sceneGraph.getAncestor(layer, DashboardScene);
-    dashboard.state.sidebar.selectObject(layer);
-  }, [layer]);
+    const dashboard = sceneGraph.getAncestor(sourceLayer, DashboardScene);
+    dashboard.state.sidebar.selectObject(sourceLayer);
+  }, [sourceLayer]);
 
   const onClickEditLayerQuery = useCallback(() => {
     setIsQueryEditorOpen(true);
   }, []);
 
   const onClickDuplicateLayer = useCallback(() => {
-    if (layer instanceof DashboardAnnotationsDataLayer) {
-      annotationEditActions.duplicateAnnotation(layer);
+    if (sourceLayer instanceof DashboardAnnotationsDataLayer) {
+      annotationEditActions.duplicateAnnotation(sourceLayer);
     }
-  }, [layer]);
+  }, [sourceLayer]);
 
   const onClickDeleteLayer = useCallback(() => {
-    const dataLayerSet = layer.parent;
+    const dataLayerSet = sourceLayer.parent;
 
-    if (dataLayerSet instanceof DashboardDataLayerSet && layer instanceof DashboardAnnotationsDataLayer) {
+    if (dataLayerSet instanceof DashboardDataLayerSet && sourceLayer instanceof DashboardAnnotationsDataLayer) {
       annotationEditActions.removeAnnotation({
         source: dataLayerSet,
-        removedObject: layer,
+        removedObject: sourceLayer,
       });
     }
-  }, [layer]);
+  }, [sourceLayer]);
 
   const editActions = useMemo(
     () => (
       <AnnotationEditActions
-        layer={layer}
+        layer={sourceLayer}
         onClickEdit={onClickEditLayer}
         onClickEditQuery={onClickEditLayerQuery}
         onClickDuplicate={onClickDuplicateLayer}
         onClickDelete={onClickDeleteLayer}
       />
     ),
-    [layer, onClickEditLayer, onClickEditLayerQuery, onClickDuplicateLayer, onClickDeleteLayer]
+    [sourceLayer, onClickEditLayer, onClickEditLayerQuery, onClickDuplicateLayer, onClickDeleteLayer]
   );
 
   return (
     <>
-      {isQueryEditorOpen && layer instanceof DashboardAnnotationsDataLayer && (
+      {isQueryEditorOpen && sourceLayer instanceof DashboardAnnotationsDataLayer && (
         <Suspense fallback={null}>
-          <AnnotationQueryEditorModal layer={layer} onClose={() => setIsQueryEditorOpen(false)} />
+          <AnnotationQueryEditorModal layer={sourceLayer} onClose={() => setIsQueryEditorOpen(false)} />
         </Suspense>
       )}
       <EditActionsPopover content={editActions}>

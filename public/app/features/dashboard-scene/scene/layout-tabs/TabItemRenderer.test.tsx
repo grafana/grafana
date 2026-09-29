@@ -3,17 +3,38 @@ import { render } from 'test/test-utils';
 
 import { SceneTimeRange } from '@grafana/scenes';
 
+import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../DashboardDataLayerSet';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
-async function renderTab({ title = 'Overview', key = 'tab-1' } = {}) {
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue({}),
+    getList: jest.fn(),
+    getInstanceSettings: jest.fn(),
+    reload: jest.fn(),
+  })),
+}));
+
+async function renderTab({
+  title = 'Overview',
+  key = 'tab-1',
+  $data,
+}: {
+  title?: string;
+  key?: string;
+  $data?: DashboardDataLayerSet;
+} = {}) {
   const tab = new TabItem({
     key,
     title,
     layout: AutoGridLayoutManager.createEmpty(),
+    $data,
   });
   const tabsLayout = new TabsLayoutManager({ key: 'tabs-layout', tabs: [tab] });
   const scene = new DashboardScene({
@@ -47,5 +68,22 @@ describe('TabItemRenderer', () => {
     await renderTab({ title: 'Overview' });
 
     expect(screen.getByRole('tab', { name: /Overview/i })).toBeInTheDocument();
+  });
+
+  it('renders a tab annotation control on the tab', async () => {
+    await renderTab({
+      $data: new DashboardDataLayerSet({
+        annotationLayers: [
+          new DashboardAnnotationsDataLayer({
+            name: 'Deploys',
+            isEnabled: true,
+            isHidden: false,
+            query: { name: 'Deploys', enable: true, iconColor: 'red' },
+          }),
+        ],
+      }),
+    });
+
+    expect(screen.getByText('Deploys')).toBeInTheDocument();
   });
 });

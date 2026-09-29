@@ -1,9 +1,11 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange } from '@grafana/scenes';
 
+import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../DashboardDataLayerSet';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardPlanningState } from '../types/dashboard';
@@ -11,17 +13,35 @@ import { type DashboardPlanningState } from '../types/dashboard';
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue({}),
+    getList: jest.fn(),
+    getInstanceSettings: jest.fn(),
+    reload: jest.fn(),
+  })),
+}));
+
 function renderRow({
   collapse = false,
   title = 'My row',
   isEditing = false,
   planning,
-}: { collapse?: boolean; title?: string; isEditing?: boolean; planning?: DashboardPlanningState } = {}) {
+  $data,
+}: {
+  collapse?: boolean;
+  title?: string;
+  isEditing?: boolean;
+  planning?: DashboardPlanningState;
+  $data?: DashboardDataLayerSet;
+} = {}) {
   const row = new RowItem({
     key: 'row-1',
     title,
     collapse,
     layout: AutoGridLayoutManager.createEmpty(),
+    $data,
   });
   const scene = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
@@ -142,5 +162,42 @@ describe('RowItemRenderer', () => {
 
     const copiedUrl = new URL(await navigator.clipboard.readText());
     expect(copiedUrl.searchParams.get('drow')).toBe('Foo%2FBar');
+  });
+
+  it('renders a row annotation control when the row is expanded', async () => {
+    await act(async () => {
+      renderRow({
+        $data: new DashboardDataLayerSet({
+          annotationLayers: [
+            new DashboardAnnotationsDataLayer({
+              name: 'Deploys',
+              isEnabled: true,
+              isHidden: false,
+              query: { name: 'Deploys', enable: true, iconColor: 'red' },
+            }),
+          ],
+        }),
+      });
+    });
+
+    expect(screen.getByText('Deploys')).toBeInTheDocument();
+  });
+
+  it('hides a row annotation control when the row is collapsed', () => {
+    renderRow({
+      collapse: true,
+      $data: new DashboardDataLayerSet({
+        annotationLayers: [
+          new DashboardAnnotationsDataLayer({
+            name: 'Deploys',
+            isEnabled: true,
+            isHidden: false,
+            query: { name: 'Deploys', enable: true, iconColor: 'red' },
+          }),
+        ],
+      }),
+    });
+
+    expect(screen.queryByText('Deploys')).not.toBeInTheDocument();
   });
 });

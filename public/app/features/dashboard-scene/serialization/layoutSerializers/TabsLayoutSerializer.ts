@@ -6,6 +6,7 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
+import { deserializeSectionAnnotations, serializeSectionAnnotations } from './sectionAnnotations';
 import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
@@ -63,6 +64,11 @@ export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabK
     tabKind.spec.variables = sectionVariables;
   }
 
+  const sectionAnnotations = serializeSectionAnnotations(tab.state.$data);
+  if (sectionAnnotations) {
+    tabKind.spec.annotations = sectionAnnotations;
+  }
+
   const conditionalRenderingRootGroup = tab.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
   if (conditionalRenderingRootGroup?.spec.items.length) {
@@ -76,14 +82,15 @@ export function deserializeTabsLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: PanelIdGenerator
+  panelIdGenerator?: PanelIdGenerator,
+  isSnapshot?: boolean
 ): TabsLayoutManager {
   if (layout.kind !== 'TabsLayout') {
     throw new Error('Invalid layout kind');
   }
 
   const tabs = layout.spec.tabs.map((tab) => {
-    return deserializeTab(tab, elements, preload, panelIdGenerator);
+    return deserializeTab(tab, elements, preload, panelIdGenerator, isSnapshot);
   });
 
   return new TabsLayoutManager({ tabs });
@@ -93,14 +100,18 @@ export function deserializeTab(
   tab: TabsLayoutTabKind,
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: PanelIdGenerator
+  panelIdGenerator?: PanelIdGenerator,
+  isSnapshot?: boolean
 ): TabItem {
   const layout = tab.spec.layout;
 
   return new TabItem({
     title: tab.spec.title,
     $variables: deserializeSectionVariables(tab.spec.variables),
-    layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
+    $data: deserializeSectionAnnotations(tab.spec.annotations, isSnapshot),
+    layout: layoutDeserializerRegistry
+      .get(layout.kind)
+      .deserialize(layout, elements, preload, panelIdGenerator, isSnapshot),
     repeatByVariable: tab.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(tab),
   });

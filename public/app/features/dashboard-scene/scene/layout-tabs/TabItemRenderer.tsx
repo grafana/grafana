@@ -14,7 +14,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
-import { SectionVariableControls } from '../VariableControls';
+import { SectionControlsRow } from '../SectionAnnotationControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
@@ -178,7 +178,7 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
-      {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+      <SectionControlsRow variableSet={tabVariablesSet} data={tab.state.$data} />
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

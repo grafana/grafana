@@ -23,10 +23,11 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
+import { cloneSectionDataLayerSet, cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor, getSlugForRowOrTab, interpolateSectionTitle } from '../../utils/utils';
+import { DashboardDataLayerSet } from '../DashboardDataLayerSet';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -114,13 +115,21 @@ export class TabItem
 
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
+    const sectionAnnotations = this.state.$data instanceof DashboardDataLayerSet ? [this.state.$data] : [];
+
     if (isEditing && this.state.$variables) {
       return [
         ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
         this.state.$variables,
+        ...sectionAnnotations,
         ...layoutChildren,
       ];
     }
+
+    if (isEditing && sectionAnnotations.length > 0) {
+      return [...sectionAnnotations, ...layoutChildren];
+    }
+
     return layoutChildren;
   }
 
@@ -214,10 +223,12 @@ export class TabItem
   // panelIdGenerator is a shared sequential counter created by the parent layout
   // we forward id to ensure sibling tabs never produce duplicate panel IDs
   public duplicate(panelIdGenerator?: PanelIdGenerator): TabItem {
+    const clonedData = cloneSectionDataLayerSet(this.state.$data);
     return this.clone({
       key: undefined,
       layout: this.getLayout().duplicate(panelIdGenerator),
       $variables: cloneSectionVariableSet(this.state.$variables),
+      ...(clonedData ? { $data: clonedData } : {}),
     });
   }
 
