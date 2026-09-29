@@ -340,10 +340,12 @@ function getLokiDatasourcesToTry(
 
 /**
  * Checks whether logs exist for any of the given queries.
- * When a prior successful Loki variation/datasource is stored, only that option is re-checked —
- * discovery already ran, so empty results mean logs are absent rather than that we should probe again.
- * Otherwise each variation is probed in order; the first match is stored for future checks.
- * If the configured Loki datasource has no logs, other Loki datasources are tried.
+ * When a prior successful Loki datasource is stored, only that datasource is re-checked —
+ * discovery already ran, so empty results mean logs are absent rather than that we should probe
+ * other datasources again. Within that datasource, a prior successful query variation is tried
+ * first but falls through to the other naming conventions (see probeForMatchingQuery), since
+ * different services behind the same datasource pair can log under different field names.
+ * The first match (of either a fresh probe or a fallback) is stored for future checks.
  */
 function checkForLogsInQueries(
   queries: DataQuery[],
@@ -397,8 +399,10 @@ function checkForLogsInQueries(
 
 /**
  * Probes query variations against a single datasource.
- * When a stored refId exists for that datasource, only that variation is checked —
- * discovery already identified the working query, so empty results mean no logs for this span/trace.
+ * When a stored refId exists for that datasource, that variation (plus its no-span-id fallback)
+ * is tried first — but different services behind the same datasource pair can log under a
+ * different field-naming convention, so an empty result falls through to the remaining variations
+ * rather than being taken as proof that this span/trace has no logs.
  */
 function probeForMatchingQuery(
   queries: DataQuery[],
@@ -409,7 +413,9 @@ function probeForMatchingQuery(
   const storedRefId = getStoredLokiQueryMatch(traceDatasourceUid, logsDatasourceUid);
   const storedQuery = storedRefId ? queries.find((q) => q.refId === storedRefId) : undefined;
 
-  const queriesToProbe = storedQuery ? addNoSpanIdFallback(storedQuery) : queries;
+  const queriesToProbe = storedQuery
+    ? [...addNoSpanIdFallback(storedQuery), ...queries.filter((q) => q !== storedQuery)]
+    : queries;
 
   return from(queriesToProbe).pipe(
     concatMap((query) =>

@@ -412,7 +412,59 @@ describe('LogsLinkButton', () => {
     );
   });
 
-  it('does not rediscover variants when a stored loki query match returns no logs', async () => {
+  it('falls through to other naming conventions when a stored query match returns no logs', async () => {
+    // A different service behind the same trace/logs datasource pair may log under a different
+    // field-naming convention than the one already discovered for this datasource pair.
+    store.set(datasourceMatchKey(), 'logs-ds-uid');
+    store.set(queryMatchKey('logs-ds-uid'), 't2l:job:trace_id');
+    mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid']);
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+    const query = jest
+      .fn()
+      .mockReturnValueOnce(of({ data: [emptyFrame] })) // stored match: t2l:job:trace_id
+      .mockReturnValueOnce(of({ data: [logsFrame] })); // falls through to: t2l:default:traceID
+    getDataSourceInstanceMock.mockResolvedValue({ query, type: 'loki' } as unknown as DataSourceApi);
+
+    const queries: DataQuery[] = [
+      { refId: 't2l:default:traceID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:job:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+    ];
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(query).toHaveBeenCalledTimes(2));
+    expect(query).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        targets: [expect.objectContaining({ refId: 't2l:job:trace_id', maxLines: 1 })],
+      })
+    );
+    expect(query).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        targets: [expect.objectContaining({ refId: 't2l:default:traceID', maxLines: 1 })],
+      })
+    );
+    expect(store.get(queryMatchKey('logs-ds-uid'))).toBe('t2l:default:traceID');
+    await waitFor(() =>
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
+        logs: true,
+        refId: 't2l:default:traceID',
+      })
+    );
+  });
+
+  it('still reports absent when a stale stored query match and every other variation return no logs', async () => {
     store.set(datasourceMatchKey(), 'logs-ds-uid');
     store.set(queryMatchKey('logs-ds-uid'), 't2l:job:trace_id');
     mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid']);
@@ -436,12 +488,7 @@ describe('LogsLinkButton', () => {
       />
     );
 
-    await waitFor(() => expect(query).toHaveBeenCalledTimes(1));
-    expect(query).toHaveBeenCalledWith(
-      expect.objectContaining({
-        targets: [expect.objectContaining({ refId: 't2l:job:trace_id', maxLines: 1 })],
-      })
-    );
+    await waitFor(() => expect(query).toHaveBeenCalledTimes(queries.length));
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true'));
     expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
       logs: false,
