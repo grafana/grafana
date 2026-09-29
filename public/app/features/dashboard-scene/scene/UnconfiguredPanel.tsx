@@ -6,6 +6,7 @@ import { AppEvents, CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaNewTextPanel, useFlagTextNewFeatures } from '@grafana/runtime/internal';
 import { sceneGraph, sceneUtils } from '@grafana/scenes';
 import {
   Button,
@@ -22,6 +23,9 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
+import { ConfigureInsightModal } from '../insight-panel/ConfigureInsightModal';
+import { applyInsightToPanel } from '../insight-panel/applyInsightToPanel';
+import { type InsightPanelConfig } from '../insight-panel/types';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
 import { DashboardInteractions } from '../utils/interactions';
@@ -31,6 +35,7 @@ import {
   EXIT_DURATION_MS,
   EXIT_EASING,
   TEXT_EXIT_DELAY_MS,
+  UNCONFIGURED_PANEL_PLUGIN_ID,
   ViewPhase,
   buttonFrames,
   gearFrames,
@@ -41,7 +46,6 @@ import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 
-export const UNCONFIGURED_PANEL_PLUGIN_ID = '__unconfigured-panel';
 const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
 
 // PanelPlugin components receive PanelProps and have no SceneObject parent reference,
@@ -77,6 +81,11 @@ export function UnconfiguredPanelComp(props: PanelProps) {
   const { isSelected } = useElementSelection(panelKey);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
+  // The insight panel is a Text panel fed by a query, which only v2 of that panel supports.
+  const hasNewTextPanel = useFlagGrafanaNewTextPanel();
+  const hasTextNewFeatures = useFlagTextNewFeatures();
+  const insightEnabled = hasNewTextPanel && hasTextNewFeatures;
   const isActive = Boolean(isEditing && (isSelected || isHovered || isFocused));
 
   const handleBlur = (e: React.FocusEvent) => {
@@ -89,6 +98,24 @@ export function UnconfiguredPanelComp(props: PanelProps) {
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });
     DashboardInteractions.panelActionClicked('configure', props.id, 'panel');
+  };
+
+  const onConfigureInsight = () => {
+    setIsInsightModalOpen(true);
+    DashboardInteractions.panelActionClicked('configure_insight', props.id, 'panel');
+  };
+
+  const onInsightConfirm = (config: InsightPanelConfig) => {
+    setIsInsightModalOpen(false);
+
+    if (!dashboard) {
+      return;
+    }
+
+    const panel = findVizPanelByKey(dashboard, panelKey);
+    if (panel) {
+      applyInsightToPanel(dashboard, panel, config);
+    }
   };
 
   const onUseSavedQuery = () => {
@@ -174,17 +201,20 @@ export function UnconfiguredPanelComp(props: PanelProps) {
       label: t('dashboard.new-panel.configure-visualization', 'Configure visualization'),
       onClick: onConfigure,
     },
-    {
-      key: 'library-panel',
-      icon: 'library-panel',
-      label: t('dashboard.new-panel.menu-use-library-panel', 'Use library panel'),
-      onClick: onUseLibraryPanel,
-      variant: 'secondary',
-    },
   ];
 
+  if (insightEnabled) {
+    buttons.push({
+      key: 'configure-insight',
+      icon: 'ai-sparkle',
+      label: t('dashboard.new-panel.configure-insight', 'Configure insight'),
+      onClick: onConfigureInsight,
+      variant: 'secondary',
+    });
+  }
+
   if (queryLibraryEnabled && hasSavedQueryReadPermissions()) {
-    buttons.splice(1, 0, {
+    buttons.push({
       key: 'saved-query',
       icon: 'book-open',
       label: t('dashboard.new-panel.menu-use-saved-query', 'Use saved query'),
@@ -192,6 +222,14 @@ export function UnconfiguredPanelComp(props: PanelProps) {
       variant: 'secondary',
     });
   }
+
+  buttons.push({
+    key: 'library-panel',
+    icon: 'library-panel',
+    label: t('dashboard.new-panel.menu-use-library-panel', 'Use library panel'),
+    onClick: onUseLibraryPanel,
+    variant: 'secondary',
+  });
 
   return (
     <div
@@ -282,6 +320,15 @@ export function UnconfiguredPanelComp(props: PanelProps) {
             <Trans i18nKey="dashboard.new-panel.no-visualization">No visualization configured</Trans>
           </Text>
         </div>
+      )}
+
+      {isInsightModalOpen && dashboard && (
+        <ConfigureInsightModal
+          dashboard={dashboard}
+          panelId={props.id}
+          onDismiss={() => setIsInsightModalOpen(false)}
+          onConfirm={onInsightConfirm}
+        />
       )}
     </div>
   );

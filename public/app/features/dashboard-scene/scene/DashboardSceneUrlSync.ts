@@ -5,11 +5,11 @@ import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPane
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../utils/unconfiguredPanelUtils';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
 import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
 import { type DashboardSceneState } from './types/dashboard';
