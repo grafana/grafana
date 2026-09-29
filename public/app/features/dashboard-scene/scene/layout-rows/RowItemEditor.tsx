@@ -97,8 +97,11 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   const annotationLayers = useSectionAnnotationLayers(model);
 
   const sectionAnnotationsCategory = useMemo(() => {
+    // Like the dashboard-level category, show no count in the header; the sub-lists carry their own counts
+    const title = t('dashboard.rows-layout.row-options.section-annotations.title', 'Annotations');
     const category = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.rows-layout.row-options.section-annotations.title', 'Annotations'),
+      title,
+      renderTitle: () => title,
       id: SidebarCategoryType.RowSectionAnnotations,
       isOpenDefault: true,
       isDashboardSidebar: true,
