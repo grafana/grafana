@@ -1,11 +1,13 @@
-# Fails a PR that breaks backwards compatibility of a protobuf module.
-name: Protobuf breaking changes
+# Fails a PR that breaks backwards compatibility of a protobuf module,
+# or whose generated Go code doesn't match its .proto files.
+name: Protobuf checks
 
 on:
   pull_request:
     paths:
       - 'pkg/registry/apps/annotation/proto/**'
       - 'pkg/storage/unified/proto/**'
+      - 'pkg/storage/unified/resourcepb/**'
       - '.github/workflows/proto-breaking-changes.yml'
 
 concurrency:
@@ -63,3 +65,51 @@ jobs:
           push: false
           archive: false
           pr_comment: false
+
+  generated:
+    name: generated code ${{ matrix.module }}
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          # To check another buf module, add its path here and its generated
+          # code directory to the `paths:` filter above.
+          - pkg/storage/unified/proto
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
+
+      - uses: bufbuild/buf-action@8c6a16e16f12ba20b6470afa9c2ba9b5ba8c97c3 # v1.5.0
+        with:
+          version: 1.65.0
+          setup_only: true
+
+      # Versions must match the `protobuf` target in the Makefile, otherwise the output differs.
+      # The Go version used to build the plugins also changes how comments are formatted,
+      # which is why they're built here with the Go version from go.mod.
+      - name: Install protoc plugins
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
+
+      - name: Generate
+        env:
+          MODULE: ${{ matrix.module }}
+        run: buf generate "$MODULE" --template "$MODULE/buf.gen.yaml"
+
+      - name: Check for differences
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git diff
+            echo "Generated protobuf code is out of date. Run 'make protobuf' and commit the changes."
+            exit 1
+          fi
