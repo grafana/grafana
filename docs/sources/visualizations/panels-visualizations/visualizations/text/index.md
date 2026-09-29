@@ -25,17 +25,17 @@ weight: 100
 {{< admonition type="note" >}}
 The new text panel is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
 To use this feature, enable the `grafana.newTextPanel` and `text.newFeatures` feature toggles in your Grafana configuration file or contact Support.
 {{< /admonition >}}
 
-<!-- use what's new to make intro more robust -->
+Text visualizations let you include text, HTML, code blocks, or Mermaid diagrams in your dashboards.
+You can use them to add contextual information and descriptions or to embed complex HTML.
+With text visualizations, you can build lightweight data-driven tables, cards, lists, and status summaries.
 
-Text visualizations let you include text or HTML in your dashboards.
-This can be used to add contextual information and descriptions or embed complex HTML.
+<!-- Update this example 
 
-For example, if you want to display important links on your dashboard, you can use a text visualization to add these links:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-text-visualization-v11.6.png" max-width="750px" alt="A text panel showing important links" >}}
+For example, if you want to display important links on your dashboard, you can use a text visualization to add these links: -->
 
 {{< docs/play title="Text Panel" url="https://play.grafana.org/d/adl33bxy1ih34b/" >}}
 
