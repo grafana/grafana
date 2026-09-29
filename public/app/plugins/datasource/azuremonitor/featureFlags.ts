@@ -1,7 +1,7 @@
 import { MultiProvider, OpenFeature, ProviderEvents } from '@openfeature/web-sdk';
 import { useEffect, useState } from 'react';
 
-import { config, createOpenFeatureLocalStorageProvider, createOpenFeatureOFREPWebProvider } from '@grafana/runtime';
+import { createOpenFeatureLocalStorageProvider, createOpenFeatureOFREPWebProvider } from '@grafana/runtime';
 
 import pluginJson from './plugin.json';
 
@@ -33,17 +33,10 @@ export function initFeatureFlags(): void {
 }
 
 /**
- * Synchronous read of the Metrics Batch API flag. Falls back to the bootstrap
- * `config.featureToggles` value when the provider has no authoritative answer
- * (flag not in the bulk response, provider errored or never initialized —
- * e.g. anonymous sessions, where core skips OFREP initialization).
+ * Synchronous read of the Metrics Batch API flag.
  */
 export function isBatchAPIFlagEnabled(): boolean {
-  const details = OpenFeature.getClient(OPEN_FEATURE_DOMAIN).getBooleanDetails(BATCH_API_FLAG, false);
-  if (details.errorCode) {
-    return Boolean(config.featureToggles[BATCH_API_FLAG]);
-  }
-  return details.value;
+  return OpenFeature.getClient(OPEN_FEATURE_DOMAIN).getBooleanValue(BATCH_API_FLAG, false);
 }
 
 /** React hook for the flag; re-renders when the provider (re)initializes. */
