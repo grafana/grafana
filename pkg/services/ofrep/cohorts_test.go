@@ -535,70 +535,101 @@ func TestCohortScrubHandlesKeyCasing(t *testing.T) {
 	}
 }
 
-// This opt-in integration test uses the deployment_tools cohort-targeting fixture and pinned GOFF relay.
+// This opt-in integration test uses the deployment_tools cohort-targeting fixture and pinned GOFF relay
+// (scripts/cohort-targeting/test_mtff.py). Organizations 11 and 10 are both in the 40% "pilot"
+// segment, which buckets org 11 into participation and org 10 out of it, so the two same-org stacks
+// prove organization bucketing rather than a 100% segment.
 func TestCohortRealGOFF(t *testing.T) {
 	endpoint := os.Getenv("GOFF_COHORT_TEST_URL")
 	if endpoint == "" {
 		t.Skip("set GOFF_COHORT_TEST_URL to a relay serving the cohort-targeting fixture")
 	}
-	now := time.Now()
-	clock := now
 	var mode atomic.Int32
-	mode.Store(1)
-	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
-		switch mode.Load() {
-		case -1:
+	var resolver *cohortResolver
+	resolver = cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+		refreshed := resolver.now().Format(time.RFC3339Nano)
+		switch {
+		case mode.Load() == -1:
 			http.Error(w, "unavailable", http.StatusServiceUnavailable)
-			return
-		case 0:
-			if r.URL.Path == "/growth/cohorts/10" {
-				_, _ = fmt.Fprintf(w, `{"cohorts":[],"snapshot":{"version":"v2","refreshedAt":%q}}`, now.Format(time.RFC3339Nano))
-				return
-			}
+		case r.URL.Path == "/instances/1" || r.URL.Path == "/instances/2":
+			_, _ = io.WriteString(w, `{"orgId":11}`)
+		case r.URL.Path == "/instances/3":
+			_, _ = io.WriteString(w, `{"orgId":10}`)
+		case r.URL.Path == "/growth/cohorts/11" && mode.Load() == 0:
+			_, _ = fmt.Fprintf(w, `{"cohorts":[],"snapshot":{"version":"v2","refreshedAt":%q}}`, refreshed)
+		case r.URL.Path == "/growth/cohorts/11" || r.URL.Path == "/growth/cohorts/10":
+			_, _ = fmt.Fprintf(w, `{"cohorts":["pilot"],"snapshot":{"version":"v1","refreshedAt":%q}}`, refreshed)
+		default:
+			http.NotFound(w, r)
 		}
-		cohortResponse(w, r, now)
 	})
-	resolver.now = func() time.Time { return clock }
+	advance := cohortClock(resolver, time.Now())
 	b := withCohorts(newTestBuilder(t, endpoint), resolver)
+
+	type flag struct {
+		Key       string         `json:"key"`
+		Value     any            `json:"value"`
+		ErrorCode string         `json:"errorCode"`
+		Metadata  map[string]any `json:"metadata"`
+	}
+	evaluate := func(t *testing.T, req *http.Request) map[string]flag {
+		w := httptest.NewRecorder()
+		b.allFlagsHandler(w, req)
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var response struct {
+			Flags []flag `json:"flags"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
+		flags := map[string]flag{}
+		for _, f := range response.Flags {
+			flags[f.Key] = f
+		}
+		require.Equal(t, true, flags["ordinary"].Value)
+		require.Empty(t, flags["ordinary"].ErrorCode)
+		return flags
+	}
 	for _, phase := range []struct {
-		name string
-		mode int32
-	}{{"member", 1}, {"removed", 0}, {"lookup failure", -1}, {"recovery", 1}} {
+		name         string
+		mode         int32
+		advance      time.Duration
+		participates bool
+	}{
+		{"member", 1, time.Minute, true},
+		{"removed", 0, 2 * time.Minute, false},
+		{"lookup failure beyond max snapshot age", -1, 3 * time.Hour, false},
+		{"recovery", 1, 2 * time.Second, true},
+	} {
 		t.Run(phase.name, func(t *testing.T) {
 			mode.Store(phase.mode)
-			clock = clock.Add(time.Minute)
+			advance(phase.advance)
+			results := map[string]map[string]flag{}
 			for _, ns := range []string{"stacks-1", "stacks-2", "stacks-3"} {
-				w := httptest.NewRecorder()
-				b.allFlagsHandler(w, cohortRequest(ns, types.TypeUser, true))
-				require.Equal(t, 200, w.Code, w.Body.String())
-				var response struct {
-					Flags []struct {
-						Key       string         `json:"key"`
-						Value     bool           `json:"value"`
-						ErrorCode string         `json:"errorCode"`
-						Metadata  map[string]any `json:"metadata"`
-					} `json:"flags"`
+				flags := evaluate(t, cohortRequest(ns, types.TypeUser, true))
+				for _, key := range []string{"cohort-demo.participation", "cohort-demo.arm"} {
+					require.Contains(t, flags, key)
+					require.Empty(t, flags[key].ErrorCode)
+					require.Equal(t, "demo-v1", flags[key].Metadata["experimentRevision"])
 				}
-				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
-				found := 0
-				for _, flag := range response.Flags {
-					switch flag.Key {
-					case "cohort-demo.participation", "cohort-demo.arm":
-						found++
-						require.Empty(t, flag.ErrorCode)
-						if flag.Key == "cohort-demo.participation" {
-							require.Equal(t, phase.mode == 1 && ns != "stacks-3", flag.Value)
-						} else if phase.mode == 1 && ns != "stacks-3" {
-							require.True(t, flag.Value)
-						}
-						require.Equal(t, "demo-v1", flag.Metadata["experimentRevision"])
-					case "ordinary":
-						found++
-						require.Empty(t, flag.ErrorCode)
-						require.True(t, flag.Value)
-					}
+				require.Equal(t, phase.participates && ns != "stacks-3", flags["cohort-demo.participation"].Value, ns)
+				results[ns] = flags
+			}
+			for _, key := range []string{"cohort-demo.participation", "cohort-demo.arm"} {
+				require.Equal(t, results["stacks-1"][key].Value, results["stacks-2"][key].Value, key)
+			}
+			if phase.participates {
+				require.Equal(t, true, results["stacks-1"]["cohort-demo.arm"].Value)
+			}
+			if phase.mode == -1 {
+				// A caller that supplies no gcomOrgID cannot be bucketed; GOFF must report an error
+				// rather than an assignment, which consumers treat as excluded.
+				req := httptest.NewRequest(http.MethodPost, ofrepPath, bytes.NewBufferString(`{"context":{"targetingKey":"stacks-1"}}`))
+				req.Header.Set("Content-Type", "application/json")
+				req = req.WithContext(types.WithAuthInfo(req.Context(), &identity.StaticRequester{Namespace: "stacks-1", Type: types.TypeUser}))
+				flags := evaluate(t, req)
+				for _, key := range []string{"cohort-demo.participation", "cohort-demo.arm"} {
+					require.NotEqual(t, true, flags[key].Value, key)
+					require.NotEmpty(t, flags[key].ErrorCode, key)
 				}
-				require.Equal(t, 3, found)
 			}
 		})
 	}
