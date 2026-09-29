@@ -47,11 +47,6 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 	})).With("logger", "folder-controller")
 	logger.Info("starting folder controller")
 
-	dynClient, err := buildDynamicClient(deps.Config)
-	if err != nil {
-		return err
-	}
-
 	handler := cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj any) {
 			accessor, err := utils.MetaAccessor(obj)
@@ -82,12 +77,18 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 			return fmt.Errorf("failed to start NATS subscriber: %w", err)
 		}
 
+		metadataClient, err := buildMetadataClient(deps.Config)
+		if err != nil {
+			return err
+		}
+
 		newObject := func(ns, name string) runtime.Object {
 			return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 		}
+		// Metadata is enough to catch a hard delete on re-list, no need for the full body.
 		list := func(ctx context.Context) ([]runtime.Object, int64, error) {
 			return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-				return dynClient.Resource(folderGVR).Namespace("").List(ctx, opts)
+				return metadataClient.Resource(folderGVR).Namespace("").List(ctx, opts)
 			})
 		}
 
@@ -100,6 +101,11 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		}
 		go inf.Run(ctx.Done())
 	} else {
+		dynClient, err := buildDynamicClient(deps.Config)
+		if err != nil {
+			return err
+		}
+
 		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynClient, 10*time.Minute, "", nil)
 		informer := factory.ForResource(folderGVR).Informer()
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/metadata"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// buildDynamicClient builds a dynamic client for the folder apiserver from
+// buildRestConfig builds the REST config for the folder apiserver from
 // [operator] and [grpc_client_authentication] settings:
 //
 // [operator]
@@ -21,7 +22,7 @@ import (
 // [grpc_client_authentication]
 // token =
 // token_exchange_url =
-func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
+func buildRestConfig(cfg *setting.Cfg) (*rest.Config, error) {
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 
 	serverURL := operatorSec.Key("folders_server_url").String()
@@ -38,7 +39,7 @@ func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	restConfig := &rest.Config{
+	return &rest.Config{
 		APIPath: "/apis",
 		Host:    serverURL,
 		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
@@ -48,6 +49,13 @@ func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
 		),
 		TLSClientConfig: tlsConfig,
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
+	}, nil
+}
+
+func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
+	restConfig, err := buildRestConfig(cfg)
+	if err != nil {
+		return nil, err
 	}
 
 	dynClient, err := dynamic.NewForConfig(restConfig)
@@ -56,6 +64,22 @@ func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
 	}
 
 	return dynClient, nil
+}
+
+// buildMetadataClient lists folders as metadata only (no spec/status), so the
+// periodic re-list doesn't hold every folder's full body in memory.
+func buildMetadataClient(cfg *setting.Cfg) (metadata.Interface, error) {
+	restConfig, err := buildRestConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	metadataClient, err := metadata.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create metadata client: %w", err)
+	}
+
+	return metadataClient, nil
 }
 
 func buildTokenExchangeClient(cfg *setting.Cfg) (*authn.TokenExchangeClient, error) {
