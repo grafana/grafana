@@ -69,6 +69,9 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   if (actions.timeRangeChanged.match(action)) {
     state.range = action.payload;
   }
+  if (!state.target) {
+    return state;
+  }
   if (actions.queriesChanged.match(action)) {
     state.queries = action.payload;
     handleTargetChanged(state);

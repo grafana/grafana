@@ -52,7 +52,7 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (state) {
+      if (state?.target) {
         dispatch(actions.queriesChanged(queries));
       }
     },
@@ -63,7 +63,7 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (state && state.target?.target !== query.target) {
+      if (state?.target && state.target.target !== query.target) {
         dispatch(actions.queryChanged(query));
       }
     },
@@ -74,7 +74,7 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (needsRefresh && state) {
+      if (needsRefresh && state?.target) {
         setNeedsRefresh(false);
         onChange({ ...query, target: state.target.target, targetFull: state.target.targetFull });
         onRunQuery();

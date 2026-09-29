@@ -1,3 +1,4 @@
+import { dateTime, type TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { GraphiteDatasource } from '../datasource';
@@ -9,7 +10,7 @@ import {
   getTagsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { createStore } from '../state/store';
+import { createStore, type GraphiteQueryEditorState } from '../state/store';
 import { type GraphiteSegment } from '../types';
 
 const mockPublish = jest.fn();
@@ -178,6 +179,42 @@ describe('Graphite actions', () => {
       expect(ctx.state.target.target).toBe('new.metrics.*');
       expect(ctx.state.segments[0].value).toBe('new');
       expect(ctx.state.segments[1].value).toBe('metrics');
+    });
+  });
+
+  describe('when actions are dispatched before init completes', () => {
+    it('should ignore them and let init set the target', async () => {
+      let resolveFuncDefs: (value: null) => void = () => {};
+      ctx.datasource.waitForFuncDefsLoaded = jest.fn(() => new Promise((resolve) => (resolveFuncDefs = resolve)));
+      const range: TimeRange = { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } };
+      const states: GraphiteQueryEditorState[] = [];
+      const dispatch = createStore((state) => states.push(state));
+
+      const init = dispatch(
+        actions.init({
+          datasource: ctx.datasource,
+          target: { target: 'test.prod.*', refId: 'A' },
+          refresh: jest.fn(),
+          queries: [],
+          //@ts-ignore
+          templateSrv: getTemplateSrv(),
+        })
+      );
+
+      await dispatch(actions.timeRangeChanged(range));
+      await dispatch(actions.queryChanged({ target: 'new.metrics.*', refId: 'A' }));
+      await dispatch(actions.queriesChanged([]));
+      await dispatch(actions.updateQuery({ query: 'other.*' }));
+      await dispatch(actions.toggleEditorMode());
+      expect(states[states.length - 1].target).toBeUndefined();
+
+      resolveFuncDefs(null);
+      await init;
+
+      const state = states[states.length - 1];
+      expect(state.target.target).toBe('test.prod.*');
+      expect(state.target.textEditor).toBeUndefined();
+      expect(state.segments.map((s) => s.value)).toEqual(['test', 'prod', '*']);
     });
   });
 
