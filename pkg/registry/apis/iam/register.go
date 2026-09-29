@@ -334,12 +334,17 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == legacyiamv0.SSOSettingResourceInfo.GetName() {
-					// Interim parity with the in-process authorizer: allow any
-					// authenticated identity (real settings RBAC is a follow-up).
-					if user.GetIdentityType() == types.TypeAnonymous {
-						return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
+					// Standalone serves this kind read-only to service identities; scope to
+					// access policies and read verbs. Per-provider settings RBAC is a follow-up.
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
-					return authorizer.DecisionAllow, "", nil
+					switch a.GetVerb() {
+					case "get", "list", "watch":
+						return authorizer.DecisionAllow, "", nil
+					default:
+						return authorizer.DecisionDeny, "ssosettings is read-only in this apiserver", nil
+					}
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
