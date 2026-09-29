@@ -39,11 +39,11 @@ const StateHistory = ({ ruleUID, pollingInterval = STATE_HISTORY_POLL_INTERVAL_M
     setTextFilter(event.currentTarget.value);
   }, []);
 
-  const { loading, error, result = [] } = useManagedAlertStateHistory(ruleUID, pollingInterval);
+  const { loading, error, result } = useManagedAlertStateHistory(ruleUID, pollingInterval);
 
   const styles = useStyles2(getStyles);
 
-  if (loading && !error) {
+  if (loading && !error && !result) {
     return <LoadingPlaceholder text={t('alerting.state-history.text-loading-history', 'Loading history...')} />;
   }
 
@@ -77,7 +77,7 @@ const StateHistory = ({ ruleUID, pollingInterval = STATE_HISTORY_POLL_INTERVAL_M
   ];
 
   // group the state history list by unique set of labels
-  const tables = Object.entries(groupStateByLabels(result))
+  const tables = Object.entries(groupStateByLabels(result ?? []))
     // sort and filter each table
     .sort()
     .filter(([groupKey]) => matchKey(groupKey, textFilter))
