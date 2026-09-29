@@ -292,9 +292,15 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 					return
 				}
 
+				sv, err := b.decrypter.get(ctx, m)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
 				parent.SetName(name)
 				parent.SetRv(m.GetResourceVersion())
 				parent.SetRaw(raw)
+				parent.SetDecryptedSecureValues(sv)
 			}
 			info.Parent = parent
 		}
