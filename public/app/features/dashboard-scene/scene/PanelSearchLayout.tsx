@@ -19,7 +19,6 @@ import { useStyles2 } from '@grafana/ui';
 import { renderMatchingSoloPanels, SoloPanelContextProvider } from '../solo/SoloPanelContext';
 
 import { type DashboardScene } from './DashboardScene';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -38,15 +37,7 @@ interface PanelSearchScope {
 
 const PanelSearchScopeContext = createContext<PanelSearchScope | null>(null);
 
-export function PanelSearchLayout(props: Props) {
-  return props.dashboard.state.body instanceof DefaultGridLayoutManager ? (
-    <ClassicPanelSearchLayout {...props} />
-  ) : (
-    <FlatPanelSearchLayout {...props} />
-  );
-}
-
-function ClassicPanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }: Props) {
+export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }: Props) {
   const { body } = dashboard.state;
   const gridStyle: CSSProperties & { [panelsPerRowCSSVar]: number | undefined } = {
     [panelsPerRowCSSVar]: panelsPerRow,
@@ -163,26 +154,6 @@ export function PanelSearchResult({
   return <div className={styles.panel}>{renderMatchingSoloPanels(filter, [panel], isLazy)}</div>;
 }
 
-function FlatPanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }: Props) {
-  const { body } = dashboard.state;
-  const gridStyle: CSSProperties & { [panelsPerRowCSSVar]: number | undefined } = {
-    [panelsPerRowCSSVar]: panelsPerRow,
-  };
-  const styles = useStyles2(getStyles);
-  const soloPanelContext = useMemo(() => new SoloPanelContextValueWithSearchStringFilter(panelSearch), [panelSearch]);
-
-  return (
-    <div
-      className={classNames(styles.grid, styles.flatGrid, { [styles.perRow]: panelsPerRow !== undefined })}
-      style={gridStyle}
-    >
-      <SoloPanelContextProvider value={soloPanelContext} singleMatch={false} dashboard={dashboard}>
-        <body.Component model={body} />
-      </SoloPanelContextProvider>
-    </div>
-  );
-}
-
 function getStyles(theme: GrafanaTheme2) {
   return {
     grid: css({
@@ -190,7 +161,6 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: 'var(--panel-search-columns, repeat(auto-fit, minmax(400px, 1fr)))',
       gap: theme.spacing(1),
     }),
-    flatGrid: css({ gridAutoRows: '320px' }),
     perRow: css({
       '--panel-search-columns': `repeat(var(${panelsPerRowCSSVar}, 3), minmax(0, 1fr))`,
     }),
