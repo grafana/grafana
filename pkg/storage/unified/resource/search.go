@@ -162,6 +162,12 @@ const IndexFeatureTrashFields IndexFeature = "trash-fields"
 // arrived together, so an index has either both or neither.
 const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 
+// IndexFeatureSortableTrashResourceVersion means deleted documents carry an
+// exact, fixed-width resource version that can be sorted without float64
+// rounding or lexical misordering. Recorded but not required so it does not
+// force a rebuild; callers can fall back when an older index lacks it.
+const IndexFeatureSortableTrashResourceVersion IndexFeature = "sortable-trash-resource-version"
+
 // IndexFeatureStoredFacets means every facet-capable field is stored, so the
 // post-rank authorization path can aggregate facets app-side. Native bleve
 // faceting reads the index, not the stored values, so this is required only
@@ -199,6 +205,7 @@ func TrashIndexFeatures() []IndexFeature {
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureHoldsDeletedDocuments,
+	IndexFeatureSortableTrashResourceVersion,
 	IndexFeatureStoredFacets,
 	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
@@ -210,6 +217,7 @@ var currentIndexFeatures = []IndexFeature{
 var knownIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureHoldsDeletedDocuments,
+	IndexFeatureSortableTrashResourceVersion,
 	IndexFeatureStoredFacets,
 	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
