@@ -34,7 +34,7 @@ Git Sync only manages dashboards and folders. Alerts, data sources, and library 
   - This is the simplest option and doesn't require deleting anything.
 - [Migrate existing dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/add-resources/dashboards-migrate): Move existing dashboards under Git Sync while **keeping their UID**, so existing links and references keep working.
   - This option requires additional care since it adopts the resource in place and requires deleting the original resource.
-  - If you chose to migrate yourdashboards, refer to [Before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/add-resources/dashboards-migrate#before-you-begin) for details.
+  - If you chose to migrate your dashboards, refer to [Before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/add-resources/dashboards-migrate#before-you-begin) for details.
 
 ## Work with Git-managed dashboards
 

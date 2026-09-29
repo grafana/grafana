@@ -22,7 +22,7 @@ aliases:
 
 {{< admonition type="note" >}}
 
-Git Sync only manages dashboards and folders. Alerts, data sources, and library panels are **not** supported yet. Keep this in mind when migrating. Refer to [Before you begin](#before-you-begin) for details.
+Git Sync only manages dashboards and folders. Alerts, data sources, and library panels are **not** supported yet. Refer to [Before you begin](#before-you-begin) for details.
 
 To copy a specific dashboard, refer to [Cherry-pick and copy individual dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/add-resources/dashboards-copy).
 
@@ -39,26 +39,35 @@ The migration follows these steps:
 
 ## Before you begin
 
-Git Sync only manages dashboards and folders. Alerts, data sources, library panels, and other resources are **not** supported yet, and Git Sync will not recreate them. Because migrating involves deleting resources, plan carefully before you start.
-
-Git Sync creates its own folders when it syncs with your existing repository. It derives each folder's UID from the folder's **path in the repository**, so the folders it creates are **new folders**, independent from your existing ones, even if they share the same name. As a result:
-
-- You **don't** need to delete your original folders to migrate the dashboards inside them.
-- **Do not** delete a folder that contains alerts or library panels. Git Sync doesn't manage those, and deleting the folder deletes them permanently.
-
-{{< admonition type="caution" >}}
-
-**Deleting a folder deletes everything it contains, including unsupported resources such as alert rules and library panels.** Git Sync recreates dashboards and folders, but it does not recreate alerts or library panels. Deleting or recreating a folder to match your repository structure permanently deletes any alert rules and library panels it holds, and they are not restored.
-
-With a folder or folderless sync, only delete the individual dashboards you're migrating, never the folders. Full-instance migrations have different cleanup behavior and can delete unmanaged folders, so follow the full-instance migration guidance instead.
-
-{{< /admonition >}}
+Because migrating involves deleting resources, read this section and plan carefully before you start.
 
 To migrate safely, keep in mind the following:
 
 - **Back up your instance first.** Export or snapshot your dashboards, folders, alert rules, and library panels before you delete anything. Deleted resources can't be restored from the Grafana UI.
 - **Migrate folder by folder.** Start with a single folder, complete the full migration for it, and validate the result before moving to the next one. This limits the impact if something goes wrong and lets you get comfortable with the process.
-- **Keep your original folders, and set them apart.** After a migration you'll have your original folder (holding any alerts and library panels) alongside the new Git Sync folder of the same name. To avoid confusion, rename your original folders or move them under a single top-level **Alerts & Library Panels** folder. This keeps the unsupported resources intact and clearly separated from the provisioned dashboards. If you instead need links to your original folders to keep working, refer to [Preserve links to the original folders](#preserve-links-to-the-original-folders).
+- **Do not delete a folder that contains alerts or library panels**. Git Sync only manages dashboards and folders. Alerts, data sources, library panels, and other resources are not supported yet, and Git Sync will not recreate them. Deleting the folder deletes them permanently.
+
+### Manage and delete migrated resources
+
+With a folder or folderless sync, Git Sync recreates dashboards and folders:
+
+- You'll have to delete each original dashboard you're migrating so Git Sync can take over its UID.
+- You don't need to delete your original folders to migrate the dashboards inside them. Git Sync creates its own new folders when it syncs with your existing repository, deriving each folder's UID from the folder's **path in the repository**. These folders are independent from your existing ones, even if they share the same name.
+- However, Git Sync doesn't recreate alerts or library panels. Deleting or recreating a folder to match your repository structure permanently deletes any alert rules and library panels it holds, and they are not restored.
+
+Refer to [Step 2: Delete the original dashboards](#step-2-delete-the-original-dashboards) for more details.
+
+{{< admonition type="note" >}}
+
+Full-instance migrations have different cleanup behavior and can delete unmanaged folders, so follow the full-instance migration guidance instead.
+
+{{< /admonition >}}
+
+### Keep your original resources and set them apart
+
+After a migration you'll have your original folder (holding any alerts and library panels) alongside the new Git Sync folder of the same name. To avoid confusion, rename your original folders or move them under a single top-level **Alerts & Library Panels** folder. This keeps the unsupported resources intact and clearly separated from the provisioned dashboards.
+
+If you need links to your original folders to keep working, refer to [Preserve links to the original folders](#preserve-links-to-the-original-folders).
 
 ## Step 1: Export the resources to your repository
 
@@ -69,7 +78,7 @@ Export the dashboards you want to migrate so that each file keeps the dashboard'
 
 ### Export with the Grafana CLI
 
-You can export existing dashboards from the terminal or from agentic coding tools using the CLI `gcx`. With `gcx` you can download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
+You can export existing dashboards from the terminal or from agentic coding tools using the `gcx` CLI. With `gcx` you can download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
 
 {{< admonition type="note" >}}
 
@@ -130,19 +139,17 @@ The structure includes:
 
 ## Step 2: Delete the original dashboards
 
-Because the exported files keep the original UID, Git Sync will not adopt a dashboard while an unmanaged dashboard with the same UID (`metadata.name`) still exists in Grafana. Delete each original dashboard you're migrating so Git Sync can take over its UID.
-
-{{< admonition type="caution" >}}
-
-Delete only the individual dashboards you're migrating. Folders don't need to be deleted, as Git Sync creates its own folders with new, path-derived UIDs. **Don't delete or recreate folders that contain alert rules or library panels**, since those resources are deleted permanently and Git Sync does not recreate them. See [Before you begin](#before-you-begin) for how to keep and set apart your original folders.
-
-{{< /admonition >}}
+Delete each original dashboard you're migrating so Git Sync can take over its UID. Since the exported files keep the original UID, Git Sync can't provison any dashboard if an unmanaged dashboard with the same UID (`metadata.name`) still exists in Grafana.
 
 When you delete a dashboard, keep in mind the following:
 
 - You cannot restore deleted resources from the UI.
 - Dashboard version history does not carry over.
 - You need to reapply custom folder permissions. Refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana) for more details.
+
+### Manage migrated folders
+
+You don't need to delete your migrated folders, as Git Sync creates its own folders with new, path-derived UIDs. **Don't delete or recreate folders that contain alert rules or library panels**, since those resources are deleted permanently and Git Sync does not recreate them. See [Before you begin](#before-you-begin) for how to keep and set apart your original folders.
 
 ## Step 3: Validate the migration
 

@@ -22,13 +22,13 @@ aliases:
 
 {{< admonition type="note" >}}
 
-Git Sync only manages dashboards and folders. Alerts, data sources, and library panels are **not** supported yet. Keep this in mind when migrating.
+Git Sync only manages dashboards and folders. Alerts, data sources, and library panels are **not** supported yet.
 
 To migrate your existing dashboards, refer to [Migrate existing dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/add-resources/dashboards-migrate).
 
 {{< /admonition >}}
 
-Use these methods to add a copy of one or more dashboards to a provisioned folder. Each copy is created with a new UID, so the original dashboards stay exactly as they are and nothing needs to be deleted. Existing links continue to point to the original dashboards, not the copies.
+Use these methods to add a copy of one or more dashboards to a folder provisioned with Git Sync. Each copy is created with a new UID, so the original dashboards stay exactly as they are and nothing needs to be deleted. Existing links continue to point to the original dashboards, not the copies.
 
 - [Add a dashboard using Import dashboards](#add-a-dashboard-using-import-dashboards)
 - [Copy an existing dashboard from the Grafana UI](#copy-an-existing-dashboard-from-the-grafana-ui)
