@@ -121,7 +121,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
-		if err := b.enrichCohorts(r); err != nil {
+		if err := b.enrichCohorts(r, flagKey); err != nil {
 			_ = tracing.Errorf(span, bodyReadFailureMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 			logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
@@ -164,7 +164,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
-		if err := b.enrichCohorts(r); err != nil {
+		if err := b.enrichCohorts(r, ""); err != nil {
 			_ = tracing.Errorf(span, bodyReadFailureMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 			logger.Error(bodyReadFailureMsg, "error", err)

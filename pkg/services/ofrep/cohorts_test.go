@@ -213,7 +213,7 @@ func TestCohortCacheRefreshFailureAndRecovery(t *testing.T) {
 	require.False(t, resolver.fresh(value))
 	require.Equal(t, cohortStatus{"stale", "upstream_5xx"}, status)
 	req := cohortRequest("stacks-1", types.TypeUser, false)
-	require.NoError(t, withCohorts(&APIBuilder{}, resolver).enrichCohorts(req))
+	require.NoError(t, withCohorts(&APIBuilder{}, resolver).enrichCohorts(req, "cohort-demo.participation"))
 	data, err := io.ReadAll(req.Body)
 	require.NoError(t, err)
 	require.Contains(t, string(data), `"growthCohortsAvailable":false`)
@@ -236,7 +236,7 @@ func TestCohortUnavailableDoesNotBreakOrdinaryFlags(t *testing.T) {
 			})
 			b := withCohorts(&APIBuilder{}, resolver)
 			req := cohortRequest("stacks-1", types.TypeUser, false)
-			require.NoError(t, b.enrichCohorts(req))
+			require.NoError(t, b.enrichCohorts(req, "cohort-demo.participation"))
 			body, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			require.Contains(t, string(body), `"growthCohortsAvailable":false`)
@@ -442,7 +442,7 @@ func TestCohortLookupFailureReasons(t *testing.T) {
 				_, _ = io.WriteString(w, tt.membership)
 			})
 			req := cohortRequest("stacks-1", types.TypeUser, false)
-			require.NoError(t, withCohorts(&APIBuilder{}, resolver).enrichCohorts(req))
+			require.NoError(t, withCohorts(&APIBuilder{}, resolver).enrichCohorts(req, "cohort-demo.participation"))
 			data, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			require.Contains(t, string(data), `"growthCohortsAvailable":false`)
@@ -480,7 +480,7 @@ func TestCohortLookupFailureReasons(t *testing.T) {
 func TestCohortScrubOnlyAfterEnable(t *testing.T) {
 	b := &APIBuilder{}
 	req := cohortRequest("stacks-1", types.TypeUser, false)
-	require.NoError(t, b.enrichCohorts(req))
+	require.NoError(t, b.enrichCohorts(req, "cohort-demo.participation"))
 	data, err := io.ReadAll(req.Body)
 	require.NoError(t, err)
 	require.Contains(t, string(data), "spoof", "OSS must forward bodies untouched")
@@ -488,7 +488,7 @@ func TestCohortScrubOnlyAfterEnable(t *testing.T) {
 	require.NoError(t, b.EnableCohortEnrichment(CohortConfig{}, nil))
 	require.Nil(t, b.cohorts)
 	req = cohortRequest("stacks-1", types.TypeUser, false)
-	require.NoError(t, b.enrichCohorts(req))
+	require.NoError(t, b.enrichCohorts(req, "cohort-demo.participation"))
 	data, err = io.ReadAll(req.Body)
 	require.NoError(t, err)
 	require.NotContains(t, string(data), "spoof")
@@ -503,11 +503,11 @@ func TestCohortScrubHandlesKeyCasing(t *testing.T) {
 		`{"cOnTeXt":{}}`,
 	} {
 		req := httptest.NewRequest(http.MethodPost, ofrepPath, bytes.NewBufferString(body))
-		require.Error(t, b.enrichCohorts(req), body)
+		require.Error(t, b.enrichCohorts(req, ""), body)
 	}
 
 	req := httptest.NewRequest(http.MethodPost, ofrepPath, bytes.NewBufferString(`{"context":{"GrowthCohortsAvailable":true,"growthcohorts":["spoof"],"GROWTHCOHORTSVERSION":"spoof","growthCohortsRefreshedat":"spoof","kept":1}}`))
-	require.NoError(t, b.enrichCohorts(req))
+	require.NoError(t, b.enrichCohorts(req, "cohort-demo.participation"))
 	var got struct {
 		Context map[string]json.RawMessage `json:"context"`
 	}
@@ -538,15 +538,17 @@ func TestCohortScrubHandlesKeyCasing(t *testing.T) {
 // This opt-in integration test uses the deployment_tools cohort-targeting fixture and pinned GOFF relay
 // (scripts/cohort-targeting/test_mtff.py). Organizations 11 and 10 are both in the 40% "pilot"
 // segment, which buckets org 11 into participation and org 10 out of it, so the two same-org stacks
-// prove organization bucketing rather than a 100% segment.
+// prove organization bucketing rather than a 100% segment. The relay also serves the flag
+// configuration, so the helper's cohortTargeting marker decides which requests reach GCOM.
 func TestCohortRealGOFF(t *testing.T) {
 	endpoint := os.Getenv("GOFF_COHORT_TEST_URL")
 	if endpoint == "" {
 		t.Skip("set GOFF_COHORT_TEST_URL to a relay serving the cohort-targeting fixture")
 	}
-	var mode atomic.Int32
+	var mode, gcomCalls atomic.Int32
 	var resolver *cohortResolver
 	resolver = cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+		gcomCalls.Add(1)
 		refreshed := resolver.now().Format(time.RFC3339Nano)
 		switch {
 		case mode.Load() == -1:
@@ -565,6 +567,7 @@ func TestCohortRealGOFF(t *testing.T) {
 	})
 	advance := cohortClock(resolver, time.Now())
 	b := withCohorts(newTestBuilder(t, endpoint), resolver)
+	b.EnableLegacyOverrideLookupBypass(mustParseURL(t, endpoint), nil)
 
 	type flag struct {
 		Key       string         `json:"key"`
@@ -572,6 +575,48 @@ func TestCohortRealGOFF(t *testing.T) {
 		ErrorCode string         `json:"errorCode"`
 		Metadata  map[string]any `json:"metadata"`
 	}
+	evaluateOne := func(t *testing.T, ns, key string) flag {
+		w := httptest.NewRecorder()
+		req := cohortRequest(ns, types.TypeUser, true)
+		if strings.HasPrefix(key, "cohort-stack-demo.") {
+			// Stack-unit experiments bucket on the validated namespace.
+			req = httptest.NewRequest(http.MethodPost, ofrepPath, strings.NewReader(fmt.Sprintf(`{"context":{"targetingKey":%q,"namespace":%q}}`, ns, ns)))
+			req.Header.Set("Content-Type", "application/json")
+			req = req.WithContext(types.WithAuthInfo(req.Context(), &identity.StaticRequester{Namespace: ns, Type: types.TypeUser}))
+		}
+		b.oneFlagHandler(w, mux.SetURLVars(req, map[string]string{"flagKey": key}))
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var f flag
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &f))
+		require.Empty(t, f.ErrorCode, key)
+		return f
+	}
+	// Ordinary flags and the namespace-only stack experiment never reach GCOM, even for an allowed
+	// stack, and still evaluate; the organization experiments carry the cohortTargeting marker.
+	unmarkedWithoutGCOM := func(t *testing.T) {
+		before, skipped := gcomCalls.Load(), testutil.ToFloat64(resolver.outcomes.WithLabelValues("skipped", "no_cohort_flags"))
+		for _, ns := range []string{"stacks-1", "stacks-3"} {
+			require.Equal(t, true, evaluateOne(t, ns, "ordinary").Value)
+		}
+		require.Equal(t, false, evaluateOne(t, "stacks-1", "cohort-stack-demo.participation").Value)
+		for _, key := range []string{"cohort-stack-demo.participation", "cohort-stack-demo.arm"} {
+			f := evaluateOne(t, "stacks-2", key)
+			require.Equal(t, true, f.Value, key)
+			require.Equal(t, false, f.Metadata["cohortTargeting"], key)
+		}
+		require.Equal(t, before, gcomCalls.Load(), "an unmarked flag must not look up GCOM")
+		requireOutcome(t, resolver, "skipped", "no_cohort_flags", skipped+5)
+		keys, reason, ok := resolver.cohortFlags(context.Background(), b.goffURL, b.transport)
+		require.True(t, ok, reason)
+		for _, key := range []string{"cohort-demo.participation", "cohort-demo.arm", "cohort-fallback.participation", "cohort-fallback.arm"} {
+			require.True(t, keys[key], key)
+		}
+		for _, key := range []string{"ordinary", "cohort-stack-demo.participation", "cohort-stack-demo.arm"} {
+			require.NotContains(t, keys, key)
+		}
+	}
+	t.Run("unmarked flags skip GCOM", unmarkedWithoutGCOM)
+	require.Zero(t, gcomCalls.Load())
 	evaluate := func(t *testing.T, req *http.Request) map[string]flag {
 		w := httptest.NewRecorder()
 		b.allFlagsHandler(w, req)
@@ -615,7 +660,10 @@ func TestCohortRealGOFF(t *testing.T) {
 			}
 			for _, key := range []string{"cohort-demo.participation", "cohort-demo.arm"} {
 				require.Equal(t, results["stacks-1"][key].Value, results["stacks-2"][key].Value, key)
+				// A single-flag evaluation of a marked flag is enriched like bulk evaluation.
+				require.Equal(t, results["stacks-1"][key].Value, evaluateOne(t, "stacks-1", key).Value, key)
 			}
+			unmarkedWithoutGCOM(t)
 			if phase.participates {
 				require.Equal(t, true, results["stacks-1"]["cohort-demo.arm"].Value)
 			}
@@ -686,6 +734,10 @@ func TestCohortEnrichmentBeforeUpstreamSelection(t *testing.T) {
 	var direct, legacy atomic.Int32
 	server := func(counter *atomic.Int32) *httptest.Server {
 		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == cohortFlagConfigPath {
+				_, _ = io.WriteString(w, `{"flags":{"cohort-demo.participation":{"metadata":{"cohortTargeting":true}},"overridden":{"metadata":{"cohortTargeting":true}}}}`)
+				return
+			}
 			var body struct {
 				Context struct {
 					Available bool   `json:"growthCohortsAvailable"`
@@ -719,4 +771,216 @@ func TestCohortEnrichmentBeforeUpstreamSelection(t *testing.T) {
 	}
 	require.EqualValues(t, 1, direct.Load())
 	require.EqualValues(t, 2, legacy.Load())
+	require.Zero(t, testutil.CollectAndCount(b.cohorts.fallbacks), "flag configuration is read from --goff-url")
+}
+
+// cohortGOFF serves GOFF's flag configuration with config, counting fetches, and answers OFREP
+// evaluations with a public flag, sending each forwarded evaluation context to the returned channel.
+func cohortGOFF(t *testing.T, config http.HandlerFunc) (*APIBuilder, *atomic.Int32, chan map[string]json.RawMessage) {
+	t.Helper()
+	var fetches atomic.Int32
+	captured := make(chan map[string]json.RawMessage, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == cohortFlagConfigPath {
+			fetches.Add(1)
+			if r.Method != http.MethodPost {
+				http.Error(w, "method", http.StatusMethodNotAllowed)
+				return
+			}
+			config(w, r)
+			return
+		}
+		var body struct {
+			Context map[string]json.RawMessage `json:"context"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		captured <- body.Context
+		_, _ = io.WriteString(w, `{"flags":[],"key":"flag","value":true,"metadata":{"public":"true"}}`)
+	}))
+	t.Cleanup(server.Close)
+	b := newTestBuilder(t, server.URL)
+	b.EnableLegacyOverrideLookupBypass(mustParseURL(t, server.URL), nil)
+	return b, &fetches, captured
+}
+
+func cohortEvaluate(t *testing.T, b *APIBuilder, captured chan map[string]json.RawMessage, namespace, flagKey string) map[string]json.RawMessage {
+	t.Helper()
+	req := cohortRequest(namespace, types.TypeUser, flagKey == "")
+	w := httptest.NewRecorder()
+	if flagKey == "" {
+		b.allFlagsHandler(w, req)
+	} else {
+		b.oneFlagHandler(w, mux.SetURLVars(req, map[string]string{"flagKey": flagKey}))
+	}
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	attrs := <-captured
+	require.Equal(t, "9007199254740993", string(attrs["unrelated"]))
+	require.NotContains(t, string(attrs["growthCohorts"]), "spoof")
+	return attrs
+}
+
+func TestCohortLookupOnlyForCohortFlags(t *testing.T) {
+	now := time.Now()
+	var gcomCalls atomic.Int32
+	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+		gcomCalls.Add(1)
+		cohortResponse(w, r, now)
+	})
+	advance := cohortClock(resolver, now)
+	var config atomic.Value
+	config.Store(`{"flags":{"cohort-demo.participation":{"metadata":{"cohortTargeting":true}},"cohort-demo.arm":{"metadata":{"cohortTargeting":"true"}},` +
+		`"stack-demo.participation":{"metadata":{"cohortTargeting":false}},"ordinary":{"metadata":{"public":"true"}},"bare":{}}}`)
+	b, fetches, captured := cohortGOFF(t, func(w http.ResponseWriter, r *http.Request) { _, _ = io.WriteString(w, config.Load().(string)) })
+	withCohorts(b, resolver)
+
+	// Ordinary flags and stack-unit experiments never reach GCOM, even for an allowed stack.
+	for _, key := range []string{"ordinary", "stack-demo.participation", "bare", "unknown", "COHORT-DEMO.PARTICIPATION"} {
+		attrs := cohortEvaluate(t, b, captured, "stacks-1", key)
+		require.Equal(t, "false", string(attrs["growthCohortsAvailable"]), key)
+		require.JSONEq(t, `[]`, string(attrs["growthCohorts"]), key)
+		require.NotContains(t, attrs, "growthCohortsVersion", key)
+	}
+	require.Zero(t, gcomCalls.Load())
+	requireOutcome(t, resolver, "skipped", "no_cohort_flags", 5)
+
+	for _, key := range []string{"cohort-demo.participation", "cohort-demo.arm", ""} {
+		attrs := cohortEvaluate(t, b, captured, "stacks-1", key)
+		require.Equal(t, "true", string(attrs["growthCohortsAvailable"]), key)
+		require.Equal(t, `"10"`, string(attrs["gcomOrgID"]), key)
+	}
+	require.EqualValues(t, 2, gcomCalls.Load())
+	requireOutcome(t, resolver, "lookup_success", "none", 1)
+	requireOutcome(t, resolver, "cache_hit", "none", 2)
+
+	// A stack outside the allowlist does not even need the flag configuration.
+	cohortEvaluate(t, b, captured, "stacks-4", "cohort-demo.participation")
+	require.EqualValues(t, 1, fetches.Load())
+
+	// Once no flag is marked, bulk evaluation skips too; GOFF omits an empty flags object.
+	for _, response := range []string{`{"flags":{"ordinary":{"metadata":{"cohortTargeting":false}}}}`, `{}`} {
+		config.Store(response)
+		advance(cohortFlagConfigTTL)
+		attrs := cohortEvaluate(t, b, captured, "stacks-3", "")
+		require.Equal(t, "false", string(attrs["growthCohortsAvailable"]), response)
+	}
+	require.EqualValues(t, 3, fetches.Load())
+	require.EqualValues(t, 2, gcomCalls.Load())
+	requireOutcome(t, resolver, "skipped", "no_cohort_flags", 7)
+	require.Zero(t, testutil.CollectAndCount(resolver.fallbacks))
+}
+
+func TestCohortFlagConfigFallback(t *testing.T) {
+	for _, tt := range []struct {
+		name, reason string
+		config       http.HandlerFunc
+	}{
+		{"server error", "upstream_5xx", func(w http.ResponseWriter, r *http.Request) { http.Error(w, "error", http.StatusInternalServerError) }},
+		{"unauthorized", "auth", func(w http.ResponseWriter, r *http.Request) { http.Error(w, "error", http.StatusUnauthorized) }},
+		{"endpoint missing", "not_found", http.NotFound},
+		{"invalid json", "decode", func(w http.ResponseWriter, r *http.Request) { _, _ = io.WriteString(w, `{"flags":`) }},
+		{"error code", "invalid", func(w http.ResponseWriter, r *http.Request) {
+			_, _ = io.WriteString(w, `{"errorCode":"RETRIEVING_FLAGS_ERROR"}`)
+		}},
+		{"oversized", "invalid", func(w http.ResponseWriter, r *http.Request) {
+			_, _ = io.WriteString(w, `{"flags":{},"padding":"`+strings.Repeat("a", maxCohortFlagConfigBytes)+`"}`)
+		}},
+		{"timeout", "timeout", func(w http.ResponseWriter, r *http.Request) {
+			// The server notices the client going away only once the body is consumed.
+			_, _ = io.Copy(io.Discard, r.Body)
+			<-r.Context().Done()
+		}},
+		{"not configured", "not_configured", nil},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			now := time.Now()
+			var gcomCalls atomic.Int32
+			resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+				gcomCalls.Add(1)
+				cohortResponse(w, r, now)
+			})
+			resolver.config.Timeout = 200 * time.Millisecond
+			advance := cohortClock(resolver, now)
+			var healthy atomic.Bool
+			b, fetches, captured := cohortGOFF(t, func(w http.ResponseWriter, r *http.Request) {
+				if healthy.Load() {
+					_, _ = io.WriteString(w, `{"flags":{"cohort-demo.participation":{"metadata":{"cohortTargeting":true}}}}`)
+					return
+				}
+				tt.config(w, r)
+			})
+			if tt.config == nil {
+				b.goffURL = nil
+			}
+			withCohorts(b, resolver)
+
+			// Unknown cohort flags fall back to looking up, so experiments keep enrolling.
+			for range 2 {
+				attrs := cohortEvaluate(t, b, captured, "stacks-1", "ordinary")
+				require.Equal(t, "true", string(attrs["growthCohortsAvailable"]))
+			}
+			require.EqualValues(t, 2, gcomCalls.Load())
+			require.Equal(t, 2.0, testutil.ToFloat64(resolver.fallbacks.WithLabelValues(tt.reason)))
+			if tt.config == nil {
+				require.Zero(t, fetches.Load())
+				return
+			}
+			if tt.reason != "timeout" {
+				require.EqualValues(t, 1, fetches.Load(), "failed fetches are retried at most once per interval")
+			}
+
+			healthy.Store(true)
+			advance(cohortRetryInterval)
+			require.Eventually(t, func() bool {
+				_, _, ok := resolver.cohortFlags(context.Background(), b.goffURL, b.transport)
+				return ok
+			}, 5*time.Second, 10*time.Millisecond)
+			attrs := cohortEvaluate(t, b, captured, "stacks-1", "ordinary")
+			require.Equal(t, "false", string(attrs["growthCohortsAvailable"]))
+			requireOutcome(t, resolver, "skipped", "no_cohort_flags", 1)
+		})
+	}
+}
+
+func TestCohortFlagConfigRefreshAndCoalescing(t *testing.T) {
+	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) { cohortResponse(w, r, time.Now()) })
+	advance := cohortClock(resolver, time.Now())
+	started := make(chan struct{}, 1)
+	release := make(chan struct{})
+	b, fetches, _ := cohortGOFF(t, func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case started <- struct{}{}:
+			<-release
+		default:
+		}
+		_, _ = io.WriteString(w, `{"flags":{"a":{"metadata":{"cohortTargeting":true}},"b":{"metadata":{"cohortTargeting":false}}}}`)
+	})
+	var wg sync.WaitGroup
+	results := make(chan map[string]bool, 20)
+	for range 20 {
+		wg.Go(func() {
+			keys, _, ok := resolver.cohortFlags(context.Background(), b.goffURL, b.transport)
+			if ok {
+				results <- keys
+			}
+		})
+	}
+	<-started
+	close(release)
+	wg.Wait()
+	close(results)
+	require.Len(t, results, 20)
+	for keys := range results {
+		require.Equal(t, map[string]bool{"a": true}, keys)
+	}
+	require.EqualValues(t, 1, fetches.Load())
+	require.Nil(t, resolver.flags.done)
+
+	advance(cohortFlagConfigTTL - time.Second)
+	_, _, ok := resolver.cohortFlags(context.Background(), b.goffURL, b.transport)
+	require.True(t, ok)
+	require.EqualValues(t, 1, fetches.Load())
+	advance(time.Second)
+	_, _, ok = resolver.cohortFlags(context.Background(), b.goffURL, b.transport)
+	require.True(t, ok)
+	require.EqualValues(t, 2, fetches.Load())
 }

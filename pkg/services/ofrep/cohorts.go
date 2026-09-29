@@ -31,6 +31,13 @@ const (
 	// cohortRetryInterval limits GCOM refreshes per key while lookups fail.
 	cohortRetryInterval  = time.Second
 	maxCohortSnapshotAge = 24 * time.Hour
+	// cohortFlagConfigTTL is how long the cohort-targeting flag keys learned from GOFF are reused.
+	// A newly marked flag is evaluated without cohorts, so excludes everyone, for at most this long.
+	cohortFlagConfigTTL = 30 * time.Second
+	// maxCohortFlagConfigBytes bounds the GOFF flag configuration response. The deployed flags come
+	// from one ConfigMap, which Kubernetes limits to 1 MiB of YAML.
+	maxCohortFlagConfigBytes = 4 * mib
+	cohortFlagConfigPath     = "/v1/flag/configuration"
 )
 
 // CohortConfig enables organization cohorts only for explicitly selected authenticated stacks.
@@ -115,6 +122,16 @@ func (e *cohortEntry[V]) fallback(reason string) (V, cohortStatus) {
 	return zero, cohortStatus{"unavailable", reason}
 }
 
+// cohortFlagIndex caches the keys of GOFF flags whose metadata sets cohortTargeting, guarded by
+// cohortResolver.mu. The keys map is replaced, never mutated, so callers may read it unlocked.
+type cohortFlagIndex struct {
+	keys    map[string]bool
+	expires time.Time
+	retry   time.Time
+	reason  string
+	done    chan struct{}
+}
+
 type cohortResolver struct {
 	config      CohortConfig
 	baseURL     *url.URL
@@ -123,17 +140,23 @@ type cohortResolver struct {
 	mu          sync.Mutex
 	orgs        map[string]*cohortEntry[string]
 	memberships map[string]*cohortEntry[cohortSnapshot]
+	flags       cohortFlagIndex
 	slots       chan struct{}
 	now         func() time.Time
 	logger      log.Logger
 	warnLimit   *rate.Sometimes
+	flagWarn    *rate.Sometimes
 	outcomes    *prometheus.CounterVec
+	fallbacks   *prometheus.CounterVec
 	duration    prometheus.Histogram
 	age         prometheus.Histogram
 }
 
 // EnableCohortEnrichment installs the reserved-attribute scrub and, for allowed stacks, the
 // GCOM resolver at the common proxy boundary. Without it request bodies are forwarded untouched.
+// Lookups are skipped for requests that cannot evaluate a flag marked cohortTargeting, as read
+// from the GOFF URL given to EnableLegacyOverrideLookupBypass; without that URL every allowed
+// request is looked up.
 func (b *APIBuilder) EnableCohortEnrichment(c CohortConfig, reg prometheus.Registerer) error {
 	if len(c.AllowedNamespaces) == 0 {
 		b.scrubCohorts = true
@@ -189,7 +212,9 @@ func newCohortResolver(c CohortConfig, u *url.URL) *cohortResolver {
 		now:         time.Now,
 		logger:      log.New("grafana-apiserver.feature-flags.cohorts"),
 		warnLimit:   &rate.Sometimes{Interval: 10 * time.Second},
-		outcomes:    prometheus.NewCounterVec(prometheus.CounterOpts{Name: "grafana_ofrep_cohort_resolutions_total", Help: "Cohort enrichment outcomes per eligible request, without tenant labels."}, []string{"outcome", "reason"}),
+		flagWarn:    &rate.Sometimes{Interval: time.Minute},
+		outcomes:    prometheus.NewCounterVec(prometheus.CounterOpts{Name: "grafana_ofrep_cohort_resolutions_total", Help: "Cohort enrichment outcomes per allowed request, without tenant labels; skipped requests cannot evaluate a cohort-targeting flag."}, []string{"outcome", "reason"}),
+		fallbacks:   prometheus.NewCounterVec(prometheus.CounterOpts{Name: "grafana_ofrep_cohort_flag_config_fallbacks_total", Help: "Allowed requests looked up in GCOM because the GOFF cohort-targeting flag configuration was unknown."}, []string{"reason"}),
 		duration:    prometheus.NewHistogram(prometheus.HistogramOpts{Name: "grafana_ofrep_cohort_lookup_duration_seconds", Help: "Duration of each GCOM organization or membership lookup."}),
 		age:         prometheus.NewHistogram(prometheus.HistogramOpts{Name: "grafana_ofrep_cohort_snapshot_age_seconds", Help: "Age of successfully served GCOM import snapshots.", Buckets: []float64{60, 300, 1800, 3600, 7200, 14400, 86400}}),
 	}
@@ -200,10 +225,15 @@ func newCohortResolver(c CohortConfig, u *url.URL) *cohortResolver {
 func (c *cohortResolver) registerMetrics(reg prometheus.Registerer) error {
 	var added []prometheus.Collector
 	var err error
-	if c.outcomes, err = registerCohortMetric(reg, &added, c.outcomes); err == nil {
-		if c.duration, err = registerCohortMetric(reg, &added, c.duration); err == nil {
-			c.age, err = registerCohortMetric(reg, &added, c.age)
-		}
+	c.outcomes, err = registerCohortMetric(reg, &added, c.outcomes)
+	if err == nil {
+		c.fallbacks, err = registerCohortMetric(reg, &added, c.fallbacks)
+	}
+	if err == nil {
+		c.duration, err = registerCohortMetric(reg, &added, c.duration)
+	}
+	if err == nil {
+		c.age, err = registerCohortMetric(reg, &added, c.age)
 	}
 	if err != nil {
 		for _, collector := range added {
@@ -369,7 +399,12 @@ func (c *cohortResolver) get(ctx context.Context, path string, dst any) error {
 		return newCohortError("invalid", "invalid GCOM request")
 	}
 	req.Header.Set("Authorization", "Bearer "+bearer)
-	resp, err := c.client.Do(req) //nolint:gosec // See above; redirects are disabled.
+	return cohortDo(ctx, c.client, req, "GCOM", mib, dst)
+}
+
+// cohortDo sends one request and decodes a bounded JSON response, classifying failures by reason.
+func cohortDo(ctx context.Context, client *http.Client, req *http.Request, upstream string, limit int, dst any) error {
+	resp, err := client.Do(req) //nolint:gosec // Callers build the URL from operator configuration; redirects are disabled.
 	if err != nil {
 		if ctx.Err() != nil || os.IsTimeout(err) {
 			return &cohortError{reason: "timeout", err: context.DeadlineExceeded}
@@ -384,26 +419,26 @@ func (c *cohortResolver) get(ctx context.Context, path string, dst any) error {
 	switch {
 	case resp.StatusCode == http.StatusOK:
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
-		return newCohortError("auth", fmt.Sprintf("GCOM returned status %d", resp.StatusCode))
+		return newCohortError("auth", fmt.Sprintf("%s returned status %d", upstream, resp.StatusCode))
 	case resp.StatusCode == http.StatusNotFound:
-		return newCohortError("not_found", "GCOM returned status 404")
+		return newCohortError("not_found", upstream+" returned status 404")
 	case resp.StatusCode >= 500:
-		return newCohortError("upstream_5xx", fmt.Sprintf("GCOM returned status %d", resp.StatusCode))
+		return newCohortError("upstream_5xx", fmt.Sprintf("%s returned status %d", upstream, resp.StatusCode))
 	default:
-		return newCohortError("upstream_status", fmt.Sprintf("GCOM returned status %d", resp.StatusCode))
+		return newCohortError("upstream_status", fmt.Sprintf("%s returned status %d", upstream, resp.StatusCode))
 	}
-	data, err := io.ReadAll(io.LimitReader(resp.Body, mib+1))
+	data, err := io.ReadAll(io.LimitReader(resp.Body, int64(limit)+1))
 	if err != nil {
 		if ctx.Err() != nil {
 			return &cohortError{reason: "timeout", err: context.DeadlineExceeded}
 		}
-		return newCohortError("network", "cannot read GCOM response")
+		return newCohortError("network", "cannot read "+upstream+" response")
 	}
-	if len(data) > mib {
-		return newCohortError("invalid", "GCOM response exceeds 1 MiB")
+	if len(data) > limit {
+		return newCohortError("invalid", fmt.Sprintf("%s response exceeds %d MiB", upstream, limit/mib))
 	}
 	if err := json.Unmarshal(data, dst); err != nil {
-		return newCohortError("decode", "cannot decode GCOM response")
+		return newCohortError("decode", "cannot decode "+upstream+" response")
 	}
 	return nil
 }
@@ -442,6 +477,123 @@ func (c *cohortResolver) fetchMembership(ctx context.Context, orgID string) (coh
 	return snapshot, nil
 }
 
+// cohortFlags returns the keys of GOFF flags marked cohortTargeting, refreshing them at most once
+// at a time. The refresh runs detached from any single caller, like cohortLookup. When ok is false
+// the keys are unknown and reason says why; callers then look up as if every flag used cohorts.
+func (c *cohortResolver) cohortFlags(ctx context.Context, goffURL *url.URL, transport *http.Transport) (keys map[string]bool, reason string, ok bool) {
+	if goffURL == nil {
+		return nil, "not_configured", false
+	}
+	ctx, cancel := context.WithTimeout(ctx, c.config.Timeout)
+	defer cancel()
+	f := &c.flags
+	c.mu.Lock()
+	now := c.now()
+	if now.Before(f.expires) {
+		defer c.mu.Unlock()
+		return f.keys, "", true
+	}
+	if f.done == nil {
+		if now.Before(f.retry) {
+			defer c.mu.Unlock()
+			return nil, f.reason, false
+		}
+		f.done = make(chan struct{})
+		go c.refreshFlags(context.WithoutCancel(ctx), goffURL, transport)
+	}
+	done := f.done
+	c.mu.Unlock()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		return nil, "timeout", false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.now().Before(f.expires) {
+		return f.keys, "", true
+	}
+	return nil, f.reason, false
+}
+
+func (c *cohortResolver) refreshFlags(ctx context.Context, goffURL *url.URL, transport *http.Transport) {
+	ctx, cancel := context.WithTimeout(ctx, c.config.Timeout)
+	ctx, span := tracing.Start(ctx, "ofrep.cohorts.flagConfiguration")
+	var keys map[string]bool
+	var err error
+	defer func() {
+		if p := recover(); p != nil {
+			err = newCohortError("internal", fmt.Sprintf("cohort flag configuration panic: %v", p))
+		}
+		cancel()
+		reason := ""
+		if err != nil {
+			reason = cohortReason(err)
+			span.SetAttributes(attribute.String("reason", reason))
+			_ = tracing.Error(span, err)
+			c.flagWarn.Do(func() {
+				c.logger.Warn("GOFF flag configuration fetch failed; looking up cohorts for every allowed request", "reason", reason, "error", err)
+			})
+		} else {
+			span.SetAttributes(attribute.Int("cohort_flags", len(keys)))
+		}
+		span.End()
+
+		c.mu.Lock()
+		f := &c.flags
+		if err == nil {
+			f.keys, f.expires, f.retry, f.reason = keys, c.now().Add(cohortFlagConfigTTL), time.Time{}, ""
+		} else {
+			f.reason, f.retry = reason, c.now().Add(cohortRetryInterval)
+		}
+		close(f.done)
+		f.done = nil
+		c.mu.Unlock()
+	}()
+	keys, err = c.fetchCohortFlags(ctx, goffURL, transport)
+}
+
+// fetchCohortFlags reads every flag from the relay proxy's flag configuration endpoint, which
+// shares the OFREP routes' authentication, and keeps the keys whose metadata sets cohortTargeting.
+func (c *cohortResolver) fetchCohortFlags(ctx context.Context, goffURL *url.URL, transport *http.Transport) (map[string]bool, error) {
+	// Like the evaluation proxy, only the scheme and host of the GOFF URL are used.
+	u := url.URL{Scheme: goffURL.Scheme, Host: goffURL.Host, Path: cohortFlagConfigPath}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(`{}`))
+	if err != nil {
+		return nil, newCohortError("invalid", "invalid GOFF request")
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{
+		Timeout: c.config.Timeout,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return errors.New("GOFF redirects are disabled")
+		},
+	}
+	if transport != nil {
+		client.Transport = transport
+	}
+	var config struct {
+		Flags map[string]struct {
+			Metadata map[string]any `json:"metadata"`
+		} `json:"flags"`
+		ErrorCode string `json:"errorCode"`
+	}
+	if err := cohortDo(ctx, client, req, "GOFF", maxCohortFlagConfigBytes, &config); err != nil {
+		return nil, err
+	}
+	if config.ErrorCode != "" {
+		return nil, newCohortError("invalid", "GOFF flag configuration error")
+	}
+	keys := map[string]bool{}
+	for key, flag := range config.Flags {
+		if metadataBool(flag.Metadata, "cohortTargeting") {
+			keys[key] = true
+		}
+	}
+	return keys, nil
+}
+
 // cohortIdentityTypes are the callers that reach MTFF with a stack identity: signed-in users and
 // service accounts (Grafana router or ID token) and access-policy tokens (token exchange).
 // Anonymous, public-dashboard and render identities also carry a stack namespace but are not
@@ -451,9 +603,10 @@ var cohortIdentityTypes = []types.IdentityType{types.TypeUser, types.TypeService
 var cohortReservedAttributes = []string{"growthCohorts", "growthCohortsAvailable", "growthCohortsVersion", "growthCohortsRefreshedAt"}
 
 // enrichCohorts replaces reserved attributes once EnableCohortEnrichment has been called,
-// including when lookups are disabled or unavailable. Only an allowed authenticated namespace
-// can authorize an organization lookup.
-func (b *APIBuilder) enrichCohorts(r *http.Request) error {
+// including when lookups are disabled, skipped or unavailable. Only an allowed authenticated
+// namespace can authorize an organization lookup, and only for a request that may evaluate a
+// cohort-targeting flag. flagKey is empty for bulk evaluation.
+func (b *APIBuilder) enrichCohorts(r *http.Request, flagKey string) error {
 	if !b.scrubCohorts {
 		return nil
 	}
@@ -499,24 +652,11 @@ func (b *APIBuilder) enrichCohorts(r *http.Request) error {
 	if c := b.cohorts; c != nil {
 		user, ok := types.AuthInfoFrom(r.Context())
 		if ok && types.IsIdentityType(user.GetIdentityType(), cohortIdentityTypes...) && c.allowed[user.GetNamespace()] {
-			value, status := c.resolve(r.Context(), user.GetNamespace())
-			if c.fresh(value) {
-				attrs["growthCohorts"], _ = json.Marshal(value.Cohorts)
-				attrs["growthCohortsAvailable"] = json.RawMessage(`true`)
-				attrs["growthCohortsVersion"], _ = json.Marshal(value.Snapshot.Version)
-				attrs["growthCohortsRefreshedAt"], _ = json.Marshal(value.Snapshot.RefreshedAt)
-				attrs["gcomOrgID"], _ = json.Marshal(value.orgID)
-				c.age.Observe(max(0, c.now().Sub(value.Snapshot.RefreshedAt).Seconds()))
-			} else if status.outcome != "unavailable" {
-				// A cached or stale value whose GCOM import snapshot is missing or too old. A
-				// stale value keeps the failure that prevented its refresh.
-				reason := "snapshot"
-				if status.outcome == "stale" {
-					reason = status.reason
-				}
-				status = cohortStatus{"unavailable", reason}
+			if b.mayEvaluateCohortFlag(r.Context(), c, flagKey) {
+				c.enrich(r.Context(), user.GetNamespace(), attrs)
+			} else {
+				c.outcomes.WithLabelValues("skipped", "no_cohort_flags").Inc()
 			}
-			c.outcomes.WithLabelValues(status.outcome, status.reason).Inc()
 		}
 	}
 	body["context"], err = json.Marshal(attrs)
@@ -531,4 +671,46 @@ func (b *APIBuilder) enrichCohorts(r *http.Request) error {
 	r.ContentLength = int64(len(encoded))
 	r.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(bytes.NewReader(encoded)), nil }
 	return nil
+}
+
+// enrich sets the organization's cohorts on attrs when a fresh snapshot is available.
+func (c *cohortResolver) enrich(ctx context.Context, namespace string, attrs map[string]json.RawMessage) {
+	value, status := c.resolve(ctx, namespace)
+	if c.fresh(value) {
+		attrs["growthCohorts"], _ = json.Marshal(value.Cohorts)
+		attrs["growthCohortsAvailable"] = json.RawMessage(`true`)
+		attrs["growthCohortsVersion"], _ = json.Marshal(value.Snapshot.Version)
+		attrs["growthCohortsRefreshedAt"], _ = json.Marshal(value.Snapshot.RefreshedAt)
+		attrs["gcomOrgID"], _ = json.Marshal(value.orgID)
+		c.age.Observe(max(0, c.now().Sub(value.Snapshot.RefreshedAt).Seconds()))
+	} else if status.outcome != "unavailable" {
+		// A cached or stale value whose GCOM import snapshot is missing or too old. A
+		// stale value keeps the failure that prevented its refresh.
+		reason := "snapshot"
+		if status.outcome == "stale" {
+			reason = status.reason
+		}
+		status = cohortStatus{"unavailable", reason}
+	}
+	c.outcomes.WithLabelValues(status.outcome, status.reason).Inc()
+}
+
+// mayEvaluateCohortFlag reports whether the request may evaluate a flag marked cohortTargeting.
+// flagKey is empty for bulk evaluation, which evaluates every flag. A skipped lookup keeps the
+// scrubbed defaults, so a wrong answer can only exclude, never enroll.
+func (b *APIBuilder) mayEvaluateCohortFlag(ctx context.Context, c *cohortResolver, flagKey string) bool {
+	keys, reason, ok := c.cohortFlags(ctx, b.goffURL, b.transport)
+	if !ok {
+		c.fallbacks.WithLabelValues(reason).Inc()
+		if reason == "not_configured" {
+			c.flagWarn.Do(func() {
+				c.logger.Warn("GOFF URL is not configured; looking up cohorts for every allowed request")
+			})
+		}
+		return true
+	}
+	if flagKey == "" {
+		return len(keys) > 0
+	}
+	return keys[flagKey]
 }

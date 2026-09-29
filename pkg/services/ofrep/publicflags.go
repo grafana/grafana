@@ -12,7 +12,12 @@ import (
 // isPublic reports whether flag metadata marks it public via the "public" key.
 // Accepts bool true or string "true" (case-insensitive).
 func isPublic(metadata map[string]any) bool {
-	v, ok := metadata["public"]
+	return metadataBool(metadata, "public")
+}
+
+// metadataBool reads a flag metadata entry set as a boolean or a boolean string.
+func metadataBool(metadata map[string]any, key string) bool {
+	v, ok := metadata[key]
 	if !ok {
 		return false
 	}
