@@ -5515,6 +5515,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageClient.onBehalfOf",
+        "resourceVersion": "1789977477190",
+        "creationTimestamp": "2026-09-21T07:57:57Z"
+      },
+      "spec": {
+        "description": "Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageClient.requireCallerIdentity",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

@@ -3746,6 +3746,58 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		require.ElementsMatch(t, []string{other1.UID, noPolicy.UID}, gotUIDs)
 	})
 
+	t.Run("k8s status state and health", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		withStatus := func(status string) *models.AlertRule {
+			r := createRule(t, store, ruleGen)
+			require.NoError(t, store.SaveAlertRuleStatus(context.Background(), orgID, r.UID, []byte(status)))
+			return r
+		}
+		firingOK := withStatus(`{"state":"firing","health":"ok"}`)
+		pendingErr := withStatus(`{"state":"pending","health":"error"}`)
+		normalOK := withStatus(`{"state":"normal","health":"ok"}`)
+		noStatus := createRule(t, store, ruleGen)
+
+		list := func(t *testing.T, q models.ListAlertRulesExtendedQuery) []string {
+			q.OrgID = orgID
+			result, _, err := store.ListAlertRulesPaginated(context.Background(), &q)
+			require.NoError(t, err)
+			uids := make([]string, 0, len(result))
+			for _, r := range result {
+				uids = append(uids, r.UID)
+			}
+			return uids
+		}
+
+		t.Run("States", func(t *testing.T) {
+			got := list(t, models.ListAlertRulesExtendedQuery{States: []string{"firing", "pending"}})
+			require.ElementsMatch(t, []string{firingOK.UID, pendingErr.UID}, got)
+		})
+		t.Run("ExcludeStates includes rules with no status", func(t *testing.T) {
+			got := list(t, models.ListAlertRulesExtendedQuery{ExcludeStates: []string{"firing"}})
+			require.ElementsMatch(t, []string{pendingErr.UID, normalOK.UID, noStatus.UID}, got)
+		})
+		t.Run("Healths", func(t *testing.T) {
+			got := list(t, models.ListAlertRulesExtendedQuery{Healths: []string{"error"}})
+			require.ElementsMatch(t, []string{pendingErr.UID}, got)
+		})
+		t.Run("ExcludeHealths includes rules with no status", func(t *testing.T) {
+			got := list(t, models.ListAlertRulesExtendedQuery{ExcludeHealths: []string{"error"}})
+			require.ElementsMatch(t, []string{firingOK.UID, normalOK.UID, noStatus.UID}, got)
+		})
+		t.Run("combined with other filters", func(t *testing.T) {
+			got := list(t, models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{RuleUIDs: []string{firingOK.UID, normalOK.UID, pendingErr.UID}},
+				States:              []string{"firing", "normal"},
+				ExcludeHealths:      []string{"error"},
+			})
+			require.ElementsMatch(t, []string{firingOK.UID, normalOK.UID}, got)
+		})
+	})
+
 	t.Run("RecordMetricExact", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
