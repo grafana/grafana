@@ -107,26 +107,26 @@ Most cloud-hosted PostgreSQL services (Amazon RDS, Azure Database for PostgreSQL
 
 If you select any TLS/SSL Mode other than **disable** with the **file system path** method, the following fields appear:
 
-| Setting                    | Description                                                                                                                                                                                          |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TLS/SSL Root Certificate   | Specify the path to the root certificate file. Grafana uses this to verify the server certificate when the mode is **verify-ca** or **verify-full**. Leave it empty for **require** mode.            |
-| TLS/SSL Client Certificate | Optional. Specify the path to the client certificate. Only needed when the server enforces mutual TLS. Ensure the file is accessible to the user running the Grafana process.                        |
-| TLS/SSL Client Key         | Optional. Specify the path to the client key. Only needed when the server enforces mutual TLS. Ensure the file is accessible to the user running the Grafana process.                                |
+| Setting                    | Description                                                                                                                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TLS/SSL Root Certificate   | Specify the path to the root certificate file. Grafana uses this to verify the server certificate when the mode is **verify-ca** or **verify-full**. Leave it empty for **require** mode. |
+| TLS/SSL Client Certificate | Optional. Specify the path to the client certificate. Only needed when the server enforces mutual TLS. Ensure the file is accessible to the user running the Grafana process.             |
+| TLS/SSL Client Key         | Optional. Specify the path to the client key. Only needed when the server enforces mutual TLS. Ensure the file is accessible to the user running the Grafana process.                     |
 
 If you select the **require** mode with the **certificate content** method, the following fields appear:
 
-| Setting                    | Description                                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------- |
+| Setting                    | Description                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
 | TLS/SSL Client Certificate | Optional. Provide the client certificate. Only needed when the server enforces mutual TLS. |
-| TLS/SSL Client Key         | Optional. Provide the client key. Only needed when the server enforces mutual TLS.    |
+| TLS/SSL Client Key         | Optional. Provide the client key. Only needed when the server enforces mutual TLS.         |
 
 If you select the **verify-ca** or **verify-full** mode with the **certificate content** method, the following fields appear:
 
-| Setting                    | Description                                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------- |
-| TLS/SSL Root Certificate   | Provide the root certificate. Grafana uses it to verify the server certificate.       |
+| Setting                    | Description                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| TLS/SSL Root Certificate   | Provide the root certificate. Grafana uses it to verify the server certificate.            |
 | TLS/SSL Client Certificate | Optional. Provide the client certificate. Only needed when the server enforces mutual TLS. |
-| TLS/SSL Client Key         | Optional. Provide the client key. Only needed when the server enforces mutual TLS.    |
+| TLS/SSL Client Key         | Optional. Provide the client key. Only needed when the server enforces mutual TLS.         |
 
 ### Connect to a cloud-hosted PostgreSQL database
 
@@ -134,8 +134,12 @@ Managed PostgreSQL services such as Amazon RDS, Azure Database for PostgreSQL, a
 
 The steps to obtain the root certificate differ by provider. Refer to your provider's documentation for the current certificate, then either point the **TLS/SSL Root Certificate** field at the downloaded file (file system path method) or paste its contents (certificate content method).
 
+{{< admonition type="note" >}}
+On Grafana Cloud, use the **certificate content** method and paste the certificate contents. The **file system path** method requires access to the Grafana host filesystem, which isn't available on Grafana Cloud.
+{{< /admonition >}}
+
 - **Amazon RDS and Aurora**: Download the AWS RDS certificate bundle, either the global bundle (`global-bundle.pem`) or the bundle for your AWS Region. For the download location and the current certificate authority, refer to [Using SSL/TLS to encrypt a connection to a DB instance or cluster](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html) in the AWS documentation.
-- **Azure Database for PostgreSQL**: Azure secures connections with public certificate authorities, such as DigiCert Global Root G2 and Microsoft RSA Root Certificate Authority 2017. Download the combined root certificate that Azure recommends. For the download location and the current certificate authorities, refer to [Networking and connectivity](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-networking) in the Azure documentation.
+- **Azure Database for PostgreSQL**: Azure secures connections with public certificate authorities, such as DigiCert Global Root G2 and Microsoft RSA Root Certificate Authority 2017. Download the combined root certificate that Azure recommends. For the download location and the current certificate authorities, refer to [Connect with TLS/SSL](https://learn.microsoft.com/en-us/azure/postgresql/security/security-tls-how-to-connect) in the Azure documentation.
 - **DigitalOcean Managed Databases**: In the DigitalOcean control panel, open your database cluster, then find the CA certificate in the **Connection details** section and download it. You can also retrieve it with the `doctl databases get-ca` command. For more information, refer to [How to secure a database cluster](https://docs.digitalocean.com/products/databases/postgresql/how-to/secure/) in the DigitalOcean documentation.
 
 After you add the root certificate, click **Save & test** to confirm the connection.
