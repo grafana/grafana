@@ -15,22 +15,25 @@ import { buildGroupEdit, canGroupSelection } from './groupLayout';
 
 let lastUndo: (() => void) | undefined;
 
-jest.mock('../../sidebar/shared', () => ({
-  ...jest.requireActual('../../sidebar/shared'),
-  dashboardEditActions: {
-    edit: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    addElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    removeElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-  },
+jest.mock('../../actions/utils/edit', () => ({
+  edit: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/element/addElement', () => ({
+  addElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/element/removeElement', () => ({
+  removeElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
 }));
 
 beforeEach(() => {

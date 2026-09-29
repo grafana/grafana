@@ -3,7 +3,6 @@ import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Badge, LinkButton, Stack, Tooltip } from '@grafana/ui';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
-import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
@@ -12,6 +11,7 @@ import { ctaClicked } from '../analytics/main';
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
+import { type TeamSelection, resolveTeamScope } from './teamFilter';
 import { type FiringAlertsData } from './useFiringAlerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
@@ -44,25 +44,25 @@ function severityLabel(level?: SeverityLevel): string {
 }
 
 /**
- * Empty-state copy scoped to the active team filter. The "All teams" sentinel is
- * checked first so it never leaks into copy; an explicit team selection overrides
- * the "your teams" default filter, so the copy names that team instead of
- * claiming it's the user's own.
+ * Empty-state copy scoped to the active team filter. An explicit team selection
+ * overrides the "your teams" default filter, so the copy names that team instead
+ * of claiming it's the user's own.
  */
-function emptyMessage(selectedTeam: string | undefined, hasTeams: boolean): string {
-  if (selectedTeam === ALL_VARIABLE_VALUE) {
-    return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+function emptyMessage(selectedTeam: TeamSelection, hasTeams: boolean): string {
+  const scope = resolveTeamScope(selectedTeam);
+  switch (scope.kind) {
+    case 'all':
+      return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+    case 'team':
+      return t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', {
+        team: scope.team,
+        interpolation: { escapeValue: false },
+      });
+    case 'default':
+      return hasTeams
+        ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
+        : t('home.firing-alerts-card.empty', 'You have no firing alerts.');
   }
-  if (selectedTeam) {
-    return t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', {
-      team: selectedTeam,
-      interpolation: { escapeValue: false },
-    });
-  }
-  if (hasTeams) {
-    return t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.');
-  }
-  return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
 }
 
 /** Render-only card body; data comes from useFiringAlerts so callers control where the hook runs. */

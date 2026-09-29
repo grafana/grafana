@@ -156,7 +156,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		}
 	}
 
-	_, cfgT := db.InitTestDBWithCfg(t)
+	_, cfgT := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	searchMock := resource.NewMockResourceClient(t)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
@@ -172,7 +172,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			cfg.Folder = "Team A"
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, configName).Return(&folder.Folder{ID: 1}, nil).Once()
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, configName).Return(&folder.Folder{ID: 1}, nil).Once() //nolint:staticcheck // Exercise legacy field compatibility.
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 2}, nil).Times(2)
 			reader, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT)
 			require.NoError(t, err)
@@ -371,22 +371,22 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 				return cmd.Title == "folderOne" && cmd.ParentUID == ""
 			}), configName).Run(func(args mock.Arguments) {
 				folderCreateCalls = append(folderCreateCalls, args[1].(*folder.CreateFolderCommand))
-			}).Return(&folder.Folder{ID: 1, UID: folderOneUID, Title: "folderOne"}, nil).Once()
+			}).Return(&folder.Folder{ID: 1, UID: folderOneUID, Title: "folderOne"}, nil).Once() //nolint:staticcheck // Exercise legacy field compatibility.
 			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
 				return cmd.Title == "folderTwo" && cmd.ParentUID == ""
 			}), configName).Run(func(args mock.Arguments) {
 				folderCreateCalls = append(folderCreateCalls, args[1].(*folder.CreateFolderCommand))
-			}).Return(&folder.Folder{ID: 2, UID: folderTwoUID, Title: "folderTwo"}, nil).Once()
+			}).Return(&folder.Folder{ID: 2, UID: folderTwoUID, Title: "folderTwo"}, nil).Once() //nolint:staticcheck // Exercise legacy field compatibility.
 			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
 				return cmd.Title == "folderThree" && cmd.ParentUID == folderTwoUID
 			}), configName).Run(func(args mock.Arguments) {
 				folderCreateCalls = append(folderCreateCalls, args[1].(*folder.CreateFolderCommand))
-			}).Return(&folder.Folder{ID: 3, UID: folderThreeUID, Title: "folderThree"}, nil).Once()
+			}).Return(&folder.Folder{ID: 3, UID: folderThreeUID, Title: "folderThree"}, nil).Once() //nolint:staticcheck // Exercise legacy field compatibility.
 			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
 				return cmd.Title == "folderFour" && cmd.ParentUID == folderThreeUID
 			}), configName).Run(func(args mock.Arguments) {
 				folderCreateCalls = append(folderCreateCalls, args[1].(*folder.CreateFolderCommand))
-			}).Return(&folder.Folder{ID: 4, UID: "folderFour-uid", Title: "folderFour"}, nil).Once()
+			}).Return(&folder.Folder{ID: 4, UID: "folderFour-uid", Title: "folderFour"}, nil).Once() //nolint:staticcheck // Exercise legacy field compatibility.
 
 			// Map iteration order is undefined; record FolderUID/FolderID per provisioned file (ExternalID).
 			savedFolderByExternalID := make(map[string]struct {
@@ -560,7 +560,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 				"folder": defaultDashboards,
 			},
 		}
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, cfg.Name).Return(&folder.Folder{ID: 1}, nil).Once()
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, cfg.Name).Return(&folder.Folder{ID: 1}, nil).Once() //nolint:staticcheck // Exercise legacy field compatibility.
 
 		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
@@ -745,11 +745,11 @@ func TestIntegrationFolderPathCacheReuse(t *testing.T) {
 	require.NoError(t, err)
 
 	fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, "cache-test").
-		Return(&folder.Folder{ID: 1, UID: "folderTwo-uid", Title: "folderTwo"}, nil).Once()
+		Return(&folder.Folder{ID: 1, UID: "folderTwo-uid", Title: "folderTwo"}, nil).Once() //nolint:staticcheck // Exercise legacy field compatibility.
 	fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, "cache-test").
-		Return(&folder.Folder{ID: 2, UID: "folderThree-uid", Title: "folderThree"}, nil).Once()
+		Return(&folder.Folder{ID: 2, UID: "folderThree-uid", Title: "folderThree"}, nil).Once() //nolint:staticcheck // Exercise legacy field compatibility.
 	fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, "cache-test").
-		Return(&folder.Folder{ID: 3, UID: "folderFour-uid", Title: "folderFour"}, nil).Once()
+		Return(&folder.Folder{ID: 3, UID: "folderFour-uid", Title: "folderFour"}, nil).Once() //nolint:staticcheck // Exercise legacy field compatibility.
 
 	cache := make(map[string]folderPathCacheEntry)
 	ctx := context.Background()

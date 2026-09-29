@@ -5,6 +5,7 @@ import { Stack } from '@grafana/ui';
 import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
+import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
@@ -24,7 +25,10 @@ interface GroupedViewProps {
 
 export function GroupedView({ groupFilter, namespaceFilter, hideEmptyDataSources = true }: GroupedViewProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
-  const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
+  // Once the Prometheus Alerting plugin is installed it owns these, so we don't render a section
+  // per data source any more. The Grafana-managed section header says where they went.
+  const routeProxyActive = useRouteProxyActive();
+  const externalRuleSources = useMemo(() => (routeProxyActive ? [] : getExternalRulesSources()), [routeProxyActive]);
 
   // Use custom hook for centralized state management
   const { updateState, loadingDataSources } = useDataSourceLoadingStates();
@@ -36,6 +40,7 @@ export function GroupedView({ groupFilter, namespaceFilter, hideEmptyDataSources
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
           onLoadingStateChange={updateState}
+          collapsible={!routeProxyActive}
           key={`${groupFilter}-${namespaceFilter}`}
         />
       </DataSourceErrorBoundary>

@@ -15,6 +15,7 @@ import "github.com/grafana/grafana-plugin-sdk-go/data"
 //
 //     Responses:
 //       200: StateHistory
+//       400: PublicError
 //       404: NotFound
 //       403: ForbiddenError
 //       500: Failure
@@ -41,7 +42,7 @@ type StateHistoryParams struct {
 	// in:query
 	// required: false
 	Limit int `json:"limit"`
-	// Filter by rule UID. Required the state history is configured to use annotations for storage.
+	// Filter by rule UID. Required when annotations is the state history read backend, including the primary of a multiple backend. Optional for Loki.
 	// in:query
 	// required: false
 	RuleUID string `json:"ruleUID"`

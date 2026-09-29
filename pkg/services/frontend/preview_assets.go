@@ -149,12 +149,10 @@ func (h *previewAssetsHandler) renderConfirmationPage(w http.ResponseWriter, log
 		Folder    string
 		AssetsURL string
 		CSRFToken string
-		Duration  string
 	}{
 		Folder:    folder,
 		AssetsURL: assetsURL,
 		CSRFToken: csrfToken,
-		Duration:  "24 hours",
 	})
 	if err != nil {
 		logger.Error("failed to render preview assets confirmation page", "err", err)

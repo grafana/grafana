@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendsettings"
 	"github.com/grafana/grafana/pkg/api/webassets"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -82,7 +81,7 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 
 	// Assets
 	hash.Reset()
-	dto, err := webassets.GetWebAssets(c.Req.Context(), "build", hs.Cfg, hs.License)
+	dto, err := webassets.GetWebAssets(c.Req.Context(), webassets.ResolveBuildDir(c.Req.Context()), hs.Cfg, hs.License)
 	if err == nil && dto != nil {
 		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
 		_, _ = hash.Write([]byte(dto.Dark))
@@ -175,31 +174,11 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.RendererAvailable = hs.RenderService.IsAvailable(c.Req.Context())
 	frontendSettings.RendererVersion = hs.RenderService.Version()
 
-	frontendSettings.Oauth = hs.getEnabledOAuthProviders()
-	frontendSettings.SamlEnabled = hs.samlEnabled()
-	frontendSettings.SamlName = hs.samlName()
+	frontendSettings.Oauth = hs.getEnabledOAuthProviders(c.Req.Context())
+	frontendSettings.SamlEnabled = hs.samlEnabled(c.Req.Context())
+	frontendSettings.SamlName = hs.samlName(c.Req.Context())
 
-	// It returns false if the provider is not enabled or the skip org role sync is false.
-	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
-		if info == nil {
-			return false
-		}
-		return info.SkipOrgRoleSync
-	}
-
-	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
-		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
-		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
-		LDAPSkipOrgRoleSync:           hs.Cfg.LDAPSkipOrgRoleSync,
-		JWTAuthSkipOrgRoleSync:        hs.Cfg.JWTAuth.SkipOrgRoleSync,
-		GoogleSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
-		GrafanaComSkipOrgRoleSync:     parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
-		GenericOAuthSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
-		AzureADSkipOrgRoleSync:        parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
-		GithubSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
-		GitLabSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
-		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
 		DisableLogin:                  hs.Cfg.DisableLogin,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
 		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
@@ -630,9 +609,14 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	return pluginSettings, nil
 }
 
-func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
+func (hs *HTTPServer) getEnabledOAuthProviders(ctx context.Context) map[string]any {
 	providers := make(map[string]any)
-	for key, oauth := range hs.SocialService.GetOAuthInfoProviders() {
+	oauthProviders, err := hs.SocialService.GetOAuthInfoProviders(ctx)
+	if err != nil {
+		hs.log.Error("Failed to load OAuth providers", "error", err)
+		return providers
+	}
+	for key, oauth := range oauthProviders {
 		providers[key] = map[string]string{
 			"name": oauth.Name,
 			"icon": oauth.Icon,

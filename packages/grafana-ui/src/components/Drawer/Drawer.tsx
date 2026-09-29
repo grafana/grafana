@@ -8,9 +8,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { Button } from '../Button/Button';
 import { getDragStyles } from '../DragHandle/DragHandle';
-import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { getPortalContainer } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -141,8 +141,9 @@ export function Drawer({
           />
           <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
             <div className={styles.actions}>
-              <IconButton
-                name="times"
+              <Button
+                icon="times"
+                size="sm"
                 variant="secondary"
                 onClick={onClose}
                 data-testid={selectors.components.Drawer.General.close}
@@ -186,15 +187,22 @@ function useResizebleDrawer(): [
   React.EventHandler<React.TouchEvent>,
 ] {
   const [drawerWidth, setDrawerWidth] = useState<string | undefined>(undefined);
+  const visualDesignRefresh = useTheme2().flags.visualDesignRefresh;
 
-  const onMouseMove = useCallback((e: MouseEvent) => {
-    setDrawerWidth(getCustomDrawerWidth(e.clientX));
-  }, []);
+  const onMouseMove = useCallback(
+    (e: MouseEvent) => {
+      setDrawerWidth(getCustomDrawerWidth(e.clientX, visualDesignRefresh));
+    },
+    [visualDesignRefresh]
+  );
 
-  const onTouchMove = useCallback((e: TouchEvent) => {
-    const touch = e.touches[0];
-    setDrawerWidth(getCustomDrawerWidth(touch.clientX));
-  }, []);
+  const onTouchMove = useCallback(
+    (e: TouchEvent) => {
+      const touch = e.touches[0];
+      setDrawerWidth(getCustomDrawerWidth(touch.clientX, visualDesignRefresh));
+    },
+    [visualDesignRefresh]
+  );
 
   const onMouseUp = useCallback(
     (e: MouseEvent) => {
@@ -231,8 +239,8 @@ function useResizebleDrawer(): [
   return [drawerWidth, onMouseDown, onTouchStart];
 }
 
-function getCustomDrawerWidth(clientX: number) {
-  let offsetRight = document.body.offsetWidth - (clientX - document.body.offsetLeft);
+function getCustomDrawerWidth(clientX: number, visualRefreshEnabled?: boolean): string {
+  let offsetRight = document.body.offsetWidth - (clientX - document.body.offsetLeft + (visualRefreshEnabled ? 8 : 0));
   let widthPercent = Math.min((offsetRight / document.body.clientWidth) * 100, 98).toFixed(2);
   return `${widthPercent}vw`;
 }
@@ -379,7 +387,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     resizer: css({
       top: 0,
-      left: theme.spacing(-1),
+      left: theme.spacing(-0.5),
       bottom: 0,
       position: 'absolute',
       zIndex: theme.zIndex.modal,
@@ -391,7 +399,8 @@ function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return css(
     {
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.components.drawer.background,
+      border: `1px solid ${theme.components.drawer.borderColor}`,
       bottom: 0,
       label: `drawer-content-wrapper-${size}`,
       position: 'absolute',

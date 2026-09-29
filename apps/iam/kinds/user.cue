@@ -30,14 +30,16 @@ userv0alpha1: userKind & {
 			name: "email"
 			path: "spec.email"
 			type: "string"
-			capabilities: ["filter", "retrieve"]
+			// sort: user search offers ?sort=email.
+			capabilities: ["filter", "sort", "retrieve"]
 			description: "The email address of the user"
 		},
 		{
 			name: "login"
 			path: "spec.login"
 			type: "string"
-			capabilities: ["filter", "retrieve"]
+			// sort: user search sorts by login when no sort is given.
+			capabilities: ["filter", "sort", "retrieve"]
 			description: "The login of the user"
 		},
 		{

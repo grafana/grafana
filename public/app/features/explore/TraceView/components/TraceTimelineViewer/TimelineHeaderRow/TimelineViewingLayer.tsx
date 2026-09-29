@@ -15,7 +15,8 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { stylesFactory } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import type TNil from '../../types/TNil';
 import DraggableManager from '../../utils/DraggableManager/DraggableManager';
@@ -23,7 +24,7 @@ import { type DraggableBounds, type DraggingUpdate } from '../../utils/Draggable
 import { type TUpdateViewRangeTimeFunction, type ViewRangeTime, type ViewRangeTimeUpdate } from '../types';
 
 // exported for testing
-const getStyles = stylesFactory(() => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     TimelineViewingLayer: css({
       label: 'TimelineViewingLayer',
@@ -41,7 +42,7 @@ const getStyles = stylesFactory(() => {
       bottom: 0,
       left: 0,
       width: '1px',
-      backgroundColor: 'red',
+      backgroundColor: theme.colors.error.main,
     }),
     TimelineViewingLayerDragged: css({
       label: 'TimelineViewingLayerDragged',
@@ -59,13 +60,13 @@ const getStyles = stylesFactory(() => {
     }),
     TimelineViewingLayerDraggedShiftDrag: css({
       label: 'TimelineViewingLayerDraggedShiftDrag',
-      backgroundColor: 'rgba(68, 68, 255, 0.2)',
-      borderColor: '#44f',
+      backgroundColor: theme.colors.accent.subtleBackground,
+      borderColor: theme.colors.accent.border,
     }),
     TimelineViewingLayerDraggedReframeDrag: css({
       label: 'TimelineViewingLayerDraggedReframeDrag',
-      backgroundColor: 'rgba(255, 68, 68, 0.2)',
-      borderColor: '#f44',
+      backgroundColor: theme.colors.error.subtleBackground,
+      borderColor: theme.colors.error.border,
     }),
     TimelineViewingLayerFullOverlay: css({
       label: 'TimelineViewingLayerFullOverlay',
@@ -151,7 +152,14 @@ function getNextViewLayout(start: number, position: number): TDraggingLeftLayout
 /**
  * Render the visual indication of the "next" view range.
  */
-function getMarkers(viewStart: number, viewEnd: number, from: number, to: number, isShift: boolean): React.ReactNode {
+function getMarkers(
+  theme: GrafanaTheme2,
+  viewStart: number,
+  viewEnd: number,
+  from: number,
+  to: number,
+  isShift: boolean
+): React.ReactNode {
   const mappedFrom = mapToViewSubRange(viewStart, viewEnd, from);
   const mappedTo = mapToViewSubRange(viewStart, viewEnd, to);
   const layout = getNextViewLayout(mappedFrom, mappedTo);
@@ -159,7 +167,7 @@ function getMarkers(viewStart: number, viewEnd: number, from: number, to: number
     return null;
   }
   const { isDraggingLeft, left, width } = layout;
-  const styles = getStyles();
+  const styles = getStyles(theme);
   const cls = cx({
     [styles.TimelineViewingLayerDraggedDraggingRight]: !isDraggingLeft,
     [styles.TimelineViewingLayerDraggedReframeDrag]: !isShift,
@@ -179,11 +187,11 @@ function getMarkers(viewStart: number, viewEnd: number, from: number, to: number
  * labels; it handles showing the current view range and handles mouse UX for
  * modifying it.
  */
-export default class TimelineViewingLayer extends React.PureComponent<TimelineViewingLayerProps> {
+class UnthemedTimelineViewingLayer extends React.PureComponent<TimelineViewingLayerProps & { theme: GrafanaTheme2 }> {
   _draggerReframe: DraggableManager;
   _root: Element | TNil;
 
-  constructor(props: TimelineViewingLayerProps) {
+  constructor(props: TimelineViewingLayerProps & { theme: GrafanaTheme2 }) {
     super(props);
     this._draggerReframe = new DraggableManager({
       getBounds: this._getDraggingBounds,
@@ -196,7 +204,7 @@ export default class TimelineViewingLayer extends React.PureComponent<TimelineVi
     this._root = undefined;
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps: TimelineViewingLayerProps) {
+  UNSAFE_componentWillReceiveProps(nextProps: TimelineViewingLayerProps & { theme: GrafanaTheme2 }) {
     const { boundsInvalidator } = this.props;
     if (boundsInvalidator !== nextProps.boundsInvalidator) {
       this._draggerReframe.resetBounds();
@@ -249,7 +257,7 @@ export default class TimelineViewingLayer extends React.PureComponent<TimelineVi
   };
 
   render() {
-    const { viewRangeTime } = this.props;
+    const { viewRangeTime, theme } = this.props;
     const { current, cursor, reframe, shiftEnd, shiftStart } = viewRangeTime;
     const [viewStart, viewEnd] = current;
     const haveNextTimeRange = reframe != null || shiftEnd != null || shiftStart != null;
@@ -257,7 +265,7 @@ export default class TimelineViewingLayer extends React.PureComponent<TimelineVi
     if (!haveNextTimeRange && cursor != null && cursor >= viewStart && cursor <= viewEnd) {
       cusrorPosition = `${mapToViewSubRange(viewStart, viewEnd, cursor) * 100}%`;
     }
-    const styles = getStyles();
+    const styles = getStyles(theme);
     return (
       <div
         aria-hidden
@@ -275,10 +283,12 @@ export default class TimelineViewingLayer extends React.PureComponent<TimelineVi
             data-testid="TimelineViewingLayer--cursorGuide"
           />
         )}
-        {reframe != null && getMarkers(viewStart, viewEnd, reframe.anchor, reframe.shift, false)}
-        {shiftEnd != null && getMarkers(viewStart, viewEnd, viewEnd, shiftEnd, true)}
-        {shiftStart != null && getMarkers(viewStart, viewEnd, viewStart, shiftStart, true)}
+        {reframe != null && getMarkers(theme, viewStart, viewEnd, reframe.anchor, reframe.shift, false)}
+        {shiftEnd != null && getMarkers(theme, viewStart, viewEnd, viewEnd, shiftEnd, true)}
+        {shiftStart != null && getMarkers(theme, viewStart, viewEnd, viewStart, shiftStart, true)}
       </div>
     );
   }
 }
+
+export default withTheme2(UnthemedTimelineViewingLayer);

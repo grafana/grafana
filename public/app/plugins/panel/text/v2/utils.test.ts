@@ -46,10 +46,20 @@ describe('transformContent', () => {
 });
 
 describe('getInterpolateFormat', () => {
-  it('uses the json format for the json language so values stay valid json', () => {
-    expect(getInterpolateFormat(CodeLanguage.Json)).toBe('json');
-    expect(getInterpolateFormat(CodeLanguage.Plaintext)).toBe('html');
-    expect(getInterpolateFormat(undefined)).toBe('html');
+  // code.language survives switching out of code mode, so it must not decide the format on its own.
+  const cases: Array<[TextMode, CodeLanguage | undefined, string]> = [
+    [TextMode.Code, CodeLanguage.Json, 'json'],
+    [TextMode.Code, CodeLanguage.Yaml, 'raw'],
+    [TextMode.Code, CodeLanguage.Plaintext, 'raw'],
+    [TextMode.Code, undefined, 'raw'],
+    [TextMode.Markdown, CodeLanguage.Json, 'html'],
+    [TextMode.Markdown, undefined, 'html'],
+    [TextMode.HTML, CodeLanguage.Json, 'html'],
+    [TextMode.HTML, undefined, 'html'],
+  ];
+
+  it.each(cases)('formats %s mode with the %s language as %s', (mode, codeLanguage, expected) => {
+    expect(getInterpolateFormat(mode, codeLanguage)).toBe(expected);
   });
 });
 

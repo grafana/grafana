@@ -1619,3 +1619,122 @@ func TestIntegrationListWithNamedRoutingTreeFieldSelectors(t *testing.T) {
 		require.NotNil(t, list.Items[0].Spec.NotificationSettings.NamedRoutingTree)
 	})
 }
+
+// TestIntegrationAlertRuleStatusSubresource exercises the AlertRule /status
+// subresource through the generated client the way the rule-status syncer does:
+// a full-object write with Subresource "status". (A bare UpdateStatus would fail
+// admission — the mutator clamps Spec.Trigger.Interval, which is empty on a
+// spec-less object — which is exactly why the syncer sends the full object.)
+func TestIntegrationAlertRuleStatusSubresource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client, err := v0alpha1.NewAlertRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	common.CreateTestFolder(t, helper, "test-folder")
+
+	rule := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	).Generate()
+
+	ruleResource := &v0alpha1.AlertRule{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace:   "default",
+			Annotations: map[string]string{"grafana.app/folder": "test-folder"},
+		},
+		Spec: v0alpha1.AlertRuleSpec{
+			Title: rule.Title,
+			Expressions: v0alpha1.AlertRuleExpressionMap{
+				"A": {
+					QueryType:     new("query"),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					Model:         rule.Data[0].Model,
+					Source:        new(true),
+					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+					},
+				},
+			},
+			Trigger: v0alpha1.AlertRuleIntervalTrigger{
+				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+			},
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+		},
+	}
+
+	created, err := client.Create(ctx, ruleResource, resource.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = client.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}) })
+
+	evalTime := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+
+	// writeStatus re-reads the current object (for its spec + resourceVersion), sets
+	// the status, and writes it back through the status subresource.
+	writeStatus := func(status v0alpha1.AlertRuleStatus) *v0alpha1.AlertRule {
+		obj, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		obj.Status = status
+		updated, err := client.Update(ctx, obj, resource.UpdateOptions{Subresource: "status"})
+		require.NoError(t, err)
+		return updated
+	}
+
+	// 1) Status round-trips, and the write leaves the spec untouched.
+	firing := v0alpha1.AlertRuleStatus{
+		State:              new(v0alpha1.AlertRuleAlertRuleStateFiring),
+		Health:             new(v0alpha1.AlertRuleAlertRuleHealthOK),
+		StateReason:        new(v0alpha1.AlertRuleAlertRuleStateReasonEvaluated),
+		LastEvaluationTime: &evalTime,
+		EvaluationDuration: new(0.25),
+	}
+	updated := writeStatus(firing)
+	require.Equal(t, v0alpha1.AlertRuleAlertRuleStateFiring, *updated.Status.State)
+	require.Equal(t, v0alpha1.AlertRuleAlertRuleHealthOK, *updated.Status.Health)
+	require.Equal(t, created.Spec.Title, updated.Spec.Title, "status write must not change the spec")
+
+	got, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+	require.NoError(t, err)
+	require.Equal(t, v0alpha1.AlertRuleAlertRuleStateFiring, *got.Status.State)
+	require.Equal(t, v0alpha1.AlertRuleAlertRuleHealthOK, *got.Status.Health)
+	require.Equal(t, v0alpha1.AlertRuleAlertRuleStateReasonEvaluated, *got.Status.StateReason)
+	require.NotNil(t, got.Status.LastEvaluationTime)
+	require.True(t, got.Status.LastEvaluationTime.Equal(evalTime))
+	require.NotNil(t, got.Status.EvaluationDuration)
+	require.InDelta(t, 0.25, *got.Status.EvaluationDuration, 0.001)
+	require.Equal(t, created.Spec.Title, got.Spec.Title)
+
+	// 2) A second status write overwrites the stored status.
+	normal := v0alpha1.AlertRuleStatus{
+		State:       new(v0alpha1.AlertRuleAlertRuleStateInactive),
+		Health:      new(v0alpha1.AlertRuleAlertRuleHealthNoData),
+		StateReason: new(v0alpha1.AlertRuleAlertRuleStateReasonEvaluated),
+	}
+	writeStatus(normal)
+	got, err = client.Get(ctx, created.GetStaticMetadata().Identifier())
+	require.NoError(t, err)
+	require.Equal(t, v0alpha1.AlertRuleAlertRuleStateInactive, *got.Status.State)
+	require.Equal(t, v0alpha1.AlertRuleAlertRuleHealthNoData, *got.Status.Health)
+
+	// 3) A spec update persists and does not clobber the status (the store omits
+	// k8s_status on spec writes).
+	specObj, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+	require.NoError(t, err)
+	specObj.Spec.Title = created.Spec.Title + "-updated"
+	specUpdated, err := client.Update(ctx, specObj, resource.UpdateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, created.Spec.Title+"-updated", specUpdated.Spec.Title)
+
+	got, err = client.Get(ctx, created.GetStaticMetadata().Identifier())
+	require.NoError(t, err)
+	require.Equal(t, created.Spec.Title+"-updated", got.Spec.Title, "spec update should persist")
+	require.Equal(t, v0alpha1.AlertRuleAlertRuleStateInactive, *got.Status.State, "spec update must not clobber status")
+	require.Equal(t, v0alpha1.AlertRuleAlertRuleHealthNoData, *got.Status.Health)
+}

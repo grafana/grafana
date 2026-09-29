@@ -15,7 +15,7 @@ import (
 // connection from the connection spec and the stored access token. The token
 // is empty until the user authorizes the OAuth application; the connection
 // never calls the provider's API in that state.
-type NewProviderFunc func(spec provisioning.ConnectionSpec, accessToken string) (Provider, error)
+type NewProviderFunc func(ctx context.Context, spec provisioning.ConnectionSpec, accessToken string) (Provider, error)
 
 // ValidateSpecFunc performs provider-specific spec validation. The shared
 // oauth section and secure values are validated by the extra itself. May be
@@ -79,7 +79,7 @@ func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (conne
 		accessToken = parsed.AccessToken
 	}
 
-	provider, err := e.newProvider(conn.Spec, accessToken)
+	provider, err := e.newProvider(ctx, conn.Spec, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("build provider: %w", err)
 	}

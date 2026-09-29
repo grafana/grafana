@@ -8,6 +8,8 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
+import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 import { GroupedView } from './GroupedView';
 import { FRONTED_GROUPED_PAGE_SIZE } from './paginationLimits';
@@ -46,9 +48,11 @@ describe('RuleList - GroupedView', () => {
   it('should render datasource sections', async () => {
     render(<GroupedView />);
 
+    const grafanaSection = await screen.findByRole('listitem', { name: /Grafana-managed/ });
     const mimirSection = await screen.findByRole('listitem', { name: /Mimir/ });
     const prometheusSection = await screen.findByRole('listitem', { name: /Prometheus/ });
 
+    expect(within(grafanaSection).getByRole('button', { name: /Collapse/ })).toBeInTheDocument();
     expect(mimirSection).toBeInTheDocument();
     expect(prometheusSection).toBeInTheDocument();
 
@@ -129,5 +133,26 @@ describe('RuleList - GroupedView', () => {
     const prometheusSection = await ui.dsSection(/Prometheus/).find();
 
     expect(within(prometheusSection).getByText('No rules found')).toBeInTheDocument();
+  });
+});
+
+describe('RuleList - GroupedView with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
+
+  it('drops the data source sections and says where those rules went', async () => {
+    render(<GroupedView />);
+
+    const grafanaSection = await screen.findByRole('listitem', { name: /Grafana-managed/ });
+    expect(
+      await within(grafanaSection).findByText(/data sources? (is|are) managed by the Prometheus Alerting plugin/)
+    ).toBeInTheDocument();
+    expect(within(grafanaSection).getByRole('link', { name: 'View' })).toHaveAttribute(
+      'href',
+      `/a/${SupportedPlugin.PrometheusAlerting}/rules`
+    );
+    expect(within(grafanaSection).queryByRole('button', { name: /Collapse/ })).not.toBeInTheDocument();
+
+    expect(screen.queryByRole('listitem', { name: /Mimir/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('listitem', { name: /Prometheus/ })).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,6 @@
-import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
+import createMockQuery from '../../mocks/query';
+
+import { calculateTimeRange, getSelectedLogTier, shouldShowBasicLogsToggle } from './utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -65,6 +67,54 @@ describe('LogsQueryEditor utils', () => {
 
     it('should return true if basic logs are enabled and selected single resource is an LA workspace variable', () => {
       expect(shouldShowBasicLogsToggle(['$ws'], true)).toBe(true);
+    });
+
+    it('should return true when called with combined search logs enablement (auxiliary only)', () => {
+      // This tests the pattern used by LogsQueryEditor: searchLogsEnabled = basicLogsEnabled || auxiliaryLogsEnabled
+      const auxiliaryLogsEnabled = true;
+      const basicLogsEnabled = false;
+      const searchLogsEnabled = basicLogsEnabled || auxiliaryLogsEnabled;
+      expect(
+        shouldShowBasicLogsToggle(
+          [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          searchLogsEnabled
+        )
+      ).toBe(true);
+    });
+  });
+
+  describe('getSelectedLogTier', () => {
+    it('returns "Analytics" when basicLogsQuery is false', () => {
+      const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: false } });
+      expect(getSelectedLogTier(query)).toBe('Analytics');
+    });
+
+    it('returns "Analytics" when basicLogsQuery is undefined', () => {
+      const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined } });
+      expect(getSelectedLogTier(query)).toBe('Analytics');
+    });
+
+    it('returns "Basic" when basicLogsQuery is true and logTier is "Basic"', () => {
+      const query = createMockQuery({
+        azureLogAnalytics: { basicLogsQuery: true, logTier: 'Basic' },
+      });
+      expect(getSelectedLogTier(query)).toBe('Basic');
+    });
+
+    it('returns "Auxiliary" when basicLogsQuery is true and logTier is "Auxiliary"', () => {
+      const query = createMockQuery({
+        azureLogAnalytics: { basicLogsQuery: true, logTier: 'Auxiliary' },
+      });
+      expect(getSelectedLogTier(query)).toBe('Auxiliary');
+    });
+
+    it('falls back to "Basic" for legacy queries with basicLogsQuery=true and no logTier', () => {
+      const query = createMockQuery({
+        azureLogAnalytics: { basicLogsQuery: true, logTier: undefined },
+      });
+      expect(getSelectedLogTier(query)).toBe('Basic');
     });
   });
 

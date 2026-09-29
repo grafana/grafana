@@ -341,7 +341,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardUid(ctx context.Context)
 	ctx, span := tracer.Start(ctx, "publicdashboards.NewPublicDashboardUid")
 	defer span.End()
 	var uid string
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		uid = util.GenerateShortUID()
 
 		pubdash, _ := pd.store.Find(ctx, uid)
@@ -357,7 +357,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 	ctx, span := tracer.Start(ctx, "publicdashboards.NewPublicDashboardAccessToken")
 	defer span.End()
 	var accessToken string
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		var err error
 		accessToken, err = GenerateAccessToken()
 		if err != nil {

@@ -241,5 +241,15 @@ func AddMigration(mg *migrator.Migrator) {
 		Postgres("ALTER TABLE role ALTER COLUMN uid TYPE VARCHAR(253);").
 		Mysql("ALTER TABLE role MODIFY uid NVARCHAR(253) NOT NULL;"))
 
+	// Existing indexes bury role_id behind an unconstrained key part, so joining
+	// role -> assignees on role_id scans every assignment in the org and filters.
+	mg.AddMigration("add user_role role_id org_id index", migrator.NewAddIndexMigration(userRoleV1, &migrator.Index{
+		Cols: []string{"role_id", "org_id"},
+	}))
+
+	mg.AddMigration("add team_role role_id org_id index", migrator.NewAddIndexMigration(teamRoleV1, &migrator.Index{
+		Cols: []string{"role_id", "org_id"},
+	}))
+
 	AddDatasourceTypeMigration(mg)
 }

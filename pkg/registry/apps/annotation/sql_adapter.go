@@ -203,10 +203,16 @@ func (a *sqlAdapter) ListTags(ctx context.Context, namespace string, opts TagLis
 		return nil, err
 	}
 
+	// The legacy repository only exposes a single substring match on Tag, so
+	// either value is passed through as-is.
+	tag := opts.Contains
+	if tag == "" {
+		tag = opts.Prefix
+	}
 	query := &annotations.TagsQuery{
 		OrgID: orgID,
 		Limit: int64(opts.Limit),
-		Tag:   opts.Prefix,
+		Tag:   tag,
 	}
 
 	result, err := a.repo.FindTags(ctx, query)

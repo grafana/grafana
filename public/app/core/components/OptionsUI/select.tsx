@@ -1,77 +1,55 @@
-import { PureComponent } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type StandardEditorProps, type SelectFieldConfigSettings, type SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-interface State<T> {
-  isLoading: boolean;
-  options: Array<SelectableValue<T>>;
-}
-
 type Props<T> = StandardEditorProps<T, SelectFieldConfigSettings<T>>;
 
-export class SelectValueEditor<T> extends PureComponent<Props<T>, State<T>> {
-  state: State<T> = {
-    isLoading: true,
-    options: [],
-  };
+export function SelectValueEditor<T>({ value, onChange, item, id, context }: Props<T>) {
+  const { settings } = item;
 
-  componentDidMount() {
-    this.updateOptions();
-  }
+  const [dynamicOptions, setDynamicOptions] = useState<Array<SelectableValue<T>>>();
 
-  componentDidUpdate(oldProps: Props<T>) {
-    const old = oldProps.item?.settings;
-    const now = this.props.item?.settings;
-    if (old !== now) {
-      this.updateOptions();
-    } else if (now?.getOptions) {
-      const old = oldProps.context?.data;
-      const now = this.props.context?.data;
-      if (old !== now) {
-        this.updateOptions();
+  useEffect(() => {
+    // bail early for static options
+    if (!settings?.getOptions) {
+      return;
+    }
+
+    let cancelled = false;
+    settings.getOptions(context).then((next) => {
+      if (!cancelled) {
+        setDynamicOptions(next);
       }
-    }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [settings, context]);
+
+  const options = settings?.getOptions ? dynamicOptions : (settings?.options ?? []);
+
+  let current = options?.find((v) => v.value === value);
+  if (!current && value) {
+    current = {
+      label: `${value}`,
+      value,
+    };
   }
 
-  updateOptions = async () => {
-    const { item } = this.props;
-    const { settings } = item;
-    let options: Array<SelectableValue<T>> = item.settings?.options || [];
-    if (settings?.getOptions) {
-      options = await settings.getOptions(this.props.context);
-    }
-    if (this.state.options !== options) {
-      this.setState({
-        isLoading: false,
-        options,
-      });
-    }
-  };
-
-  render() {
-    const { options, isLoading } = this.state;
-    const { value, onChange, item, id } = this.props;
-
-    const { settings } = item;
-    let current = options.find((v) => v.value === value);
-    if (!current && value) {
-      current = {
-        label: `${value}`,
-        value,
-      };
-    }
-    return (
-      <Select<T>
-        inputId={id}
-        isLoading={isLoading}
-        value={current}
-        defaultValue={value}
-        allowCustomValue={settings?.allowCustomValue}
-        isClearable={settings?.isClearable}
-        onChange={(e) => onChange(e?.value)}
-        options={options}
-      />
-    );
-  }
+  return (
+    <Select<T>
+      inputId={id}
+      // Loading state is "options have never arrived", not "a fetch is in flight" — options
+      // are kept across refetches, so a reload must not put the picker back into loading.
+      isLoading={options === undefined}
+      value={current}
+      defaultValue={value}
+      allowCustomValue={settings?.allowCustomValue}
+      isClearable={settings?.isClearable}
+      onChange={(e) => onChange(e?.value)}
+      options={options ?? []}
+    />
+  );
 }

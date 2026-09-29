@@ -18,7 +18,7 @@ test.use({
 const EXTRA_TABS_TO_APPEND = 10;
 
 async function buildOverflowTabs(sidebar: Sidebar, canvas: Canvas, tabs: Tabs) {
-  await sidebar.addOptions.clickAddTabButton();
+  await sidebar.addOptions.addTab();
 
   for (let i = 0; i < EXTRA_TABS_TO_APPEND; i++) {
     await canvas.addTab();
@@ -132,8 +132,8 @@ test.describe(
       await gotoDashboardPage({});
       await buildOverflowTabs(sidebar, canvas, tabs);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls, `test dashboard scroll ${Date.now()}`);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls, { title: test.info().title });
+
       await expect(page.getByRole('button', { name: 'Scroll tabs left' })).toBeVisible();
     });
   }

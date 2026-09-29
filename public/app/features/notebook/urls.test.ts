@@ -2,7 +2,14 @@ import { createBrowserHistory, createMemoryHistory } from 'history';
 
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
 
-import { notebookShareUrl, notebookViewHref, notebookViewUrl } from './urls';
+import {
+  isNotebookEditUrl,
+  notebookEditHref,
+  notebookEditUrl,
+  notebookShareUrl,
+  notebookViewHref,
+  notebookViewUrl,
+} from './urls';
 
 describe('notebook urls', () => {
   const originalLocationService = locationService;
@@ -44,6 +51,33 @@ describe('notebook urls', () => {
     setHistory(1, '/grafana');
 
     expect(notebookViewHref('nb1')).toBe('/grafana/notebooks/nb1?orgId=1');
+  });
+
+  it('carries both the edit param and orgId, so the list Edit action lands in edit mode', () => {
+    setHistory(3);
+
+    expect(notebookEditHref('nb1')).toBe('/notebooks/nb1?edit=true&orgId=3');
+  });
+
+  // Router-relative, unlike notebookEditHref: useNavigate applies the base and orgId itself, so
+  // prefixing here would double them the same way notebookViewUrl avoids it.
+  it('keeps the edit-mode route unprefixed, for router-based navigation', () => {
+    setHistory(1);
+
+    expect(notebookEditUrl('nb1')).toBe('/notebooks/nb1?edit=true');
+  });
+
+  // Exactly 'true'. A link with any other value opens the notebook as a read.
+  it.each([
+    ['?edit=true', true],
+    ['?edit=false', false],
+    ['?edit=1', false],
+    ['', false],
+  ])('reads "%s" as edit mode %s', (search, expected) => {
+    setHistory(1);
+    locationService.push(`/notebooks/nb1${search}`);
+
+    expect(isNotebookEditUrl()).toBe(expected);
   });
 
   it('builds an absolute share url', () => {

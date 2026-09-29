@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
@@ -80,8 +81,8 @@ type State struct {
 	EvaluationDuration   time.Duration
 }
 
-func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
-	lbs, annotations := expandAnnotationsAndLabels(ctx, log, alertRule, result, extraLabels, externalURL)
+func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL, maxLabelValueSize int, stateMetrics *ngmetrics.State) *State {
+	lbs, annotations := expandAnnotationsAndLabels(ctx, log, alertRule, result, extraLabels, externalURL, maxLabelValueSize, stateMetrics)
 
 	cacheID := lbs.Fingerprint()
 	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
@@ -789,9 +790,7 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 	}
 
 	if rule.NotificationSettings != nil {
-		for k, v := range rule.NotificationSettings.ToLabels(features) {
-			extraLabels[k] = v
-		}
+		maps.Copy(extraLabels, rule.NotificationSettings.ToLabels(features))
 	}
 	return extraLabels
 }
@@ -887,9 +886,7 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 		}
 	}
 
-	for key, val := range extraAnnotations {
-		a.Annotations[key] = val
-	}
+	maps.Copy(a.Annotations, extraAnnotations)
 
 	nextState := StateTransition{
 		State:               a,

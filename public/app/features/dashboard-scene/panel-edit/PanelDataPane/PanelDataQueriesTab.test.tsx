@@ -31,7 +31,8 @@ import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-time
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
-import { activateSceneObjectAndParentTree, findVizPanelByKey } from '../../utils/utils';
+import { findVizPanelByKey } from '../../utils/findVizPanel';
+import { activateSceneObjectAndParentTree } from '../../utils/utils';
 import { buildPanelEditScene } from '../PanelEditor';
 import {
   testDashboard,
@@ -204,6 +205,46 @@ const MixedDsSettingsMock = {
 
 const panelPlugin = getPanelPlugin({ id: 'timeseries', skipDataQuery: false });
 
+function resolveMockUid(ref?: DataSourceRef | string | null) {
+  return typeof ref === 'string' ? ref : ref?.uid;
+}
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === '-- Grafana --') {
+      return grafanaDs;
+    }
+    if (uid === 'gdev-testdata') {
+      return ds1Mock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return ds2Mock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDs;
+    }
+    if (uid === SHARED_DASHBOARD_QUERY) {
+      return ds3Mock;
+    }
+    return defaultDsMock;
+  },
+  getDataSourceInstanceSettings: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === 'gdev-testdata') {
+      return instance1SettingsMock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return instance2SettingsMock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDsSettingsMock;
+    }
+    return instance1SettingsMock;
+  },
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
@@ -370,7 +411,7 @@ describe('PanelDataQueriesTab', () => {
     it('can add a new query', async () => {
       const { queriesTab } = await setupScene('panel-1');
 
-      queriesTab.addQueryClick();
+      await queriesTab.addQueryClick();
 
       expect(queriesTab.queryRunner.state.queries).toHaveLength(2);
       expect(queriesTab.queryRunner.state.queries[1].refId).toBe('B');
@@ -387,7 +428,7 @@ describe('PanelDataQueriesTab', () => {
       expect(queriesTab.state.datasource?.uid).toBe('-- Mixed --');
       expect(queriesTab.queryRunner.state.datasource?.uid).toBe('-- Mixed --');
 
-      queriesTab.addQueryClick();
+      await queriesTab.addQueryClick();
 
       expect(queriesTab.queryRunner.state.queries).toHaveLength(2);
       expect(queriesTab.queryRunner.state.queries[1].refId).toBe('B');

@@ -106,7 +106,9 @@ export function useSplitter(options: UseSplitterOptions) {
 
   const onUpdateSize = useCallback(
     (diff: number) => {
-      if (!containerSize.current || !primarySizeRef.current || !secondPaneRef.current) {
+      // A fully collapsed primary pane measures 0, which is a valid size to resize from, so only
+      // an absent measurement may bail out here — otherwise the pane could never be dragged open again.
+      if (!containerSize.current || primarySizeRef.current === null || !secondPaneRef.current) {
         return;
       }
 

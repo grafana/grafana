@@ -9,14 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type managedRoutesService interface {
-	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error)
 }
 
 type NotificationPolicyService struct {
@@ -146,7 +145,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 }
 
 func calculateRouteFingerprint(route v1.Route) string {
-	return legacy_storage.CalculateRouteFingerprint(route)
+	return v1.CalculateRouteFingerprint(route)
 }
 
 func (nps *NotificationPolicyService) checkOptimisticConcurrency(current v1.Route, provenance models.Provenance, desiredVersion string, action string) error {
@@ -165,7 +164,7 @@ func (nps *NotificationPolicyService) checkOptimisticConcurrency(current v1.Rout
 }
 
 // GetManagedRoute returns managed route by name.
-func (nps *NotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+func (nps *NotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error) {
 	// This is a workaround for exporting managed routes to include provisioning permissions to access authorization.
 	return nps.routeService.GetManagedRoute(ctx, orgID, name, user)
 }

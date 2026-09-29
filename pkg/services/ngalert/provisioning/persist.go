@@ -32,8 +32,8 @@ type ProvisioningStore interface {
 	// deriving ManagerProperties from the provenance column.
 	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
 
-	// GetManagerPropertiesByUIDs returns ManagerProperties for specific UIDs of a resource type.
-	GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error)
+	// GetAllManagerProperties returns all ManagerProperties for a given org and resource type.
+	GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
 
 	// SetManagerProperties stores ManagerProperties for an object, also deriving and
 	// storing the legacy provenance column for backwards compatibility.

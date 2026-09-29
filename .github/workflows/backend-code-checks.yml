@@ -28,6 +28,7 @@ jobs:
       contents: read
     outputs:
       changed: ${{ steps.detect-changes.outputs.backend }}
+      dev-dashboards-changed: ${{ steps.detect-changes.outputs.dev-dashboards }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -45,7 +46,7 @@ jobs:
       contents: read
       id-token: write
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: needs.detect-changes.outputs.changed == 'true' || needs.detect-changes.outputs.dev-dashboards-changed == 'true'
     name: Validate Backend Configs
     runs-on: ubuntu-x64
     steps:
@@ -81,7 +82,7 @@ jobs:
       - name: Get GitHub App token
         if: github.event.pull_request.head.repo.fork == false
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-ci-bot
 

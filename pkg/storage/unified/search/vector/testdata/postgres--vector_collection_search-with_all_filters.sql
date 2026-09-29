@@ -4,7 +4,7 @@ SELECT
     "subresource",
     "content",
     "embedding" <=> '[0.1 0.2 0.3]' AS "score",
-    "folder",
+    COALESCE("folder", '') AS "folder",
     "metadata"
     FROM embeddings
     WHERE "resource"  = 'dashboards'
