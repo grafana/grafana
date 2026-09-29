@@ -257,6 +257,9 @@ type KVBackendOptions struct {
 	// polling. Requires EventSubscriber set and enabled; falls back to the
 	// polling notifier otherwise.
 	EnableNatsNotifier bool
+
+	// WatchInvalidator is shared with the watch server; shadow mode never uses it.
+	WatchInvalidator Invalidator
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -408,6 +411,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			enableNatsNotifier: opts.EnableNatsNotifier,
 			eventSubscriber:    opts.EventSubscriber,
 			natsDropped:        metrics.NatsNotifierDropped,
+			invalidator:        opts.WatchInvalidator,
 		}),
 		eventPublisher:          opts.EventPublisher,
 		watchOpts:               opts.WatchOptions.normalize(),
@@ -2480,11 +2484,6 @@ func (i *kvHistoryIterator) Folder() string {
 
 func (i *kvHistoryIterator) Value() []byte {
 	return i.value
-}
-
-// WatchInvalidation exposes delivery gaps only for the active notifier.
-func (k *kvStorageBackend) WatchInvalidation() <-chan struct{} {
-	return k.notifier.WatchInvalidation()
 }
 
 // WatchWriteEvents returns a channel that receives write events.

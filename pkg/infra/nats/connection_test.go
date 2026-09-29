@@ -415,6 +415,15 @@ func TestConnection(t *testing.T) {
 			require.EqualValues(t, 1, second.Load(), "remaining callback must keep firing")
 		})
 
+		t.Run("queued reconnect after close is ignored", func(t *testing.T) {
+			c := newDisabledConnection()
+			var calls atomic.Int64
+			c.onReconnect(func() { calls.Add(1) })
+			c.close()
+			c.fireReconnect()
+			require.Zero(t, calls.Load())
+		})
+
 		t.Run("unregister is idempotent", func(t *testing.T) {
 			c := newDisabledConnection()
 			remove := c.onReconnect(func() {})

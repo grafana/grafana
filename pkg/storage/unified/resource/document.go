@@ -181,6 +181,10 @@ type IndexableDocument struct {
 	// Resource version of the delete, as a string because it does not survive a
 	// float64 (see TrashSearchFieldDefinitions).
 	DeletedRV *string `json:"deleted_rv,omitempty"`
+
+	// Fixed-width copy of DeletedRV used only for exact lexical sorting. Keeping
+	// it separate lets search return the original resource-version string.
+	DeletedRVSort *string `json:"_deleted_rv_sort,omitempty"`
 }
 
 func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
@@ -191,6 +195,11 @@ func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
 	}
 	if m.RV > 0 {
 		m.RVString = strconv.FormatInt(m.RV, 10)
+	}
+	if m.DeletedRV != nil {
+		if rv, err := strconv.ParseInt(*m.DeletedRV, 10, 64); err == nil && rv >= 0 {
+			m.DeletedRVSort = new(sortableResourceVersion(rv))
+		}
 	}
 	if m.Manager != nil {
 		m.ManagedBy = fmt.Sprintf("%s:%s", m.Manager.Kind, m.Manager.Identity)
@@ -602,7 +611,17 @@ const (
 	SEARCH_FIELD_DELETED_BY    = "deleted_by"
 	SEARCH_FIELD_DELETION_TIME = "deletion_time"
 	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
+
+	// Internal fixed-width companion to SEARCH_FIELD_DELETED_RV.
+	SEARCH_FIELD_DELETED_RV_SORT = "_deleted_rv_sort"
 )
+
+// sortableResourceVersion preserves numeric resource-version order when Bleve
+// compares keyword values. Resource versions are non-negative int64 values, so
+// 19 decimal digits cover the full range.
+func sortableResourceVersion(rv int64) string {
+	return fmt.Sprintf("%019d", rv)
+}
 
 // Non-standard operators for Requirement.Operator, which otherwise carries a
 // k8s selection operator. Sending these as operator strings is what makes an

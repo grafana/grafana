@@ -1438,17 +1438,20 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
+	watchExpiry := NewWatchExpiry()
 	store, err := NewKVStorageBackend(KVBackendOptions{
 		KvStore:            NewBadgerKV(db),
 		EventSubscriber:    opts.EventSubscriber,
 		EventPublisher:     opts.EventPublisher,
 		EnableNatsNotifier: opts.EventSubscriber != nil,
+		WatchInvalidator:   watchExpiry,
 		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond},
 	})
 	require.NoError(t, err)
 
 	srv, err := NewResourceServer(ResourceServerOptions{
 		Backend:           store,
+		WatchExpiry:       watchExpiry,
 		BookmarkFrequency: opts.BookmarkFrequency,
 		StorageMetrics:    opts.StorageMetrics,
 		AccessClient:      opts.AccessClient,
@@ -1797,7 +1800,7 @@ func TestIncrementalBookmarksProgressLag(t *testing.T) {
 				req.Since = rvAt(now.Add(-30 * time.Second))
 				events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
 					if backend == "kv" {
-						srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
+						srv.backend = &kvStorageBackend{}
 					}
 					srv.bookmarkFrequency = 10 * time.Second
 				})
@@ -1842,7 +1845,7 @@ func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
 		req := bookmarkWatchRequest()
 		req.Since = snowflakeFromTime(now.Add(-2 * time.Minute))
 		events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
-			srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
+			srv.backend = &kvStorageBackend{}
 			srv.bookmarkFrequency = 10 * time.Second
 		})
 
@@ -1873,7 +1876,7 @@ func TestIncrementalBookmarksLaggedResume(t *testing.T) {
 		req := bookmarkWatchRequest()
 		req.Since = snowflakeFromTime(now.Add(-2 * time.Minute))
 		configure := func(srv *server, _ *bookmarkWatchServer) {
-			srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
+			srv.backend = &kvStorageBackend{}
 			srv.bookmarkFrequency = 10 * time.Second
 		}
 		events, stream, done := startBookmarkWatch(t, req, configure)
@@ -1936,7 +1939,7 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
 					if tt.kv {
-						srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
+						srv.backend = &kvStorageBackend{}
 					}
 					if tt.configure != nil {
 						tt.configure(srv)
@@ -1991,7 +1994,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				entered, release := make(chan struct{}), make(chan struct{})
 				sendErr := errors.New("send failed")
 				events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, stream *bookmarkWatchServer) {
-					srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
+					srv.backend = &kvStorageBackend{}
 					stream.beforeSend = func(event *resourcepb.WatchEvent) error {
 						if event.Type == resourcepb.WatchEvent_ADDED {
 							close(entered)
@@ -2049,8 +2052,6 @@ type bookmarkKVListBackend struct {
 	KVBackend
 	list func(func(ListIterator) error) (int64, error)
 }
-
-func (*bookmarkKVListBackend) WatchInvalidation() <-chan struct{} { return nil }
 
 func (b *bookmarkKVListBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
 	return b.list(callback)
@@ -2183,12 +2184,12 @@ func TestWatchTerminationErrors(t *testing.T) {
 }
 
 func TestWatchExpiryGeneration(t *testing.T) {
-	expiry := newWatchExpiry()
-	first := expiry.current()
-	second := expiry.current()
+	expiry := NewWatchExpiry()
+	first := expiry.WatchInvalidation()
+	second := expiry.WatchInvalidation()
 	require.Equal(t, first, second)
 
-	expiry.expire()
+	expiry.Invalidate()
 
 	for _, generation := range []<-chan struct{}{first, second} {
 		select {
@@ -2198,7 +2199,7 @@ func TestWatchExpiryGeneration(t *testing.T) {
 		}
 	}
 	select {
-	case <-expiry.current():
+	case <-expiry.WatchInvalidation():
 		t.Fatal("new generation is already expired")
 	default:
 	}
