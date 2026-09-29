@@ -139,7 +139,7 @@ The structure includes:
 
 ## Step 2: Delete the original dashboards
 
-Delete each original dashboard you're migrating so Git Sync can take over its UID. Since the exported files keep the original UID, Git Sync can't provison any dashboard if an unmanaged dashboard with the same UID (`metadata.name`) still exists in Grafana.
+Delete each original dashboard you're migrating so Git Sync can take over its UID. Since the exported files keep the original UID, Git Sync can't provision any dashboard if an unmanaged dashboard with the same UID (`metadata.name`) still exists in Grafana.
 
 When you delete a dashboard, keep in mind the following:
 
