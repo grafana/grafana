@@ -729,6 +729,14 @@ func TestStoredResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	}
 }
 
+func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
+	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
+	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
+	for _, postRankAuthz := range []bool{false, true} {
+		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureSortableTrashResourceVersion)
+	}
+}
+
 // Every index built now keeps deleted documents, and records it, so a reader can
 // tell it from an older index that keeps none.
 func TestCurrentIndexFeaturesHoldDeletedDocuments(t *testing.T) {
