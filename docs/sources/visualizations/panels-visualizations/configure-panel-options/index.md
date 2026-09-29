@@ -121,18 +121,23 @@ For example, you can set a panel to be hidden if there's no data returned by a q
 Show or hide a panel dynamically based on the variable value.
 You can select any variable that's configured for the dashboard and choose from the following operators for maximum flexibility:
 
-{{% shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/_index.md" id="show-hide-3" %}}
+- Equals
+- Not equals
+- Matches (regular expression values)
+- Not matches (regular expression values)
+
+You can [add more variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#add-variables) if you need to without leaving the dashboard.
 
 ### Time range less than rule
 
-Show or hide a panel, row, or tab if the dashboard time range is shorter than the selected time range.
+Show or hide a panel if the dashboard time range is shorter than the selected time range.
 This ensures that as you change the time range of the dashboard, you only see data relevant to that time period.
 
-{{% shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/_index.md" id="show-hide-4" %}}
+{{% shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/_index.md" id="show-hide-3" %}}
 
 ### Configure show/hide rules
 
-To configure show/hide rules, follow these steps:
+To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.

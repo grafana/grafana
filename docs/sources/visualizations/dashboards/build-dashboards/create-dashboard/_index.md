@@ -393,8 +393,6 @@ In this case, you'd set the rule as follows:
 Show or hide a panel, row, or tab dynamically based on the variable value.
 You can select any variable that's configured for the dashboard and choose from the following operators for maximum flexibility:
 
-{{< shared id="show-hide-3" >}}
-
 - Equals
 - Not equals
 - Matches (regular expression values)
@@ -402,14 +400,12 @@ You can select any variable that's configured for the dashboard and choose from 
 
 You can [add more variables](#add-variables) if you need to without leaving the dashboard.
 
-{{< /shared >}}
-
 ### Time range less than rule
 
 Show or hide a panel, row, or tab if the dashboard time range is shorter than the selected time range.
 This ensures that as you change the time range of the dashboard, you only see data relevant to that time period.
 
-{{< shared id="show-hide-4" >}}
+{{< shared id="show-hide-3" >}}
 
 For example, a dashboard is tracking adoption of a feature over time has the following setup:
 
@@ -427,7 +423,7 @@ For this rule type, you can select time ranges from **5 minutes** to **5 years**
 
 ### Configure show/hide rules
 
-To configure show/hide rules, follow these steps:
+To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
