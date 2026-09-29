@@ -521,6 +521,9 @@ export class BackendSrv implements BackendService {
                     authChecker = this.rotateToken();
                   }
                 }
+                if (error.data?.messageId === 'session.token.rotate') {
+                  authChecker = this.rotateToken();
+                }
 
                 return from(authChecker).pipe(
                   catchError((err) => {
