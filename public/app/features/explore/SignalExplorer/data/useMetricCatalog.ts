@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import type { DataSourceRef, TimeRange } from '@grafana/data';
@@ -52,7 +52,20 @@ export function useMetricCatalog(
     NO_METRICS
   );
 
-  const source = serverSearch ? search.data : catalog.data.metrics;
+  // A search in flight has no answer yet, and its data is reset to empty, so the list keeps what it
+  // showed while the debounce was pending instead of going blank. Recorded in an effect, not during
+  // render: `useAsyncResource` adjusts its state mid-render, so a render pass can briefly see the
+  // previous request's data reported as settled.
+  const searchInFlight = serverSearch && search.loading;
+  const [lastSettled, setLastSettled] = useState<MetricInfo[]>(NO_METRICS);
+  const settledSource = serverSearch ? search.data : catalog.data.metrics;
+  useEffect(() => {
+    if (!searchInFlight) {
+      setLastSettled(settledSource);
+    }
+  }, [searchInFlight, settledSource]);
+
+  const source = searchInFlight ? lastSettled : settledSource;
 
   // Filtered by the live term even when the datasource already did the matching, so results keep
   // narrowing as the user types rather than waiting out the debounce.

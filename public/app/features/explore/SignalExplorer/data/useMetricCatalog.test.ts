@@ -260,6 +260,42 @@ describe('useMetricCatalog', () => {
       expect(result.current.loading).toBe(true);
     });
 
+    it('keeps the local matches on screen while the datasource search is in flight', async () => {
+      const { result, rerender, search } = renderSearch(truncated);
+      const pending = deferred<MetricInfo[]>();
+      search.mockReturnValue(pending.promise);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      rerender({ searchText: 'load' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+
+      expect(search).toHaveBeenCalledWith({ uid: 'p1' }, range, 'load');
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+      expect(result.current.loading).toBe(true);
+
+      await act(async () => pending.resolve([{ name: 'node_load15', type: 'gauge' }]));
+
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load15']);
+      expect(result.current.loading).toBe(false);
+    });
+
+    it('keeps the previous search results, narrowed by the live term, while the next search is in flight', async () => {
+      const { result, rerender, search } = renderSearch(truncated);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.metrics).toHaveLength(2));
+      const pending = deferred<MetricInfo[]>();
+      search.mockReturnValue(pending.promise);
+
+      rerender({ searchText: 'quickpizza_lat' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+
+      expect(search).toHaveBeenLastCalledWith({ uid: 'p1' }, range, 'quickpizza_lat');
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['quickpizza_latency_seconds']);
+      expect(result.current.loading).toBe(true);
+    });
+
     it('shows the whole truncated catalog again as soon as the search is cleared', async () => {
       const { result, rerender } = renderSearch(truncated);
       await waitFor(() => expect(result.current.loading).toBe(false));
