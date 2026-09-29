@@ -12,6 +12,7 @@ import { Alert, Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip,
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { useSlowQuery } from '../../../hooks/useSlowQuery';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
+import { STATE_HISTORY_POLL_INTERVAL_MS } from '../../../utils/constants';
 import { PopupCard } from '../../HoverCard';
 import { StateFilterValues } from '../central-state-history/constants';
 
@@ -22,8 +23,6 @@ import { useRuleHistoryRecords } from './useRuleHistoryRecords';
 interface Props {
   ruleUID: string;
 }
-
-const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
 const STATE_FILTER_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'All', value: StateFilterValues.all },
@@ -47,9 +46,6 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 
   const { useGetRuleHistoryQuery } = stateHistoryApi;
 
-  // We prefer log count-based limit rather than time-based, but the API doesn't support it yet
-  const queryTimeRange = useMemo(() => getDefaultTimeRange(), []);
-
   const {
     currentData: stateHistory,
     isLoading,
@@ -58,8 +54,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   } = useGetRuleHistoryQuery(
     {
       ruleUid: ruleUID,
-      from: queryTimeRange.from.unix(),
-      to: queryTimeRange.to.unix(),
+      timeRange: { from: 'now-30d', to: 'now' },
       limit: 250,
       previous: stateFrom !== StateFilterValues.all ? stateFrom : undefined,
       current: stateTo !== StateFilterValues.all ? stateTo : undefined,
@@ -67,7 +62,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     {
       refetchOnFocus: true,
       refetchOnReconnect: true,
-      pollingInterval: STATE_HISTORY_POLLING_INTERVAL,
+      pollingInterval: STATE_HISTORY_POLL_INTERVAL_MS,
     }
   );
 
@@ -321,16 +316,6 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
   }
 );
 SearchFieldInput.displayName = 'SearchFieldInput';
-
-function getDefaultTimeRange(): TimeRange {
-  const fromDateTime = dateTime().subtract(30, 'days');
-  const toDateTime = dateTime();
-  return {
-    from: fromDateTime,
-    to: toDateTime,
-    raw: { from: fromDateTime, to: toDateTime },
-  };
-}
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   fullSize: css({
