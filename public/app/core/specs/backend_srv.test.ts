@@ -99,14 +99,6 @@ const createUnauthorizedResponse = () =>
     url: 'http://localhost:3000/api/some-mock',
   }) as unknown as Response;
 
-jest.mock('app/core/utils/auth', () => ({
-  ...jest.requireActual('app/core/utils/auth'),
-  getSessionExpiry: () => 1,
-  // pretend the session expiry cookie is always present so only the auth method decides
-  hasRotatableSession: (authenticatedBy?: string) =>
-    jest.requireActual('app/core/utils/auth').canRotateSessionToken(authenticatedBy),
-}));
-
 describe('backendSrv', () => {
   describe('parseRequestOptions', () => {
     it.each`
@@ -179,7 +171,7 @@ describe('backendSrv', () => {
       });
     });
 
-    describe('when making an unsuccessful call and conditions for retry are favorable and rotateToken does not throw', () => {
+    describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
       const url = '/api/dashboard/';
       const okResponse = { ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } };
 
@@ -223,19 +215,19 @@ describe('backendSrv', () => {
           false
         );
 
-        backendSrv.rotateToken = jest.fn().mockResolvedValue(okResponse);
+        backendSrv.loginPing = jest.fn().mockResolvedValue(okResponse);
 
         await backendSrv.request({ url, method: 'GET', retry: 0 }).finally(() => {
           expect(appEventsMock.emit).not.toHaveBeenCalled();
           expect(logoutMock).not.toHaveBeenCalled();
-          expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
-          expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the tokenRotation is mocked
+          expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
+          expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the login check is mocked
         });
       });
     });
 
     describe('when making an unsuccessful call and the request was authenticated without a session', () => {
-      it('then it should not rotate the token', async () => {
+      it('then it should check the login session', async () => {
         const url = '/api/dashboard/';
         const { backendSrv, logoutMock } = getTestContext({
           ok: false,
@@ -246,11 +238,9 @@ describe('backendSrv', () => {
           authenticatedBy: 'jwt',
         });
 
-        backendSrv.rotateToken = jest.fn();
         backendSrv.loginPing = jest.fn().mockResolvedValue({ ok: true } as FetchResponse);
 
         await backendSrv.request({ url, method: 'GET', retry: 0 }).catch(() => {
-          expect(backendSrv.rotateToken).not.toHaveBeenCalled();
           expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
           expect(logoutMock).not.toHaveBeenCalled();
         });
@@ -268,7 +258,7 @@ describe('backendSrv', () => {
           url,
         });
 
-        backendSrv.rotateToken = jest.fn();
+        backendSrv.loginPing = jest.fn();
 
         await backendSrv.request({ url, method: 'GET', retry: 0 }).catch(() => {
           expect(appEventsMock.publish).toHaveBeenCalledTimes(1);
@@ -280,7 +270,7 @@ describe('backendSrv', () => {
               },
             })
           );
-          expect(backendSrv.rotateToken).not.toHaveBeenCalled();
+          expect(backendSrv.loginPing).not.toHaveBeenCalled();
           expect(logoutMock).not.toHaveBeenCalled();
           expectRequestCallChain({ url, method: 'GET', retry: 0 });
         });
@@ -297,7 +287,7 @@ describe('backendSrv', () => {
           data: { message: errorMessage },
         });
 
-        backendSrv.rotateToken = jest
+        backendSrv.loginPing = jest
           .fn()
           .mockRejectedValue({ status: 403, statusText: 'Forbidden', data: { message: 'Forbidden' } });
         const url = '/api/dashboard/';
@@ -309,7 +299,7 @@ describe('backendSrv', () => {
             expect(error.statusText).toBe('Forbidden');
             expect(error.data).toEqual({ message: 'Forbidden' });
             expect(appEventsMock.emit).not.toHaveBeenCalled();
-            expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
+            expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
             expect(logoutMock).not.toHaveBeenCalled();
             expectRequestCallChain({ url, method: 'GET', retry: 0 });
             jest.advanceTimersByTime(50);
@@ -674,7 +664,7 @@ describe('backendSrv', () => {
       });
     });
 
-    describe('when making an unsuccessful call and conditions for retry are favorable and rotateToken does not throw', () => {
+    describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
       const url = '/api/dashboard/';
       const okResponse = { ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } };
 
@@ -717,12 +707,12 @@ describe('backendSrv', () => {
           false
         );
 
-        backendSrv.rotateToken = jest.fn().mockResolvedValue(okResponse);
+        backendSrv.loginPing = jest.fn().mockResolvedValue(okResponse);
 
         await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).finally(() => {
           expect(logoutMock).not.toHaveBeenCalled();
-          expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
-          expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the tokenRotation is mocked
+          expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
+          expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the login check is mocked
         });
       });
     });
@@ -736,7 +726,7 @@ describe('backendSrv', () => {
           data: { message: 'Token revoked', error: { id: 'ERR_TOKEN_REVOKED', maxConcurrentSessions: 3 } },
         });
 
-        backendSrv.rotateToken = jest.fn();
+        backendSrv.loginPing = jest.fn();
 
         const url = '/api/dashboard/';
 
@@ -750,7 +740,7 @@ describe('backendSrv', () => {
               },
             })
           );
-          expect(backendSrv.rotateToken).not.toHaveBeenCalled();
+          expect(backendSrv.loginPing).not.toHaveBeenCalled();
           expect(logoutMock).not.toHaveBeenCalled();
           expectRequestCallChain({ url, method: 'GET', retry: 0 });
         });
@@ -772,7 +762,7 @@ describe('backendSrv', () => {
           retry: 0,
         };
 
-        backendSrv.rotateToken = jest
+        backendSrv.loginPing = jest
           .fn()
           .mockRejectedValue({ status: 403, statusText: 'Forbidden', data: { message: 'Forbidden' } });
 
@@ -780,7 +770,7 @@ describe('backendSrv', () => {
           expect(error.status).toBe(403);
           expect(error.statusText).toBe('Forbidden');
           expect(error.data).toEqual({ message: 'Forbidden' });
-          expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
+          expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
           expect(logoutMock).not.toHaveBeenCalled();
           expectRequestCallChain(options);
         });
