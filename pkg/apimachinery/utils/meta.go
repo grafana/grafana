@@ -33,6 +33,12 @@ const AnnoKeyGrantPermissions = "grafana.app/grant-permissions"
 // AnnoGrantPermissionsDefault is the value that should be sent with AnnoKeyGrantPermissions
 const AnnoGrantPermissionsDefault = "default"
 
+// AnnoKeyOverwriteExisting, when set to "true" on a Create request, allows the create
+// to succeed by overwriting an existing resource of the same name instead of failing
+// with AlreadyExists. It is never persisted — the storage layer strips it before
+// attempting the write, whether or not the overwrite path actually fires.
+const AnnoKeyOverwriteExisting = "grafana.app/overwrite-existing"
+
 // DeletedGeneration is set on Resources that have been (soft) deleted
 const DeletedGeneration = int64(-999)
 

@@ -662,6 +662,15 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:         "dashboardOverwriteOnCreate",
+			Description:  "Allow Create to overwrite an existing dashboard.grafana.app resource when the grafana.app/overwrite-existing annotation is set",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:        "disableScriptedDashboards",
 			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
 			Stage:       FeatureStageDeprecated,
