@@ -549,6 +549,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	subscriberService := nats.ProvideSubscriber(config, registerer)
+	watchExpiry := resource.NewWatchExpiry()
 	options := &unified.Options{
 		Cfg:            cfg,
 		Features:       featureToggles,
@@ -567,6 +568,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		ExperimentalKV: experimentalKVOptions,
 		Publisher:      publisherService,
 		Subscriber:     subscriberService,
+		WatchExpiry:    watchExpiry,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1328,6 +1330,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	subscriberService := nats.ProvideSubscriber(config, registerer)
+	watchExpiry := resource.NewWatchExpiry()
 	options := &unified.Options{
 		Cfg:            cfg,
 		Features:       featureToggles,
@@ -1346,6 +1349,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		ExperimentalKV: experimentalKVOptions,
 		Publisher:      publisherService,
 		Subscriber:     subscriberService,
+		WatchExpiry:    watchExpiry,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)

@@ -71,7 +71,8 @@ type Options struct {
 	// Subscriber backs the shadow NATS notifier when nats.notifier_shadow is on.
 	// Like Publisher, it is wired in-process so a monolith can run the shadow;
 	// gated on Enabled(), so a disabled bus starts nothing.
-	Subscriber nats.Subscriber
+	Subscriber  nats.Subscriber
+	WatchExpiry resource.WatchExpiry
 }
 
 // natsEventSubscriber adapts nats.Subscriber to resource.EventSubscriber for the
@@ -126,7 +127,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV, opts.WatchExpiry)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -163,6 +164,7 @@ func newClient(opts options.StorageOptions,
 	eventPublisher nats.Publisher,
 	eventSubscriber nats.Subscriber,
 	experimentalKV *resource.ExperimentalKVOptions,
+	watchExpiry resource.WatchExpiry,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -233,7 +235,6 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
-		watchExpiry := resource.NewWatchExpiry()
 		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
 			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber, watchExpiry)...)
 		if experimentalKV != nil {
