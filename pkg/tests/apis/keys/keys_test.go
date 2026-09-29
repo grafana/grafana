@@ -191,6 +191,14 @@ func TestIntegrationListKeys_RefusesInvalidRequests(t *testing.T) {
 			method: http.MethodPost, path: namespacedPath(namespace), body: `{"shardSelector":"shard-1"}`,
 			wantStatus: http.StatusBadRequest, wantInBody: "shardSelector",
 		},
+		"a mismatched kind is refused": {
+			method: http.MethodPost, path: namespacedPath(namespace), body: `{"kind":"ListOptions"}`,
+			wantStatus: http.StatusBadRequest, wantInBody: "kind",
+		},
+		"a mismatched apiVersion is refused": {
+			method: http.MethodPost, path: namespacedPath(namespace), body: `{"apiVersion":"meta.k8s.io/v1"}`,
+			wantStatus: http.StatusBadRequest, wantInBody: "apiVersion",
+		},
 		"an unknown field is refused": {
 			method: http.MethodPost, path: namespacedPath(namespace), body: `{"nonsense":true}`,
 			wantStatus: http.StatusBadRequest,
