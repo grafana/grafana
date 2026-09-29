@@ -1,5 +1,4 @@
 import { of } from 'rxjs';
-
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { CoreApp, type LinkModel, toDataFrame, type TimeRange } from '@grafana/data';
@@ -272,12 +271,10 @@ describe('SpanDetailLinkButtons', () => {
       });
     });
 
-    it('opens the discovered href, not the link\'s original pre-discovery href', async () => {
+    it("opens the discovered href, not the link's original pre-discovery href", async () => {
       setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
 
-      const query = jest
-        .fn()
-        .mockReturnValue(of({ data: [toDataFrame({ fields: [{ name: 'time', values: [1] }] })] }));
+      const query = jest.fn().mockReturnValue(of({ data: [toDataFrame({ fields: [{ name: 'time', values: [1] }] })] }));
       (getDataSourceInstance as jest.Mock).mockResolvedValue({ query, type: 'loki' });
 
       // The href/onClick a Logs link starts with, before the presence-check discovers
@@ -317,7 +314,9 @@ describe('SpanDetailLinkButtons', () => {
       );
 
       // Wait for the presence check to resolve and rewrite the link in place.
-      await waitFor(() => expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left=')));
+      await waitFor(() =>
+        expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='))
+      );
       const discoveredHref = screen.getByRole('link').getAttribute('href');
       expect(discoveredHref).not.toBe('/logs-initial');
 
