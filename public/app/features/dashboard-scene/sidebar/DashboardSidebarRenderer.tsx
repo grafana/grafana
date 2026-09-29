@@ -29,6 +29,7 @@ import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
 import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
+import { getInsightPanels } from './insights/insightPanels';
 import { readInsightQuestions } from './insights/insightsStorage';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
@@ -279,7 +280,11 @@ function InsightsButton({ dashboard, openPane }: { dashboard: DashboardScene; op
   if (!insightsEnabled || !isAvailable || !meta.k8s) {
     return null;
   }
-  if (!isEditing && readInsightQuestions(dashboard).questions.length === 0) {
+  if (
+    !isEditing &&
+    readInsightQuestions(dashboard).questions.length === 0 &&
+    getInsightPanels(dashboard).length === 0
+  ) {
     return null;
   }
 
@@ -288,7 +293,10 @@ function InsightsButton({ dashboard, openPane }: { dashboard: DashboardScene; op
       icon="ai-sparkle"
       onClick={onClick}
       title={t('dashboard.sidebar.insights.title', 'Insights')}
-      tooltip={t('dashboard.sidebar.insights.tooltip', 'Ask Assistant saved questions about this dashboard')}
+      tooltip={t(
+        'dashboard.sidebar.insights.tooltip',
+        'Ask Assistant saved questions and find Insight panels on this dashboard'
+      )}
       active={openPane?.getId() === 'insights'}
     />
   );
