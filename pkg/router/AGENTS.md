@@ -129,7 +129,7 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
 | `/apis/{group}[/...]` | Proxied to the owning backend, through its breaker. |
 | `/apis` | Synthesized: `APIGroupList`, or `APIGroupDiscoveryList` when the aggregated format is negotiated. |
 | `/openapi/v3` | Synthesized index; per-version URLs are cache-busted with the backend key. |
-| `/openapi/v3/apis/{group}/{version}` | Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`. |
+| `/openapi/v3/apis/{group}/{version}` | GET and HEAD only (405 otherwise). Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`, or larger than `maxCachedOpenAPIDocBytes`. |
 
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
@@ -146,13 +146,27 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
-- **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric and example dashboard
-  queries; keep it in sync. Request metrics are recorded in `metrics.go`; route state is read at
-  scrape time by `routerCollector` (also in `metrics.go`), from atomics and the snapshot, so reconcile and
-  serving never update gauges. Labels stay bounded: `group` only for served groups, a fixed set of
-  values for `route`, `reason`, `state` and `result`; any other group is `unknown` (`KnownGroup`). In middleware mode, only requests the router
-  owns (`owns`) are instrumented. New backends must name their source (`Backend.Source`), and new sources
-  should report through `loaderStatus`, or their loads don't appear in the metrics.
+- **Size limits:** nothing the router buffers or decodes can grow without bound.
+  - `captureWriter` buffers OpenAPI documents up to `maxCachedOpenAPIDocBytes` (32 MiB). A larger
+    one streams to the client and isn't cached.
+  - It buffers discovery sub-requests up to `maxDiscoveryDocBytes` (16 MiB). Past that, the rest is
+    discarded and the read fails as incomplete. Both limits are variables, so tests can lower them.
+  - A write past the limit never fails: `ReverseProxy` panics when a write fails, and discovery
+    fetches run on their own goroutines.
+  - Polled responses go through `decodeLimitedJSON`: aggregate and ST discovery (16 MiB),
+    `plugins_url` (`maxPluginManifestsBytes`, 32 MiB) and grafana.com stack lookups
+    (`maxStackResponseBytes`, 1 MiB). A response over its limit fails the poll.
+- **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric, its labels and example
+  dashboard queries; keep it in sync with `metrics.go`.
+  - Request metrics are recorded in `metrics.go`. Route state is read at scrape time by
+    `routerCollector` (also in `metrics.go`), from atomics and the snapshot, so reconcile and
+    serving never update gauges.
+  - Labels stay bounded. `group` is only a served group; any other is `unknown` (`KnownGroup`).
+    `verb` is limited to `metricVerbs`, and any other value is `other`. `route`, `reason`, `state`
+    and `result` have fixed sets of values. A new label value must come from a fixed set too.
+  - In middleware mode, only requests the router owns (`owns`) are instrumented.
+  - New backends must name their source (`Backend.Source`), and new sources should report through
+    `loaderStatus`, or their loads don't appear in the metrics.
 
 ## Lifecycle
 
