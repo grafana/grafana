@@ -12,8 +12,16 @@ function throwIfAborted(signal: AbortSignal) {
   }
 }
 
-/** A fresh, tool-free inline assistant per ask, so answers never see chat history or other sources. */
-export async function askInsightAssistant(snapshot: InsightSnapshot, signal: AbortSignal): Promise<string> {
+/**
+ * A fresh, tool-free inline assistant per ask, so answers never see chat history or other sources.
+ * `systemPrompt` overrides the default rules; the Text panel's insight mode passes a variant that
+ * carries the earlier answer so a follow-up does not repeat it.
+ */
+export async function askInsightAssistant(
+  snapshot: InsightSnapshot,
+  signal: AbortSignal,
+  systemPrompt: string = INSIGHT_SYSTEM_PROMPT
+): Promise<string> {
   await ensureInlineAssistantInitialized();
   throwIfAborted(signal);
 
@@ -27,7 +35,7 @@ export async function askInsightAssistant(snapshot: InsightSnapshot, signal: Abo
     const outcome: { text?: string; error?: Error } = {};
     await assistant.sendPrompt({
       prompt: JSON.stringify(snapshot),
-      systemPrompt: INSIGHT_SYSTEM_PROMPT,
+      systemPrompt,
       agentName: 'dashboard-insights',
       tools: [],
       onComplete: (text) => {

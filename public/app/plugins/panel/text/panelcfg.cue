@@ -21,7 +21,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				TextMode: "html" | "markdown" | "code" @cuetsy(kind="enum",memberNames="HTML|Markdown|Code")
+				TextMode: "html" | "markdown" | "code" | "insight" @cuetsy(kind="enum",memberNames="HTML|Markdown|Code|Insight")
 
 				CodeLanguage: "json" | "yaml" | "xml" | "typescript" | "sql" | "go" | "markdown" | "html" | *"plaintext" @cuetsy(kind="enum")
 
@@ -35,10 +35,22 @@ composableKinds: PanelCfg: {
 					showMiniMap:     bool | *false
 				} @cuetsy(kind="interface")
 
+				// Insight mode asks Assistant a saved question about the data shown by the selected panels.
+				InsightOptions: {
+					// The question Assistant answers about the source panels.
+					question: string | *""
+					// Scene keys of the panels whose loaded data Assistant may use, such as "panel-3".
+					// A "section:" prefixed key references every panel in a tab or row.
+					sourcePanelKeys: [...string]
+					// Questions the viewer can ask after the answer, each answered inside the panel.
+					followUps: [...string]
+				} @cuetsy(kind="interface")
+
 				Options: {
 					mode:        TextMode & (*"markdown" | _)
 					renderMode?: RenderMode & (*"once" | _)
 					code?:       CodeOptions
+					insight?:    InsightOptions
 					// Rows per page once a per-row render pages its content. Unset fits the page to the panel height.
 					pageSize?: number
 					content: string | *"""

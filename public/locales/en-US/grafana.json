@@ -16885,6 +16885,7 @@
   },
   "textng": {
     "category-data": "Data",
+    "category-insight": "Insight",
     "category-text": "Text",
     "code-view": {
       "aria-label-code-content": "Code content"
@@ -16913,10 +16914,37 @@
       "tooltip-table": "Table",
       "view-preview": "Preview",
       "view-split": "Split",
-      "view-write": "Write"
+      "view-write": "Write",
+      "mode-insight": "Insight"
     },
     "frame-picker": {
       "label": "Query"
+    },
+    "insight": {
+      "ask": "Ask Assistant",
+      "ask-again": "Ask Assistant again",
+      "empty-question": "Set an insight question in the panel options to ask Assistant about your data.",
+      "empty-sources": "Select the source panels Assistant may use in the panel options.",
+      "error-title": "Assistant could not answer",
+      "follow-up-add": "Add follow-up",
+      "follow-up-error-title": "Assistant could not answer",
+      "follow-up-placeholder": "Which service drove the change?",
+      "follow-up-remove": "Remove follow-up",
+      "follow-up-retry": "Try again",
+      "follow-up-running": "Answering…",
+      "follow-ups-description": "Offered after the answer. Each one is answered inside the panel against the same data.",
+      "follow-ups-editor-label": "Follow-up questions",
+      "follow-ups-label": "Follow-ups",
+      "hint": "Get a takeaway and supporting findings from the source panels. Answers stay in this session.",
+      "loading-sources": "Loading source panels…",
+      "no-sources": "This dashboard has no panels with queries to use as sources.",
+      "question-description": "What Assistant answers using only the data the source panels show.",
+      "question-label": "Question",
+      "question-placeholder": "What changed in error rates this week?",
+      "running": "Analyzing selected panels…",
+      "sources-description": "Assistant answers using only the data these panels show. Selecting a tab or row includes every panel in it.",
+      "sources-label": "Source panels",
+      "stale-title": "Out of date"
     },
     "options": {
       "page-size": "Page size",
