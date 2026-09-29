@@ -1,7 +1,7 @@
-import { OpenFeature, ProviderEvents } from '@openfeature/web-sdk';
+import { MultiProvider, OpenFeature, ProviderEvents } from '@openfeature/web-sdk';
 import { useEffect, useState } from 'react';
 
-import { config, createOpenFeatureOFREPWebProvider } from '@grafana/runtime';
+import { config, createOpenFeatureLocalStorageProvider, createOpenFeatureOFREPWebProvider } from '@grafana/runtime';
 
 import pluginJson from './plugin.json';
 
@@ -13,22 +13,23 @@ export const OPEN_FEATURE_DOMAIN = pluginJson.id;
 export const BATCH_API_FLAG = 'datasources.azureMonitorBatchAPI';
 
 /**
- * Registers a read-only proxy of Grafana's OFREP provider under the plugin's
- * domain. Grafana initializes the underlying provider before plugins load, so
- * the proxy resolves synchronously with no extra flag fetch. Call once at
+ * Registers read-only proxies of Grafana's own providers under the plugin's
+ * domain. Grafana initializes the underlying providers before plugins load, so
+ * the proxies resolve synchronously with no extra flag fetch. Call once at
  * plugin module load.
  */
 export function initFeatureFlags(): void {
-  // Skip when the domain already has a provider so module re-evaluation does
-  // not reset OpenFeature state.
-  if (OpenFeature.getProvider(OPEN_FEATURE_DOMAIN) !== OpenFeature.getProvider()) {
-    return;
+  // Register when the domain does not already have a provider,
+  // so module re-evaluation does not reset OpenFeature state.
+  if (OpenFeature.getProvider(OPEN_FEATURE_DOMAIN) === OpenFeature.getProvider()) {
+    OpenFeature.setProvider(
+      OPEN_FEATURE_DOMAIN,
+      new MultiProvider([
+        { provider: createOpenFeatureLocalStorageProvider() },
+        { provider: createOpenFeatureOFREPWebProvider() },
+      ])
+    );
   }
-  OpenFeature.setProvider(OPEN_FEATURE_DOMAIN, createOpenFeatureOFREPWebProvider(), {
-    // Must match core's own evaluation context for consistent results.
-    targetingKey: config.namespace,
-    ...config.openFeatureContext,
-  });
 }
 
 /**
