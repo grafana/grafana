@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"compress/gzip"
 	"errors"
 	"io"
 	"net/http"
@@ -8,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	gzip "github.com/klauspost/pgzip"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 

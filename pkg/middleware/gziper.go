@@ -2,14 +2,13 @@ package middleware
 
 import (
 	"bufio"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
-
-	gzip "github.com/klauspost/pgzip"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/web"

@@ -202,7 +202,6 @@ require (
 	github.com/jmoiron/sqlx v1.4.0 // @grafana/grafana-backend-group
 	github.com/jonboulle/clockwork v0.5.0 // @grafana/identity-access-team
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
-	github.com/klauspost/pgzip v1.2.6 // @grafana/grafana-backend-group
 	github.com/ktrysmt/go-bitbucket v0.10.0 // @grafana/grafana-app-platform-squad
 	github.com/lib/pq v1.12.3 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
