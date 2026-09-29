@@ -18179,10 +18179,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Check it out",
-      "description": "We've had a redesign!",
-      "revert": "Take me back",
-      "title": "New styles"
+      "apply": "Try new style",
+      "description": "The new UI is currently in Public Preview. <1>Learn more.</1>",
+      "revert": "Use old style",
+      "title": "Grafana has a new look. Ready to try it?",
+      "title-visual-refresh": "Grafana has a new look"
     }
   },
   "visualization": {
