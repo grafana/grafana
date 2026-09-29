@@ -22,7 +22,11 @@ weight: 100
 
 # Text
 
-{{< docs/public-preview product="The new text panel" featureFlag="`grafana.newTextPanel` and `text.newFeatures`" >}}
+{{< admonition type="note" >}}
+The new text panel is currently in public preview.
+Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+To use this feature, enable the `grafana.newTextPanel` and `text.newFeatures` feature toggles in your Grafana configuration file or contact Support.
+{{< /admonition >}}
 
 <!-- use what's new to make intro more robust -->
 
@@ -43,9 +47,9 @@ Use a text visualization when you need to:
 
 ## Text visualization editor
 
-The text visualization has an editor separate from the other configuration options.
-This is where you enter and preview the content of the visualization.
-It's also where you set text modes, like Markdown, HTML, or a specific coding language.
+The editor is where you enter and preview the content of a text visualization.
+It's where you set text modes, like Markdown, HTML, or a specific coding language.
+Additionally, it provides formatting options and syntax highlighting, as well as variable and diagram support.
 
 To learn more, click the following links:
 
