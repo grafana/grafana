@@ -89,28 +89,6 @@ func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration 
 	return bo.NextDelay()
 }
 
-type watchExpiry struct {
-	mu         sync.Mutex
-	generation chan struct{}
-}
-
-func newWatchExpiry() *watchExpiry {
-	return &watchExpiry{generation: make(chan struct{})}
-}
-
-func (e *watchExpiry) current() <-chan struct{} {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return e.generation
-}
-
-func (e *watchExpiry) expire() {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	close(e.generation)
-	e.generation = make(chan struct{})
-}
-
 // filteredBookmarkDelay leaves a recovery window for late writes without
 // delaying progress from objects already sent to the client.
 const filteredBookmarkDelay = time.Minute
@@ -233,7 +211,6 @@ type ResourceLastImportTime struct {
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
 type StorageBackend interface {
-	WatchInvalidator
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
@@ -518,6 +495,9 @@ type ResourceServerOptions struct {
 	// Zero disables expiry.
 	NatsWatchMaxAge time.Duration
 
+	// WatchExpiry is shared with notification producers. Nil creates a local expiry.
+	WatchExpiry WatchExpiry
+
 	// VectorBackend is the optional pgvector-backed store for semantic search.
 	// nil when the [unified_storage] vector_backend flag is off. When present,
 	// the resource and search servers hold a reference for use by future
@@ -703,11 +683,12 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		natsWatchMaxAge:                opts.NatsWatchMaxAge,
+		watchExpiry:                    opts.WatchExpiry,
 		vectorWriteReconciler:          opts.VectorReconciler,
 		embeddingBuilders:              opts.Search.EmbeddingBuilders,
 	}
-	if s.natsWatchMaxAge > 0 {
-		s.natsWatchExpiry = newWatchExpiry()
+	if s.watchExpiry == nil {
+		s.watchExpiry = NewWatchExpiry()
 	}
 
 	if opts.Search.Resources != nil {
@@ -840,7 +821,7 @@ type server struct {
 	bookmarkFrequency time.Duration
 
 	natsWatchMaxAge time.Duration
-	natsWatchExpiry *watchExpiry
+	watchExpiry     WatchExpiry
 
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
@@ -887,7 +868,7 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
-		if s.initErr == nil && s.natsWatchExpiry != nil {
+		if s.initErr == nil && s.natsWatchMaxAge > 0 {
 			go s.runNatsWatchExpiry()
 		}
 
@@ -906,7 +887,7 @@ func (s *server) runNatsWatchExpiry() {
 			timer.Stop()
 			return
 		case <-timer.C:
-			s.natsWatchExpiry.expire()
+			s.watchExpiry.Invalidate()
 		}
 	}
 }
@@ -2352,15 +2333,22 @@ func (s *server) initWatcher() error {
 //nolint:gocyclo
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
+	if s.ctx.Err() != nil {
+		return nil
+	}
 
-	// Capture before setup: reconnects during subscription or snapshot reads must
+	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
-	reconnectC := s.backend.WatchInvalidation()
+	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
 	// as clean shutdowns. Errors from setup, storage, authorization, or another
 	// context are still propagated.
 	defer func() {
+		// A canceled request can no longer receive the expiry response.
+		if IsResourceVersionExpired(retErr) && ctx.Err() != nil {
+			retErr = nil
+		}
 		if errors.Is(retErr, errWatchSendUnavailable) {
 			retErr = nil
 		}
@@ -2521,36 +2509,27 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		bookmarkC = ticker.C
 	}
 
-	// The server-level generation survives transport reconnects, so GOAWAY does
-	// not restart the expiry interval.
-	var watchExpiryC <-chan struct{}
-	if s.natsWatchExpiry != nil {
-		watchExpiryC = s.natsWatchExpiry.current()
+	expired := func() error {
+		if ctx.Err() != nil {
+			return nil
+		}
+		s.log.Debug("watch: expiring stream to bound stale-state duration",
+			"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
+		return NewResourceVersionExpiredError(since)
 	}
 
 	for {
 		// Prioritize known delivery gaps over buffered live events.
 		select {
-		case <-reconnectC:
-			if ctx.Err() != nil {
-				return nil
-			}
-			return NewResourceVersionExpiredError(since)
+		case <-watchExpiryC:
+			return expired()
 		default:
 		}
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-reconnectC:
-			if ctx.Err() != nil {
-				return nil
-			}
-			return NewResourceVersionExpiredError(since)
 		case <-watchExpiryC:
-			// Unlike EOF, Expired forces clients to re-list.
-			s.log.Debug("watch: expiring stream to bound stale-state duration",
-				"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
-			return NewResourceVersionExpiredError(since)
+			return expired()
 
 		case <-bookmarkC:
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
