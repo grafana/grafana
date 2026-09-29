@@ -15,38 +15,38 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// Larger than pgzip's block size, so that the compressor writes to the response
-// while the handler is still running.
+// Large enough for the compressor to write to the response before Close, so
+// failing writers exercise error propagation back to the handler.
 var gzipTestBody = []byte(strings.Repeat("grafana dashboard payload ", 20000))
 
-func gzipTestHandler(t *testing.T) http.Handler {
+func gzipTestHandler(t *testing.T, assertWriteError require.ErrorAssertionFunc) http.Handler {
 	t.Helper()
 
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 		rw.Header().Set("Content-Length", "1234")
 		_, err := rw.Write(gzipTestBody)
-		require.NoError(t, err)
+		assertWriteError(t, err)
 	})
 }
 
 // serveGzipped runs a request through the gzip middleware the way the HTTP
 // server does, with a web.ResponseWriter underneath it.
-func serveGzipped(t *testing.T, method, url string, rw http.ResponseWriter) {
+func serveGzipped(t *testing.T, method, url string, rw http.ResponseWriter, assertWriteError require.ErrorAssertionFunc) {
 	t.Helper()
 
 	req, err := http.NewRequest(method, url, nil)
 	require.NoError(t, err)
 	req.Header.Set("Accept-Encoding", "gzip")
 
-	Gziper()(gzipTestHandler(t)).ServeHTTP(web.NewResponseWriter(method, rw), req)
+	Gziper()(gzipTestHandler(t, assertWriteError)).ServeHTTP(web.NewResponseWriter(method, rw), req)
 }
 
 func TestGziper(t *testing.T) {
 	t.Run("compresses a GET response", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 
-		serveGzipped(t, http.MethodGet, "/d/abc/dash", rec)
+		serveGzipped(t, http.MethodGet, "/d/abc/dash", rec, require.NoError)
 
 		require.Equal(t, "gzip", rec.Header().Get("Content-Encoding"))
 		require.Equal(t, "Accept-Encoding", rec.Header().Get("Vary"))
@@ -63,7 +63,7 @@ func TestGziper(t *testing.T) {
 	t.Run("does not compress a HEAD response, but keeps the headers a GET would return", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 
-		serveGzipped(t, http.MethodHead, "/d/abc/dash", rec)
+		serveGzipped(t, http.MethodHead, "/d/abc/dash", rec, require.NoError)
 
 		require.Equal(t, "gzip", rec.Header().Get("Content-Encoding"))
 		require.Equal(t, "Accept-Encoding", rec.Header().Get("Vary"))
@@ -76,7 +76,7 @@ func TestGziper(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/d/abc/dash", nil)
 		require.NoError(t, err)
 
-		Gziper()(gzipTestHandler(t)).ServeHTTP(web.NewResponseWriter(http.MethodGet, rec), req)
+		Gziper()(gzipTestHandler(t, require.NoError)).ServeHTTP(web.NewResponseWriter(http.MethodGet, rec), req)
 
 		require.Empty(t, rec.Header().Get("Content-Encoding"))
 		require.Equal(t, gzipTestBody, rec.Body.Bytes())
@@ -85,16 +85,15 @@ func TestGziper(t *testing.T) {
 	t.Run("does not compress ignored paths", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 
-		serveGzipped(t, http.MethodGet, "/metrics", rec)
+		serveGzipped(t, http.MethodGet, "/metrics", rec, require.NoError)
 
 		require.Empty(t, rec.Header().Get("Content-Encoding"))
 		require.Equal(t, gzipTestBody, rec.Body.Bytes())
 	})
 }
 
-// The compressor runs a goroutine that is only released when it is closed
-// cleanly, and a response it cannot write leaves that goroutine parked forever -
-// one per request, for as long as the process lives (#130649).
+// These cases previously leaked compressor goroutines with pgzip. Keep them as
+// regression coverage when changing compression implementations.
 func TestGziperDoesNotLeakGoroutines(t *testing.T) {
 	const requests = 20
 
@@ -102,7 +101,7 @@ func TestGziperDoesNotLeakGoroutines(t *testing.T) {
 		defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
 
 		for range requests {
-			serveGzipped(t, http.MethodHead, "/d/abc/dash", httptest.NewRecorder())
+			serveGzipped(t, http.MethodHead, "/d/abc/dash", httptest.NewRecorder(), require.NoError)
 		}
 	})
 
@@ -110,7 +109,7 @@ func TestGziperDoesNotLeakGoroutines(t *testing.T) {
 		defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
 
 		for range requests {
-			serveGzipped(t, http.MethodGet, "/d/abc/dash", &brokenResponseWriter{failAfter: 1})
+			serveGzipped(t, http.MethodGet, "/d/abc/dash", &brokenResponseWriter{failAfter: 1}, require.Error)
 		}
 	})
 
@@ -118,7 +117,7 @@ func TestGziperDoesNotLeakGoroutines(t *testing.T) {
 		defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
 
 		for range requests {
-			serveGzipped(t, http.MethodGet, "/d/abc/dash", &brokenResponseWriter{failAfter: 1, short: true})
+			serveGzipped(t, http.MethodGet, "/d/abc/dash", &brokenResponseWriter{failAfter: 1, short: true}, require.Error)
 		}
 	})
 }
