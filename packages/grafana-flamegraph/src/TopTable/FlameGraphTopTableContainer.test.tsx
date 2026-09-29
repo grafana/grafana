@@ -190,4 +190,39 @@ describe('buildFilteredTable', () => {
       '4': { self: 3, total: 3, totalRight: 0 },
     });
   });
+
+  it('should only include the subtree of the focused item', () => {
+    const container = textToDataContainer(`
+[0///]
+[1][2]
+[3]
+    `);
+    // Row order is depth first: 0, 1, 3, 2 so label 1 lives at row 1.
+    const result = buildFilteredTable(container!, undefined, [1]);
+
+    expect(result).toEqual({
+      '1': { self: 0, total: 3, totalRight: 0 },
+      '3': { self: 3, total: 3, totalRight: 0 },
+    });
+  });
+
+  it('should include the whole profile when focused item is the root', () => {
+    const container = textToDataContainer(`
+[0///]
+[1][2]
+    `);
+
+    expect(buildFilteredTable(container!, undefined, [0])).toEqual(buildFilteredTable(container!));
+  });
+
+  it('should combine focus with matchedLabels', () => {
+    const container = textToDataContainer(`
+[0///]
+[1][2]
+[3]
+    `);
+    const result = buildFilteredTable(container!, new Set(['3', '2']), [1]);
+
+    expect(result).toEqual({ '3': { self: 3, total: 3, totalRight: 0 } });
+  });
 });

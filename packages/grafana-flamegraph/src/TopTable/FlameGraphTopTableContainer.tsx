@@ -35,6 +35,8 @@ type Props = {
   search?: string;
   // We use these to filter out rows in the table if users is doing text search.
   matchedLabels?: Set<string>;
+  // When set, the table only covers the subtree of the focused flame graph item instead of the whole profile.
+  focusedItemIndexes?: number[];
   sandwichItem?: string;
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
@@ -48,13 +50,17 @@ const FlameGraphTopTableContainer = memo(
     onSymbolClick,
     search,
     matchedLabels,
+    focusedItemIndexes,
     onSearch,
     sandwichItem,
     onSandwich,
     onTableSort,
     colorScheme,
   }: Props) => {
-    const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const table = useMemo(
+      () => buildFilteredTable(data, matchedLabels, focusedItemIndexes),
+      [data, matchedLabels, focusedItemIndexes]
+    );
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
@@ -104,20 +110,59 @@ const FlameGraphTopTableContainer = memo(
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
-function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
+function buildFilteredTable(
+  data: FlameGraphDataContainer,
+  matchedLabels?: Set<string>,
+  focusedItemIndexes?: number[]
+) {
   // Group the data by label, we show only one row per label and sum the values
   // TODO: should be by filename + funcName + linenumber?
   let filteredTable: { [key: string]: TableData } = Object.create(null);
 
-  // Track call stack to detect recursive calls
-  const callStack: string[] = [];
+  // The data frame is a depth first traversal, so the subtree of a focused item is the run of rows following it that
+  // are deeper than the item. An item can span multiple rows when similar nodes were merged (collapsing).
+  const ranges = getFocusedRanges(data, focusedItemIndexes);
 
-  for (let i = 0; i < data.data.length; i++) {
+  for (const [from, to] of ranges) {
+    addRangeToTable(filteredTable, data, from, to, matchedLabels);
+  }
+
+  return filteredTable;
+}
+
+function getFocusedRanges(data: FlameGraphDataContainer, focusedItemIndexes?: number[]): Array<[number, number]> {
+  if (!focusedItemIndexes || focusedItemIndexes.length === 0) {
+    return [[0, data.data.length]];
+  }
+
+  return focusedItemIndexes.map((start) => {
+    const level = data.getLevel(start);
+    let end = start + 1;
+    while (end < data.data.length && data.getLevel(end) > level) {
+      end++;
+    }
+    return [start, end];
+  });
+}
+
+function addRangeToTable(
+  filteredTable: { [key: string]: TableData },
+  data: FlameGraphDataContainer,
+  from: number,
+  to: number,
+  matchedLabels?: Set<string>
+) {
+  // Track call stack to detect recursive calls. Levels are relative to the start of the range so the first item is
+  // treated as the root.
+  const callStack: string[] = [];
+  const baseLevel = data.getLevel(from);
+
+  for (let i = from; i < to; i++) {
     const value = data.getValue(i);
     const valueRight = data.getValueRight(i);
     const self = data.getSelf(i);
     const label = data.getLabel(i);
-    const level = data.getLevel(i);
+    const level = data.getLevel(i) - baseLevel;
 
     // Maintain call stack based on level changes
     while (callStack.length > level) {
@@ -144,8 +189,6 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     // Add current call to the stack
     callStack.push(label);
   }
-
-  return filteredTable;
 }
 
 function buildTableDataFrame(

@@ -235,6 +235,7 @@ const FlameGraphPane = ({
             onSymbolClick={onSymbolClick}
             search={search}
             matchedLabels={matchedLabels}
+            focusedItemIndexes={focusedItemData?.item.itemIndexes}
             sandwichItem={sandwichItem}
             onSandwich={setSandwichItem}
             onSearch={onTopTableSearch}
