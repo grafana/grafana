@@ -33,6 +33,8 @@ refs:
 
 # Text
 
+{{< docs/public-preview product="New text panel" featureFlag="`grafana.newTextPanel` and `text.newFeatures" >}}
+
 Text visualizations let you include text or HTML in your dashboards.
 This can be used to add contextual information and descriptions or embed complex HTML.
 
