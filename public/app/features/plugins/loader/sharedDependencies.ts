@@ -11,8 +11,6 @@ import 'vendor/flot/jquery.flot.gauge';
 
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
-// eslint-disable-next-line no-restricted-imports
-import * as grafanaUIraw from '@grafana/ui';
 import TableModel from 'app/core/TableModel';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
@@ -24,15 +22,6 @@ import { arrayMove } from 'app/core/utils/arrayMove';
 import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
-
-// Help the 6.4 to 6.5 migration
-// The base classes were moved from @grafana/ui to @grafana/data
-// This exposes the same classes on both import paths
-const grafanaUI: Record<string, unknown> = grafanaUIraw;
-grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
-grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
-grafanaUI.AppPlugin = grafanaData.AppPlugin;
-grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
 const jQueryFlotDeps = [
   'jquery.flot.crosshair',
@@ -55,7 +44,16 @@ export const sharedDependenciesMap = {
   '@grafana/runtime': grafanaRuntime,
   '@grafana/runtime/unstable': () => import('@grafana/runtime/unstable'),
   '@grafana/slate-react': () => import('slate-react'),
-  '@grafana/ui': grafanaUI,
+  // Load the complete namespace before plugin execution, without retaining plugin-only UI in the initial bundle.
+  '@grafana/ui': () =>
+    import('@grafana/ui').then((module) => ({
+      ...module,
+      // These classes moved to @grafana/data in 6.5 but remain available to older plugins.
+      PanelPlugin: grafanaData.PanelPlugin,
+      DataSourcePlugin: grafanaData.DataSourcePlugin,
+      AppPlugin: grafanaData.AppPlugin,
+      DataSourceApi: grafanaData.DataSourceApi,
+    })),
   '@grafana/ui/unstable': () => import('@grafana/ui/unstable'),
   '@kusto/monaco-kusto': () => import('@kusto/monaco-kusto'),
   'app/core/app_events': {
