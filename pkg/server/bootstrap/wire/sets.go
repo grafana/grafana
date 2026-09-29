@@ -205,6 +205,7 @@ var withOTelSet = wire.NewSet(
 
 var Basic = wire.NewSet(
 	iam.ProvideFeatures,
+	wire.Bind(new(acimpl.IAMFeatures), new(iam.Features)),
 	annotationsimpl.ProvideService,
 	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
 	server.New,
@@ -263,6 +264,7 @@ var Basic = wire.NewSet(
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
 	authinfoimpl.ProvideService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)),
+	authinfoimpl.ProvideLegacyStore,
 	authinfoimpl.ProvideStore,
 	datasourceproxy.ProvideService,
 	sort.ProvideService,

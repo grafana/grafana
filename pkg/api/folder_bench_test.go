@@ -299,7 +299,7 @@ func setupDB(b testing.TB) benchScenario {
 				OrgID:     signedInUser.OrgID,
 				IsFolder:  false,
 				UID:       str,
-				FolderID:  f0.ID,
+				FolderID:  f0.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 				FolderUID: f0.UID,
 				Slug:      str,
 				Title:     str,
@@ -327,7 +327,7 @@ func setupDB(b testing.TB) benchScenario {
 					OrgID:     signedInUser.OrgID,
 					IsFolder:  false,
 					UID:       str,
-					FolderID:  f1.ID,
+					FolderID:  f1.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 					FolderUID: f1.UID,
 					Slug:      str,
 					Title:     str,
@@ -355,7 +355,7 @@ func setupDB(b testing.TB) benchScenario {
 						OrgID:     signedInUser.OrgID,
 						IsFolder:  false,
 						UID:       str,
-						FolderID:  f1.ID,
+						FolderID:  f1.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 						FolderUID: f2.UID,
 						Slug:      str,
 						Title:     str,
@@ -426,7 +426,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		ac, sc.userSvc, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), folderSearchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
+		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil, iam.Features{},
 	)
 	serviceAccountRetriever := &serviceaccountstest.FakeServiceAccountService{}
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(

@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
@@ -51,6 +53,7 @@ func TestIntegrationPerKindRuleSearch(t *testing.T) {
 					"alertrules.rules.alerting.grafana.app":     {DualWriterMode: mode},
 					"recordingrules.rules.alerting.grafana.app": {DualWriterMode: mode},
 				},
+				UnifiedAlertingDisableExecuteAlerts: true,
 			})
 			runPerKindRuleSearchTests(t, helper, mode)
 		})
@@ -396,6 +399,92 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 			perKindTitles(searchAlerts(t, newPerKindQuery().text("case"))))
 	})
 
+	// Status is written through the /status subresource the way the rule-status
+	// syncer does, and both backends must filter on it: legacy through
+	// alert_rule.k8s_status, unified through the path-declared status fields.
+	t.Run("status: state and health filters", func(t *testing.T) {
+		patchStatus := func(t *testing.T, patch func(name string, data []byte) error, name, status string) {
+			t.Helper()
+			require.NoError(t, patch(name, []byte(`{"status":`+status+`}`)))
+		}
+		patchAlert := func(name string, data []byte) error {
+			_, err := alertClient.Patch(ctx, name, types.MergePatchType, data, v1.PatchOptions{}, "status")
+			return err
+		}
+		patchRecording := func(name string, data []byte) error {
+			_, err := recClient.Patch(ctx, name, types.MergePatchType, data, v1.PatchOptions{}, "status")
+			return err
+		}
+
+		firing := createPerKindAlertRule(t, ctx, alertClient, "status firing", false, nil, "ds-prom", 3000)
+		pending := createPerKindAlertRule(t, ctx, alertClient, "status pending", false, nil, "ds-prom", 3001)
+		inactive := createPerKindAlertRule(t, ctx, alertClient, "status inactive", false, nil, "ds-prom", 3002)
+		patchStatus(t, patchAlert, firing.Name, `{"state":"Firing","health":"OK"}`)
+		patchStatus(t, patchAlert, pending.Name, `{"state":"Pending","health":"Error"}`)
+		patchStatus(t, patchAlert, inactive.Name, `{"state":"Inactive","health":"NoData"}`)
+
+		recordingErr := createPerKindRecordingRule(t, ctx, recClient, "status recording error", "ds-prom", "status_error_total")
+		recordingOK := createPerKindRecordingRule(t, ctx, recClient, "status recording ok", "ds-prom", "status_ok_total")
+		patchStatus(t, patchRecording, recordingErr.Name, `{"health":"Error"}`)
+		patchStatus(t, patchRecording, recordingOK.Name, `{"health":"Recording"}`)
+
+		const opNotIn = "NotIn"
+		// Every alert rule created before this test has no status at all.
+		allAlerts := perKindTitles(searchAlerts(t, nil))
+		without := func(titles []string, drop ...string) []string {
+			out := make([]string, 0, len(titles))
+			for _, title := range titles {
+				if !slices.Contains(drop, title) {
+					out = append(out, title)
+				}
+			}
+			return out
+		}
+
+		t.Run("alert rules: state In", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"status firing", "status pending"},
+				perKindTitles(searchAlerts(t, newPerKindQuery().filter("state", perKindOpIn, "Firing", "Pending"))))
+		})
+
+		t.Run("alert rules: state NotIn includes rules with no status", func(t *testing.T) {
+			require.ElementsMatch(t, without(allAlerts, "status firing"),
+				perKindTitles(searchAlerts(t, newPerKindQuery().filter("state", opNotIn, "Firing"))))
+		})
+
+		t.Run("alert rules: health In", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"status pending"},
+				perKindTitles(searchAlerts(t, newPerKindQuery().filter("health", perKindOpIn, "Error"))))
+		})
+
+		t.Run("alert rules: health NotIn includes rules with no status", func(t *testing.T) {
+			require.ElementsMatch(t, without(allAlerts, "status pending", "status inactive"),
+				perKindTitles(searchAlerts(t, newPerKindQuery().filter("health", opNotIn, "Error", "NoData"))))
+		})
+
+		t.Run("alert rules: state and health combine", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"status firing"}, perKindTitles(searchAlerts(t, newPerKindQuery().
+				filter("state", perKindOpIn, "Firing", "Pending").
+				filter("health", perKindOpIn, "OK"))))
+		})
+
+		t.Run("alert rules: filtered hits project their status", func(t *testing.T) {
+			resp := searchAlerts(t, newPerKindQuery().filter("state", perKindOpIn, "Pending").fields("title", "state", "health"))
+			h := perKindHitFor(t, resp, "status pending")
+			require.Equal(t, "Pending", perKindStringField(t, h, "state"))
+			require.Equal(t, "Error", perKindStringField(t, h, "health"))
+		})
+
+		t.Run("recording rules: health In", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"status recording error"},
+				perKindTitles(search(t, recordingRules, newPerKindQuery().filter("health", perKindOpIn, "Error"))))
+		})
+
+		t.Run("recording rules: health NotIn includes rules with no status", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"cpu recording", "disk recording", "status recording ok"},
+				perKindTitles(search(t, recordingRules, newPerKindQuery().filter("health", opNotIn, "Error"))))
+		})
+	})
+
 	t.Run("consistency: search matches list", func(t *testing.T) {
 		list, err := alertClient.List(ctx, v1.ListOptions{})
 		require.NoError(t, err)
@@ -464,7 +553,7 @@ func perKindHitFor(t *testing.T, resp searchv0.SearchResults, want string) searc
 	return searchv0.ResultItem{}
 }
 
-func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList], perKindTitle string, paused bool, labels map[string]string, dsUID string, panelID int64) {
+func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList], perKindTitle string, paused bool, labels map[string]string, dsUID string, panelID int64) *v0alpha1.AlertRule {
 	t.Helper()
 	base := ngmodels.RuleGen.With(
 		ngmodels.RuleMuts.WithUniqueUID(),
@@ -492,11 +581,12 @@ func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.Type
 			},
 		},
 	}
-	_, err := client.Create(ctx, rule, v1.CreateOptions{})
+	created, err := client.Create(ctx, rule, v1.CreateOptions{})
 	require.NoError(t, err)
+	return created
 }
 
-func createPerKindRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList], perKindTitle, dsUID, metric string) {
+func createPerKindRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList], perKindTitle, dsUID, metric string) *v0alpha1.RecordingRule {
 	t.Helper()
 	base := ngmodels.RuleGen.With(
 		ngmodels.RuleMuts.WithUniqueUID(),
@@ -530,8 +620,9 @@ func createPerKindRecordingRule(t *testing.T, ctx context.Context, client *apis.
 			Trigger: v0alpha1.RecordingRuleIntervalTrigger{Interval: "10s"},
 		},
 	}
-	_, err := client.Create(ctx, rule, v1.CreateOptions{})
+	created, err := client.Create(ctx, rule, v1.CreateOptions{})
 	require.NoError(t, err)
+	return created
 }
 
 func perKindAlertExpressions(base ngmodels.AlertRule, dsUID string) v0alpha1.AlertRuleExpressionMap {

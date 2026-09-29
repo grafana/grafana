@@ -64,6 +64,10 @@ type Features struct {
 	ZanzanaSync                       bool
 }
 
+func (f Features) UserPermissionsAPIEnabled() bool {
+	return f.UserPermissionsAPI
+}
+
 // ProvideFeatures resolves the IAM startup feature set before any consumers
 // are constructed. Explicit [iam] configuration takes precedence; when it is
 // absent, legacy OpenFeature flags are evaluated once for staged migration.

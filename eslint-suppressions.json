@@ -1541,9 +1541,6 @@
   "public/app/features/alerting/unified/utils/rules.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/annotations/events_processing.ts": {
@@ -2251,11 +2248,6 @@
   "public/app/features/dashboard/state/TimeModel.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard/state/actions.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts": {

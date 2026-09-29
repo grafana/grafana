@@ -1422,6 +1422,8 @@ func newWatchTestUser() *identity.StaticRequester {
 }
 
 type watchTestServerOpts struct {
+	EventSubscriber   EventSubscriber
+	EventPublisher    EventPublisher
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
@@ -1436,14 +1438,20 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
+	watchExpiry := NewWatchExpiry()
 	store, err := NewKVStorageBackend(KVBackendOptions{
-		KvStore:      NewBadgerKV(db),
-		WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
+		KvStore:            NewBadgerKV(db),
+		EventSubscriber:    opts.EventSubscriber,
+		EventPublisher:     opts.EventPublisher,
+		EnableNatsNotifier: opts.EventSubscriber != nil,
+		WatchInvalidator:   watchExpiry,
+		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond},
 	})
 	require.NoError(t, err)
 
 	srv, err := NewResourceServer(ResourceServerOptions{
 		Backend:           store,
+		WatchExpiry:       watchExpiry,
 		BookmarkFrequency: opts.BookmarkFrequency,
 		StorageMetrics:    opts.StorageMetrics,
 		AccessClient:      opts.AccessClient,
@@ -2176,12 +2184,12 @@ func TestWatchTerminationErrors(t *testing.T) {
 }
 
 func TestWatchExpiryGeneration(t *testing.T) {
-	expiry := newWatchExpiry()
-	first := expiry.current()
-	second := expiry.current()
+	expiry := NewWatchExpiry()
+	first := expiry.WatchInvalidation()
+	second := expiry.WatchInvalidation()
 	require.Equal(t, first, second)
 
-	expiry.expire()
+	expiry.Invalidate()
 
 	for _, generation := range []<-chan struct{}{first, second} {
 		select {
@@ -2191,7 +2199,7 @@ func TestWatchExpiryGeneration(t *testing.T) {
 		}
 	}
 	select {
-	case <-expiry.current():
+	case <-expiry.WatchInvalidation():
 		t.Fatal("new generation is already expired")
 	default:
 	}
@@ -3570,6 +3578,31 @@ func TestServerListKeysFetchesAtMostOneValueBatchAfterAuthorization(t *testing.T
 	tripsAfter, readsAfter = kvStore.stats()
 	require.Equal(t, 0, tripsAfter-tripsBefore)
 	require.Equal(t, 0, readsAfter-readsBefore)
+}
+
+func TestServerListRecordsInstrumentationPath(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		UserID:    123,
+		UserUID:   "u123",
+		Namespace: appsNamespace.Namespace,
+	})
+	ctx, state := withRequestMetricsState(ctx)
+	seedResource(t, backend, ctx, "resource-000", "")
+
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:                     backend,
+		AuthorizeBeforeFetchEnabled: true,
+	})
+	require.NoError(t, err)
+	t.Cleanup(srv.cancel)
+
+	rsp, err := srv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Items, 1)
+	require.Equal(t, listPathStoreAuthorizeFirst, state.listPath)
 }
 
 func TestServerAuthorizeBeforeFetchKeysOnly(t *testing.T) {
