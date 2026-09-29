@@ -63,6 +63,7 @@ import {
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
+import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import {
   createV2RowsLayout,
@@ -255,6 +256,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       return transformSaveModelSchemaV2ToScene(rsp);
     }
     if (isDashboardV1Resource(rsp)) {
+      await resolveLegacyDatasourceNames(rsp.spec);
       return transformSaveModelToScene(
         {
           dashboard: rsp.spec,
@@ -274,6 +276,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     }
 
     // Neither v1 nor v2 k8s resource - must be the classic DashboardDTO shape.
+    await resolveLegacyDatasourceNames(rsp.dashboard);
     return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
   }
 
@@ -548,6 +551,7 @@ abstract class DashboardScenePageStateManagerBase<T>
 
     recordDashboardFetchTiming(options.uid || undefined, performance.now() - fetchStart);
 
+    await this.prepareResponse(rsp);
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
 
@@ -562,6 +566,12 @@ abstract class DashboardScenePageStateManagerBase<T>
   async enrichLoadOptions(_rsp: T, options: LoadDashboardOptions): Promise<LoadDashboardOptions> {
     return options;
   }
+
+  /**
+   * Post-fetch hook that lets managers asynchronously prepare the response before the scene is
+   * created from it. Public for the same reason as enrichLoadOptions.
+   */
+  async prepareResponse(_rsp: T): Promise<void> {}
 
   public getDashboardFromCache(cacheKey: string): T | null {
     const cachedDashboard = this.dashboardCache;
@@ -614,6 +624,12 @@ abstract class DashboardScenePageStateManagerBase<T>
 }
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
+  async prepareResponse(rsp: DashboardDTO): Promise<void> {
+    if (rsp.dashboard) {
+      await resolveLegacyDatasourceNames(rsp.dashboard);
+    }
+  }
+
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
     // Public dashboards are not part of a session and therefore should not use the cache.
     // Provisioning previews are cached under the file path (options.uid for this route), which
@@ -987,6 +1003,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         return;
       }
 
+      await resolveLegacyDatasourceNames(rsp.dashboard);
       const sceneCreationOptions = getSceneCreationOptions(undefined, rsp.meta);
       const scene = transformSaveModelToScene(rsp, undefined, sceneCreationOptions);
 
@@ -1459,6 +1476,12 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
 
     return options;
+  }
+
+  async prepareResponse(rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>): Promise<void> {
+    if (!isDashboardV2Resource(rsp)) {
+      await this.v1Manager.prepareResponse(rsp);
+    }
   }
 
   transformResponseToScene(
