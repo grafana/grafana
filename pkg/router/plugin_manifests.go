@@ -193,17 +193,17 @@ func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, v3.C
 	}
 	// NOTE: ClientV2 is missing ALL the middleware...
 	return &backendgrpcplugin.ClientV2{
-			DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
-			ResourceClient:    pluginv2.NewResourceClient(conn),
-			DataClient:        pluginv2.NewDataClient(conn),
-			StreamClient:      pluginv2.NewStreamClient(conn),
-			AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
-			ConversionClient:  pluginv2.NewResourceConversionClient(conn),
-		}, &grpcplugin.ClientV3{
-			AdmissionServiceClient:  pluginv3.NewAdmissionServiceClient(conn),
-			ConversionServiceClient: pluginv3.NewConversionServiceClient(conn),
-			RouteServiceClient:      pluginv3.NewRouteServiceClient(conn),
-		}, nil
+		DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
+		ResourceClient:    pluginv2.NewResourceClient(conn),
+		DataClient:        pluginv2.NewDataClient(conn),
+		StreamClient:      pluginv2.NewStreamClient(conn),
+		AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
+		ConversionClient:  pluginv2.NewResourceConversionClient(conn),
+	}, &grpcplugin.ClientV3{
+		AdmissionServiceClient:  pluginv3.NewAdmissionServiceClient(conn),
+		ConversionServiceClient: pluginv3.NewConversionServiceClient(conn),
+		RouteServiceClient:      pluginv3.NewRouteServiceClient(conn),
+	}, nil
 }
 
 func (t *pluginManifestsTarget) closeConnections() {
@@ -215,6 +215,10 @@ func (t *pluginManifestsTarget) closeConnections() {
 	}
 	t.connections = nil
 }
+
+// maxPluginManifestsBytes bounds the plugin manifests response, which holds
+// every deployment's manifest and schemas.
+const maxPluginManifestsBytes = 32 << 20 // 32MB
 
 // fetchPluginManifests fetches the plugin-manifests operator's GET /plugins
 // response, decoded as definition.PluginDeployments.
@@ -233,7 +237,7 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 	}
 
 	deployment := &definition.PluginDeployments{}
-	if err := json.NewDecoder(resp.Body).Decode(deployment); err != nil {
+	if err := decodeLimitedJSON(resp.Body, maxPluginManifestsBytes, deployment); err != nil {
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
 	return deployment, nil

@@ -84,8 +84,8 @@ type natsEventSubscriber struct {
 
 func (a natsEventSubscriber) Enabled() bool { return a.sub.Enabled() }
 
-func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (resource.Subscription, error) {
-	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
+func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (resource.Subscription, error) {
+	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
 
 func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber) []sql.StorageBackendOption {
@@ -481,10 +481,10 @@ func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}, []grpc.StreamClientInterceptor{
-			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}
+		middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}, []grpc.StreamClientInterceptor{
+		middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}
 }
 
 func newClientMetrics(reg prometheus.Registerer) *clientMetrics {

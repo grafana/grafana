@@ -292,16 +292,22 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 					return
 				}
 
+				sv, err := b.decrypter.get(ctx, m)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
 				parent.SetName(name)
 				parent.SetRv(m.GetResourceVersion())
 				parent.SetRaw(raw)
+				parent.SetDecryptedSecureValues(sv)
 			}
 			info.Parent = parent
 		}
 		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
 		req.Header.Del(proxyutil.IDHeaderName)
 		if requester, err := identity.GetRequester(ctx); err == nil {
-			proxyutil.ApplyForwardIDHeader(req, requester)
+			proxyutil.ApplyForwardIDHeader(req.Context(), req, requester, nil)
 		}
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}

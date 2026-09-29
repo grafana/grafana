@@ -233,6 +233,7 @@ type ResourceLastImportTime struct {
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
 type StorageBackend interface {
+	WatchInvalidator
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
@@ -387,6 +388,10 @@ type SearchOptions struct {
 	// setting. It selects the index features this server requires, so an index
 	// that predates them is rebuilt before that path serves a query.
 	PostRankAuthzEnabled bool
+
+	// GlobalIndexEnabled builds one index per namespace covering several resource
+	// types, alongside the per-resource indexes.
+	GlobalIndexEnabled bool
 
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
@@ -1556,9 +1561,8 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	// Don't validate the name format here: a lookup with an odd or
-	// invalid-looking name should fall through to the backend and surface as
-	// NotFound, matching K8s Get semantics. Strict name validation belongs on
+	// Don't validate the name format here: the backend reports invalid names as
+	// BadRequest, after the access check. Strict name validation belongs on
 	// writes (Create/Update/Delete).
 	if r := verifyRequestKeyCollection(req.Key); r != nil {
 		return nil, status.Error(codes.InvalidArgument, r.Message)
@@ -2349,6 +2353,10 @@ func (s *server) initWatcher() error {
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
 
+	// Capture before setup: reconnects during subscription or snapshot reads must
+	// expire this watch too, even if it has not entered the live loop yet.
+	reconnectC := s.backend.WatchInvalidation()
+
 	// Treat a closed client transport and cancellation of this watch's context
 	// as clean shutdowns. Errors from setup, storage, authorization, or another
 	// context are still propagated.
@@ -2521,10 +2529,23 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	for {
+		// Prioritize known delivery gaps over buffered live events.
+		select {
+		case <-reconnectC:
+			if ctx.Err() != nil {
+				return nil
+			}
+			return NewResourceVersionExpiredError(since)
+		default:
+		}
 		select {
 		case <-ctx.Done():
 			return nil
-
+		case <-reconnectC:
+			if ctx.Err() != nil {
+				return nil
+			}
+			return NewResourceVersionExpiredError(since)
 		case <-watchExpiryC:
 			// Unlike EOF, Expired forces clients to re-list.
 			s.log.Debug("watch: expiring stream to bound stale-state duration",
