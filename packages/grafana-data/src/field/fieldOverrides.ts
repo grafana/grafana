@@ -34,6 +34,7 @@ import {
 import { type InterpolateFunction, type PanelData } from '../types/panel';
 import { type TimeZone } from '../types/time';
 import { type FieldMatcher } from '../types/transformations';
+import { anyToNumberOrUndefined } from '../utils/anyToNumber';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { locationUtil } from '../utils/location';
 
@@ -493,6 +494,14 @@ export function validateFieldConfig(config: FieldConfig) {
   } else if (!config.color.mode) {
     // Without a mode, skip color altogether
     delete config.color;
+  }
+
+  // min/max set by a data source or saved by Grafana 6.0/6.1 can be strings, and "50" > "100" as strings
+  if (config.min != null) {
+    config.min = anyToNumberOrUndefined(config.min);
+  }
+  if (config.max != null) {
+    config.max = anyToNumberOrUndefined(config.max);
   }
 
   // Verify that max > min (swap if necessary)
