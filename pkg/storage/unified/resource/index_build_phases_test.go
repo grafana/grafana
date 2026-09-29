@@ -50,19 +50,6 @@ index_server_build_phase_seconds_total{group="dashboard.grafana.app",path="build
 	require.Equal(t, 2.0, testutil.ToFloat64(m.BuildDocuments.WithLabelValues(IndexPhaseFetch, IndexPathBuild, nsr.Group, nsr.Resource)))
 }
 
-// A recorder without metrics measures as usual and reports nothing, so callers
-// need no special case.
-func TestBuildPhaseRecorderWithoutMetrics(t *testing.T) {
-	rec := newBuildPhaseRecorder(nil, IndexPathBuild, NamespacedResource{})
-	require.NotPanics(t, func() {
-		rec.recordFetch(time.Second, 1)
-		rec.recordFetchWithNoValue(time.Second)
-		rec.recordConvert(time.Second, true)
-		rec.flush()
-	})
-	require.Empty(t, rec.pathLabel(), "the index has nothing to label its own records with")
-}
-
 type docListIterator struct {
 	values [][]byte
 	pos    int

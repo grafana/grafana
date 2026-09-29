@@ -46,6 +46,6 @@ func NewRemoteResourceClient(cfg *setting.Cfg, tracer trace.Tracer, reg promethe
 		Namespace:             clientCfg.TokenNamespace,
 		Audiences:             []string{"resourceStore"},
 		TokenExchanger:        &oboTokenExchanger{delegate: baseExchanger},
-		CarriesCallerIdentity: true,
+		CarriesCallerIdentity: true, // nolint:staticcheck
 	})
 }

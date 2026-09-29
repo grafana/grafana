@@ -41,6 +41,10 @@ type MockResourceIndex struct {
 	buildInfo IndexBuildInfo
 	docCount  int64
 
+	// What the index reports holding, for reconciliation tests.
+	documentRefs    map[schema.GroupResource][]DocumentRef
+	documentRefsErr error
+
 	// Items passed to BulkIndex, guarded by updateIndexMu.
 	bulkItems []*BulkIndexItem
 
@@ -88,6 +92,26 @@ func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStat
 
 func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
 	return m.docCount, nil
+}
+
+// documentRefs is what ListDocumentRefs answers with, by resource type.
+func (m *MockResourceIndex) ListDocumentRefs(_ context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error] {
+	return func(yield func(DocumentRef, error) bool) {
+		m.updateIndexMu.Lock()
+		refs := slices.Clone(m.documentRefs[gr])
+		err := m.documentRefsErr
+		m.updateIndexMu.Unlock()
+
+		if err != nil {
+			yield(DocumentRef{}, err)
+			return
+		}
+		for _, ref := range refs {
+			if !yield(ref, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -223,6 +247,8 @@ func featuresForTestIndex(keepsDeletedDocuments bool) []IndexFeature {
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
+	// What the previous run left recorded as open, returned by LoadOpenIndexStats.
+	openIndexStats []ResourceStats
 
 	// Recorded on every index this backend builds, standing in for the decision the
 	// real backend makes from its options at creation.
@@ -249,7 +275,7 @@ type buildIndexCall struct {
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
-	return nil, nil
+	return m.openIndexStats, nil
 }
 
 // TestStartupIndexStatsCountLimit checks the cap the startup prebuild passes to
@@ -2264,7 +2290,7 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 
 	// An index reporting no features: what a binary from before the mapping built.
 	older := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{}}}
-	require.False(t, server.keepsDeletedDocuments(older, log.NewNopLogger()))
+	require.False(t, server.keepsDeletedDocuments(key, older, log.NewNopLogger()))
 
 	require.NoError(t, server.indexTrash(t.Context(), key, older, log.NewNopLogger()))
 	require.Empty(t, older.indexedItems(), "trash listing should be skipped entirely")
@@ -2288,7 +2314,7 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 	// order. Treated the same as no markers at all: wait for the rebuild.
 	t.Run("an index with the markers but not the trash fields", func(t *testing.T) {
 		index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}}
-		require.False(t, server.keepsDeletedDocuments(index, log.NewNopLogger()))
+		require.False(t, server.keepsDeletedDocuments(key, index, log.NewNopLogger()))
 	})
 }
 

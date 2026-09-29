@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -42,7 +43,7 @@ func TestIntegrationIndexView(t *testing.T) {
 
 		// nolint:bodyclose
 		resp, html := makeRequest(t, addr, nil)
-		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data:;base-uri 'self';connect-src 'self' grafana.com \*.cartocdn.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self' ;`, resp.Header.Get("Content-Security-Policy"))
+		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data: blob:;base-uri 'self';connect-src 'self' grafana.com \*.cartocdn.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self' ;`, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce="[^"]+"`, html)
 	})
 
@@ -172,7 +173,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
-			authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(store), secretsService)
+			authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(store), secretsService, env.Cfg, nil, tracing.InitializeTracerForTest())
 			require.NoError(t, err)
 
 			// insert user_auth relationship

@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -15,7 +17,40 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+type missingReadBackend struct{ mockStorageBackend }
+
+func (*missingReadBackend) ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse {
+	return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing"}}
+}
+
+func TestLocalResourceClientErrorConversion(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
+			srv, err := NewResourceServer(ResourceServerOptions{
+				Backend: &missingReadBackend{}, GRPCErrorResultToStatus: enabled,
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+			client := NewLocalResourceClient(srv)
+			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+			resp, err := client.Read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+				Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing",
+			}})
+			if !enabled {
+				require.NoError(t, err)
+				require.Equal(t, int32(http.StatusNotFound), resp.GetError().GetCode())
+				return
+			}
+			require.Equal(t, codes.NotFound, status.Code(err))
+			details := status.Convert(err).Details()
+			require.Len(t, details, 1)
+			require.Equal(t, int32(http.StatusNotFound), details[0].(*resourcepb.ErrorResult).Code)
+		})
+	}
+}
 
 func TestIDTokenExtractor(t *testing.T) {
 	t.Run("should return an error when no claims found", func(t *testing.T) {
@@ -37,6 +72,8 @@ func TestNewIDTokenExtractor(t *testing.T) {
 		return types.WithAuthInfo(context.Background(), info)
 	}
 	requireIdentity := func(context.Context) bool { return true }
+	oboOn := func(context.Context) bool { return true }
+	oboOff := func(context.Context) bool { return false }
 
 	for _, tc := range []struct {
 		name      string
@@ -85,6 +122,33 @@ func TestNewIDTokenExtractor(t *testing.T) {
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
 			wantMode: identityModeDenied,
 			wantCode: codes.PermissionDenied,
+		},
+		{
+			name:     "user carried inside the access token goes obo",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: requireIdentity},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t)}),
+			wantMode: identityModeOnBehalfOf,
+		},
+		{
+			// The exchanger carries the caller inside the exchanged token, so the ID token
+			// must stay home: pure obo.
+			name:     "obo takes priority over a present id token",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
+			wantMode: identityModeOnBehalfOf,
+		},
+		{
+			name:      "obo policy off keeps the classic id token transport",
+			cfg:       RemoteResourceClientConfig{OnBehalfOf: oboOff},
+			ctx:       withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
+			wantMode:  identityModeIDToken,
+			wantToken: "id-token",
+		},
+		{
+			name:     "an access token that does not carry the user is not obo",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: func(context.Context) bool { return false }},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: serviceActorToken(t)}),
+			wantMode: identityModeFallbackService,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
