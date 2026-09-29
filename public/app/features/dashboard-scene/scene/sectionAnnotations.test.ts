@@ -260,6 +260,8 @@ describe('section annotations', () => {
       expect(sourceSet.isVisibleTo(clonePanel)).toBe(false);
       expect(cloneSet.isVisibleTo(clonePanel)).toBe(true);
       expect(dashboardSet.isVisibleTo(clonePanel)).toBe(true);
+      expect(sceneGraph.getDataLayers(clonePanel)).toEqual([cloneSet, dashboardSet]);
+      expect(sceneGraph.getDataLayers(panel)).toEqual([sourceSet, dashboardSet]);
     });
 
     it('keeps a repeated tab set away from a nested row in its clone, but not the copied row set', () => {

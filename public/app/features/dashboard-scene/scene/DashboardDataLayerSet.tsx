@@ -115,6 +115,10 @@ export class DashboardDataLayerSet
    */
   public isVisibleTo(sceneObject: SceneObject): boolean {
     const owner = this.parent;
+    if (!owner) {
+      return true;
+    }
+
     let current: SceneObject | undefined = sceneObject;
 
     while (current && current !== owner) {
