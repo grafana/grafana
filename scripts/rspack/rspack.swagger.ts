@@ -3,10 +3,9 @@ import path from 'node:path';
 import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import WebpackBar from 'webpackbar';
 
-import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
 import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
-import { createSwcRule, sassRule, type Env } from './rspack.common.ts';
+import { createSwcRule, cssRule, type Env } from './rspack.common.ts';
 
 export default (env: Env = {}): Configuration => {
   const config: Configuration = {
@@ -38,7 +37,7 @@ export default (env: Env = {}): Configuration => {
       },
       rules: [
         createSwcRule(),
-        sassRule,
+        cssRule,
         {
           test: /\.(svg)(\?.*)?$/,
           type: 'asset/resource',
@@ -69,7 +68,6 @@ export default (env: Env = {}): Configuration => {
       workerChunkLoading: 'import',
     },
     plugins: [
-      new CorsWorkerPlugin(),
       new rspack.CssExtractRspackPlugin({
         filename: env.develop ? '[name].css' : '[name].[contenthash].css',
       }),

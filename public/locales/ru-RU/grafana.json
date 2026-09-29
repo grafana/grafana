@@ -485,6 +485,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Внешние обработчики оповещений",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Источники данных не найдены"
     },
     "alert-menu": {
@@ -2715,6 +2716,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -3020,6 +3023,19 @@
     },
     "rule-list": {
       "configure-datasource": "Настроить",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_few": "",
+        "inline_many": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_few": "",
+        "title_many": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Невозможно загрузить правила для этого источника данных"
       },
@@ -3040,7 +3056,8 @@
         "no-more-results": "Больше нет результатов. Найдено правил: {{numberOfRules}}",
         "no-rules-found": "Ни одно правило оповещения или записи не соответствует текущему набору фильтров.",
         "results-loading": "Поиск — найдено правил: {{numberOfRules}}",
-        "results-with-cancellation": "Поиск отменен. Найдено правил: {{numberOfRules}}"
+        "results-with-cancellation": "Поиск отменен. Найдено правил: {{numberOfRules}}",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Импорт недоступен, пока активна автоматическая синхронизация с Mimir Alertmanager"
@@ -4456,6 +4473,7 @@
       "label-top": "Сверху"
     },
     "name-show-unfilled-area": "Показывать незаполненную область",
+    "name-text-mode": "",
     "name-value-display": "Отображение значений",
     "presets": {
       "basic": "Базовый",
@@ -4474,6 +4492,13 @@
     "suggestions": {
       "basic": "Столбчатый индикатор",
       "lcd": "Столбчатый индикатор: LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Скрыты",
@@ -5874,10 +5899,16 @@
       "paste-panel": "Вставка панели",
       "remove": "Удалить {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Измените заголовок строки",
       "switch-layout": "Переключить макет",
       "switch-layout-row": "Переключить макет",
       "switch-layout-tab": "Переключить макет",
+      "tab-repeat-variable": "",
       "tab-title": "Измените заголовок вкладки",
       "variable-description": "Изменить описание переменной",
       "variable-hide": "Изменить параметр скрытия переменной",
@@ -6126,6 +6157,12 @@
       "ungroup-groups-title": "Разгруппировать вложенные группы?",
       "ungroup-repeat-loss": "Настройки повторения для разгруппируемых групп будут потеряны.",
       "ungroup-repeat-loss-title": "Разгруппировать?"
+    },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} из {{numberOfPages}}",
@@ -6847,7 +6884,14 @@
         "title-remove": "Удалить",
         "title-show-transform-help": "Отображение справки по преобразованию"
       },
-      "title-delete": "Удалить {{name}}?"
+      "title-delete": "Удалить {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -6898,9 +6942,6 @@
     },
     "variable": {
       "description-tooltip": "Описание переменной"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
     },
     "view-panel": {
       "back-to-dashboard": "Назад в дашборд",
@@ -7516,7 +7557,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "При обновлении плагина изменения не сохранятся. Используйте команду <strong>Сохранить как</strong>, чтобы создать пользовательскую версию.",
-        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд",
         "title-plugin-dashboard": "Дашборд плагинов",
         "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
         "would-still-dashboard": "Все равно сохранить дашборд?"
@@ -7786,9 +7826,6 @@
       },
       "label-copy-tags": "Копировать теги",
       "label-folder": "Папка",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд"
-      },
       "required": "Обязательно"
     },
     "save-dashboard-drawer": {
@@ -7835,6 +7872,9 @@
       "save-variables-label-update-default-variable-values": "Изменить значения переменных по умолчанию",
       "show-variables-warning-alert-body": "Не удалось загрузить некоторые переменные. Если установлен флажок «Изменить значения переменных по умолчанию», текущие (неудачные) значения станут значениями по умолчанию для дашборда. Вы можете сохранить эту настройку или снять флажок, чтобы не сохранять эти (неудачные) значения.",
       "show-variables-warning-alert-title": "Не удалось выполнить запросы переменных"
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Отмена",
@@ -9538,6 +9578,8 @@
     "menu": "Открыть меню",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Сохранить",
     "title": "Управление функциями"
   },
@@ -10680,7 +10722,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Оповещение",
       "alerting-settings-label": "Управление правилами оповещения в пользовательском интерфейсе Alerting",
-      "alerting-settings-tooltip": "Управление правилами оповещения для этого источника данных. Чтобы управлять другими ресурсами Alerting, добавьте обработчик оповещений Alertmanager в качестве источника данных.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Сброс",
       "custom-headers-add": "Добавить заголовок",
       "custom-headers-header": "Заголовок",
@@ -10968,6 +11010,7 @@
       "placeholder": "Выбрать"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Фильтровать по значению",
       "cell-filter-out": "Отсеять значение",
       "cell-inspect": "Проверить значение",
@@ -11328,10 +11371,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Активные оповещения",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Инциденты",
       "team-filter-all": "Все команды",
       "team-filter-label": "Фильтр оповещений по команде",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ваши команды",
       "title": "Оповещения и инциденты",
       "title-alerts": "Оповещения",
@@ -13504,7 +13548,7 @@
       "count-truncated_other": "{{count}} первого блокнота загружено"
     },
     "new": {
-      "default-title": "Блокнот № {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Ошибка сохранения",
@@ -15079,12 +15123,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Назад к репозиториям",
       "cleaning-up-resources": "Очистка ресурсов репозитория",
-      "not-found": "не найдено",
       "not-found-message": "Репозиторий не найден",
       "repository-config-exists-configuration": "Убедитесь, что конфигурация репозитория существует в файле конфигурации.",
       "tab-overview": "Обзор",
@@ -15380,26 +15428,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Прежде чем сделать дашборд общедоступным, обратите внимание на следующее:",
-      "data-src-ack-desc": "В настоящее время публикация работает только с подмножеством источников данных*",
-      "data-src-ack-tooltip": "Подробнее об общедоступных источниках данных",
-      "public-ack-desc": "Весь дашборд будет общедоступным*",
-      "public-ack-tooltip": "Подробнее об общедоступных дашбордах",
-      "usage-ack-desc": "Если сделать дашборд общедоступным, запросы будут выполняться каждый раз при его просмотре, что может увеличить затраты*",
-      "usage-ack-desc-tooltip": "Подробнее о кэшировании запросов"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Может просматривать дашборд",
-      "copy-button": "Копировать",
-      "dashboard-url-field-label": "URL-адрес дашборда",
-      "email-share-type-option-label": "Только указанные пользователи",
-      "pause-sharing-dashboard-label": "Приостановить общий доступ к дашборду",
-      "public-share-type-option-label": "Любой, у кого есть ссылка",
-      "revoke-public-URL-button": "Отозвать общедоступный URL-адрес",
-      "revoke-public-URL-button-title": "Отозвать общедоступный URL-адрес",
-      "settings-title": "Параметры"
-    },
     "configuration": {
       "display-annotations-description": "Показывать аннотации на этом дашборде",
       "display-annotations-label": "Показывать аннотации",
@@ -15412,21 +15440,11 @@
       "time-range-label": "Временной диапазон",
       "time-range-tooltip": "Совместно используемый дашборд использует параметры временного диапазона по умолчанию"
     },
-    "create-page": {
-      "generate-public-url-button": "Создать общедоступный URL-адрес",
-      "unsupported-features-desc": "В настоящее время мы не поддерживаем переменные шаблонов или клиентские источники данных",
-      "welcome-title": "Добро пожаловать в общедоступные дашборды!"
-    },
     "email-sharing": {
       "accept-button": "Принять",
       "alert-text": "Плата за совместное использование дашбордов по электронной почте взимается за каждого пользователя в течение 30-дневного срока действия токена независимо от количества совместно используемых дашбордов. Если вы не продлеваете срок действия токена, плата перестает взиматься по истечении 30 дней.",
       "bill-ack": "Я понимаю, что за каждого добавленного пользователя взимается плата.*",
       "cancel-button": "Отмена",
-      "input-invalid-email-text": "Недопустимый адрес электронной почты",
-      "input-required-email-text": "Введите адрес электронной почты",
-      "invite-button": "Пригласить",
-      "invite-field-desc": "Пригласить пользователей по электронной почте",
-      "invite-field-label": "Пригласить",
       "learn-more-button": "Подробнее",
       "recipient-email-placeholder": "Адрес электронной почты",
       "recipient-invalid-email-text": "Недопустимый адрес электронной почты",
@@ -15436,17 +15454,12 @@
       "recipient-list-description": "Доступ к этому дашборду могут получить только те, кого вы напрямую пригласили.",
       "recipient-list-title": "Пользователи с доступом",
       "recipient-required-email-text": "Введите адрес электронной почты",
-      "resend-button": "Повторить отправку",
-      "resend-button-title": "Повторить отправку",
       "resend-invite-label": "Отправить приглашение повторно",
       "revoke-access-label": "Отозвать доступ",
-      "revoke-button": "Отозвать",
-      "revoke-button-title": "Отозвать",
       "success-creation": "Ваш дашборд готов к внешнему совместному использованию",
       "success-share-type-change": "Доступ к дашборду обновлен: теперь доступ по ссылке могут получить только определенные пользователи"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Сохраните изменения в дашборде перед обновлением общедоступной конфигурации",
       "unsupport-data-source-alert-readmore-link": "Подробнее о поддерживаемых источниках данных",
       "unsupported-data-source-alert-title": "Неподдерживаемые источники данных",
       "unsupported-template-variable-alert-desc": "Общедоступный дашборд может не работать, поскольку использует переменные шаблона",
@@ -15460,25 +15473,6 @@
       "public-ack": "Я понимаю, что дашборд будет общедоступным.*",
       "success-creation": "Ваш дашборд теперь является общедоступным",
       "success-share-type-change": "Доступ к дашборду обновлен: теперь он доступен всем, у кого есть ссылка"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Свернуть параметры",
-      "expand-settings-tooltip": "Развернуть параметры"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Временной диапазон по умолчанию",
-      "default-time-range-label-desc": "Общедоступный дашборд использует параметры временного диапазона по умолчанию",
-      "show-annotations-label": "Показать аннотации",
-      "show-annotations-label-desc": "Показывать аннотации на общедоступном дашборде",
-      "time-range-picker-label": "Включен указатель временного диапазона",
-      "time-range-picker-label-desc": "Разрешить просматривающим пользователям менять временной диапазон"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Аннотации = скрыть",
-      "annotations-show-text": "Аннотации = показать",
-      "time-range-picker-disabled-text": "Указатель временного диапазона = отключен",
-      "time-range-picker-enabled-text": "Указатель временного диапазона = включен",
-      "time-range-text": "Временной диапазон = "
     },
     "share": {
       "success-delete": "Ваш дашборд больше не допускает совместного использования"
@@ -15841,6 +15835,10 @@
       "label": "Применить преобразование к",
       "series": "Результаты запросов и преобразований"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Имя запроса уже существует",
       "empty-name": "Пустое имя запроса не допускается"
@@ -16026,6 +16024,12 @@
     "title": "Не удалось найти файл приложения"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Количество символов в сообщении: {{messageLength}}. Это значение превышает максимальную длину в 500 символов. Сократите сообщение, прежде чем сохранить.",
       "title": "Слишком длинное сообщение"
@@ -16275,9 +16279,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Общий доступ"
-    },
     "embed": {
       "copy": "Копировать в буфер обмена",
       "html": "Встроить HTML",
@@ -16324,9 +16325,6 @@
       "time-range-description": "Преобразует текущий относительный временной диапазон в абсолютный.",
       "time-range-label": "Заблокировать временной диапазон"
     },
-    "panel": {
-      "title": "Общий доступ к панели"
-    },
     "snapshot": {
       "cancel-button": "Отмена",
       "copy-link-button": "Копировать",
@@ -16342,16 +16340,11 @@
       "local-button": "Опубликовать снимок",
       "mistake-message": "Вы ошиблись? ",
       "name": "Имя снимка",
-      "timeout": "Время ожидания (сек.)",
-      "timeout-description": "Возможно, вам потребуется настроить значение времени ожидания на случай продолжительного сбора метрик дашборда.",
       "url-label": "URL-адрес снимка"
     },
     "tab-title": {
-      "embed": "Встраивание",
       "export": "Экспорт",
-      "library-panel": "Панель библиотеки",
       "link": "Ссылка",
-      "public-dashboard-title": "Общедоступный дашборд",
       "snapshot": "Снимок"
     },
     "theme-picker": {

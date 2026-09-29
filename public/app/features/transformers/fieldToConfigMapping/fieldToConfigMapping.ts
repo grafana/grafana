@@ -2,6 +2,7 @@ import { isArray } from 'lodash';
 
 import {
   anyToNumber,
+  colorManipulator,
   type DataFrame,
   FieldColorModeId,
   type FieldConfig,
@@ -15,6 +16,7 @@ import {
   type Field,
   FieldType,
 } from '@grafana/data';
+import { config as grafanaConfig } from '@grafana/runtime';
 
 const MAX_DECIMALS = 15;
 
@@ -164,7 +166,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'color',
-    processor: (value) => ({ fixedColor: value, mode: FieldColorModeId.Fixed }),
+    processor: toFixedColorOrUndefined,
   },
   {
     key: 'threshold1',
@@ -296,6 +298,31 @@ function toDecimalsOrUndefined(value: unknown) {
   }
 
   return numeric;
+}
+
+// Panels resolve a fixed color through the theme and then colorManipulator,
+// which throws on anything it cannot parse (such as -3) and blanks the panel.
+// Run the value through the same two steps and skip it if they throw. A looser
+// check such as tinycolor accepts formats like 'ff0000' that still crash.
+// decomposeColor only checks the prefix, so 'rgb(foo)' parses to NaN channels
+// without throwing; skip those too.
+function toFixedColorOrUndefined(value: unknown) {
+  if (typeof value !== 'string') {
+    return;
+  }
+
+  let channels: number[];
+  try {
+    channels = colorManipulator.decomposeColor(grafanaConfig.theme2.visualization.getColorByName(value)).values;
+  } catch {
+    return;
+  }
+
+  if (channels.length < 3 || !channels.every(Number.isFinite)) {
+    return;
+  }
+
+  return { fixedColor: value, mode: FieldColorModeId.Fixed };
 }
 
 export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler | null {

@@ -224,6 +224,9 @@ const (
 	// than or equal to it. The server falls back to this when counting exactly
 	// would be too expensive.
 	TotalHitsAtMost TotalHitsRelation = "lte"
+
+	// TotalHitsUnknown means no count is available; TotalHits is a zero placeholder.
+	TotalHitsUnknown TotalHitsRelation = "unknown"
 )
 
 // ResultsMetadata carries the pagination token and the total hit count.
@@ -233,11 +236,12 @@ type ResultsMetadata struct {
 	Continue string `json:"continue,omitempty"`
 
 	// TotalHits counts the resources matching the query. Always read it together
-	// with TotalHitsRelation, which says whether the count is exact.
+	// with TotalHitsRelation. When the relation is "unknown", this is a zero
+	// placeholder that must not be interpreted as a count.
 	TotalHits int64 `json:"totalHits"`
 
 	// TotalHitsRelation is "eq" when TotalHits is exact and "lte" when it is an
-	// upper bound.
+	// upper bound. "unknown" means no count is available and TotalHits must be ignored.
 	TotalHitsRelation TotalHitsRelation `json:"totalHitsRelation"`
 }
 

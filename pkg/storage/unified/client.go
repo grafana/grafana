@@ -71,7 +71,8 @@ type Options struct {
 	// Subscriber backs the shadow NATS notifier when nats.notifier_shadow is on.
 	// Like Publisher, it is wired in-process so a monolith can run the shadow;
 	// gated on Enabled(), so a disabled bus starts nothing.
-	Subscriber nats.Subscriber
+	Subscriber  nats.Subscriber
+	WatchExpiry resource.WatchExpiry
 }
 
 // natsEventSubscriber adapts nats.Subscriber to resource.EventSubscriber for the
@@ -84,11 +85,11 @@ type natsEventSubscriber struct {
 
 func (a natsEventSubscriber) Enabled() bool { return a.sub.Enabled() }
 
-func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (resource.Subscription, error) {
-	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
+func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (resource.Subscription, error) {
+	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
 
-func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber) []sql.StorageBackendOption {
+func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber, invalidator resource.Invalidator) []sql.StorageBackendOption {
 	var opts []sql.StorageBackendOption
 	if publisher != nil {
 		opts = append(opts, sql.WithEventPublisher(publisher))
@@ -98,7 +99,7 @@ func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subsc
 	}
 	switch {
 	case cfg.NATS.Notifier:
-		opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{sub: subscriber}))
+		opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{sub: subscriber}, invalidator))
 	case cfg.NATS.NotifierShadow:
 		opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: subscriber}))
 	}
@@ -126,7 +127,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV, opts.WatchExpiry)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -163,6 +164,7 @@ func newClient(opts options.StorageOptions,
 	eventPublisher nats.Publisher,
 	eventSubscriber nats.Subscriber,
 	experimentalKV *resource.ExperimentalKVOptions,
+	watchExpiry resource.WatchExpiry,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -174,7 +176,8 @@ func newClient(opts options.StorageOptions,
 		}
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
+			Backend:                 backend,
+			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
 			},
@@ -233,7 +236,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
-			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber)...)
+			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber, watchExpiry)...)
 		if experimentalKV != nil {
 			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
 		}
@@ -249,6 +252,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		serverOptions := sql.ServerOptions{
+			WatchExpiry:    watchExpiry,
 			Backend:        backend,
 			VectorBackend:  vectorBackend,
 			Embedder:       embedderInstance,
@@ -480,10 +484,10 @@ func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}, []grpc.StreamClientInterceptor{
-			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}
+		middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}, []grpc.StreamClientInterceptor{
+		middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}
 }
 
 func newClientMetrics(reg prometheus.Registerer) *clientMetrics {

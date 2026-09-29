@@ -30,10 +30,11 @@ interface Rudderstack {
       };
       queueOptions?: {
         maxAttempts?: number;
-        batch?: {
-          enabled?: boolean;
-          flushInterval?: number;
-        };
+      };
+      useBeacon?: boolean;
+      beaconQueueOptions?: {
+        maxItems?: number;
+        flushQueueInterval?: number;
       };
     }
   ) => void;
