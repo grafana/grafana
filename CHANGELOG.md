@@ -2,6 +2,13 @@
 
 # 12.4.12 (2026-09-29)
 
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+- Security: Fix CVE-2026-81842
+
 ### Bug fixes
 
 - **Unified Storage:** Return 403 instead of 500 on namespace mismatch [#133595](https://github.com/grafana/grafana/pull/133595), [@pstibrany](https://github.com/pstibrany)
