@@ -170,3 +170,15 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 - **Frontend tests**: The `yarn test` script includes `--watch` by default. Always use `yarn jest --no-watch` or add `--watchAll=false` to run tests once and exit.
 - **Backend tests**: Some packages (e.g. `pkg/api/`) have slow test compilation (~2 min) due to large dependency graphs. Use targeted test runs with `-run TestName` where possible.
 - All standard build/test/lint commands are documented in the Commands section above.
+
+## Learned User Preferences
+
+- Don't do visual or browser checks (screenshots, clicking through the UI, theme toggling) unless asked; verify with typecheck, lint, and existing tests, and say what wasn't checked in a browser.
+- For prototype or PoC work, don't write new tests unless asked; still run the existing tests, typecheck, and lint for the touched area and fix anything the change breaks.
+
+## Learned Workspace Facts
+
+- The workspace is multi-root: `grafana` and `grafana-assistant-app` are sibling checkouts under `/Users/bogdan/Workspace/Grafana/`, and features such as Insights span both repos.
+- Local core Grafana loads the Assistant app plugin from `/Users/bogdan/Workspace/Grafana/plugins` (configured in `conf/custom.ini`; its `plugin` entry symlinks to `grafana-assistant-app/apps/plugin`), and the Assistant backend runs from the assistant-app repo via `mise run up:api` (Docker Compose project `grafana-assistant-app`).
+- When the Assistant returns an empty or failed answer locally, check `docker logs grafana-assistant-app-api-1`, because the inline Assistant SDK reports backend errors as an empty answer; edits to the assistant-app `.env` only apply after recreating the container (`docker compose up -d --force-recreate api` or `mise run up`), not after a restart.
+- In `grafana-assistant-app`, when pnpm's dependency check wants to reinstall `node_modules` (for example after a lockfile change), run the tools directly: `mise exec -- ./node_modules/.bin/jest --watch=false <path>` and `mise exec -- node node_modules/typescript-native/bin/tsc --noEmit` from `apps/plugin`, and `mise exec -- ./node_modules/.bin/biome check <paths>` from the repo root.

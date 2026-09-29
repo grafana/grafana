@@ -1,13 +1,36 @@
-import { getFieldDisplayName, LoadingState, type PanelData } from '@grafana/data';
+import {
+  type DataFrame,
+  type Field,
+  FieldType,
+  getFieldDisplayName,
+  LoadingState,
+  type PanelData,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
 
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
+import { getMissingRefLabel, getMissingSectionRefs, getPanelLocation, resolveInsightSourceKeys } from './sections';
 import { getInsightSourceData, getInsightSourcePanels, type InsightSourcePanel } from './sources';
-import { type InsightContext, type InsightQuestion, type InsightSnapshot } from './types';
+import {
+  type InsightContext,
+  type InsightFieldStats,
+  type InsightQuestion,
+  type InsightSnapshot,
+  type InsightSnapshotField,
+  type InsightSnapshotFrame,
+} from './types';
 
 export const MAX_INSIGHT_INPUT_CHARACTERS = 100_000;
+const SUMMARY_BUCKETS = 60;
+
+// The note travels with the data so follow-up chats, which use a different prompt, read summaries correctly.
+const SUMMARY_NOTE =
+  'Too many points to send exactly. Time values are bucket start times. Numeric values are the mean of each bucket, or null when a bucket has no points. Each numeric field’s stats are exact over all original points.';
+
+/** A source is off screen and has not run its query yet; asking loads it. */
+export class InsightSourceNotLoadedError extends Error {}
 
 export function getInsightContext(dashboard: DashboardSceneLike, question: string): InsightContext {
   const timeRange = sceneGraph.getTimeRange(dashboard).state.value;
@@ -25,7 +48,187 @@ export function getInsightContext(dashboard: DashboardSceneLike, question: strin
   };
 }
 
-type InsightSourceWithData = Omit<InsightSourcePanel, 'panel'> & { data?: PanelData };
+type InsightSourceWithData = Pick<InsightSourcePanel, 'key' | 'title' | 'description'> & {
+  section?: string;
+  /** False when the panel is off screen, for example in another tab, so its data only loads on request. */
+  active: boolean;
+  data?: PanelData;
+};
+
+function readySeries(source: InsightSourceWithData, context: InsightContext): DataFrame[] {
+  const { data, title } = source;
+  const notLoaded = t(
+    'dashboard.insights.snapshot.source-not-loaded',
+    '“{{title}}” hasn’t loaded yet. Open it on the dashboard, then ask again.',
+    { title }
+  );
+  if (!data || data.state === LoadingState.NotStarted) {
+    throw new InsightSourceNotLoadedError(notLoaded);
+  }
+  if (data.state !== LoadingState.Done) {
+    throw new Error(
+      t(
+        'dashboard.insights.snapshot.source-not-ready',
+        '“{{title}}” is not ready. Wait for its query to finish successfully, then try again.',
+        { title }
+      )
+    );
+  }
+  if (data.error || data.errors?.length) {
+    throw new Error(
+      t(
+        'dashboard.insights.snapshot.source-error',
+        '“{{title}}” has a query error. Resolve it before asking Assistant.',
+        { title }
+      )
+    );
+  }
+  if (!data.series.some((frame) => frame.length > 0 && frame.fields.length > 0)) {
+    throw new Error(
+      t(
+        'dashboard.insights.snapshot.source-empty',
+        '“{{title}}” has no data for this selection. Adjust the filters or time range.',
+        { title }
+      )
+    );
+  }
+  // Panel time overrides are not supported: refuse to describe mismatched ranges as one dashboard interval.
+  if (
+    data.timeRange &&
+    (data.timeRange.from.toISOString() !== context.from || data.timeRange.to.toISOString() !== context.to)
+  ) {
+    if (!source.active) {
+      throw new InsightSourceNotLoadedError(notLoaded);
+    }
+    throw new Error(
+      t(
+        'dashboard.insights.snapshot.source-time-range',
+        '“{{title}}” uses a different time range. Wait for it to refresh or select matching panels.',
+        { title }
+      )
+    );
+  }
+  return data.series;
+}
+
+function exactField(field: Field, frame: DataFrame, series: DataFrame[]): InsightSnapshotField {
+  return {
+    name: getFieldDisplayName(field, frame, series),
+    type: field.type,
+    unit: field.config.unit,
+    labels: field.labels,
+    values: Array.from(field.values),
+  };
+}
+
+/** Stats while scanning; times stay epoch milliseconds until the result is serialized. */
+type RunningStats = Record<Exclude<keyof InsightFieldStats, 'mean'> | 'sum', number>;
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function round(value: number): number {
+  return Number(value.toPrecision(6));
+}
+
+/** Only wide numeric time series can be averaged without dropping or reinterpreting values. */
+function summarizeFrame(frame: DataFrame, series: DataFrame[]): InsightSnapshotFrame | undefined {
+  const timeFields = frame.fields.filter((field) => field.type === FieldType.time);
+  if (
+    frame.length <= SUMMARY_BUCKETS ||
+    timeFields.length !== 1 ||
+    frame.fields.length < 2 ||
+    frame.fields.some((field) => field.type !== FieldType.time && field.type !== FieldType.number)
+  ) {
+    return undefined;
+  }
+  const values: unknown[] = Array.from(timeFields[0].values);
+  if (!values.every(isFiniteNumber)) {
+    return undefined;
+  }
+  const times: number[] = values;
+  const start = times.reduce((min, time) => Math.min(min, time));
+  const end = times.reduce((max, time) => Math.max(max, time));
+  const bucketMs = Math.max(1000, Math.ceil((end - start + 1) / SUMMARY_BUCKETS / 1000) * 1000);
+  const buckets = Math.floor((end - start) / bucketMs) + 1;
+  const bucketStarts = Array.from({ length: buckets }, (_, index) => new Date(start + index * bucketMs).toISOString());
+
+  const summarizeField = (field: Field): InsightSnapshotField => {
+    const sums = new Array<number>(buckets).fill(0);
+    const counts = new Array<number>(buckets).fill(0);
+    let stats: RunningStats | undefined;
+    Array.from(field.values).forEach((value, row) => {
+      const time = times[row];
+      if (!isFiniteNumber(value)) {
+        return;
+      }
+      const bucket = Math.floor((time - start) / bucketMs);
+      sums[bucket] += value;
+      counts[bucket] += 1;
+      stats ??= {
+        count: 0,
+        sum: 0,
+        first: value,
+        firstAt: time,
+        last: value,
+        lastAt: time,
+        min: value,
+        minAt: time,
+        max: value,
+        maxAt: time,
+      };
+      stats.count += 1;
+      stats.sum += value;
+      if (time < stats.firstAt) {
+        stats.first = value;
+        stats.firstAt = time;
+      }
+      if (time > stats.lastAt) {
+        stats.last = value;
+        stats.lastAt = time;
+      }
+      if (value < stats.min) {
+        stats.min = value;
+        stats.minAt = time;
+      }
+      if (value > stats.max) {
+        stats.max = value;
+        stats.maxAt = time;
+      }
+    });
+    const iso = (time: number) => new Date(time).toISOString();
+    return {
+      name: getFieldDisplayName(field, frame, series),
+      type: field.type,
+      unit: field.config.unit,
+      labels: field.labels,
+      values: sums.map((sum, bucket) => (counts[bucket] ? round(sum / counts[bucket]) : null)),
+      stats: stats && {
+        count: stats.count,
+        first: stats.first,
+        firstAt: iso(stats.firstAt),
+        last: stats.last,
+        lastAt: iso(stats.lastAt),
+        min: stats.min,
+        minAt: iso(stats.minAt),
+        max: stats.max,
+        maxAt: iso(stats.maxAt),
+        mean: round(stats.sum / stats.count),
+      },
+    };
+  };
+
+  return {
+    name: frame.name,
+    summary: { note: SUMMARY_NOTE, originalRows: frame.length, buckets, bucketSeconds: bucketMs / 1000 },
+    fields: frame.fields.map((field) =>
+      field.type === FieldType.time
+        ? { name: getFieldDisplayName(field, frame, series), type: field.type, values: bucketStarts }
+        : summarizeField(field)
+    ),
+  };
+}
 
 /** Never queries a datasource or silently drops a selected source; throws a user-facing message instead. */
 export function buildInsightSnapshot(
@@ -42,7 +245,7 @@ export function buildInsightSnapshot(
     );
   }
 
-  const panels = [...new Set(selectedKeys)].map((key) => {
+  const sources = [...new Set(selectedKeys)].map((key) => {
     const source = available.find((candidate) => candidate.key === key);
     if (!source) {
       throw new Error(
@@ -52,71 +255,37 @@ export function buildInsightSnapshot(
         )
       );
     }
-    const { data, title } = source;
-    if (!data || data.state !== LoadingState.Done) {
-      throw new Error(
-        t(
-          'dashboard.insights.snapshot.source-not-ready',
-          '“{{title}}” is not ready. Wait for its query to finish successfully, then try again.',
-          { title }
-        )
-      );
-    }
-    if (data.error || data.errors?.length) {
-      throw new Error(
-        t(
-          'dashboard.insights.snapshot.source-error',
-          '“{{title}}” has a query error. Resolve it before asking Assistant.',
-          { title }
-        )
-      );
-    }
-    if (!data.series.some((frame) => frame.length > 0 && frame.fields.length > 0)) {
-      throw new Error(
-        t(
-          'dashboard.insights.snapshot.source-empty',
-          '“{{title}}” has no data for this selection. Adjust the filters or time range.',
-          { title }
-        )
-      );
-    }
-    // Panel time overrides are not supported: refuse to describe mismatched ranges as one dashboard interval.
-    if (
-      data.timeRange &&
-      (data.timeRange.from.toISOString() !== context.from || data.timeRange.to.toISOString() !== context.to)
-    ) {
-      throw new Error(
-        t(
-          'dashboard.insights.snapshot.source-time-range',
-          '“{{title}}” uses a different time range. Wait for it to refresh or select matching panels.',
-          { title }
-        )
-      );
-    }
-
-    return {
-      key,
-      title,
-      description: source.description,
-      frames: data.series.map((frame) => ({
-        name: frame.name,
-        fields: frame.fields.map((field) => ({
-          name: getFieldDisplayName(field, frame, data.series),
-          type: field.type,
-          unit: field.config.unit,
-          labels: field.labels,
-          values: Array.from(field.values),
-        })),
-      })),
-    };
+    return { source, series: readySeries(source, context) };
   });
 
-  const serialized = JSON.stringify({ ...context, question: context.question.trim(), panels });
+  const serialize = (summarize: boolean) =>
+    JSON.stringify({
+      ...context,
+      question: context.question.trim(),
+      panels: sources.map(({ source, series }) => ({
+        key: source.key,
+        title: source.title,
+        description: source.description,
+        section: source.section,
+        frames: series.map(
+          (frame): InsightSnapshotFrame =>
+            (summarize && summarizeFrame(frame, series)) || {
+              name: frame.name,
+              fields: frame.fields.map((field) => exactField(field, frame, series)),
+            }
+        ),
+      })),
+    });
+
+  let serialized = serialize(false);
+  if (serialized.length > MAX_INSIGHT_INPUT_CHARACTERS) {
+    serialized = serialize(true);
+  }
   if (serialized.length > MAX_INSIGHT_INPUT_CHARACTERS) {
     throw new Error(
       t(
         'dashboard.insights.snapshot.too-large',
-        'The selected data is too large to send. Select fewer panels or a shorter time range.'
+        'The selected data is too large to send, even after summarizing time series. Select fewer panels, series, or table rows.'
       )
     );
   }
@@ -125,17 +294,48 @@ export function buildInsightSnapshot(
   return frozen;
 }
 
-export function captureInsightSnapshot(
-  dashboard: DashboardSceneLike,
-  question: InsightQuestion
-): { context: InsightContext; snapshot?: InsightSnapshot; unavailable?: string } {
+export interface InsightCapture {
+  context: InsightContext;
+  /** The panels the question's sources resolve to now; a tab or row expands to the panels inside it. */
+  keys: string[];
+  snapshot?: InsightSnapshot;
+  unavailable?: string;
+  /** Some sources are off screen and have not loaded yet. Asking loads them, so this does not block it. */
+  unloaded?: boolean;
+}
+
+export function captureInsightSnapshot(dashboard: DashboardSceneLike, question: InsightQuestion): InsightCapture {
   const context = getInsightContext(dashboard, question.question);
-  const available = getInsightSourcePanels(dashboard)
-    .filter((source) => question.sourcePanelKeys.includes(source.key))
-    .map((source) => ({ ...source, data: getInsightSourceData(source.panel) }));
+  const sources = getInsightSourcePanels(dashboard);
+  const keys = resolveInsightSourceKeys(question.sourcePanelKeys, sources);
   try {
-    return { context, snapshot: buildInsightSnapshot(context, question.sourcePanelKeys, available) };
+    const [missing] = getMissingSectionRefs(question.sourcePanelKeys, sources);
+    if (missing !== undefined) {
+      throw new Error(
+        t(
+          'dashboard.insights.snapshot.section-unavailable',
+          '“{{title}}” is no longer on this dashboard or has no panels with queries. Edit the question to update its sources.',
+          { title: getMissingRefLabel(missing) }
+        )
+      );
+    }
+    const available = sources
+      .filter((source) => keys.includes(source.key))
+      .map((source) => ({
+        key: source.key,
+        title: source.title,
+        description: source.description,
+        section: getPanelLocation(source) || undefined,
+        active: source.panel.isActive,
+        data: getInsightSourceData(source.panel),
+      }));
+    return { context, keys, snapshot: buildInsightSnapshot(context, keys, available) };
   } catch (error) {
-    return { context, unavailable: error instanceof Error ? error.message : String(error) };
+    return {
+      context,
+      keys,
+      unavailable: error instanceof Error ? error.message : String(error),
+      unloaded: error instanceof InsightSourceNotLoadedError,
+    };
   }
 }
