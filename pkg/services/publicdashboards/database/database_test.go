@@ -706,8 +706,8 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 		const at = "accessToken"
 		const uid = "abc123"
 
-		cmd := models.SavePublicDashboardCommand{
-			PublicDashboard: models.PublicDashboard{
+		cmd := SavePublicDashboardCommand{
+			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          uid,
 				DashboardUid: savedDashboard.UID,
