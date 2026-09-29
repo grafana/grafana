@@ -27,7 +27,9 @@ import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/co
 import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
 import { InspectTab } from 'app/features/inspector/types';
 import { AddPanelToNotebookScene } from 'app/features/notebook/addPanel/AddPanelToNotebookScene';
-import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
+import { getRecentNotebook } from 'app/features/notebook/addPanel/recentNotebook';
+import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
+import { canAddPanelToNotebook, canEditNotebooks } from 'app/features/notebook/permissions';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -391,12 +393,31 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
 
       items.push({
-        text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
+        text: t('panel.header-menu.add-to-notebook', 'Add to notebook…'),
         iconClassName: 'search',
         onClick: () => {
           dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
       });
+
+      const recent = canEditNotebooks() ? getRecentNotebook() : undefined;
+      if (recent) {
+        items.push({
+          text: t('panel.header-menu.add-to-recent-notebook', 'Add to "{{title}}"', { title: recent.title }),
+          iconClassName: 'book',
+          onClick: async () => {
+            const { quickAddPanelToNotebook } = await import('app/features/notebook/addPanel/quickAddPanelToNotebook');
+            const modal = new AddPanelToNotebookScene({ panelRef: panel.getRef() });
+            await quickAddPanelToNotebook(
+              modal.buildPanel,
+              NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
+              modal.isLibraryPanel(),
+              () => dashboard.showModal(modal),
+              `${dashboard.state.uid}:${panel.getPathId()}`
+            );
+          },
+        });
+      }
     }
 
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {

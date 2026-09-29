@@ -38,6 +38,7 @@ import {
   addPanelToExistingNotebook,
   createNotebookWithPanel,
 } from './addPanelToNotebook';
+import { setRecentNotebook } from './recentNotebook';
 import { getSortOptions, useNotebookPicker } from './useNotebookPicker';
 
 const FORM_ID = 'add-panel-to-notebook';
@@ -133,6 +134,8 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
               entryPoint,
               isLibraryPanel
             );
+
+        setRecentNotebook(added.uid, added.title);
 
         dispatch(
           notifyApp(
