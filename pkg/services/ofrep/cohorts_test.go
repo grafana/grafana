@@ -681,6 +681,176 @@ func TestCohortRealGOFF(t *testing.T) {
 			}
 		})
 	}
+	t.Run("odin enrollment", func(t *testing.T) { testCohortRealGOFFOdin(t, endpoint) })
+}
+
+// testCohortRealGOFFOdin follows the Odin enrollment path (grafana/hackathon-14-grafana-odin#261)
+// against the fixture's AssignmentFlag demo flags: odin-demo has no cohort gate, and
+// odin-demo-cohort gates only its allocate rule on the "pilot" cohort. The Experiments backend
+// sends experimentAssignment "allocate" once and then pins the committed arm, and the browser's
+// bulk refetch carries the same attributes.
+func testCohortRealGOFFOdin(t *testing.T, endpoint string) {
+	var unavailable, gcomCalls atomic.Int32
+	var resolver *cohortResolver
+	resolver = cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+		gcomCalls.Add(1)
+		refreshed := resolver.now().Format(time.RFC3339Nano)
+		switch {
+		case unavailable.Load() == 1:
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
+		case r.URL.Path == "/instances/1" || r.URL.Path == "/instances/2":
+			_, _ = io.WriteString(w, `{"orgId":11}`)
+		case r.URL.Path == "/instances/3":
+			_, _ = io.WriteString(w, `{"orgId":12}`)
+		case r.URL.Path == "/growth/cohorts/11":
+			_, _ = fmt.Fprintf(w, `{"cohorts":["pilot"],"snapshot":{"version":"v1","refreshedAt":%q}}`, refreshed)
+		case r.URL.Path == "/growth/cohorts/12":
+			_, _ = fmt.Fprintf(w, `{"cohorts":[],"snapshot":{"version":"v1","refreshedAt":%q}}`, refreshed)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+	advance := cohortClock(resolver, time.Now())
+	b := withCohorts(newTestBuilder(t, endpoint), resolver)
+	b.EnableLegacyOverrideLookupBypass(mustParseURL(t, endpoint), nil)
+
+	type flag struct {
+		Key       string         `json:"key"`
+		Value     any            `json:"value"`
+		ErrorCode string         `json:"errorCode"`
+		Metadata  map[string]any `json:"metadata"`
+	}
+	// The context the Experiments backend and the browser send: flat, lowercase "context".
+	request := func(ns string, identityType types.IdentityType, experiment, participant, assignment string) *http.Request {
+		body, err := json.Marshal(map[string]any{"context": map[string]string{
+			"targetingKey": ns, "namespace": ns, "stackId": strings.TrimPrefix(ns, "stacks-"),
+			"experimentParticipantKey": participant, "experimentName": experiment, "experimentAssignment": assignment,
+		}})
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, ofrepPath, bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		return req.WithContext(types.WithAuthInfo(req.Context(), &identity.StaticRequester{Namespace: ns, Type: identityType}))
+	}
+	evaluate := func(t *testing.T, key string, req *http.Request) flag {
+		t.Helper()
+		w := httptest.NewRecorder()
+		b.oneFlagHandler(w, mux.SetURLVars(req, map[string]string{"flagKey": key}))
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var f flag
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &f))
+		require.Empty(t, f.ErrorCode, key)
+		return f
+	}
+	arm := func(t *testing.T, f flag) string {
+		t.Helper()
+		require.Contains(t, []any{"control", "treatment"}, f.Value, f.Key)
+		return f.Value.(string)
+	}
+
+	t.Run("flag metadata", func(t *testing.T) {
+		keys, reason, ok := resolver.cohortFlags(context.Background(), b.goffURL, b.transport)
+		require.True(t, ok, reason)
+		require.True(t, keys["odin-demo-cohort"])
+		require.NotContains(t, keys, "odin-demo")
+		// Stack 4 is not allowlisted, so pinned evaluations never reach GCOM.
+		for key, cohortTargeting := range map[string]bool{"odin-demo": false, "odin-demo-cohort": true} {
+			f := evaluate(t, key, request("stacks-4", types.TypeServiceAccount, key, "v1-meta", "control"))
+			require.Equal(t, "control", f.Value, key)
+			require.Equal(t, key, f.Metadata["experimentName"], key)
+			require.Equal(t, "enrollment", f.Metadata["assignmentModel"], key)
+			require.Equal(t, cohortTargeting, f.Metadata["cohortTargeting"], key)
+		}
+		require.Zero(t, gcomCalls.Load())
+	})
+
+	t.Run("service account allocates odin-demo without GCOM", func(t *testing.T) {
+		skipped := testutil.ToFloat64(resolver.outcomes.WithLabelValues("skipped", "no_cohort_flags"))
+		for _, identityType := range []types.IdentityType{types.TypeServiceAccount, types.TypeAccessPolicy, types.TypeUser} {
+			arm(t, evaluate(t, "odin-demo", request("stacks-1", identityType, "odin-demo", "v1-alice", "allocate")))
+		}
+		require.Equal(t, "excluded", evaluate(t, "odin-demo", request("stacks-1", types.TypeServiceAccount, "ds-setup-help", "v1-alice", "allocate")).Value)
+		require.Equal(t, "excluded", evaluate(t, "odin-demo", request("stacks-1", types.TypeServiceAccount, "odin-demo", "v1-alice", "")).Value)
+		require.Zero(t, gcomCalls.Load())
+		requireOutcome(t, resolver, "skipped", "no_cohort_flags", skipped+5)
+	})
+
+	t.Run("odin-demo-cohort allocates only pilot organizations", func(t *testing.T) {
+		for _, identityType := range []types.IdentityType{types.TypeServiceAccount, types.TypeAccessPolicy} {
+			arm(t, evaluate(t, "odin-demo-cohort", request("stacks-1", identityType, "odin-demo-cohort", "v1-alice", "allocate")))
+		}
+		require.NotZero(t, gcomCalls.Load(), "a cohort-gated allocation must look up GCOM")
+		require.Equal(t, "excluded", evaluate(t, "odin-demo-cohort", request("stacks-3", types.TypeServiceAccount, "odin-demo-cohort", "v1-bob", "allocate")).Value)
+		// A stack outside the allowlist has no cohort data and is never looked up.
+		calls := gcomCalls.Load()
+		require.Equal(t, "excluded", evaluate(t, "odin-demo-cohort", request("stacks-4", types.TypeServiceAccount, "odin-demo-cohort", "v1-carol", "allocate")).Value)
+		require.Equal(t, calls, gcomCalls.Load())
+	})
+
+	t.Run("two users on one stack get different arms deterministically", func(t *testing.T) {
+		arms := map[string]string{}
+		for i := 0; i < 64 && len(arms) < 2; i++ {
+			participant := fmt.Sprintf("v1-user-%d", i)
+			got := arm(t, evaluate(t, "odin-demo", request("stacks-2", types.TypeServiceAccount, "odin-demo", participant, "allocate")))
+			require.Equal(t, got, arm(t, evaluate(t, "odin-demo", request("stacks-2", types.TypeServiceAccount, "odin-demo", participant, "allocate"))), participant)
+			arms[got] = participant
+		}
+		require.Len(t, arms, 2, "participants on one stack must be able to land in different arms")
+	})
+
+	t.Run("pinned assignments survive unavailable cohort data", func(t *testing.T) {
+		unavailable.Store(1)
+		advance(3 * time.Hour)
+		before := testutil.ToFloat64(resolver.outcomes.WithLabelValues("unavailable", "upstream_5xx"))
+		require.Equal(t, "excluded", evaluate(t, "odin-demo-cohort", request("stacks-1", types.TypeServiceAccount, "odin-demo-cohort", "v1-alice", "allocate")).Value)
+		for _, pinned := range []string{"treatment", "control"} {
+			require.Equal(t, pinned, evaluate(t, "odin-demo-cohort", request("stacks-1", types.TypeServiceAccount, "odin-demo-cohort", "v1-alice", pinned)).Value)
+		}
+		require.Equal(t, before+3, testutil.ToFloat64(resolver.outcomes.WithLabelValues("unavailable", "upstream_5xx")))
+		unavailable.Store(0)
+		advance(2 * time.Second)
+	})
+
+	t.Run("bulk refetch returns the changed attributes", func(t *testing.T) {
+		bulk := func(t *testing.T, assignment, etag string) *httptest.ResponseRecorder {
+			t.Helper()
+			req := request("stacks-1", types.TypeUser, "odin-demo", "v1-alice", assignment)
+			if etag != "" {
+				req.Header.Set("If-None-Match", etag)
+			}
+			w := httptest.NewRecorder()
+			b.allFlagsHandler(w, req)
+			return w
+		}
+		values := func(t *testing.T, w *httptest.ResponseRecorder) map[string]any {
+			t.Helper()
+			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			var response struct {
+				Flags []flag `json:"flags"`
+			}
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
+			got := map[string]any{}
+			for _, f := range response.Flags {
+				got[f.Key] = f.Value
+			}
+			return got
+		}
+		first := bulk(t, "control", "")
+		require.Equal(t, "control", values(t, first)["odin-demo"])
+		etag := first.Header().Get("ETag")
+		require.NotEmpty(t, etag, "the relay sets an ETag on bulk evaluation")
+
+		// Only the custom attributes change, so the web provider keeps its ETag and sends it.
+		changed := bulk(t, "treatment", etag)
+		got := values(t, changed)
+		require.Equal(t, "treatment", got["odin-demo"])
+		require.Equal(t, "excluded", got["odin-demo-cohort"], "odin-demo-cohort ignores another experiment's attributes")
+		require.NotEqual(t, etag, changed.Header().Get("ETag"))
+
+		// An unchanged context with the current ETag is answered 304 through MTFF.
+		unchanged := bulk(t, "treatment", changed.Header().Get("ETag"))
+		require.Equal(t, http.StatusNotModified, unchanged.Code, unchanged.Body.String())
+		require.Empty(t, unchanged.Body.Bytes())
+	})
 }
 
 func TestCohortRejectsUnsafeConfiguration(t *testing.T) {
@@ -983,4 +1153,48 @@ func TestCohortFlagConfigRefreshAndCoalescing(t *testing.T) {
 	_, _, ok = resolver.cohortFlags(context.Background(), b.goffURL, b.transport)
 	require.True(t, ok)
 	require.EqualValues(t, 2, fetches.Load())
+}
+
+// Odin's enrollment attributes are not reserved, so the scrub forwards them byte for byte for every
+// enriched identity type, next to the MTFF-set cohort attributes.
+func TestCohortForwardsOdinAttributes(t *testing.T) {
+	now := time.Now()
+	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) { cohortResponse(w, r, now) })
+	cohortClock(resolver, now)
+	b, _, captured := cohortGOFF(t, func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `{"flags":{"odin-demo":{"metadata":{"cohortTargeting":false}},"odin-demo-cohort":{"metadata":{"cohortTargeting":true}}}}`)
+	})
+	withCohorts(b, resolver)
+	odin := map[string]string{
+		"targetingKey":             `"stacks-1"`,
+		"namespace":                `"stacks-1"`,
+		"stackId":                  `"1"`,
+		"experimentParticipantKey": `"v1-7qk3m2abcdefghijklmnopqr"`,
+		"experimentName":           `"odin-demo-cohort"`,
+		"experimentAssignment":     `"allocate"`,
+	}
+	for _, identityType := range []types.IdentityType{types.TypeServiceAccount, types.TypeAccessPolicy, types.TypeUser} {
+		for _, flagKey := range []string{"odin-demo", "odin-demo-cohort", ""} {
+			body := `{"context":{`
+			for k, v := range odin {
+				body += fmt.Sprintf("%q:%s,", k, v)
+			}
+			body = strings.TrimSuffix(body, ",") + `}}`
+			req := httptest.NewRequest(http.MethodPost, ofrepPath, strings.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			req = req.WithContext(types.WithAuthInfo(req.Context(), &identity.StaticRequester{Namespace: "stacks-1", Type: identityType}))
+			w := httptest.NewRecorder()
+			if flagKey == "" {
+				b.allFlagsHandler(w, req)
+			} else {
+				b.oneFlagHandler(w, mux.SetURLVars(req, map[string]string{"flagKey": flagKey}))
+			}
+			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			attrs := <-captured
+			for k, v := range odin {
+				require.Equal(t, v, string(attrs[k]), "%s %s %q", k, identityType, flagKey)
+			}
+			require.Equal(t, fmt.Sprint(flagKey != "odin-demo"), string(attrs["growthCohortsAvailable"]), "%s %q", identityType, flagKey)
+		}
+	}
 }
