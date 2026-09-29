@@ -63,11 +63,11 @@ Additionally, it provides formatting options and syntax highlighting, as well as
 
 To learn more, click the following links:
 
-- [Editor views](#editor-views)
-- [Formatting toolbar](#formatting-toolbar)
-- [Text modes](#text-modes)
+- [Editor views](#views)
+- [Formatting toolbar](#toolbar)
+- [Modes](#modes)
 
-### Editor views
+### Views
 
 The editor provides three views:
 
@@ -75,7 +75,7 @@ The editor provides three views:
 - **Split**: See the authoring and preview blocks at the same time.
 - **Write**: See only the authoring block.
 
-### Formatting toolbar
+### Toolbar
 
 The toolbar provides formatting options for common Markdown and HTML operations, like bold or italic text and lists.
 You can also insert:
@@ -88,7 +88,7 @@ Dashboard variables autocomplete as you enter them, and they're interpolated in 
 
 The options displayed in the formatting toolbar depend on the mode you select.
 
-### Text modes
+### Modes
 
 The visualization mode determines how embedded content appears.
 Choose from:
