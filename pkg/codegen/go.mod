@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/codegen
 
-go 1.26.6
+go 1.27.1
 
 require (
 	cuelang.org/go v0.17.1
