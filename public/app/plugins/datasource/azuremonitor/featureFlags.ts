@@ -1,5 +1,5 @@
-import { MultiProvider, OpenFeature, ProviderEvents } from '@openfeature/web-sdk';
-import { useEffect, useState } from 'react';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { MultiProvider, OpenFeature } from '@openfeature/web-sdk';
 
 import { createOpenFeatureLocalStorageProvider, createOpenFeatureOFREPWebProvider } from '@grafana/runtime';
 
@@ -41,23 +41,5 @@ export function isBatchAPIFlagEnabled(): boolean {
 
 /** React hook for the flag; re-renders when the provider (re)initializes. */
 export function useBatchAPIFlag(): boolean {
-  const [enabled, setEnabled] = useState(isBatchAPIFlagEnabled);
-
-  useEffect(() => {
-    const client = OpenFeature.getClient(OPEN_FEATURE_DOMAIN);
-    // Provider events fire before the client exposes the new values, so the
-    // read is deferred a microtask.
-    const update = () => queueMicrotask(() => setEnabled(isBatchAPIFlagEnabled()));
-    client.addHandler(ProviderEvents.Ready, update);
-    client.addHandler(ProviderEvents.ConfigurationChanged, update);
-    // Synchronous re-read in case the provider became ready between render
-    // and effect; only event handlers need the microtask deferral.
-    setEnabled(isBatchAPIFlagEnabled());
-    return () => {
-      client.removeHandler(ProviderEvents.Ready, update);
-      client.removeHandler(ProviderEvents.ConfigurationChanged, update);
-    };
-  }, []);
-
-  return enabled;
+  return useBooleanFlagValue(BATCH_API_FLAG, false);
 }

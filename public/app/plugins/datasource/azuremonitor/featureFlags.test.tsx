@@ -1,3 +1,4 @@
+import { OpenFeatureProvider, OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { InMemoryProvider, OpenFeature } from '@openfeature/web-sdk';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
@@ -32,14 +33,14 @@ describe('featureFlags', () => {
 
   describe('useBatchAPIFlag', () => {
     it('re-renders with the flag value when the provider becomes ready', async () => {
-      const { result } = renderHook(() => useBatchAPIFlag());
-      expect(result.current).toBe(false);
-
-      // act() contains the state updates the hook's provider-event handlers
-      // schedule while the provider initializes.
-      await act(async () => {
-        await OpenFeature.setProviderAndWait(OPEN_FEATURE_DOMAIN, new InMemoryProvider(batchFlagConfig(true)));
+      const { result } = renderHook(() => useBatchAPIFlag(), {
+        wrapper: ({ children }) => (
+          <OpenFeatureTestProvider domain={OPEN_FEATURE_DOMAIN} flagValueMap={{ [BATCH_API_FLAG]: true }} delayMs={10}>
+            {children}
+          </OpenFeatureTestProvider>
+        ),
       });
+      expect(result.current).toBe(false);
 
       await waitFor(() => expect(result.current).toBe(true));
     });
@@ -48,7 +49,9 @@ describe('featureFlags', () => {
       const provider = new InMemoryProvider(batchFlagConfig(false));
       await OpenFeature.setProviderAndWait(OPEN_FEATURE_DOMAIN, provider);
 
-      const { result } = renderHook(() => useBatchAPIFlag());
+      const { result } = renderHook(() => useBatchAPIFlag(), {
+        wrapper: ({ children }) => <OpenFeatureProvider domain={OPEN_FEATURE_DOMAIN}>{children}</OpenFeatureProvider>,
+      });
       expect(result.current).toBe(false);
 
       await act(async () => {
