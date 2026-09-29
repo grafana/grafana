@@ -54,6 +54,7 @@ interface OwnProps {
   title: string;
 }
 
+/** Kept temporarily for Enterprise callers until they migrate to registerDynamicDashNavAction. @lintignore */
 export function addCustomLeftAction(content: DynamicDashNavButtonModel) {
   registerDynamicDashNavAction('left', content);
 }
