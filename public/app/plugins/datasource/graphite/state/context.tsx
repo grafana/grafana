@@ -63,13 +63,13 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (state && state.target?.target !== query.target) {
+      if (state?.target && state.target.target !== query.target) {
         dispatch(actions.queryChanged(query));
       }
     },
     // adding state to dependencies causes infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, query]
+    [dispatch, query, state?.target]
   );
 
   useEffect(

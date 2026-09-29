@@ -1,7 +1,9 @@
+import { type AnyAction } from '@reduxjs/toolkit';
+
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { GraphiteDatasource } from '../datasource';
-import gfunc from '../gfunc';
+import gfunc, { type FuncDefs } from '../gfunc';
 import { actions } from '../state/actions';
 import {
   getAltSegmentsSelectables,
@@ -9,7 +11,7 @@ import {
   getTagsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { createStore } from '../state/store';
+import { createStore, type GraphiteQueryEditorState } from '../state/store';
 import { type GraphiteSegment } from '../types';
 
 const mockPublish = jest.fn();
@@ -518,5 +520,50 @@ describe('Graphite actions', () => {
       const segments = await getAltSegmentsSelectables(ctx.state, 1, '');
       expect(segments).toHaveLength(5000);
     });
+  });
+});
+
+describe('Graphite actions dispatched before init completes', () => {
+  it('should not throw and should keep the init target', async () => {
+    let resolveFuncDefs: () => void = () => {};
+    const datasource = new GraphiteDatasource({ url: '/api/datasources/proxy/1', name: 'graphiteProd', jsonData: {} });
+    datasource.metricFindQuery = jest.fn(() => Promise.resolve([]));
+    const funcDefs = gfunc.getFuncDefs('1.0');
+    datasource.funcDefs = funcDefs;
+    datasource.waitForFuncDefsLoaded = jest.fn(
+      () =>
+        new Promise<FuncDefs>((resolve) => {
+          resolveFuncDefs = () => resolve(funcDefs);
+        })
+    );
+
+    let state: GraphiteQueryEditorState | undefined;
+    const dispatch = createStore((newState) => {
+      state = newState;
+    }) as unknown as (action: AnyAction) => Promise<void>;
+
+    const init = dispatch(
+      actions.init({
+        datasource,
+        target: { refId: 'A', target: 'test.prod.*' },
+        refresh: jest.fn(),
+        queries: [],
+        //@ts-ignore
+        templateSrv: getTemplateSrv(),
+      })
+    );
+
+    await expect(dispatch(actions.timeRangeChanged(undefined))).resolves.toBeUndefined();
+    await expect(dispatch(actions.queriesChanged([]))).resolves.toBeUndefined();
+    await expect(dispatch(actions.queryChanged({ refId: 'A', target: 'test.dev.*' }))).resolves.toBeUndefined();
+    await expect(dispatch(actions.updateQuery({ query: 'test.dev.*' }))).resolves.toBeUndefined();
+    await expect(dispatch(actions.toggleEditorMode())).resolves.toBeUndefined();
+    expect(state?.target).toBeUndefined();
+
+    resolveFuncDefs();
+    await init;
+
+    expect(state?.target.target).toBe('test.prod.*');
+    expect(state?.queryModel).toBeDefined();
   });
 });
