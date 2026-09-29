@@ -139,7 +139,7 @@ func trashRouteSpec(kindName, version string) *spec3.PathProps {
 }
 
 func hybridSearchRouteSpec(kindName, version string) *spec3.PathProps {
-	return routeSpec(routeSpecArgs{
+	s := routeSpec(routeSpecArgs{
 		operationID:  hybridSearchOperationID(kindName, version),
 		description:  "Hybrid lexical and semantic search for " + kindName + " resources in a namespace. Returns top-k results with opaque scores meaningful only for ordering within this response. No pagination, totals, sorting or facets.",
 		requestKind:  searchv0.KindHybridSearchQuery,
@@ -152,6 +152,8 @@ func hybridSearchRouteSpec(kindName, version string) *spec3.PathProps {
 			Limit:    10,
 		},
 	})
+	s.Post.RequestBody.Description = "A " + searchv0.KindHybridSearchQuery + " describing what to match and return."
+	return s
 }
 
 // routeSpecArgs is what differs between the endpoints. Go names are separate
@@ -191,7 +193,7 @@ func routeSpec(a routeSpecArgs) *spec3.PathProps {
 				RequestBody: &spec3.RequestBody{
 					RequestBodyProps: spec3.RequestBodyProps{
 						Required:    true,
-						Description: "A " + a.requestKind + " describing what to match and return.",
+						Description: "A " + a.requestKind + " describing what to match, sort and return.",
 						Content:     jsonContent(a.requestGo, a.example),
 					},
 				},
