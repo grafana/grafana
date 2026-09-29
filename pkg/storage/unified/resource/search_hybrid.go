@@ -57,7 +57,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	}()
 
 	if s.search == nil {
-		return nil, status.Error(codes.Unimplemented, "hybrid search not configured")
+		return nil, status.Error(codes.Unimplemented, "search index not configured")
 	}
 	if err := validateHybridSearchRequest(req); err != nil {
 		return nil, err
