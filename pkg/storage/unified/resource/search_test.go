@@ -41,6 +41,10 @@ type MockResourceIndex struct {
 	buildInfo IndexBuildInfo
 	docCount  int64
 
+	// What the index reports holding, for reconciliation tests.
+	documentRefs    map[schema.GroupResource][]DocumentRef
+	documentRefsErr error
+
 	// Items passed to BulkIndex, guarded by updateIndexMu.
 	bulkItems []*BulkIndexItem
 
@@ -88,6 +92,26 @@ func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStat
 
 func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
 	return m.docCount, nil
+}
+
+// documentRefs is what ListDocumentRefs answers with, by resource type.
+func (m *MockResourceIndex) ListDocumentRefs(_ context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error] {
+	return func(yield func(DocumentRef, error) bool) {
+		m.updateIndexMu.Lock()
+		refs := slices.Clone(m.documentRefs[gr])
+		err := m.documentRefsErr
+		m.updateIndexMu.Unlock()
+
+		if err != nil {
+			yield(DocumentRef{}, err)
+			return
+		}
+		for _, ref := range refs {
+			if !yield(ref, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
