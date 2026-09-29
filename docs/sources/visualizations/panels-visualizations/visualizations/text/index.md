@@ -79,13 +79,15 @@ You can also insert:
 
 - Tables
 - Mermaid diagrams
-- Dashboard variables: Variables autocomplete as you enter them, and they're interpolated in the content.
+- Dashboard variables
+
+Dashboard variables autocomplete as you enter them, and they're interpolated in the content.
 
 The options displayed in the formatting toolbar depend on the mode you select.
 
 ### Text modes
 
-This mode determines how embedded content appears.
+The visualization mode determines how embedded content appears.
 Choose from:
 
 - **Markdown**: Formats the content as [Markdown](https://en.wikipedia.org/wiki/Markdown).
