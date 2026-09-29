@@ -38,6 +38,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning/
+  alerting_provisioning_at_scale:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/provisioning-rate-limits/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/guides/provisioning-rate-limits/
   provisioning:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
@@ -76,6 +81,8 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 
    If you need the alerting resources for file provisioning, use [Export Alerting endpoints](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-api-endpoints) to return or download them in provisioning format.
    {{< /admonition >}}
+
+If you manage a large number of alerting resources, refer to [Avoid API rate limits when provisioning alerting resources](ref:alerting_provisioning_at_scale) to keep your tooling under the API rate limits.
 
 ## Export alerting resources
 
