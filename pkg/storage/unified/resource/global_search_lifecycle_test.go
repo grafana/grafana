@@ -464,8 +464,8 @@ func TestGlobalIndexKeepsNamesOfDifferentTypesApart(t *testing.T) {
 	assert.Len(t, ids, 2, fmt.Sprintf("two documents, not one: %v", ids))
 }
 
-// syncStorage records reads, so tests can show a sync reads only what drifted.
-type syncStorage struct {
+// reconcileStorage records reads, so tests can show a reconcile reads only what drifted.
+type reconcileStorage struct {
 	multiTypeStorage
 
 	// Names read, in order.
@@ -478,7 +478,7 @@ type syncStorage struct {
 	readErr error
 }
 
-func (m *syncStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+func (m *reconcileStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
 	rv, err := m.multiTypeStorage.ListIterator(ctx, req, cb)
 	if m.afterList != nil {
 		m.afterList()
@@ -486,7 +486,7 @@ func (m *syncStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequ
 	return rv, err
 }
 
-func (m *syncStorage) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
+func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
 	if m.readErr != nil {
 		return nil, m.readErr
 	}
@@ -506,11 +506,11 @@ func (m *syncStorage) BatchReadResource(_ context.Context, requests []*resourcep
 	}, nil
 }
 
-func (m *syncStorage) ReadResource(_ context.Context, request *resourcepb.ReadRequest) *BackendReadResponse {
+func (m *reconcileStorage) ReadResource(_ context.Context, request *resourcepb.ReadRequest) *BackendReadResponse {
 	return m.readOne(request)
 }
 
-func (m *syncStorage) readOne(request *resourcepb.ReadRequest) *BackendReadResponse {
+func (m *reconcileStorage) readOne(request *resourcepb.ReadRequest) *BackendReadResponse {
 	key := request.GetKey()
 	m.read = append(m.read, key.GetName())
 
@@ -531,7 +531,7 @@ func (m *syncStorage) readOne(request *resourcepb.ReadRequest) *BackendReadRespo
 }
 
 // storedRV is zero when storage does not hold the object.
-func (m *syncStorage) storedRV(src NamespacedResource, name string) int64 {
+func (m *reconcileStorage) storedRV(src NamespacedResource, name string) int64 {
 	for _, stored := range m.live[src] {
 		if stored == name {
 			if rv := m.listRVs[src]; rv > 0 {
@@ -543,24 +543,24 @@ func (m *syncStorage) storedRV(src NamespacedResource, name string) int64 {
 	return 0
 }
 
-func syncServer(t *testing.T, storage StorageBackend, refs map[schema.GroupResource][]DocumentRef) (*searchServer, *MockResourceIndex) {
+func repairServer(t *testing.T, storage StorageBackend, refs map[schema.GroupResource][]DocumentRef) (*searchServer, *MockResourceIndex) {
 	t.Helper()
 	idx := &MockResourceIndex{documentRefs: refs}
 	search := &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("ns"): idx}}
 	return globalTestServer(t, storage, search), idx
 }
 
-func TestSyncIndexesWhatIsMissing(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestReconcileIndexesWhatIsMissing(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}}
 	// The index holds one of the two, at the current version.
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
 	})
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 1, res.Reindexed)
 	assert.Equal(t, 0, res.Removed)
@@ -572,48 +572,48 @@ func TestSyncIndexesWhatIsMissing(t *testing.T) {
 	}, indexedNames(t, idx))
 }
 
-func TestSyncIndexesWhatIsOutOfDate(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestReconcileIndexesWhatIsOutOfDate(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30},
 	}}
 	// Present, but indexed at an older version than storage holds.
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
 	})
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 1, res.Reindexed)
 	assert.Equal(t, []string{"dash-a"}, storage.read)
 }
 
 // No readable version means out of date, not current.
-func TestSyncIndexesWhatHasNoVersion(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestReconcileIndexesWhatHasNoVersion(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30},
 	}}
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a"}},
 	})
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 1, res.Reindexed)
 }
 
-func TestSyncRemovesWhatStorageNoLongerHas(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestReconcileRemovesWhatStorageNoLongerHas(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}}
 	// A delete the index never heard about.
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}, {Name: "gone", RV: 19}},
 	})
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 0, res.Reindexed)
 	assert.Equal(t, 1, res.Removed)
@@ -626,16 +626,16 @@ func TestSyncRemovesWhatStorageNoLongerHas(t *testing.T) {
 }
 
 // An agreeing index costs no reads or writes.
-func TestSyncDoesNothingWhenTheIndexAgrees(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestReconcileDoesNothingWhenTheIndexAgrees(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}}
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}, {Name: "dash-b", RV: 20}},
 	})
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 0, res.Reindexed)
 	assert.Equal(t, 0, res.Removed)
@@ -644,50 +644,50 @@ func TestSyncDoesNothingWhenTheIndexAgrees(t *testing.T) {
 }
 
 // The listing is older than the index, so a newer indexed version is kept.
-func TestSyncLeavesNewerDocumentsAlone(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestReconcileLeavesNewerDocumentsAlone(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}}
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 25}},
 	})
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 0, res.Reindexed)
 	assert.Equal(t, 0, res.Removed)
 }
 
 // A backend without batch reads still gets its objects read, one at a time.
-func TestSyncReadsOneAtATimeWhenBatchesAreUnsupported(t *testing.T) {
-	storage := &syncStorage{
+func TestReconcileReadsOneAtATimeWhenBatchesAreUnsupported(t *testing.T) {
+	storage := &reconcileStorage{
 		multiTypeStorage: multiTypeStorage{
 			live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
 			listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 		},
 		noBatchReads: true,
 	}
-	server, idx := syncServer(t, storage, nil)
+	server, idx := repairServer(t, storage, nil)
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 2, res.Reindexed)
 	assert.Equal(t, []string{"dash-a", "dash-b"}, storage.read)
 }
 
 // One unreadable object does not stop the rest of the repair.
-func TestSyncSkipsWhatItCannotRead(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestReconcileSkipsWhatItCannotRead(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}}
-	server, idx := syncServer(t, storage, nil)
+	server, idx := repairServer(t, storage, nil)
 
 	// The listing reports it, but by the time it is read it is gone.
 	storage.afterList = func() { storage.live[dashboardType("ns")] = nil }
 
-	_, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	_, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, []string{"dash-a"}, storage.read, "it was found out of date and read")
 	assert.Empty(t, idx.indexedItems())
@@ -695,34 +695,34 @@ func TestSyncSkipsWhatItCannotRead(t *testing.T) {
 
 // A storage failure is returned, not mistaken for a deleted object, so the caller
 // retries.
-func TestSyncReturnsStorageFailures(t *testing.T) {
-	storage := &syncStorage{
+func TestReconcileReturnsStorageFailures(t *testing.T) {
+	storage := &reconcileStorage{
 		multiTypeStorage: multiTypeStorage{
 			live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
 			listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 		},
 		readErr: errors.New("storage is unavailable"),
 	}
-	server, idx := syncServer(t, storage, nil)
+	server, idx := repairServer(t, storage, nil)
 
-	_, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	_, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.Error(t, err)
 	assert.Empty(t, idx.indexedItems())
 }
 
-// A build failure does not stop the sync, and the next sync retries it. This is
+// A build failure does not stop a reconcile, and the next one retries it. This is
 // the repair for changes the update path moves past.
-func TestSyncRetriesWhatFailedToBuild(t *testing.T) {
-	storage := &syncStorage{
+func TestReconcileRetriesWhatFailedToBuild(t *testing.T) {
+	storage := &reconcileStorage{
 		multiTypeStorage: multiTypeStorage{
 			live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
 			listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 		},
 	}
 	storage.broken = map[string]bool{"dash-b": true}
-	server, idx := syncServer(t, storage, nil)
+	server, idx := repairServer(t, storage, nil)
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 1, res.Reindexed, "only what was written counts")
 	assert.Equal(t, 1, res.Failed, "and the one that could not be built is reported")
@@ -730,13 +730,13 @@ func TestSyncRetriesWhatFailedToBuild(t *testing.T) {
 		dashboardType("ns"): {"dash-a"},
 	}, indexedNames(t, idx), "the one that failed is left out")
 
-	// Once it builds, the next sync finds it still missing and indexes it.
+	// Once it builds, the next reconcile finds it still missing and indexes it.
 	storage.broken = nil
 	idx.documentRefs = map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
 	}
 	idx.bulkItems = nil
-	res, err = server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err = server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, map[NamespacedResource][]string{
 		dashboardType("ns"): {"dash-b"},
@@ -744,14 +744,14 @@ func TestSyncRetriesWhatFailedToBuild(t *testing.T) {
 }
 
 // Standard fields only, as on every other path into this index.
-func TestSyncKeepsStandardFieldsOnly(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestReconcileKeepsStandardFieldsOnly(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}}
-	server, idx := syncServer(t, storage, nil)
+	server, idx := repairServer(t, storage, nil)
 
-	_, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	_, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 
 	items := idx.indexedItems()
@@ -766,12 +766,12 @@ var (
 )
 
 // A document created and indexed after the listing is live and must be kept.
-func TestSyncDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestReconcileDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}}
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
 	})
 	storage.afterList = func() {
@@ -780,7 +780,7 @@ func TestSyncDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
 		idx.documentRefs[dashboardsGroupResource] = append(idx.documentRefs[dashboardsGroupResource], DocumentRef{Name: "late", RV: 21})
 	}
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 0, res.Removed)
 	assert.Empty(t, idx.indexedItems())
@@ -788,54 +788,54 @@ func TestSyncDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
 
 // Reads are chunked, but writes are not split per read chunk: each write has a
 // fixed cost.
-func TestSyncWritesInFullBatches(t *testing.T) {
-	names := make([]string, 0, 3*syncReadChunkSize)
-	for i := range 3 * syncReadChunkSize {
+func TestReconcileWritesInFullBatches(t *testing.T) {
+	names := make([]string, 0, 3*reconcileReadChunkSize)
+	for i := range 3 * reconcileReadChunkSize {
 		names = append(names, fmt.Sprintf("dash-%03d", i))
 	}
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): names},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}}
-	server, idx := syncServer(t, storage, nil)
+	server, idx := repairServer(t, storage, nil)
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, len(names), res.Reindexed)
 	assert.Equal(t, 1, idx.bulkCalls)
 }
 
 // Large removals are split into normal-sized writes.
-func TestSyncRemovesInBatches(t *testing.T) {
+func TestReconcileRemovesInBatches(t *testing.T) {
 	gone := make([]DocumentRef, 0, maxBatchSize+1)
 	for i := range maxBatchSize + 1 {
 		gone = append(gone, DocumentRef{Name: fmt.Sprintf("gone-%d", i), RV: 1})
 	}
-	server, idx := syncServer(t, &syncStorage{}, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, &reconcileStorage{}, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: gone,
 	})
 
-	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, maxBatchSize+1, res.Removed)
 	assert.Equal(t, 2, idx.bulkCalls)
 }
 
-// An import can restore older versions, so a resync rewrites everything and
+// An import can restore older versions, so a rebuild rewrites everything and
 // removes what the import dropped.
-func TestResyncRewritesTheWholeType(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestRebuildTypeRewritesTheWholeType(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
 	}}
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		// Newer than the restored version, and one the import dropped.
 		dashboardsGroupResource: {{Name: "dash-a", RV: 100}, {Name: "gone", RV: 90}},
 	})
 
-	res, err := server.resyncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.rebuildResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
-	assert.Equal(t, syncResult{Reindexed: 2, Removed: 1}, res)
+	assert.Equal(t, repairResult{Reindexed: 2, Removed: 1}, res)
 
 	var written, removed []string
 	for _, item := range idx.indexedItems() {
@@ -851,28 +851,28 @@ func TestResyncRewritesTheWholeType(t *testing.T) {
 }
 
 // The old document may describe what the import replaced, so it is removed.
-func TestResyncRemovesWhatFailsToBuild(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+func TestRebuildTypeRemovesWhatFailsToBuild(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
 	}}
 	storage.broken = map[string]bool{"dash-b": true}
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 40}, {Name: "dash-b", RV: 40}},
 	})
 
-	res, err := server.resyncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.rebuildResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
-	assert.Equal(t, syncResult{Reindexed: 1, Removed: 1, Failed: 1}, res)
+	assert.Equal(t, repairResult{Reindexed: 1, Removed: 1, Failed: 1}, res)
 }
 
-// Same ordering guarantee as the sync.
-func TestResyncDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
-	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+// Same ordering guarantee as a reconcile.
+func TestRebuildTypeDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
 	}}
-	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 50}},
 	})
 	storage.afterList = func() {
@@ -880,32 +880,32 @@ func TestResyncDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
 		idx.documentRefs[dashboardsGroupResource] = append(idx.documentRefs[dashboardsGroupResource], DocumentRef{Name: "late", RV: 51})
 	}
 
-	res, err := server.resyncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	res, err := server.rebuildResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 0, res.Removed)
 }
 
-func TestResyncRefusesAPerResourceIndex(t *testing.T) {
-	server, idx := syncServer(t, &syncStorage{}, nil)
+func TestRebuildTypeRefusesAPerResourceIndex(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
 
-	_, err := server.resyncResourceType(t.Context(), idx, dashboardType("ns"), dashboardType("ns"))
+	_, err := server.rebuildResourceType(t.Context(), idx, dashboardType("ns"), dashboardType("ns"))
 	require.Error(t, err)
 	assert.Empty(t, idx.indexedItems())
 }
 
 // Comparing with live objects would remove a per-resource index's trash.
-func TestSyncRefusesAPerResourceIndex(t *testing.T) {
-	server, idx := syncServer(t, &syncStorage{}, nil)
+func TestReconcileRefusesAPerResourceIndex(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
 
-	_, err := server.syncResourceType(t.Context(), idx, dashboardType("ns"), dashboardType("ns"))
+	_, err := server.reconcileResourceType(t.Context(), idx, dashboardType("ns"), dashboardType("ns"))
 	require.Error(t, err)
 	assert.Empty(t, idx.indexedItems())
 }
 
-func TestSyncRefusesAnotherNamespace(t *testing.T) {
-	server, idx := syncServer(t, &syncStorage{}, nil)
+func TestReconcileRefusesAnotherNamespace(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
 
-	_, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("other"))
+	_, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("other"))
 	require.Error(t, err)
 	assert.Empty(t, idx.indexedItems())
 }

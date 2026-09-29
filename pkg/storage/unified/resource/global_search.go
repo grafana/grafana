@@ -147,37 +147,37 @@ func IndexFieldDefinitions(group, resource string) (standard, deleted []SearchFi
 	return StandardSearchFieldDefinitions(), TrashSearchFieldDefinitions()
 }
 
-// syncReadChunkSize bounds how many drifted objects a sync reads at once.
-const syncReadChunkSize = 50
+// reconcileReadChunkSize bounds how many drifted objects are read at once.
+const reconcileReadChunkSize = 50
 
-// syncResourceType repairs one resource type in a global index by comparing it
+// reconcileResourceType repairs one resource type in a global index by comparing it
 // with storage, rather than replaying changes, so it fixes drift however it
 // happened and costs one keys-only listing when nothing drifted.
 //
 // It relies on each object's version only increasing, which an import breaks;
-// use resyncResourceType after an import.
-func (s *searchServer) syncResourceType(ctx context.Context, index ResourceIndex, key, src NamespacedResource) (syncResult, error) {
-	if err := checkSyncTarget(key, src); err != nil {
-		return syncResult{}, err
+// use rebuildResourceType after an import.
+func (s *searchServer) reconcileResourceType(ctx context.Context, index ResourceIndex, key, src NamespacedResource) (repairResult, error) {
+	if err := checkRepairTarget(key, src); err != nil {
+		return repairResult{}, err
 	}
 	// Read the index before listing storage: otherwise a document created and
 	// indexed after the listing looks deleted and is removed while live.
 	//
-	// Two narrower races remain, both repaired by the next sync: an older body
+	// Two narrower races remain, both repaired by the next reconcile: an older body
 	// overwriting a newer write, and a document recreated after the listing being
 	// removed. Closing them needs conditional writes, which the index lacks.
 	gr := schema.GroupResource{Group: src.Group, Resource: src.Resource}
 	indexed := map[string]int64{}
 	for ref, err := range index.ListDocumentRefs(ctx, gr) {
 		if err != nil {
-			return syncResult{}, err
+			return repairResult{}, err
 		}
 		indexed[ref.Name] = ref.RV
 	}
 
 	stored, err := s.storedRefs(ctx, src)
 	if err != nil {
-		return syncResult{}, err
+		return repairResult{}, err
 	}
 
 	// Newer in the index than in the listing is left alone: the listing is older,
@@ -200,43 +200,43 @@ func (s *searchServer) syncResourceType(ctx context.Context, index ResourceIndex
 	slices.Sort(removed)
 
 	if err := s.removeFromIndex(index, src, removed); err != nil {
-		return syncResult{}, err
+		return repairResult{}, err
 	}
 	result, err := s.reindex(ctx, index, src, outdated)
 	result.Removed = len(removed)
 	return result, err
 }
 
-// resyncResourceType rewrites one resource type in a global index from storage,
+// rebuildResourceType rewrites one resource type in a global index from storage,
 // ignoring what the index holds. For after an import, which can restore objects at
 // older versions, so comparing versions would leave them stale.
 //
 // Everything is written before anything is removed, so the type does not vanish
-// from search while the resync runs. An object that fails to build is removed
+// from search while the rebuild runs. An object that fails to build is removed
 // rather than kept, because its old document may describe what the import
 // replaced.
-func (s *searchServer) resyncResourceType(ctx context.Context, index ResourceIndex, key, src NamespacedResource) (syncResult, error) {
-	if err := checkSyncTarget(key, src); err != nil {
-		return syncResult{}, err
+func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIndex, key, src NamespacedResource) (repairResult, error) {
+	if err := checkRepairTarget(key, src); err != nil {
+		return repairResult{}, err
 	}
 
-	// Before the listing, for the same reason as in syncResourceType.
+	// Before the listing, for the same reason as in reconcileResourceType.
 	gr := schema.GroupResource{Group: src.Group, Resource: src.Resource}
 	indexed := map[string]struct{}{}
 	for ref, err := range index.ListDocumentRefs(ctx, gr) {
 		if err != nil {
-			return syncResult{}, err
+			return repairResult{}, err
 		}
 		indexed[ref.Name] = struct{}{}
 	}
 
 	builder, err := s.builders.get(ctx, src)
 	if err != nil {
-		return syncResult{}, err
+		return repairResult{}, err
 	}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
-	var result syncResult
+	var result repairResult
 	written := map[string]struct{}{}
 	_, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{
@@ -267,7 +267,7 @@ func (s *searchServer) resyncResourceType(ctx context.Context, index ResourceInd
 			docKey := &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: iter.Name()}
 			doc, err := builder.BuildDocument(ctx, docKey, iter.ResourceVersion(), iter.Value())
 			if err != nil {
-				logger.Warn("failed to build a document while resyncing", "key", SearchID(docKey), "error", err)
+				logger.Warn("failed to build a document while rebuilding a resource type", "key", SearchID(docKey), "error", err)
 				result.Failed++
 				continue
 			}
@@ -302,11 +302,11 @@ func (s *searchServer) resyncResourceType(ctx context.Context, index ResourceInd
 	return result, nil
 }
 
-// checkSyncTarget refuses per-resource indexes: they keep deleted documents for
+// checkRepairTarget refuses per-resource indexes: they keep deleted documents for
 // trash, which comparing with live objects would remove.
-func checkSyncTarget(key, src NamespacedResource) error {
+func checkRepairTarget(key, src NamespacedResource) error {
 	if !key.IsGlobal() {
-		return fmt.Errorf("syncing a resource type is only supported for a global index, not %s", key.String())
+		return fmt.Errorf("repairing a resource type is only supported for a global index, not %s", key.String())
 	}
 	if src.Namespace != key.Namespace {
 		return fmt.Errorf("resource type %s is in another namespace than index %s", src.String(), key.String())
@@ -314,8 +314,8 @@ func checkSyncTarget(key, src NamespacedResource) error {
 	return nil
 }
 
-// syncResult is what a sync changed.
-type syncResult struct {
+// repairResult is what a reconcile or rebuild changed.
+type repairResult struct {
 	Reindexed int
 	Removed   int
 	// Failed counts objects that could not be built, so a caller that needs the
@@ -376,12 +376,12 @@ func (s *searchServer) removeFromIndex(index ResourceIndex, src NamespacedResour
 
 // reindex reads and writes the named objects. One that cannot be built is
 // skipped, not fatal, so a bad object does not block the rest; it stays missing,
-// so the next sync retries it.
+// so the next reconcile retries it.
 //
 // Reads go in small chunks, writes in full batches: each write is a separate
 // index batch with its own fixed cost.
-func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string) (syncResult, error) {
-	var result syncResult
+func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string) (repairResult, error) {
+	var result repairResult
 	if len(names) == 0 {
 		return result, nil
 	}
@@ -407,7 +407,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 
 	// Requests are built a chunk at a time, so only the comparison scales with
 	// the size of the type.
-	for chunk := range slices.Chunk(names, syncReadChunkSize) {
+	for chunk := range slices.Chunk(names, reconcileReadChunkSize) {
 		requests := make([]*resourcepb.ReadRequest, 0, len(chunk))
 		for _, name := range chunk {
 			requests = append(requests, &resourcepb.ReadRequest{
@@ -415,14 +415,15 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 			})
 		}
 
-		for response := range readResourcesInChunks(ctx, s.storage, requests, syncReadChunkSize) {
+		for response := range readResourcesInChunks(ctx, s.storage, requests, reconcileReadChunkSize) {
 			if ctx.Err() != nil {
 				return result, ctx.Err()
 			}
 			if response.Error != nil {
-				// Not found means deleted since the listing. Anything else is a
-				// storage failure, returned so the caller does not think the type
-				// is in sync.
+				// Not found means deleted since the listing, or the revision was
+				// pruned by a newer update, which the update path delivers.
+				// Anything else is a storage failure, returned so the caller does
+				// not think the type is repaired.
 				if response.Error.Code != http.StatusNotFound {
 					return result, GetError(response.Error)
 				}
@@ -431,7 +432,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 			}
 			doc, err := builder.BuildDocument(ctx, response.Key, response.ResourceVersion, response.Value)
 			if err != nil {
-				logger.Warn("failed to build a document while syncing", "key", SearchID(response.Key), "error", err)
+				logger.Warn("failed to build a document while reconciling", "key", SearchID(response.Key), "error", err)
 				result.Failed++
 				continue
 			}
