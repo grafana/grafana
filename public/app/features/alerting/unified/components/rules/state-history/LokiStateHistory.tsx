@@ -22,6 +22,7 @@ import { useRuleHistoryRecords } from './useRuleHistoryRecords';
 
 interface Props {
   ruleUID: string;
+  pollingInterval?: number;
 }
 
 const STATE_FILTER_OPTIONS: Array<SelectableValue<string>> = [
@@ -35,7 +36,7 @@ const STATE_FILTER_OPTIONS: Array<SelectableValue<string>> = [
 ];
 const MAX_TIMELINE_SERIES = 12;
 
-const LokiStateHistory = ({ ruleUID }: Props) => {
+const LokiStateHistory = ({ ruleUID, pollingInterval = STATE_HISTORY_POLL_INTERVAL_MS }: Props) => {
   const styles = useStyles2(getStyles);
   const [instancesFilter, setInstancesFilter] = useState('');
   const [stateFrom, setStateFrom] = useState<string>(StateFilterValues.all);
@@ -62,7 +63,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     {
       refetchOnFocus: true,
       refetchOnReconnect: true,
-      pollingInterval: STATE_HISTORY_POLL_INTERVAL_MS,
+      pollingInterval,
     }
   );
 

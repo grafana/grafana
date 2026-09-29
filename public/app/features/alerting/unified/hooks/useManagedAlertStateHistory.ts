@@ -10,7 +10,7 @@ import { type AsyncRequestState } from '../utils/redux';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
-export function useManagedAlertStateHistory(ruleUID: string) {
+export function useManagedAlertStateHistory(ruleUID: string, pollingInterval = STATE_HISTORY_POLL_INTERVAL_MS) {
   const dispatch = useDispatch();
   const history = useUnifiedAlertingSelector<AsyncRequestState<StateHistoryItem[]>>(
     (state) => state.managedAlertStateHistory
@@ -24,7 +24,7 @@ export function useManagedAlertStateHistory(ruleUID: string) {
     if (!history.loading) {
       dispatch(fetchGrafanaAnnotationsAction(ruleUID));
     }
-  }, STATE_HISTORY_POLL_INTERVAL_MS);
+  }, pollingInterval);
 
   return history;
 }

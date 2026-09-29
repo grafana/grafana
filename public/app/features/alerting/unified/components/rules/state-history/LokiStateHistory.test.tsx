@@ -94,6 +94,20 @@ const ui = {
 };
 
 describe('LokiStateHistory', () => {
+  it('requests history again after the polling interval', async () => {
+    const requestedRuleUIDs: Array<string | null> = [];
+    server.use(
+      http.get('/api/v1/rules/history', ({ request }) => {
+        requestedRuleUIDs.push(new URL(request.url).searchParams.get('ruleUID'));
+        return HttpResponse.json<DataFrameJSON>({ data: { values: [] }, schema: { fields: [] } });
+      })
+    );
+
+    render(<LokiStateHistory ruleUID="ABC123" pollingInterval={50} />);
+
+    await waitFor(() => expect(requestedRuleUIDs.slice(0, 2)).toEqual(['ABC123', 'ABC123']));
+  });
+
   it('should render history records', async () => {
     render(<LokiStateHistory ruleUID="ABC123" />);
 

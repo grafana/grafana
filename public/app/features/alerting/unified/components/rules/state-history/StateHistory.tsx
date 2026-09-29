@@ -10,6 +10,7 @@ import { type StateHistoryItem, type StateHistoryItemData } from 'app/types/unif
 import { type GrafanaAlertStateWithReason, type PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useManagedAlertStateHistory } from '../../../hooks/useManagedAlertStateHistory';
+import { STATE_HISTORY_POLL_INTERVAL_MS } from '../../../utils/constants';
 import { AlertLabel } from '../../AlertLabel';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../../DynamicTable';
 import { AlertStateTag } from '../AlertStateTag';
@@ -29,15 +30,16 @@ type StateHistoryRow = DynamicTableItemProps<StateHistoryRowItem>;
 
 interface Props {
   ruleUID: string;
+  pollingInterval?: number;
 }
 
-const StateHistory = ({ ruleUID }: Props) => {
+const StateHistory = ({ ruleUID, pollingInterval = STATE_HISTORY_POLL_INTERVAL_MS }: Props) => {
   const [textFilter, setTextFilter] = useState<string>('');
   const handleTextFilter = useCallback((event: FormEvent<HTMLInputElement>) => {
     setTextFilter(event.currentTarget.value);
   }, []);
 
-  const { loading, error, result = [] } = useManagedAlertStateHistory(ruleUID);
+  const { loading, error, result = [] } = useManagedAlertStateHistory(ruleUID, pollingInterval);
 
   const styles = useStyles2(getStyles);
 

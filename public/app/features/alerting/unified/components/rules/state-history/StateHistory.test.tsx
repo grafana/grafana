@@ -1,6 +1,28 @@
-import { AlertState } from '@grafana/data';
+import { HttpResponse, http } from 'msw';
+import { render, waitFor } from 'test/test-utils';
 
-import { groupStateByLabels, matchKey } from './StateHistory';
+import { AlertState } from '@grafana/data';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+
+import StateHistory, { groupStateByLabels, matchKey } from './StateHistory';
+
+const server = setupMswServer();
+
+describe('StateHistory', () => {
+  it('requests history again after the polling interval', async () => {
+    const requestedRuleUIDs: Array<string | null> = [];
+    server.use(
+      http.get('/api/annotations', ({ request }) => {
+        requestedRuleUIDs.push(new URL(request.url).searchParams.get('alertUID'));
+        return HttpResponse.json([]);
+      })
+    );
+
+    render(<StateHistory ruleUID="ABC123" pollingInterval={50} />);
+
+    await waitFor(() => expect(requestedRuleUIDs.slice(0, 2)).toEqual(['ABC123', 'ABC123']));
+  });
+});
 
 describe('matchKey', () => {
   it('should match with exact string match', () => {
