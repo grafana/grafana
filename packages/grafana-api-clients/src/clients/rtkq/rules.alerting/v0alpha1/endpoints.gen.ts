@@ -595,6 +595,9 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['RuleSequence'],
       }),
+      getHybridSearchAlertRules: build.query<GetHybridSearchAlertRulesApiResponse, GetHybridSearchAlertRulesApiArg>({
+        query: () => ({ url: `/search/hybrid` }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -1368,6 +1371,8 @@ export type UpdateRuleSequenceStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type GetHybridSearchAlertRulesApiResponse = unknown;
+export type GetHybridSearchAlertRulesApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -2157,4 +2162,6 @@ export const {
   useLazyGetRuleSequenceStatusQuery,
   useReplaceRuleSequenceStatusMutation,
   useUpdateRuleSequenceStatusMutation,
+  useGetHybridSearchAlertRulesQuery,
+  useLazyGetHybridSearchAlertRulesQuery,
 } = injectedRtkApi;
