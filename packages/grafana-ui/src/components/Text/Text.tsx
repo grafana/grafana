@@ -85,9 +85,6 @@ const getTextStyles = (
       padding: 0,
       ...customVariant(theme, element, variant),
     },
-    variant && {
-      ...theme.typography[variant],
-    },
     color && {
       color: customColor(color, theme),
     },

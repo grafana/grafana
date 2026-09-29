@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
-import { mergeMap } from 'rxjs';
+import { mergeMap, type Subscription } from 'rxjs';
 
 import {
   type DataTransformerConfig,
@@ -143,17 +143,22 @@ export const TransformationOperationRow = ({
     // transformers that drop empty frames build the name from fewer of them, and the no-op paths
     // return their input untouched. Run without the filter (already applied) or the static refId, so
     // what comes back is the name the user would get by leaving the field blank; without `disabled`
-    // too, so a disabled row still shows one.
-    const previewConfig: DataTransformerConfig = {
-      ...config,
-      refId: undefined,
-      filter: undefined,
-      disabled: undefined,
-    };
-    const generatedRefIdSubscription = transformDataFrame(inputTransforms, data.series, ctx)
-      .pipe(mergeMap((before) => transformDataFrame([previewConfig], applyFilter(before), ctx)))
-      // More than one frame means there is no single output to name, so the row shows "(Auto)".
-      .subscribe((frames) => setGeneratedRefId(frames.length === 1 ? frames[0].refId : undefined));
+    // too, so a disabled row still shows one. Only the rows that can pin a name render it, and the
+    // rest would pay for the extra replay on every data or config change.
+    let generatedRefIdSubscription: Subscription | undefined;
+
+    if (canSetRefId) {
+      const previewConfig: DataTransformerConfig = {
+        ...config,
+        refId: undefined,
+        filter: undefined,
+        disabled: undefined,
+      };
+      generatedRefIdSubscription = transformDataFrame(inputTransforms, data.series, ctx)
+        .pipe(mergeMap((before) => transformDataFrame([previewConfig], applyFilter(before), ctx)))
+        // More than one frame means there is no single output to name, so the row shows "(Auto)".
+        .subscribe((frames) => setGeneratedRefId(frames.length === 1 ? frames[0].refId : undefined));
+    }
     const outputSubscription = transformDataFrame(inputTransforms, data.series, ctx)
       .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
       .subscribe(setOutput);
@@ -175,9 +180,9 @@ export const TransformationOperationRow = ({
       inputSubscription.unsubscribe();
       outputSubscription.unsubscribe();
       prevOutputSubscription.unsubscribe();
-      generatedRefIdSubscription.unsubscribe();
+      generatedRefIdSubscription?.unsubscribe();
     };
-  }, [index, data, configs]);
+  }, [index, data, configs, canSetRefId]);
 
   const renderHeader = () => {
     return (

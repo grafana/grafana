@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -45,7 +46,9 @@ func (h *HybridHandler) Search(w http.ResponseWriter, req *http.Request) {
 		errhttp.Write(req.Context(), err, w)
 		return
 	}
-	_ = writeJSON(w, out)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(out)
 }
 
 func (h *HybridHandler) search(ctx context.Context, req *http.Request) (*resourcepb.HybridSearchResponse, error) {

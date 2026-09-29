@@ -13,12 +13,12 @@ import (
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 
+	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -101,7 +101,7 @@ func TestRuleSearchReadAttributes(t *testing.T) {
 			alertrule.ResourceInfo.GroupResource().Resource,
 			recordingrule.ResourceInfo.GroupResource().Resource,
 		} {
-			got := ruleSearchReadAttributes(request(resource, search.RouteResource))
+			got := ruleSearchReadAttributes(request(resource, rulesApp.SearchRulesPathSegment))
 			require.Equal(t, "list", got.GetVerb(), resource)
 			require.Empty(t, got.GetName(), resource)
 		}
@@ -113,19 +113,19 @@ func TestRuleSearchReadAttributes(t *testing.T) {
 	})
 
 	t.Run("another resource is unchanged", func(t *testing.T) {
-		got := ruleSearchReadAttributes(request("rulesequences", search.RouteResource))
+		got := ruleSearchReadAttributes(request("rulesequences", rulesApp.SearchRulesPathSegment))
 		require.Equal(t, "create", got.GetVerb())
 	})
 
 	t.Run("a subresource request is unchanged", func(t *testing.T) {
-		attr := request(alertrule.ResourceInfo.GroupResource().Resource, search.RouteResource)
+		attr := request(alertrule.ResourceInfo.GroupResource().Resource, rulesApp.SearchRulesPathSegment)
 		attr.Subresource = "status"
 		got := ruleSearchReadAttributes(attr)
 		require.Equal(t, "create", got.GetVerb())
 	})
 
 	t.Run("a non-resource request is unchanged", func(t *testing.T) {
-		attr := request(alertrule.ResourceInfo.GroupResource().Resource, search.RouteResource)
+		attr := request(alertrule.ResourceInfo.GroupResource().Resource, rulesApp.SearchRulesPathSegment)
 		attr.ResourceRequest = false
 		got := ruleSearchReadAttributes(attr)
 		require.Equal(t, "create", got.GetVerb())

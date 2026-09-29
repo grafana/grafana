@@ -9,18 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// RouteResource is the resource segment of the namespaced searchRules route, as
-// seen by the apiserver authorizer. It must match the route path.
-const RouteResource = "searchRules"
-
 const HybridRouteResource = "search"
 
-// Authorize gates the rule search route on rule-read access, consistent with
-// listing rules. Per-folder/per-rule access is still enforced by each backend
-// (the provisioning service for legacy, the access client for unified), so this
-// is the coarse route-level check.
+// Authorize gates hybrid search on rule-read access. Unified storage enforces
+// per-folder/per-rule access on the results.
 func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-	if attr.GetResource() != RouteResource && attr.GetResource() != HybridRouteResource {
+	if attr.GetResource() != HybridRouteResource {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 	user, err := identity.GetRequester(ctx)

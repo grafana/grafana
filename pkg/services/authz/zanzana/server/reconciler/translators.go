@@ -55,8 +55,11 @@ func TranslateRoleToTuples(
 
 	var effective []roleeffective.ActionScope
 	if globalRolePerms != nil {
-		getter := func(roleName string) ([]roleeffective.ActionScope, error) {
-			perms := globalRolePerms[roleName]
+		getter := func(ref iamv0.RolespecRoleRef) ([]roleeffective.ActionScope, error) {
+			if ref.Kind != "GlobalRole" {
+				return nil, fmt.Errorf("role %q ref kind %q is unsupported: expected GlobalRole", role.Name, ref.Kind)
+			}
+			perms := globalRolePerms[ref.Name]
 			out := make([]roleeffective.ActionScope, 0, len(perms))
 			for _, p := range perms {
 				out = append(out, roleeffective.ActionScope{Action: p.Action, Scope: p.Scope})
