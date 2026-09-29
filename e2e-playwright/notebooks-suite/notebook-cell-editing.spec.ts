@@ -159,7 +159,7 @@ test.describe('Notebook cell editing with the mouse', () => {
     // - hovering the frame first is what makes it actionable at all.
     const firstCellFrame = page.locator(`.${NOTEBOOK_CELL_FRAME_CLASS}`).first();
     await firstCellFrame.hover();
-    await firstCellFrame.getByRole('button', { name: 'Click to add below' }).click();
+    await firstCellFrame.getByRole('button', { name: 'Click to add above' }).click();
     await page.getByRole('menuitem', { name: 'Code' }).click();
 
     // The only code cell on the page, so its language combobox picks it out unambiguously
