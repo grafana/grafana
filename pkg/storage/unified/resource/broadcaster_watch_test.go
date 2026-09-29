@@ -42,9 +42,12 @@ func cacheEvent(gr GroupResource, rv int64) *WrittenEvent {
 func newWatchBroadcaster(t *testing.T, floor int64, seed ...*WrittenEvent) (*broadcaster[*WrittenEvent], chan<- *WrittenEvent) {
 	t.Helper()
 	input := make(chan *WrittenEvent)
-	b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil, writtenEventIdentity,
-		func(context.Context) (cacheSeed[*WrittenEvent], error) {
-			return cacheSeed[*WrittenEvent]{items: seed, initialCacheFloor: floor}, nil
+	b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+		&seededCacheConfig[*WrittenEvent]{
+			identity: writtenEventIdentity,
+			initialize: func(context.Context) (cacheSeed[*WrittenEvent], error) {
+				return cacheSeed[*WrittenEvent]{items: seed, initialCacheFloor: floor}, nil
+			},
 		})
 	require.NoError(t, b.waitReady(t.Context()))
 	return b, input
@@ -121,7 +124,7 @@ func TestRingBufferEvictionWraparound(t *testing.T) {
 
 func TestCheckedWatchRequiresSeededCache(t *testing.T) {
 	metrics := newBroadcasterMetrics(prometheus.NewRegistry())
-	b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, metrics, nil, nil, nil)
+	b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, metrics, nil, nil)
 
 	stream, err := b.subscribeWatch(t.Context(), "resume", "r", &watchResume{since: 50, requestedRV: 50})
 	require.ErrorContains(t, err, "checked resume requires a seeded watch cache")
@@ -192,14 +195,17 @@ func TestWatchSeedReadinessAndGenericSubscribers(t *testing.T) {
 		input := make(chan *WrittenEvent, 2)
 		gr := GroupResource{Group: "g", Resource: "r"}
 		release := make(chan struct{})
-		b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil, writtenEventIdentity,
-			func(ctx context.Context) (cacheSeed[*WrittenEvent], error) {
-				select {
-				case <-ctx.Done():
-					return cacheSeed[*WrittenEvent]{}, ctx.Err()
-				case <-release:
-					return cacheSeed[*WrittenEvent]{items: []*WrittenEvent{cacheEvent(gr, 50)}, initialCacheFloor: 50}, nil
-				}
+		b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+			&seededCacheConfig[*WrittenEvent]{
+				identity: writtenEventIdentity,
+				initialize: func(ctx context.Context) (cacheSeed[*WrittenEvent], error) {
+					select {
+					case <-ctx.Done():
+						return cacheSeed[*WrittenEvent]{}, ctx.Err()
+					case <-release:
+						return cacheSeed[*WrittenEvent]{items: []*WrittenEvent{cacheEvent(gr, 50)}, initialCacheFloor: 50}, nil
+					}
+				},
 			})
 		stream, err := b.Subscribe(t.Context(), "internal", "r")
 		require.NoError(t, err)
@@ -231,8 +237,8 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 		secondRelease := make(chan struct{})
 		loadErr := errors.New("seed load failed")
 		var attempts atomic.Int32
-		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil, nil,
-			func(ctx context.Context) (cacheSeed[int], error) {
+		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+			&seededCacheConfig[int]{initialize: func(ctx context.Context) (cacheSeed[int], error) {
 				switch attempts.Add(1) {
 				case 1:
 					select {
@@ -249,7 +255,7 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 						return cacheSeed[int]{items: []int{50}}, nil
 					}
 				}
-			})
+			}})
 
 		generic, err := b.Subscribe(t.Context(), "internal", "r")
 		require.NoError(t, err)
@@ -305,15 +311,15 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 func TestBroadcasterFatalInitializationFailureClosesQueuedSubscribers(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		release := make(chan struct{})
-		b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil, nil,
-			func(ctx context.Context) (cacheSeed[int], error) {
+		b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+			&seededCacheConfig[int]{initialize: func(ctx context.Context) (cacheSeed[int], error) {
 				select {
 				case <-ctx.Done():
 					return cacheSeed[int]{}, ctx.Err()
 				case <-release:
 					return cacheSeed[int]{items: make([]int, defaultCacheSize+1)}, nil
 				}
-			})
+			}})
 		stream, err := b.Subscribe(t.Context(), "internal", "r")
 		require.NoError(t, err)
 		close(release)
@@ -329,11 +335,11 @@ func TestBroadcasterFatalInitializationFailureClosesQueuedSubscribers(t *testing
 
 func TestCheckedWatchCancellationDuringInitialization(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil, nil,
-			func(ctx context.Context) (cacheSeed[int], error) {
+		b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+			&seededCacheConfig[int]{initialize: func(ctx context.Context) (cacheSeed[int], error) {
 				<-ctx.Done()
 				return cacheSeed[int]{}, ctx.Err()
-			})
+			}})
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
 		go func() {

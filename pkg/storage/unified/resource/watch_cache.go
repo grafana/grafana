@@ -74,3 +74,47 @@ func (c *watchCache[T]) replay(dst chan<- T) error {
 	}
 	return nil
 }
+
+// ringBuffer is a fixed-size circular buffer. It is not safe for concurrent
+// use — the broadcaster's single stream() goroutine is the only caller.
+type ringBuffer[T any] struct {
+	buf  []T
+	zero int // index of the oldest item
+	len  int // number of items currently stored
+}
+
+func newRingBuffer[T any](size int) ringBuffer[T] {
+	if size <= 0 {
+		size = defaultCacheSize
+	}
+	return ringBuffer[T]{
+		buf: make([]T, size),
+	}
+}
+
+func (r *ringBuffer[T]) add(item T) (evicted T, ok bool) {
+	i := (r.zero + r.len) % len(r.buf)
+	if r.len == len(r.buf) {
+		evicted, ok = r.buf[i], true
+	}
+	r.buf[i] = item
+	if r.len < len(r.buf) {
+		r.len++
+	} else {
+		r.zero = (r.zero + 1) % len(r.buf)
+	}
+	return evicted, ok
+}
+
+// readInto sends all cached items to dst without blocking. Returns true if all
+// items were sent, false if dst's buffer was full (slow consumer).
+func (r *ringBuffer[T]) readInto(dst chan<- T) bool {
+	for i := 0; i < r.len; i++ {
+		select {
+		case dst <- r.buf[(r.zero+i)%len(r.buf)]:
+		default:
+			return false
+		}
+	}
+	return true
+}

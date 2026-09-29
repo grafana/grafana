@@ -14,15 +14,15 @@ func TestGenericSubscriptionContextOnlyAppliesToSubmission(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		release := make(chan struct{})
 		input := make(chan int)
-		b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil, nil,
-			func(ctx context.Context) (cacheSeed[int], error) {
+		b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+			&seededCacheConfig[int]{initialize: func(ctx context.Context) (cacheSeed[int], error) {
 				select {
 				case <-ctx.Done():
 					return cacheSeed[int]{}, ctx.Err()
 				case <-release:
 					return cacheSeed[int]{items: []int{1}}, nil
 				}
-			})
+			}})
 
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
@@ -45,10 +45,10 @@ func TestSubscriptionReplayFailureContracts(t *testing.T) {
 		t.Run(map[bool]string{false: "generic", true: "checked"}[checked], func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				metrics := newBroadcasterMetrics(prometheus.NewRegistry())
-				b := newBroadcasterWithSizes(t.Context(), make(chan int), 1, defaultOverflowCap, metrics, nil, nil,
-					func(context.Context) (cacheSeed[int], error) {
+				b := newBroadcasterWithSizes(t.Context(), make(chan int), 1, defaultOverflowCap, metrics, nil,
+					&seededCacheConfig[int]{initialize: func(context.Context) (cacheSeed[int], error) {
 						return cacheSeed[int]{items: []int{1, 2}}, nil
-					})
+					}})
 
 				if checked {
 					stream, err := b.subscribeWatch(t.Context(), "checked", "r", nil)
