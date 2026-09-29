@@ -549,6 +549,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	subscriberService := nats.ProvideSubscriber(config, registerer)
+	watchExpiry := resource.NewWatchExpiry()
 	options := &unified.Options{
 		Cfg:            cfg,
 		Features:       featureToggles,
@@ -567,6 +568,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		ExperimentalKV: experimentalKVOptions,
 		Publisher:      publisherService,
 		Subscriber:     subscriberService,
+		WatchExpiry:    watchExpiry,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -597,10 +599,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
 	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService, cfg, eventualRestConfigProvider, tracingService)
+	authinfoimplStore, err := authinfoimpl.ProvideLegacyStore(ctx, legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
+	loginStore := authinfoimpl.ProvideStore(authinfoimplStore, cfg, eventualRestConfigProvider, tracingService)
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
 	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
 	if err != nil {
@@ -965,7 +968,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, loginStore, remoteCache)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache)
 	if err != nil {
 		return nil, err
 	}
@@ -1328,6 +1331,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	subscriberService := nats.ProvideSubscriber(config, registerer)
+	watchExpiry := resource.NewWatchExpiry()
 	options := &unified.Options{
 		Cfg:            cfg,
 		Features:       featureToggles,
@@ -1346,6 +1350,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		ExperimentalKV: experimentalKVOptions,
 		Publisher:      publisherService,
 		Subscriber:     subscriberService,
+		WatchExpiry:    watchExpiry,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1467,10 +1472,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
 	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService, cfg, eventualRestConfigProvider, tracingService)
+	authinfoimplStore, err := authinfoimpl.ProvideLegacyStore(ctx, legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
+	loginStore := authinfoimpl.ProvideStore(authinfoimplStore, cfg, eventualRestConfigProvider, tracingService)
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
 	oauthtokenService := oauthtoken.ProvideService(socialService, authinfoimplService, configProvider, registerer, serverLockService, tracingService, userAuthTokenService, featureToggles)
 	dataSourceProxyService := datasourceproxy.ProvideService(cacheServiceImpl, ossDataSourceRequestValidator, pluginstoreService, cfg, httpclientProvider, oauthtokenService, service13, tracingService, secretsService, featureToggles)
@@ -1746,7 +1752,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, loginStore, remoteCache)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache)
 	if err != nil {
 		return nil, err
 	}
@@ -2034,11 +2040,12 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, legacyDatabaseProvider, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
 	socialService := socialimpl.ProvideService(contextContext, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	loginStore, err := authinfoimpl.ProvideStore(contextContext, legacyDatabaseProvider, secretsService, cfg, eventualRestConfigProvider, tracingService)
+	authinfoimplStore, err := authinfoimpl.ProvideLegacyStore(contextContext, legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	loginStore := authinfoimpl.ProvideStore(authinfoimplStore, cfg, eventualRestConfigProvider, tracingService)
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
 	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
 	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(contextContext, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)

@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.26.6
+go 1.27.1
 
 require (
 	github.com/go-jose/go-jose/v4 v4.1.5
@@ -8,8 +8,8 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 // @grafana/identity-access-team
 	github.com/stretchr/testify v1.12.1
 	go.yaml.in/yaml/v3 v3.0.5
-	k8s.io/apimachinery v0.37.0
-	k8s.io/apiserver v0.37.0
+	k8s.io/apimachinery v0.37.1
+	k8s.io/apiserver v0.37.1
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098
 )
 

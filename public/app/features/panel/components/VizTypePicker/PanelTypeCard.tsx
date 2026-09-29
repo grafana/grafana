@@ -78,7 +78,7 @@ const PanelTypeCardComponent = ({
         {children}
       </div>
       {showBadge && (
-        <div className={cx(styles.badge, { [styles.disabled]: isDisabled })}>
+        <div className={cx({ [styles.disabled]: isDisabled })}>
           <PanelPluginBadge plugin={plugin} />
         </div>
       )}
@@ -220,9 +220,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: IMAGE_SIZE,
       display: 'flex',
       alignItems: 'center',
-    }),
-    badge: css({
-      background: theme.colors.background.primary,
     }),
     deleteButton: css({
       cursor: 'pointer',
