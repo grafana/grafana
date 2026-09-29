@@ -116,7 +116,7 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 }
 
 func TestWriteEvent_Add(t *testing.T) {
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	timeNow = func() time.Time {
 		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
@@ -289,7 +289,7 @@ func saGroupResource() schema.GroupResource {
 }
 
 func TestWriteEvent_Add_ServiceAccount(t *testing.T) {
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	timeNow = func() time.Time {
 		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
@@ -771,7 +771,7 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 }
 
 func TestWriteEvent_Modify(t *testing.T) {
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	timeNow = func() time.Time {
 		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)

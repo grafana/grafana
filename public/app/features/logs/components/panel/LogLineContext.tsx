@@ -345,12 +345,16 @@ export const LogLineContext = memo(
       () =>
         log instanceof LogListModel
           ? log
-          : new LogListModel(log, {
-              escape: false,
-              otelLogsFormattingEnabled,
-              timeZone,
-              wrapLogMessage,
-            }),
+          : new LogListModel(
+              log,
+              {
+                escape: false,
+                otelLogsFormattingEnabled,
+                timeZone,
+                wrapLogMessage,
+              },
+              0
+            ),
       [log, otelLogsFormattingEnabled, timeZone, wrapLogMessage]
     );
 
@@ -526,6 +530,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 0,
     }),
     wrapper: css({
+      background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(0, 1, 1, 0),
       flex: '1 1 auto',

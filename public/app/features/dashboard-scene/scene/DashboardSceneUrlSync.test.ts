@@ -1,7 +1,16 @@
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { waitFor } from '@testing-library/react';
+
+import { locationService } from '@grafana/runtime';
+import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
+
+import * as panelEditor from '../panel-edit/openPanelEditor';
 
 import { DashboardScene } from './DashboardScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowItem } from './layout-rows/RowItem';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
+import { TabItem } from './layout-tabs/TabItem';
+import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 describe('DashboardSceneUrlSync', () => {
   describe('Given a standard scene', () => {
@@ -23,17 +32,377 @@ describe('DashboardSceneUrlSync', () => {
     });
   });
 
+  describe('Scroll to row', () => {
+    let scrollIntoViewSpy: jest.Mock;
+    let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
+    let locationPartialSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      // jsdom doesn't implement scrollIntoView, so patch the prototype rather than spy on it.
+      originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+      scrollIntoViewSpy = jest.fn();
+      HTMLElement.prototype.scrollIntoView = scrollIntoViewSpy;
+      locationPartialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+      locationPartialSpy.mockRestore();
+      document.body.innerHTML = '';
+    });
+
+    it('scrolls the matching row into view', () => {
+      const { scene, element } = buildTestSceneWithRow('Traces Instance Stats');
+
+      scene.urlSync?.updateFromUrl({ drow: 'Traces-Instance-Stats' });
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(element);
+    });
+
+    it('expands a collapsed row', () => {
+      const { scene, row } = buildTestSceneWithRow('Traces Instance Stats', { collapse: true });
+
+      scene.urlSync?.updateFromUrl({ drow: 'Traces-Instance-Stats' });
+
+      expect(row.state.collapse).toBe(false);
+    });
+
+    it('clears parameter from the url after scrolling so it acts as a one-shot action', () => {
+      const { scene } = buildTestSceneWithRow('Traces Instance Stats');
+
+      scene.urlSync?.updateFromUrl({ drow: 'Traces-Instance-Stats' });
+
+      // replace: true so clearing drow does not push a history entry that Back would restore
+      expect(locationPartialSpy).toHaveBeenCalledWith({ drow: null }, true);
+    });
+
+    it('expands all collapsed ancestor rows of a nested row', () => {
+      const nestedRow = new RowItem({ title: 'Nested' });
+      const middleRow = new RowItem({
+        title: 'Middle',
+        collapse: true,
+        layout: new RowsLayoutManager({ rows: [nestedRow] }),
+      });
+      const outerRow = new RowItem({
+        title: 'Outer',
+        collapse: true,
+        layout: new RowsLayoutManager({ rows: [middleRow] }),
+      });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [outerRow] }),
+      });
+
+      scene.urlSync?.updateFromUrl({ drow: 'Outer/Middle/Nested' });
+
+      expect(outerRow.state.collapse).toBe(false);
+      expect(middleRow.state.collapse).toBe(false);
+    });
+
+    it('switches to a non-active tab containing the target row', () => {
+      const targetRow = new RowItem({ title: 'Target row' });
+      const activeTab = new TabItem({ title: 'Active tab' });
+      const targetTab = new TabItem({
+        title: 'Target tab',
+        layout: new RowsLayoutManager({ rows: [targetRow] }),
+      });
+      const tabsLayout = new TabsLayoutManager({ tabs: [activeTab, targetTab] });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: tabsLayout,
+      });
+      tabsLayout.setState({ currentTabSlug: activeTab.getSlug() });
+
+      scene.urlSync?.updateFromUrl({ drow: 'Target-tab/Target-row' });
+
+      expect(tabsLayout.getCurrentTab()).toBe(targetTab);
+    });
+
+    it('scrolls the correct row when a nested row shares its slug with a top-level row', () => {
+      const nestedRow = new RowItem({ title: 'Row 1' });
+      const containerRow = new RowItem({ title: 'Row 2', layout: new RowsLayoutManager({ rows: [nestedRow] }) });
+      const topLevelRow = new RowItem({ title: 'Row 1' });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [topLevelRow, containerRow] }),
+      });
+
+      const topLevelElement = document.createElement('div');
+      document.body.appendChild(topLevelElement);
+      topLevelRow.containerRef.current = topLevelElement;
+
+      const nestedElement = document.createElement('div');
+      document.body.appendChild(nestedElement);
+      nestedRow.containerRef.current = nestedElement;
+
+      scene.urlSync?.updateFromUrl({ drow: 'Row-2/Row-1' });
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(nestedElement);
+
+      scene.urlSync?.updateFromUrl({ drow: 'Row-1' });
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      expect(scrollIntoViewSpy.mock.instances[1]).toBe(topLevelElement);
+    });
+
+    it('distinguishes a row titled with a slash from a nested row with the same path segments', () => {
+      const nestedRow = new RowItem({ title: 'Bar' });
+      const parentRow = new RowItem({ title: 'Foo', layout: new RowsLayoutManager({ rows: [nestedRow] }) });
+      const slashTitleRow = new RowItem({ title: 'Foo/Bar' });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [slashTitleRow, parentRow] }),
+      });
+
+      const slashTitleElement = document.createElement('div');
+      document.body.appendChild(slashTitleElement);
+      slashTitleRow.containerRef.current = slashTitleElement;
+
+      const nestedElement = document.createElement('div');
+      document.body.appendChild(nestedElement);
+      nestedRow.containerRef.current = nestedElement;
+
+      // Encoded slash in the title segment must not match nested Foo/Bar path
+      scene.urlSync?.updateFromUrl({ drow: 'Foo%2FBar' });
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(slashTitleElement);
+
+      scene.urlSync?.updateFromUrl({ drow: 'Foo/Bar' });
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      expect(scrollIntoViewSpy.mock.instances[1]).toBe(nestedElement);
+    });
+
+    it('clears parameter but does not scroll when no row matches the slug', () => {
+      const { scene } = buildTestSceneWithRow('Traces Instance Stats');
+
+      scene.urlSync?.updateFromUrl({ drow: 'Does-Not-Exist' });
+
+      expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+      expect(locationPartialSpy).toHaveBeenCalledWith({ drow: null }, true);
+    });
+
+    it('matches a repeated row clone by its own slug, without the source row as a path segment', () => {
+      const sourceRow = new RowItem({ title: 'Web A' });
+      // Repeat clones live in the source row's repeatedRows state, so their scene graph
+      // parent is the source row even though they render as its siblings
+      const cloneRow = new RowItem({ title: 'Web B', repeatSourceKey: sourceRow.state.key });
+      sourceRow.setState({ repeatedRows: [cloneRow] });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [sourceRow] }),
+      });
+
+      const cloneElement = document.createElement('div');
+      document.body.appendChild(cloneElement);
+      cloneRow.containerRef.current = cloneElement;
+
+      scene.urlSync?.updateFromUrl({ drow: 'Web-B' });
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(cloneElement);
+    });
+
+    it('scrolls to a repeated row that is created after url sync, when the repeater announces it', () => {
+      const sourceRow = new RowItem({ title: 'Web A' });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [sourceRow] }),
+      });
+
+      // On load the repeat variable has not resolved yet, so the clone does not exist
+      scene.urlSync?.updateFromUrl({ drow: 'Web-B' });
+      expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+
+      // Simulate the repeater performing repeats: it creates the clones and publishes
+      // NewSceneObjectAddedEvent when done
+      const cloneRow = new RowItem({ title: 'Web B', repeatSourceKey: sourceRow.state.key });
+      sourceRow.setState({ repeatedRows: [cloneRow] });
+      const cloneElement = document.createElement('div');
+      document.body.appendChild(cloneElement);
+      cloneRow.containerRef.current = cloneElement;
+      sourceRow.publishEvent(new NewSceneObjectAddedEvent(sourceRow), true);
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(cloneElement);
+
+      // The retry is one-shot: later additions must not scroll again
+      sourceRow.publishEvent(new NewSceneObjectAddedEvent(sourceRow), true);
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('replaces a pending scroll target when a new drow arrives before the old one matched', () => {
+      const sourceRow = new RowItem({ title: 'Web A' });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [sourceRow] }),
+      });
+
+      scene.urlSync?.updateFromUrl({ drow: 'Web-B' });
+      scene.urlSync?.updateFromUrl({ drow: 'Web-C' });
+
+      const cloneB = new RowItem({ title: 'Web B', repeatSourceKey: sourceRow.state.key });
+      const cloneC = new RowItem({ title: 'Web C', repeatSourceKey: sourceRow.state.key });
+      sourceRow.setState({ repeatedRows: [cloneB, cloneC] });
+      for (const clone of [cloneB, cloneC]) {
+        const element = document.createElement('div');
+        document.body.appendChild(element);
+        clone.containerRef.current = element;
+      }
+      sourceRow.publishEvent(new NewSceneObjectAddedEvent(sourceRow), true);
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(cloneC.containerRef.current);
+    });
+  });
+
   describe('entering edit mode', () => {
-    it('it should be possible to go from the view panel view to the edit view when the dashboard is not in edit mdoe', () => {
+    it('preserves a deep-linked panel editor while entering dashboard edit mode', async () => {
+      locationService.push('/d/test/test?editPanel=1');
+      const scene = buildTestScene();
+      const urlSync = new UrlSyncManager();
+      try {
+        urlSync.initSync(scene);
+        expect(locationService.getSearchObject().editPanel).toBe('1');
+        await waitFor(() => expect(scene.state.editPanel?.getUrlKey()).toBe('1'));
+      } finally {
+        urlSync.cleanUp(scene);
+      }
+    });
+
+    it('keeps the URL and selected edit view in sync after successive updates', async () => {
+      const scene = buildTestScene();
+      scene.setState({
+        editable: true,
+        isEditing: true,
+        meta: { ...scene.state.meta, canEdit: true },
+      });
+
+      scene.urlSync?.updateFromUrl({ editview: 'settings' });
+      expect(scene.urlSync?.getUrlState().editview).toBe('settings');
+
+      scene.urlSync?.updateFromUrl({ editview: 'variables' });
+      expect(scene.urlSync?.getUrlState().editview).toBe('variables');
+
+      await waitFor(() => expect(scene.state.editview?.getUrlKey()).toBe('variables'));
+    });
+
+    it('opens the editor when the same URL update closes panel view and already-closed settings', async () => {
       const scene = buildTestScene();
       scene.setState({ isEditing: false });
       scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
       expect(scene.state.viewPanel).toBeDefined();
+      scene.urlSync?.updateFromUrl({ editPanel: 'panel-1', editview: null });
+      // The panel editor is code split, so editPanel lands in a follow-up state update.
+      await waitFor(() => expect(scene.state.editPanel).toBeDefined());
+      expect(scene.state.viewPanel).toBeUndefined();
+    });
+
+    it('does not reopen the editor when URL sync closes it before its chunk arrives', async () => {
+      const scene = buildTestScene();
+      scene.setState({ isEditing: true });
+      const openEditor = jest.spyOn(panelEditor, 'openPanelEditor');
+      try {
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+        expect(scene.urlSync?.getUrlState().editPanel).toBe('panel-1');
+        const editing = openEditor.mock.results[0].value;
+
+        scene.urlSync?.updateFromUrl({ editPanel: null });
+        await editing;
+
+        expect(scene.state.editPanel).toBeUndefined();
+        expect(scene.urlSync?.getUrlState().editPanel).toBeUndefined();
+
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+        await openEditor.mock.results[1].value;
+        expect(scene.state.editPanel?.getUrlKey()).toBe('1');
+      } finally {
+        openEditor.mockRestore();
+      }
+    });
+  });
+
+  describe('while planning', () => {
+    const planning = {
+      planId: 'plan-1',
+      planTitle: 'Kafka overview',
+      onBuild: jest.fn(),
+      onDismiss: jest.fn(),
+    };
+
+    it('does not open dashboard settings from an editview url param, and does not enter edit mode', () => {
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false, planning });
+      jest.spyOn(scene, 'canEditDashboard').mockReturnValue(true);
+      const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
+      scene.urlSync?.updateFromUrl({ editview: 'settings' });
+
+      expect(scene.state.editview).toBeUndefined();
+      expect(scene.state.isEditing).toBe(false);
+      expect(onEnterEditMode).not.toHaveBeenCalled();
+    });
+
+    it('does not open the panel editor from an editPanel url param, and does not enter edit mode', () => {
+      // Without this guard, the branch below calls onEnterEditMode() directly when not already
+      // editing, undoing the invariant the static preview depends on.
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false, planning });
+      const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
       scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
-      expect(scene.state.editPanel).toBeDefined();
+
+      expect(scene.state.editPanel).toBeUndefined();
+      expect(scene.state.isEditing).toBe(false);
+      expect(onEnterEditMode).not.toHaveBeenCalled();
+    });
+
+    it('does not open the share drawer from a shareView url param', () => {
+      // Share is guarded elsewhere too (keyboard shortcuts; no menu at all on a preview panel)
+      // -- this is a third route to the same action.
+      const scene = buildTestScene();
+      scene.setState({ planning });
+
+      scene.urlSync?.updateFromUrl({ shareView: 'snapshot' });
+
+      expect(scene.state.overlay).toBeUndefined();
+      expect(scene.state.shareView).toBeUndefined();
+    });
+
+    it('does not open the view-panel pane from a viewPanel url param', () => {
+      // Preview panels have no menu, so View isn't reachable that way -- but ?viewPanel= reaches
+      // the same pane directly, whose Quick toggles section is plugin-gated, not isPlanning()-gated.
+      const scene = buildTestScene();
+      scene.setState({ planning });
+
+      scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
+
+      expect(scene.state.viewPanel).toBeUndefined();
     });
   });
 });
+
+function buildTestSceneWithRow(title: string, { collapse }: { collapse?: boolean } = {}) {
+  const row = new RowItem({ title, collapse });
+  const scene = new DashboardScene({
+    title: 'hello',
+    uid: 'dash-1',
+    body: new RowsLayoutManager({ rows: [row] }),
+  });
+
+  // simulate the row being rendered
+  const element = document.createElement('div');
+  document.body.appendChild(element);
+  row.containerRef.current = element;
+
+  return { scene, row, element };
+}
 
 function buildTestScene() {
   const scene = new DashboardScene({

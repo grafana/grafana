@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "konfigurálva",
       "reset-symbol-client-secret": "Visszaállítás"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} nyers lekérdezés",
       "aria-label-use-query": "Használja ezt a lekérdezési gombot",
@@ -79,9 +84,9 @@
       "label-enable-basic-logs": "Alapvető naplók engedélyezése"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Köteg-API",
+      "description-batch-api": "Több erőforrást kérdez le egyetlen kérésben, javítva a nagy irányítópultok teljesítményét. Szükséges hozzá a <2>Monitoring Reader</2> (Monitorozási olvasó) szerepkör az előfizetési hatókörben a <6>metrics.monitor.azure.com</6> oldalon. Az ingyenes szinten túl további <9>költségek merülhetnek fel</9>.",
+      "label-enable-batch-api": "Köteg-API engedélyezése"
     },
     "config-editor": {
       "description-additional-settings": "A további beállítások olyan opcionális beállítások, amelyek konfigurálhatók az adatforrás nagyobb mértékű ellenőrzése érdekében. Idetartozik a Secure Socks Proxy, a lekérdezési időtúllépés és a továbbított cookie-k.",
@@ -105,7 +110,11 @@
       "load-subscriptions": "Előfizetések betöltése"
     },
     "dimension-fields": {
-      "aria-label-remove": "Eltávolítás",
+      "aria-label-field": "{{position}} dimenzió mezője",
+      "aria-label-operator": "{{position}} dimenzió operátora",
+      "aria-label-remove": "{{position}} dimenzió eltávolítása",
+      "aria-label-value": "{{position}} dimenzió értéke",
+      "aria-label-values": "{{position}} dimenzió értékei",
       "label-dimensions": "Dimenziók",
       "placeholder-field": "Mező",
       "placeholder-operation": "Művelet",
@@ -178,19 +187,47 @@
       "tooltip-limit": "A visszaadott sorok számának korlátozása (az alapértelmezett érték az 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Biztosan átvált az alapvető naplókra?",
       "confirmText-confirm": "Megerősítés",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Az Alapvető naplók lekérdezései a beolvasott adatok mennyiségétől függően költséget eredményeznek.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Naplók",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Alapvető naplók lekérdezései",
-      "tooltip-logs": "Megadja, hogy Alapvető vagy Analitikai naplók lekérdezését kell-e futtatni."
+      "tooltip-logs": "Megadja, hogy Alapvető vagy Analitikai naplók lekérdezését kell-e futtatni.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Az erőforrás sikeresen betöltődött, de táblák nélkül"
     },
     "logs-query-editor": {
       "learn-more": "További információ",
-      "view-query": "Lekérdezés megtekintése az Azure Portalon"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Lekérdezés megtekintése az Azure Portalon",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrika"
@@ -199,11 +236,11 @@
       "label-metric-namespace": "Metrika névtere"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Kiválaszthatja az azonos erőforrástípusú elemeket az előfizetések és a régiók között. A különböző előfizetésekben vagy régiókban lévő erőforrások lekérdezése külön kérésekben történik, és egymástól függetlenül sikertelenek lehetnek. Egy másik erőforrástípushoz tartozó erőforrások kiválasztásához először törölje az aktuális kijelölést.",
+      "selection-notice-standard": "Kiválaszthatja az azonos erőforrástípusú és -helyű elemeket. Egy másik erőforrástípushoz vagy -helyhez tartozó erőforrások kiválasztásához először törölje az aktuális kijelölést."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Funkciók"
     },
     "nested-row": {
       "text-loading": "Betöltés…"
@@ -218,8 +255,8 @@
       "tooltip-order-by": "Az eredmények rendezése egy vagy több oszlop alapján növekvő vagy csökkenő sorrendben."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "A betöltés {{maxPages}} oldal után leállt; néhány eredmény kimaradhat.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Hiba történt a metaadatok Azure Monitor szolgáltatásból történő lekérése során"

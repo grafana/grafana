@@ -9,6 +9,40 @@ import { type TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
+import { getDashboardSceneLike } from '../types/dashboard';
+
+/**
+ * Dashboard default layout to start the new group with, when the current layout holds nothing worth keeping.
+ * Only grids qualify: rows and tabs carry structure the user built even while they contain no panels.
+ */
+function getDefaultLayoutForEmptyGrid(layout: DashboardLayoutManager): DashboardLayoutManager | undefined {
+  if (!layout.descriptor.isGridLayout || layout.getVizPanels().length > 0) {
+    return undefined;
+  }
+
+  const dashboard = getDashboardSceneLike(layout);
+  const defaultLayout = dashboard.getDefaultLayout();
+
+  // A template deserialized from preferences carries no edit-mode flags, so without this
+  // panels in the new group would not be draggable/resizable until edit mode is re-entered
+  if (dashboard.state.isEditing) {
+    defaultLayout?.editModeChanged?.(true);
+  }
+
+  return defaultLayout;
+}
+
+function createTabsLayoutContaining(layout: DashboardLayoutManager): TabsLayoutManager {
+  const tabsLayout = TabsLayoutManager.createEmpty();
+  tabsLayout.state.tabs[0].setState({ layout });
+  return tabsLayout;
+}
+
+function createRowsLayoutContaining(layout: DashboardLayoutManager): RowsLayoutManager {
+  const rowsLayout = RowsLayoutManager.createEmpty();
+  rowsLayout.state.rows[0].setState({ layout });
+  return rowsLayout;
+}
 
 export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
   const layoutParent = layout.parent!;
@@ -21,12 +55,12 @@ export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
   }
 
   // Create new tabs layout and wrap the current layout in the first tab
-  const tabsLayout = TabsLayoutManager.createEmpty();
-  tabsLayout.state.tabs[0].setState({ layout: layout.clone() });
+  const layoutToWrap = getDefaultLayoutForEmptyGrid(layout) ?? layout.clone();
+  const tabsLayout = createTabsLayoutContaining(layoutToWrap);
+  const tab = tabsLayout.state.tabs[0];
 
   layoutParent.switchLayout(tabsLayout);
 
-  const tab = tabsLayout.state.tabs[0];
   layout.publishEvent(new NewObjectAddedToCanvasEvent(tab), true);
 
   return tab;
@@ -64,7 +98,10 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   // If we want to add a row and current layout is custom grid or auto we migrate to rows layout
   // And wrap current layout in a row
 
-  const rowsLayout = RowsLayoutManager.createFromLayout(layoutParent.getLayout());
+  const defaultLayout = getDefaultLayoutForEmptyGrid(layout);
+  const rowsLayout = defaultLayout
+    ? createRowsLayoutContaining(defaultLayout)
+    : RowsLayoutManager.createFromLayout(layout);
   layoutParent.switchLayout(rowsLayout);
 
   const row = rowsLayout.state.rows[0];

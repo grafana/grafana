@@ -14,6 +14,7 @@ Restart=on-failure
 WorkingDirectory=/usr/share/grafana
 RuntimeDirectory=grafana
 RuntimeDirectoryMode=0750
+Environment=PLUGIN_UNIX_SOCKET_DIR=/run/grafana
 ExecStart=/usr/share/grafana/bin/grafana server                                     \
                             --config=${CONF_FILE}                                   \
                             --pidfile=${PID_FILE_DIR}/grafana-server.pid            \
@@ -21,7 +22,8 @@ ExecStart=/usr/share/grafana/bin/grafana server                                 
                             cfg:default.paths.logs=${LOG_DIR}                       \
                             cfg:default.paths.data=${DATA_DIR}                      \
                             cfg:default.paths.plugins=${PLUGINS_DIR}                \
-                            cfg:default.paths.provisioning=${PROVISIONING_CFG_DIR}
+                            cfg:default.paths.provisioning=${PROVISIONING_CFG_DIR}  \
+                            cfg:default.paths.bundled_plugins=${DATA_DIR}/plugins-bundled
 
 LimitNOFILE=10000
 TimeoutStopSec=20

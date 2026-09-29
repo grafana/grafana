@@ -19,6 +19,17 @@ describe('QueryOperationRowHeader', () => {
     expect(() => setup()).not.toThrow();
   });
 
+  describe('drag handle', () => {
+    test('should carry its own accessible name rather than relying on the icon', () => {
+      setup();
+      expect(screen.getByLabelText('Drag and drop to reorder')).toBeInTheDocument();
+    });
+    test('should not render the drag handle when the row is not draggable', () => {
+      setup({ draggable: false });
+      expect(screen.queryByLabelText('Drag and drop to reorder')).not.toBeInTheDocument();
+    });
+  });
+
   describe('collapsable property', () => {
     test('should show the button to collapse the query row by default', () => {
       setup();

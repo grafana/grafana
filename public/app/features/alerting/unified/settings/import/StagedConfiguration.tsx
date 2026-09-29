@@ -11,6 +11,8 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeEditContactPointLink, makeEditTimeIntervalLink } from '../../utils/misc';
 import { createRelativeUrl } from '../../utils/url';
 
+import { PromoteConfirmModal } from './PromoteConfirmModal';
+import { RevertConfirmModal } from './RevertConfirmModal';
 import {
   type StagedExtraConfig,
   encodeRouteMatchersQuery,
@@ -65,6 +67,12 @@ interface AccordionSection {
 
 interface Props {
   stagedConfig: StagedExtraConfig;
+  /** Whether the current user can merge the staged configuration into the live one. */
+  canPromote: boolean;
+  /** Whether the current user can discard the staged configuration. */
+  canRevert: boolean;
+  /** Written by the external Alertmanager sync, so reverting it would only be undone by the next tick. */
+  isSyncManaged?: boolean;
   /**
    * The live Grafana Alertmanager config the staged one is merged against. Needed to work out which staged
    * resources the backend renames on a name collision, so their View links address the staged copy.
@@ -72,8 +80,13 @@ interface Props {
   liveConfig?: AlertmanagerConfig;
 }
 
-export function StagedConfiguration({ stagedConfig, liveConfig }: Props) {
+export function StagedConfiguration({ stagedConfig, canPromote, canRevert, isSyncManaged, liveConfig }: Props) {
   const styles = useStyles2(getStyles);
+  const [openModal, setOpenModal] = useState<'promote' | 'revert' | null>(null);
+  const noPermissionTooltip = t(
+    'alerting.settings.import.no-write-permission',
+    "You don't have permission to modify the imported configuration."
+  );
   const config = parseStagedAlertmanagerConfig(stagedConfig.alertmanager_config);
 
   if (!config) {
@@ -215,17 +228,65 @@ export function StagedConfiguration({ stagedConfig, liveConfig }: Props) {
 
   return (
     <div className={styles.card}>
-      <Stack direction="row" alignItems="center" gap={1}>
-        <Text element="h3" variant="h5">
-          {stagedConfig.identifier}
-        </Text>
-        <Badge
-          color="blue"
-          icon="cloud-upload"
-          text={t('alerting.settings.import.staged-badge', 'Staged · read-only')}
-        />
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} wrap="wrap">
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Text element="h3" variant="h5">
+            {stagedConfig.identifier}
+          </Text>
+          {isSyncManaged ? (
+            <Badge color="green" icon="sync" text={t('alerting.settings.import.synced-badge', 'Synced · read-only')} />
+          ) : (
+            <Badge
+              color="blue"
+              icon="cloud-upload"
+              text={t('alerting.settings.import.staged-badge', 'Staged · read-only')}
+            />
+          )}
+        </Stack>
+        <Stack direction="row" gap={1}>
+          {!isSyncManaged && (
+            <Button
+              variant="secondary"
+              disabled={!canRevert}
+              tooltip={canRevert ? undefined : noPermissionTooltip}
+              onClick={() => setOpenModal('revert')}
+            >
+              <Trans i18nKey="alerting.settings.import.revert-button">Revert</Trans>
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            icon="cloud-upload"
+            disabled={!canPromote}
+            tooltip={canPromote ? undefined : noPermissionTooltip}
+            onClick={() => setOpenModal('promote')}
+          >
+            <Trans i18nKey="alerting.settings.import.promote-button">Promote to live config</Trans>
+          </Button>
+        </Stack>
       </Stack>
+
+      {isSyncManaged && (
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="alerting.settings.import.sync-managed-description">
+            This configuration is kept up to date by auto-sync, so it can&apos;t be reverted — disable auto-sync to
+            remove it. Promoting it merges these resources into your live config and stops the sync.
+          </Trans>
+        </Text>
+      )}
+
       <ResourceAccordion sections={sections} />
+
+      {openModal === 'promote' && (
+        <PromoteConfirmModal
+          stagedConfig={stagedConfig}
+          isSyncManaged={isSyncManaged}
+          onDismiss={() => setOpenModal(null)}
+        />
+      )}
+      {openModal === 'revert' && (
+        <RevertConfirmModal stagedConfig={stagedConfig} onDismiss={() => setOpenModal(null)} />
+      )}
     </div>
   );
 }

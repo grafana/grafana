@@ -58,7 +58,7 @@ Click the panel menu icon that appears and select **Edit**.
 The panel menu also gives you access to several actions.
 If an option is only available in view mode or edit mode, that's indicated:
 
-- **View**: View the panel in full screen.
+- **View**: View the panel in full screen. Opens the [View panel sidebar](#view-mode-panel-controls) and displays controls for supported visualizations, if enabled.
 - **Edit**: Open the panel editor to edit panel and visualization options.
 - **Share**: Share the panel as a link, embed, or snapshot.
 - **Explore**: Open the panel in **Explore**, where you can focus on your query.
@@ -66,7 +66,7 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
-- **Time settings**: Opens the **Panel time settings** drawer where you can set panel-specific time options. Public preview. For more information, refer to [Panel time settings](#panel-time-settings).
+- **Time settings**: Opens the **Panel time settings** drawer where you can set panel-specific time options. For more information, refer to [Panel time settings](#panel-time-settings).
 - **Styles**: Edit mode only. Copy and paste styles from one panel to another in the same dashboard. For more information, refer to [Copy and paste panel styles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-editor-overview/#copy-and-paste-panel-styles).
 - **Assistant**: View mode only. Access Grafana Assistant help options. This option is only available on Grafana Cloud.
 - **Metrics drilldown**: Open the panel in the **Drilldown > Metrics** feature for further exploration. For more information, refer to [Metrics drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/metrics/).
@@ -79,6 +79,50 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **Hide/Show legend**: Hide or show the panel legend.
   - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
 - **Remove**: Edit mode only. Remove the panel from the dashboard.
+
+## View mode panel controls
+
+{{< admonition type="note" >}}
+View panel sidebar is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+This feature is enabled by default. To turn it off, disable the `viewPanelPane` feature toggle in your Grafana configuration file or contact Support.
+{{< /admonition >}}
+
+When you open a panel in full-screen view mode, Grafana displays a **View panel** sidebar with controls for adjusting the panel.
+These controls make it easier to view specific data or identify patterns and correlations.
+Because these controls exist in view mode, you don't need edit permissions to use them, and the changes you make don't affect the saved dashboard.
+
+The sidebar includes the following controls:
+
+- **Quick toggles**: Adjust common visualization options, such as legend visibility and basic graph styles.
+- **Fan-out by series or label**: Split one graph into multiple graphs per series or label value. This is useful when a single graph has many series and you need to spot which series or labels share an anomaly.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-view-panel-sidebar-2-v13.2.png" max-width="750px" alt="Panel in view mode with sidebar" >}}
+
+{{< admonition type="note" >}}
+This feature is supported for time series visualizations.
+If it's added to more visualizations, available quick toggles and fan-out support will depend on the visualization type.
+{{< /admonition >}}
+
+### Fan-out by series or label
+
+Fan-out splits one panel into multiple panels so you can compare series or label values side by side.
+This is useful when a single graph has many series and you need to spot which series or labels share an anomaly.
+
+In the **Fan-out by series or label** section, choose one of the following:
+
+| Option        | Description                                                                           |
+| ------------- | ------------------------------------------------------------------------------------- |
+| **Disabled**  | Show the original single panel.                                                       |
+| **By series** | Create one panel per series.                                                          |
+| **Labels**    | Create one panel per value of the selected label (for example, `method` or `status`). |
+
+If the panel data has no labels, Grafana shows **Data has no labels** under **Labels**.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-view-panel-sidebar-v13.2.png" max-width="750px" caption="Panel in view mode with fan-out applied to series" >}}
+
+When you select a fan-out mode, Grafana updates the dashboard URL with a `fanout` query parameter so you can share the split view.
+Leaving view mode removes that parameter.
 
 ## Keyboard shortcuts
 
@@ -101,16 +145,15 @@ By hovering over a panel with the mouse you can use some shortcuts that target t
 
 ## Panel time settings
 
-{{< docs/public-preview product="Panel time settings" featureFlag="`panelTimeSettings`" >}}
-
 You can configure the following settings to control the time range for a panel:
 
-| Option                | Description                                                                                                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Panel time range      | Overrides the dashboard time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                                              |
-| Time shift            | Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                 |
-| Time comparison       | <p>Compare data between two time ranges. Applied after **Time shift** when used together.</p><p>To try out this feature, enable the `timeComparison` feature toggle.</p> |
-| Hide panel time range | Don't show the panel time range in the panel header.                                                                                                                     |
+| Option                         | Description                                                                                                                                                                                                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel time range               | Overrides the dashboard time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                                                                                                                                     |
+| Time shift                     | Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                                                                                                        |
+| Time comparison                | Compares data with an earlier time range, such as the day or week before. Applied after **Time shift** when used together.                                                                                                                                      |
+| Comparison tooltip delta color | Colors the change between the original and comparison values in the tooltip. An increase is green with **Standard**, red with **Inverted**, or the series color with **Same as value**. Only shown for time series visualizations with **Time comparison** set. |
+| Hide panel time range          | Don't show the panel time range in the panel header.                                                                                                                                                                                                            |
 
 ## Pan and zoom panel time range
 

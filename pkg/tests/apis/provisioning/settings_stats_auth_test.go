@@ -103,6 +103,18 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 		require.Equal(t, int64(1000), settings.MaxRepositories, "MaxRepositories should be 1000 when configured")
 	})
 
+	t.Run("settings endpoint includes GitHub connections by default", func(t *testing.T) {
+		settings := &provisioning.RepositoryViewList{}
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("settings").
+			Do(t.Context())
+
+		require.NoError(t, result.Error(), "should be able to GET settings")
+		require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
+		require.Contains(t, settings.AvailableConnectionTypes, provisioning.GithubConnectionType)
+	})
+
 	t.Run("settings endpoint surfaces the default supported resources, enabled and disabled", func(t *testing.T) {
 		settings := &provisioning.RepositoryViewList{}
 		result := helper.AdminREST.Get().

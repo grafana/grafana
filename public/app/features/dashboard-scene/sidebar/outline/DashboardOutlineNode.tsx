@@ -18,7 +18,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
-import { LinkEdit } from '../../settings/links/LinkAddEditableElement';
+import { LinkEdit } from '../../settings/links/LinkEdit';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';

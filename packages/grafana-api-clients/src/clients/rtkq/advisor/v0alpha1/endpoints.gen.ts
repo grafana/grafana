@@ -303,6 +303,14 @@ const injectedRtkApi = api
       createRegister: build.mutation<CreateRegisterApiResponse, CreateRegisterApiArg>({
         query: () => ({ url: `/register`, method: 'POST' }),
       }),
+      getTranslations: build.query<GetTranslationsApiResponse, GetTranslationsApiArg>({
+        query: (queryArg) => ({
+          url: `/translations`,
+          params: {
+            lang: queryArg.lang,
+          },
+        }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -721,6 +729,11 @@ export type UpdateCheckTypeStatusApiArg = {
 };
 export type CreateRegisterApiResponse = /** status 200 OK */ CreateRegisterResponse;
 export type CreateRegisterApiArg = void;
+export type GetTranslationsApiResponse = /** status 200 OK */ GetTranslationsResponse;
+export type GetTranslationsApiArg = {
+  /** BCP 47 locale (e.g. "es-ES"). Defaults to "en-US" server-side if empty. */
+  lang?: string;
+};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -857,6 +870,9 @@ export type CheckOperatorState = {
 export type CheckErrorLink = {
   /** Human readable error message */
   message: string;
+  /** i18n key for the message (e.g. "advisor.link.fix-me"), so the
+    frontend can translate without deriving the key from the text */
+  messageKey?: string;
   /** URL to a page with more information about the error */
   url: string;
 };
@@ -1022,6 +1038,16 @@ export type CreateRegisterResponse = {
   kind: string;
   message: string;
 };
+export type GetTranslationsResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind: string;
+  /** Flat map of i18n key -> translated string for the requested locale. */
+  translations: {
+    [key: string]: string;
+  };
+};
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
@@ -1052,4 +1078,6 @@ export const {
   useReplaceCheckTypeStatusMutation,
   useUpdateCheckTypeStatusMutation,
   useCreateRegisterMutation,
+  useGetTranslationsQuery,
+  useLazyGetTranslationsQuery,
 } = injectedRtkApi;

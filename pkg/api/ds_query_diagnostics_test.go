@@ -114,7 +114,7 @@ func TestQueryDiagnosticsDoesNotCountRejectedInput(t *testing.T) {
 
 func newTestDiagnosticsMetrics(t *testing.T, usage usagestats.Service) *diagnostics.Metrics {
 	t.Helper()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	require.NoError(t, sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
 		_, err := session.Where("namespace = ?", "datasource-diagnostics").Delete(&kvstore.Item{})
 		return err

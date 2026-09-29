@@ -116,6 +116,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
+  view-notification-history:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-notification-history/
 ---
 
 # Configure contact points
@@ -188,6 +193,10 @@ Each contact point integration has its own configuration options and setup proce
 
 Some of the integrations above are not supported by Prometheus Alertmanager. For the list of supported integrations, refer to the [Prometheus Alertmanager receiver settings](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings).
 
+## Allowlist notification source IP addresses
+
+Grafana Cloud notifications sent by the Grafana Alertmanager use the `grafana` service egress IP addresses, not the Hosted Alerts (`alerts`) list or `src-ips.alertmanager-*.grafana.net` DNS records. To retrieve the current addresses, refer to [List of Grafana Cloud IP addresses to add to your allowlist](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/).
+
 ## Add a contact point
 
 Complete the following steps to add a contact point.
@@ -241,3 +250,7 @@ After creating a contact point, you can enable it to receive alert notifications
 
 - **Assign it to alert rules** – Select the contact point in the [notifications options for Grafana-managed alert rules](ref:configure-grafana-alerts) to directly associate it with specific alerts.
 - **Assign it to notification policies** – Add the contact point to one or more [notification policies](ref:configure-contact-points), which manage the alert notifications you want the contact point to receive.
+
+## Troubleshoot notification delivery
+
+The **Contact points** tab shows the status of the latest notification deliveries for each contact point. To review past delivery attempts and filter by contact point or delivery outcome, refer to [View notification history](ref:view-notification-history).

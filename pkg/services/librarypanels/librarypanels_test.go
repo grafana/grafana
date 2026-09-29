@@ -484,14 +484,14 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		orgID := int64(1)
 		role := org.RoleAdmin
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		mockDashboardService := dashboards.NewFakeDashboardService(t)
 		mockFolderService := foldertest.NewFakeService()
 		mockFolder := &folder.Folder{
-			ID:        1,
+			ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.
 			UID:       "test-folder-uid",
 			Title:     "Test Folder",
 			URL:       "/dashboards/f/test-folder-uid/test-folder",
@@ -533,7 +533,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)

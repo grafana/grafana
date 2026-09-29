@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -67,8 +68,8 @@ func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions,
 		Ref:                  options.Branch,
 		Path:                 options.Path,
 		GenerateNewFolderIDs: options.GenerateNewFolderIDs,
-		OnFolder: func(folder resources.Folder, created bool, err error) error {
-			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)
+		OnFolder: func(folder resources.Folder, created bool, startedAt time.Time, err error) error {
+			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated).WithStartTime(startedAt)
 
 			// A folder that failed to write must keep a non-ignored action: the
 			// recorder discards errors on FileActionIgnored results, so labelling

@@ -189,6 +189,19 @@ describe('TimeRangeForm', () => {
     expect(to).toHaveClass('react-calendar__tile--rangeEnd');
   });
 
+  it('should expose the selected state of every day in the selected range', async () => {
+    const { getAllByRole, getCalendarDayByLabelText } = setup();
+    const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
+
+    await user.click(openCalendarButton[0]);
+
+    expect(getCalendarDayByLabelText('June 16, 2021')).toHaveAttribute('aria-pressed', 'false');
+    for (const day of [17, 18, 19]) {
+      expect(getCalendarDayByLabelText(`June ${day}, 2021`)).toHaveAttribute('aria-pressed', 'true');
+    }
+    expect(getCalendarDayByLabelText('June 20, 2021')).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('should select correct time range in calendar when having a custom time zone', async () => {
     const { getAllByRole, getCalendarDayByLabelText } = setup(defaultTimeRange, 'Asia/Tokyo');
     const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });

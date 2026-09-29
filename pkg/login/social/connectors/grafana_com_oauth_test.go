@@ -38,9 +38,9 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 		AutoAssignOrgRole: "Viewer",
 		AutoAssignOrgId:   2,
 	}
-	provider := NewGrafanaComProvider(social.NewOAuthInfo(),
+	provider := mustNewGrafanaComProvider(t, social.NewOAuthInfo(),
 		cfg,
-		ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{}),
+		mustProvideOrgRoleMapper(t, cfg, &orgtest.FakeOrgService{}),
 		ssosettingstests.NewFakeService(),
 		featuremgmt.WithFeatures())
 
@@ -140,7 +140,7 @@ func TestSocialGrafanaCom_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGrafanaComProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := mustNewGrafanaComProvider(t, tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
 		})
@@ -209,7 +209,7 @@ func TestSocialGrafanaCom_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGrafanaComProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := mustNewGrafanaComProvider(t, &social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -309,7 +309,7 @@ func TestSocialGrafanaCom_Reload(t *testing.T) {
 			cfg := &setting.Cfg{
 				GrafanaComURL: GrafanaComURL,
 			}
-			s := NewGrafanaComProvider(tc.info, cfg, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := mustNewGrafanaComProvider(t, tc.info, cfg, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -370,7 +370,7 @@ func TestSocialGrafanaCom_Reload_ExtraFields(t *testing.T) {
 			cfg := &setting.Cfg{
 				GrafanaComURL: GrafanaComURL,
 			}
-			s := NewGrafanaComProvider(tc.info, cfg, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := mustNewGrafanaComProvider(t, tc.info, cfg, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

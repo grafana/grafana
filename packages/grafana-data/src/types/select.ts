@@ -14,5 +14,7 @@ export interface SelectableValue<T = any> {
   // Optional component that will be shown together with other options. Does not get passed any props.
   component?: React.ComponentType;
   isDisabled?: boolean;
+  // Optional data-testid attribute that will be added to the option element. If not provided, a default value will be generated based on the label or value.
+  dataTestId?: string;
   [key: string]: any;
 }

@@ -43,8 +43,10 @@ jobs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
       public-commit: ${{ steps.output.outputs.public_commit }}
+      run-meticulous: ${{ steps.meticulous-eligibility.outputs.run }}
     permissions:
       contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v6
         with:
@@ -76,11 +78,10 @@ jobs:
           # clone/checkout (enterprise/upstream + the build checkouts). Do NOT repoint it.
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
 
-          # public_commit is the commit STAMPED into the binary (-X main.commit). For a mirror
-          # #patched build it's the sibling unpatched branch HEAD — a real grafana/grafana
-          # commit — so artifacts advertise a public commit instead of the mirror-only one.
-          # Everywhere else it's just the checkout HEAD. This value is only ever passed to the
-          # Makefile's COMMIT_SHA; it is never used as a checkout/clone ref.
+          # public_commit is a real, publicly-resolvable grafana/grafana commit, used wherever a
+          # downstream step needs to perform a git operation against the public repo (tag
+          # creation, npm publish, test-infra checkout). It is not used to stamp the binary
+          # (main.commit uses grafana_commit instead, below) or as a checkout/clone ref.
           if [ "$GITHUB_REPOSITORY" = "grafana/grafana-security-mirror" ] && [[ "$REF_NAME" == *'#patched' ]]; then
             sibling="${REF_NAME%\#patched}"
             public_commit=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${sibling}" --jq '.object.sha')
@@ -88,6 +89,25 @@ jobs:
             public_commit=$(git rev-parse HEAD)
           fi
           echo "public_commit=${public_commit}" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Check whether Meticulous should run
+        id: meticulous-eligibility
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let run = true;
+            const author = context.payload.head_commit?.author?.name;
+            if (context.eventName === 'push' && author === 'renovate-sh-app[bot]') {
+              // Preserve the Renovate classification after its PR has been merged.
+              const { data: pullRequests } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                ...context.repo,
+                commit_sha: context.sha,
+              });
+              run = pullRequests.some((pullRequest) =>
+                pullRequest.labels.some((label) => label.name === 'ci/meticulous')
+              );
+            }
+            core.setOutput('run', run);
 
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
@@ -100,7 +120,7 @@ jobs:
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-releases-oss
           permission_set: ${{ github.ref_name == 'main' && 'dispatch-downstream-main' || 'dispatch-downstream-release' }} # different branches require different permission sets
@@ -262,9 +282,9 @@ jobs:
           arm: ${{ matrix.arm }}
           build-number: ${{ github.run_id }}
           build-version: ${{ needs.setup.outputs.version }}
-          # Stamp the public (non-#patched) commit while still compiling the #patched
-          # source that was checked out above. See the build invariant in the plan.
-          commit: ${{ needs.setup.outputs.public-commit }}
+          # Stamp the commit actually built, not public-commit (used elsewhere where a publicly
+          # resolvable commit is required, e.g. tag creation and npm publish).
+          commit: ${{ needs.setup.outputs.grafana-commit }}
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-backend-${{ matrix.name }}
@@ -907,12 +927,13 @@ jobs:
       environment: prod
       runs-on: ubuntu-x64-small
   run-meticulous-tests:
-    if: github.repository == 'grafana/grafana'
+    if: github.repository == 'grafana/grafana' && needs.setup.outputs.run-meticulous == 'true'
     name: Run Meticulous tests
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64-large
     continue-on-error: true
     needs:
-      - build-docker-linux-amd64
+      - setup
+      - build-targz
     permissions:
       actions: write
       contents: read
@@ -928,12 +949,36 @@ jobs:
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: artifacts-docker-distroless-slim-linux-amd64
+          name: artifacts-packages-linux-amd64
           path: dist
+
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.4
+
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
+
+      # Upload the baseline without waiting for the other release Docker variants.
+      - name: Build Docker image for Meticulous
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+        run: |
+          set -euo pipefail
+          for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
+          make build-docker-distroless \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            SLIM=true \
+            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-distroless-slim-amd64"
 
       - name: Load Docker image under test
         id: load-image
         run: |
+          set -euo pipefail
           PACKAGE_PATH="$(find dist -type f -name '*_linux_amd64.distroless-slim.docker.tar.gz' | sort | sed -n '1p')"
           if [ -z "$PACKAGE_PATH" ]; then
             echo "No distroless-slim docker package found in dist/"
@@ -955,7 +1000,7 @@ jobs:
             METICULOUS_API_TOKEN=meticulous-ui:api-token
 
       - name: Run Meticulous tests
-        uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
+        uses: alwaysmeticulous/report-diffs-action/upload-container@739cb7bd62805f98f3c8749f8149ba4ecd86725d # v1
         with:
           api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}
           image-tag: ${{ steps.load-image.outputs.IMAGE_UNDER_TEST }}

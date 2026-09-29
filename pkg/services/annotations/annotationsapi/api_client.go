@@ -22,6 +22,7 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/flowcontrol"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -208,7 +209,7 @@ func (s *annotationAPIClient) ListTags(ctx context.Context, orgID int64, query *
 		Resource("tags")
 
 	if query.Tag != "" {
-		req = req.Param("prefix", query.Tag)
+		req = req.Param("contains", query.Tag)
 	}
 	if query.Limit != 0 {
 		req = req.Param("limit", strconv.FormatInt(query.Limit, 10))
@@ -261,7 +262,7 @@ func decodeAnnotation(raw []byte) (*annotationV0.Annotation, error) {
 }
 
 func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) (authnlib.TokenExchanger, error) {
-	var exchangeOpts []authnlib.ExchangeClientOpts
+	exchangeOpts := []authnlib.ExchangeClientOpts{authnlib.WithTracer(tracer)}
 	if allowInsecure {
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(
 			&http.Client{Transport: &http.Transport{
@@ -280,15 +281,31 @@ func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) 
 	return tc, nil
 }
 
+const (
+	defaultQPS   = float32(200)
+	defaultBurst = 300
+)
+
 func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, tlsConfig rest.TLSClientConfig) *rest.Config {
 	cfg := dynamic.ConfigFor(&rest.Config{
 		Host:            url,
 		WrapTransport:   newBearerTokenExchangeWrapper(exchanger, nsMapper),
 		TLSClientConfig: tlsConfig,
+		RateLimiter:     tracedRateLimiter{flowcontrol.NewTokenBucketRateLimiter(defaultQPS, defaultBurst)},
 	})
 	cfg.APIPath = "apis"
 	cfg.GroupVersion = &annotationV0.GroupVersion
 	return cfg
+}
+
+type tracedRateLimiter struct {
+	flowcontrol.RateLimiter
+}
+
+func (l tracedRateLimiter) Wait(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx, "annotations.apiclient.rateLimiterWait")
+	defer span.End()
+	return l.RateLimiter.Wait(ctx)
 }
 
 type bearerTokenExchangeRT struct {

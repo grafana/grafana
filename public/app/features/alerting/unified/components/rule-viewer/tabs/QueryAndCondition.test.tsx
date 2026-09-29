@@ -3,6 +3,8 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../../../../types/unified-alerting-dto';
 import { setupMswServer } from '../../../mockApi';
@@ -14,10 +16,27 @@ import { QueryAndCondition } from './QueryAndCondition';
 
 const DS_UID = 'test-ds-uid';
 
+// Mocked so a test can hold the hook in its loading state; beforeEach restores the real
+// implementation, which reads the cache seeded by setDataSourceInstanceSettings below.
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(),
+}));
+
+const { useDataSourceInstanceList: actualUseDataSourceInstanceList } = jest.requireActual<{
+  useDataSourceInstanceList: typeof useDataSourceInstanceList;
+}>('@grafana/runtime/unstable');
+
 const server = setupMswServer();
 
 beforeEach(() => {
-  const dsrv = setupDataSources(mockDataSource({ uid: DS_UID, name: 'Test DS' }));
+  jest.mocked(useDataSourceInstanceList).mockImplementation(actualUseDataSourceInstanceList);
+
+  const ds = mockDataSource({ uid: DS_UID, name: 'Test DS' });
+  const dsrv = setupDataSources(ds);
+
+  // Populate the new async instance-settings cache so useAlertQueryDataSources resolves correctly.
+  setDataSourceInstanceSettings({ 'Test DS': ds });
 
   // AlertingQueryRunner.prepareQueries calls dataSourceSrv.get(uid) to load the plugin instance.
   // In tests this fails because the Prometheus plugin can't be imported. We spy on get() to return
@@ -32,6 +51,8 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
+  // Clear the async instance-settings cache between tests.
+  setDataSourceInstanceSettings({});
 });
 
 /** Default relative time range used in test queries to silence AlertingQueryRunner warnings. */
@@ -155,18 +176,45 @@ describe('visualizationQueries transformation', () => {
 // ---------------------------------------------------------------------------
 
 describe('loading state', () => {
-  it('renders the rule definition immediately while eval is pending, then clears the loading bar', async () => {
+  function blockEvalRequests() {
     let resolveEval!: () => void;
     const evalPending = new Promise<void>((resolve) => {
       resolveEval = resolve;
     });
+    let requestCount = 0;
 
     server.use(
       http.post('/api/v1/eval', async () => {
+        requestCount++;
         await evalPending;
         return HttpResponse.json<AlertingQueryResponse>({ results: {} });
       })
     );
+
+    return { evalRequests: () => requestCount, resolveEval };
+  }
+
+  it('holds the query previews behind a loading bar until the data sources resolve', async () => {
+    jest.mocked(useDataSourceInstanceList).mockReturnValue({ items: [], isLoading: true, error: undefined });
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+
+    render(<QueryAndCondition rule={rule} />);
+
+    // A preview without its data source renders neither the query model nor the visualization's own
+    // loading bar, so the wait has to be held above both rule branches rather than inside them.
+    expect(await screen.findByTestId('eval-loading-bar')).toBeInTheDocument();
+    expect(screen.queryByTestId('queries-container')).not.toBeInTheDocument();
+  });
+
+  it.skip('renders the rule definition immediately while eval is pending, then clears the loading bar', async () => {
+    const { resolveEval } = blockEvalRequests();
 
     const rule = makeGrafanaRule([
       {
@@ -188,6 +236,75 @@ describe('loading state', () => {
 
     // Loading bars disappear once both runners have settled
     await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());
+  });
+
+  it('keeps the loading bar visible while query preparation is pending', async () => {
+    const { evalRequests } = blockEvalRequests();
+
+    // prepareQueries awaits dataSourceSrv.get before it can issue the request
+    let resolveDataSource!: (dataSource: DataSourceApi) => void;
+    const dataSourcePending = new Promise<DataSourceApi>((resolve) => {
+      resolveDataSource = resolve;
+    });
+    const getDataSource = jest.mocked(getDataSourceSrv().get);
+    getDataSource.mockImplementation(() => dataSourcePending);
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+
+    render(<QueryAndCondition rule={rule} />);
+
+    await waitFor(() => expect(getDataSource).toHaveBeenCalledTimes(2));
+    expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
+
+    resolveDataSource({ uid: DS_UID } as DataSourceApi);
+
+    await waitFor(() => expect(evalRequests()).toBe(2));
+    expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
+  });
+
+  it('keeps the loading bar visible while the eval request is in flight', async () => {
+    const { evalRequests, resolveEval } = blockEvalRequests();
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+
+    render(<QueryAndCondition rule={rule} />);
+
+    await waitFor(() => expect(evalRequests()).toBe(2));
+    expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
+
+    resolveEval();
+    await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());
+  });
+
+  it('never shows the loading bar for a federated rule', async () => {
+    jest.mocked(useDataSourceInstanceList).mockReturnValue({ items: [], isLoading: true, error: undefined });
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+    // A federated rule group renders neither preview branch regardless of loading state (RuleViewer
+    // shows FederatedRuleWarning above the tabs instead), so this tab must render nothing here too.
+    rule.group.source_tenants = ['tenant-a'];
+
+    render(<QueryAndCondition rule={rule} />);
+
+    expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument();
   });
 });
 

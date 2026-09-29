@@ -38,6 +38,7 @@ import { type LogLineTimestampResolution } from './LogLine';
 import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
 import { type LogListOptions, type LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
+import { logsSupportHighlighting } from './grammar';
 import { type LogListModel } from './processing';
 
 export interface LogListContextData
@@ -71,6 +72,9 @@ export interface LogListContextData
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
   unwrappedColumns: boolean;
+  // Big log payloads can freeze or OOM the browser when highlighted. In those
+  // situations highlighting is unavailable to protect the user experience.
+  syntaxHighlightingUnavailable: boolean;
 }
 
 export const LogListContext = createContext<LogListContextData>({
@@ -105,6 +109,7 @@ export const LogListContext = createContext<LogListContextData>({
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  syntaxHighlightingUnavailable: false,
   timestampResolution: 'ns',
   wrapLogMessage: false,
   isAssistantAvailable: false,
@@ -599,6 +604,8 @@ export const LogListContextProvider = ({
     [onClickHideField]
   );
 
+  const syntaxHighlightingUnavailable = useMemo(() => !logsSupportHighlighting(logs), [logs]);
+
   return (
     <LogListContext.Provider
       value={{
@@ -657,7 +664,8 @@ export const LogListContextProvider = ({
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
-        syntaxHighlighting: logListState.syntaxHighlighting,
+        syntaxHighlighting: logListState.syntaxHighlighting && !syntaxHighlightingUnavailable,
+        syntaxHighlightingUnavailable: syntaxHighlightingUnavailable,
         timestampResolution: logListState.timestampResolution,
         unwrappedColumns,
         wrapLogMessage,

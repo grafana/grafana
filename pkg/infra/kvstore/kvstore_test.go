@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 func createTestableKVStore(t *testing.T) KVStore {
 	t.Helper()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	kv := &kvStoreSQL{
 		sqlStore: sqlStore,

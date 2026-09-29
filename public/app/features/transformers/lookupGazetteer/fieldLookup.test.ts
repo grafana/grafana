@@ -14,14 +14,14 @@ afterEach(() => {
 });
 
 describe('Lookup gazetteer from the worldmap format', () => {
-  const publicPath = window.__grafana_public_path__;
+  const buildPath = window.__grafana_build_path__;
 
   beforeAll(() => {
-    window.__grafana_public_path__ = 'https://grafana.fake/public/';
+    window.__grafana_build_path__ = 'https://grafana.fake/public/build/';
   });
 
   afterAll(() => {
-    window.__grafana_public_path__ = publicPath;
+    window.__grafana_build_path__ = buildPath;
   });
 
   beforeEach(() => {

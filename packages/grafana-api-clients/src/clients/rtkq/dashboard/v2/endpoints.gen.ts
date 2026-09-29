@@ -421,6 +421,8 @@ export type DashboardTransformationSpec = {
   filter?: DashboardMatcherConfig;
   /** Options to be passed to the transformer Valid options depend on the transformer id */
   options: object;
+  /** Unique identifier of the instance of the transformer */
+  refId?: string;
   /** Where to pull DataFrames from as input to transformation */
   topic?: string;
 };
@@ -699,6 +701,7 @@ export type DashboardAutoGridRepeatOptions = {
 export type DashboardAutoGridLayoutItemSpec = {
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   element: DashboardElementReference;
+  fitContent?: boolean;
   repeat?: DashboardAutoGridRepeatOptions;
 };
 export type DashboardAutoGridLayoutItemKind = {
@@ -709,8 +712,14 @@ export type DashboardAutoGridLayoutSpec = {
   columnWidth?: number;
   columnWidthMode: string;
   fillScreen?: boolean;
+  fitContent?: boolean;
   items: DashboardAutoGridLayoutItemKind[];
+  matchRowHeights?: boolean;
   maxColumnCount?: number;
+  maxHeight?: number;
+  maxHeightMode?: string;
+  minHeight?: number;
+  minHeightMode?: string;
   rowHeight?: number;
   rowHeightMode: string;
 };

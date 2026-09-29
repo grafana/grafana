@@ -63,7 +63,7 @@ func (d *sqlmockQuotaDB) GetDBType() core.DbType {
 func TestIntegrationQuotaDataAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss := db.InitTestDB(t)
+	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	quotaStore := sqlStore{
 		sql: legacysql.NewDatabaseProvider(ss),
 	}

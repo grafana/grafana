@@ -13,6 +13,30 @@
         }
       ]
     },
+    "start:rspack": {
+      "dependsOn": [
+        "build:rspack:boot:dev",
+        "check-frontend-dev",
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "cache": false
+    },
+    "start:rspack:noHmr": {
+      "dependsOn": [
+        "build:rspack:boot:dev",
+        "check-frontend-dev",
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "cache": false
+    },
     "build": {
       "dependsOn": [
         "themes-generate",
@@ -35,14 +59,36 @@
       "outputs": ["{workspaceRoot}/public/build"],
       "cache": true
     },
+    "dev:rspack": {
+      "dependsOn": [
+        "build:rspack:boot:dev",
+        "themes-generate",
+        "build:swagger",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "cache": false
+    },
+    "build:rspack:boot:dev": {
+      "cache": false
+    },
     "build:swagger": {
       "dependsOn": ["themes-generate"],
       "outputs": ["{workspaceRoot}/public/build-swagger"],
       "cache": true
     },
+    "start:swagger": {
+      "dependsOn": ["themes-generate"]
+    },
     "themes-generate": {
       "inputs": [
         "{workspaceRoot}/scripts/cli/generateSassVariableFiles.ts",
+        "{workspaceRoot}/scripts/cli/themeTemplates/**",
+        "{workspaceRoot}/public/sass/_angular.scss",
+        "{workspaceRoot}/public/sass/grafana.dark.scss",
+        "{workspaceRoot}/public/sass/grafana.light.scss",
         "{workspaceRoot}/packages/grafana-data/src/themes/**",
         "{workspaceRoot}/packages/grafana-ui/src/themes/**",
         "{workspaceRoot}/package.json"
@@ -51,6 +97,8 @@
         "{workspaceRoot}/public/sass/_variables.generated.scss",
         "{workspaceRoot}/public/sass/_variables.dark.generated.scss",
         "{workspaceRoot}/public/sass/_variables.light.generated.scss",
+        "{workspaceRoot}/public/sass/grafana.dark.css",
+        "{workspaceRoot}/public/sass/grafana.light.css",
         "{workspaceRoot}/public/app/features/theme-playground/schema.json"
       ],
       "cache": true

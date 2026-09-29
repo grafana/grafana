@@ -1,9 +1,6 @@
-import { useMemo } from 'react';
+import { lazy, Suspense } from 'react';
 
-import { type NavModel, type NavModelItem, PageLayoutType, generateUUID } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
-import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import { generateUUID } from '@grafana/data';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -12,44 +9,43 @@ import {
   SceneVariableSet,
   sceneGraph,
 } from '@grafana/scenes';
-import { Alert, Button } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
-import {
-  HIGHLIGHT_CATEGORY_PARAM_NAME,
-  CATEGORY_PARAM_NAME,
-} from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
+import { Spinner } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-import { SidebarCategoryType } from '../sidebar/types';
-import { DashboardInteractions } from '../utils/interactions';
 import { isPredefinedOrigin } from '../utils/predefinedVariables';
 import { getDashboardSceneFor } from '../utils/utils';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
-import { ProvisionedVariablesSection } from './variables/ProvisionedVariablesSection';
-import { VariableEditorForm } from './variables/VariableEditorForm';
-import { VariableEditorList } from './variables/VariableEditorList';
-import { VariablesUnknownTable } from './variables/VariablesUnknownTable';
+import { type DashboardEditView, type DashboardEditViewState } from './utils';
 import {
   type EditableVariableType,
   RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
   WORD_CHARACTERS_REGEX,
   getVariableDefault,
   getVariableScene,
-  isVariableEditable,
   restoreUnshadowedPredefinedVariables,
 } from './variables/utils';
+
+const VariablesEditViewRenderer = lazy(() =>
+  import('./SettingsRenderers').then((m) => ({ default: m.VariablesEditViewRenderer }))
+);
+
+function LazyVariablesEditViewRenderer(props: SceneComponentProps<VariablesEditView>) {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <VariablesEditViewRenderer {...props} />
+    </Suspense>
+  );
+}
 
 export interface VariablesEditViewState extends DashboardEditViewState {
   editIndex?: number | undefined;
 }
 
 export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> implements DashboardEditView {
-  public static Component = VariableEditorSettingsListView;
+  public static Component = LazyVariablesEditViewRenderer;
 
   public getUrlKey(): string {
     return 'variables';
@@ -173,17 +169,17 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.setState({ editIndex: variableIndex });
   };
 
-  public onAdd = () => {
+  public onAdd = async () => {
     const variables = this.getVariables();
     const variableIndex = variables.length;
     //add the new variable to the end of the array
-    const defaultNewVariable = getVariableDefault(variables);
+    const defaultNewVariable = await getVariableDefault(variables);
 
     this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
     this.setState({ editIndex: variableIndex });
   };
 
-  public onTypeChange = (type: EditableVariableType) => {
+  public onTypeChange = async (type: EditableVariableType) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex ?? -1;
     const { variables } = this.getVariableSet().state;
@@ -196,7 +192,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     }
 
     const { name, label } = variable.state;
-    const newVariable = getVariableScene(type, { name, label });
+    const newVariable = await getVariableScene(type, { name, label });
     this.replaceEditVariable(newVariable);
   };
 
@@ -242,130 +238,4 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const usagesNetwork = transformUsagesToNetwork(usages);
     return usagesNetwork;
   };
-}
-
-function VariableEditorSettingsListView({ model }: SceneComponentProps<VariablesEditView>) {
-  const dashboard = model.getDashboard();
-  const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  // get variables from dashboard state
-  const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onAdd } = model;
-  const { variables } = model.getVariableSet().useState();
-  const { editIndex } = model.useState();
-  const defaultVariables = useMemo(
-    () => variables.filter((v) => !isVariableEditable(v) && !isPredefinedOrigin(v.state.origin)),
-    [variables]
-  );
-  const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
-  const usages = useMemo(() => model.getUsages(), [model]);
-  const saveModel = model.getSaveModel();
-
-  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
-  const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
-
-  const goToSidebar = () => {
-    // close settings and open dashboard sidebar
-    const dashboard = getDashboardSceneFor(model);
-    dashboard.state.sidebar.selectObject(dashboard);
-    locationService.partial({
-      editview: null,
-      [HIGHLIGHT_CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
-      [CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
-    });
-
-    DashboardInteractions.takeMeToSidebarClicked({ item: 'variables' });
-  };
-
-  if (isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled) {
-    return (
-      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-        <NavToolbarActions dashboard={dashboard} />
-        <Alert
-          severity="info"
-          title={t('dashboard-scene.dashboard-settings.variables.title-moved', 'Looking for variable settings?')}
-        >
-          <Trans i18nKey="dashboard-scene.dashboard-settings.variables.description-moved">
-            Variable settings have moved to the dashboard&apos;s sidebar.
-          </Trans>
-          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
-            <Trans i18nKey="dashboard-scene.dashboard-settings.variables.button-moved">Take me there</Trans>
-          </Button>
-        </Alert>
-      </Page>
-    );
-  }
-
-  if (editIndex !== undefined && variables[editIndex]) {
-    const variable = variables[editIndex];
-    if (variable) {
-      return (
-        <VariableEditorSettingsView
-          variable={variable}
-          onTypeChange={onTypeChange}
-          onGoBack={onGoBack}
-          pageNav={pageNav}
-          navModel={navModel}
-          dashboard={dashboard}
-          onDelete={onDelete}
-        />
-      );
-    }
-  }
-
-  return (
-    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-      <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorList
-        variables={variables}
-        usages={usages}
-        usagesNetwork={usagesNetwork}
-        onDelete={onDelete}
-        onDuplicate={onDuplicated}
-        onChangeOrder={onOrderChanged}
-        onAdd={onAdd}
-        onEdit={onEdit}
-      />
-      {defaultVariables.length > 0 && <ProvisionedVariablesSection variables={defaultVariables} />}
-      <VariablesUnknownTable variables={variables} dashboard={saveModel} />
-    </Page>
-  );
-}
-
-interface VariableEditorSettingsEditViewProps {
-  variable: SceneVariable;
-  pageNav: NavModelItem;
-  navModel: NavModel;
-  dashboard: DashboardScene;
-  onTypeChange: (variableType: EditableVariableType) => void;
-  onGoBack: () => void;
-  onDelete: (variableName: string) => void;
-}
-
-function VariableEditorSettingsView({
-  variable,
-  pageNav,
-  navModel,
-  dashboard,
-  onTypeChange,
-  onGoBack,
-  onDelete,
-}: VariableEditorSettingsEditViewProps) {
-  const { name } = variable.useState();
-
-  const editVariablePageNav = {
-    text: name,
-    parentItem: pageNav,
-  };
-  return (
-    <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
-      <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm
-        variable={variable}
-        onTypeChange={onTypeChange}
-        onGoBack={onGoBack}
-        onDelete={onDelete}
-        // force refresh when navigating using back/forward between variables
-        key={variable.state.key}
-      />
-    </Page>
-  );
 }

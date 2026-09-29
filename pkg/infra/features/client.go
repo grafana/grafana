@@ -12,6 +12,11 @@ import (
 const (
 	// FeaturesProviderAudience is the default audience for Feature Flag service
 	FeaturesProviderAudience = "features.grafana.app"
+
+	// ClientUserAgentPrefix marks a User-Agent as having been set by this
+	// package's HTTP client, so a proxy can tell a caller-supplied UserAgent
+	// apart from anything else (e.g. a browser) without it.
+	ClientUserAgentPrefix = "feature-service-client:"
 )
 
 // HTTPClientOptions contains options for creating an HTTP client
@@ -30,6 +35,10 @@ type HTTPClientOptions struct {
 	Middlewares []sdkhttpclient.Middleware
 	// CacheTTL enables response caching with the given TTL. Zero disables caching.
 	CacheTTL time.Duration
+	// UserAgent overrides the default User-Agent header, so downstream
+	// consumers can attribute requests to the calling service instead of
+	// seeing the Go stdlib default.
+	UserAgent string
 }
 
 // TokenExchangeConfig holds all authentication configuration for token exchange.
@@ -59,6 +68,11 @@ func CreateHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 		CACertificate:      opts.RootCACertificate,
 	}
 
+	var header http.Header
+	if opts.UserAgent != "" {
+		header = http.Header{"User-Agent": []string{ClientUserAgentPrefix + opts.UserAgent}}
+	}
+
 	options := sdkhttpclient.Options{
 		TLS: tlsOptions,
 		Timeouts: &sdkhttpclient.TimeoutOptions{
@@ -66,6 +80,7 @@ func CreateHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 			Timeout:     timeout,
 		},
 		Middlewares: middlewares,
+		Header:      header,
 	}
 
 	httpcli, err := sdkhttpclient.NewProvider().New(options)

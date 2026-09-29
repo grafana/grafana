@@ -45,6 +45,10 @@ func (UnimplementedStorageBackend) ReadResource(_ context.Context, req *resource
 	}
 }
 
+func (UnimplementedStorageBackend) BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
+	return nil, ErrBatchReadUnsupported
+}
+
 func (UnimplementedStorageBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
 	return 0, errUnimplemented
 }
@@ -58,6 +62,8 @@ func (UnimplementedStorageBackend) ListModifiedSince(context.Context, Namespaced
 		yield(nil, errUnimplemented)
 	}
 }
+
+func (UnimplementedStorageBackend) WatchInvalidation() <-chan struct{} { return nil }
 
 // WatchWriteEvents returns an open channel that never emits, rather than an
 // error. The storage server's watcher treats a WatchWriteEvents error as fatal,
@@ -78,8 +84,6 @@ func (UnimplementedStorageBackend) ListStoredResources(context.Context, Namespac
 	return nil, errUnimplemented
 }
 
-func (UnimplementedStorageBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		yield(ResourceLastImportTime{}, errUnimplemented)
-	}
+func (UnimplementedStorageBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
+	return time.Time{}, errUnimplemented
 }

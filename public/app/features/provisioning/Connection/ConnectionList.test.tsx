@@ -47,7 +47,7 @@ const mockConnections: Connection[] = [
   }),
   createMockConnection({
     metadata: { name: 'gitlab-conn-2' },
-    spec: { title: 'GitLab Connection 2', type: 'gitlab', url: 'https://gitlab.com/org2/repo2' },
+    spec: { title: 'GitLab Connection 2', type: 'gitlabOAuth', url: 'https://gitlab.com/org2/repo2' },
   }),
   createMockConnection({
     metadata: { name: 'another-github' },
@@ -83,6 +83,7 @@ describe('ConnectionList', () => {
         screen.getByRole('link', { name: 'https://github.com/settings/installations/103343308' })
       ).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'https://gitlab.com/org2/repo2' })).toBeInTheDocument();
+      expect(screen.getByRole('img', { name: 'GitLab' })).toBeInTheDocument();
       expect(
         screen.getByRole('link', { name: 'https://github.com/settings/installations/987654321' })
       ).toBeInTheDocument();

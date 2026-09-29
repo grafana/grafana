@@ -1,5 +1,9 @@
 name: Release NPM packages
 run-name: Publish NPM ${{ inputs.version_type }} ${{ inputs.version }}
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+  queue: max
 on:
   workflow_call:
     inputs:

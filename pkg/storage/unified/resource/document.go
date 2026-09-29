@@ -9,9 +9,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/storage/unified/fieldpath"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -73,6 +75,18 @@ type IndexableDocument struct {
 
 	// Resource version for the resource (if known)
 	RV int64 `json:"rv,omitempty"`
+
+	// RV as a string, set by UpdateCopyFields. A resource version does not survive
+	// being stored as a number: bleve keeps numbers as float64, which cannot
+	// represent a value this large exactly (see SearchFieldTypeInt64).
+	RVString string `json:"_rv,omitempty"`
+
+	// The resource type as {group}/{resource}, set by UpdateCopyFields. Every
+	// document carries it, but only a namespace-wide index declares it as a field,
+	// and a document mapping is static: elsewhere the value reaches the index and
+	// is dropped without being indexed. Only there does a query have to pick out
+	// one resource type from an index holding several.
+	GroupResource string `json:"groupResource,omitempty"`
 
 	// The generic display name
 	Title string `json:"title,omitempty"`
@@ -172,6 +186,12 @@ type IndexableDocument struct {
 func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
 	m.TitleNgram = m.Title
 	m.TitlePhrase = strings.ToLower(m.Title) // Lowercase for case-insensitive sorting ?? in the analyzer?
+	if m.Key != nil {
+		m.GroupResource = m.Key.Group + "/" + m.Key.Resource
+	}
+	if m.RV > 0 {
+		m.RVString = strconv.FormatInt(m.RV, 10)
+	}
 	if m.Manager != nil {
 		m.ManagedBy = fmt.Sprintf("%s:%s", m.Manager.Kind, m.Manager.Identity)
 	}
@@ -254,6 +274,19 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		CreatedBy: obj.GetCreatedBy(),
 		UpdatedBy: obj.GetUpdatedBy(),
 	}
+	// Tags and description are read here rather than in a per-kind builder, so any
+	// kind declaring them is searchable without needing one. Both are already
+	// declared standard fields and mapped for every kind; only the population was
+	// dashboard-specific. A kind with its own builder may still overwrite them:
+	// dashboards do, from their parsed summary.
+	if spec, err := obj.GetSpec(); err == nil {
+		if specValue, ok := spec.(map[string]any); ok {
+			doc.Tags = specTags(specValue["tags"])
+			if description, ok := specValue["description"].(string); ok {
+				doc.Description = description
+			}
+		}
+	}
 	m, ok := obj.GetManagerProperties()
 	if ok {
 		doc.Manager = &m
@@ -268,7 +301,7 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		doc.Created = ts.UnixMilli()
 	}
 	tt, err := obj.GetUpdatedTimestamp()
-	if err != nil && tt != nil {
+	if err == nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
 	}
 	for _, owner := range obj.GetOwnerReferences() {
@@ -278,6 +311,28 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		}
 	}
 	return doc.UpdateCopyFields()
+}
+
+// specTags reads a spec.tags value, which unstructured decoding yields as a
+// []any of strings. Anything else — a missing key, a non-list, a non-string
+// entry — is skipped rather than failing: a malformed tag should not keep the
+// whole resource out of the index. Returns nil when nothing usable is found, so
+// the field stays omitted rather than serializing as an empty list.
+func specTags(raw any) []string {
+	values, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	tags := make([]string, 0, len(values))
+	for _, v := range values {
+		if s, ok := v.(string); ok && s != "" {
+			tags = append(tags, s)
+		}
+	}
+	if len(tags) == 0 {
+		return nil
+	}
+	return tags
 }
 
 // StandardDocumentBuilder returns the standard document builder backed by the
@@ -346,7 +401,7 @@ func (s *standardDocumentBuilder) extractDeclaredFields(provider SearchFieldsPro
 		if def.Path == "" {
 			continue
 		}
-		raw, err := extractPath(tmp.Object, def.Path)
+		raw, err := fieldpath.Extract(tmp.Object, def.Path)
 		if err != nil {
 			s.log.Warn("declared search field path failed to evaluate",
 				"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
@@ -430,8 +485,8 @@ func apiVersionOf(tmp *unstructured.Unstructured) string {
 	// apiVersion is "<group>/<version>" for non-core resources and just
 	// "<version>" for core. The Group is authoritative from the key; we
 	// only need the version segment.
-	if i := strings.IndexByte(av, '/'); i >= 0 {
-		return av[i+1:]
+	if _, after, ok := strings.Cut(av, "/"); ok {
+		return after
 	}
 	return av
 }
@@ -503,8 +558,8 @@ const (
 	SEARCH_FIELD_PREFIX             = "fields."
 	SEARCH_FIELD_ID                 = "_id" // {namespace}/{group}/{resource}/{name}
 	SEARCH_FIELD_LEGACY_ID          = utils.LabelKeyDeprecatedInternalID
-	SEARCH_FIELD_KIND               = "kind" // resource ( for federated index filtering )
-	SEARCH_FIELD_GROUP_RESOURCE     = "gr"   // group/resource
+	SEARCH_FIELD_KIND               = "kind"          // resource ( for federated index filtering )
+	SEARCH_FIELD_GROUP_RESOURCE     = "groupResource" // {group}/{resource}
 	SEARCH_FIELD_NAMESPACE          = "namespace"
 	SEARCH_FIELD_NAME               = "name"
 	SEARCH_FIELD_RV                 = "rv"
@@ -537,12 +592,35 @@ const (
 	SEARCH_FIELD_IS_DELETED     = "_deleted"
 	SEARCH_FIELD_IS_PROVISIONED = "_provisioned"
 
+	// Stores the resource version as a string. Callers ask for it as SEARCH_FIELD_RV
+	// and receive a number, so this name is internal to the index.
+	SEARCH_FIELD_RV_STRING = "_rv"
+
 	// Fields only a deleted document carries, declared in
 	// TrashSearchFieldDefinitions rather than the standard set for the same reasons
 	// as the markers above.
 	SEARCH_FIELD_DELETED_BY    = "deleted_by"
 	SEARCH_FIELD_DELETION_TIME = "deletion_time"
 	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
+)
+
+// Non-standard operators for Requirement.Operator, which otherwise carries a
+// k8s selection operator. Sending these as operator strings is what makes an
+// older search server answer with a bad request rather than drop the query.
+//
+// Regex operators match whole values on filterable, case-preserving keyword fields.
+// Supported operations are literals, character classes, grouping, alternation,
+// and greedy repetition. Equivalent spellings, including hex escapes and POSIX
+// classes, are accepted. Successive quantifiers are unsupported.
+// A leading (?i) folds value case; dot matches newlines. Missing fields or labels
+// are evaluated as empty values. Flattened labels split literal-key=value at the
+// first "=", keeping the key case-sensitive; keys containing "=" are ambiguous.
+// Each dictionary expansion permits 10,000 inspected terms and 10,000 matches.
+const (
+	OperatorGreaterThanOrEqual selection.Operator = "gte"
+	OperatorLessThanOrEqual    selection.Operator = "lte"
+	OperatorRegex              selection.Operator = "regex"
+	OperatorNotRegex           selection.Operator = "notregex"
 )
 
 var standardSearchFieldsInit sync.Once

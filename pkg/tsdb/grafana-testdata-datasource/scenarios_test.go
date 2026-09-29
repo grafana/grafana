@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -193,10 +193,10 @@ func TestTestdataScenarios(t *testing.T) {
 						},
 						Interval:      100 * time.Millisecond,
 						MaxDataPoints: 100,
-						JSON: []byte(fmt.Sprintf(
+						JSON: fmt.Appendf(nil,
 							`{"queryDelay":"0s","errorProbability":%v,"errorMessage":"test error","errorStatusCode":400,"errorSource":"downstream"}`,
 							probability,
-						)),
+						),
 					},
 				},
 			}

@@ -14,20 +14,21 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
-import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { refuseWhilePlanning } from './refuseWhilePlanning';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -70,22 +71,28 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     }),
   });
 
-  // Panel share link (copy to clipboard)
+  // Panel share link (copy to clipboard). Neither this nor 'p e'/'p s'/'i' below check isEditing
+  // anywhere in their chain — each is reachable during planning by construction, so it's refused
+  // explicitly here (see refuseWhilePlanning).
   keybindings.addBinding({
     key: 'p u',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+      if (refuseWhilePlanning(scene)) {
+        return;
+      }
       await buildShareUrl(scene, vizPanel);
     }),
   });
   keybindings.addBinding({
     key: 'p e',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      const drawer = new ShareDrawer({
+      if (refuseWhilePlanning(scene)) {
+        return;
+      }
+      await openShareDrawer(scene, {
         shareView: shareDashboardType.embed,
         panelRef: vizPanel.getRef(),
       });
-
-      scene.showModal(drawer);
     }),
   });
 
@@ -97,12 +104,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p s',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        const drawer = new ShareDrawer({
+        if (refuseWhilePlanning(scene)) {
+          return;
+        }
+        await openShareDrawer(scene, {
           shareView: shareDashboardType.snapshot,
           panelRef: vizPanel.getRef(),
         });
-
-        scene.showModal(drawer);
       }),
     });
   }
@@ -111,7 +119,10 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'i',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      scene.showModal(new PanelInspectDrawer({ panelRef: vizPanel.getRef(), currentTab: InspectTab.Data }));
+      if (refuseWhilePlanning(scene)) {
+        return;
+      }
+      await openPanelInspector(vizPanel, InspectTab.Data);
     }),
   });
 

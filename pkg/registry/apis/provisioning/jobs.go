@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type JobQueueGetter interface {
@@ -310,6 +312,17 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	}
 	if spec.Action == provisioning.JobActionTest && (c.perfTestingEnabled == nil || !c.perfTestingEnabled(ctx)) {
 		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
+	}
+
+	exportEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningExport, false, openfeature.TransactionContext(ctx))
+	// Reject export (push) and migrate jobs up front when the feature is disabled,
+	// so the API user gets a clear error at creation time instead of a job that is
+	// created only to complete as a no-op.
+	if spec.Action == provisioning.JobActionPush && !exportEnabled {
+		return apierrors.NewBadRequest("push jobs require the provisioningExport feature flag")
+	}
+	if spec.Action == provisioning.JobActionMigrate && !exportEnabled {
+		return apierrors.NewBadRequest("migrate jobs require the provisioningExport feature flag")
 	}
 
 	switch spec.Action {

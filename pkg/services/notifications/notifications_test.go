@@ -2,13 +2,18 @@ package notifications
 
 import (
 	"context"
+	"errors"
+	"maps"
 	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,7 +29,7 @@ func TestProvideService(t *testing.T) {
 	bus := newBus(t)
 
 	t.Run("When invalid from_address in configuration", func(t *testing.T) {
-		cfg := createSmtpConfig()
+		cfg := createSmtpConfig(t)
 		cfg.Smtp.FromAddress = "@notanemail@"
 		_, _, err := createSutWithConfig(t, bus, cfg)
 
@@ -32,7 +37,7 @@ func TestProvideService(t *testing.T) {
 	})
 
 	t.Run("When all template_patterns fail to parse", func(t *testing.T) {
-		cfg := createSmtpConfig()
+		cfg := createSmtpConfig(t)
 		cfg.Smtp.TemplatesPatterns = []string{"/usr/not-a-dir/**", "/usr/also-not-a-dir/**"}
 		_, _, err := createSutWithConfig(t, bus, cfg)
 
@@ -40,7 +45,7 @@ func TestProvideService(t *testing.T) {
 	})
 
 	t.Run("When some template_patterns fail to parse", func(t *testing.T) {
-		cfg := createSmtpConfig()
+		cfg := createSmtpConfig(t)
 		cfg.Smtp.TemplatesPatterns = append(cfg.Smtp.TemplatesPatterns, "/usr/not-a-dir/**")
 		_, _, err := createSutWithConfig(t, bus, cfg)
 
@@ -158,8 +163,8 @@ func TestSendEmailSync(t *testing.T) {
 	})
 
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {
-		cfg := createSmtpConfig()
-		cfg.Smtp.Enabled = false
+		cfg := createSmtpConfig(t)
+		setRawKeys(t, cfg, "smtp", map[string]string{"enabled": "false"})
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &SendEmailCommandSync{
@@ -178,8 +183,8 @@ func TestSendEmailSync(t *testing.T) {
 	})
 
 	t.Run("When invalid content type in configuration", func(t *testing.T) {
-		cfg := createSmtpConfig()
-		cfg.Smtp.ContentTypes = append(cfg.Smtp.ContentTypes, "multipart/form-data")
+		cfg := createSmtpConfig(t)
+		setRawKeys(t, cfg, "emails", map[string]string{"content_types": "text/html, multipart/form-data"})
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &SendEmailCommandSync{
@@ -246,8 +251,8 @@ func TestSendEmailAsync(t *testing.T) {
 	})
 
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {
-		cfg := createSmtpConfig()
-		cfg.Smtp.Enabled = false
+		cfg := createSmtpConfig(t)
+		setRawKeys(t, cfg, "smtp", map[string]string{"enabled": "false"})
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &SendEmailCommand{
@@ -264,8 +269,8 @@ func TestSendEmailAsync(t *testing.T) {
 	})
 
 	t.Run("When invalid content type in configuration", func(t *testing.T) {
-		cfg := createSmtpConfig()
-		cfg.Smtp.ContentTypes = append(cfg.Smtp.ContentTypes, "multipart/form-data")
+		cfg := createSmtpConfig(t)
+		setRawKeys(t, cfg, "emails", map[string]string{"content_types": "text/html, multipart/form-data"})
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &SendEmailCommand{
@@ -297,10 +302,132 @@ func TestSendEmailAsync(t *testing.T) {
 	})
 }
 
+func TestSendEmailFollowsLiveSettings(t *testing.T) {
+	bus := newBus(t)
+	newCmd := func() *SendEmailCommandSync {
+		return &SendEmailCommandSync{
+			SendEmailCommand: SendEmailCommand{
+				Subject:  "subject",
+				To:       []string{"asdf@grafana.com"},
+				Template: "welcome_on_signup",
+			},
+		}
+	}
+
+	t.Run("sends once SMTP is enabled after startup", func(t *testing.T) {
+		cfg := createSmtpConfig(t)
+		setRawKeys(t, cfg, "smtp", map[string]string{"enabled": "false"})
+		ns, mailer, err := createSutWithConfig(t, bus, cfg)
+		require.NoError(t, err)
+
+		require.ErrorIs(t, ns.SendEmailCommandHandlerSync(context.Background(), newCmd()), ErrSmtpNotEnabled)
+
+		setRawKeys(t, cfg, "smtp", map[string]string{"enabled": "true"})
+		require.NoError(t, ns.SendEmailCommandHandlerSync(context.Background(), newCmd()))
+		assert.Len(t, mailer.Sent, 1)
+	})
+
+	t.Run("stops sending once SMTP is disabled after startup", func(t *testing.T) {
+		cfg := createSmtpConfig(t)
+		ns, mailer, err := createSutWithConfig(t, bus, cfg)
+		require.NoError(t, err)
+
+		require.NoError(t, ns.SendEmailCommandHandlerSync(context.Background(), newCmd()))
+
+		setRawKeys(t, cfg, "smtp", map[string]string{"enabled": "false"})
+		require.ErrorIs(t, ns.SendEmailCommandHandlerSync(context.Background(), newCmd()), ErrSmtpNotEnabled)
+		assert.Len(t, mailer.Sent, 1)
+	})
+
+	t.Run("uses the sender changed after startup", func(t *testing.T) {
+		cfg := createSmtpConfig(t)
+		ns, mailer, err := createSutWithConfig(t, bus, cfg)
+		require.NoError(t, err)
+
+		setRawKeys(t, cfg, "smtp", map[string]string{"from_address": "new@address.com", "from_name": "New Sender"})
+		require.NoError(t, ns.SendEmailCommandHandlerSync(context.Background(), newCmd()))
+
+		require.Len(t, mailer.Sent, 1)
+		assert.Equal(t, `"New Sender" <new@address.com>`, mailer.Sent[0].From)
+	})
+
+	t.Run("rejects an invalid sender changed after startup", func(t *testing.T) {
+		cfg := createSmtpConfig(t)
+		ns, mailer, err := createSutWithConfig(t, bus, cfg)
+		require.NoError(t, err)
+
+		setRawKeys(t, cfg, "smtp", map[string]string{"from_address": "@notanemail@"})
+
+		require.ErrorIs(t, ns.SendEmailCommandHandlerSync(context.Background(), newCmd()), errInvalidFromAddress)
+		assert.Empty(t, mailer.Sent)
+	})
+
+	t.Run("renders the content types changed after startup", func(t *testing.T) {
+		cfg := createSmtpConfig(t)
+		ns, mailer, err := createSutWithConfig(t, bus, cfg)
+		require.NoError(t, err)
+
+		setRawKeys(t, cfg, "emails", map[string]string{"content_types": "text/plain"})
+		require.NoError(t, ns.SendEmailCommandHandlerSync(context.Background(), newCmd()))
+
+		require.Len(t, mailer.Sent, 1)
+		assert.Equal(t, []string{"text/plain"}, mailer.Sent[0].ContentTypes)
+		assert.Equal(t, []string{"text/plain"}, slices.Collect(maps.Keys(mailer.Sent[0].Body)))
+	})
+
+	t.Run("returns the config provider error", func(t *testing.T) {
+		providerErr := errors.New("settings unavailable")
+		cfg := createSmtpConfig(t)
+		ns, err := ProvideService(bus, cfg, failingConfigProvider{err: providerErr}, NewFakeMailer(), nil)
+		require.NoError(t, err)
+
+		require.ErrorIs(t, ns.SendEmailCommandHandlerSync(context.Background(), newCmd()), providerErr)
+	})
+}
+
+func TestSignUpCompletedFollowsLiveWelcomeSetting(t *testing.T) {
+	bus := newBus(t)
+	evt := &events.SignUpCompleted{Email: "new@user.com", Name: "New User"}
+
+	t.Run("sends the welcome email once enabled after startup", func(t *testing.T) {
+		cfg := createSmtpConfig(t)
+		ns, _, err := createSutWithConfig(t, bus, cfg)
+		require.NoError(t, err)
+
+		require.NoError(t, ns.signUpCompletedHandler(context.Background(), evt))
+		require.Empty(t, ns.mailQueue)
+
+		setRawKeys(t, cfg, "emails", map[string]string{"welcome_email_on_sign_up": "true"})
+		require.NoError(t, ns.signUpCompletedHandler(context.Background(), evt))
+		require.Len(t, ns.mailQueue, 1)
+		assert.Equal(t, []string{"new@user.com"}, (<-ns.mailQueue).To)
+	})
+
+	t.Run("stops sending the welcome email once disabled after startup", func(t *testing.T) {
+		cfg := createSmtpConfig(t)
+		setRawKeys(t, cfg, "emails", map[string]string{"welcome_email_on_sign_up": "true"})
+		ns, _, err := createSutWithConfig(t, bus, cfg)
+		require.NoError(t, err)
+
+		setRawKeys(t, cfg, "emails", map[string]string{"welcome_email_on_sign_up": "false"})
+		require.NoError(t, ns.signUpCompletedHandler(context.Background(), evt))
+		require.Empty(t, ns.mailQueue)
+	})
+
+	t.Run("does not fail sign-up when the SMTP settings cannot be read", func(t *testing.T) {
+		cfg := createSmtpConfig(t)
+		ns, err := ProvideService(bus, cfg, failingConfigProvider{err: errors.New("settings unavailable")}, NewFakeMailer(), nil)
+		require.NoError(t, err)
+
+		require.NoError(t, ns.signUpCompletedHandler(context.Background(), evt))
+		require.Empty(t, ns.mailQueue)
+	})
+}
+
 func createSut(t *testing.T, bus bus.Bus) (*NotificationService, *FakeMailer) {
 	t.Helper()
 
-	cfg := createSmtpConfig()
+	cfg := createSmtpConfig(t)
 	ns, fm, err := createSutWithConfig(t, bus, cfg)
 	require.NoError(t, err)
 	return ns, fm
@@ -308,27 +435,41 @@ func createSut(t *testing.T, bus bus.Bus) (*NotificationService, *FakeMailer) {
 
 func createSutWithConfig(t *testing.T, bus bus.Bus, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
 	smtp := NewFakeMailer()
-	ns, err := ProvideService(bus, cfg, smtp, nil)
+	ns, err := provideTestService(t, bus, cfg, smtp)
 	return ns, smtp, err
 }
 
 func createDisconnectedSut(t *testing.T, bus bus.Bus) *NotificationService {
 	t.Helper()
 
-	cfg := createSmtpConfig()
+	cfg := createSmtpConfig(t)
 	smtp := NewFakeDisconnectedMailer()
-	ns, err := ProvideService(bus, cfg, smtp, nil)
+	ns, err := provideTestService(t, bus, cfg, smtp)
 	require.NoError(t, err)
 	return ns
 }
 
-func createSmtpConfig() *setting.Cfg {
+func provideTestService(t *testing.T, bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*NotificationService, error) {
+	t.Helper()
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return ProvideService(bus, cfg, cfgProvider, mailer, nil)
+}
+
+// createSmtpConfig sets the SMTP settings in cfg.Raw, which the config provider
+// serves at send time, and derives the startup cfg.Smtp from the same values.
+func createSmtpConfig(t *testing.T) *setting.Cfg {
+	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../../public/"
-	cfg.Smtp.Enabled = true
-	cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
-	cfg.Smtp.FromAddress = "from@address.com"
-	cfg.Smtp.FromName = "Grafana Admin"
-	cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+	setRawKeys(t, cfg, "smtp", map[string]string{
+		"enabled":      "true",
+		"from_address": "from@address.com",
+		"from_name":    "Grafana Admin",
+	})
+	setRawKeys(t, cfg, "emails", map[string]string{"content_types": "text/html, text/plain"})
+	smtp, err := setting.ReadSmtpSettings(cfg.Raw, cfg.InstanceName)
+	require.NoError(t, err)
+	cfg.Smtp = smtp
 	return cfg
 }

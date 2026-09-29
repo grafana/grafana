@@ -2,10 +2,19 @@ import yaml from 'js-yaml';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { applyJsonToDashboard, getDashboardResourceText } from './codePaneUtils';
+import { applyJsonToDashboard, getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
 
 jest.mock('../serialization/transformSceneToSaveModelSchemaV2', () => ({
   transformSceneToSaveModelSchemaV2: jest.fn(() => ({ title: 'Test dashboard' })),
+}));
+
+const mockEnsureV2Response = jest.fn();
+jest.mock('../../dashboard/api/ResponseTransformers', () => ({
+  ensureV2Response: (dto: unknown) => mockEnsureV2Response(dto),
+}));
+
+jest.mock('../../dashboard/api/utils', () => ({
+  isDashboardV2Spec: (obj: unknown) => typeof obj === 'object' && obj !== null && 'elements' in obj,
 }));
 
 jest.mock('../serialization/transformSaveModelSchemaV2ToScene', () => ({
@@ -34,11 +43,21 @@ function buildDashboard(uid?: string): DashboardScene {
 
 function buildApplyDashboard(uid?: string): DashboardScene {
   return {
-    state: { uid, key: 'key-1', isEditing: true, meta: {} },
-    serializer: { metadata: {} },
+    state: {
+      uid,
+      key: 'key-1',
+      isEditing: true,
+      meta: {},
+      body: { editModeChanged: jest.fn() },
+      sidebar: { closePane: jest.fn() },
+    },
+    serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),
     setState: jest.fn(),
-    publishEvent: jest.fn(),
+    forEachChild: jest.fn(),
+    publishEvent: jest.fn((event: { payload?: { perform?: () => void } }) => {
+      event.payload?.perform?.();
+    }),
   } as unknown as DashboardScene;
 }
 
@@ -73,6 +92,101 @@ describe('getDashboardResourceText', () => {
       spec: { title: 'Test dashboard' },
     });
     expect(text).toMatch(/^apiVersion: dashboard\.grafana\.app\/v2$/m);
+  });
+});
+
+describe('getDashboardDiffTexts', () => {
+  const v2Initial = { elements: {}, title: 'Original title' };
+
+  function buildDiffDashboard(initialSaveModel: unknown, uid = 'abc-123'): DashboardScene {
+    return {
+      state: { uid, meta: {} },
+      getInitialSaveModel: () => initialSaveModel,
+    } as unknown as DashboardScene;
+  }
+
+  function currentText(spec: object) {
+    return JSON.stringify({
+      apiVersion: 'dashboard.grafana.app/v2',
+      kind: 'Dashboard',
+      metadata: { name: 'abc-123' },
+      spec,
+    });
+  }
+
+  beforeEach(() => {
+    mockEnsureV2Response.mockReset();
+  });
+
+  it('returns original and current resource texts for a v2 initial save model', () => {
+    const result = getDashboardDiffTexts(
+      buildDiffDashboard(v2Initial),
+      currentText({ elements: {}, title: 'Changed title' })
+    );
+
+    expect(result).not.toBeNull();
+    const original = JSON.parse(result!.original);
+    const current = JSON.parse(result!.current);
+    expect(original.apiVersion).toBe('dashboard.grafana.app/v2');
+    expect(original.metadata.name).toBe('abc-123');
+    expect(original.spec.title).toBe('Original title');
+    expect(current.spec.title).toBe('Changed title');
+    expect(result!.migratedFromV1).toBe(false);
+    expect(mockEnsureV2Response).not.toHaveBeenCalled();
+  });
+
+  it('produces identical texts when only key order and null values differ', () => {
+    const unorderedWithNulls = JSON.stringify({
+      spec: { title: 'Original title', elements: {}, description: null },
+      kind: 'Dashboard',
+      metadata: { name: 'abc-123' },
+      apiVersion: 'dashboard.grafana.app/v2',
+    });
+
+    const result = getDashboardDiffTexts(buildDiffDashboard(v2Initial), unorderedWithNulls);
+
+    expect(result!.original).toBe(result!.current);
+  });
+
+  it('returns null when the editor content is not valid JSON', () => {
+    expect(getDashboardDiffTexts(buildDiffDashboard(v2Initial), 'not json {')).toBeNull();
+  });
+
+  it('returns null when there is no initial save model', () => {
+    expect(getDashboardDiffTexts(buildDiffDashboard(undefined), currentText({}))).toBeNull();
+  });
+
+  it('converts a v1 initial save model before diffing', () => {
+    mockEnsureV2Response.mockReturnValue({ spec: { elements: {}, title: 'Converted title' } });
+    const v1Initial = { schemaVersion: 41, title: 'V1 dashboard' };
+
+    const result = getDashboardDiffTexts(buildDiffDashboard(v1Initial), currentText({ elements: {} }));
+
+    expect(mockEnsureV2Response).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboard: expect.objectContaining(v1Initial) })
+    );
+    expect(JSON.parse(result!.original).spec.title).toBe('Converted title');
+    expect(result!.migratedFromV1).toBe(true);
+  });
+
+  it('returns null when the v1 conversion fails', () => {
+    mockEnsureV2Response.mockImplementation(() => {
+      throw new Error('conversion failed');
+    });
+
+    expect(getDashboardDiffTexts(buildDiffDashboard({ schemaVersion: 41 }), currentText({}))).toBeNull();
+  });
+
+  it('emits YAML for both sides when format is "yaml"', () => {
+    const result = getDashboardDiffTexts(
+      buildDiffDashboard(v2Initial),
+      currentText({ elements: {}, title: 'Changed title' }),
+      'yaml'
+    );
+
+    expect(result!.original).toMatch(/^apiVersion: dashboard\.grafana\.app\/v2$/m);
+    const current = yaml.load(result!.current) as { spec: { title: string } };
+    expect(current.spec.title).toBe('Changed title');
   });
 });
 
@@ -122,7 +236,7 @@ describe('applyJsonToDashboard', () => {
   it('applies the resource text generated for a saved dashboard', () => {
     const text = getDashboardResourceText(buildDashboard('abc-123'));
     const result = applyJsonToDashboard(buildApplyDashboard('abc-123'), text);
-    expect(result.success).toBe(true);
+    expect(result).toEqual({ success: true });
   });
 
   // Regression: the pane emits a placeholder metadata.name for a dashboard with no uid yet;
@@ -130,6 +244,21 @@ describe('applyJsonToDashboard', () => {
   it('applies the placeholder resource text for an unsaved dashboard', () => {
     const text = getDashboardResourceText(buildDashboard(undefined));
     const result = applyJsonToDashboard(buildApplyDashboard(undefined), text);
-    expect(result.success).toBe(true);
+    expect(result).toEqual({ success: true });
+  });
+
+  // Regression: the rebuild swaps in a freshly-deserialized layout manager, which is not
+  // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
+  // (via entering edit mode), so panels stayed frozen in the new tree until this call was also
+  // made on the swapped-in body.
+  it('re-enables dragging on the rebuilt layout', () => {
+    const dashboard = buildApplyDashboard('abc-123');
+    const text = getDashboardResourceText(buildDashboard('abc-123'));
+
+    expect(applyJsonToDashboard(dashboard, text)).toEqual({ success: true });
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- reach into the test double's mock
+    const editModeChanged = (dashboard.state.body as unknown as { editModeChanged: jest.Mock }).editModeChanged;
+    expect(editModeChanged).toHaveBeenCalledWith(true);
   });
 });

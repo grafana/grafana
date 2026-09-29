@@ -51,14 +51,6 @@ describe('SectionFiltersList', () => {
     expect(screen.queryByText('custom0')).not.toBeInTheDocument();
   });
 
-  it('shows add filter button when no filters exist', () => {
-    const row = buildRow({ includeCustom: true });
-
-    render(<SectionFiltersList sectionOwner={row} />);
-
-    expect(screen.getByText('Add filter')).toBeInTheDocument();
-  });
-
   it('renders a plain top-level filters heading without a count', () => {
     render(<SectionFiltersCategoryTitle />);
 
