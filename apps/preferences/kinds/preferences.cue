@@ -40,7 +40,8 @@ preferencesV1alpha1: {
 	pluralName: "Preferences"
 	scope:      "Namespaced"
 
-	// Normal list reads are restricted to the caller's owners.
+	// Generic read routes cannot apply the owner filtering used by normal list reads.
+	listKeys: false
 	search: {
 		endpoint: false
 	}
@@ -61,7 +62,8 @@ preferencesV1: {
 	pluralName: "Preferences"
 	scope:      "Namespaced"
 
-	// Normal list reads are restricted to the caller's owners.
+	// Generic read routes cannot apply the owner filtering used by normal list reads.
+	listKeys: false
 	search: {
 		endpoint: false
 	}
