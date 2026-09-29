@@ -12,6 +12,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -55,20 +56,25 @@ type HandlerOptions struct {
 	FieldValueResultsEnabled FieldValueResultsEnabled
 }
 
+// SearchClient allows callers to wrap search without implementing unrelated index operations.
+type SearchClient interface {
+	Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error)
+}
+
 // Handler serves the search envelope endpoints for one kind.
 type Handler struct {
-	client                   resourcepb.ResourceIndexClient
+	client                   SearchClient
 	provider                 resource.SearchFieldsProvider
 	tracer                   trace.Tracer
 	log                      log.Logger
 	fieldValueResultsEnabled FieldValueResultsEnabled
 }
 
-func NewHandler(client resourcepb.ResourceIndexClient, provider resource.SearchFieldsProvider, tracer trace.Tracer) *Handler {
+func NewHandler(client SearchClient, provider resource.SearchFieldsProvider, tracer trace.Tracer) *Handler {
 	return NewHandlerWithOptions(client, provider, tracer, HandlerOptions{})
 }
 
-func NewHandlerWithOptions(client resourcepb.ResourceIndexClient, provider resource.SearchFieldsProvider, tracer trace.Tracer, options HandlerOptions) *Handler {
+func NewHandlerWithOptions(client SearchClient, provider resource.SearchFieldsProvider, tracer trace.Tracer, options HandlerOptions) *Handler {
 	return &Handler{
 		client:                   client,
 		provider:                 provider,

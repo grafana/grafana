@@ -822,6 +822,10 @@ Set to `false` to disable the X-Content-Type-Options response header. The X-Cont
 
 #### `x_xss_protection`
 
+{{< admonition type="warning" >}}
+This setting will be removed in a future major version. Support for it has been removed by browsers. Consider disabling it in the meantime and using `content_security_policy` instead.
+{{< /admonition >}}
+
 Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `true`.
 
 #### `content_security_policy`

@@ -38,7 +38,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	userSvc.ExpectedListUsersByIdOrUid = []*user.User{testUser}
 
 	testFolder := &folder.Folder{
-		ID:    1,
+		ID:    1, //nolint:staticcheck // Exercise legacy field compatibility.
 		UID:   "test-folder-uid",
 		Title: "Test Folder",
 	}
@@ -48,7 +48,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 
 	dashboardsSvc := &dashboards.FakeDashboardService{}
 	testDashboard := &dashboards.DashboardRef{
-		ID:        1,
+		ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.
 		UID:       "test-dashboard-uid",
 		FolderUID: testFolder.UID,
 	}

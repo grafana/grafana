@@ -39,7 +39,7 @@ import { canEditNotebooks } from '../permissions';
 import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
-import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
+import { changedCellTimeRange, changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
 import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
@@ -203,8 +203,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // flag on the way into a session as well, but without this the flag would mean "moved since the
       // last start" rather than "moved during this session".
       const timeRangeSub = this.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
-        if (this.state.isEditing && changesTimeSettings(payload, this)) {
+        if (!this.state.isEditing) {
+          return;
+        }
+        if (changesTimeSettings(payload, this)) {
           this.editSession.onTimeRangeChanged();
+        }
+        if (changedCellTimeRange(payload, this)) {
+          this.editSession.onCellTimeRangeChanged();
         }
       });
 

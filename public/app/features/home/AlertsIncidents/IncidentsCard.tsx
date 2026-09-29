@@ -1,7 +1,7 @@
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Badge, LinkButton, Tooltip } from '@grafana/ui';
-import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
+import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentFieldFilter } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
@@ -12,15 +12,14 @@ import { ctaClicked } from '../analytics/main';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
-import { type TeamSelection, explicitTeam } from './teamFilter';
 import { type IncidentsData } from './useIncidents';
 
-/** Empty-state copy names the filtered team; the default and "All teams" scopes use the generic line. */
-function emptyMessage(selectedTeam: TeamSelection): string {
-  const team = explicitTeam(selectedTeam);
-  if (team) {
+/** Empty-state copy names the filtered value; the unfiltered scope uses the generic line. */
+function emptyMessage(filter: IncidentFieldFilter | undefined): string {
+  if (filter) {
+    // Key and param predate the widening past `team`; the copy fits any field value, so they stay.
     return t('home.incidents-card.empty-selected-team', 'No active incidents for {{team}}.', {
-      team,
+      team: filter.value,
       interpolation: { escapeValue: false },
     });
   }
@@ -36,7 +35,7 @@ export function IncidentsCard({
   hideFooterActions?: boolean;
 }) {
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, selectedTeam, loading, error, refetch } = data;
+  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, filter, loading, error, refetch } = data;
 
   return (
     <SummaryCard
@@ -51,7 +50,7 @@ export function IncidentsCard({
           ? { title: t('home.incidents-card.error-title', 'Could not load active incidents'), onRetry: () => refetch() }
           : undefined
       }
-      emptyMessage={emptyMessage(selectedTeam)}
+      emptyMessage={emptyMessage(filter)}
       items={displayed}
       getItemKey={(incident) => incident.incidentID}
       renderItem={(incident) => (
