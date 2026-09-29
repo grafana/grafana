@@ -58,7 +58,7 @@ type natsShadow struct {
 func newNatsShadow(subscriber EventSubscriber, watchOpts WatchOptions, reg prometheus.Registerer, logger log.Logger) *natsShadow {
 	metrics := newNatsShadowMetrics(reg)
 	return &natsShadow{
-		notifier:  newNatsNotifier(subscriber, metrics.dropped, logger),
+		notifier:  newNatsNotifier(subscriber, nil, metrics.dropped, logger),
 		watchOpts: watchOpts,
 		metrics:   metrics,
 		log:       logger,
