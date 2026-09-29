@@ -151,7 +151,7 @@ export function alertInstanceKey(alert: Alert): string {
   return JSON.stringify(alert.labels);
 }
 
-export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
+export function isRulerNotSupportedResponse(resp: AsyncRequestState<unknown>) {
   return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
 }
 
