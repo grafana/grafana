@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	cuelang.org/go v0.17.1
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
-	github.com/grafana/grafana-app-sdk v0.60.7-0.20260929200557-eb425ec5151f
+	github.com/grafana/grafana-app-sdk v0.60.7
 	github.com/grafana/grafana-app-sdk/logging v0.60.6
 	github.com/grafana/grafana-plugin-sdk-go v0.296.5
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
