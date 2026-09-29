@@ -342,6 +342,19 @@ describe('tz.zone', () => {
     expect(moment.tz(jan, 'America/New_York').format('z')).toBe('EST');
     expect(moment.tz(jul, 'America/New_York').format('z')).toBe('EDT');
   });
+
+  it('resolves week-start locale overrides before falling back to Intl for zone abbreviations', () => {
+    const previousLocale = moment.locale();
+    const zone = moment.tz.zone('EST5EDT');
+    const timestamp = Date.UTC(2026, 0, 15);
+    try {
+      moment.updateLocale('en-US-weekStart', { week: { dow: 1 } });
+
+      expect(zone?.abbr(timestamp)).toBe('EST');
+    } finally {
+      moment.locale(previousLocale);
+    }
+  });
 });
 
 describe('duration component getters', () => {
