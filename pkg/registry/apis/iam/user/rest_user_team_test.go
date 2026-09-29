@@ -3,520 +3,222 @@ package user
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-func TestUserTeamREST_Connect(t *testing.T) {
-	t.Run("should create handler with default pagination and stable sort", func(t *testing.T) {
-		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
+func TestUserTeamRESTQuery(t *testing.T) {
+	token, err := resource.NewSearchContinueToken([]string{"team-a"}, 42)
+	require.NoError(t, err)
+	for _, tt := range []struct {
+		params  string
+		limit   int64
+		after   []string
+		explain bool
+	}{
+		{limit: common.DefaultListLimit},
+		{params: "limit=20", limit: 20},
+		{params: "limit=0", limit: common.DefaultListLimit},
+		{params: "limit=-1", limit: common.DefaultListLimit},
+		{params: "limit=invalid", limit: common.DefaultListLimit},
+		{params: "continue=" + url.QueryEscape(token), limit: common.DefaultListLimit, after: []string{"team-a"}},
+		{params: "explain=true", limit: common.DefaultListLimit, explain: true},
+		{params: "explain", limit: common.DefaultListLimit, explain: true},
+		{params: "explain=false", limit: common.DefaultListLimit},
+		{params: "offset=10&page=3", limit: common.DefaultListLimit},
+	} {
+		t.Run(tt.params, func(t *testing.T) {
+			backend := &fakeUserTeamsBackend{}
+			requester := &identity.StaticRequester{Namespace: "stacks-1"}
+			ctx := identity.WithRequester(t.Context(), requester)
+			responder, w := serveUserTeams(t, ctx, userTeamsSelector(backend), tt.params)
+			require.NoError(t, responder.err)
+			require.Equal(t, http.StatusOK, w.Code)
+			require.Equal(t, UserTeamsQuery{Namespace: "stacks-1", UserUID: "alice", Limit: tt.limit, After: tt.after, Explain: tt.explain}, backend.queries[0])
+			got, err := identity.GetRequester(backend.ctx)
+			require.NoError(t, err)
+			require.Same(t, requester, got)
 		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-		require.NotNil(t, httpHandler)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.NotNil(t, mockClient.LastSearchRequest)
-		require.Equal(t, int64(common.DefaultListLimit), mockClient.LastSearchRequest.Limit)
-		// Keyset pagination: offset/page are no longer used.
-		require.Equal(t, int64(0), mockClient.LastSearchRequest.Offset)
-		require.Equal(t, int64(0), mockClient.LastSearchRequest.Page)
-		require.Empty(t, mockClient.LastSearchRequest.SearchAfter)
-		require.False(t, mockClient.LastSearchRequest.Explain)
-		require.Equal(t, "alice", mockClient.LastSearchRequest.Options.Fields[0].Values[0])
-		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, mockClient.LastSearchRequest.ResultFormat)
-		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, mockClient.LastSearchRequest.Fields)
-		// Stable sort by name is required for keyset pagination correctness.
-		require.Len(t, mockClient.LastSearchRequest.SortBy, 1)
-		require.Equal(t, resource.SEARCH_FIELD_NAME, mockClient.LastSearchRequest.SortBy[0].Field)
-		require.False(t, mockClient.LastSearchRequest.SortBy[0].Desc)
-	})
-
-	t.Run("should parse limit query parameter", func(t *testing.T) {
-		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams?limit=20", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.Equal(t, int64(20), mockClient.LastSearchRequest.Limit)
-	})
-
-	t.Run("should pass continue token through as SearchAfter", func(t *testing.T) {
-		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		token, err := resource.NewSearchContinueToken([]string{"team-foo"}, 0)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams?continue="+url.QueryEscape(token), nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.Equal(t, []string{"team-foo"}, mockClient.LastSearchRequest.SearchAfter)
-	})
-
-	t.Run("should reject malformed continue token", func(t *testing.T) {
-		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams?continue=not-base64!", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.Equal(t, http.StatusBadRequest, w.Code)
-		require.Nil(t, mockClient.LastSearchRequest, "search should not run on bad token")
-	})
-
-	t.Run("should emit continue token when page is full", func(t *testing.T) {
-		mockClient := &mockSearchClient{
-			Response: &resourcepb.ResourceSearchResponse{
-				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
-				ResourceVersion: 42,
-				Rows: []*resourcepb.ResourceSearchRow{
-					{Key: &resourcepb.ResourceKey{Name: "team-a"}, SortFields: []string{"team-a"}},
-					{Key: &resourcepb.ResourceKey{Name: "team-b"}, SortFields: []string{"team-b"}},
-				},
-			},
-		}
-		getter := &mockGetter{teams: map[string]*iamv0alpha1.Team{
-			"team-a": team("team-a", member("alice", "admin", false)),
-			"team-b": team("team-b", member("alice", "member", false)),
-		}}
-		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams?limit=2", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
-		require.True(t, ok)
-		require.NotEmpty(t, result.Continue, "continue token should be set when page is full")
-
-		decoded, err := resource.GetContinueToken(result.Continue)
-		require.NoError(t, err)
-		require.Equal(t, []string{"team-b"}, decoded.SearchAfter)
-	})
-
-	t.Run("should not emit continue token when page is partial", func(t *testing.T) {
-		mockClient := &mockSearchClient{
-			Response: &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: "permission"},
-						{Name: "external"},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "team-a"}, Cells: [][]byte{[]byte("admin"), []byte("false")}, SortFields: []string{"team-a"}},
-					},
-				},
-			},
-		}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams?limit=10", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
-		require.True(t, ok)
-		require.Empty(t, result.Continue, "continue token should be empty when page is not full")
-	})
-
-	t.Run("should parse explain query parameter", func(t *testing.T) {
-		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams?explain=true", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.True(t, mockClient.LastSearchRequest.Explain)
-	})
-
-	t.Run("should not enable explain when explain=false", func(t *testing.T) {
-		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams?explain=false", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.False(t, mockClient.LastSearchRequest.Explain)
-	})
-
-	t.Run("should return error when identity is missing", func(t *testing.T) {
-		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := context.Background()
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.True(t, responder.called)
-		require.NotNil(t, responder.err)
-		require.Contains(t, responder.err.Error(), "no identity found")
-	})
-
-	t.Run("should return error when search fails", func(t *testing.T) {
-		mockClient := &mockSearchClient{Err: errors.New("search failed")}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.True(t, responder.called)
-		require.NotNil(t, responder.err)
-		require.Contains(t, responder.err.Error(), "search failed")
-	})
-
-	t.Run("should return JSON response with teams (unified path)", func(t *testing.T) {
-		mockClient := &mockSearchClient{
-			Response: &resourcepb.ResourceSearchResponse{
-				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-				Rows: []*resourcepb.ResourceSearchRow{
-					{Key: &resourcepb.ResourceKey{Name: "team-a"}},
-					{Key: &resourcepb.ResourceKey{Name: "team-b"}},
-				},
-			},
-		}
-		getter := &mockGetter{teams: map[string]*iamv0alpha1.Team{
-			"team-a": team("team-a", member("alice", "admin", false), member("bob", "member", false)),
-			"team-b": team("team-b", member("alice", "member", true)),
-		}}
-		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.True(t, responder.called)
-		require.Equal(t, http.StatusOK, responder.code)
-
-		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
-		require.True(t, ok)
-		require.Len(t, result.Items, 2)
-
-		require.Equal(t, "alice", result.Items[0].User)
-		require.Equal(t, "team-a", result.Items[0].Team)
-		require.Equal(t, "admin", result.Items[0].Permission)
-		require.False(t, result.Items[0].External)
-
-		require.Equal(t, "team-b", result.Items[1].Team)
-		require.Equal(t, "member", result.Items[1].Permission)
-		require.True(t, result.Items[1].External)
-	})
-
-	t.Run("should build items from inline cells (legacy adapter path)", func(t *testing.T) {
-		mockClient := &mockSearchClient{
-			Response: &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: "permission"},
-						{Name: "external"},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key:   &resourcepb.ResourceKey{Name: "team-a"},
-							Cells: [][]byte{[]byte("admin"), []byte("false")},
-						},
-						{
-							Key:   &resourcepb.ResourceKey{Name: "team-b"},
-							Cells: [][]byte{[]byte("member"), []byte("true")},
-						},
-					},
-				},
-			},
-		}
-		// Failing getter ensures the inline-cells path doesn't call it.
-		getter := &mockGetter{err: errors.New("getter must not be called")}
-		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.True(t, responder.called)
-		require.Equal(t, http.StatusOK, responder.code)
-
-		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
-		require.True(t, ok)
-		require.Len(t, result.Items, 2)
-		require.Equal(t, "team-a", result.Items[0].Team)
-		require.Equal(t, "admin", result.Items[0].Permission)
-		require.False(t, result.Items[0].External)
-		require.Equal(t, "team-b", result.Items[1].Team)
-		require.Equal(t, "member", result.Items[1].Permission)
-		require.True(t, result.Items[1].External)
-	})
-
-	t.Run("should skip hits whose getter returns NotFound", func(t *testing.T) {
-		mockClient := &mockSearchClient{
-			Response: &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "team-a"}},
-						{Key: &resourcepb.ResourceKey{Name: "team-missing"}},
-					},
-				},
-			},
-		}
-		getter := &mockGetter{teams: map[string]*iamv0alpha1.Team{
-			"team-a": team("team-a", member("alice", "admin", false)),
-		}}
-		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
-		require.True(t, ok)
-		require.Len(t, result.Items, 1)
-		require.Equal(t, "team-a", result.Items[0].Team)
-	})
-
-	t.Run("should include correct fields in search request", func(t *testing.T) {
-		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.NotNil(t, mockClient.LastSearchRequest)
-		require.Equal(t, iamv0alpha1.TeamResourceInfo.GroupResource().Group, mockClient.LastSearchRequest.Options.Key.Group)
-		require.Equal(t, iamv0alpha1.TeamResourceInfo.GroupResource().Resource, mockClient.LastSearchRequest.Options.Key.Resource)
-		require.Equal(t, "test-namespace", mockClient.LastSearchRequest.Options.Key.Namespace)
-		require.Len(t, mockClient.LastSearchRequest.Options.Fields, 1)
-		require.Equal(t, builders.TEAM_SEARCH_MEMBERS, mockClient.LastSearchRequest.Options.Fields[0].Key)
-		require.Equal(t, []string{"alice"}, mockClient.LastSearchRequest.Options.Fields[0].Values)
-	})
-}
-
-func team(uid string, members ...iamv0alpha1.TeamTeamMember) *iamv0alpha1.Team {
-	return &iamv0alpha1.Team{
-		ObjectMeta: metav1.ObjectMeta{Name: uid, Namespace: "default"},
-		Spec:       iamv0alpha1.TeamSpec{Title: uid, Members: members},
 	}
 }
 
-func member(name, permission string, external bool) iamv0alpha1.TeamTeamMember {
-	return iamv0alpha1.TeamTeamMember{
-		Kind:       "User",
-		Name:       name,
-		Permission: iamv0alpha1.TeamTeamPermission(permission),
-		External:   external,
+func TestUserTeamRESTResponse(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		page UserTeamsPage
+	}{
+		{name: "empty"},
+		{name: "partial page", page: UserTeamsPage{Items: []iamv0.GetUserTeamsUserTeam{{User: "alice", Team: "team-a", Permission: "admin", External: true}}}},
+		{name: "full page", page: UserTeamsPage{Items: []iamv0.GetUserTeamsUserTeam{{User: "alice", Team: "team-a"}}, Next: []string{"team-a"}, ResourceVersion: 42}},
+		{name: "all visited memberships disappeared", page: UserTeamsPage{Items: []iamv0.GetUserTeamsUserTeam{}, Next: []string{"team-b"}, ResourceVersion: 43}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			backend := &fakeUserTeamsBackend{page: &tt.page}
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "stacks-1"})
+			responder, _ := serveUserTeams(t, ctx, userTeamsSelector(backend), "")
+			require.NoError(t, responder.err)
+			require.Equal(t, http.StatusOK, responder.code)
+			result := responder.obj.(*iamv0.GetUserTeamsResponse)
+			require.Equal(t, tt.page.Items, result.Items)
+			if len(tt.page.Next) == 0 {
+				require.Empty(t, result.Continue)
+			} else {
+				token, err := resource.GetContinueToken(result.Continue)
+				require.NoError(t, err)
+				require.Equal(t, tt.page.Next, token.SearchAfter)
+				require.Equal(t, tt.page.ResourceVersion, token.ResourceVersion)
+			}
+		})
 	}
+}
+
+func TestUserTeamRESTInvalidRequest(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		params     string
+		noIdentity bool
+	}{
+		{name: "bad token", params: "continue=not-base64!"},
+		{name: "large limit", params: fmt.Sprintf("limit=%d", common.MaxListLimit+1)},
+		{name: "bad query", params: "invalid=%zz"},
+		{name: "missing identity", noIdentity: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			backend := &fakeUserTeamsBackend{}
+			ctx := t.Context()
+			if !tt.noIdentity {
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{Namespace: "stacks-1"})
+			}
+			responder, w := serveUserTeams(t, ctx, userTeamsSelector(backend), tt.params)
+			require.Empty(t, backend.queries)
+			switch {
+			case tt.noIdentity:
+				require.True(t, apierrors.IsUnauthorized(responder.err))
+			case tt.name == "bad query":
+				require.Error(t, responder.err)
+			default:
+				require.Equal(t, http.StatusBadRequest, w.Code)
+			}
+		})
+	}
+}
+
+func TestUserTeamRESTModeChanges(t *testing.T) {
+	gr := iamv0.TeamResourceInfo.GroupResource()
+	cfg := &setting.Cfg{UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+		iamv0.UserResourceInfo.GroupResource().String(): {DualWriterMode: rest.Mode5},
+	}}
+	legacyBackend := &fakeUserTeamsBackend{page: &UserTeamsPage{Items: []iamv0.GetUserTeamsUserTeam{{Team: "legacy"}}}}
+	unifiedBackend := &fakeUserTeamsBackend{page: &UserTeamsPage{Items: []iamv0.GetUserTeamsUserTeam{{Team: "unified"}}}}
+	selector := dualwrite.NewSelector[UserTeamsBackend](dualwrite.ProvideServiceForTests(cfg), gr, legacyBackend, unifiedBackend)
+	handler := NewUserTeamREST(selector, tracing.NewNoopTracerService())
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "stacks-1"})
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5, rest.Mode0} {
+		cfg.UnifiedStorage[gr.String()] = setting.UnifiedStorageConfig{DualWriterMode: mode}
+		responder := &mockResponder{}
+		h, err := handler.Connect(ctx, "alice", nil, responder)
+		require.NoError(t, err)
+		h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/teams", nil).WithContext(ctx))
+		require.NoError(t, responder.err)
+		want := "legacy"
+		if mode >= rest.Mode4 {
+			want = "unified"
+		}
+		require.Equal(t, want, responder.obj.(*iamv0.GetUserTeamsResponse).Items[0].Team)
+	}
+	require.Len(t, legacyBackend.queries, 5)
+	require.Len(t, unifiedBackend.queries, 2)
+}
+
+func TestUserTeamRESTErrorsDoNotFallback(t *testing.T) {
+	for _, tt := range []struct {
+		name           string
+		unified        bool
+		selectionError bool
+	}{
+		{name: "selection", selectionError: true},
+		{name: "legacy error"},
+		{name: "unified error", unified: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			wantErr := errors.New("unavailable")
+			legacyBackend := &fakeUserTeamsBackend{err: wantErr}
+			unifiedBackend := &fakeUserTeamsBackend{err: wantErr}
+			reader := userReadModeFunc(func(_ context.Context, gr schema.GroupResource) (bool, error) {
+				require.Equal(t, iamv0.TeamResourceInfo.GroupResource(), gr)
+				if tt.selectionError {
+					return false, wantErr
+				}
+				return tt.unified, nil
+			})
+			selector := dualwrite.NewSelector[UserTeamsBackend](reader, iamv0.TeamResourceInfo.GroupResource(), legacyBackend, unifiedBackend)
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "stacks-1"})
+			responder, _ := serveUserTeams(t, ctx, selector, "")
+			if tt.selectionError {
+				require.True(t, apierrors.IsInternalError(responder.err))
+				require.ErrorContains(t, responder.err, wantErr.Error())
+			} else {
+				require.ErrorIs(t, responder.err, wantErr)
+			}
+			require.Equal(t, !tt.selectionError && !tt.unified, len(legacyBackend.queries) > 0)
+			require.Equal(t, !tt.selectionError && tt.unified, len(unifiedBackend.queries) > 0)
+		})
+	}
+}
+
+func serveUserTeams(t *testing.T, ctx context.Context, selector *dualwrite.Selector[UserTeamsBackend], params string) (*mockResponder, *httptest.ResponseRecorder) {
+	t.Helper()
+	handler := NewUserTeamREST(selector, tracing.NewNoopTracerService())
+	responder := &mockResponder{}
+	h, err := handler.Connect(ctx, "alice", nil, responder)
+	require.NoError(t, err)
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest("GET", "/teams?"+params, nil).WithContext(ctx))
+	return responder, w
+}
+
+func userTeamsSelector(backend UserTeamsBackend) *dualwrite.Selector[UserTeamsBackend] {
+	return dualwrite.NewSelector(dualwrite.ProvideServiceForTests(&setting.Cfg{}), iamv0.TeamResourceInfo.GroupResource(), backend, backend)
+}
+
+type fakeUserTeamsBackend struct {
+	queries []UserTeamsQuery
+	ctx     context.Context
+	page    *UserTeamsPage
+	err     error
+}
+
+func (f *fakeUserTeamsBackend) ListUserTeams(ctx context.Context, query UserTeamsQuery) (*UserTeamsPage, error) {
+	f.ctx = ctx
+	f.queries = append(f.queries, query)
+	if f.page != nil {
+		return f.page, f.err
+	}
+	return &UserTeamsPage{}, f.err
 }
 
 type mockResponder struct {
-	called bool
-	err    error
-	obj    interface{}
-	code   int
+	err  error
+	obj  runtime.Object
+	code int
 }
 
-func (m *mockResponder) Object(statusCode int, obj runtime.Object) {
-	m.called = true
-	m.code = statusCode
-	m.obj = obj
-}
-
-func (m *mockResponder) Error(err error) {
-	m.called = true
-	m.err = err
-}
-
-type mockSearchClient struct {
-	resourcepb.ResourceIndexClient
-	resource.ResourceIndex
-
-	LastSearchRequest *resourcepb.ResourceSearchRequest
-	Response          *resourcepb.ResourceSearchResponse
-	Err               error
-}
-
-func (m *mockSearchClient) Search(_ context.Context, in *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	m.LastSearchRequest = in
-	if m.Err != nil {
-		return nil, m.Err
-	}
-	if m.Response != nil {
-		return m.Response, nil
-	}
-	return &resourcepb.ResourceSearchResponse{}, nil
-}
-
-type mockGetter struct {
-	teams map[string]*iamv0alpha1.Team
-	err   error
-}
-
-func (m *mockGetter) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	t, ok := m.teams[name]
-	if !ok {
-		return nil, apierrors.NewNotFound(iamv0alpha1.TeamResourceInfo.GroupResource(), name)
-	}
-	return t, nil
-}
+func (m *mockResponder) Object(code int, obj runtime.Object) { m.code, m.obj = code, obj }
+func (m *mockResponder) Error(err error)                     { m.err = err }
