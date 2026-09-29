@@ -237,7 +237,7 @@ describe('RuleList', () => {
 
     mocks.api.fetchRulerRules.mockRejectedValue({ status: 500, data: { message: 'Server error' } });
 
-    const { user } = await renderRuleList();
+    const { user } = renderRuleList();
 
     await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(4));
     const groups = await ui.ruleGroup.findAll();
@@ -333,7 +333,7 @@ describe('RuleList', () => {
       }
     });
 
-    const { user } = await renderRuleList();
+    const { user } = renderRuleList();
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
@@ -506,7 +506,7 @@ describe('RuleList', () => {
       }
     });
 
-    const { user } = await renderRuleList();
+    const { user } = renderRuleList();
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
