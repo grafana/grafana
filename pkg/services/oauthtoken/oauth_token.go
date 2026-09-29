@@ -225,6 +225,15 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 		return nil, nil
 	}
 
+	// In most cases the token has not expired, so the lock can be skipped.
+	persistedToken := o.loadTokenFromExternalSession(ctx, ctxLogger, tokenRefreshMetadata.ExternalSessionID)
+	if persistedToken == nil {
+		return nil, nil
+	}
+	if !needTokenRefresh(ctx, persistedToken) {
+		return persistedToken, nil
+	}
+
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d-%d", userID, tokenRefreshMetadata.ExternalSessionID)
 
 	cfg, err := o.cfgProvider.Get(ctx)
@@ -258,18 +267,11 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 
 		ctxLogger.Debug("Serverlock request for getting a new access token", "key", lockKey)
 
-		var persistedToken *oauth2.Token
-		externalSession, err := o.sessionService.GetExternalSession(ctx, tokenRefreshMetadata.ExternalSessionID)
-		if err != nil {
-			if errors.Is(err, auth.ErrExternalSessionNotFound) {
-				ctxLogger.Error("External session was not found for user", "error", err)
-				return
-			}
-			ctxLogger.Error("Failed to fetch external session", "error", err)
+		// Re-read under the lock: another instance may have refreshed the token while we waited.
+		persistedToken := o.loadTokenFromExternalSession(ctx, ctxLogger, tokenRefreshMetadata.ExternalSessionID)
+		if persistedToken == nil {
 			return
 		}
-
-		persistedToken = buildOAuthTokenFromExternalSession(externalSession)
 
 		needRefresh := needTokenRefresh(ctx, persistedToken)
 		if !needRefresh {
@@ -291,6 +293,21 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 	}
 
 	return newToken, cmdErr
+}
+
+// loadTokenFromExternalSession returns the token stored in the external session, or nil if the session cannot be read.
+func (o *Service) loadTokenFromExternalSession(ctx context.Context, ctxLogger log.Logger, externalSessionID int64) *oauth2.Token {
+	externalSession, err := o.sessionService.GetExternalSession(ctx, externalSessionID)
+	if err != nil {
+		if errors.Is(err, auth.ErrExternalSessionNotFound) {
+			ctxLogger.Error("External session was not found for user", "error", err)
+			return nil
+		}
+		ctxLogger.Error("Failed to fetch external session", "error", err)
+		return nil
+	}
+
+	return buildOAuthTokenFromExternalSession(externalSession)
 }
 
 // InvalidateOAuthTokens invalidates the OAuth tokens (access_token, refresh_token) and sets the Expiry to default/zero

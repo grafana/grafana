@@ -310,6 +310,26 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		require.Empty(t, got.Items)
 	})
 
+	t.Run("metadata labelSelector NotIn keeps rules outside the excluded group", func(t *testing.T) {
+		for _, tc := range []struct {
+			resource string
+			titles   []string
+		}{
+			{alertRules, []string{"cpu usage high", "memory usage high", "disk low"}},
+			{recordingRules, []string{"cpu recording", "disk recording"}},
+		} {
+			t.Run(tc.resource, func(t *testing.T) {
+				got := search(t, tc.resource, newPerKindQuery().labelSelector(&v1.LabelSelector{
+					MatchExpressions: []v1.LabelSelectorRequirement{{
+						Key: v0alpha1.GroupLabelKey, Operator: v1.LabelSelectorOpNotIn, Values: []string{"no-such-group"},
+					}},
+				}))
+				require.ElementsMatch(t, tc.titles, perKindTitles(got))
+				require.EqualValues(t, len(tc.titles), got.Metadata.TotalHits)
+			})
+		}
+	})
+
 	t.Run("alert rules: source datasource filter", func(t *testing.T) {
 		require.Equal(t, []string{"memory usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("datasourceUIDs", perKindOpIn, "ds-loki"))))
 	})

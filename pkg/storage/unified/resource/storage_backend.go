@@ -257,6 +257,9 @@ type KVBackendOptions struct {
 	// polling. Requires EventSubscriber set and enabled; falls back to the
 	// polling notifier otherwise.
 	EnableNatsNotifier bool
+
+	// WatchInvalidator is shared with the watch server; shadow mode never uses it.
+	WatchInvalidator Invalidator
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -408,6 +411,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			enableNatsNotifier: opts.EnableNatsNotifier,
 			eventSubscriber:    opts.EventSubscriber,
 			natsDropped:        metrics.NatsNotifierDropped,
+			invalidator:        opts.WatchInvalidator,
 		}),
 		eventPublisher:          opts.EventPublisher,
 		watchOpts:               opts.WatchOptions.normalize(),
@@ -1259,6 +1263,11 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		}
 	}
 
+	// The datastore rejects invalid names. Report that as a bad request, not a server error.
+	if errs := validation.IsValidGrafanaName(req.Key.Name); len(errs) > 0 {
+		return &BackendReadResponse{Error: NewBadRequestError(errs[0])}
+	}
+
 	meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
@@ -1346,6 +1355,13 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 			rv := ToSnowflakeRV(req.ResourceVersion)
 			if rv > latestRV {
 				entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
+				entries = append(entries, entry)
+				continue
+			}
+
+			// Same as ReadResource: an invalid name is a bad request, not a server error.
+			if errs := validation.IsValidGrafanaName(req.Key.Name); len(errs) > 0 {
+				entry.response = &BackendReadResponse{Error: NewBadRequestError(errs[0])}
 				entries = append(entries, entry)
 				continue
 			}
@@ -2468,11 +2484,6 @@ func (i *kvHistoryIterator) Folder() string {
 
 func (i *kvHistoryIterator) Value() []byte {
 	return i.value
-}
-
-// WatchInvalidation exposes delivery gaps only for the active notifier.
-func (k *kvStorageBackend) WatchInvalidation() <-chan struct{} {
-	return k.notifier.WatchInvalidation()
 }
 
 // WatchWriteEvents returns a channel that receives write events.
