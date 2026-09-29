@@ -515,6 +515,11 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.10 START -->
+
+# 13.0.10 (2026-09-29)
+
+<!-- 13.0.10 END -->
 <!-- 13.0.9 START -->
 
 # 13.0.9 (2026-09-15)
