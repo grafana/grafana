@@ -88,7 +88,7 @@ You can also insert:
 
 Dashboard variables autocomplete as you enter them, and they're interpolated in the content.
 
-The options displayed in the formatting toolbar depend on the mode you select.
+The options displayed in the formatting toolbar depend on whether you select Markdown or HTML.
 
 ### Modes
 
@@ -126,7 +126,7 @@ Use the following options to control how data is rendered in the text visualizat
 
 #### Render mode
 
-If you've used [Handlebars templates](#render-query-results-as-text-with-handlebars-templates), select a render mode to control how your template is applied:
+Select a render mode to control how your template is applied:
 
 - **Once**: Render the whole result.
 - **Per row**: Each row in the data gets its own repeated block of content.
@@ -140,7 +140,7 @@ You can also select which data frame to display.
 When a query returns many rows, pagination lets you move through the full result instead of showing only a limited number of rows.
 Grafana automatically adjusts the number of rows on each page to fit the panel or you can set a range from 1-1000 rows.
 
-This option only displays when you set **Render mode** to **Per row**.
+This option only displays when you set **Render mode** to **Per row** and when there are 100 rows or more.
 
 ### Value mappings
 
