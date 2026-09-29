@@ -15,6 +15,11 @@ title: Notification template examples
 menuTitle: Examples
 weight: 103
 refs:
+  grafana-and-legacy-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
   template-annotations-and-labels:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
@@ -78,6 +83,8 @@ Avoid adding extra information about alert instances in notification templates, 
 
 Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
 {{< /admonition >}}
+
+Examples that use shared fields such as `.Status`, `.Alerts`, labels, and annotations apply to both Grafana and Legacy integrations. Examples that use Grafana-only fields, defaults, or namespaced functions require a Grafana integration. Refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates) before you use an example with a Legacy integration.
 
 This page provides various examples illustrating how to template common notification messages. For more details about notification templates, refer to:
 
@@ -369,7 +376,7 @@ Alert annotations: 2
 
 ## Print URLs for runbook and alert data in Grafana
 
-Note that the following example works only for Grafana-managed alerts. It displays some [alert data](ref:reference-alert) such as `DashboardURL`, `PanelURL`, and `SilenceURL`, which are exclusive to Grafana-managed alerts.
+The following example requires a Grafana integration. It displays extended [alert data](ref:reference-alert), including `DashboardURL`, `PanelURL`, and `SilenceURL`. Legacy integrations don't provide these fields, regardless of the alert's origin. Dashboard and panel links depend on the alert's annotations.
 
 ```go
 {{ define "custom.alert_additional_details" -}}

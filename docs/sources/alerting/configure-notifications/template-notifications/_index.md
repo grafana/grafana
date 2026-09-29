@@ -16,6 +16,11 @@ labels:
 title: Template notifications
 weight: 450
 refs:
+  grafana-and-legacy-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
   template-annotations-and-labels:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
@@ -42,7 +47,7 @@ refs:
 
 You can use notification templates to change the title, message, and format of notifications.
 
-Grafana provides a **default template** for notification titles (`default.title`) and one default template for notification messages (`default.message`). Both templates display common alert details.
+Grafana integrations use a **default template** for notification titles (`default.title`) and one for notification messages (`default.message`). Both display common alert details. Legacy integrations use Mimir-compatible defaults instead. Refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates) for differences in defaults, functions, and data.
 
 You can also create a notification template to customize the content and format of your notification messages. For example:
 
@@ -93,13 +98,13 @@ Instead, you should [use annotations or labels](ref:template-annotations-and-lab
 
 #### Select a notification template for a contact point
 
-Notification templates are not tied to specific contact point integrations, such as email or Slack, and the same template can be shared across multiple contact points.
+You can share a notification template across multiple contact points and integration types, such as email and Slack. All the integrations must use the same template type, Grafana or Legacy, and must provide the data that the template expects.
 
-The notification template is assigned to the contact point to determine the notification message sent to contact point integrations.
+Select the template in each integration's settings that support templates to customize its notification message.
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" caption="A flow of the alert notification process, from querying the alert rule to sending the alert notification message." >}}
 
-By default, Grafana provides default templates, such as `{{define "default.title"}}` and `{{define "default.message"}}`, to format notification messages.
+For Grafana integrations, `{{define "default.title"}}` and `{{define "default.message"}}` format notification messages by default.
 
 ## Grafana Cloud AI-generated templates
 
@@ -126,6 +131,7 @@ For further details on how to write notification templates, refer to:
 - [Select, create, and preview a notification template](ref:manage-notification-templates)
 - [Notification template reference](ref:reference)
 - [Notification template examples](ref:examples)
+- [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates)
 
 {{< admonition type="tip" >}}
 For a practical example of templating, refer to our [Getting Started with Templating tutorial](https://grafana.com/tutorials/alerting-get-started-pt4/).

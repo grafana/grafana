@@ -16,6 +16,12 @@ labels:
 title: Use images in notifications
 menuTitle: Use images
 weight: 105
+refs:
+  grafana-and-legacy-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/grafana-and-legacy-templates/
 ---
 
 # Use images in notifications
@@ -117,6 +123,7 @@ Grafana supports a wide range of contact points with varied support for images i
 
 ## Limitations
 
+- This feature is not supported by Legacy integrations, even when the integration runs in Grafana. Refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates) for differences in notification data.
 - This feature is not supported in Mimir or Loki, or when Grafana is configured to send alerts to other Alertmanagers such as the Prometheus Alertmanager.
 - This feature is not supported when using custom templates in email notifications.
 - A number of contact points support at most one image per notification. In this case, just the first image is either uploaded to the receiving service or referenced from cloud storage per notification.
