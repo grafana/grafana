@@ -29,10 +29,11 @@ interface Rudderstack {
       };
       queueOptions?: {
         maxAttempts?: number;
-        batch?: {
-          enabled?: boolean;
-          flushInterval?: number;
-        };
+      };
+      useBeacon?: boolean;
+      beaconQueueOptions?: {
+        maxItems?: number;
+        flushQueueInterval?: number;
       };
     }
   ) => void;
@@ -113,14 +114,16 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
         },
         migrate: false,
       },
-      // reduce the maximum number of retries for failed requests to avoid network spam,
-      // and enable batching of the events we generate to further reduce network spam.
+      // reduce the maximum number of retries for failed requests to avoid network spam.
       queueOptions: {
         maxAttempts: 3,
-        batch: {
-          enabled: (options.batchInterval ?? 0) > 0,
-          flushInterval: options.batchInterval ?? 0,
-        },
+      },
+      // enable batching via beacon of the events we generate to reduce network spam.
+      // xhr queue defaults to 100 items, beacon queue defaults to 10 items, meet in the middle.
+      useBeacon: (options.batchInterval ?? 0) > 0,
+      beaconQueueOptions: {
+        maxItems: 50,
+        flushQueueInterval: options.batchInterval ?? 0,
       },
     });
 

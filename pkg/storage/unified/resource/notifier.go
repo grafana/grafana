@@ -23,14 +23,7 @@ const (
 	defaultBufferSize  = 10000
 )
 
-// WatchInvalidator exposes a generation that closes when watch delivery may
-// have gaps. Implementations without invalidation return nil.
-type WatchInvalidator interface {
-	WatchInvalidation() <-chan struct{}
-}
-
 type notifier interface {
-	WatchInvalidator
 	// Watch returns a channel that will receive events as they happen.
 	Watch(context.Context, WatchOptions) <-chan Event
 	// Publish lets callers to inform watchers about events. Some notifiers
@@ -58,6 +51,7 @@ type notifierOptions struct {
 	enableNatsNotifier bool
 	eventSubscriber    EventSubscriber
 	natsDropped        *prometheus.CounterVec
+	invalidator        Invalidator
 }
 
 type WatchOptions struct {
@@ -95,7 +89,7 @@ func (opts WatchOptions) normalize() WatchOptions {
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	if opts.enableNatsNotifier {
 		if opts.eventSubscriber != nil && opts.eventSubscriber.Enabled() {
-			return newNatsNotifier(opts.eventSubscriber, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
+			return newNatsNotifier(opts.eventSubscriber, opts.invalidator, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
 		}
 		opts.log.Warn("nats notifier requested but subscriber unavailable, falling back to polling")
 	}
@@ -119,8 +113,6 @@ func newChannelNotifier(log log.Logger) *channelNotifier {
 		subscribers: make(map[chan Event]struct{}),
 	}
 }
-
-func (*channelNotifier) WatchInvalidation() <-chan struct{} { return nil }
 
 func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	cn.log.Info("creating new notifier",
@@ -220,8 +212,6 @@ func (n *pollingNotifier) lastEventResourceVersion(ctx context.Context) (int64, 
 	}
 	return e.ResourceVersion, nil
 }
-
-func (*pollingNotifier) WatchInvalidation() <-chan struct{} { return nil }
 
 func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	n.log.Info("creating new notifier",
