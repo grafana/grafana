@@ -53,14 +53,16 @@ function buildScene() {
 function stubStateManager(scene?: NotebookScene, loadError?: { message: string; status?: number }) {
   const loadNotebook = jest.fn();
   const clearState = jest.fn();
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the three members the page touches
+  const removeSceneCache = jest.fn();
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the members the page touches
   mockGetStateManager.mockReturnValue({
     useState: () => ({ scene, isLoading: false, loadError }),
     loadNotebook,
     clearState,
+    removeSceneCache,
   } as unknown as ReturnType<typeof getNotebookPageStateManager>);
 
-  return { loadNotebook, clearState };
+  return { loadNotebook, clearState, removeSceneCache };
 }
 
 /** Stands in for the chromedp binding grafana-image-renderer injects. */
@@ -152,6 +154,26 @@ describe('NotebookRenderPage', () => {
 
     await screen.findByText('Findings');
     expect(abandon).toHaveBeenCalled();
+  });
+
+  /**
+   * `abandon` above is one-way, and the scene cache is a module-level singleton that outlives a
+   * route change — so a scene left there after this page has rendered it is a notebook that can
+   * never save again, silently. Clearing the current state is not enough; the entry has to go.
+   */
+  it('drops the scene from the shared cache on unmount, rather than leaving it abandoned', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const scene = buildScene();
+    const { clearState, removeSceneCache } = stubStateManager(scene);
+
+    const { unmount } = render(<NotebookRenderPage />);
+    await screen.findByText('Findings');
+    expect(removeSceneCache).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(clearState).toHaveBeenCalled();
+    expect(removeSceneCache).toHaveBeenCalledWith('nb1');
   });
 });
 

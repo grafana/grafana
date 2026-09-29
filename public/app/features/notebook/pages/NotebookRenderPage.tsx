@@ -44,6 +44,14 @@ export function NotebookRenderPage() {
 
     return () => {
       stateManager.clearState();
+      // Evicted, not just cleared: the scene cache is a module-level singleton that deliberately
+      // outlives a route change, and this page latches autosave off on the scene it renders (see
+      // NotebookRenderDocument). Left cached, a later in-app visit to the notebook would reuse it
+      // and silently never save again. Nothing navigates here in-app today — the export opens a new
+      // tab — so this guards the moment something does.
+      if (uid) {
+        stateManager.removeSceneCache(uid);
+      }
     };
   }, [stateManager, uid, notebooksEnabled]);
 
@@ -105,7 +113,8 @@ function NotebookRenderDocument({ scene }: { scene: NotebookScene }) {
     const deactivate = scene.activate();
     // This tab exists to photograph the notebook, never to change it. Autosave would otherwise be
     // watching — harmless in practice, since a capture makes no edits, but a render that can write
-    // to the document it is rendering is not a property worth relying on.
+    // to the document it is rendering is not a property worth relying on. One-way: nothing turns
+    // autosave back on, which is why the page drops this scene from the cache as it unmounts.
     scene.autosave.abandon();
     // Same statement, about refreshing: a capture is a still photograph, so nothing should be
     // re-querying underneath it while the renderer works. Stated outright rather than left to fall
