@@ -43,10 +43,11 @@ func TestNewKVGrpcBackendOptions(t *testing.T) {
 	vectorBackend := &fakeVectorBackend{}
 	experimentalKV := &resource.ExperimentalKVOptions{}
 	gcGate := resource.NewGCGate()
+	expiry := resource.NewWatchExpiry()
 
 	opts := newKVGrpcBackendOptions(kvGrpcCfg(), prometheus.NewRegistry(), false, testKV(t), gcGate,
 		WithEventPublisher(&fakeEventPublisher{}),
-		WithNatsNotifier(subscriber),
+		WithNatsNotifier(subscriber, expiry),
 		WithVectorBackend(vectorBackend),
 		WithExperimentalKV(experimentalKV),
 	)
@@ -54,6 +55,7 @@ func TestNewKVGrpcBackendOptions(t *testing.T) {
 	require.NotNil(t, opts.EventPublisher)
 	require.Same(t, subscriber, opts.EventSubscriber)
 	require.True(t, opts.EnableNatsNotifier)
+	require.Same(t, expiry, opts.WatchInvalidator)
 	require.Same(t, gcGate, opts.GCGate)
 	require.Equal(t, vectorBackend, opts.EmbeddingDeleter)
 	require.Same(t, experimentalKV, opts.ExperimentalKV)
