@@ -38,8 +38,8 @@ import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
-import { buildCellSceneTimeRange, type CellTimeRangeSpec } from './cellTimeRange';
 import { isDiscardableContent, isEmptyMarkdown } from './cellEmptiness';
+import { buildCellSceneTimeRange, type CellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
 import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
