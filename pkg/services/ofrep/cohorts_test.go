@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -21,19 +22,46 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 )
 
-func cohortTestResolver(t *testing.T, handler http.HandlerFunc) *cohortResolver {
+func cohortTokenFile(t *testing.T) string {
+	t.Helper()
+	tokenFile := filepath.Join(t.TempDir(), "token")
+	require.NoError(t, os.WriteFile(tokenFile, []byte("test-token"), 0600))
+	return tokenFile
+}
+
+func cohortTestConfig(t *testing.T, url string) CohortConfig {
+	return CohortConfig{URL: url, TokenFile: cohortTokenFile(t), AllowedNamespaces: []string{"stacks-1", "stacks-2", "stacks-3"}, Timeout: time.Second, CacheTTL: time.Minute, MaxSnapshotAge: 2 * time.Hour, MaxConcurrent: 2}
+}
+
+func cohortTestResolver(t *testing.T, handler http.HandlerFunc, opts ...func(*CohortConfig)) *cohortResolver {
 	t.Helper()
 	server := httptest.NewTLSServer(handler)
 	t.Cleanup(server.Close)
-	tokenFile := filepath.Join(t.TempDir(), "token")
-	require.NoError(t, os.WriteFile(tokenFile, []byte("test-token"), 0600))
+	c := cohortTestConfig(t, server.URL)
+	for _, opt := range opts {
+		opt(&c)
+	}
 	b := &APIBuilder{}
-	require.NoError(t, b.EnableCohortEnrichment(CohortConfig{URL: server.URL, TokenFile: tokenFile, AllowedNamespaces: []string{"stacks-1", "stacks-2", "stacks-3"}, Timeout: time.Second, CacheTTL: time.Minute, MaxSnapshotAge: 2 * time.Hour, MaxEntries: 2, MaxConcurrent: 2}, prometheus.NewRegistry()))
-	b.cohorts.client = server.Client()
+	require.NoError(t, b.EnableCohortEnrichment(c, prometheus.NewRegistry()))
+	b.cohorts.client.Transport.(*http.Transport).TLSClientConfig = server.Client().Transport.(*http.Transport).TLSClientConfig
 	return b.cohorts
+}
+
+// cohortClock replaces the resolver clock; refreshes read it from their own goroutines.
+func cohortClock(r *cohortResolver, start time.Time) func(time.Duration) {
+	var ns atomic.Int64
+	ns.Store(start.UnixNano())
+	r.now = func() time.Time { return time.Unix(0, ns.Load()) }
+	return func(d time.Duration) { ns.Add(int64(d)) }
+}
+
+func requireOutcome(t *testing.T, r *cohortResolver, outcome, reason string, want float64) {
+	t.Helper()
+	require.Equal(t, want, testutil.ToFloat64(r.outcomes.WithLabelValues(outcome, reason)), "%s/%s", outcome, reason)
 }
 
 func withCohorts(b *APIBuilder, resolver *cohortResolver) *APIBuilder {
@@ -129,12 +157,14 @@ func TestCohortEnrichmentServingBoundary(t *testing.T) {
 			}
 		}
 	}
-	require.EqualValues(t, 12, calls.Load()) // Three stacks, two requests each, across two passes through a two-entry cache.
+	// Three stack mappings and two organization memberships; every later request is a cache hit.
+	require.EqualValues(t, 5, calls.Load())
+	requireOutcome(t, resolver, "lookup_success", "none", 3)
+	requireOutcome(t, resolver, "cache_hit", "none", 7)
 }
 
 func TestCohortCacheRefreshFailureAndRecovery(t *testing.T) {
 	now := time.Now()
-	clock := now
 	var calls atomic.Int32
 	var fail atomic.Bool
 	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
@@ -145,24 +175,50 @@ func TestCohortCacheRefreshFailureAndRecovery(t *testing.T) {
 		}
 		cohortResponse(w, r, now)
 	})
-	resolver.now = func() time.Time { return clock }
-	first := resolver.resolve(context.Background(), "stacks-1")
+	advance := cohortClock(resolver, now)
+	first, status := resolver.resolve(context.Background(), "stacks-1")
 	require.True(t, resolver.fresh(first))
-	require.Equal(t, first, resolver.resolve(context.Background(), "stacks-1"))
+	require.Equal(t, cohortStatus{"lookup_success", "none"}, status)
+	second, status := resolver.resolve(context.Background(), "stacks-1")
+	require.Equal(t, first, second)
+	require.Equal(t, cohortStatus{"cache_hit", "none"}, status)
 	require.EqualValues(t, 2, calls.Load())
-	fail.Store(true)
-	clock = clock.Add(time.Minute)
-	require.False(t, resolver.fresh(resolver.resolve(context.Background(), "stacks-1")))
-	require.False(t, resolver.fresh(resolver.resolve(context.Background(), "stacks-1")))
-	require.EqualValues(t, 3, calls.Load())
-	fail.Store(false)
-	clock = clock.Add(time.Second)
-	require.True(t, resolver.fresh(resolver.resolve(context.Background(), "stacks-1")))
-	require.EqualValues(t, 5, calls.Load())
-	clock = clock.Add(3 * time.Hour)
-	require.False(t, resolver.fresh(resolver.resolve(context.Background(), "stacks-1")))
-}
 
+	// Stale-while-error: the last good membership keeps serving, with at most one retry per second.
+	fail.Store(true)
+	advance(time.Minute)
+	for range 3 {
+		value, status := resolver.resolve(context.Background(), "stacks-1")
+		require.True(t, resolver.fresh(value))
+		require.Equal(t, first, value)
+		require.Equal(t, cohortStatus{"stale", "upstream_5xx"}, status)
+	}
+	require.EqualValues(t, 3, calls.Load())
+	advance(time.Second)
+	_, status = resolver.resolve(context.Background(), "stacks-1")
+	require.Equal(t, cohortStatus{"stale", "upstream_5xx"}, status)
+	require.EqualValues(t, 4, calls.Load())
+
+	fail.Store(false)
+	advance(time.Second)
+	value, status := resolver.resolve(context.Background(), "stacks-1")
+	require.True(t, resolver.fresh(value))
+	require.Equal(t, cohortStatus{"lookup_success", "none"}, status)
+	require.EqualValues(t, 5, calls.Load())
+
+	// Stale values stop enrolling once the snapshot is older than MaxSnapshotAge.
+	fail.Store(true)
+	advance(3 * time.Hour)
+	value, status = resolver.resolve(context.Background(), "stacks-1")
+	require.False(t, resolver.fresh(value))
+	require.Equal(t, cohortStatus{"stale", "upstream_5xx"}, status)
+	req := cohortRequest("stacks-1", types.TypeUser, false)
+	require.NoError(t, withCohorts(&APIBuilder{}, resolver).enrichCohorts(req))
+	data, err := io.ReadAll(req.Body)
+	require.NoError(t, err)
+	require.Contains(t, string(data), `"growthCohortsAvailable":false`)
+	requireOutcome(t, resolver, "unavailable", "upstream_5xx", 1)
+}
 func TestCohortUnavailableDoesNotBreakOrdinaryFlags(t *testing.T) {
 	for _, response := range []string{
 		`{"cohorts":[],"snapshot":null}`,
@@ -205,7 +261,6 @@ func TestCohortLookupCoalescingAndBounds(t *testing.T) {
 		}
 		cohortResponse(w, r, now)
 	})
-	resolver.config.Timeout = time.Second
 	var wg sync.WaitGroup
 	for range 20 {
 		wg.Go(func() { resolver.resolve(context.Background(), "stacks-1") })
@@ -217,20 +272,211 @@ func TestCohortLookupCoalescingAndBounds(t *testing.T) {
 	for _, ns := range []string{"stacks-2", "stacks-3"} {
 		resolver.resolve(context.Background(), ns)
 	}
-	require.Len(t, resolver.cache, 2)
-	require.NotContains(t, resolver.cache, "stacks-1")
-	require.Empty(t, resolver.inflight)
+	require.EqualValues(t, 5, calls.Load())
+	require.Len(t, resolver.orgs, 3)
+	require.Len(t, resolver.memberships, 2)
+	for _, e := range resolver.orgs {
+		require.Nil(t, e.done)
+	}
 	require.Empty(t, resolver.slots)
 }
 
+func TestCohortStacksShareOrganizationSnapshot(t *testing.T) {
+	now := time.Now()
+	var version atomic.Value
+	version.Store("v1")
+	var membershipCalls atomic.Int32
+	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/growth/cohorts/10" {
+			membershipCalls.Add(1)
+			_, _ = fmt.Fprintf(w, `{"cohorts":["preview"],"snapshot":{"version":%q,"refreshedAt":%q}}`, version.Load(), now.Format(time.RFC3339Nano))
+			return
+		}
+		cohortResponse(w, r, now)
+	})
+	advance := cohortClock(resolver, now)
+	one, _ := resolver.resolve(context.Background(), "stacks-1")
+	two, _ := resolver.resolve(context.Background(), "stacks-2")
+	require.Equal(t, one, two)
+	require.EqualValues(t, 1, membershipCalls.Load())
+
+	version.Store("v2")
+	advance(2 * time.Minute)
+	two, _ = resolver.resolve(context.Background(), "stacks-2")
+	one, status := resolver.resolve(context.Background(), "stacks-1")
+	require.Equal(t, "v2", two.Snapshot.Version)
+	require.Equal(t, two, one)
+	require.Equal(t, cohortStatus{"cache_hit", "none"}, status)
+	require.EqualValues(t, 2, membershipCalls.Load())
+}
+
+func TestCohortStaleOrganizationMapping(t *testing.T) {
+	now := time.Now()
+	var instancesDown atomic.Bool
+	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+		if instancesDown.Load() && r.URL.Path == "/instances/1" {
+			http.Error(w, "unavailable", http.StatusBadGateway)
+			return
+		}
+		cohortResponse(w, r, now)
+	})
+	advance := cohortClock(resolver, now)
+	_, status := resolver.resolve(context.Background(), "stacks-1")
+	require.Equal(t, "lookup_success", status.outcome)
+	instancesDown.Store(true)
+	advance(cohortOrgTTL + time.Second)
+	value, status := resolver.resolve(context.Background(), "stacks-1")
+	require.Equal(t, cohortStatus{"stale", "upstream_5xx"}, status)
+	require.Equal(t, "10", value.orgID)
+	require.True(t, resolver.fresh(value))
+}
+
+func TestCohortLeaderCancellationDoesNotPoisonCache(t *testing.T) {
+	now := time.Now()
+	var calls atomic.Int32
+	started := make(chan struct{})
+	release := make(chan struct{})
+	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		if r.URL.Path == "/instances/1" {
+			close(started)
+			<-release
+		}
+		cohortResponse(w, r, now)
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	leader := make(chan cohortStatus)
+	go func() {
+		_, status := resolver.resolve(ctx, "stacks-1")
+		leader <- status
+	}()
+	<-started
+	waiter := make(chan cohortSnapshot)
+	go func() {
+		value, _ := resolver.resolve(context.Background(), "stacks-1")
+		waiter <- value
+	}()
+	cancel()
+	require.Equal(t, cohortStatus{"unavailable", "timeout"}, <-leader)
+	close(release)
+	require.True(t, resolver.fresh(<-waiter))
+	value, status := resolver.resolve(context.Background(), "stacks-1")
+	require.True(t, resolver.fresh(value))
+	require.Equal(t, cohortStatus{"cache_hit", "none"}, status)
+	require.EqualValues(t, 2, calls.Load())
+}
+
+func TestCohortLookupSaturation(t *testing.T) {
+	now := time.Now()
+	var calls atomic.Int32
+	started := make(chan struct{})
+	release := make(chan struct{})
+	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		if r.URL.Path == "/instances/1" {
+			close(started)
+			<-release
+		}
+		cohortResponse(w, r, now)
+	}, func(c *CohortConfig) { c.MaxConcurrent = 1 })
+	first := make(chan cohortSnapshot)
+	go func() {
+		value, _ := resolver.resolve(context.Background(), "stacks-1")
+		first <- value
+	}()
+	<-started
+	_, status := resolver.resolve(context.Background(), "stacks-3")
+	require.Equal(t, cohortStatus{"unavailable", "saturated"}, status)
+	close(release)
+	require.True(t, resolver.fresh(<-first))
+	require.EqualValues(t, 2, calls.Load())
+	value, status := resolver.resolve(context.Background(), "stacks-3")
+	require.True(t, resolver.fresh(value))
+	require.Equal(t, cohortStatus{"lookup_success", "none"}, status)
+}
 func TestCohortLookupTimeout(t *testing.T) {
 	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) { <-r.Context().Done() })
 	resolver.config.Timeout = 20 * time.Millisecond
 	start := time.Now()
-	require.False(t, resolver.fresh(resolver.resolve(context.Background(), "stacks-1")))
+	value, status := resolver.resolve(context.Background(), "stacks-1")
+	require.False(t, resolver.fresh(value))
+	require.Equal(t, cohortStatus{"unavailable", "timeout"}, status)
 	require.Less(t, time.Since(start), time.Second)
 }
 
+func TestCohortLookupFailureReasons(t *testing.T) {
+	now := time.Now().Format(time.RFC3339Nano)
+	big := `{"cohorts":["` + strings.Repeat("a", mib) + `"]}`
+	many := `{"cohorts":["x"` + strings.Repeat(`,"x"`, 1000) + `],"snapshot":{"version":"v1","refreshedAt":"` + now + `"}}`
+	for _, tt := range []struct {
+		name, instance, membership string
+		status                     int
+		reason                     string
+	}{
+		{"unauthorized", "", "", http.StatusUnauthorized, "auth"},
+		{"forbidden", "", "", http.StatusForbidden, "auth"},
+		{"not found", "", "", http.StatusNotFound, "not_found"},
+		{"server error", "", "", http.StatusInternalServerError, "upstream_5xx"},
+		{"bad gateway", "", "", http.StatusBadGateway, "upstream_5xx"},
+		{"other status", "", "", http.StatusTeapot, "upstream_status"},
+		{"org missing", `{}`, "", 0, "invalid"},
+		{"org zero", `{"orgId":0}`, "", 0, "invalid"},
+		{"org string", `{"orgId":"10"}`, "", 0, "decode"},
+		{"org invalid json", `{`, "", 0, "decode"},
+		{"body over 1 MiB", `{"orgId":10}`, big, 0, "invalid"},
+		{"too many cohorts", `{"orgId":10}`, many, 0, "invalid"},
+		{"name too long", `{"orgId":10}`, `{"cohorts":["` + strings.Repeat("a", 257) + `"]}`, 0, "invalid"},
+		{"empty name", `{"orgId":10}`, `{"cohorts":[""]}`, 0, "invalid"},
+		{"null cohorts", `{"orgId":10}`, `{"cohorts":null}`, 0, "invalid"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+				if tt.status != 0 {
+					http.Error(w, "error", tt.status)
+					return
+				}
+				if strings.HasPrefix(r.URL.Path, "/instances/") {
+					_, _ = io.WriteString(w, tt.instance)
+					return
+				}
+				_, _ = io.WriteString(w, tt.membership)
+			})
+			req := cohortRequest("stacks-1", types.TypeUser, false)
+			require.NoError(t, withCohorts(&APIBuilder{}, resolver).enrichCohorts(req))
+			data, err := io.ReadAll(req.Body)
+			require.NoError(t, err)
+			require.Contains(t, string(data), `"growthCohortsAvailable":false`)
+			requireOutcome(t, resolver, "unavailable", tt.reason, 1)
+		})
+	}
+
+	t.Run("boundary sizes accepted", func(t *testing.T) {
+		names := make([]string, 1000)
+		for i := range names {
+			names[i] = strings.Repeat("a", 256)
+		}
+		encoded, err := json.Marshal(names)
+		require.NoError(t, err)
+		resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasPrefix(r.URL.Path, "/instances/") {
+				_, _ = io.WriteString(w, `{"orgId":10}`)
+				return
+			}
+			_, _ = fmt.Fprintf(w, `{"cohorts":%s,"snapshot":{"version":"v1","refreshedAt":%q,"sourceRefreshedAt":%q}}`, encoded, now, now)
+		})
+		value, status := resolver.resolve(context.Background(), "stacks-1")
+		require.True(t, resolver.fresh(value))
+		require.Len(t, value.Cohorts, 1000)
+		require.Equal(t, cohortStatus{"lookup_success", "none"}, status)
+	})
+
+	t.Run("token file", func(t *testing.T) {
+		resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) { cohortResponse(w, r, time.Now()) })
+		require.NoError(t, os.WriteFile(resolver.config.TokenFile, []byte("\n"), 0600))
+		_, status := resolver.resolve(context.Background(), "stacks-1")
+		require.Equal(t, cohortStatus{"unavailable", "token_file"}, status)
+	})
+}
 func TestCohortScrubOnlyAfterEnable(t *testing.T) {
 	b := &APIBuilder{}
 	req := cohortRequest("stacks-1", types.TypeUser, false)
@@ -362,6 +608,24 @@ func TestCohortRejectsUnsafeConfiguration(t *testing.T) {
 	b := &APIBuilder{}
 	require.NoError(t, b.EnableCohortEnrichment(CohortConfig{}, nil))
 	require.Error(t, b.EnableCohortEnrichment(CohortConfig{AllowedNamespaces: []string{"stacks-1"}, URL: "http://example.com"}, nil))
+	for name, mutate := range map[string]func(*CohortConfig){
+		"snapshot age over 24h": func(c *CohortConfig) { c.MaxSnapshotAge = 25 * time.Hour },
+		"no snapshot age":       func(c *CohortConfig) { c.MaxSnapshotAge = 0 },
+		"cache ttl":             func(c *CohortConfig) { c.CacheTTL = 10 * time.Minute },
+		"timeout":               func(c *CohortConfig) { c.Timeout = 0 },
+		"concurrency":           func(c *CohortConfig) { c.MaxConcurrent = 0 },
+		"missing token file":    func(c *CohortConfig) { c.TokenFile = filepath.Join(t.TempDir(), "missing") },
+		"no token file":         func(c *CohortConfig) { c.TokenFile = "" },
+		"wildcard namespace":    func(c *CohortConfig) { c.AllowedNamespaces = []string{"*"} },
+	} {
+		c := cohortTestConfig(t, "https://example.com/api")
+		mutate(&c)
+		require.Error(t, (&APIBuilder{}).EnableCohortEnrichment(c, nil), name)
+	}
+	empty := cohortTestConfig(t, "https://example.com/api")
+	require.NoError(t, os.WriteFile(empty.TokenFile, []byte(" "), 0600))
+	require.Error(t, (&APIBuilder{}).EnableCohortEnrichment(empty, nil))
+
 	for _, ns := range []string{"*", "stacks-0", "stacks-01", "stacks-1/2", "orgs-1"} {
 		_, ok := cohortStackID(ns)
 		require.False(t, ok)
@@ -370,6 +634,22 @@ func TestCohortRejectsUnsafeConfiguration(t *testing.T) {
 	require.NotNil(t, newCohortResolver(CohortConfig{MaxConcurrent: 1}, u))
 }
 
+func TestCohortConfigurationRuntime(t *testing.T) {
+	c := cohortTestConfig(t, "https://example.com/api")
+	c.MaxConcurrent = 16
+	c.MaxSnapshotAge = maxCohortSnapshotAge
+	reg := prometheus.NewRegistry()
+	first, second := &APIBuilder{}, &APIBuilder{}
+	require.NoError(t, first.EnableCohortEnrichment(c, reg))
+	require.NoError(t, second.EnableCohortEnrichment(c, reg), "an already registered collector is reused")
+	require.Same(t, first.cohorts.outcomes, second.cohorts.outcomes)
+	require.Same(t, first.cohorts.duration, second.cohorts.duration)
+
+	transport, ok := first.cohorts.client.Transport.(*http.Transport)
+	require.True(t, ok)
+	require.NotSame(t, http.DefaultTransport, transport)
+	require.GreaterOrEqual(t, transport.MaxIdleConnsPerHost, c.MaxConcurrent)
+}
 func TestCohortEnrichmentBeforeUpstreamSelection(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagFeaturesLegacyOverrideLookupBypass, true)
 	var direct, legacy atomic.Int32
