@@ -3411,6 +3411,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "unifiedStorageClient.onBehalfOf",
+			Description:  "Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "grafana.pluginExtensionReactElementProps",
 			Description:  "Pass React elements in plugin extension props by reference",
 			Stage:        FeatureStageExperimental,

@@ -743,7 +743,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 			ID:          int64(i),
 			OrgID:       1,
 			UserID:      1,
-			DashboardID: int64(i),
+			DashboardID: int64(i), //nolint:staticcheck // Exercise legacy field compatibility.
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       10,
