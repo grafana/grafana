@@ -1,5 +1,3 @@
-import { isEqual } from 'lodash';
-
 import {
   type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
@@ -9,133 +7,24 @@ import {
   matchPluginId,
 } from '@grafana/data';
 
-import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { isExpressionReference } from '../../utils/expressionRef';
-import {
-  getCachedPromise,
-  getFetchErrorContext,
-  getOriginMessage,
-  invalidateCachedPromise,
-} from '../../utils/getCachedPromise';
-import { getBackendSrv } from '../backendSrv';
+import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
-import { getDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { getTemplateSrv } from '../templateSrv';
 
-import {
-  type DataSourceConnectionDescriptor,
-  fetchDataSourceConnections,
-  fetchDataSourceSettings,
-  getDataSourceConnectionsUrl,
-  getDataSourceSettingsUrl,
-} from './api';
-import { notifyDataSourceCacheChanged } from './cacheGeneration';
-import {
-  DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING,
-  FALLBACK_TO_BOOTDATA_LIST_WARNING,
-  FALLBACK_TO_BOOTDATA_SETTINGS_WARNING,
-  FALLBACK_TO_LEGACY_LIST_WARNING,
-  FALLBACK_TO_LEGACY_SETTINGS_WARNING,
-} from './constants';
+import { createApiCacheProvider } from './apiCacheProvider';
+import { createConfigCacheProvider } from './configCacheProvider';
+import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { describeRef, logDataSourceWarning } from './logging';
 import { clearPluginCache } from './pluginCache';
+import { type DataSourceSettingsCacheProvider } from './settingsCacheProvider';
 
-let byName: Record<string, DataSourceInstanceSettings> = {};
-let byUid: Record<string, DataSourceInstanceSettings> = {};
-let byId: Record<string, DataSourceInstanceSettings> = {};
-let runtimeByUid: Record<string, DataSourceInstanceSettings> = {};
-let bootByName: Record<string, DataSourceInstanceSettings> = {};
-let bootByUid: Record<string, DataSourceInstanceSettings> = {};
-let bootById: Record<string, DataSourceInstanceSettings> = {};
-let listByName: Record<string, DataSourceInstanceListItem> = {};
-let listByUid: Record<string, DataSourceInstanceListItem> = {};
-let connectionByUid: Record<string, DataSourceConnectionDescriptor> = {};
-let defaultName = '';
-let asyncInitializationEnabled = false;
-let initializationGeneration = 0;
-let initializedFromApi = false;
+let cacheProvider: DataSourceSettingsCacheProvider | undefined;
 
-const INITIALIZATION_CACHE_KEY = 'grafana-runtime:ds-initialization';
 const RELOAD_CACHE_KEY = 'grafana-runtime:ds-reload';
-const SETTINGS_CACHE_KEY_PREFIX = 'grafana-runtime:ds-settings';
-const settingsCacheKeys = new Set<string>();
-
-function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
-  byName = {};
-  byUid = {};
-  byId = {};
-
-  for (const dsSettings of Object.values(settings)) {
-    upsertSettings(dsSettings);
-  }
-
-  // Re-apply any previously registered runtime data sources so they survive a refetch.
-  for (const ds of Object.values(runtimeByUid)) {
-    byUid[ds.uid] = ds;
-  }
-}
-
-function upsertSettings(input: DataSourceInstanceSettings): DataSourceInstanceSettings {
-  const settings = input.uid ? input : { ...input, uid: input.name };
-  byName[settings.name] = settings;
-  byUid[settings.uid] = settings;
-  if (settings.id) {
-    byId[String(settings.id)] = settings;
-  }
-  return settings;
-}
-
-function populateBootMaps(settings: Record<string, DataSourceInstanceSettings>): void {
-  bootByName = {};
-  bootByUid = {};
-  bootById = {};
-
-  for (const input of Object.values(structuredClone(settings))) {
-    const value = input.uid ? input : { ...input, uid: input.name };
-    bootByName[value.name] = value;
-    bootByUid[value.uid] = value;
-    if (value.id) {
-      bootById[String(value.id)] = value;
-    }
-  }
-}
-
-function populateListFromSettings(settings: Record<string, DataSourceInstanceSettings>): void {
-  commitList(
-    Object.values(settings).map((value) => toListItem(value.uid ? value : { ...value, uid: value.name })),
-    {}
-  );
-}
-
-function commitList(
-  items: DataSourceInstanceListItem[],
-  connections: Record<string, DataSourceConnectionDescriptor>
-): void {
-  listByName = {};
-  listByUid = {};
-  for (const item of items) {
-    listByName[item.name] = item;
-    listByUid[item.uid] = item;
-  }
-  connectionByUid = connections;
-}
-
-function clearFetchedSettings(): void {
-  byName = {};
-  byUid = {};
-  byId = {};
-  for (const settings of Object.values(runtimeByUid)) {
-    byUid[settings.uid] = settings;
-  }
-
-  for (const key of settingsCacheKeys) {
-    invalidateCachedPromise(key);
-  }
-  settingsCacheKeys.clear();
-}
 
 /**
  * Populate the instance-settings cache from boot data. Intended to be called
@@ -148,154 +37,11 @@ export function initDataSourceInstanceSettings(
   settings: Record<string, DataSourceInstanceSettings>,
   defaultDsName: string
 ): void {
-  defaultName = defaultDsName;
-  populateBootMaps(settings);
-  asyncInitializationEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsInitDataSourcesAsync, false);
-
-  if (!asyncInitializationEnabled) {
-    populateMaps(structuredClone(settings));
-    populateListFromSettings(settings);
-    notifyDataSourceCacheChanged();
-    return;
-  }
-
-  clearFetchedSettings();
-  void ensureDataSourceInstanceSettingsInitialized();
-}
-
-function connectionsRouteEnabled(): boolean {
-  // These flags register and enable the route at process startup, so checking the
-  // boot-time values avoids issuing a request that is guaranteed to return 404/501.
-  // eslint-disable-next-line @grafana/no-config-feature-toggles
-  const queryServiceEnabled = config.featureToggles.queryService;
-  // eslint-disable-next-line @grafana/no-config-feature-toggles
-  const experimentalApiServerEnabled = config.featureToggles.grafanaAPIServerWithExperimentalAPIs;
-  // eslint-disable-next-line @grafana/no-config-feature-toggles
-  const connectionsEnabled = config.featureToggles.queryServiceWithConnections;
-  return Boolean((queryServiceEnabled || experimentalApiServerEnabled) && connectionsEnabled);
-}
-
-async function ensureDataSourceInstanceSettingsInitialized(): Promise<void> {
-  if (!asyncInitializationEnabled) {
-    return;
-  }
-  await getCachedPromise(() => loadAndCommitConnections('startup'), { cacheKey: INITIALIZATION_CACHE_KEY });
-}
-
-async function loadAndCommitConnections(operation: 'startup' | 'reload'): Promise<void> {
-  const generation = initializationGeneration;
-
-  if (!connectionsRouteEnabled()) {
-    commitBootFallback(generation, operation, 'prerequisites-disabled');
-    return;
-  }
-
-  try {
-    const [response, metas] = await Promise.all([fetchDataSourceConnections(), getDatasourcePluginMetas()]);
-    const metaById = new Map(metas.map((meta) => [meta.id, meta]));
-    const metaByAlias = new Map(metas.flatMap((meta) => (meta.aliasIDs ?? []).map((alias) => [alias, meta])));
-    const items: DataSourceInstanceListItem[] = [];
-    const connections: Record<string, DataSourceConnectionDescriptor> = {};
-
-    for (const connection of response.items ?? []) {
-      if (!connection.plugin) {
-        logDataSourceWarning(DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING, {
-          dataSourceUid: connection.name,
-          dataSourceName: connection.title,
-          operation,
-          requestUrl: getDataSourceConnectionsUrl(),
-        });
-        continue;
-      }
-
-      const meta = metaById.get(connection.plugin) ?? metaByAlias.get(connection.plugin);
-      if (!meta) {
-        continue;
-      }
-
-      const item: DataSourceInstanceListItem = {
-        uid: connection.name,
-        name: connection.title,
-        type: meta.id,
-        meta,
-        isDefault: connection.title === defaultName,
-      };
-      items.push(item);
-      connections[item.uid] = { group: connection.group, version: connection.version };
-    }
-
-    // Built-ins do not have connection rows. Preserve their established identity while
-    // sourcing plugin metadata from the metadata cache whenever it is available.
-    for (const boot of Object.values(bootByName).filter(isBuiltInSettings)) {
-      const meta = metaById.get(boot.meta.id) ?? boot.meta;
-      items.push({ ...toListItem(boot), meta });
-    }
-
-    if (operation === 'startup') {
-      validateListParity(items);
-    }
-    if (generation !== initializationGeneration) {
-      return;
-    }
-
-    commitList(items, connections);
-    initializedFromApi = true;
-    notifyDataSourceCacheChanged();
-  } catch (error) {
-    commitBootFallback(generation, operation, getOriginMessage(error) || 'request-failed', error);
-  }
-}
-
-function commitBootFallback(
-  generation: number,
-  operation: 'startup' | 'reload',
-  reason: string,
-  error?: unknown
-): void {
-  if (generation !== initializationGeneration) {
-    return;
-  }
-
-  if (!initializedFromApi || Object.keys(listByUid).length === 0) {
-    populateListFromSettings(bootByName);
-    populateMaps(structuredClone(bootByName));
-  }
-  notifyDataSourceCacheChanged();
-
-  logDataSourceWarning(FALLBACK_TO_BOOTDATA_LIST_WARNING, {
-    operation,
-    reason,
-    requestUrl: getDataSourceConnectionsUrl(),
-    ...getFetchErrorContext(error),
-  });
-}
-
-function validateListParity(items: DataSourceInstanceListItem[]): void {
-  const expected = Object.values(bootByName).map(toListItem).map(listItemForComparison).sort(compareByUid);
-  const actual = items.map(listItemForComparison).sort(compareByUid);
-
-  if (!isEqual(actual, expected)) {
-    throw new Error('datasource-list-parity-mismatch');
-  }
-}
-
-function listItemForComparison(item: DataSourceInstanceListItem) {
-  return {
-    uid: item.uid,
-    name: item.name,
-    type: item.type,
-    apiVersion: item.apiVersion,
-    isDefault: item.isDefault,
-    pluginId: item.meta.id,
-  };
-}
-
-function compareByUid(a: { uid: string }, b: { uid: string }): number {
-  return a.uid > b.uid ? 1 : a.uid < b.uid ? -1 : 0;
-}
-
-function isBuiltInSettings(settings: DataSourceInstanceSettings): boolean {
-  return settings.meta.id === 'grafana' || settings.meta.id === 'mixed' || settings.meta.id === 'dashboard';
+  cacheProvider?.reset();
+  const asyncEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsInitDataSourcesAsync, false);
+  cacheProvider = asyncEnabled
+    ? createApiCacheProvider(settings, defaultDsName)
+    : createConfigCacheProvider(settings, defaultDsName);
 }
 
 /**
@@ -316,11 +62,8 @@ export function setDataSourceInstanceSettings(
   }
 
   _resetForTests();
-  populateBootMaps(settings);
-  populateMaps(structuredClone(settings));
-  populateListFromSettings(settings);
-  defaultName = defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '';
-  notifyDataSourceCacheChanged();
+  const defaultName = defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '';
+  cacheProvider = createConfigCacheProvider(settings, defaultName);
 }
 
 /**
@@ -329,22 +72,6 @@ export function setDataSourceInstanceSettings(
  *
  * @public
  */
-async function fetchAndPopulate(): Promise<void> {
-  const settings = await getBackendSrv().get('/api/frontend/settings');
-  populateMaps(settings.datasources);
-  populateBootMaps(settings.datasources);
-  populateListFromSettings(settings.datasources);
-  defaultName = settings.defaultDatasource;
-  notifyDataSourceCacheChanged();
-}
-
-async function refreshAsyncDataSourceCaches(): Promise<void> {
-  initializationGeneration++;
-  clearFetchedSettings();
-  invalidateCachedPromise(INITIALIZATION_CACHE_KEY);
-  await getCachedPromise(() => loadAndCommitConnections('reload'), { cacheKey: INITIALIZATION_CACHE_KEY });
-}
-
 async function performReload(): Promise<void> {
   const srv = getDataSourceSrv();
   if (srv) {
@@ -352,11 +79,7 @@ async function performReload(): Promise<void> {
     return;
   }
   clearPluginCache();
-  if (asyncInitializationEnabled) {
-    await refreshAsyncDataSourceCaches();
-  } else {
-    await fetchAndPopulate();
-  }
+  await cacheProvider?.refreshList();
 }
 
 export async function reloadDataSourceInstanceSettings(): Promise<void> {
@@ -387,22 +110,7 @@ interface SyncDataSourceSettings {
  */
 export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings): void {
   clearPluginCache();
-  if (asyncInitializationEnabled) {
-    void refreshAsyncDataSourceCaches().catch((error) => {
-      logDataSourceWarning(FALLBACK_TO_BOOTDATA_LIST_WARNING, {
-        operation: 'reload',
-        reason: getOriginMessage(error) || 'refresh-failed',
-        requestUrl: getDataSourceConnectionsUrl(),
-        ...getFetchErrorContext(error),
-      });
-    });
-    return;
-  }
-  populateMaps(settings.datasources);
-  populateBootMaps(settings.datasources);
-  populateListFromSettings(settings.datasources);
-  defaultName = settings.defaultDatasource;
-  notifyDataSourceCacheChanged();
+  cacheProvider?.sync(settings.datasources, settings.defaultDatasource);
 }
 
 /**
@@ -418,9 +126,9 @@ export async function getDataSourceInstanceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
-  await ensureDataSourceInstanceSettingsInitialized();
+  await ensureSettingsProviderReady();
 
-  if (asyncInitializationEnabled && initializedFromApi) {
+  if (cacheProvider?.source === 'api') {
     return getAsyncDataSourceInstanceSettings(ref, scopedVars);
   }
 
@@ -429,6 +137,10 @@ export async function getDataSourceInstanceSettings(
     return result;
   }
   return getInstanceSettingsFallback(ref, scopedVars);
+}
+
+async function ensureSettingsProviderReady(): Promise<void> {
+  await cacheProvider?.waitUntilReady();
 }
 
 async function getAsyncDataSourceInstanceSettings(
@@ -449,8 +161,8 @@ async function getAsyncDataSourceInstanceSettings(
     return lookupFromBootMaps(ref, scopedVars) ?? getInstanceSettingsFallback(ref, scopedVars);
   }
 
-  const cached = byUid[resolved.item.uid];
-  const settings = cached ?? (await loadDataSourceInstanceSettings(resolved.item));
+  const cached = cacheProvider?.getSettingsByUid(resolved.item.uid);
+  const settings = cached ?? (await cacheProvider?.refreshSettings(resolved.item.uid, resolved.item.type));
   if (!settings) {
     return getInstanceSettingsFallback(ref, scopedVars);
   }
@@ -474,7 +186,8 @@ function lookupFromBootMaps(
 ): DataSourceInstanceSettings | undefined {
   const nameOrUid = getNameOrUid(ref);
   if (nameOrUid == null || nameOrUid === 'default') {
-    return bootByName[defaultName] ?? bootByUid[defaultName];
+    const defaultName = cacheProvider?.getDefaultName() ?? '';
+    return cacheProvider?.getBootSettingsByName(defaultName) ?? cacheProvider?.getBootSettingsByUid(defaultName);
   }
 
   if (nameOrUid.includes('$')) {
@@ -482,8 +195,10 @@ function lookupFromBootMaps(
     if (interpolated !== nameOrUid) {
       const resolved =
         interpolated === 'default'
-          ? bootByName[defaultName]
-          : (bootByUid[interpolated] ?? bootByName[interpolated] ?? bootById[interpolated]);
+          ? cacheProvider?.getBootSettingsByName(cacheProvider.getDefaultName())
+          : (cacheProvider?.getBootSettingsByUid(interpolated) ??
+            cacheProvider?.getBootSettingsByName(interpolated) ??
+            cacheProvider?.getBootSettingsById(interpolated));
       return resolved
         ? {
             ...resolved,
@@ -496,7 +211,11 @@ function lookupFromBootMaps(
     }
   }
 
-  return bootByUid[nameOrUid] ?? bootByName[nameOrUid] ?? bootById[nameOrUid];
+  return (
+    cacheProvider?.getBootSettingsByUid(nameOrUid) ??
+    cacheProvider?.getBootSettingsByName(nameOrUid) ??
+    cacheProvider?.getBootSettingsById(nameOrUid)
+  );
 }
 
 function lookupRuntimeSettings(
@@ -510,7 +229,7 @@ function lookupRuntimeSettings(
 
   if (nameOrUid.includes('$')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
-    const resolved = interpolated !== nameOrUid ? runtimeByUid[interpolated] : undefined;
+    const resolved = interpolated !== nameOrUid ? cacheProvider?.getRuntimeSettingsByUid(interpolated) : undefined;
     if (resolved) {
       return {
         ...resolved,
@@ -522,7 +241,7 @@ function lookupRuntimeSettings(
     }
   }
 
-  return runtimeByUid[nameOrUid];
+  return cacheProvider?.getRuntimeSettingsByUid(nameOrUid);
 }
 
 interface ResolvedListItem {
@@ -541,116 +260,25 @@ function resolveListItem(
       const item = matches.find((candidate) => candidate.isDefault) ?? matches[0];
       return item ? { item } : undefined;
     }
-    const item = listByName[defaultName] ?? listByUid[defaultName];
+    const defaultName = cacheProvider?.getDefaultName() ?? '';
+    const item = cacheProvider?.getListItemByName(defaultName) ?? cacheProvider?.getListItemByUid(defaultName);
     return item ? { item } : undefined;
   }
 
   if (nameOrUid.includes('$')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
     if (interpolated !== nameOrUid) {
+      const defaultName = cacheProvider?.getDefaultName() ?? '';
       const item =
-        interpolated === 'default' ? listByName[defaultName] : (listByUid[interpolated] ?? listByName[interpolated]);
+        interpolated === 'default'
+          ? cacheProvider?.getListItemByName(defaultName)
+          : (cacheProvider?.getListItemByUid(interpolated) ?? cacheProvider?.getListItemByName(interpolated));
       return item ? { item, rawRef: nameOrUid } : undefined;
     }
   }
 
-  const item = listByUid[nameOrUid] ?? listByName[nameOrUid];
+  const item = cacheProvider?.getListItemByUid(nameOrUid) ?? cacheProvider?.getListItemByName(nameOrUid);
   return item ? { item } : undefined;
-}
-
-async function loadDataSourceInstanceSettings(
-  item: DataSourceInstanceListItem
-): Promise<DataSourceInstanceSettings | undefined> {
-  const descriptor = connectionByUid[item.uid];
-  if (!descriptor) {
-    const cacheKey = `${SETTINGS_CACHE_KEY_PREFIX}:${initializationGeneration}:${item.uid}`;
-    settingsCacheKeys.add(cacheKey);
-    return getCachedPromise(
-      async () => {
-        const fallback = getBootOrLegacySettings(item.uid);
-        if (!isBuiltInListItem(item)) {
-          logDataSourceWarning(FALLBACK_TO_BOOTDATA_SETTINGS_WARNING, {
-            operation: 'settings',
-            reason: 'connection-not-found',
-            pluginType: item.type,
-            requestUrl: getDataSourceConnectionsUrl(),
-          });
-        }
-        return fallback ? upsertSettings(fallback) : undefined;
-      },
-      { cacheKey }
-    );
-  }
-
-  const generation = initializationGeneration;
-  const cacheKey = `${SETTINGS_CACHE_KEY_PREFIX}:${generation}:${item.uid}`;
-  settingsCacheKeys.add(cacheKey);
-
-  return getCachedPromise(
-    async () => {
-      try {
-        const settings = await fetchDataSourceSettings(item, descriptor);
-        const fallback = getBootOrLegacySettings(item.uid);
-        if (fallback && !settingsHaveParity(settings, fallback)) {
-          logSettingsFallback(item, descriptor, 'datasource-settings-parity-mismatch');
-          return generation === initializationGeneration ? upsertSettings(fallback) : fallback;
-        }
-        return generation === initializationGeneration ? upsertSettings(settings) : settings;
-      } catch (error) {
-        const fallback = getBootOrLegacySettings(item.uid);
-        logSettingsFallback(item, descriptor, getOriginMessage(error) || 'request-failed', error);
-        if (!fallback) {
-          return undefined;
-        }
-        return generation === initializationGeneration ? upsertSettings(fallback) : fallback;
-      }
-    },
-    { cacheKey }
-  );
-}
-
-function getBootOrLegacySettings(uid: string): DataSourceInstanceSettings | undefined {
-  return getDataSourceSrv()?.getInstanceSettings(uid) ?? bootByUid[uid];
-}
-
-function settingsHaveParity(actual: DataSourceInstanceSettings, expected: DataSourceInstanceSettings): boolean {
-  return isEqual(settingsForComparison(actual), settingsForComparison(expected));
-}
-
-function settingsForComparison(settings: DataSourceInstanceSettings) {
-  return {
-    id: settings.id,
-    uid: settings.uid,
-    type: settings.type,
-    apiVersion: settings.apiVersion,
-    name: settings.name,
-    cachingConfig: settings.cachingConfig,
-    readOnly: settings.readOnly,
-    url: settings.url,
-    jsonData: settings.jsonData,
-    username: settings.username,
-    password: settings.password,
-    database: settings.database,
-    isDefault: settings.isDefault ?? false,
-    access: settings.access,
-    basicAuth: settings.basicAuth,
-    withCredentials: settings.withCredentials,
-  };
-}
-
-function logSettingsFallback(
-  item: DataSourceInstanceListItem,
-  descriptor: DataSourceConnectionDescriptor,
-  reason: string,
-  error?: unknown
-): void {
-  logDataSourceWarning(FALLBACK_TO_BOOTDATA_SETTINGS_WARNING, {
-    operation: 'settings',
-    reason,
-    pluginType: item.type,
-    requestUrl: getDataSourceSettingsUrl(item.uid, descriptor),
-    ...getFetchErrorContext(error),
-  });
 }
 
 /**
@@ -678,9 +306,9 @@ export interface GetDataSourceInstanceListFilters extends Omit<GetDataSourceList
 export async function getDataSourceInstanceList(
   filters?: GetDataSourceInstanceListFilters
 ): Promise<DataSourceInstanceListItem[]> {
-  await ensureDataSourceInstanceSettingsInitialized();
+  await ensureSettingsProviderReady();
 
-  if (asyncInitializationEnabled) {
+  if (cacheProvider?.source === 'api') {
     const results = applyListFilters(filters);
     if (results.length > 0) {
       return results;
@@ -705,7 +333,7 @@ export async function getDataSourceInstanceList(
 }
 
 function applyListFilters(filters: GetDataSourceInstanceListFilters = {}): DataSourceInstanceListItem[] {
-  const base = Object.values(listByName).filter((item) => {
+  const base = (cacheProvider?.getList() ?? []).filter((item) => {
     if (isBuiltInListItem(item)) {
       return false;
     }
@@ -757,11 +385,15 @@ function applyListFilters(filters: GetDataSourceInstanceListFilters = {}): DataS
       if (variable.type !== 'datasource') {
         continue;
       }
-      let value = variable.current.value === 'default' ? defaultName : variable.current.value;
+      let value =
+        variable.current.value === 'default' ? (cacheProvider?.getDefaultName() ?? '') : variable.current.value;
       if (Array.isArray(value)) {
         value = value[0];
       }
-      const item = !Array.isArray(value) && (listByName[value] ?? listByUid[value]);
+      if (typeof value !== 'string') {
+        continue;
+      }
+      const item = cacheProvider?.getListItemByName(value) ?? cacheProvider?.getListItemByUid(value);
       if (item) {
         const key = `\${${variable.name}}`;
         base.push({ ...item, isDefault: false, name: key, uid: key });
@@ -804,21 +436,20 @@ function isBuiltInListItem(item: DataSourceInstanceListItem): boolean {
 }
 
 function findBuiltInListItem(id: string): DataSourceInstanceListItem | undefined {
-  return Object.values(listByName).find((item) => item.meta.id === id);
+  return cacheProvider?.getList().find((item) => item.meta.id === id);
 }
 
-// Expressions are included because `__expr__` (and the legacy `-100`) is the uid they are
-// registered under; they sit outside `byUid` only because they are set at boot.
+// Expressions use their own settings object rather than being part of the datasource cache.
 function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
   if (isExpressionReference(uid)) {
     return getExpressionDataSourceSettings();
   }
-  return byUid[uid];
+  return cacheProvider?.getSettingsByUid(uid);
 }
 
 export async function lookupListItemByUid(uid: string): Promise<DataSourceInstanceListItem | undefined> {
-  await ensureDataSourceInstanceSettingsInitialized();
-  const item = listByUid[uid];
+  await ensureSettingsProviderReady();
+  const item = cacheProvider?.getListItemByUid(uid);
   if (item) {
     return item;
   }
@@ -874,11 +505,7 @@ export async function hasDataSourceInstance(type: string): Promise<boolean> {
  * @internal
  */
 export function upsertRuntimeDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
-  if (runtimeByUid[settings.uid] || byUid[settings.uid] || bootByUid[settings.uid] || listByUid[settings.uid]) {
-    throw new Error(`A data source with uid ${settings.uid} has already been registered`);
-  }
-  runtimeByUid[settings.uid] = settings;
-  byUid[settings.uid] = settings;
+  cacheProvider?.registerRuntimeSettings(settings);
 }
 
 function lookupFromMaps(
@@ -898,7 +525,8 @@ function lookupFromMaps(
         return byType;
       }
     }
-    return byUid[defaultName] ?? byName[defaultName];
+    const defaultName = cacheProvider?.getDefaultName() ?? '';
+    return cacheProvider?.getSettingsByUid(defaultName) ?? cacheProvider?.getSettingsByName(defaultName);
   }
 
   // Template variable reference — interpolate and preserve the raw ref. The variable can
@@ -913,8 +541,10 @@ function lookupFromMaps(
       // that plain branch, so it reaches the id map and this one has to as well.
       const resolved =
         interpolated === 'default'
-          ? byName[defaultName]
-          : (byUid[interpolated] ?? byName[interpolated] ?? byId[interpolated]);
+          ? cacheProvider?.getSettingsByName(cacheProvider.getDefaultName())
+          : (cacheProvider?.getSettingsByUid(interpolated) ??
+            cacheProvider?.getSettingsByName(interpolated) ??
+            cacheProvider?.getSettingsById(interpolated));
       if (!resolved) {
         return undefined;
       }
@@ -928,7 +558,11 @@ function lookupFromMaps(
     }
   }
 
-  return byUid[nameOrUid] ?? byName[nameOrUid] ?? byId[nameOrUid];
+  return (
+    cacheProvider?.getSettingsByUid(nameOrUid) ??
+    cacheProvider?.getSettingsByName(nameOrUid) ??
+    cacheProvider?.getSettingsById(nameOrUid)
+  );
 }
 
 function findByType(type: string): DataSourceInstanceSettings | undefined {
@@ -940,7 +574,7 @@ function findByType(type: string): DataSourceInstanceSettings | undefined {
 }
 
 function applyFilters(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
-  const base = Object.values(byName).filter((x) => {
+  const base = (cacheProvider?.getSettingsList() ?? []).filter((x) => {
     if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
       return false;
     }
@@ -992,11 +626,15 @@ function applyFilters(filters: GetDataSourceListFilters = {}): DataSourceInstanc
       if (variable.type !== 'datasource') {
         continue;
       }
-      let dsValue = variable.current.value === 'default' ? defaultName : variable.current.value;
+      let dsValue =
+        variable.current.value === 'default' ? (cacheProvider?.getDefaultName() ?? '') : variable.current.value;
       if (Array.isArray(dsValue)) {
         dsValue = dsValue[0];
       }
-      const dsSettings = !Array.isArray(dsValue) && (byName[dsValue] || byUid[dsValue]);
+      if (typeof dsValue !== 'string') {
+        continue;
+      }
+      const dsSettings = cacheProvider?.getSettingsByName(dsValue) || cacheProvider?.getSettingsByUid(dsValue);
       if (dsSettings) {
         const key = `\${${variable.name}}`;
         base.push({
@@ -1021,19 +659,21 @@ function applyFilters(filters: GetDataSourceListFilters = {}): DataSourceInstanc
 
   if (!filters.pluginId && !filters.alerting) {
     if (filters.mixed) {
-      const mixed = byName['-- Mixed --'] ?? byUid['-- Mixed --'];
+      const mixed = cacheProvider?.getSettingsByName('-- Mixed --') ?? cacheProvider?.getSettingsByUid('-- Mixed --');
       if (mixed) {
         results.push(mixed);
       }
     }
     if (filters.dashboard) {
-      const dashboard = byName['-- Dashboard --'] ?? byUid['-- Dashboard --'];
+      const dashboard =
+        cacheProvider?.getSettingsByName('-- Dashboard --') ?? cacheProvider?.getSettingsByUid('-- Dashboard --');
       if (dashboard) {
         results.push(dashboard);
       }
     }
     if (!filters.tracing) {
-      const grafana = byName['-- Grafana --'] ?? byUid['-- Grafana --'];
+      const grafana =
+        cacheProvider?.getSettingsByName('-- Grafana --') ?? cacheProvider?.getSettingsByUid('-- Grafana --');
       if (grafana && filters.filter?.(grafana) !== false) {
         results.push(grafana);
       }
@@ -1110,25 +750,8 @@ export function _resetForTests(): void {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('_resetForTests must only be called from tests');
   }
-  byName = {};
-  byUid = {};
-  byId = {};
-  bootByName = {};
-  bootByUid = {};
-  bootById = {};
-  listByName = {};
-  listByUid = {};
-  connectionByUid = {};
-  runtimeByUid = {};
-  defaultName = '';
-  asyncInitializationEnabled = false;
-  initializationGeneration++;
-  initializedFromApi = false;
-  invalidateCachedPromise(INITIALIZATION_CACHE_KEY);
+  cacheProvider?.reset();
+  cacheProvider = undefined;
   invalidateCachedPromise(RELOAD_CACHE_KEY);
-  for (const key of settingsCacheKeys) {
-    invalidateCachedPromise(key);
-  }
-  settingsCacheKeys.clear();
   resetExpressionDs();
 }
