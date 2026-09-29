@@ -301,6 +301,12 @@ Automatic mounting and its authorization wiring are a follow-up; adding the
 handler does not enable the endpoint on existing resources. The dashboard GET
 hybrid endpoint keeps its existing request and response format.
 
+Storage combines lexical and semantic results when both an embedding provider
+and vector backend are configured. If either is missing, storage versions with
+lexical-only support search the regular resource index instead. Reranking remains
+available in this mode. Failures from a configured semantic search still return
+errors; they do not trigger lexical-only results.
+
 The request uses the same envelope group as lexical search:
 
 ```json
@@ -314,9 +320,10 @@ The request uses the same envelope group as lexical search:
 }
 ```
 
-`query` is required and feeds the lexical search. It is also embedded for semantic
-search unless `semanticQuery` is supplied. Each is limited to 1,000 bytes. `limit`
-defaults to 50, is capped at 200, and cannot be negative.
+`query` is required and feeds the lexical search. It also supplies the text for
+semantic search and reranking unless `semanticQuery` is supplied. In lexical-only
+mode, `semanticQuery` can still be used for reranking. Each query is limited to
+1,000 bytes. `limit` defaults to 50, is capped at 200, and cannot be negative.
 
 Filters are exact matches: values within a filter are ORed, and different filters
 are ANDed. Each field may appear once, each values list must be nonempty, and the
@@ -356,12 +363,16 @@ best-effort `folderTitle` and `managedBy` (`kind` and `id`) display data. No mat
 returns `"items": []`.
 
 Malformed JSON and unknown fields receive 400; invalid envelopes and options
-receive 422 with field paths. A resource not enrolled through
-`vector_allowed_internal_collections`, not provisioned, or without an active
-builder receives 404. An unavailable backend receives 503, and storage lacking
-hybrid support or configuration receives 501. There is no lexical fallback.
-The storage service continues to authorize individual results and enforce its
-existing query rate limit (429 when exceeded).
+receive 422 with field paths. When semantic search is configured, a resource not
+enrolled through `vector_allowed_internal_collections`, not provisioned, or
+without an active builder receives 404. These enrollment checks do not apply in
+lexical-only mode. An unavailable backend receives 503. Storage without the RPC
+or a configured search index receives 501; older storage versions may also return
+501 when embedding configuration is missing. The HTTP handler preserves these
+errors instead of implementing a separate fallback.
+
+The storage service authorizes individual results in both modes. Its embedding
+query rate limit applies only when semantic search is enabled (429 when exceeded).
 
 ## Where to look
 

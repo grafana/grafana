@@ -80,8 +80,8 @@ func (h *HybridHandler) HybridSearchFor(kind kindRef) http.HandlerFunc {
 func hybridSearchError(err error) error {
 	switch status.Code(err) {
 	case codes.Unimplemented:
-		// Older storage services may not implement the RPC. A lexical fallback
-		// would silently change the search the caller requested.
+		// Storage owns lexical-only fallback. Preserve Unimplemented for older
+		// services without RPC support or deployments without a search index.
 		return errHybridNotConfigured.Errorf("hybrid search is not configured: %w", err)
 	case codes.NotFound:
 		return errHybridNotEnrolled.Errorf("hybrid search is not enabled for this resource: %w", err)
