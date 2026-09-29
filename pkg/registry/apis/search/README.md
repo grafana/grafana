@@ -296,15 +296,16 @@ Individual results are then filtered per item using the same access client that 
 ## Hybrid search
 
 Hybrid search combines lexical matches with semantic matches from embeddings.
-To make your resource embeddable, choose the text that describes it, declare
-that text in CUE, and enroll the resource in the deployment. Your resource's
+To make your resource embeddable, declare its embedding inputs with `embed.fields`
+in CUE and enroll the resource in the deployment. Your resource's
 data must already be in unified storage, as described in the prerequisite above.
 
-### 1. Choose the text to embed
+### 1. Declare the fields to embed
 
-Add `embed.fields` to the kind's CUE definition. Choose fields that describe
-what the resource is about: folders use their title and description. In
-`apps/folder/kinds/folder.cue`, the `foldersV1` definition contains:
+Add `embed.fields` to the kind's CUE definition. Each entry identifies a field
+whose value is included in the text sent to the embedding provider. Folders
+include `spec.title` and `spec.description`; the `foldersV1` definition in
+`apps/folder/kinds/folder.cue` contains:
 
 ```cue
 embed: {
