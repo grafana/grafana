@@ -36,8 +36,8 @@ group declared in the manifest when one is present and may differ from the plugi
 
 Naming a single version writes a single spec, to `-o <file>` or to stdout. Otherwise every
 served version is written into the `-o <directory>`, which is created if it doesn't exist.
-That set always includes the `v0alpha1` settings API, which every app plugin serves whether
-or not its manifest mentions the version.
+Legacy plugins include the `v0alpha1` settings API. Manifest-backed plugins omit settings
+unless `appplugins.loadAppManifestAndKeepSettings` is enabled.
 
 ## How the spec is built
 

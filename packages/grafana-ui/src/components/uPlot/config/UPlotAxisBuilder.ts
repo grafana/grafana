@@ -110,7 +110,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       filter = (u, splits) => splits.map((v) => (Number.isInteger(v) ? v : null));
     }
 
-    let config: Axis = {
+    let config: Axis & { timeZone?: TimeZone | undefined } = {
       scale: scaleKey,
       show,
       stroke: color ?? theme.colors.text.primary,
@@ -184,7 +184,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     }
 
     // store timezone
-    (config as any).timeZone = timeZone;
+    config.timeZone = timeZone;
 
     return config;
   }

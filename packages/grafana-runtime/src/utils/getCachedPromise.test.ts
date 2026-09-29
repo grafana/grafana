@@ -8,6 +8,7 @@ import {
   getDataMessage,
   getFetchErrorContext,
   getOriginMessage,
+  hashFunctionSource,
   invalidateCachedPromise,
   invalidateCachedPromisesCache,
   isHandledError,
@@ -62,6 +63,16 @@ describe('cached promises', () => {
       logInfo: jest.fn(),
       logMeasurement: jest.fn(),
       logWarning: jest.fn(),
+    });
+  });
+
+  describe('hashFunctionSource', () => {
+    test('returns stable signed 32-bit hashes', () => {
+      expect([
+        hashFunctionSource(''),
+        hashFunctionSource('function fetchA() { return 1; }'),
+        hashFunctionSource('function fetchA() { return 2; }'),
+      ]).toEqual([-2128831035, 74078783, -64158792]);
     });
   });
 

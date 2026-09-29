@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import {
   Alert,
   Button,
@@ -25,9 +25,19 @@ import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/Dash
 
 import { applyJsonToDashboard, getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
 
-export class DashboardCodePane extends SceneObjectBase {
+interface DashboardCodePaneState extends SceneObjectState {
+  editorFormat: SchemaEditorFormat;
+  isExpanded: boolean;
+  showDiff: boolean;
+}
+
+export class DashboardCodePane extends SceneObjectBase<DashboardCodePaneState> {
   public static Component = DashboardCodePaneRenderer;
   public minWidth = 700;
+
+  constructor(state: Partial<DashboardCodePaneState>) {
+    super({ editorFormat: 'json', isExpanded: false, showDiff: false, ...state });
+  }
 
   public getId() {
     return 'code' as const;
@@ -37,13 +47,11 @@ export class DashboardCodePane extends SceneObjectBase {
 function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodePane>) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
+  const { editorFormat, isExpanded, showDiff } = model.useState();
 
   const [hasValidationErrors, setHasValidationErrors] = useState(true);
   const [applyError, setApplyError] = useState<string | null>(null);
   const [jsonText, setJsonText] = useState(() => getDashboardResourceText(dashboard, 'json'));
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [editorFormat, setEditorFormat] = useState<SchemaEditorFormat>('json');
-  const [showDiff, setShowDiff] = useState(false);
   const [inlineDiff, setInlineDiff] = useInlineDiffPreference();
   const [hasSyntaxError, setHasSyntaxError] = useState(false);
 
@@ -111,7 +119,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
           showLabel
           value={showDiff}
           disabled={!canShowDiff}
-          onChange={(e) => setShowDiff(e.currentTarget.checked)}
+          onChange={(e) => model.setState({ showDiff: e.currentTarget.checked })}
         />
       </div>
     </Tooltip>
@@ -149,11 +157,12 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
   ) : null;
 
   const editorProps = {
+    initialFormat: editorFormat,
     value: jsonText,
     onChange: handleChange,
     onValidationChange: setHasValidationErrors,
     onParseErrorChange: setHasSyntaxError,
-    onFormatChange: setEditorFormat,
+    onFormatChange: (editorFormat: SchemaEditorFormat) => model.setState({ editorFormat }),
     showFormatToggle: true,
     headerLeftActions: (
       <>
@@ -234,7 +243,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
             name="expand-arrows"
             size="sm"
             tooltip={t('dashboard.sidebar.edit-schema.expand', 'Expand editor')}
-            onClick={() => setIsExpanded(true)}
+            onClick={() => model.setState({ isExpanded: true })}
           />
         </div>
       </div>
@@ -243,7 +252,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
         <Modal
           title={t('dashboard.sidebar.edit-schema.modal-title', 'Edit dashboard as code')}
           isOpen
-          onDismiss={() => setIsExpanded(false)}
+          onDismiss={() => model.setState({ isExpanded: false })}
           className={styles.modal}
           contentClassName={styles.modalContent}
           closeOnBackdropClick={false}
@@ -261,7 +270,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
                 name="compress-arrows"
                 size="sm"
                 tooltip={t('dashboard.sidebar.edit-schema.collapse', 'Collapse editor')}
-                onClick={() => setIsExpanded(false)}
+                onClick={() => model.setState({ isExpanded: false })}
               />
             </div>
           </div>

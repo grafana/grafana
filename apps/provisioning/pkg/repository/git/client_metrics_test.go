@@ -126,3 +126,24 @@ func TestRegisterClientMetrics_PerRegistry(t *testing.T) {
 	assert.Equal(t, 1.0, testutil.ToFloat64(a.cacheAccesses.WithLabelValues("git", "hit")))
 	assert.Equal(t, 0.0, testutil.ToFloat64(b.cacheAccesses.WithLabelValues("git", "hit")))
 }
+
+// TestRegisterClientMetrics_SharedRegistry pins the multi-tenant case: the
+// repository-extras provider runs more than once against a single shared
+// registry, so a second registration must not panic and must reuse the
+// already-registered collectors rather than orphaning the first set.
+func TestRegisterClientMetrics_SharedRegistry(t *testing.T) {
+	reg := prometheus.NewRegistry()
+
+	first := RegisterClientMetrics(reg)
+	var second *ClientMetrics
+	require.NotPanics(t, func() {
+		second = RegisterClientMetrics(reg)
+	})
+	require.NotNil(t, second)
+
+	// Both instances share the collector that is actually registered on reg, so a
+	// recording made through either shows up in the same series when gathering reg.
+	second.Recorder(provisioning.GitRepositoryType).CacheAccess(context.Background(), metrics.CacheAccessSample{Hit: true})
+	assert.Equal(t, 1.0, testutil.ToFloat64(first.cacheAccesses.WithLabelValues("git", "hit")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(second.cacheAccesses.WithLabelValues("git", "hit")))
+}

@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/dskit/flagext"
@@ -16,8 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
-	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -25,7 +22,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -121,17 +117,11 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 		Help:    "Time spent executing requests to resource server.",
 		Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 	}, []string{"operation", "status_code"})
-	factoryRequestRetries := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-		Name: "resource_server_client_request_retries_total",
-		Help: "Total number of retries for requests to the resource server.",
-	}, []string{"operation"})
 
 	factory := ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
+		// No retry interceptor here: retrying the same pod uses up the request's time
+		// budget before the distributor can fail over to another replica.
 		unaryInterceptors, streamInterceptors := grpcclient.Instrument(factoryRequestDuration)
-
-		// Add retry interceptors for transient connection issues
-		unaryInterceptors = append(unaryInterceptors, ringClientRetryInterceptor())
-		unaryInterceptors = append(unaryInterceptors, ringClientRetryInstrument(factoryRequestRetries))
 
 		opts, err := clientCfg.DialOption(unaryInterceptors, streamInterceptors, nil)
 		if err != nil {
@@ -156,29 +146,6 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 	})
 
 	return ringclient.NewPool(resource.RingName, poolCfg, nil, factory, clientsCount, log)
-}
-
-// ringClientRetryInterceptor creates an interceptor to perform retries for unary methods.
-// It retries on ResourceExhausted and Unavailable codes, which are typical for
-// transient connection issues and rate limiting.
-func ringClientRetryInterceptor() grpc.UnaryClientInterceptor {
-	return grpc_retry.UnaryClientInterceptor(
-		grpc_retry.WithMax(3),
-		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.1)),
-		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
-	)
-}
-
-// ringClientRetryInstrument creates an interceptor to count retry attempts for metrics.
-func ringClientRetryInstrument(metric *prometheus.CounterVec) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, resp interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		// We can tell if a call is a retry by checking the retry attempt metadata.
-		attempt, err := strconv.Atoi(metautils.ExtractOutgoing(ctx).Get(grpc_retry.AttemptMetadataKey))
-		if err == nil && attempt > 0 {
-			metric.WithLabelValues(method).Inc()
-		}
-		return invoker(ctx, method, req, resp, cc, opts...)
-	}
 }
 
 // connectionBackoffOptions configures connection backoff parameters for faster recovery from

@@ -170,8 +170,8 @@ func WildcardsFromPrefixes(prefixes []string) Wildcards {
 	var b strings.Builder
 	wildcards := Wildcards{"*"}
 	for _, prefix := range prefixes {
-		parts := strings.Split(prefix, ":")
-		for _, p := range parts {
+		parts := strings.SplitSeq(prefix, ":")
+		for p := range parts {
 			if p == "" {
 				continue
 			}

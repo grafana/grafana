@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -445,7 +444,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 			func() bool {
 				cms, err := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
 				return err == nil && cms != nil && cms.Status == cloudmigration.SnapshotStatusFinished &&
-					atomic.LoadInt32(&s.isSyncSnapshotStatusFromGMSRunning) == 0
+					s.isSyncSnapshotStatusFromGMSRunning.Load() == 0
 			},
 			5*time.Second,
 			100*time.Millisecond,

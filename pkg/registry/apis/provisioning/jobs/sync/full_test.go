@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -2140,4 +2141,161 @@ func TestWrapWithTimeout(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestFullSync_ManagerKindConflictQuota(t *testing.T) {
+	testManagerKindConflictQuota(t, "full")
+}
+
+func TestFullSync_QuotaBlockedCreateDoesNotAccessResource(t *testing.T) {
+	testQuotaBlockedCreateDoesNotAccessResource(t, "full")
+}
+
+func TestFullSync_DeferredCreates(t *testing.T) {
+	conflict := utils.NewForbiddenManagerKindChangeError(
+		utils.ManagerProperties{Kind: utils.ManagerKindTerraform},
+		utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repo"},
+	)
+	for _, tt := range []struct {
+		name    string
+		stopErr error
+	}{
+		{name: "deferred conflict frees quota for the next create"},
+		{name: "cancellation stops deferred creates", stopErr: context.Canceled},
+		{name: "too many errors stops deferred creates", stopErr: fmt.Errorf("too many resource errors")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			firstStarted := make(chan struct{})
+			allBlocked := make(chan struct{})
+			var blockedCount atomic.Int32
+			var stopped atomic.Bool
+			tracker := quotas.NewInMemoryQuotaTracker(9, 10)
+			observedQuota := quotas.NewMockQuotaTracker(t)
+			observedQuota.On("TryAcquire").Return(func() bool {
+				acquired := tracker.TryAcquire()
+				if !acquired && blockedCount.Add(1) == 2 {
+					close(allBlocked)
+				}
+				return acquired
+			})
+			observedQuota.On("Release").Run(func(mock.Arguments) { tracker.Release() })
+			progress := jobs.NewMockJobProgressRecorder(t)
+			progress.On("TooManyErrors").Return(func() error {
+				if stopped.Load() {
+					return tt.stopErr
+				}
+				return nil
+			})
+			progress.On("HasDirPathFailedCreation", "first.json").Return(false)
+			for _, path := range []string{"second.json", "valid.json"} {
+				progress.On("HasDirPathFailedCreation", path).Run(func(mock.Arguments) {
+					select {
+					case <-firstStarted:
+					case <-ctx.Done():
+						t.Error("first write did not start")
+					}
+				}).Return(false)
+			}
+			var resultsMu sync.Mutex
+			var results []jobs.JobResourceResult
+			progress.On("Record", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				resultsMu.Lock()
+				defer resultsMu.Unlock()
+				results = append(results, args.Get(1).(jobs.JobResourceResult))
+			}).Return()
+			repoResources := resources.NewMockRepositoryResources(t)
+			gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+			repoResources.On("WriteResourceFromFile", mock.Anything, "first.json", "ref").Run(func(mock.Arguments) {
+				close(firstStarted)
+				select {
+				case <-allBlocked:
+				case <-ctx.Done():
+					t.Error("concurrent creates did not exhaust quota")
+				}
+				if errors.Is(tt.stopErr, context.Canceled) {
+					cancel()
+				} else if tt.stopErr != nil {
+					stopped.Store(true)
+				}
+			}).Return("first", gvk, 0, conflict).Once()
+			if tt.stopErr == nil {
+				repoResources.On("WriteResourceFromFile", mock.Anything, "second.json", "ref").Return("second", gvk, 0, conflict).Once()
+				repoResources.On("WriteResourceFromFile", mock.Anything, "valid.json", "ref").Return("valid", gvk, 0, nil).Once()
+			}
+			err := applyResourcesInParallel(ctx, []ResourceFileChange{
+				{Path: "first.json", Action: repository.FileActionCreated},
+				{Path: "second.json", Action: repository.FileActionCreated},
+				{Path: "valid.json", Action: repository.FileActionCreated},
+			}, resources.NewMockResourceClients(t), "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, observedQuota, false, 0)
+			require.ErrorIs(t, err, tt.stopErr)
+			if tt.stopErr != nil {
+				require.Len(t, results, 1)
+				require.True(t, tracker.TryAcquire(), "stopped creates must not reserve quota")
+				return
+			}
+			require.Len(t, results, 3)
+			for i, path := range []string{"first.json", "second.json", "valid.json"} {
+				require.Equal(t, path, results[i].Path())
+				require.NoError(t, results[i].Error())
+				if path == "valid.json" {
+					require.NoError(t, results[i].Warning())
+				} else {
+					require.ErrorIs(t, results[i].Warning(), conflict)
+				}
+			}
+			require.False(t, tracker.TryAcquire())
+		})
+	}
+}
+
+func TestFullSync_QuotaBlockedCreatesDoNotAccessResources(t *testing.T) {
+	const files, limit, workers = 128, 8, 4
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	repo := repository.NewMockRepository(t)
+	repo.On("Config").Return(&provisioning.Repository{})
+	changes := make([]ResourceFileChange, files)
+	for i := range changes {
+		changes[i] = ResourceFileChange{Path: fmt.Sprintf("dashboard-%d.json", i), Action: repository.FileActionCreated}
+	}
+	repoResources := resources.NewMockRepositoryResources(t)
+	compare := NewMockCompareFn(t)
+	compare.On("Execute", mock.Anything, repo, repoResources, "ref", false).Return(changes, nil, nil, nil)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetTotal", mock.Anything, files).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+	repoResources.On("WriteResourceFromFile", mock.Anything, mock.Anything, "ref").Return("dashboard", gvk, 0, nil).Times(limit)
+	var mu sync.Mutex
+	results := make(map[string]jobs.JobResourceResult)
+	progress.On("Record", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		mu.Lock()
+		defer mu.Unlock()
+		result := args.Get(1).(jobs.JobResourceResult)
+		results[result.Path()] = result
+	}).Return().Times(files)
+	tracker := quotas.NewInMemoryQuotaTracker(0, limit)
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+	clients := resources.NewMockResourceClients(t)
+	err := FullSync(ctx, repo, compare.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), workers, metrics, tracker, false, time.Second)
+	require.NoError(t, err)
+	require.Len(t, results, files)
+	created, skipped := 0, 0
+	for _, result := range results {
+		require.NoError(t, result.Error())
+		if result.Action() == repository.FileActionCreated {
+			created++
+			require.NoError(t, result.Warning())
+		} else {
+			skipped++
+			require.Equal(t, repository.FileActionIgnored, result.Action())
+			require.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+		}
+	}
+	require.Equal(t, limit, created)
+	require.Equal(t, files-limit, skipped)
+	require.False(t, tracker.TryAcquire())
 }

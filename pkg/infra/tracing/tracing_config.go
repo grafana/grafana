@@ -182,8 +182,8 @@ func (tc TracingConfig) OTelExporterEnabled() bool {
 func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 	res := []attribute.KeyValue{}
 
-	attribs := strings.Split(s, ",")
-	for _, v := range attribs {
+	attribs := strings.SplitSeq(s, ",")
+	for v := range attribs {
 		parts := strings.SplitN(v, ":", 2)
 		if len(parts) > 1 {
 			res = append(res, attribute.String(parts[0], parts[1]))

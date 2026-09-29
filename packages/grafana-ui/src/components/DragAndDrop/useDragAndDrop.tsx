@@ -86,11 +86,12 @@ function loadDragAndDrop() {
 /**
  * Loads `@hello-pangea/dnd` on demand. Until the module arrives (or while `enabled` is false)
  * it returns inert passthrough components, so callers can render the same JSX unconditionally
- * without pulling the library into their initial chunk.
+ * without pulling the library into their initial chunk. Consumers that cannot tolerate a
+ * remount can wait for `isReady` before rendering stateful children.
  *
  * @internal Exported through `@grafana/ui/internal` for Grafana core only.
  */
-export function useDragAndDrop(enabled = true): DragAndDropComponents {
+export function useDragAndDrop(enabled = true): DragAndDropComponents & { isReady: boolean } {
   const [module, setModule] = useState(enabled ? loadedModule : undefined);
 
   useEffect(() => {
@@ -116,5 +117,5 @@ export function useDragAndDrop(enabled = true): DragAndDropComponents {
     };
   }, [enabled]);
 
-  return (enabled && module) || passthrough;
+  return { ...((enabled && module) || passthrough), isReady: enabled && module !== undefined };
 }

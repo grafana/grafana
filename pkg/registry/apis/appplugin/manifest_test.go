@@ -120,16 +120,12 @@ func TestGetGroupVersions(t *testing.T) {
 
 // Shipping a manifest must not move a plugin's existing settings API, so
 // v0alpha1 stays served even when the manifest never mentions it.
-func TestGetGroupVersionsAlwaysServesSettingsVersion(t *testing.T) {
+func TestGetGroupVersionsWithSettings(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions = slices.DeleteFunc(manifest.Versions, func(v app.ManifestVersion) bool {
 		return v.Name == apppluginV0.VERSION
 	})
-	b := &AppPluginAPIBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
-	}
+	b := testBuilder(t, manifest)
 
 	require.Equal(t, []schema.GroupVersion{
 		{Group: "example.ext.grafana.app", Version: "v1alpha1"},
@@ -153,11 +149,7 @@ func TestGetGroupVersionsFallback(t *testing.T) {
 		for i := range manifest.Versions {
 			manifest.Versions[i].Served = false
 		}
-		b := &AppPluginAPIBuilder{
-			group:      manifest.Group,
-			manifest:   manifest,
-			pluginJSON: plugins.JSONData{ID: "example-app"},
-		}
+		b := testBuilder(t, manifest)
 		require.Equal(t, []schema.GroupVersion{
 			{Group: "example.ext.grafana.app", Version: apppluginV0.VERSION},
 		}, b.GetGroupVersions())

@@ -7,7 +7,11 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-logr/logr"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -31,20 +35,24 @@ func TestBuildManifestVersion(t *testing.T) {
 	require.Equal(t, "example.ext.grafana.app/v1alpha1", oas.Info.Title)
 	require.Equal(t, "12.3.4", oas.Info.Version)
 	require.Equal(t, "An example", oas.Info.Description)
+	raw, err := json.Marshal(oas)
+	require.NoError(t, err)
+	_, err = openapi3.NewLoader().LoadFromData(raw)
+	require.NoError(t, err, "all schema references must resolve without settings")
 
 	root := "/apis/example.ext.grafana.app/v1alpha1/"
 	paths := slices.Sorted(maps.Keys(oas.Paths.Paths))
 	require.Equal(t, []string{
 		root,
-		root + "namespaces/{namespace}/app/instance",
-		root + "namespaces/{namespace}/app/instance/health",
-		root + "namespaces/{namespace}/app/instance/resources",
 		// The kind, from resource storage.
 		root + "namespaces/{namespace}/testkinds",
-		// The routes the manifest declares, plus the generic ones.
+		// The routes the manifest declares, plus the generic ones. list-keys is the
+		// only generic route mounted at both scopes.
+		root + "namespaces/{namespace}/testkinds/list-keys",
 		root + "namespaces/{namespace}/testkinds/search",
 		root + "namespaces/{namespace}/testkinds/{name}",
 		root + "namespaces/{namespace}/testkinds/{name}/reload",
+		root + "testkinds/list-keys",
 	}, paths, "paths should not include the watch or all-namespace routes the server hides")
 
 	// The kind's schema, and the list wrapper around it, are the response types.
@@ -57,9 +65,9 @@ func TestBuildManifestVersion(t *testing.T) {
 		responseRef(t, oas.Paths.Paths[root+"namespaces/{namespace}/testkinds/{name}"].Get))
 }
 
-// The settings API is served in every version, including the one a manifest
-// never mentions.
+// The compatibility flag preserves the legacy settings version.
 func TestBuildSettingsVersion(t *testing.T) {
+	keepManifestSettings(t)
 	oas, err := Build(testPlugin(t), "v0alpha1", Options{BuildVersion: "12.3.4"})
 	require.NoError(t, err)
 
@@ -96,6 +104,7 @@ func TestBuildVersionSelection(t *testing.T) {
 
 // The proxy subresource is only served when the toggle for it is on.
 func TestBuildProxyRoute(t *testing.T) {
+	keepManifestSettings(t)
 	proxy := "/apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/app/instance/proxy"
 
 	oas, err := Build(testPlugin(t), "v1alpha1", Options{})
@@ -162,5 +171,33 @@ func testPlugin(t *testing.T) definition.PluginDefinition {
 				}},
 			}},
 		},
+	}
+}
+
+func keepManifestSettings(t *testing.T) {
+	t.Helper()
+	flag := featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		flag: {Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
+	})))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+}
+
+func TestBuildWithoutServedVersions(t *testing.T) {
+	plugin := testPlugin(t)
+	plugin.Manifest.Versions[0].Served = false
+	for _, version := range []string{"", "v1alpha1"} {
+		_, err := Build(plugin, version, Options{})
+		require.ErrorContains(t, err, "no served versions")
+	}
+}
+
+func TestBuildLegacySettings(t *testing.T) {
+	plugin := testPlugin(t)
+	plugin.Manifest = nil
+	oas, err := Build(plugin, "", Options{RegisterProxy: true})
+	require.NoError(t, err)
+	for _, suffix := range []string{"", "/health", "/resources", "/proxy"} {
+		require.Contains(t, oas.Paths.Paths, "/apis/example-app/v0alpha1/namespaces/{namespace}/app/instance"+suffix)
 	}
 }

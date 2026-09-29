@@ -107,7 +107,7 @@ var (
 
 // convert a db data([]byte) to a field value
 func (session *Session) bytes2Value(col *core.Column, fieldValue *reflect.Value, data []byte) error {
-	if structConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+	if structConvert, ok := reflect.TypeAssert[core.Conversion](fieldValue.Addr()); ok {
 		return structConvert.FromDB(data)
 	}
 
@@ -211,7 +211,7 @@ func (session *Session) bytes2Value(col *core.Column, fieldValue *reflect.Value,
 	//Currently only support Time type
 	case reflect.Struct:
 		// !<winxxp>! 增加支持sql.Scanner接口的结构，如sql.NullString
-		if nulVal, ok := fieldValue.Addr().Interface().(sql.Scanner); ok {
+		if nulVal, ok := reflect.TypeAssert[sql.Scanner](fieldValue.Addr()); ok {
 			if err := nulVal.Scan(data); err != nil {
 				return fmt.Errorf("sql.Scan(%v) failed: %s ", data, err.Error())
 			}
@@ -486,7 +486,7 @@ func (session *Session) bytes2Value(col *core.Column, fieldValue *reflect.Value,
 // convert a field value of a struct to interface for put into db
 func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Value) (any, error) {
 	if fieldValue.CanAddr() {
-		if fieldConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+		if fieldConvert, ok := reflect.TypeAssert[core.Conversion](fieldValue.Addr()); ok {
 			data, err := fieldConvert.ToDB()
 			if err != nil {
 				return 0, err
@@ -498,7 +498,7 @@ func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Val
 		}
 	}
 
-	if fieldConvert, ok := fieldValue.Interface().(core.Conversion); ok {
+	if fieldConvert, ok := reflect.TypeAssert[core.Conversion](fieldValue); ok {
 		data, err := fieldConvert.ToDB()
 		if err != nil {
 			return 0, err
@@ -545,7 +545,7 @@ func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Val
 
 		if !col.SQLType.IsJson() {
 			// !<winxxp>! 增加支持driver.Valuer接口的结构，如sql.NullString
-			if v, ok := fieldValue.Interface().(driver.Valuer); ok {
+			if v, ok := reflect.TypeAssert[driver.Valuer](fieldValue); ok {
 				return v.Value()
 			}
 

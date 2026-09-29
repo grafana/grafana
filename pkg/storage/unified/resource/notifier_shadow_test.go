@@ -24,7 +24,7 @@ type countingSubscriber struct {
 
 func (c *countingSubscriber) Enabled() bool { return true }
 
-func (c *countingSubscriber) Subscribe(_ context.Context, _ string, handler func(subject string, data []byte)) (Subscription, error) {
+func (c *countingSubscriber) Subscribe(_ context.Context, _ string, handler func(subject string, data []byte), _ func()) (Subscription, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.calls++
@@ -46,8 +46,7 @@ func TestNatsShadow_ReSubscribesAfterInitialFailure(t *testing.T) {
 	// Small backoff bounds keep the notifier's subscription retry loop fast.
 	s := newNatsShadow(sub, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond}, prometheus.NewRegistry(), log.NewNopLogger())
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s.start(ctx)
 
 	// The first two Subscribe calls fail; the loop must keep retrying until one

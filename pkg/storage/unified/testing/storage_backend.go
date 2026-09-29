@@ -43,7 +43,7 @@ const (
 	TestListTrash                 = "list trash"
 	TestCreateNewResource         = "create new resource"
 	TestGetResourceLastImportTime = "get resource last import time"
-	TestOptimisticLocking         = "optimistic locking on concurrent writes"
+	TestConcurrentWriteConflicts  = "concurrent write conflicts"
 	TestClusterScopedResources    = "cluster scoped resources"
 	TestErrorResponses            = "error responses"
 	TestReadAtRVBeforeDelete      = "read at RV edge cases"
@@ -95,7 +95,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
 		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 		{TestGetResourceLastImportTime, runTestIntegrationGetResourceLastImportTime},
-		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
+		{TestConcurrentWriteConflicts, runTestIntegrationBackendConcurrentWriteConflicts},
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
 		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVEdgeCases},
@@ -1825,9 +1825,9 @@ func (s *sliceBulkRequestIterator) RollbackRequested() bool {
 	return false
 }
 
-func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+func runTestIntegrationBackendConcurrentWriteConflicts(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-optimis-lock" // optimistic-locking. need to cut down on characters to not exceed namespace character limit (40)
+	ns := nsPrefix + "-write-conf" // Keep the suffix short enough not to exceed the 40-character namespace limit.
 
 	t.Run("concurrent updates with same RV - only one succeeds", func(t *testing.T) {
 		// Create initial resource with rv0 (no previous RV)

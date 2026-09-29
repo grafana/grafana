@@ -239,6 +239,24 @@ func counterValueWithLabel(t *testing.T, reg *prometheus.Registry, name, labelNa
 	return 0
 }
 
+// counterVecSum returns the summed value across all series of a counter metric,
+// or 0 when the metric has never been observed (its family is absent). Unlike
+// counterValueWithLabel it does not require the family to exist, so it can assert
+// that nothing was recorded.
+func counterVecSum(t *testing.T, reg *prometheus.Registry, name string) float64 {
+	t.Helper()
+	families := gatherMetrics(t, reg)
+	f, ok := families[name]
+	if !ok {
+		return 0
+	}
+	var sum float64
+	for _, metric := range f.GetMetric() {
+		sum += metric.GetCounter().GetValue()
+	}
+	return sum
+}
+
 func histogramCount(t *testing.T, reg *prometheus.Registry, name string) uint64 {
 	t.Helper()
 	families := gatherMetrics(t, reg)

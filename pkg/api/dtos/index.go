@@ -38,9 +38,10 @@ type IndexViewData struct {
 	UseLuxon               bool              `json:"-"`
 	// AutoLoginRedirectURL is the URL the frontend should redirect to for auto-login.
 	// Empty means no auto-login redirect should occur.
-	AutoLoginRedirectURL  string `json:"autoLoginRedirectURL,omitempty"`
-	AssetSriChecksEnabled bool   `json:"-"`
-	OFREPRootUrlEnabled   bool   `json:"-"`
+	AutoLoginRedirectURL    string `json:"autoLoginRedirectURL,omitempty"`
+	AssetSriChecksEnabled   bool   `json:"-"`
+	OFREPRootUrlEnabled     bool   `json:"-"`
+	LegacyFeatureToggleMode string `json:"-"`
 
 	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
 	// matching <script type>.

@@ -189,6 +189,7 @@ func TestGetUIDFromLegacyID(t *testing.T) {
 
 	gvr := folderv1.FolderResourceInfo.GroupVersionResource()
 	searchReq := &resourcepb.ResourceSearchRequest{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "default",

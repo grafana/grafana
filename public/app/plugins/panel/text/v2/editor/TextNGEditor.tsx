@@ -18,8 +18,7 @@ import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 import { getEditorLayoutStyles } from './editorLayout';
 import { variableCompletion } from './variableCompletion';
-
-export type ViewMode = 'write' | 'split' | 'preview';
+import { type ViewMode } from './viewMode';
 
 export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
 
@@ -38,6 +37,7 @@ export interface TextNGEditorProps {
   codeLanguage?: CodeLanguage;
   renderMode?: RenderMode;
   rowWindow?: RowWindow;
+  frameSelector?: ReactNode;
   pagination?: ReactNode;
   previewRef?: Ref<HTMLDivElement>;
   series?: DataFrame[];
@@ -75,6 +75,7 @@ export function TextNGEditor({
   codeLanguage,
   renderMode,
   rowWindow,
+  frameSelector,
   pagination,
   previewRef,
   series,
@@ -278,7 +279,15 @@ export function TextNGEditor({
         {showEditor && (
           // Outside interactions (Save, Apply, Back) blur the editor on mousedown,
           // so a pending draft is committed before anything reads the options.
-          <div ref={editorContainerRef} className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
+          // Escape stays here so it arms CodeMirror's Escape-then-Tab focus exit
+          // instead of reaching the global handler that leaves panel edit.
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div
+            ref={editorContainerRef}
+            className={cx(styles.pane, styles.editorPane)}
+            onBlur={commitDraft}
+            onKeyDown={(event) => event.key === 'Escape' && event.stopPropagation()}
+          >
             <CodeMirrorEditor
               value={draft}
               onChange={handleDraftChange}
@@ -307,11 +316,12 @@ export function TextNGEditor({
         )}
       </div>
 
-      {(isCode || footerPagination) && (
+      {(isCode || frameSelector || footerPagination) && (
         <TextNGEditorFooter
           showLineNumbersSwitch={isCode}
           showLineNumbers={showLineNumbers}
           onShowLineNumbersChange={(next) => changeOption({ showLineNumbers: next })}
+          frameSelector={frameSelector}
           pagination={footerPagination}
         />
       )}

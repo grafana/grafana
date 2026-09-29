@@ -57,6 +57,13 @@ const (
 	IndexPhasePromote = "promote"
 )
 
+// State of the documents counted by the indexed kinds metric. Deleted documents
+// are the ones an index keeps so they can be found in trash.
+const (
+	IndexedDocumentsLive    = "live"
+	IndexedDocumentsDeleted = "deleted"
+)
+
 // What was being done to the index, used as the path label. Trash is the pass
 // over deleted objects that a build makes when the index keeps them.
 const (
@@ -77,8 +84,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}),
 		IndexedKinds: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "index_server_indexed_kinds",
-			Help: "Number of indexed documents by kind",
-		}, []string{"kind"}),
+			Help: "Number of indexed documents by kind. Live documents and deleted ones the index keeps so they can be found in trash are reported separately.",
+		}, []string{"kind", "state"}), // state is either "live" or "deleted"
 		IndexCreationTime: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "index_server_index_build_time_seconds",
 			Help:                            "Time it takes to successfully build an index. Failed or skipped builds are not counted.",
@@ -218,9 +225,6 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 // emit permanently-zero `index_server_snapshot_*` series. Registration of
 // the CounterVecs themselves stays unconditional in ProvideIndexMetrics.
 func (m *BleveIndexMetrics) InitSnapshotMetrics() {
-	if m == nil {
-		return
-	}
 	for _, policy := range []string{"tiered", "same_version", "cold_start"} {
 		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "success").Add(0)
 		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "empty").Add(0)
@@ -255,9 +259,6 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 // configured to run on this instance, so disabled instances don't emit
 // permanently-zero `index_server_disk_cleanup_*` series.
 func (m *BleveIndexMetrics) InitDiskCleanupMetrics() {
-	if m == nil {
-		return
-	}
 	m.IndexDiskCleanupRuns.WithLabelValues("success").Add(0)
 	m.IndexDiskCleanupRuns.WithLabelValues("error").Add(0)
 	for _, kind := range []string{"index", "snapshot_staging"} {

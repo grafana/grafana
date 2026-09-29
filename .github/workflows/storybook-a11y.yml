@@ -51,6 +51,8 @@ jobs:
           - deut_prot_dark
           - tritanopia_light
           - tritanopia_dark
+          - visual_refresh_dark
+          - visual_refresh_light
     name: "Run Storybook a11y tests (${{ matrix.STORYBOOK_THEME }} theme)"
     steps:
     - uses: actions/checkout@v5

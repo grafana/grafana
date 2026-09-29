@@ -20,11 +20,9 @@ import * as utils from '../utils/utils';
 import { PanelOptions } from './PanelOptions';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
-jest.mock('app/features/dashboard/components/GenAI/GenAIPanelTitleButton', () => ({
-  GenAIPanelTitleButton: () => null,
-}));
-jest.mock('app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton', () => ({
-  GenAIPanelDescriptionButton: () => null,
+jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
+  LazyGenAIPanelTitleButton: () => null,
+  LazyGenAIPanelDescriptionButton: () => null,
 }));
 
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;

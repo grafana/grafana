@@ -116,6 +116,8 @@ type ListAlertRulesOptions struct {
 	TargetDatasourceUIDFilter ListRuleStringFilter
 	DatasourceUIDs            []string
 	SearchTitle               string
+	StateFilter               ListRuleStringFilter
+	HealthFilter              ListRuleStringFilter
 }
 
 // extractSingleValue returns the single value from a ListRuleStringFilter's Include or Exclude slice,
@@ -246,9 +248,13 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 			DataSourceUIDs:                   opts.DatasourceUIDs,
 			SearchTitle:                      opts.SearchTitle,
 		},
-		RuleType:      opts.RuleType,
-		Limit:         opts.Limit,
-		ContinueToken: opts.ContinueToken,
+		RuleType:       opts.RuleType,
+		Limit:          opts.Limit,
+		ContinueToken:  opts.ContinueToken,
+		States:         opts.StateFilter.Include,
+		ExcludeStates:  opts.StateFilter.Exclude,
+		Healths:        opts.HealthFilter.Include,
+		ExcludeHealths: opts.HealthFilter.Exclude,
 	}
 
 	can, err := service.authz.CanReadAllRules(ctx, user)
@@ -1283,6 +1289,9 @@ func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) e
 func (service *AlertRuleService) ensureNamespace(ctx context.Context, user identity.Requester, orgID int64, namespaceUID string) error {
 	if namespaceUID == "" {
 		return fmt.Errorf("%w: folderUID must be set", models.ErrAlertRuleFailedValidation)
+	}
+	if folder.IsRootFolderUID(namespaceUID) {
+		return fmt.Errorf("%w: folderUID cannot be the root folder", models.ErrAlertRuleFailedValidation)
 	}
 
 	if service.folderService == nil {

@@ -37,6 +37,7 @@ import (
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -48,6 +49,15 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // errStopping is returned when a write operation is rejected because the server is shutting down.
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
+
+var errWatchSendUnavailable = errors.New("watch send transport unavailable")
+
+func watchSendError(err error) error {
+	if status.Code(err) == codes.Unavailable {
+		return fmt.Errorf("%w: %v", errWatchSendUnavailable, err)
+	}
+	return err
+}
 
 // logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
 func (s *server) logIfServerError(ctx context.Context, op string, key *resourcepb.ResourceKey, errRes *resourcepb.ErrorResult) {
@@ -67,6 +77,21 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // defaultBookmarkFrequency is how often periodic bookmark events are sent
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
+
+const natsWatchMaxAgeJitterFraction = 0.2
+
+func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration {
+	bo := backoff.New(ctx, backoff.Config{
+		MinBackoff: time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction)),
+		MaxBackoff: time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction)),
+		MaxRetries: 1,
+	})
+	return bo.NextDelay()
+}
+
+// filteredBookmarkDelay leaves a recovery window for late writes without
+// delaying progress from objects already sent to the client.
+const filteredBookmarkDelay = time.Minute
 
 // maxKeysPageSize caps a keys_only page by count. The byte budget also applies,
 // but it measures the wire and a key costs far less there (~20 bytes) than the
@@ -99,6 +124,32 @@ type SearchServer interface {
 
 type ResourceServerStopper interface {
 	Stop(ctx context.Context) error
+}
+
+type BackendListKey struct {
+	Key             *resourcepb.ResourceKey
+	ResourceVersion int64
+	Folder          string
+	ContinueToken   string
+
+	// dataKey identifies the exact stored revision selected by ListKeys. It is
+	// intentionally private so callers cannot construct references to values that
+	// were not returned by the backend.
+	dataKey DataKey
+}
+
+type ListKeyIterator interface {
+	Next() bool
+	Error() error
+	Item() BackendListKey
+}
+
+// KeyListBackend is an optional capability for authorizing list metadata before
+// fetching values. Keep it separate from StorageBackend while the legacy SQL
+// backend remains supported.
+type KeyListBackend interface {
+	ListKeys(context.Context, *resourcepb.ListRequest, func(ListKeyIterator) error) (int64, error)
+	FetchValues(context.Context, []BackendListKey) (iter.Seq2[*BackendReadResponse, error], error)
 }
 
 type ListIterator interface {
@@ -147,6 +198,10 @@ type BackendReadResponse struct {
 	Error *resourcepb.ErrorResult
 }
 
+// ErrBatchReadUnsupported signals the caller to fall back to per-resource reads.
+// On the base interface, not a type assertion, so a wrapped backend keeps advertising it.
+var ErrBatchReadUnsupported = errors.New("batch read not supported by this backend")
+
 type ResourceLastImportTime struct {
 	NamespacedResource
 	LastImportTime time.Time
@@ -163,6 +218,12 @@ type StorageBackend interface {
 
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
+
+	// BatchReadResource lazily reads several resources, yielding one response per
+	// request in order. Body reads stop when the consumer stops. The up-front error
+	// reports failures that happen before iteration; per-request failures are set
+	// on BackendReadResponse.Error.
+	BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -305,11 +366,23 @@ type SearchOptions struct {
 	// that predates them is rebuilt before that path serves a query.
 	PostRankAuthzEnabled bool
 
+	// GlobalIndexEnabled builds one index per namespace covering several resource
+	// types, alongside the per-resource indexes.
+	GlobalIndexEnabled bool
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
 	// stored in an index's IndexBuildInfo. May be nil.
 	SearchFields *SearchFieldsRegistry
+
+	// EmbeddingConfig is shared with the manifest watcher; consumers must read
+	// it after the initial poll and retain the registry to observe later reloads.
+	EmbeddingConfig *EmbeddingConfigRegistry
+
+	// EmbeddingBuilders is evaluated after the initial manifest load and again
+	// for queries, so a catalog row alone cannot enroll an internal collection.
+	EmbeddingBuilders embed.BuilderProvider
 
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
@@ -390,12 +463,19 @@ type ResourceServerOptions struct {
 
 	StorageMetrics *StorageMetrics
 
+	// GRPCErrorResultToStatus enables conversion of embedded ErrorResults on in-process calls.
+	GRPCErrorResultToStatus bool
+
 	IndexMetrics *BleveIndexMetrics
 
 	VectorMetrics *VectorMetrics
 
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
+
+	// AuthorizeBeforeFetchEnabled authorizes list metadata before fetching resource values
+	// when the backend implements KeyListBackend.
+	AuthorizeBeforeFetchEnabled bool
 
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue  QOSEnqueuer
@@ -405,9 +485,18 @@ type ResourceServerOptions struct {
 
 	QuotasConfig QuotasConfig
 
+	SearchBackedListConfig SearchBackedListConfig
+
 	// BookmarkFrequency controls how often periodic bookmark events are sent to
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
 	BookmarkFrequency time.Duration
+
+	// NatsWatchMaxAge forces NATS-backed watch clients to re-list periodically.
+	// Zero disables expiry.
+	NatsWatchMaxAge time.Duration
+
+	// WatchExpiry is shared with notification producers. Nil creates a local expiry.
+	WatchExpiry WatchExpiry
 
 	// VectorBackend is the optional pgvector-backed store for semantic search.
 	// nil when the [unified_storage] vector_backend flag is off. When present,
@@ -550,6 +639,11 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		opts.BookmarkFrequency = defaultBookmarkFrequency
 	}
 
+	// Recording sites should not have to check for nil.
+	if opts.StorageMetrics == nil {
+		opts.StorageMetrics = ProvideStorageMetrics(nil)
+	}
+
 	// Initialize the blob storage
 	blobstore, err := initializeBlobStorage(opts)
 	if err != nil {
@@ -574,7 +668,9 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		ctx:                            ctx,
 		cancel:                         cancel,
 		storageMetrics:                 opts.StorageMetrics,
+		grpcErrorResultToStatus:        opts.GRPCErrorResultToStatus,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
+		authorizeBeforeFetchEnabled:    opts.AuthorizeBeforeFetchEnabled,
 		reg:                            opts.Reg,
 		queue:                          opts.QOSQueue,
 		queueConfig:                    opts.QOSConfig,
@@ -582,9 +678,17 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		storageEnabled:                 true,
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
+		searchBackedListResources:      opts.SearchBackedListConfig,
+		manifestSearchFields:           opts.Search.SearchFields,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
+		natsWatchMaxAge:                opts.NatsWatchMaxAge,
+		watchExpiry:                    opts.WatchExpiry,
 		vectorWriteReconciler:          opts.VectorReconciler,
+		embeddingBuilders:              opts.Search.EmbeddingBuilders,
+	}
+	if s.watchExpiry == nil {
+		s.watchExpiry = NewWatchExpiry()
 	}
 
 	if opts.Search.Resources != nil {
@@ -662,22 +766,28 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	log              log.Logger
-	backend          StorageBackend
-	vectorBackend    vector.VectorBackend
-	bulkBatchOptions BulkBatchOptions
-	blob             BlobSupport
-	secure           secrets.InlineSecureValueSupport
-	search           *searchServer
-	searchClient     resourcepb.ResourceIndexClient
-	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
-	access           claims.AccessClient
-	writeHooks       WriteAccessHooks
-	now              func() int64
-	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics   *StorageMetrics
-	overridesService *OverridesService
-	quotasConfig     QuotasConfig
+	log                       log.Logger
+	backend                   StorageBackend
+	vectorBackend             vector.VectorBackend
+	bulkBatchOptions          BulkBatchOptions
+	blob                      BlobSupport
+	secure                    secrets.InlineSecureValueSupport
+	search                    *searchServer
+	searchClient              resourcepb.ResourceIndexClient
+	diagnostics               resourcepb.DiagnosticsServer //nolint:staticcheck
+	access                    claims.AccessClient
+	writeHooks                WriteAccessHooks
+	now                       func() int64
+	mostRecentRV              atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics            *StorageMetrics
+	grpcErrorResultToStatus   bool
+	overridesService          *OverridesService
+	quotasConfig              QuotasConfig
+	searchBackedListResources SearchBackedListConfig
+	// Kind declarations from the manifests, refreshed by the manifest watcher. List
+	// reads the selectable fields from it before asking an index about a selector.
+	// May be nil.
+	manifestSearchFields *SearchFieldsRegistry
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -696,10 +806,11 @@ type server struct {
 	once    sync.Once
 	initErr error
 
-	maxPageSizeBytes int
-	reg              prometheus.Registerer
-	queue            QOSEnqueuer
-	queueConfig      QueueConfig
+	maxPageSizeBytes            int
+	authorizeBeforeFetchEnabled bool
+	reg                         prometheus.Registerer
+	queue                       QOSEnqueuer
+	queueConfig                 QueueConfig
 
 	// This value is used by storage server to artificially delay returning response after successful
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
@@ -709,9 +820,13 @@ type server struct {
 
 	bookmarkFrequency time.Duration
 
+	natsWatchMaxAge time.Duration
+	watchExpiry     WatchExpiry
+
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
+	embeddingBuilders     embed.BuilderProvider
 	indexersWG            sync.WaitGroup
 
 	// statsIngester buffers and flushes usage stats events. nil when the
@@ -730,6 +845,11 @@ func (s *server) Init(ctx context.Context) error {
 		// initialize the search index
 		if s.initErr == nil && s.search != nil {
 			s.initErr = s.search.init(ctx)
+		} else if s.initErr == nil && s.embeddingBuilders != nil {
+			// Storage-only servers also validate after the initial manifest poll.
+			if err := s.embeddingBuilders.Validate(); err != nil {
+				s.initErr = fmt.Errorf("embedding enrollment: %w", err)
+			}
 		}
 
 		// Start watching for changes
@@ -748,11 +868,28 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
+		if s.initErr == nil && s.natsWatchMaxAge > 0 {
+			go s.runNatsWatchExpiry()
+		}
+
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
+}
+
+func (s *server) runNatsWatchExpiry() {
+	for {
+		timer := time.NewTimer(jitteredWatchMaxAge(s.ctx, s.natsWatchMaxAge))
+		select {
+		case <-s.ctx.Done():
+			timer.Stop()
+			return
+		case <-timer.C:
+			s.watchExpiry.Invalidate()
+		}
+	}
 }
 
 // startVectorIndexers launches the vector reconciler (which owns and runs
@@ -1405,9 +1542,8 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	// Don't validate the name format here: a lookup with an odd or
-	// invalid-looking name should fall through to the backend and surface as
-	// NotFound, matching K8s Get semantics. Strict name validation belongs on
+	// Don't validate the name format here: the backend reports invalid names as
+	// BadRequest, after the access check. Strict name validation belongs on
 	// writes (Create/Update/Delete).
 	if r := verifyRequestKeyCollection(req.Key); r != nil {
 		return nil, status.Error(codes.InvalidArgument, r.Message)
@@ -1437,31 +1573,39 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}()
 
 	rsp := s.backend.ReadResource(ctx, req)
-	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
-		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
-	}
-
-	a, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      "get",
-		Group:     req.Key.Group,
-		Resource:  req.Key.Resource,
-		Namespace: req.Key.Namespace,
-		Name:      req.Key.Name,
-	}, rsp.Folder)
-	if err != nil {
-		return &resourcepb.ReadResponse{Error: AsErrorResult(err)}, nil
-	}
-	if !a.Allowed {
-		return &resourcepb.ReadResponse{
-			Error: &resourcepb.ErrorResult{
-				Code: http.StatusForbidden,
-			}}, nil
+	if errRes := s.authorizeRead(ctx, user, req.Key, rsp); errRes != nil {
+		return &resourcepb.ReadResponse{Error: errRes}, nil
 	}
 	return &resourcepb.ReadResponse{
 		ResourceVersion: rsp.ResourceVersion,
 		Value:           rsp.Value,
 		Error:           rsp.Error,
 	}, nil
+}
+
+// authorizeRead applies the "get" access check for an already-read resource,
+// using the folder resolved by the read. It returns nil when access is allowed,
+// or the error result to surface otherwise (403, or the check failure). A
+// NotFound is surfaced without authorizing: a 404 reveals nothing and the read
+// resolved no folder to check.
+func (s *server) authorizeRead(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rsp *BackendReadResponse) *resourcepb.ErrorResult {
+	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
+		return rsp.Error
+	}
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      "get",
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}, rsp.Folder)
+	if err != nil {
+		return AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return &resourcepb.ErrorResult{Code: http.StatusForbidden}
+	}
+	return nil
 }
 
 func (s *server) checkStatsReadAccess(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) error {
@@ -1548,9 +1692,34 @@ func (s *server) GetResourceDailyStats(req *resourcepb.GetResourceDailyStatsRequ
 	return nil
 }
 
-func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
+func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ErrorResult {
+	if req.KeysOnly && req.Options.Key.Namespace != "" {
+		return requireUserNamespace(ctx, req.Options.Key.Namespace)
+	}
+	if _, ok := claims.AuthInfoFrom(ctx); !ok {
+		return &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+	}
+	return nil
+}
+
+//nolint:gocyclo // Temporary list-path instrumentation
+func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *resourcepb.ListResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
-	defer span.End()
+	path := listPathUnknown
+	selectorType := listSelectorType(req)
+	requestedLimit := int64(0)
+	if req != nil {
+		requestedLimit = req.GetLimit()
+	}
+	searchFallback := false
+	defer func() {
+		setListRequestPath(ctx, path)
+		annotateListRequest(span, path, selectorType, requestedLimit, req, rsp)
+		span.End()
+	}()
 
 	if req.Options == nil {
 		return nil, status.Error(codes.InvalidArgument, "missing list options")
@@ -1577,18 +1746,8 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}, nil
 	}
 
-	if req.KeysOnly && req.Options.Key.Namespace != "" {
-		return &resourcepb.ListResponse{
-			Error: NewBadRequestError("keys_only lists are cluster-wide, so the namespace must be empty"),
-		}, nil
-	}
-
-	if _, ok := claims.AuthInfoFrom(ctx); !ok {
-		return &resourcepb.ListResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "no user found in context",
-				Code:    http.StatusUnauthorized,
-			}}, nil
+	if errRes := requireListIdentity(ctx, req); errRes != nil {
+		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 
 	// Do not allow label query for trash/history
@@ -1602,6 +1761,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	// resolves names through Read, which fetches whole objects.
 	if !req.KeysOnly {
 		if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
+			path = listPathFieldSelector
 			return rsp, nil
 		}
 	}
@@ -1624,14 +1784,20 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 	req = filterSelectors(req)
 
-	if s.useSelectorSearch(req) {
+	if s.shouldUseSearchForList(req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
-		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-		if s.storageMetrics != nil {
+		rsp, err = s.listWithSelectors(ctx, req)
+		if !errors.Is(err, errSearchCannotAnswerList) {
+			path = listPathSearch
+			gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+			return rsp, err
 		}
-		return s.listWithSelectors(ctx, req)
+		// The store scan reads the objects themselves, so it answers what the index
+		// cannot. Slower, but right.
+		searchFallback = true
+		s.log.Warn("Search cannot answer List with selectors, falling back to the store", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 	}
 
 	if req.NextPageToken != "" {
@@ -1644,10 +1810,25 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 	switch req.Source {
 	case resourcepb.ListRequest_STORE:
+		if s.authorizeBeforeFetchEnabled {
+			if backend, ok := s.backend.(KeyListBackend); ok {
+				path = listPathStoreAuthorizeFirst
+				if searchFallback {
+					path = listPathSearchFallbackAuthorizeFirst
+				}
+				return s.listAuthorizeBeforeFetch(ctx, req, backend)
+			}
+		}
+		path = listPathStoreFetchFirst
+		if searchFallback {
+			path = listPathSearchFallbackFetchFirst
+		}
 		return s.listAuthorized(ctx, req, s.backend.ListIterator)
 	case resourcepb.ListRequest_HISTORY:
+		path = listPathHistory
 		return s.listAuthorized(ctx, req, s.backend.ListHistory)
 	case resourcepb.ListRequest_TRASH:
+		path = listPathTrash
 		return s.listFromTrash(ctx, req)
 	default:
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
@@ -1735,11 +1916,10 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		}
 
 		extractFn := func(c candidateItem) authz.BatchCheckItem {
-			// keys_only is cluster-wide and has an empty namespace in the key, so
-			// we use the actual item namespace. FilterAuthorized still checks each
-			// item using the authenticated identity from ctx.
+			// Cross-namespace keys-only lists must authorize each item in its own
+			// namespace. Namespaced lists retain the request scope.
 			namespace := key.Namespace
-			if req.KeysOnly {
+			if req.KeysOnly && namespace == "" {
 				namespace = c.namespace
 			}
 			return authz.BatchCheckItem{
@@ -1790,6 +1970,216 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 	})
 
 	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
+}
+
+type authorizedListKeyPull func() (BackendListKey, error, bool)
+
+func (s *server) listAuthorizeBeforeFetch(ctx context.Context, req *resourcepb.ListRequest, backend KeyListBackend) (*resourcepb.ListResponse, error) {
+	rsp := &resourcepb.ListResponse{}
+	var nextToken string
+
+	rv, err := backend.ListKeys(ctx, req, func(keyIter ListKeyIterator) error {
+		nextAuthorized, stop := iter.Pull2(authz.FilterAuthorized(
+			ctx,
+			s.access,
+			listKeyCandidates(keyIter),
+			func(item BackendListKey) authz.BatchCheckItem {
+				return listKeyAuthorizationItem(req, item)
+			},
+			authz.WithTracer(tracer),
+		))
+		defer stop()
+
+		if req.KeysOnly {
+			var err error
+			nextToken, err = s.listAuthorizedKeysOnlyPage(req, rsp, keyIter, nextAuthorized)
+			return err
+		}
+
+		var err error
+		nextToken, err = s.listAuthorizedValuesPage(ctx, req, rsp, backend, keyIter, nextAuthorized)
+		return err
+	})
+
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
+}
+
+func listKeyCandidates(keyIter ListKeyIterator) iter.Seq[BackendListKey] {
+	return func(yield func(BackendListKey) bool) {
+		for keyIter.Next() {
+			if keyIter.Error() != nil || !yield(keyIter.Item()) {
+				return
+			}
+		}
+	}
+}
+
+func listKeyAuthorizationItem(req *resourcepb.ListRequest, item BackendListKey) authz.BatchCheckItem {
+	key := req.Options.Key
+	namespace := key.Namespace
+	if req.KeysOnly && namespace == "" {
+		namespace = item.Key.Namespace
+	}
+	return authz.BatchCheckItem{
+		Name:               item.Key.Name,
+		Folder:             item.Folder,
+		Verb:               utils.VerbGet,
+		Group:              key.Group,
+		Resource:           key.Resource,
+		Namespace:          namespace,
+		FreshnessTimestamp: ResourceVersionTime(item.ResourceVersion),
+	}
+}
+
+func (s *server) listAuthorizedKeysOnlyPage(
+	req *resourcepb.ListRequest,
+	rsp *resourcepb.ListResponse,
+	keyIter ListKeyIterator,
+	nextAuthorized authorizedListKeyPull,
+) (string, error) {
+	var (
+		pageBytes         int
+		lastContinueToken string
+	)
+	for {
+		item, authErr, ok := nextAuthorized()
+		if authErr != nil {
+			return "", authErr
+		}
+		if !ok {
+			return "", keyIter.Error()
+		}
+		if s.listPageFull(req, rsp, pageBytes) {
+			if err := keyIter.Error(); err != nil {
+				return "", err
+			}
+			return lastContinueToken, nil
+		}
+
+		rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+			ResourceVersion: item.ResourceVersion,
+			Namespace:       item.Key.Namespace,
+			Name:            item.Key.Name,
+			Folder:          item.Folder,
+		})
+		pageBytes += proto.Size(rsp.Items[len(rsp.Items)-1])
+		lastContinueToken = item.ContinueToken
+	}
+}
+
+func (s *server) listAuthorizedValuesPage(
+	ctx context.Context,
+	req *resourcepb.ListRequest,
+	rsp *resourcepb.ListResponse,
+	backend KeyListBackend,
+	keyIter ListKeyIterator,
+	nextAuthorized authorizedListKeyPull,
+) (string, error) {
+	pageBytes := 0
+	for {
+		remaining := int(req.Limit) - len(rsp.Items)
+		if req.Limit > 0 && remaining <= 0 {
+			return "", fmt.Errorf("list page reached its item limit before fetching values")
+		}
+
+		batchSize := dataBatchSize
+		if req.Limit > 0 {
+			batchSize = min(batchSize, remaining)
+		}
+		batch, noMoreAuthorizedItems, err := pullAuthorizedListKeyBatch(nextAuthorized, batchSize)
+		if err != nil {
+			return "", err
+		}
+		if len(batch) == 0 {
+			return "", keyIter.Error()
+		}
+
+		values, err := backend.FetchValues(ctx, batch)
+		if err != nil {
+			return "", err
+		}
+
+		for value, err := range values {
+			if err != nil {
+				return "", err
+			}
+			if value == nil || value.Key == nil {
+				return "", fmt.Errorf("list value fetch returned an empty response")
+			}
+			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+				ResourceVersion: value.ResourceVersion,
+				Value:           value.Value,
+			})
+			pageBytes += len(value.Value)
+
+			if s.listPageFull(req, rsp, pageBytes) {
+				nextToken, err := continueTokenAfterFetchedValue(batch, value, noMoreAuthorizedItems, nextAuthorized)
+				if err != nil {
+					return "", err
+				}
+				if err := keyIter.Error(); err != nil {
+					return "", err
+				}
+				return nextToken, nil
+			}
+		}
+		if noMoreAuthorizedItems {
+			if err := keyIter.Error(); err != nil {
+				return "", err
+			}
+			return "", nil
+		}
+	}
+}
+
+func pullAuthorizedListKeyBatch(nextAuthorized authorizedListKeyPull, batchSize int) ([]BackendListKey, bool, error) {
+	batch := make([]BackendListKey, 0, batchSize)
+	for len(batch) < batchSize {
+		item, authErr, ok := nextAuthorized()
+		if authErr != nil {
+			return nil, false, authErr
+		}
+		if !ok {
+			return batch, true, nil
+		}
+		batch = append(batch, item)
+	}
+	return batch, false, nil
+}
+
+func continueTokenAfterFetchedValue(
+	batch []BackendListKey,
+	value *BackendReadResponse,
+	noMoreAuthorizedItems bool,
+	nextAuthorized authorizedListKeyPull,
+) (string, error) {
+	batchIndex := -1
+	for idx, item := range batch {
+		if item.ResourceVersion == value.ResourceVersion && proto.Equal(item.Key, value.Key) {
+			batchIndex = idx
+			break
+		}
+	}
+	if batchIndex < 0 {
+		return "", fmt.Errorf("list value fetch returned an unexpected resource")
+	}
+
+	hasMore := batchIndex+1 < len(batch)
+	if !hasMore && !noMoreAuthorizedItems {
+		_, authErr, ok := nextAuthorized()
+		if authErr != nil {
+			return "", authErr
+		}
+		hasMore = ok
+	}
+	if hasMore {
+		return batch[batchIndex].ContinueToken, nil
+	}
+	return "", nil
+}
+
+func (s *server) listPageFull(req *resourcepb.ListRequest, rsp *resourcepb.ListResponse, pageBytes int) bool {
+	return (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization
@@ -1888,9 +2278,7 @@ func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListR
 	rsp.ResourceVersion = rv
 	rsp.NextPageToken = nextToken
 	gr := key.Group + "/" + key.Resource
-	if s.storageMetrics != nil {
-		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
-	}
+	s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	return rsp, nil
 }
 
@@ -1933,11 +2321,7 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	var broadcasterMetrics *BroadcasterMetrics
-	if s.storageMetrics != nil {
-		broadcasterMetrics = s.storageMetrics.Broadcaster
-	}
-	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics, func(e *WrittenEvent) string {
+	s.broadcaster = NewBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
 		if e == nil || e.Key == nil {
 			return ""
 		}
@@ -1949,13 +2333,25 @@ func (s *server) initWatcher() error {
 //nolint:gocyclo
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
+	if s.ctx.Err() != nil {
+		return nil
+	}
 
-	// When our context is canceled (e.g. client disconnects), downstream calls
-	// like srv.Send may surface that cancellation back to us. Treat it as a
-	// clean shutdown to match the explicit `case <-ctx.Done(): return nil`
-	// branch in the watch loop. Context errors from other contexts are still
-	// propagated.
+	// Capture before setup: invalidations during subscription or snapshot reads must
+	// expire this watch too, even if it has not entered the live loop yet.
+	watchExpiryC := s.watchExpiry.WatchInvalidation()
+
+	// Treat a closed client transport and cancellation of this watch's context
+	// as clean shutdowns. Errors from setup, storage, authorization, or another
+	// context are still propagated.
 	defer func() {
+		// A canceled request can no longer receive the expiry response.
+		if IsResourceVersionExpired(retErr) && ctx.Err() != nil {
+			retErr = nil
+		}
+		if errors.Is(retErr, errWatchSendUnavailable) {
+			retErr = nil
+		}
 		if retErr != nil && ctx.Err() != nil &&
 			(errors.Is(retErr, context.Canceled) || errors.Is(retErr, context.DeadlineExceeded)) {
 			retErr = nil
@@ -2041,8 +2437,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	lastBookmarkRV := int64(-1)
 	sendBookmark := func(rv int64) error {
-		// Don't send repeated bookmarks if no new events were received.
-		if rv <= 0 || rv == lastBookmarkRV {
+		// Don't send repeated or regressing bookmarks.
+		if rv <= 0 || rv <= lastBookmarkRV {
 			return nil
 		}
 
@@ -2050,14 +2446,15 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			Type:     resourcepb.WatchEvent_BOOKMARK,
 			Resource: &resourcepb.WatchEvent_Resource{Version: rv},
 		}); err != nil {
-			return fmt.Errorf("sending bookmark: %w", err)
+			return fmt.Errorf("sending bookmark: %w", watchSendError(err))
 		}
 
 		lastBookmarkRV = rv
 		return nil
 	}
 
-	var lastEmittedRV int64 // tracks the most recent RV sent to the client
+	var processedRV int64 // Includes events deliberately excluded by watch filters.
+	var lastObjectRV int64
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
@@ -2075,7 +2472,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 						Version: iter.ResourceVersion(),
 					},
 				}); err != nil {
-					return err
+					return watchSendError(err)
 				}
 			}
 			return iter.Error()
@@ -2084,9 +2481,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			return err
 		}
 
-		lastEmittedRV = initialEventsRV
+		processedRV = initialEventsRV
 		if req.AllowWatchBookmarks {
-			if err := sendBookmark(lastEmittedRV); err != nil {
+			if err := sendBookmark(processedRV); err != nil {
 				return err
 			}
 		}
@@ -2095,12 +2492,14 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	var since int64 // resource version to start watching from
 	switch {
 	case req.SendInitialEvents:
-		since = lastEmittedRV
+		since = processedRV
 	case req.Since == 0:
 		since = mostRecentRV
 	default:
 		since = req.Since
 	}
+
+	_, isKVBackend := s.backend.(KVBackend)
 
 	// Set up periodic bookmark ticker when the client opted in.
 	var bookmarkC <-chan time.Time
@@ -2110,14 +2509,40 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		bookmarkC = ticker.C
 	}
 
+	expired := func() error {
+		if ctx.Err() != nil {
+			return nil
+		}
+		s.log.Debug("watch: expiring stream to bound stale-state duration",
+			"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
+		return NewResourceVersionExpiredError(since)
+	}
+
 	for {
+		// Prioritize known delivery gaps over buffered live events.
+		select {
+		case <-watchExpiryC:
+			return expired()
+		default:
+		}
 		select {
 		case <-ctx.Done():
 			return nil
+		case <-watchExpiryC:
+			return expired()
 
 		case <-bookmarkC:
-			if err := sendBookmark(lastEmittedRV); err != nil {
-				return err
+			cutoff := time.Now().Add(-filteredBookmarkDelay)
+			cutoffRV := cutoff.UnixMicro()
+			if IsSnowflake(processedRV) {
+				cutoffRV = snowflakeFromTime(cutoff)
+			}
+			// Object sends have already advanced the client's cursor; only filtered progress is held back.
+			bookmarkRV := max(lastObjectRV, min(processedRV, cutoffRV))
+			if bookmarkRV > since {
+				if err := sendBookmark(bookmarkRV); err != nil {
+					return err
+				}
 			}
 
 		case event, ok := <-stream:
@@ -2125,12 +2550,15 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				s.log.Debug("watch events closed")
 				return nil
 			}
-			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
-			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Name, event.Folder) {
-					continue
-				}
-
+			if event.ResourceVersion <= since {
+				continue
+			}
+			// KV notifiers settle and order events across collections. Legacy SQL polls
+			// group/resources separately, so other collections cannot establish progress.
+			if !isKVBackend && (event.Key.Group != key.Group || event.Key.Resource != key.Resource) {
+				continue
+			}
+			if matchesQueryKey(key, event.Key) && checker(event.Key.Name, event.Folder) {
 				value := event.Value
 				// remove the delete marker stored in the value for deleted objects
 				if event.Type == resourcepb.WatchEvent_DELETED {
@@ -2161,20 +2589,29 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 						}
 					}
 				}
+				s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
+				sendStartedAt := time.Now()
 				if err := srv.Send(resp); err != nil {
-					return err
+					return watchSendError(err)
 				}
-				lastEmittedRV = event.ResourceVersion
+				sentAt := time.Now()
+				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
-				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
-					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
-					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
-					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
-					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
-					}
+				if event.ResourceVersion > mostRecentRV {
+					// Resource versions can be either Unix microsecond timestamps (SQL backend)
+					// or snowflake IDs (KV backend). Split the total at Send so upstream
+					// delivery and gRPC transport flow-control wait can be diagnosed separately.
+					s.storageMetrics.observeWatchEvent(
+						event.Key.Group,
+						event.Key.Resource,
+						ResourceVersionTime(event.ResourceVersion),
+						sendStartedAt,
+						sentAt,
+					)
 				}
 			}
+			// Progress is not a delivery cutoff: keep using the fixed starting since.
+			processedRV = max(processedRV, event.ResourceVersion)
 		}
 	}
 }
@@ -2201,9 +2638,9 @@ func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchR
 // search backend and the vector backend live.
 func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
 	// Unimplemented (not a bare error) so API-layer callers can map a
-	// search-disabled server to 501, same as an unconfigured vector store.
+	// search-disabled server to 501.
 	if s.search == nil {
-		return nil, status.Error(codes.Unimplemented, "hybrid search is not configured")
+		return nil, status.Error(codes.Unimplemented, "search index not configured")
 	}
 	return s.search.HybridSearch(ctx, req)
 }
@@ -2590,10 +3027,8 @@ func (s *server) degraded(ctx context.Context, operation, reason string, nsr Nam
 		"operation", operation, "reason", reason,
 		"namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource,
 		"error", err)
-	if s.storageMetrics != nil {
-		s.storageMetrics.DegradedOperations.
-			WithLabelValues(operation, reason, nsr.Group, nsr.Resource).Inc()
-	}
+	s.storageMetrics.DegradedOperations.
+		WithLabelValues(operation, reason, nsr.Group, nsr.Resource).Inc()
 	if span := trace.SpanFromContext(ctx); span != nil {
 		span.AddEvent("degraded_operation", trace.WithAttributes(
 			attribute.String("operation", operation),

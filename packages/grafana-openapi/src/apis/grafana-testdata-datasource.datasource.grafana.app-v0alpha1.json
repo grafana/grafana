@@ -1443,12 +1443,7 @@
             "description": "Secure values allows setting values that are never shown to users The returned properties are only the names of the configured values",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/InlineSecureValue"
-                }
-              ]
+              "$ref": "#/components/schemas/InlineSecureValue"
             }
           },
           "spec": {
@@ -1474,12 +1469,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DataSource"
-                }
-              ]
+              "$ref": "#/components/schemas/DataSource"
             }
           },
           "kind": {
@@ -1561,12 +1551,7 @@
             "description": "Responses is a map of RefIDs (Unique Query ID) to *DataResponse.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
             }
           }
         },

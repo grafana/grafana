@@ -191,22 +191,17 @@ func (b *bleveIndex) hitsToFieldValues(
 			row.Score = new(match.Score)
 		}
 		if schema.includeResourceVersion {
-			value, ok, err := searchHitFieldValue(match, resource.SEARCH_FIELD_RV)
-			if err != nil {
-				return nil, nil, fmt.Errorf("row %d resource version: %w", rowIndex, err)
-			}
-			if ok && value != nil {
-				row.ResourceVersion, err = searchResultInt64(value)
-				if err != nil {
-					return nil, nil, fmt.Errorf("row %d resource version: %w", rowIndex, err)
-				}
-			}
+			row.ResourceVersion = b.hitResourceVersion(match)
 		}
 
 		for fieldIndex, definition := range schema.definitions {
 			value, ok, err := searchHitFieldValue(match, definition.Name)
 			if err != nil {
-				return nil, nil, fmt.Errorf("row %d field %q: %w", rowIndex, definition.Name, err)
+				if definition.Name != resource.SEARCH_FIELD_LEGACY_ID {
+					return nil, nil, fmt.Errorf("row %d field %q: %w", rowIndex, definition.Name, err)
+				}
+				// Table results ignore legacy ID conversion errors, so keep that compatibility.
+				b.logger.Debug("ignoring malformed legacy ID in search result", "resource", match.ID, "error", err)
 			}
 			if !ok || value == nil {
 				continue
@@ -237,6 +232,30 @@ func fieldValueType(fieldType resource.SearchFieldType) (resourcepb.ResourceSear
 	default:
 		return resourcepb.ResourceSearchField_UNSPECIFIED, fmt.Errorf("unsupported field type %q", fieldType)
 	}
+}
+
+// hitResourceVersion reads the resource version a hit was indexed with. The index
+// stores it as a string because a number would come back rounded (see
+// SEARCH_FIELD_RV_STRING), so it is parsed here rather than converted.
+//
+// Returns 0 when the value is absent, which is the case for every document in an
+// index built before the field existed.
+func (b *bleveIndex) hitResourceVersion(match *blevesearch.DocumentMatch) int64 {
+	value, ok := match.Fields[resource.SEARCH_FIELD_RV_STRING]
+	if !ok || value == nil {
+		return 0
+	}
+	text, ok := value.(string)
+	if !ok {
+		b.logger.Debug("ignoring non-string resource version in search result", "resource", match.ID, "type", fmt.Sprintf("%T", value))
+		return 0
+	}
+	rv, err := strconv.ParseInt(text, 10, 64)
+	if err != nil {
+		b.logger.Debug("ignoring invalid resource version in search result", "resource", match.ID, "value", text, "error", err)
+		return 0
+	}
+	return rv
 }
 
 func searchHitFieldValue(match *blevesearch.DocumentMatch, name string) (any, bool, error) {

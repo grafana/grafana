@@ -33,6 +33,12 @@ type notifier interface {
 	Publish(Event)
 }
 
+var (
+	_ notifier = (*pollingNotifier)(nil)
+	_ notifier = (*channelNotifier)(nil)
+	_ notifier = (*natsNotifier)(nil)
+)
+
 type pollingNotifier struct {
 	eventStore *eventStore
 	log        log.Logger
@@ -45,6 +51,7 @@ type notifierOptions struct {
 	enableNatsNotifier bool
 	eventSubscriber    EventSubscriber
 	natsDropped        *prometheus.CounterVec
+	invalidator        Invalidator
 }
 
 type WatchOptions struct {
@@ -52,6 +59,15 @@ type WatchOptions struct {
 	BufferSize  int           // How many events to buffer
 	MinBackoff  time.Duration // Minimum interval between polling requests
 	MaxBackoff  time.Duration // Maximum interval between polling requests
+
+	// captureReady is a buffered, one-shot startup acknowledgment, not a timer.
+	captureReady chan<- error
+}
+
+func (opts WatchOptions) captured(err error) {
+	if opts.captureReady != nil {
+		opts.captureReady <- err
+	}
 }
 
 func (opts WatchOptions) normalize() WatchOptions {
@@ -73,7 +89,7 @@ func (opts WatchOptions) normalize() WatchOptions {
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	if opts.enableNatsNotifier {
 		if opts.eventSubscriber != nil && opts.eventSubscriber.Enabled() {
-			return newNatsNotifier(opts.eventSubscriber, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
+			return newNatsNotifier(opts.eventSubscriber, opts.invalidator, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
 		}
 		opts.log.Warn("nats notifier requested but subscriber unavailable, falling back to polling")
 	}
@@ -112,6 +128,7 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 	cn.mu.Lock()
 	cn.subscribers[raw] = struct{}{}
 	cn.mu.Unlock()
+	opts.captured(nil)
 
 	// Output channel with settled, sorted events, returned to the watcher.
 	out := make(chan Event, opts.BufferSize)
@@ -211,7 +228,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 		lastEmittedRV = 0 // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
+		if opts.captureReady != nil {
+			opts.captured(err)
+			close(events)
+			return events
+		}
 	}
+	opts.captured(nil)
 
 	go func() {
 		defer close(events)

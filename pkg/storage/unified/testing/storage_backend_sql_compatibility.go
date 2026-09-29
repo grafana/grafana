@@ -26,15 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-type SQLKVBackendMode string
-
-const (
-	SQLKVBackendModeRVManager         SQLKVBackendMode = "rvmanager"
-	SQLKVBackendModeLeases            SQLKVBackendMode = "leases"
-	SQLKVBackendModeOptimisticLocking SQLKVBackendMode = "optimistic-locking"
-)
-
-func NewTestSqlKvBackend(t *testing.T, ctx context.Context, mode SQLKVBackendMode) (resource.KVBackend, sqldb.DB) {
+func NewTestSqlKvBackend(t *testing.T, ctx context.Context, backwardsCompatible bool) (resource.KVBackend, sqldb.DB) {
 	t.Helper()
 
 	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
@@ -56,8 +48,7 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, mode SQLKVBackendMod
 		kvOpts.UseChannelNotifier = true
 	}
 
-	switch mode {
-	case SQLKVBackendModeRVManager:
+	if backwardsCompatible {
 		dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 			Dialect: dialect,
@@ -66,12 +57,8 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, mode SQLKVBackendMod
 		require.NoError(t, err)
 
 		kvOpts.RvManager = rvManager
-	case SQLKVBackendModeLeases:
-		kvOpts.EnableKVLeases = true
+	} else {
 		kvOpts.Holder = "test-holder-" + uuid.NewString()
-	case SQLKVBackendModeOptimisticLocking:
-	default:
-		require.FailNowf(t, "invalid SQLKV backend mode", "mode: %s", mode)
 	}
 
 	backend, err := resource.NewKVStorageBackend(kvOpts)
@@ -1817,10 +1804,7 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 	}
 
 	// Update resources (only update as many as we have, limited by creates and updates count)
-	updateCount := counts.Updates
-	if updateCount > counts.Creates {
-		updateCount = counts.Creates // Can't update more resources than we created
-	}
+	updateCount := min(counts.Updates, counts.Creates) // Can't update more resources than we created
 	for i := 1; i <= updateCount; i++ {
 		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
@@ -1855,10 +1839,7 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 	}
 
 	// Delete resources (only delete as many as we have, limited by creates and deletes count)
-	deleteCount := counts.Deletes
-	if deleteCount > updateCount {
-		deleteCount = updateCount // Can only delete resources that were updated (have latest RV)
-	}
+	deleteCount := min(counts.Deletes, updateCount) // Can only delete resources that were updated (have latest RV)
 	for i := 1; i <= deleteCount; i++ {
 		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",

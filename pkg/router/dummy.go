@@ -45,10 +45,12 @@ func (d *dummyBackend) Load(context.Context) (http.Handler, error) {
 	return d, nil
 }
 
+func (d *dummyBackend) Source() string { return sourceDummy }
+
 func (d *dummyBackend) Key() string {
 	return "static"
 }
 
 func (d *dummyBackend) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	_, _ = fmt.Fprint(w, "dummy backend for group: ", d.group)
+	_, _ = fmt.Fprint(w, "dummy backend for group: ", d.group) // nolint:gosec // G705: XSS via taint analysis (gosec)
 }

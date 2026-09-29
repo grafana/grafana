@@ -48,13 +48,11 @@ func TestService_getBasicRolePermissions_concurrentOrgsAreIsolated(t *testing.T)
 	got := make([][]string, orgs)
 
 	for i := range orgs {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			orgID := int64(i + 1)
 			perms, err := s.getBasicRolePermissions(context.Background(), "Editor", orgID)
 			errs[i], got[i] = err, folderScopes(perms)
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -95,7 +93,7 @@ func setupBasicRoleService(t *testing.T) *Service {
 	// Fixed-role registration builds the process-wide basic role by repeated
 	// append, which leaves the slice with spare capacity.
 	editor := s.roles["Editor"]
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		editor.Permissions = append(editor.Permissions, accesscontrol.Permission{
 			Action: fmt.Sprintf("fixed:action:%d", i),
 		})

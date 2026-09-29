@@ -17,6 +17,7 @@ import { MetricDetailPanel } from './MetricDetailPanel';
 import { MetricsList } from './MetricsList';
 import { SignalCard } from './SignalCard';
 import { dsKey, rangeKey } from './data/metricResourceClient';
+import { trackSignalExplorerPanelOpened } from './tracking';
 import { type MetricSelection } from './types';
 
 interface CardDescriptor {
@@ -105,6 +106,18 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
       };
     });
   }, [queries, paneDatasource, dataSourceItems, logosByType]);
+
+  useEffect(() => {
+    trackSignalExplorerPanelOpened({
+      // A Mixed pane's own type is the unhelpful `datasource`, and no one card speaks for the pane;
+      // the per-card type reaches the other three events instead.
+      data_source_type: paneDatasource?.meta?.mixed ? 'mixed' : paneDatasource?.type,
+      stacked_queries_count: cards.length,
+    });
+    // Mount only: ContentOutline renders this component only while the sidebar is visible, so
+    // mounting is the opening the event describes. Both values above are read as they were then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // A card's expanded state has to go away with the card's ability to expand:
   // - a deleted query, because Explore hands out the lowest unused refId when a query is
@@ -223,6 +236,7 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
                   refId={card.refId}
                   dsUid={card.dsUid}
                   dsType={card.dsType}
+                  stackedQueriesCount={cards.length}
                   timeRange={timeRange}
                   selectedMetric={selectedMetric?.refId === card.refId ? selectedMetric.metric.name : undefined}
                   onSelectMetric={selectMetric}

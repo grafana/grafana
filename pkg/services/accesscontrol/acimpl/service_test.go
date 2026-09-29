@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
@@ -146,6 +147,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 				nil,
 				permreg.ProvidePermissionRegistry(),
 				nil,
+				iam.Features{},
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
@@ -1253,7 +1255,7 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 			if tt.withActionSets {
 				actionSetSvc := resourcepermissions.NewActionSetService()
 				for set, actions := range tt.actionSets {
-					resourceName := strings.Split(set, ":")[0]
+					resourceName, _, _ := strings.Cut(set, ":")
 					permissionName := strings.Split(set, ":")[1]
 					setOptions := resourcepermissions.Options{Resource: resourceName}
 					actionSetName := setOptions.GetActionSetName(permissionName)

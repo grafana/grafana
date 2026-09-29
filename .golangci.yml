@@ -214,13 +214,13 @@ linters:
         text: ST1001
       - linters:
           - staticcheck
-        text: 'SA1019: http.CloseNotifier'
+        text: 'SA1019: (net/)?http\.CloseNotifier'
       - linters:
           - staticcheck
         text: 'SA1019: strings.Title'
       - linters:
           - staticcheck
-        text: 'SA1019: "go.opentelemetry.io/otel/exporters/jaeger"'
+        text: 'SA1019: "?go\.opentelemetry\.io/otel/exporters/jaeger"? is deprecated:'
       - linters:
           - staticcheck
         text: use fake service and real access control evaluator instead

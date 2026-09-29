@@ -320,10 +320,7 @@ func generateTestPermissions(numActions, totalPerms int) []Permission {
 	permissions := make([]Permission, 0, totalPerms)
 
 	// Calculate base scopes per action
-	basePerAction := totalPerms / numActions
-	if basePerAction < 1 {
-		basePerAction = 1
-	}
+	basePerAction := max(totalPerms/numActions, 1)
 
 	for i := 0; i < numActions && len(permissions) < totalPerms; i++ {
 		// Add variance: some actions get 2x scopes, some get 0.5x

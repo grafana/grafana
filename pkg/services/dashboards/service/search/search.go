@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -56,12 +57,29 @@ var (
 		resource.SEARCH_FIELD_LEGACY_ID,
 		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 	}
+
+	// tableOnlyFields have no typed field-value definition. The table result format silently
+	// skips unknown response fields, but the FIELD_VALUES format rejects them, so requests
+	// using that format must leave these out.
+	tableOnlyFields = []string{
+		resource.SEARCH_FIELD_LABELS,
+		resource.SEARCH_FIELD_UPDATED_BY,
+	}
+
+	// FieldValueIncludeFields is IncludeFields reduced to what the FIELD_VALUES result format
+	// accepts. Note the per-label "labels.<key>" entries stay: only the bare "labels" is untyped.
+	FieldValueIncludeFields = slices.DeleteFunc(slices.Clone(IncludeFields), func(field string) bool {
+		return slices.Contains(tableOnlyFields, field)
+	})
 )
 
+// SearchFunc is in practice only invoking the unified storage search grpc API due to which we handle errors from it as
+// if they were grpc errors. If other implementation are considered the error handling will need changes.
 type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
 
 // SearchAll executes a search request and paginates through all results by incrementing the offset until the offset is greater than total hits
 // or it hits an empty page.
+// Callers that use searchFn directly must call ParseResults, or embedded errors are silently dropped.
 func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest, searchFn SearchFunc) (v0alpha1.SearchResults, error) {
 	if request.Limit == 0 {
 		request.Limit = 100000
@@ -107,9 +125,9 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
-		// Wrap via GetError so the status code/reason survives, letting callers
-		// classify transient search failures (e.g. 429/503) as retryable.
-		return v0alpha1.SearchResults{}, fmt.Errorf("error searching: %w", resource.GetError(result.Error))
+		// Return the status error directly because Kubernetes response writers
+		// do not unwrap errors when determining the HTTP status.
+		return v0alpha1.SearchResults{}, resource.GetError(result.Error)
 	}
 
 	switch result.ResultFormat {

@@ -43,6 +43,11 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	deleteUserAuth := func(userID int64) sqltemplate.SQLTemplate {
+		v := newDeleteUserAuth(nodb, userID)
+		return &v
+	}
+
 	createOrgUser := func(cmd *CreateOrgUserCommand) sqltemplate.SQLTemplate {
 		v := newCreateOrgUser(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -635,6 +640,16 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "delete_org_user_different_id",
 					Data: deleteOrgUser(456),
+				},
+			},
+			sqlDeleteUserAuthTemplate: {
+				{
+					Name: "delete_user_auth_basic",
+					Data: deleteUserAuth(123),
+				},
+				{
+					Name: "delete_user_auth_different_id",
+					Data: deleteUserAuth(456),
 				},
 			},
 			sqlCreateTeamTemplate: {
