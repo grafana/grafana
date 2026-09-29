@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { lazy, Suspense, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -13,11 +13,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import {
-  AddSectionAnnotationButton,
-  useSectionAnnotationLayers,
-  SectionAnnotationsList,
-} from '../../sidebar/SectionAnnotationsList';
+import { AddSectionAnnotationButton, useSectionAnnotationLayers } from '../../sidebar/SectionAnnotationActions';
 import {
   getSectionFiltersCount,
   AddSectionFilterButton,
@@ -36,6 +32,13 @@ import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
 import { type TabItem } from './TabItem';
+
+// The list pulls in the annotation editor and data source picker; keep them out of the main bundle
+const SectionAnnotationsList = lazy(() =>
+  import(/* webpackChunkName: "dashboard-edit-actions" */ '../../sidebar/SectionAnnotationsList').then((m) => ({
+    default: m.SectionAnnotationsList,
+  }))
+);
 
 export function useSidebarOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
@@ -92,7 +95,11 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
         title: '',
         id: SidebarCategoryType.TabSectionAnnotationsList,
         skipField: true,
-        render: () => <SectionAnnotationsList sectionOwner={model} />,
+        render: () => (
+          <Suspense fallback={null}>
+            <SectionAnnotationsList sectionOwner={model} />
+          </Suspense>
+        ),
       })
     );
 

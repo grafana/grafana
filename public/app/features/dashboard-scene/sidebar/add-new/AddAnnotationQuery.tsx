@@ -7,7 +7,7 @@ import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { annotationEditActions } from '../../settings/annotations/actions';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { addSectionAnnotation } from '../SectionAnnotationsList';
+import { addSectionAnnotation } from '../SectionAnnotationActions';
 
 import { AddButton } from './AddButton';
 
