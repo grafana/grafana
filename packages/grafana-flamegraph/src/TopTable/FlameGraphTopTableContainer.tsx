@@ -85,7 +85,8 @@ const FlameGraphTopTableContainer = memo(
               theme,
               colorScheme,
               search,
-              sandwichItem
+              sandwichItem,
+              focusedItemIndexes
             );
             return (
               <Table
@@ -135,14 +136,37 @@ function getFocusedRanges(data: FlameGraphDataContainer, focusedItemIndexes?: nu
     return [[0, data.data.length]];
   }
 
-  return focusedItemIndexes.map((start) => {
+  const ranges: Array<[number, number]> = [];
+  // Sorted so nested ranges (recursion, or merged nodes overlapping) can be skipped and not counted twice.
+  for (const start of [...focusedItemIndexes].sort((a, b) => a - b)) {
+    const last = ranges[ranges.length - 1];
+    if (last && start < last[1]) {
+      continue;
+    }
     const level = data.getLevel(start);
     let end = start + 1;
     while (end < data.data.length && data.getLevel(end) > level) {
       end++;
     }
-    return [start, end];
-  });
+    ranges.push([start, end]);
+  }
+  return ranges;
+}
+
+function getTotalTicks(data: FlameGraphDataContainer, focusedItemIndexes?: number[]): [number, number | undefined] {
+  if (!focusedItemIndexes || focusedItemIndexes.length === 0) {
+    const levels = data.getLevels();
+    return [levels.length ? levels[0][0].value : 0, levels.length ? levels[0][0].valueRight : undefined];
+  }
+
+  // Same as the level items, value is left + right for diff profiles.
+  let total = 0;
+  let totalRight = 0;
+  for (const i of focusedItemIndexes) {
+    total += data.getValue(i) + data.getValueRight(i);
+    totalRight += data.getValueRight(i);
+  }
+  return [total, totalRight];
 }
 
 function addRangeToTable(
@@ -201,7 +225,8 @@ function buildTableDataFrame(
   theme: GrafanaTheme2,
   colorScheme: ColorScheme | ColorSchemeDiff,
   search?: string,
-  sandwichItem?: string
+  sandwichItem?: string,
+  focusedItemIndexes?: number[]
 ): DataFrame {
   const actionField: Field = createActionField(onSandwich, onSearch, search, sandwichItem);
 
@@ -247,10 +272,8 @@ function buildTableDataFrame(
       { type: MappingType.RangeToText, options: { from: -Infinity, to: 0, result: { color: removeColor } } },
     ];
 
-    // For this we don't really consider sandwich view even though you can switch it on.
-    const levels = data.getLevels();
-    const totalTicks = levels.length ? levels[0][0].value : 0;
-    const totalTicksRight = levels.length ? levels[0][0].valueRight : undefined;
+    // Percentages are relative to the focused subtree if there is one, otherwise to the whole profile.
+    const [totalTicks, totalTicksRight] = getTotalTicks(data, focusedItemIndexes);
 
     for (let key in table) {
       actionField.values.push(null);
@@ -432,6 +455,6 @@ const getStylesActionCell = () => {
   };
 };
 
-export { buildFilteredTable };
+export { buildFilteredTable, getTotalTicks };
 
 export default FlameGraphTopTableContainer;

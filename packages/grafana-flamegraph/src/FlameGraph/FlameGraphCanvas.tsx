@@ -216,7 +216,7 @@ const FlameGraphCanvas = ({
           onItemFocus={() => {
             setRangeMin(clickedItemData.item.start / totalViewTicks);
             setRangeMax((clickedItemData.item.start + clickedItemData.item.value) / totalViewTicks);
-            onItemFocused(clickedItemData);
+            onItemFocused({ ...clickedItemData, direction });
           }}
           onSandwich={() => {
             onSandwich(data.getLabel(clickedItemData.item.itemIndexes[0]));

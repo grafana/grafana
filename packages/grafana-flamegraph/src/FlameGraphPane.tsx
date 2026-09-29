@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { escapeStringForRegex } from '@grafana/data';
 
@@ -168,6 +168,11 @@ const FlameGraphPane = ({
     }
   }, [focusedItemIndexes, dataContainer, focusedItemData]);
 
+  const tableFocusIndexes = useMemo(
+    () => getTableFocusIndexes(focusedItemData, sandwichItem),
+    [focusedItemData, sandwichItem]
+  );
+
   const resetFocus = useCallback(() => {
     setFocusedItemData(undefined);
     setRangeMin(0);
@@ -235,7 +240,7 @@ const FlameGraphPane = ({
             onSymbolClick={onSymbolClick}
             search={search}
             matchedLabels={matchedLabels}
-            focusedItemIndexes={focusedItemData?.item.itemIndexes}
+            focusedItemIndexes={tableFocusIndexes}
             sandwichItem={sandwichItem}
             onSandwich={setSandwichItem}
             onSearch={onTopTableSearch}
@@ -312,6 +317,31 @@ const FlameGraphPane = ({
 
   return <div className={styles.paneWrapper}>{content}</div>;
 };
+
+// Rows of the data frame the table should be scoped to. In the sandwich callers tree the focused item is an ancestor of
+// the sandwiched function and its children are copies that lead down to it, so we resolve to the sandwiched rows
+// (leaves) instead. Their subtrees are what the focused caller path contributes.
+function getTableFocusIndexes(focusedItemData: ClickedItemData | undefined, sandwichItem: string | undefined) {
+  if (!focusedItemData) {
+    return undefined;
+  }
+
+  if (!sandwichItem || focusedItemData.direction !== 'parents') {
+    return focusedItemData.item.itemIndexes;
+  }
+
+  const indexes = new Set<number>();
+  const stack = [focusedItemData.item];
+  while (stack.length) {
+    const item = stack.pop()!;
+    if (item.children.length === 0) {
+      item.itemIndexes.forEach((i) => indexes.add(i));
+    } else {
+      stack.push(...item.children);
+    }
+  }
+  return Array.from(indexes);
+}
 
 function getStyles() {
   return {

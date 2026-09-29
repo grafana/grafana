@@ -5,6 +5,8 @@ export type ClickedItemData = {
   posY: number;
   label: string;
   item: LevelItem;
+  // Which tree the item was clicked in. Only differs from 'children' for the callers tree of the sandwich view.
+  direction?: 'children' | 'parents';
 };
 
 export enum SampleUnit {

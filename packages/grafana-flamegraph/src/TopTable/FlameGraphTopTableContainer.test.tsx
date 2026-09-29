@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -9,7 +9,7 @@ import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
 import { ColorScheme } from '../types';
 
-import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
+import FlameGraphTopTableContainer, { buildFilteredTable, getTotalTicks } from './FlameGraphTopTableContainer';
 
 describe('FlameGraphTopTableContainer', () => {
   const setup = () => {
@@ -224,5 +224,42 @@ describe('buildFilteredTable', () => {
     const result = buildFilteredTable(container!, new Set(['3', '2']), [1]);
 
     expect(result).toEqual({ '3': { self: 3, total: 3, totalRight: 0 } });
+  });
+
+  it('should not count nested focused items twice', () => {
+    const container = textToDataContainer(`
+[0//////]
+[1//////]
+[1//]
+    `);
+    // Rows 1 and 2 are both label 1 and row 2 is inside row 1's subtree.
+    const result = buildFilteredTable(container!, undefined, [1, 2]);
+
+    expect(result['1']).toEqual({ self: 9, total: 9, totalRight: 0 });
+  });
+});
+
+describe('getTotalTicks', () => {
+  const diffContainer = () =>
+    new FlameGraphDataContainer(
+      createDataFrame({
+        fields: [
+          { name: 'level', values: [0, 1, 1] },
+          { name: 'label', values: ['root', 'a', 'b'], type: FieldType.string },
+          { name: 'value', values: [10, 4, 6] },
+          { name: 'valueRight', values: [20, 15, 5] },
+          { name: 'self', values: [0, 4, 6] },
+          { name: 'selfRight', values: [0, 15, 5] },
+        ],
+      }),
+      { collapsing: false }
+    );
+
+  it('should use the whole profile without focus', () => {
+    expect(getTotalTicks(diffContainer())).toEqual([30, 20]);
+  });
+
+  it('should use the focused subtree, left plus right', () => {
+    expect(getTotalTicks(diffContainer(), [1])).toEqual([19, 15]);
   });
 });
