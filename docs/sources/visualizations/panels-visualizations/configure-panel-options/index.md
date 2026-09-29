@@ -109,7 +109,7 @@ If you need each panel to have a unique, stable layout position or individual se
 ## Show/hide rules
 
 You can configure panels to be shown or hidden based on rules.
-For example, you can set a panel to be hidden if there's no data returned by a query or a tab to only be shown if a specific variable value is present.
+For example, you can set a panel to be hidden if there's no data returned by a query or to only be shown if a specific variable value is present.
 
 {{% shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/_index.md" id="show-hide-1" %}}
 
@@ -119,7 +119,7 @@ For example, you can set a panel to be hidden if there's no data returned by a q
 
 ### Template variable rule
 
-Show or hide a panel dynamically based on the variable value.
+Show or hide a panel dynamically based on a variable value.
 You can select any variable that's configured for the dashboard and choose from the following operators for maximum flexibility:
 
 - Equals
@@ -127,7 +127,7 @@ You can select any variable that's configured for the dashboard and choose from 
 - Matches (regular expression values)
 - Not matches (regular expression values)
 
-You can [add more variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#add-variables) if you need to without leaving the dashboard.
+You can [add more variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables) if you need to without leaving the dashboard.
 
 ### Time range less than rule
 
@@ -151,18 +151,16 @@ To configure a show/hide rule, follow these steps:
 1. Click **+ Add rule**.
 1. Select a rule type:
    - **Query result**: Show or hide a panel based on query results. Choose from **Has data** and **No data**.
-   - **Template variable**: Show or hide the panel dynamically based on the variable value. Select a variable and operator and enter a value.
+   - **Template variable**: Show or hide the panel dynamically based on the variable value. Select a variable and operator, and enter a value.
    - **Time range less than**: Show or hide the panel if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
 
-1. If you've configured more than rule, under **Match rules**, select one of the following:
+1. If you've configured multiple rules, the **Match rules** option displays. Select one of the following:
    - **Match all**: The panel  is shown or hidden only if _all_ the rules are matched.
    - **Match any**: The panel is shown or hidden if _any_ of the rules are matched.
 
-   This option is only displayed if you add multiple rules.
-
-1. When you've finished setting rules, click **Save**.
+1. When you've finished setting rules, save the dashboard.
 1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
+1. Click **Save** again.
 1. Click **Exit edit**
 
 Hidden panels aren't visible when the dashboard is in view mode.
