@@ -10,6 +10,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { edit } from '../../actions/utils/edit';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
+import { annotationQueryWithDisplay, isAnnotationLabelHidden } from './annotationDisplay';
 
 export function AnnotationQueryEditorModal({ layer, onClose }: { layer: AnnotationLayer; onClose: () => void }) {
   const queryOnOpen = useRef(layer.state.query);
@@ -69,21 +70,26 @@ function AnnotationDataSourcePicker({ layer }: { layer: AnnotationLayer }) {
     (ds: DataSourceInstanceSettings) => {
       const dsRef = getDataSourceRef(ds);
 
-      // If the data source type changed, reset the query to defaults
-      const newQuery =
-        query.datasource?.type !== dsRef.type
-          ? {
-              datasource: dsRef,
-              builtIn: query.builtIn,
-              enable: query.enable,
-              iconColor: query.iconColor,
-              name: query.name,
-              hide: query.hide,
-              filter: query.filter,
-              mappings: query.mappings,
-              type: query.type,
-            }
-          : { ...query, datasource: dsRef };
+      let newQuery: typeof query = { ...query, datasource: dsRef };
+
+      // If the data source type changed, reset the query to defaults but keep how its control is displayed
+      if (query.datasource?.type !== dsRef.type) {
+        const resetQuery: typeof query = {
+          datasource: dsRef,
+          builtIn: query.builtIn,
+          enable: query.enable,
+          iconColor: query.iconColor,
+          name: query.name,
+          filter: query.filter,
+          mappings: query.mappings,
+          type: query.type,
+        };
+        newQuery = annotationQueryWithDisplay(resetQuery, {
+          isHidden: Boolean(query.hide),
+          placement: query.placement,
+          hideLabel: isAnnotationLabelHidden(query),
+        });
+      }
 
       layer.setState({ query: newQuery });
       layer.runLayer();
