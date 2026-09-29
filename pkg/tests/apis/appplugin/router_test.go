@@ -369,11 +369,16 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		t.Cleanup(func() { _ = resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{}) })
 		requireName := func(events <-chan string, what string) {
 			t.Helper()
-			select {
-			case name := <-events:
-				require.Equal(t, created.GetName(), name)
-			case <-ctx.Done():
-				t.Fatalf("the informer saw no %s: %v", what, ctx.Err())
+			// Initial sync also emits add events for objects from earlier subtests.
+			for {
+				select {
+				case name := <-events:
+					if name == created.GetName() {
+						return
+					}
+				case <-ctx.Done():
+					t.Fatalf("the informer saw no %s for %q: %v", what, created.GetName(), ctx.Err())
+				}
 			}
 		}
 		requireName(added, "add")
