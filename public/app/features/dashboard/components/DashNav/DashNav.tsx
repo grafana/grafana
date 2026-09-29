@@ -33,7 +33,6 @@ import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events
 import {
   type DynamicDashNavButtonModel,
   dynamicDashNavActions,
-  registerDynamicDashNavAction,
 } from '../../../dashboard-scene/utils/registerDynamicDashNavAction';
 
 import { DashNavTimeControls } from './DashNavTimeControls';
@@ -52,14 +51,6 @@ interface OwnProps {
   hideTimePicker: boolean;
   folderTitle?: string;
   title: string;
-}
-
-export function addCustomLeftAction(content: DynamicDashNavButtonModel) {
-  registerDynamicDashNavAction('left', content);
-}
-
-export function addCustomRightAction(content: DynamicDashNavButtonModel) {
-  registerDynamicDashNavAction('right', content);
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
