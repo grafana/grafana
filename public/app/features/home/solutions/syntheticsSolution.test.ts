@@ -57,6 +57,7 @@ beforeEach(() => {
   mockAccessibleAppPage.mockReset();
   mockAccessibleAppPage.mockImplementation(async (appId, path) => `/a/${appId}${path}`);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
 });
 
 afterEach(() => jest.restoreAllMocks());
@@ -262,6 +263,13 @@ describe('syntheticsSolution CTA and offer', () => {
     expect(cta?.href).toMatch(/^\/explore\?left=/);
     expect(cta?.action).toBe('open_solution');
     expect(decodeURIComponent(cta!.href)).toContain('sm-prom');
+  });
+
+  it('omits the Explore fallback when the user cannot access Explore', async () => {
+    mockAccessibleAppPage.mockResolvedValue(null);
+    jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(false);
+
+    await expect(syntheticsSolution().cta()).resolves.toBeNull();
   });
 
   it('offers the accessible setup flow after a definitive no-data result', async () => {

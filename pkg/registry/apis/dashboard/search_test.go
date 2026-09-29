@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -67,6 +69,31 @@ func TestSearch(t *testing.T) {
 
 		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
 	})
+}
+
+func TestSearchErrorStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{Name: "dashboard", Group: "dashboard.grafana.app", Kind: "dashboards", Uid: "uid", RetryAfterSeconds: 12},
+	}
+	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
+	require.NoError(t, err)
+	for name, client := range map[string]*MockClient{
+		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
+		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
+	} {
+		t.Run(name, func(t *testing.T) {
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
+			req := httptest.NewRequest("GET", "/search", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+			recorder := httptest.NewRecorder()
+			handler.DoSearch(recorder, req)
+			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
+			var got metav1.Status
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
+			require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), got)
+		})
+	}
 }
 
 func TestVectorSearch(t *testing.T) {
@@ -1658,6 +1685,7 @@ type MockClient struct {
 	LastSearchRequest *resourcepb.ResourceSearchRequest
 
 	MockResponses []*resourcepb.ResourceSearchResponse
+	MockError     error
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
 
@@ -1714,6 +1742,9 @@ var mockResults = []MockResult{
 }
 
 func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if m.MockError != nil {
+		return nil, m.MockError
+	}
 	m.LastSearchRequest = in
 	m.MockCalls = append(m.MockCalls, in)
 

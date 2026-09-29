@@ -65,12 +65,10 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
 | `kubernetesAlertingHistorian`                | Adds support for Kubernetes alerting historian APIs                                                                                 | Yes                |
-| `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                            | Yes                |
 | `alertingNotificationHistoryRuleViewer`      | Enables the notification history tab in the rule viewer                                                                             | Yes                |
 | `alertingNotificationHistoryGlobal`          | Enables the notification history global menu item viewer                                                                            | Yes                |
 | `alertingNotificationHistoryTriage`          | Enables the notification history timeline in the triage instance details drawer                                                     | Yes                |
 | `alertingNotificationHistoryDetail`          | Enables the notification history detail page                                                                                        | Yes                |
-| `react19`                                    | Whether to use the new React 19 runtime                                                                                             | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |

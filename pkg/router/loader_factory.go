@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -32,8 +33,9 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 // RoutesLoaderClients groups clients that are constructed by the router module
 // before the remaining routes loader dependencies are initialized.
 type RoutesLoaderClients struct {
-	Resource     resource.ResourceClient
-	Access       types.AccessClient
-	DualWrite    dualwrite.Service
-	SecureValues secret.InlineSecureValueSupport
+	RESTConfigProvider restcfg.RestConfigProvider
+	Resource           resource.ResourceClient
+	Access             types.AccessClient
+	DualWrite          dualwrite.Service
+	SecureValues       secret.InlineSecureValueSupport
 }

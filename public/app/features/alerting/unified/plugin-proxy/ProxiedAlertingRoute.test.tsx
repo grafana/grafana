@@ -2,6 +2,7 @@ import { useLocation } from 'react-use';
 import { act, render, screen } from 'test/test-utils';
 
 import { setLogger } from '@grafana/runtime/unstable';
+import * as appNotification from 'app/core/copy/appNotification';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { setupMswServer } from '../mockApi';
@@ -61,6 +62,18 @@ afterEach(() => {
   jest.useRealTimers();
   jest.restoreAllMocks();
 });
+
+/** The notification goes into the redux store, which nothing renders here — so watch the call instead. */
+function mockAppNotifications() {
+  const info = jest.fn();
+  jest.spyOn(appNotification, 'useAppNotification').mockReturnValue({
+    success: jest.fn(),
+    warning: jest.fn(),
+    error: jest.fn(),
+    info,
+  });
+  return info;
+}
 
 function CorePage() {
   corePageRendered();
@@ -138,6 +151,27 @@ describe('withRouteProxy', () => {
     // Mounting it fires off every request it makes, for a page we're about to leave. The render
     // right after the plugin check settles is the one that's easy to get wrong.
     expect(corePageRendered).not.toHaveBeenCalled();
+  });
+
+  it('tells the person why the page changed under them', async () => {
+    const info = mockAppNotifications();
+
+    renderProxiedRoute(DATA_SOURCE_URL);
+
+    expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}`)).toBeInTheDocument();
+    expect(info).toHaveBeenCalledWith(
+      'Opened in the Prometheus Alerting plugin',
+      'Data source managed alerting is handled by the Prometheus Alerting plugin.'
+    );
+  });
+
+  it('says nothing when the page stays on Grafana', async () => {
+    const info = mockAppNotifications();
+
+    renderProxiedRoute(GRAFANA_URL);
+
+    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
+    expect(info).not.toHaveBeenCalled();
   });
 
   it('keeps the query string when redirecting', async () => {

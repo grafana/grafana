@@ -11,6 +11,8 @@ Each function checks for the new host API at runtime and falls back to the
 legacy equivalent when it's not available, so a single call works across
 Grafana versions.
 
+Ships both ESM and CommonJS builds, so it works with `import` and `require`.
+
 ## Domains
 
 - `@grafana/plugin-compat/datasources` — `getDataSourceInstance`,

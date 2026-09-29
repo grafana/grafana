@@ -146,6 +146,41 @@ func TestPerKindTranslateQuery_extractRoundTrip(t *testing.T) {
 	assert.Empty(t, f.groupsExclude)
 }
 
+// TestPerKindTranslateQuery_statusFilters covers state and health: In and NotIn
+// split into the include and exclude sides the legacy store pushes down to
+// alert_rule.k8s_status.
+func TestPerKindTranslateQuery_statusFilters(t *testing.T) {
+	t.Run("alert rule", func(t *testing.T) {
+		q := query()
+		q.Where = perKindAndNode(
+			perKindFilterLeaf(fieldState, perKindFilterOperatorIn, "firing", "pending"),
+			perKindFilterLeaf(fieldHealth, perKindFilterOperatorNotIn, "error", "nodata"),
+		)
+
+		f := extractFilters(translate(t, q).req)
+		assert.Equal(t, listFilter{include: []string{"firing", "pending"}}, f.states)
+		assert.Equal(t, listFilter{exclude: []string{"error", "nodata"}}, f.healths)
+	})
+
+	t.Run("recording rule health", func(t *testing.T) {
+		q := query()
+		q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: fieldHealth, Operator: perKindFilterOperatorIn, Values: []string{"ok"}}}
+
+		f := extractFilters(translateFor(t, recordingRuleKind(t), q).req)
+		assert.Equal(t, listFilter{include: []string{"ok"}}, f.healths)
+		assert.Equal(t, listFilter{}, f.states)
+	})
+
+	t.Run("recording rule has no state field", func(t *testing.T) {
+		q := query()
+		q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: fieldState, Operator: perKindFilterOperatorIn, Values: []string{"firing"}}}
+
+		_, errs := validatePerKindQuery(q, recordingRuleKind(t))
+		require.Len(t, errs, 1)
+		assert.Equal(t, "where.filter.field", errs[0].Field)
+	})
+}
+
 // TestTranslateQuery_typeFilter covers the "type" filter now that the endpoint
 // already fixes the kind. It stays a real requirement so the two backends agree:
 // unified filters on the indexed field, and the legacy backend answers with an
@@ -316,6 +351,11 @@ func TestPerKindTranslateQuery_sort(t *testing.T) {
 // generic search API returns, so the projection does not change when that
 // endpoint takes over.
 func TestPerKindTranslateQuery_returnFields(t *testing.T) {
+	t.Run("requests field-value results", func(t *testing.T) {
+		request := translate(t, query())
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.req.ResultFormat)
+	})
+
 	t.Run("defaults to title and folder", func(t *testing.T) {
 		request := translate(t, query())
 		assert.Equal(t, []string{fieldTitle, fieldFolder}, request.fields)

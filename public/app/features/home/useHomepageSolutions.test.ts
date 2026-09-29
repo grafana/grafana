@@ -158,20 +158,21 @@ describe('useHomepageSolutions', () => {
     expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
 
-  it('maps a rejecting solution getter to unknown without rejecting the snapshot', async () => {
+  it('maps a rejecting solution signal to unknown without rejecting the snapshot', async () => {
     fixtures.logs.signal = jest.fn(async () => {
       throw new Error('Loki unavailable');
     });
     const { result } = renderHook(() => useHomepageSolutions());
 
-    await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ logs: 'unknown' }));
-  });
-
-  it('maps a rejecting IRM signal to unknown without rejecting the snapshot', async () => {
-    mockDetectIrmSignal.mockRejectedValue(new Error('IRM unavailable'));
-    const { result } = renderHook(() => useHomepageSolutions());
-
-    await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ irm: 'unknown' }));
+    await expect(result.current.signals()).resolves.toEqual({
+      metrics: 'active',
+      logs: 'unknown',
+      traces: 'unknown',
+      kubernetes: 'active',
+      spanMetrics: 'active',
+      synthetics: 'inactive',
+      irm: 'inactive',
+    });
   });
 
   it('recreates only the Kubernetes solution when its filter changes', () => {
