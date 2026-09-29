@@ -33,7 +33,7 @@ function RuleList() {
   const { viewMode, handleViewChange } = useListViewMode();
   const showImportToGMABanner = useShowImportToGMARulesBanner();
   const [hideEmptyDataSources, setHideEmptyDataSources] = useLocalStorage(
-    'grafana.unifiedalerting.hideEmptyDataSources',
+    `grafana.unifiedalerting.hideEmptyDataSources-org-${config.bootData.user.orgId}`,
     true
   );
 
