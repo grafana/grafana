@@ -165,6 +165,21 @@ By default, Git Sync gives each synced folder a new UID derived from its path in
 
 If you need existing folder links and URLs to resolve to the provisioned folders instead, you can pin a folder's UID with a folder metadata file so Git Sync reuses the original folder's UID.
 
+### Save unsupported resources
+
+Because this option reuses the original folder's UID, the synced folder collides with your existing unmanaged folder, and Git Sync can't take over a UID that still belongs to an unmanaged folder, with the sync failing with a conflict.
+
+To avoid losing unsupported resources, complete these steps for each folder **before** you sync:
+
+1. Create a new folder and move all alert rules, library panels, and other unsupported resources out of the original folder into it.
+
+- Move alert rules and library panels out of the folder **before** you delete the folder, since Git Sync does not recreate alerts or library panels.
+
+1. Delete the original folder. Its dashboards should already be exported to the repository from [Step 1](#step-1-export-the-resources-to-your-repository).
+1. Reapply any custom permissions on the new provisioned folder, as folder permissions don't carry over. Refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana).
+
+### Reuse the original folder's UID
+
 {{< admonition type="note" >}}
 
 Folder metadata requires the `provisioningFolderMetadata` feature, which is enabled by default. If your administrator has disabled it, `metadata.name` is ignored and folders always get a path-derived UID.
@@ -183,15 +198,3 @@ To reuse an original folder's UID, add a `_folder.json` file to that folder's di
 ```
 
 Where `<ORIGINAL_FOLDER_UID>` is the UID of your existing folder. You can find it in the folder's URL.
-
-Because this option reuses the original folder's UID, the synced folder collides with your existing unmanaged folder, and Git Sync can't take over a UID that still belongs to an unmanaged folder, with the sync failing with a conflict. To avoid losing unsupported resources, complete these steps for each folder **before** you sync:
-
-1. Create a new folder and move all alert rules, library panels, and other unsupported resources out of the original folder into it.
-1. Delete the original folder. Its dashboards should already be exported to the repository from [Step 1](#step-1-export-the-resources-to-your-repository).
-1. Reapply any custom permissions on the new provisioned folder — folder permissions don't carry over. Refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana).
-
-{{< admonition type="caution" >}}
-
-Move alert rules and library panels out of the folder **before** you delete it. Deleting a folder deletes everything it contains, and Git Sync does not recreate alerts or library panels.
-
-{{< /admonition >}}
