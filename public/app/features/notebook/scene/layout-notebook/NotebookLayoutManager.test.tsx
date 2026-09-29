@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
@@ -159,6 +159,26 @@ function panelCell(elementName: string, queries?: DataQuery[]) {
     setQueryRunnerQueries(runner, queries);
   }
   return { cell: new NotebookCellItem({ elementName, source: 'user', body: panel }), runner };
+}
+
+function panelCellWithOwnTimeOverride(elementName: string, timeFrom: string) {
+  const panelKind = defaultVisualizationPanelKind();
+  const panel = new VizPanel(
+    buildVizPanelState(
+      {
+        ...panelKind,
+        spec: {
+          ...panelKind.spec,
+          data: {
+            ...panelKind.spec.data,
+            spec: { ...panelKind.spec.data.spec, queryOptions: { ...panelKind.spec.data.spec.queryOptions, timeFrom } },
+          },
+        },
+      },
+      1
+    )
+  );
+  return { cell: new NotebookCellItem({ elementName, source: 'user', body: panel }), panel };
 }
 
 function withExpr(query: DataQuery, expr: string): DataQuery {
@@ -517,6 +537,21 @@ describe('NotebookLayoutManager', () => {
       manager.duplicateCell(buildNarrativeCells(['stranger'])[0]);
 
       expect(cellNames(manager)).toEqual(['a']);
+    });
+
+    it("clones a cell's own time range independently", () => {
+      const { cell } = panelCell('latency');
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
+      const manager = buildManager([cell]);
+
+      manager.duplicateCell(manager.state.cells[0]);
+
+      const [original, copy] = manager.state.cells;
+      expect(copy.state.$timeRange?.state.from).toBe('now-24h');
+      expect(copy.state.$timeRange).not.toBe(original.state.$timeRange);
+
+      copy.state.$timeRange?.setState({ from: 'now-1h' });
+      expect(original.state.$timeRange?.state.from).toBe('now-24h');
     });
   });
 
@@ -1253,6 +1288,91 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  describe('setCellTimeRange', () => {
+    it('applies directly, with no undo entry, while only viewing', () => {
+      const { cell, runner } = panelCell('latency');
+      const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      const history = attachHistory(manager);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(history.state.canUndo).toBe(false);
+      expect(runQueries).toHaveBeenCalledTimes(1);
+    });
+
+    it('records a discrete, correctly labeled undo step while editing', () => {
+      const { cell, runner } = panelCell('latency');
+      const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(history.state.undoLabel).toBe('Set panel time range');
+      expect(runQueries).toHaveBeenCalledTimes(1);
+
+      act(() => history.undo());
+      expect(cell.state.$timeRange).toBeUndefined();
+      expect(runQueries).toHaveBeenCalledTimes(2);
+
+      act(() => history.redo());
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(runQueries).toHaveBeenCalledTimes(3);
+    });
+
+    it('clears the override, labeled as reverting to the notebook time, while editing', () => {
+      const { cell } = panelCell('latency');
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+
+      manager.setCellTimeRange(cell, undefined);
+
+      expect(cell.state.$timeRange).toBeUndefined();
+      expect(history.state.undoLabel).toBe('Use notebook time range');
+
+      act(() => history.undo());
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    });
+
+    it("clears a panel's own carried-over override so the new cell range is not shadowed", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      attachHistory(manager);
+      expect(sceneGraph.getTimeRange(panel)).toBe(panel.state.$timeRange);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(panel.state.$timeRange).toBeUndefined();
+      expect(sceneGraph.getTimeRange(panel).state.from).toBe('now-24h');
+    });
+
+    it("restores a panel's own carried-over override on undo", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+      const originalPanelTimeRange = panel.state.$timeRange;
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      act(() => history.undo());
+
+      expect(panel.state.$timeRange).toBe(originalPanelTimeRange);
+    });
+
+    it("also clears a panel's own carried-over override when resetting to the notebook time", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      attachHistory(manager);
+
+      manager.setCellTimeRange(cell, undefined);
+
+      expect(panel.state.$timeRange).toBeUndefined();
+    });
+  });
+
   // The session counts by the kind each action carries, so these tests pin that mapping.
   // End to end on purpose: a real layout action, through the real history, into the real tracker.
   describe('what an edit session counts', () => {
@@ -1579,6 +1699,16 @@ describe('NotebookLayoutManager', () => {
       expect(clone.state.cells[0].state.body).toBeUndefined();
       expect(clone.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
       expect(clone.state.cells[0].state.content).not.toBe(original.state.content);
+    });
+
+    it("clones each cell's own time range independently", () => {
+      const manager = buildManager();
+      manager.state.cells[1].setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
+
+      const clone = manager.duplicate();
+
+      expect(clone.state.cells[1].state.$timeRange?.state.from).toBe('now-24h');
+      expect(clone.state.cells[1].state.$timeRange).not.toBe(manager.state.cells[1].state.$timeRange);
     });
   });
 

@@ -794,6 +794,7 @@ protobuf: ## Compile protobuf definitions
 protobuf-breaking: ## Check protobuf definitions for breaking changes against main
 	bash scripts/protobuf-check.sh
 	buf breaking pkg/registry/apps/annotation/proto --against '.git#branch=main,subdir=pkg/registry/apps/annotation/proto'
+	buf breaking pkg/storage/unified/proto --against '.git#branch=main,subdir=pkg/storage/unified/proto'
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.
