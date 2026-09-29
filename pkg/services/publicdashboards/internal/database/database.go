@@ -222,7 +222,7 @@ func (d *PublicDashboardStoreImpl) ExistsEnabledByAccessToken(ctx context.Contex
 func (d *PublicDashboardStoreImpl) GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error) {
 	var orgId int64
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sql := "SELECT org_id FROM dashboard_public WHERE access_token=?"
+		sql := "SELECT org_id FROM dashboard_public WHERE access_token=? AND is_enabled=true"
 
 		_, err := dbSession.SQL(sql, accessToken).Get(&orgId)
 		if err != nil {
