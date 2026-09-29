@@ -61,15 +61,13 @@ export class DashboardDataLayerSet
   }
 
   private _shouldRunLayers(): boolean {
-    let current: SceneObject | undefined = this.parent;
-    while (current) {
+    for (const current of sectionAncestors(this)) {
       if (isTabItem(current) && !tabIsCurrent(current)) {
         return false;
       }
       if (isRowItem(current) && current.getCollapsedState()) {
         return false;
       }
-      current = current.parent;
     }
     return true;
   }
@@ -90,18 +88,18 @@ export class DashboardDataLayerSet
 
   private _watchSectionLiveness(): () => void {
     const unsubs: Array<() => void> = [];
-    let current: SceneObject | undefined = this.parent;
 
-    while (current) {
-      if (isTabItem(current) && current.parent) {
-        const sub = current.parent.subscribeToState(() => this._syncSectionQueries());
+    for (const current of sectionAncestors(this)) {
+      // The tabs manager holds currentTabSlug; a repeat clone's parent is its source tab, not the manager
+      const tabsManager = isTabItem(current) ? skipRepeatSources(current).parent : undefined;
+      if (tabsManager) {
+        const sub = tabsManager.subscribeToState(() => this._syncSectionQueries());
         unsubs.push(() => sub.unsubscribe());
       }
       if (isRowItem(current)) {
         const sub = current.subscribeToState(() => this._syncSectionQueries());
         unsubs.push(() => sub.unsubscribe());
       }
-      current = current.parent;
     }
 
     return () => {
@@ -109,6 +107,24 @@ export class DashboardDataLayerSet
         unsub();
       }
     };
+  }
+
+  /**
+   * Repeat clones of a row/tab are children of the source section (repeatedRows/repeatedTabs) and carry
+   * their own copy of this set, so the source set must not reach panels inside those clones.
+   */
+  public isVisibleTo(sceneObject: SceneObject): boolean {
+    const owner = this.parent;
+    let current: SceneObject | undefined = sceneObject;
+
+    while (current && current !== owner) {
+      if (current.parent === owner && isRepeatCloneOf(current, owner)) {
+        return false;
+      }
+      current = current.parent;
+    }
+
+    return true;
   }
 
   public addAnnotationLayer(layer: SceneDataLayerProvider) {
@@ -167,6 +183,34 @@ export function isDashboardDataLayerSetState(data: unknown): data is DashboardDa
 
 export function isDashboardDataLayerSet(obj: unknown): obj is DashboardDataLayerSet {
   return obj instanceof DashboardDataLayerSet;
+}
+
+/**
+ * Ancestors of a scene object, stepping over repeat sources. A repeat clone is a child of its source
+ * row/tab (repeatedRows/repeatedTabs), but the source's current/collapsed state does not apply to the clone.
+ */
+function* sectionAncestors(sceneObject: SceneObject): Generator<SceneObject> {
+  let current = sceneObject.parent;
+  while (current) {
+    yield current;
+    current = skipRepeatSources(current).parent;
+  }
+}
+
+function skipRepeatSources(sceneObject: SceneObject): SceneObject {
+  let current = sceneObject;
+  while (current.parent && isRepeatCloneOf(current, current.parent)) {
+    current = current.parent;
+  }
+  return current;
+}
+
+function isRepeatCloneOf(clone: SceneObject, source: SceneObject): boolean {
+  return (
+    'repeatSourceKey' in clone.state &&
+    Boolean(clone.state.repeatSourceKey) &&
+    clone.state.repeatSourceKey === source.state.key
+  );
 }
 
 function tabIsCurrent(tab: SceneObject): boolean {

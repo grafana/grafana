@@ -213,6 +213,84 @@ describe('section annotations', () => {
     });
   });
 
+  describe('visibility to repeat clones', () => {
+    function repeatVariable(name: string) {
+      return new TestVariable({
+        name,
+        query: 'A.*',
+        value: ['A', 'B'],
+        text: ['A', 'B'],
+        isMulti: true,
+        optionsToReturn: [
+          { label: 'A', value: 'A' },
+          { label: 'B', value: 'B' },
+        ],
+      });
+    }
+
+    it.each(['row', 'tab'] as const)('keeps the source %s set away from panels in its repeat clones', (kind) => {
+      const variable = repeatVariable('server');
+      const panel = new VizPanel({ title: 'CPU', pluginId: 'timeseries' });
+      const sourceSet = new DashboardDataLayerSet({ annotationLayers: [annotationLayer('deploys')] });
+      const dashboardSet = new DashboardDataLayerSet({ annotationLayers: [annotationLayer('dashboard')] });
+      const sectionState = { key: 'section-1', repeatByVariable: 'server', $data: sourceSet, layout: gridWith(panel) };
+      const section = kind === 'row' ? new RowItem(sectionState) : new TabItem(sectionState);
+
+      new DashboardScene({
+        $data: dashboardSet,
+        $variables: new SceneVariableSet({ variables: [variable] }),
+        body:
+          section instanceof RowItem
+            ? new RowsLayoutManager({ rows: [section] })
+            : new TabsLayoutManager({ tabs: [section as TabItem] }),
+      });
+
+      let clone: RowItem | TabItem;
+      if (section instanceof RowItem) {
+        performRowRepeats(variable as unknown as MultiValueVariable, section, true);
+        clone = section.state.repeatedRows![0];
+      } else {
+        performTabRepeats(variable as unknown as MultiValueVariable, section, true);
+        clone = section.state.repeatedTabs![0];
+      }
+      const clonePanel = clone.getLayout().getVizPanels()[0];
+      const cloneSet = clone.state.$data as DashboardDataLayerSet;
+
+      expect(sourceSet.isVisibleTo(panel)).toBe(true);
+      expect(sourceSet.isVisibleTo(clonePanel)).toBe(false);
+      expect(cloneSet.isVisibleTo(clonePanel)).toBe(true);
+      expect(dashboardSet.isVisibleTo(clonePanel)).toBe(true);
+    });
+
+    it('keeps a repeated tab set away from a nested row in its clone, but not the copied row set', () => {
+      const variable = repeatVariable('region');
+      const panel = new VizPanel({ title: 'CPU', pluginId: 'timeseries' });
+      const tabSet = new DashboardDataLayerSet({ annotationLayers: [annotationLayer('tab')] });
+      const rowSet = new DashboardDataLayerSet({ annotationLayers: [annotationLayer('row')] });
+      const tab = new TabItem({
+        key: 'tab-1',
+        repeatByVariable: 'region',
+        $data: tabSet,
+        layout: new RowsLayoutManager({
+          rows: [new RowItem({ key: 'row-1', $data: rowSet, layout: gridWith(panel) })],
+        }),
+      });
+      new DashboardScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+        body: new TabsLayoutManager({ tabs: [tab] }),
+      });
+
+      performTabRepeats(variable as unknown as MultiValueVariable, tab, true);
+
+      const rowInClone = (tab.state.repeatedTabs![0].getLayout() as RowsLayoutManager).state.rows[0];
+      const clonePanel = rowInClone.getLayout().getVizPanels()[0];
+
+      expect(tabSet.isVisibleTo(clonePanel)).toBe(false);
+      expect((rowInClone.state.$data as DashboardDataLayerSet).isVisibleTo(clonePanel)).toBe(true);
+      expect(rowSet.isVisibleTo(panel)).toBe(true);
+    });
+  });
+
   describe('query gating', () => {
     let runLayer: jest.SpyInstance;
 
@@ -249,6 +327,84 @@ describe('section annotations', () => {
 
       tabs.setState({ currentTabSlug: tabB.getSlug() });
       expect(layer.isActive).toBe(false);
+
+      deactivate();
+    });
+
+    it('queries a repeat tab clone while it is current, independent of the source tab', () => {
+      const variable = new TestVariable({
+        name: 'server',
+        query: 'A.*',
+        value: ['A', 'B'],
+        text: ['A', 'B'],
+        isMulti: true,
+        optionsToReturn: [
+          { label: 'A', value: 'A' },
+          { label: 'B', value: 'B' },
+        ],
+      });
+      const source = new TabItem({
+        key: 'tab-1',
+        title: 'Tab ${server}',
+        repeatByVariable: 'server',
+        $data: new DashboardDataLayerSet({ annotationLayers: [annotationLayer('deploys')] }),
+        layout: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
+      });
+      const tabs = new TabsLayoutManager({ tabs: [source] });
+      new DashboardScene({ $variables: new SceneVariableSet({ variables: [variable] }), body: tabs });
+      performTabRepeats(variable as unknown as MultiValueVariable, source, true);
+
+      const clone = source.state.repeatedTabs![0];
+      const cloneSet = clone.state.$data as DashboardDataLayerSet;
+      const cloneLayer = cloneSet.state.annotationLayers[0];
+
+      const deactivate = cloneSet.activate();
+      expect(cloneLayer.isActive).toBe(false);
+
+      tabs.setState({ currentTabSlug: clone.getSlug() });
+      expect(source.isCurrentTab()).toBe(false);
+      expect(cloneLayer.isActive).toBe(true);
+
+      tabs.setState({ currentTabSlug: source.getSlug() });
+      expect(cloneLayer.isActive).toBe(false);
+
+      deactivate();
+    });
+
+    it('queries a repeat row clone while the source row is collapsed', () => {
+      const variable = new TestVariable({
+        name: 'server',
+        query: 'A.*',
+        value: ['A', 'B'],
+        text: ['A', 'B'],
+        isMulti: true,
+        optionsToReturn: [
+          { label: 'A', value: 'A' },
+          { label: 'B', value: 'B' },
+        ],
+      });
+      const source = new RowItem({
+        key: 'row-1',
+        title: 'Row ${server}',
+        repeatByVariable: 'server',
+        $data: new DashboardDataLayerSet({ annotationLayers: [annotationLayer('deploys')] }),
+        layout: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
+      });
+      new DashboardScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+        body: new RowsLayoutManager({ rows: [source] }),
+      });
+      performRowRepeats(variable as unknown as MultiValueVariable, source, true);
+
+      const clone = source.state.repeatedRows![0];
+      const cloneSet = clone.state.$data as DashboardDataLayerSet;
+      const deactivate = cloneSet.activate();
+
+      source.setState({ collapse: true });
+      expect(cloneSet.state.annotationLayers[0].isActive).toBe(true);
+
+      clone.setState({ collapse: true });
+      expect(cloneSet.state.annotationLayers[0].isActive).toBe(false);
 
       deactivate();
     });
