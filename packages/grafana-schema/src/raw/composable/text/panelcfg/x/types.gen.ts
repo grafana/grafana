@@ -10,7 +10,7 @@
 
 // Generated from public/app/plugins/panel/text/panelcfg.cue file.
 
-export const pluginVersion = "12.4.11";
+export const pluginVersion = "12.4.12";
 
 export enum TextMode {
   Code = 'code',

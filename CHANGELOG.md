@@ -1,3 +1,12 @@
+<!-- 12.4.12 START -->
+
+# 12.4.12 (2026-09-29)
+
+### Bug fixes
+
+- **Unified Storage:** Return 403 instead of 500 on namespace mismatch [#133595](https://github.com/grafana/grafana/pull/133595), [@pstibrany](https://github.com/pstibrany)
+
+<!-- 12.4.12 END -->
 <!-- 12.4.11 START -->
 
 # 12.4.11 (2026-09-15)
