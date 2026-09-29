@@ -31,11 +31,21 @@ To use this feature, enable the `grafana.newTextPanel` and `text.newFeatures` fe
 
 Text visualizations let you include text, HTML, code blocks, or Mermaid diagrams in your dashboards.
 You can use them to add contextual information and descriptions or to embed complex HTML.
-With text visualizations, you can build lightweight data-driven tables, cards, lists, and status summaries.
+With text visualizations, you can build things like lightweight data-driven tables, cards, lists, and status summaries.
 
-<!-- Update this example 
+The following images show different uses of the text visualization.
 
-For example, if you want to display important links on your dashboard, you can use a text visualization to add these links: -->
+Here, text visualizations use Markdown and HTML modes:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-text-markdown-html-v13.3.png" max-width="750px" alt="Text visualizations in Markdown and HTML mode" >}}
+
+In this example, one text visualization is in TypeScript mode and the other is using Handlebars templating:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-text-code-handlebars-v13.3.png" max-width="750px" alt="Text visualizations in TypeScript mode and using Handlebars templating" >}}
+
+Finally, this image shows one text visualization using per row render mode and another using pagination:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-text-render-pagination-v13.3.png" max-width="750px" alt="Text visualizations using per row render mode and pagination" >}}
 
 {{< docs/play title="Text Panel" url="https://play.grafana.org/d/adl33bxy1ih34b/" >}}
 
