@@ -4167,6 +4167,29 @@
           }
         }
       ]
+    },
+    "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/search/hybrid": {
+      "get": {
+        "description": "Experimental hybrid search for alert rules",
+        "operationId": "getHybridSearchAlertRules",
+        "responses": {
+          "default": {
+            "description": "Default Response."
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "namespace",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
