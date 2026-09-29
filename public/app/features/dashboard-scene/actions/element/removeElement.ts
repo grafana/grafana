@@ -1,10 +1,12 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
+import { type DashboardActionTracking } from '../../sidebar/events';
 import { edit } from '../utils/edit';
 import { getElementTypeName } from '../utils/getElementTypeName';
 
 interface RemoveElementActionHelperProps {
+  tracking?: DashboardActionTracking;
   removedObject: SceneObject;
   source: SceneObject;
   perform: () => void;
@@ -20,6 +22,10 @@ export function removeElement(props: RemoveElementActionHelperProps) {
   }
 
   edit({
+    tracking: {
+      actionId: props.tracking?.actionId ?? 'element.removeElement',
+      trigger: props.tracking?.trigger,
+    },
     description: t('dashboard.edit-actions.remove', 'Remove {{typeName}}', { typeName }),
     removedObject,
     source,

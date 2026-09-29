@@ -199,6 +199,7 @@ export class AutoGridLayoutManager
 
     if (config.featureToggles.dashboardNewLayouts) {
       edit({
+        tracking: { actionId: 'layout-auto-grid.pastePanel' },
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: panel.state.body,
         source: this,

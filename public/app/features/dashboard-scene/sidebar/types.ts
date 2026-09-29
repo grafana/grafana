@@ -1,7 +1,11 @@
 import { type SceneObjectState, type SceneObject } from '@grafana/scenes';
 import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 
-import { type DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
+import {
+  type DashboardEditActionEvent,
+  type DashboardEditActionEventPayload,
+  type UndoRedoCallOptions,
+} from './events';
 import { type DashboardOutline } from './outline/DashboardOutline';
 
 export interface DashboardSidebarState extends SceneObjectState {
@@ -38,8 +42,8 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   closePane(): void;
   refreshAfterRebuild(): void;
   getSelectedObject(key?: string): SceneObject | undefined;
-  undoAction(): void;
-  redoAction(): void;
+  undoAction(options?: UndoRedoCallOptions): void;
+  redoAction(options?: UndoRedoCallOptions): void;
   goBackToPrevious(): void;
   fixSelectionOfRemovedObject(): void;
   addNewPanel(target: SceneObject | undefined): void | Promise<void>;

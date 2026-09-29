@@ -52,6 +52,7 @@ export function moveRowToTab({
   const previousSlug = tabs.state.currentTabSlug;
 
   moveElement({
+    tracking: { actionId: 'layout.moveRowToTab', trigger: 'mouse' },
     source: dashboard,
     movedObject: row,
     selectOnMove: false,

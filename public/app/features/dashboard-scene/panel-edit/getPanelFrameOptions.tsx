@@ -15,6 +15,7 @@ import { type VizPanelLinks } from '../scene/PanelLinks';
 import { useSidebarInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { type DashboardActionTracking } from '../sidebar/events';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -24,6 +25,7 @@ export function createPresetApplyHandler(panel: VizPanel) {
   return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
     const prevOptions = panel.state.options;
     edit({
+      tracking: { actionId: 'panel-edit.applyPreset' },
       description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
       source: panel,
       perform: () => {
@@ -200,6 +202,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
 
   const onCommitDescriptionChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     edit({
+      tracking: { actionId: 'panel-edit.changeDescription' },
       description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
       perform: () => panel.setState({ [propName]: value }),
@@ -209,6 +212,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
 
   const onToggleSubtitle = (evt: React.ChangeEvent<HTMLInputElement>) => {
     edit({
+      tracking: { actionId: 'panel-edit.toggleSubtitle' },
       description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
       perform: () => {
@@ -280,6 +284,7 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
     const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
 
     edit({
+      tracking: { actionId: 'panel-edit.changeBackground' },
       description: t('dashboard.edit-actions.panel-background', 'panel background change'),
       source: panel,
       perform: () => panel.setState({ displayMode: newDisplayMode }),
@@ -294,12 +299,18 @@ function updatePanelTitleState(panel: VizPanel, title: string) {
   getDashboardSceneFor(panel).updatePanelTitle(panel, title);
 }
 
-export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
+export function editPanelTitleAction(
+  panel: VizPanel,
+  title: string,
+  prevTitle: string = panel.state.title,
+  tracking: DashboardActionTracking = {}
+) {
   if (title === prevTitle) {
     return;
   }
 
   edit({
+    tracking: { actionId: 'panel-edit.editPanelTitleAction', trigger: tracking.trigger },
     description: t('dashboard.edit-actions.panel-title', 'panel title change'),
     source: panel,
     perform: () => updatePanelTitleState(panel, title),

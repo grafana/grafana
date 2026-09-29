@@ -395,6 +395,7 @@ export class TabsLayoutManager
     let nextVariables: SceneVariable[] | undefined;
 
     edit({
+      tracking: { actionId: 'layout-tabs.ungroupTabs' },
       description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
       source: scene,
       perform: () => {

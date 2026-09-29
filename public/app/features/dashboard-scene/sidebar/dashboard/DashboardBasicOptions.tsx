@@ -30,6 +30,8 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
         }
 
         changeTitle({
+          tracking: { trigger: 'mouse' },
+
           source: dashboard,
           oldValue: valueBeforeEdit.current,
           newValue: e.currentTarget.value,
@@ -61,6 +63,8 @@ export function DashboardDescriptionInput({ dashboard, id }: { dashboard: Dashbo
         }
 
         changeDescription({
+          tracking: { trigger: 'mouse' },
+
           source: dashboard,
           oldValue: valueBeforeEdit.current,
           newValue: e.currentTarget.value,

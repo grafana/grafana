@@ -334,6 +334,7 @@ export class RowsLayoutManager
     let nextVariables: SceneVariable[] | undefined;
 
     edit({
+      tracking: { actionId: 'layout-rows.ungroupRows' },
       description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
       source: scene,
       perform: () => {
@@ -659,6 +660,7 @@ export class RowsLayoutManager
     }
 
     edit({
+      tracking: { actionId: 'layout-rows.setAllRowsCollapsed' },
       source: this,
       description,
       perform: () => rowsToToggle.forEach((row) => row.setCollapsedState(collapse)),

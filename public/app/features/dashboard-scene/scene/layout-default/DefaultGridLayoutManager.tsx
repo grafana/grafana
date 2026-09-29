@@ -206,6 +206,7 @@ export class DefaultGridLayoutManager
 
     if (config.featureToggles.dashboardNewLayouts) {
       edit({
+        tracking: { actionId: 'layout-default.pastePanel' },
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: newGridItem.state.body,
         source: this,
@@ -323,6 +324,7 @@ export class DefaultGridLayoutManager
 
     const parent = gridItem.parent instanceof SceneGridRow ? gridItem.parent : grid;
     edit({
+      tracking: { actionId: 'layout-default.duplicatePanel' },
       description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
       addedObject: newGridItem.state.body,
       source: this,

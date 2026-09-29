@@ -1,19 +1,22 @@
 import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 
 import { dropPredefinedVariableNamed } from '../../settings/variables/utils';
+import { type DashboardActionTracking } from '../../sidebar/events';
 import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { addElement } from '../element/addElement';
 
 interface AddVariableActionHelperProps {
+  tracking?: DashboardActionTracking;
   addedObject: SceneVariable;
   source: SceneVariableSet;
 }
 
-export function addVariable({ source, addedObject }: AddVariableActionHelperProps) {
+export function addVariable({ source, addedObject, tracking }: AddVariableActionHelperProps) {
   const varsBeforeAddition = [...(source.state.variables ?? [])];
   const name = addedObject.state.name;
 
   addElement({
+    tracking: { actionId: 'variable.addVariable', trigger: tracking?.trigger },
     source,
     addedObject,
     perform() {

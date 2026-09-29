@@ -1,18 +1,21 @@
 import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 
 import { restoreUnshadowedPredefinedVariables } from '../../settings/variables/utils';
+import { type DashboardActionTracking } from '../../sidebar/events';
 import { DashboardInteractions } from '../../utils/interactions';
 import { removeElement } from '../element/removeElement';
 
 interface RemoveVariableActionHelperProps {
+  tracking?: DashboardActionTracking;
   removedObject: SceneVariable;
   source: SceneVariableSet;
 }
 
-export function removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
+export function removeVariable({ source, removedObject, tracking }: RemoveVariableActionHelperProps) {
   const varsBeforeRemoval = [...source.state.variables];
 
   removeElement({
+    tracking: { actionId: 'variable.removeVariable', trigger: tracking?.trigger },
     source,
     removedObject,
     perform() {

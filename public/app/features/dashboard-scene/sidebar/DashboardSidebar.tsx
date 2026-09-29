@@ -26,6 +26,8 @@ import {
   DashboardBatchEditActionEndEvent,
   DashboardBatchEditActionStartEvent,
   DashboardEditActionEvent,
+  type DashboardActionTracking,
+  type UndoRedoCallOptions,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
@@ -94,6 +96,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
   private _activeBatch?: {
+    tracking?: DashboardActionTracking;
     source: SceneObject;
     description?: string;
     actions: DashboardEditActionEventPayload[];
@@ -201,12 +204,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     action.payload.source.publishEvent(action, true);
   }
 
-  private startBatchAction({ source, description }: DashboardBatchEditActionEventPayload) {
+  private startBatchAction({ source, description, tracking }: DashboardBatchEditActionEventPayload) {
     if (this.state.redoStack.length > 0) {
       this.setState({ redoStack: [] });
     }
 
-    this._activeBatch = { source, description, actions: [] };
+    this._activeBatch = { source, description, tracking, actions: [] };
   }
 
   private endBatchAction() {
@@ -219,6 +222,10 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     const action: DashboardEditActionEventPayload = {
       source: batch.source,
+      tracking: {
+        actionId: batch.tracking?.actionId ?? 'utils.batch',
+        trigger: batch.tracking?.trigger,
+      },
       description: batch.description,
       perform: () => {
         batch.actions.forEach((childAction) => this.performAction(childAction));
@@ -229,6 +236,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     };
 
     this.setState({ undoStack: [...this.state.undoStack, action] });
+    this.trackEdit(action);
   }
 
   /**
@@ -254,6 +262,14 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     this.setState({ undoStack: [...this.state.undoStack, action] });
+    this.trackEdit(action);
+  }
+
+  private trackEdit(action: DashboardEditActionEventPayload) {
+    reportInteraction('grafana_dashboard_edit', {
+      actionId: action.tracking?.actionId ?? 'unknown',
+      trigger: action.tracking?.trigger,
+    });
   }
 
   /**
@@ -267,6 +283,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.handleEditAction(
       {
         source: payload.source,
+        tracking: { actionId: 'scene.stateCommitted' },
         description: payload.description,
         perform: payload.replay,
         undo: payload.revert,
@@ -279,7 +296,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   /**
    * Removes last action from undo stack and adds it to redo stack.
    */
-  public undoAction() {
+  public undoAction({ trigger }: UndoRedoCallOptions = {}) {
     const undoStack = this.state.undoStack.slice();
     const action = undoStack.pop();
     if (!action) {
@@ -289,7 +306,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.undoSingleAction(action);
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
-    reportInteraction('grafana_dashboard_undo');
+    reportInteraction('grafana_dashboard_undo', {
+      actionId: action.tracking?.actionId ?? 'unknown',
+      editTrigger: action.tracking?.trigger,
+      trigger,
+    });
   }
 
   private undoSingleAction(action: DashboardEditActionEventPayload) {
@@ -336,7 +357,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   /**
    * Removes last action from redo stack and adds it to undo stack.
    */
-  public redoAction() {
+  public redoAction({ trigger }: UndoRedoCallOptions = {}) {
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
     if (!action) {
@@ -346,7 +367,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.performAction(action);
 
     this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
-    reportInteraction('grafana_dashboard_redo');
+    reportInteraction('grafana_dashboard_redo', {
+      actionId: action.tracking?.actionId ?? 'unknown',
+      editTrigger: action.tracking?.trigger,
+      trigger,
+    });
   }
 
   public enableSelection() {

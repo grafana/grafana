@@ -286,6 +286,8 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
             }
 
             changeVariableName({
+              tracking: { trigger: 'mouse' },
+
               source: variable,
               oldValue: oldName.current,
               newValue: name,
@@ -324,6 +326,8 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
         }
 
         changeVariableLabel({
+          tracking: { trigger: 'mouse' },
+
           source: variable,
           oldValue: oldLabel.current,
           newValue: e.currentTarget.value,
@@ -356,6 +360,8 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
         }
 
         changeVariableDescription({
+          tracking: { trigger: 'mouse' },
+
           source: variable,
           oldValue: oldDescription.current,
           newValue: e.currentTarget.value,
@@ -372,6 +378,8 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
 
   const onChange = (option: VariableHide) => {
     changeVariableHideValue({
+      tracking: { trigger: 'mouse' },
+
       source: variable,
       oldValue: display,
       newValue: option,

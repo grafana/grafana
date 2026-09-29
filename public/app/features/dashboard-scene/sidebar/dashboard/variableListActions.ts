@@ -87,6 +87,7 @@ export function createDragEndHandler(
     const draggableSet = new Set(reordered);
 
     edit({
+      tracking: { actionId: 'variable.reorder', trigger: 'mouse' },
       source: variableSet,
       description,
       perform: () => {

@@ -271,7 +271,7 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
     <Sidebar.Button
       icon="corner-up-left"
       disabled={undoStack.length === 0}
-      onClick={() => sidebar.undoAction()}
+      onClick={() => sidebar.undoAction({ trigger: 'mouse' })}
       title={undoWord}
       tooltip={tooltip}
     />
@@ -291,7 +291,7 @@ function RedoButton({ dashboard }: ToolbarActionProps) {
       disabled={redoStack.length === 0}
       title={redoWord}
       tooltip={tooltip}
-      onClick={() => sidebar.redoAction()}
+      onClick={() => sidebar.redoAction({ trigger: 'mouse' })}
     />
   );
 }

@@ -62,6 +62,7 @@ export const annotationEditActions = {
     }
 
     edit({
+      tracking: { actionId: 'annotations.changeAnnotationName' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-name',
         'Change annotation name'
@@ -89,6 +90,7 @@ export const annotationEditActions = {
   },
   changeAnnotationEnabled({ source, oldValue, newValue }: { source: DataLayer; oldValue: boolean; newValue: boolean }) {
     edit({
+      tracking: { actionId: 'annotations.changeAnnotationEnabled' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-enabled-state',
         'Change annotation enabled state'
@@ -116,6 +118,7 @@ export const annotationEditActions = {
   },
   changeAnnotationColor({ source, oldValue, newValue }: { source: DataLayer; oldValue: string; newValue: string }) {
     edit({
+      tracking: { actionId: 'annotations.changeAnnotationColor' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-color',
         'Change annotation color'
@@ -160,6 +163,7 @@ export const annotationEditActions = {
     };
 
     edit({
+      tracking: { actionId: 'annotations.changeAnnotationDisplay' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-controls-display',
         'Change annotation controls display'
@@ -201,6 +205,7 @@ export const annotationEditActions = {
     newValue?: AnnotationPanelFilter;
   }) {
     edit({
+      tracking: { actionId: 'annotations.changeAnnotationFilter' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-panel-filter',
         'Change annotation panel filter'

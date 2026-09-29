@@ -1,10 +1,12 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
+import { type DashboardActionTracking } from '../../sidebar/events';
 import { edit } from '../utils/edit';
 import { getElementTypeName } from '../utils/getElementTypeName';
 
 interface DuplicateElementActionHelperProps<T extends SceneObject = SceneObject> {
+  tracking?: DashboardActionTracking;
   duplicatedObject: T;
   source: SceneObject;
   /** Extra state applied to the clone, e.g. a renamed title. A fresh key is always generated. */
@@ -28,6 +30,10 @@ export function duplicateElement<T extends SceneObject>(props: DuplicateElementA
   const addedObject = duplicatedObject.clone({ ...cloneState, key: undefined });
 
   edit({
+    tracking: {
+      actionId: props.tracking?.actionId ?? 'element.duplicateElement',
+      trigger: props.tracking?.trigger,
+    },
     description: t('dashboard.edit-actions.duplicate', 'Duplicate {{typeName}}', { typeName }),
     addedObject,
     source,

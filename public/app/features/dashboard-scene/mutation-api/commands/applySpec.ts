@@ -64,6 +64,8 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
       const spec = validatedSpec ?? (payload.spec as unknown as DashboardV2Spec);
 
       applyDashboardSpec({
+        tracking: { trigger: 'api' },
+
         scene,
         spec,
         description: t('dashboard.mutation-api.apply-spec.undo-title', 'Assistant schema edit'),

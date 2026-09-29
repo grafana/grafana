@@ -100,6 +100,8 @@ export function applyJsonToDashboard(
     }
 
     applyDashboardSpec({
+      tracking: { trigger: 'mouse' },
+
       scene: dashboard,
       spec,
       description: t('dashboard.sidebar.edit-schema.undo-title', 'Schema edit'),
