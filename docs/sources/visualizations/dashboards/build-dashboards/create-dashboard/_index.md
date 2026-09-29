@@ -366,7 +366,11 @@ For steps on to create show/hide rules, refer to [Configure show/hide rules](#co
 You can only configure show/hide rules for panels in the **Auto grid** layout. Set the panel layout at the dashboard, row, or tab-level.
 {{< /admonition >}}
 
+{{< /shared >}}
+
 ### Query result rule
+
+{{< shared id="show-hide-2" >}}
 
 Show or hide a panel based on whether or not the query returns any results.
 The rule provides **Has data** and **No data** options, so you can choose to show or hide the panel based on the presence or absence of data.
@@ -387,10 +391,9 @@ In this case, you'd set the rule as follows:
 ### Template variable rule
 
 Show or hide a panel, row, or tab dynamically based on the variable value.
-
-{{< shared id="show-hide-2" >}}
-
 You can select any variable that's configured for the dashboard and choose from the following operators for maximum flexibility:
+
+{{< shared id="show-hide-3" >}}
 
 - Equals
 - Not equals
@@ -404,10 +407,9 @@ You can [add more variables](#add-variables) if you need to without leaving the 
 ### Time range less than rule
 
 Show or hide a panel, row, or tab if the dashboard time range is shorter than the selected time range.
-
-{{< shared id="show-hide-3" >}}
-
 This ensures that as you change the time range of the dashboard, you only see data relevant to that time period.
+
+{{< shared id="show-hide-4" >}}
 
 For example, a dashboard is tracking adoption of a feature over time has the following setup:
 
