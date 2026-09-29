@@ -41,6 +41,7 @@ type APIBuilder struct {
 	logger          log.Logger
 	hgOverrideFlags map[string]bool
 	cohorts         *cohortResolver
+	scrubCohorts    bool
 }
 
 func (b *APIBuilder) EnableLegacyOverrideLookupBypass(goffURL *url.URL, flagsWithOverrides []string) {

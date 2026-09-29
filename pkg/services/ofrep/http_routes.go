@@ -122,6 +122,9 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := b.enrichCohorts(r); err != nil {
+			_ = tracing.Errorf(span, bodyReadFailureMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
+			logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
 			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
 			return
 		}
@@ -162,6 +165,9 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := b.enrichCohorts(r); err != nil {
+			_ = tracing.Errorf(span, bodyReadFailureMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
+			logger.Error(bodyReadFailureMsg, "error", err)
 			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
 			return
 		}

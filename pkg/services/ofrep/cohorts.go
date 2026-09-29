@@ -21,7 +21,8 @@ import (
 )
 
 // CohortConfig enables organization cohorts only for explicitly selected authenticated stacks.
-// Configure before serving requests. An empty allowlist disables lookups.
+// Configure before serving requests. An empty allowlist disables lookups but still scrubs
+// reserved attributes.
 type CohortConfig struct {
 	URL               string
 	TokenFile         string
@@ -64,9 +65,11 @@ type cohortResolver struct {
 	age      prometheus.Histogram
 }
 
-// EnableCohortEnrichment installs the GCOM resolver at the common proxy boundary.
+// EnableCohortEnrichment installs the reserved-attribute scrub and, for allowed stacks, the
+// GCOM resolver at the common proxy boundary. Without it request bodies are forwarded untouched.
 func (b *APIBuilder) EnableCohortEnrichment(c CohortConfig, reg prometheus.Registerer) error {
 	if len(c.AllowedNamespaces) == 0 {
+		b.scrubCohorts = true
 		return nil
 	}
 	u, err := url.Parse(c.URL)
@@ -99,6 +102,7 @@ func (b *APIBuilder) EnableCohortEnrichment(c CohortConfig, reg prometheus.Regis
 		}
 	}
 	b.cohorts = resolver
+	b.scrubCohorts = true
 	return nil
 }
 
@@ -263,9 +267,21 @@ func (c *cohortResolver) fetch(ctx context.Context, namespace string) (cohortSna
 	return snapshot, nil
 }
 
-// enrichCohorts always replaces reserved attributes, including when disabled or unavailable.
-// Only a concrete authenticated namespace can authorize an organization lookup.
+// cohortIdentityTypes are the callers that reach MTFF with a stack identity: signed-in users and
+// service accounts (Grafana router or ID token) and access-policy tokens (token exchange).
+// Anonymous, public-dashboard and render identities also carry a stack namespace but are not
+// acting for the organization, so they must not be enriched.
+var cohortIdentityTypes = []types.IdentityType{types.TypeUser, types.TypeServiceAccount, types.TypeAccessPolicy}
+
+var cohortReservedAttributes = []string{"growthCohorts", "growthCohortsAvailable", "growthCohortsVersion", "growthCohortsRefreshedAt"}
+
+// enrichCohorts replaces reserved attributes once EnableCohortEnrichment has been called,
+// including when lookups are disabled or unavailable. Only an allowed authenticated namespace
+// can authorize an organization lookup.
 func (b *APIBuilder) enrichCohorts(r *http.Request) error {
+	if !b.scrubCohorts {
+		return nil
+	}
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
@@ -279,6 +295,14 @@ func (b *APIBuilder) enrichCohorts(r *http.Request) error {
 	if body == nil {
 		body = map[string]json.RawMessage{}
 	}
+	// encoding/json matches struct fields case-insensitively, so GOFF and namespace validation
+	// would read a variant such as "Context" that this scrub cannot see. Reject rather than
+	// guess which duplicate a decoder would pick.
+	for k := range body {
+		if k != "context" && strings.EqualFold(k, "context") {
+			return errors.New("non-canonical evaluation context key")
+		}
+	}
 	attrs := map[string]json.RawMessage{}
 	if raw := body["context"]; len(raw) > 0 {
 		if err := json.Unmarshal(raw, &attrs); err != nil {
@@ -288,14 +312,18 @@ func (b *APIBuilder) enrichCohorts(r *http.Request) error {
 	if attrs == nil {
 		attrs = map[string]json.RawMessage{}
 	}
-	for _, name := range []string{"growthCohorts", "growthCohortsAvailable", "growthCohortsVersion", "growthCohortsRefreshedAt"} {
-		delete(attrs, name)
+	for k := range attrs {
+		for _, name := range cohortReservedAttributes {
+			if strings.EqualFold(k, name) {
+				delete(attrs, k)
+			}
+		}
 	}
 	attrs["growthCohorts"] = json.RawMessage(`[]`)
 	attrs["growthCohortsAvailable"] = json.RawMessage(`false`)
 	if c := b.cohorts; c != nil {
 		user, ok := types.AuthInfoFrom(r.Context())
-		if ok && user.GetIdentityType() != types.TypeUnauthenticated && user.GetIdentityType() != types.TypeEmpty && c.allowed[user.GetNamespace()] {
+		if ok && types.IsIdentityType(user.GetIdentityType(), cohortIdentityTypes...) && c.allowed[user.GetNamespace()] {
 			value := c.resolve(r.Context(), user.GetNamespace())
 			if c.fresh(value) {
 				attrs["growthCohorts"], _ = json.Marshal(value.Cohorts)

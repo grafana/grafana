@@ -36,6 +36,12 @@ func cohortTestResolver(t *testing.T, handler http.HandlerFunc) *cohortResolver 
 	return b.cohorts
 }
 
+func withCohorts(b *APIBuilder, resolver *cohortResolver) *APIBuilder {
+	b.cohorts = resolver
+	b.scrubCohorts = true
+	return b
+}
+
 func cohortResponse(w http.ResponseWriter, r *http.Request, now time.Time) {
 	w.Header().Set("Content-Type", "application/json")
 	switch r.URL.Path {
@@ -82,8 +88,7 @@ func TestCohortEnrichmentServingBoundary(t *testing.T) {
 		_, _ = io.WriteString(w, `{"flags":[],"key":"cohort-demo.participation","value":true,"metadata":{"public":"true"}}`)
 	}))
 	defer upstream.Close()
-	b := newTestBuilder(t, upstream.URL)
-	b.cohorts = resolver
+	b := withCohorts(newTestBuilder(t, upstream.URL), resolver)
 	for _, bulk := range []bool{false, true} {
 		for _, tt := range []struct {
 			ns           string
@@ -92,11 +97,17 @@ func TestCohortEnrichmentServingBoundary(t *testing.T) {
 			org, cohorts string
 		}{
 			{"stacks-1", types.TypeUser, true, `"10"`, `["preview"]`},
+			{"stacks-1", types.TypeServiceAccount, true, `"10"`, `["preview"]`},
+			{"stacks-1", types.TypeAccessPolicy, true, `"10"`, `["preview"]`},
 			{"stacks-2", types.TypeUser, true, `"10"`, `["preview"]`},
 			{"stacks-3", types.TypeUser, true, `"20"`, `[]`},
 			{"stacks-4", types.TypeUser, false, `"999"`, `[]`},
 			{"stacks-1", types.TypeUnauthenticated, false, `"999"`, `[]`},
 			{"stacks-1", types.TypeEmpty, false, `"999"`, `[]`},
+			{"stacks-1", types.TypeAnonymous, false, `"999"`, `[]`},
+			{"stacks-1", types.TypePublic, false, `"999"`, `[]`},
+			{"stacks-1", types.TypeRenderService, false, `"999"`, `[]`},
+			{"stacks-1", types.TypeProvisioning, false, `"999"`, `[]`},
 			{"*", types.TypeUser, false, `"999"`, `[]`},
 		} {
 			w := httptest.NewRecorder()
@@ -167,7 +178,7 @@ func TestCohortUnavailableDoesNotBreakOrdinaryFlags(t *testing.T) {
 				}
 				_, _ = io.WriteString(w, response)
 			})
-			b := &APIBuilder{cohorts: resolver}
+			b := withCohorts(&APIBuilder{}, resolver)
 			req := cohortRequest("stacks-1", types.TypeUser, false)
 			require.NoError(t, b.enrichCohorts(req))
 			body, err := io.ReadAll(req.Body)
@@ -220,14 +231,62 @@ func TestCohortLookupTimeout(t *testing.T) {
 	require.Less(t, time.Since(start), time.Second)
 }
 
-func TestCohortDisabledScrubsReservedAttributes(t *testing.T) {
+func TestCohortScrubOnlyAfterEnable(t *testing.T) {
 	b := &APIBuilder{}
 	req := cohortRequest("stacks-1", types.TypeUser, false)
 	require.NoError(t, b.enrichCohorts(req))
 	data, err := io.ReadAll(req.Body)
 	require.NoError(t, err)
+	require.Contains(t, string(data), "spoof", "OSS must forward bodies untouched")
+
+	require.NoError(t, b.EnableCohortEnrichment(CohortConfig{}, nil))
+	require.Nil(t, b.cohorts)
+	req = cohortRequest("stacks-1", types.TypeUser, false)
+	require.NoError(t, b.enrichCohorts(req))
+	data, err = io.ReadAll(req.Body)
+	require.NoError(t, err)
 	require.NotContains(t, string(data), "spoof")
 	require.Contains(t, string(data), `"growthCohortsAvailable":false`)
+}
+
+func TestCohortScrubHandlesKeyCasing(t *testing.T) {
+	b := withCohorts(&APIBuilder{}, nil)
+	for _, body := range []string{
+		`{"Context":{"growthCohortsAvailable":true}}`,
+		`{"context":{},"CONTEXT":{"growthCohortsAvailable":true}}`,
+		`{"cOnTeXt":{}}`,
+	} {
+		req := httptest.NewRequest(http.MethodPost, ofrepPath, bytes.NewBufferString(body))
+		require.Error(t, b.enrichCohorts(req), body)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, ofrepPath, bytes.NewBufferString(`{"context":{"GrowthCohortsAvailable":true,"growthcohorts":["spoof"],"GROWTHCOHORTSVERSION":"spoof","growthCohortsRefreshedat":"spoof","kept":1}}`))
+	require.NoError(t, b.enrichCohorts(req))
+	var got struct {
+		Context map[string]json.RawMessage `json:"context"`
+	}
+	require.NoError(t, json.NewDecoder(req.Body).Decode(&got))
+	require.Equal(t, map[string]json.RawMessage{
+		"growthCohorts":          json.RawMessage(`[]`),
+		"growthCohortsAvailable": json.RawMessage(`false`),
+		"kept":                   json.RawMessage(`1`),
+	}, got.Context)
+
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("a rejected body must not be forwarded")
+	}))
+	defer upstream.Close()
+	b = withCohorts(newTestBuilder(t, upstream.URL), nil)
+	for _, bulk := range []bool{false, true} {
+		req := httptest.NewRequest(http.MethodPost, ofrepPath, bytes.NewBufferString(`{"Context":{"growthCohortsAvailable":true}}`))
+		w := httptest.NewRecorder()
+		if bulk {
+			b.allFlagsHandler(w, req)
+		} else {
+			b.oneFlagHandler(w, mux.SetURLVars(req, map[string]string{"flagKey": "flag"}))
+		}
+		require.Equal(t, http.StatusBadRequest, w.Code)
+	}
 }
 
 // This opt-in integration test uses the deployment_tools cohort-targeting fixture and pinned GOFF relay.
@@ -254,8 +313,7 @@ func TestCohortRealGOFF(t *testing.T) {
 		cohortResponse(w, r, now)
 	})
 	resolver.now = func() time.Time { return clock }
-	b := newTestBuilder(t, endpoint)
-	b.cohorts = resolver
+	b := withCohorts(newTestBuilder(t, endpoint), resolver)
 	for _, phase := range []struct {
 		name string
 		mode int32
@@ -336,7 +394,7 @@ func TestCohortEnrichmentBeforeUpstreamSelection(t *testing.T) {
 	defer hg.Close()
 	b := newTestBuilder(t, hg.URL)
 	b.EnableLegacyOverrideLookupBypass(mustParseURL(t, goff.URL), []string{"overridden"})
-	b.cohorts = cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) { cohortResponse(w, r, time.Now()) })
+	withCohorts(b, cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) { cohortResponse(w, r, time.Now()) }))
 	for _, key := range []string{"cohort-demo.participation", "overridden", ""} {
 		req := cohortRequest("stacks-1", types.TypeUser, key == "")
 		w := httptest.NewRecorder()
