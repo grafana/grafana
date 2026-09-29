@@ -165,6 +165,31 @@ describe('RulesFilterV2', () => {
     expect(screen.queryByRole('button', { name: 'Filter' })).not.toBeInTheDocument();
   });
 
+  it('Should show the "Hide empty data sources" switch only in grouped view', async () => {
+    const { rerender } = render(<RulesFilterV2 viewMode="grouped" />);
+
+    expect(await screen.findByLabelText('Hide empty data sources')).toBeInTheDocument();
+
+    rerender(<RulesFilterV2 viewMode="list" />);
+
+    expect(screen.queryByLabelText('Hide empty data sources')).not.toBeInTheDocument();
+  });
+
+  it('Should call onHideEmptyDataSourcesChange when the switch is toggled', async () => {
+    const onHideEmptyDataSourcesChange = jest.fn();
+    const { user } = render(
+      <RulesFilterV2
+        viewMode="grouped"
+        hideEmptyDataSources={true}
+        onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange}
+      />
+    );
+
+    await user.click(await screen.findByLabelText('Hide empty data sources'));
+
+    expect(onHideEmptyDataSourcesChange).toHaveBeenCalledWith(false);
+  });
+
   it('Should allow typing in search input', async () => {
     const { user } = render(<RulesFilterV2 />);
 

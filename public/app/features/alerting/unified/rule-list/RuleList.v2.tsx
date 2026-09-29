@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useToggle } from 'react-use';
+import { useLocalStorage, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -33,19 +33,32 @@ function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
   const showImportToGMABanner = useShowImportToGMARulesBanner();
+  const [hideEmptyDataSources, setHideEmptyDataSources] = useLocalStorage(
+    `grafana.unifiedalerting.hideEmptyDataSources-org-${config.bootData.user.orgId}`,
+    true
+  );
 
   return (
     <Stack direction="column">
       {showImportToGMABanner && <ImportToGMABanner />}
       <Stack direction="column" gap={2}>
-        <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
+        <RulesFilter
+          viewMode={viewMode}
+          onViewModeChange={handleViewChange}
+          hideEmptyDataSources={hideEmptyDataSources}
+          onHideEmptyDataSourcesChange={setHideEmptyDataSources}
+        />
         <Stack direction="row" grow={1} minHeight={0}>
           <RulesFilterSidebar />
           <Box flex={1} minWidth={0} paddingLeft={2}>
             {viewMode === 'list' ? (
               <FilterView filterState={filterState} />
             ) : (
-              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+              <GroupedView
+                groupFilter={filterState.groupName}
+                namespaceFilter={filterState.namespace}
+                hideEmptyDataSources={hideEmptyDataSources}
+              />
             )}
           </Box>
         </Stack>

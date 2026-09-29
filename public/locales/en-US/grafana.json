@@ -3013,8 +3013,6 @@
         "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules",
         "search-in-plugin": "Search data source managed rules in Prometheus Alerting"
       },
-      "hidden-empty-data-sources_one": "{{count}} data source with no rules is hidden",
-      "hidden-empty-data-sources_other": "{{count}} data sources with no rules are hidden",
       "import-disabled-tooltip": {
         "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
       },
@@ -3165,6 +3163,7 @@
       "group-search-error": "Error searching groups",
       "group-search-prompt": "Type at least 3 characters to search groups",
       "health": "Health",
+      "hide-empty-data-sources": "Hide empty data sources",
       "label": {
         "hide": "Hide",
         "show": "Show"
