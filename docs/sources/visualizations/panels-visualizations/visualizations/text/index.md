@@ -35,6 +35,8 @@ refs:
 
 {{< docs/public-preview product="New text panel" featureFlag="`grafana.newTextPanel` and `text.newFeatures" >}}
 
+<!-- use what's new to make intro more robust -->
+
 Text visualizations let you include text or HTML in your dashboards.
 This can be used to add contextual information and descriptions or embed complex HTML.
 
@@ -50,6 +52,54 @@ Use a text visualization when you need to:
 - Provide instructions or guidance on how to interpret different panels, configure settings, or take specific actions based on the displayed data.
 - Announce any scheduled maintenance or downtime that might impact your dashboards.
 
+## Text visualization editor
+
+The text visualization has an editor separate from the other configuration options.
+This is where you enter and preview the content of the visualization.
+It's also where you set text modes, like Markdown, HTML, or a specific coding language.
+
+To learn more, click the following links:
+
+- [Editor views](#editor-views)
+- [Formatting toolbar](#formatting-toolbar)
+- [Text modes](#text-modes)
+
+### Editor views
+
+The editor provides three views:
+
+- **Preview**: See only the preview block.
+- **Split**: See the authoring and preview blocks at the same time.
+- **Write**: See only the authoring block.
+
+### Formatting toolbar
+
+The toolbar provides formatting options for common Markdown and HTML operations, like bold or italic text and lists.
+You can also insert:
+
+- Tables
+- Mermaid diagrams
+- Dashboard variables
+
+Dashboard variables are interpolated in the content.
+
+The options displayed in the formatting toolbar depend on the mode you select.
+
+### Text modes
+
+This mode determines how embedded content appears.
+Choose from:
+
+- **Markdown**: Formats the content as [Markdown](https://en.wikipedia.org/wiki/Markdown).
+- **HTML**: Renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the [`disable_sanitize_html`](ref:disable-sanitize-html) flag which enables you to directly enter HTML.
+- **Code**: Renders content inside a read-only code editor. [Variables](ref:variables) in the content are expanded for display. The code options are: Go, HTML, JSON, Markdown, Plain text, SQL, TypeScript, XML, YAML.
+
+The editor provides syntax highlighting in the authoring block.
+
+{{< admonition type="note" >}}
+To allow embedding of iframes and other websites, you need set `allow_embedding = true` in your Grafana `config.ini` or environment variables, depending on your deployment.
+{{< /admonition>}}
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -58,21 +108,18 @@ Use a text visualization when you need to:
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Text options
+### Data options
 
-Use the following options to refine your text visualization.
+Use the following options to control how data is rendered in the text visualization.
 
-<!-- prettier-ignore-start -->
+#### Render mode
 
-| Option | Description |
-| ------ | ----------- |
-| Mode | Determines how embedded content appears. Choose from:<ul><li>**Markdown** - Formats the content as [markdown](https://en.wikipedia.org/wiki/Markdown).</li><li>**HTML** - Renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the [disable_sanitize_html](ref:disable-sanitize-html) flag which enables you to directly enter HTML.</li><li>**Code** - Renders content inside a read-only code editor. [Variables](ref:variables) in the content are expanded for display.</li></ul><p>To allow embedding of iframes and other websites, you need set `allow_embedding = true` in your Grafana `config.ini` or environment variables, depending on your deployment.</p> |
-| Content | Enter the text to display. The content supports Markdown, HTML, or code, depending on **Mode**. Dashboard variables are interpolated in the content. |
-| Language | When you choose **Code** as your text mode, select an appropriate language to apply syntax highlighting to the embedded text. Choose from JSON, YAML, XML, TypeScript, SQL, Go, Markdown, HTML, or Plain text. The default is Plain text. |
-| Show line numbers | Displays line numbers in the panel preview when you choose **Code** as your text mode. |
-| Show mini map | Displays a small outline of the embedded text in the panel preview when you choose **Code** as your text mode. |
+Blah blah
 
-<!-- prettier-ignore-end -->
+- **Once**:
+- **Per row**:
+
+#### Page size
 
 ### Value mappings
 
@@ -85,3 +132,5 @@ Use the following options to refine your text visualization.
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+<!-- Show line numbers: Displays line numbers in the panel preview when you choose **Code** as your text mode. -->
