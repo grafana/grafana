@@ -291,8 +291,10 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 		}`),
 	}
 
-	_, _ = helper.CreateGitRepo(t, repoName, initialContent)
-	helper.SyncAndWait(t, repoName)
+	// The unsynced destination needs a real ancestor for the read after the move.
+	_, _ = helper.CreateFolderTargetGitRepo(t, repoName, initialContent)
+	helper.ProvisioningTestHelper.SyncAndWait(t, repoName, nil)
+	helper.RequireFolders(t, repoName)
 
 	t.Run("move file on default branch", func(t *testing.T) {
 		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
@@ -327,8 +329,10 @@ func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
 		"mydir/dashboard.json": common.DashboardJSON("dir-dash", "Dir Dashboard", 1),
 	}
 
-	_, _ = helper.CreateGitRepo(t, repoName, initialContent, "write", "branch")
-	helper.SyncAndWait(t, repoName)
+	// The unsynced destination needs a real ancestor for the read after the move.
+	_, _ = helper.CreateFolderTargetGitRepo(t, repoName, initialContent, "write", "branch")
+	helper.ProvisioningTestHelper.SyncAndWait(t, repoName, nil)
+	helper.RequireFolders(t, repoName)
 
 	t.Run("move directory on branch succeeds with correct response", func(t *testing.T) {
 		branchName := "move-dir-branch"

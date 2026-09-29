@@ -151,6 +151,53 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
+// FindExistingAncestor resolves directories nearest-first, including the repository
+// root. An empty result means no real folder exists; this method never makes
+// authorization decisions.
+func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref string) (string, error) {
+	if grafanautil.IsInterfaceNil(fm.client) {
+		return "", errors.New("folder client is required to find an existing ancestor")
+	}
+
+	cfg := fm.repo.Config()
+	// Existence must not depend on the caller's permissions, but repository metadata
+	// is still read with the original caller context below.
+	folderCtx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+	if err != nil {
+		return "", fmt.Errorf("create identity for ancestor lookup: %w", err)
+	}
+
+	root := RootFolder(cfg)
+	for dir = safepath.EnsureTrailingSlash(dir); ; dir = safepath.Dir(dir) {
+		folderID := root
+		if dir != "" {
+			// Authorization callers must see invalid metadata, not the sync resolver's
+			// fallback to a cached folder or a hash-derived UID.
+			var err error
+			folderID, err = GetFolderID(ctx, fm.repo, dir, ref, fm.folderMetadataEnabled)
+			if err != nil {
+				return "", fmt.Errorf("resolve ancestor %q: %w", dir, err)
+			}
+		}
+
+		// Instance-target repositories have no root folder to probe.
+		if folderID != "" {
+			_, err := fm.client.Get(folderCtx, folderID, metav1.GetOptions{})
+			if err == nil {
+				return folderID, nil
+			}
+			if !apierrors.IsNotFound(err) {
+				return "", fmt.Errorf("get ancestor folder %q: %w", folderID, err)
+			}
+		}
+
+		// The empty path may identify a real repository folder, so try it before stopping.
+		if dir == "" {
+			return "", nil
+		}
+	}
+}
+
 // EnsureFolderPathExist creates the folder structure in the cluster.
 func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string, opts ...EnsurePathOption) (parent string, err error) {
 	epCfg := newEnsurePathConfig(opts)

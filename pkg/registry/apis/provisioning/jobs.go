@@ -359,7 +359,8 @@ func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Re
 	if err != nil {
 		return nil, fmt.Errorf("create clients for authorization: %w", err)
 	}
-	return resources.NewAuthorizer(cfg, reader, c.access, clients, c.folderMetadataEnabled), nil
+	// Jobs authorize writes, not previews, and only require a repository reader.
+	return resources.NewAuthorizer(cfg, reader, c.access, clients, nil, c.folderMetadataEnabled), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
