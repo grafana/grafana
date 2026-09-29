@@ -295,11 +295,135 @@ Individual results are then filtered per item using the same access client that 
 
 ## Hybrid search
 
-`NewHybridHandler(client, tracer).HybridSearchRoute` supplies a POST handler for
+Hybrid search combines lexical matches with semantic matches from embeddings.
+To make your resource embeddable, choose the text that describes it, declare
+that text in CUE, and enroll the resource in the deployment. Your resource's
+data must already be in unified storage, as described in the prerequisite above.
+
+### 1. Choose the text to embed
+
+Add `embed.fields` to the kind's CUE definition. Choose fields that describe
+what the resource is about: folders use their title and description. In
+`apps/folder/kinds/folder.cue`, the `foldersV1` definition contains:
+
+```cue
+embed: {
+	fields: [
+		{name: "title", path: "spec.title"},
+		{name: "description", path: "spec.description"},
+	]
+}
+```
+
+`path` selects a string or string array from the stored object. `name` labels
+that value in the text sent to the embedding provider. For example:
+
+```text
+title: Production infrastructure
+description: Dashboards for production services
+```
+
+The generic builder produces one embedding document per resource, joining
+fields in declaration order. It omits missing or empty values and caps the
+combined document at 4 KiB, so put the most useful information first.
+
+These fields supply embedding text only. They do not make the fields available
+as filters, and they are independent of `searchFields`.
+
+### 2. Declare fields for each stored API version
+
+The builder selects fields using the object's stored `apiVersion`. Declare
+them for every version whose objects you want embedded, including older
+versions still present in storage. The version in a search request does not
+change which declaration is used to embed an object.
+
+If versions share a schema, they can share the declaration: folders define
+`foldersV1beta1: foldersV1`, so both `v1` and `v1beta1` have the fields above.
+If their schemas differ, give each version the paths that match its schema.
+An object with no matching version declaration is skipped; the builder does
+not fall back to another version's fields.
+
+### 3. Set the resource's re-embedding version
+
+Inside the `manifest` object in `apps/folder/kinds/manifest.cue`, declare:
+
+```cue
+embed: {
+	folders: {
+		reembedVersion: 1
+	}
+}
+```
+
+The key is the plural resource name (`folders`). `reembedVersion` is a positive
+integer shared by all API versions of that resource. It is independent of API
+versions such as `v1` and `v1beta1`.
+
+Increase it when you change the embedding inputs and need existing resources
+reprocessed, for example when adding another descriptive field. Changing
+`embed.fields` does not automatically increase this version: future writes use
+the new fields, while a version bump requests a backfill of existing resources.
+Keep it increasing; do not reset it when adding a new API version.
+
+### 4. Generate, deploy, and enroll the resource
+
+Generate the app artifacts after editing the CUE. From the repository root,
+for folders:
+
+```bash
+make gen-apps app=folder
+```
+
+Commit the generated artifacts with the CUE changes and deploy the updated
+manifest to the services that generate and query embeddings. In a split
+deployment, updating the Grafana API process alone does not update the storage
+and search services. Deploy the declarations before adding the resource to the
+allowlist: startup validation rejects an enrolled resource with no declaration
+or custom builder.
+
+Ask the deployment owner to add your `group/resource` to
+`[unified_storage] vector_allowed_internal_collections`. For folders alongside
+dashboards:
+
+```ini
+[unified_storage]
+vector_allowed_internal_collections = dashboard.grafana.app/dashboards,folder.grafana.app/folders
+```
+
+Set the list on both storage-api and search-api. Storage-api uses it to select
+resources for embedding generation and backfill; search-api uses it to allow
+queries against those embeddings. The configured list replaces the default,
+so retain dashboards and any other resources already enrolled. An unset or
+empty setting defaults to dashboards only.
+
+The deployment also needs an embedding provider and vector database configured,
+with `vector_backend = true` on both services and `vector_indexing_enabled = true`
+on storage-api. Search-api does not need indexing enabled. In a single-process
+deployment, these settings belong to the same Grafana process.
+
+After rollout, create or update a resource. The first write event processed by
+the reconciler initializes its vector collection and schedules a backfill of
+existing resources. Later writes keep embeddings up to date. Check generation
+and backfill metrics for your group/resource; an increase in
+`vector_storage_embed_skipped_versions_total` indicates that stored objects
+lack a matching API-version declaration.
+
+### Custom embedding builders
+
+Use a registered Go `embed.Builder` when a resource needs custom extraction or
+multiple chunks. Dashboards, for example, produce a chunk per panel. The builder
+supplies its text through `Extract` and its re-embedding version through
+`Version()`; omit the CUE `embed.fields` and resource-level `reembedVersion` for
+that resource. A custom builder takes precedence over manifest declarations.
+It still needs enrollment in `vector_allowed_internal_collections`.
+
+### Query the resource
+
+Embedding generation and HTTP route availability are configured separately.
+On a deployment that exposes your resource's hybrid endpoint, send a POST to
 `/apis/{group}/{version}/namespaces/{namespace}/{resource}/search/hybrid`.
-Automatic mounting and its authorization wiring are a follow-up; adding the
-handler does not enable the endpoint on existing resources. The dashboard GET
-hybrid endpoint keeps its existing request and response format.
+For folders, the path is
+`/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/search/hybrid`.
 
 Storage combines lexical and semantic results when both an embedding provider
 and vector backend are configured. If either is missing, storage versions with
@@ -378,6 +502,8 @@ query rate limit applies only when semantic search is enabled (429 when exceeded
 
 - `pkg/apis/search/v0alpha1/types.go` and `hybrid.go`: public request and response shapes
 - `route.go`, `handler.go`, `translate.go` in this package: validation and error codes
+- `apps/folder/kinds/folder.cue` and `manifest.cue`: a complete example of declarative embedding inputs and their re-embedding version
+- `pkg/storage/unified/search/embed/generic/builder.go`: how declared fields become embedding text
 - `pkg/storage/unified/resource/search_field.go`: field definitions, capabilities, the index-affecting hash
 - `pkg/storage/unified/resource/standard_search_fields.go`: the standard fields
 - `pkg/services/apiserver/searchroutes/searchroutes.go`: how routes are mounted, including the temporary field requirement
