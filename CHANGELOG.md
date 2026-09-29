@@ -211,6 +211,11 @@
 - **Tag:** Fix crash when picking an out of bounds `colorIndex` [#129579](https://github.com/grafana/grafana/pull/129579), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.2.0 END -->
+<!-- 13.1.7 START -->
+
+# 13.1.7 (2026-09-29)
+
+<!-- 13.1.7 END -->
 <!-- 13.1.6 START -->
 
 # 13.1.6 (2026-09-15)
