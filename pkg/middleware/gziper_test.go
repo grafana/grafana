@@ -123,36 +123,20 @@ func TestGziperDoesNotLeakGoroutines(t *testing.T) {
 }
 
 func TestGzipSink(t *testing.T) {
-	t.Run("reports a failed write as complete and remembers the error", func(t *testing.T) {
-		failed := &brokenResponseWriter{}
-		sink := &gzipSink{w: failed}
+	t.Run("propagates a failed write", func(t *testing.T) {
+		sink := &gzipSink{w: &brokenResponseWriter{}}
 
 		n, err := sink.Write([]byte("compressed"))
-		require.NoError(t, err, "the error must not reach the compressor")
-		require.Equal(t, len("compressed"), n, "a short write must not reach the compressor")
-		require.ErrorIs(t, sink.err(), errClientGone)
+		require.ErrorIs(t, err, errClientGone)
+		require.Zero(t, n)
 	})
 
-	t.Run("reports a short write as complete and remembers it", func(t *testing.T) {
+	t.Run("reports a short write", func(t *testing.T) {
 		sink := &gzipSink{w: &brokenResponseWriter{short: true}}
 
 		n, err := sink.Write([]byte("compressed"))
-		require.NoError(t, err)
-		require.Equal(t, len("compressed"), n)
-		require.ErrorContains(t, sink.err(), "wrote 0 bytes of 10")
-	})
-
-	t.Run("keeps the first error and stops writing once a write failed", func(t *testing.T) {
-		failed := &brokenResponseWriter{}
-		sink := &gzipSink{w: failed}
-
-		_, err := sink.Write([]byte("first"))
-		require.NoError(t, err)
-		_, err = sink.Write([]byte("second"))
-		require.NoError(t, err)
-
-		require.ErrorIs(t, sink.err(), errClientGone)
-		require.Equal(t, 1, failed.writes, "a writer that failed is not written to again")
+		require.ErrorIs(t, err, io.ErrShortWrite)
+		require.Zero(t, n)
 	})
 
 	t.Run("passes successful writes through", func(t *testing.T) {
@@ -162,9 +146,35 @@ func TestGzipSink(t *testing.T) {
 		n, err := sink.Write([]byte("compressed"))
 		require.NoError(t, err)
 		require.Equal(t, len("compressed"), n)
-		require.NoError(t, sink.err())
 		require.Equal(t, "compressed", rec.Body.String())
 	})
+}
+
+func TestGzipResponseWriterErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		short   bool
+		wantErr error
+	}{
+		{name: "client disconnect", wantErr: errClientGone},
+		{name: "short write", short: true, wantErr: io.ErrShortWrite},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, failAfter := range []int{0, 1} {
+				failed := &brokenResponseWriter{failAfter: failAfter, short: tc.short}
+				rw := web.NewResponseWriter(http.MethodGet, failed)
+				grw := &gzipResponseWriter{gzip.NewWriter(&gzipSink{w: rw}), rw}
+
+				_, err := grw.Write(gzipTestBody)
+				require.ErrorIs(t, err, tc.wantErr)
+				writes := failed.writes
+				_, err = grw.Write(gzipTestBody)
+				require.ErrorIs(t, err, tc.wantErr)
+				require.ErrorIs(t, grw.w.Close(), tc.wantErr)
+				require.Equal(t, writes, failed.writes, "a writer that failed is not written to again")
+			}
+		})
+	}
 }
 
 var errClientGone = errors.New("write tcp 10.0.0.1:3000->10.0.0.2:54321: write: broken pipe")
