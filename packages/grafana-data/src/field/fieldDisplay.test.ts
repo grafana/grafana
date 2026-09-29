@@ -114,6 +114,18 @@ describe('FieldDisplay', () => {
     expect(display[0].display.numeric).toEqual(0);
   });
 
+  it('Should return numeric min/max when there is no data and the panel min/max are strings', () => {
+    const options = createEmptyDisplayOptions({
+      fieldConfig: {
+        defaults: { min: '0', max: '200' },
+      },
+    });
+
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.min).toBe(0);
+    expect(display[0].field.max).toBe(200);
+  });
+
   it('Should return field with default text when no mapping or data available', () => {
     const options = createEmptyDisplayOptions();
     const display = getFieldDisplayValues(options);
