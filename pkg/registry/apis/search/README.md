@@ -293,9 +293,79 @@ Individual results are then filtered per item using the same access client that 
 - **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 
+## Hybrid search
+
+`NewHybridHandler(client, tracer).HybridSearchRoute` supplies a POST handler for
+`/apis/{group}/{version}/namespaces/{namespace}/{resource}/search/hybrid`.
+Automatic mounting and its authorization wiring are a follow-up; adding the
+handler does not enable the endpoint on existing resources. The dashboard GET
+hybrid endpoint keeps its existing request and response format.
+
+The request uses the same envelope group as lexical search:
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchQuery",
+  "query": "production",
+  "semanticQuery": "Folders containing production infrastructure dashboards",
+  "filters": [{ "field": "folder", "values": [""] }],
+  "limit": 10
+}
+```
+
+`query` is required and feeds the lexical search. It is also embedded for semantic
+search unless `semanticQuery` is supplied. Each is limited to 1,000 bytes. `limit`
+defaults to 50, is capped at 200, and cannot be negative.
+
+Filters are exact matches: values within a filter are ORed, and different filters
+are ANDed. Each field may appear once, each values list must be nonempty, and the
+combined value count cannot exceed 1,000. All resources support `uid` (resource
+name) and `folder` (containing folder, not recursive). `""` and `"general"` both
+select the root folder. Dashboards additionally support `datasource_uid` and
+`language` (`promql`, `logql`, `traceql`, `sql`). Language filtering preserves the
+dashboard endpoint's behavior: its lexical leg approximates language using
+datasource types. Declaring `embed.fields` supplies
+embedding text only; it grants no filtering capability. Lexical search field
+declarations do not extend the hybrid filter set either.
+
+`minRelevance` accepts `lowest`, `low`, `medium`, `high` or `highest`; omitting it
+keeps every result. It is best-effort: if no reranker is configured or reranking
+fails, results are returned without this threshold. `skipRerank: true` skips
+reranking and cannot be combined with `minRelevance`.
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchResults",
+  "items": [{
+    "resource": { "group": "folder.grafana.app", "resource": "folders", "kind": "Folder", "name": "production" },
+    "score": 0.032,
+    "title": "Production infrastructure",
+    "folder": "",
+    "chunks": [{ "subresource": "", "content": "Production infrastructure dashboards" }]
+  }]
+}
+```
+
+This is a top-k result set, without totals, pagination, sorting or facets. Scores
+are opaque and meaningful only for ordering within one response. Matching chunks
+are returned best first; an empty subresource means the whole resource or a
+synthesized title chunk for a lexical-only hit. Results can also include
+best-effort `folderTitle` and `managedBy` (`kind` and `id`) display data. No matches
+returns `"items": []`.
+
+Malformed JSON and unknown fields receive 400; invalid envelopes and options
+receive 422 with field paths. A resource not enrolled through
+`vector_allowed_internal_collections`, not provisioned, or without an active
+builder receives 404. An unavailable backend receives 503, and storage lacking
+hybrid support or configuration receives 501. There is no lexical fallback.
+The storage service continues to authorize individual results and enforce its
+existing query rate limit (429 when exceeded).
+
 ## Where to look
 
-- `pkg/apis/search/v0alpha1/types.go`: the only authority on the public request and response shape
+- `pkg/apis/search/v0alpha1/types.go` and `hybrid.go`: public request and response shapes
 - `route.go`, `handler.go`, `translate.go` in this package: validation and error codes
 - `pkg/storage/unified/resource/search_field.go`: field definitions, capabilities, the index-affecting hash
 - `pkg/storage/unified/resource/standard_search_fields.go`: the standard fields

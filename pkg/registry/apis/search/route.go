@@ -72,6 +72,18 @@ func (h *Handler) TrashRoute(group, version, resourceName, kindName string) Rout
 	}
 }
 
+// HybridSearchRoute returns the namespaced route to mount at
+// .../namespaces/{namespace}/{resource}/search/hybrid.
+func (h *HybridHandler) HybridSearchRoute(group, version, resourceName, kindName string) Route {
+	kind := kindRef{group: group, version: version, resource: resourceName, kind: kindName}
+	return Route{
+		Path:    resourceName + "/" + searchPathSegment + "/hybrid",
+		Spec:    hybridSearchRouteSpec(kindName, version),
+		Handler: h.HybridSearchFor(kind),
+		Schemas: envelopeSchemas(hybridSearchQueryGoName, hybridSearchResultsGoName),
+	}
+}
+
 // searchOperationID names the operation for OpenAPI. The version is part of the
 // name because the endpoint is mounted on every served version, and operation
 // IDs have to stay unique once the per-version specs are merged. It starts with
@@ -83,6 +95,10 @@ func searchOperationID(kindName, version string) string {
 
 func trashOperationID(kindName, version string) string {
 	return "list" + kindName + "Trash" + capitalize(version)
+}
+
+func hybridSearchOperationID(kindName, version string) string {
+	return "list" + kindName + "HybridSearch" + capitalize(version)
 }
 
 func capitalize(s string) string {
@@ -122,7 +138,23 @@ func trashRouteSpec(kindName, version string) *spec3.PathProps {
 	})
 }
 
-// routeSpecArgs is what differs between the two endpoints. Go names are separate
+func hybridSearchRouteSpec(kindName, version string) *spec3.PathProps {
+	return routeSpec(routeSpecArgs{
+		operationID:  hybridSearchOperationID(kindName, version),
+		description:  "Hybrid lexical and semantic search for " + kindName + " resources in a namespace. Returns top-k results with opaque scores meaningful only for ordering within this response. No pagination, totals, sorting or facets.",
+		requestKind:  searchv0.KindHybridSearchQuery,
+		requestGo:    hybridSearchQueryGoName,
+		responseKind: searchv0.KindHybridSearchResults,
+		responseGo:   hybridSearchResultsGoName,
+		example: &searchv0.HybridSearchQuery{
+			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindHybridSearchQuery},
+			Query:    "production",
+			Limit:    10,
+		},
+	})
+}
+
+// routeSpecArgs is what differs between the endpoints. Go names are separate
 // from kind names because the schema components are keyed by the Go name, while
 // the descriptions read better with the kind name.
 type routeSpecArgs struct {
@@ -135,7 +167,7 @@ type routeSpecArgs struct {
 	example      any
 }
 
-// routeSpec builds what both endpoints have in common: a namespaced POST taking a
+// routeSpec builds what the endpoints have in common: a namespaced POST taking a
 // query envelope and returning a results envelope.
 func routeSpec(a routeSpecArgs) *spec3.PathProps {
 	return &spec3.PathProps{
@@ -159,7 +191,7 @@ func routeSpec(a routeSpecArgs) *spec3.PathProps {
 				RequestBody: &spec3.RequestBody{
 					RequestBodyProps: spec3.RequestBodyProps{
 						Required:    true,
-						Description: "A " + a.requestKind + " describing what to match, sort and return.",
+						Description: "A " + a.requestKind + " describing what to match and return.",
 						Content:     jsonContent(a.requestGo, a.example),
 					},
 				},
