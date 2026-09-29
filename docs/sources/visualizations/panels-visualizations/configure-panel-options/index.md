@@ -155,7 +155,7 @@ To configure a show/hide rule, follow these steps:
    - **Time range less than**: Show or hide the panel if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
 
 1. If you've configured multiple rules, the **Match rules** option displays. Select one of the following:
-   - **Match all**: The panel  is shown or hidden only if _all_ the rules are matched.
+   - **Match all**: The panel is shown or hidden only if _all_ the rules are matched.
    - **Match any**: The panel is shown or hidden if _any_ of the rules are matched.
 
 1. When you've finished setting rules, save the dashboard.
