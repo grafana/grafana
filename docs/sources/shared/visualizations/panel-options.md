@@ -4,7 +4,7 @@ comments: |
   This file is used in all visualizations pages
 ---
 
-In the **Panel options** section of the panel editor pane, set options like the panel title and show/hide rules.
+In the **Panel options** section of the panel editor pane, set options like the panel title, description, and show/hide rules.
 To learn more, refer to [Configure panel options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-panel-options/).
 
 <!-- prettier-ignore-start -->
