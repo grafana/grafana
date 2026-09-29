@@ -95,7 +95,11 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	var receivedSecureValues atomic.Value
 	pluginv3.RegisterRouteServiceServer(pluginServer, httpadapter.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		parent := httpadapter.ParentFromContext(r.Context())
-		receivedSecureValues.Store(parent.GetDecryptedSecureValues())
+		secureValues := parent.GetDecryptedSecureValues()
+		if secureValues == nil {
+			secureValues = map[string]string{}
+		}
+		receivedSecureValues.Store(secureValues)
 		routeCalls.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(parent.GetRaw())
