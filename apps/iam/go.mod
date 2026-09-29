@@ -44,7 +44,7 @@ replace (
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.60.6
+	github.com/grafana/grafana-app-sdk v0.60.7-0.20260929200557-eb425ec5151f
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/stretchr/testify v1.12.1
 	k8s.io/apimachinery v0.37.1
@@ -142,3 +142,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
+
+replace github.com/grafana/grafana-enterprise => ../../../grafana-enterprise

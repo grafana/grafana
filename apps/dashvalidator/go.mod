@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.60.6
+	github.com/grafana/grafana-app-sdk v0.60.7-0.20260929200557-eb425ec5151f
 	github.com/grafana/grafana-app-sdk/logging v0.60.6
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/prometheus v0.313.0
@@ -359,3 +359,5 @@ replace (
 // This was retracted, but seems to be known by the Go module proxy, and is
 // otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
+
+replace github.com/grafana/grafana-enterprise => ../../../grafana-enterprise
