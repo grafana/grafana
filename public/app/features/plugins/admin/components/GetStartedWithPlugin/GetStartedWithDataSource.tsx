@@ -6,7 +6,6 @@ import { Pages } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
-import { AssistantSetupDropdown } from 'app/features/connections/components/AssistantSetupDropdown/AssistantSetupDropdown';
 import { ROUTES } from 'app/features/connections/constants';
 import { addDataSource } from 'app/features/datasources/state/actions';
 import { useDispatch } from 'app/types/store';

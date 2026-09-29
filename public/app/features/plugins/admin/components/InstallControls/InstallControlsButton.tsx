@@ -9,7 +9,6 @@ import { appEvents } from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
-import { AssistantSetupDropdown } from 'app/features/connections/components/AssistantSetupDropdown/AssistantSetupDropdown';
 import { useDispatch } from 'app/types/store';
 
 import { getExternalManageLink, isDisabledAngularPlugin, isMarketplacePlugin } from '../../helpers';
