@@ -4,11 +4,11 @@ import { useDebounce } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor, createCodeEditorTheme, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
-import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
+import { CodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
@@ -16,6 +16,7 @@ import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '.
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
+import { TextNGModePicker } from './TextNGModePicker';
 import { getEditorLayoutStyles } from './editorLayout';
 import { variableCompletion } from './variableCompletion';
 import { type ViewMode } from './viewMode';
@@ -50,18 +51,6 @@ export interface TextNGEditorProps {
   /** Mirrors the panel's transparent background option. */
   transparent?: boolean;
 }
-
-const getLanguageLabels = (): Record<CodeLanguage, string> => ({
-  [CodeLanguage.Go]: 'Go',
-  [CodeLanguage.Html]: 'HTML',
-  [CodeLanguage.Json]: 'JSON',
-  [CodeLanguage.Markdown]: 'Markdown',
-  [CodeLanguage.Plaintext]: t('textng.editor.language-plaintext', 'Plain text'),
-  [CodeLanguage.Sql]: 'SQL',
-  [CodeLanguage.Typescript]: 'TypeScript',
-  [CodeLanguage.Xml]: 'XML',
-  [CodeLanguage.Yaml]: 'YAML',
-});
 
 const COMMIT_DEBOUNCE_MS = 250;
 // Markdown, sanitization and the innerHTML reparse cost tens of milliseconds on
@@ -187,61 +176,6 @@ export function TextNGEditor({
     { label: t('textng.editor.view-write', 'Write'), value: 'write' as const },
   ];
 
-  const modeLabels: Record<TextMode, string> = {
-    [TextMode.Markdown]: t('textng.editor.mode-markdown', 'Markdown'),
-    [TextMode.HTML]: t('textng.editor.mode-html', 'HTML'),
-    [TextMode.Code]: t('textng.editor.mode-code', 'Code'),
-    [TextMode.Insight]: t('textng.editor.mode-insight', 'Insight'),
-  };
-  const languageLabels = getLanguageLabels();
-  const languageOptions = Object.values(CodeLanguage).map((value) => ({ value, label: languageLabels[value] }));
-
-  const language = codeLanguage ?? defaultCodeLanguage;
-  const modeValue = mode === TextMode.Code ? `${modeLabels[mode]} · ${languageLabels[language]}` : modeLabels[mode];
-
-  const renderModeMenu = () => (
-    <Menu>
-      {[TextMode.Markdown, TextMode.HTML].map((value) => (
-        <Menu.Item
-          key={value}
-          className={styles.pickerMenuItem}
-          label={modeLabels[value]}
-          role="menuitemradio"
-          ariaChecked={value === mode}
-          active={value === mode}
-          onClick={() => changeOption({ mode: value })}
-        />
-      ))}
-      <Menu.Item
-        className={styles.pickerMenuItem}
-        label={modeLabels[TextMode.Code]}
-        active={mode === TextMode.Code}
-        childItems={languageOptions.map((option) => (
-          <Menu.Item
-            key={option.value}
-            className={styles.pickerMenuItem}
-            label={option.label}
-            role="menuitemradio"
-            ariaChecked={mode === TextMode.Code && option.value === language}
-            active={mode === TextMode.Code && option.value === language}
-            onClick={() => changeOption({ mode: TextMode.Code, codeLanguage: option.value })}
-          />
-        ))}
-      />
-      <Menu.Divider />
-      {/* Switching here swaps the panel for the insight view, whose inputs are in the options pane. */}
-      <Menu.Item
-        className={styles.pickerMenuItem}
-        label={modeLabels[TextMode.Insight]}
-        icon="ai-sparkle"
-        role="menuitemradio"
-        ariaChecked={mode === TextMode.Insight}
-        active={mode === TextMode.Insight}
-        onClick={() => changeOption({ mode: TextMode.Insight })}
-      />
-    </Menu>
-  );
-
   const showEditor = view !== 'preview';
   const isCode = mode === TextMode.Code;
   const footerPagination = showPreview ? pagination : null;
@@ -270,21 +204,7 @@ export function TextNGEditor({
       <Stack gap={1} alignItems="center" wrap="wrap" minHeight={theme.components.height.md}>
         <RadioButtonGroup options={viewOptions} value={view} onChange={onViewChange} size="sm" />
         {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
-        <Dropdown placement="bottom-end" overlay={renderModeMenu}>
-          <Button
-            className={styles.modePicker}
-            fill="text"
-            size="sm"
-            variant="secondary"
-            aria-label={t('textng.editor.aria-label-mode', 'Text mode: {{mode}}', { mode: modeValue })}
-          >
-            <Stack direction="row" alignItems="center" gap={0.5}>
-              <span className={styles.pickerLabel}>{t('textng.editor.mode-picker-label', 'Mode')}</span>
-              {modeValue}
-              <Icon name="angle-down" />
-            </Stack>
-          </Button>
-        </Dropdown>
+        <TextNGModePicker mode={mode} codeLanguage={codeLanguage} onChange={changeOption} />
       </Stack>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
@@ -335,15 +255,6 @@ export function TextNGEditor({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   ...getEditorLayoutStyles(theme),
-  modePicker: css({
-    marginLeft: 'auto',
-  }),
-  pickerMenuItem: css({
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-  pickerLabel: css({
-    color: theme.colors.text.secondary,
-  }),
   fullHeight: css({
     height: '100%',
   }),

@@ -4,7 +4,7 @@ import { render, screen, userEvent } from 'test/test-utils';
 import { CoreApp, getDefaultTimeRange, type PanelProps } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { useFlagGrafanaNewTextPanel, useFlagTextNewFeatures } from '@grafana/runtime/internal';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { useElementSelection, usePanelContext } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
@@ -88,7 +88,10 @@ jest.mock('../utils/findVizPanel', () => ({
   findVizPanelByKey: jest.fn(),
 }));
 
+// utils-panels is three pure key helpers with a type-only import, so the real module is safe
+// here. DefaultGridLayoutManager.fromVizPanels needs the other two to build source panels.
 jest.mock('../utils/utils-panels', () => ({
+  ...jest.requireActual('../utils/utils-panels'),
   getVizPanelKeyForPanelId: (id: number) => `panel-${id}`,
 }));
 
@@ -116,11 +119,11 @@ const defaultProps = { id: 1 } as PanelProps;
 let deactivateScene: undefined | (() => void);
 
 /** Creates and activates a DashboardScene for tests. */
-function buildDashboard({ isEditing = false } = {}) {
+function buildDashboard({ isEditing = false, panels }: { isEditing?: boolean; panels?: VizPanel[] } = {}) {
   const dashboard = new DashboardScene({
     title: 'Test dashboard',
     uid: 'test-uid',
-    body: DefaultGridLayoutManager.createEmpty(),
+    body: panels ? DefaultGridLayoutManager.fromVizPanels(panels) : DefaultGridLayoutManager.createEmpty(),
     isEditing,
   });
   deactivateScene?.();
@@ -329,25 +332,28 @@ describe('UnconfiguredPanelComp', () => {
         expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure_insight', 1, 'panel');
       });
 
-      it('applies the insight to the panel on confirm', async () => {
+      it('applies the configured insight options to the panel on confirm', async () => {
         enableInsight();
-        const dashboard = buildDashboard({ isEditing: true });
+        const source = new VizPanel({
+          key: 'panel-2',
+          title: 'Request latency',
+          pluginId: 'timeseries',
+          $data: new SceneQueryRunner({ queries: [] }),
+        });
+        const dashboard = buildDashboard({ isEditing: true, panels: [source] });
         const panel = new VizPanel({ key: 'panel-1', pluginId: '__unconfigured-panel' });
         mockFindVizPanelByKey.mockReturnValue(panel);
         const { user, root } = renderPanel();
 
         await user.hover(root);
         await user.click(screen.getByRole('button', { name: /configure insight/i }));
+        await user.click(screen.getByLabelText('Request latency'));
         await user.click(screen.getByRole('button', { name: 'Create insight panel' }));
 
         expect(mockApplyInsightToPanel).toHaveBeenCalledWith(dashboard, panel, {
-          prompt: 'Show insights of this panel or panels',
-          context: {
-            scope: 'dashboard',
-            dashboardUid: 'test-uid',
-            dashboardTitle: 'Test dashboard',
-            panels: [],
-          },
+          question: 'Show insights of this panel or panels',
+          sourcePanelKeys: ['panel-2'],
+          followUps: [],
         });
       });
     });

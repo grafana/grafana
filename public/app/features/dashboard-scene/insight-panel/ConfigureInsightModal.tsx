@@ -1,79 +1,37 @@
 import { useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Field, Modal, MultiSelect, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
+import { Button, Field, Modal, Stack, Text, TextArea } from '@grafana/ui';
+import { type InsightOptions } from 'app/plugins/panel/text/panelcfg.gen';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../utils/unconfiguredPanelUtils';
-import { getPanelIdForVizPanel } from '../utils/utils-panels';
+import { InsightSourcePicker } from '../sidebar/insights/InsightSourcePicker';
+import { getInsightSourcePanels } from '../sidebar/insights/sources';
 
-import { type InsightPanelConfig, type InsightPanelRef, type InsightScope } from './types';
+import { InsightFollowUpsList } from './InsightFollowUpsList';
 
 export interface ConfigureInsightModalProps {
   dashboard: DashboardScene;
-  /** The panel being configured — never offered as its own context. */
+  /** The panel being configured — never offered as one of its own sources. */
   panelId: number;
   onDismiss: () => void;
-  onConfirm: (config: InsightPanelConfig) => void;
-}
-
-/** Panels the assistant can be pointed at: everything configured, minus the panel being edited. */
-function useContextPanelOptions(
-  dashboard: DashboardScene,
-  panelId: number
-): Array<SelectableValue<number> & { panelTitle: string }> {
-  return useMemo(
-    () =>
-      dashboard.state.body
-        .getVizPanels()
-        .filter((panel) => panel.state.pluginId !== UNCONFIGURED_PANEL_PLUGIN_ID)
-        .map((panel) => ({ panel, id: getPanelIdForVizPanel(panel) }))
-        .filter(({ id }) => id !== panelId)
-        .map(({ panel, id }) => {
-          const panelTitle = panel.state.title || t('dashboard.insight-panel.untitled-panel', 'Untitled panel');
-          return { value: id, label: `${panelTitle} (${id})`, panelTitle };
-        }),
-    [dashboard, panelId]
-  );
+  onConfirm: (insight: InsightOptions) => void;
 }
 
 export function ConfigureInsightModal({ dashboard, panelId, onDismiss, onConfirm }: ConfigureInsightModalProps) {
-  const panelOptions = useContextPanelOptions(dashboard, panelId);
-
-  const [scope, setScope] = useState<InsightScope>(panelOptions.length > 0 ? 'panels' : 'dashboard');
-  const [selectedPanelIds, setSelectedPanelIds] = useState<number[]>([]);
-  const [prompt, setPrompt] = useState(
-    t('dashboard.insight-panel.default-prompt', 'Show insights of this panel or panels')
+  // The panel being configured has no data of its own to answer from, so exclude it.
+  const sources = useMemo(
+    () => getInsightSourcePanels(dashboard).filter((source) => source.key !== `panel-${panelId}`),
+    [dashboard, panelId]
   );
 
-  const scopeOptions: Array<SelectableValue<InsightScope>> = [
-    { value: 'panels', label: t('dashboard.insight-panel.scope-panels', 'Specific panels') },
-    { value: 'dashboard', label: t('dashboard.insight-panel.scope-dashboard', 'Whole dashboard') },
-  ];
+  const [question, setQuestion] = useState(
+    t('dashboard.insight-panel.default-question', 'Show insights of this panel or panels')
+  );
+  const [sourcePanelKeys, setSourcePanelKeys] = useState<string[]>([]);
+  const [followUps, setFollowUps] = useState<string[]>([]);
 
-  const missingPanels = scope === 'panels' && selectedPanelIds.length === 0;
-  const missingPrompt = prompt.trim().length === 0;
-
-  const onCreate = () => {
-    const panels: InsightPanelRef[] =
-      scope === 'dashboard'
-        ? []
-        : selectedPanelIds.map((id) => ({
-            panelId: id,
-            panelTitle: panelOptions.find((option) => option.value === id)?.panelTitle ?? String(id),
-          }));
-
-    onConfirm({
-      prompt: prompt.trim(),
-      context: {
-        scope,
-        dashboardUid: dashboard.state.uid,
-        dashboardTitle: dashboard.state.title,
-        panels,
-      },
-    });
-  };
+  const canCreate = question.trim() !== '' && sourcePanelKeys.length > 0;
 
   return (
     <Modal
@@ -85,43 +43,48 @@ export function ConfigureInsightModal({ dashboard, panelId, onDismiss, onConfirm
       <Stack direction="column" gap={2}>
         <Field
           noMargin
-          label={t('dashboard.insight-panel.scope-label', 'Panel context')}
+          label={t('dashboard.insight-panel.question-label', 'Question')}
           description={t(
-            'dashboard.insight-panel.scope-description',
-            'What the assistant looks at when it writes the insight.'
-          )}
-        >
-          <RadioButtonGroup options={scopeOptions} value={scope} onChange={setScope} />
-        </Field>
-
-        {scope === 'panels' && (
-          <Field noMargin label={t('dashboard.insight-panel.panels-label', 'Panels')}>
-            <MultiSelect
-              inputId="insight-context-panels"
-              options={panelOptions}
-              value={selectedPanelIds}
-              onChange={(selected) => setSelectedPanelIds(selected.map((option) => option.value!))}
-              placeholder={t('dashboard.insight-panel.panels-placeholder', 'Select panels')}
-              noOptionsMessage={t('dashboard.insight-panel.panels-empty', 'This dashboard has no other panels')}
-              isClearable
-            />
-          </Field>
-        )}
-
-        <Field
-          noMargin
-          label={t('dashboard.insight-panel.prompt-label', 'Prompt')}
-          description={t(
-            'dashboard.insight-panel.prompt-description',
-            'What you want to know about the panels in context.'
+            'dashboard.insight-panel.question-description',
+            'What Assistant answers using only the data the source panels show.'
           )}
         >
           <TextArea
-            id="insight-prompt"
-            rows={4}
-            value={prompt}
-            onChange={(event) => setPrompt(event.currentTarget.value)}
+            id="insight-question"
+            rows={3}
+            value={question}
+            onChange={(event) => setQuestion(event.currentTarget.value)}
           />
+        </Field>
+
+        <Field
+          noMargin
+          label={t('dashboard.insight-panel.sources-label', 'Source panels')}
+          description={t(
+            'dashboard.insight-panel.sources-description',
+            'Assistant answers using only the data these panels show. Selecting a tab or row includes every panel in it.'
+          )}
+        >
+          {sources.length > 0 ? (
+            <InsightSourcePicker sources={sources} value={sourcePanelKeys} onChange={setSourcePanelKeys} />
+          ) : (
+            <Text element="p" variant="bodySmall" color="secondary">
+              <Trans i18nKey="dashboard.insight-panel.sources-empty">
+                This dashboard has no other panels with queries to use as sources.
+              </Trans>
+            </Text>
+          )}
+        </Field>
+
+        <Field
+          noMargin
+          label={t('dashboard.insight-panel.follow-ups-label', 'Follow-up questions')}
+          description={t(
+            'dashboard.insight-panel.follow-ups-description',
+            'Optional. Offered after the answer, each one answered inside the panel against the same data.'
+          )}
+        >
+          <InsightFollowUpsList value={followUps} onChange={setFollowUps} />
         </Field>
       </Stack>
 
@@ -129,7 +92,18 @@ export function ConfigureInsightModal({ dashboard, panelId, onDismiss, onConfirm
         <Button variant="secondary" fill="outline" onClick={onDismiss}>
           <Trans i18nKey="dashboard.insight-panel.cancel">Cancel</Trans>
         </Button>
-        <Button variant="primary" onClick={onCreate} disabled={missingPanels || missingPrompt}>
+        <Button
+          variant="primary"
+          disabled={!canCreate}
+          onClick={() =>
+            onConfirm({
+              question: question.trim(),
+              sourcePanelKeys,
+              // Blank rows are the author's in-progress input, not questions to offer.
+              followUps: followUps.map((followUp) => followUp.trim()).filter(Boolean),
+            })
+          }
+        >
           <Trans i18nKey="dashboard.insight-panel.create">Create insight panel</Trans>
         </Button>
       </Modal.ButtonRow>

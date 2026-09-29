@@ -1,12 +1,16 @@
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent } from 'test/test-utils';
 
-import { VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { ConfigureInsightModal } from './ConfigureInsightModal';
+
+/** Only panels with a data provider can be insight sources. */
+function panelWithData(key: string, title: string) {
+  return new VizPanel({ key, title, pluginId: 'timeseries', $data: new SceneQueryRunner({ queries: [] }) });
+}
 
 function buildDashboard() {
   return new DashboardScene({
@@ -14,8 +18,8 @@ function buildDashboard() {
     uid: 'test-uid',
     body: DefaultGridLayoutManager.fromVizPanels([
       new VizPanel({ key: 'panel-1', pluginId: '__unconfigured-panel' }),
-      new VizPanel({ key: 'panel-2', pluginId: 'timeseries', title: 'Request latency' }),
-      new VizPanel({ key: 'panel-3', pluginId: 'timeseries', title: 'Error rate' }),
+      panelWithData('panel-2', 'Request latency'),
+      panelWithData('panel-3', 'Error rate'),
     ]),
   });
 }
@@ -27,58 +31,62 @@ function renderModal(onConfirm = jest.fn(), onDismiss = jest.fn()) {
 }
 
 describe('ConfigureInsightModal', () => {
-  it('defaults to a prompt asking for insights', () => {
+  it('defaults to a question asking for insights', () => {
     renderModal();
 
-    expect(screen.getByLabelText(/^Prompt/)).toHaveValue('Show insights of this panel or panels');
+    expect(screen.getByLabelText(/^Question/)).toHaveValue('Show insights of this panel or panels');
   });
 
-  it('offers the other configured panels as context', async () => {
+  it('offers the dashboard panels that have queries as sources', () => {
     renderModal();
 
-    await selectOptionInTest(screen.getByLabelText('Panels'), 'Request latency (2)');
-
-    expect(screen.getByText('Request latency (2)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Request latency')).toBeInTheDocument();
+    expect(screen.getByLabelText('Error rate')).toBeInTheDocument();
   });
 
-  it('cannot be confirmed until a panel is selected', async () => {
+  it('does not offer the panel being configured as its own source', () => {
+    renderModal();
+
+    expect(screen.queryByLabelText('panel-1')).not.toBeInTheDocument();
+  });
+
+  it('cannot be confirmed until a source panel is selected', async () => {
     renderModal();
 
     expect(screen.getByRole('button', { name: 'Create insight panel' })).toBeDisabled();
 
-    await selectOptionInTest(screen.getByLabelText('Panels'), 'Error rate (3)');
+    await userEvent.click(screen.getByLabelText('Error rate'));
 
     expect(screen.getByRole('button', { name: 'Create insight panel' })).toBeEnabled();
   });
 
-  it('confirms with the selected panel context and prompt', async () => {
+  it('confirms with the question and the selected source keys', async () => {
     const { onConfirm } = renderModal();
 
-    await selectOptionInTest(screen.getByLabelText('Panels'), 'Error rate (3)');
-    await userEvent.clear(screen.getByLabelText(/^Prompt/));
-    await userEvent.type(screen.getByLabelText(/^Prompt/), 'Is this panel healthy?');
+    await userEvent.click(screen.getByLabelText('Error rate'));
+    await userEvent.clear(screen.getByLabelText(/^Question/));
+    await userEvent.type(screen.getByLabelText(/^Question/), 'Is this panel healthy?');
     await userEvent.click(screen.getByRole('button', { name: 'Create insight panel' }));
 
     expect(onConfirm).toHaveBeenCalledWith({
-      prompt: 'Is this panel healthy?',
-      context: {
-        scope: 'panels',
-        dashboardUid: 'test-uid',
-        dashboardTitle: 'Test dashboard',
-        panels: [{ panelId: 3, panelTitle: 'Error rate' }],
-      },
+      question: 'Is this panel healthy?',
+      sourcePanelKeys: ['panel-3'],
+      followUps: [],
     });
   });
 
-  it('confirms with no panels when the whole dashboard is in scope', async () => {
+  it('confirms with the author-defined follow-ups, dropping blank rows', async () => {
     const { onConfirm } = renderModal();
 
-    await userEvent.click(screen.getByRole('radio', { name: 'Whole dashboard' }));
+    await userEvent.click(screen.getByLabelText('Request latency'));
+    await userEvent.click(screen.getByRole('button', { name: 'Add follow-up' }));
+    await userEvent.type(screen.getByPlaceholderText('Which service drove the change?'), 'Which service?');
+    // A second, left-blank row is in-progress input and must not become a follow-up.
+    await userEvent.click(screen.getByRole('button', { name: 'Add follow-up' }));
     await userEvent.click(screen.getByRole('button', { name: 'Create insight panel' }));
 
-    expect(screen.queryByLabelText('Panels')).not.toBeInTheDocument();
     expect(onConfirm).toHaveBeenCalledWith(
-      expect.objectContaining({ context: expect.objectContaining({ panels: [] }) })
+      expect.objectContaining({ sourcePanelKeys: ['panel-2'], followUps: ['Which service?'] })
     );
   });
 });

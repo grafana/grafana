@@ -21,11 +21,11 @@ import {
 import { appEvents } from 'app/core/app_events';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
+import { type InsightOptions } from 'app/plugins/panel/text/panelcfg.gen';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
 import { ConfigureInsightModal } from '../insight-panel/ConfigureInsightModal';
 import { applyInsightToPanel } from '../insight-panel/applyInsightToPanel';
-import { type InsightPanelConfig } from '../insight-panel/types';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
 import { DashboardInteractions } from '../utils/interactions';
@@ -105,7 +105,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
     DashboardInteractions.panelActionClicked('configure_insight', props.id, 'panel');
   };
 
-  const onInsightConfirm = (config: InsightPanelConfig) => {
+  const onInsightConfirm = (insight: InsightOptions) => {
     setIsInsightModalOpen(false);
 
     if (!dashboard) {
@@ -114,7 +114,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
 
     const panel = findVizPanelByKey(dashboard, panelKey);
     if (panel) {
-      applyInsightToPanel(dashboard, panel, config);
+      applyInsightToPanel(dashboard, panel, insight);
     }
   };
 
