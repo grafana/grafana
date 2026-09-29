@@ -20,7 +20,7 @@ import (
 const idTokenPresentAttribute = "grafana.plugin.id_token_present"
 
 // WithCallerIDToken attaches the caller's Grafana ID token to ctx (see
-// k8s.WithIDToken), so a v3 plugin RPC's BuildKubeConfig client acts as the
+// k8s.ContextWithIDToken), so a v3 plugin RPC's BuildKubeConfig client acts as the
 // caller, not as the plugin's own service identity. Embedded Grafana already
 // has one on the requester (the edge mints it); the standalone router does
 // not, so deriver mints one from the requester's OBO access token instead.
@@ -48,7 +48,7 @@ func WithCallerIDToken(ctx context.Context, deriver authnlib.IDTokenDeriver) con
 			"subject", requester.GetSubject(), "identity_type", requester.GetIdentityType())
 	}
 
-	return k8s.WithIDToken(ctx, token)
+	return k8s.ContextWithIDToken(ctx, token)
 }
 
 func deriveIDToken(ctx context.Context, deriver authnlib.IDTokenDeriver, requester identity.Requester) string {

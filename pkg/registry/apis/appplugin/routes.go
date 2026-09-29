@@ -311,7 +311,7 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 		}
 		// The header above is the contract for a route handler that reads
 		// X-Grafana-Id itself; this is the separate channel a BuildKubeConfig
-		// client inside the handler reads via gRPC metadata (see k8s.WithIDToken).
+		// client inside the handler reads via gRPC metadata (see k8s.ContextWithIDToken).
 		req = req.WithContext(kindstore.WithCallerIDToken(req.Context(), b.idTokenDeriver))
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}
