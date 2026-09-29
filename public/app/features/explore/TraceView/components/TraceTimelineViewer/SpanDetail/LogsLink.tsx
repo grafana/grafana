@@ -442,6 +442,7 @@ function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch, drilld
   // (closed over that reference) uses the matched query and datasource.
   if (linkModel.interpolatedParams) {
     linkModel.interpolatedParams.query = matchedQueries[0];
+    linkModel.href = href;
   }
 
   return {
