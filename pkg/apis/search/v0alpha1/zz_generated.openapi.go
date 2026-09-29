@@ -181,7 +181,7 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchFilter(ref common.ReferenceCall
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Values must contain at least one value. An empty folder value matches resources in the root folder.",
+							Description: "Values must contain at least one value. Values containing '*' are rejected. An empty folder value matches resources in the root folder.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

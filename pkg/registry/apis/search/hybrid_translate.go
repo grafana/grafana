@@ -97,6 +97,12 @@ func validateHybridFilters(filters []searchv0.HybridSearchFilter, gvr schema.Gro
 			errs = append(errs, field.Required(path.Child("values"), "must contain at least one value"))
 		}
 		totalValues += len(f.Values)
+		for j, v := range f.Values {
+			// Filters must stay exact: the lexical backend can interpret '*' as a wildcard.
+			if strings.Contains(v, "*") {
+				errs = append(errs, field.Invalid(path.Child("values").Index(j), v, "wildcard values are not allowed"))
+			}
+		}
 		if f.Field == "language" {
 			languages := []string{"promql", "logql", "traceql", "sql"}
 			for j, v := range f.Values {

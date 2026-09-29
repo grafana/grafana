@@ -451,7 +451,8 @@ mode, `semanticQuery` can still be used for reranking. Each query is limited to
 1,000 bytes. `limit` defaults to 50, is capped at 200, and cannot be negative.
 
 Filters are exact matches: values within a filter are ORed, and different filters
-are ANDed. Each field may appear once, each values list must be nonempty, and the
+are ANDed. Filter values containing `*` are rejected.
+Each field may appear once, each values list must be nonempty, and the
 combined value count cannot exceed 1,000. All resources support `uid` (resource
 name) and `folder` (containing folder, not recursive). `""` and `"general"` both
 select the root folder. Dashboards additionally support `datasource_uid` and

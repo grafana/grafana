@@ -47,8 +47,8 @@ type HybridSearchFilter struct {
 	// support datasource_uid and language (promql, logql, traceql or sql).
 	Field string `json:"field"`
 
-	// Values must contain at least one value. An empty folder value matches
-	// resources in the root folder.
+	// Values must contain at least one value. Values containing '*' are rejected.
+	// An empty folder value matches resources in the root folder.
 	// +listType=atomic
 	Values []string `json:"values"`
 }

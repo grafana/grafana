@@ -73,7 +73,8 @@ func TestHybridSearchHandler(t *testing.T) {
 	}}}
 	h := NewHybridHandler(client, noop.NewTracerProvider().Tracer(""))
 	q := hybridQuery()
-	q.SemanticQuery = "CPU usage by host"
+	q.Query = "cpu*"
+	q.SemanticQuery = "CPU usage for host *"
 	q.Limit = 12
 	q.MinRelevance = "low"
 	q.Filters = []searchv0.HybridSearchFilter{
@@ -186,6 +187,18 @@ func TestHybridSearchValidation(t *testing.T) {
 		{"empty filter values", func(q *searchv0.HybridSearchQuery) {
 			q.Filters = []searchv0.HybridSearchFilter{{Field: "uid"}}
 		}, "filters[0].values"},
+		{"wildcard uid filter", func(q *searchv0.HybridSearchQuery) {
+			q.Filters = []searchv0.HybridSearchFilter{{Field: "uid", Values: []string{"*"}}}
+		}, "filters[0].values[0]"},
+		{"wildcard folder prefix", func(q *searchv0.HybridSearchQuery) {
+			q.Filters = []searchv0.HybridSearchFilter{{Field: "folder", Values: []string{"prod-*"}}}
+		}, "filters[0].values[0]"},
+		{"wildcard within datasource value", func(q *searchv0.HybridSearchQuery) {
+			q.Filters = []searchv0.HybridSearchFilter{
+				{Field: "folder", Values: []string{"prod"}},
+				{Field: "datasource_uid", Values: []string{"prom", "prom*prod"}},
+			}
+		}, "filters[1].values[1]"},
 		{"duplicate filter", func(q *searchv0.HybridSearchQuery) {
 			q.Filters = []searchv0.HybridSearchFilter{{Field: "uid", Values: []string{"a"}}, {Field: "uid", Values: []string{"b"}}}
 		}, "filters[1].field"},
