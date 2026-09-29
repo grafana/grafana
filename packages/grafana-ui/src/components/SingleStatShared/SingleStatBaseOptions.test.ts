@@ -80,6 +80,30 @@ describe('sharedSingleStatMigrationHandler', () => {
     `);
   });
 
+  it('converts string minValue/maxValue saved by 6.0/6.1 gauges to numbers', () => {
+    const panel = {
+      options: {
+        valueOptions: {
+          unit: 'none',
+          stat: 'last',
+          decimals: 0,
+        },
+        minValue: '0',
+        maxValue: '100',
+        thresholds: [
+          { color: 'green', index: 0, value: -Infinity },
+          { color: 'red', index: 1, value: 80 },
+        ],
+      },
+      type: 'gauge',
+    } as PanelModel;
+
+    sharedSingleStatMigrationHandler(panel);
+
+    const { min, max } = panel.fieldConfig.defaults;
+    expect({ min, max }).toEqual({ min: 0, max: 100 });
+  });
+
   it('move thresholds to scale', () => {
     const panel = {
       options: {
