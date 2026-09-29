@@ -20,8 +20,11 @@ import (
 	webhookV0 "github.com/grafana/alerting/receivers/webhook/v0mimir1"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestRoundTripConversion(t *testing.T) {
@@ -239,6 +242,42 @@ inhibit_rules:
 	// Ensure passes validation.
 	require.NoError(t, model.Validate())
 
+	// Spot-check that ToModel actually mapped fields correctly, not just that a round trip through
+	// ToModel/ToDBModel comes back unchanged (which the JSONEq check below verifies separately).
+	tmpl, ok := model.Templates["template1.tmpl"]
+	require.True(t, ok, "expected template with UID template1.tmpl (managed_templates map key)")
+	assert.Equal(t, `{{ define "test" }}Hello {{ .CommonLabels.alertname }}{{ end }}`, tmpl.Content)
+
+	recv, ok := model.Receivers[ReceiverUID("default-receiver")]
+	require.True(t, ok, "expected receiver default-receiver")
+	require.Len(t, recv.GrafanaManagedReceivers, 1)
+	assert.Equal(t, "uid-default-1", recv.GrafanaManagedReceivers[0].UID)
+	assert.Equal(t, "email", recv.GrafanaManagedReceivers[0].Type)
+
+	// Deprecated mute_time_intervals and time_intervals are folded into one map.
+	weekends, ok := model.TimeIntervals[TimeIntervalUID("weekends")]
+	require.True(t, ok, "expected time interval weekends (folded from mute_time_intervals)")
+	assert.Equal(t, "weekends", weekends.Title)
+	businessHours, ok := model.TimeIntervals[TimeIntervalUID("business-hours")]
+	require.True(t, ok, "expected time interval business-hours")
+	assert.Equal(t, "business-hours", businessHours.Title)
+
+	// Inhibition rules are keyed by their stored name verbatim (not hashed).
+	rule, ok := model.InhibitionRules["inhibit-rule-1"]
+	require.True(t, ok, "expected inhibition rule inhibit-rule-1")
+	require.Len(t, rule.SourceMatchers, 1)
+	assert.Equal(t, Matcher{Type: MatcherEqual, Label: "alertname", Value: "HighCPU"}, rule.SourceMatchers[0])
+
+	route, ok := model.ManagedRoutes["managed-route-1"]
+	require.True(t, ok, "expected managed route managed-route-1")
+	assert.Equal(t, "critical-receiver", route.Receiver)
+
+	require.Len(t, model.ExtraConfigs, 1)
+	assert.Equal(t, "remote-primary", model.ExtraConfigs[0].Identifier)
+
+	require.NotNil(t, model.AlertmanagerConfig.Route)
+	assert.Equal(t, "default-receiver", model.AlertmanagerConfig.Route.Receiver)
+
 	// Convert Model -> DB
 	convertedDB, err := ToDBModel(model)
 	require.NoError(t, err)
@@ -271,6 +310,93 @@ inhibit_rules:
 
 	require.JSONEq(t, string(expectedJSON), string(convertedJSON),
 		"Round-trip conversion should be lossless")
+}
+
+// TestToDBModel_ToStaticJSON hand-builds an AMConfigV1 (not derived from unmarshalling/ToModel)
+// and asserts the JSON ToDBModel produces against an independently-authored expected literal.
+// This is the direction TestRoundTripConversion can't cover on its own: that test's "expected"
+// value is itself produced by the same ToModel/ToDBModel helpers being tested (checking internal
+// round-trip consistency), whereas this pins the actual external JSON contract.
+func TestToDBModel_ToStaticJSON(t *testing.T) {
+	model := &AMConfigV1{
+		Templates: map[ResourceUID]TemplateGroup{
+			"tmpl-uid": NewTemplateGroup("tmpl-uid", "welcome.tmpl", "hi", TemplateKindGrafana, models.ProvenanceNone),
+		},
+		InhibitionRules: map[ResourceUID]InhibitionRule{
+			"rule-1": NewInhibitionRule(
+				"rule-1",
+				[]Matcher{{Type: MatcherEqual, Label: "severity", Value: "critical"}},
+				[]Matcher{{Type: MatcherEqual, Label: "severity", Value: "warning"}},
+				[]string{"alertname"},
+				models.ProvenanceNone,
+			),
+		},
+		TimeIntervals: map[ResourceUID]TimeInterval{
+			TimeIntervalUID("business-hours"): NewTimeInterval(
+				"business-hours",
+				[]timeinterval.TimeInterval{{Weekdays: []timeinterval.WeekdayRange{{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 5}}}}},
+				models.ProvenanceNone,
+			),
+		},
+		Receivers: map[ResourceUID]PostableApiReceiver{
+			ReceiverUID("email-receiver"): NewReceiver("email-receiver", []*PostableGrafanaReceiver{
+				{UID: "int-1", Name: "email-receiver", Type: "email"},
+			}, models.ProvenanceNone),
+		},
+		AlertmanagerConfig: PostableApiAlertingConfig{
+			Config: Config{
+				Route: &Route{Receiver: "email-receiver", GroupByStr: []string{"alertname"}},
+			},
+		},
+		ManagedRoutes: map[string]*Route{
+			"imported": {Receiver: "email-receiver"},
+		},
+		ExtraConfigs: []ExtraConfiguration{
+			{Identifier: "remote-1", TemplateFiles: map[string]string{}, AlertmanagerConfig: "route:\n  receiver: x\n"},
+		},
+	}
+
+	dbModel, err := ToDBModel(model)
+	require.NoError(t, err)
+
+	actual, err := json.Marshal(dbModel)
+	require.NoError(t, err)
+
+	const expected = `{
+		"managed_templates": {
+			"tmpl-uid": {"name": "welcome.tmpl", "content": "hi", "kind": "grafana"}
+		},
+		"alertmanager_config": {
+			"route": {"receiver": "email-receiver", "group_by": ["alertname"]},
+			"receivers": [
+				{
+					"name": "email-receiver",
+					"grafana_managed_receiver_configs": [
+						{"uid": "int-1", "name": "email-receiver", "type": "email", "disableResolveMessage": false}
+					]
+				}
+			],
+			"time_intervals": [
+				{"name": "business-hours", "time_intervals": [{"weekdays": ["monday:friday"]}]}
+			]
+		},
+		"managed_routes": {
+			"imported": {"receiver": "email-receiver"}
+		},
+		"managed_inhibition_rules": {
+			"rule-1": {
+				"name": "rule-1",
+				"source_matchers": ["severity=\"critical\""],
+				"target_matchers": ["severity=\"warning\""],
+				"equal": ["alertname"]
+			}
+		},
+		"extra_config": [
+			{"identifier": "remote-1", "template_files": {}, "alertmanager_config": "route:\n  receiver: x\n", "managed_by": ""}
+		]
+	}`
+
+	assert.JSONEq(t, expected, string(actual))
 }
 
 func TestMigrationFromTemplateFiles(t *testing.T) {
