@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"iter"
 	"math/rand"
 	"net/http"
 	"slices"
@@ -310,12 +311,35 @@ type ResourceIndex interface {
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string, stats *SearchStats) (int64, error)
 
+	// ListDocumentRefs enumerates the live documents the index holds for one
+	// resource type, as the name and the resource version each was indexed at.
+	// Reconciliation compares that with what storage holds, so it needs the whole
+	// set rather than a ranked page.
+	ListDocumentRefs(ctx context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error]
+
 	// UpdateIndex updates the index with the latest data (using update function provided when index was built) to guarantee strong consistency during the search.
 	// Returns RV to which index was updated.
 	UpdateIndex(ctx context.Context) (int64, error)
 
 	// BuildInfo returns build information about the index.
 	BuildInfo() (IndexBuildInfo, error)
+}
+
+// DocumentRef is what an index knows about one document without reading it.
+//
+// It carries no namespace, group or resource, because the caller supplied all
+// three: the index covers one namespace, and the enumeration is of one resource
+// type within it.
+type DocumentRef struct {
+	// Name is the Kubernetes name, the same one a resource key carries. It is
+	// unique within a namespace, group and resource, which is what makes it enough
+	// to identify a document here.
+	Name string
+
+	// RV is the resource version the document was indexed at, which is how a
+	// caller tells an out-of-date document from a current one. Zero when the index
+	// holds no readable version, which a caller treats as out of date.
+	RV int64
 }
 
 type BuildFn func(index ResourceIndex) (int64, error)

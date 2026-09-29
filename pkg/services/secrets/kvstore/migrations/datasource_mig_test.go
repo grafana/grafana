@@ -73,7 +73,7 @@ func TestIntegrationMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName} //nolint:staticcheck // Exercise legacy field compatibility.
 		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, dataSource)
@@ -96,7 +96,7 @@ func TestIntegrationMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was maintained for compatibility
-		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName} //nolint:staticcheck // Exercise legacy field compatibility.
 		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, dataSource)

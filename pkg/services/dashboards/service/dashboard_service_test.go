@@ -772,7 +772,6 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 		folderPermissions: folderPermService,
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  0,
 				UID: "general",
 			},
 		},
@@ -799,7 +798,7 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 		cfg: setting.NewCfg(),
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  0,
+				ID:  0, //nolint:staticcheck // Exercise legacy field compatibility.
 				UID: "general",
 			},
 		},
@@ -2177,7 +2176,7 @@ func TestCleanUpDashboard(t *testing.T) {
 		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			item := annotations.Item{
 				OrgID:       orgID,
-				DashboardID: 0,
+				DashboardID: 0, //nolint:staticcheck // Exercise legacy field compatibility.
 				Text:        "org annotation",
 				Epoch:       1,
 				Created:     1,
