@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { LoadingState, type DataFrame, type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -167,6 +167,9 @@ export function QueryInspector({ instanceId, data, onRefreshQuery }: Props) {
   const [response, setResponse] = useState<{}>({});
   // Only read when copying to the clipboard, so it must not drive a render.
   const formattedJson = useRef<{} | undefined>(undefined);
+  const onDidRender = useCallback((rendered: {}) => {
+    formattedJson.current = rendered;
+  }, []);
 
   useEffect(() => {
     const subscription = backendSrv.getInspectorStream().subscribe({
@@ -245,15 +248,7 @@ export function QueryInspector({ instanceId, data, onRefreshQuery }: Props) {
             text={t('inspector.query-inspector.text-loading-query-inspector', 'Loading query inspector...')}
           />
         )}
-        {!isLoading && haveData && (
-          <JSONFormatter
-            json={response}
-            open={openNodes}
-            onDidRender={(rendered) => {
-              formattedJson.current = rendered;
-            }}
-          />
-        )}
+        {!isLoading && haveData && <JSONFormatter json={response} open={openNodes} onDidRender={onDidRender} />}
         {!isLoading && !haveData && (
           <p className="muted">
             <Trans i18nKey="inspector.query.no-data">No request and response collected yet. Hit refresh button</Trans>

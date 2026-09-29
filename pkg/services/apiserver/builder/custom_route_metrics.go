@@ -59,6 +59,17 @@ func (w *responseWriterWithStatus) StatusCode() int {
 	return w.statusCode
 }
 
+// Flush implements http.Flusher, so handlers that stream their response, such
+// as plugin routes, can still flush through the wrapper.
+func (w *responseWriterWithStatus) Flush() {
+	_ = http.NewResponseController(w.ResponseWriter).Flush()
+}
+
+// Unwrap returns the wrapped writer for http.ResponseController.
+func (w *responseWriterWithStatus) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
 // InstrumentHandler wraps an HTTP handler to record metrics for custom routes.
 // It captures the status code and records it using the standard apiserver_request_total metric,
 // making custom routes appear alongside regular Kubernetes API metrics.

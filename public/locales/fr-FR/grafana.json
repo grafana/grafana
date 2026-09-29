@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externes",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configurer",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Impossible de charger les règles pour cette source de données"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Plus aucun résultat : {{numberOfRules}} règles trouvées",
         "no-rules-found": "Aucune règle d'alerte ou d'enregistrement ne correspond à votre ensemble actuel de filtres.",
         "results-loading": "Recherche : {{numberOfRules}} règles trouvées",
-        "results-with-cancellation": "Recherche annulée : {{numberOfRules}} règles trouvées"
+        "results-with-cancellation": "Recherche annulée : {{numberOfRules}} règles trouvées",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Les importations ne sont pas disponibles tant que la synchronisation automatique de Mimir Alertmanager est active"
@@ -4392,6 +4405,7 @@
       "label-top": "Haut"
     },
     "name-show-unfilled-area": "Afficher la zone non remplie",
+    "name-text-mode": "",
     "name-value-display": "Affichage de la valeur",
     "presets": {
       "basic": "Basique",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Jauge à barres",
       "lcd": "Jauge à barres – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Masqué",
@@ -5788,10 +5809,16 @@
       "paste-panel": "Coller le panneau",
       "remove": "Supprimer {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Modifier le titre de la ligne",
       "switch-layout": "Changer la disposition",
       "switch-layout-row": "Changer de mise en page",
       "switch-layout-tab": "Changer de mise en page",
+      "tab-repeat-variable": "",
       "tab-title": "Modifier le titre de l’onglet",
       "variable-description": "Modifiez la description de la variable",
       "variable-hide": "Modifiez l’option de masquage de la variable",
@@ -6040,6 +6067,12 @@
       "ungroup-groups-title": "Dissocier les groupes imbriqués ?",
       "ungroup-repeat-loss": "Les options de répétition configurées sur les groupes dissociés seront perdues.",
       "ungroup-repeat-loss-title": "Dissocier ?"
+    },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} sur {{numberOfPages}}",
@@ -6759,7 +6792,14 @@
         "title-remove": "Supprimer",
         "title-show-transform-help": "Afficher l’aide sur la transformation"
       },
-      "title-delete": "Supprimer {{name}} ?"
+      "title-delete": "Supprimer {{name}} ?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -6808,9 +6848,6 @@
     },
     "variable": {
       "description-tooltip": "Description de la variable"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
     },
     "view-panel": {
       "back-to-dashboard": "Retour au tableau de bord",
@@ -7424,7 +7461,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Vos modifications seront perdues lors de la mise à jour du plugin. Utilisez la fonction <strong>Enregistrer sous</strong> pour créer une version personnalisée.",
-        "title-failed-to-save-dashboard": "Échec de l’enregistrement du tableau de bord",
         "title-plugin-dashboard": "Tableau de bord du plugin",
         "title-someone-else-has-updated-this-dashboard": "Quelqu’un d’autre a mis à jour ce tableau de bord",
         "would-still-dashboard": "Voulez-vous toujours enregistrer ce tableau de bord ?"
@@ -7692,9 +7728,6 @@
       },
       "label-copy-tags": "Copier les balises",
       "label-folder": "Dossier",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Échec de l’enregistrement du tableau de bord"
-      },
       "required": "Champ requis"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7774,9 @@
       "save-variables-label-update-default-variable-values": "Mettre à jour les valeurs des variables par défaut",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Annuler",
@@ -9430,6 +9466,8 @@
     "menu": "Ouvrir le menu",
     "new-flag": "nouvelle-surcharge-de-flag",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Enregistrer",
     "title": "Contrôle des fonctionnalités"
   },
@@ -10552,7 +10590,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerte",
       "alerting-settings-label": "Gérer les règles d'alerte dans l'interface utilisateur d'alerte",
-      "alerting-settings-tooltip": "Gérez les règles d'alerte pour cette source de données. Pour gérer d'autres ressources d'alerte, ajoutez une source de données Alertmanager.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Réinitialiser",
       "custom-headers-add": "Ajouter un en-tête",
       "custom-headers-header": "En-tête",
@@ -10840,6 +10878,7 @@
       "placeholder": "Choisir"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filtrer par valeur",
       "cell-filter-out": "Filtrer la valeur",
       "cell-inspect": "Inspecter la valeur",
@@ -11200,10 +11239,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Alertes en cours",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidents",
       "team-filter-all": "Toutes les équipes",
       "team-filter-label": "Filtrer les alertes par équipe",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Vos équipes",
       "title": "Alertes et incidents",
       "title-alerts": "Alertes",
@@ -13318,7 +13358,7 @@
       "count-truncated_other": "{{count}} premiers notebooks chargés"
     },
     "new": {
-      "default-title": "Notebook nº {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Échec de l’enregistrement",
@@ -14857,12 +14897,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Retour aux référentiels",
       "cleaning-up-resources": "Nettoyage des ressources du référentiel",
-      "not-found": "introuvable",
       "not-found-message": "Référentiel introuvable",
       "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration.",
       "tab-overview": "Vue d’ensemble",
@@ -15158,26 +15202,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Avant de rendre le tableau de bord public, acceptez ce qui suit :",
-      "data-src-ack-desc": "La publication ne fonctionne actuellement qu'avec un sous-ensemble de sources de données*",
-      "data-src-ack-tooltip": "En savoir plus sur les sources de données publiques",
-      "public-ack-desc": "Votre tableau de bord sera entièrement public*",
-      "public-ack-tooltip": "En savoir plus sur les tableaux de bord publics",
-      "usage-ack-desc": "Si vous rendez le tableau de bord public, les requêtes seront exécutées à chaque fois qu'il sera affiché, ce qui peut augmenter les coûts*",
-      "usage-ack-desc-tooltip": "En savoir plus sur la mise en cache des requêtes"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Peut voir le tableau de bord",
-      "copy-button": "Copier",
-      "dashboard-url-field-label": "URL du tableau de bord",
-      "email-share-type-option-label": "Uniquement les personnes spécifiées",
-      "pause-sharing-dashboard-label": "Interrompre le partage du tableau de bord",
-      "public-share-type-option-label": "Toute personne ayant un lien",
-      "revoke-public-URL-button": "Désactiver l'URL publique",
-      "revoke-public-URL-button-title": "Désactiver l'URL publique",
-      "settings-title": "Paramètres"
-    },
     "configuration": {
       "display-annotations-description": "Afficher les annotations sur ce tableau de bord",
       "display-annotations-label": "Afficher les annotations",
@@ -15190,21 +15214,11 @@
       "time-range-label": "Plage temporelle",
       "time-range-tooltip": "Le tableau de bord partagé utilise les paramètres de plage temporelle par défaut du tableau de bord"
     },
-    "create-page": {
-      "generate-public-url-button": "Générer une URL publique",
-      "unsupported-features-desc": "Actuellement, nous ne prenons pas en charge les variables de modèle ou les données provenant des utilisateurs",
-      "welcome-title": "Bienvenue dans les tableaux de bord publics !"
-    },
     "email-sharing": {
       "accept-button": "Accepter",
       "alert-text": "Le partage de tableaux de bord par e-mail est facturé par utilisateur pour la durée du jeton de 30 jours, quel que soit le nombre de tableaux de bord partagés. La facturation s'arrête après 30 jours, sauf si vous renouvelez le jeton.",
       "bill-ack": "Je comprends que l'ajout d'utilisateurs nécessite un paiement.*",
       "cancel-button": "Annuler",
-      "input-invalid-email-text": "Adresse e-mail non valide",
-      "input-required-email-text": "Une adresse e-mail est obligatoire",
-      "invite-button": "Inviter",
-      "invite-field-desc": "Invitez des personnes par e-mail",
-      "invite-field-label": "Inviter",
       "learn-more-button": "En savoir plus",
       "recipient-email-placeholder": "Adresse e-mail",
       "recipient-invalid-email-text": "Adresse e-mail non valide",
@@ -15214,17 +15228,12 @@
       "recipient-list-description": "Seules les personnes que vous avez directement invitées peuvent accéder à ce tableau de bord",
       "recipient-list-title": "Personnes ayant accès",
       "recipient-required-email-text": "Une adresse e-mail est obligatoire",
-      "resend-button": "Renvoyer",
-      "resend-button-title": "Renvoyer",
       "resend-invite-label": "Renvoyer l'invitation",
       "revoke-access-label": "Révoquer l'accès",
-      "revoke-button": "Retirer",
-      "revoke-button-title": "Retirer",
       "success-creation": "Votre tableau de bord est prêt pour le partage externe",
       "success-share-type-change": "Accès au tableau de bord mis à jour : seules les personnes spécifiques peuvent désormais y accéder avec le lien"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Veuillez enregistrer les modifications de votre tableau de bord avant de modifier la configuration publique",
       "unsupport-data-source-alert-readmore-link": "En savoir plus sur les sources de données prises en charge",
       "unsupported-data-source-alert-title": "Sources de données non prises en charge",
       "unsupported-template-variable-alert-desc": "Ce tableau de bord public peut ne pas fonctionner car il utilise des variables de modèle",
@@ -15238,25 +15247,6 @@
       "public-ack": "Je comprends que l'intégralité de ce tableau de bord sera publique.*",
       "success-creation": "Votre tableau de bord est maintenant accessible au public",
       "success-share-type-change": "Accès au tableau de bord mis à jour : toute personne disposant du lien peut désormais y accéder"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Réduire les paramètres",
-      "expand-settings-tooltip": "Développer les paramètres"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Intervalle de temps par défaut",
-      "default-time-range-label-desc": "Le tableau de bord public utilise les paramètres d'intervalle de temps par défaut du tableau de bord",
-      "show-annotations-label": "Afficher les annotations",
-      "show-annotations-label-desc": "Afficher les annotations sur le tableau de bord public",
-      "time-range-picker-label": "Sélecteur de plage de temps activé",
-      "time-range-picker-label-desc": "Permettre de modifier la plage de temps pendant l'affichage"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Annotations = masquer",
-      "annotations-show-text": "Annotations = montrer",
-      "time-range-picker-disabled-text": "Sélecteur de plage de temps = désactivé",
-      "time-range-picker-enabled-text": "Sélecteur de plage de temps = activé",
-      "time-range-text": "Plage de temps = "
     },
     "share": {
       "success-delete": "Votre tableau de bord n'est plus partageable"
@@ -15605,6 +15595,10 @@
       "label": "Appliquer la transformation vers",
       "series": "Résultats de la requête et de la transformation"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Le nom de la requête existe déjà",
       "empty-name": "Le nom de la requête ne peut pas être vide"
@@ -15784,6 +15778,12 @@
     "title": "Impossible de trouver le fichier d'application"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Le message comporte {{messageLength}} caractères, ce qui dépasse la longueur maximale de 500 caractères. Veuillez le raccourcir avant de l'enregistrer.",
       "title": "Messages trop longs"
@@ -16031,9 +16031,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Partager"
-    },
     "embed": {
       "copy": "Copier dans le presse-papiers",
       "html": "Intégrer du HTML",
@@ -16080,9 +16077,6 @@
       "time-range-description": "Transforme la période temporelle relative actuelle en une période temporelle absolue",
       "time-range-label": "Verrouiller la période temporelle"
     },
-    "panel": {
-      "title": "Partager le panneau"
-    },
     "snapshot": {
       "cancel-button": "Annuler",
       "copy-link-button": "Copier",
@@ -16098,16 +16092,11 @@
       "local-button": "Publier un instantané",
       "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
-      "timeout": "Délai d’expiration (secondes)",
-      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
       "url-label": "Capturer l'URL"
     },
     "tab-title": {
-      "embed": "Intégrer",
       "export": "Exporter",
-      "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
-      "public-dashboard-title": "Tableau de bord public",
       "snapshot": "Instantané"
     },
     "theme-picker": {

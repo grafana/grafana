@@ -723,6 +723,8 @@ approval_rules:
       changed_files:
         paths:
           - ^pkg\/registry\/apps\/annotation\/proto\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/storage\/unified\/proto\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/storage\/unified\/resourcepb\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/workflows\/proto-breaking-changes\.yml$
       file_not_deleted:
         paths:

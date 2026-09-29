@@ -116,6 +116,8 @@ type ListAlertRulesOptions struct {
 	TargetDatasourceUIDFilter ListRuleStringFilter
 	DatasourceUIDs            []string
 	SearchTitle               string
+	StateFilter               ListRuleStringFilter
+	HealthFilter              ListRuleStringFilter
 }
 
 // extractSingleValue returns the single value from a ListRuleStringFilter's Include or Exclude slice,
@@ -246,9 +248,13 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 			DataSourceUIDs:                   opts.DatasourceUIDs,
 			SearchTitle:                      opts.SearchTitle,
 		},
-		RuleType:      opts.RuleType,
-		Limit:         opts.Limit,
-		ContinueToken: opts.ContinueToken,
+		RuleType:       opts.RuleType,
+		Limit:          opts.Limit,
+		ContinueToken:  opts.ContinueToken,
+		States:         opts.StateFilter.Include,
+		ExcludeStates:  opts.StateFilter.Exclude,
+		Healths:        opts.HealthFilter.Include,
+		ExcludeHealths: opts.HealthFilter.Exclude,
 	}
 
 	can, err := service.authz.CanReadAllRules(ctx, user)
