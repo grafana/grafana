@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"iter"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -19,6 +21,9 @@ import (
 // index read from and what each of them returned.
 type multiTypeStorage struct {
 	mockStorageBackend
+
+	// Names whose stored body cannot be turned into a document.
+	broken map[string]bool
 
 	live     map[NamespacedResource][]string
 	listRVs  map[NamespacedResource]int64
@@ -42,7 +47,7 @@ func (m *multiTypeStorage) ListIterator(_ context.Context, req *resourcepb.ListR
 	if rv == 0 {
 		rv = 1
 	}
-	return rv, cb(&namedListIterator{names: m.live[key], rv: rv, keysOnly: req.GetKeysOnly()})
+	return rv, cb(&namedListIterator{names: m.live[key], rv: rv, keysOnly: req.GetKeysOnly(), broken: m.broken})
 }
 
 // namedListIterator lists objects under their own names and resource version,
@@ -51,6 +56,7 @@ type namedListIterator struct {
 	names    []string
 	rv       int64
 	keysOnly bool
+	broken   map[string]bool
 	pos      int
 }
 
@@ -70,6 +76,9 @@ func (i *namedListIterator) Value() []byte {
 		return nil
 	}
 	name := i.names[i.pos-1]
+	if i.broken[name] {
+		return []byte("not an object")
+	}
 	return testObjectJSON(name, name)
 }
 
@@ -453,4 +462,450 @@ func TestGlobalIndexKeepsNamesOfDifferentTypesApart(t *testing.T) {
 		ids[SearchID(item.Doc.Key)] = true
 	}
 	assert.Len(t, ids, 2, fmt.Sprintf("two documents, not one: %v", ids))
+}
+
+// syncStorage records reads, so tests can show a sync reads only what drifted.
+type syncStorage struct {
+	multiTypeStorage
+
+	// Names read, in order.
+	read []string
+	// Set to refuse batch reads, as a backend without them does.
+	noBatchReads bool
+	// Runs right after the listing, to simulate a write arriving then.
+	afterList func()
+	// Simulates storage being unavailable.
+	readErr error
+}
+
+func (m *syncStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+	rv, err := m.multiTypeStorage.ListIterator(ctx, req, cb)
+	if m.afterList != nil {
+		m.afterList()
+	}
+	return rv, err
+}
+
+func (m *syncStorage) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
+	if m.readErr != nil {
+		return nil, m.readErr
+	}
+	if m.noBatchReads {
+		return nil, ErrBatchReadUnsupported
+	}
+	responses := make([]*BackendReadResponse, 0, len(requests))
+	for _, request := range requests {
+		responses = append(responses, m.readOne(request))
+	}
+	return func(yield func(*BackendReadResponse) bool) {
+		for _, response := range responses {
+			if !yield(response) {
+				return
+			}
+		}
+	}, nil
+}
+
+func (m *syncStorage) ReadResource(_ context.Context, request *resourcepb.ReadRequest) *BackendReadResponse {
+	return m.readOne(request)
+}
+
+func (m *syncStorage) readOne(request *resourcepb.ReadRequest) *BackendReadResponse {
+	key := request.GetKey()
+	m.read = append(m.read, key.GetName())
+
+	src := NamespacedResource{Namespace: key.GetNamespace(), Group: key.GetGroup(), Resource: key.GetResource()}
+	rv := m.storedRV(src, key.GetName())
+	if rv == 0 {
+		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Message: "not found", Code: 404}}
+	}
+	value := testObjectJSON(key.GetName(), key.GetName())
+	if m.broken[key.GetName()] {
+		value = []byte("not an object")
+	}
+	return &BackendReadResponse{
+		Key:             key,
+		ResourceVersion: rv,
+		Value:           value,
+	}
+}
+
+// storedRV is zero when storage does not hold the object.
+func (m *syncStorage) storedRV(src NamespacedResource, name string) int64 {
+	for _, stored := range m.live[src] {
+		if stored == name {
+			if rv := m.listRVs[src]; rv > 0 {
+				return rv
+			}
+			return 1
+		}
+	}
+	return 0
+}
+
+func syncServer(t *testing.T, storage StorageBackend, refs map[schema.GroupResource][]DocumentRef) (*searchServer, *MockResourceIndex) {
+	t.Helper()
+	idx := &MockResourceIndex{documentRefs: refs}
+	search := &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("ns"): idx}}
+	return globalTestServer(t, storage, search), idx
+}
+
+func TestSyncIndexesWhatIsMissing(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+	}}
+	// The index holds one of the two, at the current version.
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
+	})
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Reindexed)
+	assert.Equal(t, 0, res.Removed)
+
+	// Only the missing one was read, and only it was written.
+	assert.Equal(t, []string{"dash-b"}, storage.read)
+	assert.Equal(t, map[NamespacedResource][]string{
+		dashboardType("ns"): {"dash-b"},
+	}, indexedNames(t, idx))
+}
+
+func TestSyncIndexesWhatIsOutOfDate(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30},
+	}}
+	// Present, but indexed at an older version than storage holds.
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
+	})
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Reindexed)
+	assert.Equal(t, []string{"dash-a"}, storage.read)
+}
+
+// No readable version means out of date, not current.
+func TestSyncIndexesWhatHasNoVersion(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30},
+	}}
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a"}},
+	})
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Reindexed)
+}
+
+func TestSyncRemovesWhatStorageNoLongerHas(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+	}}
+	// A delete the index never heard about.
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 20}, {Name: "gone", RV: 19}},
+	})
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Reindexed)
+	assert.Equal(t, 1, res.Removed)
+
+	items := idx.indexedItems()
+	require.Len(t, items, 1)
+	assert.Equal(t, ActionDelete, items[0].Action)
+	assert.Equal(t, "gone", items[0].Key.GetName())
+	assert.Empty(t, storage.read, "nothing has to be read to remove a document")
+}
+
+// An agreeing index costs no reads or writes.
+func TestSyncDoesNothingWhenTheIndexAgrees(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+	}}
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 20}, {Name: "dash-b", RV: 20}},
+	})
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Reindexed)
+	assert.Equal(t, 0, res.Removed)
+	assert.Empty(t, storage.read)
+	assert.Empty(t, idx.indexedItems())
+}
+
+// The listing is older than the index, so a newer indexed version is kept.
+func TestSyncLeavesNewerDocumentsAlone(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+	}}
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 25}},
+	})
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Reindexed)
+	assert.Equal(t, 0, res.Removed)
+}
+
+// A backend without batch reads still gets its objects read, one at a time.
+func TestSyncReadsOneAtATimeWhenBatchesAreUnsupported(t *testing.T) {
+	storage := &syncStorage{
+		multiTypeStorage: multiTypeStorage{
+			live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+			listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+		},
+		noBatchReads: true,
+	}
+	server, idx := syncServer(t, storage, nil)
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 2, res.Reindexed)
+	assert.Equal(t, []string{"dash-a", "dash-b"}, storage.read)
+}
+
+// One unreadable object does not stop the rest of the repair.
+func TestSyncSkipsWhatItCannotRead(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+	}}
+	server, idx := syncServer(t, storage, nil)
+
+	// The listing reports it, but by the time it is read it is gone.
+	storage.afterList = func() { storage.live[dashboardType("ns")] = nil }
+
+	_, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, []string{"dash-a"}, storage.read, "it was found out of date and read")
+	assert.Empty(t, idx.indexedItems())
+}
+
+// A storage failure is returned, not mistaken for a deleted object, so the caller
+// retries.
+func TestSyncReturnsStorageFailures(t *testing.T) {
+	storage := &syncStorage{
+		multiTypeStorage: multiTypeStorage{
+			live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+			listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+		},
+		readErr: errors.New("storage is unavailable"),
+	}
+	server, idx := syncServer(t, storage, nil)
+
+	_, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.Error(t, err)
+	assert.Empty(t, idx.indexedItems())
+}
+
+// A build failure does not stop the sync, and the next sync retries it. This is
+// the repair for changes the update path moves past.
+func TestSyncRetriesWhatFailedToBuild(t *testing.T) {
+	storage := &syncStorage{
+		multiTypeStorage: multiTypeStorage{
+			live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+			listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+		},
+	}
+	storage.broken = map[string]bool{"dash-b": true}
+	server, idx := syncServer(t, storage, nil)
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Reindexed, "only what was written counts")
+	assert.Equal(t, 1, res.Failed, "and the one that could not be built is reported")
+	assert.Equal(t, map[NamespacedResource][]string{
+		dashboardType("ns"): {"dash-a"},
+	}, indexedNames(t, idx), "the one that failed is left out")
+
+	// Once it builds, the next sync finds it still missing and indexes it.
+	storage.broken = nil
+	idx.documentRefs = map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
+	}
+	idx.bulkItems = nil
+	res, err = server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, map[NamespacedResource][]string{
+		dashboardType("ns"): {"dash-b"},
+	}, indexedNames(t, idx))
+}
+
+// Standard fields only, as on every other path into this index.
+func TestSyncKeepsStandardFieldsOnly(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+	}}
+	server, idx := syncServer(t, storage, nil)
+
+	_, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+
+	items := idx.indexedItems()
+	require.Len(t, items, 1)
+	require.NotNil(t, items[0].Doc)
+	assert.Empty(t, items[0].Doc.Fields)
+	assert.Empty(t, items[0].Doc.SelectableFields)
+}
+
+var (
+	dashboardsGroupResource = schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+)
+
+// A document created and indexed after the listing is live and must be kept.
+func TestSyncDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+	}}
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
+	})
+	storage.afterList = func() {
+		// Created in storage and indexed, both after the listing was taken.
+		storage.live[dashboardType("ns")] = append(storage.live[dashboardType("ns")], "late")
+		idx.documentRefs[dashboardsGroupResource] = append(idx.documentRefs[dashboardsGroupResource], DocumentRef{Name: "late", RV: 21})
+	}
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Removed)
+	assert.Empty(t, idx.indexedItems())
+}
+
+// Reads are chunked, but writes are not split per read chunk: each write has a
+// fixed cost.
+func TestSyncWritesInFullBatches(t *testing.T) {
+	names := make([]string, 0, 3*syncReadChunkSize)
+	for i := range 3 * syncReadChunkSize {
+		names = append(names, fmt.Sprintf("dash-%03d", i))
+	}
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): names},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+	}}
+	server, idx := syncServer(t, storage, nil)
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, len(names), res.Reindexed)
+	assert.Equal(t, 1, idx.bulkCalls)
+}
+
+// Large removals are split into normal-sized writes.
+func TestSyncRemovesInBatches(t *testing.T) {
+	gone := make([]DocumentRef, 0, maxBatchSize+1)
+	for i := range maxBatchSize + 1 {
+		gone = append(gone, DocumentRef{Name: fmt.Sprintf("gone-%d", i), RV: 1})
+	}
+	server, idx := syncServer(t, &syncStorage{}, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: gone,
+	})
+
+	res, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, maxBatchSize+1, res.Removed)
+	assert.Equal(t, 2, idx.bulkCalls)
+}
+
+// An import can restore older versions, so a resync rewrites everything and
+// removes what the import dropped.
+func TestResyncRewritesTheWholeType(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
+	}}
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		// Newer than the restored version, and one the import dropped.
+		dashboardsGroupResource: {{Name: "dash-a", RV: 100}, {Name: "gone", RV: 90}},
+	})
+
+	res, err := server.resyncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, syncResult{Reindexed: 2, Removed: 1}, res)
+
+	var written, removed []string
+	for _, item := range idx.indexedItems() {
+		if item.Action == ActionDelete {
+			removed = append(removed, item.Key.GetName())
+			continue
+		}
+		written = append(written, item.Doc.Key.GetName())
+	}
+	assert.Equal(t, []string{"dash-a", "dash-b"}, written)
+	assert.Equal(t, []string{"gone"}, removed)
+	assert.Empty(t, storage.read, "bodies come from the listing, not from reads one by one")
+}
+
+// The old document may describe what the import replaced, so it is removed.
+func TestResyncRemovesWhatFailsToBuild(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
+	}}
+	storage.broken = map[string]bool{"dash-b": true}
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 40}, {Name: "dash-b", RV: 40}},
+	})
+
+	res, err := server.resyncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, syncResult{Reindexed: 1, Removed: 1, Failed: 1}, res)
+}
+
+// Same ordering guarantee as the sync.
+func TestResyncDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
+	storage := &syncStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
+	}}
+	server, idx := syncServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 50}},
+	})
+	storage.afterList = func() {
+		storage.live[dashboardType("ns")] = append(storage.live[dashboardType("ns")], "late")
+		idx.documentRefs[dashboardsGroupResource] = append(idx.documentRefs[dashboardsGroupResource], DocumentRef{Name: "late", RV: 51})
+	}
+
+	res, err := server.resyncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Removed)
+}
+
+func TestResyncRefusesAPerResourceIndex(t *testing.T) {
+	server, idx := syncServer(t, &syncStorage{}, nil)
+
+	_, err := server.resyncResourceType(t.Context(), idx, dashboardType("ns"), dashboardType("ns"))
+	require.Error(t, err)
+	assert.Empty(t, idx.indexedItems())
+}
+
+// Comparing with live objects would remove a per-resource index's trash.
+func TestSyncRefusesAPerResourceIndex(t *testing.T) {
+	server, idx := syncServer(t, &syncStorage{}, nil)
+
+	_, err := server.syncResourceType(t.Context(), idx, dashboardType("ns"), dashboardType("ns"))
+	require.Error(t, err)
+	assert.Empty(t, idx.indexedItems())
+}
+
+func TestSyncRefusesAnotherNamespace(t *testing.T) {
+	server, idx := syncServer(t, &syncStorage{}, nil)
+
+	_, err := server.syncResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("other"))
+	require.Error(t, err)
+	assert.Empty(t, idx.indexedItems())
 }

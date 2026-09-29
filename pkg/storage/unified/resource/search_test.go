@@ -45,8 +45,10 @@ type MockResourceIndex struct {
 	documentRefs    map[schema.GroupResource][]DocumentRef
 	documentRefsErr error
 
-	// Items passed to BulkIndex, guarded by updateIndexMu.
+	// Items passed to BulkIndex, and how many writes carried them, guarded by
+	// updateIndexMu.
 	bulkItems []*BulkIndexItem
+	bulkCalls int
 
 	// Optional configured results for the managed-object RPCs. When nil the
 	// methods return an error, matching the default "not expected" behaviour.
@@ -68,6 +70,7 @@ func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
 func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
+	m.bulkCalls++
 	m.bulkItems = append(m.bulkItems, req.Items...)
 	return nil
 }
