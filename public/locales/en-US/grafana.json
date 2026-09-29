@@ -18180,7 +18180,7 @@
   "visual-refresh": {
     "info": {
       "apply": "Try new style",
-      "description": "The new UI is currently in Public Preview. <1>Learn more.</1>",
+      "description": "The new UI is currently in Public Preview. <2>Learn more.</2>",
       "revert": "Use old style",
       "title": "Grafana has a new look. Ready to try it?",
       "title-visual-refresh": "Grafana has a new look"
