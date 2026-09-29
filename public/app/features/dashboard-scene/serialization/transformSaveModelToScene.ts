@@ -45,7 +45,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { notebookPanelZoomBehavior, panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
@@ -519,6 +519,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     vizPanelState.pluginId = LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID;
     vizPanelState.$data = undefined;
   }
+
+  vizPanelState.$behaviors!.push(notebookPanelZoomBehavior);
 
   if (!config.publicDashboardAccessToken) {
     vizPanelState.menu = new VizPanelMenu({

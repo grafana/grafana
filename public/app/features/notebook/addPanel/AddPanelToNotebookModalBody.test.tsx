@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
+import { rangeUtil } from '@grafana/data';
 import { onInteraction, setEchoSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -109,7 +110,18 @@ async function chooseExisting(user: ReturnType<typeof render>['user']) {
   await user.click(screen.getByRole('radio', { name: 'Existing notebook' }));
 }
 
-function renderModal(buildPanel = jest.fn(async (): Promise<PanelKind> => panel()), isLibraryPanel = false) {
+const relativeRange = rangeUtil.convertRawToRange({ from: 'now-1h', to: 'now' }, 'utc');
+const absoluteRange = rangeUtil.convertRawToRange(
+  { from: '2026-09-25T10:15:00.000Z', to: '2026-09-25T10:25:00.000Z' },
+  'utc'
+);
+
+function renderModal(
+  buildPanel = jest.fn(async (): Promise<PanelKind> => panel()),
+  isLibraryPanel = false,
+  sourceTimeRange = relativeRange,
+  defaultLockTimeRange = false
+) {
   const onDismiss = jest.fn();
   const result = render(
     <AddPanelToNotebookModalBody
@@ -117,6 +129,8 @@ function renderModal(buildPanel = jest.fn(async (): Promise<PanelKind> => panel(
       onDismiss={onDismiss}
       entryPoint="dashboard_panel"
       isLibraryPanel={isLibraryPanel}
+      sourceTimeRange={sourceTimeRange}
+      defaultLockTimeRange={defaultLockTimeRange}
     />
   );
   return { ...result, buildPanel, onDismiss };
@@ -132,6 +146,52 @@ describe('AddPanelToNotebookModalBody', () => {
   });
 
   afterEach(() => jest.clearAllMocks());
+
+  it('defaults to locking a zoomed source range and lets the user opt out', async () => {
+    const first = renderModal(undefined, false, absoluteRange, true);
+    const lock = screen.getByRole('checkbox', { name: 'Lock time range for this visualization' });
+    expect(lock).toBeChecked();
+
+    await chooseExisting(first.user);
+    await first.user.click(selectNotebook('Q2 latency regression'));
+    await first.user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+    await waitFor(() => expect(addToExisting).toHaveBeenCalled());
+    const captured = addToExisting.mock.calls[0][1];
+    expect(captured.kind === 'Panel' && captured.spec.data.spec.queryOptions).toEqual(
+      expect.objectContaining({ timeFrom: absoluteRange.from.toISOString(), timeTo: absoluteRange.to.toISOString() })
+    );
+
+    first.unmount();
+    const second = renderModal(undefined, false, absoluteRange, true);
+    await second.user.click(screen.getByRole('checkbox', { name: 'Lock time range for this visualization' }));
+    await chooseExisting(second.user);
+    await second.user.click(selectNotebook('Q2 latency regression'));
+    await second.user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+    await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(2));
+    expect(addToExisting.mock.calls[1][1]).toEqual(panel());
+  });
+
+  it('does not lock a manually selected absolute range by default', () => {
+    renderModal(undefined, false, absoluteRange);
+    expect(screen.getByRole('checkbox', { name: 'Lock time range for this visualization' })).not.toBeChecked();
+  });
+
+  it('defaults a relative source to following notebook time, but can freeze it', async () => {
+    const { user } = renderModal();
+    const lock = screen.getByRole('checkbox', { name: 'Lock time range for this visualization' });
+    expect(lock).not.toBeChecked();
+    await user.click(lock);
+    await chooseExisting(user);
+    await user.click(selectNotebook('Q2 latency regression'));
+    await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+    await waitFor(() => expect(addToExisting).toHaveBeenCalled());
+    const captured = addToExisting.mock.calls[0][1];
+    expect(captured.kind === 'Panel' && captured.spec.data.spec.queryOptions).toEqual(
+      expect.objectContaining({ timeFrom: relativeRange.from.toISOString(), timeTo: relativeRange.to.toISOString() })
+    );
+  });
 
   // The create route refuses a name that is already taken, and it checks against the picker's rows —
   // which are empty until the first page lands and keep filling after it.
@@ -267,6 +327,8 @@ describe('AddPanelToNotebookModalBody', () => {
           onDismiss={jest.fn()}
           entryPoint="dashboard_panel"
           isLibraryPanel={false}
+          sourceTimeRange={relativeRange}
+          defaultLockTimeRange={false}
         />
       );
 
