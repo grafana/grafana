@@ -34,7 +34,6 @@ interface LoaderProps extends Required<Pick<DataSourceSectionProps, 'application
   groupFilter?: string;
   namespaceFilter?: string;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
-  hideEmptyDataSources?: boolean;
 }
 
 export function PaginatedDataSourceLoader({
@@ -43,7 +42,6 @@ export function PaginatedDataSourceLoader({
   groupFilter,
   namespaceFilter,
   onLoadingStateChange,
-  hideEmptyDataSources,
 }: LoaderProps) {
   const key = `${rulesSourceIdentifier.uid}-${groupFilter}-${namespaceFilter}`;
 
@@ -56,7 +54,6 @@ export function PaginatedDataSourceLoader({
       groupFilter={groupFilter}
       namespaceFilter={namespaceFilter}
       onLoadingStateChange={onLoadingStateChange}
-      hideEmptyDataSources={hideEmptyDataSources}
     />
   );
 }
@@ -67,7 +64,6 @@ function PaginatedGroupsLoader({
   groupFilter,
   namespaceFilter,
   onLoadingStateChange,
-  hideEmptyDataSources,
 }: LoaderProps) {
   // If there are filters, we don't want to populate the cache to avoid performance issues
   // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
@@ -129,9 +125,9 @@ function PaginatedGroupsLoader({
     return null;
   }
 
-  // once we know for sure a data source has no rules configured, hide it entirely unless the user
-  // opted back in via the "hide empty data sources" toggle, or it has an error worth surfacing.
-  if (hideEmptyDataSources && !hasFilters && hasNoRules && !error) {
+  // once we know for sure a data source has no rules configured, hide it entirely (an error is
+  // still worth surfacing, so that case falls through to render the section below).
+  if (!hasFilters && hasNoRules && !error) {
     return null;
   }
 

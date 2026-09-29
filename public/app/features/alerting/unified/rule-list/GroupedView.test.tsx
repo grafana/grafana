@@ -117,22 +117,23 @@ describe('RuleList - GroupedView', () => {
     expect(loadMoreButton.query(prometheusSection)).not.toBeInTheDocument();
   });
 
-  it('should hide data sources with no rules by default', async () => {
+  it('should hide data sources with no rules and show a count of how many are hidden', async () => {
     setPrometheusRules(prometheusDs, []);
     render(<GroupedView />);
 
     await ui.dsSection(/Mimir/).find();
 
     expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
+    expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
   });
 
-  it('should show data sources with no rules when hideEmptyDataSources is false', async () => {
-    setPrometheusRules(prometheusDs, []);
-    render(<GroupedView hideEmptyDataSources={false} />);
+  it('should not show the hidden data sources count when none are hidden', async () => {
+    render(<GroupedView />);
 
-    const prometheusSection = await ui.dsSection(/Prometheus/).find();
+    await ui.dsSection(/Mimir/).find();
+    await ui.dsSection(/Prometheus/).find();
 
-    expect(within(prometheusSection).getByText('No rules found')).toBeInTheDocument();
+    expect(screen.queryByText(/data sources? with no rules/)).not.toBeInTheDocument();
   });
 });
 

@@ -11,6 +11,8 @@ interface DerivedStates {
   loadingDataSources: string[];
   totalRulesCount: number;
   dataSourcesWithErrors: Array<{ uid: string; error: unknown }>;
+  /** uids that have finished loading, have no rules, and didn't error */
+  dataSourcesWithNoRules: string[];
   hasAnyLoading: boolean;
   hasAnyErrors: boolean;
 }
@@ -50,10 +52,15 @@ export function useDataSourceLoadingStates() {
       .filter(([_, state]) => state.error !== undefined)
       .map(([uid, state]) => ({ uid, error: state.error! }));
 
+    const dataSourcesWithNoRules = entries
+      .filter(([_, state]) => !state.isLoading && state.rulesCount === 0 && state.error === undefined)
+      .map(([uid]) => uid);
+
     return {
       loadingDataSources,
       totalRulesCount,
       dataSourcesWithErrors,
+      dataSourcesWithNoRules,
       hasAnyLoading: loadingDataSources.length > 0,
       hasAnyErrors: dataSourcesWithErrors.length > 0,
     };
