@@ -15,6 +15,7 @@ export const pluginVersion = "13.3.0-pre";
 export enum TextMode {
   Code = 'code',
   HTML = 'html',
+  Insight = 'insight',
   Markdown = 'markdown',
 }
 
@@ -55,6 +56,31 @@ export const defaultCodeOptions: Partial<CodeOptions> = {
   showMiniMap: false,
 };
 
+/**
+ * Insight mode asks Assistant a saved question about the data shown by the selected panels.
+ */
+export interface InsightOptions {
+  /**
+   * Questions the viewer can ask after the answer, each answered inside the panel.
+   */
+  followUps: Array<string>;
+  /**
+   * The question Assistant answers about the source panels.
+   */
+  question: string;
+  /**
+   * Scene keys of the panels whose loaded data Assistant may use, such as "panel-3".
+   * A "section:" prefixed key references every panel in a tab or row.
+   */
+  sourcePanelKeys: Array<string>;
+}
+
+export const defaultInsightOptions: Partial<InsightOptions> = {
+  followUps: [],
+  question: '',
+  sourcePanelKeys: [],
+};
+
 export interface Options {
   code?: CodeOptions;
   content: string;
@@ -62,6 +88,7 @@ export interface Options {
    * Index of the selected frame, when the query returns more than one
    */
   frameIndex?: number;
+  insight?: InsightOptions;
   mode: TextMode;
   /**
    * Rows per page once a per-row render pages its content. Unset fits the page to the panel height.

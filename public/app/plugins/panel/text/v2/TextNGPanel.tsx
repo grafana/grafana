@@ -42,6 +42,8 @@ import { TextNGHtmlView } from './TextNGHtmlView';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
+import { InsightView } from './insight/lazy';
+import { usePanelDashboard } from './insight/usePanelDashboard';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
@@ -59,6 +61,29 @@ const viewModeByPanel = new WeakMap<EventBus, ViewMode>();
 export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
+  // Insight mode has no content template, so it shares none of the render, pagination, or
+  // editor machinery below. Split into its own component so neither side runs the other's hooks.
+  if (props.options.mode === TextMode.Insight) {
+    return <TextNGInsightPanel {...props} />;
+  }
+
+  return <TextNGContentPanel {...props} />;
+}
+
+function TextNGInsightPanel({ options, fitContent }: Props) {
+  const { app } = usePanelContext();
+  const dashboard = usePanelDashboard();
+
+  return (
+    <InsightView
+      dashboard={dashboard}
+      options={options.insight ?? { question: '', sourcePanelKeys: [], followUps: [] }}
+      fitContent={fitContent && app !== CoreApp.PanelEditor}
+    />
+  );
+}
+
+function TextNGContentPanel(props: Props) {
   const { app } = usePanelContext();
   const {
     eventBus,

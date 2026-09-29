@@ -191,6 +191,7 @@ export function TextNGEditor({
     [TextMode.Markdown]: t('textng.editor.mode-markdown', 'Markdown'),
     [TextMode.HTML]: t('textng.editor.mode-html', 'HTML'),
     [TextMode.Code]: t('textng.editor.mode-code', 'Code'),
+    [TextMode.Insight]: t('textng.editor.mode-insight', 'Insight'),
   };
   const languageLabels = getLanguageLabels();
   const languageOptions = Object.values(CodeLanguage).map((value) => ({ value, label: languageLabels[value] }));
@@ -226,6 +227,17 @@ export function TextNGEditor({
             onClick={() => changeOption({ mode: TextMode.Code, codeLanguage: option.value })}
           />
         ))}
+      />
+      <Menu.Divider />
+      {/* Switching here swaps the panel for the insight view, whose inputs are in the options pane. */}
+      <Menu.Item
+        className={styles.pickerMenuItem}
+        label={modeLabels[TextMode.Insight]}
+        icon="ai-sparkle"
+        role="menuitemradio"
+        ariaChecked={mode === TextMode.Insight}
+        active={mode === TextMode.Insight}
+        onClick={() => changeOption({ mode: TextMode.Insight })}
       />
     </Menu>
   );
