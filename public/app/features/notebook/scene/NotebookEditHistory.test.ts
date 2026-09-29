@@ -80,6 +80,64 @@ describe('NotebookEditHistory', () => {
     expect(original.perform).toHaveBeenCalledTimes(2);
   });
 
+  it('removes a failed action below a newer edit without losing the newer edit', () => {
+    const history = new NotebookEditHistory();
+    const failed = {
+      label: 'change visualization',
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: jest.fn(),
+      undo: jest.fn(),
+    };
+    const newer = { label: 'rename panel', kind: NOTEBOOK_EDIT_KIND.EDIT, perform: jest.fn(), undo: jest.fn() };
+
+    history.record(failed);
+    history.execute(newer);
+    history.discard(failed);
+
+    expect(history.state.undoLabel).toBe('rename panel');
+    expect(history.undo()).toBe(true);
+    expect(newer.undo).toHaveBeenCalledTimes(1);
+    expect(history.undo()).toBe(false);
+    expect(failed.undo).not.toHaveBeenCalled();
+  });
+
+  it('removes a failed action after it was moved to redo history', () => {
+    const history = new NotebookEditHistory();
+    const failed = {
+      label: 'change visualization',
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: jest.fn(),
+      undo: jest.fn(),
+    };
+
+    history.record(failed);
+    history.undo();
+    history.discard(failed);
+
+    expect(history.redo()).toBe(false);
+    expect(failed.perform).not.toHaveBeenCalled();
+  });
+
+  it('keeps newer redo history when a failed action becomes the undo stack top', () => {
+    const history = new NotebookEditHistory();
+    const failed = {
+      label: 'change visualization',
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: jest.fn(),
+      undo: jest.fn(),
+    };
+    const newer = { label: 'rename panel', kind: NOTEBOOK_EDIT_KIND.EDIT, perform: jest.fn(), undo: jest.fn() };
+
+    history.record(failed);
+    history.execute(newer);
+    history.undo();
+    history.discard(failed);
+
+    expect(history.redo()).toBe(true);
+    expect(newer.perform).toHaveBeenCalledTimes(2);
+    expect(failed.perform).not.toHaveBeenCalled();
+  });
+
   it('keeps an action available when undo fails', () => {
     const history = new NotebookEditHistory();
     history.execute({

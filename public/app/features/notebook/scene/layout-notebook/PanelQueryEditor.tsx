@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { useRef } from 'react';
+import { type RefObject, useRef } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
@@ -20,6 +20,8 @@ interface Props {
   cell?: NotebookCellItem;
   /** True right after this cell was inserted or converted — see NotebookCellRenderer's own doc comment. */
   autoFocus?: boolean;
+  lastSuggestedQuery?: RefObject<DataQuery | undefined>;
+  autoSuggest?: RefObject<boolean>;
 }
 
 /**
@@ -28,31 +30,45 @@ interface Props {
  * and re-runs on a time-range change the same way any dashboard panel does. This component only
  * reads and writes that runner's live state — one PanelQueryEditorRow per query.
  */
-export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
+export function PanelQueryEditor({
+  panel,
+  cell,
+  autoFocus,
+  lastSuggestedQuery: sharedLastSuggestedQuery,
+  autoSuggest,
+}: Props) {
   const queryRunner = getQueryRunnerFor(panel);
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
   const range = sceneGraph.getTimeRange(panel).useState().value;
   // The last query we successfully fetched a viz suggestion for.
-  const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
+  const localLastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
+  const lastSuggestedQuery = sharedLastSuggestedQuery ?? localLastSuggestedQuery;
 
   const [runState, runQuery] = useAsyncFn(async () => {
     if (!queryRunner || queries.length === 0) {
       return;
     }
-    if (!isEqual(lastSuggestedQuery.current, queries[0])) {
+    if ((autoSuggest?.current ?? true) && !isEqual(lastSuggestedQuery.current, queries[0])) {
       try {
         const suggestion = await getVizSuggestionForQuery(queries[0], range);
-        lastSuggestedQuery.current = queries[0];
-        if (suggestion) {
-          await panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
+        if (suggestion && autoSuggest?.current !== false && cell?.getParentLayout().state.isEditing !== false) {
+          if (cell) {
+            await cell.onVisualizationChange(suggestion);
+          } else {
+            await panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
+          }
+          if (autoSuggest) {
+            autoSuggest.current = false;
+          }
         }
+        lastSuggestedQuery.current = queries[0];
       } catch {
         console.error('Failed to get viz suggestion for query', queries[0]);
       }
     }
     queryRunner.runQueries();
-  }, [queries, range, panel, queryRunner]);
+  }, [queries, range, panel, queryRunner, cell]);
 
   if (!queryRunner || queries.length === 0) {
     return null;

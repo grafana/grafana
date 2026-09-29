@@ -79,12 +79,20 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
   }
 
   public discard(action: NotebookEditAction): void {
-    if (this.undoStack.at(-1) !== action) {
-      return;
+    const undoIndex = this.undoStack.indexOf(action);
+    if (undoIndex >= 0) {
+      this.undoStack.splice(undoIndex, 1);
+      if (undoIndex === this.undoStack.length && this.redoStack.length === 0) {
+        this.redoStack = this.redoStackBeforeRecord.get(action) ?? this.redoStack;
+      }
+    } else {
+      const redoIndex = this.redoStack.indexOf(action);
+      if (redoIndex < 0) {
+        return;
+      }
+      this.redoStack.splice(redoIndex, 1);
     }
 
-    this.undoStack.pop();
-    this.redoStack = this.redoStackBeforeRecord.get(action) ?? this.redoStack;
     this.redoStackBeforeRecord.delete(action);
     this.observer?.onDiscard();
     this.publishState();

@@ -208,20 +208,12 @@ export function NotebookCellFrame({
 
           {isEditing && <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_CONTROLS_CLASS} />}
 
-          {isEditing && onDuplicate && onDelete && (
-            <>
-              <div
-                className={cx(
-                  styles.actionsHoverBridge,
-                  (dragSnapshot.isDragging || isDragActive) && styles.actionsHoverBridgeHidden
-                )}
-              />
-              <NotebookCellActions
-                onDuplicate={onDuplicate}
-                onDelete={onDelete}
-                className={NOTEBOOK_CELL_CONTROLS_CLASS}
-              />
-            </>
+          {isEditing && onDuplicate && onDelete && (!body || collapsed) && (
+            <NotebookCellActions
+              onDuplicate={onDuplicate}
+              onDelete={onDelete}
+              className={NOTEBOOK_CELL_CONTROLS_CLASS}
+            />
           )}
 
           <div className={NOTEBOOK_CELL_CONTENT_CLASS}>
@@ -235,6 +227,8 @@ export function NotebookCellFrame({
               onAdvance={onAdvance}
               onFocusRequest={onFocusRequest}
               onNavigate={onNavigate}
+              onDuplicate={onDuplicate}
+              onDelete={onDelete}
             />
           </div>
         </div>
@@ -265,8 +259,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     scrollMarginBottom: theme.spacing(4),
   }),
   frameEditing: css({
-    // Wide enough for the drag handle and the add-cell button side by side — see the same numbers in
-    // NotebookCellActions.tsx, and dragging/dropLine below, which all anchor off this same gutter.
+    // Wide enough for the drag handle and the add-cell button side by side.
     paddingLeft: theme.spacing(7),
     marginLeft: theme.spacing(-7),
     paddingTop: theme.spacing(3),
@@ -339,28 +332,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     [`& .${NOTEBOOK_CELL_CONTROLS_CLASS}`]: {
       visibility: 'hidden',
     },
-  }),
-  actionsHoverBridge: css({
-    position: 'absolute',
-    // Sits inside this frame's own reserved top padding (frameEditing's paddingTop), never above the
-    // frame's own top edge — that edge is the previous cell's box, and reaching past it here is
-    // exactly what used to let a short previous cell's own content get hovered as if it were this
-    // bridge instead.
-    top: 0,
-    // Starts at the frame's own left edge, covering the gutter/handle column above it too — not just
-    // the span the actions bar itself occupies. Without that, the top-left corner of the widened hit-box
-    // is a dead zone: nothing there answers the hit test, so hovering it doesn't reveal anything, and the
-    // pointer has to drift right past the gutter before the actions bar appears.
-    left: 0,
-    width: theme.spacing(15),
-    [theme.breakpoints.up('md')]: {
-      width: theme.spacing(18),
-    },
-    height: theme.spacing(4),
-    pointerEvents: 'auto',
-  }),
-  actionsHoverBridgeHidden: css({
-    pointerEvents: 'none',
   }),
   dropLineTop: css({
     '&::before': dropLine(theme, 'top'),

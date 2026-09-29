@@ -1,3 +1,4 @@
+import { type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { SceneObjectBase, type SceneObjectState, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
@@ -53,6 +54,18 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
 
   public onQueryStructureChange(label: string, queries: DataQuery[]): void {
     this.getParentLayout().runQueryEdit(this, label, queries);
+  }
+
+  public onPanelTitleChange(title: string): void {
+    this.getParentLayout().setPanelTitle(this, title);
+  }
+
+  public onPanelTitleCommit(): void {
+    this.getParentLayout().commitPanelTitleEdit();
+  }
+
+  public onVisualizationChange(suggestion: PanelPluginVisualizationSuggestion): Promise<void> {
+    return this.getParentLayout().changePanelVisualization(this, suggestion);
   }
 
   /** Throws rather than returning undefined: a cell outside a layout is a wiring mistake. */
