@@ -331,19 +331,25 @@ For example, in a dashboard:
 You can configure panels, rows, and tabs to be shown or hidden based on rules.
 For example, you can set a panel to be hidden if there's no data returned by a query or a tab to only be shown if a specific variable value is present.
 
+{{< shared id="show-hide-1" >}}
+
 There are three types of show/hide rules to choose from:
 
 - [Query result](#query-result-rule)
 - [Template variable](#template-variable-rule)
 - [Time range less than](#time-range-less-than-rule)
 
-For steps on how to create show/hide rules, refer to [Configure show/hide rules](#configure-showhide-rules).
+For steps to create show/hide rules, refer to [Configure show/hide rules](#configure-showhide-rules).
 
 {{< admonition type="note" >}}
 You can only configure show/hide rules for panels in the **Auto grid** layout. Set the panel layout at the dashboard, row, or tab-level.
 {{< /admonition >}}
 
+{{< /shared >}}
+
 ### Query result rule
+
+{{< shared id="show-hide-2" >}}
 
 Show or hide a panel based on whether or not the query returns any results.
 The rule provides **Has data** and **No data** options, so you can choose to show or hide the panel based on the presence or absence of data.
@@ -359,9 +365,11 @@ In this case, you'd set the rule as follows:
 - Panel visibility > Show
 - Query result > No data
 
+{{< /shared >}}
+
 ### Template variable rule
 
-Show or hide a panel, row, or tab dynamically based on the variable value.
+Show or hide a panel, row, or tab dynamically based on a variable value.
 You can select any variable that's configured for the dashboard and choose from the following operators for maximum flexibility:
 
 - Equals
@@ -369,14 +377,16 @@ You can select any variable that's configured for the dashboard and choose from 
 - Matches (regular expression values)
 - Not matches (regular expression values)
 
-You can [add more variables](#add-variables) if you need to without leaving the dashboard.
+You can [add more variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables) if you need to without leaving the dashboard.
 
 ### Time range less than rule
 
 Show or hide a panel, row, or tab if the dashboard time range is shorter than the selected time range.
 This ensures that as you change the time range of the dashboard, you only see data relevant to that time period.
 
-For example, a dashboard is tracking adoption of a feature over time has the following setup:
+{{< shared id="show-hide-3" >}}
+
+For example, a dashboard that's tracking adoption of a feature over time has the following setup:
 
 - Dashboard time range is **Last 7 days**
 - One panel tracks weekly stats
@@ -388,9 +398,11 @@ This configuration ensures that these time-based panels are only displayed when 
 
 For this rule type, you can select time ranges from **5 minutes** to **5 years**.
 
+{{< /shared >}}
+
 ### Configure show/hide rules
 
-To configure show/hide rules, follow these steps:
+To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
@@ -403,16 +415,14 @@ To configure show/hide rules, follow these steps:
 1. Click **+ Add rule**.
 1. Select a rule type:
    - **Query result**: Show or hide a panel based on query results. Choose from **Has data** and **No data**.
-   - **Template variable**: Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
+   - **Template variable**: Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator, and enter a value.
    - **Time range less than**: Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
 
-1. If you've configured more than rule, under **Match rules**, select one of the following:
+1. If you've configured multiple rules, the **Match rules** option displays. Select one of the following:
    - **Match all**: The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
    - **Match any**: The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
 
-   This option is only displayed if you add multiple rules.
-
-1. When you've finished setting rules, click **Save**.
+1. When you've finished setting rules, save the dashboard.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**
@@ -437,7 +447,7 @@ To move a panel, follow these steps:
 1. When the new position is highlighted in a solid blue line, drop the panel.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
+1. Click **Save** again.
 1. Click **Exit edit**
 
 ## Resize a panel
