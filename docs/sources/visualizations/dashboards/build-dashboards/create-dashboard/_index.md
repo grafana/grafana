@@ -352,13 +352,15 @@ For example, in a dashboard:
 You can configure panels, rows, and tabs to be shown or hidden based on rules.
 For example, you can set a panel to be hidden if there's no data returned by a query or a tab to only be shown if a specific variable value is present.
 
+{{< shared id="show-hide-1" >}}
+
 There are three types of show/hide rules to choose from:
 
 - [Query result](#query-result-rule)
 - [Template variable](#template-variable-rule)
 - [Time range less than](#time-range-less-than-rule)
 
-For steps on how to create show/hide rules, refer to [Configure show/hide rules](#configure-showhide-rules).
+For steps on to create show/hide rules, refer to [Configure show/hide rules](#configure-showhide-rules).
 
 {{< admonition type="note" >}}
 You can only configure show/hide rules for panels in the **Auto grid** layout. Set the panel layout at the dashboard, row, or tab-level.
@@ -380,9 +382,14 @@ In this case, you'd set the rule as follows:
 - Panel visibility > Show
 - Query result > No data
 
+{{< /shared >}}
+
 ### Template variable rule
 
 Show or hide a panel, row, or tab dynamically based on the variable value.
+
+{{< shared id="show-hide-2" >}}
+
 You can select any variable that's configured for the dashboard and choose from the following operators for maximum flexibility:
 
 - Equals
@@ -392,9 +399,14 @@ You can select any variable that's configured for the dashboard and choose from 
 
 You can [add more variables](#add-variables) if you need to without leaving the dashboard.
 
+{{< /shared >}}
+
 ### Time range less than rule
 
 Show or hide a panel, row, or tab if the dashboard time range is shorter than the selected time range.
+
+{{< shared id="show-hide-3" >}}
+
 This ensures that as you change the time range of the dashboard, you only see data relevant to that time period.
 
 For example, a dashboard is tracking adoption of a feature over time has the following setup:
@@ -408,6 +420,8 @@ For the panel tracking daily stats, a rule is set up to hide it if the dashboard
 This configuration ensures that these time-based panels are only displayed when enough time has passed to make them relevant.
 
 For this rule type, you can select time ranges from **5 minutes** to **5 years**.
+
+{{< /shared >}}
 
 ### Configure show/hide rules
 
