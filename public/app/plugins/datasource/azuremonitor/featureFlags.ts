@@ -36,10 +36,10 @@ export function initFeatureFlags(): void {
  * Synchronous read of the Metrics Batch API flag.
  */
 export function isBatchAPIFlagEnabled(): boolean {
-  return OpenFeature.getClient(OPEN_FEATURE_DOMAIN).getBooleanValue(BATCH_API_FLAG, false);
+  return OpenFeature.getClient(OPEN_FEATURE_DOMAIN).getBooleanValue(BATCH_API_FLAG, true);
 }
 
 /** React hook for the flag; re-renders when the provider (re)initializes. */
 export function useBatchAPIFlag(): boolean {
-  return useBooleanFlagValue(BATCH_API_FLAG, false);
+  return useBooleanFlagValue(BATCH_API_FLAG, true);
 }
