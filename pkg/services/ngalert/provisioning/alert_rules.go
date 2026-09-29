@@ -280,6 +280,9 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 		} else {
 			q.NamespaceUIDs = folderUIDs
 		}
+		if len(q.NamespaceUIDs) == 0 {
+			return nil, map[string]models.Provenance{}, "", nil
+		}
 	} else if len(opts.FolderFilter.Include) > 0 {
 		q.NamespaceUIDs = opts.FolderFilter.Include
 	}

@@ -1996,6 +1996,22 @@ func TestListAlertRules(t *testing.T) {
 			assert.Equal(t, "HasAccessInFolder", ac.Calls[1].Method)
 			assert.Equal(t, "HasAccessInFolder", ac.Calls[2].Method)
 		})
+
+		t.Run("should return no rules when no folders are accessible", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+				return false, nil
+			}
+
+			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			require.NoError(t, err)
+			require.Empty(t, rules)
+			require.Empty(t, token)
+			require.Empty(t, ruleStore.RecordedOps)
+		})
 	})
 
 	t.Run("GroupFilter", func(t *testing.T) {
@@ -2122,6 +2138,24 @@ func TestListAlertRules(t *testing.T) {
 				got = append(got, r.UID)
 			}
 			require.ElementsMatch(t, expected, got)
+		})
+
+		t.Run("Include when user cannot read requested folder should return no rules", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+				return folder.GetNamespaceUID() == groupKey2.NamespaceUID, nil
+			}
+
+			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				FolderFilter: ListRuleStringFilter{Include: []string{"inaccessible-folder"}},
+			})
+			require.NoError(t, err)
+			require.Empty(t, rules)
+			require.Empty(t, token)
+			require.Empty(t, ruleStore.RecordedOps)
 		})
 
 		t.Run("Exclude should return rules not in the specified folders", func(t *testing.T) {
