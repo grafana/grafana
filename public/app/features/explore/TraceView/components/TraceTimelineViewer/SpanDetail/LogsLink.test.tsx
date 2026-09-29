@@ -1145,7 +1145,16 @@ describe('addNoSpanIdFallback', () => {
     );
   });
 
-  it('does not strip line-contains queries because they have no span field name', () => {
+  it('only strips the span_id clause when an unrelated label filter elsewhere uses !=', () => {
+    const query: LokiQuery = {
+      refId: 'A',
+      expr: '{job="x", env!="prod"} | span_id="6605c7b08e715d6c"',
+    };
+    const [, fallback] = addNoSpanIdFallback(query) as LokiQuery[];
+    expect(fallback.expr).toBe('{job="x", env!="prod"}');
+  });
+
+  it('strips line-contains queries', () => {
     const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
     const lineContains = queries.find((q) => q.refId === 't2l:line-contains');
@@ -1154,8 +1163,13 @@ describe('addNoSpanIdFallback', () => {
       '{cluster="cluster1", hostname="hostname1"} |= "7946b05c2e2e4e5a" |= "6605c7b08e715d6c"'
     );
 
+    const fallback = {
+      expr: '{cluster="cluster1", hostname="hostname1"} |= "7946b05c2e2e4e5a"',
+      refId: 't2l:line-contains',
+    };
+
     // Line filters only embed the span id value, not a span_* field name, so no fallback is added.
-    expect(addNoSpanIdFallback(lineContains!)).toEqual([lineContains]);
+    expect(addNoSpanIdFallback(lineContains!)).toEqual([lineContains, fallback]);
   });
 
   it('does not add a fallback for trace-level queries that already omit span filters', () => {

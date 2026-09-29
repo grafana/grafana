@@ -408,7 +408,7 @@ function probeForMatchingQuery(
 ): Observable<DataQuery | undefined> {
   const storedRefId = getStoredLokiQueryMatch(traceDatasourceUid, logsDatasourceUid);
   const storedQuery = storedRefId ? queries.find((q) => q.refId === storedRefId) : undefined;
-  // Prefer the known match exclusively; do not fall through to other naming conventions.
+
   const queriesToProbe = storedQuery ? addNoSpanIdFallback(storedQuery) : queries;
 
   return from(queriesToProbe).pipe(
@@ -469,15 +469,16 @@ export function addNoSpanIdFallback(query: DataQuery) {
   if ('expr' in query === false || typeof query.expr !== 'string') {
     return [query];
   }
-  if (!query.expr.toLowerCase().includes('span')) {
+  const lineFilters = query.expr.match(/\|\=/g)?.length ?? 0;
+  if (!query.expr.toLowerCase().includes('span') && lineFilters < 2) {
     return [query];
   }
-  const spanIdFilter = /\s*\|\s*(?:span_?id|otel_span_id)\b\s*(?:=~|!~|!=|=)\s*(?:"(?:\\.|[^"\\])*"|`[^`]*`|[^\s|]+)/gi;
+  const spanIdFilter = /\s*\|\s*(?:span_?id|otel_span_id)\b\s*(?:=)\s*(?:"(?:\\.|[^"\\])*"|`[^`]*`|[^\s|]+)/gi;
 
   // Add fallback without span_id filter
   const fallbackQuery = {
     ...query,
-    expr: query.expr.includes('!=')
+    expr: query.expr.includes('|=')
       ? query.expr.substring(0, query.expr.lastIndexOf('|=') - 1)
       : query.expr.replace(spanIdFilter, ''),
   };
