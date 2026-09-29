@@ -477,6 +477,47 @@ describe('NotebookLayoutManager', () => {
       expect(cellNames(manager)).toEqual(['a', 'c', 'paragraph-1']);
     });
 
+    // Each content kind through the same wiring; which shapes count as discardable is pinned in
+    // cellEmptiness.test.ts rather than re-asserted through a render here.
+    it.each([
+      ['an untouched paragraph', { kind: 'Markdown' as const, spec: { text: '' } }],
+      ['a code block with no code', { kind: 'Code' as const, spec: { language: 'sql', code: '' } }],
+    ])('deletes %s outright, without asking', async (_label, content) => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { manager } = renderManager(
+        buildManager(
+          [
+            ...buildNarrativeCells(['a']),
+            new NotebookCellItem({ elementName: 'blank', source: 'user', content }),
+            ...buildNarrativeCells(['b']),
+          ],
+          true
+        )
+      );
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+
+      expect(publish).not.toHaveBeenCalled();
+      // Plus the trailing-invariant cell appended after 'b'.
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
+    });
+
+    // A panel carries no `content`, so it is never discardable — emptiness cannot be read off its
+    // queries when every viz type but the notebook's own holds content elsewhere.
+    it('asks before deleting a panel', async () => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { cell } = panelCell('latency');
+      // Collapsed so the cell renders as just its name: loading a live panel's plugin has its own
+      // coverage, and what the frame renders is beside the point here.
+      cell.setState({ collapsed: true });
+      const { manager } = renderManager(buildManager([cell], true));
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[0]);
+
+      expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
+      expect(cellNames(manager)).toEqual(['latency', 'paragraph-1']);
+    });
+
     it('duplicates the cell directly below itself', async () => {
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
