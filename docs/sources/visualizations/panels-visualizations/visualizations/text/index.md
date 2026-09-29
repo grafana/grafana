@@ -18,22 +18,11 @@ labels:
 description: Configure options for Grafana's text visualization
 title: Text
 weight: 100
-refs:
-  disable-sanitize-html:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/
 ---
 
 # Text
 
-{{< docs/public-preview product="New text panel" featureFlag="`grafana.newTextPanel` and `text.newFeatures" >}}
+{{< docs/public-preview product="The new text panel" featureFlag="`grafana.newTextPanel` and `text.newFeatures`" >}}
 
 <!-- use what's new to make intro more robust -->
 
@@ -91,8 +80,8 @@ The visualization mode determines how embedded content appears.
 Choose from:
 
 - **Markdown**: Formats the content as [Markdown](https://en.wikipedia.org/wiki/Markdown).
-- **HTML**: Renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the [`disable_sanitize_html`](ref:disable-sanitize-html) flag which enables you to directly enter HTML.
-- **Code**: Renders content inside a read-only code editor. [Variables](ref:variables) in the content are expanded for display. The code options are: Go, HTML, JSON, Markdown, Plain text, SQL, TypeScript, XML, YAML.
+- **HTML**: Renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the [`disable_sanitize_html`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html) flag which enables you to directly enter HTML.
+- **Code**: Renders content inside a read-only code editor. [Variables](/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/) in the content are expanded for display. The code options are: Go, HTML, JSON, Markdown, Plain text, SQL, TypeScript, XML, YAML.
 
 The editor provides syntax highlighting in the authoring block.
 
@@ -143,7 +132,7 @@ This option only displays when you set **Render mode** to **Per row**.
 
 ### Thresholds
 
-{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Field overrides
 
