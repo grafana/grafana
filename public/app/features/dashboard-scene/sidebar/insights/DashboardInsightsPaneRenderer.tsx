@@ -7,8 +7,10 @@ import { type SceneComponentProps } from '@grafana/scenes';
 import { Alert, Button, ScrollContainer, Sidebar, Text, useStyles2 } from '@grafana/ui';
 
 import { type DashboardInsightsPane } from './DashboardInsightsPane';
+import { InsightPanelList } from './InsightPanelList';
 import { InsightQuestionForm } from './InsightQuestionForm';
 import { InsightQuestionItem } from './InsightQuestionItem';
+import { getInsightPanels } from './insightPanels';
 import { addInsightQuestion } from './insightsEditActions';
 import { getInsightsDashboard, readInsightQuestions } from './insightsStorage';
 import { getInsightSourcePanels } from './sources';
@@ -23,7 +25,9 @@ export function DashboardInsightsPaneRenderer({ model }: SceneComponentProps<Das
 
   const { questions, invalid } = readInsightQuestions(dashboard);
   const sources = getInsightSourcePanels(dashboard);
+  const insightPanels = getInsightPanels(dashboard);
   const isAdding = Boolean(isEditing) && formTarget?.kind === 'add';
+  const showQuestions = Boolean(isEditing) || questions.length > 0;
 
   return (
     <div className={styles.wrapper}>
@@ -42,7 +46,13 @@ export function DashboardInsightsPaneRenderer({ model }: SceneComponentProps<Das
             </Alert>
           )}
 
-          {questions.length === 0 && !isAdding && (
+          {showQuestions && insightPanels.length > 0 && (
+            <Text element="h3" variant="h6">
+              <Trans i18nKey="dashboard.insights.pane.questions-title">Saved questions</Trans>
+            </Text>
+          )}
+
+          {questions.length === 0 && !isAdding && (isEditing || insightPanels.length === 0) && (
             <Text element="p" color="secondary">
               {isEditing
                 ? t(
@@ -89,6 +99,8 @@ export function DashboardInsightsPaneRenderer({ model }: SceneComponentProps<Das
                 </Button>
               </div>
             ))}
+
+          {insightPanels.length > 0 && <InsightPanelList panels={insightPanels} />}
         </div>
       </ScrollContainer>
     </div>

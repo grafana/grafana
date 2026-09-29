@@ -13,6 +13,7 @@ import { InsightSourceLinks } from './InsightSourceLinks';
 import { openInsightFollowUp } from './followUp';
 import { deleteInsightQuestion, moveInsightQuestion, updateInsightQuestion } from './insightsEditActions';
 import { type InsightsDashboard } from './insightsStorage';
+import { getMissingRefLabel } from './sections';
 import { captureInsightSnapshot } from './snapshot';
 import { type InsightSourcePanel } from './sources';
 import { getInsightStaleReasons } from './staleness';
@@ -122,9 +123,15 @@ export function InsightQuestionItem({
   const running = run?.running ?? false;
   const result = run?.result;
   const capture = captureInsightSnapshot(dashboard, question);
-  const unavailable = capture.unavailable;
+  // Asking loads off-screen sources, so they neither block the action nor count as changed data.
+  const unavailable = capture.unloaded ? undefined : capture.unavailable;
   const staleReasons = result
-    ? getInsightStaleReasons(result.snapshot, capture.context, question.sourcePanelKeys, capture.snapshot)
+    ? getInsightStaleReasons(
+        result.snapshot,
+        capture.context,
+        capture.keys,
+        capture.snapshot ?? (capture.unloaded ? result.snapshot : undefined)
+      )
     : [];
   const ask = () => void pane.ask(question);
 
@@ -147,12 +154,12 @@ export function InsightQuestionItem({
         <Stack direction="column" gap={1.5}>
           <div>
             <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="dashboard.insights.item.sources-label">Source panels</Trans>
+              <Trans i18nKey="dashboard.insights.item.sources-label">Sources</Trans>
             </Text>
             <InsightSourceLinks
               items={question.sourcePanelKeys.map((key) => ({
                 key,
-                title: result?.snapshot.panels.find((panel) => panel.key === key)?.title ?? key,
+                title: result?.snapshot.panels.find((panel) => panel.key === key)?.title ?? getMissingRefLabel(key),
               }))}
               sources={sources}
             />
@@ -195,7 +202,11 @@ export function InsightQuestionItem({
             <Stack gap={1} alignItems="center">
               <Spinner inline />
               <Text color="secondary">
-                <Trans i18nKey="dashboard.insights.item.running">Analyzing selected panels…</Trans>
+                {run?.loadingSources ? (
+                  <Trans i18nKey="dashboard.insights.item.loading-sources">Loading source panels…</Trans>
+                ) : (
+                  <Trans i18nKey="dashboard.insights.item.running">Analyzing selected panels…</Trans>
+                )}
               </Text>
             </Stack>
           )}

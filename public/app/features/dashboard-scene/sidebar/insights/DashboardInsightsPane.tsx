@@ -6,10 +6,23 @@ import { DashboardInsightsPaneRenderer } from './DashboardInsightsPaneRenderer';
 import { parseInsightAnswer } from './answer';
 import { askInsightAssistant } from './askAssistant';
 import { captureInsightSnapshot } from './snapshot';
+import { getInsightSourcePanels, loadInsightSources } from './sources';
 import { type InsightQuestion, type InsightRun } from './types';
 
-/** Panel data, time range, and variable value changes. */
-const RERENDER_KEYS = ['data', 'value', 'text', 'filters'];
+/** Panel data, time range, and variable value changes, plus the layout, titles, and options the Insight panel list shows. */
+const RERENDER_KEYS = [
+  'data',
+  'value',
+  'text',
+  'filters',
+  'options',
+  'pluginId',
+  'title',
+  'hideHeader',
+  'children',
+  'tabs',
+  'rows',
+];
 
 export interface DashboardInsightsPaneState extends SceneObjectState {
   /** Session-local answers keyed by question id; never persisted. */
@@ -60,7 +73,7 @@ export class DashboardInsightsPane extends SceneObjectBase<DashboardInsightsPane
     // In-flight requests belong to the live pane; a copy must never look busy.
     const runs: Record<string, InsightRun> = {};
     for (const [id, run] of Object.entries(this.state.runs)) {
-      runs[id] = { ...run, running: false };
+      runs[id] = { ...run, running: false, loadingSources: false };
     }
     return super.clone({ runs, ...withState });
   }
@@ -75,9 +88,10 @@ export class DashboardInsightsPane extends SceneObjectBase<DashboardInsightsPane
       return;
     }
 
-    const { snapshot, unavailable } = captureInsightSnapshot(getDashboardSceneLike(this), question);
-    if (!snapshot) {
-      this.updateRun(question.id, { error: unavailable });
+    const dashboard = getDashboardSceneLike(this);
+    const initial = captureInsightSnapshot(dashboard, question);
+    if (!initial.snapshot && !initial.unloaded) {
+      this.updateRun(question.id, { error: initial.unavailable });
       return;
     }
 
@@ -86,6 +100,20 @@ export class DashboardInsightsPane extends SceneObjectBase<DashboardInsightsPane
     this.updateRun(question.id, { running: true, error: undefined });
 
     try {
+      const sources = getInsightSourcePanels(dashboard).filter((source) => initial.keys.includes(source.key));
+      const loading = loadInsightSources(sources, controller.signal);
+      if (loading) {
+        this.updateRun(question.id, { loadingSources: true });
+        await loading;
+        if (controller.signal.aborted) {
+          return;
+        }
+        this.updateRun(question.id, { loadingSources: false });
+      }
+      const { snapshot, unavailable } = loading ? captureInsightSnapshot(dashboard, question) : initial;
+      if (!snapshot) {
+        throw new Error(unavailable);
+      }
       const content = parseInsightAnswer(await askInsightAssistant(snapshot, controller.signal));
       this.updateRun(question.id, {
         result: { content, snapshot, completedAt: new Date().toISOString(), sourceLocation: window.location.href },
@@ -99,7 +127,7 @@ export class DashboardInsightsPane extends SceneObjectBase<DashboardInsightsPane
       if (this._requests.get(question.id) === controller) {
         this._requests.delete(question.id);
       }
-      this.updateRun(question.id, { running: false });
+      this.updateRun(question.id, { running: false, loadingSources: false });
     }
   }
 
