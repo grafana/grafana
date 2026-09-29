@@ -1,4 +1,4 @@
-import { toDataFrame, FieldType, DataTransformerID, transformDataFrame } from '@grafana/data';
+import { toDataFrame, FieldType, DataTransformerID, transformDataFrame, getFieldDisplayName } from '@grafana/data';
 import { mockTransformationsRegistry } from '@grafana/data/internal';
 
 import {
@@ -77,6 +77,7 @@ describe('transformer operator pipeline', () => {
       fields: [
         { name: 'Field Name', type: FieldType.string, values: ['col1', 'col2'] },
         { name: 'Color', type: FieldType.string, values: ['red', 'green'] },
+        { name: 'Display Name', type: FieldType.string, values: ['The Red', 'The Green'] },
       ],
       refId: 'config',
     });
@@ -84,7 +85,7 @@ describe('transformer operator pipeline', () => {
     const series = toDataFrame({
       fields: [
         { name: 'col1', type: FieldType.time, values: [1, 2, 3] },
-        { name: 'col2', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'col2', type: FieldType.number, values: [1, 2, 3] },
       ],
       refId: 'A',
     });
@@ -98,7 +99,10 @@ describe('transformer operator pipeline', () => {
           id: CustomCFQMatchers.dynamicFieldName,
           options: 'Field Name',
         },
-        mappings: [{ fieldName: 'Color', handlerKey: 'color' }],
+        mappings: [
+          { fieldName: 'Color', handlerKey: 'color' },
+          { fieldName: 'Display Name', handlerKey: 'displayName' },
+        ],
       },
     };
 
@@ -108,6 +112,8 @@ describe('transformer operator pipeline', () => {
       expect(result[0].name).toBe('throughput');
       expect(result[0].fields[0].config.color).toStrictEqual({ fixedColor: 'red', mode: 'fixed' });
       expect(result[0].fields[1].config.color).toStrictEqual({ fixedColor: 'green', mode: 'fixed' });
+      expect(getFieldDisplayName(result[0].fields[0], result[0], result)).toEqual('The Red');
+      expect(getFieldDisplayName(result[0].fields[1], result[0], result)).toEqual('The Green');
     });
   });
 });
