@@ -14,6 +14,11 @@ do-generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generati
 
 .PHONY: post-generate-cleanup
 post-generate-cleanup: ## Clean up the generated code
+	# These specs use handwritten types; generated empty structs conflict with them.
+	@rm -f ./pkg/apis/dashboard/v0alpha1/dashboard_spec_gen.go
+	@rm -f ./pkg/apis/dashboard/v1/dashboard_spec_gen.go
+	@rm -f ./pkg/apis/dashboard/v2beta1/variable_spec_gen.go
+
 	# This is a workaround for SDK codegen not producing correct output for v0alpha1
 	@rm ../../packages/grafana-schema/src/schema/dashboard/v0alpha1/types.spec.gen.ts
 	@cp ./tshack/v0alpha1_spec_gen.ts ../../packages/grafana-schema/src/schema/dashboard/v0alpha1/types.spec.gen.ts

@@ -33,6 +33,12 @@ type notifier interface {
 	Publish(Event)
 }
 
+var (
+	_ notifier = (*pollingNotifier)(nil)
+	_ notifier = (*channelNotifier)(nil)
+	_ notifier = (*natsNotifier)(nil)
+)
+
 type pollingNotifier struct {
 	eventStore *eventStore
 	log        log.Logger
@@ -45,6 +51,7 @@ type notifierOptions struct {
 	enableNatsNotifier bool
 	eventSubscriber    EventSubscriber
 	natsDropped        *prometheus.CounterVec
+	invalidator        Invalidator
 }
 
 type WatchOptions struct {
@@ -82,7 +89,7 @@ func (opts WatchOptions) normalize() WatchOptions {
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	if opts.enableNatsNotifier {
 		if opts.eventSubscriber != nil && opts.eventSubscriber.Enabled() {
-			return newNatsNotifier(opts.eventSubscriber, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
+			return newNatsNotifier(opts.eventSubscriber, opts.invalidator, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
 		}
 		opts.log.Warn("nats notifier requested but subscriber unavailable, falling back to polling")
 	}

@@ -113,7 +113,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	unifiedStorageFolder.Kind = "folder"
 
 	fooFolder := &folder.Folder{
-		ID:        123,
+		ID:        123, //nolint:staticcheck // Exercise legacy field compatibility.
 		Title:     "Foo Folder",
 		OrgID:     orgID,
 		UID:       "foo",
@@ -123,7 +123,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	notFooFolder := &folder.Folder{
-		ID:        543,
+		ID:        543, //nolint:staticcheck // Exercise legacy field compatibility.
 		Title:     "Foo Folder",
 		OrgID:     orgID,
 		UID:       "not-foo",
@@ -476,7 +476,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				emptyString := ""
 				query := &folder.GetFolderQuery{
 					UID:          &emptyString,
-					ID:           &id,
+					ID:           &id, //nolint:staticcheck // Exercise legacy field compatibility.
 					OrgID:        1,
 					SignedInUser: usr,
 				}
@@ -490,7 +490,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
 				id := int64(111111)
 				query := &folder.GetFolderQuery{
-					ID:           &id,
+					ID:           &id, //nolint:staticcheck // Exercise legacy field compatibility.
 					OrgID:        1,
 					SignedInUser: usr,
 				}
@@ -556,7 +556,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				idZero := int64(0)
 				actual, err := folderService.Get(ctx, &folder.GetFolderQuery{
 					UID:          &emptyString,
-					ID:           &idZero,
+					ID:           &idZero, //nolint:staticcheck // Exercise legacy field compatibility.
 					Title:        &emptyString,
 					OrgID:        1,
 					SignedInUser: usr,
@@ -575,7 +575,7 @@ func TestSearchFolders(t *testing.T) {
 	folderStore := folder.NewFakeStore()
 	folderStore.ExpectedFolder = &folder.Folder{
 		UID:   "parent-uid",
-		ID:    2,
+		ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 		Title: "parent title",
 	}
 	tracer := noop.NewTracerProvider().Tracer("TestSearchFolders")
@@ -750,7 +750,7 @@ func TestSearchFolders(t *testing.T) {
 		fakeFolderStore := folder.NewFakeStore()
 		fakeFolderStore.ExpectedFolder = &folder.Folder{
 			UID:   "parent-uid",
-			ID:    2,
+			ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 			Title: "parent title",
 		}
 		service.unifiedStore = fakeFolderStore
@@ -839,7 +839,7 @@ func TestSearchFolders(t *testing.T) {
 		fakeFolderStore := folder.NewFakeStore()
 		fakeFolderStore.ExpectedFolder = &folder.Folder{
 			UID:   "parent-uid",
-			ID:    2,
+			ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 			Title: "parent title",
 		}
 		service.unifiedStore = fakeFolderStore
@@ -1002,7 +1002,7 @@ func TestGetFolderByTitle(t *testing.T) {
 	folderStore := folder.NewFakeStore()
 	folderStore.ExpectedFolder = &folder.Folder{
 		UID:   "parent-uid",
-		ID:    2,
+		ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 		Title: "parent title",
 	}
 	tracer := noop.NewTracerProvider().Tracer("TestGetFolderByTitle")
@@ -1028,7 +1028,7 @@ func TestGetFolderByTitle(t *testing.T) {
 		fakeFolderStore.ExpectedFolder = &folder.Folder{
 			UID:       "foouid",
 			ParentUID: "parentuid",
-			ID:        2,
+			ID:        2, //nolint:staticcheck // Exercise legacy field compatibility.
 			OrgID:     1,
 			Title:     "foo title",
 			URL:       "/dashboards/f/foouid/foo-title",
@@ -1078,7 +1078,7 @@ func TestGetFolderByTitle(t *testing.T) {
 		fakeFolderStore.ExpectedFolder = &folder.Folder{
 			UID:       "foouid",
 			ParentUID: "parentuid",
-			ID:        2,
+			ID:        2, //nolint:staticcheck // Exercise legacy field compatibility.
 			OrgID:     1,
 			Title:     "foo title",
 			URL:       "/dashboards/f/foouid/foo-title",
@@ -1128,7 +1128,7 @@ func TestGetFolderByTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		expectedResult := &folder.Folder{
-			ID:        2,
+			ID:        2, //nolint:staticcheck // Exercise legacy field compatibility.
 			UID:       "foouid",
 			ParentUID: "parentuid",
 			Title:     "foo title",

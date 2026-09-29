@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	claims "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -21,10 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -1531,7 +1530,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			IsFolder:    false,
 			FolderUID:   folder.ToLegacyFolderUID(hit.Folder),
 			FolderTitle: folderTitle,
-			FolderID:    folderID,
+			FolderID:    folderID, //nolint:staticcheck // Preserve legacy field compatibility.
 			FolderSlug:  slugify.Slugify(folderTitle),
 			ManagedBy:   hit.ManagedBy.Kind,
 			ManagerId:   hit.ManagedBy.ID,
