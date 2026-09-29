@@ -43,7 +43,7 @@ export function VisualRefreshInfo() {
         <span>
           <Trans i18nKey="visual-refresh.info.description">
             The new UI is currently in Public Preview.{' '}
-            <TextLink href="https://grafana.com/docs/release-life-cycle/#public-preview" external>
+            <TextLink href="https://grafana.com/whats-new/2026-10-26-grafana-visual-ui-refresh/" external>
               Learn more.
             </TextLink>
           </Trans>
