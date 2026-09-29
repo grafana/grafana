@@ -167,7 +167,7 @@ describe('NotebookCellTimeRangeControl', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Update time range' }));
 
-    expect(await screen.findByText('Panel time settings')).toBeInTheDocument();
+    expect(await screen.findByText('Lock panel time range')).toBeInTheDocument();
   });
 
   it('shows the resolved absolute range in the tooltip when the cell has its own range', async () => {
@@ -177,6 +177,6 @@ describe('NotebookCellTimeRangeControl', () => {
     await user.hover(screen.getByText('Locked: Last 24 hours'));
 
     expect(await screen.findByText('to')).toBeInTheDocument();
-    expect(screen.queryByText('Panel time settings')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lock panel time range')).not.toBeInTheDocument();
   });
 });
