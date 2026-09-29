@@ -22,29 +22,13 @@ labels:
     - oss
 title: View active notifications
 weight: 800
-refs:
-  view-notification-history:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-notification-history/
-  alertmanager:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
-  grouping:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
 ---
 
 # View active notifications
 
 The Active notifications page lists groups of alerts (or alert instances) that are actively triggering notifications.
 
-By default, Grafana Alerting [groups similar alerts into a single notification](ref:grouping).
+By default, Grafana Alerting [groups similar alerts into a single notification](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/).
 
 In this view, you can:
 
@@ -53,7 +37,7 @@ In this view, you can:
 
 The Active notifications view is useful for debugging and verifying how notifications are grouped based on your notification policy settings.
 
-To review notifications that were already sent, refer to [View notification history](ref:view-notification-history).
+To review notifications that were already sent, refer to [View notification history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/).
 
 ## View alert groups and notification state
 
@@ -86,11 +70,11 @@ You can filter by label, state, or Alertmanager:
 
 - **By state**: In **States**, select from Active, Suppressed, or Unprocessed states to view alerts matching your selected state. All other alerts are hidden.
 
-- **By Alertmanager**: In the **Alertmanager** dropdown, select an [external Alertmanager](ref:alertmanager) to view only alert groups for that specific Alertmanager. By default, the `Grafana` Alertmanager is selected.
+- **By Alertmanager**: In the **Alertmanager** dropdown, select an [external Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/) to view only alert groups for that specific Alertmanager. By default, the `Grafana` Alertmanager is selected.
 
 ### Custom group
 
-From **Custom group by** dropdown, select a combination of labels to view a grouping other than the default. This helps validate the [grouping settings of your notification policies](ref:grouping).
+From **Custom group by** dropdown, select a combination of labels to view a grouping other than the default. This helps validate the [grouping settings of your notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/).
 
 If an alert does not contain labels specified either in the grouping of the default policy or the custom grouping, then the alert is added to a catch all group with a header of `No grouping`.
 
@@ -98,7 +82,7 @@ If an alert does not contain labels specified either in the grouping of the defa
 
 {{< admonition type="note" >}}
 
-Notification errors are only available with [pre-configured Grafana Alertmanagers](ref:alertmanager).
+Notification errors are only available with [pre-configured Grafana Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/).
 
 {{< /admonition >}}
 
@@ -110,4 +94,4 @@ Each contact point displays a message about the status of their latest notificat
 
 If a contact point is failing, a red message indicates that there are errors delivering notifications. Hover over the error message to see the notification error details.
 
-To review past delivery attempts across contact points, refer to [View notification history](ref:view-notification-history).
+To review past delivery attempts across contact points, refer to [View notification history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/).

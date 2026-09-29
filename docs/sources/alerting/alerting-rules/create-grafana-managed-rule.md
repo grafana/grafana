@@ -18,118 +18,6 @@ labels:
     - oss
 title: Configure Grafana-managed alert rules
 weight: 100
-refs:
-  time-units-and-relative-ranges:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#time-units-and-relative-ranges
-
-  configure-missing-series-evaluations-to-resolve:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve
-  alert-instance-state:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
-  recovery-threshold:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
-  modify-the-no-data-or-error-state:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
-  pending-period:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/#pending-period
-  keep-firing-for:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for
-  alert-rule-evaluation:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/
-  mute-timings:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
-  alert-rule-query:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/
-  alert-rule-labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#labels
-  expression-queries:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries
-  alert-condition:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#alert-condition
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#alert-condition
-  contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/contact-points/
-  notification-policies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
-  data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana-cloud/
-    - destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
-  alert-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/
-  shared-provision-alerting-resources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/
-  shared-alert-rule-template:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
-  shared-annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
-  shared-link-alert-rules-to-panels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
-  tutorials:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/tutorials/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/tutorials/
 ---
 
 {{< admonition type="caution" >}}
@@ -150,7 +38,7 @@ Grafana-managed rules inherit their model from Prometheus Alerting and extend it
 To create or edit Grafana-managed alert rules, follow the instructions below.
 
 {{< admonition type="tip" >}}
-For quick-start tutorials on key alerting features, see [Getting started with Grafana Alerting tutorials](ref:tutorials).
+For quick-start tutorials on key alerting features, see [Getting started with Grafana Alerting tutorials](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/tutorials/).
 {{< /admonition  >}}
 
 ## Before you begin
@@ -180,7 +68,7 @@ Only users with **Edit** permissions for the folder storing the rules can edit o
 
 Note that if you delete an alert resource created in the UI, you can no longer retrieve it.
 
-To backup and manage alert rules, you can [provision alerting resources](ref:shared-provision-alerting-resources) using options such as configuration files, Terraform, or the Alerting API.
+To backup and manage alert rules, you can [provision alerting resources](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/) using options such as configuration files, Terraform, or the Alerting API.
 
 [//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
@@ -214,8 +102,8 @@ The **Default** option allows to configure one query and one alert condition. Th
 {{< collapse title="Default options" >}}
 
 1. Select a data source.
-1. Add a [query](ref:alert-rule-query).
-1. Add an [alert condition](ref:alert-condition).
+1. Add a [query](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/).
+1. Add an [alert condition](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#alert-condition).
 
    The **When** input includes the reducer function and the last input is the threshold.
 
@@ -225,18 +113,18 @@ The **Default** option allows to configure one query and one alert condition. Th
 {{< collapse title="Advanced options" >}}
 
 1. Select a data source.
-1. From the **Options** drop-down menu, specify a [time range](ref:time-units-and-relative-ranges).
+1. From the **Options** drop-down menu, specify a [time range](/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/use-dashboards/#time-units-and-relative-ranges).
 
    Note that Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
    It doesn't support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
 
 1. Add a query.
 
-   To add multiple [queries](ref:alert-rule-query), click **Add query**.
+   To add multiple [queries](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/), click **Add query**.
 
    All alert rules are managed by Grafana by default. If you want to switch to a data source-managed alert rule, click **Switch to data source-managed alert rule**.
 
-1. Add one or more [expressions](ref:expression-queries).
+1. Add one or more [expressions](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 
    a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series.
 
@@ -244,11 +132,11 @@ The **Default** option allows to configure one query and one alert condition. Th
 
    b. Click **Preview** to verify that the expression is successful.
 
-1. To add a [recovery threshold](ref:recovery-threshold), enable the **Custom recovery threshold** toggle and enter a value that defines when the alert should recover—transition to `Normal` state from the `Alerting` or `Pending` state.
+1. To add a [recovery threshold](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold), enable the **Custom recovery threshold** toggle and enter a value that defines when the alert should recover—transition to `Normal` state from the `Alerting` or `Pending` state.
 
    You can only add one recovery threshold, and it must be part of the alert condition.
 
-1. Click **Set as alert condition** on the query or expression you want to set as your [alert condition](ref:alert-condition).
+1. Click **Set as alert condition** on the query or expression you want to set as your [alert condition](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#alert-condition).
    {{< /collapse >}}
 
 You can switch between **Default** and **Advanced** options at any time.
@@ -261,7 +149,7 @@ If the [Default versus Advanced options](#default-versus-advanced-options) featu
 
 Organize your alert rule with a folder and set of labels.
 
-In the **Labels** section, you can optionally choose whether to add labels to organize your alert rules and their notifications. For more details, refer to [alert rule labels](ref:alert-rule-labels).
+In the **Labels** section, you can optionally choose whether to add labels to organize your alert rules and their notifications. For more details, refer to [alert rule labels](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels).
 
 1. Select a folder or click **+ New folder**.
 
@@ -271,7 +159,7 @@ In the **Labels** section, you can optionally choose whether to add labels to or
 
 ## Configure alert evaluation behavior
 
-Use [alert rule evaluation](ref:alert-rule-evaluation) to determine how frequently an alert rule should be evaluated and how quickly it should change its state.
+Use [alert rule evaluation](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/) to determine how frequently an alert rule should be evaluated and how quickly it should change its state.
 
 To do this, you need to make sure that your alert rule is in the right evaluation group and set a pending period time that works best for your use case.
 
@@ -281,14 +169,14 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    All rules within the same group are evaluated concurrently over the same time interval.
 
-1. Enter a [pending period](ref:pending-period).
+1. Enter a [pending period](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period).
 
    The pending period is the period in which an alert rule can be in breach of the condition until it fires.
 
    After a condition is met, the alert goes into the **Pending** state.
    If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
 
-1. Optionally, set the [Keep firing for](ref:keep-firing-for) period.
+1. Optionally, set the [Keep firing for](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for) period.
 
    You can set the minimum amount of time that an alert remains firing after the breached threshold expression no longer returns any results. This sets an alert to a "Recovering" state for the duration of time set here. The Recovering state can be used to reduce noise from flapping alerts. Select "none" stop an alert from firing immediately after the breach threshold is cleared.
 
@@ -296,7 +184,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts.
    Pausing stops alert rule evaluation and doesn't create any alert instances.
-   This is different to [mute timings](ref:mute-timings), which stop notifications from being delivered, but still allows for alert rule evaluation and the creation of alert instances.
+   This is different to [mute timings](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/), which stop notifications from being delivered, but still allows for alert rule evaluation and the creation of alert instances.
 
 1. In **Configure no data and error handling**, you can define the alerting behavior and alerting state for two scenarios:
    - When the evaluation returns **No data** or all values are null.
@@ -312,19 +200,19 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    {{< docs/shared lookup="alerts/modify-error-state.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-   For more details, refer to [alert instance states](ref:alert-instance-state) and [modify the no data or error state](ref:modify-the-no-data-or-error-state).
+   For more details, refer to [alert instance states](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/) and [modify the no data or error state](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state).
 
-1. In **Configure no data and error handling**, you can also configure [Missing series evaluations to resolve](ref:configure-missing-series-evaluations-to-resolve): how many consecutive evaluation intervals must pass without data before an alert instance is considered stale.
+1. In **Configure no data and error handling**, you can also configure [Missing series evaluations to resolve](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve): how many consecutive evaluation intervals must pass without data before an alert instance is considered stale.
 
 ## Configure notifications
 
 Configure who receives notifications when the alert rule fires.
 
-The **Default** option allows to select a [contact point](ref:contact-points) to handle notifications for this alert rule. The **Advanced** option routes notifications through [notification policies](ref:notification-policies).
+The **Default** option allows to select a [contact point](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points/) to handle notifications for this alert rule. The **Advanced** option routes notifications through [notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/).
 
 {{< collapse title="Default options" >}}
 
-1.  Select an existing [contact point](ref:contact-points).
+1.  Select an existing [contact point](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points/).
 
     All notifications for this alert rule are sent to this contact point automatically and notification policies aren't used.
 
@@ -334,7 +222,7 @@ The **Default** option allows to select a [contact point](ref:contact-points) to
 
 {{< collapse title="Advanced options" >}}
 
-With this option, all notifications for this alert rule are managed by the [notification policy tree](ref:notification-policies), which routes alerts based on their labels.
+With this option, all notifications for this alert rule are managed by the [notification policy tree](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/), which routes alerts based on their labels.
 
 Click **Change** to change the routing from the default policy to another policy.
 
@@ -354,9 +242,9 @@ If the [Default versus Advanced options](#default-versus-advanced-options) featu
 
 ## Configure notification message
 
-Use [annotations](ref:shared-annotations) to add information to alert messages that can help respond to the alert.
+Use [annotations](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations) to add information to alert messages that can help respond to the alert.
 
-Annotations are included by default in notification messages, and can use text or [templates](ref:shared-alert-rule-template) to display dynamic data from queries.
+Annotations are included by default in notification messages, and can use text or [templates](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/) to display dynamic data from queries.
 
 Grafana provides several optional annotations.
 
@@ -378,7 +266,7 @@ Grafana provides several optional annotations.
 
 1. Optional: **Link dashboard and panel**.
 
-   [Link the alert rule to a panel](ref:shared-link-alert-rules-to-panels) to facilitate alert investigation.
+   [Link the alert rule to a panel](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/) to facilitate alert investigation.
 
 1. Click **Save rule**.
 
