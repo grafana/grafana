@@ -112,4 +112,22 @@ describe('RuleList - GroupedView', () => {
 
     expect(loadMoreButton.query(prometheusSection)).not.toBeInTheDocument();
   });
+
+  it('should hide data sources with no rules by default', async () => {
+    setPrometheusRules(prometheusDs, []);
+    render(<GroupedView />);
+
+    await ui.dsSection(/Mimir/).find();
+
+    expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
+  });
+
+  it('should show data sources with no rules when hideEmptyDataSources is false', async () => {
+    setPrometheusRules(prometheusDs, []);
+    render(<GroupedView hideEmptyDataSources={false} />);
+
+    const prometheusSection = await ui.dsSection(/Prometheus/).find();
+
+    expect(within(prometheusSection).getByText('No rules found')).toBeInTheDocument();
+  });
 });

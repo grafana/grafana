@@ -19,9 +19,10 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 interface GroupedViewProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  hideEmptyDataSources?: boolean;
 }
 
-export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) {
+export function GroupedView({ groupFilter, namespaceFilter, hideEmptyDataSources = true }: GroupedViewProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
   const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
 
@@ -46,6 +47,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
             groupFilter={groupFilter}
             namespaceFilter={namespaceFilter}
             onLoadingStateChange={updateState}
+            hideEmptyDataSources={hideEmptyDataSources}
           />
         );
       })}
@@ -59,6 +61,7 @@ interface DataSourceLoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
+  hideEmptyDataSources?: boolean;
 }
 
 function DataSourceLoader({
@@ -66,6 +69,7 @@ function DataSourceLoader({
   groupFilter,
   namespaceFilter,
   onLoadingStateChange,
+  hideEmptyDataSources,
 }: DataSourceLoaderProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
   const { data: dataSourceInfo, isLoading, error } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
@@ -92,6 +96,7 @@ function DataSourceLoader({
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
           onLoadingStateChange={onLoadingStateChange}
+          hideEmptyDataSources={hideEmptyDataSources}
         />
       </DataSourceErrorBoundary>
     );

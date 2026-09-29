@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Box, FilterInput, Icon, Label, Stack, useStyles2 } from '@grafana/ui';
+import { Box, FilterInput, Icon, InlineSwitch, Label, Stack, useStyles2 } from '@grafana/ui';
 
 import { trackAlertRuleFilterEvent, trackRulesSearchInputCleared } from '../../Analytics';
 import { PopupCard } from '../../components/HoverCard';
@@ -20,13 +20,20 @@ import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 export interface RulesFilterProps {
   viewMode?: SupportedView;
   onViewModeChange?: (viewMode: SupportedView) => void;
+  hideEmptyDataSources?: boolean;
+  onHideEmptyDataSourcesChange?: (hideEmptyDataSources: boolean) => void;
 }
 
 type SearchQueryForm = {
   query: string;
 };
 
-export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterProps) {
+export default function RulesFilter({
+  viewMode,
+  onViewModeChange,
+  hideEmptyDataSources,
+  onHideEmptyDataSourcesChange,
+}: RulesFilterProps) {
   const { searchQuery, updateFilters } = useRulesFilter();
 
   const {
@@ -131,6 +138,15 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
             onSetDefault={setDefaultSearch}
             isLoading={savedSearchesLoading}
           />
+          {viewMode === 'grouped' && (
+            <InlineSwitch
+              transparent
+              showLabel
+              label={t('alerting.rules-filter.hide-empty-data-sources', 'Hide empty data sources')}
+              value={hideEmptyDataSources}
+              onChange={(event) => onHideEmptyDataSourcesChange?.(event.currentTarget.checked)}
+            />
+          )}
           <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
         </Stack>
       </Stack>
