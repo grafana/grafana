@@ -463,27 +463,28 @@ function rebuildExploreHref(linkModel: LinkModel, queries: DataQuery[], datasour
 }
 
 /**
- * Adds a fallback query for environments where there is a trace_id filter but no span_id filters.
+ * Adds a fallback query for environments where there is a trace_id filter but no span_id filter.
+ *
+ * getQueryForLoki produces two shapes that can carry a span_id constraint:
+ * - line-contains: two line filters, `|= "<traceId>" |= "<spanId>"` — the span_id one is always last.
+ * - structured (default/job): a single field filter, `| <field>="<spanId>"`.
  */
 export function addNoSpanIdFallback(query: DataQuery) {
   if ('expr' in query === false || typeof query.expr !== 'string') {
     return [query];
   }
-  const lineFilters = query.expr.match(/\|\=/g)?.length ?? 0;
-  if (!query.expr.toLowerCase().includes('span') && lineFilters < 2) {
+  const lineFilterCount = query.expr.match(/\|=/g)?.length ?? 0;
+  if (lineFilterCount < 2 && !query.expr.toLowerCase().includes('span')) {
     return [query];
   }
-  const spanIdFilter = /\s*\|\s*(?:span_?id|otel_span_id)\b\s*(?:=)\s*(?:"(?:\\.|[^"\\])*"|`[^`]*`|[^\s|]+)/gi;
+  const spanIdFilter = /\s*\|\s*(?:span_?id|otel_span_id)\b\s*=\s*"(?:\\.|[^"\\])*"/gi;
 
-  // Add fallback without span_id filter
-  const fallbackQuery = {
-    ...query,
-    expr: query.expr.includes('|=')
-      ? query.expr.substring(0, query.expr.lastIndexOf('|=') - 1)
-      : query.expr.replace(spanIdFilter, ''),
-  };
+  const fallbackExpr =
+    lineFilterCount >= 2
+      ? query.expr.slice(0, query.expr.lastIndexOf('|=')).trimEnd()
+      : query.expr.replace(spanIdFilter, '');
 
-  return [query, fallbackQuery];
+  return [query, { ...query, expr: fallbackExpr }];
 }
 
 function checkForLogs(query: DataQuery, timeRange: TimeRange): Observable<boolean> {
