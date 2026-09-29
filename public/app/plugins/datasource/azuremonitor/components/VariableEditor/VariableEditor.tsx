@@ -380,8 +380,9 @@ const VariableEditor = (props: Props) => {
   };
 
   return (
-    <>
+    <Stack direction="column" gap={2}>
       <Field
+        noMargin
         label={t('components.variable-editor.label-query-type', 'Query Type')}
         data-testid={selectors.components.variableEditor.queryType.input}
       >
@@ -394,7 +395,7 @@ const VariableEditor = (props: Props) => {
         />
       </Field>
       {query.queryType === AzureQueryType.LogAnalytics && (
-        <>
+        <div>
           <LogsQueryEditor
             subscriptionId={query.subscription}
             query={query}
@@ -422,13 +423,14 @@ const VariableEditor = (props: Props) => {
               </Alert>
             </>
           )}
-        </>
+        </div>
       )}
       {query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
         <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={datasource} />
       )}
       {requireSubscription && (
         <Field
+          noMargin
           label={t('components.variable-editor.label-subscription', 'Subscription')}
           data-testid={selectors.components.variableEditor.subscription.input}
         >
@@ -443,6 +445,7 @@ const VariableEditor = (props: Props) => {
       )}
       {(requireResourceGroup || hasResourceGroup) && (
         <Field
+          noMargin
           label={t('components.variable-editor.label-resource-group', 'Resource Group')}
           data-testid={selectors.components.variableEditor.resourceGroup.input}
         >
@@ -464,6 +467,7 @@ const VariableEditor = (props: Props) => {
       )}
       {(requireNamespace || hasNamespace) && (
         <Field
+          noMargin
           label={
             queryType === AzureQueryType.CustomNamespacesQuery || queryType === AzureQueryType.CustomMetricNamesQuery
               ? t('components.variable-editor.label-resource-type', 'Resource Type')
@@ -489,6 +493,7 @@ const VariableEditor = (props: Props) => {
       )}
       {hasRegion && (
         <Field
+          noMargin
           label={t('components.variable-editor.label-region', 'Region')}
           data-testid={selectors.components.variableEditor.region.input}
         >
@@ -504,6 +509,7 @@ const VariableEditor = (props: Props) => {
       )}
       {requireResource && (
         <Field
+          noMargin
           label={t('components.variable-editor.label-resource', 'Resource')}
           data-testid={selectors.components.variableEditor.resource.input}
         >
@@ -518,6 +524,7 @@ const VariableEditor = (props: Props) => {
       )}
       {(requireCustomNamespace || hasCustomNamespace) && (
         <Field
+          noMargin
           label={t('components.variable-editor.label-custom-namespace', 'Custom Namespace')}
           data-testid={selectors.components.variableEditor.customNamespace.input}
         >
@@ -540,39 +547,37 @@ const VariableEditor = (props: Props) => {
         </Field>
       )}
       {hasMetricDimensionCascade && (
-        <Stack direction="column" gap={2}>
-          <Field
-            noMargin
-            label={t('components.variable-editor.label-metric-name', 'Metric Name')}
-            data-testid={selectors.components.variableEditor.metricName.input}
-          >
-            <Select
-              aria-label={t('components.variable-editor.aria-label-select-metric-name', 'Select metric name')}
-              onChange={onChangeMetricName}
-              options={metricNames.concat(variableOptionGroup)}
-              width={25}
-              value={query.metricName || null}
-            />
-          </Field>
-          {query.queryType === AzureQueryType.DimensionValuesQuery && (
-            <Field
-              noMargin
-              label={t('components.variable-editor.label-dimension-name', 'Dimension Name')}
-              data-testid={selectors.components.variableEditor.dimension.input}
-            >
-              <Select
-                aria-label={t('components.variable-editor.aria-label-select-dimension-name', 'Select dimension name')}
-                onChange={onChangeDimension}
-                options={dimensions.concat(variableOptionGroup)}
-                width={25}
-                value={query.dimension || null}
-              />
-            </Field>
-          )}
-        </Stack>
+        <Field
+          noMargin
+          label={t('components.variable-editor.label-metric-name', 'Metric Name')}
+          data-testid={selectors.components.variableEditor.metricName.input}
+        >
+          <Select
+            aria-label={t('components.variable-editor.aria-label-select-metric-name', 'Select metric name')}
+            onChange={onChangeMetricName}
+            options={metricNames.concat(variableOptionGroup)}
+            width={25}
+            value={query.metricName || null}
+          />
+        </Field>
+      )}
+      {hasMetricDimensionCascade && query.queryType === AzureQueryType.DimensionValuesQuery && (
+        <Field
+          noMargin
+          label={t('components.variable-editor.label-dimension-name', 'Dimension Name')}
+          data-testid={selectors.components.variableEditor.dimension.input}
+        >
+          <Select
+            aria-label={t('components.variable-editor.aria-label-select-dimension-name', 'Select dimension name')}
+            onChange={onChangeDimension}
+            options={dimensions.concat(variableOptionGroup)}
+            width={25}
+            value={query.dimension || null}
+          />
+        </Field>
       )}
       {query.queryType === AzureQueryType.AzureResourceGraph && (
-        <>
+        <div>
           <ArgQueryEditor
             subscriptionId={datasource.azureLogAnalyticsDatasource.defaultSubscriptionId}
             query={query}
@@ -595,9 +600,9 @@ const VariableEditor = (props: Props) => {
               </Alert>
             </>
           )}
-        </>
+        </div>
       )}
-    </>
+    </Stack>
   );
 };
 

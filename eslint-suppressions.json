@@ -3128,11 +3128,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 7
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/featureFlags.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
