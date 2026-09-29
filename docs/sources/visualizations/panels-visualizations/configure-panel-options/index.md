@@ -41,6 +41,7 @@ Set the following options to provide basic information about a panel and define 
 | Transparent background                       | Toggle this switch on and off to control whether or not the panel has the same background color as the dashboard. | 
 | Panel links | Add [links to the panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/#panel-links) to create shortcuts to other dashboards, panels, and external websites. Access panel links by clicking the icon next to the panel title. |
 | Repeat options                               | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).|
+| Show/hide rules                               | Set whether to show or hide panels based on various rules. For more information, refer to [Show/hide rules](#showhide-rules).|
 
 <!-- prettier-ignore-end -->
 
