@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
 import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
@@ -11,6 +11,7 @@ import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { NotebookVizSuggestionsPicker } from './NotebookVizSuggestionsPicker';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
@@ -96,10 +97,15 @@ function PanelCell({
   autoFocus?: boolean;
 }) {
   const styles = useStyles2(getStyles);
+  const [suggestions, setSuggestions] = useState<PanelPluginVisualizationSuggestion[]>([]);
+  const showQueryEditor = isEditing && isEditableQueryPanel(panel);
 
   return (
     <Stack direction="column" gap={1}>
-      {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
+      {showQueryEditor && (
+        <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} onSuggestionsChange={setSuggestions} />
+      )}
+      {showQueryEditor && <NotebookVizSuggestionsPicker panel={panel} suggestions={suggestions} />}
       <div className={styles.panel}>
         <panel.Component model={panel} />
       </div>

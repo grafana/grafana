@@ -1,15 +1,16 @@
 import { isEqual } from 'lodash';
-import { useRef } from 'react';
-import { useAsyncFn } from 'react-use';
+import { useEffect, useRef } from 'react';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Stack } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
-import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
+import { TOP_VIZ_SUGGESTION_COUNT } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
+import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
+import { hasData } from 'app/features/panel/suggestions/utils';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { PanelQueryEditorRow } from './PanelQueryEditorRow';
@@ -20,6 +21,8 @@ interface Props {
   cell?: NotebookCellItem;
   /** True right after this cell was inserted or converted — see NotebookCellRenderer's own doc comment. */
   autoFocus?: boolean;
+  /** For NotebookVizSuggestionsPicker's option list. */
+  onSuggestionsChange?: (suggestions: PanelPluginVisualizationSuggestion[]) => void;
 }
 
 /**
@@ -28,31 +31,61 @@ interface Props {
  * and re-runs on a time-range change the same way any dashboard panel does. This component only
  * reads and writes that runner's live state — one PanelQueryEditorRow per query.
  */
-export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
+export function PanelQueryEditor({ panel, cell, autoFocus, onSuggestionsChange }: Props) {
   const queryRunner = getQueryRunnerFor(panel);
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
   const range = sceneGraph.getTimeRange(panel).useState().value;
-  // The last query we successfully fetched a viz suggestion for.
-  const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
+  // Set only by an explicit Run click, so a passive auto-run (time-range tick, activation) never
+  // silently changes the panel's type.
+  const pendingAutoApplyQuery = useRef<DataQuery | undefined>(undefined);
+  // Prevents a repeat Run of the same query from clobbering a manually picked suggestion.
+  const lastAutoAppliedQuery = useRef<DataQuery | undefined>(undefined);
 
-  const [runState, runQuery] = useAsyncFn(async () => {
+  const runQuery = () => {
     if (!queryRunner || queries.length === 0) {
       return;
     }
-    if (!isEqual(lastSuggestedQuery.current, queries[0])) {
-      try {
-        const suggestion = await getVizSuggestionForQuery(queries[0], range);
-        lastSuggestedQuery.current = queries[0];
-        if (suggestion) {
-          await panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
-        }
-      } catch {
-        console.error('Failed to get viz suggestion for query', queries[0]);
-      }
+    if (!isEqual(lastAutoAppliedQuery.current, queries[0])) {
+      pendingAutoApplyQuery.current = queries[0];
     }
     queryRunner.runQueries();
-  }, [queries, range, panel, queryRunner]);
+  };
+
+  // Single source for both the picker's options and (via pendingAutoApplyQuery) the auto-applied
+  // type, so the two can't disagree.
+  useEffect(() => {
+    if (!data || data.state === LoadingState.Loading || data.state === LoadingState.NotStarted) {
+      return;
+    }
+    if (data.state === LoadingState.Error || !hasData(data)) {
+      // Nothing to suggest from — disable the picker instead of showing a stale suggestion.
+      pendingAutoApplyQuery.current = undefined;
+      onSuggestionsChange?.([]);
+      return;
+    }
+    let cancelled = false;
+    getAllSuggestions(data.series)
+      .then(({ suggestions }) => {
+        if (cancelled) {
+          return;
+        }
+        const topSuggestions = suggestions.slice(0, TOP_VIZ_SUGGESTION_COUNT);
+        onSuggestionsChange?.(topSuggestions);
+        const pendingQuery = pendingAutoApplyQuery.current;
+        const topSuggestion = topSuggestions[0];
+        // Clear even with no suggestion, so it can't apply to a later, unrelated data arrival.
+        pendingAutoApplyQuery.current = undefined;
+        if (pendingQuery && topSuggestion) {
+          lastAutoAppliedQuery.current = pendingQuery;
+          panel.changePluginType(topSuggestion.pluginId, topSuggestion.options, topSuggestion.fieldConfig);
+        }
+      })
+      .catch(() => console.error('Failed to get viz suggestions for panel data', data));
+    return () => {
+      cancelled = true;
+    };
+  }, [data, panel, onSuggestionsChange]);
 
   if (!queryRunner || queries.length === 0) {
     return null;
@@ -82,7 +115,7 @@ export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
         >
           {t('notebook.cell.query.add', 'Add query')}
         </Button>
-        <Button icon="play" onClick={runQuery} disabled={runState.loading} size="sm">
+        <Button icon="play" onClick={runQuery} size="sm">
           {t('notebook.cell.query.run', 'Run query')}
         </Button>
       </Stack>
