@@ -69,10 +69,8 @@ func createServiceSut(
 func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 	return &legacy_storage.ConfigRevision{
 		Config: &v1.AMConfigV1{
-			AlertmanagerConfig: v1.PostableApiAlertingConfig{
-				Config: v1.Config{
-					Route: &v1.Route{Receiver: "grafana-default"},
-				},
+			ManagedRoutes: map[string]*v1.Route{
+				models.DefaultRoutingTreeName: {Receiver: "grafana-default"},
 			},
 			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				{Name: "grafana-default"},
@@ -91,18 +89,14 @@ func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 func configRevisionWithManagedRoutes() *legacy_storage.ConfigRevision {
 	return &legacy_storage.ConfigRevision{
 		Config: &v1.AMConfigV1{
-			AlertmanagerConfig: v1.PostableApiAlertingConfig{
-				Config: v1.Config{
-					Route: &v1.Route{Receiver: "grafana-default"},
-				},
-			},
 			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				{Name: "grafana-default"},
 				{Name: "empty"},
 			}),
 			ManagedRoutes: map[string]*v1.Route{
-				"route-a": {Receiver: "grafana-default"},
-				"route-b": {Receiver: "grafana-default"},
+				models.DefaultRoutingTreeName: {Receiver: "grafana-default"},
+				"route-a":                     {Receiver: "grafana-default"},
+				"route-b":                     {Receiver: "grafana-default"},
 			},
 		},
 		ConcurrencyToken: "test-token",
@@ -468,7 +462,7 @@ func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
 		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
 		require.NoError(t, err)
 		// The route resolves to the root route...
-		assert.Equal(t, rev.Config.AlertmanagerConfig.Route.Receiver, route.Receiver)
+		assert.Equal(t, rev.Config.GetDefaultRoute().Receiver, route.Receiver)
 		// ...and its identity canonicalizes to the default tree, so RBAC scopes are stable across names.
 		assert.Equal(t, models.DefaultRoutingTreeName, route.GetUID())
 	})
@@ -485,7 +479,7 @@ func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, models.DefaultRoutingTreeName, updated.GetUID())
 		// The root route was modified in place; no managed route was created under the alias.
-		assert.Equal(t, "empty", rev.Config.AlertmanagerConfig.Route.Receiver)
+		assert.Equal(t, "empty", rev.Config.GetDefaultRoute().Receiver)
 		assert.NotContains(t, rev.Config.ManagedRoutes, models.DefaultRoutingTreeNameAlias)
 	})
 

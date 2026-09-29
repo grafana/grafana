@@ -939,17 +939,16 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		for name, route := range cfg.ManagedRoutes {
 			t.Run(fmt.Sprintf("Create policy %s", name), func(t *testing.T) {
 				createdRoute, err := adminClient.Create(ctx, k8sRoute(t, name, route), resource.CreateOptions{})
+				if models.IsDefaultRoutingTreeName(name) {
+					// Attempting to create a route with name UserDefinedRoutingTreeName fails.
+					require.Error(t, err)
+					return
+				}
 				require.NoError(t, err)
 
 				validateGetEqual(t, name, createdRoute)
 			})
 		}
-
-		t.Run("Create default policy fails", func(t *testing.T) {
-			// Attempting to create a route with name UserDefinedRoutingTreeName fails.
-			_, err = adminClient.Create(ctx, k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy), resource.CreateOptions{})
-			require.Error(t, err)
-		})
 
 		t.Run("Get Default Policy", func(t *testing.T) {
 			validateGetEqual(t, models.DefaultRoutingTreeName, k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy))
@@ -963,12 +962,13 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			_ = db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "") // Just in case it was provisioned.
 			_ = adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{})
 		}
-		_ = db.SetProvenance(ctx, v1model.NewManagedRoute(models.DefaultRoutingTreeName, &v1model.Route{}), org1.OrgID, "")
-		_ = adminClient.Delete(ctx, nameToIdentifier(models.DefaultRoutingTreeName), resource.DeleteOptions{})
 
 		// Recreate them.
 		created := make(map[string]*v1beta1.RoutingTree, len(cfg.ManagedRoutes))
 		for name, route := range cfg.ManagedRoutes {
+			if models.IsDefaultRoutingTreeName(name) {
+				continue
+			}
 			c, err := adminClient.Create(ctx, k8sRoute(t, name, route), resource.CreateOptions{})
 			require.NoError(t, err)
 			created[name] = c
@@ -998,9 +998,9 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		// List all routes and validate again.
 		list, err = adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 		require.NoError(t, err)
-		assert.Len(t, list.Items, len(cfg.ManagedRoutes)+1)
+		assert.Len(t, list.Items, len(cfg.ManagedRoutes))
 		t.Run("Includes all managed routes ", func(t *testing.T) {
-			expectedRoutes := make([]v1beta1.RoutingTree, 0, len(cfg.ManagedRoutes)+1)
+			expectedRoutes := make([]v1beta1.RoutingTree, 0, len(allCreatedRoutes)+1)
 			for _, route := range allCreatedRoutes {
 				expectedRoutes = append(expectedRoutes, *route)
 			}
@@ -1015,7 +1015,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			assert.ElementsMatch(t, expectedRoutes, list.Items)
 		})
 		t.Run("Default policy last", func(t *testing.T) {
-			assert.Equal(t, models.DefaultRoutingTreeName, list.Items[len(cfg.ManagedRoutes)].Name)
+			assert.Equal(t, models.DefaultRoutingTreeName, list.Items[len(list.Items)-1].Name)
 		})
 	})
 

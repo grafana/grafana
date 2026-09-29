@@ -1965,7 +1965,7 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 			// Create route after receivers as they will be referenced.
 			revision, err := sut.cfgStore.Get(context.Background(), tc.user.GetOrgID())
 			require.NoError(t, err)
-			revision.Config.AlertmanagerConfig.Route = &tc.storeRoute
+			revision.Config.SetDefaultRoute(&tc.storeRoute)
 			err = sut.cfgStore.Save(context.Background(), revision, tc.user.GetOrgID())
 			require.NoError(t, err)
 

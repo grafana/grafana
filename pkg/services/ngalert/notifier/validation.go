@@ -93,7 +93,8 @@ func NewNotificationSettingsValidator(cfg *v1.AMConfigV1) NotificationSettingsVa
 	for routeName := range cfg.ManagedRoutes {
 		availableRoutes[routeName] = struct{}{}
 	}
-	availableRoutes[models.DefaultRoutingTreeName] = struct{}{}
+	// ManagedRoutes already includes models.DefaultRoutingTreeName
+	// so only the alias needs adding explicitly.
 	availableRoutes[models.DefaultRoutingTreeNameAlias] = struct{}{}
 	if len(cfg.ExtraConfigs) > 0 {
 		availableRoutes[cfg.ExtraConfigs[0].Identifier] = struct{}{}

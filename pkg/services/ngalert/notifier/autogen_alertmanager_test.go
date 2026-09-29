@@ -30,10 +30,8 @@ func TestAddAutogenConfig(t *testing.T) {
 	}
 	configGen := func(receivers []string, muteIntervals []string) *v1.AMConfigV1 {
 		cfg := &v1.AMConfigV1{
-			AlertmanagerConfig: v1.PostableApiAlertingConfig{
-				Config: v1.Config{
-					Route: rootRoute(),
-				},
+			ManagedRoutes: map[string]*v1.Route{
+				models.DefaultRoutingTreeName: rootRoute(),
 			},
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{},
 		}
@@ -300,7 +298,7 @@ func TestAddAutogenConfig(t *testing.T) {
 			if tt.skipInvalid {
 				onInvalid = IgnoreInvalidReceivers
 			}
-			route := v1.RouteToDB(tt.existingConfig.AlertmanagerConfig.Route)
+			route := v1.RouteToDB(tt.existingConfig.GetDefaultRoute())
 			err := AddAutogenConfig(context.Background(), &logtest.Fake{}, store, orgId, tt.existingConfig, route, onInvalid, nil)
 			if tt.expErrorContains != "" {
 				require.Error(t, err)

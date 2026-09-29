@@ -1992,12 +1992,8 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 		postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&tc.receiver)
 		require.NoError(t, err)
 		postable := v1.AMConfigV1{
-			AlertmanagerConfig: v1.PostableApiAlertingConfig{
-				Config: v1.Config{
-					Route: &v1.Route{
-						Receiver: postableReceiver.Name,
-					},
-				},
+			ManagedRoutes: map[string]*v1.Route{
+				models.DefaultRoutingTreeName: {Receiver: postableReceiver.Name},
 			},
 			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{&postableReceiver}),
 		}
@@ -2159,7 +2155,7 @@ func TestApiGetSnapshots(t *testing.T) {
 	cfg := policy_exports.Config()
 
 	// Route
-	cfg.AlertmanagerConfig.Route = v1.RouteToModel(legacy_storage.WithManagedRoutes(cfg))
+	cfg.ManagedRoutes[models.DefaultRoutingTreeName] = v1.RouteToModel(legacy_storage.WithManagedRoutes(cfg))
 
 	// Templates
 	t1 := v1.NewTemplateGroup("", "templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
@@ -2522,7 +2518,7 @@ func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID
 	if orgID != 1 {
 		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
-	result := *f.config.Config.AlertmanagerConfig.Route
+	result := *f.config.Config.GetDefaultRoute()
 	result.Provenance = v1.Provenance(f.prov)
 	return *notifier.RouteToAPI(&result), "", nil
 }
@@ -2531,13 +2527,13 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	if orgID != 1 {
 		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
-	f.config.Config.AlertmanagerConfig.Route = v1.RouteToModel(&tree)
+	f.config.Config.SetDefaultRoute(v1.RouteToModel(&tree))
 	f.prov = p
 	return tree, "some", nil
 }
 
 func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
-	f.config.Config.AlertmanagerConfig.Route = &v1.Route{} // TODO
+	f.config.Config.SetDefaultRoute(&v1.Route{}) // TODO
 	return definitions.Route{}, nil
 }
 
