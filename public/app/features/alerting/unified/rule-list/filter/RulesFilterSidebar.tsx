@@ -12,6 +12,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { trackAlertRuleFilterEvent } from '../../Analytics';
 import { createBridgeURL } from '../../components/PluginBridge';
+import { type SupportedView } from '../../components/rules/Filter/RulesViewModeSelector';
 import {
   useAlertingDataSourceOptions,
   useLabelOptions,
@@ -30,11 +31,21 @@ import { advancedFiltersToRulesFilter, searchQueryToDefaultValues, usePluginsFil
 
 const SIDEBAR_WIDTH = 250;
 
+interface RulesFilterSidebarProps {
+  viewMode?: SupportedView;
+  hideEmptyDataSources?: boolean;
+  onHideEmptyDataSourcesChange?: (hideEmptyDataSources: boolean) => void;
+}
+
 /**
  * Persistent filter sidebar for the alert rule list v2.
  * All filters apply immediately on change; rule name applies on blur or Enter.
  */
-export function RulesFilterSidebar() {
+export function RulesFilterSidebar({
+  viewMode,
+  hideEmptyDataSources,
+  onHideEmptyDataSourcesChange,
+}: RulesFilterSidebarProps) {
   const styles = useStyles2(getStyles);
   const { hasActiveFilters, clearAll, searchQuery, filterState } = useRulesFilter();
 
@@ -48,7 +59,13 @@ export function RulesFilterSidebar() {
         </Stack>
         {/* key remounts the form when the URL changes externally (top bar, clearAll, navigation)
             so defaultValues always reflect the current URL state — no sync effects needed */}
-        <FilterSidebarForm key={searchQuery} filterState={filterState} />
+        <FilterSidebarForm
+          key={searchQuery}
+          filterState={filterState}
+          viewMode={viewMode}
+          hideEmptyDataSources={hideEmptyDataSources}
+          onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange}
+        />
       </Stack>
     </div>
   );
@@ -56,9 +73,17 @@ export function RulesFilterSidebar() {
 
 interface FilterSidebarFormProps {
   filterState: RulesFilter;
+  viewMode?: SupportedView;
+  hideEmptyDataSources?: boolean;
+  onHideEmptyDataSourcesChange?: (hideEmptyDataSources: boolean) => void;
 }
 
-function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
+function FilterSidebarForm({
+  filterState,
+  viewMode,
+  hideEmptyDataSources,
+  onHideEmptyDataSourcesChange,
+}: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
 
   const { updateFilters, searchQuery } = useRulesFilter();
@@ -540,6 +565,52 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                       ]}
                     />
                   )}
+                />
+              </SidebarField>
+            </SidebarSection>
+          </>
+        )}
+
+        {/* Not a rule filter, so it's kept out of the search-form state above - it's a display
+            preference for the grouped view, not part of the URL-driven search query. */}
+        {viewMode === 'grouped' && (
+          <>
+            <div className={styles.divider} />
+            <SidebarSection>
+              <SidebarField
+                label={
+                  <Stack gap={0.5} alignItems="center">
+                    <span>
+                      <Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources">Empty data sources</Trans>
+                    </span>
+                    <Tooltip
+                      content={
+                        <Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources-tooltip">
+                          Shows or hides data sources that have no alert rules configured.
+                        </Trans>
+                      }
+                    >
+                      <Icon
+                        name="info-circle"
+                        size="sm"
+                        title={t(
+                          'alerting.rules-filter-sidebar.empty-data-sources-tooltip-title',
+                          'Empty data sources filter help'
+                        )}
+                      />
+                    </Tooltip>
+                  </Stack>
+                }
+                labelId="filter-label-empty-data-sources"
+              >
+                <ToggleButtonGroup<boolean>
+                  aria-labelledby="filter-label-empty-data-sources"
+                  value={Boolean(hideEmptyDataSources)}
+                  onChange={(value) => onHideEmptyDataSourcesChange?.(value)}
+                  options={[
+                    { label: t('alerting.rules-filter.label.show', 'Show'), value: false },
+                    { label: t('alerting.rules-filter.label.hide', 'Hide'), value: true },
+                  ]}
                 />
               </SidebarField>
             </SidebarSection>

@@ -129,6 +129,15 @@ function PaginatedGroupsLoader({
     return null;
   }
 
+  // We don't know yet whether this data source has any rules at all - don't show its header until
+  // the initial fetch settles, to avoid it popping in and then disappearing again once we learn it's
+  // empty. isEmpty(groups) only holds during that initial fetch: groups only ever accumulates (see
+  // useLazyLoadPrometheusGroups), so this never fires during a later "Load More" fetch, and an error
+  // during the initial fetch flips isLoading to false, so it still falls through to be shown below.
+  if (!hasFilters && isLoading && isEmpty(groups)) {
+    return null;
+  }
+
   // once we know for sure a data source has no rules configured, hide it entirely unless the user
   // opted back in via the "hide empty data sources" toggle, or it has an error worth surfacing.
   if (hideEmptyDataSources && !hasFilters && hasNoRules && !error) {

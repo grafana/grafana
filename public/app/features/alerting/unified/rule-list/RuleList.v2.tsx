@@ -42,14 +42,13 @@ function RuleList() {
     <Stack direction="column">
       {showImportToGMABanner && <ImportToGMABanner />}
       <Stack direction="column" gap={2}>
-        <RulesFilter
-          viewMode={viewMode}
-          onViewModeChange={handleViewChange}
-          hideEmptyDataSources={hideEmptyDataSources}
-          onHideEmptyDataSourcesChange={setHideEmptyDataSources}
-        />
+        <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
         <Stack direction="row" grow={1} minHeight={0}>
-          <RulesFilterSidebar />
+          <RulesFilterSidebar
+            viewMode={viewMode}
+            hideEmptyDataSources={hideEmptyDataSources}
+            onHideEmptyDataSourcesChange={setHideEmptyDataSources}
+          />
           <Box flex={1} minWidth={0} paddingLeft={2}>
             {viewMode === 'list' ? (
               <FilterView filterState={filterState} />

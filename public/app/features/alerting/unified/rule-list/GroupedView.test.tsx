@@ -1,7 +1,9 @@
+import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
+import server from '@grafana/test-utils/server';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
@@ -117,13 +119,14 @@ describe('RuleList - GroupedView', () => {
     expect(loadMoreButton.query(prometheusSection)).not.toBeInTheDocument();
   });
 
-  it('should hide data sources with no rules by default', async () => {
+  it('should hide data sources with no rules by default, and show how many are hidden', async () => {
     setPrometheusRules(prometheusDs, []);
     render(<GroupedView />);
 
     await ui.dsSection(/Mimir/).find();
 
     expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
+    expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
   });
 
   it('should show data sources with no rules when hideEmptyDataSources is false', async () => {
@@ -133,6 +136,42 @@ describe('RuleList - GroupedView', () => {
     const prometheusSection = await ui.dsSection(/Prometheus/).find();
 
     expect(within(prometheusSection).getByText('No rules found')).toBeInTheDocument();
+    expect(screen.queryByText(/data sources? with no rules (is|are) hidden/)).not.toBeInTheDocument();
+  });
+
+  it('should not show a data source header until its first fetch settles, and should say so while waiting', async () => {
+    server.use(
+      http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, async () => {
+        await delay('infinite');
+        return HttpResponse.json({ status: 'success', data: { groups: [] } });
+      })
+    );
+
+    render(<GroupedView />);
+
+    // Mimir resolves quickly and has rules, so it should still show up promptly.
+    await ui.dsSection(/Mimir/).find();
+
+    // Prometheus's fetch never settles in this test - its header must never appear, even briefly.
+    expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
+    expect(await screen.findByText('Checking 1 more data source')).toBeInTheDocument();
+  });
+
+  it('should replace the "checking" notice with the hidden-count notice once a slow empty data source settles', async () => {
+    server.use(
+      http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, async () => {
+        await delay(50);
+        return HttpResponse.json({ status: 'success', data: { groups: [] } });
+      })
+    );
+
+    render(<GroupedView />);
+
+    expect(await screen.findByText('Checking 1 more data source')).toBeInTheDocument();
+
+    await waitFor(() => expect(screen.queryByText('Checking 1 more data source')).not.toBeInTheDocument());
+    expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
+    expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
   });
 });
 

@@ -6,13 +6,15 @@ import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
-import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { DataSourceErrorBoundary } from './components/DataSourceErrorBoundary';
 import { DataSourceSection } from './components/DataSourceSection';
+import { HiddenDataSourcesNotice } from './components/HiddenDataSourcesNotice';
+import { PendingDataSourcesNotice } from './components/PendingDataSourcesNotice';
 import { type DataSourceLoadState, useDataSourceLoadingStates } from './hooks/useDataSourceLoadingStates';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -31,7 +33,18 @@ export function GroupedView({ groupFilter, namespaceFilter, hideEmptyDataSources
   const externalRuleSources = useMemo(() => (routeProxyActive ? [] : getExternalRulesSources()), [routeProxyActive]);
 
   // Use custom hook for centralized state management
-  const { updateState, loadingDataSources } = useDataSourceLoadingStates();
+  const { updateState, loadingDataSources, dataSourcesWithNoRules, settledDataSourceUids } =
+    useDataSourceLoadingStates();
+
+  const hiddenDataSourcesCount = hideEmptyDataSources
+    ? dataSourcesWithNoRules.filter((uid) => uid !== GRAFANA_RULES_SOURCE_NAME).length
+    : 0;
+
+  // A data source has no reported state at all until its feature discovery resolves, so treat
+  // "not yet in the map" as pending too - otherwise data sources stuck in slow discovery would be
+  // silently uncounted instead of showing up as still-being-checked.
+  const settledUidSet = useMemo(() => new Set(settledDataSourceUids), [settledDataSourceUids]);
+  const pendingExternalCount = externalRuleSources.filter((ds) => !settledUidSet.has(ds.uid)).length;
 
   return (
     <Stack direction="column" gap={1} role="list">
@@ -57,6 +70,8 @@ export function GroupedView({ groupFilter, namespaceFilter, hideEmptyDataSources
         );
       })}
       {hasFilters && !isEmpty(loadingDataSources) && <AlertRuleListItemSkeleton />}
+      {!hasFilters && <PendingDataSourcesNotice count={pendingExternalCount} />}
+      {!hasFilters && <HiddenDataSourcesNotice count={hiddenDataSourcesCount} />}
     </Stack>
   );
 }

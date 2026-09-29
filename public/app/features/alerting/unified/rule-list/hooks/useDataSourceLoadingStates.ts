@@ -11,6 +11,13 @@ interface DerivedStates {
   loadingDataSources: string[];
   totalRulesCount: number;
   dataSourcesWithErrors: Array<{ uid: string; error: unknown }>;
+  /** uids that have finished loading, have no rules, and didn't error */
+  dataSourcesWithNoRules: string[];
+  /**
+   * uids whose status is known: either they're done loading, or they're loading more but already
+   * reported at least one rule (a "Load More" fetch, not the initial unknown-outcome fetch).
+   */
+  settledDataSourceUids: string[];
   hasAnyLoading: boolean;
   hasAnyErrors: boolean;
 }
@@ -50,10 +57,20 @@ export function useDataSourceLoadingStates() {
       .filter(([_, state]) => state.error !== undefined)
       .map(([uid, state]) => ({ uid, error: state.error! }));
 
+    const dataSourcesWithNoRules = entries
+      .filter(([_, state]) => !state.isLoading && state.rulesCount === 0 && state.error === undefined)
+      .map(([uid]) => uid);
+
+    const settledDataSourceUids = entries
+      .filter(([_, state]) => !state.isLoading || state.rulesCount > 0)
+      .map(([uid]) => uid);
+
     return {
       loadingDataSources,
       totalRulesCount,
       dataSourcesWithErrors,
+      dataSourcesWithNoRules,
+      settledDataSourceUids,
       hasAnyLoading: loadingDataSources.length > 0,
       hasAnyErrors: dataSourcesWithErrors.length > 0,
     };

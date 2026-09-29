@@ -268,6 +268,50 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
   });
 });
 
+describe('RulesFilterSidebar — empty data sources', () => {
+  it('shows the toggle only in grouped view', async () => {
+    const { rerender } = render(<RulesFilterSidebar viewMode="grouped" />);
+
+    expect(await screen.findByRole('radiogroup', { name: 'Empty data sources' })).toBeInTheDocument();
+
+    rerender(<RulesFilterSidebar viewMode="list" />);
+
+    expect(screen.queryByRole('radiogroup', { name: 'Empty data sources' })).not.toBeInTheDocument();
+  });
+
+  it('calls onHideEmptyDataSourcesChange when Hide is selected', async () => {
+    const onHideEmptyDataSourcesChange = jest.fn();
+    const { user } = render(
+      <RulesFilterSidebar
+        viewMode="grouped"
+        hideEmptyDataSources={false}
+        onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange}
+      />
+    );
+
+    const group = await screen.findByRole('radiogroup', { name: 'Empty data sources' });
+    await user.click(within(group).getByRole('radio', { name: 'Hide' }));
+
+    expect(onHideEmptyDataSourcesChange).toHaveBeenCalledWith(true);
+  });
+
+  it('calls onHideEmptyDataSourcesChange when Show is selected', async () => {
+    const onHideEmptyDataSourcesChange = jest.fn();
+    const { user } = render(
+      <RulesFilterSidebar
+        viewMode="grouped"
+        hideEmptyDataSources={true}
+        onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange}
+      />
+    );
+
+    const group = await screen.findByRole('radiogroup', { name: 'Empty data sources' });
+    await user.click(within(group).getByRole('radio', { name: 'Show' }));
+
+    expect(onHideEmptyDataSourcesChange).toHaveBeenCalledWith(false);
+  });
+});
+
 describe('RulesFilterSidebar — rule source filter', () => {
   it('offers the rule source filter while data source managed rules are still in this list', async () => {
     render(<RulesFilterSidebar />);
