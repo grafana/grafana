@@ -145,6 +145,10 @@ export function extractConfigFromQueryDynamic(
           ...field.config,
           ...newConfig,
         },
+        // Reset state after a potential config change
+        // This fixes things like display names not being updated in the state
+        // Despite being configured correctly.
+        state: {},
       });
     }
 
