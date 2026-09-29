@@ -1,31 +1,15 @@
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { type InsightOptions } from 'app/plugins/panel/text/panelcfg.gen';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { applyInsightToPanel } from './applyInsightToPanel';
-import { type InsightDataQuery, type InsightPanelConfig } from './types';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstanceList: jest.fn(),
-}));
-
-const mockGetDataSourceInstanceList = getDataSourceInstanceList as jest.MockedFunction<
-  typeof getDataSourceInstanceList
->;
-
-const mockTestDataSource = { uid: 'gdev-testdata', type: 'testdata', name: 'gdev-testdata' };
-
-const config: InsightPanelConfig = {
-  prompt: 'Show insights of this panel or panels',
-  context: {
-    scope: 'panels',
-    dashboardUid: 'test-uid',
-    dashboardTitle: 'Test dashboard',
-    panels: [{ panelId: 2, panelTitle: 'Request latency' }],
-  },
+const insight: InsightOptions = {
+  question: 'Why did errors spike?',
+  sourcePanelKeys: ['panel-2', 'section:["LLM usage"]'],
+  followUps: ['Which service drove it?'],
 };
 
 function buildPanelWithQueryRunner() {
@@ -39,8 +23,6 @@ describe('applyInsightToPanel', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetDataSourceInstanceList.mockResolvedValue([mockTestDataSource as never]);
-
     dashboard = new DashboardScene({
       title: 'Test dashboard',
       uid: 'test-uid',
@@ -52,62 +34,40 @@ describe('applyInsightToPanel', () => {
     jest.restoreAllMocks();
   });
 
-  function mockApplySetup(queryRunner: SceneQueryRunner) {
+  function mockApplySetup() {
     jest.spyOn(dashboard, 'changePanelPlugin').mockResolvedValue(undefined);
     jest.spyOn(dashboard, 'updatePanelTitle').mockImplementation(() => {});
-    jest.spyOn(queryRunner, 'runQueries').mockImplementation(() => {});
   }
 
-  it('turns the panel into a text panel rendering the insight field', async () => {
-    const { panel, queryRunner } = buildPanelWithQueryRunner();
-    mockApplySetup(queryRunner);
+  it('turns the panel into a text panel in insight mode carrying the configured options', async () => {
+    const { panel } = buildPanelWithQueryRunner();
+    mockApplySetup();
 
-    await applyInsightToPanel(dashboard, panel, config);
+    await applyInsightToPanel(dashboard, panel, insight);
 
     expect(dashboard.changePanelPlugin).toHaveBeenCalledWith(panel, 'text', {
-      mode: 'markdown',
-      renderMode: 'once',
-      content: '{{{data.[0].insight}}}',
+      mode: 'insight',
+      insight,
     });
     expect(dashboard.updatePanelTitle).toHaveBeenCalledWith(panel, 'Insights');
   });
 
-  it('sets a query carrying the prompt and panel context, and runs it', async () => {
-    const { panel, queryRunner } = buildPanelWithQueryRunner();
-    mockApplySetup(queryRunner);
+  it('removes the query runner, since insight mode reads its sources and not its own data', async () => {
+    const { panel } = buildPanelWithQueryRunner();
+    mockApplySetup();
 
-    await applyInsightToPanel(dashboard, panel, config);
+    await applyInsightToPanel(dashboard, panel, insight);
 
-    expect(queryRunner.state.datasource).toEqual({ type: 'testdata', uid: 'gdev-testdata' });
-
-    const [query] = queryRunner.state.queries as InsightDataQuery[];
-    expect(query.prompt).toBe(config.prompt);
-    expect(query.insightContext).toEqual(config.context);
-    expect(queryRunner.runQueries).toHaveBeenCalled();
+    expect(panel.state.$data).toBeUndefined();
   });
 
-  it('mocks the response with a testdata raw frame holding markdown', async () => {
-    const { panel, queryRunner } = buildPanelWithQueryRunner();
-    mockApplySetup(queryRunner);
+  it('applies cleanly to a panel that never had a query runner', async () => {
+    const panel = new VizPanel({ pluginId: '__unconfigured-panel' });
+    mockApplySetup();
 
-    await applyInsightToPanel(dashboard, panel, config);
+    await applyInsightToPanel(dashboard, panel, insight);
 
-    const [query] = queryRunner.state.queries as InsightDataQuery[];
-    expect(query.scenarioId).toBe('raw_frame');
-
-    const [frame] = JSON.parse(query.rawFrameContent);
-    expect(frame.fields[0].name).toBe('insight');
-    expect(frame.fields[0].values[0]).toContain('Request latency');
-  });
-
-  it('leaves the datasource unset when no testdata instance exists', async () => {
-    mockGetDataSourceInstanceList.mockResolvedValue([]);
-    const { panel, queryRunner } = buildPanelWithQueryRunner();
-    mockApplySetup(queryRunner);
-
-    await applyInsightToPanel(dashboard, panel, config);
-
-    expect(queryRunner.state.datasource).toBeUndefined();
-    expect(queryRunner.state.queries).toHaveLength(1);
+    expect(dashboard.changePanelPlugin).toHaveBeenCalled();
+    expect(panel.state.$data).toBeUndefined();
   });
 });

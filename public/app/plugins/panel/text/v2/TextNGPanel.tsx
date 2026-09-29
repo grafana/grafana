@@ -40,6 +40,7 @@ import { TextNGCodeView } from './TextNGCodeView';
 import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
+import { TextNGModePicker } from './editor/TextNGModePicker';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { InsightView } from './insight/lazy';
@@ -70,15 +71,28 @@ export function TextNGPanel(props: Props) {
   return <TextNGContentPanel {...props} />;
 }
 
-function TextNGInsightPanel({ options, fitContent }: Props) {
+function TextNGInsightPanel({ options, onOptionsChange, fitContent }: Props) {
   const { app } = usePanelContext();
   const dashboard = usePanelDashboard();
+  const isEditing = app === CoreApp.PanelEditor;
+  const content = options.content ?? defaultOptions.content ?? '';
 
   return (
     <InsightView
       dashboard={dashboard}
       options={options.insight ?? { question: '', sourcePanelKeys: [], followUps: [] }}
-      fitContent={fitContent && app !== CoreApp.PanelEditor}
+      fitContent={fitContent && !isEditing}
+      // Leaving insight mode keeps whatever content the panel already had, so switching
+      // back and forth does not lose a template.
+      modePicker={
+        isEditing ? (
+          <TextNGModePicker
+            mode={options.mode}
+            codeLanguage={options.code?.language}
+            onChange={(change) => onOptionsChange(applyEditorChange(options, { ...change, content }))}
+          />
+        ) : undefined
+      }
     />
   );
 }

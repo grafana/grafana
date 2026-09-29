@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
+import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Icon, ScrollContainer, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, ScrollContainer, Spinner, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { type DashboardSceneLike } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { InsightAnswerView } from 'app/features/dashboard-scene/sidebar/insights/InsightAnswerView';
 import { openInsightFollowUp } from 'app/features/dashboard-scene/sidebar/insights/followUp';
@@ -16,10 +17,16 @@ export interface InsightViewProps {
   dashboard: DashboardSceneLike | undefined;
   options: InsightOptions;
   fitContent?: boolean;
+  /**
+   * The mode picker, while editing. Insight mode has no editor of its own, so without this
+   * there is no way back to Markdown, HTML, or Code.
+   */
+  modePicker?: ReactNode;
 }
 
-export function InsightView({ dashboard, options, fitContent }: InsightViewProps) {
+export function InsightView({ dashboard, options, fitContent, modePicker }: InsightViewProps) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const insight = useInsight(dashboard, options);
   const { result, running, loadingSources, error, staleReasons, unavailable, sources } = insight;
 
@@ -29,32 +36,32 @@ export function InsightView({ dashboard, options, fitContent }: InsightViewProps
   // A refusal blocks asking; an unloaded source does not, since asking loads it first.
   const canAsk = Boolean(dashboard) && question !== '' && hasSources && !running && !unavailable;
 
-  if (question === '' || !hasSources) {
-    return (
-      <div className={styles.empty}>
-        <Stack direction="column" alignItems="center" gap={1}>
-          <Icon name="ai-sparkle" size="xl" className={styles.emptyIcon} />
-          <Text element="p" textAlignment="center" color="secondary">
-            {question === '' ? (
-              <Trans i18nKey="textng.insight.empty-question">
-                Set an insight question in the panel options to ask Assistant about your data.
-              </Trans>
-            ) : (
-              <Trans i18nKey="textng.insight.empty-sources">
-                Select the source panels Assistant may use in the panel options.
-              </Trans>
-            )}
-          </Text>
-        </Stack>
-      </div>
-    );
-  }
+  const isUnconfigured = question === '' || !hasSources;
 
   const askLabel = result
     ? t('textng.insight.ask-again', 'Ask Assistant again')
     : t('textng.insight.ask', 'Ask Assistant');
 
-  const body = (
+  const emptyBody = (
+    <div className={styles.empty}>
+      <Stack direction="column" alignItems="center" gap={1}>
+        <Icon name="ai-sparkle" size="xl" className={styles.emptyIcon} />
+        <Text element="p" textAlignment="center" color="secondary">
+          {question === '' ? (
+            <Trans i18nKey="textng.insight.empty-question">
+              Set an insight question in the panel options to ask Assistant about your data.
+            </Trans>
+          ) : (
+            <Trans i18nKey="textng.insight.empty-sources">
+              Select the source panels Assistant may use in the panel options.
+            </Trans>
+          )}
+        </Text>
+      </Stack>
+    </div>
+  );
+
+  const answerBody = (
     <Stack direction="column" gap={1.5}>
       <div className={styles.header}>
         <Stack direction="row" gap={1} alignItems="start">
@@ -136,15 +143,31 @@ export function InsightView({ dashboard, options, fitContent }: InsightViewProps
     </Stack>
   );
 
-  // Fit-content: normal flow, so the answer defines the panel height and the cell bounds it.
-  if (fitContent) {
-    return <div className={styles.fit}>{body}</div>;
-  }
+  const body = isUnconfigured ? emptyBody : answerBody;
 
-  return (
+  // Fit-content: normal flow, so the answer defines the panel height and the cell bounds it.
+  const content = fitContent ? (
+    <div className={styles.fit}>{body}</div>
+  ) : (
     <ScrollContainer minHeight="100%">
       <div className={styles.padded}>{body}</div>
     </ScrollContainer>
+  );
+
+  if (!modePicker) {
+    return content;
+  }
+
+  // Matches the content editor's layout: a toolbar row, then a body that takes the rest.
+  return (
+    <Stack direction="column" gap={1} height="100%">
+      <Stack gap={1} alignItems="center" minHeight={theme.components.height.md}>
+        {modePicker}
+      </Stack>
+      <Stack direction="column" grow={1} minHeight={0}>
+        {content}
+      </Stack>
+    </Stack>
   );
 }
 
