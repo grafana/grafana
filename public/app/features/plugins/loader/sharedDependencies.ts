@@ -9,8 +9,7 @@ import 'vendor/flot/jquery.flot.crosshair';
 import 'vendor/flot/jquery.flot.dashes';
 import 'vendor/flot/jquery.flot.gauge';
 
-import * as grafanaData from '@grafana/data';
-import * as grafanaRuntime from '@grafana/runtime';
+import { AppPlugin, DataSourceApi, DataSourcePlugin, PanelPlugin, dateMath } from '@grafana/data';
 import TableModel from 'app/core/TableModel';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
@@ -39,9 +38,9 @@ const jQueryFlotDeps = [
 export const sharedDependenciesMap = {
   '@emotion/css': () => import('@emotion/css'),
   '@emotion/react': () => import('@emotion/react'),
-  '@grafana/data': grafanaData,
+  '@grafana/data': () => import('@grafana/data'),
   '@grafana/data/unstable': () => import('@grafana/data/unstable'),
-  '@grafana/runtime': grafanaRuntime,
+  '@grafana/runtime': () => import('@grafana/runtime'),
   '@grafana/runtime/unstable': () => import('@grafana/runtime/unstable'),
   '@grafana/slate-react': () => import('slate-react'),
   // Load the complete namespace before plugin execution, without retaining plugin-only UI in the initial bundle.
@@ -49,10 +48,10 @@ export const sharedDependenciesMap = {
     import('@grafana/ui').then((module) => ({
       ...module,
       // These classes moved to @grafana/data in 6.5 but remain available to older plugins.
-      PanelPlugin: grafanaData.PanelPlugin,
-      DataSourcePlugin: grafanaData.DataSourcePlugin,
-      AppPlugin: grafanaData.AppPlugin,
-      DataSourceApi: grafanaData.DataSourceApi,
+      PanelPlugin,
+      DataSourcePlugin,
+      AppPlugin,
+      DataSourceApi,
     })),
   '@grafana/ui/unstable': () => import('@grafana/ui/unstable'),
   '@kusto/monaco-kusto': () => import('@kusto/monaco-kusto'),
@@ -75,7 +74,7 @@ export const sharedDependenciesMap = {
   'app/core/table_model': { default: TableModel, __useDefault: true },
   'app/core/time_series': { default: TimeSeries, __useDefault: true },
   'app/core/time_series2': { default: TimeSeries, __useDefault: true },
-  'app/core/utils/datemath': grafanaData.dateMath,
+  'app/core/utils/datemath': dateMath,
   'app/core/utils/flatten': flatten,
   'app/core/utils/kbn': {
     default: kbn,
