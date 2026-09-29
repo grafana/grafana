@@ -8927,15 +8927,17 @@
       "loading-labels": "Loading labels…",
       "loading-values": "Loading values…",
       "no-metrics": "No metrics found",
+      "no-metrics-status": "Query {{refId}}: no metrics found",
       "search-placeholder": "Search metrics",
       "show-metric-details": "Show details for {{name}}",
       "show-more": "Show more",
-      "show-more-metrics": "Show more metrics",
       "show-more-values": "Show more values",
       "show-values": "Show values for {{label}}",
       "sort-ascending": "Sort ascending",
       "sort-descending": "Sort descending",
-      "values-error": "Failed to load values"
+      "values-error": "Failed to load values",
+      "visible-count_one": "Query {{refId}}: showing {{visible}} of {{count}} metric",
+      "visible-count_other": "Query {{refId}}: showing {{visible}} of {{count}} metrics"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-/** How many rows of a long list reach the DOM at a time, and how many each "show more" adds. */
+/** How many rows of a long list reach the DOM at first, and how many each `showMore` adds. */
 const INITIAL_BATCH = 25;
 
 /**

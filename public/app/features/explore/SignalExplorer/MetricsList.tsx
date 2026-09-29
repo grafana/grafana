@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
-import { memo, useCallback, useId, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, FilterInput, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { FilterInput, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 
 import { MetricLabels } from './MetricLabels';
 import { MetricRow } from './MetricRow';
 import { blockId } from './blockId';
 import { dsKey, rangeKey } from './data/metricResourceClient';
-import { useMetricCatalog } from './data/useMetricCatalog';
+import { SEARCH_DEBOUNCE_MS, useMetricCatalog } from './data/useMetricCatalog';
+import { useLoadMoreSentinel } from './hooks/useLoadMoreSentinel';
 import { useVisibleBatch } from './hooks/useVisibleBatch';
 import {
   trackSignalExplorerMetricExpanded,
@@ -47,8 +48,9 @@ interface Props {
  * SignalCard.
  *
  * Only a batch of the list reaches the DOM at a time — a real catalog runs to tens of thousands of
- * names. Searching is the catalog hook's job, not this component's: the list being searched is the
- * whole datasource's catalog, which this component never holds.
+ * names — and the next batch is added as the end of the list scrolls into view. Searching is the
+ * catalog hook's job, not this component's: the list being searched is the whole datasource's
+ * catalog, which this component never holds.
  *
  * A row's chevron expands it to its label keys and a label key to its values. One metric and one label
  * at a time: every open row holds a request open, and both lists are unbounded. The row's name is a
@@ -170,8 +172,42 @@ export const MetricsList = memo(function MetricsList({
 
   // Paging resets on anything that swaps the catalog out for a different one — the search, but also
   // the datasource and the range. An offset into the old list means nothing in the new one.
-  const { visibleCount, showMore } = useVisibleBatch(`${dsKey(dsRef)}|${rangeKey(timeRange)}|${searchTerm}`);
+  const pagingKey = `${dsKey(dsRef)}|${rangeKey(timeRange)}|${searchTerm}`;
+  const { visibleCount, showMore } = useVisibleBatch(pagingKey);
   const visible = metrics.slice(0, visibleCount);
+  const setSentinel = useLoadMoreSentinel(showMore, visibleCount);
+
+  // The search box sits outside the scroll region, so a new list would otherwise open at the old
+  // offset: clamped near the bottom of the first batch, with the end in view loading another.
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (scrollerRef.current) {
+      scrollerRef.current.scrollTop = 0;
+    }
+  }, [pagingKey]);
+
+  // Rows arrive on scroll with nothing announcing them, so without this a screen reader user cannot
+  // tell a list that ends from one with more to load. Silent while loading, since the counts are not
+  // yet the answer, and on error, which announces itself. Named by query, because several cards can
+  // be open at once and a range change reloads them all together.
+  let statusText = '';
+  if (!loading && !error) {
+    statusText =
+      metrics.length === 0
+        ? t('explore.metrics-list.no-metrics-status', 'Query {{refId}}: no metrics found', { refId })
+        : t('explore.metrics-list.visible-count', '', {
+            refId,
+            visible: visible.length,
+            count: metrics.length,
+            defaultValue_one: 'Query {{refId}}: showing {{visible}} of {{count}} metric',
+            defaultValue_other: 'Query {{refId}}: showing {{visible}} of {{count}} metrics',
+          });
+  }
+
+  // Settled before it is announced: the count moves on every keystroke and every batch of a fill,
+  // and a live region speaks each change, queued behind the user's own typing echo.
+  const [announcedStatus, setAnnouncedStatus] = useState('');
+  useDebounce(() => setAnnouncedStatus(statusText), SEARCH_DEBOUNCE_MS, [statusText]);
 
   return (
     <div className={styles.wrapper}>
@@ -198,7 +234,7 @@ export const MetricsList = memo(function MetricsList({
           {t('explore.metrics-list.no-metrics', 'No metrics found')}
         </Text>
       )}
-      <ScrollContainer>
+      <ScrollContainer ref={scrollerRef}>
         {/* Only once there is a row to put in it: an empty list is still announced as a list. */}
         {visible.length > 0 && (
           <ul className={styles.list}>
@@ -231,20 +267,15 @@ export const MetricsList = memo(function MetricsList({
             })}
           </ul>
         )}
-        {/* Inside the scroll region on purpose: it belongs to the end of the list, not to the card. */}
+        {/* Inside the scroll region on purpose: it marks the end of the list, not of the card. */}
         {metrics.length > visible.length && (
-          <Button
-            className={styles.showMore}
-            size="sm"
-            variant="secondary"
-            fill="text"
-            aria-label={t('explore.metrics-list.show-more-metrics', 'Show more metrics')}
-            onClick={showMore}
-          >
-            {t('explore.metrics-list.show-more', 'Show more')}
-          </Button>
+          <div ref={setSentinel} className={styles.sentinel} data-testid="signal-explorer-load-more" />
         )}
       </ScrollContainer>
+      {/* Always mounted, because a live region inserted along with its text is often not announced. */}
+      <div className="sr-only" role="status">
+        {announcedStatus}
+      </div>
     </div>
   );
 });
@@ -266,9 +297,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
       padding: 0,
     }),
-    showMore: css({
-      label: 'metrics-list-show-more',
-      alignSelf: 'flex-start',
+    sentinel: css({
+      label: 'metrics-list-sentinel',
+      // A zero-area target reports unreliable intersection ratios.
+      height: 1,
+      flexShrink: 0,
     }),
   };
 };
