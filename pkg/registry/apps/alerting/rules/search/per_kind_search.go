@@ -179,7 +179,7 @@ func resultItems(resp *Result, fields []string, k perKind) []searchv0.ResultItem
 			Group: k.groupResource().Group, Resource: k.groupResource().Resource,
 			Kind: k.info.GroupVersionKind().Kind, Name: hit.Name,
 		}}
-		values := map[string]any{}
+		values := make(map[string]any, min(len(hit.Values), len(wanted)))
 		for name, value := range hit.Values {
 			if wanted[name] {
 				values[name] = value
