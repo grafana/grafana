@@ -1,7 +1,7 @@
 /** Column width and sizing configuration */
 export const COLUMN = {
   DEFAULT_WIDTH: 150,
-  EXPANDER_WIDTH: 50,
+  EXPANDER_WIDTH: 36,
   // This will need to eventually change to 36
   MIN_WIDTH: 50,
   // Upper bound for a content-aware auto-sized column before we grow it to fill the panel.
@@ -15,6 +15,7 @@ export const COLUMN = {
 /** Table layout and display constants */
 export const TABLE = {
   CELL_PADDING: 6,
+  FRAME_BORDER_WIDTH: 1,
   LINE_HEIGHT: 22,
   /**
    * The header label's own line box, which is shorter than a body row's `LINE_HEIGHT`. Kept here
@@ -44,6 +45,10 @@ export const TABLE = {
  */
 export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
 
+/** Block-axis space around a nested table. */
+export const NESTED_TABLE_VERTICAL_PADDING = TABLE.CELL_PADDING * 2;
+export const REFRESHED_NESTED_TABLE_VERTICAL_PADDING = TABLE.CELL_PADDING * 4;
+
 /**
  * Marker classes stamped onto the first and last columns once the final column list is assembled.
  * CSS can't find those columns on its own: `:first-child`/`:last-child` match the first and last
@@ -52,6 +57,8 @@ export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGH
  */
 export const FIRST_COLUMN_CLASS = 'table-ng-first-col';
 export const LAST_COLUMN_CLASS = 'table-ng-last-col';
+export const NESTED_LAST_ROW_CLASS = 'table-ng-row-nested-last';
+export const OVERFLOW_CELL_CLASS = 'table-ng-cell-overflow';
 
 // Marks a row that carries a zebra stripe, and one that is a nested table's container rather than
 // a row of data. Both are applied through `rowClass` - see `makeStripedRowClass`.

@@ -41,6 +41,10 @@ type MockResourceIndex struct {
 	buildInfo IndexBuildInfo
 	docCount  int64
 
+	// What the index reports holding, for reconciliation tests.
+	documentRefs    map[schema.GroupResource][]DocumentRef
+	documentRefsErr error
+
 	// Items passed to BulkIndex, guarded by updateIndexMu.
 	bulkItems []*BulkIndexItem
 
@@ -88,6 +92,26 @@ func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStat
 
 func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
 	return m.docCount, nil
+}
+
+// documentRefs is what ListDocumentRefs answers with, by resource type.
+func (m *MockResourceIndex) ListDocumentRefs(_ context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error] {
+	return func(yield func(DocumentRef, error) bool) {
+		m.updateIndexMu.Lock()
+		refs := slices.Clone(m.documentRefs[gr])
+		err := m.documentRefsErr
+		m.updateIndexMu.Unlock()
+
+		if err != nil {
+			yield(DocumentRef{}, err)
+			return
+		}
+		for _, ref := range refs {
+			if !yield(ref, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -207,9 +231,24 @@ func (m *mockStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr 
 	return time.Time{}, nil
 }
 
+// featuresForTestIndex describes an index that does or does not keep deleted
+// documents. Only a new index keeps them, so the false case stands in for an index
+// built before that was the case.
+func featuresForTestIndex(keepsDeletedDocuments bool) []IndexFeature {
+	features := CurrentIndexFeatures()
+	if keepsDeletedDocuments {
+		return features
+	}
+	return slices.DeleteFunc(features, func(f IndexFeature) bool {
+		return f == IndexFeatureHoldsDeletedDocuments
+	})
+}
+
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
+	// What the previous run left recorded as open, returned by LoadOpenIndexStats.
+	openIndexStats []ResourceStats
 
 	// Recorded on every index this backend builds, standing in for the decision the
 	// real backend makes from its options at creation.
@@ -236,7 +275,7 @@ type buildIndexCall struct {
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
-	return nil, nil
+	return m.openIndexStats, nil
 }
 
 // TestStartupIndexStatsCountLimit checks the cap the startup prebuild passes to
@@ -281,7 +320,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
-	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(m.keepsDeletedDocuments)}}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
 	m.mu.Lock()
 	m.lastUpdater = updater
 	m.mu.Unlock()
@@ -684,22 +723,25 @@ func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
 // Asserts both halves, so requiring the feature — which rebuilds every existing
 // index — cannot happen by accident.
 func TestStoredResourceVersionIsRecordedButNotRequired(t *testing.T) {
-	require.Contains(t, IndexFeaturesForNewIndex(false), IndexFeatureStoredResourceVersion)
+	require.Contains(t, CurrentIndexFeatures(), IndexFeatureStoredResourceVersion)
 	for _, postRankAuthz := range []bool{false, true} {
 		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureStoredResourceVersion)
 	}
 }
 
-// One index keeping deleted documents must not change what every other index
-// records.
-func TestIndexFeaturesForNewIndexLeavesCurrentAlone(t *testing.T) {
-	before := slices.Clone(currentIndexFeatures)
+func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
+	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
+	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
+	for _, postRankAuthz := range []bool{false, true} {
+		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureSortableTrashResourceVersion)
+	}
+}
 
-	require.Contains(t, IndexFeaturesForNewIndex(true), IndexFeatureHoldsDeletedDocuments)
-	require.NotContains(t, IndexFeaturesForNewIndex(false), IndexFeatureHoldsDeletedDocuments)
-
-	require.Equal(t, before, currentIndexFeatures)
-	require.NotContains(t, CurrentIndexFeatures(), IndexFeatureHoldsDeletedDocuments)
+// Every index built now keeps deleted documents, and records it, so a reader can
+// tell it from an older index that keeps none.
+func TestCurrentIndexFeaturesHoldDeletedDocuments(t *testing.T) {
+	require.Contains(t, CurrentIndexFeatures(), IndexFeatureHoldsDeletedDocuments)
+	require.Contains(t, IndexReaderRequirements(), IndexFeatureHoldsDeletedDocuments)
 }
 
 // Anything this binary builds with, it must also know how to read, or it would
@@ -713,16 +755,7 @@ func TestKnownIndexFeaturesCoverCurrent(t *testing.T) {
 // Declaring a requirement this binary cannot read would reject every index it
 // builds.
 func TestReaderRequiredFeaturesAreKnown(t *testing.T) {
-	for _, keeps := range []bool{true, false} {
-		require.Empty(t, UnknownIndexRequirements(IndexReaderRequirements(keeps)))
-	}
-}
-
-// The requirement follows what the index holds. An index keeping deleted documents
-// needs a reader that filters them; one that keeps none is safe for any reader.
-func TestIndexReaderRequirementsFollowContents(t *testing.T) {
-	require.Equal(t, []IndexFeature{IndexFeatureHoldsDeletedDocuments}, IndexReaderRequirements(true))
-	require.Empty(t, IndexReaderRequirements(false))
+	require.Empty(t, UnknownIndexRequirements(IndexReaderRequirements()))
 }
 
 func TestUnknownIndexRequirements(t *testing.T) {
@@ -742,9 +775,18 @@ func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
 
 	// An index built before the stored facet mapping is reused with the option
 	// off, and rebuilt once it is on.
-	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}
+	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
 	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
 	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
+}
+
+// An index missing the trash mappings must be rebuilt rather than serve an empty
+// trash, whatever the facet option is set to.
+func TestTrashIndexFeaturesAreRequired(t *testing.T) {
+	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureStoredFacets}}
+	for _, postRankAuthz := range []bool{false, true} {
+		require.Equal(t, TrashIndexFeatures(), MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
+	}
 }
 
 func TestShouldRebuildIndex(t *testing.T) {
@@ -1976,7 +2018,7 @@ func TestIndexTrash(t *testing.T) {
 	require.NoError(t, err)
 
 	// The index records the decision, so a test driving indexTrash states it.
-	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
 	require.NoError(t, server.indexTrash(t.Context(), key, index, log.NewNopLogger()))
 
 	items := index.indexedItems()
@@ -2053,7 +2095,7 @@ func TestUpdaterMarksDeletedDocuments(t *testing.T) {
 	search.mu.Unlock()
 	require.NotNil(t, updater)
 
-	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
 	_, docs, err := updater(t.Context(), index, 1)
 	require.NoError(t, err)
 	require.Equal(t, 2, docs)
@@ -2070,10 +2112,9 @@ func TestUpdaterMarksDeletedDocuments(t *testing.T) {
 	require.Equal(t, "broken", items[1].Key.Name)
 }
 
-// The option is off by default, and with it off a delete has to behave exactly as
-// it did before deleted objects were kept: the document is removed and no trash is
-// listed.
-func TestDeletedDocumentsAreRemovedWhenTheOptionIsOff(t *testing.T) {
+// On an index built before deleted documents were kept, a delete has to behave as
+// it did then: the document is removed and no trash is listed.
+func TestDeletedDocumentsAreRemovedOnAnOlderIndex(t *testing.T) {
 	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
 	storage := &trashStorageBackend{
 		trash: []trashEntry{{name: "gone-1", rv: 10, value: testObjectJSON("gone-1", "Gone one")}},
@@ -2100,7 +2141,7 @@ func TestDeletedDocumentsAreRemovedWhenTheOptionIsOff(t *testing.T) {
 	updater := search.lastUpdater
 	search.mu.Unlock()
 
-	index := &MockResourceIndex{}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(false)}}
 	_, _, err = updater(t.Context(), index, 1)
 	require.NoError(t, err)
 
@@ -2257,7 +2298,7 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 
 	// An index reporting no features: what a binary from before the mapping built.
 	older := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{}}}
-	require.False(t, server.keepsDeletedDocuments(older, log.NewNopLogger()))
+	require.False(t, server.keepsDeletedDocuments(key, older, log.NewNopLogger()))
 
 	require.NoError(t, server.indexTrash(t.Context(), key, older, log.NewNopLogger()))
 	require.Empty(t, older.indexedItems(), "trash listing should be skipped entirely")
@@ -2281,7 +2322,7 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 	// order. Treated the same as no markers at all: wait for the rebuild.
 	t.Run("an index with the markers but not the trash fields", func(t *testing.T) {
 		index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}}
-		require.False(t, server.keepsDeletedDocuments(index, log.NewNopLogger()))
+		require.False(t, server.keepsDeletedDocuments(key, index, log.NewNopLogger()))
 	})
 }
 
@@ -2308,7 +2349,7 @@ type snapshotSearchBackend struct {
 }
 
 func (m *snapshotSearchBackend) BuildIndex(_ context.Context, key NamespacedResource, size int64, _ string, _ BuildFn, updater UpdateFn, _ bool, _ time.Time, _ time.Duration) (ResourceIndex, error) {
-	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(m.keepsDeletedDocuments)}}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -2386,7 +2427,7 @@ func TestBuildResolvesDocumentBuilderOnFirstUse(t *testing.T) {
 		require.NotNil(t, updater)
 
 		for i := range 3 {
-			index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
+			index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
 			_, docs, err := updater(t.Context(), index, int64(11+i))
 			require.NoError(t, err)
 			require.Equal(t, 1, docs)

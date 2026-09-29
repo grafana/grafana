@@ -2,58 +2,38 @@ package search
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	prom_model "github.com/prometheus/common/model"
-	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// legacyClient implements resourcepb.ResourceIndexClient over the provisioning
-// AlertRuleService (the ngalert SQL store). It is the legacy half of the
-// dual-writer-aware search router; selector-expressible filters are pushed to
-// the service and the rest (free-text title, label matchers, source datasource)
-// are applied in memory, mirroring the unified backend's result shape.
+var _ Backend = (*legacyClient)(nil)
+
 type legacyClient struct {
-	resourcepb.ResourceIndexClient
 	service provisioning.AlertRuleService
 	logger  log.Logger
 }
 
 func NewLegacyClient(service provisioning.AlertRuleService) *legacyClient {
-	logger := log.New("alerting.rules.search.legacy")
-
-	// Surface a degraded result table at startup. Both conditions are schema
-	// bugs the tests should have caught, so report them where an operator can
-	// see them rather than letting hits quietly lose fields.
-	if len(results.skipped) > 0 {
-		logger.Warn("rule search result columns dropped: no declared search field", "columns", results.skipped)
-	}
-	if results.err != nil {
-		logger.Error("rule search result table could not be built; legacy search will fail", "error", results.err)
-	}
-	return &legacyClient{service: service, logger: logger}
+	return &legacyClient{service: service, logger: log.New("alerting.rules.search.legacy")}
 }
 
-func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+func (c *legacyClient) Search(ctx context.Context, req *Query) (*Result, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	f := extractFilters(req)
-	perKindSearch := isPerKindSearch(ctx)
-	if perKindSearch && f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
-		return emptyResponse(), nil
+	if f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
+		return &Result{Hits: []Hit{}, TotalHitsExact: true}, nil
 	}
 	rules, _, _, err := c.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:                  ruleTypeForRequest(req),
@@ -70,6 +50,8 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		TargetDatasourceUIDFilter: stringFilter(f.targetDatasourceUID),
 		DatasourceUIDs:            f.datasourceUIDs,
 		SearchTitle:               f.title,
+		StateFilter:               listStringFilter(f.states),
+		HealthFilter:              listStringFilter(f.healths),
 	})
 	if err != nil {
 		return nil, err
@@ -77,55 +59,38 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	filtered := rules[:0]
 	for _, r := range rules {
-		if perKindSearch && !matchTitle(r, f.title) {
+		if !matchTitle(r, f.title) {
 			continue
 		}
 		if !matchLabels(r, f.labelMatchers) {
 			continue
 		}
-		if perKindSearch && !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
+		if !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
 			continue
 		}
 		filtered = append(filtered, r)
 	}
-	if perKindSearch {
-		perKindSortRules(filtered, f.sortField, f.sortDesc)
-	} else {
-		sortRules(filtered, f.sortField, f.sortDesc)
-	}
+	perKindSortRules(filtered, f.sortField, f.sortDesc)
 
 	total := len(filtered)
 	page := applyOffset(filtered, req.Offset, req.Limit)
 
-	table := &resourcepb.ResourceTable{Columns: resultColumnDefinitions()}
+	hits := make([]Hit, 0, len(page))
 	for _, r := range page {
-		cells, err := ruleCells(r)
-		if err != nil {
-			return nil, err
+		values := ruleColumnValues(r)
+		c.addStatusValues(r, values)
+		// Empty strings were omitted by the old table decoder; retain that API shape.
+		for name, value := range values {
+			if text, ok := value.(string); ok && text == "" {
+				delete(values, name)
+			}
 		}
-		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{
-			Key:   ruleKey(req.Options.GetKey().GetNamespace(), r),
-			Cells: cells,
-		})
+		hits = append(hits, Hit{Name: r.UID, Values: values})
 	}
-	// ListAlertRules restricts the query to folders the caller can read, so total
-	// counts authorized rules exactly rather than bounding them from above.
-	return &resourcepb.ResourceSearchResponse{Results: table, TotalHits: int64(total), TotalHitsExact: true}, nil
+	// The provisioning service counts only rules in folders the caller can read.
+	return &Result{Hits: hits, TotalHits: int64(total), TotalHitsExact: true}, nil
 }
 
-func ruleKey(namespace string, r *ngmodels.AlertRule) *resourcepb.ResourceKey {
-	res := alertrule.ResourceInfo
-	if r.Type() == ngmodels.RuleTypeRecording {
-		res = recordingrule.ResourceInfo
-	}
-	gr := res.GroupResource()
-	return &resourcepb.ResourceKey{Namespace: namespace, Group: gr.Group, Resource: gr.Resource, Name: r.UID}
-}
-
-// ruleColumnValues maps a rule onto the declared search columns, keyed by
-// column name. Values are in their native Go type — the column's encoder turns
-// them into cells — so this must not pre-format them as strings: a "42" written
-// into the int64 panelID column would be read back as a big-endian int64.
 func ruleColumnValues(r *ngmodels.AlertRule) map[string]any {
 	receiver, notificationType, routingTree := notificationFields(r.NotificationSettings)
 
@@ -167,30 +132,6 @@ func ruleColumnValues(r *ngmodels.AlertRule) map[string]any {
 	return vals
 }
 
-// ruleCells encodes a rule into the result table's cells. Positions come from
-// the column index rather than the literal order of this function, so adding a
-// column cannot silently misalign the rest of the row.
-func ruleCells(r *ngmodels.AlertRule) ([][]byte, error) {
-	if results.err != nil {
-		return nil, results.err
-	}
-	cells := make([][]byte, len(results.defs))
-	for name, v := range ruleColumnValues(r) {
-		i, ok := results.index[name]
-		if !ok {
-			// skip undefined columns instead of failing
-			// This should never happnen in practice
-			continue
-		}
-		cell, err := results.encoders[i](v)
-		if err != nil {
-			return nil, fmt.Errorf("encoding rule search column %q: %w", name, err)
-		}
-		cells[i] = cell
-	}
-	return cells, nil
-}
-
 func promDuration(d time.Duration) string {
 	return prom_model.Duration(d).String()
 }
@@ -224,13 +165,8 @@ func ruleType(r *ngmodels.AlertRule) string {
 	return "alertrule"
 }
 
-func ruleTypeForRequest(req *resourcepb.ResourceSearchRequest) ngmodels.RuleTypeFilter {
-	resourceName := req.Options.GetKey().GetResource()
-	// A federated request (cross-kind /search) carries the other kind too.
-	if len(req.Federated) > 0 {
-		return ngmodels.RuleTypeFilterAll
-	}
-	if resourceName == recordingrule.ResourceInfo.GroupResource().Resource {
+func ruleTypeForRequest(req *Query) ngmodels.RuleTypeFilter {
+	if req.Resource.Resource == recordingrule.ResourceInfo.GroupResource().Resource {
 		return ngmodels.RuleTypeFilterRecording
 	}
 	return ngmodels.RuleTypeFilterAlerting

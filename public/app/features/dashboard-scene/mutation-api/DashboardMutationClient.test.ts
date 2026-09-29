@@ -132,5 +132,33 @@ describe('DashboardMutationClient', () => {
       expect(close.success).toBe(true);
       expect(scene.state.planning).toBeUndefined();
     });
+
+    it('applies planning guards to lowercase lazy commands and allows editing after planning ends', async () => {
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      const scene = activeScene();
+      const client = new DashboardMutationClient(scene);
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      expect(scene.isPlanning()).toBe(true);
+
+      const refused = await client.execute({ type: 'create_notebook_spec', payload: {} });
+      expect(refused.success).toBe(false);
+      expect(refused.error).toContain('read-only');
+
+      const info = await client.execute({ type: 'get_dashboard_info', payload: {} });
+      expect(info.success).toBe(true);
+      expect(info.data).toMatchObject({ title: 'Plan', uid: '' });
+
+      const rerender = await client.execute({ type: 'render_plan', payload: { ...plan, title: 'Replacement' } });
+      expect(rerender.success).toBe(true);
+      expect(scene.state.title).toBe('Replacement');
+
+      const close = await client.execute({ type: 'end_planning', payload: { planId: 'plan-1' } });
+      expect(close.success).toBe(true);
+      expect(scene.state.planning).toBeUndefined();
+
+      const edit = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} });
+      expect(edit.success).toBe(true);
+      expect(scene.state.isEditing).toBe(true);
+    });
   });
 });

@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/kv"
@@ -54,6 +55,7 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 
 	// -- Shared Components
+	watchExpiry   resource.WatchExpiry
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
@@ -89,6 +91,11 @@ type service struct {
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
 // ServiceOption allows customizing service behavior
 type ServiceOption func(*service)
+
+// WithWatchExpiry shares notification invalidation with the resource server.
+func WithWatchExpiry(expiry resource.WatchExpiry) ServiceOption {
+	return func(s *service) { s.watchExpiry = expiry }
+}
 
 // WithAuthenticator sets a custom authenticator for the service
 // This is primarily intended for testing scenarios
@@ -428,6 +435,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	}
 
 	serverOptions := ServerOptions{
+		WatchExpiry:    s.watchExpiry,
 		Backend:        s.backend,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,
@@ -596,9 +604,13 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 		handler = &searchServerWithAuth{SearchServer: server, ServiceWithAuth: sa}
 	}
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceIndexServer(srv, handler)
-	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
-	resourcepb.RegisterDiagnosticsServer(srv, handler)
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+	} {
+		srv.RegisterService(s.withErrorResultConversion(desc), handler)
+	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 	return nil
 }
@@ -629,15 +641,22 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	// Storage services. ResourceStore is wrapped with the request-duration interceptor
 	// so we get group/resource-labeled metrics for Read/Create/Update/Delete/List.
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
-	srv.RegisterService(grpchan.InterceptServer(&resourcepb.ResourceStore_ServiceDesc, metricsInt, nil), handler)
-	resourcepb.RegisterResourceStatsServer(srv, handler)
-	resourcepb.RegisterBulkStoreServer(srv, handler)
-	resourcepb.RegisterBlobStoreServer(srv, handler)
-	resourcepb.RegisterDiagnosticsServer(srv, handler)
-	resourcepb.RegisterQuotasServer(srv, handler)
-	// Search services
-	resourcepb.RegisterResourceIndexServer(srv, handler)
-	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceStore_ServiceDesc,
+		&resourcepb.ResourceStats_ServiceDesc,
+		&resourcepb.BulkStore_ServiceDesc,
+		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+		&resourcepb.Quotas_ServiceDesc,
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+	} {
+		wrapped := s.withErrorResultConversion(desc)
+		if desc == &resourcepb.ResourceStore_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+		}
+		srv.RegisterService(wrapped, handler)
+	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 
 	// VectorStore write service: storage-server surface only (standalone
@@ -649,6 +668,13 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		}
 		resourcepb.RegisterVectorStoreServer(srv, vsHandler)
 	}
+}
+
+func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
+	if s.cfg != nil && s.cfg.UnifiedStorageGRPCErrorResultToStatus {
+		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), nil)
+	}
+	return desc
 }
 
 // BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV

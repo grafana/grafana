@@ -40,7 +40,7 @@ func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user
 		}
 	}
 	return backend.PluginContext{
-		OrgID:                      orgID,
+		OrgID:                      orgID, //nolint:staticcheck // Preserve the legacy plugin context used by expression tests.
 		PluginID:                   pluginID,
 		User:                       u,
 		AppInstanceSettings:        f.result[pluginID],

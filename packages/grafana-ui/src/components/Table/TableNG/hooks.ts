@@ -37,6 +37,8 @@ import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
   getPaginationChromeHeight,
+  NESTED_TABLE_VERTICAL_PADDING,
+  REFRESHED_NESTED_TABLE_VERTICAL_PADDING,
   SCROLL_SHADOW_THRESHOLD,
   TABLE,
 } from './constants';
@@ -186,6 +188,7 @@ export function useNotifyDisplayedRowIndices(
 }
 
 export interface PaginatedRowsOptions {
+  tableRefreshEnabled?: boolean;
   height: number;
   width: number;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
@@ -224,6 +227,7 @@ export function usePaginatedRows(
     hasNestedFrames,
     pageSize,
     noPanelPadding,
+    tableRefreshEnabled = false,
   }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
@@ -280,7 +284,9 @@ export function usePaginatedRows(
       // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
       rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
-      const rowAreaHeight = height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding);
+      const frameHeight = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+      const rowAreaHeight =
+        height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding) - frameHeight;
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
       // ensure at least one row per page is displayed
       rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
@@ -300,7 +306,18 @@ export function usePaginatedRows(
       pageRangeStart,
       pageRangeEnd,
     };
-  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page, pageSize, noPanelPadding]);
+  }, [
+    height,
+    headerHeight,
+    footerHeight,
+    avgRowHeight,
+    enabled,
+    numRows,
+    page,
+    pageSize,
+    noPanelPadding,
+    tableRefreshEnabled,
+  ]);
 
   // safeguard against page overflow on panel resize or other factors
   useLayoutEffect(() => {
@@ -402,6 +419,7 @@ export const useNestedRows = (
 };
 
 interface UseHeaderHeightOptions {
+  lastColumnExtraPadding?: number;
   enabled: boolean;
   fields: Field[];
   columnWidths: number[];
@@ -427,6 +445,7 @@ export function useHeaderHeight({
   noPanelPadding = false,
   tableRefreshEnabled = false,
   filter,
+  lastColumnExtraPadding = 0,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
   const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
@@ -440,6 +459,9 @@ export function useHeaderHeight({
 
         const field = fields[idx];
         let width = c - CELL_HORIZONTAL_CHROME;
+        if (idx === fields.length - 1) {
+          width -= lastColumnExtraPadding;
+        }
         if (noPanelPadding && idx === 0) {
           width -= FIRST_COLUMN_EXTRA_PADDING;
         }
@@ -450,7 +472,7 @@ export function useHeaderHeight({
         });
         return Math.floor(width);
       }),
-    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshEnabled, filteredKeys]
+    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshEnabled, filteredKeys, lastColumnExtraPadding]
   );
 
   const headerHeight = useMemo(() => {
@@ -473,6 +495,7 @@ export function useHeaderHeight({
 }
 
 interface UseRowHeightOptions {
+  lastColumnExtraPadding?: number;
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
@@ -486,10 +509,17 @@ interface UseRowHeightOptions {
   nestedFields: Field[];
   nestedColWidths: number[];
   nestedFooterHeight?: number;
+  tableRefreshEnabled?: boolean;
 }
 
-const getTrueColWidths = (cw: number[], noPanelPadding = false): number[] =>
-  cw.map((c, i) => c - CELL_HORIZONTAL_CHROME - (noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0));
+const getTrueColWidths = (cw: number[], noPanelPadding = false, lastColumnExtraPadding = 0): number[] =>
+  cw.map(
+    (c, i) =>
+      c -
+      CELL_HORIZONTAL_CHROME -
+      (noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0) -
+      (i === cw.length - 1 ? lastColumnExtraPadding : 0)
+  );
 
 // TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
 export function useRowHeight({
@@ -506,6 +536,8 @@ export function useRowHeight({
   nestedColWidths,
   visibleNestedRowCounts,
   nestedFooterHeight = 0,
+  lastColumnExtraPadding = 0,
+  tableRefreshEnabled = false,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const theme = useTheme2();
   const nestedMeasurers = useMemo(
@@ -570,7 +602,7 @@ export function useRowHeight({
       return () => defaultHeight;
     }
 
-    const trueColWidths = getTrueColWidths(columnWidths);
+    const trueColWidths = getTrueColWidths(columnWidths, false, lastColumnExtraPadding);
     const cache: Array<number | undefined> = Array(fields[0].values.length);
     return (row: TableRow) => {
       let result = cache[row.__index];
@@ -579,7 +611,7 @@ export function useRowHeight({
       }
       return result;
     };
-  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols]);
+  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols, lastColumnExtraPadding]);
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
@@ -611,7 +643,12 @@ export function useRowHeight({
           0
         );
         const scrollbarHeight = nestedHasOverflow ? TABLE.SCROLLBAR_AFFORDANCE : 0;
-        return nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + TABLE.CELL_PADDING * 2 + scrollbarHeight;
+        const nestedTableVerticalPadding = tableRefreshEnabled
+          ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING
+          : NESTED_TABLE_VERTICAL_PADDING;
+        return (
+          nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + nestedTableVerticalPadding + scrollbarHeight
+        );
       }
 
       return row.__parentIndex != null ? getNestedRowHeightWithCache(row) : getRowHeightWithCache(row);
@@ -627,6 +664,7 @@ export function useRowHeight({
     nestedHasOverflow,
     nestedRows,
     nestedData,
+    tableRefreshEnabled,
     visibleNestedRowCounts,
   ]);
 

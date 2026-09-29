@@ -2,9 +2,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
 import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@grafana/data';
-import { type DataGridHandle } from '@grafana/react-data-grid';
+import { type DataGridHandle, Row, Cell } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
+import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS } from './constants';
 
 // jsdom does not compute pseudo-element styles; read the matching Emotion rules in cascade order.
 function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', property: string) {
@@ -14,8 +15,7 @@ function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', prop
       if (
         rule instanceof CSSStyleRule &&
         rule.selectorText.split(',').some((selector) => {
-          const suffix = `::${edge}`;
-          return selector.trim().endsWith(suffix) && element?.matches(selector.trim().slice(0, -suffix.length));
+          return Array.from(element?.classList ?? []).some((className) => selector.trim() === `.${className}::${edge}`);
         })
       ) {
         value = rule.style.getPropertyValue(property) || value;
@@ -40,6 +40,8 @@ function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridPr
     sortColumns: [],
     setSortColumns: jest.fn(),
     rowHeight: 36,
+    getRowHeight: () => 36,
+    height: 100,
     hasFooter: false,
     footerHeight: 0,
     noHeader: false,
@@ -77,6 +79,16 @@ function readTableSurfaces() {
   };
 }
 
+function getGridFrameOverlayStyleRule(role: 'grid' | 'treegrid' = 'grid') {
+  const frameClasses = Array.from(screen.getByRole(role).parentElement!.parentElement!.classList);
+  return Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .find(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule && frameClasses.some((className) => rule.selectorText === `.${className}::after`)
+    );
+}
+
 describe('TableDataGrid', () => {
   let origResizeObserver = global.ResizeObserver;
   let resizeObservers: Array<{
@@ -104,22 +116,195 @@ describe('TableDataGrid', () => {
   });
 
   describe('table.refresh', () => {
-    it('rounds the grid itself so a row scrolled under the header cannot show through its corners', () => {
-      // The header cells round their own top corners, which leaves the area outside the radius
-      // transparent. The grid is the scroll container, so rounding it is what clips the rows it
-      // scrolls out of that corner.
+    it('clips the grid inside the rounded frame', () => {
       const radius = createTheme().shape.radius.default;
       const { unmount } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
-      const refreshed = window.getComputedStyle(screen.getByRole('grid'));
-      expect(refreshed.getPropertyValue('border-start-start-radius')).toBe(radius);
-      expect(refreshed.getPropertyValue('border-start-end-radius')).toBe(radius);
+      const refreshedFrame = window.getComputedStyle(screen.getByRole('grid').parentElement!.parentElement!);
+      expect(refreshedFrame.getPropertyValue('border-start-start-radius')).toBe(radius);
+      expect(refreshedFrame.getPropertyValue('border-end-start-radius')).toBe(radius);
+      expect(refreshedFrame.overflow).toBe('hidden');
 
       unmount();
 
-      // the classic header shares the rows' background, so the table stays square
+      // Classic tables keep their original unframed geometry.
       render(<TableDataGrid {...makeProps()} />);
-      const classic = window.getComputedStyle(screen.getByRole('grid'));
-      expect(classic.getPropertyValue('border-start-start-radius')).toBe('');
+      const classicFrame = window.getComputedStyle(screen.getByRole('grid').parentElement!.parentElement!);
+      expect(classicFrame.getPropertyValue('border-start-start-radius')).toBe('');
+      expect(classicFrame.getPropertyValue('border-end-start-radius')).toBe('');
+      expect(classicFrame.overflow).toBe('');
+    });
+
+    it.each([
+      {
+        tableRefreshEnabled: true,
+        hasFooter: false,
+        noPanelPadding: false,
+        role: 'grid' as const,
+        height: 110,
+        omitLastBorder: true,
+      },
+      {
+        tableRefreshEnabled: false,
+        hasFooter: false,
+        noPanelPadding: false,
+        role: 'grid' as const,
+        omitLastBorder: false,
+      },
+      {
+        tableRefreshEnabled: false,
+        hasFooter: true,
+        noPanelPadding: false,
+        role: 'grid' as const,
+        omitLastBorder: false,
+      },
+      {
+        tableRefreshEnabled: true,
+        hasFooter: false,
+        noPanelPadding: false,
+        role: 'grid' as const,
+        height: 111,
+        omitLastBorder: false,
+      },
+      {
+        tableRefreshEnabled: false,
+        hasFooter: false,
+        noPanelPadding: true,
+        role: 'grid' as const,
+        omitLastBorder: false,
+      },
+      {
+        tableRefreshEnabled: true,
+        hasFooter: false,
+        noPanelPadding: false,
+        role: 'treegrid' as const,
+        omitLastBorder: true,
+      },
+      {
+        tableRefreshEnabled: true,
+        hasFooter: false,
+        noPanelPadding: false,
+        role: 'treegrid' as const,
+        height: 111,
+        omitLastBorder: false,
+      },
+    ])(
+      'sets the final body border with table.refresh=$tableRefreshEnabled, footer=$hasFooter, noPanelPadding=$noPanelPadding, role=$role',
+      ({ tableRefreshEnabled, hasFooter, noPanelPadding, role, height, omitLastBorder }) => {
+        const theme = createTheme();
+        const { container } = render(
+          <TableDataGrid
+            {...makeProps({
+              tableRefreshEnabled,
+              hasFooter,
+              noPanelPadding,
+              role,
+              height: height ?? 100,
+              enableVirtualization: false,
+              columns: [
+                {
+                  key: 'value',
+                  name: 'Value',
+                  renderSummaryCell: () => 'Total',
+                },
+              ],
+              rows: [
+                { __index: 12, __depth: 0, value: 'First' },
+                { __index: 3, __depth: 0, value: 'Last' },
+              ],
+              rowClass: () => 'custom-row',
+              renderers: {
+                renderRow: (key, props) => <Row key={key} {...props} />,
+                renderCell: (key, props) => <Cell key={key} {...props} />,
+              },
+            })}
+          />
+        );
+        const rows = container.querySelectorAll('.rdg-row:not(.rdg-summary-row)');
+        expect(rows).toHaveLength(2);
+        expect(rows[0]).toHaveClass('custom-row');
+        expect(rows[1]).toHaveClass('custom-row');
+        const firstCell = screen.getByRole('gridcell', { name: 'First' });
+        const lastCell = screen.getByRole('gridcell', { name: 'Last' });
+        expect(window.getComputedStyle(firstCell).borderBlockEnd).not.toBe('none');
+        expect(window.getComputedStyle(lastCell).borderBlockEnd === 'none').toBe(omitLastBorder);
+        if (hasFooter) {
+          expect(
+            window.getComputedStyle(screen.getByRole('gridcell', { name: 'Total' })).borderBlockEnd === 'none'
+          ).toBe(tableRefreshEnabled);
+        }
+        if (tableRefreshEnabled && !noPanelPadding) {
+          const frameRule = getGridFrameOverlayStyleRule(role);
+          expect(frameRule?.style.getPropertyValue('border')).toBe(`1px solid ${theme.components.table.border}`);
+          expect(frameRule?.style.getPropertyValue('inset')).toBe('0');
+          expect(frameRule?.style.getPropertyValue('border-start-start-radius')).toBe(theme.shape.radius.default);
+          expect(frameRule?.style.getPropertyValue('border-end-start-radius')).toBe(theme.shape.radius.default);
+          expect(frameRule?.style.getPropertyValue('border-end-end-radius')).toBe(theme.shape.radius.default);
+        } else {
+          expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
+        }
+      }
+    );
+
+    it('keeps selected first and last column edges visible inside the frame', () => {
+      render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+
+      const gridClasses = Array.from(screen.getByRole('grid').classList);
+      const edgeRules = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter(
+          (rule): rule is CSSStyleRule =>
+            rule instanceof CSSStyleRule &&
+            gridClasses.some((className) => rule.selectorText.startsWith(`.${className}`)) &&
+            rule.selectorText.includes('[aria-selected="true"]:focus-within') &&
+            [FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS].some((className) => rule.selectorText.includes(`.${className}`))
+        );
+
+      expect(edgeRules).toHaveLength(2);
+      expect(edgeRules.map((rule) => rule.style.getPropertyValue('background-color'))).toEqual([
+        'var(--rdg-selection-color)',
+        'var(--rdg-selection-color)',
+      ]);
+      expect(edgeRules.map((rule) => rule.style.getPropertyValue('inset-inline-start'))).toContain('1px');
+      expect(edgeRules.map((rule) => rule.style.getPropertyValue('inset-inline-end'))).toContain('1px');
+    });
+
+    it('renders the refreshed outer border unless the table is flush with its panel', () => {
+      const theme = createTheme();
+      const props = makeProps({ tableRefreshEnabled: true });
+      const { rerender } = render(<TableDataGrid {...props} />);
+
+      expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border')).toBe(
+        `1px solid ${theme.components.table.border}`
+      );
+
+      rerender(<TableDataGrid {...props} noPanelPadding />);
+
+      expect(getGridFrameOverlayStyleRule()).toBeUndefined();
+    });
+
+    it.each([
+      [true, 'none'],
+      [false, '0 2px 4px red'],
+    ])('sets active-cell shadows with table.refresh=%s', (tableRefreshEnabled, expected) => {
+      const theme = createTheme({ shadows: { z2: '0 2px 4px red' } });
+      render(
+        <ThemeContext.Provider value={theme}>
+          <TableDataGrid {...makeProps({ tableRefreshEnabled })} />
+        </ThemeContext.Provider>
+      );
+      const gridClasses = Array.from(screen.getByRole('grid').classList);
+      const activeCellRules = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter(
+          (rule): rule is CSSStyleRule =>
+            rule instanceof CSSStyleRule &&
+            gridClasses.some((className) => rule.selectorText.startsWith(`.${className}`)) &&
+            rule.selectorText.includes('[aria-selected=true]:focus-within') &&
+            rule.selectorText.includes(':hover') &&
+            rule.style.getPropertyValue('box-shadow') !== ''
+        );
+
+      expect(activeCellRules.map((rule) => rule.style.getPropertyValue('box-shadow'))).toEqual([expected, expected]);
     });
   });
 
@@ -131,7 +316,7 @@ describe('TableDataGrid', () => {
       // below the table gets pushed out of the panel.
       const { container } = render(<TableDataGrid {...makeProps()} />);
       expect(screen.getByRole('grid').parentElement).toHaveStyle({ 'min-block-size': '0' });
-      expect(container.firstElementChild).toHaveStyle({ position: 'relative' });
+      expect(container.firstElementChild).toHaveStyle({ position: 'relative', 'min-block-size': '0' });
     });
   });
 
@@ -321,6 +506,9 @@ describe('TableDataGrid', () => {
         expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
           theme.components.table.rowHoverBackground
         );
+        expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border')).toBe(
+          `1px solid ${theme.components.table.border}`
+        );
         expect(window.getComputedStyle(screen.getByRole('row')).getPropertyValue('--rdg-border-color')).toBe(
           headerDivider
         );
@@ -338,6 +526,15 @@ describe('TableDataGrid', () => {
         );
         expect(transparentGrid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
           theme.components.table.rowHoverBackground
+        );
+        expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border')).toBe(
+          `1px solid ${theme.components.table.border}`
+        );
+        expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border-start-start-radius')).toBe(
+          theme.shape.radius.default
+        );
+        expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe(
+          theme.shape.radius.default
         );
       }
     );

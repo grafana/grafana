@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/errhttp"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -290,13 +292,23 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 					return
 				}
 
+				sv, err := b.decrypter.get(ctx, m)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
 				parent.SetName(name)
 				parent.SetRv(m.GetResourceVersion())
 				parent.SetRaw(raw)
+				parent.SetDecryptedSecureValues(sv)
 			}
 			info.Parent = parent
 		}
-		req := r.WithContext(httpadapter.WithRouteInfo(ctx, info))
+		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
+		req.Header.Del(proxyutil.IDHeaderName)
+		if requester, err := identity.GetRequester(ctx); err == nil {
+			proxyutil.ApplyForwardIDHeader(req.Context(), req, requester, nil)
+		}
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}
 }

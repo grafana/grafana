@@ -17,6 +17,19 @@ export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditA
   static type = 'dashboard-edit-action';
 }
 
+export interface DashboardBatchEditActionEventPayload {
+  source: SceneObject;
+  description?: string;
+}
+
+export class DashboardBatchEditActionStartEvent extends BusEventWithPayload<DashboardBatchEditActionEventPayload> {
+  static type = 'dashboard-batch-edit-action-start';
+}
+
+export class DashboardBatchEditActionEndEvent extends BusEventBase {
+  static type = 'dashboard-batch-edit-action-end';
+}
+
 /**
  * Emitted after DashboardEditActionEvent has been processed (or undone)
  */
