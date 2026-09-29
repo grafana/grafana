@@ -79,9 +79,7 @@ You can also insert:
 
 - Tables
 - Mermaid diagrams
-- Dashboard variables
-
-Dashboard variables are interpolated in the content.
+- Dashboard variables: Variables autocomplete as you enter them, and they're interpolated in the content.
 
 The options displayed in the formatting toolbar depend on the mode you select.
 
@@ -100,6 +98,13 @@ The editor provides syntax highlighting in the authoring block.
 To allow embedding of iframes and other websites, you need set `allow_embedding = true` in your Grafana `config.ini` or environment variables, depending on your deployment.
 {{< /admonition>}}
 
+## Render query results as text with Handlebars templates
+
+Use `${__value}`, `${__field}`, `${__series}`, and `${__data}` macros to reference query results in the visualization content, and [Handlebars templating](https://handlebarsjs.com/guide/) for more control.
+Choose what data to display, repeat content for each row with `{{#each}}`, and add if/then logic with `{{#if}}` helpers.
+
+![Text visualization with Handlebars support](/media/docs/grafana/panels-visualizations/screenshot-text-handlebars-v13.3.png)
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -114,12 +119,21 @@ Use the following options to control how data is rendered in the text visualizat
 
 #### Render mode
 
-Blah blah
+If you've used [Handlebars templates](#render-query-results-as-text-with-handlebars-templates), select a render mode to control how your template is applied:
 
-- **Once**:
-- **Per row**:
+- **Once**: Render the whole result.
+- **Per row**: Each row in the data gets its own repeated block of content.
+
+You can also select which data frame to display.
+
+![Text visualization with Render mode set to per row](/media/docs/grafana/panels-visualizations/screenshot-text-render-mode-2-v13.3.png)
 
 #### Page size
+
+When a query returns many rows, pagination lets you move through the full result instead of showing only a limited number of rows.
+Grafana automatically adjusts the number of rows on each page to fit the panel or you can set a range from 1-1000 rows.
+
+This option only displays when you set **Render mode** to **Per row**.
 
 ### Value mappings
 
