@@ -75,6 +75,12 @@ func keepStandardFieldsOnly(doc *IndexableDocument) *IndexableDocument {
 	return doc
 }
 
+// GlobalIndexCoversType reports whether a global index holds documents of this
+// resource type.
+func GlobalIndexCoversType(gr schema.GroupResource) bool {
+	return slices.Contains(GlobalSearchResourceTypes(), gr)
+}
+
 // indexSources returns the resource types whose documents belong in the index
 // for key. A namespace-wide index draws from every covered type; every other
 // index draws from its own type only.
