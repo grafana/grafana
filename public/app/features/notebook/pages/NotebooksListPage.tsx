@@ -33,6 +33,7 @@ export function NotebooksListPage() {
     isTruncated,
     isLoadingMore,
     isFiltered,
+    searchesContent,
     searchQuery,
     setSearchQuery,
     debouncedSearch,
@@ -174,8 +175,15 @@ export function NotebooksListPage() {
                   value={searchQuery}
                   onChange={setSearchQuery}
                   escapeRegex={false}
-                  placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                  placeholder={t('notebooks.list.search-placeholder', 'Search notebooks...')}
                 />
+                {searchQuery.trim() && (
+                  <Text variant="bodySmall" color="secondary" role="status" aria-live="polite">
+                    {searchesContent
+                      ? t('notebooks.list.search-scope-content', 'Matches may be in titles, markdown, or code.')
+                      : t('notebooks.list.search-scope-title', 'Searching titles only on this instance.')}
+                  </Text>
+                )}
                 <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                   <Stack alignItems="center" gap={1} wrap="wrap">
                     <NotebookTagsField
