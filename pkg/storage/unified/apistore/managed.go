@@ -19,6 +19,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -30,6 +31,9 @@ func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMe
 }
 
 func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	if err := enforceClassicFPAssignment(auth, obj); err != nil {
+		return err
+	}
 	return enforceManagerProperties(auth, obj)
 }
 
@@ -40,8 +44,15 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 		return nil // not managed
 	}
 
-	// Check the current settings
-	err := checkManagerPropertiesOnCreate(auth, obj)
+	// Check the current settings. Gate only a *new* classic-FP assignment: rewriting an
+	// object that already carries it must keep working (allowUiUpdates), and removal is
+	// handled further down.
+	if oldManager, hadOld := old.GetManagerProperties(); !hadOld || oldManager.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
+		if err := enforceClassicFPAssignment(auth, obj); err != nil {
+			return err
+		}
+	}
+	err := enforceManagerProperties(auth, obj)
 	if err != nil { // new settings failed
 		return err
 	}
@@ -53,8 +64,10 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	}
 
 	if !okNew && okOld {
-		// This allows removing the managedBy annotations if you were allowed to write them originally
-		if err := checkManagerPropertiesOnCreate(auth, old); err != nil {
+		// This allows removing the managedBy annotations if you were allowed to write them
+		// originally. Not checkManagerPropertiesOnCreate: the assignment gate must not
+		// block recovery of an object locked with a forged annotation.
+		if err := enforceManagerProperties(auth, old); err != nil {
 			return &apierrors.StatusError{ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusForbidden,
@@ -64,6 +77,24 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 		}
 	}
 	return nil
+}
+
+// enforceClassicFPAssignment blocks assigning classic-file-provisioning provenance. The
+// manager annotations are server-derived and only the file provisioner may set them.
+func enforceClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
+	if kind != utils.ManagerKindClassicFP { // nolint:staticcheck
+		return nil
+	}
+	if identity.IsServiceIdentityAuth(auth) {
+		return nil // the file provisioner
+	}
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Reason:  metav1.StatusReasonForbidden,
+		Message: "Can not set the classic-file-provisioning resource manager",
+	}}
 }
 
 func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {

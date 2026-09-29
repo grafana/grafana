@@ -184,7 +184,15 @@ func IsServiceIdentity(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	t, uid, err := types.ParseTypeID(ident.GetUID())
+	return IsServiceIdentityAuth(ident)
+}
+
+// IsServiceIdentityAuth is the AuthInfo-based form of IsServiceIdentity.
+func IsServiceIdentityAuth(auth types.AuthInfo) bool {
+	if auth == nil {
+		return false
+	}
+	t, uid, err := types.ParseTypeID(auth.GetUID())
 	if err != nil {
 		return false
 	}

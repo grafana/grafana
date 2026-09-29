@@ -706,7 +706,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 		assert.Equal(t, savedDashboard.OrgID, orgId)
 	})
 
-	t.Run("GetOrgIdByAccessToken will return current OrgId when IsEnabled=false", func(t *testing.T) {
+	t.Run("GetOrgIdByAccessToken will return 0 when IsEnabled=false", func(t *testing.T) {
 		setup()
 		cmd := SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
@@ -725,7 +725,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 
 		orgId, err := publicdashboardStore.GetOrgIdByAccessToken(context.Background(), "accessToken")
 		require.NoError(t, err)
-		assert.Equal(t, savedDashboard.OrgID, orgId)
+		assert.Zero(t, orgId)
 	})
 
 	t.Run("GetOrgIdByAccessToken will return 0 when no public dashboard has matching access token", func(t *testing.T) {
@@ -734,6 +734,38 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 		orgId, err := publicdashboardStore.GetOrgIdByAccessToken(context.Background(), "nonExistentAccessToken")
 		require.NoError(t, err)
 		assert.NotEqual(t, savedDashboard.OrgID, orgId)
+	})
+
+	t.Run("GetOrgIdByAccessToken will return 0 when a public dashboard token is deleted", func(t *testing.T) {
+		setup()
+
+		const at = "accessToken"
+		const uid = "abc123"
+
+		cmd := SavePublicDashboardCommand{
+			PublicDashboard: PublicDashboard{
+				IsEnabled:    true,
+				Uid:          uid,
+				DashboardUid: savedDashboard.UID,
+				OrgId:        savedDashboard.OrgID,
+				CreatedAt:    time.Now(),
+				CreatedBy:    7,
+				AccessToken:  at,
+			},
+		}
+		_, err := publicdashboardStore.Create(t.Context(), cmd)
+		require.NoError(t, err)
+
+		orgID, err := publicdashboardStore.GetOrgIdByAccessToken(t.Context(), at)
+		require.NoError(t, err)
+		assert.Equal(t, savedDashboard.OrgID, orgID)
+
+		_, err = publicdashboardStore.Delete(t.Context(), orgID, uid)
+		require.NoError(t, err)
+
+		orgID, err = publicdashboardStore.GetOrgIdByAccessToken(t.Context(), at)
+		require.NoError(t, err)
+		assert.Zero(t, orgID)
 	})
 }
 
