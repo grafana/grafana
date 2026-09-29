@@ -3,12 +3,14 @@ import { render, screen, userEvent } from 'test/test-utils';
 
 import { CoreApp, getDefaultTimeRange, type PanelProps } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
+import { useFlagGrafanaNewTextPanel, useFlagTextNewFeatures } from '@grafana/runtime/internal';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { useElementSelection, usePanelContext } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { applyInsightToPanel } from '../insight-panel/applyInsightToPanel';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
@@ -31,6 +33,16 @@ jest.mock('@grafana/runtime', () => ({
     getLocation: jest.fn().mockReturnValue({ pathname: '/d/test', search: '' }),
     getHistory: jest.fn().mockReturnValue({ listen: jest.fn() }),
   },
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagGrafanaNewTextPanel: jest.fn(),
+  useFlagTextNewFeatures: jest.fn(),
+}));
+
+jest.mock('../insight-panel/applyInsightToPanel', () => ({
+  applyInsightToPanel: jest.fn(),
 }));
 
 // Mock sceneGraph.getTimeRange and sceneUtils.registerRuntimePanelPlugin at module
@@ -91,6 +103,9 @@ const mockGetVizSuggestionForQuery = getVizSuggestionForQuery as jest.Mock;
 const mockApplyQueryToPanel = applyQueryToPanel as jest.Mock;
 const mockLocationServicePartial = locationService.partial as jest.Mock;
 const mockSceneGraphGetTimeRange = sceneGraph.getTimeRange as jest.Mock;
+const mockUseFlagGrafanaNewTextPanel = useFlagGrafanaNewTextPanel as jest.Mock;
+const mockUseFlagTextNewFeatures = useFlagTextNewFeatures as jest.Mock;
+const mockApplyInsightToPanel = applyInsightToPanel as jest.Mock;
 // findVizPanelByKey is imported inside tests to keep the reference in sync with the mock
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const mockFindVizPanelByKey: jest.Mock = require('../utils/findVizPanel').findVizPanelByKey;
@@ -129,6 +144,9 @@ beforeEach(() => {
   mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: false });
   mockGetVizSuggestionForQuery.mockResolvedValue(undefined);
   mockApplyQueryToPanel.mockResolvedValue(undefined);
+  mockUseFlagGrafanaNewTextPanel.mockReturnValue(false);
+  mockUseFlagTextNewFeatures.mockReturnValue(false);
+  mockApplyInsightToPanel.mockResolvedValue(undefined);
   mockFindVizPanelByKey.mockReturnValue(new VizPanel({ key: 'panel-1', pluginId: '__unconfigured-panel' }));
   mockSceneGraphGetTimeRange.mockReturnValue({
     state: { value: getDefaultTimeRange(), weekStart: undefined },
@@ -281,6 +299,56 @@ describe('UnconfiguredPanelComp', () => {
         await user.click(screen.getByRole('button', { name: /configure visualization/i }));
 
         expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'panel');
+      });
+    });
+
+    describe('Configure insight button', () => {
+      function enableInsight() {
+        mockUseFlagGrafanaNewTextPanel.mockReturnValue(true);
+        mockUseFlagTextNewFeatures.mockReturnValue(true);
+      }
+
+      it('is hidden when the text panel cannot take queries', async () => {
+        buildDashboard({ isEditing: true });
+        const { user, root } = renderPanel();
+
+        await user.hover(root);
+
+        expect(screen.queryByRole('button', { name: /configure insight/i })).not.toBeInTheDocument();
+      });
+
+      it('opens the configure insight modal and tracks the interaction', async () => {
+        enableInsight();
+        buildDashboard({ isEditing: true });
+        const { user, root } = renderPanel();
+
+        await user.hover(root);
+        await user.click(screen.getByRole('button', { name: /configure insight/i }));
+
+        expect(screen.getByRole('heading', { name: 'Configure insight' })).toBeInTheDocument();
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure_insight', 1, 'panel');
+      });
+
+      it('applies the insight to the panel on confirm', async () => {
+        enableInsight();
+        const dashboard = buildDashboard({ isEditing: true });
+        const panel = new VizPanel({ key: 'panel-1', pluginId: '__unconfigured-panel' });
+        mockFindVizPanelByKey.mockReturnValue(panel);
+        const { user, root } = renderPanel();
+
+        await user.hover(root);
+        await user.click(screen.getByRole('button', { name: /configure insight/i }));
+        await user.click(screen.getByRole('button', { name: 'Create insight panel' }));
+
+        expect(mockApplyInsightToPanel).toHaveBeenCalledWith(dashboard, panel, {
+          prompt: 'Show insights of this panel or panels',
+          context: {
+            scope: 'dashboard',
+            dashboardUid: 'test-uid',
+            dashboardTitle: 'Test dashboard',
+            panels: [],
+          },
+        });
       });
     });
 

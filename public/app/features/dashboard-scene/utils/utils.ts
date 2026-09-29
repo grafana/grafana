@@ -31,9 +31,12 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+// getDefaultPluginId() below hands out UNCONFIGURED_PANEL_PLUGIN_ID, and the plugin behind it is
+// registered as a side effect of loading UnconfiguredPanel. Nothing else imports that module, so
+// dropping this import makes every new panel fail with "Plugin __unconfigured-panel not found".
+import '../scene/UnconfiguredPanel';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -43,6 +46,7 @@ import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
 import { findVizPanelByKey } from './findVizPanel';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from './unconfiguredPanelUtils';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;

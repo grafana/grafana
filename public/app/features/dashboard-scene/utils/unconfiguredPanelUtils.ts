@@ -2,6 +2,10 @@ import { keyframes } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 
+// Lives here rather than in UnconfiguredPanel so modules rendered by that panel can read it
+// without importing back into it.
+export const UNCONFIGURED_PANEL_PLUGIN_ID = '__unconfigured-panel';
+
 export enum ViewPhase {
   QuietInitial = 'quiet-initial',
   Quiet = 'quiet',

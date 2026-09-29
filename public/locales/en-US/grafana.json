@@ -5977,6 +5977,25 @@
       "title-get-help-with-this-panel": "Get help with this panel",
       "troubleshooting-docs": "Troubleshooting docs"
     },
+    "insight-panel": {
+      "cancel": "Cancel",
+      "create": "Create insight panel",
+      "default-prompt": "Show insights of this panel or panels",
+      "default-title": "Insights",
+      "missing-mock-datasource": "No TestData DB datasource found",
+      "missing-mock-datasource-detail": "The insight panel is mocked with TestData DB. Add a TestData DB datasource to see a response.",
+      "modal-title": "Configure insight",
+      "panels-empty": "This dashboard has no other panels",
+      "panels-label": "Panels",
+      "panels-placeholder": "Select panels",
+      "prompt-description": "What you want to know about the panels in context.",
+      "prompt-label": "Prompt",
+      "scope-dashboard": "Whole dashboard",
+      "scope-description": "What the assistant looks at when it writes the insight.",
+      "scope-label": "Panel context",
+      "scope-panels": "Specific panels",
+      "untitled-panel": "Untitled panel"
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Errors and notices",
@@ -6083,6 +6102,7 @@
     },
     "new-panel": {
       "aria-label": "Unconfigured panel. Tab to see configuration options.",
+      "configure-insight": "Configure insight",
       "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-use-library-panel": "Use library panel",

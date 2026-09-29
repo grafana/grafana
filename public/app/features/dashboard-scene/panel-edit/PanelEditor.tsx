@@ -27,13 +27,13 @@ import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePick
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
 import { findVizPanelByKey } from '../utils/findVizPanel';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../utils/unconfiguredPanelUtils';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 

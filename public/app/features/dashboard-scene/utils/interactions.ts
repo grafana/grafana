@@ -194,7 +194,16 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
+    item:
+      | 'configure'
+      | 'configure_dropdown'
+      | 'configure_insight'
+      | 'edit'
+      | 'copy'
+      | 'duplicate'
+      | 'delete'
+      | 'view'
+      | 'use_library_panel',
     id: number,
     source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
     panelType?: string
