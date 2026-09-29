@@ -32,6 +32,8 @@ interface CommonProps {
    * everything else.
    */
   onTitleChange?: (title: string) => void;
+  /** Background for the sticky controls row */
+  controlsBackground?: string;
 }
 
 /** A notebook that exists. Its autosave writes edits straight through to the resource. */
@@ -92,18 +94,23 @@ export function NotebookView(props: NotebookViewProps) {
   }
 
   return props.uid !== undefined ? (
-    <SavedNotebookView uid={props.uid} onTitleChange={props.onTitleChange} />
+    <SavedNotebookView
+      uid={props.uid}
+      onTitleChange={props.onTitleChange}
+      controlsBackground={props.controlsBackground}
+    />
   ) : (
     <DraftNotebookView
       spec={props.spec}
       onChange={props.onChange}
       onDirtyChange={props.onDirtyChange}
       onTitleChange={props.onTitleChange}
+      controlsBackground={props.controlsBackground}
     />
   );
 }
 
-function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
+function SavedNotebookView({ uid, onTitleChange, controlsBackground }: SavedNotebookViewProps) {
   // Per instance, not the module singleton: the singleton holds one scene for the whole app, so an
   // embedded notebook would evict whatever the notebooks route had open and be evicted by it in
   // turn. The cost is that this instance's scene is not shared with the route's.
@@ -122,10 +129,16 @@ function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
     return loadError ? <NotebookViewError error={loadError} /> : <Centered>{isLoading && <PageLoader />}</Centered>;
   }
 
-  return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
+  return <NotebookDocument scene={scene} onTitleChange={onTitleChange} controlsBackground={controlsBackground} />;
 }
 
-function DraftNotebookView({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
+function DraftNotebookView({
+  spec,
+  onChange,
+  onDirtyChange,
+  onTitleChange,
+  controlsBackground,
+}: DraftNotebookViewProps) {
   /**
    * Built once, from the first spec. The prop is the document's starting point, not a live mirror of
    * it: rebuilding whenever the host echoed an edited spec back would throw away the caret, the undo
@@ -142,7 +155,7 @@ function DraftNotebookView({ spec, onChange, onDirtyChange, onTitleChange }: Dra
 
   useNotebookDraftChanges(scene, onChange, onDirtyChange);
 
-  return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
+  return <NotebookDocument scene={scene} onTitleChange={onTitleChange} controlsBackground={controlsBackground} />;
 }
 
 /**
@@ -251,7 +264,15 @@ function useNotebookDraftChanges(
   }, [scene, Boolean(onChange)]);
 }
 
-function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTitleChange?: (title: string) => void }) {
+function NotebookDocument({
+  scene,
+  onTitleChange,
+  controlsBackground,
+}: {
+  scene: NotebookScene;
+  onTitleChange?: (title: string) => void;
+  controlsBackground?: string;
+}) {
   const { title } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
@@ -266,7 +287,7 @@ function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTi
    * autosave. Only the tree can answer per mount.
    */
   return (
-    <NotebookEmbeddedHost>
+    <NotebookEmbeddedHost controlsBackground={controlsBackground}>
       <scene.Component model={scene} />
     </NotebookEmbeddedHost>
   );
