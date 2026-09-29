@@ -66,12 +66,12 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	var buf bytes.Buffer
 
 	// TODO: should we comment even if there are no changes?
-	if len(info.Changes) == 0 {
-		buf.WriteString("Grafana didn't find any changes in this pull request.")
-	} else if info.UnsupportedFork {
+	if info.UnsupportedFork {
 		if err := c.templateUnsupportedFork.Execute(&buf, info); err != nil {
 			return "", fmt.Errorf("unable to execute unsupported fork template: %w", err)
 		}
+	} else if len(info.Changes) == 0 {
+		buf.WriteString("Grafana didn't find any changes in this pull request.")
 	} else if len(info.Changes) == 1 && info.Changes[0].Parsed != nil && info.Changes[0].Parsed.GVK.Kind == dashboardKind {
 		if err := c.templateDashboard.Execute(&buf, &info.Changes[0]); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
