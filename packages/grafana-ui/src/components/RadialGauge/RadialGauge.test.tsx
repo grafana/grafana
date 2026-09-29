@@ -27,6 +27,15 @@ describe('RadialGauge', () => {
     }
   );
 
+  // RadialGaugeExample sets max in the data frame's field config, where a data source can send a string
+  it.each([
+    { description: 'gradient', props: { gradient: true } },
+    { description: 'thresholds bar', props: { thresholdsBar: true } },
+  ])('should render with $description when the data frame max is a string', ({ props }) => {
+    render(<RadialGaugeExample {...props} max={'100' as unknown as number} />);
+    expect(screen.getByRole('img')).toBeInTheDocument();
+  });
+
   describe('text mode', () => {
     describe('auto mode', () => {
       it('should render `value_and_name` if the vizCount is greater than 1', () => {
