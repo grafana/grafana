@@ -90,6 +90,8 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
             ...field.config,
             ...dataConfig,
           },
+          // Reset state after a config change. This fixes issues with stale display name & such.
+          state: {},
         });
       } else {
         outputFrame.fields.push(field);
