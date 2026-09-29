@@ -21,9 +21,6 @@ export const PublicDashboardBadge = ({ dashboard }: ToolbarActionProps) => {
   );
 };
 
-// Used in old architecture
-export const PublicDashboardBadgeLegacy = PublicDashboardBadgeInternal;
-
 function PublicDashboardBadgeInternal({ uid, hasPublicDashboard }: { uid: string; hasPublicDashboard?: boolean }) {
   const { data: publicDashboard } = useGetPublicDashboardQuery(uid, {
     skip: hasPublicDashboard !== undefined && !hasPublicDashboard,
