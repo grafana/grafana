@@ -3163,6 +3163,7 @@
       "group-search-error": "Error searching groups",
       "group-search-prompt": "Type at least 3 characters to search groups",
       "health": "Health",
+      "hide-empty-data-sources": "Hide empty data sources",
       "label": {
         "hide": "Hide",
         "show": "Show"
