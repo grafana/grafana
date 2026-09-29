@@ -2,6 +2,12 @@
 
 # 13.2.3 (2026-09-29)
 
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+
 <!-- 13.2.3 END -->
 <!-- 13.2.2 START -->
 
@@ -219,6 +225,12 @@
 <!-- 13.1.7 START -->
 
 # 13.1.7 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
 
 <!-- 13.1.7 END -->
 <!-- 13.1.6 START -->
@@ -526,6 +538,15 @@
 
 <!-- 13.1.0 END -->
 <!-- 13.0.10 START -->
+
+# 13.0.10 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+- Security: Fix CVE-2026-81842
 
 # 13.0.10 (2026-09-29)
 
@@ -1023,6 +1044,13 @@
 <!-- 12.4.12 START -->
 
 # 12.4.12 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+- Security: Fix CVE-2026-81842
 
 ### Bug fixes
 
