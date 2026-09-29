@@ -26,6 +26,14 @@ export interface SavedViewTimeRange {
   timezone?: string;
 }
 
+/** Ad-hoc filters scoped to a tab or row rather than the whole dashboard (stretch goal, spec 2.1.1). */
+export interface SavedViewSectionFilter {
+  sectionKind: 'tab' | 'row';
+  /** A layout path (e.g. "/tabs/1", "/rows/0/tabs/2") -- see mutation-api/commands/layoutPathResolver.ts. */
+  sectionKey: string;
+  variables: SavedViewVariable[];
+}
+
 /** Mirrors apps/dashboardviews/kinds/saveddashboardview.cue's spec — see the backend spec, 4.2. */
 export interface SavedDashboardViewSpec {
   dashboardUID: string;
@@ -33,4 +41,5 @@ export interface SavedDashboardViewSpec {
   description?: string;
   timeRange: SavedViewTimeRange;
   variables: SavedViewVariable[];
+  sectionFilters?: SavedViewSectionFilter[];
 }

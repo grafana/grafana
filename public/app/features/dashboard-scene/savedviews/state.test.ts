@@ -2,6 +2,9 @@ import { type AdHocVariableFilter } from '@grafana/data';
 import { AdHocFiltersVariable, QueryVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 
 import { applySavedViewState, captureSavedViewState, getSavedViewDiff } from './state';
 import { type SavedDashboardViewSpec } from './types';
@@ -105,6 +108,68 @@ describe('applySavedViewState', () => {
   });
 });
 
+function buildSceneWithTabFilter(filters: AdHocVariableFilter[]) {
+  const sectionAdhoc = new AdHocFiltersVariable({ name: 'podFilter', datasource: null, filters });
+  const tab = new TabItem({ title: 'My tab', $variables: new SceneVariableSet({ variables: [sectionAdhoc] }) });
+  const scene = new DashboardScene({
+    uid: 'dash-1',
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $variables: new SceneVariableSet({ variables: [] }),
+    body: new TabsLayoutManager({ tabs: [tab] }),
+  });
+  return { scene, tab };
+}
+
+describe('captureSavedViewState — tab/row-scoped section filters', () => {
+  it('captures ad-hoc filters scoped to a tab, keyed by its layout path', () => {
+    const { scene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'x' }]);
+    const spec = captureSavedViewState(scene);
+
+    expect(spec.sectionFilters).toEqual([
+      {
+        sectionKind: 'tab',
+        sectionKey: '/tabs/0',
+        variables: [{ name: 'podFilter', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'x' }] }],
+      },
+    ]);
+  });
+
+  it('omits sectionFilters entirely when no tab/row has its own variables', () => {
+    const spec = captureSavedViewState(buildScene());
+
+    expect(spec.sectionFilters).toBeUndefined();
+  });
+});
+
+describe('applySavedViewState — tab/row-scoped section filters', () => {
+  it('applies a saved section filter back onto the matching tab', () => {
+    const { scene, tab } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'x' }]);
+    const spec = captureSavedViewState(scene);
+
+    const live = tab.state.$variables?.getByName('podFilter');
+    if (live instanceof AdHocFiltersVariable) {
+      live.setState({ filters: [{ key: 'pod', operator: '=', value: 'changed' }] });
+    }
+
+    applySavedViewState(scene, spec);
+
+    const after = tab.state.$variables?.getByName('podFilter');
+    expect(after).toBeInstanceOf(AdHocFiltersVariable);
+    if (after instanceof AdHocFiltersVariable) {
+      expect(after.state.filters).toEqual([{ key: 'pod', operator: '=', value: 'x' }]);
+    }
+  });
+
+  it('is a no-op, not a throw, when the saved layout path no longer resolves', () => {
+    const { scene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'x' }]);
+    const spec = captureSavedViewState(scene);
+
+    scene.setState({ body: DefaultGridLayoutManager.fromVizPanels([]) });
+
+    expect(() => applySavedViewState(scene, spec)).not.toThrow();
+  });
+});
+
 describe('getSavedViewDiff', () => {
   const base: SavedDashboardViewSpec = {
     dashboardUID: 'dash-1',
@@ -129,5 +194,33 @@ describe('getSavedViewDiff', () => {
   it('is true when the set of variables differs', () => {
     const changed = { ...base, variables: [] };
     expect(getSavedViewDiff(changed, base)).toBe(true);
+  });
+
+  it('is true when a section filter value differs', () => {
+    const withSection: SavedDashboardViewSpec = {
+      ...base,
+      sectionFilters: [
+        {
+          sectionKind: 'tab',
+          sectionKey: '/tabs/0',
+          variables: [{ name: 'pod', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'x' }] }],
+        },
+      ],
+    };
+    const changed: SavedDashboardViewSpec = {
+      ...withSection,
+      sectionFilters: [
+        {
+          sectionKind: 'tab',
+          sectionKey: '/tabs/0',
+          variables: [{ name: 'pod', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'y' }] }],
+        },
+      ],
+    };
+    expect(getSavedViewDiff(changed, withSection)).toBe(true);
+  });
+
+  it('is false when sectionFilters is absent on both sides', () => {
+    expect(getSavedViewDiff(base, { ...base, variables: [...base.variables] })).toBe(false);
   });
 });
