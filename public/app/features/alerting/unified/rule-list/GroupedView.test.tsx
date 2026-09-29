@@ -129,6 +129,26 @@ describe('RuleList - GroupedView', () => {
     expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
   });
 
+  it('should reveal hidden data sources when "Show all" is clicked', async () => {
+    setPrometheusRules(prometheusDs, []);
+    const onHideEmptyDataSourcesChange = jest.fn();
+    const { user, rerender } = render(
+      <GroupedView hideEmptyDataSources={true} onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange} />
+    );
+
+    await ui.dsSection(/Mimir/).find();
+    await user.click(await screen.findByRole('button', { name: 'Show all' }));
+
+    expect(onHideEmptyDataSourcesChange).toHaveBeenCalledWith(false);
+
+    // the button itself doesn't own the toggle state - the parent re-renders with the new value
+    rerender(
+      <GroupedView hideEmptyDataSources={false} onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange} />
+    );
+
+    expect(await ui.dsSection(/Prometheus/).find()).toBeInTheDocument();
+  });
+
   it('should show data sources with no rules when hideEmptyDataSources is false', async () => {
     setPrometheusRules(prometheusDs, []);
     render(<GroupedView hideEmptyDataSources={false} />);
@@ -137,6 +157,22 @@ describe('RuleList - GroupedView', () => {
 
     expect(within(prometheusSection).getByText('No rules found')).toBeInTheDocument();
     expect(screen.queryByText(/data sources? with no rules (is|are) hidden/)).not.toBeInTheDocument();
+  });
+
+  it('should stop counting a data source as "pending" once its discovery request errors', async () => {
+    server.use(
+      http.get(`/api/datasources/proxy/uid/${prometheusDs.uid}/api/v1/status/buildinfo`, () =>
+        HttpResponse.json({ message: 'internal error' }, { status: 500 })
+      )
+    );
+
+    render(<GroupedView />);
+
+    await ui.dsSection(/Mimir/).find();
+    await screen.findByRole('button', { name: /Error/i });
+
+    // The errored data source settled (with an error), so it must not be stuck in "still checking".
+    expect(screen.queryByText(/Checking \d+ more data sources?/)).not.toBeInTheDocument();
   });
 
   it('should not show a data source header until its first fetch settles, and should say so while waiting', async () => {

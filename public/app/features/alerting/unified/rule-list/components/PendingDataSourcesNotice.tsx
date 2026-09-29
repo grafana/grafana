@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
-import { Spinner, Stack, Text } from '@grafana/ui';
+import { Spinner } from '@grafana/ui';
+
+import { InlineNotice } from './InlineNotice';
 
 interface Props {
   count: number;
@@ -12,15 +14,12 @@ export function PendingDataSourcesNotice({ count }: Props) {
   }
 
   return (
-    <Stack direction="row" alignItems="center" gap={0.5}>
-      <Spinner size="sm" inline />
-      <Text variant="bodySmall" color="secondary">
-        {t('alerting.rule-list.checking-data-sources', '', {
-          count,
-          defaultValue_one: 'Checking {{count}} more data source',
-          defaultValue_other: 'Checking {{count}} more data sources',
-        })}
-      </Text>
-    </Stack>
+    <InlineNotice icon={<Spinner size="sm" inline />}>
+      {t('alerting.rule-list.checking-data-sources', '', {
+        count,
+        defaultValue_one: 'Checking {{count}} more data source',
+        defaultValue_other: 'Checking {{count}} more data sources',
+      })}
+    </InlineNotice>
   );
 }

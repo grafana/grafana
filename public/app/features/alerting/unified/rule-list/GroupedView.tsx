@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { Stack } from '@grafana/ui';
 import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
@@ -23,9 +23,15 @@ interface GroupedViewProps {
   groupFilter?: string;
   namespaceFilter?: string;
   hideEmptyDataSources?: boolean;
+  onHideEmptyDataSourcesChange?: (hideEmptyDataSources: boolean) => void;
 }
 
-export function GroupedView({ groupFilter, namespaceFilter, hideEmptyDataSources = true }: GroupedViewProps) {
+export function GroupedView({
+  groupFilter,
+  namespaceFilter,
+  hideEmptyDataSources = true,
+  onHideEmptyDataSourcesChange,
+}: GroupedViewProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
   // Once the Prometheus Alerting plugin is installed it owns these, so we don't render a section
   // per data source any more. The Grafana-managed section header says where they went.
@@ -71,7 +77,12 @@ export function GroupedView({ groupFilter, namespaceFilter, hideEmptyDataSources
       })}
       {hasFilters && !isEmpty(loadingDataSources) && <AlertRuleListItemSkeleton />}
       {!hasFilters && <PendingDataSourcesNotice count={pendingExternalCount} />}
-      {!hasFilters && <HiddenDataSourcesNotice count={hiddenDataSourcesCount} />}
+      {!hasFilters && (
+        <HiddenDataSourcesNotice
+          count={hiddenDataSourcesCount}
+          onShowAll={onHideEmptyDataSourcesChange ? () => onHideEmptyDataSourcesChange(false) : undefined}
+        />
+      )}
     </Stack>
   );
 }
@@ -95,6 +106,15 @@ function DataSourceLoader({
   const { data: dataSourceInfo, isLoading, error } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
 
   const { uid, name } = rulesSourceIdentifier;
+
+  // A discovery error means this data source is done loading (as far as we're concerned), but it
+  // never reaches PaginatedDataSourceLoader, so nothing else would ever report that. Without this,
+  // it would count as "still pending" forever in the aggregate loading state.
+  useEffect(() => {
+    if (error) {
+      onLoadingStateChange?.(uid, { isLoading: false, rulesCount: 0, error });
+    }
+  }, [uid, error, onLoadingStateChange]);
 
   // if we are loading and there are filters configured – we shouldn't show any data source headers
   // dito for errors, we shouldn't show those when we're in filter mode

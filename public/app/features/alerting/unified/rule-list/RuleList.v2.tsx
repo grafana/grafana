@@ -57,6 +57,7 @@ function RuleList() {
                 groupFilter={filterState.groupName}
                 namespaceFilter={filterState.namespace}
                 hideEmptyDataSources={hideEmptyDataSources}
+                onHideEmptyDataSourcesChange={setHideEmptyDataSources}
               />
             )}
           </Box>

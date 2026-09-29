@@ -3017,6 +3017,7 @@
       },
       "hidden-empty-data-sources_one": "{{count}} data source with no rules is hidden",
       "hidden-empty-data-sources_other": "{{count}} data sources with no rules are hidden",
+      "hidden-empty-data-sources-show-all": "Show all",
       "import-disabled-tooltip": {
         "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
       },
