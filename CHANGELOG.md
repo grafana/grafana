@@ -2,6 +2,12 @@
 
 # 13.1.7 (2026-09-29)
 
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+
 <!-- 13.1.7 END -->
 <!-- 13.1.6 START -->
 

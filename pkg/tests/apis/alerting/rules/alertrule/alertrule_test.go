@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -20,7 +21,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -944,6 +948,16 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
 	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+	viewerClient := common.NewAlertRuleClient(t, helper.Org1.Viewer)
+	folderlessReader := helper.CreateUser("folderless-rule-reader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{accesscontrol.ActionAlertingRuleRead},
+			Resource:          "folders",
+			ResourceID:        "folder-with-no-rules",
+			ResourceAttribute: "uid",
+		},
+	})
+	folderlessReaderClient := common.NewAlertRuleClient(t, folderlessReader)
 
 	common.CreateTestFolder(t, helper, "folder-alpha")
 	common.CreateTestFolder(t, helper, "folder-beta")
@@ -1020,6 +1034,21 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 		for _, item := range list.Items {
 			require.Equal(t, "folder-beta", item.Labels[v0alpha1.FolderLabelKey])
 		}
+	})
+
+	t.Run("non-existent folder label returns no rules for viewer", func(t *testing.T) {
+		list, err := viewerClient.List(ctx, v1.ListOptions{LabelSelector: "grafana.app/folder=non-existent-folder"})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
+	})
+
+	t.Run("reader with no accessible folders gets no rules", func(t *testing.T) {
+		_, err := folderlessReaderClient.Get(ctx, beta1.Name, v1.GetOptions{})
+		require.True(t, k8serrors.IsForbidden(err))
+
+		list, err := folderlessReaderClient.List(ctx, v1.ListOptions{})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
 	})
 }
 
