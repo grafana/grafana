@@ -27,6 +27,8 @@ The new text panel is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
 To use this feature, enable the `grafana.newTextPanel` and `text.newFeatures` feature toggles in your Grafana configuration file or contact Support.
+
+For information about the generally available experience, refer to the [latest OSS documentation](https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/visualizations/text/).
 {{< /admonition >}}
 
 Text visualizations let you include text, HTML, code blocks, or Mermaid diagrams in your dashboards.
