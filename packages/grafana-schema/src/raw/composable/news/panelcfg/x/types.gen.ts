@@ -10,7 +10,7 @@
 
 // Generated from public/app/plugins/panel/news/panelcfg.cue file.
 
-export const pluginVersion = "13.0.9";
+export const pluginVersion = "13.0.10";
 
 export interface Options {
   /**
