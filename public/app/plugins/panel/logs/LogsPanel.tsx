@@ -42,7 +42,7 @@ import { combineResponses } from 'app/features/loki-helpers/mergeResponses';
 import { SupportingQueryType } from 'app/features/loki-helpers/types';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
-import { createAndCopyShortLink, getLogsPermalinkRange } from '../../../core/utils/shortLinks';
+import { createAndCopyShortLink, getLogsPermalink } from '../../../core/utils/shortLinks';
 import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
 import type { Options } from './panelcfg.gen';
@@ -588,7 +588,7 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
   const currentURL = new URL(window.location.href);
 
   currentURL.searchParams.set('panelState', JSON.stringify(panelState));
-  const range = getLogsPermalinkRange(row, rows, {
+  const { range } = getLogsPermalink(row, rows, {
     from: toUtc(timeRange.from).valueOf(),
     to: toUtc(timeRange.to).valueOf(),
   });

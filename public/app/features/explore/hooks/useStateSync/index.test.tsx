@@ -20,6 +20,7 @@ import { configureStore } from 'app/store/configureStore';
 import { makeDatasourceSetup } from '../../spec/helper/setup';
 import { updateEditSavedQueryRefAction } from '../../state/explorePane';
 import { splitClose, splitOpen } from '../../state/main';
+import { updateTimeRange } from '../../state/time';
 
 import { useStateSync } from './';
 
@@ -136,6 +137,53 @@ function setup({ queryParams = {}, datasourceGetter = defaultDsGetter }: SetupPa
 }
 
 describe('useStateSync', () => {
+  it('preserves a precise link on initialization and URL restoration, but clears it after a picker change', async () => {
+    const queryParams = {
+      schemaVersion: 1,
+      panes: JSON.stringify({
+        one: {
+          datasource: 'loki-uid',
+          queries: [
+            {
+              refId: 'A',
+              datasource: { type: 'loki', uid: 'loki-uid' },
+              expr: '{service_name="test"}',
+              endNs: '1700000000000000124',
+            },
+          ],
+          range: { from: '1699999999000', to: '1700000000001' },
+          panelsState: { logs: { id: 'A_1700000000000000123_hash' } },
+        },
+      }),
+    };
+    const { store, location, rerender } = setup({
+      queryParams,
+      datasourceGetter: (datasources) => {
+        datasources[0].api.getRef = () => ({ type: 'loki', uid: 'loki-uid' });
+        return defaultDsGetter(datasources);
+      },
+    });
+    await waitFor(() =>
+      expect(store.getState().explore.panes.one?.queries[0]).toMatchObject({ endNs: '1700000000000000124' })
+    );
+    act(() => {
+      store.dispatch(updateTimeRange({ exploreId: 'one', absoluteRange: { from: 1700086400000, to: 1700086401000 } }));
+    });
+    await waitFor(() => {
+      const pane = store.getState().explore.panes.one;
+      expect(pane?.range.from.valueOf()).toBe(1700086400000);
+      expect(pane?.queries[0]).not.toHaveProperty('endNs');
+      const panes = JSON.parse(String(location.getSearchObject().panes));
+      expect(panes.one.queries[0]).not.toHaveProperty('endNs');
+    });
+    rerender({ children: null, params: location.getSearchObject() });
+    rerender({ children: null, params: queryParams });
+    await waitFor(() => {
+      const pane = store.getState().explore.panes.one;
+      expect(pane?.range.from.valueOf()).toBe(1699999999000);
+      expect(pane?.queries[0]).toMatchObject({ endNs: '1700000000000000124' });
+    });
+  });
   it('does not push a new entry to history on first render', async () => {
     const { location } = setup({});
 

@@ -4,7 +4,7 @@ import { VariableSizeList } from 'react-window';
 import { createTheme, dateTimeForTimeZone, LoadingState, rangeUtil } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
-import { ScrollDirection, SCROLLING_THRESHOLD } from '../infiniteScrollUtils';
+import { ScrollDirection } from '../infiniteScrollUtils';
 import { createLogLine } from '../mocks/logRow';
 
 import { InfiniteScroll, type InfiniteScrollMode, type Props } from './InfiniteScroll';
@@ -115,7 +115,7 @@ describe('InfiniteScroll', () => {
     (order: LogsSortOrder) => {
       let logs: LogListModel[];
       beforeEach(() => {
-        logs = createLogs(absoluteRange.from + 2 * SCROLLING_THRESHOLD, absoluteRange.to - 2 * SCROLLING_THRESHOLD);
+        logs = createLogs(absoluteRange.from + 2_000, absoluteRange.to - 2_000);
       });
 
       test.each([
@@ -189,7 +189,7 @@ describe('InfiniteScroll', () => {
           {
             from: logs[logs.length - 1].timeEpochMs,
             to: absoluteRange.to,
-            startNs: '1702578898000000000',
+            startNs: '1702578898000000001',
           },
           order === LogsSortOrder.Descending ? -1 : 1
         );
@@ -316,8 +316,8 @@ describe('InfiniteScroll', () => {
 // Regression tests for https://github.com/grafana/grafana/issues/129033 (infinite scroll stopping early).
 describe('InfiniteScroll consecutive loads (regression #129033)', () => {
   // Page 1 sits early in the range so canScrollBottom returns a valid next window.
-  const pageFrom = absoluteRange.from + 2 * SCROLLING_THRESHOLD;
-  const pageTo = absoluteRange.from + 50 * SCROLLING_THRESHOLD;
+  const pageFrom = absoluteRange.from + 2_000;
+  const pageTo = absoluteRange.from + 50_000;
 
   // n log lines spread across [pageFrom, pageTo] (oldest first), a fresh array each call.
   function makeLogs(n: number): LogListModel[] {

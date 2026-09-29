@@ -1,6 +1,6 @@
 import memoizeOne from 'memoize-one';
 
-import { type AbsoluteTimeRange, type LogRowModel, type UrlQueryMap } from '@grafana/data';
+import { type AbsoluteTimeRange, type DataQuery, type LogRowModel, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
@@ -9,6 +9,7 @@ import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
+import { type LokiQuery } from 'app/features/loki-helpers/types';
 import { dispatch } from 'app/store/store';
 
 import { type ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
@@ -155,7 +156,41 @@ function getPreviousLog(row: LogRowModel, allLogs: LogRowModel[]): LogRowModel |
   return null;
 }
 
-export function getLogsPermalinkRange(row: LogRowModel, rows: LogRowModel[], absoluteRange: AbsoluteTimeRange) {
+export function getLogsPermalink(
+  row: LogRowModel,
+  rows: LogRowModel[],
+  absoluteRange: AbsoluteTimeRange,
+  queries: Array<DataQuery & Partial<Pick<LokiQuery, 'direction' | 'startNs' | 'endNs'>>> = [],
+  datasourceType?: string
+) {
+  const selectedQuery = queries.find(
+    (query) =>
+      query.refId === row.dataFrame.refId && (query.datasource?.type ?? row.datasourceType ?? datasourceType) === 'loki'
+  );
+  if (row.timeEpochNs && selectedQuery) {
+    const forward = selectedQuery.direction === 'forward';
+    const endNs = BigInt(row.timeEpochNs) + BigInt(1);
+    // Loki parses bounds as signed int64; its exclusive end must still be representable.
+    const maxInt64Ns = BigInt('9223372036854775807');
+    if (forward || endNs <= maxInt64Ns) {
+      return {
+        range: {
+          from: new Date(forward ? row.timeEpochMs : Math.min(absoluteRange.from, row.timeEpochMs)).toISOString(),
+          to: new Date(forward ? Math.max(absoluteRange.to, row.timeEpochMs + 1) : row.timeEpochMs + 1).toISOString(),
+        },
+        queries: queries.map((query) => {
+          if (query !== selectedQuery) {
+            return query;
+          }
+          const { startNs: _startNs, endNs: _endNs, ...withoutBounds } = query;
+          return forward
+            ? { ...withoutBounds, startNs: row.timeEpochNs }
+            : { ...withoutBounds, endNs: endNs.toString() };
+        }),
+      };
+    }
+  }
+
   // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
   // Look for the previous sibling log, and use its timestamp
   const allLogs = rows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
@@ -165,14 +200,20 @@ export function getLogsPermalinkRange(row: LogRowModel, rows: LogRowModel[], abs
     // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
     // This only happens when you scroll into the future and you want to share the first log of the list
     return {
-      from: new Date(absoluteRange.from).toISOString(),
-      // Slide 1ms otherwise it's very likely to be omitted in the results
-      to: new Date(row.timeEpochMs + 1).toISOString(),
+      range: {
+        from: new Date(absoluteRange.from).toISOString(),
+        // Slide 1ms otherwise it's very likely to be omitted in the results
+        to: new Date(row.timeEpochMs + 1).toISOString(),
+      },
+      queries,
     };
   }
 
   return {
-    from: new Date(absoluteRange.from).toISOString(),
-    to: new Date(prevLog ? prevLog.timeEpochMs : absoluteRange.to).toISOString(),
+    range: {
+      from: new Date(absoluteRange.from).toISOString(),
+      to: new Date(prevLog ? prevLog.timeEpochMs : absoluteRange.to).toISOString(),
+    },
+    queries,
   };
 }

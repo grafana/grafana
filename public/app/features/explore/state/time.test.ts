@@ -7,6 +7,7 @@ import { type ExploreItemState } from 'app/types/explore';
 
 import { createDefaultInitialState } from './testHelpers';
 import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime } from './time';
+import { makeExplorePaneState } from './utils';
 
 const mockTimeSrv = {
   init: jest.fn(),
@@ -65,6 +66,24 @@ describe('Explore item reducer', () => {
   });
 
   describe('changing range', () => {
+    it('expires Loki bounds when the range changes and retains them on refresh', () => {
+      const range = { from: dateTime(1000), to: dateTime(2000), raw: { from: dateTime(1000), to: dateTime(2000) } };
+      const query = { refId: 'A', datasource: { type: 'loki', uid: 'loki' }, endNs: '1500000124' };
+      const other = { refId: 'B', datasource: { type: 'other', uid: 'other' }, endNs: 'preserve' };
+      const state = makeExplorePaneState({ range, queries: [query, other] });
+      const refresh = changeRangeAction({ exploreId: 'left', range, absoluteRange: { from: 1000, to: 2000 } });
+      expect(timeReducer(state, refresh).queries).toEqual([query, other]);
+      const changed = changeRangeAction({
+        exploreId: 'left',
+        range: { ...range, to: dateTime(3000) },
+        absoluteRange: { from: 1000, to: 3000 },
+      });
+      expect(timeReducer(state, changed).queries).toEqual([
+        { refId: 'A', datasource: { type: 'loki', uid: 'loki' } },
+        other,
+      ]);
+      expect(state.queries).toEqual([query, other]);
+    });
     describe('when changeRangeAction is dispatched', () => {
       it('then it should set correct state', () => {
         const expectedFrom = dateTime('2019-01-01');

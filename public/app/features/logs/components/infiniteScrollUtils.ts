@@ -9,8 +9,6 @@ export enum ScrollDirection {
   NoScroll = 0,
 }
 
-export const SCROLLING_THRESHOLD = 1e3;
-
 export function shouldLoadMore(
   event: Event | WheelEvent,
   lastEvent: Event | WheelEvent | null,
@@ -134,11 +132,11 @@ export function canScrollTop(
 ): LogsNanoSecondTimeRange | undefined {
   if (sortOrder === LogsSortOrder.Descending) {
     currentRange = updateCurrentRange(currentRange, timeZone);
-    const canScroll = currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
+    const canScroll = BigInt(visibleRange.newestNs) + BigInt(1) < BigInt(currentRange.to.valueOf()) * BigInt(1_000_000);
     return canScroll ? getNextRange(visibleRange, currentRange, timeZone) : undefined;
   }
 
-  const canScroll = Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
+  const canScroll = BigInt(visibleRange.oldestNs) > BigInt(currentRange.from.valueOf()) * BigInt(1_000_000);
   return canScroll ? getPrevRange(visibleRange, currentRange) : undefined;
 }
 
@@ -149,11 +147,11 @@ export function canScrollBottom(
   sortOrder: LogsSortOrder
 ): LogsNanoSecondTimeRange | undefined {
   if (sortOrder === LogsSortOrder.Descending) {
-    const canScroll = Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
+    const canScroll = BigInt(visibleRange.oldestNs) > BigInt(currentRange.from.valueOf()) * BigInt(1_000_000);
     return canScroll ? getPrevRange(visibleRange, currentRange) : undefined;
   }
   currentRange = updateCurrentRange(currentRange, timeZone);
-  const canScroll = currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
+  const canScroll = BigInt(visibleRange.newestNs) + BigInt(1) < BigInt(currentRange.to.valueOf()) * BigInt(1_000_000);
   return canScroll ? getNextRange(visibleRange, currentRange, timeZone) : undefined;
 }
 
@@ -184,22 +182,25 @@ function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
 }
 
 /** Copies the single nanosecond bound onto a Loki query. Other datasources are unchanged. */
-export function withLokiNsBound<T extends DataQuery & { supportingQueryType?: string }>(
+export function withLokiNsBound<
+  T extends DataQuery & { supportingQueryType?: string; startNs?: string; endNs?: string },
+>(
   query: T,
   nanoSecondTimeRange: LogsNanoSecondTimeRange,
   datasourceType?: string
-): T & { startNs?: string; endNs?: string } {
+): Omit<T, 'startNs' | 'endNs'> & { startNs?: string; endNs?: string } {
   const configured = query.datasource;
   const configuredType =
     configured && typeof configured === 'object' && 'type' in configured ? configured.type : undefined;
   if ((typeof configuredType === 'string' ? configuredType : datasourceType) !== 'loki') {
     return query;
   }
+  const { startNs: _startNs, endNs: _endNs, ...withoutBounds } = query;
   if (nanoSecondTimeRange.endNs !== undefined) {
-    return { ...query, endNs: nanoSecondTimeRange.endNs };
+    return { ...withoutBounds, endNs: nanoSecondTimeRange.endNs };
   }
   if (nanoSecondTimeRange.startNs !== undefined) {
-    return { ...query, startNs: nanoSecondTimeRange.startNs };
+    return { ...withoutBounds, startNs: nanoSecondTimeRange.startNs };
   }
   return query;
 }

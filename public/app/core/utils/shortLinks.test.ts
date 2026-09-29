@@ -3,6 +3,7 @@ import { config, locationService } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
+import { LokiQueryDirection } from 'app/features/loki-helpers/types';
 
 import { type ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
@@ -12,7 +13,7 @@ import {
   createShortLink,
   createAndCopyShortLink,
   createDashboardShareUrl,
-  getLogsPermalinkRange,
+  getLogsPermalink,
   buildShortUrl,
 } from './shortLinks';
 
@@ -266,7 +267,71 @@ describe('createDashboardShareUrl', () => {
   });
 });
 
-describe('getLogsPermalinkRange', () => {
+describe('getLogsPermalink', () => {
+  it.each([
+    [
+      LokiQueryDirection.Backward,
+      '2023-11-14T22:13:19.000Z',
+      '2023-11-14T22:13:20.001Z',
+      { endNs: '1700000000000000124' },
+    ],
+    [
+      LokiQueryDirection.Forward,
+      '2023-11-14T22:13:20.000Z',
+      '2023-11-14T22:13:21.000Z',
+      { startNs: '1700000000000000123' },
+    ],
+  ])('anchors a %s link and replaces bounds only on the selected query', (direction, from, to, bounds) => {
+    const row = createLogRow({ timeEpochMs: 1700000000000, timeEpochNs: '1700000000000000123' });
+    row.dataFrame.refId = 'A';
+    const query = { refId: 'A', direction, datasource: { type: 'loki', uid: 'loki' } };
+    const other = { refId: 'B', datasource: { type: 'loki', uid: 'loki' } };
+    const result = getLogsPermalink(row, [row], { from: 1699999999000, to: 1700000001000 }, [
+      { ...query, startNs: '1', endNs: '2' },
+      other,
+    ]);
+    expect(result).toEqual({ range: { from, to }, queries: [{ ...query, ...bounds }, other] });
+  });
+
+  it('keeps the selected row inside the range after scrolling beyond either original boundary', () => {
+    const row = createLogRow({ timeEpochMs: 1700000000000, timeEpochNs: '1700000000000000123' });
+    row.dataFrame.refId = 'A';
+    const query = { refId: 'A', datasource: { type: 'loki', uid: 'loki' } };
+    expect(getLogsPermalink(row, [row], { from: 1700000001000, to: 1700000002000 }, [query]).range).toEqual({
+      from: '2023-11-14T22:13:20.000Z',
+      to: '2023-11-14T22:13:20.001Z',
+    });
+    expect(
+      getLogsPermalink(row, [row], { from: 1699999998000, to: 1699999999000 }, [
+        { ...query, direction: LokiQueryDirection.Forward },
+      ]).range
+    ).toEqual({
+      from: '2023-11-14T22:13:20.000Z',
+      to: '2023-11-14T22:13:20.001Z',
+    });
+  });
+
+  it('preserves the millisecond link for other datasources and rows without nanoseconds', () => {
+    const row = createLogRow({ timeEpochMs: 1700000000000, timeEpochNs: '' });
+    row.dataFrame.refId = 'A';
+    const range = { from: 1699999999000, to: 1700000001000 };
+    const query = { refId: 'A', datasource: { type: 'loki', uid: 'loki' } };
+    expect(getLogsPermalink(row, [row], range, [query])).toEqual({
+      range: { from: '2023-11-14T22:13:19.000Z', to: '2023-11-14T22:13:21.000Z' },
+      queries: [query],
+    });
+    const other = { ...query, datasource: { type: 'elasticsearch', uid: 'other' } };
+    expect(getLogsPermalink({ ...row, timeEpochNs: '1700000000000000123' }, [], range, [other]).queries).toEqual([
+      other,
+    ]);
+  });
+
+  it('does not send an exclusive nanosecond end that overflows int64', () => {
+    const row = createLogRow({ timeEpochMs: 9223372036854, timeEpochNs: '9223372036854775807' });
+    row.dataFrame.refId = 'A';
+    const query = { refId: 'A', datasource: { type: 'loki', uid: 'loki' } };
+    expect(getLogsPermalink(row, [row], { from: 9223372036000, to: 9223372036855 }, [query]).queries).toEqual([query]);
+  });
   let row: LogRowModel, rows: LogRowModel[];
   beforeEach(() => {
     row = createLogRow({
@@ -285,7 +350,7 @@ describe('getLogsPermalinkRange', () => {
       from: 1111111111111,
       to: 1111114444444,
     };
-    expect(getLogsPermalinkRange(row, rows, range)).toEqual({
+    expect(getLogsPermalink(row, rows, range).range).toEqual({
       from: '2005-03-18T01:58:31.111Z',
       to: '2005-03-18T02:35:33.333Z',
     });
@@ -296,7 +361,7 @@ describe('getLogsPermalinkRange', () => {
       from: 1111111111110,
       to: 1111111111111,
     };
-    expect(getLogsPermalinkRange(row, [row], range)).toEqual({
+    expect(getLogsPermalink(row, [row], range).range).toEqual({
       from: '2005-03-18T01:58:31.110Z',
       to: '2005-03-18T02:17:02.223Z',
     });

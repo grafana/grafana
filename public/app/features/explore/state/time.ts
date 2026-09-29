@@ -23,6 +23,7 @@ import {
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { type LogsNanoSecondTimeRange } from 'app/features/logs/components/infiniteScrollUtils';
 import { sortLogsResult } from 'app/features/logs/utils';
+import { type LokiQuery } from 'app/features/loki-helpers/types';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { type ExploreItemState } from 'app/types/explore';
 import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
@@ -265,8 +266,25 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
 
   if (changeRangeAction.match(action)) {
     const { range, absoluteRange } = action.payload;
+    const rangeChanged =
+      state.range &&
+      (range.from.valueOf() !== state.range.from.valueOf() || range.to.valueOf() !== state.range.to.valueOf());
+    const queries = rangeChanged
+      ? state.queries.map((query) => {
+          if ((query.datasource?.type ?? state.datasourceInstance?.type) !== 'loki') {
+            return query;
+          }
+          const {
+            startNs: _startNs,
+            endNs: _endNs,
+            ...withoutBounds
+          }: typeof query & Pick<LokiQuery, 'startNs' | 'endNs'> = query;
+          return withoutBounds;
+        })
+      : state.queries;
     return {
       ...state,
+      queries,
       range,
       absoluteRange,
     };

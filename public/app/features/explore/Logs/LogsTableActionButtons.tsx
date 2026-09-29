@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ClipboardButton, type CustomCellRendererProps, IconButton, Modal, useTheme2 } from '@grafana/ui';
-import { getLogsPermalinkRange } from 'app/core/utils/shortLinks';
+import { getLogsPermalink } from 'app/core/utils/shortLinks';
 import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSync/external.utils';
 import { type LogsFrame, DATAPLANE_ID_NAME } from 'app/features/logs/logsFrame';
 import { getState } from 'app/store/store';
@@ -78,7 +78,10 @@ export const LogsTableActionButtons = memo((props: Props) => {
       };
 
       // Calculate the time range for the permalink
-      urlState.range = getLogsPermalinkRange(logRow, logRows, absoluteRange);
+      Object.assign(
+        urlState,
+        getLogsPermalink(logRow, logRows, absoluteRange, urlState.queries, currentPaneState.datasourceInstance?.type)
+      );
 
       // Create the full URL with selectedLine as a URL parameter (with id and row)
       const serializedState = serializeStateToUrlParam(urlState);

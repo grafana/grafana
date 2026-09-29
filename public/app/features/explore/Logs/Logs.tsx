@@ -48,7 +48,7 @@ import {
   type Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
+import { createAndCopyShortLink, getLogsPermalink } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, type LogListOptions } from 'app/features/logs/components/panel/LogList';
@@ -537,7 +537,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           sortOrder: logsSortOrder,
         },
       };
-      urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
+      Object.assign(urlState, getLogsPermalink(row, logRows, absoluteRange, urlState.queries, props.datasourceType));
 
       // append changed urlState to baseUrl
       const serializedState = serializeStateToUrlParam(urlState);
@@ -551,7 +551,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         logRowLevel: row.logLevel,
       });
     },
-    [absoluteRange, displayedFields, exploreId, logRows, logsSortOrder, panelState, visualisationType]
+    [
+      absoluteRange,
+      displayedFields,
+      exploreId,
+      logRows,
+      logsSortOrder,
+      panelState,
+      props.datasourceType,
+      visualisationType,
+    ]
   );
 
   const onTablePermalinkClick: BuildLinkToLogLine = useCallback(
@@ -580,6 +589,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         from: toUtc(props.range.from).valueOf().toString(),
         to: toUtc(props.range.to).valueOf().toString(),
       };
+      const row = logRows.find((row) => row.rowId === logId);
+      if (row) {
+        Object.assign(urlState, getLogsPermalink(row, logRows, absoluteRange, urlState.queries, props.datasourceType));
+      }
 
       // append changed urlState to baseUrl
       const serializedState = serializeStateToUrlParam(urlState);
@@ -594,7 +607,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
       return url;
     },
-    [displayedFields, exploreId, logsSortOrder, panelState, props.range.from, props.range.to, visualisationType]
+    [
+      absoluteRange,
+      displayedFields,
+      exploreId,
+      logRows,
+      logsSortOrder,
+      panelState,
+      props.datasourceType,
+      props.range.from,
+      props.range.to,
+      visualisationType,
+    ]
   );
 
   const onPinToContentOutlineClick = useCallback(

@@ -41,7 +41,7 @@ describe('canScrollBottom', () => {
     expect(canScrollBottom(getVisibleRange(rows), currentRange, timeZone, LogsSortOrder.Ascending)).toEqual({
       from: 40_000,
       to: 100_000,
-      startNs: '40000000000',
+      startNs: '40000000001',
     });
   });
 });
@@ -51,7 +51,7 @@ describe('canScrollTop', () => {
     expect(canScrollTop(getVisibleRange(rows), currentRange, timeZone, LogsSortOrder.Descending)).toEqual({
       from: 40_000,
       to: 100_000,
-      startNs: '40000000000',
+      startNs: '40000000001',
     });
   });
 
@@ -64,7 +64,37 @@ describe('canScrollTop', () => {
   });
 });
 
+describe('scrolling within one millisecond', () => {
+  const range = rangeUtil.convertRawToRange({ from: dateTime(20_000), to: dateTime(20_001) });
+  const visible = { from: 20_000, to: 20_000, oldestNs: '20000000010', newestNs: '20000000050' };
+
+  it.each([LogsSortOrder.Ascending, LogsSortOrder.Descending])('loads remaining logs in %s order', (order) => {
+    const older = { from: 20_000, to: 20_000, endNs: '20000000010' };
+    const newer = { from: 20_000, to: 20_001, startNs: '20000000051' };
+    expect(canScrollTop(visible, range, timeZone, order)).toEqual(order === LogsSortOrder.Ascending ? older : newer);
+    expect(canScrollBottom(visible, range, timeZone, order)).toEqual(order === LogsSortOrder.Ascending ? newer : older);
+  });
+
+  it.each([LogsSortOrder.Ascending, LogsSortOrder.Descending])('stops at the exact bounds in %s order', (order) => {
+    const complete = { ...visible, oldestNs: '20000000000', newestNs: '20000999999' };
+    expect(canScrollTop(complete, range, timeZone, order)).toBeUndefined();
+    expect(canScrollBottom(complete, range, timeZone, order)).toBeUndefined();
+  });
+});
+
 describe('withLokiNsBound', () => {
+  it.each([
+    [{ startNs: '1500000125' }, { startNs: '1500000125' }],
+    [{ endNs: '1500000100' }, { endNs: '1500000100' }],
+  ])('replaces shared bounds when paginating in either direction: %j', (bound, expected) => {
+    expect(
+      withLokiNsBound(
+        { refId: 'A', startNs: '1000000000', endNs: '1500000124' },
+        { from: 1000, to: 2000, ...bound },
+        'loki'
+      )
+    ).toEqual({ refId: 'A', ...expected });
+  });
   const lokiQuery: DataQuery = { refId: 'A', datasource: { type: 'loki', uid: 'loki' } };
 
   it('copies endNs onto a Loki query and omits startNs', () => {
