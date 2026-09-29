@@ -201,7 +201,7 @@ func (c *cohortResolver) resolve(ctx context.Context, namespace string) cohortSn
 }
 
 func (c *cohortResolver) get(ctx context.Context, path string, dst any) error {
-	token, err := os.ReadFile(c.config.TokenFile)
+	token, err := os.ReadFile(c.config.TokenFile) //nolint:gosec // The path is operator configuration, not request input.
 	if err != nil {
 		return errors.New("cannot read GCOM token file")
 	}
@@ -211,12 +211,13 @@ func (c *cohortResolver) get(ctx context.Context, path string, dst any) error {
 	}
 	u := *c.baseURL
 	u.Path = strings.TrimRight(u.Path, "/") + path
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	// The base URL is validated at startup and path segments are canonical numeric IDs.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil) //nolint:gosec
 	if err != nil {
 		return errors.New("invalid GCOM request")
 	}
 	req.Header.Set("Authorization", "Bearer "+bearer)
-	resp, err := c.client.Do(req)
+	resp, err := c.client.Do(req) //nolint:gosec // See above; redirects are disabled.
 	if err != nil {
 		return errors.New("GCOM request failed")
 	}

@@ -66,7 +66,7 @@ func TestCohortEnrichmentServingBoundary(t *testing.T) {
 	now := time.Now()
 	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer test-token" {
-			http.Error(w, "unauthorized", 401)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 		calls.Add(1)
@@ -129,7 +129,7 @@ func TestCohortCacheRefreshFailureAndRecovery(t *testing.T) {
 	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
 		if fail.Load() {
-			http.Error(w, "unavailable", 503)
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
 			return
 		}
 		cohortResponse(w, r, now)
@@ -243,7 +243,7 @@ func TestCohortRealGOFF(t *testing.T) {
 	resolver := cohortTestResolver(t, func(w http.ResponseWriter, r *http.Request) {
 		switch mode.Load() {
 		case -1:
-			http.Error(w, "unavailable", 503)
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
 			return
 		case 0:
 			if r.URL.Path == "/growth/cohorts/10" {
