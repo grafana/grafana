@@ -162,30 +162,6 @@ func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int6
 }
 
 // TEST-ONLY: declared in api.RuleStore and implemented by the fake, but no production caller.
-// IncreaseVersionForAllRulesInNamespaces Increases version for all rules that have specified namespace. Returns all rules that belong to the namespaces
-func (st RuleStore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, orgID int64, namespaceUIDs []string) ([]ngmodels.AlertRuleKeyWithVersion, error) {
-	var keys []ngmodels.AlertRuleKeyWithVersion
-	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		now := timeNow()
-		namespaceUIDsArgs, in := getINSubQueryArgs(namespaceUIDs)
-		sql := fmt.Sprintf(
-			"UPDATE alert_rule SET version = version + 1, updated = ? WHERE org_id = ? AND namespace_uid IN (%s)",
-			strings.Join(in, ","),
-		)
-		args := make([]interface{}, 0, 3+len(namespaceUIDsArgs))
-		args = append(args, sql, now, orgID)
-		args = append(args, namespaceUIDsArgs...)
-
-		_, err := sess.Exec(args...)
-		if err != nil {
-			return err
-		}
-
-		return sess.Table(alertRule{}).Where("org_id = ?", orgID).In("namespace_uid", namespaceUIDs).Find(&keys)
-	})
-	return keys, err
-}
-
 // getFolderFullpaths fetches fullpaths for multiple folders using the Grafana service identity.
 // Returns a map of folder UID -> fullpath, or nil if FolderService is not configured.
 func (st RuleStore) getFolderFullpaths(ctx context.Context, orgID int64, folderUIDs []string) (map[string]string, error) {

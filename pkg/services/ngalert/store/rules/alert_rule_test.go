@@ -1821,54 +1821,6 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 	})
 }
 
-func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
-	tutil.SkipIntegrationTestInShortMode(t)
-
-	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
-	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
-	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
-	orgID := int64(1)
-	gen := models.RuleGen
-	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval)).With(gen.WithOrgID(orgID))
-
-	alertRules := make([]*models.AlertRule, 0, 5)
-	for range 5 {
-		alertRules = append(alertRules, createRule(t, store, gen))
-	}
-	alertRuleNamespaceUIDs := make([]string, 0, len(alertRules))
-	for _, rule := range alertRules {
-		alertRuleNamespaceUIDs = append(alertRuleNamespaceUIDs, rule.NamespaceUID)
-	}
-	alertRuleInAnotherNamespace := createRule(t, store, gen)
-
-	requireAlertRuleVersion := func(t *testing.T, ruleID int64, orgID int64, expectedVersion int64) {
-		t.Helper()
-		dbrule := &alertRule{}
-		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(alertRule{}).ID(ruleID).Get(dbrule)
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", ruleID))
-			return err
-		})
-		require.NoError(t, err)
-		require.Equal(t, expectedVersion, dbrule.Version)
-	}
-
-	t.Run("should increase version for all rules", func(t *testing.T) {
-		_, err := store.IncreaseVersionForAllRulesInNamespaces(context.Background(), orgID, alertRuleNamespaceUIDs)
-		require.NoError(t, err)
-
-		for _, rule := range alertRules {
-			requireAlertRuleVersion(t, rule.ID, orgID, rule.Version+1)
-		}
-
-		// this rule's version should not be changed
-		requireAlertRuleVersion(t, alertRuleInAnotherNamespace.ID, orgID, alertRuleInAnotherNamespace.Version)
-	})
-}
-
 func TestIntegrationGetRuleVersions(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 

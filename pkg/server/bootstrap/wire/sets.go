@@ -501,7 +501,7 @@ var Server = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
-	wire.Bind(new(cleanup.AlertRuleService), new(*ngrules.RuleStore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrules.RuleStore)),
 	// Server only — builds the kvlease-backed Elector for the embedded zanzana
 	// reconciler. CLI/test sets bind Elector to NewDefaultElector instead, so
 	// the unified-storage KV is never opened from grafana-cli.
@@ -542,7 +542,7 @@ var Test = wire.NewSet(
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
-	wire.Bind(new(cleanup.AlertRuleService), new(*ngrules.RuleStore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrules.RuleStore)),
 	// Tests get a default elector — none of the integration tests today need to
 	// exercise real leader election.
 	leaderelection.NewDefaultElector,

@@ -77,8 +77,6 @@ type RuleWriter interface {
 // RuleAdminWriter purges the trash and applies bulk fix-ups after a folder move or rename.
 type RuleAdminWriter interface {
 	DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error)
-	// IncreaseVersionForAllRulesInNamespaces Increases version for all rules that have specified namespace uids
-	IncreaseVersionForAllRulesInNamespaces(ctx context.Context, orgID int64, namespaceUIDs []string) ([]ngmodels.AlertRuleKeyWithVersion, error)
 	// UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules in the specified folders
 	UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error
 }
@@ -104,11 +102,14 @@ type ContactPointRoutingReader interface {
 	ListContactPointRoutings(ctx context.Context, q ngmodels.ListContactPointRoutingsQuery) (map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, error)
 }
 
-// NotificationSettingsStore updates the notification settings embedded in rules.
-type NotificationSettingsStore interface {
+// ReceiverRenamer repoints rules' notification settings at a renamed receiver.
+type ReceiverRenamer interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error)
+}
+
+// TimeIntervalRenamer repoints rules' notification settings at a renamed time interval.
+type TimeIntervalRenamer interface {
 	RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error)
-	ContactPointRoutingReader
 }
 
 // StatusWriter persists the k8s status subresource of a rule.
@@ -120,13 +121,6 @@ type StatusWriter interface {
 type FolderRuleCounter interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetAllFoldersWithRules(ctx context.Context, orgID int64) (map[string]struct{}, error)
-}
-
-// FolderRegistryStore lets the folder service count and delete rules in folders.
-type FolderRegistryStore interface {
-	DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error
-	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
-	Kind() string
 }
 
 // MaintenanceStore cleans up soft-deleted rules.
@@ -147,9 +141,11 @@ type Store interface {
 	RuleVersionReader
 	RuleVersionFolderReader
 	SchedulableRuleReader
-	NotificationSettingsStore
+	ReceiverRenamer
+	TimeIntervalRenamer
+	ContactPointRoutingReader
 	StatusWriter
-	FolderRegistryStore
+	folder.RegistryService
 	FolderRuleCounter
 	MaintenanceStore
 }
