@@ -307,7 +307,7 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
 		req.Header.Del(proxyutil.IDHeaderName)
 		if requester, err := identity.GetRequester(ctx); err == nil {
-			proxyutil.ApplyForwardIDHeader(req.Context(), req, requester, nil)
+			proxyutil.ApplyForwardIDHeader(req.Context(), req, requester, b.idTokenDeriver)
 		}
 		// The header above is the contract for a route handler that reads
 		// X-Grafana-Id itself; this is the separate channel a BuildKubeConfig
