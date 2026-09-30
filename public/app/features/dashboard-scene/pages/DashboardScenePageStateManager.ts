@@ -552,10 +552,12 @@ abstract class DashboardScenePageStateManagerBase<T>
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
 
-    if (scene) {
+    if (scene && !isRenderTarget(options.route)) {
       // Writes ?viewFilter= into the URL if the viewer has a stored default for this dashboard
       // and the URL doesn't already name one -- see applyDefaultSavedViewToUrl's own comment for
       // why this happens before the scene mounts rather than applying the view's state directly.
+      // Gated on !isRenderTarget: a scheduled report or embedded render has its own fixed
+      // parameters, which the viewer's personal default must never silently substitute.
       await applyDefaultSavedViewToUrl(scene);
     }
 
