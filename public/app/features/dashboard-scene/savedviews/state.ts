@@ -3,7 +3,9 @@ import { AdHocFiltersVariable, MultiValueVariable, type SceneVariable, type Scen
 
 import { resolveLayoutPath } from '../mutation-api/commands/layoutPathResolver';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { type RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { type TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
@@ -69,6 +71,7 @@ function captureVariable(variable: SceneVariable): SavedViewVariable | undefined
 interface SectionVariableScope {
   sectionKind: 'tab' | 'row';
   sectionKey: string;
+  sectionTitle: string | undefined;
   variables: SceneVariable[];
 }
 
@@ -86,7 +89,7 @@ function collectSectionVariableScopes(layout: DashboardLayoutManager, pathSoFar:
       const path = pathSoFar === '/' ? `/rows/${i}` : `${pathSoFar}/rows/${i}`;
       const variables = row.state.$variables?.state.variables;
       if (variables && variables.length > 0) {
-        scopes.push({ sectionKind: 'row', sectionKey: path, variables });
+        scopes.push({ sectionKind: 'row', sectionKey: path, sectionTitle: row.state.title, variables });
       }
       scopes.push(...collectSectionVariableScopes(row.state.layout, path));
     });
@@ -95,7 +98,7 @@ function collectSectionVariableScopes(layout: DashboardLayoutManager, pathSoFar:
       const path = pathSoFar === '/' ? `/tabs/${i}` : `${pathSoFar}/tabs/${i}`;
       const variables = tab.state.$variables?.state.variables;
       if (variables && variables.length > 0) {
-        scopes.push({ sectionKind: 'tab', sectionKey: path, variables });
+        scopes.push({ sectionKind: 'tab', sectionKey: path, sectionTitle: tab.state.title, variables });
       }
       scopes.push(...collectSectionVariableScopes(tab.state.layout, path));
     });
@@ -113,9 +116,10 @@ function collectSectionVariableScopes(layout: DashboardLayoutManager, pathSoFar:
  */
 function captureSectionFilters(dashboard: DashboardScene): SavedViewSectionFilter[] | undefined {
   const sectionFilters = collectSectionVariableScopes(dashboard.state.body, '/')
-    .map(({ sectionKind, sectionKey, variables }) => ({
+    .map(({ sectionKind, sectionKey, sectionTitle, variables }) => ({
       sectionKind,
       sectionKey,
+      ...(sectionTitle ? { sectionTitle } : {}),
       variables: captureVariables(variables),
     }))
     .filter((section) => section.variables.length > 0);
@@ -130,6 +134,97 @@ export function applySavedViewState(dashboard: DashboardScene, spec: SavedDashbo
     applyVariablesToSet(dashboard.state.$variables, spec.variables);
   }
   applySectionFilters(dashboard, spec.sectionFilters);
+}
+
+/**
+ * The default-aware counterpart to applySavedViewState, for the URL-driven apply path only. A
+ * saved view is meant to be a default an explicit var- or from/to param in the SAME url change
+ * still overrides (e.g. a shared link like "?viewFilter=view-1&from=now-15m") -- but $timeRange's and
+ * every variable's own updateFromUrl already ran synchronously, in the same pass, by the time the
+ * caller's deferred applySavedViewState would normally run, so a blind full apply would clobber
+ * whatever they just set. `before` is a captureSavedViewState snapshot taken synchronously, BEFORE
+ * those sibling handlers ran; this re-captures the CURRENT state (`after`) and, field by field
+ * (time range's from/to/timezone independently, each variable by name, each section's variables by
+ * name within that section), applies the saved spec's value only where `before` and `after` are
+ * equal -- i.e. nothing explicit touched it during this pass. Where they differ, the just-applied
+ * explicit value is left alone.
+ */
+export function applySavedViewStateAsDefault(
+  dashboard: DashboardScene,
+  spec: SavedDashboardViewSpec,
+  before: SavedDashboardViewSpec
+): void {
+  const after = captureSavedViewState(dashboard);
+
+  applyTimeRange(dashboard, mergeTimeRangeAsDefault(spec.timeRange, before.timeRange, after.timeRange));
+  if (dashboard.state.$variables) {
+    applyVariablesToSet(
+      dashboard.state.$variables,
+      mergeVariablesAsDefault(spec.variables, before.variables, after.variables)
+    );
+  }
+  applySectionFilters(
+    dashboard,
+    mergeSectionFiltersAsDefault(spec.sectionFilters, before.sectionFilters, after.sectionFilters)
+  );
+}
+
+function mergeTimeRangeAsDefault(
+  spec: SavedViewTimeRange,
+  before: SavedViewTimeRange,
+  after: SavedViewTimeRange
+): SavedViewTimeRange {
+  // from/to/timezone are independent url keys (SceneTimeRange.updateFromUrl applies each on its
+  // own), so a link with only ?from= leaves `to` untouched -- merging as one atomic unit would see
+  // "timeRange differs" and wrongly skip the saved to as well.
+  const timezone = (before.timezone ?? '') === (after.timezone ?? '') ? spec.timezone : after.timezone;
+  return {
+    from: before.from === after.from ? spec.from : after.from,
+    to: before.to === after.to ? spec.to : after.to,
+    ...(timezone ? { timezone } : {}),
+  };
+}
+
+function mergeVariablesAsDefault(
+  spec: SavedViewVariable[],
+  before: SavedViewVariable[],
+  after: SavedViewVariable[]
+): SavedViewVariable[] {
+  const beforeByName = new Map(before.map((v) => [v.name, v]));
+  const afterByName = new Map(after.map((v) => [v.name, v]));
+  // A saved variable absent from BOTH before and after (deleted/renamed since the view was saved,
+  // or an unsupported type captureVariable already skips) has nothing to compare, so it's treated
+  // as untouched and passed through -- applyVariablesToSet's own getByName lookup already no-ops
+  // harmlessly when the target doesn't exist live.
+  return spec.filter((saved) => variableEqual(beforeByName.get(saved.name), afterByName.get(saved.name)));
+}
+
+function mergeSectionFiltersAsDefault(
+  spec: SavedViewSectionFilter[] | undefined,
+  before: SavedViewSectionFilter[] | undefined,
+  after: SavedViewSectionFilter[] | undefined
+): SavedViewSectionFilter[] | undefined {
+  if (!spec) {
+    return undefined;
+  }
+  const beforeByKey = new Map((before ?? []).map((s) => [s.sectionKey, s]));
+  const afterByKey = new Map((after ?? []).map((s) => [s.sectionKey, s]));
+
+  // Only ever iterates spec's own sections, never before/after's -- a section present live but
+  // absent from spec is never touched, matching applySectionFilters' own "absence in spec ⇒ no
+  // effect" behavior.
+  const merged = spec
+    .map((section) => {
+      const variables = mergeVariablesAsDefault(
+        section.variables,
+        beforeByKey.get(section.sectionKey)?.variables ?? [],
+        afterByKey.get(section.sectionKey)?.variables ?? []
+      );
+      return variables.length > 0 ? { ...section, variables } : undefined;
+    })
+    .filter((s): s is SavedViewSectionFilter => s !== undefined);
+
+  return merged.length > 0 ? merged : undefined;
 }
 
 function applyTimeRange(dashboard: DashboardScene, timeRange: SavedViewTimeRange): void {
@@ -168,7 +263,12 @@ function applyVariablesToSet(variableSet: SceneVariables, variables: SavedViewVa
 
 function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
   if (target instanceof AdHocFiltersVariable && saved.filters) {
-    target.setState({ filters: saved.filters });
+    // updateFilters, not a raw setState: it also publishes SceneVariableValueChangedEvent when the
+    // filter expression/groupBy actually changed, which is what dependent panels/repeats/
+    // interpolated content listen for. A raw setState updates the filter-chip UI (reads
+    // state.filters directly) but leaves dependents silently showing data from the previous
+    // filters until an unrelated refresh.
+    target.updateFilters(saved.filters);
     return;
   }
   if (target instanceof MultiValueVariable && saved.value !== undefined) {
@@ -181,6 +281,13 @@ function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
  * longer resolves (the dashboard's tabs/rows changed since the view was saved) or a section with no
  * variable set of its own is skipped, not an error — same "unknown target is a no-op" philosophy as
  * applyVariablesToSet.
+ *
+ * sectionKey is a structural index path (e.g. "/tabs/0"): reordering, inserting, or deleting
+ * tabs/rows can leave it resolving successfully but to a DIFFERENT section than the one captured.
+ * sectionTitle is a lightweight identity check against exactly that — if the resolved section's
+ * title doesn't match what was captured, this is treated the same as a failed resolution (skipped,
+ * not applied to the wrong section). Older saved views without a captured sectionTitle (title
+ * undefined) skip the check entirely, applying unconditionally as before -- no forced re-save.
  */
 function applySectionFilters(dashboard: DashboardScene, sectionFilters: SavedViewSectionFilter[] | undefined): void {
   if (!sectionFilters) {
@@ -188,14 +295,17 @@ function applySectionFilters(dashboard: DashboardScene, sectionFilters: SavedVie
   }
 
   for (const section of sectionFilters) {
-    let variableSet: SceneVariables | undefined;
+    let item: RowItem | TabItem | undefined;
     try {
-      variableSet = resolveLayoutPath(dashboard.state.body, section.sectionKey).item?.state.$variables;
+      item = resolveLayoutPath(dashboard.state.body, section.sectionKey).item;
     } catch {
       continue;
     }
-    if (variableSet) {
-      applyVariablesToSet(variableSet, section.variables);
+    if (section.sectionTitle !== undefined && item?.state.title !== section.sectionTitle) {
+      continue;
+    }
+    if (item?.state.$variables) {
+      applyVariablesToSet(item.state.$variables, section.variables);
     }
   }
 }
@@ -248,6 +358,6 @@ function sectionFiltersDiffer(
 
 // Both sides come from captureVariable's fixed field order, so a plain JSON comparison is safe here
 // (no risk of the same object serializing differently on either side).
-function variableEqual(a: SavedViewVariable, b: SavedViewVariable): boolean {
+function variableEqual(a: SavedViewVariable | undefined, b: SavedViewVariable | undefined): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }

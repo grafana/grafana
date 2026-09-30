@@ -23,19 +23,23 @@ import { getDefaultSavedView, setDefaultSavedView } from './defaultView';
  *   (Filters, Code, Add panes all fetch/build their content on open, not on dashboard load).
  *
  * Saved Views are additive UI, not required to view or edit the dashboard, so a failure here is
- * logged and swallowed rather than blocking or breaking dashboard load.
+ * logged and swallowed rather than blocking or breaking dashboard load -- but the boolean return
+ * lets `SavedViewsPane` tell "still loading" apart from "failed" (see its own effect), so a
+ * transient failure doesn't leave the pane showing a loading spinner forever with no way to retry.
  */
-export async function loadSavedViews(dashboard: DashboardScene): Promise<void> {
+export async function loadSavedViews(dashboard: DashboardScene): Promise<boolean> {
   const uid = dashboard.state.uid;
   if (!uid) {
-    return;
+    return true;
   }
 
   try {
     const savedViews = await savedDashboardViewsApi.listForDashboard(uid);
     dashboard.setState({ savedViews });
+    return true;
   } catch (err) {
     console.error('Failed to load saved views for dashboard', uid, err);
+    return false;
   }
 }
 

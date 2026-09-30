@@ -163,7 +163,9 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
         )}
         <div className={styles.viewGroup}>
           {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
-          {hasUid && !isEmbedded && <SavedViewsSidebarButton sidebar={sidebar} openPane={openPane} />}
+          {hasUid && !isEmbedded && !meta.isSnapshot && (
+            <SavedViewsSidebarButton sidebar={sidebar} openPane={openPane} />
+          )}
           <Sidebar.Button
             icon="list-ui-alt"
             onClick={() => {

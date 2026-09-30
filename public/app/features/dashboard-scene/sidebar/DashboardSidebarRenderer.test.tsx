@@ -154,6 +154,35 @@ describe('DashboardSidebarRenderer', () => {
     expect(scene.state.sidebar.state.isDocked).toBe(false);
   });
 
+  describe('Saved Views button', () => {
+    function buildTestSceneWithUid(metaOverrides?: Partial<DashboardScene['state']['meta']>) {
+      const scene = buildTestScene();
+      scene.setState({ uid: 'dash-1', meta: { ...scene.state.meta, ...metaOverrides } });
+      return scene;
+    }
+
+    it('shows for a normal dashboard with a uid', async () => {
+      const scene = buildTestSceneWithUid();
+      act(() => activateFullSceneTree(scene));
+      render(<DashboardSidebarSplitter dashboard={scene} />);
+
+      expect(await screen.findByRole('button', { name: 'Views' })).toBeInTheDocument();
+    });
+
+    it('is hidden on a snapshot dashboard', async () => {
+      // Snapshot scenes retain the source dashboard's uid, so hasUid alone doesn't gate this out --
+      // a viewer on a frozen snapshot has no business creating/overwriting/deleting the live
+      // source dashboard's saved views, and an anonymous snapshot recipient has no permission on
+      // that dashboard's saved views at all.
+      const scene = buildTestSceneWithUid({ isSnapshot: true });
+      act(() => activateFullSceneTree(scene));
+      render(<DashboardSidebarSplitter dashboard={scene} />);
+
+      await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton);
+      expect(screen.queryByRole('button', { name: 'Views' })).not.toBeInTheDocument();
+    });
+  });
+
   describe('outline interactions tracking', () => {
     it('should call DashboardInteractions.outlineClicked when clicking on dashboard outline', async () => {
       const user = userEvent.setup();

@@ -30,9 +30,11 @@ saveddashboardviewv0alpha1: {
 }
 
 SavedViewVariable: {
-	name:  string
-	type:  string // "adhoc" | "query" | "custom" | ...
-	value: _
+	name: string
+	type: string // "adhoc" | "query" | "custom" | ...
+	// value is the variable's scalar or multi-value selection (query/custom/datasource variables).
+	// Omitted for ad-hoc variables, which carry their state in filters instead.
+	value?: string | [...string]
 	filters?: [...SavedViewFilter]
 }
 
@@ -45,5 +47,11 @@ SavedViewFilter: {
 SavedViewSectionFilter: {
 	sectionKind: "tab" | "row"
 	sectionKey:  string
+	// sectionTitle is the tab/row's title at capture time, used to sanity-check on apply that the
+	// section resolved at sectionKey still looks like the same one -- layout edits (reordering,
+	// inserting, deleting tabs/rows) can leave sectionKey resolving successfully but to a
+	// different section. Optional for backward compatibility with views saved before this field
+	// existed; those still apply unconditionally, same as before.
+	sectionTitle?: string
 	variables: [...SavedViewVariable]
 }

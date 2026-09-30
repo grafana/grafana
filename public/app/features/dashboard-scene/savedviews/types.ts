@@ -31,6 +31,12 @@ export interface SavedViewSectionFilter {
   sectionKind: 'tab' | 'row';
   /** A layout path (e.g. "/tabs/1", "/rows/0/tabs/2") -- see mutation-api/commands/layoutPathResolver.ts. */
   sectionKey: string;
+  /**
+   * The tab/row's title at capture time, checked on apply to guard against sectionKey resolving
+   * successfully but to a different section after layout edits (reordering, inserting, deleting
+   * tabs/rows). Optional for backward compatibility with views saved before this field existed.
+   */
+  sectionTitle?: string;
   variables: SavedViewVariable[];
 }
 

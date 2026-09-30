@@ -2,13 +2,20 @@
 
 package v0alpha1
 
+import (
+	json "encoding/json"
+	errors "errors"
+)
+
 // +k8s:openapi-gen=true
 type SavedDashboardViewSavedViewVariable struct {
 	Name string `json:"name"`
 	// "adhoc" | "query" | "custom" | ...
-	Type    string                              `json:"type"`
-	Value   interface{}                         `json:"value"`
-	Filters []SavedDashboardViewSavedViewFilter `json:"filters,omitempty"`
+	Type string `json:"type"`
+	// value is the variable's scalar or multi-value selection (query/custom/datasource variables).
+	// Omitted for ad-hoc variables, which carry their state in filters instead.
+	Value   *SavedDashboardViewStringOrArrayOfString `json:"value,omitempty"`
+	Filters []SavedDashboardViewSavedViewFilter      `json:"filters,omitempty"`
 }
 
 // NewSavedDashboardViewSavedViewVariable creates a new SavedDashboardViewSavedViewVariable object.
@@ -42,7 +49,13 @@ func (SavedDashboardViewSavedViewFilter) OpenAPIModelName() string {
 type SavedDashboardViewSavedViewSectionFilter struct {
 	SectionKind SavedDashboardViewSavedViewSectionFilterSectionKind `json:"sectionKind"`
 	SectionKey  string                                              `json:"sectionKey"`
-	Variables   []SavedDashboardViewSavedViewVariable               `json:"variables"`
+	// sectionTitle is the tab/row's title at capture time, used to sanity-check on apply that the
+	// section resolved at sectionKey still looks like the same one -- layout edits (reordering,
+	// inserting, deleting tabs/rows) can leave sectionKey resolving successfully but to a
+	// different section. Optional for backward compatibility with views saved before this field
+	// existed; those still apply unconditionally, same as before.
+	SectionTitle *string                               `json:"sectionTitle,omitempty"`
+	Variables    []SavedDashboardViewSavedViewVariable `json:"variables"`
 }
 
 // NewSavedDashboardViewSavedViewSectionFilter creates a new SavedDashboardViewSavedViewSectionFilter object.
@@ -115,4 +128,64 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for SavedDashboardViewSavedViewSectionFilterSectionKind.
 func (SavedDashboardViewSavedViewSectionFilterSectionKind) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboardviews.pkg.apis.dashboardviews.v0alpha1.SavedDashboardViewSavedViewSectionFilterSectionKind"
+}
+
+// +k8s:openapi-gen=true
+type SavedDashboardViewStringOrArrayOfString struct {
+	String        *string  `json:"String,omitempty"`
+	ArrayOfString []string `json:"ArrayOfString,omitempty"`
+}
+
+// NewSavedDashboardViewStringOrArrayOfString creates a new SavedDashboardViewStringOrArrayOfString object.
+func NewSavedDashboardViewStringOrArrayOfString() *SavedDashboardViewStringOrArrayOfString {
+	return &SavedDashboardViewStringOrArrayOfString{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `SavedDashboardViewStringOrArrayOfString` as JSON.
+func (resource SavedDashboardViewStringOrArrayOfString) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.ArrayOfString != nil {
+		return json.Marshal(resource.ArrayOfString)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `SavedDashboardViewStringOrArrayOfString` from JSON.
+func (resource *SavedDashboardViewStringOrArrayOfString) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// ArrayOfString
+	var ArrayOfString []string
+	if err := json.Unmarshal(raw, &ArrayOfString); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfString = nil
+	} else {
+		resource.ArrayOfString = ArrayOfString
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+// OpenAPIModelName returns the OpenAPI model name for SavedDashboardViewStringOrArrayOfString.
+func (SavedDashboardViewStringOrArrayOfString) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboardviews.pkg.apis.dashboardviews.v0alpha1.SavedDashboardViewStringOrArrayOfString"
 }
