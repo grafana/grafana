@@ -14,6 +14,7 @@ import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
+import { getGrotLoadingGameRoutes } from 'app/features/grot-loading-game/routes';
 import { NOTEBOOK_NEW_URL, NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
@@ -651,6 +652,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')
       ),
     },
+    ...getGrotLoadingGameRoutes(),
     {
       path: '/dashboard/recently-deleted',
       component: SafeDynamicImport(
