@@ -4,7 +4,6 @@ import { act, render, screen } from 'test/test-utils';
 
 import { CoreApp, type Scope, dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { selectors } from '@grafana/e2e-selectors';
 import {
   config,
   HistoryWrapper,
@@ -25,7 +24,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
@@ -35,7 +33,6 @@ import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 
-import { NotebookEmbeddedHost } from './NotebookEmbeddedContext';
 import { NotebookScene } from './NotebookScene';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
@@ -113,12 +110,8 @@ describe('NotebookScene', () => {
     deactivators.splice(0).forEach((deactivate) => deactivate());
   });
 
-  // activate() only propagates to $timeRange/$variables/$data/$behaviors; the pickers are plain
-  // state and are otherwise activated by their renderers. With the controls row hidden nothing
-  // renders the refresh picker, so without an explicit activation its interval never starts and the
-  // spec's autoRefresh silently does nothing.
-  it('activates the refresh picker when the time controls are hidden', () => {
-    const scene = buildScene(true);
+  it.each([true, false])('activates the refresh picker regardless of hideTimeControls (%s)', (hideTimeControls) => {
+    const scene = buildScene(hideTimeControls);
 
     const deactivate = scene.activate();
 
@@ -128,12 +121,16 @@ describe('NotebookScene', () => {
     expect(scene.state.refreshPicker.isActive).toBe(false);
   });
 
-  it('leaves the refresh picker to its renderer when the time controls are shown', () => {
+  it('renders the document only, with no controls row', () => {
     const scene = buildScene(false);
-
     activate(scene);
 
-    expect(scene.state.refreshPicker.isActive).toBe(false);
+    render(<scene.Component model={scene} />);
+
+    expect(screen.getByText('Hello')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Time range selected/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Edit')).not.toBeInTheDocument();
   });
 
   describe('edit mode', () => {
@@ -475,39 +472,6 @@ describe('NotebookScene', () => {
       expect(scene.editHistory.state.canUndo).toBe(true);
     });
 
-    // Awaited because entering edit mode also mounts the header's tag picker, whose dropdown measures
-    // itself once mounted. That lands after the act above, so a synchronous assertion here leaves an
-    // unwrapped update behind and the console guard fails the test.
-    it('offers the history controls only in edit mode', async () => {
-      const scene = buildScene(false);
-      activate(scene);
-      render(<scene.Component model={scene} />);
-
-      expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
-
-      act(() => scene.onEnterEditMode());
-
-      expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument();
-    });
-
-    // The assistant writes without entering edit mode, so gating the status on `isEditing` would hide a
-    // failed save from the only person who could retry it.
-    it('reports a save outside edit mode, where the assistant writes', () => {
-      const scene = buildScene(false);
-      activate(scene);
-      render(<scene.Component model={scene} />);
-
-      expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
-
-      act(() =>
-        scene.autosave.setState({ status: 'error', errorMessage: 'The notebook was changed by someone else.' })
-      );
-
-      expect(scene.state.isEditing).toBeUndefined();
-      expect(screen.getByText('Save failed')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
-    });
-
     it('records history for a body replaced before activation', () => {
       const scene = buildScene(false);
       const replacement = new NotebookLayoutManager({ cells: [] });
@@ -799,61 +763,6 @@ describe('NotebookScene', () => {
       );
 
       expect(scene.state.body.state.title).toBe('Rebuilt');
-    });
-  });
-
-  describe('sticky controls background', () => {
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    function controlsRow() {
-      return screen.getByTestId(selectors.pages.Notebooks.Item.controls);
-    }
-
-    it('matches the page background on the /notebooks route', async () => {
-      await act(async () => {
-        setTestFlags({ 'grafana.visualDesignRefresh': true });
-      });
-      const scene = buildScene(false);
-      activate(scene);
-
-      render(<scene.Component model={scene} />);
-
-      expect(controlsRow()).toHaveStyle({ background: config.theme2.colors.background.page });
-    });
-
-    // Embedded hosts have no <Page> of their own to match, so — unlike the route above — this
-    // ignores the visual-refresh flag and always resolves to the same token.
-    it('falls back to the canvas background when embedded with no host override', async () => {
-      await act(async () => {
-        setTestFlags({ 'grafana.visualDesignRefresh': true });
-      });
-      const scene = buildScene(false);
-      activate(scene);
-
-      render(
-        <NotebookEmbeddedHost>
-          <scene.Component model={scene} />
-        </NotebookEmbeddedHost>
-      );
-
-      expect(controlsRow()).toHaveStyle({ background: config.theme2.colors.background.canvas });
-    });
-
-    it('uses the host-supplied background when embedded with an override', () => {
-      const scene = buildScene(false);
-      activate(scene);
-
-      render(
-        <NotebookEmbeddedHost controlsBackground="rebeccapurple">
-          <scene.Component model={scene} />
-        </NotebookEmbeddedHost>
-      );
-
-      expect(controlsRow()).toHaveStyle({ background: 'rebeccapurple' });
     });
   });
 });

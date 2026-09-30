@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -17,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/warning"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 )
 
@@ -32,7 +32,7 @@ type reviewClient struct {
 	call int
 }
 
-func (c *reviewClient) AdmissionReview(_ context.Context, req *pluginv3.AdmissionReviewRequest, _ ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
+func (c *reviewClient) AdmissionReview(_ context.Context, req *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
 	c.call++
 	c.req = req
 	return c.rsp, c.err
@@ -50,7 +50,7 @@ func allowed(objectBytes []byte, warnings ...string) *pluginv3.AdmissionReviewRe
 	return rsp
 }
 
-func admissionTestStore(client pluginv3.AdmissionServiceClient, mutation, validation []app.AdmissionOperation) *Store {
+func admissionTestStore(client appclientv3.AdmissionClient, mutation, validation []app.AdmissionOperation) *Store {
 	return &Store{
 		gvk:        testAdmissionGVK,
 		admission:  client,
