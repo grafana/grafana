@@ -89,6 +89,21 @@ describe('SavedViewsPane', () => {
     expect(screen.getByText('No saved views yet')).toBeInTheDocument();
   });
 
+  it('shows an error with a retry action when the initial fetch fails, instead of loading forever', async () => {
+    api.listForDashboard.mockRejectedValueOnce(new Error('boom'));
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    renderPane(undefined);
+
+    await screen.findByText('Failed to load saved views.');
+    expect(screen.queryByText(/Loading saved views/i)).not.toBeInTheDocument();
+
+    api.listForDashboard.mockResolvedValueOnce([buildView('view-1', { name: 'My view' })]);
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await screen.findByText('My view');
+    consoleErrorSpy.mockRestore();
+  });
+
   it('selects a view by updating the URL', async () => {
     const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
     renderPane([buildView('view-1', { name: 'My view' })]);
@@ -96,6 +111,20 @@ describe('SavedViewsPane', () => {
     await userEvent.click(screen.getByText('My view'));
 
     expect(partialSpy).toHaveBeenCalledWith({ viewFilter: 'view-1' });
+    partialSpy.mockRestore();
+  });
+
+  it('sets viewFilter synchronously on select, before the url round-trip', async () => {
+    // Part of the double-apply fix: DashboardSceneUrlSync's viewFilter handling only fires when
+    // the url value actually changes, so this synchronous write (done here, ahead of
+    // locationService.partial) is what makes a genuinely-new selection apply exactly once in a
+    // real app where a UrlSyncManager is live, instead of once here plus once more there.
+    const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
+    const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
+
+    await userEvent.click(screen.getByText('My view'));
+
+    expect(scene.state.viewFilter).toBe('view-1');
     partialSpy.mockRestore();
   });
 
