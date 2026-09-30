@@ -89,11 +89,13 @@ func ProvidePluginLoaderDependencies(
 	builderMetrics *builder.BuilderMetrics,
 	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
-	// A missing exchange configuration leaves requests unauthenticated; the
-	// caller's identity is then not propagated to plugins.
-	exchanger, err := v3.NewTokenExchanger(cfg)
+	// A missing or invalid exchange configuration leaves requests
+	// unauthenticated: the caller's identity is not propagated, and plugins
+	// that authenticate reject them rather than trust them.
+	exchanger, err := appplugin.NewClientV3TokenExchanger(cfg)
 	if err != nil {
-		panic(err)
+		logging.DefaultLogger.Error("router: plugin v3 requests will not be authenticated", "err", err)
+		exchanger = nil
 	}
 
 	return PluginLoaderDependencies{
@@ -287,7 +289,8 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	clientV3, err = v3.WithAuthentication(clientV3, b.plugin.JSONData.ID, b.deps.TokenExchanger)
+	clientV3, err = v3.WithAuthentication(clientV3, b.plugin.JSONData.ID,
+		appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.plugin.JSONData.ID, b.deps.TokenExchanger))
 	if err != nil {
 		return nil, err
 	}

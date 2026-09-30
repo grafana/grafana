@@ -1,36 +1,28 @@
 package v3
 
 import (
+	"errors"
 	"fmt"
-	"strings"
 
 	authnlib "github.com/grafana/authlib/authn"
 
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	appgrpcplugin "github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewTokenExchanger returns the exchanger that delegates callers to plugin v3
-// services, from the [plugins] v3_cap_token and v3_token_exchange_url
-// settings. The access policy of that token is what may call plugins on a
-// caller's behalf, so it is configured separately from Grafana's other service
-// credentials. Without both settings it returns nil: requests then carry no
-// credentials, the caller's identity is not propagated, and plugins that
-// authenticate reject them. It never sends the token itself to plugins.
-func NewTokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error) {
-	if cfg == nil {
-		return nil, nil
-	}
-	section := cfg.SectionWithEnvOverrides("plugins")
-	token := strings.TrimSpace(section.Key("v3_cap_token").MustString(""))
-	tokenExchangeURL := strings.TrimSpace(section.Key("v3_token_exchange_url").MustString(""))
+// services, using the access policy token at the token exchange URL. That
+// policy is what may call plugins on a caller's behalf. Without both values it
+// returns nil: requests then carry no credentials, the caller's identity is
+// not propagated, and plugins that authenticate reject them. It never sends
+// the token itself to plugins.
+func NewTokenExchanger(token, tokenExchangeURL string) (authnlib.TokenExchanger, error) {
 	if token == "" && tokenExchangeURL == "" {
 		return nil, nil
 	}
 	if token == "" || tokenExchangeURL == "" {
-		return nil, fmt.Errorf("plugin v3 token exchange: [plugins] v3_cap_token and v3_token_exchange_url must be set together")
+		return nil, errors.New("plugin v3 token exchange: the access policy token and token exchange URL must be set together")
 	}
 
 	exchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{

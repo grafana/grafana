@@ -15,10 +15,9 @@ import (
 
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestNewTokenExchangerConfiguration(t *testing.T) {
+func TestNewTokenExchanger(t *testing.T) {
 	for _, tt := range []struct {
 		name, token, url string
 	}{
@@ -26,42 +25,22 @@ func TestNewTokenExchangerConfiguration(t *testing.T) {
 		{name: "exchange URL only", url: "https://auth.example.com/v1/sign-access-token"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			exchanger, err := NewTokenExchanger(clientV3AuthCfg(tt.token, tt.url))
+			exchanger, err := NewTokenExchanger(tt.token, tt.url)
 			require.ErrorContains(t, err, "must be set together")
 			require.Nil(t, exchanger)
 		})
 	}
 
-	t.Run("does not reuse Grafana's other service credentials", func(t *testing.T) {
-		cfg := clientV3AuthCfg("", "")
-		grpcAuth := cfg.Raw.Section("grpc_client_authentication")
-		grpcAuth.Key("token").SetValue("service-token")
-		grpcAuth.Key("token_exchange_url").SetValue("https://auth.example.com/v1/sign-access-token")
-		exchanger, err := NewTokenExchanger(cfg)
+	t.Run("not configured", func(t *testing.T) {
+		exchanger, err := NewTokenExchanger("", "")
 		require.NoError(t, err)
-		require.Nil(t, exchanger)
+		require.Nil(t, exchanger, "without both values, requests are not authenticated")
+
+		client := &recordingClientV3{}
+		wrapped, err := WithAuthentication(client, "example-app", exchanger)
+		require.NoError(t, err)
+		require.Same(t, client, wrapped)
 	})
-
-	for _, tt := range []struct {
-		name, token, url string
-	}{
-		{name: "not configured"},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			exchanger, err := NewTokenExchanger(clientV3AuthCfg(tt.token, tt.url))
-			require.NoError(t, err)
-			require.Nil(t, exchanger, "without both settings, requests are not authenticated")
-
-			client := &recordingClientV3{}
-			wrapped, err := WithAuthentication(client, "example-app", exchanger)
-			require.NoError(t, err)
-			require.Same(t, client, wrapped)
-		})
-	}
-
-	exchanger, err := NewTokenExchanger(nil)
-	require.NoError(t, err)
-	require.Nil(t, exchanger)
 
 	wrapped, err := WithAuthentication(nil, "example-app", authnlib.NewStaticTokenExchanger("token"))
 	require.NoError(t, err)
@@ -80,7 +59,7 @@ func TestWithAuthenticationExchangesForCaller(t *testing.T) {
 	}))
 	defer signer.Close()
 
-	exchanger, err := NewTokenExchanger(clientV3AuthCfg("cap-token", signer.URL))
+	exchanger, err := NewTokenExchanger("cap-token", signer.URL)
 	require.NoError(t, err)
 	require.NotNil(t, exchanger)
 
@@ -134,14 +113,6 @@ func TestWithAuthenticationExchangesForCaller(t *testing.T) {
 		require.Empty(t, exchanged)
 		require.Nil(t, inner.ctx, "the request must not reach the plugin")
 	})
-}
-
-func clientV3AuthCfg(token, url string) *setting.Cfg {
-	cfg := setting.NewCfg()
-	section := cfg.Raw.Section("plugins")
-	section.Key("v3_cap_token").SetValue(token)
-	section.Key("v3_token_exchange_url").SetValue(url)
-	return cfg
 }
 
 // recordingClientV3 records the context of the last route call.

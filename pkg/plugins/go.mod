@@ -6,8 +6,10 @@ require (
 	github.com/Machiel/slugify v1.0.1
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/ProtonMail/go-crypto v1.4.1
+	github.com/go-jose/go-jose/v4 v4.1.5
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
+	github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana-app-sdk v0.60.7
 	github.com/grafana/grafana-app-sdk/plugin v0.60.6
@@ -40,7 +42,6 @@ require (
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.3 // indirect
 	github.com/getkin/kin-openapi v0.149.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v1.0.1 // indirect
@@ -64,7 +65,6 @@ require (
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.60.6 // indirect
 	github.com/grafana/otel-profiling-go v0.6.0 // indirect

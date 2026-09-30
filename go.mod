@@ -713,6 +713,11 @@ replace (
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-4
 	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-2
 
+	// TEMPORARY: test against a local grafana-app-sdk checkout. Do not commit.
+	github.com/grafana/grafana-app-sdk => ../grafana-app-sdk
+	github.com/grafana/grafana-app-sdk/logging => ../grafana-app-sdk/logging
+	github.com/grafana/grafana-app-sdk/plugin => ../grafana-app-sdk/plugin
+
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7
 

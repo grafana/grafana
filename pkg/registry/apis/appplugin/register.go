@@ -203,14 +203,15 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
 
-	exchanger, err := v3.NewTokenExchanger(cfg)
+	exchanger, err := NewClientV3TokenExchanger(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginDefs {
-		clientV3, err := v3.WithAuthentication(v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID), plugin.JSONData.ID, exchanger)
+		clientV3, err := v3.WithAuthentication(v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID), plugin.JSONData.ID,
+			ClientV3TokenExchanger(cfg, plugin.JSONData.ID, exchanger))
 		if err != nil {
 			return nil, err
 		}
