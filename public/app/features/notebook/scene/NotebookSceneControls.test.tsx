@@ -2,15 +2,20 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { act, getWrapper, render, screen } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { selectors } from '@grafana/e2e-selectors';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { NotebookEmbeddedHost } from './NotebookEmbeddedContext';
 import { NotebookScene } from './NotebookScene';
 import { NotebookSceneControls } from './NotebookSceneControls';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
+
+const VISUAL_REFRESH_FLAG = 'grafana.visualDesignRefresh';
 
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
@@ -128,5 +133,65 @@ describe('NotebookSceneControls', () => {
     expect(screen.queryByText('Edit')).not.toBeInTheDocument();
     // Still there: kiosk is not a capture.
     expect(screen.getByRole('button', { name: /Time range selected/ })).toBeInTheDocument();
+  });
+  /**
+   * The row is sticky, so one that is not opaque lets the notebook scroll visibly through it.
+   *
+   * Here rather than with NotebookScene: this component renders the row. Asserting it against
+   * `scene.Component` is what stopped testing anything once the row moved out of the scene.
+   */
+  describe('sticky background', () => {
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    function controlsRow() {
+      return screen.getByTestId(selectors.pages.Notebooks.Item.controls);
+    }
+
+    it('matches the page background on the /notebooks route', async () => {
+      await act(async () => {
+        setTestFlags({ [VISUAL_REFRESH_FLAG]: true });
+      });
+      const scene = buildScene();
+      activate(scene);
+
+      render(<NotebookSceneControls model={scene} stickyOffset={0} />);
+
+      expect(controlsRow()).toHaveStyle({ background: config.theme2.colors.background.page });
+    });
+
+    // Embedded hosts have no <Page> of their own to match, so — unlike the route above — this
+    // ignores the visual-refresh flag and always resolves to the same token.
+    it('falls back to the canvas background when embedded with no host override', async () => {
+      await act(async () => {
+        setTestFlags({ [VISUAL_REFRESH_FLAG]: true });
+      });
+      const scene = buildScene();
+      activate(scene);
+
+      render(
+        <NotebookEmbeddedHost>
+          <NotebookSceneControls model={scene} stickyOffset={0} />
+        </NotebookEmbeddedHost>
+      );
+
+      expect(controlsRow()).toHaveStyle({ background: config.theme2.colors.background.canvas });
+    });
+
+    it('uses the host-supplied background when embedded with an override', () => {
+      const scene = buildScene();
+      activate(scene);
+
+      render(
+        <NotebookEmbeddedHost controlsBackground="rebeccapurple">
+          <NotebookSceneControls model={scene} stickyOffset={0} />
+        </NotebookEmbeddedHost>
+      );
+
+      expect(controlsRow()).toHaveStyle({ background: 'rebeccapurple' });
+    });
   });
 });

@@ -270,27 +270,23 @@ function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTi
   }, [onTitleChange, title]);
 
   /**
-   * Two answers this tree owes the notebook, both per-mount, because the same scene object may also
-   * be mounted on /notebooks at the same time and the two share it.
+   * `stickyOffset={0}`: there is no app header in this tree for the sticky row to stop beneath — a
+   * per-mount answer, because the same scene object may also be mounted on /notebooks, which has
+   * one, and the two share it.
    *
-   * `stickyOffset={0}`: there is no app header here for the sticky row to stop beneath.
-   *
-   * `NotebookEmbeddedHost`: the toolbar asks it whether the destructive actions are safe, and in a
-   * host like the assistant's canvas they are not — Delete would navigate the whole host away. That
-   * is a question about the tree rather than about layout, which is why it stays a context rather
-   * than becoming another prop.
+   * No `NotebookEmbeddedHost` here: it wraps the whole view instead, so that the host's
+   * `controlsBackground` reaches the row. A second provider nested here would shadow the outer one
+   * and reset that background to undefined.
    *
    * The column is explicit because this renders into a host we do not control, and the controls row
    * and the document are two siblings that need a flex column above them for the sticky row to
    * behave.
    */
   return (
-    <NotebookEmbeddedHost>
-      <div className={styles.host}>
-        <NotebookSceneControls model={scene} stickyOffset={0} />
-        <scene.Component model={scene} />
-      </div>
-    </NotebookEmbeddedHost>
+    <div className={styles.host}>
+      <NotebookSceneControls model={scene} stickyOffset={0} />
+      <scene.Component model={scene} />
+    </div>
   );
 }
 
