@@ -40,13 +40,13 @@ const PanelSearchScopeContext = createContext<PanelSearchScope | null>(null);
 
 export function PanelSearchLayout(props: Props) {
   return props.dashboard.state.body instanceof DefaultGridLayoutManager ? (
-    <ClassicPanelSearchLayout {...props} />
+    <DefaultGridPanelSearchLayout {...props} />
   ) : (
     <FlatPanelSearchLayout {...props} />
   );
 }
 
-function ClassicPanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }: Props) {
+function DefaultGridPanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }: Props) {
   const { body } = dashboard.state;
   const gridStyle: CSSProperties & { [panelsPerRowCSSVar]: number | undefined } = {
     [panelsPerRowCSSVar]: panelsPerRow,
