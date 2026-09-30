@@ -376,6 +376,13 @@ export {
 // datetime
 export * as dateMath from './datetime/datemath';
 export * as rangeUtil from './datetime/rangeutil';
+export {
+  parseTimeWithNanos,
+  formatTimeWithNanos,
+  toISOStringWithNanos,
+  toEpochNs,
+  fromEpochNs,
+} from './datetime/nanoseconds';
 export { type DateTimeOptions, setTimeZoneResolver, type TimeZoneResolver, getTimeZone } from './datetime/common';
 export {
   ISO_8601,

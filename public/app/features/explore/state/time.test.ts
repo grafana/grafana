@@ -5,8 +5,10 @@ import { RefreshPicker } from '@grafana/ui';
 import { configureStore } from 'app/store/configureStore';
 import { type ExploreItemState } from 'app/types/explore';
 
+import { initialExploreState } from './main';
 import { createDefaultInitialState } from './testHelpers';
 import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime } from './time';
+import { makeExplorePaneState } from './utils';
 
 const mockTimeSrv = {
   init: jest.fn(),
@@ -24,6 +26,29 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Explore item reducer', () => {
+  it('clears nanosecond bounds when the user selects a new time range', () => {
+    const store = configureStore({ explore: { ...initialExploreState, panes: { left: makeExplorePaneState() } } });
+    store.dispatch(
+      updateTime({
+        exploreId: 'left',
+        rawRange: {
+          from: '1970-01-01T00:00:00.123000001Z',
+          to: '1970-01-01T00:00:00.123999999Z',
+        },
+      })
+    );
+    expect(store.getState().explore.panes.left?.absoluteRange).toEqual({
+      from: 123,
+      to: 123,
+      fromNano: 1,
+      toNano: 999999,
+    });
+    store.dispatch(updateTime({ exploreId: 'left', rawRange: { from: 'now-6h', to: 'now' } }));
+    expect(store.getState().explore.panes.left?.range.raw).toEqual({ from: 'now-6h', to: 'now' });
+    expect(store.getState().explore.panes.left?.range.fromNano).toBeUndefined();
+    expect(store.getState().explore.panes.left?.range.toNano).toBeUndefined();
+    expect(store.getState().explore.panes.left?.absoluteRange.fromNano).toBeUndefined();
+  });
   describe('When time is updated', () => {
     it('Time service is re-initialized and template service is updated with the new time range', async () => {
       const state = createDefaultInitialState().defaultInitialState as any;

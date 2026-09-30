@@ -1,4 +1,4 @@
-import { type TimeRange, type RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
+import { type TimeRange, type RawTimeRange, rangeUtil, dateMath } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
@@ -33,11 +33,7 @@ export const ExploreTimeControls = ({
   onChangeTime,
 }: Props) => {
   const onMoveTimePicker = (direction: number) => {
-    const { from, to } = getShiftedTimeRange(direction, range);
-    const nextTimeRange = {
-      from: dateTimeForTimeZone(timeZone, from),
-      to: dateTimeForTimeZone(timeZone, to),
-    };
+    const nextTimeRange = rangeUtil.convertAbsoluteToRaw(getShiftedTimeRange(direction, range), timeZone);
 
     onChangeTime(nextTimeRange);
   };
@@ -46,8 +42,9 @@ export const ExploreTimeControls = ({
   const onMoveBack = () => onMoveTimePicker(-1);
 
   const onChangeTimePicker = (timeRange: TimeRange) => {
-    const adjustedFrom = dateMath.isMathString(timeRange.raw.from) ? timeRange.raw.from : timeRange.from;
-    const adjustedTo = dateMath.isMathString(timeRange.raw.to) ? timeRange.raw.to : timeRange.to;
+    const adjustedFrom =
+      timeRange.fromNano || dateMath.isMathString(timeRange.raw.from) ? timeRange.raw.from : timeRange.from;
+    const adjustedTo = timeRange.toNano || dateMath.isMathString(timeRange.raw.to) ? timeRange.raw.to : timeRange.to;
 
     onChangeTime({
       from: adjustedFrom,
@@ -61,11 +58,7 @@ export const ExploreTimeControls = ({
   };
 
   const onZoom = () => {
-    const { from, to } = getZoomedTimeRange(range, 2);
-    const nextTimeRange = {
-      from: dateTimeForTimeZone(timeZone, from),
-      to: dateTimeForTimeZone(timeZone, to),
-    };
+    const nextTimeRange = rangeUtil.convertAbsoluteToRaw(getZoomedTimeRange(range, 2), timeZone);
 
     onChangeTime(nextTimeRange);
   };

@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTimeParse, systemDateFormats, type TimeRange } from '@grafana/data';
+import { dateTimeParse, rangeUtil, systemDateFormats, type TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { TimeRangeContent } from './TimeRangeContent';
@@ -44,6 +44,54 @@ describe('TimeRangeForm', () => {
     Object.defineProperty(global.navigator, 'clipboard', {
       value: mockClipboard,
     });
+  });
+
+  it('reopens and applies nanosecond bounds in the selected timezone without rounding', async () => {
+    const onApply = jest.fn();
+    const range = rangeUtil.convertRawToRange({
+      from: '2023-06-17T00:00:00.123000001Z',
+      to: '2023-06-17T00:00:00.123999999Z',
+    });
+    render(<TimeRangeContent isFullscreen value={range} onApply={onApply} timeZone="America/New_York" />);
+    expect(screen.getByLabelText('From')).toHaveValue('2023-06-16 20:00:00.123000001');
+    expect(screen.getByLabelText('To')).toHaveValue('2023-06-16 20:00:00.123999999');
+    await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromNano: 1,
+        toNano: 999999,
+        raw: { from: '2023-06-17T00:00:00.123000001Z', to: '2023-06-17T00:00:00.123999999Z' },
+      })
+    );
+    await user.click(screen.getByTestId(selectors.components.TimePicker.copyTimeRange));
+    expect(mockClipboard.writeText).toHaveBeenCalledWith(
+      '{"from":"2023-06-17T00:00:00.123000001Z","to":"2023-06-17T00:00:00.123999999Z"}'
+    );
+  });
+
+  it('rejects reversed nanosecond bounds within the same millisecond', async () => {
+    const onApply = jest.fn();
+    const range = rangeUtil.convertRawToRange({
+      from: '2023-06-17T00:00:00.123000002Z',
+      to: '2023-06-17T00:00:00.123000001Z',
+    });
+    render(<TimeRangeContent isFullscreen value={range} onApply={onApply} timeZone="utc" />);
+    await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+    expect(await screen.findAllByText('"From" date must be before "To" date')).toHaveLength(2);
+    expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it('preserves an exact millisecond boundary paired with a nanosecond boundary', async () => {
+    const onApply = jest.fn();
+    const range = rangeUtil.convertRawToRange({
+      from: '2023-06-17T00:00:00.123000001Z',
+      to: '2023-06-17T00:00:00.124Z',
+    });
+    render(<TimeRangeContent isFullscreen value={range} onApply={onApply} timeZone="utc" />);
+    expect(screen.getByLabelText('To')).toHaveValue('2023-06-17 00:00:00.124000000');
+    await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+    expect(onApply.mock.calls[0][0].to.valueOf()).toBe(1686960000124);
+    expect(onApply.mock.calls[0][0].fromNano).toBe(1);
   });
 
   it('should render form correctly', async () => {

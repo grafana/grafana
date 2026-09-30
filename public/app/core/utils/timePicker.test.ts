@@ -1,6 +1,34 @@
-import { toUtc, type AbsoluteTimeRange, type TimeRange } from '@grafana/data';
+import { toUtc, rangeUtil, type AbsoluteTimeRange, type TimeRange } from '@grafana/data';
 
-import { getShiftedTimeRange, getZoomedTimeRange } from './timePicker';
+import { getShiftedTimeRange, getZoomedTimeRange, toUtcDateTimeIfIsoString } from './timePicker';
+
+describe('nanosecond time controls', () => {
+  const range = rangeUtil.convertRawToRange({
+    from: '1970-01-01T00:00:00.000000100Z',
+    to: '1970-01-01T00:00:00.000000300Z',
+  });
+
+  it('shifts by half the range without truncating to milliseconds', () => {
+    expect(getShiftedTimeRange(1, range)).toEqual({ from: 0, to: 0, fromNano: 200, toNano: 400 });
+    expect(getShiftedTimeRange(-1, range)).toEqual({ from: 0, to: 0, toNano: 200 });
+  });
+
+  it('zooms a sub-millisecond range without using the zero-duration fallback', () => {
+    expect(getZoomedTimeRange(range, 2)).toEqual({ from: 0, to: 0, toNano: 400 });
+  });
+
+  it('can move a one-nanosecond range', () => {
+    const oneNanosecond = rangeUtil.convertRawToRange({
+      from: '1970-01-01T00:00:00.000000001Z',
+      to: '1970-01-01T00:00:00.000000002Z',
+    });
+    expect(getShiftedTimeRange(1, oneNanosecond)).toEqual({ from: 0, to: 0, fromNano: 2, toNano: 3 });
+  });
+
+  it('retains nanosecond ISO values when pasting', () => {
+    expect(toUtcDateTimeIfIsoString('1970-01-01T00:00:00.000000100Z')).toBe('1970-01-01T00:00:00.000000100Z');
+  });
+});
 
 export const setup = (options?: { direction?: number; range?: TimeRange }) => {
   const defaultOptions = {
