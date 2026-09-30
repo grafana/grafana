@@ -1,6 +1,6 @@
 import { from, map, type Unsubscribable } from 'rxjs';
 
-import { AlertState, type AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
+import { type AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneDataLayerBase,
@@ -15,11 +15,14 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { loadPanelAlertStateCandidates, selectMostSevereAlertCandidatePerPanel } from './loadPanelAlertStateCandidates';
+import {
+  loadPanelAlertStateCandidates,
+  promAlertStateToAlertState,
+  selectMostSevereAlertCandidatePerPanel,
+} from './loadPanelAlertStateCandidates';
 
 interface AlertStatesDataLayerState extends SceneDataLayerProviderState {}
 
@@ -151,13 +154,4 @@ export class AlertStatesDataLayer
     const notification = createErrorNotification('AlertStatesDataLayer', getMessageFromError(err));
     dispatch(notifyApp(notification));
   };
-}
-
-export function promAlertStateToAlertState(state: PromAlertingRuleState): AlertState {
-  if (state === PromAlertingRuleState.Firing) {
-    return AlertState.Alerting;
-  } else if (state === PromAlertingRuleState.Pending) {
-    return AlertState.Pending;
-  }
-  return AlertState.OK;
 }
