@@ -2180,6 +2180,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/plugin-configs": "npm:13.3.0-pre"
     "@grafana/plugin-ui": "npm:^0.17.3"
+    "@grafana/prometheus": "npm:13.1.14"
     "@grafana/runtime": "npm:13.3.0-pre"
     "@grafana/scenes": "npm:8.18.2"
     "@grafana/schema": "npm:13.3.0-pre"
@@ -2819,6 +2820,48 @@ __metadata:
     monaco-editor:
       optional: true
   checksum: 10/dd11add62dc4347b2296c58a6f5b498768d4224ad7bf46503bca63437aa02d8be42164521ce285cb185270a7695aa8a16f60399856f5fac029079bebe443d86f
+  languageName: node
+  linkType: hard
+
+"@grafana/prometheus@npm:13.1.14":
+  version: 13.1.14
+  resolution: "@grafana/prometheus@npm:13.1.14"
+  dependencies:
+    "@emotion/css": "npm:^11.13.5"
+    "@floating-ui/react": "npm:0.27.19"
+    "@grafana/plugin-ui": "npm:^0.17.3"
+    "@hello-pangea/dnd": "npm:^18.0.1"
+    "@leeoniya/ufuzzy": "npm:^1.0.19"
+    "@lezer/common": "npm:^1.5.2"
+    "@lezer/highlight": "npm:^1.2.3"
+    "@lezer/lr": "npm:1.4.8"
+    "@prometheus-io/lezer-promql": "npm:^0.307.3"
+    debounce-promise: "npm:^3.1.2"
+    lodash: "npm:^4.18.1"
+    monaco-editor: "npm:^0.34.1"
+    monaco-promql: "npm:^1.8.0"
+    pluralize: "npm:^8.0.0"
+    prismjs: "npm:^1.30.0"
+    react-highlight-words: "npm:^0.21.0"
+    react-use: "npm:^17.6.0"
+    react-window: "npm:^1.8.11"
+    rxjs: "npm:^7.8.2"
+    semver: "npm:^7.7.3"
+    uuid: "npm:^14.0.0"
+  peerDependencies:
+    "@grafana/assistant": ">=0.1.0"
+    "@grafana/data": ">=11.5.0"
+    "@grafana/e2e-selectors": ">=11.5.0"
+    "@grafana/i18n": ">=12.3.0"
+    "@grafana/runtime": ">=11.5.0"
+    "@grafana/schema": ">=11.5.0"
+    "@grafana/ui": ">=11.5.0"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  peerDependenciesMeta:
+    "@grafana/assistant":
+      optional: true
+  checksum: 10/92639db8b5e99d00c0d2d2a5fd6d189f983243f25712c9504af72f6612eced10c5f9a122b46655f966fd75fc9bce49e1257b2095f6bc53e98e9b4821a47524f1
   languageName: node
   linkType: hard
 
@@ -7120,6 +7163,16 @@ __metadata:
     "@lezer/highlight": ^1.1.2
     "@lezer/lr": ^1.2.3
   checksum: 10/bcaf3d0f182cb862a7c101e46703a11b0eb589771342ddc9e7ebfe9941b3be91b413632a83ebc2dead6701dbe8458f69ae00ae9ba3ef98431425f976bdc97ce7
+  languageName: node
+  linkType: hard
+
+"@prometheus-io/lezer-promql@npm:^0.307.3":
+  version: 0.307.3
+  resolution: "@prometheus-io/lezer-promql@npm:0.307.3"
+  peerDependencies:
+    "@lezer/highlight": ^1.1.2
+    "@lezer/lr": ^1.2.3
+  checksum: 10/50e4cf89900071f298808c946f39a9662342c812f64fe118fd8f4afbaa018da032039402b765cdaf40701eed75b008f34f6e790e15b78c3d263e591699662a31
   languageName: node
   linkType: hard
 

@@ -1,7 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
@@ -42,7 +43,7 @@ import { NOTEBOOK_EDIT_PARAM } from '../urls';
 import { changedCellTimeRange, changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
 import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
-import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
+import { useNotebookEmbedHostConfig } from './NotebookEmbeddedContext';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -426,15 +427,22 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
    * no app header at the same time, and those two share one scene object — so the answer has to come
    * from where it is being drawn rather than from what is being drawn.
    */
-  const embedded = useIsNotebookEmbedded();
-  // `headerHeight` is read unconditionally above so the hook order never varies, then discarded when
-  // there is no app header for it to describe.
-  const styles = useStyles2(getStyles, embedded ? 0 : (headerHeight ?? 0), visualRefreshEnabled);
+  const hostConfig = useNotebookEmbedHostConfig();
+  const stickyOffset = hostConfig.embedded ? 0 : (headerHeight ?? 0);
+  const styles = useStyles2(getStyles);
+  const usesCanvasBackground = hostConfig.embedded || !visualRefreshEnabled;
 
   return (
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
-      <div className={styles.controls}>
+      <div
+        className={cx(
+          styles.controls,
+          usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground
+        )}
+        style={{ top: stickyOffset, background: hostConfig.controlsBackground }}
+        data-testid={selectors.pages.Notebooks.Item.controls}
+      >
         {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has to
             be visible and retryable there too. This renders nothing until there is something to say. */}
         <NotebookSaveStatus autosave={model.autosave} />
@@ -478,7 +486,7 @@ function NotebookHiddenVariables({ model }: SceneComponentProps<NotebookScene>) 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'flex',
     flexDirection: 'column',
@@ -492,18 +500,19 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
     flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
-    // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two
-    // tokens are the page's own background (PageLayoutType.Custom, see getDefaultBackgroundForLayout), so
-    // the row reads as chrome rather than as a tinted band — same pairing DashboardControlsChrome uses.
-    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
     // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
     // it scroll away rather than eat the reading area, and this follows suit.
     [theme.breakpoints.up('md')]: {
       position: 'sticky',
-      top: headerHeight,
       // Above the docked sidebar, or the time picker's popover opens behind it. Same reasoning and same
       // token the dashboard's controls chrome uses.
       zIndex: theme.zIndex.sidemenu,
     },
+  }),
+  controlsCanvasBackground: css({
+    background: theme.colors.background.canvas,
+  }),
+  controlsPageBackground: css({
+    background: theme.colors.background.page,
   }),
 });
