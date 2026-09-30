@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -10,6 +11,7 @@ import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import { LibraryPanelsSearch } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
+import { replacePanelWithLibraryPanel } from '../actions/panel/replacePanelWithLibraryPanel';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -24,7 +26,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
     getDashboardSceneFor(this).closeModal();
   };
 
-  public onAddLibraryPanel = async (panelInfo: LibraryPanel) => {
+  public onAddLibraryPanel = async (panelInfo: LibraryPanel, isNewLayout: boolean) => {
     const dashboard = getDashboardSceneFor(this);
     const newPanel = await getDefaultVizPanel();
 
@@ -41,10 +43,15 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       const layoutItem = panelToReplace.parent;
 
       if (layoutItem && isDashboardLayoutItem(layoutItem)) {
-        // keep the same key from the panelToReplace
-        // this is important for edit mode
-        newPanel.setState({ key: panelToReplace.state.key });
-        layoutItem.setElementBody(newPanel);
+        if (isNewLayout) {
+          replacePanelWithLibraryPanel({ source: layoutItem, oldPanel: panelToReplace, newPanel });
+        } else {
+          // Needed only for old architecture which reuses the same component
+          // but has no way to trigger dashboard actions. It can be removed when
+          // the dashboardNewLayouts toggle is removed
+          newPanel.setState({ key: panelToReplace.state.key });
+          layoutItem.setElementBody(newPanel);
+        }
       }
     } else {
       dashboard.addPanel(newPanel);
@@ -54,11 +61,12 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
   };
 
   static Component = ({ model }: SceneComponentProps<AddLibraryPanelDrawer>) => {
+    const isNewLayout = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true);
     const title = t('library-panel.add-widget.title', 'Add panel from panel library');
 
     return (
       <Drawer title={title} onClose={model.onClose}>
-        <LibraryPanelsSearch onClick={model.onAddLibraryPanel} showPanelFilter />
+        <LibraryPanelsSearch onClick={(panelInfo) => model.onAddLibraryPanel(panelInfo, isNewLayout)} showPanelFilter />
       </Drawer>
     );
   };

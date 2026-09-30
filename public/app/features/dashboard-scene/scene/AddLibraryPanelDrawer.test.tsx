@@ -1,6 +1,11 @@
+import { act, render, screen, waitFor } from 'test/test-utils';
+
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import * as libraryPanelApi from 'app/features/library-panels/state/api';
 
+import { replacePanelWithLibraryPanel } from '../actions/panel/replacePanelWithLibraryPanel';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -23,12 +28,38 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
 
+jest.mock('../actions/panel/replacePanelWithLibraryPanel');
+
+jest.spyOn(libraryPanelApi, 'getConnectedDashboards').mockResolvedValue([]);
+
+async function selectLibraryPanel(drawer: AddLibraryPanelDrawer, panel: LibraryPanel) {
+  jest
+    .spyOn(libraryPanelApi, 'getLibraryPanels')
+    .mockResolvedValue({ elements: [panel], page: 1, perPage: 40, totalCount: 1 });
+  const dashboard = drawer.parent as DashboardScene;
+  const { user, unmount } = render(<drawer.Component model={drawer} />);
+  await user.click(await screen.findByText(panel.name, {}, { timeout: 3000 }));
+  await waitFor(() => expect(dashboard.state.overlay).toBeUndefined());
+  unmount();
+}
+
 describe('AddLibraryPanelWidget', () => {
   let dashboard: DashboardScene;
   let addLibPanelDrawer: AddLibraryPanelDrawer;
+  let deactivations: Array<() => void>;
+
+  afterEach(async () => {
+    await act(async () => {
+      deactivations.forEach((deactivate) => deactivate());
+      setTestFlags({});
+    });
+  });
 
   beforeEach(async () => {
+    setTestFlags({ dashboardNewLayouts: false });
+    deactivations = [];
     const result = await buildTestScene();
+    deactivations.push(result.deactivate);
     dashboard = result.dashboard;
     addLibPanelDrawer = result.drawer;
   });
@@ -45,7 +76,7 @@ describe('AddLibraryPanelWidget', () => {
       type: 'timeseries',
     };
 
-    await addLibPanelDrawer.onAddLibraryPanel(panelInfo);
+    await selectLibraryPanel(addLibPanelDrawer, panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     const panel = panels[0];
@@ -70,7 +101,7 @@ describe('AddLibraryPanelWidget', () => {
       overlay: drawer,
     });
 
-    activateFullSceneTree(dashboard);
+    deactivations.push(activateFullSceneTree(dashboard));
 
     await new Promise((r) => setTimeout(r, 1));
 
@@ -89,7 +120,7 @@ describe('AddLibraryPanelWidget', () => {
     // the CTA should enter edit mode
     expect(dashboard.state.isEditing).toBe(undefined);
 
-    await drawer.onAddLibraryPanel(panelInfo);
+    await selectLibraryPanel(drawer, panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     const panel = panels[0];
@@ -133,7 +164,7 @@ describe('AddLibraryPanelWidget', () => {
       type: 'timeseries',
     };
 
-    await addLibPanelDrawer.onAddLibraryPanel(panelInfo);
+    await selectLibraryPanel(addLibPanelDrawer, panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     expect(panels.length).toBe(1);
@@ -145,6 +176,37 @@ describe('AddLibraryPanelWidget', () => {
     expect(behavior.state.name).toBe('new_name');
     expect(panels[0].state.title).toBe('model title');
     expect(panels[0].state.key).toBe('panel-1'); // Key should be preserved from original panel
+  });
+
+  describe('with new layouts', () => {
+    beforeEach(() => setTestFlags({ dashboardNewLayouts: true }));
+
+    it('delegates replacement to the action with the prepared library panel', async () => {
+      const oldPanel = new VizPanel({ key: 'panel-1', title: 'Original', pluginId: 'table' });
+      const drawer = new AddLibraryPanelDrawer({ panelToReplaceRef: oldPanel.getRef() });
+      const dashboard = new DashboardScene({
+        body: DefaultGridLayoutManager.fromVizPanels([oldPanel]),
+        overlay: drawer,
+      });
+      const source = oldPanel.parent;
+      const panelInfo: LibraryPanel = {
+        uid: 'library-1',
+        name: 'Library panel',
+        version: 1,
+        type: 'timeseries',
+        model: { title: 'Library title', type: 'timeseries' },
+      };
+
+      await selectLibraryPanel(drawer, panelInfo);
+
+      expect(replacePanelWithLibraryPanel).toHaveBeenCalledTimes(1);
+      expect(replacePanelWithLibraryPanel).toHaveBeenCalledWith({ source, oldPanel, newPanel: expect.any(VizPanel) });
+      const { newPanel } = jest.mocked(replacePanelWithLibraryPanel).mock.calls[0][0];
+      expect(newPanel.state).toMatchObject({ title: 'Library title', hoverHeader: false });
+      const behavior = newPanel.state.$behaviors?.[0] as LibraryPanelBehavior;
+      expect(behavior.state).toMatchObject({ uid: 'library-1', name: 'Library panel' });
+      expect(dashboard.state.body.getVizPanels()).toEqual([oldPanel]);
+    });
   });
 
   it('should set hoverHeader to true if the library panel title is empty', async () => {
@@ -159,7 +221,7 @@ describe('AddLibraryPanelWidget', () => {
       type: 'timeseries',
     };
 
-    await addLibPanelDrawer.onAddLibraryPanel(panelInfo);
+    await selectLibraryPanel(addLibPanelDrawer, panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     const panel = panels[0];
@@ -181,11 +243,11 @@ async function buildTestScene() {
     overlay: drawer,
   });
 
-  activateFullSceneTree(dashboard);
+  const deactivate = activateFullSceneTree(dashboard);
 
   await new Promise((r) => setTimeout(r, 1));
 
   dashboard.onEnterEditMode();
 
-  return { dashboard, drawer };
+  return { dashboard, drawer, deactivate };
 }
