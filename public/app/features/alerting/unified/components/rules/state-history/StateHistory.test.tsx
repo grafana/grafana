@@ -1,14 +1,48 @@
 import { HttpResponse, http } from 'msw';
-import { render, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { AlertState } from '@grafana/data';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { configureStore } from 'app/store/configureStore';
 
 import StateHistory, { groupStateByLabels, matchKey } from './StateHistory';
 
 const server = setupMswServer();
 
 describe('StateHistory', () => {
+  it.each(['switching rules', 'reopening for another rule'])(
+    'does not show the previous history when %s',
+    async (navigation) => {
+      server.use(
+        http.get('/api/annotations', ({ request }) =>
+          HttpResponse.json([
+            {
+              id: 1,
+              newState: AlertState.Alerting,
+              updated: 1658834395024,
+              text: `History for ${new URL(request.url).searchParams.get('alertUID')}`,
+              data: {},
+            },
+          ])
+        )
+      );
+      const store = configureStore();
+      const { rerender, unmount } = render(<StateHistory ruleUID="first-rule" />, { store });
+      expect(await screen.findByText('History for first-rule')).toBeInTheDocument();
+
+      if (navigation === 'switching rules') {
+        rerender(<StateHistory ruleUID="second-rule" />);
+      } else {
+        unmount();
+        render(<StateHistory ruleUID="second-rule" />, { store });
+      }
+
+      expect(screen.getByText('Loading history...')).toBeInTheDocument();
+      expect(screen.queryByText('History for first-rule')).not.toBeInTheDocument();
+      expect(await screen.findByText('History for second-rule')).toBeInTheDocument();
+    }
+  );
+
   it('requests history again after the polling interval', async () => {
     const requestedRuleUIDs: Array<string | null> = [];
     server.use(

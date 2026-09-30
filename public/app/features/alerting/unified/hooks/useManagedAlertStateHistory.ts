@@ -6,14 +6,14 @@ import { type StateHistoryItem } from 'app/types/unified-alerting';
 
 import { fetchGrafanaAnnotationsAction } from '../state/actions';
 import { STATE_HISTORY_POLL_INTERVAL_MS } from '../utils/constants';
-import { type AsyncRequestState } from '../utils/redux';
+import { type AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export function useManagedAlertStateHistory(ruleUID: string, pollingInterval = STATE_HISTORY_POLL_INTERVAL_MS) {
   const dispatch = useDispatch();
   const history = useUnifiedAlertingSelector<AsyncRequestState<StateHistoryItem[]>>(
-    (state) => state.managedAlertStateHistory
+    (state) => state.managedAlertStateHistory[ruleUID] ?? initialAsyncRequestState
   );
 
   useEffect(() => {
