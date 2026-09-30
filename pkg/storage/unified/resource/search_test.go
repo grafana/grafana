@@ -122,6 +122,26 @@ func (m *MockResourceIndex) RecordImportTime(gr schema.GroupResource, t time.Tim
 	return nil
 }
 
+// DocumentTypes answers with the types documentRefs holds any documents of.
+func (m *MockResourceIndex) DocumentTypes() ([]schema.GroupResource, error) {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	var out []schema.GroupResource
+	for gr, refs := range m.documentRefs {
+		if len(refs) > 0 {
+			out = append(out, gr)
+		}
+	}
+	return out, nil
+}
+
+func (m *MockResourceIndex) ForgetType(gr schema.GroupResource) error {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	delete(m.importTimes, gr)
+	return nil
+}
+
 // documentRefs is what ListDocumentRefs answers with, by resource type.
 func (m *MockResourceIndex) ListDocumentRefs(_ context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error] {
 	return func(yield func(DocumentRef, error) bool) {

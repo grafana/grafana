@@ -330,14 +330,25 @@ type ResourceIndex interface {
 	// set rather than a ranked page.
 	ListDocumentRefs(ctx context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error]
 
-	// ImportTimes returns, per resource type, the import time storage reported
-	// when the index last caught up with an import of that type. Kept inside the
-	// index, so a restarted server does not redo work the index already did.
+	// DocumentTypes returns the resource types the index may hold documents of.
+	// Each is recorded before its first document is written, so a type written
+	// only in part is included, and stays until ForgetType.
+	DocumentTypes() ([]schema.GroupResource, error)
+
+	// ImportTimes returns every resource type the index has written in full, with
+	// the import time storage reported when it last caught up with that type,
+	// zero if it had none. A type missing from it may still have documents, as
+	// one written only in part; DocumentTypes lists those. Kept inside the index,
+	// so a restarted server does not redo work the index already did.
 	ImportTimes() (map[schema.GroupResource]time.Time, error)
 
-	// RecordImportTime records that the index has caught up with the import of
-	// one resource type that storage reports at t.
+	// RecordImportTime records that the index has written one resource type in
+	// full and caught up with its import that storage reports at t, zero if none.
 	RecordImportTime(gr schema.GroupResource, t time.Time) error
+
+	// ForgetType records that the index no longer holds one resource type,
+	// removing it from both ImportTimes and DocumentTypes.
+	ForgetType(gr schema.GroupResource) error
 
 	// UpdateIndex updates the index with the latest data (using update function provided when index was built) to guarantee strong consistency during the search.
 	// Returns RV to which index was updated.
@@ -623,9 +634,9 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		ret.minBuildTime = b.minBuildTime
 	}
 
-	for _, gr := range b.importedTypes {
-		if !slices.Contains(ret.importedTypes, gr) {
-			ret.importedTypes = append(ret.importedTypes, gr)
+	for _, gr := range b.staleTypes {
+		if !slices.Contains(ret.staleTypes, gr) {
+			ret.staleTypes = append(ret.staleTypes, gr)
 		}
 	}
 
@@ -1390,7 +1401,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
 	// A global index is never imported itself; its covered types are, and only
 	// those are rebuilt.
-	importChs, err := s.queueImportedTypeRebuilds(ctx, filterKeys)
+	importChs, err := s.queueTypeSyncs(ctx, filterKeys)
 	if err != nil {
 		return &resourcepb.RebuildIndexesResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -1650,7 +1661,7 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 				s.log.Error("failed to get import times", "error", err)
 			}
 			s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
-			if _, err := s.queueImportedTypeRebuilds(ctx, keys); err != nil {
+			if _, err := s.queueTypeSyncs(ctx, keys); err != nil {
 				s.log.Warn("failed to check global search indexes for imports", "error", err)
 			}
 		}
@@ -1873,8 +1884,9 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, req.expectedSearchFieldsHash, s.requiredFeatures, l)
-	// A full rebuild rewrites every type, so it covers any imported ones.
-	rebuildTypes := !rebuild && len(req.importedTypes) > 0
+	// A full rebuild writes a new index of every covered type, so it covers any
+	// stale ones.
+	rebuildTypes := !rebuild && len(req.staleTypes) > 0
 	if !rebuild && !rebuildTypes {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
@@ -1929,9 +1941,9 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	// index. Rechecked type by type: a request deferred behind a full rebuild
 	// finds that the rebuild already caught up.
 	if rebuildTypes {
-		if err := s.rebuildImportedTypes(ctx, req.NamespacedResource, req.importedTypes); err != nil {
+		if err := s.syncTypes(ctx, req.NamespacedResource, req.staleTypes); err != nil {
 			span.RecordError(err)
-			l.Warn("failed to catch up with an import in the global search index", "error", err)
+			l.Warn("failed to sync resource types of the global search index", "error", err)
 		}
 		return
 	}
@@ -2060,10 +2072,10 @@ type rebuildRequest struct {
 	selectableFields         []string        // rebuild index which is missing some of these selectable fields.
 	expectedSearchFieldsHash string          // if non-empty, rebuild index whose stored SearchFieldsHash differs from this value.
 
-	// importedTypes, for a global index, are resource types storage reports as
-	// imported since the index caught up. Only those types are rebuilt, unless
-	// a full rebuild is due anyway.
-	importedTypes []schema.GroupResource
+	// staleTypes, for a global index, are resource types it is out of date for:
+	// imported since it caught up, or added to or dropped from what it covers.
+	// Only those types are synced, unless a full rebuild is due anyway.
+	staleTypes []schema.GroupResource
 
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
@@ -2366,7 +2378,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				return indexRV, err
 			}
 
-			if !importedAt.IsZero() {
+			// Recorded even with no import, because the record also says which
+			// types the index has written in full.
+			if nsr.IsGlobal() {
 				if err := index.RecordImportTime(groupResourceOf(src), importedAt); err != nil {
 					return indexRV, err
 				}
