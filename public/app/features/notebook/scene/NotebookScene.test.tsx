@@ -4,6 +4,7 @@ import { act, render, screen } from 'test/test-utils';
 
 import { CoreApp, type Scope, dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   config,
   HistoryWrapper,
@@ -24,6 +25,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
@@ -33,6 +35,7 @@ import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 
+import { NotebookEmbeddedHost } from './NotebookEmbeddedContext';
 import { NotebookScene } from './NotebookScene';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
@@ -698,6 +701,66 @@ describe('NotebookScene', () => {
 
       expect(scene.state.body.state.tags).toEqual(['rebuilt']);
     });
+
+    it('records a tag change so it can be undone', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Add tag');
+
+      act(() => scene.editHistory.undo());
+
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.state.body.state.tags).toEqual([]);
+    });
+
+    it('labels removing a tag distinctly, and supports redo', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTagsChange(['latency', 'slo']));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.undoLabel).toBe('Remove tag');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual(['latency', 'slo']);
+
+      act(() => scene.editHistory.redo());
+      expect(scene.state.tags).toEqual(['latency']);
+    });
+
+    it('does not record a no-op tag change', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTagsChange(['latency']));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      // A single undo should clear the one real change, not a second no-op entry.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits an active content edit first, so it lands as its own undo step under the tag change', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      act(() => scene.activate());
+      act(() => scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } }));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+
+      act(() => scene.editHistory.undo());
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
   });
 
   describe('title', () => {
@@ -736,6 +799,61 @@ describe('NotebookScene', () => {
       );
 
       expect(scene.state.body.state.title).toBe('Rebuilt');
+    });
+  });
+
+  describe('sticky controls background', () => {
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    function controlsRow() {
+      return screen.getByTestId(selectors.pages.Notebooks.Item.controls);
+    }
+
+    it('matches the page background on the /notebooks route', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.visualDesignRefresh': true });
+      });
+      const scene = buildScene(false);
+      activate(scene);
+
+      render(<scene.Component model={scene} />);
+
+      expect(controlsRow()).toHaveStyle({ background: config.theme2.colors.background.page });
+    });
+
+    // Embedded hosts have no <Page> of their own to match, so — unlike the route above — this
+    // ignores the visual-refresh flag and always resolves to the same token.
+    it('falls back to the canvas background when embedded with no host override', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.visualDesignRefresh': true });
+      });
+      const scene = buildScene(false);
+      activate(scene);
+
+      render(
+        <NotebookEmbeddedHost>
+          <scene.Component model={scene} />
+        </NotebookEmbeddedHost>
+      );
+
+      expect(controlsRow()).toHaveStyle({ background: config.theme2.colors.background.canvas });
+    });
+
+    it('uses the host-supplied background when embedded with an override', () => {
+      const scene = buildScene(false);
+      activate(scene);
+
+      render(
+        <NotebookEmbeddedHost controlsBackground="rebeccapurple">
+          <scene.Component model={scene} />
+        </NotebookEmbeddedHost>
+      );
+
+      expect(controlsRow()).toHaveStyle({ background: 'rebeccapurple' });
     });
   });
 });

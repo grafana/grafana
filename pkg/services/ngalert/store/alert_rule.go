@@ -10,8 +10,8 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -585,7 +585,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 
 			// assign unique identifier that will identify resource across space and time. The probability of collision is so low that we do not need to check for uniqueness.
 			// The unique keys will ensure uniqueness in rule and versions tables
-			converted.GUID = uuid.NewString()
+			converted.GUID = uuid.NewV4().String()
 
 			newRules = append(newRules, converted)
 			v := alertRuleToAlertRuleVersion(converted)
@@ -774,12 +774,12 @@ func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session
 
 	for _, update := range titleUpdates {
 		r := update.Existing
-		u := uuid.New().String()
+		u := uuid.NewV4().String()
 
 		// Some defensive programming in case the temporary title is somehow persisted it will still be recognizable.
 		uniqueTempTitle := r.Title + u
 		if len(uniqueTempTitle) > AlertRuleMaxTitleLength {
-			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.New().String()
+			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.NewV4().String()
 		}
 
 		if updated, err := sess.Table(alertRule{}).ID(r.ID).Cols("title").Update(&alertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {
@@ -1331,6 +1331,38 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	if len(query.RuleUIDs) > 0 {
 		args, in := getINSubQueryArgs(query.RuleUIDs)
 		q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
+	}
+
+	if len(query.States) > 0 {
+		body, args, err := jsonValueIn(st.SQLStore.GetDialect(), "k8s_status", "state", query.States)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(body, args...)
+	}
+
+	if len(query.ExcludeStates) > 0 {
+		body, args, err := jsonValueNotIn(st.SQLStore.GetDialect(), "k8s_status", "state", query.ExcludeStates)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(body, args...)
+	}
+
+	if len(query.Healths) > 0 {
+		body, args, err := jsonValueIn(st.SQLStore.GetDialect(), "k8s_status", "health", query.Healths)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(body, args...)
+	}
+
+	if len(query.ExcludeHealths) > 0 {
+		body, args, err := jsonValueNotIn(st.SQLStore.GetDialect(), "k8s_status", "health", query.ExcludeHealths)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(body, args...)
 	}
 
 	q, groupsSet, err = buildRuleGroupFilter(q, query.RuleGroups)

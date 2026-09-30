@@ -2,9 +2,11 @@ import { useEffect, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { FeatureState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
-import { Alert, Box, Button, Checkbox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
+import { Alert, Box, Button, Checkbox, EmptyState, FeatureBadge, FilterInput, Stack, Text } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -86,7 +88,7 @@ export function NotebooksListPage() {
   const onCreate = () => navigate(notebookNewEditUrl());
 
   const createButton = canCreate ? (
-    <Button icon="plus" onClick={onCreate}>
+    <Button icon="plus" onClick={onCreate} data-testid={selectors.pages.Notebooks.List.newButton}>
       <Trans i18nKey="notebooks.list.new-notebook">New notebook</Trans>
     </Button>
   ) : undefined;
@@ -113,7 +115,16 @@ export function NotebooksListPage() {
 
   return (
     // When nothing exists the empty state carries the create button, so drop it from the header.
-    <Page navId="notebooks" actions={hasNoNotebooks ? undefined : createButton}>
+    <Page
+      navId="notebooks"
+      renderTitle={(title) => (
+        <Stack alignItems="center">
+          <Text element="h1">{title}</Text>
+          <FeatureBadge featureState={FeatureState.preview} />
+        </Stack>
+      )}
+      actions={hasNoNotebooks ? undefined : createButton}
+    >
       <Page.Contents isLoading={isLoading}>
         <Stack direction="column" gap={2}>
           {/* With nothing loaded and nothing filtered the alert is the whole story — filters over
@@ -159,47 +170,50 @@ export function NotebooksListPage() {
                   {extractErrorMessage(error)}
                 </Alert>
               )}
-              <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
-                <Stack alignItems="center" gap={1} wrap="wrap">
-                  <FilterInput
-                    width={40}
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    escapeRegex={false}
-                    placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
-                  />
-                  <NotebookTagsField
-                    value={tagFilter}
-                    onChange={setTagFilter}
-                    // Where the search route is not served the facet cannot answer, and these are
-                    // the only tags there are to offer.
-                    fallbackTags={loadedTags}
-                    placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
-                  />
-                  {canFilterByMe && (
-                    <Checkbox
-                      id="notebooks-created-by-me"
-                      value={createdByMe}
-                      onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
-                      label={t('notebooks.list.created-by-me', 'Created by me')}
+              <Stack direction="column" gap={1}>
+                <FilterInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  escapeRegex={false}
+                  placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                  data-testid={selectors.pages.Notebooks.List.searchInput}
+                />
+                <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
+                  <Stack alignItems="center" gap={1} wrap="wrap">
+                    <NotebookTagsField
+                      value={tagFilter}
+                      onChange={setTagFilter}
+                      // Where the search route is not served the facet cannot answer, and these are
+                      // the only tags there are to offer.
+                      fallbackTags={loadedTags}
+                      placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
                     />
-                  )}
-                </Stack>
-                <Stack alignItems="center" gap={1}>
-                  {/* Nothing is held for these filters yet, so every number here would be zero —
-                      "0 notebooks" beside a loading table claims a result we do not have. */}
-                  {isReloading ? (
-                    <Skeleton width={COUNT_SKELETON_WIDTH} />
-                  ) : (
-                    <CountSummary
-                      shown={rows.length}
-                      loadedCount={loadedCount}
-                      totalCount={totalCount}
-                      isTotalExact={isTotalExact}
-                      isTruncated={isTruncated}
-                      isLoadingMore={isLoadingMore}
-                    />
-                  )}
+                    {canFilterByMe && (
+                      <Checkbox
+                        id="notebooks-created-by-me"
+                        value={createdByMe}
+                        onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
+                        label={t('notebooks.list.created-by-me', 'Created by me')}
+                        data-testid={selectors.pages.Notebooks.List.createdByMeCheckbox}
+                      />
+                    )}
+                  </Stack>
+                  <Stack alignItems="center" gap={1}>
+                    {/* Nothing is held for these filters yet, so every number here would be zero —
+                        "0 notebooks" beside a loading table claims a result we do not have. */}
+                    {isReloading ? (
+                      <Skeleton width={COUNT_SKELETON_WIDTH} />
+                    ) : (
+                      <CountSummary
+                        shown={rows.length}
+                        loadedCount={loadedCount}
+                        totalCount={totalCount}
+                        isTotalExact={isTotalExact}
+                        isTruncated={isTruncated}
+                        isLoadingMore={isLoadingMore}
+                      />
+                    )}
+                  </Stack>
                 </Stack>
               </Stack>
 

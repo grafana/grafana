@@ -38,7 +38,7 @@ import {
   type TableRow,
   type TableSummaryRow,
 } from './types';
-import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
+import { type ApplyFilterResult, applyFilter, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows
@@ -353,6 +353,7 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
     disableSanitizeHtml: false,
     showTypeIcons: false,
     timeRange: undefined,
+    typographyCtx: createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily),
     ...overrides,
   };
 }
@@ -407,6 +408,15 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
     expect(typeof result.cellRootRenderers['A']).toBe('function');
     expect(typeof result.cellRootRenderers['B']).toBe('function');
+  });
+
+  it('reserves last-column padding only for the outer grid', () => {
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const outer = hook.result.current(frame.fields, [100, 100], frame, rows, rows, 6);
+    const inner = hook.result.current(frame.fields, [100, 100], frame, rows, rows);
+    expect(getCellRendererProps(outer.columns[0], rows[0]).width).toBe(87);
+    expect(getCellRendererProps(outer.columns[1], rows[0]).width).toBe(81);
+    expect(getCellRendererProps(inner.columns[1], rows[0]).width).toBe(87);
   });
 
   it('marks columns frozen when index is within frozen range', () => {

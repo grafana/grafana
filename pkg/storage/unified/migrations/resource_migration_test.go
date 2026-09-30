@@ -10,8 +10,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
@@ -53,7 +53,7 @@ func newTestEnv(t *testing.T) testEnv {
 
 func uniqueTable(t *testing.T, engine *xorm.Engine) string {
 	t.Helper()
-	name := fmt.Sprintf("test_%s", uuid.New().String()[:8])
+	name := fmt.Sprintf("test_%s", uuid.NewV4().String()[:8])
 	_, err := engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY, val TEXT)", engine.Quote(name)))
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -559,7 +559,7 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 	})
 
 	t.Run(setup.name+"/error — neither exists", func(t *testing.T) {
-		missing := "nonexistent_" + uuid.New().String()[:8]
+		missing := "nonexistent_" + uuid.NewV4().String()[:8]
 		renamer := setup.make(t)
 		err := renamer.RecoverRenamedTables([]string{missing})
 		require.Error(t, err)
@@ -889,7 +889,7 @@ func TestIntegrationBuildRenamePairs(t *testing.T) {
 	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
 
 	t.Run("skips already renamed", func(t *testing.T) {
-		name := fmt.Sprintf("test_crash_%s", uuid.New().String()[:8])
+		name := fmt.Sprintf("test_crash_%s", uuid.NewV4().String()[:8])
 		_, err := env.engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", env.engine.Quote(name+legacySuffix)))
 		require.NoError(t, err)
 		t.Cleanup(func() {

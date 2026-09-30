@@ -20,6 +20,7 @@ import (
 
 func newSearchHandler(
 	store Store,
+	tracer trace.Tracer,
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
 	metrics *Metrics,
@@ -43,7 +44,7 @@ func newSearchHandler(
 			return err
 		}
 
-		allowed, err := canAccessAnnotations(ctx, accessClient, folderResolver, namespace, result.Items, utils.VerbList)
+		allowed, err := canAccessAnnotations(ctx, tracer, accessClient, folderResolver, namespace, result.Items, utils.VerbList)
 		if err != nil {
 			return err
 		}

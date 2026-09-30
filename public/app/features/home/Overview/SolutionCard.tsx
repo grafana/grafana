@@ -11,6 +11,8 @@ import { LearnMoreLink } from '../solutions/LearnMoreLink';
 import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
 import { type Solution, type SolutionOffer } from '../solutions/types';
 
+import { KubernetesFilterActions } from './KubernetesFilterActions';
+
 interface SolutionCardProps {
   solution: Solution;
   needsAttention: boolean;
@@ -28,6 +30,28 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
   const status = needsAttention
     ? t('home.overview.status.attention', 'Needs attention')
     : t('home.overview.status.enabled', 'Enabled');
+  const ctaContent = ctaLoading ? (
+    <Skeleton width={120} height={24} />
+  ) : cta ? (
+    <LinkButton
+      href={cta.href}
+      fill="text"
+      size="sm"
+      icon="angle-right"
+      iconPlacement="right"
+      className={cx(styles.textAction, isAttentionCta && styles.attentionAction)}
+      onClick={() =>
+        ctaClicked({
+          surface: 'overview',
+          action: cta.action,
+          placement: 'card',
+          solution: solution.id,
+        })
+      }
+    >
+      <Text truncate>{cta.label}</Text>
+    </LinkButton>
+  ) : null;
 
   return (
     <Card noMargin className={styles.card}>
@@ -48,7 +72,10 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
               {datasource && (
                 <span className={styles.viaDatasource}>
                   <Text variant="bodySmall" color="secondary" truncate>
-                    {t('home.solutions.via-datasource', 'via {{name}}', { name: datasource.name })}
+                    {t('home.solutions.via-datasource', 'via {{name}}', {
+                      name: datasource.name,
+                      interpolation: { escapeValue: false },
+                    })}
                   </Text>
                 </span>
               )}
@@ -67,7 +94,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         />
 
         {alert && (
-          <Stack direction="row" gap={1.5} alignItems="flex-start">
+          <Stack direction="row" gap={1.5} alignItems="center">
             <Icon name="exclamation-triangle" size="md" className={styles.warning} />
             <Text variant="body" color="secondary">
               {[alert.primary, ...(alert.details ?? [])].join(' · ')}
@@ -76,30 +103,12 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         )}
       </Card.Description>
 
-      <Card.Actions className={styles.actions}>
-        {ctaLoading ? (
-          <Skeleton width={120} height={24} />
-        ) : cta ? (
-          <LinkButton
-            href={cta.href}
-            fill="text"
-            size="sm"
-            icon="angle-right"
-            iconPlacement="right"
-            className={cx(styles.textAction, isAttentionCta && styles.attentionAction)}
-            onClick={() =>
-              ctaClicked({
-                surface: 'overview',
-                action: cta.action,
-                placement: 'card',
-                solution: solution.id,
-              })
-            }
-          >
-            <Text truncate>{cta.label}</Text>
-          </LinkButton>
-        ) : null}
-      </Card.Actions>
+      {ctaContent && <Card.Actions className={styles.actions}>{ctaContent}</Card.Actions>}
+      {solution.id === 'kubernetes' && datasource && (
+        <Card.SecondaryActions>
+          <KubernetesFilterActions datasource={datasource} attention={isAttentionCta} />
+        </Card.SecondaryActions>
+      )}
     </Card>
   );
 }
@@ -213,17 +222,6 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     gridTemplateColumns: 'auto minmax(0, 1fr) auto',
     ...(needsAttention && {
       borderColor: `color-mix(in srgb, ${theme.colors.warning.main} 32%, ${theme.colors.border.weak})`,
-      overflow: 'hidden',
-
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
-        left: 0,
-        width: theme.spacing(0.375),
-        background: theme.colors.warning.main,
-      },
     }),
   }),
   heading: css({
@@ -308,7 +306,7 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     color: theme.colors.warning.text,
 
     '&:hover, &:focus': {
-      background: theme.colors.warning.background,
+      background: theme.colors.warning.subtleBackground,
       color: theme.colors.warning.textEmphasis,
     },
   }),

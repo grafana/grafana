@@ -122,10 +122,11 @@ func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
 // WithNatsNotifier feeds the watch pipeline directly from the NATS bus instead
 // of polling. Delivery is at-most-once; the backend falls back to polling when
 // the subscriber is disabled. KV backend only.
-func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
+func WithNatsNotifier(s resource.EventSubscriber, invalidator resource.Invalidator) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) {
 		o.EventSubscriber = s
 		o.EnableNatsNotifier = true
+		o.WatchInvalidator = invalidator
 	}
 }
 
@@ -1098,6 +1099,12 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 		return fmt.Errorf("multiple rows effected (%d)", rows)
 	}
 	return resource.NewConflictStatusError(key.Group, key.Resource, key.Name, "requested RV does not match current RV")
+}
+
+// BatchReadResource is unsupported: the SQL backend is retiring, so batched
+// search-list reads live only on the KV backend.
+func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*resource.BackendReadResponse], error) {
+	return nil, resource.ErrBatchReadUnsupported
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {

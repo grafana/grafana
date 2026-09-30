@@ -9,12 +9,10 @@ import (
 // Deletion stages, used as the "stage" label on the error counter so the
 // distinct delete-path failure points are distinguishable from one another.
 const (
-	// deletionStageBuild is the repoFactory.Build() call that constructs the
-	// repository before its finalizers can run. Its failure (e.g. missing or
-	// invalid credentials) leaves the repository stuck in Terminating.
-	deletionStageBuild = "build"
 	// deletionStageFinalizers is the finalizer.process() call that runs the
-	// registered finalizers (orphan-resource cleanup, etc.).
+	// registered finalizers (webhook removal, orphan-resource cleanup, etc.).
+	// A build failure while processing the cleanup finalizer (e.g. expired
+	// credentials) surfaces here, since the build now happens inside process.
 	deletionStageFinalizers = "process_finalizers"
 	// deletionStageRemoveFinalizers is the JSON-Patch that removes the finalizers
 	// once processing succeeds. Its failure (notably RetryOnConflict exhaustion)

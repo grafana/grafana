@@ -217,8 +217,8 @@ func (s *Syncer) syncAlertRule(ctx context.Context, orgID int64, rule *v0alpha1.
 
 	s.persist(ctx, key, newStatus, func(ctx context.Context) error {
 		rule.Status = newStatus
-		_, err := s.alertRuleClient.Update(ctx, rule, resource.UpdateOptions{
-			Subresource: "status",
+		_, err := s.alertRuleClient.UpdateStatus(ctx, rule.GetStaticMetadata().Identifier(), newStatus, resource.UpdateOptions{
+			ResourceVersion: rule.GetResourceVersion(),
 		})
 		return err
 	})
@@ -234,8 +234,8 @@ func (s *Syncer) syncRecordingRule(ctx context.Context, orgID int64, rule *v0alp
 
 	s.persist(ctx, key, newStatus, func(ctx context.Context) error {
 		rule.Status = newStatus
-		_, err := s.recordingRuleClient.Update(ctx, rule, resource.UpdateOptions{
-			Subresource: "status",
+		_, err := s.recordingRuleClient.UpdateStatus(ctx, rule.GetStaticMetadata().Identifier(), newStatus, resource.UpdateOptions{
+			ResourceVersion: rule.GetResourceVersion(),
 		})
 		return err
 	})

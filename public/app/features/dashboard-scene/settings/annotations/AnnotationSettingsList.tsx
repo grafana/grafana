@@ -6,9 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
-import { MoveDirection } from '../AnnotationsEditView';
-
 import { ListNewButton } from './ListNewButton';
+import { MoveDirection } from './MoveDirection';
 
 type Props = {
   annotations: AnnotationQuery[];

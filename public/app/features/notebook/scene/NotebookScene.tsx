@@ -1,6 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
@@ -35,13 +37,13 @@ import {
   type NotebookEditSessionSource,
 } from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
+import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
-import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
-import { NotebookEditHistory } from './NotebookEditHistory';
+import { changedCellTimeRange, changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
+import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
-import { NotebookEditToggle } from './NotebookEditToggle';
-import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
+import { useNotebookEmbedHostConfig } from './NotebookEmbeddedContext';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -202,8 +204,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // flag on the way into a session as well, but without this the flag would mean "moved since the
       // last start" rather than "moved during this session".
       const timeRangeSub = this.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
-        if (this.state.isEditing && changesTimeSettings(payload, this)) {
+        if (!this.state.isEditing) {
+          return;
+        }
+        if (changesTimeSettings(payload, this)) {
           this.editSession.onTimeRangeChanged();
+        }
+        if (changedCellTimeRange(payload, this)) {
+          this.editSession.onCellTimeRangeChanged();
         }
       });
 
@@ -346,9 +354,30 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   /**
    * The scene stays the single writer for tags — it is what transformNotebookSceneToSaveModel reads.
    * The layout manager's copy is refreshed by the subscription above, so the two cannot drift.
+   *
+   * Recorded on editHistory like a cell edit, so an accidental tag add/remove is undoable. TagFilter
+   * is used with isClearable={false} and no bulk-clear control, so every call here already represents
+   * exactly one add or one remove — unlike cell content, there is nothing to coalesce.
    */
   public onTagsChange = (tags: string[]) => {
-    this.setState({ tags });
+    const previous = this.state.tags ?? [];
+    if (isEqual(previous, tags)) {
+      return;
+    }
+
+    // Closes out any cell edit still coalescing, so it lands as its own undo step under this one
+    // instead of being interrupted by it.
+    this.state.body.commitPendingEdits();
+
+    this.editHistory.execute({
+      label:
+        tags.length > previous.length
+          ? t('notebooks.history.add-tag', 'Add tag')
+          : t('notebooks.history.remove-tag', 'Remove tag'),
+      kind: NOTEBOOK_EDIT_KIND.TAGS,
+      perform: () => this.setState({ tags }),
+      undo: () => this.setState({ tags: previous }),
+    });
   };
 
   /**
@@ -392,32 +421,39 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   // to come from the chrome rather than a constant.
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing, uid } = model.useState();
   /**
    * From the tree, not the scene. The same notebook can be rendered on the route and in a host with
    * no app header at the same time, and those two share one scene object — so the answer has to come
    * from where it is being drawn rather than from what is being drawn.
    */
-  const embedded = useIsNotebookEmbedded();
-  // `headerHeight` is read unconditionally above so the hook order never varies, then discarded when
-  // there is no app header for it to describe.
-  const styles = useStyles2(getStyles, embedded ? 0 : (headerHeight ?? 0), visualRefreshEnabled);
+  const hostConfig = useNotebookEmbedHostConfig();
+  const stickyOffset = hostConfig.embedded ? 0 : (headerHeight ?? 0);
+  const styles = useStyles2(getStyles);
+  const usesCanvasBackground = hostConfig.embedded || !visualRefreshEnabled;
 
   return (
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
-      <div className={styles.controls}>
+      <div
+        className={cx(
+          styles.controls,
+          usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground
+        )}
+        style={{ top: stickyOffset, background: hostConfig.controlsBackground }}
+        data-testid={selectors.pages.Notebooks.Item.controls}
+      >
         {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has to
             be visible and retryable there too. This renders nothing until there is something to say. */}
         <NotebookSaveStatus autosave={model.autosave} />
         {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
-        <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (
           <>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </>
         )}
+        <NotebookToolbar uid={uid} scene={model} />
       </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
@@ -450,7 +486,7 @@ function NotebookHiddenVariables({ model }: SceneComponentProps<NotebookScene>) 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'flex',
     flexDirection: 'column',
@@ -464,18 +500,19 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
     flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
-    // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two
-    // tokens are the page's own background (PageLayoutType.Custom, see getDefaultBackgroundForLayout), so
-    // the row reads as chrome rather than as a tinted band — same pairing DashboardControlsChrome uses.
-    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
     // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
     // it scroll away rather than eat the reading area, and this follows suit.
     [theme.breakpoints.up('md')]: {
       position: 'sticky',
-      top: headerHeight,
       // Above the docked sidebar, or the time picker's popover opens behind it. Same reasoning and same
       // token the dashboard's controls chrome uses.
       zIndex: theme.zIndex.sidemenu,
     },
+  }),
+  controlsCanvasBackground: css({
+    background: theme.colors.background.canvas,
+  }),
+  controlsPageBackground: css({
+    background: theme.colors.background.page,
   }),
 });

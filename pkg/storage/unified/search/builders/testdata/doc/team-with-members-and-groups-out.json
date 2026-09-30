@@ -8,6 +8,7 @@
   "name": "with-members-and-groups",
   "rv": 1234,
   "_rv": "1234",
+  "groupResource": "iam.grafana.app/teams",
   "title": "Team With Members And Groups",
   "title_ngram": "Team With Members And Groups",
   "title_phrase": "team with members and groups",

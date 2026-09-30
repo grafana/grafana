@@ -17,7 +17,6 @@ import (
 var (
 	// These fields exist at the top-level of DashboardHit
 	standardFields = map[string]string{
-		resource.SEARCH_FIELD_EXPLAIN:          "",
 		resource.SEARCH_FIELD_SCORE:            "",
 		resource.SEARCH_FIELD_TITLE:            "",
 		resource.SEARCH_FIELD_FOLDER:           "",
@@ -73,10 +72,13 @@ var (
 	})
 )
 
+// SearchFunc is in practice only invoking the unified storage search grpc API due to which we handle errors from it as
+// if they were grpc errors. If other implementation are considered the error handling will need changes.
 type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
 
 // SearchAll executes a search request and paginates through all results by incrementing the offset until the offset is greater than total hits
 // or it hits an empty page.
+// Callers that use searchFn directly must call ParseResults, or embedded errors are silently dropped.
 func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest, searchFn SearchFunc) (v0alpha1.SearchResults, error) {
 	if request.Limit == 0 {
 		request.Limit = 100000
@@ -122,9 +124,9 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
-		// Wrap via GetError so the status code/reason survives, letting callers
-		// classify transient search failures (e.g. 429/503) as retryable.
-		return v0alpha1.SearchResults{}, fmt.Errorf("error searching: %w", resource.GetError(result.Error))
+		// Return the status error directly because Kubernetes response writers
+		// do not unwrap errors when determining the HTTP status.
+		return v0alpha1.SearchResults{}, resource.GetError(result.Error)
 	}
 
 	switch result.ResultFormat {
@@ -146,15 +148,12 @@ func parseTableResults(result *resourcepb.ResourceSearchResponse, offset int64) 
 	tagsIDX := -1
 	descriptionIDX := -1
 	scoreIDX := -1
-	explainIDX := -1
 	managerKindIDX := -1
 	managerIdIDX := -1
 	ownerRefsIDX := -1
 
 	for i, v := range table.GetColumns() {
 		switch v.Name {
-		case resource.SEARCH_FIELD_EXPLAIN:
-			explainIDX = i
 		case resource.SEARCH_FIELD_SCORE:
 			scoreIDX = i
 		case resource.SEARCH_FIELD_TITLE:
@@ -232,9 +231,6 @@ func parseTableResults(result *resourcepb.ResourceSearchResponse, offset int64) 
 		if tagsIDX >= 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)
 		}
-		if explainIDX >= 0 && row.Cells[explainIDX] != nil {
-			_ = json.Unmarshal(row.Cells[explainIDX], &hit.Explain)
-		}
 		if scoreIDX >= 0 && row.Cells[scoreIDX] != nil {
 			_, _ = binary.Decode(row.Cells[scoreIDX], binary.BigEndian, &hit.Score)
 		}
@@ -268,6 +264,9 @@ func parseFieldValueResults(result *resourcepb.ResourceSearchResponse, offset in
 		}
 
 		fields := &common.Unstructured{}
+		if row.ResourceVersion != 0 {
+			fields.Set(resource.SEARCH_FIELD_RV, row.ResourceVersion)
+		}
 		for name, value := range values {
 			if _, ok := standardFields[name]; !ok {
 				fields.Set(name, jsonCompatibleValue(value))

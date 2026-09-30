@@ -15,15 +15,13 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
+import { useVisualRefreshNudge } from 'app/features/visual-refresh/useVisualRefreshNudge';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
-import {
-  ExtensionSidebar,
-  MAX_EXTENSION_SIDEBAR_WIDTH,
-  MIN_EXTENSION_SIDEBAR_WIDTH,
-} from './ExtensionSidebar/ExtensionSidebar';
+import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
+import { MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar/constants';
 import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl';
 import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspace/FullscreenWorkspacePlatformBar';
 import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorkspaceShell';
@@ -41,6 +39,7 @@ export interface Props extends PropsWithChildren<{}> {}
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  useVisualRefreshNudge(visualRefreshEnabled);
   const {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,
