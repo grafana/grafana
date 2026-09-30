@@ -5,9 +5,11 @@ import {
   SceneObjectStateChangedEvent,
   type SceneObjectState,
   type SceneObjectStateChangedPayload,
+  type SceneTimeRangeLike,
   type VizPanel,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { buildSceneTimeRange } from 'app/features/dashboard-scene/serialization/shared/timeSettings';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT } from '../analytics/types';
@@ -17,7 +19,12 @@ import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from 
 
 import { type NotebookScene } from './NotebookScene';
 import { type NotebookCellItem } from './layout-notebook/NotebookCellItem';
-import { type CellTimeRangeSpec, withQueryOptionsTimeRange } from './layout-notebook/cellTimeRange';
+import {
+  buildCellSceneTimeRange,
+  buildCellTimeRangeSpec,
+  type CellTimeRangeSpec,
+  withQueryOptionsTimeRange,
+} from './layout-notebook/cellTimeRange';
 
 type PanelVizConfigState = Pick<VizPanel['state'], 'pluginId' | 'pluginVersion' | 'options' | 'fieldConfig'>;
 
@@ -68,6 +75,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private vizConfigsEdited = new Set<string>();
   /** Each cell's own time range in `baseline`, by cell identity. As `savedVizConfigs`. */
   private savedCellTimeRanges = new Map<NotebookCellItem, CellTimeRangeSpec | undefined>();
+  /** The panel's own time override in `baseline`, by cell identity. As `savedCellTimeRanges`. */
+  private savedPanelTimeRanges = new Map<NotebookCellItem, SceneTimeRangeLike | undefined>();
   /** The cells whose own time range was edited this session, by cell identity. As `vizConfigsEdited`. */
   private cellTimeRangesEdited = new Set<NotebookCellItem>();
   /** The panels a reader changed, by element name, waiting on the prompt edit mode opens with. */
@@ -315,6 +324,78 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   /**
+   * Puts back the time settings and cell ranges a reader moved, so the notebook opens on its own range.
+   *
+   * Saves already hold these back (see `buildSpecToSave`), so the server copy is right. This is the
+   * other half: the page caches the scene and hands the same one back on the next visit, so without
+   * this a reader's range outlives them. `NotebookScene`'s teardown resets `isEditing` for the same
+   * reason.
+   */
+  public discardViewOnlyTimeChanges(): void {
+    // Replacing `$timeRange` under a live tree would orphan every cell range's ancestor subscription
+    // (SceneTimeRangeTransformerBase resolves it once, at activation), and the url sync manager would
+    // answer the change by rewriting the address bar. A notebook still open in an embed therefore keeps
+    // the reader's range, which is right: someone is reading it.
+    if (this.scene.isActive) {
+      return;
+    }
+
+    // A save in flight already cleared the flags saying what it carries, and the saved values still
+    // describe the notebook from before it. Closing a notebook flushes a pending save, so this is the
+    // ordinary shape of leaving one mid-edit.
+    if (this.inFlight) {
+      return;
+    }
+
+    const saved = this.savedTimeSettings;
+    // A range edited this session is the notebook's own, and may still be waiting on the debounce or on
+    // a retry after a failed save (`saveNow` puts the flag back).
+    if (!saved || this.timeSettingsEdited) {
+      return;
+    }
+
+    // Rebuilt rather than patched, so every time setting comes back together and `value` is
+    // re-evaluated. Panels re-query on their next activation, where they see data for another range.
+    this.scene.setState({ $timeRange: buildSceneTimeRange(saved) });
+
+    const { refreshPicker } = this.scene.state;
+    if (refreshPicker.state.refresh !== saved.autoRefresh) {
+      refreshPicker.setState({ refresh: saved.autoRefresh });
+    }
+
+    this.restoreSavedCellTimeRanges();
+  }
+
+  private restoreSavedCellTimeRanges(): void {
+    const currentCells = new Set(this.scene.state.body.state.cells);
+
+    for (const [cell, savedRange] of this.savedCellTimeRanges) {
+      // Same identity checks `withSavedCellTimeRanges` and `restorablePanels` make: a cell that has
+      // left the notebook, or whose panel was replaced, is not the one this entry was recorded for.
+      const panel = cell.state.body;
+      if (
+        this.cellTimeRangesEdited.has(cell) ||
+        !currentCells.has(cell) ||
+        panel !== this.savedVizPanels?.get(cell.state.elementName)
+      ) {
+        continue;
+      }
+
+      const savedPanelRange = this.savedPanelTimeRanges.get(cell);
+      const currentRange = cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : undefined;
+      if (isEqual(currentRange, savedRange) && panel?.state.$timeRange === savedPanelRange) {
+        continue;
+      }
+
+      cell.setState({ $timeRange: savedRange ? buildCellSceneTimeRange(savedRange.from, savedRange.to) : undefined });
+      // Setting a cell range clears the panel's own override (see setCellTimeRange), so it has to go
+      // back too or a reader's toggle costs the notebook a `timeFrom` of its own. Not via
+      // setCellTimeRange: that runs the cell's queries, which SceneQueryRunner does even off screen.
+      panel?.setState({ $timeRange: savedPanelRange });
+    }
+  }
+
+  /**
    * The panels with a saved look to go back to. Skips one whose plugin has not loaded, because
    * restoring re-applies that plugin's defaults and an unrendered panel has nothing to restore.
    */
@@ -512,13 +593,39 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     spec: NotebookSpec,
     serialized = JSON.stringify(spec),
     panels = collectVizPanels(this.scene),
-    cells = this.scene.state.body.contentCells()
+    cells = this.scene.state.body.contentCells(),
+    cellTimeRangesEdited: ReadonlySet<NotebookCellItem> = this.cellTimeRangesEdited
   ): void {
     this.baseline = serialized;
     this.savedTimeSettings = spec.timeSettings;
     this.savedVizConfigs = collectVizConfigs(spec);
     this.savedVizPanels = panels;
     this.savedCellTimeRanges = collectCellTimeRangesFromSpec(spec, cells);
+    this.savedPanelTimeRanges = this.collectPanelTimeRanges(cells, cellTimeRangesEdited);
+  }
+
+  /**
+   * The panel's own time override for each cell, as the spec just written leaves it.
+   *
+   * From the scene, not the spec: a one-sided override (`timeFrom` with no `timeTo`) stays on the panel
+   * and never becomes a cell range, so `collectCellTimeRangesFromSpec` records nothing for it.
+   *
+   * Only a cell whose range this save wrote is read from the scene. Any other can be showing a reader's
+   * toggle, which clears the panel's override, so reading it now would record that loss as saved.
+   */
+  private collectPanelTimeRanges(
+    cells: NotebookCellItem[],
+    cellTimeRangesEdited: ReadonlySet<NotebookCellItem>
+  ): Map<NotebookCellItem, SceneTimeRangeLike | undefined> {
+    const previous = this.savedPanelTimeRanges;
+    const ranges = new Map<NotebookCellItem, SceneTimeRangeLike | undefined>();
+
+    for (const cell of cells) {
+      const carryForward = previous.has(cell) && !cellTimeRangesEdited.has(cell);
+      ranges.set(cell, carryForward ? previous.get(cell) : cell.state.body?.state.$timeRange);
+    }
+
+    return ranges;
   }
 
   /** What to report when there is nothing waiting to be written. */
@@ -592,7 +699,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.inFlightSave = this.write(uid, spec)
       .then(({ generation }) => {
-        this.recordWritten(spec, serialized, panels, cells);
+        this.recordWritten(spec, serialized, panels, cells, cellTimeRangesEdited);
         this.hasSavedOnce = true;
         this.failedAttempts = 0;
         this.setState({
