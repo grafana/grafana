@@ -196,7 +196,7 @@ it('applies code once, then undoes without restoring Code mode', () => {
   expect(getDashboardMode(scene.state)).toBe('edit');
 });
 
-it('keeps invalid text and refuses switching and saving', async () => {
+it('keeps invalid text and refuses switching while allowing Save of the current dashboard', async () => {
   const scene = setup();
   scene.setDashboardMode('code');
   scene.state.codeSession!.updateText('{ unfinished');
@@ -206,7 +206,7 @@ it('keeps invalid text and refuses switching and saving', async () => {
   expect(scene.state.codeSession!.state.text).toBe('{ unfinished');
   expect(scene.state.codeSession!.state.error).toEqual(expect.any(String));
   expect(scene.state.title).toBe('Original title');
-  expect(scene.state.overlay).toBeUndefined();
+  expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer);
 });
 
 it('rejects code that would silently drop an unsupported field', () => {
@@ -429,15 +429,15 @@ it('keeps dashboard content visible while applying JSON from the bottom pane wit
   const resource = JSON.parse(scene.state.codeSession!.state.text);
   resource.spec.title = 'Updated from code';
   fireEvent.change(editor, { target: { value: JSON.stringify(resource) } });
-  await userEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
   expect(await screen.findByRole('heading', { name: 'Updated from code' })).toBeInTheDocument();
   expect(getDashboardMode(scene.state)).toBe('code');
-  expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Preview' })).toBeDisabled();
   expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
 
   fireEvent.change(editor, { target: { value: '{ invalid' } });
-  await userEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
-  expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+  await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
+  expect(screen.getByRole('button', { name: 'Preview' })).toBeDisabled();
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Updated from code' })).toBeInTheDocument();
   expect(editor).toHaveValue('{ invalid');
@@ -561,11 +561,7 @@ it('syncs the editor automatically and reviews overlapping changes before applyi
     expect(result.success).toBe(true);
   });
   expect(screen.getByRole('heading', { name: 'Assistant second' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
-  await userEvent.click(screen.getByRole('button', { name: 'More apply options' }));
-  expect(screen.getByRole('menuitem', { name: 'Apply changes and Save' })).toBeDisabled();
-  expect(screen.getByRole('menuitem', { name: 'Save as copy' })).toBeDisabled();
-  await userEvent.keyboard('{Escape}');
+  expect(screen.getByRole('button', { name: 'Preview' })).toBeDisabled();
   await userEvent.click(screen.getByRole('button', { name: 'Review changes' }));
   expect(screen.getByText('"Assistant first"')).toBeInTheDocument();
   expect(screen.getByText('"My title"')).toBeInTheDocument();
@@ -582,7 +578,7 @@ it('syncs the editor automatically and reviews overlapping changes before applyi
     title: 'My title',
     description: 'Keep this addition',
   });
-  await userEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
   expect(screen.getByRole('heading', { name: 'My title' })).toBeInTheDocument();
   expect(scene.state.description).toBe('Keep this addition');
   expect(getDashboardMode(scene.state)).toBe('code');
@@ -634,7 +630,7 @@ it('switches diff layouts from the unified toolbar and keeps edits when returnin
   await userEvent.click(actions.getByRole('switch', { name: 'Show diff' }));
   expect(actions.queryByRole('radio', { name: 'Side by side' })).not.toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'Dashboard JSON' })).toHaveValue(pendingText);
-  await userEvent.click(actions.getByRole('button', { name: 'Apply changes' }));
+  await userEvent.click(actions.getByRole('button', { name: 'Preview' }));
   expect(screen.getByRole('heading', { name: 'Pending title' })).toBeInTheDocument();
 });
 
@@ -659,7 +655,7 @@ it('shows unsaved Assistant and code changes against the saved dashboard', async
   expect(
     JSON.parse((screen.getByRole('textbox', { name: 'Pending code JSON' }) as HTMLTextAreaElement).value).spec.title
   ).toBe('Assistant title');
-  expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Preview' })).toBeDisabled();
 
   await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
   const resource = JSON.parse(scene.state.codeSession!.state.text);
@@ -667,7 +663,7 @@ it('shows unsaved Assistant and code changes against the saved dashboard', async
   fireEvent.change(screen.getByRole('textbox', { name: 'Dashboard JSON' }), {
     target: { value: JSON.stringify(resource) },
   });
-  await userEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
   expect(scene.state.description).toBe('Code description');
   await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
   expect(
@@ -693,7 +689,7 @@ it('shows unsaved Assistant and code changes against the saved dashboard', async
 });
 
 it.each(['syntax', 'schema', 'envelope', 'unsupported'])(
-  'disables Apply for %s errors until the JSON is corrected',
+  'disables Preview for %s errors until the JSON is corrected',
   async (kind) => {
     const scene = setup();
     scene.setDashboardMode('code');
@@ -711,68 +707,75 @@ it.each(['syntax', 'schema', 'envelope', 'unsupported'])(
     }
     const invalidText = kind === 'syntax' ? '{ unfinished' : JSON.stringify(resource);
     fireEvent.change(editor, { target: { value: invalidText } });
-    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeDisabled();
     await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
-    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeDisabled();
     expect(scene.state.title).toBe('Original title');
-    await userEvent.click(screen.getByRole('button', { name: 'More apply options' }));
-    expect(screen.getByRole('menuitem', { name: 'Apply changes and Save' })).toBeDisabled();
-    expect(screen.getByRole('menuitem', { name: 'Save as copy' })).toBeDisabled();
-    await userEvent.keyboard('{Escape}');
     await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Dashboard JSON' }), { target: { value: validText } });
-    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeEnabled();
-    await userEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeEnabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(scene.state.title).toBe('Corrected title');
   }
 );
 
-it('hides toolbar Save in Code mode and blocks both save actions for invalid drafts', async () => {
-  const scene = setup();
-  scene.setDashboardMode('code');
-  function Dashboard() {
-    const { title } = scene.useState();
-    return (
-      <>
-        <SaveDashboard dashboard={scene} />
-        <DashboardSidebarSplitter dashboard={scene} body={<h2>{title}</h2>} />
-      </>
-    );
+function CodeDashboard({ scene }: { scene: ReturnType<typeof setup> }) {
+  const { title } = scene.useState();
+  return (
+    <>
+      <SaveDashboard dashboard={scene} />
+      <DashboardSidebarSplitter dashboard={scene} body={<h2>{title}</h2>} />
+    </>
+  );
+}
+
+it.each(['clean', 'valid draft', 'invalid draft'])(
+  'opens toolbar Save in Code mode with %s without applying editor changes',
+  async (draft) => {
+    const scene = setup();
+    scene.setDashboardMode('code');
+    renderApp(<CodeDashboard scene={scene} />);
+    const editor = await screen.findByRole('textbox', { name: 'Dashboard JSON' });
+    if (draft !== 'clean') {
+      const resource = JSON.parse(scene.state.codeSession!.state.text);
+      resource.spec.title = 'Not previewed';
+      fireEvent.change(editor, {
+        target: { value: draft === 'invalid draft' ? '{ invalid' : JSON.stringify(resource) },
+      });
+    }
+    const pendingText = scene.state.codeSession!.state.text;
+    expect(screen.getByRole('button', { name: 'Save' })).not.toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(screen.getByRole('button', { name: 'More save options' }));
+    expect(screen.getByRole('menuitem', { name: 'Save' })).toBeEnabled();
+    expect(screen.getByRole('menuitem', { name: 'Save as copy' })).toBeEnabled();
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
+    const drawer = scene.state.overlay as SaveDashboardDrawer;
+    expect(drawer.state.dashboardRef.resolve().state.title).toBe('Original title');
+    expect(scene.state.codeSession!.state.text).toBe(pendingText);
+    expect(scene.hasPendingCodeChanges()).toBe(draft !== 'clean');
   }
-  renderApp(<Dashboard />);
-  const editor = await screen.findByRole('textbox', { name: 'Dashboard JSON' });
-  expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
-  expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
-  const resource = JSON.parse(scene.state.codeSession!.state.text);
-  resource.spec.title = 'Applied before saving';
-  fireEvent.change(editor, { target: { value: JSON.stringify(resource) } });
-  await userEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
-  expect(screen.getByRole('heading', { name: 'Applied before saving' })).toBeInTheDocument();
-  expect(scene.state.overlay).toBeUndefined();
-  await userEvent.click(screen.getByRole('button', { name: 'More apply options' }));
-  expect(screen.getByRole('menuitem', { name: 'Apply changes and Save' })).toBeEnabled();
-  await userEvent.keyboard('{Escape}');
-  fireEvent.change(editor, { target: { value: '{ invalid again' } });
-  await userEvent.click(screen.getByRole('button', { name: 'More apply options' }));
-  expect(screen.getByRole('menuitem', { name: 'Apply changes and Save' })).toBeDisabled();
-  expect(screen.getByRole('menuitem', { name: 'Save as copy' })).toBeDisabled();
-  await userEvent.click(screen.getByRole('menuitem', { name: 'Apply changes and Save' }));
-  expect(scene.state.overlay).toBeUndefined();
-});
+);
 
 it.each([
-  { action: 'Apply changes and Save', copy: false },
+  { action: 'Save', copy: false },
   { action: 'Save as copy', copy: true },
-])('applies pending code before opening the normal $action drawer', async ({ action, copy }) => {
+])('opens the toolbar $action drawer with previewed code', async ({ action, copy }) => {
   const scene = setup();
   scene.setDashboardMode('code');
-  renderApp(<DashboardSidebarSplitter dashboard={scene} body={<h2>Preview</h2>} />);
+  renderApp(<CodeDashboard scene={scene} />);
   const editor = await screen.findByRole('textbox', { name: 'Dashboard JSON' });
   const resource = JSON.parse(scene.state.codeSession!.state.text);
   resource.spec.title = 'Code ready to save';
   fireEvent.change(editor, { target: { value: JSON.stringify(resource) } });
-  await userEvent.click(screen.getByRole('button', { name: 'More apply options' }));
-  await userEvent.click(screen.getByRole('menuitem', { name: action }));
+  await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
+  if (copy) {
+    await userEvent.click(screen.getByRole('button', { name: 'More save options' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: action }));
+  } else {
+    await userEvent.click(screen.getByRole('button', { name: action }));
+  }
   await waitFor(() => expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
   const drawer = scene.state.overlay as SaveDashboardDrawer;
   expect(drawer.state.dashboardRef.resolve().state.title).toBe('Code ready to save');
@@ -781,8 +784,8 @@ it.each([
   expect(getDashboardMode(scene.state)).toBe('code');
 });
 
-it.each(['new', 'template', 'copy-only', 'no-save-permission'] as const)(
-  'uses the toolbar save policy for a %s dashboard in Code mode',
+it.each(['new', 'template', 'copy-only'] as const)(
+  'uses the toolbar save policy for a %s dashboard after Preview',
   async (kind) => {
     const previousFolderPermission = contextSrv.hasEditPermissionInFolders;
     contextSrv.hasEditPermissionInFolders = kind === 'copy-only';
@@ -797,20 +800,15 @@ it.each(['new', 'template', 'copy-only', 'no-save-permission'] as const)(
         scene.setState({ meta: { ...scene.state.meta, canSave: false, canMakeEditable: false } });
       }
       scene.setDashboardMode('code');
-      renderApp(<DashboardSidebarSplitter dashboard={scene} body={<h2>Preview</h2>} />);
+      renderApp(<CodeDashboard scene={scene} />);
       const editor = await screen.findByRole('textbox', { name: 'Dashboard JSON' });
       const resource = JSON.parse(scene.state.codeSession!.state.text);
       resource.spec.title = 'Saved from code';
       fireEvent.change(editor, { target: { value: JSON.stringify(resource) } });
-      expect(screen.getByRole('button', { name: 'Apply changes' })).toBeEnabled();
-      if (kind === 'no-save-permission') {
-        expect(screen.queryByRole('button', { name: 'More apply options' })).not.toBeInTheDocument();
-        return;
-      }
-      await userEvent.click(screen.getByRole('button', { name: 'More apply options' }));
-      const action = kind === 'copy-only' ? 'Save as copy' : 'Apply changes and Save';
-      expect(screen.getAllByRole('menuitem')).toHaveLength(1);
-      await userEvent.click(screen.getByRole('menuitem', { name: action }));
+      const action = kind === 'copy-only' ? 'Save as copy' : 'Save';
+      expect(screen.getByRole('button', { name: action })).not.toHaveAttribute('aria-disabled', 'true');
+      await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
+      await userEvent.click(screen.getByRole('button', { name: action }));
       await waitFor(() => expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
       const drawer = scene.state.overlay as SaveDashboardDrawer;
       expect(drawer.state.dashboardRef.resolve().state.title).toBe('Saved from code');
@@ -833,7 +831,8 @@ it.each(['{ invalid', 'valid'])('does not implicitly apply %s code when opening 
   await scene.openSaveDrawer({});
   expect(scene.state.title).toBe('Original title');
   expect(scene.hasPendingCodeChanges()).toBe(true);
-  expect(scene.state.overlay).toBeUndefined();
+  expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer);
+  expect((scene.state.overlay as SaveDashboardDrawer).state.dashboardRef.resolve().state.title).toBe('Original title');
 });
 
 it('shows line counts outside the buttons only in Diff and keeps them until saving', async () => {
@@ -859,7 +858,7 @@ it('shows line counts outside the buttons only in Diff and keeps them until savi
   await userEvent.click(toolbar.getByRole('switch', { name: 'Show diff' }));
   expect(toolbar.getByRole('status', { name: '2 lines added, 1 lines removed' })).toHaveTextContent('+2-1');
   expect(toolbar.getByText('+2').closest('label')).toBeNull();
-  await userEvent.click(toolbar.getByRole('button', { name: 'Apply changes' }));
+  await userEvent.click(toolbar.getByRole('button', { name: 'Preview' }));
   expect(toolbar.getByText('+2')).toBeInTheDocument();
   expect(toolbar.getByText('-1')).toBeInTheDocument();
   expect(
@@ -912,7 +911,7 @@ it('edits and previews YAML in the shared toolbar, then applies it before saving
   const draft = (editor as HTMLTextAreaElement).value.replace('title: Original title', 'title: YAML title');
   fireEvent.change(editor, { target: { value: draft } });
   expect(scene.state.title).toBe('Original title');
-  expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Save' })).not.toHaveAttribute('aria-disabled', 'true');
   await userEvent.click(actions.getByRole('switch', { name: 'Show diff' }));
   expect(
     yaml.load((screen.getByRole('textbox', { name: 'Pending code JSON' }) as HTMLTextAreaElement).value)
@@ -922,8 +921,8 @@ it('edits and previews YAML in the shared toolbar, then applies it before saving
   );
   await userEvent.click(actions.getByRole('switch', { name: 'Show diff' }));
   expect(screen.getByRole('textbox', { name: 'Dashboard YAML' })).toHaveValue(draft);
-  await waitFor(() => expect(actions.getByRole('button', { name: 'Apply changes' })).toBeEnabled());
-  await userEvent.click(actions.getByRole('button', { name: 'Apply changes' }));
+  await waitFor(() => expect(actions.getByRole('button', { name: 'Preview' })).toBeEnabled());
+  await userEvent.click(actions.getByRole('button', { name: 'Preview' }));
   expect(scene.state.title).toBe('YAML title');
   expect(scene.hasPendingCodeChanges()).toBe(false);
   await userEvent.click(actions.getByRole('radio', { name: 'JSON' }));
@@ -932,7 +931,7 @@ it('edits and previews YAML in the shared toolbar, then applies it before saving
   ).toBe('YAML title');
 });
 
-it('protects invalid YAML from saving and mode switches, and merges Assistant changes after correction', async () => {
+it('keeps invalid YAML separate from Save and blocks mode switches until corrected', async () => {
   const scene = setup();
   scene.setDashboardMode('code');
   function Dashboard() {
@@ -950,13 +949,13 @@ it('protects invalid YAML from saving and mode switches, and merges Assistant ch
   const editor = screen.getByRole('textbox', { name: 'Dashboard YAML' });
   const validDraft = (editor as HTMLTextAreaElement).value.replace('title: Original title', 'title: My YAML title');
   fireEvent.change(editor, { target: { value: 'spec: [' } });
-  expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
-  expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Preview' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Save' })).not.toHaveAttribute('aria-disabled', 'true');
   expect(screen.getByRole('radio', { name: 'JSON' })).toBeDisabled();
   expect(screen.getByRole('switch', { name: 'Show diff' })).toBeDisabled();
-  await userEvent.click(screen.getByRole('button', { name: 'More apply options' }));
-  expect(screen.getByRole('menuitem', { name: 'Apply changes and Save' })).toBeDisabled();
-  expect(screen.getByRole('menuitem', { name: 'Save as copy' })).toBeDisabled();
+  await userEvent.click(screen.getByRole('button', { name: 'More save options' }));
+  expect(screen.getByRole('menuitem', { name: 'Save' })).toBeEnabled();
+  expect(screen.getByRole('menuitem', { name: 'Save as copy' })).toBeEnabled();
   await userEvent.keyboard('{Escape}');
   expect(scene.hasPendingCodeChanges()).toBe(true);
   act(() => {
@@ -965,11 +964,11 @@ it('protects invalid YAML from saving and mode switches, and merges Assistant ch
   await act(async () => scene.setState({ description: 'Assistant addition' }));
   expect(editor).toHaveValue('spec: [');
   fireEvent.change(editor, { target: { value: validDraft } });
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Apply changes' })).toBeEnabled());
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Preview' })).toBeEnabled());
   expect(yaml.load((editor as HTMLTextAreaElement).value)).toMatchObject({
     spec: { title: 'My YAML title', description: 'Assistant addition' },
   });
-  await userEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
   expect(scene.state.title).toBe('My YAML title');
   expect(scene.state.description).toBe('Assistant addition');
 });

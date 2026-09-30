@@ -10,29 +10,20 @@ import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scen
 import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
 import { getDashboardSaveActions } from '../../../saving/dashboardSaveActions';
-import { dashboardModesEnabled, getDashboardMode } from '../../dashboardModes';
+import { dashboardModesEnabled } from '../../dashboardModes';
 import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, uid, editview, isEditing } = dashboard.state;
   const isDirty = dashboard.state.isDirty;
   const hasPendingCodeChanges = dashboard.hasPendingCodeChanges();
-  const isCodeMode = dashboardModesEnabled() && getDashboardMode(dashboard.state) === 'code';
-  const hasUnappliedCode = isCodeMode && hasPendingCodeChanges;
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
   const isPreviewModeEnabled = useFlagGrafanaDashboardPreviewMode();
   const showChanges = isPreviewModeEnabled && isEditing;
 
   const { save, saveAsCopy: onSaveAsCopy, isNew } = getDashboardSaveActions(dashboard, isDashboardTemplatesFlagEnabled);
-  if (isCodeMode) {
-    return null;
-  }
   const isManaged = dashboard.isManaged();
-  const saveDisabled = isCodeMode && (hasPendingCodeChanges || (!isDirty && !isNew));
-  const saveTooltip = hasUnappliedCode
-    ? t('dashboard.modes.apply-before-save', 'Apply code changes before saving')
-    : t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes');
   // In dashboard settings we still use the nav toolbar for a short while
   const buttonSize = Boolean(editview) ? 'sm' : 'md';
 
@@ -68,7 +59,6 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                   <Menu.Item
                     label={t('dashboard.preview.view-changes', 'View changes')}
                     icon="code-branch"
-                    disabled={hasUnappliedCode}
                     onClick={() => dashboard.openChanges()}
                   />
                 )}
@@ -85,7 +75,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
             <Button
               aria-label={t('dashboard.toolbar.new.more-save-options', 'More save options')}
               icon="angle-down"
-              variant={!hasUnappliedCode && (isDirty || isNew) ? 'primary' : 'secondary'}
+              variant={isDirty || isNew ? 'primary' : 'secondary'}
               size={buttonSize}
               data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
             />
@@ -103,12 +93,9 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     return renderSaveButton(
       <Button
         onClick={save}
-        tooltip={
-          hasUnappliedCode ? saveTooltip : t('dashboard.toolbar.new.save-template.tooltip', 'Save template changes')
-        }
-        disabled={saveDisabled}
+        tooltip={t('dashboard.toolbar.new.save-template.tooltip', 'Save template changes')}
         size={buttonSize}
-        variant={isDirty && !hasUnappliedCode ? 'primary' : 'secondary'}
+        variant={isDirty ? 'primary' : 'secondary'}
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
       >
         <Trans i18nKey="dashboard.toolbar.new.save-template.label">Save</Trans>
@@ -121,10 +108,9 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     return renderSaveButton(
       <Button
         onClick={save}
-        tooltip={saveTooltip}
-        disabled={saveDisabled}
+        tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
         size={buttonSize}
-        variant={hasUnappliedCode ? 'secondary' : 'primary'}
+        variant="primary"
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
       >
         <Trans i18nKey="dashboard.toolbar.new.save-dashboard.label">Save</Trans>
@@ -137,12 +123,9 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     return renderSaveButton(
       <Button
         onClick={onSaveAsCopy}
-        tooltip={
-          hasUnappliedCode ? saveTooltip : t('dashboard.toolbar.new.save-dashboard-copy.tooltip', 'Save as copy')
-        }
-        disabled={hasUnappliedCode}
+        tooltip={t('dashboard.toolbar.new.save-dashboard-copy.tooltip', 'Save as copy')}
         size={buttonSize}
-        variant={isDirty && !hasUnappliedCode ? 'primary' : 'secondary'}
+        variant={isDirty ? 'primary' : 'secondary'}
       >
         <Trans i18nKey="dashboard.toolbar.new.save-dashboard-copy.label">Save as copy</Trans>
       </Button>
@@ -152,26 +135,19 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   return renderSaveButton(
     <Button
       onClick={save}
-      tooltip={saveTooltip}
-      disabled={saveDisabled}
+      tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
       size={buttonSize}
       data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
-      variant={isDirty && !hasUnappliedCode ? 'primary' : 'secondary'}
-      data-testactive={(isDirty && !hasUnappliedCode) || undefined} // used in e2e tests to verify if dsahboard has unsaved changes
+      variant={isDirty ? 'primary' : 'secondary'}
+      data-testactive={isDirty || undefined} // used in e2e tests to verify if dsahboard has unsaved changes
     >
       <Trans i18nKey="dashboard.toolbar.new.save-dashboard.label">Save</Trans>
     </Button>,
     <>
-      <Menu.Item
-        label={t('dashboard.toolbar.new.save-dashboard-short', 'Save')}
-        icon="save"
-        disabled={saveDisabled}
-        onClick={save}
-      />
+      <Menu.Item label={t('dashboard.toolbar.new.save-dashboard-short', 'Save')} icon="save" onClick={save} />
       <Menu.Item
         label={t('dashboard.toolbar.new.save-dashboard-copy.label', 'Save as copy')}
         icon="copy"
-        disabled={hasUnappliedCode}
         onClick={onSaveAsCopy}
         testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
       />
@@ -182,7 +158,6 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
           <Menu.Item
             label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
             icon="grid"
-            disabled={hasUnappliedCode}
             onClick={() => {
               CustomDashboardTemplateInteractions.saveAsOpened({
                 dashboardUid: uid ?? '',

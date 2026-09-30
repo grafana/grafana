@@ -980,9 +980,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!this.state.isEditing) {
       return;
     }
-    if (getDashboardMode(this.state) === 'code' && this.hasPendingCodeChanges()) {
-      return;
-    }
 
     await this.showModalAsync(async () => {
       const { SaveDashboardDrawer } = await import(

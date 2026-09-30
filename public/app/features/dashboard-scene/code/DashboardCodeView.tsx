@@ -16,8 +16,6 @@ import { getDashboardDiffTexts } from '../sidebar/codePaneUtils';
 import { DashboardCodeDiffControls } from '../v2schema/DashboardCodeDiffControls';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
-import { DashboardCodeSaveButton } from './DashboardCodeSaveButton';
-
 export default function DashboardCodeView({ dashboard, children }: { dashboard: DashboardScene; children: ReactNode }) {
   const styles = useStyles2(getStyles);
   const { codeSession } = dashboard.useState();
@@ -183,18 +181,23 @@ function CodeEditor({
                     {t('dashboard.modes.code.finish-review', 'Use resolved code')}
                   </Button>
                 )}
-                <DashboardCodeSaveButton
-                  dashboard={dashboard}
-                  hasChanges={session.hasChanges()}
-                  invalid={
-                    conflicts.length > 0 || Boolean(validationError) || hasEditorErrors || Boolean(hasParseError)
+                <Button
+                  size="md"
+                  variant={session.hasChanges() ? 'primary' : 'secondary'}
+                  disabled={
+                    !session.hasChanges() ||
+                    conflicts.length > 0 ||
+                    Boolean(validationError) ||
+                    hasEditorErrors ||
+                    Boolean(hasParseError)
                   }
-                  onApply={() => {
-                    const applied = session.apply(dashboard);
+                  onClick={() => {
+                    session.apply(dashboard);
                     dashboard.forceRender();
-                    return applied;
                   }}
-                />
+                >
+                  {t('dashboard.modes.code.preview', 'Preview')}
+                </Button>
               </div>
             </div>
             {error && !validationError && (

@@ -27,6 +27,8 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
   const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, {
     key: scene.state.key,
     sidebar: scene.state.sidebar,
+    // Template identity is not part of the dashboard spec or its access DTO.
+    meta: { ...rebuilt.state.meta, isDashboardTemplate: scene.state.meta.isDashboardTemplate },
   });
   const previousState = { ...scene.state };
 
