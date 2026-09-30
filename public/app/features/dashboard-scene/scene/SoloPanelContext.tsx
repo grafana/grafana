@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { LazyLoader, VizPanel } from '@grafana/scenes';
+import { LazyLoader, type SceneGridRow, type VizPanel } from '@grafana/scenes';
 import { Box, Spinner } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
@@ -9,6 +9,7 @@ import { DashboardScene } from './DashboardScene';
 export interface SoloPanelContextValue {
   matches: (VizPanel: VizPanel) => boolean;
   matchFound: boolean;
+  renderRow?: (row: SceneGridRow, header: React.ReactNode) => React.ReactNode;
 }
 
 export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
