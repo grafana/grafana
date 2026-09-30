@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -431,7 +432,7 @@ func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
 	if err == nil {
 		return grpcErrorFromErrorResult(resp.GetError())
 	}
-	if res := errorResultFromGRPCDetails(err); res != nil {
+	if res := resourceclient.ErrorResultFromGRPCDetails(err); res != nil {
 		return grpcErrorFromErrorResult(res)
 	}
 	return err
