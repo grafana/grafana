@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var _ ResourceIndex = &MockResourceIndex{}
+var _ ResourceIndex = (*MockResourceIndex)(nil)
 
 // Mock implementations
 type MockResourceIndex struct {

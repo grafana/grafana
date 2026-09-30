@@ -28,8 +28,8 @@ var (
 )
 
 var (
-	_ authn.HookClient         = new(APIKey)
-	_ authn.ContextAwareClient = new(APIKey)
+	_ authn.HookClient         = (*APIKey)(nil)
+	_ authn.ContextAwareClient = (*APIKey)(nil)
 )
 
 const (

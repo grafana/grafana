@@ -39,7 +39,7 @@ type canceledRequestWriter struct {
 	req *http.Request
 }
 
-var _ responsewriter.UserProvidedDecorator = &canceledRequestWriter{}
+var _ responsewriter.UserProvidedDecorator = (*canceledRequestWriter)(nil)
 
 func (w *canceledRequestWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
 

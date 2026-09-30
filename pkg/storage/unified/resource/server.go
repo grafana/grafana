@@ -763,7 +763,7 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 	return blobstore, nil
 }
 
-var _ ResourceServer = &server{}
+var _ ResourceServer = (*server)(nil)
 
 type server struct {
 	log                       log.Logger

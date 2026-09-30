@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	_ FS          = &inMemoryFS{}
-	_ fs.File     = &inMemoryFile{}
-	_ fs.FileInfo = &inMemoryFileInfo{}
+	_ FS          = (*inMemoryFS)(nil)
+	_ fs.File     = (*inMemoryFile)(nil)
+	_ fs.FileInfo = (*inMemoryFileInfo)(nil)
 )
 
 // inMemoryFS is an FS that stores files in-memory.
