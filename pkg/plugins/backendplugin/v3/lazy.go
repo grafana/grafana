@@ -3,6 +3,7 @@ package v3
 import (
 	"context"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -10,13 +11,14 @@ import (
 )
 
 // Lazy client resolves the client before each request
-func NewLazyClient(loader ClientV3Loader, id string) ClientV3 {
-	return &lazyClient{loader, id}
+func NewLazyClient(loader ClientV3Loader, id string, deriver authnlib.IDTokenDeriver) ClientV3 {
+	return &lazyClient{loader, id, deriver}
 }
 
 type lazyClient struct {
-	loader ClientV3Loader
-	id     string
+	loader  ClientV3Loader
+	id      string
+	deriver authnlib.IDTokenDeriver
 }
 
 func (c *lazyClient) resolve(ctx context.Context) (ClientV3, error) {
@@ -25,7 +27,7 @@ func (c *lazyClient) resolve(ctx context.Context) (ClientV3, error) {
 		return nil, errors.NewServiceUnavailable(
 			"the plugin backend does not implement ClientV3")
 	}
-	return client, nil
+	return &clientWithOBOTokens{client: client, deriver: c.deriver}, nil
 }
 
 // AdmissionReview implements [ClientV3].
