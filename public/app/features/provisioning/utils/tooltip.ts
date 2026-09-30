@@ -30,3 +30,11 @@ export const getReadOnlyTooltipText = ({ isLocal = false }) => {
 export function getOrphanedRepositoryTooltip(): string {
   return t('provisioning.orphaned-repository-tooltip', 'Repository not found');
 }
+
+/**
+ * Tooltip for any provisioning resource (Repository, Connection, ...) that was applied from a
+ * mounted manifest at startup and is therefore read-only in the UI.
+ */
+export function getProvisionedFromFileTooltip(): string {
+  return t('provisioning.provisioned-from-file-tooltip', 'This resource is provisioned from a file and is read-only');
+}

@@ -941,6 +941,21 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_file_size", fmt.Sprintf("%d", *opts.ProvisioningMaxFileSize))
 		require.NoError(t, err)
 	}
+	if len(opts.BootstrapManifests) > 0 {
+		manifestsDir := filepath.Join(provDir, "manifests")
+		require.NoError(t, os.MkdirAll(manifestsDir, 0o750))
+		for name, content := range opts.BootstrapManifests {
+			require.NoError(t, os.WriteFile(filepath.Join(manifestsDir, name), []byte(content), 0o600))
+		}
+
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("bootstrap_manifests_enabled", "true")
+		require.NoError(t, err)
+		// Set the path explicitly so it does not depend on how [paths] provisioning resolves.
+		_, err = provisioningSect.NewKey("bootstrap_manifests_path", manifestsDir)
+		require.NoError(t, err)
+	}
 	if opts.ProvisioningControllerResyncInterval > 0 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -1175,6 +1190,10 @@ type GrafanaOpts struct {
 	ProvisioningMaxFileSize               *int64
 	ProvisioningWebhookRateLimitRPS       int
 	ProvisioningWebhookTrustedIPHeader    string
+	// BootstrapManifests, when non-empty, enables [provisioning] bootstrap_manifests and writes
+	// each entry (filename -> YAML content) into <provisioning>/manifests before the server starts,
+	// so they are applied by the startup provisioning bootstrap hook.
+	BootstrapManifests map[string]string
 	// ProvisioningControllerResyncInterval overrides [provisioning]
 	// resync_interval (repo/connection/job informer re-list). Set it
 	// high in NATS tests so a fast reconcile can only be a live notification, not

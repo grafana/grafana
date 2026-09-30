@@ -1,8 +1,13 @@
 import { render, screen } from 'test/test-utils';
 
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+
+import { exportResourceAsJson } from '../utils/export';
 
 import { RepositoryListItem } from './RepositoryListItem';
+
+jest.mock('../utils/export', () => ({ exportResourceAsJson: jest.fn() }));
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
@@ -174,6 +179,42 @@ describe('RepositoryListItem', () => {
 
       expect(screen.queryByRole('link', { name: /widgets/ })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: '3 widgets' })).toBeDisabled();
+    });
+  });
+
+  describe('export', () => {
+    it('exports the repository as JSON when the Export button is clicked', async () => {
+      const repo = createMockRepository();
+      const { user } = render(<RepositoryListItem repository={repo} />);
+
+      await user.click(screen.getByRole('button', { name: /export/i }));
+
+      expect(exportResourceAsJson).toHaveBeenCalledWith(repo, 'Repository');
+    });
+  });
+
+  describe('file-provisioned repositories', () => {
+    const provisionedRepo = () =>
+      createMockRepository({
+        metadata: {
+          name: 'test-repo',
+          annotations: {
+            [AnnoKeyManagerKind]: ManagerKind.FileProvisioning,
+            [AnnoKeyManagerIdentity]: 'file-provisioning',
+          },
+        },
+      });
+
+    it('disables the Settings action when file-provisioned', () => {
+      render(<RepositoryListItem repository={provisionedRepo()} />);
+
+      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('keeps Settings editable for repositories that are not file-provisioned', () => {
+      render(<RepositoryListItem repository={createMockRepository()} />);
+
+      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'false');
     });
   });
 });
