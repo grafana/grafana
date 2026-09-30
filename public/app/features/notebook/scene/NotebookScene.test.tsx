@@ -110,10 +110,6 @@ describe('NotebookScene', () => {
     deactivators.splice(0).forEach((deactivate) => deactivate());
   });
 
-  // The pickers are plain scene state, so they are otherwise activated by their renderers — and
-  // whether anything renders the controls row is now the surface's choice. Activating here
-  // unconditionally is what stops the spec's autoRefresh being silently dead on a surface that
-  // leaves the row out.
   it.each([true, false])('activates the refresh picker regardless of hideTimeControls (%s)', (hideTimeControls) => {
     const scene = buildScene(hideTimeControls);
 
@@ -125,9 +121,6 @@ describe('NotebookScene', () => {
     expect(scene.state.refreshPicker.isActive).toBe(false);
   });
 
-  // `scene.Component` is the document and nothing else: the controls row is composed by whichever
-  // surface wants it (see NotebookSceneControls), so a surface that does not — the PDF capture
-  // route — simply leaves it out rather than the scene having to ask who is drawing it.
   it('renders the document only, with no controls row', () => {
     const scene = buildScene(false);
     activate(scene);

@@ -82,16 +82,10 @@ export function isNotebookEditUrl(): boolean {
 }
 
 /**
- * The chromeless route a notebook is drawn on when it is being captured rather than read, which the
- * PDF export points the headless browser at (see export/openNotebookPdf). Its own route rather than
- * a mode of the view route, so that nothing a document does not want — app chrome, the page shell,
- * the toolbar, the controls row — is rendered in the first place.
+ * The chromeless route the PDF export points the headless browser at (see export/openNotebookPdf).
  *
- * Nested under the notebook rather than a top-level path: `render` is a static segment, which a v6
- * `<Routes>` ranks above the `:slug?` of the view route, so it cannot be swallowed as a slug. That
- * is the same ranking `/notebooks/new` already relies on to avoid being read as a uid.
- *
- * Raw, with no sub-path applied, like `notebookViewUrl`.
+ * `render` is a static segment, which a v6 `<Routes>` ranks above the view route's `:slug?`, so it
+ * cannot be swallowed as one. Raw, with no sub-path applied, like `notebookViewUrl`.
  */
 export function notebookRenderUrl(uid: string): string {
   return `${notebookViewUrl(uid)}/render`;

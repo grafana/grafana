@@ -82,13 +82,9 @@ export function NotebookExportMenu({ uid, getSpec, flushPendingChanges, source }
     }
   };
 
-  // Opens a new tab rather than downloading, matching dashboards' PDF export. The tab has to open
-  // before the awaits below, not after: both the flush and the row menu's getSpec go over the
-  // network, and a window.open past either can easily outlast the click's transient user activation
-  // and get treated as an unrequested popup. The spec itself is still needed — not for its content, but
-  // because transformNotebookSceneToSaveModel captures whatever time range is currently on screen,
-  // including one a reader picked that was never saved — without it the render would fall back to
-  // the notebook's last-saved range instead.
+  // The tab opens before the awaits below: both go over the network, and a window.open past either
+  // can outlast the click's transient user activation. The spec is loaded for its time range, which
+  // is whatever is on screen rather than whatever was last saved.
   const onExportPdf = async () => {
     const tab = openBlankNotebookPdfTab();
     if (!tab) {
@@ -97,9 +93,8 @@ export function NotebookExportMenu({ uid, getSpec, flushPendingChanges, source }
     }
 
     try {
-      // Before the spec, because this is what makes the notebook the render will load the notebook
-      // that is on screen. A failure here aborts the export rather than producing a PDF that is
-      // quietly a few seconds out of date.
+      // Before the spec, so the render loads what is on screen. A failure aborts the export rather
+      // than producing a PDF a few seconds out of date.
       await flushPendingChanges?.();
       const spec = await loadSpec();
       navigateToNotebookPdf(tab, uid, spec.timeSettings);

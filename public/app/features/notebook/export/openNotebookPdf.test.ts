@@ -18,8 +18,6 @@ describe('openBlankNotebookPdfTab', () => {
 
     openBlankNotebookPdfTab();
 
-    // No third argument: noopener/noreferrer make window.open return null unconditionally, which
-    // would make every export — successful or not — look like it was popup-blocked.
     expect(window.open).toHaveBeenCalledWith('', '_blank');
   });
 
@@ -30,7 +28,6 @@ describe('openBlankNotebookPdfTab', () => {
     expect(openBlankNotebookPdfTab()).toBe(tab);
   });
 
-  // window.open returns null rather than throwing when a popup blocker eats it.
   it('returns null when a popup blocker silently ate the tab', () => {
     window.open = jest.fn().mockReturnValue(null);
 
@@ -54,8 +51,6 @@ describe('canExportNotebookPdf', () => {
     expect(canExportNotebookPdf()).toBe(false);
   });
 
-  // The backend rejects encoding=pdf below this version, so offering the action would only ever
-  // produce a render error.
   it.each([
     ['3.9.0', false],
     ['3.10.0', true],
@@ -68,7 +63,6 @@ describe('canExportNotebookPdf', () => {
     expect(canExportNotebookPdf()).toBe(expected);
   });
 
-  // Same leniency as the backend's own semver parse.
   it.each(['v3.10.0', '3.10'])('accepts the loosely written version %s', (version) => {
     config.rendererAvailable = true;
     config.rendererVersion = version;
@@ -76,8 +70,6 @@ describe('canExportNotebookPdf', () => {
     expect(canExportNotebookPdf()).toBe(true);
   });
 
-  // Grafana fetches the version from the renderer asynchronously and retries, so an available
-  // renderer can still report no version. Fails closed, like the backend does.
   it.each(['', 'not-a-version'])('says no for the unreadable version "%s"', (version) => {
     config.rendererAvailable = true;
     config.rendererVersion = version;
@@ -97,8 +89,6 @@ describe('navigateToNotebookPdf', () => {
   afterEach(() => {
     contextSrv.user.orgId = originalOrgId;
     Object.defineProperty(window, 'Intl', { value: originalIntl, configurable: true, writable: true });
-    // locationUtil holds the sub-path in module state, so the one test that sets it has to hand
-    // the rest of the file back a Grafana served from the root.
     locationUtil.initialize({
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only appSubUrl is read
       config: { appSubUrl: '' } as GrafanaConfig,
@@ -117,20 +107,14 @@ describe('navigateToNotebookPdf', () => {
 
     navigateToNotebookPdf(tab, 'nb1', TIME_RANGE);
 
-    // The notebook's own chromeless render route, not the page a reader opens.
     expect(tab.location.href).toMatch(/^\/render\/notebooks\/nb1\/render\?/);
-    // For the transport, to pick a PDF over a PNG.
     expect(tab.location.href).toContain('encoding=pdf');
     expect(tab.location.href).toContain('orgId=7');
-    // The route is chromeless and the page leaves out its own chrome, so nothing has to ask for
-    // either — these were needed only while this pointed at the ordinary notebook page.
     expect(tab.location.href).not.toContain('kiosk');
     expect(tab.location.href).not.toContain('hideNav');
     expect(tab.location.href).not.toContain('pdfLayout');
   });
 
-  // The tab being navigated is `about:blank` and carries no `<base href>` of its own, so the
-  // sub-path is spelled out rather than left to whatever base url a browser resolves against.
   it('spells out the sub-path Grafana is served under', () => {
     locationUtil.initialize({
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only appSubUrl is read
@@ -181,8 +165,6 @@ describe('navigateToNotebookPdf', () => {
     expect(tab.location.href).toContain('tz=UTC');
   });
 
-  // A headless renderer has no reader behind it for 'browser' to mean anything to, so it has to
-  // resolve to a concrete zone before either the scene or the renderer's own OS timezone see it.
   it("resolves 'browser' to the current Intl-reported timezone", () => {
     Object.defineProperty(window, 'Intl', {
       value: { DateTimeFormat: () => ({ resolvedOptions: () => ({ timeZone: 'Europe/Berlin' }) }) },

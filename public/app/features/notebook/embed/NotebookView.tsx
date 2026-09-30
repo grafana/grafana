@@ -270,17 +270,9 @@ function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTi
   }, [onTitleChange, title]);
 
   /**
-   * `stickyOffset={0}`: there is no app header in this tree for the sticky row to stop beneath — a
-   * per-mount answer, because the same scene object may also be mounted on /notebooks, which has
-   * one, and the two share it.
-   *
-   * No `NotebookEmbeddedHost` here: it wraps the whole view instead, so that the host's
-   * `controlsBackground` reaches the row. A second provider nested here would shadow the outer one
-   * and reset that background to undefined.
-   *
-   * The column is explicit because this renders into a host we do not control, and the controls row
-   * and the document are two siblings that need a flex column above them for the sticky row to
-   * behave.
+   * `NotebookEmbeddedHost` wraps the whole view instead of sitting here, so the host's
+   * `controlsBackground` reaches the row; a nested provider would shadow it. The flex column is
+   * explicit because the host is not ours, and the sticky row needs one above it.
    */
   return (
     <div className={styles.host}>
@@ -322,8 +314,6 @@ function Centered({ children }: { children: ReactNode }) {
 }
 
 const getStyles = () => ({
-  // Matches what the scene's own container does on the /notebooks route, where Page supplies the
-  // column. Nothing here can assume the host does.
   host: css({
     display: 'flex',
     flexDirection: 'column',

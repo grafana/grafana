@@ -1465,14 +1465,11 @@ describe('NotebookAutosave', () => {
     expect(savedTexts()).toEqual(['typed just before hiding']);
   });
 
-  // The PDF export's reason for existing: it points a headless browser at the notebook's own route,
-  // which loads the saved resource, so anything still on the debounce would be missing from the PDF.
   describe('awaitPendingSave', () => {
     it('writes an edit still sitting on the debounce, without waiting it out', async () => {
       const scene = activateEditing();
       editFirstCell(scene, 'Typed a moment ago');
 
-      // No timer advance at all: the point is that the caller does not wait the two seconds.
       await scene.autosave.awaitPendingSave();
 
       expect(updateNotebook).toHaveBeenCalledTimes(1);
@@ -1480,7 +1477,6 @@ describe('NotebookAutosave', () => {
       expect(JSON.stringify(spec)).toContain('Typed a moment ago');
     });
 
-    // Otherwise the export hands back a PDF quietly missing the last few seconds of typing.
     it('throws when that save failed, rather than reporting a notebook that was never written', async () => {
       jest.mocked(updateNotebook).mockRejectedValue(new Error('The notebook was changed by someone else.'));
       const scene = activateEditing();
@@ -1497,8 +1493,6 @@ describe('NotebookAutosave', () => {
       expect(updateNotebook).not.toHaveBeenCalled();
     });
 
-    // The edit is carried by the save queued behind the request already running, so waiting on the
-    // running one would return before the edit had reached the server.
     it('waits for the queued save when one was already in flight', async () => {
       let finishFirstSave = () => {};
       jest
@@ -1520,8 +1514,6 @@ describe('NotebookAutosave', () => {
       expect(JSON.stringify(spec)).toContain('Second');
     });
 
-    // A reader's own time range is theirs, not the notebook's, and an export must not be the thing
-    // that writes it to the resource everyone else opens.
     it('does not adopt what a reader changed on the way', async () => {
       const scene = buildScene();
       deactivate = scene.activate();

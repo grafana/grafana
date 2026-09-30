@@ -42,8 +42,6 @@ function buildScene(hideTimeControls = false) {
   });
 }
 
-// activate() registers the scene on window.__grafanaSceneContext; leaving it registered leaks into
-// later tests in this file.
 const deactivators: Array<() => void> = [];
 function activate(scene: NotebookScene) {
   deactivators.push(scene.activate());
@@ -54,8 +52,6 @@ describe('NotebookSceneControls', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
-  // Wrapped in act(): these controls subscribe to scene state, so deactivating while they are
-  // still mounted publishes an update React would otherwise report as unwrapped.
   afterEach(() => {
     act(() => {
       deactivators.splice(0).forEach((deactivate) => deactivate());
@@ -72,8 +68,6 @@ describe('NotebookSceneControls', () => {
     expect(screen.getByRole('button', { name: /Time range selected/ })).toBeInTheDocument();
   });
 
-  // A property of the notebook, not of the surface rendering it, which is why this stays inside the
-  // controls rather than becoming a prop.
   it('hides the time controls when the notebook asks for them to be hidden', () => {
     const scene = buildScene(true);
     activate(scene);
@@ -84,9 +78,6 @@ describe('NotebookSceneControls', () => {
     expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
   });
 
-  // Awaited because entering edit mode also mounts the header's tag picker, whose dropdown measures
-  // itself once mounted. That lands after the act above, so a synchronous assertion here leaves an
-  // unwrapped update behind and the console guard fails the test.
   it('offers the history controls only in edit mode', async () => {
     const scene = buildScene();
     activate(scene);
@@ -99,8 +90,6 @@ describe('NotebookSceneControls', () => {
     expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument();
   });
 
-  // The assistant writes without entering edit mode, so gating the status on `isEditing` would hide a
-  // failed save from the only person who could retry it.
   it('reports a save outside edit mode, where the assistant writes', () => {
     const scene = buildScene();
     activate(scene);
@@ -115,8 +104,6 @@ describe('NotebookSceneControls', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
-  // A display someone has put a notebook on. The editing affordances go, but the time controls stay
-  // — a live display may well want the range visible, which is what separates this from a capture.
   it('hides save status, the edit toggle and history controls when kiosk mode is full', () => {
     const scene = buildScene();
     activate(scene);
@@ -131,15 +118,8 @@ describe('NotebookSceneControls', () => {
     expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument();
     expect(screen.queryByText('Edit')).not.toBeInTheDocument();
-    // Still there: kiosk is not a capture.
     expect(screen.getByRole('button', { name: /Time range selected/ })).toBeInTheDocument();
   });
-  /**
-   * The row is sticky, so one that is not opaque lets the notebook scroll visibly through it.
-   *
-   * Here rather than with NotebookScene: this component renders the row. Asserting it against
-   * `scene.Component` is what stopped testing anything once the row moved out of the scene.
-   */
   describe('sticky background', () => {
     afterEach(async () => {
       await act(async () => {
@@ -163,8 +143,6 @@ describe('NotebookSceneControls', () => {
       expect(controlsRow()).toHaveStyle({ background: config.theme2.colors.background.page });
     });
 
-    // Embedded hosts have no <Page> of their own to match, so — unlike the route above — this
-    // ignores the visual-refresh flag and always resolves to the same token.
     it('falls back to the canvas background when embedded with no host override', async () => {
       await act(async () => {
         setTestFlags({ [VISUAL_REFRESH_FLAG]: true });

@@ -200,8 +200,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.editedByWriter = true;
     this.schedule();
 
-    // Nothing left in flight once this returns, so no error means the write landed — or there was
-    // nothing to write and the notebook already holds what was asked for.
     await this.awaitPendingSave();
   }
 
@@ -326,24 +324,17 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   /**
-   * Writes anything still pending and waits for it to land, for a caller about to read the notebook
-   * back from the server: the PDF export points a headless browser at the notebook's own route,
-   * which loads the saved resource rather than the scene on screen, so an edit still sitting on the
-   * debounce would be missing from the PDF.
+   * Brings forward the save the debounce was already going to make, for a caller about to read the
+   * notebook back from the server. Unlike `saveDocumentChange` it claims nothing on the way.
    *
-   * Unlike `saveDocumentChange` it claims nothing on the way: what a reader owns stays theirs. All it
-   * does is bring forward the save the debounce was already going to make.
-   *
-   * Throws when that save failed, so the caller can report it rather than hand back a document that
-   * silently predates the last few seconds of typing. A save that failed earlier and has not been
-   * retried throws for the same reason — the server's copy is behind either way.
+   * Throws when the save failed, including one that failed earlier and was never retried — either
+   * way the server's copy is behind.
    */
   public async awaitPendingSave(): Promise<void> {
     this.flush();
 
-    // `flush` runs the save synchronously, so anything to write is in flight by now. A save already
-    // running when this arrived leaves this one queued behind it, and the queued one carries the
-    // change, so waiting on a single request would return before it was written.
+    // A save already running leaves this one queued behind it, and the queued one carries the
+    // change, so awaiting a single request would return too early.
     while (this.inFlightSave) {
       await this.inFlightSave;
     }

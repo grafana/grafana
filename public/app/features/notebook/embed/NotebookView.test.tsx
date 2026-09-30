@@ -94,15 +94,6 @@ describe('NotebookView', () => {
     expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
   });
 
-  /**
-   * This host has no app header above it, so the sticky controls row must offset itself by 0 — left
-   * alone it floats over the first cells as they scroll past.
-   *
-   * What this pins is that the answer must not live ON THE SCENE: the same scene object is shared
-   * with the /notebooks route, which does have a header, so a flag there would answer for both and
-   * leave the route's row tucked under its own header. It travels as a `stickyOffset` prop to
-   * NotebookSceneControls instead, which is per-mount by construction.
-   */
   it('does not mark the shared scene as embedded', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const { instances } = captureStateManager();

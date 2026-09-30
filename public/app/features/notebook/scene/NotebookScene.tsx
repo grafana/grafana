@@ -148,14 +148,9 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       claimSceneContext(this);
 
       // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are
-      // plain state, so they are otherwise activated by their renderers, and the spec's autoRefresh
-      // interval only starts once the refresh picker is active.
-      //
-      // Done unconditionally rather than only when the controls row is hidden: whether anything
-      // renders that row is now the surface's choice (see NotebookSceneControls), so keying this off
-      // `hideTimeControls` would leave autoRefresh silently dead on any surface that leaves the row
-      // out. Activation is reference counted, so the picker's own renderer activating it as well is
-      // harmless — the activation handlers still run once.
+      // Unconditionally, because whether any surface renders the controls row is its own choice, and
+      // autoRefresh only starts once the picker is active. Activation is reference counted, so the
+      // picker's own renderer activating it too is harmless.
       let refreshPickerDeactivation: CancelActivationHandler | undefined;
       const syncRefreshPickerActivation = (state: NotebookSceneState) => {
         refreshPickerDeactivation?.();
@@ -414,9 +409,8 @@ function buildNotebookVariables(): SceneVariableSet | undefined {
 }
 
 /**
- * The notebook document: the cells, and the hidden variables they depend on. What `scene.Component`
- * resolves to, so every surface that renders the scene gets exactly this and composes whatever else
- * it wants around it — see NotebookSceneControls for the row the route and the embed add on top.
+ * What `scene.Component` resolves to: the document only. Surfaces compose whatever else they want
+ * around it — see NotebookSceneControls.
  */
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const styles = useStyles2(getStyles);
@@ -461,10 +455,8 @@ const getStyles = () => ({
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
-    // For a person printing this page from their own browser. Only the width, deliberately: the
-    // PDF export's headless render never triggers print media and brings its own, far more
-    // thorough, layout (see NotebookPdfLayout). Sharing the page width is what stops the two
-    // disagreeing about how wide a sheet is.
+    // For Ctrl+P only: the PDF export never triggers print media and brings its own layout (see
+    // NotebookPdfLayout). Shared width so the two agree on how wide a sheet is.
     '@media print': {
       maxWidth: `${PDF_PAGE_WIDTH_MM}mm`,
       margin: '0 auto',

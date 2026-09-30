@@ -13,18 +13,11 @@ import { NotebookRenderPage } from './NotebookRenderPage';
 
 setPluginComponentHook(() => ({ component: null, isLoading: false }));
 
-// The page reads its uid from the route params, which need a matched Route to be populated — the
-// test renders the component directly, so they are supplied here instead.
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
   useParams: () => ({ uid: 'nb1' }),
 }));
 
-/**
- * The state manager is stubbed rather than driven through `loadNotebook`, which always goes to the
- * api before it consults its cache. What belongs to this page is narrow — ask for the load, render
- * the scene or nothing, stop autosave — and loading itself is covered by the manager's own tests.
- */
 jest.mock('./NotebookPageStateManager', () => ({
   getNotebookPageStateManager: jest.fn(),
 }));
@@ -65,7 +58,6 @@ function stubStateManager(scene?: NotebookScene, loadError?: { message: string; 
   return { loadNotebook, clearState, removeSceneCache };
 }
 
-/** Stands in for the chromedp binding grafana-image-renderer injects. */
 function captureRenderMessages() {
   const channel = jest.fn();
   window.__grafanaImageRendererMessageChannel = channel;
@@ -77,7 +69,6 @@ const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
 describe('NotebookRenderPage', () => {
   afterEach(async () => {
-    // setTestFlags publishes OpenFeature events, which can land while a component is still mounted.
     await act(async () => {
       setTestFlags({});
     });
@@ -92,7 +83,6 @@ describe('NotebookRenderPage', () => {
     render(<NotebookRenderPage />);
 
     expect(await screen.findByText('Page not found')).toBeInTheDocument();
-    // The flag gates the load too, not only what is drawn.
     expect(loadNotebook).not.toHaveBeenCalled();
   });
 
@@ -107,8 +97,6 @@ describe('NotebookRenderPage', () => {
     });
   });
 
-  // Deliberately no spinner: the renderer captures whatever is on the page once it settles, so a
-  // loading state would simply become the PDF. Better to render nothing and let the render time out.
   it('renders nothing at all while there is no scene, rather than a loading state', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     stubStateManager();
@@ -129,8 +117,6 @@ describe('NotebookRenderPage', () => {
     expect(await screen.findByText('Findings')).toBeInTheDocument();
   });
 
-  // The whole point of the route: everything the ordinary page wraps a notebook in is simply not
-  // rendered here, rather than rendered and then hidden.
   it('leaves out the controls row, so the capture is only the document', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     stubStateManager(buildScene());
@@ -142,8 +128,6 @@ describe('NotebookRenderPage', () => {
     expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
   });
 
-  // A tab that exists to photograph the notebook must not be able to write to it. Harmless in
-  // practice, since a capture makes no edits — but not a property worth leaving to chance.
   it('abandons autosave, so the render can never write to the notebook it is rendering', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const scene = buildScene();
@@ -156,11 +140,6 @@ describe('NotebookRenderPage', () => {
     expect(abandon).toHaveBeenCalled();
   });
 
-  /**
-   * `abandon` above is one-way, and the scene cache is a module-level singleton that outlives a
-   * route change — so a scene left there after this page has rendered it is a notebook that can
-   * never save again, silently. Clearing the current state is not enough; the entry has to go.
-   */
   it('drops the scene from the shared cache on unmount, rather than leaving it abandoned', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const scene = buildScene();
@@ -186,8 +165,6 @@ describe('NotebookRenderPage readiness', () => {
     jest.clearAllMocks();
   });
 
-  // A failure is an answer, and the renderer is left waiting without one. Success needs no message:
-  // the renderer polls for the page to settle, which is how a good capture is detected today.
   it('reports failure to the renderer when the notebook could not be loaded', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const messages = captureRenderMessages();
@@ -211,8 +188,6 @@ describe('NotebookRenderPage readiness', () => {
     expect(messages()).toEqual([]);
   });
 
-  // Rendered rather than swallowed, so a polling capture produces something diagnosable instead of
-  // a blank sheet.
   it('shows the failure on the page', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     captureRenderMessages();

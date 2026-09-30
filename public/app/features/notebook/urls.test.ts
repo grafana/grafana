@@ -81,9 +81,6 @@ describe('notebook urls', () => {
     expect(isNotebookEditUrl()).toBe(expected);
   });
 
-  // Nested under the notebook, with `render` as a static segment: a v6 `<Routes>` ranks that above
-  // the view route's `:slug?`, so it resolves to the render route rather than being read as a slug —
-  // the same ranking `/notebooks/new` relies on. Nothing generates a notebook slug today anyway.
   it('nests the render route under the notebook it renders', () => {
     setHistory(1);
 

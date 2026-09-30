@@ -30,8 +30,6 @@ function buildSpec(): NotebookSpec {
     ...defaultNotebookSpec(),
     title: 'Q2 latency regression',
     tags: [],
-    // A range that differs from whatever the schema default is, so a PDF-export test asserting on
-    // it actually proves the current range reached the render call, not just some coincidence.
     timeSettings: { ...defaultNotebookSpec().timeSettings, from: 'now-3h', to: 'now' },
     elements: { md: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: 'Findings' } } } } },
     layout: {
@@ -92,8 +90,6 @@ describe('NotebookExportMenu', () => {
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
   });
 
-  // The renderer has to be both configured and new enough to produce a PDF — canExportNotebookPdf
-  // answers both, and this menu just asks it.
   it('hides the PDF export when the renderer cannot produce one', () => {
     setup(async () => buildSpec());
 
@@ -109,11 +105,8 @@ describe('NotebookExportMenu', () => {
 
     await user.click(screen.getByRole('menuitem', { name: 'Export as PDF' }));
 
-    // Opened synchronously, within the click, before the spec (which the row menu fetches) resolves
-    // — a window.open after that await could outlast the click's transient user activation.
     expect(mockOpenBlankNotebookPdfTab).toHaveBeenCalled();
 
-    // The spec resolves before the handler navigates, so this only settles after a tick.
     await waitFor(() => {
       expect(mockNavigateToNotebookPdf).toHaveBeenCalledWith(
         tab,
@@ -123,8 +116,6 @@ describe('NotebookExportMenu', () => {
     });
   });
 
-  // The render route loads the saved notebook, not the scene on screen, so an edit still on
-  // autosave's debounce has to be written before the headless browser goes and reads it.
   it('flushes pending changes before navigating, so the PDF holds the latest edits', async () => {
     mockCanExportNotebookPdf.mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the mock reads nothing off it
@@ -142,7 +133,6 @@ describe('NotebookExportMenu', () => {
     );
   });
 
-  // Better than a PDF that is quietly missing the last few seconds of someone's typing.
   it('abandons the export when the pending changes cannot be saved', async () => {
     mockCanExportNotebookPdf.mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only .close is read
@@ -163,8 +153,6 @@ describe('NotebookExportMenu', () => {
     expect(tab.close).toHaveBeenCalled();
   });
 
-  // A list row holds no scene and nothing to flush; the server's copy is the only one it could
-  // export anyway.
   it('exports without a flush when the surface has nothing pending', async () => {
     mockCanExportNotebookPdf.mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the mock reads nothing off it
@@ -225,8 +213,6 @@ describe('NotebookExportMenu', () => {
     expect(mockExported).toHaveBeenCalledWith('nb1', 'download', 'notebook_list');
   });
 
-  // These serialize the scene in the browser and so already hold every unsaved edit. Waiting on a
-  // save would only let one that failed break a copy that never needed the server at all.
   it('does not flush for the markdown exports', async () => {
     const flushPendingChanges = jest.fn().mockResolvedValue(undefined);
     const { user } = setup(async () => buildSpec(), 'notebook_toolbar', flushPendingChanges);

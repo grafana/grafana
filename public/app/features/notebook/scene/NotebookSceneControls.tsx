@@ -17,27 +17,17 @@ import { type NotebookScene } from './NotebookScene';
 interface Props {
   model: NotebookScene;
   /**
-   * How far down the sticky row should stop, in pixels — the height of whatever fixed chrome sits
-   * above it, or 0 where there is none.
-   *
-   * Supplied by whoever renders this rather than read from context or scene state, because it is a
-   * property of the tree the notebook is drawn in: the same scene object can be mounted on the
-   * /notebooks route, under the app header, and in a host that has none, at the same time. A prop is
-   * per-mount by construction, which is exactly the invariant that needs holding.
+   * Height of the fixed chrome above the row, or 0 where there is none. A prop rather than context
+   * or scene state because one scene can be mounted under the app header and in a host without one
+   * at the same time; a prop is per-mount by construction.
    */
   stickyOffset: number;
 }
 
 /**
- * The notebook's own controls row: save status, undo/redo, the time controls, and the toolbar
- * (which owns the edit toggle and the copy/export/delete actions).
- *
- * Rendered by each surface that wants it rather than by the scene, so that a surface which does not
- * — the PDF capture route — simply leaves it out instead of the scene having to ask who is drawing
- * it. See NotebookSceneRenderer for the document half.
- *
- * `hideTimeControls` and kiosk mode are still read here, deliberately: those are properties of the
- * notebook and of the display, not of the surface, so they are not the caller's business.
+ * Rendered by each surface that wants it rather than by the scene, so the PDF capture route can
+ * simply leave it out. `hideTimeControls` and kiosk mode stay here: they are properties of the
+ * notebook and the display, not of the surface.
  */
 export function NotebookSceneControls({ model, stickyOffset }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();

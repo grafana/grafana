@@ -83,9 +83,7 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   // uid comes off the scene rather than the route param: it is the notebook's identity
   // (metadata.name), and the scene already carries it for the same reason it carries the title.
   const { title, uid } = scene.useState();
-  // The app header is fixed and its height varies (single vs docked mega menu), so the sticky
-  // offset for the controls row has to come from the chrome rather than a constant. Read here
-  // rather than inside the scene: this page is what knows there is an app header above it.
+  // Varies with the mega menu, and this page is what knows there is an app header at all.
   const headerHeight = useChromeHeaderHeight();
 
   useEffect(() => scene.activate(), [scene]);
