@@ -6,11 +6,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/provenance"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func convertToK8sResources(orgID int64, list []v1.TemplateGroup, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TemplateGroupList, error) {
@@ -43,13 +43,13 @@ func convertToK8sResource(orgID int64, template v1.TemplateGroup, namespacer req
 			Kind:    model.TemplateGroupTemplateKind(template.Kind),
 		},
 	}
-	result.SetProvenanceStatus(string(template.Provenance))
+	provenance.SetAnnotations(result, template.Provenance, template.Manager)
 	result.UID = gapiutil.CalculateClusterWideUID(result)
 	return result
 }
 
 func convertToDomainModel(template *model.TemplateGroup) (v1.TemplateGroup, error) {
-	prov, err := ngmodels.ProvenanceFromString(template.GetProvenanceStatus())
+	prov, manager, err := provenance.FromAnnotations(template)
 	if err != nil {
 		return v1.TemplateGroup{}, err
 	}
@@ -58,6 +58,7 @@ func convertToDomainModel(template *model.TemplateGroup) (v1.TemplateGroup, erro
 			UID:        v1.ResourceUID(template.Name),
 			Version:    template.ResourceVersion,
 			Provenance: prov,
+			Manager:    manager,
 		},
 		Title:   template.Spec.Title,
 		Content: template.Spec.Content,

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -389,7 +390,7 @@ func TestUpsertTemplate(t *testing.T) {
 			assertInTransaction(t, ctx)
 			return nil
 		}
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p utils.ManagerProperties) {
 			assertInTransaction(t, ctx)
 		}).Return(nil)
 
@@ -423,9 +424,9 @@ func TestUpsertTemplate(t *testing.T) {
 		assert.Contains(t, saved.Config.Templates, result.UID)
 		assert.Equal(t, result, saved.Config.Templates[result.UID])
 
-		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
 			return t.Title == tmpl.Title
-		}), orgID, models.ProvenanceAPI)
+		}), orgID, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 	})
 
 	t.Run("updates current template", func(t *testing.T) {
@@ -435,7 +436,7 @@ func TestUpsertTemplate(t *testing.T) {
 				return revision(), nil
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
-			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
+			prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p utils.ManagerProperties) {
 				assertInTransaction(t, ctx)
 			}).Return(nil)
 
@@ -474,7 +475,7 @@ func TestUpsertTemplate(t *testing.T) {
 				return revision(), nil
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
-			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
+			prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p utils.ManagerProperties) {
 				assertInTransaction(t, ctx)
 			}).Return(nil)
 
@@ -718,7 +719,7 @@ func TestUpsertTemplate(t *testing.T) {
 				return revision(), nil
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
-			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
+			prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
 			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
@@ -774,7 +775,7 @@ func TestCreateTemplate(t *testing.T) {
 			assertInTransaction(t, ctx)
 			return nil
 		}
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p utils.ManagerProperties) {
 			assertInTransaction(t, ctx)
 		}).Return(nil)
 
@@ -798,9 +799,9 @@ func TestCreateTemplate(t *testing.T) {
 		assert.Contains(t, saved.Config.Templates, result.UID)
 		assert.Equal(t, result, saved.Config.Templates[result.UID])
 
-		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
 			return t.Title == tmpl.Title
-		}), orgID, models.ProvenanceAPI)
+		}), orgID, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 	})
 
 	t.Run("uses the UID that is given", func(t *testing.T) {
@@ -808,7 +809,7 @@ func TestCreateTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{Config: &v1.AMConfigV1{}, ConcurrencyToken: amConfigToken}, nil
 		}
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		given := tmpl
 		given.UID = "chosen-uid"
@@ -944,7 +945,7 @@ func TestCreateTemplate(t *testing.T) {
 			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 				return revision(), nil
 			}
-			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
+			prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
 			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
@@ -1045,7 +1046,7 @@ func TestUpdateTemplate(t *testing.T) {
 				return revision(), nil
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
-			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
+			prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p utils.ManagerProperties) {
 				assertInTransaction(t, ctx)
 			}).Return(nil)
 
@@ -1074,7 +1075,7 @@ func TestUpdateTemplate(t *testing.T) {
 				return revision(), nil
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
-			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
+			prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p utils.ManagerProperties) {
 				assertInTransaction(t, ctx)
 			}).Return(nil)
 
@@ -1105,7 +1106,7 @@ func TestUpdateTemplate(t *testing.T) {
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(ctx context.Context, o models.Provisionable, org int64) {
 			assertInTransaction(t, ctx)
 		}).Return(nil)
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p utils.ManagerProperties) {
 			assertInTransaction(t, ctx)
 		}).Return(nil)
 
@@ -1304,7 +1305,7 @@ func TestUpdateTemplate(t *testing.T) {
 				return revision(), nil
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
-			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
+			prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
 			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
@@ -1573,6 +1574,9 @@ func TestDeleteTemplate(t *testing.T) {
 func createTemplateServiceSut() (*TemplateService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
 	store := &legacy_storage.AlertmanagerConfigStoreFake{}
 	provStore := &MockProvisioningStore{}
+	// Tests that only care about provenance don't need to stub the stored managers.
+	provStore.EXPECT().GetAllManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(map[string]utils.ManagerProperties{}, nil).Maybe()
+	provStore.EXPECT().GetManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(utils.ManagerProperties{}, nil).Maybe()
 	return &TemplateService{
 		configStore:     store,
 		provenanceStore: provStore,
@@ -1657,7 +1661,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(5), nil
 		}
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
 
@@ -1672,7 +1676,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(100), nil
 		}
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
 
@@ -1692,7 +1696,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(100), nil
 		}
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
 
@@ -1707,7 +1711,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(100), nil
 		}
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
 
@@ -1764,7 +1768,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 			return revision(99), nil
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		updateTmpl := v1.TemplateGroup{
 			ResourceMetadata: v1.ResourceMetadata{UID: v1.TemplateUID(v1.TemplateKindGrafana, existingTemplateName)},
@@ -1787,6 +1791,73 @@ type mockLimitsProvider struct {
 
 func (m *mockLimitsProvider) GetLimits(_ context.Context) (*client.TenantLimits, error) {
 	return m.limits, m.err
+}
+
+func TestTemplateManagerProperties(t *testing.T) {
+	orgID := int64(1)
+	terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
+	newRevision := func() *legacy_storage.ConfigRevision {
+		return &legacy_storage.ConfigRevision{
+			Config: &v1.AMConfigV1{
+				Templates: generateTemplates(map[string]string{
+					"managed": "{{ define \"managed\" }}managed{{ end }}",
+					"legacy":  "{{ define \"legacy\" }}legacy{{ end }}",
+				}, v1.TemplateKindGrafana),
+			},
+		}
+	}
+
+	t.Run("reads assign the stored manager to the template metadata", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		prov.ExpectedCalls = nil
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(), nil
+		}
+		// The provisioning store keys templates by title.
+		prov.EXPECT().GetProvenances(mock.Anything, orgID, mock.Anything).Return(map[string]models.Provenance{
+			"managed": models.ProvenanceAPI,
+			"legacy":  models.ProvenanceFile,
+		}, nil)
+		prov.EXPECT().GetAllManagerProperties(mock.Anything, orgID, mock.Anything).Return(map[string]utils.ManagerProperties{
+			"managed": terraform,
+		}, nil)
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, orgID).Return(models.ProvenanceAPI, nil)
+		prov.EXPECT().GetManagerProperties(mock.Anything, mock.Anything, orgID).Return(terraform, nil)
+
+		result, err := sut.GetTemplates(context.Background(), orgID)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		byTitle := make(map[string]v1.TemplateGroup, len(result))
+		for _, r := range result {
+			byTitle[r.Title] = r
+		}
+		assert.Equal(t, terraform, byTitle["managed"].Manager)
+		assert.Equal(t, models.ProvenanceAPI, byTitle["managed"].Provenance)
+		// Without a stored manager, it is derived from the provenance.
+		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), byTitle["legacy"].Manager)
+
+		single, err := sut.GetTemplate(context.Background(), orgID, "managed")
+		require.NoError(t, err)
+		assert.Equal(t, terraform, single.Manager)
+		assert.Equal(t, models.ProvenanceAPI, single.Provenance)
+	})
+
+	t.Run("create persists the template's manager and derives its provenance", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(), nil
+		}
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, orgID, terraform).Return(nil)
+
+		tmpl := v1.NewTemplateGroup("", "new", "{{ define \"new\" }}new{{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone)
+		tmpl.Manager = terraform
+		result, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+		require.NoError(t, err)
+
+		assert.Equal(t, terraform, result.Manager)
+		assert.Equal(t, models.ProvenanceAPI, result.Provenance)
+		prov.AssertExpectations(t)
+	})
 }
 
 func generateTemplates(templates map[string]string, kind v1.TemplateKind) map[v1.ResourceUID]v1.TemplateGroup {
@@ -1818,7 +1889,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 			return revision(), nil
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 		return sut, store, prov
 	}
