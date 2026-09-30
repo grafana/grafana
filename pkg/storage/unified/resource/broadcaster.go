@@ -27,23 +27,23 @@ type BroadcasterMetrics struct {
 func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
 	return &BroadcasterMetrics{
 		Subscribers: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
-			Name: "storage_server_broadcaster_subscribers",
+			Name: "grafana_storage_server_broadcaster_subscribers",
 			Help: "Current number of active broadcaster subscribers.",
 		}, []string{"resource"}),
 		SubscriptionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_broadcaster_subscriptions_total",
+			Name: "grafana_storage_server_broadcaster_subscriptions_total",
 			Help: "Total number of broadcaster subscription attempts by result.",
 		}, []string{"resource", "result"}),
 		UnsubscriptionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_broadcaster_unsubscriptions_total",
+			Name: "grafana_storage_server_broadcaster_unsubscriptions_total",
 			Help: "Total number of broadcaster unsubscriptions by reason.",
 		}, []string{"resource", "reason"}),
 		EventsReceivedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_broadcaster_events_received_total",
+			Name: "grafana_storage_server_broadcaster_events_received_total",
 			Help: "Total number of events received by the broadcaster.",
 		}, []string{"resource"}),
 		OverflowEventsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_broadcaster_overflow_events_total",
+			Name: "grafana_storage_server_broadcaster_overflow_events_total",
 			Help: "Total number of events appended to subscriber overflow buffers.",
 		}, []string{"resource"}),
 	}
