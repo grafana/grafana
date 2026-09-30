@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Egyedi névtér kiválasztása",
+      "aria-label-select-dimension-name": "",
+      "aria-label-select-metric-name": "",
       "aria-label-select-namespace": "Névtér kijelölése",
       "aria-label-select-query-type": "Lekérdezéstípus kiválasztása",
       "aria-label-select-region": "Régió kiválasztása",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "Erőforráscsoport kiválasztása",
       "aria-label-select-subscription": "Előfizetés kiválasztása",
       "label-custom-namespace": "Egyedi névtér",
+      "label-dimension-name": "",
+      "label-metric-name": "",
       "label-namespace": "Névtér",
       "label-query-type": "Lekérdezés típusa",
       "label-region": "Régió",

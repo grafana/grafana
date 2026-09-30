@@ -13225,6 +13225,12 @@
       "query": {
         "add": "Lekérdezés hozzáadása",
         "run": "Lekérdezés futtatása"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13308,7 +13314,9 @@
       "redo-action": "Újra: {{action}}",
       "remove-query": "Lekérdezés eltávolítása",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Lekérdezés kijelölése",
+      "set-cell-time-range": "",
       "split-block": "Blokk felosztása",
       "switch-datasource": "Adatforrásváltás",
       "undo": "Visszavonás",
@@ -15864,8 +15872,7 @@
       "deleted-by-removed": "Törölt fiók",
       "deleted-by-unknown-short": "<0></0> Ismeretlen",
       "deleted-by-unknown-tooltip": "Nem sikerült megkeresni a fiókot, amely törölte ezt az irányítópultot",
-      "deleted-less-than-1-min": "< 1 perc",
-      "deleted-remaining-header": "Hátralévő idő",
+      "deleted-header": "",
       "location-header": "Hely",
       "name-header": "Név",
       "tags-header": "Címkék",

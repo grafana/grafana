@@ -3754,8 +3754,8 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 	index := newTestDashboardsIndex(t, threshold, 4, func(index resource.ResourceIndex) (int64, error) {
 		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
 			deleted("middle", "Alpha middle", alice, 2000, 20),
-			deleted("newest", "Alpha newest", bob, 3000, 30),
-			deleted("oldest", "Alpha oldest", alice, 1000, 10),
+			deleted("newest", "Alpha newest", bob, 3000, 100),
+			deleted("oldest", "Alpha oldest", alice, 1000, 3),
 			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live",
@@ -3791,6 +3791,39 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		checkSearchQuery(t, index, q, []string{"oldest", "middle", "newest"})
 	})
 
+	// Different digit counts would sort as 100, 20, 3 if the returned value were
+	// used directly as a keyword. The index uses a fixed-width internal copy.
+	t.Run("sorting by deleted resource version", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		checkSearchQuery(t, index, q, []string{"oldest", "middle", "newest"})
+
+		q.SortBy[0].Desc = true
+		checkSearchQuery(t, index, q, []string{"newest", "middle", "oldest"})
+	})
+
+	t.Run("paging by deleted resource version", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.Limit = 1
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		// A List(TRASH) caller only persists the last RV, not the resource name.
+		// Starting after the RV plus the minimum name keeps that RV inclusive.
+		q.SearchAfter = []string{"0000000000000000003", ""}
+
+		for _, name := range []string{"oldest", "middle", "newest"} {
+			res, err := index.Search(context.Background(), nil, q, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, res.Error)
+			require.Len(t, res.Results.Rows, 1)
+			row := res.Results.Rows[0]
+			require.Equal(t, name, row.Key.Name)
+			require.Len(t, row.SortFields, 2, "resource version plus the name tie-breaker")
+			q.SearchAfter = row.SortFields
+		}
+	})
+
 	t.Run("returning the values", func(t *testing.T) {
 		q := newTestQuery("")
 		q.IsDeleted = true
@@ -3814,7 +3847,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		// int64 columns are encoded big-endian, not as JSON (see NewTableBuilder).
 		require.Len(t, rows[0].Cells[1], 8)
 		require.Equal(t, int64(1000), int64(binary.BigEndian.Uint64(rows[0].Cells[1])))
-		require.Equal(t, "10", string(rows[0].Cells[2]), "the resource version of the delete")
+		require.Equal(t, "3", string(rows[0].Cells[2]), "the resource version of the delete")
 	})
 
 	// Resource versions are snowflake ids well past the range a float64 represents
@@ -4302,6 +4335,7 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 		resource.SEARCH_FIELD_RV_STRING,
 		resource.SEARCH_FIELD_IS_DELETED,
 		resource.SEARCH_FIELD_IS_PROVISIONED,
+		resource.SEARCH_FIELD_DELETED_RV_SORT,
 	}
 	for _, field := range internal {
 		t.Run(field, func(t *testing.T) {

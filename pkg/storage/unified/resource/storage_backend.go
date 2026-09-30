@@ -193,8 +193,8 @@ func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
 }
 
 var (
-	_ KVBackend      = &kvStorageBackend{}
-	_ KeyListBackend = &kvStorageBackend{}
+	_ KVBackend      = (*kvStorageBackend)(nil)
+	_ KeyListBackend = (*kvStorageBackend)(nil)
 )
 
 type KVBackend interface {

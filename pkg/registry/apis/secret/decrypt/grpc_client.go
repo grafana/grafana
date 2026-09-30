@@ -35,7 +35,7 @@ type GRPCDecryptClient struct {
 	tokenExchanger authnlib.TokenExchanger
 }
 
-var _ decrypt.DecryptService = &GRPCDecryptClient{}
+var _ decrypt.DecryptService = (*GRPCDecryptClient)(nil)
 
 type TLSConfig struct {
 	UseTLS             bool

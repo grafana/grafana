@@ -58,8 +58,8 @@ const (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search")
 
-var _ resource.SearchBackend = &bleveBackend{}
-var _ resource.ResourceIndex = &bleveIndex{}
+var _ resource.SearchBackend = (*bleveBackend)(nil)
+var _ resource.ResourceIndex = (*bleveIndex)(nil)
 
 type BleveOptions struct {
 	// The root folder where file objects are saved
@@ -1308,7 +1308,7 @@ type adaptiveBuildIndex struct {
 	cleanupDir    string
 }
 
-var _ resource.ResourceIndex = &adaptiveBuildIndex{}
+var _ resource.ResourceIndex = (*adaptiveBuildIndex)(nil)
 
 func newAdaptiveBuildIndex(delegate *bleveIndex, threshold int64, promote promoteBuildIndexFunc) *adaptiveBuildIndex {
 	return &adaptiveBuildIndex{
@@ -2793,6 +2793,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		if !b.keepsDeletedDocuments {
 			return nil, resource.NewServiceUnavailableError("trash is not available for this resource until its search index has been rebuilt")
 		}
+		if sortsByDeletedResourceVersion(req) && !slices.Contains(b.features, resource.IndexFeatureSortableTrashResourceVersion) {
+			return nil, resource.NewServiceUnavailableError("sorting trash by resource version is not available for this resource until its search index has been rebuilt")
+		}
 		if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, time.Now()); ok {
 			expirationThreshold = t
 		}
@@ -3633,6 +3636,15 @@ func safeInt64ToInt(i64 int64) (int, error) {
 		return 0, fmt.Errorf("int64 value %d overflows int", i64)
 	}
 	return int(i64), nil
+}
+
+func sortsByDeletedResourceVersion(req *resourcepb.ResourceSearchRequest) bool {
+	for _, sort := range req.SortBy {
+		if sort.GetField() == resource.SEARCH_FIELD_DELETED_RV {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *bleveIndex) getSortFields(req *resourcepb.ResourceSearchRequest) []string {

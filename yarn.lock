@@ -2180,6 +2180,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/plugin-configs": "npm:13.3.0-pre"
     "@grafana/plugin-ui": "npm:^0.17.3"
+    "@grafana/prometheus": "npm:13.1.14"
     "@grafana/runtime": "npm:13.3.0-pre"
     "@grafana/scenes": "npm:8.18.2"
     "@grafana/schema": "npm:13.3.0-pre"
@@ -16870,15 +16871,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.4.15, dompurify@npm:^3.3.3, dompurify@npm:^3.4.0":
-  version: 3.4.15
-  resolution: "dompurify@npm:3.4.15"
+"dompurify@npm:^3.3.3, dompurify@npm:^3.4.0, dompurify@npm:^3.4.16":
+  version: 3.4.16
+  resolution: "dompurify@npm:3.4.16"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/159f592307578405c5217ba40ab467d4ac35f23eb20abc7f32b85698b8c1aff92f71b00c80779f891a8e463edafab05d9a4db53052d5c67005240ac4fff7fc72
+  checksum: 10/a571d0e2bede4f739666afd640398a86854abd27c71ce0724910249e2fd2ca7ddb8098a9ab579d3a5b39058419af694421f8fe859a81fd6d8acda16019a8ab9d
   languageName: node
   linkType: hard
 
@@ -19911,7 +19912,7 @@ __metadata:
     dangerously-set-html-content: "npm:1.1.1"
     date-fns: "npm:4.4.0"
     debounce-promise: "npm:3.1.2"
-    dompurify: "npm:3.4.15"
+    dompurify: "npm:^3.4.16"
     downsample: "npm:1.4.0"
     enquirer: "npm:^2.4.1"
     esbuild: "npm:0.28.1"
