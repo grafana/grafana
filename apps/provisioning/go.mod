@@ -9,8 +9,8 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
-	github.com/grafana/grafana-app-sdk v0.60.7
-	github.com/grafana/grafana-app-sdk/logging v0.60.6
+	github.com/grafana/grafana-app-sdk v0.60.8
+	github.com/grafana/grafana-app-sdk/logging v0.60.8
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44
 	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
