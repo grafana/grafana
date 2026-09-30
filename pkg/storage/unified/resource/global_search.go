@@ -241,7 +241,13 @@ func (s *searchServer) rebuildImportedTypes(ctx context.Context, key NamespacedR
 	// The import time is read before the rebuild, so an import that lands during
 	// it is still seen as newer next time.
 	pending, err := s.importedSinceRecorded(ctx, key, idx, only)
-	if err != nil {
+	if err != nil || len(pending) == 0 {
+		return err
+	}
+	// The rebuild does not move the index's checkpoint, and a checkpoint from
+	// before the import would replay changes the import undid, such as a delete
+	// of an object it restored. Updating first moves it past the import.
+	if _, err := idx.UpdateIndex(ctx); err != nil {
 		return err
 	}
 	for _, p := range pending {
@@ -254,10 +260,10 @@ func (s *searchServer) rebuildImportedTypes(ctx context.Context, key NamespacedR
 		}
 		s.log.Info("rebuilt an imported type in the global search index", "namespace", key.Namespace, "resource", p.src.GroupResource(),
 			"reindexed", res.Reindexed, "removed", res.Removed, "failed", res.Failed)
-		// Recorded even when some objects could not be built: that comes from the
-		// object itself and would fail again, so retrying would rebuild the type
-		// forever. A later edit that fixes the object is indexed by the update
-		// path. Read failures return above, unrecorded, and are retried.
+		// Recorded even when some objects could not be built, or a failure that
+		// comes from the object would rebuild the type forever. Those objects are
+		// removed, so a reconcile sees them missing and retries them. Read failures
+		// return above, unrecorded, and are retried.
 		if res.Failed > 0 {
 			s.log.Warn("some objects of an imported type could not be indexed", "namespace", key.Namespace, "resource", p.src.GroupResource(), "failed", res.Failed)
 		}
@@ -333,9 +339,9 @@ func (s *searchServer) reconcileResourceType(ctx context.Context, index Resource
 // older versions, so comparing versions would leave them stale.
 //
 // Everything is written before anything is removed, so the type does not vanish
-// from search while the rebuild runs. An object that fails to build keeps its old
-// document: the failure can be transient, as when a dashboard's blob cannot be
-// read, and a stale document is better than none until the next reconcile.
+// from search while the rebuild runs. An object that fails to build is removed
+// rather than kept, because its old document may describe what the import
+// replaced.
 func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIndex, key, src NamespacedResource) (repairResult, error) {
 	if err := checkRepairTarget(key, src); err != nil {
 		return repairResult{}, err
@@ -390,8 +396,6 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 			if err != nil {
 				logger.Warn("failed to build a document while rebuilding a resource type", "key", SearchID(docKey), "error", err)
 				result.Failed++
-				// Still in storage, so not removed below.
-				written[iter.Name()] = struct{}{}
 				continue
 			}
 			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)})

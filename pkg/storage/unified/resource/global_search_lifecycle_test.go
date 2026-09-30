@@ -850,9 +850,8 @@ func TestRebuildTypeRewritesTheWholeType(t *testing.T) {
 	assert.Empty(t, storage.read, "bodies come from the listing, not from reads one by one")
 }
 
-// A build failure can be transient, as when a dashboard's blob cannot be read, so
-// the old document is kept rather than removed; the next reconcile repairs it.
-func TestRebuildTypeKeepsWhatFailsToBuild(t *testing.T) {
+// The old document may describe what the import replaced, so it is removed.
+func TestRebuildTypeRemovesWhatFailsToBuild(t *testing.T) {
 	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
@@ -864,10 +863,7 @@ func TestRebuildTypeKeepsWhatFailsToBuild(t *testing.T) {
 
 	res, err := server.rebuildResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
-	assert.Equal(t, repairResult{Reindexed: 1, Failed: 1}, res)
-	for _, item := range idx.indexedItems() {
-		assert.NotEqual(t, ActionDelete, item.Action, "nothing is removed")
-	}
+	assert.Equal(t, repairResult{Reindexed: 1, Removed: 1, Failed: 1}, res)
 }
 
 // Same ordering guarantee as a reconcile.
@@ -1205,4 +1201,36 @@ func TestImportCheckIgnoresAnOlderImportTime(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, completeChs)
 	assert.Zero(t, server.rebuildQueue.Len())
+}
+
+// A checkpoint from before the import would replay changes the import undid, so
+// the index is updated first, and nothing is rebuilt or recorded if that fails.
+func TestImportedTypeRebuildUpdatesTheIndexFirst(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
+	}}
+	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
+	server, idx := repairServer(t, storage, nil)
+	idx.updateIndexError = errors.New("update failed")
+
+	require.ErrorContains(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil), "update failed")
+	assert.Empty(t, idx.indexedItems(), "nothing rebuilt")
+	assert.Empty(t, idx.importTimes, "nothing recorded, so it is retried")
+
+	idx.updateIndexError = nil
+	require.NoError(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	assert.Equal(t, 2, idx.updateIndexCalls)
+	assert.Equal(t, importTuesday, idx.importTimes[dashboardsGroupResource])
+}
+
+// With no import to catch up with, the index is left alone.
+func TestImportedTypeRebuildSkipsTheUpdateWhenCaughtUp(t *testing.T) {
+	storage := &reconcileStorage{}
+	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
+	server, idx := repairServer(t, storage, nil)
+	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: importTuesday}
+
+	require.NoError(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	assert.Zero(t, idx.updateIndexCalls)
 }
