@@ -94,18 +94,31 @@ const ui = {
 };
 
 describe('LokiStateHistory', () => {
-  it('requests history again after the polling interval', async () => {
-    const requestedRuleUIDs: Array<string | null> = [];
+  it('advances both time bounds when polling history', async () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-01-29T12:00:00Z'));
+    const requests: Array<{ ruleUID: string | null; from: string | null; to: string | null }> = [];
     server.use(
       http.get('/api/v1/rules/history', ({ request }) => {
-        requestedRuleUIDs.push(new URL(request.url).searchParams.get('ruleUID'));
+        const params = new URL(request.url).searchParams;
+        requests.push({ ruleUID: params.get('ruleUID'), from: params.get('from'), to: params.get('to') });
+        // Advance the clock without slowing down the real polling interval.
+        now.mockReturnValue(Date.parse('2026-01-29T12:00:10Z'));
         return HttpResponse.json<DataFrameJSON>({ data: { values: [] }, schema: { fields: [] } });
       })
     );
 
-    render(<LokiStateHistory ruleUID="ABC123" pollingInterval={50} />);
+    try {
+      render(<LokiStateHistory ruleUID="ABC123" pollingInterval={50} />);
 
-    await waitFor(() => expect(requestedRuleUIDs.slice(0, 2)).toEqual(['ABC123', 'ABC123']));
+      await waitFor(() =>
+        expect(requests.slice(0, 2)).toEqual([
+          { ruleUID: 'ABC123', from: '1767096000', to: '1769688000' },
+          { ruleUID: 'ABC123', from: '1767096010', to: '1769688010' },
+        ])
+      );
+    } finally {
+      now.mockRestore();
+    }
   });
 
   it('should render history records', async () => {
