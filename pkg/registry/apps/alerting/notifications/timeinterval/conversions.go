@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/provenance"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -75,10 +76,10 @@ func buildTimeInterval(orgID int64, interval v1.TimeInterval, spec model.TimeInt
 		},
 		Spec: spec,
 	}
-	i.SetProvenanceStatus(string(interval.Provenance))
+	prov := provenance.SetAnnotations(&i, interval.Provenance, interval.Manager)
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
 
-	i.SetCanUse(interval.Provenance != ngmodels.ProvenanceConvertedPrometheus)
+	i.SetCanUse(prov != ngmodels.ProvenanceConvertedPrometheus)
 
 	return i
 }
@@ -89,7 +90,7 @@ func convertToDomainModel(interval *model.TimeInterval) (v1.TimeInterval, error)
 		return v1.TimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
 
-	prov, err := ngmodels.ProvenanceFromString(interval.GetProvenanceStatus())
+	prov, manager, err := provenance.FromAnnotations(interval)
 	if err != nil {
 		return v1.TimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
@@ -99,6 +100,7 @@ func convertToDomainModel(interval *model.TimeInterval) (v1.TimeInterval, error)
 			UID:        v1.ResourceUID(interval.Name),
 			Version:    interval.ResourceVersion,
 			Provenance: prov,
+			Manager:    manager,
 		},
 		Title:         interval.Spec.Name,
 		TimeIntervals: timeIntervals,
