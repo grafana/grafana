@@ -1,13 +1,11 @@
 package controller
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
-	"github.com/grafana/nanogit/protocol/client"
 )
 
 type finalizerMetrics struct {
@@ -109,16 +107,11 @@ type HealthMetricsRecorder interface {
 }
 
 func classifyHealthCheckErrorCause(err error) string {
-	switch {
-	case err == nil:
+	if err == nil {
 		// Successful check executions have no error cause.
 		return ""
-	// Branch discovery can return raw transport errors before repository error mapping.
-	case errors.Is(err, client.ErrUnauthorized), errors.Is(err, client.ErrPermissionDenied):
-		return reconcileCauseUser
-	default:
-		return classifyTokenErrorCause(err)
 	}
+	return classifyTokenErrorCause(err)
 }
 
 type healthMetrics struct {

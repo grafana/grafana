@@ -15,7 +15,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/nanogit/protocol/client"
 )
 
 func TestReconcileErrorMetrics_NilSafe(t *testing.T) {
@@ -69,25 +68,6 @@ func TestHealthCheckMetrics(t *testing.T) {
 			err:         connection.ErrRepositoryAccess,
 			wantOutcome: "error",
 			wantCause:   "user",
-		},
-		{
-			name: "production nanogit unauthorized",
-			err: fmt.Errorf("list refs: list refs: send ls-refs command: %w",
-				client.NewUnauthorizedError("POST", "git-upload-pack", errors.New("got status code 401: 401 Unauthorized"))),
-			wantOutcome: "error",
-			wantCause:   "user",
-		},
-		{
-			name:        "nanogit permission denied",
-			err:         client.NewPermissionDeniedError("POST", "git-upload-pack", nil),
-			wantOutcome: "error",
-			wantCause:   "user",
-		},
-		{
-			name:        "nanogit server unavailable",
-			err:         client.NewServerUnavailableError("POST", http.StatusServiceUnavailable, nil),
-			wantOutcome: "error",
-			wantCause:   "system",
 		},
 		{
 			name:        "repository server unavailable",
