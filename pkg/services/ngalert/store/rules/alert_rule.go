@@ -138,14 +138,20 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 }
 
 func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64, ruleUIDs []string) ([]alertRuleVersion, error) {
-	dbHelper, err := st.legacyDatabaseProvider(ctx)
-	if err != nil {
-		return nil, err
+	conn := st.SQLStore
+	alertRuleVersionTable := "alert_rule_version"
+	if st.LegacyDatabaseProvider != nil {
+		dbHelper, err := st.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn = dbHelper.DB
+		alertRuleVersionTable = dbHelper.Table("alert_rule_version")
+		ctx = withoutAmbientSession(ctx)
 	}
-	alertRuleVersionTable := dbHelper.Table("alert_rule_version")
 
 	var result []alertRuleVersion
-	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+	err := conn.WithDbSession(ctx, func(sess *db.Session) error {
 		args, in := getINSubQueryArgs(ruleUIDs)
 		// take only the latest versions of each rule by GUID
 		rows, err := sess.SQL(fmt.Sprintf(`
@@ -510,7 +516,7 @@ func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string, ale
 // of sharing one.
 func deletedRuleFolderKeysOnDB(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
 	var uids []string
-	err := dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+	err := dbHelper.DB.WithDbSession(withoutAmbientSession(ctx), func(sess *db.Session) error {
 		return sess.Table(dbHelper.Table("alert_rule")).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids)
 	})
 	if err != nil {
@@ -1810,14 +1816,21 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 // listAlertRuleUIDsInFolder is a narrow ListAlertRules substitute for the delete path, so only
 // this path needs to go through legacyDatabaseProvider, not ListAlertRules' other callers.
 func (st RuleStore) listAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
-	dbHelper, err := st.legacyDatabaseProvider(ctx)
-	if err != nil {
-		return nil, err
+	conn := st.SQLStore
+	alertRuleTable := "alert_rule"
+	if st.LegacyDatabaseProvider != nil {
+		dbHelper, err := st.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn = dbHelper.DB
+		alertRuleTable = dbHelper.Table("alert_rule")
+		ctx = withoutAmbientSession(ctx)
 	}
 
 	var uids []string
-	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Table(dbHelper.Table("alert_rule")).Cols("uid").Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).Find(&uids)
+	err := conn.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(alertRuleTable).Cols("uid").Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).Find(&uids)
 	})
 	if err != nil {
 		return nil, err
