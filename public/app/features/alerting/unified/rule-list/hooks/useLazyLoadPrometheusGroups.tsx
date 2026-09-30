@@ -53,9 +53,7 @@ export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
     fetchMoreGroups();
   });
 
-  // useEffectOnce below always fires fetchMoreGroups on mount, so "not-executed" is only ever
-  // momentary - treat it as loading too, otherwise consumers briefly see isLoading=false with an
-  // empty result before the fetch has even started, and can mistake that for "confirmed empty".
+  // Treat the pre-fetch state as loading so consumers don't mistake it for a confirmed empty result.
   const isLoading = isLoadingState(groupsRequestState) || isUninitialized(groupsRequestState);
 
   return {

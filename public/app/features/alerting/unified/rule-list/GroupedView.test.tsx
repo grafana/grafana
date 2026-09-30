@@ -142,9 +142,6 @@ describe('RuleList - GroupedView', () => {
       await ui.dsSection(/Mimir/).find();
       expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
 
-      // The route proxy takes over: external sources disappear from the list entirely. The
-      // dropped loader's unmount cleanup reports it as "settled, no rules" one last time, which
-      // must not linger in the hidden count once it's no longer one of externalRuleSources.
       config.unifiedAlertingEnabled = true;
       setTestFlags({ [FlagKeys.AlertingDataSourceManagedRouteProxy]: true });
       addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
@@ -171,7 +168,6 @@ describe('RuleList - GroupedView', () => {
 
     expect(onHideEmptyDataSourcesChange).toHaveBeenCalledWith(false);
 
-    // the button itself doesn't own the toggle state - the parent re-renders with the new value
     rerender(<GroupedView hideEmptyDataSources={false} onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange} />);
 
     expect(await ui.dsSection(/Prometheus/).find()).toBeInTheDocument();
@@ -199,7 +195,6 @@ describe('RuleList - GroupedView', () => {
     await ui.dsSection(/Mimir/).find();
     await screen.findByRole('button', { name: /Error/i });
 
-    // The errored data source settled (with an error), so it must not be stuck in "still checking".
     expect(screen.queryByText(/Checking \d+ more data sources?/)).not.toBeInTheDocument();
   });
 
@@ -213,10 +208,8 @@ describe('RuleList - GroupedView', () => {
 
     render(<GroupedView />);
 
-    // Mimir resolves quickly and has rules, so it should still show up promptly.
     await ui.dsSection(/Mimir/).find();
 
-    // Prometheus's fetch never settles in this test - its header must never appear, even briefly.
     expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
     expect(await screen.findByText('Checking 1 more data source')).toBeInTheDocument();
   });

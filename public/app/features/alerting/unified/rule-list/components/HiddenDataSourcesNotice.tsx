@@ -8,7 +8,6 @@ interface Props {
   onShowAll?: () => void;
 }
 
-/** Tells the user some data sources with no rules aren't shown, so the list isn't mistaken for the full set. */
 export function HiddenDataSourcesNotice({ count, onShowAll }: Props) {
   if (count === 0) {
     return null;

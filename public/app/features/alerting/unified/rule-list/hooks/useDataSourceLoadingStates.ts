@@ -11,12 +11,8 @@ interface DerivedStates {
   loadingDataSources: string[];
   totalRulesCount: number;
   dataSourcesWithErrors: Array<{ uid: string; error: unknown }>;
-  /** uids that have finished loading, have no rules, and didn't error */
   dataSourcesWithNoRules: string[];
-  /**
-   * uids whose status is known: either they're done loading, or they're loading more but already
-   * reported at least one rule (a "Load More" fetch, not the initial unknown-outcome fetch).
-   */
+  /** Includes sources fetching more rules after a non-empty result. */
   settledDataSourceUids: string[];
   hasAnyLoading: boolean;
   hasAnyErrors: boolean;

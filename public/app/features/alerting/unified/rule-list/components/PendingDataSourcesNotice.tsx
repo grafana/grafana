@@ -7,7 +7,6 @@ interface Props {
   count: number;
 }
 
-/** Tells the user N more data sources are still being checked, so an empty-looking list isn't mistaken for a complete one. */
 export function PendingDataSourcesNotice({ count }: Props) {
   if (count === 0) {
     return null;

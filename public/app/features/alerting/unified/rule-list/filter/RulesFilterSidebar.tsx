@@ -544,8 +544,7 @@ function FilterSidebarForm({
           </>
         )}
 
-        {/* Not a rule filter, so it's kept out of the search-form state above - it's a display
-            preference for the grouped view, not part of the URL-driven search query. */}
+        {/* Display preferences stay outside the URL-backed filter state. */}
         {viewMode === 'grouped' && (
           <>
             <div className={styles.divider} />

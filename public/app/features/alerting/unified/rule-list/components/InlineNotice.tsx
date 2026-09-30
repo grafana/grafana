@@ -8,7 +8,6 @@ interface Props {
   children: NonNullable<ReactNode>;
 }
 
-/** Shared layout for a small icon + secondary text (+ optional action) status line. */
 export function InlineNotice({ icon, action, children }: Props) {
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>

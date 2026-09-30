@@ -42,19 +42,13 @@ export function GroupedView({
   const { updateState, loadingDataSources, dataSourcesWithNoRules, settledDataSourceUids } =
     useDataSourceLoadingStates();
 
-  // Both counts are re-derived against the *current* set of external data sources, not just
-  // filtered from the raw reported-state map: a uid can linger in that map (e.g. reported empty
-  // on unmount) after it stops being one of externalRuleSources - e.g. once routeProxyActive
-  // flips true and drops every external source. Grafana-managed is never in this list either, so
-  // no separate exclusion for it is needed.
+  // Unmounted loaders can leave stale state, so only count current external sources.
   const externalUidSet = useMemo(() => new Set(externalRuleSources.map((ds) => ds.uid)), [externalRuleSources]);
   const hiddenDataSourcesCount = hideEmptyDataSources
     ? dataSourcesWithNoRules.filter((uid) => externalUidSet.has(uid)).length
     : 0;
 
-  // A data source has no reported state at all until its feature discovery resolves, so treat
-  // "not yet in the map" as pending too - otherwise data sources stuck in slow discovery would be
-  // silently uncounted instead of showing up as still-being-checked.
+  // Sources have no reported state during discovery and must still count as pending.
   const settledUidSet = useMemo(() => new Set(settledDataSourceUids), [settledDataSourceUids]);
   const pendingExternalCount = externalRuleSources.filter((ds) => !settledUidSet.has(ds.uid)).length;
 
@@ -113,9 +107,7 @@ function DataSourceLoader({
 
   const { uid, name } = rulesSourceIdentifier;
 
-  // A discovery error means this data source is done loading (as far as we're concerned), but it
-  // never reaches PaginatedDataSourceLoader, so nothing else would ever report that. Without this,
-  // it would count as "still pending" forever in the aggregate loading state.
+  // Discovery errors bypass PaginatedDataSourceLoader, so report them here to clear the pending count.
   useEffect(() => {
     if (error) {
       onLoadingStateChange?.(uid, { isLoading: false, rulesCount: 0, error });
