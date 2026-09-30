@@ -10,6 +10,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/prometheus/alertmanager/config"
+	promtimeinterval "github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -20,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
@@ -508,6 +511,83 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 			err = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 			require.NoError(t, err)
 		})
+	})
+}
+
+// TestIntegrationTimeIntervalManagerPropertiesRoundTrip verifies that ManagerProperties set via the
+// k8s API survive a round-trip through legacy storage, and that resources provisioned through the
+// legacy API are exposed via k8s with the classic-API manager shim.
+func TestIntegrationTimeIntervalManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	t.Run("k8s ManagerKindTerraform survives round-trip through legacy storage", func(t *testing.T) {
+		interval := &v1beta1.TimeInterval{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+				},
+			},
+			Spec: v1beta1.TimeIntervalSpec{
+				Name:          "mp-terraform",
+				TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
+			},
+		}
+		created, err := adminClient.Create(ctx, interval, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus(), "create response provenance should reflect terraform->api mapping")
+		require.Equal(t, string(utils.ManagerKindTerraform), created.Annotations[utils.AnnoKeyManagerKind])
+		require.Equal(t, "my-terraform-workspace", created.Annotations[utils.AnnoKeyManagerIdentity])
+
+		legacy, status, body := legacyCli.GetMuteTimingByNameWithStatus(t, created.Spec.Name)
+		require.Equalf(t, http.StatusOK, status, body)
+		require.Equal(t, definitions.Provenance(ngmodels.ProvenanceAPI), legacy.Provenance, "terraform manager should map to ProvenanceAPI in legacy API")
+
+		retrieved, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindTerraform), retrieved.Annotations[utils.AnnoKeyManagerKind], "ManagerKindTerraform should survive a fresh read")
+		require.Equal(t, "my-terraform-workspace", retrieved.Annotations[utils.AnnoKeyManagerIdentity], "manager identity should survive a fresh read")
+		require.Equal(t, string(ngmodels.ProvenanceAPI), retrieved.GetProvenanceStatus())
+	})
+
+	t.Run("legacy ProvenanceAPI maps to ManagerKindClassicAPI when read via k8s", func(t *testing.T) {
+		mt := definitions.MuteTimeInterval{
+			MuteTimeInterval: config.MuteTimeInterval{
+				Name:          "mp-legacy-api",
+				TimeIntervals: []promtimeinterval.TimeInterval{},
+			},
+		}
+		_, status, body := legacyCli.CreateMuteTimingWithStatus(t, mt)
+		require.Equalf(t, http.StatusCreated, status, body)
+
+		list, err := adminClient.List(ctx, "default", resource.ListOptions{})
+		require.NoError(t, err)
+		idx := slices.IndexFunc(list.Items, func(i v1beta1.TimeInterval) bool { return i.Spec.Name == mt.Name })
+		require.GreaterOrEqual(t, idx, 0, "legacy-created interval should be listed via k8s")
+		listed := list.Items[idx]
+		t.Cleanup(func() {
+			_ = adminClient.Delete(ctx, listed.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		require.Equal(t, string(ngmodels.ProvenanceAPI), listed.GetProvenanceStatus())
+		require.Equal(t, string(utils.ManagerKindClassicAPI), listed.Annotations[utils.AnnoKeyManagerKind]) //nolint:staticcheck
+
+		got, err := adminClient.Get(ctx, listed.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindClassicAPI), got.Annotations[utils.AnnoKeyManagerKind]) //nolint:staticcheck
 	})
 }
 
