@@ -19,7 +19,6 @@ import { useStyles2 } from '@grafana/ui';
 import { renderMatchingSoloPanels, SoloPanelContextProvider } from '../solo/SoloPanelContext';
 
 import { type DashboardScene } from './DashboardScene';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -39,7 +38,7 @@ interface PanelSearchScope {
 const PanelSearchScopeContext = createContext<PanelSearchScope | null>(null);
 
 export function PanelSearchLayout(props: Props) {
-  return props.dashboard.state.body instanceof DefaultGridLayoutManager ? (
+  return props.dashboard.state.body.descriptor.id === 'GridLayout' ? (
     <DefaultGridPanelSearchLayout {...props} />
   ) : (
     <FlatPanelSearchLayout {...props} />
@@ -106,7 +105,7 @@ function PanelSearchGridRow({ model, header }: { model: SceneGridRow; header: Re
   );
 }
 
-export function PanelSearchRow({
+function PanelSearchRow({
   isCollapsed,
   children,
 }: {
@@ -141,7 +140,7 @@ export function PanelSearchRow({
   );
 }
 
-export function PanelSearchGrid({ children }: { children: ReactNode }) {
+function PanelSearchGrid({ children }: { children: ReactNode }) {
   const scope = useContext(PanelSearchScopeContext);
   const styles = useStyles2(getStyles);
 
