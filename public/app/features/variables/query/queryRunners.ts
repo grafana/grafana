@@ -90,7 +90,7 @@ class LegacyQueryRunner implements QueryRunner {
 
     const queryOptions: any = getLegacyQueryOptions(variable, searchFilter, timeSrv, request.scopedVars);
 
-    return from(datasource.metricFindQuery(variable.query, queryOptions)).pipe(
+    return from(datasource.metricFindQuery(variable.query, { ...queryOptions, headers: request.headers })).pipe(
       mergeMap((values) => {
         if (!values || !values.length) {
           return getEmptyMetricFindValueObservable();

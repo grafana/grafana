@@ -297,6 +297,8 @@ export class PanelQueryRunner {
 
     const request: DataQueryRequest = {
       app: app ?? CoreApp.Dashboard,
+      headers:
+        (app ?? CoreApp.Dashboard) === CoreApp.Dashboard ? { 'X-Grafana-Query-Purpose': 'dashboard' } : undefined,
       requestId: getNextRequestId(),
       timezone,
       panelId,

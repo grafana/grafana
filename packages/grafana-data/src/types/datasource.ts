@@ -520,6 +520,7 @@ export interface ErrorsAndNoticesInspectorProps<
 }
 
 export interface LegacyMetricFindQueryOptions {
+  headers?: Record<string, string>;
   searchFilter?: string;
   scopedVars?: ScopedVars;
   range?: TimeRange;

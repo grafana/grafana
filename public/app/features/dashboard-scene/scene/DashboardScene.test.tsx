@@ -1814,6 +1814,7 @@ describe('DashboardScene', () => {
         const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
+          headers: { 'X-Grafana-Query-Purpose': 'dashboard' },
           dashboardUID: 'dash-1',
           dashboardTitle: 'hello',
           panelId: 1,
@@ -1831,6 +1832,7 @@ describe('DashboardScene', () => {
 
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
+          headers: { 'X-Grafana-Query-Purpose': 'dashboard' },
           dashboardUID: 'dash-1',
           dashboardTitle: 'hello',
           panelId: 1,

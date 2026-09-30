@@ -180,6 +180,34 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
+  it.each(['dashboard', 'explore', 'variable', 'annotation'])(
+    'forwards %s context for all query targets',
+    async (purpose) => {
+      const { mock, ds } = createMockDatasource();
+      await firstValueFrom(
+        ds.query({
+          targets: [
+            { refId: 'A', datasource: { type: 'sample', uid: 'sample' } },
+            { refId: 'B', datasource: { type: 'sample', uid: 'sample' } },
+          ],
+          range: getDefaultTimeRange(),
+          headers: { 'X-Grafana-Query-Purpose': purpose, 'X-Test': 'retained' },
+          requestId: '',
+          interval: '1s',
+          intervalMs: 1000,
+          scopedVars: {},
+          timezone: 'UTC',
+          app: 'dashboard',
+          startTime: 0,
+        } as DataQueryRequest)
+      );
+      expect(mock.calls[0][0]).toMatchObject({
+        headers: { 'X-Grafana-Query-Purpose': purpose, 'X-Test': 'retained' },
+        data: { queries: [{ refId: 'A' }, { refId: 'B' }] },
+      });
+    }
+  );
+
   test('surfaces an error when a query targets an unknown datasource', async () => {
     const { ds } = createMockDatasource();
     // the async settings lookup returning undefined means the datasource does not exist
@@ -921,6 +949,30 @@ describe('DataSourceWithBackend', () => {
       type: 'loki',
       jsonData: {},
     } as DataSourceInstanceSettings;
+
+    it.each([
+      [false, '/apis/query.grafana.app/v0alpha1/namespaces/default/query?ds_type=dummy'],
+      [true, '/apis/datasource.grafana.app/v0alpha1/namespaces/default/query?ds_type=dummy'],
+    ])('forwards context to the querier when new-name is %s', async (newName, url) => {
+      mockIsQueryServiceCompatible.mockReturnValue(true);
+      mockGetBooleanValue.mockReturnValue(newName);
+      const { ds, mock } = createMockDatasource();
+      await firstValueFrom(
+        ds.query({
+          targets: [{ refId: 'A' }],
+          range: getDefaultTimeRange(),
+          headers: { 'X-Grafana-Query-Purpose': 'explore' },
+          requestId: '',
+          interval: '1s',
+          intervalMs: 1000,
+          scopedVars: {},
+          timezone: 'UTC',
+          app: 'explore',
+          startTime: 0,
+        } as DataQueryRequest)
+      );
+      expect(mock.calls[0][0]).toMatchObject({ url, headers: { 'X-Grafana-Query-Purpose': 'explore' } });
+    });
 
     it('uses query.grafana.app when the new-name flag is disabled', async () => {
       mockIsQueryServiceCompatible.mockReturnValue(true);
