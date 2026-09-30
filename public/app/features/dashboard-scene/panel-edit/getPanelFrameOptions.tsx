@@ -15,7 +15,6 @@ import { type VizPanelLinks } from '../scene/PanelLinks';
 import { useSidebarInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-import { type DashboardActionTracking } from '../sidebar/events';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -299,18 +298,13 @@ function updatePanelTitleState(panel: VizPanel, title: string) {
   getDashboardSceneFor(panel).updatePanelTitle(panel, title);
 }
 
-export function editPanelTitleAction(
-  panel: VizPanel,
-  title: string,
-  prevTitle: string = panel.state.title,
-  tracking: DashboardActionTracking = {}
-) {
+export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
   if (title === prevTitle) {
     return;
   }
 
   edit({
-    tracking: { actionId: 'panel-edit.editPanelTitleAction', trigger: tracking.trigger },
+    tracking: { actionId: 'panel-edit.editPanelTitleAction' },
     description: t('dashboard.edit-actions.panel-title', 'panel title change'),
     source: panel,
     perform: () => updatePanelTitleState(panel, title),

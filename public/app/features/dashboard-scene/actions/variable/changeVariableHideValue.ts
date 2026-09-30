@@ -1,23 +1,21 @@
 import { t } from '@grafana/i18n';
 import { type SceneVariable, SceneVariableSet } from '@grafana/scenes';
 
-import { type DashboardActionTracking } from '../../sidebar/events';
 import { edit } from '../utils/edit';
 
 interface ChangeVariableHideValueActionProps {
-  tracking?: DashboardActionTracking;
   source: SceneVariable;
   oldValue: SceneVariable['state']['hide'];
   newValue: SceneVariable['state']['hide'];
 }
 
-export function changeVariableHideValue({ tracking, source, oldValue, newValue }: ChangeVariableHideValueActionProps) {
+export function changeVariableHideValue({ source, oldValue, newValue }: ChangeVariableHideValueActionProps) {
   const variableSet = source.parent;
   const variablesBeforeChange =
     variableSet instanceof SceneVariableSet ? [...(variableSet.state.variables ?? [])] : undefined;
 
   edit({
-    tracking: { actionId: 'variable.changeVariableHideValue', trigger: tracking?.trigger },
+    tracking: { actionId: 'variable.changeVariableHideValue' },
     description: t('dashboard.edit-actions.variable-hide', 'Change variable hide option'),
     source,
     perform: () => {

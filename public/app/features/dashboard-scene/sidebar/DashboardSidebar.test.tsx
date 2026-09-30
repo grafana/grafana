@@ -409,92 +409,27 @@ describe('DashboardSidebar', () => {
   describe('history tracking', () => {
     beforeEach(() => jest.mocked(reportInteraction).mockClear());
 
-    it('reports an edit after performing it without including the description', () => {
+    it('does not report performing edits, batches or committed scene changes', () => {
       const scene = buildTestScene();
-      const perform = jest.fn(() => scene.setState({ title: 'new title' }));
 
-      edit({
-        source: scene,
-        tracking: { actionId: 'dashboard.changeTitle', trigger: 'mouse' },
-        description: 'Private dashboard title',
-        perform,
-        undo: jest.fn(),
-      });
-
-      expect(scene.state.title).toBe('new title');
-      expect(reportInteraction).toHaveBeenCalledTimes(1);
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_edit', {
-        actionId: 'dashboard.changeTitle',
-        trigger: 'mouse',
-      });
-      expect(perform.mock.invocationCallOrder[0]).toBeLessThan(
-        jest.mocked(reportInteraction).mock.invocationCallOrder[0]
-      );
-    });
-
-    it('does not report individual edits while a batch is open', () => {
-      const scene = buildTestScene();
-      startBatch(scene, 'Change properties', { actionId: 'dashboard.changeProperties', trigger: 'mouse' });
-
-      edit({ source: scene, perform: () => scene.setState({ title: 'new title' }), undo: jest.fn() });
-      edit({ source: scene, perform: () => scene.setState({ description: 'new description' }), undo: jest.fn() });
-
-      expect(scene.state.title).toBe('new title');
-      expect(scene.state.description).toBe('new description');
-      expect(reportInteraction).not.toHaveBeenCalled();
-    });
-
-    it('reports one edit when a nonempty batch ends', () => {
-      const scene = buildTestScene();
-      startBatch(scene, 'Change properties', { actionId: 'dashboard.changeProperties', trigger: 'mouse' });
+      edit({ source: scene, tracking: { actionId: 'dashboard.changeTitle' }, perform: jest.fn(), undo: jest.fn() });
+      startBatch(scene, 'Change properties', { actionId: 'dashboard.changeProperties' });
       edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
-      edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
-
       endBatch(scene);
-
-      expect(reportInteraction).toHaveBeenCalledTimes(1);
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_edit', {
-        actionId: 'dashboard.changeProperties',
-        trigger: 'mouse',
-      });
-    });
-
-    it('does not report an edit when an empty batch ends', () => {
-      const scene = buildTestScene();
-      startBatch(scene, 'Change properties');
-
-      endBatch(scene);
-
-      expect(reportInteraction).not.toHaveBeenCalled();
-    });
-
-    it('reports an already committed scene change without replaying it', () => {
-      const scene = buildTestScene();
-      const replay = jest.fn();
-
       scene.publishEvent(
-        new StateCommittedEvent({
-          source: scene,
-          description: 'Private description',
-          replay,
-          revert: jest.fn(),
-        }),
+        new StateCommittedEvent({ source: scene, description: 'Move panel', replay: jest.fn(), revert: jest.fn() }),
         true
       );
 
-      expect(replay).not.toHaveBeenCalled();
-      expect(reportInteraction).toHaveBeenCalledTimes(1);
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_edit', {
-        actionId: 'scene.stateCommitted',
-        trigger: undefined,
-      });
+      expect(scene.state.sidebar.state.undoStack).toHaveLength(3);
+      expect(reportInteraction).not.toHaveBeenCalled();
     });
 
-    it('reports the original edit and the keyboard invocation when undoing', () => {
+    it('reports the undone action and how undo was invoked without including the description', () => {
       const scene = buildTestScene();
       edit({
         source: scene,
-        tracking: { actionId: 'dashboard.changeTitle', trigger: 'mouse' },
+        tracking: { actionId: 'dashboard.changeTitle' },
         description: 'Private dashboard title',
         perform: () => scene.setState({ title: 'new title' }),
         undo: () => scene.setState({ title: 'hello' }),
@@ -503,25 +438,22 @@ describe('DashboardSidebar', () => {
       scene.state.sidebar.undoAction({ trigger: 'keyboard' });
 
       expect(scene.state.title).toBe('hello');
+      expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'dashboard.changeTitle',
-        editTrigger: 'mouse',
         trigger: 'keyboard',
-      });
-      expect(scene.state.sidebar.state.redoStack[0]).toMatchObject({
-        tracking: { actionId: 'dashboard.changeTitle', trigger: 'mouse' },
       });
     });
 
-    it('keeps the original edit trigger when redo is invoked through the API', () => {
+    it('reports the redone action and how redo was invoked', () => {
       const scene = buildTestScene();
       edit({
         source: scene,
-        tracking: { actionId: 'dashboard.changeTitle', trigger: 'mouse' },
+        tracking: { actionId: 'dashboard.changeTitle' },
         perform: () => scene.setState({ title: 'new title' }),
         undo: () => scene.setState({ title: 'hello' }),
       });
-      scene.state.sidebar.undoAction({ trigger: 'keyboard' });
+      scene.state.sidebar.undoAction({ trigger: 'sidebar' });
       jest.mocked(reportInteraction).mockClear();
 
       scene.state.sidebar.redoAction({ trigger: 'api' });
@@ -530,7 +462,6 @@ describe('DashboardSidebar', () => {
       expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_redo', {
         actionId: 'dashboard.changeTitle',
-        editTrigger: 'mouse',
         trigger: 'api',
       });
     });
@@ -543,8 +474,22 @@ describe('DashboardSidebar', () => {
 
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'unknown',
-        editTrigger: undefined,
         trigger: undefined,
+      });
+    });
+
+    it('reports an undone committed scene change under its own action id', () => {
+      const scene = buildTestScene();
+      scene.publishEvent(
+        new StateCommittedEvent({ source: scene, description: 'Private', replay: jest.fn(), revert: jest.fn() }),
+        true
+      );
+
+      scene.state.sidebar.undoAction({ trigger: 'sidebar' });
+
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
+        actionId: 'scene.stateCommitted',
+        trigger: 'sidebar',
       });
     });
 
@@ -553,27 +498,22 @@ describe('DashboardSidebar', () => {
 
       scene.state.sidebar.undoAction({ trigger: 'keyboard' });
 
-      expect(reportInteraction).not.toHaveBeenCalledWith('grafana_dashboard_undo', expect.anything());
+      expect(reportInteraction).not.toHaveBeenCalled();
     });
 
-    it('tracks a batch as one operation with its own trigger', () => {
+    it('reports an undone batch once, under the batch action id', () => {
       const scene = buildTestScene();
-      startBatch(scene, 'Remove selection', {
-        actionId: 'element.removeSelection',
-        trigger: 'mouse',
-      });
+      startBatch(scene, 'Remove selection', { actionId: 'element.removeSelection' });
       edit({ source: scene, tracking: { actionId: 'element.removeElement' }, perform: jest.fn(), undo: jest.fn() });
       edit({ source: scene, tracking: { actionId: 'element.removeElement' }, perform: jest.fn(), undo: jest.fn() });
       endBatch(scene);
-      jest.mocked(reportInteraction).mockClear();
 
-      scene.state.sidebar.undoAction({ trigger: 'mouse' });
+      scene.state.sidebar.undoAction({ trigger: 'sidebar' });
 
       expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'element.removeSelection',
-        editTrigger: 'mouse',
-        trigger: 'mouse',
+        trigger: 'sidebar',
       });
     });
   });

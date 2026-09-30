@@ -30,10 +30,7 @@ export function duplicateElement<T extends SceneObject>(props: DuplicateElementA
   const addedObject = duplicatedObject.clone({ ...cloneState, key: undefined });
 
   edit({
-    tracking: {
-      actionId: props.tracking?.actionId ?? 'element.duplicateElement',
-      trigger: props.tracking?.trigger,
-    },
+    tracking: { actionId: props.tracking?.actionId ?? 'element.duplicateElement' },
     description: t('dashboard.edit-actions.duplicate', 'Duplicate {{typeName}}', { typeName }),
     addedObject,
     source,

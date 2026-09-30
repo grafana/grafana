@@ -88,7 +88,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       const newPlacement = DROPPABLE_TO_PLACEMENT[destination.droppableId];
 
       edit({
-        tracking: { actionId: 'links.reorder', trigger: 'mouse' },
+        tracking: { actionId: 'links.reorder' },
         source: dashboard,
         description: t('dashboard.sidebar.links.reorder-description', 'Reorder links list'),
         perform: () => {

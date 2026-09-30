@@ -33,7 +33,7 @@ export async function openAddFilterForm(
   if (!existing) {
     sectionOwner.setState({ $variables: variablesSet });
   }
-  addVariable({ tracking: { trigger: 'mouse' }, source: variablesSet, addedObject: newVar });
+  addVariable({ source: variablesSet, addedObject: newVar });
   dashboard.state.sidebar.selectObject(newVar, { force: true, multi: false });
 }
 

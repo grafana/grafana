@@ -1,22 +1,15 @@
 import { t } from '@grafana/i18n';
 import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 
-import { type DashboardActionTracking } from '../../sidebar/events';
 import { edit } from '../utils/edit';
 
 interface ChangeVariableTypeActionHelperProps {
-  tracking?: DashboardActionTracking;
   oldVariable: SceneVariable;
   newVariable: SceneVariable;
   source: SceneVariableSet;
 }
 
-export function changeVariableType({
-  tracking,
-  source,
-  oldVariable,
-  newVariable,
-}: ChangeVariableTypeActionHelperProps) {
+export function changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
   const varsBeforeChange = [...source.state.variables];
   const variableIndex = varsBeforeChange.indexOf(oldVariable);
 
@@ -28,7 +21,7 @@ export function changeVariableType({
   varsAfterChange[variableIndex] = newVariable;
 
   edit({
-    tracking: { actionId: 'variable.changeVariableType', trigger: tracking?.trigger },
+    tracking: { actionId: 'variable.changeVariableType' },
     description: t('dashboard.edit-actions.variable-type', 'Change variable type'),
     source,
     addedObject: newVariable,

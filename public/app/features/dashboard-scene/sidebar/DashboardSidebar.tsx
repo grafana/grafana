@@ -222,10 +222,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     const action: DashboardEditActionEventPayload = {
       source: batch.source,
-      tracking: {
-        actionId: batch.tracking?.actionId ?? 'utils.batch',
-        trigger: batch.tracking?.trigger,
-      },
+      tracking: { actionId: batch.tracking?.actionId ?? 'utils.batch' },
       description: batch.description,
       perform: () => {
         batch.actions.forEach((childAction) => this.performAction(childAction));
@@ -236,7 +233,6 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     };
 
     this.setState({ undoStack: [...this.state.undoStack, action] });
-    this.trackEdit(action);
   }
 
   /**
@@ -262,14 +258,6 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     this.setState({ undoStack: [...this.state.undoStack, action] });
-    this.trackEdit(action);
-  }
-
-  private trackEdit(action: DashboardEditActionEventPayload) {
-    reportInteraction('grafana_dashboard_edit', {
-      actionId: action.tracking?.actionId ?? 'unknown',
-      trigger: action.tracking?.trigger,
-    });
   }
 
   /**
@@ -308,7 +296,6 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
     reportInteraction('grafana_dashboard_undo', {
       actionId: action.tracking?.actionId ?? 'unknown',
-      editTrigger: action.tracking?.trigger,
       trigger,
     });
   }
@@ -369,7 +356,6 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
     reportInteraction('grafana_dashboard_redo', {
       actionId: action.tracking?.actionId ?? 'unknown',
-      editTrigger: action.tracking?.trigger,
       trigger,
     });
   }

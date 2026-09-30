@@ -17,7 +17,7 @@ export function reorderRows(layout: RowsLayoutManager, fromIndex: number, toInde
   };
 
   moveElement({
-    tracking: { actionId: 'layout.reorderRows', trigger: 'mouse' },
+    tracking: { actionId: 'layout.reorderRows' },
     source: layout,
     movedObject: row,
     selectOnMove: false,

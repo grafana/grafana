@@ -2,7 +2,7 @@
 import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { type SceneObject } from '@grafana/scenes';
 
-export type DashboardActionTrigger = 'mouse' | 'keyboard' | 'api';
+export type DashboardActionTrigger = 'sidebar' | 'keyboard' | 'api';
 
 export interface UndoRedoCallOptions {
   trigger?: DashboardActionTrigger;
@@ -10,7 +10,6 @@ export interface UndoRedoCallOptions {
 
 export interface DashboardActionTracking {
   actionId?: `${string}.${string}`;
-  trigger?: DashboardActionTrigger;
 }
 
 export interface DashboardEditActionEventPayload {

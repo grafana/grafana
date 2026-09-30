@@ -22,10 +22,7 @@ export function removeElement(props: RemoveElementActionHelperProps) {
   }
 
   edit({
-    tracking: {
-      actionId: props.tracking?.actionId ?? 'element.removeElement',
-      trigger: props.tracking?.trigger,
-    },
+    tracking: { actionId: props.tracking?.actionId ?? 'element.removeElement' },
     description: t('dashboard.edit-actions.remove', 'Remove {{typeName}}', { typeName }),
     removedObject,
     source,

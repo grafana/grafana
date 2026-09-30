@@ -7,22 +7,20 @@ import {
   restoreVariableSetSnapshots,
   snapshotVariableSetsAlongPath,
 } from '../../settings/variables/utils';
-import { type DashboardActionTracking } from '../../sidebar/events';
 import { edit } from '../utils/edit';
 
 interface ChangeVariableNameActionProps {
-  tracking?: DashboardActionTracking;
   source: SceneVariable;
   oldValue: SceneVariable['state']['name'];
   newValue: SceneVariable['state']['name'];
 }
 
-export function changeVariableName({ tracking, source, oldValue, newValue }: ChangeVariableNameActionProps) {
+export function changeVariableName({ source, oldValue, newValue }: ChangeVariableNameActionProps) {
   // Snapshot set + ancestors before mutate so undo restores drops and re-injections.
   const snapshots = snapshotVariableSetsAlongPath(source);
 
   edit({
-    tracking: { actionId: 'variable.changeVariableName', trigger: tracking?.trigger },
+    tracking: { actionId: 'variable.changeVariableName' },
     description: t('dashboard.edit-actions.variable-name', 'Change variable name'),
     source,
     perform: () => {

@@ -68,7 +68,7 @@ function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>
         name: getNextAvailableId(getVariableNamePrefix(type), sectionVars),
       });
 
-      addVariable({ tracking: { trigger: 'mouse' }, source: variablesSet, addedObject: newVar });
+      addVariable({ source: variablesSet, addedObject: newVar });
 
       if (sectionOwner === dashboard) {
         DashboardInteractions.variableTypeSelected({ type });

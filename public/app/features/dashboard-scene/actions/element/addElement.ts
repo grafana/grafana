@@ -25,10 +25,7 @@ export function addElement(props: AddElementActionHelperProps) {
   }
 
   edit({
-    tracking: {
-      actionId: props.tracking?.actionId ?? 'element.addElement',
-      trigger: props.tracking?.trigger,
-    },
+    tracking: { actionId: props.tracking?.actionId ?? 'element.addElement' },
     description: t('dashboard.edit-actions.add', 'Add {{typeName}}', { typeName }),
     addedObject,
     source,

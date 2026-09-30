@@ -11,7 +11,6 @@ interface MakeEditActionProps<Source extends SceneObject, T extends keyof Source
 }
 
 interface EditActionProps<Source extends SceneObject, T extends keyof Source['state']> {
-  tracking?: DashboardActionTracking;
   source: Source;
   oldValue: Source['state'][T];
   newValue: Source['state'][T];
@@ -22,9 +21,9 @@ export function makeEditAction<Source extends SceneObject, T extends keyof Sourc
   description,
   prop,
 }: MakeEditActionProps<Source, T>) {
-  return ({ source, oldValue, newValue, tracking }: EditActionProps<Source, T>) => {
+  return ({ source, oldValue, newValue }: EditActionProps<Source, T>) => {
     edit({
-      tracking: { actionId, trigger: tracking?.trigger },
+      tracking: { actionId },
       description,
       source,
       perform: () => {

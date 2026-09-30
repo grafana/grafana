@@ -4,7 +4,6 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
-import { type DashboardActionTracking } from '../../sidebar/events';
 import { edit } from '../utils/edit';
 
 // Minimal structural type for the bits of DashboardSceneUrlSync the rebuild drives, without
@@ -15,13 +14,12 @@ type DashboardUrlSync = {
 };
 
 export interface ApplyDashboardSpecProps {
-  tracking?: DashboardActionTracking;
   scene: DashboardScene;
   spec: DashboardV2Spec;
   description: string;
 }
 
-export function applyDashboardSpec({ scene, spec, description, tracking }: ApplyDashboardSpecProps): void {
+export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardSpecProps): void {
   const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
 
@@ -43,7 +41,7 @@ export function applyDashboardSpec({ scene, spec, description, tracking }: Apply
   const urlSync = scene.urlSync as DashboardUrlSync | undefined;
 
   edit({
-    tracking: { actionId: 'dashboard.applyDashboardSpec', trigger: tracking?.trigger },
+    tracking: { actionId: 'dashboard.applyDashboardSpec' },
     source: scene,
     description,
     perform: () => {

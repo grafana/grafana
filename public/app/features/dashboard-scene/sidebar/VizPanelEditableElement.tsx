@@ -151,7 +151,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onChangeName(name: string) {
-    editPanelTitleAction(this.panel, name, this.panel.state.title, { trigger: 'mouse' });
+    editPanelTitleAction(this.panel, name);
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {

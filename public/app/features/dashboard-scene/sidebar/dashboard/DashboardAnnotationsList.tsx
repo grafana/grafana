@@ -82,7 +82,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
       };
 
       edit({
-        tracking: { actionId: 'annotations.reorder', trigger: 'mouse' },
+        tracking: { actionId: 'annotations.reorder' },
         source: dataLayerSet,
         description: t('dashboard.sidebar.annotations.reorder-description', 'Reorder annotations list'),
         perform: () => {

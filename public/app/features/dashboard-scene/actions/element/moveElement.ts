@@ -23,10 +23,7 @@ export function moveElement(props: MoveElementActionHelperProps) {
   }
 
   edit({
-    tracking: {
-      actionId: props.tracking?.actionId ?? 'element.moveElement',
-      trigger: props.tracking?.trigger,
-    },
+    tracking: { actionId: props.tracking?.actionId ?? 'element.moveElement' },
     description: t('dashboard.edit-actions.move', 'Move {{typeName}}', { typeName }),
     movedObject,
     selectOnMove,
