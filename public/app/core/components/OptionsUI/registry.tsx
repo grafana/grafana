@@ -1,4 +1,5 @@
 import type { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
+import { type ComponentType, lazy, Suspense } from 'react';
 
 import {
   type FieldConfigPropertyItem,
@@ -32,24 +33,84 @@ import {
 import { actionsOverrideProcessor } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type FieldConfig } from '@grafana/schema';
-import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/internal';
-import { ThresholdsValueEditor } from 'app/features/dimensions/editors/ThresholdsEditor/thresholds';
-import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
+import { RadioButtonGroup, Switch, TimeZonePicker } from '@grafana/ui';
 
-import { DashboardPicker, type DashboardPickerOptions } from './DashboardPicker';
-import { ActionsValueEditor } from './actions';
-import { ColorValueEditor, type ColorValueEditorSettings } from './color';
-import { FieldColorEditor } from './fieldColor';
-import { DataLinksValueEditor } from './links';
-import { MultiSelectValueEditor } from './multiSelect';
-import { NumberValueEditor } from './number';
-import { SelectValueEditor } from './select';
-import { SliderValueEditor } from './slider';
-import { StatsPickerEditor } from './stats';
-import { StringValueEditor } from './string';
-import { StringArrayEditor } from './strings';
-import { UnitValueEditor } from './units';
+import type { DashboardPickerOptions } from './DashboardPicker';
+import type { ColorValueEditorSettings } from './color';
+
+/**
+ * Wraps an editor so its module is only fetched when the editor first renders. The registry is
+ * built during app boot, so importing editors directly would put all of them in the initial chunk.
+ * Each wrapper has its own Suspense boundary because plugins render `registryItem.editor` directly
+ * and must not need to provide one.
+ */
+function lazyEditor<P extends object>(load: () => Promise<ComponentType<P>>): ComponentType<P> {
+  const LazyComponent = lazy(() => load().then((component) => ({ default: component })));
+  const LazyEditor = (props: P) => (
+    <Suspense fallback={null}>
+      <LazyComponent {...props} />
+    </Suspense>
+  );
+  return LazyEditor;
+}
+
+// Editors are grouped into a few named chunks by how often they render and how large they are:
+// - core: small editors that appear as soon as almost any panel editor opens
+// - unit: needed by most panels, but its picker is several times larger than all of core
+// - links: only renders when "Data links and actions" is expanded or already has items
+// - mappings: only renders when "Value mappings" is expanded or already has items
+const ThresholdsValueEditor = lazyEditor(() =>
+  import(
+    /* webpackChunkName: "options-ui-editors-core" */ 'app/features/dimensions/editors/ThresholdsEditor/thresholds'
+  ).then((m) => m.ThresholdsValueEditor)
+);
+const ValueMappingsEditor = lazyEditor(() =>
+  import(
+    /* webpackChunkName: "options-ui-editors-mappings" */ 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor'
+  ).then((m) => m.ValueMappingsEditor)
+);
+const DashboardPicker = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './DashboardPicker').then((m) => m.DashboardPicker)
+);
+const ActionsValueEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-links" */ './actions').then((m) => m.ActionsValueEditor)
+);
+const ColorValueEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './color').then((m) => m.ColorValueEditor)
+);
+const FieldColorEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './fieldColor').then((m) => m.FieldColorEditor)
+);
+const DataLinksValueEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-links" */ './links').then((m) => m.DataLinksValueEditor)
+);
+const MultiSelectValueEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './multiSelect').then((m) => m.MultiSelectValueEditor)
+);
+const NumberValueEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './number').then((m) => m.NumberValueEditor)
+);
+const SelectValueEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './select').then((m) => m.SelectValueEditor)
+);
+const SliderValueEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './slider').then((m) => m.SliderValueEditor)
+);
+const StatsPickerEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './stats').then((m) => m.StatsPickerEditor)
+);
+const StringValueEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './string').then((m) => m.StringValueEditor)
+);
+const StringArrayEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ './strings').then((m) => m.StringArrayEditor)
+);
+const UnitValueEditor = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-unit" */ './units').then((m) => m.UnitValueEditor)
+);
+const FieldNamePicker = lazyEditor(() =>
+  import(/* webpackChunkName: "options-ui-editors-core" */ '@grafana/ui/internal').then((m) => m.FieldNamePicker)
+);
 
 /**
  * Returns collection of standard option editors definitions
