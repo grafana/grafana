@@ -3,8 +3,8 @@ package test
 import (
 	"context"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"

@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -175,7 +175,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			Value:      value,
 			Object:     meta,
 			PreviousRV: prev,
-			GUID:       uuid.NewString(),
+			GUID:       uuid.New().String(),
 		})
 		require.NoError(t, err)
 		require.Greater(t, rv, int64(0))

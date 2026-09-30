@@ -14,10 +14,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -1868,7 +1868,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, status)
 			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 
-			group.Rules[0].GrafanaManagedAlert.Title = uuid.NewString()
+			group.Rules[0].GrafanaManagedAlert.Title = uuid.New().String()
 			resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 
 			if status == http.StatusAccepted {

@@ -10,8 +10,8 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -585,7 +585,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 
 			// assign unique identifier that will identify resource across space and time. The probability of collision is so low that we do not need to check for uniqueness.
 			// The unique keys will ensure uniqueness in rule and versions tables
-			converted.GUID = uuid.NewString()
+			converted.GUID = uuid.New().String()
 
 			newRules = append(newRules, converted)
 			v := alertRuleToAlertRuleVersion(converted)

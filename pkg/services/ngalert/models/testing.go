@@ -10,9 +10,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/google/uuid"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -114,7 +114,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 
 	rule := AlertRule{
 		ID:                          0,
-		GUID:                        uuid.NewString(),
+		GUID:                        uuid.New().String(),
 		OrgID:                       rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
 		Title:                       fmt.Sprintf("title-%s", util.GenerateShortUID()),
 		Condition:                   "A",

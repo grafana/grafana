@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	authlib "github.com/grafana/authlib/types"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -160,7 +160,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetUID() == "" {
-		obj.SetUID(types.UID(uuid.NewString()))
+		obj.SetUID(types.UID(uuid.New().String()))
 	}
 	if err = s.verifyFolder(obj); err != nil {
 		return v, err

@@ -11,8 +11,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
+	"uuid"
 )
 
 var errWebHookURL = errors.New("webhook url must be https")
@@ -64,7 +63,7 @@ func (wClient *webHookClient) Notify(ctx context.Context,
 
 	// create request body
 	values := map[string]any{
-		"alert_uid":                uuid.NewString(),
+		"alert_uid":                uuid.New().String(),
 		"title":                    "SecretScan Alert: Grafana Token leaked",
 		"state":                    "alerting",
 		"link_to_upstream_details": token.URL,

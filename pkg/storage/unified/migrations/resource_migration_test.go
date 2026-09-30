@@ -10,8 +10,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sync"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
 	traceNoop "go.opentelemetry.io/otel/trace/noop"

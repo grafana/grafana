@@ -7,8 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"

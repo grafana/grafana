@@ -9,8 +9,8 @@ import (
 	"mime"
 	"strings"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"

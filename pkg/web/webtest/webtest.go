@@ -6,8 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -96,7 +95,7 @@ func (s *Server) SendJSON(req *http.Request) (*http.Response, error) {
 }
 
 func generateRequestIdentifier() string {
-	return uuid.NewString()
+	return uuid.New().String()
 }
 
 func requestWithRequestIdentifier(req *http.Request, id string) *http.Request {

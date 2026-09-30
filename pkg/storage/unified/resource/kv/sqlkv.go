@@ -10,9 +10,9 @@ import (
 	"iter"
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 

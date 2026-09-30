@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -202,7 +202,7 @@ func generateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtende
 		rules = append(rules, gen())
 	}
 	return apimodels.PostableRuleGroupConfig{
-		Name:     "arulegroup-" + uuid.NewString(),
+		Name:     "arulegroup-" + uuid.New().String(),
 		Interval: model.Duration(10 * time.Second),
 		Rules:    rules,
 	}
@@ -792,7 +792,7 @@ func (a apiClient) CreateTestDatasource(t *testing.T) (result api.CreateOrUpdate
 func (a apiClient) CreateDatasource(t *testing.T, dsType string) (result api.CreateOrUpdateDatasourceResponse) {
 	t.Helper()
 
-	payload := fmt.Sprintf(`{"name":"TestDatasource-%s","type":"%s","access":"proxy","isDefault":false}`, uuid.NewString(), dsType)
+	payload := fmt.Sprintf(`{"name":"TestDatasource-%s","type":"%s","access":"proxy","isDefault":false}`, uuid.New().String(), dsType)
 	buf := bytes.Buffer{}
 	buf.Write([]byte(payload))
 

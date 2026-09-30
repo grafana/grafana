@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"net/url"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"

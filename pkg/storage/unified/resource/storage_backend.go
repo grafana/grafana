@@ -17,10 +17,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"uuid"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
@@ -335,7 +335,7 @@ func newLeaseHolder(instanceID string) string {
 		}
 		instanceID = hostname
 	}
-	return fmt.Sprintf("%s-%s", instanceID, uuid.NewString())
+	return fmt.Sprintf("%s-%s", instanceID, uuid.New().String())
 }
 
 var (

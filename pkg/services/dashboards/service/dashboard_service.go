@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	claims "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -2381,7 +2381,7 @@ func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *uns
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (*unstructured.Unstructured, error) {
 	uid := cmd.GetDashboardModel().UID
 	if uid == "" {
-		uid = uuid.NewString()
+		uid = uuid.New().String()
 	}
 
 	finalObj := &unstructured.Unstructured{

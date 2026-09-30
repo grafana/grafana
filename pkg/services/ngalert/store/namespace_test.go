@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -38,9 +38,9 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	}
 
 	folders := []*folder.Folder{
-		{UID: uuid.NewString(), Title: "folder1", ParentUID: "", OrgID: 1},
-		{UID: uuid.NewString(), Title: "folder2", ParentUID: "", OrgID: 1},
-		{UID: uuid.NewString(), Title: "nested/folder", ParentUID: "", OrgID: 1},
+		{UID: uuid.New().String(), Title: "folder1", ParentUID: "", OrgID: 1},
+		{UID: uuid.New().String(), Title: "folder2", ParentUID: "", OrgID: 1},
+		{UID: uuid.New().String(), Title: "nested/folder", ParentUID: "", OrgID: 1},
 	}
 
 	for _, f := range folders {

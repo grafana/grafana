@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -108,7 +108,7 @@ func randFolder() *folder.Folder {
 		// UpdatedBy: 0,
 		// CreatedBy: 0,
 		// HasACL:    false,
-		ParentUID: uuid.NewString(),
+		ParentUID: uuid.New().String(),
 		Fullpath:  path.Join("parent-folder", title),
 	}
 }
@@ -656,7 +656,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			name: "fail if Condition does not exist",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.GrafanaManagedAlert.Condition = uuid.NewString()
+				r.GrafanaManagedAlert.Condition = uuid.New().String()
 				return &r
 			},
 		},

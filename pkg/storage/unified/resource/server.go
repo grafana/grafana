@@ -11,10 +11,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"uuid"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/bwmarrin/snowflake"
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"

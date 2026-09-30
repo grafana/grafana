@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/benbjohnson/clock"
 	"github.com/golang/mock/gomock"
-	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -819,7 +819,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 	logger := log.New()
 
 	rule := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithNoNotificationSettings()).GenerateRef()
-	folderTitle := uuid.NewString()
+	folderTitle := uuid.New().String()
 
 	cpr := ngmodels.ContactPointRouting{
 		Receiver:  "Test",
@@ -1045,10 +1045,10 @@ func TestNewState(t *testing.T) {
 			"__label3":   {},
 			"label4":     {},
 		}
-		result.Instance["__label1__"] = uuid.NewString()
-		result.Instance["label2__"] = uuid.NewString()
-		result.Instance["__label3"] = uuid.NewString()
-		result.Instance["label4"] = uuid.NewString()
+		result.Instance["__label1__"] = uuid.New().String()
+		result.Instance["label2__"] = uuid.New().String()
+		result.Instance["__label3"] = uuid.New().String()
+		result.Instance["label4"] = uuid.New().String()
 
 		rule := generateRule()
 
@@ -1070,9 +1070,9 @@ func TestNewState(t *testing.T) {
 		assert.Equal(t, state.Labels["label4_user"], result.Instance["label4"])
 
 		t.Run("should drop label if renamed collides with existing", func(t *testing.T) {
-			result.Instance["label1"] = uuid.NewString()
-			result.Instance["label1_user"] = uuid.NewString()
-			result.Instance["label4_user"] = uuid.NewString()
+			result.Instance["label1"] = uuid.New().String()
+			result.Instance["label1_user"] = uuid.New().String()
+			result.Instance["label4_user"] = uuid.New().String()
 
 			state = newState(context.Background(), l, rule, result, nil, url, 0, nil)
 			assert.NotContains(t, state.Labels, "__label1__")

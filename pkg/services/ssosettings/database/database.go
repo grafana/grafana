@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"

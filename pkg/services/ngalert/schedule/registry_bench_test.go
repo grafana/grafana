@@ -5,8 +5,7 @@ import (
 	"io"
 	"math/rand"
 	"testing"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -19,7 +18,7 @@ func BenchmarkRuleWithFolderFingerprint(b *testing.B) {
 			rule.Data = append(rule.Data, gen.GenerateQuery())
 		}
 	}).GenerateManyRef(b.N)
-	folder := uuid.NewString()
+	folder := uuid.New().String()
 	b.ReportAllocs()
 	b.ResetTimer()
 	var f fingerprint

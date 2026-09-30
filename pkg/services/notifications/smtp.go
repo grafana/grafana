@@ -14,8 +14,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"uuid"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
@@ -142,7 +142,7 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, smtp setting.SmtpSettings,
 		at := strings.LastIndex(from.Address, "@")
 		if at >= 0 {
 			domain := from.Address[at+1:]
-			m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.NewString(), domain))
+			m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.New().String(), domain))
 		}
 	}
 

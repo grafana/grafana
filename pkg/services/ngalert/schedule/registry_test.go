@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -314,7 +314,7 @@ func TestRuleSequencesNeedUpdate(t *testing.T) {
 
 func TestRuleWithFolderFingerprint(t *testing.T) {
 	rule := models.RuleGen.GenerateRef()
-	title := uuid.NewString()
+	title := uuid.New().String()
 	f := ruleWithFolder{rule: rule, folderTitle: title}.Fingerprint()
 	t.Run("should calculate a fingerprint", func(t *testing.T) {
 		require.NotEqual(t, 0, uint64(f))
@@ -332,7 +332,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		require.Equal(t, f, f2)
 	})
 	t.Run("folder name should be used in fingerprint", func(t *testing.T) {
-		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.NewString()}.Fingerprint()
+		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.New().String()}.Fingerprint()
 		require.NotEqual(t, f, f2)
 	})
 	t.Run("Version, Updated, IntervalSeconds, GUID, Annotations and RuleGroupIndex should be excluded from fingerprint", func(t *testing.T) {
@@ -343,7 +343,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		cp.Annotations = make(map[string]string)
 		cp.Annotations["test"] = "test"
 		cp.RuleGroupIndex++
-		cp.GUID = uuid.NewString()
+		cp.GUID = uuid.New().String()
 
 		f2 := ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
 		require.Equal(t, f, f2)

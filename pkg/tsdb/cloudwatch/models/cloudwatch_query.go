@@ -10,10 +10,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
-
-	"github.com/google/uuid"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -350,7 +349,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		// it would likely collide with some ref id. That's why the `query` prefix is used.
 		suffix := refId
 		if !validMetricDataID.MatchString(suffix) {
-			newUUID := uuid.NewString()
+			newUUID := uuid.New().String()
 			suffix = strings.ReplaceAll(newUUID, "-", "")
 		}
 		q.Id = fmt.Sprintf("query%s", suffix)

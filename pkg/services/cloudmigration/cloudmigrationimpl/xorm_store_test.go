@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
@@ -116,7 +116,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a snapshot
-		uid := uuid.NewString()
+		uid := uuid.New().String()
 		cmr := cloudmigration.CloudMigrationSnapshot{
 			UID:        uid,
 			SessionUID: session.UID,
@@ -179,7 +179,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a snapshot
-		uid := uuid.NewString()
+		uid := uuid.New().String()
 		err = s.CreateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
 			UID:        uid,
 			SessionUID: session.UID,

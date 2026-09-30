@@ -7,8 +7,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -83,11 +82,7 @@ func IsRequestURLInAllowList(url *url.URL, cfg *setting.Cfg) bool {
 
 func GetGrafanaRequestIDHeaders(req *http.Request, cfg *setting.Cfg, logger log.Logger) map[string]string {
 	// Generate a new Grafana request ID and sign it with the secret key
-	uid, err := uuid.NewRandom()
-	if err != nil {
-		logger.Debug("Failed to generate Grafana request ID", "error", err)
-		return nil
-	}
+	uid := uuid.New()
 	grafanaRequestID := uid.String()
 
 	hmac := hmac.New(sha256.New, []byte(cfg.IPRangeACSecretKey))

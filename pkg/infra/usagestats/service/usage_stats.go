@@ -12,8 +12,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
@@ -194,11 +194,7 @@ func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 		return anonId
 	}
 
-	newId, err := uuid.NewRandom()
-	if err != nil {
-		uss.log.Error("Failed to generate usage stats id", "error", err)
-		return ""
-	}
+	newId := uuid.New()
 
 	anonId = newId.String()
 

@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"

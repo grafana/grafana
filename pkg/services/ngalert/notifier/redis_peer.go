@@ -9,9 +9,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"uuid"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 
