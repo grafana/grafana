@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { ActionType, HttpRequestMethod, type Action, VariableOrigin, VariableSuggestionsScope } from '@grafana/data';
 

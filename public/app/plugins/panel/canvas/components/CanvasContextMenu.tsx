@@ -5,7 +5,7 @@ import { first } from 'rxjs/operators';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagCanvasPanelPanZoom } from '@grafana/runtime/internal';
 import { ContextMenu, MenuItem, type MenuItemProps } from '@grafana/ui';
 import { type ElementState } from 'app/features/canvas/runtime/element';
 import { type FrameState } from 'app/features/canvas/runtime/frame';
@@ -23,6 +23,7 @@ type Props = {
 };
 
 export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) => {
+  const canvasPanelPanZoom = useFlagCanvasPanelPanZoom();
   const inlineEditorOpen = panel.state.openInlineEdit;
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [anchorPoint, setAnchorPoint] = useState<AnchorPoint>({ x: 0, y: 0 });
@@ -33,7 +34,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
   const rootLayer: FrameState | undefined = panel.context?.instanceState?.layer;
 
   useEffect(() => {
-    if (config.featureToggles.canvasPanelPanZoom) {
+    if (canvasPanelPanZoom) {
       scene.openContextMenu = (position: AnchorPoint) => {
         setAnchorPoint(position);
         setIsMenuVisible(true);
@@ -44,7 +45,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       return () => (scene.openContextMenu = undefined);
     }
     return undefined;
-  }, [scene, onVisibilityChange]);
+  }, [scene, onVisibilityChange, canvasPanelPanZoom]);
 
   const handleContextMenu = useCallback(
     (event: Event) => {
@@ -55,7 +56,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       event.preventDefault();
       panel.setActivePanel();
 
-      const shouldSelectElement = config.featureToggles.canvasPanelPanZoom
+      const shouldSelectElement = canvasPanelPanZoom
         ? event.currentTarget !== scene.viewportDiv
         : event.currentTarget !== scene.div;
       if (
@@ -68,21 +69,27 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       setIsMenuVisible(true);
       onVisibilityChange(true);
     },
-    [scene, panel, onVisibilityChange]
+    [scene, panel, onVisibilityChange, canvasPanelPanZoom]
   );
 
   useEffect(() => {
     if (scene.selecto) {
-      scene.selecto.getSelectableElements().forEach((element) => {
+      const elements = scene.selecto.getSelectableElements();
+      elements.forEach((element) => {
         element.addEventListener('contextmenu', handleContextMenu);
       });
+      return () => elements.forEach((element) => element.removeEventListener('contextmenu', handleContextMenu));
     }
+    return undefined;
   }, [handleContextMenu, scene.selecto]);
 
   useEffect(() => {
     if (scene.div) {
-      scene.div.addEventListener('contextmenu', handleContextMenu);
+      const div = scene.div;
+      div.addEventListener('contextmenu', handleContextMenu);
+      return () => div.removeEventListener('contextmenu', handleContextMenu);
     }
+    return undefined;
   }, [handleContextMenu, scene.div]);
 
   const closeContextMenu = () => {

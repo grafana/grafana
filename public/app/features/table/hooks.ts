@@ -9,12 +9,12 @@ import {
   type FieldConfigSource,
   type InterpolateFunction,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   useFlagTableAutoColumnWidths,
   useFlagTablePaginationPageSize,
   useFlagTableRefresh,
   useFlagTableRefreshNewFeatures,
+  useFlagTableSharedCrosshair,
 } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
@@ -53,12 +53,9 @@ export function useCellActions(replaceVariables: InterpolateFunction | undefined
  * the panel context to have cursor sync enabled to something other than `Off`.
  */
 export function useTableSharedCrosshair(): boolean {
+  const tableSharedCrosshair = useFlagTableSharedCrosshair();
   const panelContext = usePanelContext();
-  return (
-    Boolean(config.featureToggles.tableSharedCrosshair) &&
-    Boolean(panelContext.sync) &&
-    panelContext.sync!() !== DashboardCursorSync.Off
-  );
+  return tableSharedCrosshair && Boolean(panelContext.sync) && panelContext.sync!() !== DashboardCursorSync.Off;
 }
 
 type CommonTableOptions = Pick<
