@@ -82,8 +82,6 @@ They can observe its output into the `public/api-merged.json` and `public/openap
 
 Finally, they can browser and try out both the OpenAPI v2 and v3 via the Swagger UI editor (served by the grafana server) by navigating to `/swagger`.
 
-JSON request bodies use a lazy-loaded CodeMirror editor with schema validation, completion, and hover documentation. Edits stay in the editor until blur or save, when they update Swagger's request body. The schema integration lives in `public/swagger/SchemaEditor.tsx`. Swagger does not initialize Grafana's Monaco workers.
-
 The `go-swagger` version is pinned in `.citools/src/swagger/go.mod` and the `make` targets build it from there, so there is nothing to install manually. If there are any issues generating the specifications (e.g., diff containing unrelated changes to your PR or unusually large diff), check that you are running the pinned version:
 
 ```bash
