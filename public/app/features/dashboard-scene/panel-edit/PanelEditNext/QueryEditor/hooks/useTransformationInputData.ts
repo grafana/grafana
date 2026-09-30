@@ -8,6 +8,7 @@ import {
   NO_CONFIGS,
   frameMatcherFor,
   precedingTransformations,
+  transformationTopic,
   useInterpolatedConfigs,
   useTransformedFrames,
 } from './useTransformedFrames';
@@ -29,7 +30,8 @@ interface UseTransformationInputDataOptions {
  *
  * @param selectedTransformation - The transformation currently open in the editor.
  * @param allTransformations - The full ordered list of transformations in the pipeline.
- * @param rawData - Raw data frames from the query runner, before any transformations.
+ * @param rawData - Raw frames of the selected transformation's topic (series or annotations) from the
+ *   query runner, before any transformations.
  * @returns Data frames that feed into the selected transformation.
  */
 export function useTransformationInputData({
@@ -41,7 +43,13 @@ export function useTransformationInputData({
     () =>
       // TransformationEditorRenderer won't render without a selected transformation, but the hook
       // accepts null so we guard here too and fall back to rawData.
-      selectedTransformation ? precedingTransformations(selectedTransformation, allTransformations) : NO_CONFIGS,
+      selectedTransformation
+        ? precedingTransformations(
+            selectedTransformation,
+            allTransformations,
+            transformationTopic(selectedTransformation)
+          )
+        : NO_CONFIGS,
     [selectedTransformation, allTransformations]
   );
 
