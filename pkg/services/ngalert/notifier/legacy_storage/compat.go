@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
@@ -63,6 +64,7 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (v1.PostableApiReceiver, 
 			UID:        v1.ResourceUID(r.UID),
 			Version:    r.Version,
 			Provenance: r.Provenance,
+			Manager:    r.Manager,
 		},
 		Name:                    r.Name,
 		GrafanaManagedReceivers: integrations,
@@ -80,6 +82,7 @@ func PostableApiReceiverToReceiver(postable v1.PostableApiReceiver, origin model
 		Name:         postable.GetName(),
 		Integrations: integrations,
 		Provenance:   postable.Provenance,
+		Manager:      postable.Manager,
 		Origin:       origin,
 	}
 	return r, nil
@@ -105,6 +108,21 @@ func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *v1
 		}
 	}
 	return models.ProvenanceNone
+}
+
+// GetReceiverManager determines the ManagerProperties of a v1.PostableApiReceiver from those of its
+// integrations. It mirrors GetReceiverProvenance: the first integration with a known manager wins.
+// Without one, the manager is derived from the receiver's provenance.
+func GetReceiverManager(storedManagers map[string]utils.ManagerProperties, r *v1.PostableApiReceiver, origin models.ResourceOrigin) utils.ManagerProperties {
+	if origin == models.ResourceOriginImported {
+		return models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus)
+	}
+	for _, integration := range r.GrafanaManagedReceivers {
+		if m, exists := storedManagers[integration.UID]; exists && m.Kind != utils.ManagerKindUnknown {
+			return m
+		}
+	}
+	return models.ProvenanceToManagerProperties(r.Provenance)
 }
 
 func PostableGrafanaReceiversToIntegrations(postables []*v1.PostableGrafanaReceiver) ([]*models.Integration, error) {

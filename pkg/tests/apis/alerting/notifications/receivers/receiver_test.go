@@ -27,6 +27,8 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -1067,6 +1069,106 @@ func TestIntegrationProvisioning(t *testing.T) {
 			err = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 			require.NoError(t, err)
 		})
+	})
+}
+
+// TestIntegrationReceiverManagerPropertiesRoundTrip verifies that ManagerProperties set via the k8s
+// API survive a round-trip through legacy storage (where they are stored per integration), and that
+// contact points provisioned through the legacy API are exposed via k8s with the classic-API manager
+// shim.
+func TestIntegrationReceiverManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	findInList := func(t *testing.T, title string) *v1beta1.Receiver {
+		t.Helper()
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+		require.NoError(t, err)
+		idx := slices.IndexFunc(list.Items, func(r v1beta1.Receiver) bool { return r.Spec.Title == title })
+		require.GreaterOrEqualf(t, idx, 0, "receiver %q should be listed", title)
+		return &list.Items[idx]
+	}
+
+	t.Run("k8s ManagerKindTerraform survives round-trip through legacy storage", func(t *testing.T) {
+		recv := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: apis.DefaultNamespace,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+				},
+			},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        "mp-terraform",
+				Integrations: []v1beta1.ReceiverIntegration{createIntegration(t, "email"), createIntegration(t, "email")},
+			},
+		}
+		created, err := adminClient.Create(ctx, recv, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		requireTerraform := func(t *testing.T, r *v1beta1.Receiver, msg string) {
+			t.Helper()
+			require.Equal(t, string(utils.ManagerKindTerraform), r.Annotations[utils.AnnoKeyManagerKind], msg)
+			require.Equal(t, "my-terraform-workspace", r.Annotations[utils.AnnoKeyManagerIdentity], msg)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), r.GetProvenanceStatus(), msg)
+		}
+		requireTerraform(t, created, "create response")
+
+		fresh, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		requireTerraform(t, fresh, "fresh get")
+		requireTerraform(t, findInList(t, created.Spec.Title), "list")
+
+		// Every integration carries the manager, so the legacy per-integration API reports ProvenanceAPI.
+		cps, status, body := legacyCli.GetContactPointsByNameWithStatus(t, created.Spec.Title)
+		require.Equalf(t, http.StatusOK, status, body)
+		require.Len(t, cps, 2)
+		for _, cp := range cps {
+			require.Equal(t, string(ngmodels.ProvenanceAPI), cp.Provenance)
+		}
+
+		// Adding an integration via k8s keeps the manager on the whole receiver.
+		updated := fresh.Copy().(*v1beta1.Receiver)
+		updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
+		got, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+		requireTerraform(t, got, "update response")
+		fresh, err = adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		requireTerraform(t, fresh, "fresh get after update")
+
+		require.NoError(t, adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+	})
+
+	t.Run("legacy ProvenanceAPI maps to ManagerKindClassicAPI when read via k8s", func(t *testing.T) {
+		const title = "mp-legacy-api"
+		_, status, body := legacyCli.CreateContactPointWithStatus(t, definitions.EmbeddedContactPoint{
+			Name:     title,
+			Type:     "email",
+			Settings: simplejson.NewFromAny(map[string]any{"addresses": "test@example.com"}),
+		})
+		require.Equalf(t, http.StatusAccepted, status, body)
+
+		listed := findInList(t, title)
+		t.Cleanup(func() {
+			_ = adminClient.Delete(ctx, listed.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+		require.Equal(t, string(ngmodels.ProvenanceAPI), listed.GetProvenanceStatus())
+		require.Equal(t, string(utils.ManagerKindClassicAPI), listed.Annotations[utils.AnnoKeyManagerKind]) //nolint:staticcheck
+
+		got, err := adminClient.Get(ctx, listed.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindClassicAPI), got.Annotations[utils.AnnoKeyManagerKind]) //nolint:staticcheck
 	})
 }
 

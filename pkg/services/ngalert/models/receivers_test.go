@@ -354,6 +354,8 @@ func TestReceiver_Fingerprint(t *testing.T) {
 		excludedFields := map[string]struct{}{
 			"Version": {},
 			"Origin":  {},
+			// Manager is not part of the fingerprint, so that assigning it never changes versions.
+			"Manager": {},
 		}
 
 		reflectVal := reflect.ValueOf(&completelyDifferentReceiver).Elem()
