@@ -12,7 +12,6 @@ import { NOTEBOOK_EDIT_KIND } from '../../scene/NotebookEditHistory';
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { isEmptyMarkdown } from '../../scene/layout-notebook/cellEmptiness';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
-import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 import { type Spec as NotebookSpec } from '../../types';
 
 import { requiresNotebookEdit } from './permissions';
@@ -185,6 +184,10 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         perform: () => scene.setState({ ...newState, uid: scene.state.uid }),
         undo: () => scene.setState({ ...previousState, uid: scene.state.uid }),
       });
+
+      const { transformNotebookSceneToSaveModel } = await import(
+        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
+      );
 
       let appliedNotebook: NotebookSpec | undefined;
       try {
