@@ -829,10 +829,12 @@ var dashboardSearchResponseFields = func() map[string]bool {
 	provider := resource.NewManifestBackedProvider(dashboard.ManifestData, folder.ManifestData)
 
 	fields := map[string]bool{
-		resource.SEARCH_FIELD_RV:          true,
-		resource.SEARCH_FIELD_LEGACY_ID:   true,
-		resource.SEARCH_FIELD_SCORE:       true,
-		resource.SEARCH_FIELD_SOURCE_PATH: true,
+		resource.SEARCH_FIELD_RV:              true,
+		resource.SEARCH_FIELD_LEGACY_ID:       true,
+		resource.SEARCH_FIELD_SCORE:           true,
+		resource.SEARCH_FIELD_SOURCE_PATH:     true,
+		resource.SEARCH_FIELD_SOURCE_CHECKSUM: true,
+		resource.SEARCH_FIELD_SOURCE_TIME:     true,
 	}
 	for _, definition := range resource.StandardSearchFieldDefinitions() {
 		fields[definition.Name] = true
@@ -875,7 +877,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		offset = (page - 1) * limit
 	}
 
-	searchRequest := &resourcepb.ResourceSearchRequest{
+	searchRequest := &resourcepb.ResourceSearchRequest{ // nosemgrep: direct-go-resource-search-requires-field-values -- the rollout flag still controls this format
 		Options: &resourcepb.ListOptions{},
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),

@@ -66,7 +66,7 @@ func TestSearch(t *testing.T) {
 	t.Run("ignores response fields that field-value results do not support", func(t *testing.T) {
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
 
-		client := doSearch(t, searchHandler, "/search?field=panel_types&field=labels&field=not_declared&field=labels.custom&field=rv&field=grafana.app/deprecatedInternalID&field=_score&field=source.path")
+		client := doSearch(t, searchHandler, "/search?field=panel_types&field=labels&field=not_declared&field=labels.custom&field=rv&field=grafana.app/deprecatedInternalID&field=_score&field=source.path&field=source.checksum&field=source.timestampMillis")
 
 		assert.Contains(t, client.LastSearchRequest.Fields, "panel_types")
 		assert.Contains(t, client.LastSearchRequest.Fields, "labels.custom")
@@ -74,6 +74,8 @@ func TestSearch(t *testing.T) {
 		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_LEGACY_ID)
 		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SCORE)
 		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_PATH)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_CHECKSUM)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_TIME)
 		assert.NotContains(t, client.LastSearchRequest.Fields, "labels")
 		assert.NotContains(t, client.LastSearchRequest.Fields, "not_declared")
 	})
