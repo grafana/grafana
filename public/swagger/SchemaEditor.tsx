@@ -1,6 +1,6 @@
 import { type EditorView, ViewPlugin } from '@codemirror/view';
 import { getJSONSchema, jsonSchema, updateSchema } from 'codemirror-json-schema';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { CodeMirrorEditor, type CodeMirrorExtension } from '@grafana/ui/unstable';
 
@@ -14,6 +14,16 @@ interface Props {
 }
 
 export default function SchemaEditor({ schema, ...props }: Props) {
+  const incomingValue = props.value ?? props.defaultValue ?? '';
+  const [previousValue, setPreviousValue] = useState(incomingValue);
+  const [draft, setDraft] = useState(incomingValue);
+
+  // Swagger may rerender with the same stale value while the user is typing.
+  // Only a new incoming value should replace the in-progress draft.
+  if (incomingValue !== previousValue) {
+    setPreviousValue(incomingValue);
+    setDraft(incomingValue);
+  }
   const extensions = useMemo<CodeMirrorExtension[]>(() => {
     // Reconfiguration retains state fields, so update the schema in this editor's view.
     const schemaUpdate = ViewPlugin.fromClass(
@@ -36,18 +46,17 @@ export default function SchemaEditor({ schema, ...props }: Props) {
     return [...jsonSchema(schema), schemaUpdate];
   }, [schema]);
 
-  const value = props.value ?? props.defaultValue ?? '';
-  const onChange = (text: string) => props.onChange({ target: { value: text } });
+  const flush = (text: string) => props.onChange({ target: { value: text } });
 
   return (
     <CodeMirrorEditor
-      value={value}
+      value={draft}
       height="300px"
       extensions={extensions}
       readOnly={Boolean(props.disabled || props.readOnly)}
-      onChange={onChange}
-      onBlur={onChange}
-      onSave={onChange}
+      onChange={setDraft}
+      onBlur={flush}
+      onSave={flush}
     />
   );
 }
