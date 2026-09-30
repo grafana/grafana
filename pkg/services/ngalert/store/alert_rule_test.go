@@ -942,11 +942,86 @@ func TestDBstore_legacyDatabaseProvider(t *testing.T) {
 type dbSpy struct {
 	db.DB
 	withDbSessionCalled bool
+	lastSession         *db.Session
 }
 
 func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
 	s.withDbSessionCalled = true
-	return s.DB.WithDbSession(ctx, callback)
+	return s.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
+}
+
+// TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession is a regression test:
+// sqlstore.startSessionOrUseExisting reuses whatever session is on ctx regardless of which db.DB
+// created it, so a routed read must strip that session first or it silently runs on the wrong
+// connection when called from inside another db.DB's InTransaction (as provisioning's delete
+// path does).
+func TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB:    spy,
+			Table: func(n string) string { return n },
+		}, nil
+	}
+
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		_, err := store.getLatestVersionOfRulesByUID(ctx, 1, []string{"does-not-exist"})
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
+}
+
+// TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession is the same regression
+// test as above, for the analogous folder-key read.
+func TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+
+	spy := &dbSpy{DB: sqlStore}
+	dbHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    spy,
+		Table: func(n string) string { return n },
+	}
+
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		_, err := deletedRuleFolderKeysOnDB(ctx, dbHelper, 1, []string{"does-not-exist"})
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
 }
 
 func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -85,6 +86,12 @@ func (st DBstore) legacyDatabaseProvider(ctx context.Context) (*legacysql.Legacy
 		return legacysql.NewDatabaseProvider(st.SQLStore)(ctx)
 	}
 	return st.LegacyDatabaseProvider(ctx)
+}
+
+// withoutAmbientSession forces a fresh session, since sqlstore reuses whatever's on ctx without
+// checking it came from the right db.DB.
+func withoutAmbientSession(ctx context.Context) context.Context {
+	return context.WithValue(ctx, sqlstore.ContextSessionKey{}, nil)
 }
 
 // RuleChangeEvent is published via DBSession.PublishAfterCommit, so subscribers observe it only
