@@ -54,6 +54,7 @@ export function MetricLabels({ id, dsRef, timeRange, metric, expandedLabel, onTo
                 <button
                   type="button"
                   className={styles.labelRow}
+                  title={labelKey}
                   aria-expanded={expanded}
                   aria-controls={expanded ? valuesId : undefined}
                   aria-label={
@@ -64,7 +65,7 @@ export function MetricLabels({ id, dsRef, timeRange, metric, expandedLabel, onTo
                   onClick={() => onToggleLabel(labelKey)}
                 >
                   <Icon name={expanded ? 'angle-down' : 'angle-right'} />
-                  {labelKey}
+                  <span className={styles.labelKey}>{labelKey}</span>
                 </button>
                 {expanded && (
                   <LabelValues id={valuesId} dsRef={dsRef} timeRange={timeRange} metric={metric} labelKey={labelKey} />
@@ -119,5 +120,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       background: theme.colors.action.hover,
     },
+  }),
+  labelKey: css({
+    label: 'metric-labels-key',
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   }),
 });
