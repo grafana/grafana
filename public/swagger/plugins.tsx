@@ -9,7 +9,7 @@ interface UntypedProps {
   [k: string]: any;
 }
 
-export type SchemaType = Record<string, any> | undefined;
+type SchemaType = Record<string, any> | undefined;
 export type ResourceInfo = {
   group: string;
   version: string;
@@ -18,7 +18,7 @@ export type ResourceInfo = {
 };
 
 // Use react contexts to stash settings
-export const SchemaContext = createContext<SchemaType>(undefined);
+const SchemaContext = createContext<SchemaType>(undefined);
 export const NamespaceContext = createContext<string | undefined>(undefined);
 export const ResourceContext = createContext<ResourceInfo | undefined>(undefined);
 
