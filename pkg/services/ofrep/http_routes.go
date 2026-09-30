@@ -121,13 +121,6 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
-		if err := b.enrichCohorts(r, flagKey); err != nil {
-			_ = tracing.Errorf(span, bodyReadFailureMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
-			logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
-			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
-			return
-		}
 		logger.Debug("serving flag evaluation request", "handler", "oneFlagHandler", "flag", flagKey, "authenticated", isAuthedReq, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
 		b.proxyFlagReq(ctx, flagKey, isAuthedReq, authNamespace, w, r)
 		return
@@ -162,13 +155,6 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 			logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
-			return
-		}
-		if err := b.enrichCohorts(r, ""); err != nil {
-			_ = tracing.Errorf(span, bodyReadFailureMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
-			logger.Error(bodyReadFailureMsg, "error", err)
-			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
 			return
 		}
 		logger.Debug("serving flag evaluation request", "handler", "allFlagsHandler", "authenticated", isAuthedReq, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
