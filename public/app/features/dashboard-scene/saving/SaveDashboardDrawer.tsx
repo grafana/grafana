@@ -57,8 +57,8 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const dashboard = this.state.dashboardRef.resolve();
     // Save As folder picker mutates live meta; restore on cancel so the source dash isn't left dirty.
     const shouldRestoreMeta = Boolean(this.state.saveAsCopy) || isNewDashboard(dashboard.state);
+    dashboard.closeModal();
     dashboard.setState({
-      overlay: undefined,
       meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
     });
   };

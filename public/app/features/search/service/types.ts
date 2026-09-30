@@ -54,7 +54,8 @@ export interface DashboardQueryResult {
   location: string; // url that can be split
   ds_uid: string[];
   isDeleted?: boolean;
-  permanentlyDeleteDate?: Date;
+  // When the object was deleted, as an ISO timestamp. Only deleted results carry it.
+  deletionTimestamp?: string;
 
   // debugging fields
   score: number;

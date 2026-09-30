@@ -13,20 +13,6 @@ labels:
 menuTitle: Table data
 title: Example of alerting on tabular data
 weight: 1102
-refs:
-  testdata-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/testdata/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata/
-  multi-dimensional-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/multi-dimensional-alerts/
-  infinity-csv:
-    - pattern: /docs/grafana/
-      destination: /docs/plugins/yesoreyeram-infinity-datasource/latest/csv/
 ---
 
 # Example of alerting on tabular data
@@ -100,7 +86,7 @@ Finally, an alert condition that checks for less than 5% of free space (`$A < 5`
 
 ## Try it with TestData
 
-To test this quickly, you can simulate the table using the [**TestData** data source](ref:testdata-data-source):
+To test this quickly, you can simulate the table using the [**TestData** data source](/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/):
 
 1. Add the **TestData** data source through the **Connections** menu.
 1. Go to **Alerting** and create an alert rule
@@ -128,7 +114,7 @@ To test this quickly, you can simulate the table using the [**TestData** data so
 
 ## CSV data with Infinity
 
-Note that when the [Infinity plugin fetches CSV data](ref:infinity-csv), all the columns are parsed and returned as strings. By default, this causes the query expression to fail in Alerting.
+Note that when the [Infinity plugin fetches CSV data](/docs/plugins/yesoreyeram-infinity-datasource/latest/csv/), all the columns are parsed and returned as strings. By default, this causes the query expression to fail in Alerting.
 
 To make it work, you need to format the CSV data as [expected by Grafana Alerting](#how-grafana-alerting-evaluates-tabular-data).
 
@@ -146,4 +132,4 @@ The key difference is the data format:
   To evaluate the alert condition, alert rules **must reduce each series to a single number** using a function like `last()`, `avg()`, or `max()`.
 - **Tabular data** doesn’t require reduction, as each row contains only a single numeric value used to evaluate the alert condition.
 
-For comparison, see the [multi-dimensional time series data example](ref:multi-dimensional-example).
+For comparison, see the [multi-dimensional time series data example](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/).

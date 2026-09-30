@@ -34,9 +34,9 @@ import {
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
+import { getEditableVariableDefinition } from '../../settings/variables/editableVariablesRegistry';
 import {
   dropShadowedPredefinedVariables,
-  getEditableVariableDefinition,
   restoreUnshadowedPredefinedVariables,
   validateVariableName,
 } from '../../settings/variables/utils';

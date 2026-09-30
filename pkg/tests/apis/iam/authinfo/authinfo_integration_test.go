@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -52,6 +53,7 @@ func TestIntegrationAuthInfo(t *testing.T) {
 			doAuthInfoCRUDTestsUsingTheNewAPIs(t, helper)
 			doAuthInfoAuthzTests(t, helper)
 			doAuthInfoListRequiresFieldSelectorTest(t, helper)
+			doAuthInfoListByAuthIDTest(t, helper)
 			doAuthInfoDeleteTests(t, helper)
 			doAuthInfoUserDeleteCascadeTest(t, helper)
 		})
@@ -73,6 +75,11 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		// The object name is deterministic: "<userUID>.<authModule>".
 		expectedName := iamv0alpha1.EncodeName(userUID, "ldap")
 		require.Equal(t, expectedName, created.GetName())
+
+		createdMeta, err := utils.MetaAccessor(created)
+		require.NoError(t, err)
+		internalID := createdMeta.GetDeprecatedInternalID() // nolint:staticcheck
+		require.NotZero(t, internalID, "create should assign a DeprecatedInternalID")
 
 		createdSpec := created.Object["spec"].(map[string]interface{})
 		require.Equal(t, userUID, createdSpec["userRef"].(map[string]interface{})["name"])
@@ -101,6 +108,10 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		fetchedAfter, err := authInfoClient.Resource.Get(ctx, expectedName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "cn=updated,dc=example,dc=com", fetchedAfter.Object["spec"].(map[string]interface{})["authID"])
+
+		fetchedAfterMeta, err := utils.MetaAccessor(fetchedAfter)
+		require.NoError(t, err)
+		require.Equal(t, internalID, fetchedAfterMeta.GetDeprecatedInternalID(), "the internal ID must stay stable across updates") // nolint:staticcheck
 	})
 
 	t.Run("should not create authinfo for a non-existent user", func(t *testing.T) {
@@ -203,6 +214,45 @@ func doAuthInfoListRequiresFieldSelectorTest(t *testing.T, helper *apis.K8sTestH
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
 		require.Contains(t, statusErr.ErrStatus.Message, "spec.userRef.name")
+	})
+}
+
+// doAuthInfoListByAuthIDTest verifies that AuthInfo can be looked up by
+// spec.authID (with an optional spec.authModule) without a spec.userRef.name.
+func doAuthInfoListByAuthIDTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should list by authID alone, without knowing the user", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-by-authid-user", "authinfo-by-authid-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		authID := "by-authid-" + userUID
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.authID=%s", authID),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, created.GetName(), list.Items[0].GetName())
+
+		list, err = authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.authID=%s,spec.authModule=ldap", authID),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, created.GetName(), list.Items[0].GetName())
+	})
+
+	t.Run("should return an empty list for an authID with no match", func(t *testing.T) {
+		ctx := context.Background()
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.authID=no-such-auth-id",
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
 	})
 }
 

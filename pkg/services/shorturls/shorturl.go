@@ -12,6 +12,5 @@ type Service interface {
 	CreateShortURL(ctx context.Context, user identity.Requester, cmd *dtos.CreateShortURLCmd) (*ShortUrl, error)
 	UpdateLastSeenAt(ctx context.Context, shortURL *ShortUrl) error
 	DeleteStaleShortURLs(ctx context.Context, cmd *DeleteShortUrlCommand) error
-	ConvertShortURLToDTO(shortURL *ShortUrl, appURL string) *dtos.ShortURL
 	List(ctx context.Context, orgID int64) ([]*ShortUrl, error)
 }

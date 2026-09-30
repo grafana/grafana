@@ -18,9 +18,9 @@ func registerFinalizerMetrics(registry prometheus.Registerer) finalizerMetrics {
 	finalizerProcessedTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "grafana_provisioning_finalizers_processed_total",
-			Help: "Total number of finalizers processed",
+			Help: "Total number of finalizers processed. cause is empty for outcome=\"success\"; for outcome=\"error\" filter cause!=\"user\" to exclude user-caused failures (e.g. revoked credentials) from SLOs.",
 		},
-		[]string{"finalizer_type", "outcome"},
+		[]string{"finalizer_type", "outcome", "cause"},
 	)
 	registry.MustRegister(finalizerProcessedTotal)
 
@@ -41,8 +41,8 @@ func registerFinalizerMetrics(registry prometheus.Registerer) finalizerMetrics {
 	}
 }
 
-func (m *finalizerMetrics) RecordFinalizer(finalizerType string, outcome string, resourceCountChanged int, duration float64) {
-	m.finalizerProcessedTotal.WithLabelValues(finalizerType, outcome).Inc()
+func (m *finalizerMetrics) RecordFinalizer(finalizerType string, outcome string, cause string, resourceCountChanged int, duration float64) {
+	m.finalizerProcessedTotal.WithLabelValues(finalizerType, outcome, cause).Inc()
 	if outcome == utils.SuccessOutcome {
 		m.finalizerDuration.WithLabelValues(finalizerType, utils.GetResourceCountBucket(resourceCountChanged)).Observe(duration)
 	}

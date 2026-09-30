@@ -18,8 +18,8 @@ test.describe(
   },
   () => {
     test('variable query with mocked response', async ({ variableEditPage, page }) => {
-      variableEditPage.mockResourceResponse('api/v1/labels?*', prometheusLabels);
-      variableEditPage.mockResourceResponse('suggestions*', prometheusLabels);
+      await variableEditPage.mockResourceResponse('api/v1/labels*', prometheusLabels);
+      await variableEditPage.mockResourceResponse('suggestions*', prometheusLabels);
       await variableEditPage.datasource.set('gdev-prometheus');
       await variableEditPage.getByGrafanaSelector('Query type').fill('Label names');
       await page.keyboard.press('Tab');
