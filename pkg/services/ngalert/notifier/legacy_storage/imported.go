@@ -80,6 +80,7 @@ func (e ImportedConfigRevision) receivers(match func(v1.PostableApiReceiver) boo
 		}
 
 		recv.Provenance = models.ProvenanceConvertedPrometheus
+		recv.NormalizeManager()
 		result = append(result, recv)
 	}
 	return result, nil

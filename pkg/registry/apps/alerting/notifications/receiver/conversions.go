@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/provenance"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -87,7 +88,7 @@ func convertToK8sResource(
 		},
 		Spec: spec,
 	}
-	r.SetProvenanceStatus(string(receiver.Provenance))
+	provenance.SetAnnotations(r, receiver.Provenance, receiver.Manager)
 
 	if access != nil {
 		for _, action := range ngmodels.ReceiverPermissions() {
@@ -123,7 +124,7 @@ var permissionMapper = map[ngmodels.ReceiverPermission]string{
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
-	prov, err := ngmodels.ProvenanceFromString(receiver.GetProvenanceStatus())
+	prov, manager, err := provenance.FromAnnotations(receiver)
 	if err != nil {
 		return nil, nil, ngmodels.ErrReceiverInvalid(err)
 	}
@@ -133,6 +134,7 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 		Integrations: make([]*ngmodels.Integration, 0, len(receiver.Spec.Integrations)),
 		Version:      receiver.ResourceVersion,
 		Provenance:   prov,
+		Manager:      manager,
 		Origin:       ngmodels.ResourceOriginGrafana, // Set to Grafana by default.
 	}
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))

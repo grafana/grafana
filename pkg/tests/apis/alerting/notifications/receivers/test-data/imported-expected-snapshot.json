@@ -37,6 +37,7 @@
         "uid": "XWudg3B6u9coBhaOBrVqBTQM5fzp7Ry9UgxDI9QWrtwX",
         "resourceVersion": "2bd7e872a626fae7",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -59,6 +60,7 @@
         "uid": "3jbFtVX1y7iXbcenOKFFyXYbseD7E6NTxgxrPc79peAX",
         "resourceVersion": "9a6e3ae7164e3b7f",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -104,6 +106,7 @@
         "uid": "lSEXoQg9QWXAcGiyjR3BjrtduhMCZaCkoX3xbOrq9YAX",
         "resourceVersion": "da0b13af2655712f",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -153,6 +156,7 @@
         "uid": "b6hah6ox4vOVz4k5onFLZ62gXiTiy2IPBrGZySc2jeQX",
         "resourceVersion": "1d8b76076e47fb35",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -212,6 +216,7 @@
         "uid": "LOjyz8yP7DOHAmWL9rmIXe2rni5U5w0G4RGdAU1V6PoX",
         "resourceVersion": "0210f5e2769f82fc",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -258,6 +263,7 @@
         "uid": "S4vybN0AeF43oClUAb7boNX1sXLVF39RgJ7bvUBH0xUX",
         "resourceVersion": "6850b0bb5ba21028",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -320,6 +326,7 @@
         "uid": "Luf7QOEgVIbvTtC4QdTalM5ohuvfqpkACOX8AUNWGMEX",
         "resourceVersion": "bc14ddac8da39a89",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -392,6 +399,7 @@
         "uid": "doynt7iGayIbFMxElQbXguiUa8q48y9FTDUIFTAtzpsX",
         "resourceVersion": "378960f69f74ae69",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -446,6 +454,7 @@
         "uid": "LBs8C8cXXttOQpPQqohRXYejp7Wb0xix4tjXvKSQof4X",
         "resourceVersion": "886b87b2cc037b6e",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -531,6 +540,7 @@
         "uid": "cP7sfvZM7XedIKG8XbOmOMSve5hugB9PzZtZoZaC5tkX",
         "resourceVersion": "59cfc163f64faa26",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -586,6 +596,7 @@
         "uid": "9p4fXHPe2n7OZwMruibXEUm4jhVJwiUCuDXQX2x8xtkX",
         "resourceVersion": "0d5327f8641822f6",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -633,6 +644,7 @@
         "uid": "Sw8uvOrgCM1dB54tKjht6Ynyjscqv14YSQAVi11Hk3MX",
         "resourceVersion": "03537a82c6fd7e05",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -683,6 +695,7 @@
         "uid": "Fw3crXdbuXxPGveAxXI8RJa3d8C5aJGfV8Nu71MXrncX",
         "resourceVersion": "22cb4c9e94cb72f5",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -732,6 +745,7 @@
         "uid": "FhtDwvM02gDyCajTu2Xbg4NcY5RCvnqT81MinNHTvBgX",
         "resourceVersion": "2ca8dfcf1f3b1b9c",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
@@ -777,6 +791,7 @@
         "uid": "c4SMJtHkXaIsDlrYKz3mOAZpaveeVbCQ4NZm7H5XnX8X",
         "resourceVersion": "059d3cb49003b5d3",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
           "grafana.com/canUse": "false",
