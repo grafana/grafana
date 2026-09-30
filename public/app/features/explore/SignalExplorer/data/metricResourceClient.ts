@@ -163,6 +163,7 @@ export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promis
     await lp.start(timeRange);
     const names = lp.retrieveMetrics() ?? [];
     const meta = lp.retrieveMetricsMetadata() ?? {};
+    const catalog = new Set(names);
     return names.map<MetricInfo>((name) => {
       // Metadata is keyed by the metric family, so a classic histogram or summary series has none of
       // its own; fall back to its family's. Own entry first, in case a metric really is named with
@@ -170,7 +171,7 @@ export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promis
       const entry = meta[name] ?? meta[baseMetricName(name)];
       return {
         name,
-        type: deriveMetricType(name, entry),
+        type: deriveMetricType(name, entry, catalog),
         help: entry?.help,
         unit: entry?.unit,
       };

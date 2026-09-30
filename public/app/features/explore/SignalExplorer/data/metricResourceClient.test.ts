@@ -113,6 +113,14 @@ describe('metricResourceClient', () => {
       expect(row.type).toBe('native histogram');
     });
 
+    it('infers types from the catalog’s names when no metadata exists', async () => {
+      withMetadata(['app_requests_total', 'rpc_seconds', 'rpc_seconds_sum', 'rpc_seconds_count'], {});
+
+      const rows = await fetchCatalog({ uid: 'h7' }, range);
+
+      expect(rows.map((row) => row.type)).toEqual(['counter', 'summary', 'summary', 'summary']);
+    });
+
     it('leaves a metric with no suffix and no metadata as unknown', async () => {
       withMetadata(['mystery_metric'], {});
 
