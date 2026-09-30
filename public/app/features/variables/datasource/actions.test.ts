@@ -16,15 +16,14 @@ import { createDataSourceOptions } from './reducer';
 
 interface Args {
   sources?: DataSourceInstanceListItem[];
+  defaultSource?: DataSourceInstanceListItem;
   query?: string;
   regex?: string;
 }
 
-function getTestContext({ sources = [], query, regex }: Args = {}) {
+function getTestContext({ sources = [], defaultSource, query, regex }: Args = {}) {
   const getDataSourceInstanceListMock = jest.fn().mockResolvedValue(sources);
-  const getDefaultDataSourceInstanceListItemMock = jest
-    .fn()
-    .mockResolvedValue(sources.find((source) => source.isDefault));
+  const getDefaultDataSourceInstanceListItemMock = jest.fn().mockResolvedValue(defaultSource);
   const dependencies: DataSourceVariableActionDependencies = {
     getDataSourceInstanceList: getDataSourceInstanceListMock,
     getDefaultDataSourceInstanceListItem: getDefaultDataSourceInstanceListItemMock,
@@ -46,7 +45,6 @@ function toListItem(name: string, meta: ReturnType<typeof getMockPlugin>): DataS
     type: settings.type,
     name: settings.name,
     meta: settings.meta,
-    isDefault: settings.isDefault ?? false,
   };
 }
 
@@ -164,11 +162,11 @@ describe('data source actions', () => {
       it('then the dispatched action includes the default data source uid', async () => {
         const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
         const sources: DataSourceInstanceListItem[] = [toListItem('first-name', meta), toListItem('second-name', meta)];
-        sources[1].isDefault = true;
 
         const { datasource, dependencies, getDataSourceInstanceListMock, getDefaultDataSourceInstanceListItemMock } =
           getTestContext({
             sources,
+            defaultSource: sources[1],
             query: 'mock-data-id',
           });
 

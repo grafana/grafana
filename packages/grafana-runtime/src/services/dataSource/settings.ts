@@ -221,7 +221,6 @@ export function toListItem(settings: DataSourceInstanceSettings): DataSourceInst
     apiVersion: settings.apiVersion,
     name: settings.name,
     meta: settings.meta,
-    isDefault: settings.isDefault ?? false,
   };
 }
 
@@ -240,7 +239,7 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
 export async function getDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): Promise<DataSourceInstanceListItem | undefined> {
-  return items.find((item) => item.isDefault);
+  return items.find((item) => (lookupByUid(item.uid) ?? getInstanceSettingsFallback(item.uid, undefined))?.isDefault);
 }
 
 /**

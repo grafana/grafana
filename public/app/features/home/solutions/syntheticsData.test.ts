@@ -10,7 +10,7 @@ import {
   type QueryRunner,
 } from '@grafana/data';
 import { type BackendSrv, createQueryRunner, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList, getDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 
 import { resetProbeHealth } from './probeUtils';
 import {
@@ -29,10 +29,12 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceList: jest.fn(),
+  getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
 
 const mockCreateQueryRunner = jest.mocked(createQueryRunner);
 const mockGetDataSourceInstanceList = jest.mocked(getDataSourceInstanceList);
+const mockGetDefaultDataSourceInstanceListItem = jest.mocked(getDefaultDataSourceInstanceListItem);
 
 const run = jest.fn();
 const healthGet = jest.fn();
@@ -47,12 +49,15 @@ function createPrometheusListItem(ds: { uid: string; name: string; isDefault?: b
     name: ds.name,
     type: 'prometheus',
     meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-    isDefault: ds.isDefault ?? false,
   };
 }
 
 function setDataSources(list: Array<{ uid: string; name: string; isDefault?: boolean }>) {
+  const defaultUids = new Set(list.filter((ds) => ds.isDefault).map((ds) => ds.uid));
   mockGetDataSourceInstanceList.mockResolvedValue(list.map(createPrometheusListItem));
+  mockGetDefaultDataSourceInstanceListItem.mockImplementation(async (items) =>
+    items.find((item) => defaultUids.has(item.uid))
+  );
 }
 
 // uid -> check count the datasource's sm_check_info probe reports; absent uid = no Synthetics data.
@@ -72,6 +77,7 @@ beforeEach(() => {
   run.mockReset();
   mockCreateQueryRunner.mockReset();
   mockGetDataSourceInstanceList.mockReset();
+  mockGetDefaultDataSourceInstanceListItem.mockReset();
   healthGet.mockReset();
   // Health gate: every candidate healthy unless a test overrides by uid.
   healthGet.mockResolvedValue({ status: 'OK' });

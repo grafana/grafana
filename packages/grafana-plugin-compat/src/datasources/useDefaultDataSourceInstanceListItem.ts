@@ -12,14 +12,14 @@ export interface UseDefaultDataSourceInstanceListItemResult {
 }
 
 /**
- * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-resolves when the uid or
- * `isDefault` flag of any item changes, so passing an inline array is safe.
+ * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-resolves when the uids of the
+ * items change, so passing an inline array is safe.
  */
 export function useDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): UseDefaultDataSourceInstanceListItemResult {
   const [result, setResult] = useState<UseDefaultDataSourceInstanceListItemResult>({ isLoading: true });
-  const itemsKey = JSON.stringify(items.map((item) => [item?.uid, item?.isDefault]));
+  const itemsKey = JSON.stringify(items.map((item) => item?.uid));
 
   useEffect(() => {
     let active = true;
@@ -41,7 +41,7 @@ export function useDefaultDataSourceInstanceListItem(
     return () => {
       active = false;
     };
-    // Keyed by uid and flag, the only fields the resolver reads.
+    // Keyed by uid, the only field the resolver reads.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsKey]);
 
