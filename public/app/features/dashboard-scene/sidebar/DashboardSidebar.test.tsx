@@ -442,6 +442,8 @@ describe('DashboardSidebar', () => {
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'dashboard.changeTitle',
         trigger: 'keyboard',
+        undoStackLength: 1,
+        redoStackLength: 0,
       });
     });
 
@@ -463,6 +465,8 @@ describe('DashboardSidebar', () => {
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_redo', {
         actionId: 'dashboard.changeTitle',
         trigger: 'api',
+        undoStackLength: 0,
+        redoStackLength: 1,
       });
     });
 
@@ -475,6 +479,8 @@ describe('DashboardSidebar', () => {
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'unknown',
         trigger: undefined,
+        undoStackLength: 1,
+        redoStackLength: 0,
       });
     });
 
@@ -490,6 +496,8 @@ describe('DashboardSidebar', () => {
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'scene.stateCommitted',
         trigger: 'sidebar',
+        undoStackLength: 1,
+        redoStackLength: 0,
       });
     });
 
@@ -514,7 +522,32 @@ describe('DashboardSidebar', () => {
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'element.removeSelection',
         trigger: 'sidebar',
+        undoStackLength: 1,
+        redoStackLength: 0,
       });
+    });
+
+    it('reports the undo and redo stack lengths from before the undo or redo happened', () => {
+      const scene = buildTestScene();
+      edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
+      edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
+      edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
+      scene.state.sidebar.undoAction();
+      jest.mocked(reportInteraction).mockClear();
+
+      scene.state.sidebar.undoAction();
+      scene.state.sidebar.redoAction();
+
+      expect(reportInteraction).toHaveBeenNthCalledWith(
+        1,
+        'grafana_dashboard_undo',
+        expect.objectContaining({ undoStackLength: 2, redoStackLength: 1 })
+      );
+      expect(reportInteraction).toHaveBeenNthCalledWith(
+        2,
+        'grafana_dashboard_redo',
+        expect.objectContaining({ undoStackLength: 1, redoStackLength: 2 })
+      );
     });
   });
 

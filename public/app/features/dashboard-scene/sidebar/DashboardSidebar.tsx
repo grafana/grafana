@@ -285,6 +285,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction({ trigger }: UndoRedoCallOptions = {}) {
+    const undoStackLength = this.state.undoStack.length;
+    const redoStackLength = this.state.redoStack.length;
     const undoStack = this.state.undoStack.slice();
     const action = undoStack.pop();
     if (!action) {
@@ -297,6 +299,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     reportInteraction('grafana_dashboard_undo', {
       actionId: action.tracking?.actionId ?? 'unknown',
       trigger,
+      undoStackLength,
+      redoStackLength,
     });
   }
 
@@ -345,6 +349,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from redo stack and adds it to undo stack.
    */
   public redoAction({ trigger }: UndoRedoCallOptions = {}) {
+    const undoStackLength = this.state.undoStack.length;
+    const redoStackLength = this.state.redoStack.length;
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
     if (!action) {
@@ -357,6 +363,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     reportInteraction('grafana_dashboard_redo', {
       actionId: action.tracking?.actionId ?? 'unknown',
       trigger,
+      undoStackLength,
+      redoStackLength,
     });
   }
 
