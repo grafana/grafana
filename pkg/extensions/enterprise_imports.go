@@ -42,7 +42,6 @@ import (
 	_ "github.com/google/go-cmp/cmp"
 	_ "github.com/google/go-cmp/cmp/cmpopts"
 	_ "github.com/google/safetext/yamltemplate"
-	_ "github.com/google/uuid"
 	_ "github.com/google/wire"
 	_ "github.com/googleapis/gax-go/v2"
 	_ "github.com/gorilla/mux"
