@@ -1,4 +1,5 @@
 import { locationService } from '@grafana/runtime';
+import { getStatusFromError } from 'app/core/utils/errors';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -67,7 +68,7 @@ export async function applyDefaultSavedViewToUrl(dashboard: DashboardScene): Pro
   }
 
   const defaultViewName = await getDefaultSavedView(uid);
-  if (!defaultViewName) {
+  if (!defaultViewName || !isStillOnDashboard(uid)) {
     return;
   }
 
@@ -76,19 +77,40 @@ export async function applyDefaultSavedViewToUrl(dashboard: DashboardScene): Pro
     return;
   }
 
+  let view;
   try {
-    await savedDashboardViewsApi.get(defaultViewName);
-  } catch {
-    // The stored default points at a view that's gone (deleted) or no longer accessible
-    // (permissions changed) -- self-heal so this dashboard doesn't keep paying for a fetch that
-    // will never succeed, and so a dead name never lands in the URL.
-    setDefaultSavedView(uid, undefined).catch(() => {});
+    view = await savedDashboardViewsApi.get(defaultViewName);
+  } catch (err) {
+    // Only self-heal on a TERMINAL failure -- the view is genuinely gone (404) or no longer
+    // accessible (403/401). A transient network error, timeout, or server-side 5xx doesn't mean
+    // that; clearing the stored preference on one of those would cause silent, permanent
+    // preference loss from what's actually a one-off blip.
+    const status = getStatusFromError(err);
+    if (status === 404 || status === 401 || status === 403) {
+      setDefaultSavedView(uid, undefined).catch(() => {});
+    }
     return;
   }
 
-  if (typeof locationService.getSearchObject().viewFilter === 'string') {
+  // The dashboard this default was captured for isn't necessarily the one currently loading
+  // anymore: if the viewer navigated away to a different dashboard while any of the above awaits
+  // were in flight, writing viewFilter now would apply THIS dashboard's default onto THAT one.
+  if (typeof locationService.getSearchObject().viewFilter === 'string' || !isStillOnDashboard(uid)) {
     return;
   }
 
-  locationService.partial({ viewFilter: defaultViewName });
+  // Initialization, not a real user navigation -- replace rather than push, or the viewer's first
+  // Back press would land on the no-viewFilter version of this same dashboard instead of wherever
+  // they actually came from.
+  locationService.partial({ viewFilter: view.metadata.name }, true);
+}
+
+/**
+ * Best-effort staleness guard, not a full cancellation-token system: dashboard urls are
+ * "/d/<uid>/...", so this is enough to catch the common case (a fast navigation to a different
+ * dashboard while this function's own awaits are still in flight) without needing to thread a
+ * cancellation signal through every caller.
+ */
+function isStillOnDashboard(uid: string): boolean {
+  return locationService.getLocation().pathname.includes(`/d/${uid}`);
 }
