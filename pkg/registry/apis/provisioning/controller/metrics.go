@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"github.com/grafana/nanogit/protocol/client"
 )
 
 type finalizerMetrics struct {
@@ -103,7 +105,20 @@ func (m *reconcileErrorMetrics) RecordReconcileError(phase, cause string) {
 
 //go:generate mockery --name=HealthMetricsRecorder --structname=MockHealthMetricsRecorder --inpackage --filename metrics_mock.go --with-expecter
 type HealthMetricsRecorder interface {
-	RecordHealthCheck(resource, outcome string, duration float64)
+	RecordHealthCheck(resource, outcome, cause string, duration float64)
+}
+
+func classifyHealthCheckErrorCause(err error) string {
+	switch {
+	case err == nil:
+		// Successful check executions have no error cause.
+		return ""
+	// Branch discovery can return raw transport errors before repository error mapping.
+	case errors.Is(err, client.ErrUnauthorized), errors.Is(err, client.ErrPermissionDenied):
+		return reconcileCauseUser
+	default:
+		return classifyTokenErrorCause(err)
+	}
 }
 
 type healthMetrics struct {
@@ -119,35 +134,39 @@ var (
 
 func NewHealthMetricsRecorder(registry prometheus.Registerer) HealthMetricsRecorder {
 	once.Do(func() {
-		healthCheckedTotal := prometheus.NewCounterVec(
-			prometheus.CounterOpts{
-				Name: "grafana_provisioning_health_checked_total",
-				Help: "Total number of health checks performed",
-			},
-			[]string{"resource", "outcome"},
-		)
-		registry.MustRegister(healthCheckedTotal)
-
-		healthCheckedDuration := prometheus.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Name:    "grafana_provisioning_health_checked_duration_seconds",
-				Help:    "Duration of health checks",
-				Buckets: []float64{0.1, 0.2, 0.5, 1.0, 2.0, 5.0},
-			},
-			[]string{"resource"},
-		)
-		registry.MustRegister(healthCheckedDuration)
-
-		metrics = &healthMetrics{
-			registry:              registry,
-			healthCheckedTotal:    healthCheckedTotal,
-			healthCheckedDuration: healthCheckedDuration,
-		}
+		metrics = registerHealthMetrics(registry)
 	})
 	return metrics
 }
 
-func (m *healthMetrics) RecordHealthCheck(resource, outcome string, duration float64) {
-	m.healthCheckedTotal.WithLabelValues(resource, outcome).Inc()
+func registerHealthMetrics(registry prometheus.Registerer) *healthMetrics {
+	healthCheckedTotal := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grafana_provisioning_health_checked_total",
+			Help: "Total number of health checks performed by resource, execution outcome, and error cause. Filter cause!=\"user\" to exclude user-caused failures (e.g. revoked credentials) from SLOs.",
+		},
+		[]string{"resource", "outcome", "cause"},
+	)
+	registry.MustRegister(healthCheckedTotal)
+
+	healthCheckedDuration := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "grafana_provisioning_health_checked_duration_seconds",
+			Help:    "Duration of health checks",
+			Buckets: []float64{0.1, 0.2, 0.5, 1.0, 2.0, 5.0},
+		},
+		[]string{"resource"},
+	)
+	registry.MustRegister(healthCheckedDuration)
+
+	return &healthMetrics{
+		registry:              registry,
+		healthCheckedTotal:    healthCheckedTotal,
+		healthCheckedDuration: healthCheckedDuration,
+	}
+}
+
+func (m *healthMetrics) RecordHealthCheck(resource, outcome, cause string, duration float64) {
+	m.healthCheckedTotal.WithLabelValues(resource, outcome, cause).Inc()
 	m.healthCheckedDuration.WithLabelValues(resource).Observe(duration)
 }
