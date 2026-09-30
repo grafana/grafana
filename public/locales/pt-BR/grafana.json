@@ -13225,6 +13225,12 @@
       "query": {
         "add": "Adicionar consulta",
         "run": "Executar consulta"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13308,7 +13314,9 @@
       "redo-action": "Refazer: {{action}}",
       "remove-query": "Remover consulta",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Selecionar consulta",
+      "set-cell-time-range": "",
       "split-block": "Dividir bloco",
       "switch-datasource": "Alternar fonte de dados",
       "undo": "Desfazer",
@@ -15864,8 +15872,7 @@
       "deleted-by-removed": "Conta excluída",
       "deleted-by-unknown-short": "<0></0> Desconhecido",
       "deleted-by-unknown-tooltip": "Erro ao procurar a conta que excluiu este painel de controle",
-      "deleted-less-than-1-min": "< 1 minuto",
-      "deleted-remaining-header": "Tempo restante",
+      "deleted-header": "",
       "location-header": "Localização",
       "name-header": "Nome",
       "tags-header": "Tags",

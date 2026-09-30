@@ -5,7 +5,7 @@ go 1.27.1
 replace github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
 
 require (
-	github.com/grafana/grafana-app-sdk v0.60.6
+	github.com/grafana/grafana-app-sdk v0.60.7
 	github.com/grafana/grafana-app-sdk/logging v0.60.6
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0
 	github.com/stretchr/testify v1.12.1

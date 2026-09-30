@@ -1597,8 +1597,8 @@ github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 h1:d04mpP3+tVfB
 github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
 github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNcQogCNTd/vPkEXTr7zX8=
 github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
-github.com/grafana/grafana-app-sdk v0.60.6 h1:8+4WPJwMUbQefQlMLefkhR4iMj9jhF6XNYtiJvGkYLE=
-github.com/grafana/grafana-app-sdk v0.60.6/go.mod h1:XM+J9Jzczi/sQV3JSP8LwMBoZmPD+jS4bxFbkIG/rs4=
+github.com/grafana/grafana-app-sdk v0.60.7 h1:tXWCE5RSNx+xlhQQq7SDUstjkyZ2Rhsa9ZolwPUjjkM=
+github.com/grafana/grafana-app-sdk v0.60.7/go.mod h1:XM+J9Jzczi/sQV3JSP8LwMBoZmPD+jS4bxFbkIG/rs4=
 github.com/grafana/grafana-app-sdk/logging v0.60.6 h1:xDqWfpdonVqwe3SG39Uhoys07b0mKZI/uO3s1bgwlKI=
 github.com/grafana/grafana-app-sdk/logging v0.60.6/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
 github.com/grafana/grafana-app-sdk/plugin v0.60.6 h1:cvxREhrwAiWJ2ZJT49l9IquNXnQ2XpqTvgx6r9Gz3KM=
@@ -1615,6 +1615,8 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.296.5 h1:86zOFJV6mSSYMPvcug6X4TlrrPm77q+PQH2VYGVV5ME=
 github.com/grafana/grafana-plugin-sdk-go v0.296.5/go.mod h1:E2WBpInzUESFrzNow91khsHYJPVEKTV0O05XLDMMKus=
+github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.18 h1:5MceBd5dunxNjWbH3XECyGZEdborkqExVYHx1IVQUDs=
+github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.18/go.mod h1:kQTcZL+iotYO1NcHD2lUxJtguxMvrnTi7XSLW4c3T7U=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
 github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7 h1:F5hMoc+tCK4AeUKfaL1XFEVEPSg+eKQe712fsSO/JA0=
@@ -1633,8 +1635,8 @@ github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 h1:cLN4IBkmkYZNnk7E
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
 github.com/grafana/saml v0.4.15-0.20260916103902-393394c6d16c h1:N9JWcpVDNx12jPjOa0U+0IqLqf1fqmony3dMwh5QH2c=
 github.com/grafana/saml v0.4.15-0.20260916103902-393394c6d16c/go.mod h1:Nux9mP+d+Kcxwe5r8OeF08Idgoy8p2k3X/eCjwGXHbE=
-github.com/grafana/schemads v0.2.2 h1:3vXluclcfHpisR5bF9jjLwtfAUgfSGT4iI5ba/wii1I=
-github.com/grafana/schemads v0.2.2/go.mod h1:TX0YfoMxJ8dl1ONXTa+rFk1y3sw1khGwQjB8dKKfzds=
+github.com/grafana/schemads v0.2.3 h1:cfneDXyPK5OHqBr2RZlaxjHQNWcSUOX2UKhXLe4MaiE=
+github.com/grafana/schemads v0.2.3/go.mod h1:TX0YfoMxJ8dl1ONXTa+rFk1y3sw1khGwQjB8dKKfzds=
 github.com/grafana/sqlds/v5 v5.3.1 h1:TEp3IKq3rcjz1LPDS1jkM8cFzXwvW3s0pA20EYOxGeM=
 github.com/grafana/sqlds/v5 v5.3.1/go.mod h1:8GfxmJ5jiiKx4ztrxAvYaggAzpOEZ1ACXqo9OOhnazI=
 github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 h1:kE5kdMnyPJmlNUdWhahfzqPYB3vM8DtAxgWymbB8nOA=
@@ -1843,8 +1845,6 @@ github.com/klauspost/cpuid/v2 v2.4.0 h1:S6Hrbc7+ywsr0r+RLapfGBHfyefhCTwEh3A0tV91
 github.com/klauspost/cpuid/v2 v2.4.0/go.mod h1:19jmZ9mjzoF//ddRSUsv0zfBTJWh3QJh9FNxZTMrGxU=
 github.com/klauspost/crc32 v1.3.0 h1:sSmTt3gUt81RP655XGZPElI0PelVTZ6YwCRnPSupoFM=
 github.com/klauspost/crc32 v1.3.0/go.mod h1:D7kQaZhnkX/Y0tstFGf8VUzv2UofNGqCjnC3zdHB0Hw=
-github.com/klauspost/pgzip v1.2.6 h1:8RXeL5crjEUFnR2/Sn6GJNWtSQ3Dk8pq4CL3jvdDyjU=
-github.com/klauspost/pgzip v1.2.6/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
 github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b h1:udzkj9S/zlT5X367kqJis0QP7YMxobob6zhzq6Yre00=
 github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b/go.mod h1:pcaDhQK0/NJZEvtCO0qQPPropqV0sJOJ6YW7X+9kRwM=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
