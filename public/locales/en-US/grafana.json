@@ -5147,6 +5147,7 @@
       "dark-theme": "Dark",
       "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
+      "new-notebook": "New notebook",
       "open-saved-queries": "Open saved queries",
       "scopes": "Scopes"
     },
@@ -5172,6 +5173,7 @@
       "dashboard-search-results": "Dashboards",
       "deep-search": "Dashboards deep search",
       "folder-search-results": "Folders",
+      "notebook-search-results": "Notebooks",
       "pages": "Pages",
       "preferences": "Preferences",
       "recent-dashboards": "Recent dashboards",
@@ -13088,6 +13090,7 @@
       "starred-dashboard-icon": "Dashboard",
       "starred-folder-icon": "Folder"
     },
+    "notebooks": "Notebooks",
     "org-switcher": {
       "aria-label": "Change organization"
     },
@@ -13096,6 +13099,7 @@
     },
     "quick-add": {
       "aria-label": "New",
+      "new-notebook-button": "New notebook",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"

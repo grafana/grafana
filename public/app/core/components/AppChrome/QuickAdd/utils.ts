@@ -10,6 +10,7 @@ export interface CreateActionGroup {
 export const ITEM_ICONS: Record<string, IconName> = {
   'dashboards/new': 'plus',
   'browse-template-dashboard': 'grid',
+  'notebooks/new': 'plus',
   'dashboards/import': 'import',
   alert: 'plus',
   folder: 'folder',

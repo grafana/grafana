@@ -1,4 +1,12 @@
+import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
+import { getBackendSrv } from '@grafana/runtime';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
+
+import {
+  confirmNotebookSearchAvailable,
+  isNotebookSearchUnavailable,
+  markNotebookSearchUnavailable,
+} from './notebookSearchAvailability';
 
 /**
  * Client for `POST .../notebooks/search`, the per-kind search endpoint mounted by
@@ -189,5 +197,32 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
     }),
   }),
 });
+
+export async function searchNotebookTitles(query: string, limit: number): Promise<ResultItem[]> {
+  if (isNotebookSearchUnavailable()) {
+    return [];
+  }
+
+  try {
+    const results = await getBackendSrv().post<SearchResults>(
+      `${BASE_URL}/notebooks/search`,
+      {
+        apiVersion: SEARCH_API_VERSION,
+        kind: SEARCH_QUERY_KIND,
+        where: { text: { value: query, fields: ['title'] } },
+        fields: ['title'],
+        limit,
+      },
+      { showErrorAlert: false }
+    );
+    confirmNotebookSearchAvailable();
+    return results.items;
+  } catch (error) {
+    if (markNotebookSearchUnavailable(error)) {
+      return [];
+    }
+    throw error;
+  }
+}
 
 export const { useSearchNotebooksInfiniteQuery, useLazyNotebookFieldFacetQuery } = notebookSearchAPI;
