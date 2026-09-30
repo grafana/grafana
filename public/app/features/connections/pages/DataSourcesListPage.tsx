@@ -3,13 +3,14 @@ import { css } from '@emotion/css';
 import type { GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { DatasourceTroubleshootingBanner } from 'app/features/connections/components/DatasourceTroubleshootingBanner/DatasourceTroubleshootingBanner';
 import { RunAdvisorChecksButton } from 'app/features/connections/components/RunAdvisorChecksButton/RunAdvisorChecksButton';
 import { AdvisorCheckProvider } from 'app/features/connections/hooks/useDatasourceAdvisorChecks';
 import { DataSourceAddButton } from 'app/features/datasources/components/DataSourceAddButton';
 import { DataSourcesList } from 'app/features/datasources/components/DataSourcesList';
 import { getDataSourcesCount } from 'app/features/datasources/state/selectors';
 import { type StoreState, useSelector } from 'app/types/store';
+
+import { AdvisorRedirectNotice } from '../components/AdvisorRedirectNotice/AdvisorRedirectNotice';
 
 export function DataSourcesListPage() {
   const styles = useStyles2(getStyles);
@@ -26,7 +27,7 @@ export function DataSourcesListPage() {
     <AdvisorCheckProvider>
       <Page navId={'connections-datasources'} actions={actions}>
         <Page.Contents className={styles.pageContents}>
-          <DatasourceTroubleshootingBanner />
+          <AdvisorRedirectNotice />
           <DataSourcesList />
         </Page.Contents>
       </Page>
