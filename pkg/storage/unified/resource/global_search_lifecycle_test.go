@@ -1089,7 +1089,8 @@ func TestImportQueuesNothingWhenCaughtUp(t *testing.T) {
 	server, idx := repairServer(t, storage, nil)
 	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: importMonday}
 
-	server.queueImportedTypeRebuilds(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
+	_, err := server.queueImportedTypeRebuilds(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
+	require.NoError(t, err)
 	assert.Zero(t, server.rebuildQueue.Len())
 }
 
