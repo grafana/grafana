@@ -1737,6 +1737,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.queryGatewaySlimAudit",
+        "resourceVersion": "1790805819665",
+        "creationTimestamp": "2026-09-30T22:03:39Z"
+      },
+      "spec": {
+        "description": "Only attach query payloads to query gateway audit events when a guardrail fires",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.queryTypes",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

@@ -3359,6 +3359,15 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
 		},
+		{
+			Name:         "datasources.queryGatewaySlimAudit",
+			Description:  "Only attach query payloads to query gateway audit events when a guardrail fires",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
 		// TODO: add docs for the unified_alerting.folder_label_full_sync_interval setting before removing this
 		{
 			Name:         "alerting.folderHasRulesLabel",
