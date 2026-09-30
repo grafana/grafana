@@ -984,6 +984,27 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
 }
 
+// TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderNotNeeded asserts that a permanent
+// delete with FlagAlertingFolderHasRulesLabel off (so no folder-key or version lookup happens)
+// doesn't need LegacyDatabaseProvider to succeed, even if the provider itself would error.
+func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderNotNeeded(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return nil, errors.New("provider unavailable")
+	}
+
+	rule := createRule(t, store, models.RuleGen)
+
+	err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, true, rule.UID)
+	require.NoError(t, err)
+}
+
 func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
