@@ -600,6 +600,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 		teamGetter,
 		teamLister,
 		b.tracing,
+		b.reg,
 	)
 	return nil
 }
