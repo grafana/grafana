@@ -10,7 +10,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 )
 
 // This prefix is used when modeling datasources from legacy SQL + secrets
