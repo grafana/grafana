@@ -5899,10 +5899,16 @@
       "paste-panel": "Вставка панели",
       "remove": "Удалить {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Измените заголовок строки",
       "switch-layout": "Переключить макет",
       "switch-layout-row": "Переключить макет",
       "switch-layout-tab": "Переключить макет",
+      "tab-repeat-variable": "",
       "tab-title": "Измените заголовок вкладки",
       "variable-description": "Изменить описание переменной",
       "variable-hide": "Изменить параметр скрытия переменной",
@@ -9572,6 +9578,8 @@
     "menu": "Открыть меню",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Сохранить",
     "title": "Управление функциями"
   },
@@ -13403,6 +13411,12 @@
       "query": {
         "add": "Добавить запрос",
         "run": "Выполнить запрос"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13486,7 +13500,9 @@
       "redo-action": "Повторить: {{action}}",
       "remove-query": "Удалить запрос",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Выбрать запрос",
+      "set-cell-time-range": "",
       "split-block": "Разделить блок",
       "switch-datasource": "Изменить источник данных",
       "undo": "Отменить",
@@ -16102,8 +16118,7 @@
       "deleted-by-removed": "Удаленный аккаунт",
       "deleted-by-unknown-short": "<0></0> Неизвестно",
       "deleted-by-unknown-tooltip": "Не удалось определить аккаунт, который удалил этот дашборд",
-      "deleted-less-than-1-min": "< 1 мин.",
-      "deleted-remaining-header": "Оставшееся время",
+      "deleted-header": "",
       "location-header": "Расположение",
       "name-header": "Имя",
       "tags-header": "Теги",

@@ -5809,10 +5809,16 @@
       "paste-panel": "Paneel plakken",
       "remove": "{{typeName}} verwijderen",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Rijtitel wijzigen",
       "switch-layout": "Indeling wisselen",
       "switch-layout-row": "Indeling wisselen",
       "switch-layout-tab": "Indeling wisselen",
+      "tab-repeat-variable": "",
       "tab-title": "Tabbladtitel wijzigen",
       "variable-description": "Variabelebeschrijving wijzigen",
       "variable-hide": "Optie variabele verbergen wijzigen",
@@ -9460,6 +9466,8 @@
     "menu": "Menu openen",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Opslaan",
     "title": "Functiebeheer"
   },
@@ -13217,6 +13225,12 @@
       "query": {
         "add": "Query toevoegen",
         "run": "Query uitvoeren"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13300,7 +13314,9 @@
       "redo-action": "Opnieuw uitvoeren: {{action}}",
       "remove-query": "Query verwijderen",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Query selecteren",
+      "set-cell-time-range": "",
       "split-block": "Blok splitsen",
       "switch-datasource": "Gegevensbron wisselen",
       "undo": "Ongedaan maken",
@@ -15856,8 +15872,7 @@
       "deleted-by-removed": "Verwijderd account",
       "deleted-by-unknown-short": "<0></0> Onbekend",
       "deleted-by-unknown-tooltip": "Kan het account dat dit dashboard heeft verwijderd niet opzoeken",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Resterende tijd",
+      "deleted-header": "",
       "location-header": "Locatie",
       "name-header": "Naam",
       "tags-header": "Tags",

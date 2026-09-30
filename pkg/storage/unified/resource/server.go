@@ -89,28 +89,6 @@ func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration 
 	return bo.NextDelay()
 }
 
-type watchExpiry struct {
-	mu         sync.Mutex
-	generation chan struct{}
-}
-
-func newWatchExpiry() *watchExpiry {
-	return &watchExpiry{generation: make(chan struct{})}
-}
-
-func (e *watchExpiry) current() <-chan struct{} {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return e.generation
-}
-
-func (e *watchExpiry) expire() {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	close(e.generation)
-	e.generation = make(chan struct{})
-}
-
 // filteredBookmarkDelay leaves a recovery window for late writes without
 // delaying progress from objects already sent to the client.
 const filteredBookmarkDelay = time.Minute
@@ -388,6 +366,10 @@ type SearchOptions struct {
 	// that predates them is rebuilt before that path serves a query.
 	PostRankAuthzEnabled bool
 
+	// GlobalIndexEnabled builds one index per namespace covering several resource
+	// types, alongside the per-resource indexes.
+	GlobalIndexEnabled bool
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
@@ -512,6 +494,9 @@ type ResourceServerOptions struct {
 	// NatsWatchMaxAge forces NATS-backed watch clients to re-list periodically.
 	// Zero disables expiry.
 	NatsWatchMaxAge time.Duration
+
+	// WatchExpiry is shared with notification producers. Nil creates a local expiry.
+	WatchExpiry WatchExpiry
 
 	// VectorBackend is the optional pgvector-backed store for semantic search.
 	// nil when the [unified_storage] vector_backend flag is off. When present,
@@ -698,11 +683,12 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		natsWatchMaxAge:                opts.NatsWatchMaxAge,
+		watchExpiry:                    opts.WatchExpiry,
 		vectorWriteReconciler:          opts.VectorReconciler,
 		embeddingBuilders:              opts.Search.EmbeddingBuilders,
 	}
-	if s.natsWatchMaxAge > 0 {
-		s.natsWatchExpiry = newWatchExpiry()
+	if s.watchExpiry == nil {
+		s.watchExpiry = NewWatchExpiry()
 	}
 
 	if opts.Search.Resources != nil {
@@ -777,7 +763,7 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 	return blobstore, nil
 }
 
-var _ ResourceServer = &server{}
+var _ ResourceServer = (*server)(nil)
 
 type server struct {
 	log                       log.Logger
@@ -835,7 +821,7 @@ type server struct {
 	bookmarkFrequency time.Duration
 
 	natsWatchMaxAge time.Duration
-	natsWatchExpiry *watchExpiry
+	watchExpiry     WatchExpiry
 
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
@@ -882,7 +868,7 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
-		if s.initErr == nil && s.natsWatchExpiry != nil {
+		if s.initErr == nil && s.natsWatchMaxAge > 0 {
 			go s.runNatsWatchExpiry()
 		}
 
@@ -901,7 +887,7 @@ func (s *server) runNatsWatchExpiry() {
 			timer.Stop()
 			return
 		case <-timer.C:
-			s.natsWatchExpiry.expire()
+			s.watchExpiry.Invalidate()
 		}
 	}
 }
@@ -1556,9 +1542,8 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	// Don't validate the name format here: a lookup with an odd or
-	// invalid-looking name should fall through to the backend and surface as
-	// NotFound, matching K8s Get semantics. Strict name validation belongs on
+	// Don't validate the name format here: the backend reports invalid names as
+	// BadRequest, after the access check. Strict name validation belongs on
 	// writes (Create/Update/Delete).
 	if r := verifyRequestKeyCollection(req.Key); r != nil {
 		return nil, status.Error(codes.InvalidArgument, r.Message)
@@ -2348,11 +2333,22 @@ func (s *server) initWatcher() error {
 //nolint:gocyclo
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
+	if s.ctx.Err() != nil {
+		return nil
+	}
+
+	// Capture before setup: invalidations during subscription or snapshot reads must
+	// expire this watch too, even if it has not entered the live loop yet.
+	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
 	// as clean shutdowns. Errors from setup, storage, authorization, or another
 	// context are still propagated.
 	defer func() {
+		// A canceled request can no longer receive the expiry response.
+		if IsResourceVersionExpired(retErr) && ctx.Err() != nil {
+			retErr = nil
+		}
 		if errors.Is(retErr, errWatchSendUnavailable) {
 			retErr = nil
 		}
@@ -2513,23 +2509,27 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		bookmarkC = ticker.C
 	}
 
-	// The server-level generation survives transport reconnects, so GOAWAY does
-	// not restart the expiry interval.
-	var watchExpiryC <-chan struct{}
-	if s.natsWatchExpiry != nil {
-		watchExpiryC = s.natsWatchExpiry.current()
+	expired := func() error {
+		if ctx.Err() != nil {
+			return nil
+		}
+		s.log.Debug("watch: expiring stream to bound stale-state duration",
+			"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
+		return NewResourceVersionExpiredError(since)
 	}
 
 	for {
+		// Prioritize known delivery gaps over buffered live events.
+		select {
+		case <-watchExpiryC:
+			return expired()
+		default:
+		}
 		select {
 		case <-ctx.Done():
 			return nil
-
 		case <-watchExpiryC:
-			// Unlike EOF, Expired forces clients to re-list.
-			s.log.Debug("watch: expiring stream to bound stale-state duration",
-				"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
-			return NewResourceVersionExpiredError(since)
+			return expired()
 
 		case <-bookmarkC:
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
@@ -2638,9 +2638,9 @@ func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchR
 // search backend and the vector backend live.
 func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
 	// Unimplemented (not a bare error) so API-layer callers can map a
-	// search-disabled server to 501, same as an unconfigured vector store.
+	// search-disabled server to 501.
 	if s.search == nil {
-		return nil, status.Error(codes.Unimplemented, "hybrid search is not configured")
+		return nil, status.Error(codes.Unimplemented, "search index not configured")
 	}
 	return s.search.HybridSearch(ctx, req)
 }

@@ -5764,10 +5764,16 @@
       "paste-panel": "パネルを貼り付け",
       "remove": "{{typeName}}を削除",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "行のタイトルを変更",
       "switch-layout": "レイアウトを切り替え",
       "switch-layout-row": "レイアウトを切り替える",
       "switch-layout-tab": "レイアウトを切り替える",
+      "tab-repeat-variable": "",
       "tab-title": "タブのタイトルを変更",
       "variable-description": "変数の説明を変更",
       "variable-hide": "変数の非表示設定を変更",
@@ -9404,6 +9410,8 @@
     "menu": "メニューを開く",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "保存",
     "title": "機能コントロール"
   },
@@ -13124,6 +13132,12 @@
       "query": {
         "add": "クエリを追加",
         "run": "クエリを実行"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13207,7 +13221,9 @@
       "redo-action": "やり直し：{{action}}",
       "remove-query": "クエリを削除",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "クエリを選択",
+      "set-cell-time-range": "",
       "split-block": "ブロックを分割",
       "switch-datasource": "データソースを切り替える",
       "undo": "元に戻す",
@@ -15733,8 +15749,7 @@
       "deleted-by-removed": "削除されたアカウント",
       "deleted-by-unknown-short": "<0></0>不明",
       "deleted-by-unknown-tooltip": "このダッシュボードを削除したアカウントの検索に失敗しました",
-      "deleted-less-than-1-min": "1分以下",
-      "deleted-remaining-header": "残り時間",
+      "deleted-header": "",
       "location-header": "場所",
       "name-header": "名前",
       "tags-header": "タグ",

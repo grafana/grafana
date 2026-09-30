@@ -5764,10 +5764,16 @@
       "paste-panel": "貼上面板",
       "remove": "移除 {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "變更列標題",
       "switch-layout": "切換版面配置",
       "switch-layout-row": "切換版面配置",
       "switch-layout-tab": "切換版面配置",
+      "tab-repeat-variable": "",
       "tab-title": "變更分頁標題",
       "variable-description": "變更變數描述",
       "variable-hide": "變更變數隱藏選項",
@@ -9404,6 +9410,8 @@
     "menu": "開啟選單",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "儲存",
     "title": "功能控制項"
   },
@@ -13124,6 +13132,12 @@
       "query": {
         "add": "新增查詢",
         "run": "執行查詢"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13207,7 +13221,9 @@
       "redo-action": "重做：{{action}}",
       "remove-query": "移除查詢",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "選取查詢項目",
+      "set-cell-time-range": "",
       "split-block": "分割區塊",
       "switch-datasource": "切換資料來源",
       "undo": "還原",
@@ -15733,8 +15749,7 @@
       "deleted-by-removed": "已刪除的帳戶",
       "deleted-by-unknown-short": "<0></0> 不明",
       "deleted-by-unknown-tooltip": "無法查詢刪除此儀表板的帳戶",
-      "deleted-less-than-1-min": "< 1 分鐘",
-      "deleted-remaining-header": "剩餘時間",
+      "deleted-header": "",
       "location-header": "位置",
       "name-header": "名稱",
       "tags-header": "標籤",

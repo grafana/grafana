@@ -72,6 +72,8 @@ func TestNewIDTokenExtractor(t *testing.T) {
 		return types.WithAuthInfo(context.Background(), info)
 	}
 	requireIdentity := func(context.Context) bool { return true }
+	oboOn := func(context.Context) bool { return true }
+	oboOff := func(context.Context) bool { return false }
 
 	for _, tc := range []struct {
 		name      string
@@ -120,6 +122,33 @@ func TestNewIDTokenExtractor(t *testing.T) {
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
 			wantMode: identityModeDenied,
 			wantCode: codes.PermissionDenied,
+		},
+		{
+			name:     "user carried inside the access token goes obo",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: requireIdentity},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t)}),
+			wantMode: identityModeOnBehalfOf,
+		},
+		{
+			// The exchanger carries the caller inside the exchanged token, so the ID token
+			// must stay home: pure obo.
+			name:     "obo takes priority over a present id token",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
+			wantMode: identityModeOnBehalfOf,
+		},
+		{
+			name:      "obo policy off keeps the classic id token transport",
+			cfg:       RemoteResourceClientConfig{OnBehalfOf: oboOff},
+			ctx:       withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
+			wantMode:  identityModeIDToken,
+			wantToken: "id-token",
+		},
+		{
+			name:     "an access token that does not carry the user is not obo",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: func(context.Context) bool { return false }},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: serviceActorToken(t)}),
+			wantMode: identityModeFallbackService,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

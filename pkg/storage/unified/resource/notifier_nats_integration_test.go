@@ -31,7 +31,8 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 	t.Run("committed write round-trips through NATS with every field intact", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
-		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
+		expiry := NewWatchExpiry()
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, log.NewNopLogger())
 		out := notifier.Watch(ctx, WatchOptions{})
 
 		event := Event{
@@ -66,7 +67,8 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 	t.Run("every action type survives the marshal/transport/unmarshal round trip", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
-		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
+		expiry := NewWatchExpiry()
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, log.NewNopLogger())
 		out := notifier.Watch(ctx, WatchOptions{})
 
 		establishInterest(t, ctx, out, backend)
@@ -143,7 +145,8 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
 		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "nats_notifier_dropped_total"}, []string{"reason"})
-		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, dropped, log.NewNopLogger())
+		expiry := NewWatchExpiry()
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, dropped, log.NewNopLogger())
 		out := notifier.Watch(ctx, WatchOptions{})
 
 		// Interest must be live first, else NATS drops the bad messages before the
@@ -177,8 +180,8 @@ type natsSubscriberAdapter struct{ sub nats.Subscriber }
 
 func (a natsSubscriberAdapter) Enabled() bool { return a.sub.Enabled() }
 
-func (a natsSubscriberAdapter) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (Subscription, error) {
-	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
+func (a natsSubscriberAdapter) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error) {
+	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
 
 // startNatsRoundTrip boots an embedded NATS server plus a real publisher and

@@ -56,7 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -99,7 +99,7 @@ func RegisterAPIService(
 	teamService teamservice.Service,
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
-	authInfoStore login.Store,
+	legacyAuthInfoStore *authinfoimpl.Store,
 	remoteCache remotecache.CacheStorage,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
@@ -156,7 +156,7 @@ func RegisterAPIService(
 		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
 		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
-		authInfoLegacyStore:               authinfo.NewLegacyStore(store, authInfoStore, tracing, remoteCache),
+		authInfoLegacyStore:               authinfo.NewLegacyStore(store, legacyAuthInfoStore, tracing, remoteCache),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		ssoSettingsClient:                 ssoSettingsClient,
 		roleApiInstaller:                  roleApiInstaller,
@@ -181,8 +181,8 @@ func RegisterAPIService(
 		unified:                           unified,
 		userSearchClient: dualwrite.NewSelector[user.SearchBackend](dual, iamv0.UserResourceInfo.GroupResource(),
 			user.NewUserLegacySearchClient(orgService, tracing, cfg), user.NewUnifiedSearchClient(unified, cfg)),
-		teamSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.TeamResourceInfo.GroupResource(),
-			unified, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing)),
+		teamSearchClient: dualwrite.NewSelector[team.SearchBackend](dual, iamv0.TeamResourceInfo.GroupResource(),
+			team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), team.NewUnifiedSearchClient(unified)),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
 		cfgProvider:                      cfgProvider,
@@ -763,13 +763,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	)
 
 	if b.dual != nil && b.unified != nil {
-		teamSearchClient := resource.NewSearchClient(
-			dualwrite.NewSearchAdapter(b.dual),
-			iamv0.TeamResourceInfo.GroupResource(),
-			b.unified,
-			team.NewLegacyUserTeamsSearchClient(b.store, b.tracing),
-		)
-
 		statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
 		storage[userResource.StoragePath("status")] = statusStore
 
@@ -783,7 +776,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 			)
 		}
 		if enableTeamsAPI {
-			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing)
+			backends := dualwrite.NewSelector[user.UserTeamsBackend](b.dual, iamv0.TeamResourceInfo.GroupResource(),
+				user.NewLegacyUserTeamsBackend(b.store, b.tracing), user.NewUnifiedUserTeamsBackend(b.unified, b.teamGetter))
+			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(backends, b.tracing)
 		}
 	}
 
