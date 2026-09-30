@@ -6,11 +6,16 @@ import { memo, forwardRef, useId } from 'react';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
+import { useFlagGrafanaSectionSidebar, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { ScrollContainer, Stack, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
+import { useSelector } from 'app/types/store';
+
+import { LazyFeatureControlButton } from '../FeatureControl/LazyFeatureControl';
+import { HelpTopBarButton } from '../TopBar/HelpTopBarButton';
+import { ProfileButton } from '../TopBar/ProfileButton';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -19,6 +24,7 @@ import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
 import { MegaMenuSkeleton } from './MegaMenuSkeleton';
 import { useNavCustomization } from './hooks';
+import { isRailBottomItem } from './utils';
 
 export const MENU_WIDTH = '320px';
 
@@ -33,6 +39,9 @@ export const MegaMenu = memo(
     const { chrome } = useGrafana();
     const state = chrome.useState();
     const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
+    // With the rail, the menu is either docked or the rail, so there is no undocked overlay to switch to.
+    // Its rows start where the rail's icons do.
+    const railEnabled = useFlagGrafanaSectionSidebar();
 
     const {
       canCustomise,
@@ -56,6 +65,9 @@ export const MegaMenu = memo(
       isSaving,
     } = useNavCustomization();
     const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
+    // Matches the rail, which keeps these at its bottom next to profile and help
+    const bottomItems = railEnabled ? navItems.filter(isRailBottomItem) : [];
+    const listItems = railEnabled ? navItems.filter((link) => !isRailBottomItem(link)) : navItems;
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -225,14 +237,17 @@ export const MegaMenu = memo(
         </DragDropContext>
       ) : (
         <ul className={styles.itemList} aria-label={navLabel}>
-          {navItems.map((link) => renderNavItem(link))}
+          {listItems.map((link) => renderNavItem(link))}
         </ul>
       );
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
-        <nav className={cx(styles.content, state.megaMenuDocked && styles.contentDocked)} aria-label={navLabel}>
+        <nav
+          className={cx(styles.content, (state.megaMenuDocked || railEnabled) && styles.contentDocked)}
+          aria-label={navLabel}
+        >
           <div className={styles.scrollArea}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
               <>
@@ -247,15 +262,20 @@ export const MegaMenu = memo(
                   </>
                 ) : (
                   <ul className={styles.itemList} aria-label={navLabel}>
-                    {navItems.map((link) => renderNavItem(link))}
+                    {listItems.map((link) => renderNavItem(link))}
                   </ul>
                 )}
                 <MegaMenuExtensionPoint />
               </>
             </ScrollContainer>
           </div>
+          {bottomItems.length > 0 && (
+            <ul className={cx(styles.itemList, styles.bottomItemList)} aria-label={navLabel}>
+              {bottomItems.map((link) => renderNavItem(link))}
+            </ul>
+          )}
           <hr className={styles.dividerLine} />
-          <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
+          <div className={cx(styles.footer, editMode && styles.footerEditMode, railEnabled && styles.footerRail)}>
             {editMode && (
               <MegaMenuCustomiseControls
                 canReset={canReset}
@@ -265,12 +285,13 @@ export const MegaMenu = memo(
                 saving={isSaving}
               />
             )}
-            {!editMode && canCustomise && !isLoading && (
+            {railEnabled && !editMode && <MegaMenuToolbarButtons />}
+            {!editMode && canCustomise && !isLoading && !railEnabled && (
               <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
                 <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
               </Button>
             )}
-            {!editMode && !state.fullscreenWorkspace && (
+            {!editMode && !state.fullscreenWorkspace && !railEnabled && (
               <IconButton
                 id={DOCK_MENU_BUTTON_ID}
                 className={styles.dockMenuButton}
@@ -292,6 +313,22 @@ export const MegaMenu = memo(
 );
 
 MegaMenu.displayName = 'MegaMenu';
+
+/** With the rail, these stay at the bottom of the menu instead of moving back to the top bar */
+function MegaMenuToolbarButtons() {
+  const { chrome } = useGrafana();
+  const profileNode = useSelector((state) => state.navIndex['profile']);
+
+  return (
+    <Stack gap={0.5} alignItems="center">
+      <LazyFeatureControlButton />
+      <HelpTopBarButton isSmallScreen={false} placement="top-start" />
+      {profileNode && (
+        <ProfileButton profileNode={profileNode} onToggleKioskMode={chrome.onToggleKioskMode} placement="top-start" />
+      )}
+    </Stack>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
@@ -363,6 +400,17 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       flexShrink: 0,
       justifyContent: 'space-between',
       padding: theme.spacing(0.5, 2, 1.5, 2),
+    }),
+    // Lines the footer buttons up with the same buttons at the bottom of the rail
+    // Expanding Administration here shouldn't squeeze out the main list
+    bottomItemList: css({
+      flexShrink: 0,
+      maxHeight: '40vh',
+      overflowY: 'auto',
+      paddingBottom: 0,
+    }),
+    footerRail: css({
+      paddingLeft: theme.spacing(1),
     }),
     footerEditMode: css({
       justifyContent: 'center',

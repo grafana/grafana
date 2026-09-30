@@ -9,16 +9,17 @@ import { useLocalStorage } from 'react-use';
 import { FeatureState, type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaSectionSidebar, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 
 import { Indent } from '../../Indent/Indent';
 
+import { MegaMenuCreateButton } from './MegaMenuCreateButton';
 import { MegaMenuItemText } from './MegaMenuItemText';
 import { getDragHandleStyles } from './styles';
-import { hasChildMatch } from './utils';
+import { getCreateActions, hasChildMatch } from './utils';
 
 interface Props {
   link: NavModelItem;
@@ -114,6 +115,11 @@ export function MegaMenuItem({
 
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
+  // Section icons match the icon rail's size, since the menu opens over it
+  const railEnabled = useFlagGrafanaSectionSidebar();
+  const railIconSize = railEnabled && level === 0;
+  // Create actions (e.g. New alert rule) surface as a + on their section instead of as rows
+  const createActions = railEnabled && !editMode ? getCreateActions(link.children) : [];
   const dragStyles = useStyles2(getDragHandleStyles);
 
   // expand parent sections if child is active
@@ -153,12 +159,17 @@ export function MegaMenuItem({
 
   if (link.icon) {
     iconElement = (
-      <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" title={starredLeafIconTitle} />
+      <Icon
+        className={cx(styles.icon, railIconSize && styles.railIcon)}
+        name={toIconName(link.icon) ?? 'link'}
+        size="lg"
+        title={starredLeafIconTitle}
+      />
     );
   } else if (link.img) {
     iconElement = (
       <Stack width={3} justifyContent="center">
-        <img className={styles.img} src={link.img} alt="" />
+        <img className={cx(styles.img, railIconSize && styles.railImg)} src={link.img} alt="" />
       </Stack>
     );
   }
@@ -237,6 +248,9 @@ export function MegaMenuItem({
             </div>
           </MegaMenuItemText>
         </div>
+        {createActions.length > 0 && (
+          <MegaMenuCreateButton sectionName={link.text} actions={createActions} onNavigate={onClick} />
+        )}
         <div className={styles.collapseButtonWrapper}>
           {showExpandButton && (
             <IconButton
@@ -319,6 +333,14 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   icon: css({
     width: theme.spacing(3),
     color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
+  }),
+  // Keeps the 24px icon column, so the glyph stays centred where the rail centres its icons
+  railIcon: css({
+    height: '20px',
+  }),
+  railImg: css({
+    height: '20px',
+    width: '20px',
   }),
   img: css({
     height: theme.spacing(2),

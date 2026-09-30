@@ -63,6 +63,7 @@ declare module "@openfeature/core" {
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
+    | "grafana.sectionSidebar"
     | "grafana.newTextPanel"
     | "text.newFeatures"
     | "alertingTriage"

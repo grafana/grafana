@@ -10,6 +10,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { AppChromeSectionSidebar } from 'app/core/components/AppChrome/SectionSidebar/AppChromeSectionSidebar';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
 import { useDispatch } from 'app/types/store';
@@ -182,6 +183,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       renderTitle={renderTitle}
       actions={<FolderDetailsActions folderDTO={folderDTO} />}
     >
+      {/* The browse list is the full version of the sidebar's content, so it doesn't need one */}
+      <AppChromeSectionSidebar disabled />
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
 

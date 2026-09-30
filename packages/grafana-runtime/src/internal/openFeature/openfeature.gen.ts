@@ -146,6 +146,8 @@ export const FlagKeys = {
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
+  /** Enables a section sidebar next to the mega menu, first adopted by the dashboards section */
+  GrafanaSectionSidebar: "grafana.sectionSidebar",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
@@ -980,6 +982,17 @@ export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.secretsReferenceValueUI", false, options).value;
+};
+
+/**
+ * Enables a section sidebar next to the mega menu, first adopted by the dashboards section
+ *
+ * **Details:**
+ * - flag key: `grafana.sectionSidebar`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSectionSidebar = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.sectionSidebar", false, options).value;
 };
 
 /**

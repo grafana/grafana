@@ -5,7 +5,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type ScopesContextValue } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaSectionSidebar, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -21,6 +21,7 @@ import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { LazyFeatureControlButton } from '../FeatureControl/LazyFeatureControl';
 import { AssistantToolbarButtons } from '../FullscreenWorkspace/AssistantToolbarButtons';
+import { useIsMegaMenuRail } from '../MegaMenu/MegaMenuRail';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
@@ -60,6 +61,11 @@ export const SingleTopBar = memo(function SingleTopBar({
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen, visualRefreshEnabled);
   const profileNode = useSelector((state) => state.navIndex['profile']);
+  const isMegaMenuRail = useIsMegaMenuRail(state);
+  // Section sidebars offer their own contextual "New" actions
+  const sectionSidebarEnabled = useFlagGrafanaSectionSidebar();
+  // The rail, or the docked menu that replaces it, hosts the profile, help and feature control menus
+  const menuHostsToolbarButtons = sectionSidebarEnabled && !state.chromeless;
   const homeNav = useHomeNav();
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
@@ -72,7 +78,8 @@ export const SingleTopBar = memo(function SingleTopBar({
         <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, lg: 1 }}>
           {!menuDockedAndOpen && (
             <>
-              <HomeLogo homeNav={homeNav} />
+              {/* The rail already shows the logo, right next to this toggle */}
+              {!isMegaMenuRail && <HomeLogo homeNav={homeNav} />}
               <ToolbarButton
                 narrow
                 id={MEGA_MENU_TOGGLE_ID}
@@ -102,16 +109,18 @@ export const SingleTopBar = memo(function SingleTopBar({
         >
           <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
-          {!isSmallScreen && <QuickAdd />}
-          <LazyFeatureControlButton />
-          <HelpTopBarButton isSmallScreen={isSmallScreen} />
+          {!isSmallScreen && !sectionSidebarEnabled && <QuickAdd />}
+          {!menuHostsToolbarButtons && <LazyFeatureControlButton />}
+          {!menuHostsToolbarButtons && <HelpTopBarButton isSmallScreen={isSmallScreen} />}
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           <NavRightButton />
           <AssistantToolbarButtons />
-          {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
+          {profileNode && !menuHostsToolbarButtons && (
+            <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />
+          )}
         </Stack>
       </div>
       {showToolbarLevel && (

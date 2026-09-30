@@ -157,4 +157,18 @@ describe('AppChromeService', () => {
       expect(chromeService.state.getValue().fullscreenWorkspace).toBe(initial);
     });
   });
+
+  describe('section sidebar', () => {
+    it('clears the page override when the route changes', () => {
+      const chromeService = new AppChromeService();
+      chromeService.setMatchedRoute({ path: '/a', component: () => null });
+      chromeService.update({ sectionSidebarOverride: { context: { folderUid: 'abc' } } });
+      expect(chromeService.state.getValue().sectionSidebarOverride).toEqual({ context: { folderUid: 'abc' } });
+
+      chromeService.setMatchedRoute({ path: '/b', component: () => null });
+      chromeService.update({ pageNav: { text: 'Other page' } });
+
+      expect(chromeService.state.getValue().sectionSidebarOverride).toBeUndefined();
+    });
+  });
 });

@@ -11,6 +11,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { type RouteDescriptor } from '../../navigation/types';
 
 import { type ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
+import { type SectionSidebarOverride } from './SectionSidebar/types';
 
 export interface AppChromeState {
   chromeless?: boolean;
@@ -27,6 +28,7 @@ export interface AppChromeState {
     title: ReturnToPreviousProps['title'];
     href: ReturnToPreviousProps['href'];
   };
+  sectionSidebarOverride?: SectionSidebarOverride;
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -77,6 +79,7 @@ export class AppChromeService {
       newState.sectionNav = { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } };
       newState.chromeless = this.currentRoute?.chromeless;
       newState.layout = PageLayoutType.Standard;
+      newState.sectionSidebarOverride = undefined;
       this.routeChangeHandled = true;
     }
 
