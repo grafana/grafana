@@ -293,24 +293,31 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.
 			ResourceVersion: row.resourceVersion,
 		}
 	}
+	return readResourcesInChunks(ctx, s.backend, requests, searchReadChunkSize)
+}
 
+// readResourcesInChunks reads the requests a chunk at a time, falling back to one
+// read per object on a backend without batch reads. A backend that answers a
+// chunk with the wrong number of responses is reported as an error, because the
+// responses could no longer be matched to what was asked.
+func readResourcesInChunks(ctx context.Context, backend StorageBackend, requests []*resourcepb.ReadRequest, chunkSize int) iter.Seq[*BackendReadResponse] {
 	return func(yield func(*BackendReadResponse) bool) {
 		batchSupported := true
-		for chunk := range slices.Chunk(requests, searchReadChunkSize) {
+		for chunk := range slices.Chunk(requests, chunkSize) {
 			if !batchSupported {
 				for _, request := range chunk {
-					if !yield(s.backend.ReadResource(ctx, request)) {
+					if !yield(backend.ReadResource(ctx, request)) {
 						return
 					}
 				}
 				continue
 			}
 
-			values, err := s.backend.BatchReadResource(ctx, chunk)
+			values, err := backend.BatchReadResource(ctx, chunk)
 			if errors.Is(err, ErrBatchReadUnsupported) {
 				batchSupported = false
 				for _, request := range chunk {
-					if !yield(s.backend.ReadResource(ctx, request)) {
+					if !yield(backend.ReadResource(ctx, request)) {
 						return
 					}
 				}
