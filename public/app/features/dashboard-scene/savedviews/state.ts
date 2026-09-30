@@ -3,7 +3,9 @@ import { AdHocFiltersVariable, MultiValueVariable, type SceneVariable, type Scen
 
 import { resolveLayoutPath } from '../mutation-api/commands/layoutPathResolver';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { type RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { type TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
@@ -69,6 +71,7 @@ function captureVariable(variable: SceneVariable): SavedViewVariable | undefined
 interface SectionVariableScope {
   sectionKind: 'tab' | 'row';
   sectionKey: string;
+  sectionTitle: string | undefined;
   variables: SceneVariable[];
 }
 
@@ -86,7 +89,7 @@ function collectSectionVariableScopes(layout: DashboardLayoutManager, pathSoFar:
       const path = pathSoFar === '/' ? `/rows/${i}` : `${pathSoFar}/rows/${i}`;
       const variables = row.state.$variables?.state.variables;
       if (variables && variables.length > 0) {
-        scopes.push({ sectionKind: 'row', sectionKey: path, variables });
+        scopes.push({ sectionKind: 'row', sectionKey: path, sectionTitle: row.state.title, variables });
       }
       scopes.push(...collectSectionVariableScopes(row.state.layout, path));
     });
@@ -95,7 +98,7 @@ function collectSectionVariableScopes(layout: DashboardLayoutManager, pathSoFar:
       const path = pathSoFar === '/' ? `/tabs/${i}` : `${pathSoFar}/tabs/${i}`;
       const variables = tab.state.$variables?.state.variables;
       if (variables && variables.length > 0) {
-        scopes.push({ sectionKind: 'tab', sectionKey: path, variables });
+        scopes.push({ sectionKind: 'tab', sectionKey: path, sectionTitle: tab.state.title, variables });
       }
       scopes.push(...collectSectionVariableScopes(tab.state.layout, path));
     });
@@ -113,9 +116,10 @@ function collectSectionVariableScopes(layout: DashboardLayoutManager, pathSoFar:
  */
 function captureSectionFilters(dashboard: DashboardScene): SavedViewSectionFilter[] | undefined {
   const sectionFilters = collectSectionVariableScopes(dashboard.state.body, '/')
-    .map(({ sectionKind, sectionKey, variables }) => ({
+    .map(({ sectionKind, sectionKey, sectionTitle, variables }) => ({
       sectionKind,
       sectionKey,
+      ...(sectionTitle ? { sectionTitle } : {}),
       variables: captureVariables(variables),
     }))
     .filter((section) => section.variables.length > 0);
@@ -277,6 +281,13 @@ function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
  * longer resolves (the dashboard's tabs/rows changed since the view was saved) or a section with no
  * variable set of its own is skipped, not an error — same "unknown target is a no-op" philosophy as
  * applyVariablesToSet.
+ *
+ * sectionKey is a structural index path (e.g. "/tabs/0"): reordering, inserting, or deleting
+ * tabs/rows can leave it resolving successfully but to a DIFFERENT section than the one captured.
+ * sectionTitle is a lightweight identity check against exactly that — if the resolved section's
+ * title doesn't match what was captured, this is treated the same as a failed resolution (skipped,
+ * not applied to the wrong section). Older saved views without a captured sectionTitle (title
+ * undefined) skip the check entirely, applying unconditionally as before -- no forced re-save.
  */
 function applySectionFilters(dashboard: DashboardScene, sectionFilters: SavedViewSectionFilter[] | undefined): void {
   if (!sectionFilters) {
@@ -284,14 +295,17 @@ function applySectionFilters(dashboard: DashboardScene, sectionFilters: SavedVie
   }
 
   for (const section of sectionFilters) {
-    let variableSet: SceneVariables | undefined;
+    let item: RowItem | TabItem | undefined;
     try {
-      variableSet = resolveLayoutPath(dashboard.state.body, section.sectionKey).item?.state.$variables;
+      item = resolveLayoutPath(dashboard.state.body, section.sectionKey).item;
     } catch {
       continue;
     }
-    if (variableSet) {
-      applyVariablesToSet(variableSet, section.variables);
+    if (section.sectionTitle !== undefined && item?.state.title !== section.sectionTitle) {
+      continue;
+    }
+    if (item?.state.$variables) {
+      applyVariablesToSet(item.state.$variables, section.variables);
     }
   }
 }

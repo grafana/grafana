@@ -158,6 +158,7 @@ describe('captureSavedViewState — tab/row-scoped section filters', () => {
       {
         sectionKind: 'tab',
         sectionKey: '/tabs/0',
+        sectionTitle: 'My tab',
         variables: [{ name: 'podFilter', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'x' }] }],
       },
     ]);
@@ -196,6 +197,51 @@ describe('applySavedViewState — tab/row-scoped section filters', () => {
     scene.setState({ body: DefaultGridLayoutManager.fromVizPanels([]) });
 
     expect(() => applySavedViewState(scene, spec)).not.toThrow();
+  });
+
+  it('does not apply a saved section filter to a different tab that now resolves at the same layout path', () => {
+    // Regression test: sectionKey is a structural index path ("/tabs/0"), which can keep resolving
+    // successfully after a reorder/insert/delete, just to a DIFFERENT tab than the one captured. If
+    // that different tab happens to have a same-named ad-hoc variable, a title-unaware apply would
+    // silently overwrite it with the wrong saved value.
+    const { scene: originalScene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'saved' }]);
+    const spec = captureSavedViewState(originalScene);
+    expect(spec.sectionFilters?.[0].sectionTitle).toBe('My tab');
+
+    const { scene: reorderedScene, tab: differentTab } = buildSceneWithTabFilter([
+      { key: 'pod', operator: '=', value: 'live' },
+    ]);
+    differentTab.setState({ title: 'A totally different tab' });
+
+    applySavedViewState(reorderedScene, spec);
+
+    const podFilter = differentTab.state.$variables?.getByName('podFilter');
+    if (podFilter instanceof AdHocFiltersVariable) {
+      expect(podFilter.state.filters).toEqual([{ key: 'pod', operator: '=', value: 'live' }]); // unchanged
+    }
+  });
+
+  it('still applies unconditionally when the saved section has no captured title (backward compat)', () => {
+    const { scene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'saved' }]);
+    const spec = captureSavedViewState(scene);
+    // Simulate a view saved before sectionTitle existed, AND the tab's title having since changed
+    // -- a mismatch that would fail the check if it ran, proving it's genuinely skipped here.
+    const specWithoutTitle: SavedDashboardViewSpec = {
+      ...spec,
+      sectionFilters: spec.sectionFilters?.map(({ sectionTitle, ...rest }) => rest),
+    };
+    const tab = (scene.state.body as TabsLayoutManager).state.tabs[0];
+    tab.setState({ title: 'Renamed since this view was saved' });
+    const podFilter = tab.state.$variables?.getByName('podFilter');
+    if (podFilter instanceof AdHocFiltersVariable) {
+      podFilter.setState({ filters: [{ key: 'pod', operator: '=', value: 'live' }] });
+    }
+
+    applySavedViewState(scene, specWithoutTitle);
+
+    if (podFilter instanceof AdHocFiltersVariable) {
+      expect(podFilter.state.filters).toEqual([{ key: 'pod', operator: '=', value: 'saved' }]);
+    }
   });
 });
 
