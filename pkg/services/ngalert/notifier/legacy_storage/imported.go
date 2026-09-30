@@ -129,7 +129,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*v1.ManagedRoute, error) {
 	merge.RenameResourceUsagesInRoutes([]*v1.Route{route}, renamed)
 
 	mr := v1.NewManagedRoute(e.identifier, route)
-	mr.Provenance = models.ProvenanceConvertedPrometheus
+	mr.SetImported()
 	mr.Origin = models.ResourceOriginImported
 	return mr, nil
 }

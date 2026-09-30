@@ -12,6 +12,7 @@ import (
 	promModel "github.com/prometheus/common/model"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/provenance"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -81,7 +82,7 @@ func ConvertToK8sResource(orgID int64, r *v1.ManagedRoute, name string, namespac
 			}
 		}
 	}
-	result.SetProvenanceStatus(string(r.Provenance))
+	provenance.SetAnnotations(result, r.Provenance, r.Manager)
 	result.UID = gapiutil.CalculateClusterWideUID(result)
 	return result, nil
 }

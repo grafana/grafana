@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -23,6 +24,9 @@ type routeProvenanceStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
+	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
+	GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
+	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
 type transactionManager interface {
@@ -140,7 +144,11 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 		if err != nil {
 			return v1.ManagedRoute{}, err
 		}
-		route.Provenance = provenance
+		manager, err := nps.provenanceStore.GetManagerProperties(ctx, route, orgID)
+		if err != nil {
+			return v1.ManagedRoute{}, err
+		}
+		route.AssignManager(provenance, manager)
 	}
 
 	return *route, nil
@@ -162,6 +170,10 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 	if err != nil {
 		return nil, err
 	}
+	managers, err := nps.provenanceStore.GetAllManagerProperties(ctx, orgID, (&v1.ManagedRoute{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
 
 	managedRoutes := rev.GetManagedRoutes()
 	for _, mr := range managedRoutes {
@@ -169,7 +181,8 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 		if !ok {
 			provenance = models.ProvenanceNone
 		}
-		mr.Provenance = provenance
+		// ResourceID() is "" for the default tree (legacy root route key), not its UID.
+		mr.AssignManager(provenance, managers[mr.ResourceID()])
 	}
 
 	if nps.includeImported() {
@@ -201,7 +214,9 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 	return managedRoutes, nil
 }
 
-func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, version string, user identity.Requester) (*v1.ManagedRoute, error) {
+// UpdateManagedRoute replaces the named route. The route is persisted as managed by manager, and
+// its provenance is derived from it.
+func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, manager utils.ManagerProperties, version string, user identity.Requester) (*v1.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.update", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -250,7 +265,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	if err := nps.provenanceStatusTransitionValidator(ctx, storedProvenance, p); err != nil {
+	if err := nps.provenanceStatusTransitionValidator(ctx, storedProvenance, models.ManagerPropertiesToProvenance(manager)); err != nil {
 		return nil, err
 	}
 
@@ -258,13 +273,13 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	updated.Provenance = p
+	updated.SetManager(manager)
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return nps.provenanceStore.SetProvenance(ctx, updated, orgID, p)
+		return nps.provenanceStore.SetManagerProperties(ctx, updated, orgID, updated.Manager)
 	})
 	if err != nil {
 		return nil, err
@@ -360,7 +375,9 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	return nil
 }
 
-func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, user identity.Requester) (*v1.ManagedRoute, error) {
+// CreateManagedRoute creates the named route. The route is persisted as managed by manager, and
+// its provenance is derived from it.
+func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, manager utils.ManagerProperties, user identity.Requester) (*v1.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.create", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -372,7 +389,7 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 		return nil, err
 	}
 
-	if err := nps.provenanceStatusTransitionValidator(ctx, models.ProvenanceNone, p); err != nil {
+	if err := nps.provenanceStatusTransitionValidator(ctx, models.ProvenanceNone, models.ManagerPropertiesToProvenance(manager)); err != nil {
 		return nil, err
 	}
 
@@ -390,6 +407,7 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
+	created.SetManager(manager)
 
 	// Check if this conflicts with an imported config.
 	if nps.includeImported() {
@@ -405,7 +423,7 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.routeAccess.SetDefaultPermissions(ctx, user, created); err != nil {
 			return err
 		}
-		return nps.provenanceStore.SetProvenance(ctx, created, orgID, p)
+		return nps.provenanceStore.SetManagerProperties(ctx, created, orgID, created.Manager)
 	})
 	if err != nil {
 		return nil, err

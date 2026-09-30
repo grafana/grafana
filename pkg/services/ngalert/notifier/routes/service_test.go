@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -134,13 +135,11 @@ func TestGetManagedRoute(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, models.ProvenanceConvertedPrometheus, route.Provenance)
+		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus), route.Manager)
 		assert.Equal(t, models.ResourceOriginImported, route.Origin)
 
 		// Provenance store should NOT have been called for imported routes.
-		for _, call := range provStore.Calls {
-			assert.NotEqual(t, "GetProvenance", call.MethodName,
-				"provenance store should not be queried for imported routes")
-		}
+		assert.Empty(t, provStore.Calls, "provenance store should not be queried for imported routes")
 	})
 
 	t.Run("grafana route uses provenance from store", func(t *testing.T) {
@@ -154,6 +153,10 @@ func TestGetManagedRoute(t *testing.T) {
 		provStore.GetProvenanceFunc = func(_ context.Context, _ models.Provisionable, _ int64) (models.Provenance, error) {
 			return models.ProvenanceAPI, nil
 		}
+		terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
+		provStore.GetManagerPropertiesFunc = func(_ context.Context, _ models.Provisionable, _ int64) (utils.ManagerProperties, error) {
+			return terraform, nil
+		}
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
@@ -162,10 +165,12 @@ func TestGetManagedRoute(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, models.ProvenanceAPI, route.Provenance)
+		assert.Equal(t, terraform, route.Manager)
 		assert.Equal(t, models.ResourceOriginGrafana, route.Origin)
 
-		require.Len(t, provStore.Calls, 1)
+		require.Len(t, provStore.Calls, 2)
 		assert.Equal(t, "GetProvenance", provStore.Calls[0].MethodName)
+		assert.Equal(t, "GetManagerProperties", provStore.Calls[1].MethodName)
 	})
 
 	t.Run("propagates provenance store error for grafana route", func(t *testing.T) {
@@ -265,6 +270,39 @@ func TestGetManagedRoutes(t *testing.T) {
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 
+	t.Run("assigns the stored manager to each route's metadata", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
+				return rev, nil
+			},
+		}
+		terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
+		provStore := fakes.NewFakeProvisioningStore()
+		provStore.GetProvenancesFunc = func(_ context.Context, _ int64, _ string) (map[string]models.Provenance, error) {
+			return map[string]models.Provenance{"": models.ProvenanceAPI, "route-a": models.ProvenanceFile}, nil
+		}
+		// The provisioning store keys the default tree by "" (the legacy root route), not its UID.
+		provStore.GetAllManagerPropertiesFunc = func(_ context.Context, _ int64, _ string) (map[string]utils.ManagerProperties, error) {
+			return map[string]utils.ManagerProperties{"": terraform}, nil
+		}
+		sut := createServiceSut(configStore, provStore, featuremgmt.WithFeatures(), &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
+
+		routes, err := sut.GetManagedRoutes(context.Background(), orgID, usr)
+		require.NoError(t, err)
+
+		byUID := make(map[string]*v1.ManagedRoute, len(routes))
+		for _, r := range routes {
+			byUID[r.GetUID()] = r
+		}
+		require.Contains(t, byUID, models.DefaultRoutingTreeName)
+		assert.Equal(t, terraform, byUID[models.DefaultRoutingTreeName].Manager)
+		assert.Equal(t, models.ProvenanceAPI, byUID[models.DefaultRoutingTreeName].Provenance)
+		require.Contains(t, byUID, "route-a")
+		// Without a stored manager, it is derived from the provenance.
+		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), byUID["route-a"].Manager)
+	})
+
 	t.Run("filters out routes the user does not have access to", func(t *testing.T) {
 		rev := configRevisionWithManagedRoutes()
 		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
@@ -348,7 +386,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, utils.ManagerProperties{}, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 	t.Run("sets default permissions when create", func(t *testing.T) {
@@ -369,7 +407,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		}
 		sut := createServiceSut(configStore, provStore, features, authz)
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, utils.ManagerProperties{}, user)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"AuthorizeCreate", "SetDefaultPermissions"}, authz.Calls.Methods())
 	})
@@ -385,7 +423,7 @@ func TestUpdateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
 
-		_, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
+		_, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, v1.Route{Receiver: "grafana-default"}, utils.ManagerProperties{}, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }
@@ -481,7 +519,7 @@ func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
 		current, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
 		require.NoError(t, err)
 
-		updated, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "empty"}, models.ProvenanceNone, current.Version, user)
+		updated, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "empty"}, utils.ManagerProperties{}, current.Version, user)
 		require.NoError(t, err)
 		assert.Equal(t, models.DefaultRoutingTreeName, updated.GetUID())
 		// The root route was modified in place; no managed route was created under the alias.
@@ -504,7 +542,7 @@ func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
 		rev := configRevisionWithManagedRoutes()
 		sut := newSut(rev, featuremgmt.WithFeatures(), &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "grafana-default"}, utils.ManagerProperties{}, user)
 		require.ErrorIs(t, err, models.ErrRouteExists)
 		assert.NotContains(t, rev.Config.ManagedRoutes, models.DefaultRoutingTreeNameAlias)
 	})
