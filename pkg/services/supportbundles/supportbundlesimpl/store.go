@@ -10,8 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -50,10 +49,7 @@ type bundleStore interface {
 }
 
 func (s *store) Create(ctx context.Context, usr identity.Requester) (*supportbundles.Bundle, error) {
-	uid, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
-	}
+	uid := uuid.NewV4()
 
 	bundle := supportbundles.Bundle{
 		UID:       uid.String(),

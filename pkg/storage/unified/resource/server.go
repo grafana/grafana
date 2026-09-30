@@ -11,10 +11,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"uuid"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/bwmarrin/snowflake"
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -763,7 +763,7 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 	return blobstore, nil
 }
 
-var _ ResourceServer = &server{}
+var _ ResourceServer = (*server)(nil)
 
 type server struct {
 	log                       log.Logger
@@ -1036,7 +1036,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		Value:  value,
 		Key:    key,
 		Object: obj,
-		GUID:   uuid.New().String(),
+		GUID:   uuid.NewV4().String(),
 	}
 
 	if oldValue == nil {
@@ -1490,7 +1490,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
 		PreviousRV: req.ResourceVersion,
-		GUID:       uuid.New().String(),
+		GUID:       uuid.NewV4().String(),
 	}
 	marker := &unstructured.Unstructured{}
 	err = json.Unmarshal(latest.Value, marker)
@@ -2638,9 +2638,9 @@ func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchR
 // search backend and the vector backend live.
 func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
 	// Unimplemented (not a bare error) so API-layer callers can map a
-	// search-disabled server to 501, same as an unconfigured vector store.
+	// search-disabled server to 501.
 	if s.search == nil {
-		return nil, status.Error(codes.Unimplemented, "hybrid search is not configured")
+		return nil, status.Error(codes.Unimplemented, "search index not configured")
 	}
 	return s.search.HybridSearch(ctx, req)
 }

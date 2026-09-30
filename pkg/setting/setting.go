@@ -704,6 +704,7 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage                        map[string]UnifiedStorageConfig
+	UnifiedStorageClusterSlug             string
 	UnifiedStorageAuthzExemptionEnabled   bool
 	UnifiedStorageAuthzExemptResources    []string
 	UnifiedStorageGRPCErrorResultToStatus bool

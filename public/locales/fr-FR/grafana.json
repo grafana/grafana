@@ -13225,6 +13225,12 @@
       "query": {
         "add": "Ajoutez une requête",
         "run": "Exécutez la requête"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13308,7 +13314,9 @@
       "redo-action": "Rétablir : {{action}}",
       "remove-query": "Supprimez la requête",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Sélectionnez la requête",
+      "set-cell-time-range": "",
       "split-block": "Fractionner le bloc",
       "switch-datasource": "Changer de source de données",
       "undo": "Annuler",
@@ -15864,8 +15872,7 @@
       "deleted-by-removed": "Compte supprimé",
       "deleted-by-unknown-short": "<0></0> Inconnu",
       "deleted-by-unknown-tooltip": "Impossible de trouver le compte ayant supprimé ce tableau de bord",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Temps restant",
+      "deleted-header": "",
       "location-header": "Emplacement",
       "name-header": "Nom",
       "tags-header": "Balises",

@@ -15,8 +15,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -99,7 +99,7 @@ func TestNewLeaseHolder(t *testing.T) {
 
 func requireValidLeaseHolderUUID(t *testing.T, holder string) string {
 	t.Helper()
-	uuidLength := len(uuid.Nil.String())
+	uuidLength := len(uuid.Nil().String())
 	require.Greater(t, len(holder), uuidLength+1)
 	separatorIndex := len(holder) - uuidLength - 1
 	require.Equal(t, byte('-'), holder[separatorIndex])
