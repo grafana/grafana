@@ -1,3 +1,4 @@
+import { dateTime, type TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { GraphiteDatasource } from '../datasource';
@@ -9,7 +10,7 @@ import {
   getTagsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { createStore } from '../state/store';
+import { createStore, type GraphiteQueryEditorState } from '../state/store';
 import { type GraphiteSegment } from '../types';
 
 const mockPublish = jest.fn();
@@ -178,6 +179,42 @@ describe('Graphite actions', () => {
       expect(ctx.state.target.target).toBe('new.metrics.*');
       expect(ctx.state.segments[0].value).toBe('new');
       expect(ctx.state.segments[1].value).toBe('metrics');
+    });
+  });
+
+  describe('when actions are dispatched before init finishes', () => {
+    it('should ignore them without throwing and apply queries dispatched after init', async () => {
+      let resolveFuncDefs: (value: unknown) => void = () => {};
+      ctx.datasource.waitForFuncDefsLoaded = jest.fn(() => new Promise((resolve) => (resolveFuncDefs = resolve)));
+      let state = {} as GraphiteQueryEditorState;
+      const dispatch = createStore((newState) => {
+        state = newState;
+      });
+
+      const init = dispatch(
+        actions.init({
+          datasource: ctx.datasource,
+          target: { refId: 'A', target: 'test.prod.*' },
+          refresh: jest.fn(),
+          queries: [],
+          //@ts-ignore
+          templateSrv: getTemplateSrv(),
+        })
+      );
+      const range: TimeRange = { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } };
+      await dispatch(actions.timeRangeChanged(range));
+      await dispatch(actions.queryChanged({ refId: 'A', target: 'new.metrics.*' }));
+      await dispatch(actions.queriesChanged([]));
+      expect(state.queryModel).toBeUndefined();
+      expect(state.range).toBe(range);
+
+      resolveFuncDefs(null);
+      await init;
+      expect(state.target.target).toBe('test.prod.*');
+
+      await dispatch(actions.queryChanged({ refId: 'A', target: 'new.metrics.*' }));
+      expect(state.target.target).toBe('new.metrics.*');
+      expect(state.segments[0].value).toBe('new');
     });
   });
 

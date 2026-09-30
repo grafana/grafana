@@ -69,6 +69,10 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   if (actions.timeRangeChanged.match(action)) {
     state.range = action.payload;
   }
+  // Actions can be dispatched while init is still waiting for function definitions to load
+  if (!state.queryModel) {
+    return state;
+  }
   if (actions.queriesChanged.match(action)) {
     state.queries = action.payload;
     handleTargetChanged(state);

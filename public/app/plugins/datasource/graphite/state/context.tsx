@@ -1,5 +1,14 @@
 import { type AnyAction } from '@reduxjs/toolkit';
-import { createContext, type Dispatch, type PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  type Dispatch,
+  type PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { usePrevious } from 'react-use';
 
 import { type QueryEditorProps } from '@grafana/data';
@@ -35,6 +44,8 @@ export const GraphiteQueryEditorContext = ({
 }: PropsWithChildren<GraphiteQueryEditorProps>) => {
   const [state, setState] = useState<GraphiteQueryEditorState>();
   const [needsRefresh, setNeedsRefresh] = useState<boolean>(false);
+  const initDispatched = useRef(false);
+  const initialized = Boolean(state?.queryModel);
 
   const dispatch = useMemo(() => {
     return createStore((state) => {
@@ -52,7 +63,7 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (state) {
+      if (initialized) {
         dispatch(actions.queriesChanged(queries));
       }
     },
@@ -63,18 +74,18 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (state && state.target?.target !== query.target) {
+      if (initialized && state?.target?.target !== query.target) {
         dispatch(actions.queryChanged(query));
       }
     },
     // adding state to dependencies causes infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, query]
+    [dispatch, query, initialized]
   );
 
   useEffect(
     () => {
-      if (needsRefresh && state) {
+      if (needsRefresh && state?.queryModel) {
         setNeedsRefresh(false);
         onChange({ ...query, target: state.target.target, targetFull: state.target.targetFull });
         onRunQuery();
@@ -85,7 +96,11 @@ export const GraphiteQueryEditorContext = ({
     [needsRefresh, JSON.stringify(query)]
   );
 
-  if (!state) {
+  if (!state?.queryModel) {
+    if (initDispatched.current) {
+      return null;
+    }
+    initDispatched.current = true;
     dispatch(
       actions.init({
         target: { ...query },
