@@ -592,6 +592,7 @@ func checkCapability(fs *fieldSet, name string, cap resource.SearchCapability, p
 
 func newRequest(gvr schema.GroupVersionResource, namespace string) *resourcepb.ResourceSearchRequest {
 	return &resourcepb.ResourceSearchRequest{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Group:     gvr.Group,

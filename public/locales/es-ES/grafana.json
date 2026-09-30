@@ -13225,6 +13225,12 @@
       "query": {
         "add": "Añadir consulta",
         "run": "Ejecutar consulta"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13308,7 +13314,9 @@
       "redo-action": "Rehacer: {{action}}",
       "remove-query": "Eliminar consulta",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Seleccionar consulta",
+      "set-cell-time-range": "",
       "split-block": "Dividir bloque",
       "switch-datasource": "Cambiar fuente de datos",
       "undo": "Deshacer",
@@ -15864,8 +15872,7 @@
       "deleted-by-removed": "Cuenta eliminada",
       "deleted-by-unknown-short": "<0></0> Desconocido",
       "deleted-by-unknown-tooltip": "Error al buscar la cuenta que eliminó este dashboard",
-      "deleted-less-than-1-min": "<1 min",
-      "deleted-remaining-header": "Tiempo restante",
+      "deleted-header": "",
       "location-header": "Ubicación",
       "name-header": "Nombre",
       "tags-header": "Etiquetas",

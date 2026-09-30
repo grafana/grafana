@@ -71,7 +71,7 @@ type amReceiverStatusFetcher interface {
 // ReceiverService instances that never need to serve AM-derived receiver status, e.g. file-based provisioning.
 type NoopReceiverStatusFetcher struct{}
 
-var _ amReceiverStatusFetcher = &NoopReceiverStatusFetcher{}
+var _ amReceiverStatusFetcher = (*NoopReceiverStatusFetcher)(nil)
 
 func (NoopReceiverStatusFetcher) GetReceiverStatuses(_ context.Context, _ int64) ([]alertingModels.ReceiverStatus, error) {
 	return nil, nil

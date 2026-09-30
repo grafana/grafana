@@ -1,10 +1,15 @@
+import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { type PluginExtensionEventHelpers, PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionPoints } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
+import { configureStore } from 'app/store/configureStore';
+
+import { initialExploreState } from '../state/main';
+import { makeExplorePaneState } from '../state/utils';
 
 import { getExploreExtensionConfigs } from './getExploreExtensionConfigs';
 
@@ -103,8 +108,10 @@ describe('getExploreExtensionConfigs', () => {
         context: { exploreId: 'left' },
         extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
         openModal,
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the handler reads only these three
-      } as unknown as PluginExtensionEventHelpers<{ exploreId: string }>);
+        openSidebar: jest.fn(),
+        closeSidebar: jest.fn(),
+        toggleSidebar: jest.fn(),
+      });
 
       expect(openModal).toHaveBeenCalledWith(
         expect.objectContaining({ title: addPanelToNotebookTitle(), width: ADD_PANEL_MODAL_WIDTH })
@@ -136,6 +143,33 @@ describe('getExploreExtensionConfigs', () => {
       const [extension] = extensions;
 
       expect(extension?.configure?.(undefined)).toEqual({});
+    });
+
+    it('opens the dashboard form for the clicked pane and dismisses it', async () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      const openModal = jest.fn();
+      const onDismiss = jest.fn();
+      const [extension] = getExploreExtensionConfigs();
+      const store = configureStore({
+        explore: { ...initialExploreState, panes: { right: makeExplorePaneState() } },
+      });
+
+      extension.onClick?.(undefined, {
+        context: { exploreId: 'right' },
+        extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+        openModal,
+        openSidebar: jest.fn(),
+        closeSidebar: jest.fn(),
+        toggleSidebar: jest.fn(),
+      });
+
+      expect(openModal).toHaveBeenCalledWith(expect.objectContaining({ title: 'Add panel to dashboard' }));
+
+      const ModalBody = openModal.mock.calls[0][0].body;
+      render(<ModalBody onDismiss={onDismiss} />, { store });
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+      expect(onDismiss).toHaveBeenCalledTimes(1);
     });
   });
 });
