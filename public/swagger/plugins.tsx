@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useRef } from 'react';
-
-import { CodeEditor, type Monaco } from '@grafana/ui';
+import { createContext, lazy, Suspense, useContext, useEffect, useMemo, useRef } from 'react';
 
 import { K8sNameLookup } from './K8sNameLookup';
+
+const SchemaEditor = lazy(() => import('./SchemaEditor'));
 
 // swagger does not have types
 interface UntypedProps {
@@ -40,6 +40,32 @@ function NamespaceInput({ Original, ...props }: UntypedProps & { Original: React
   return <Original {...props} />;
 }
 
+function RequestBodyWithSchema({ Original, ...props }: UntypedProps & { Original: React.ElementType }) {
+  const schema = useMemo<SchemaType>(() => {
+    const content = props.requestBody.get('content');
+    const mime = content?.get('application/json') ?? content?.get('*/*');
+    return mime?.get('schema')?.toJS();
+  }, [props.requestBody]);
+
+  return (
+    <SchemaContext.Provider value={schema}>
+      <Original {...props} />
+    </SchemaContext.Provider>
+  );
+}
+
+function ModelExampleWithSchema({ Original, ...props }: UntypedProps & { Original: React.ElementType }) {
+  const schema = useMemo<SchemaType>(() => props.schema?.toJS(), [props.schema]);
+  if (props.isExecute && schema) {
+    return (
+      <SchemaContext.Provider value={schema}>
+        <Original {...props} />
+      </SchemaContext.Provider>
+    );
+  }
+  return <Original {...props} />;
+}
+
 /* eslint-disable react/display-name */
 export const WrappedPlugins = function () {
   return {
@@ -60,7 +86,6 @@ export const WrappedPlugins = function () {
             if (info.namespaced) {
               info.resource = path[6];
             }
-            // console.log('NAME (in path)', path, info);
             return (
               <ResourceContext.Provider value={info}>
                 <Original {...props} />
@@ -73,34 +98,13 @@ export const WrappedPlugins = function () {
 
       // https://github.com/swagger-api/swagger-ui/blob/v5.17.14/src/core/components/parameters/parameters.jsx#L235
       // https://github.com/swagger-api/swagger-ui/blob/v5.17.14/src/core/plugins/oas3/components/request-body.jsx#L35
-      RequestBody: (Original: React.ElementType) => (props: UntypedProps) => {
-        let v: SchemaType = undefined;
-        const content = props.requestBody.get('content');
-        if (content) {
-          let mime = content.get('application/json') ?? content.get('*/*');
-          if (mime) {
-            v = mime.get('schema').toJS();
-          }
-          // console.log('RequestBody', v, mime, props);
-        }
-        return (
-          <SchemaContext.Provider value={v}>
-            <Original {...props} />
-          </SchemaContext.Provider>
-        );
-      },
+      RequestBody: (Original: React.ElementType) => (props: UntypedProps) => (
+        <RequestBodyWithSchema Original={Original} {...props} />
+      ),
 
-      modelExample: (Original: React.ElementType) => (props: UntypedProps) => {
-        if (props.isExecute && props.schema) {
-          console.log('modelExample PROPS', props);
-          return (
-            <SchemaContext.Provider value={props.schema.toJS()}>
-              <Original {...props} />
-            </SchemaContext.Provider>
-          );
-        }
-        return <Original {...props} />;
-      },
+      modelExample: (Original: React.ElementType) => (props: UntypedProps) => (
+        <ModelExampleWithSchema Original={Original} {...props} />
+      ),
 
       JsonSchemaForm: (Original: React.ElementType) => (props: UntypedProps) => {
         const { description, disabled, required, onChange, value } = props;
@@ -121,45 +125,15 @@ export const WrappedPlugins = function () {
       TextArea: (Original: React.ElementType) => (props: UntypedProps) => {
         return (
           <SchemaContext.Consumer>
-            {(schema) => {
-              if (schema) {
-                const val = props.value ?? props.defaultValue ?? '';
-                //console.log('JSON TextArea', props, info);
-                // Return a synthetic text area event
-                const cb = (txt: string) => {
-                  props.onChange({
-                    target: {
-                      value: txt,
-                    },
-                  });
-                };
-                console.log('CodeEditor', schema);
-
-                return (
-                  <CodeEditor
-                    value={val}
-                    height={300}
-                    language="application/json"
-                    showMiniMap={val.length > 500}
-                    onBlur={cb}
-                    onSave={cb}
-                    onBeforeEditorMount={(monaco: Monaco) => {
-                      monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-                        validate: true,
-                        schemas: [
-                          {
-                            uri: schema['$$ref'] ?? '#internal',
-                            fileMatch: ['*'], // everything
-                            schema: schema,
-                          },
-                        ],
-                      });
-                    }}
-                  />
-                );
-              }
-              return <Original {...props} />;
-            }}
+            {(schema) =>
+              schema ? (
+                <Suspense fallback={<Original {...props} />}>
+                  <SchemaEditor {...props} onChange={props.onChange} schema={schema} />
+                </Suspense>
+              ) : (
+                <Original {...props} />
+              )
+            }
           </SchemaContext.Consumer>
         );
       },
