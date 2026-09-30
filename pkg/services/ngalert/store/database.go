@@ -72,7 +72,7 @@ func ProvideDBStore(
 		// database" apart from "identity provider" and keep the folder-key read on sess.
 		// legacyDatabaseProvider still supplies bare table names on demand when this is nil.
 	}
-	if err := folderService.RegisterService(store); err != nil {
+	if err := folderService.RegisterService(&store); err != nil {
 		return nil, err
 	}
 	return &store, nil
