@@ -201,6 +201,7 @@ receivers:
 			ResourceMetadata: v1.ResourceMetadata{
 				UID:        v1.RouteUID(extra.Identifier),
 				Provenance: models.ProvenanceConvertedPrometheus,
+				Manager:    models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus),
 			},
 			Receiver: "r1",
 			Routes: []*v1.Route{
@@ -245,6 +246,7 @@ mute_time_intervals:
 			ResourceMetadata: v1.ResourceMetadata{
 				UID:        v1.RouteUID(extra.Identifier),
 				Provenance: models.ProvenanceConvertedPrometheus,
+				Manager:    models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus),
 			},
 			Receiver: "receiver1" + expectedDedupSuffix,
 			Routes: []*v1.Route{
