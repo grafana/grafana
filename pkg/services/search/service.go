@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	grafanasort "github.com/grafana/grafana/pkg/services/search/sort"
@@ -21,7 +22,8 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
 
-func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starClient starapi.K8sClients, dashboardService dashboards.DashboardService, folderService folder.Service, sortService grafanasort.Service) *SearchService {
+// Keep the unused feature toggle argument so the Enterprise Wire output remains compatible.
+func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starClient starapi.K8sClients, dashboardService dashboards.DashboardService, folderService folder.Service, _ featuremgmt.FeatureToggles, sortService grafanasort.Service) *SearchService {
 	s := &SearchService{
 		Cfg:              cfg,
 		sqlstore:         sqlstore,
