@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
-import { type DataTransformerConfig, type PanelData } from '@grafana/data';
+import { type DataFrame, type DataTransformerConfig, type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { DataTopic } from '@grafana/schema';
 import { Alert, ErrorBoundaryAlert } from '@grafana/ui';
 
 import {
@@ -15,7 +16,10 @@ import { TransformationEditor } from './TransformationEditor';
 import { TransformationFilterEditor } from './TransformationFilterDisplay';
 import { TransformationHelpDisplay } from './TransformationHelpDisplay';
 import { useTransformationInputData } from './hooks/useTransformationInputData';
+import { transformationTopic } from './hooks/useTransformedFrames';
 import { type Transformation } from './types';
+
+const NO_FRAMES: DataFrame[] = [];
 
 interface TransformationEditorPanelProps {
   transformation: Transformation | null;
@@ -32,7 +36,11 @@ export function TransformationEditorPanel({
   updateTransformation,
   showSupplementalDisplays = false,
 }: TransformationEditorPanelProps) {
-  const rawData = useMemo(() => data?.series ?? [], [data]);
+  const isAnnotationTopic = transformation ? transformationTopic(transformation) === DataTopic.Annotations : false;
+  const rawData = useMemo(
+    () => (isAnnotationTopic ? data?.annotations : data?.series) ?? NO_FRAMES,
+    [data, isAnnotationTopic]
+  );
 
   const inputData = useTransformationInputData({
     selectedTransformation: transformation,

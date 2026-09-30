@@ -15,6 +15,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { DataTopic } from '@grafana/schema';
 import { ConfirmModal } from '@grafana/ui';
 import {
   QueryOperationAction,
@@ -112,6 +113,11 @@ export const TransformationOperationRow = ({
 
   useEffect(() => {
     const config = configs[index].transformation;
+    // The pipeline runs each topic over its own frames, so this transformation is described against
+    // the frames of its topic, preceded only by the transformations that share it.
+    const isAnnotations = config.topic === DataTopic.Annotations;
+    const topicFrames = (isAnnotations ? data.annotations : data.series) ?? [];
+    const sharesTopic = (other: DataTransformerConfig) => (other.topic === DataTopic.Annotations) === isAnnotations;
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     // we need previous transformation index to get its outputs
     //    to be used in this transforms inputs
@@ -121,11 +127,20 @@ export const TransformationOperationRow = ({
     let prevOutputTransforms: Array<DataTransformerConfig<{}>> = [];
 
     if (prevTransformIndex >= 0) {
-      prevInputTransforms = configs.slice(0, prevTransformIndex).map((t) => t.transformation);
-      prevOutputTransforms = configs.slice(prevTransformIndex, index).map((t) => t.transformation);
+      prevInputTransforms = configs
+        .slice(0, prevTransformIndex)
+        .map((t) => t.transformation)
+        .filter(sharesTopic);
+      prevOutputTransforms = configs
+        .slice(prevTransformIndex, index)
+        .map((t) => t.transformation)
+        .filter(sharesTopic);
     }
 
-    const inputTransforms = configs.slice(0, index).map((t) => t.transformation);
+    const inputTransforms = configs
+      .slice(0, index)
+      .map((t) => t.transformation)
+      .filter(sharesTopic);
     const outputTransforms = configs.slice(index, index + 1).map((t) => t.transformation);
 
     const ctx: DataTransformContext = {
@@ -134,7 +149,7 @@ export const TransformationOperationRow = ({
 
     const applyFilter = (frames: DataFrame[]) => (matcher ? frames.filter((frame) => matcher(frame)) : frames);
 
-    const inputSubscription = transformDataFrame(inputTransforms, data.series, ctx).subscribe((data) => {
+    const inputSubscription = transformDataFrame(inputTransforms, topicFrames, ctx).subscribe((data) => {
       setInput(applyFilter(data));
     });
 
@@ -154,20 +169,21 @@ export const TransformationOperationRow = ({
         filter: undefined,
         disabled: undefined,
       };
-      generatedRefIdSubscription = transformDataFrame(inputTransforms, data.series, ctx)
+      generatedRefIdSubscription = transformDataFrame(inputTransforms, topicFrames, ctx)
         .pipe(mergeMap((before) => transformDataFrame([previewConfig], applyFilter(before), ctx)))
         // More than one frame means there is no single output to name, so the row shows "(Auto)".
         .subscribe((frames) => setGeneratedRefId(frames.length === 1 ? frames[0].refId : undefined));
     }
-    const outputSubscription = transformDataFrame(inputTransforms, data.series, ctx)
+    const outputSubscription = transformDataFrame(inputTransforms, topicFrames, ctx)
       .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
       .subscribe(setOutput);
-    const prevOutputSubscription = transformDataFrame(prevInputTransforms, data.series, ctx)
+    const prevOutputSubscription = transformDataFrame(prevInputTransforms, topicFrames, ctx)
       .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
       .subscribe((result) => {
         let mergedResult = [...result];
         // add refIds that were requested even if they did not return a result
-        data.request?.targets.forEach((series) => {
+        // Requested refIds are series queries; annotation frames do not come from them.
+        (isAnnotations ? [] : (data.request?.targets ?? [])).forEach((series) => {
           const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
           if (!refIdInResult) {
             mergedResult.push({ refId: series.refId, fields: [], length: 0 });

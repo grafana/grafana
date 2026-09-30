@@ -444,4 +444,17 @@ describe('precedingTransformations', () => {
 
     expect(precedingTransformations(selected, [annotations, series, selected])).toEqual([series.transformConfig]);
   });
+
+  it('keeps only annotation-topic transformations when asked for the annotation pipeline', () => {
+    const annotations = {
+      ...makeTransformation('filterByRefId'),
+      transformConfig: { id: 'filterByRefId', options: {}, topic: DataTopic.Annotations },
+    };
+    const series = makeTransformation('organize');
+    const selected = makeTransformation('reduce');
+
+    expect(precedingTransformations(selected, [annotations, series, selected], DataTopic.Annotations)).toEqual([
+      annotations.transformConfig,
+    ]);
+  });
 });
