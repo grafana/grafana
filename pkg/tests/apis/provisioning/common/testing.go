@@ -1611,6 +1611,16 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 	}
 }
 
+// WithKeysOnlyReList sets [provisioning] keys_only_relist, so the connection
+// informer's periodic re-list asks storage for keys instead of whole objects.
+// Off by default in Grafana, so a test that wants the keys path must say so, and
+// the tests that do not keep covering the full-object path.
+func WithKeysOnlyReList() GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningKeysOnlyReList = true
+	}
+}
+
 // WithProvisioningHistoryExpiration overrides [provisioning] history_expiration,
 // which is both the HistoricJob retention and the historic-job informer's
 // resync. A short value lets tests exercise the re-list-driven cleanup quickly.

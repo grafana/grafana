@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Vyberte vlastní jmenný prostor",
+      "aria-label-select-dimension-name": "",
+      "aria-label-select-metric-name": "",
       "aria-label-select-namespace": "Vyberte jmenný prostor",
       "aria-label-select-query-type": "Vyberte typ dotazu",
       "aria-label-select-region": "Vyberte oblast",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "Vyberte skupinu zdrojů",
       "aria-label-select-subscription": "Vyberte předplatné",
       "label-custom-namespace": "Vlastní jmenný prostor",
+      "label-dimension-name": "",
+      "label-metric-name": "",
       "label-namespace": "Jmenný prostor",
       "label-query-type": "Typ dotazu",
       "label-region": "Oblast",

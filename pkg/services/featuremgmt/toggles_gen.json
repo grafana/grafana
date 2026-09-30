@@ -406,7 +406,8 @@
       "metadata": {
         "name": "alertingImportYAMLUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-05-21T15:59:41Z"
+        "creationTimestamp": "2025-05-21T15:59:41Z",
+        "deletionTimestamp": "2026-09-23T18:37:49Z"
       },
       "spec": {
         "description": "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
