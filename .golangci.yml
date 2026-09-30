@@ -60,6 +60,8 @@ linters:
           files:
             - '**/apps/playlist/*'
             - '**/apps/playlist/**/*'
+            - '!**/pkg/registry/apps/playlist/*'
+            - '!**/pkg/registry/apps/playlist/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/playlist is not allowed to import grafana core
