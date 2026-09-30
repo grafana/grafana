@@ -42,9 +42,8 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore/versionpolicy"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
 
 var updateRetryConfig = backoff.Config{
@@ -132,7 +131,7 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store          resource.ResourceClient
+	store          resourceclient.ResourceClient
 	getKey         func(string) (*resourcepb.ResourceKey, error)
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
@@ -162,7 +161,7 @@ type RestConfigProvider interface {
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
-	store resource.ResourceClient,
+	store resourceclient.ResourceClient,
 	keyFunc func(obj runtime.Object) (string, error),
 	keyParser func(key string) (*resourcepb.ResourceKey, error),
 	newFunc func() runtime.Object,
@@ -357,12 +356,12 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	rsp, err := s.store.Create(ctx, req)
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
-		resErr := resource.AsErrorResult(err)
+	if err := resourceclient.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		resErr := resourceclient.AsErrorResult(err)
 		if resErr.Code == http.StatusConflict {
 			err = storage.NewKeyExistsError(key, 0)
 		} else {
-			err = resource.GetError(resErr)
+			err = resourceclient.GetError(resErr)
 		}
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
@@ -457,13 +456,13 @@ func (s *Storage) Delete(
 
 		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
 		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
+			return resourceclient.GetError(resourceclient.AsErrorResult(err))
 		}
 		rsp, err := s.store.Delete(ctx, cmd)
-		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		if err := resourceclient.ErrorFromResponse(rsp.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.GetError(resource.AsErrorResult(err))
+			err = resourceclient.GetError(resourceclient.AsErrorResult(err))
 			if retryable {
 				lastErr = err
 				bo.Wait()
@@ -514,7 +513,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			return watch.NewEmptyWatch(), nil
 		}
 
-		return nil, resource.GetError(resource.AsErrorResult(err))
+		return nil, resourceclient.GetError(resourceclient.AsErrorResult(err))
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
@@ -549,15 +548,15 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	}
 
 	rsp, err := s.store.Read(ctx, req)
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
-		resErr := resource.AsErrorResult(err)
+	if err := resourceclient.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		resErr := resourceclient.AsErrorResult(err)
 		if resErr.Code == http.StatusNotFound {
 			if opts.IgnoreNotFound {
 				return runtime.SetZeroValue(objPtr)
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return resource.GetError(resErr)
+		return resourceclient.GetError(resErr)
 	}
 
 	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
@@ -588,10 +587,10 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
+		return resourceclient.GetError(resourceclient.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
-		return resource.GetError(rsp.Error)
+		return resourceclient.GetError(rsp.Error)
 	}
 
 	if err := s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
@@ -750,10 +749,10 @@ func (s *Storage) GuaranteedUpdate(
 	for bo.Ongoing() {
 		// Read the latest value
 		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
-		if err := resource.ErrorFromResponse(readResponse.GetError(), err); err != nil {
-			resErr := resource.AsErrorResult(err)
+		if err := resourceclient.ErrorFromResponse(readResponse.GetError(), err); err != nil {
+			resErr := resourceclient.AsErrorResult(err)
 			if resErr.Code != http.StatusNotFound {
-				return resource.GetError(resErr)
+				return resourceclient.GetError(resErr)
 			}
 			if !ignoreNotFound {
 				return apierrors.NewNotFound(s.gr, req.Key.Name)
@@ -818,10 +817,10 @@ func (s *Storage) GuaranteedUpdate(
 		req.Value = v.raw
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
-		if err = resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
+		if err = resourceclient.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.GetError(resource.AsErrorResult(err))
+			err = resourceclient.GetError(resourceclient.AsErrorResult(err))
 			if retryable {
 				// Delete the secure values this attempt created; the next attempt recreates them.
 				// finish only echoes the conflict back and logs any cleanup failure itself, so we
@@ -854,7 +853,7 @@ func (s *Storage) GuaranteedUpdate(
 }
 
 func isRetryableStorageError(err error) bool {
-	return resource.IsConflict(err)
+	return resourceclient.IsConflict(err)
 }
 
 func retriesExhausted(ctx context.Context, bo *backoff.Backoff, lastErr error) error {
@@ -911,12 +910,12 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	// RVs may be in either snowflake or microsecond format depending
 	// on which backend produced them.
 	rvMin := int64(minimumRV)
-	if !resource.IsSnowflake(rvMin) {
-		rvMin = rvmanager.SnowflakeFromRV(rvMin)
+	if !resourceclient.IsSnowflake(rvMin) {
+		rvMin = resourceclient.SnowflakeFromRV(rvMin)
 	}
 	rvActual := int64(actualRevision)
-	if !resource.IsSnowflake(rvActual) {
-		rvActual = rvmanager.SnowflakeFromRV(rvActual)
+	if !resourceclient.IsSnowflake(rvActual) {
+		rvActual = resourceclient.SnowflakeFromRV(rvActual)
 	}
 
 	// Enforce the storage.Interface guarantee that the resource version of the returned data
