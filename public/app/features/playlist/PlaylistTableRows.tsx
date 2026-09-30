@@ -112,7 +112,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                   data-testid={selectors.pages.PlaylistForm.itemDelete}
                   tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
                 />
-                <div {...provided.dragHandleProps}>
+                <div className={styles.iconContainer} {...provided.dragHandleProps}>
                   <Icon
                     title={t('playlist-edit.form.table-drag', 'Reorder playlist item')}
                     name="draggabledots"
@@ -135,6 +135,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       display: 'flex',
+      height: theme.spacing(theme.components.height.md),
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: '3px',
@@ -143,6 +144,9 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         border: `1px solid ${theme.colors.border.strong}`,
       },
+    }),
+    iconContainer: css({
+      display: 'inline-flex',
     }),
     rightMargin: css({
       marginRight: '5px',
