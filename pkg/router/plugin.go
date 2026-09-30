@@ -42,8 +42,8 @@ type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client
 
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
-	PluginClient       plugins.Client
-	ContextProvider    appplugin.PluginContextWrapper
+	PluginClient    plugins.Client
+	ContextProvider appplugin.PluginContextWrapper
 	// IDTokenDeriver mints X-Grafana-Id from a requester's OBO access token when
 	// the requester carries no id token of its own. Only the cloud loader sets
 	// this (see ProvideCloudRoutesLoaderFactory); the embedded router runs where
