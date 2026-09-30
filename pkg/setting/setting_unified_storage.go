@@ -169,6 +169,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
+	cfg.UnifiedStorageClusterSlug = strings.TrimSpace(section.Key("cluster_slug").String())
 	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.MigrationChunkedWrites = section.Key("migration_chunked_writes").MustBool(false)
@@ -232,6 +233,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
+	// Off by default: this builds a global index per namespace, holding the
+	// dashboards and folders already covered by their own indexes.
+	cfg.GlobalSearchIndexEnabled = section.Key("global_search_index_enabled").MustBool(false)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()

@@ -5809,10 +5809,16 @@
       "paste-panel": "Panel einfügen",
       "remove": "{{typeName}} entfernen",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Zeilentitel ändern",
       "switch-layout": "Layout wechseln",
       "switch-layout-row": "Layout wechseln",
       "switch-layout-tab": "Layout wechseln",
+      "tab-repeat-variable": "",
       "tab-title": "Tab-Titel ändern",
       "variable-description": "Variablenbeschreibung ändern",
       "variable-hide": "Option zum Ausblenden von Variablen ändern",
@@ -9460,6 +9466,8 @@
     "menu": "Menü öffnen",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Speichern",
     "title": "Funktionssteuerung"
   },
@@ -13217,6 +13225,12 @@
       "query": {
         "add": "Abfrage hinzufügen",
         "run": "Abfrage ausführen"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13300,7 +13314,9 @@
       "redo-action": "Wiederherstellen: {{action}}",
       "remove-query": "Abfrage entfernen",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Abfrage auswählen",
+      "set-cell-time-range": "",
       "split-block": "Block aufteilen",
       "switch-datasource": "Datenquelle wechseln",
       "undo": "Rückgängig machen",
@@ -15856,8 +15872,7 @@
       "deleted-by-removed": "Gelöschter Account",
       "deleted-by-unknown-short": "<0></0> Unbekannt",
       "deleted-by-unknown-tooltip": "Der Account, der dieses Dashboard gelöscht hat, konnte nicht gesucht werden",
-      "deleted-less-than-1-min": "< 1 Min.",
-      "deleted-remaining-header": "Verbleibende Zeit",
+      "deleted-header": "",
       "location-header": "Standort",
       "name-header": "Name",
       "tags-header": "Tags",

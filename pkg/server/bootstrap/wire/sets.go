@@ -264,6 +264,7 @@ var Basic = wire.NewSet(
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
 	authinfoimpl.ProvideService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)),
+	authinfoimpl.ProvideLegacyStore,
 	authinfoimpl.ProvideStore,
 	datasourceproxy.ProvideService,
 	sort.ProvideService,

@@ -122,10 +122,11 @@ func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
 // WithNatsNotifier feeds the watch pipeline directly from the NATS bus instead
 // of polling. Delivery is at-most-once; the backend falls back to polling when
 // the subscriber is disabled. KV backend only.
-func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
+func WithNatsNotifier(s resource.EventSubscriber, invalidator resource.Invalidator) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) {
 		o.EventSubscriber = s
 		o.EnableNatsNotifier = true
+		o.WatchInvalidator = invalidator
 	}
 }
 

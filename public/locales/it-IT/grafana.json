@@ -5809,10 +5809,16 @@
       "paste-panel": "Incolla pannello",
       "remove": "Rimuovi {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Modifica il titolo riga",
       "switch-layout": "Cambia layout",
       "switch-layout-row": "Cambia layout",
       "switch-layout-tab": "Cambia layout",
+      "tab-repeat-variable": "",
       "tab-title": "Modifica il titolo della scheda",
       "variable-description": "Modifica la descrizione della variabile",
       "variable-hide": "Modifica l'opzione di occultamento della variabile",
@@ -9460,6 +9466,8 @@
     "menu": "Apri menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Salva",
     "title": "Controllo funzionalità"
   },
@@ -13217,6 +13225,12 @@
       "query": {
         "add": "Aggiungi query",
         "run": "Esegui query"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13300,7 +13314,9 @@
       "redo-action": "Ripeti: {{action}}",
       "remove-query": "Rimuovi query",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Seleziona query",
+      "set-cell-time-range": "",
       "split-block": "Dividi blocco",
       "switch-datasource": "Cambia origine dei dati",
       "undo": "Annulla",
@@ -15856,8 +15872,7 @@
       "deleted-by-removed": "Account eliminato",
       "deleted-by-unknown-short": "<0></0> Sconosciuto",
       "deleted-by-unknown-tooltip": "Impossibile trovare l'account che ha eliminato questa dashboard",
-      "deleted-less-than-1-min": "<1 min",
-      "deleted-remaining-header": "Tempo rimanente",
+      "deleted-header": "",
       "location-header": "Posizione",
       "name-header": "Nome",
       "tags-header": "Tag",

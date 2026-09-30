@@ -20,37 +20,6 @@ labels:
     - oss
 title: Configure Alertmanagers
 weight: 200
-refs:
-  configure-grafana-alerts-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-notifications
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#configure-notifications
-  configure-notification-policies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/
-  alertmanager-contact-point:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
-  alertmanager-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/alertmanager/
-  notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
-  export-alerting-resources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/
 ---
 
 {{< admonition type="caution" >}}
@@ -70,7 +39,7 @@ All Alertmanager functionality, including silences, notification policies, conta
 
 # Configure Alertmanagers
 
-Grafana Alerting is based on the architecture of the Prometheus alerting system. Grafana sends firing and resolved alerts to an Alertmanager, which is responsible for [handling notifications](ref:notifications). This architecture decouples alert rule evaluation from notification handling, improving scalability.
+Grafana Alerting is based on the architecture of the Prometheus alerting system. Grafana sends firing and resolved alerts to an Alertmanager, which is responsible for [handling notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/). This architecture decouples alert rule evaluation from notification handling, improving scalability.
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
@@ -111,7 +80,7 @@ Alertmanagers should be configured as data sources using Grafana Configuration f
 
 {{< docs/shared lookup="alerts/add-alertmanager-ds.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-For provisioning instructions, refer to the [Alertmanager data source documentation](ref:alertmanager-data-source).
+For provisioning instructions, refer to the [Alertmanager data source documentation](/docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/).
 
 After adding an Alertmanager, you can use the Grafana Alerting UI to manage notification policies, contact points, silences, and other alerting resources from within Grafana.
 
@@ -145,9 +114,9 @@ To send **specific** alerts to an Alertmanager, configure the Alertmanager as a 
 
 For detailed instructions, refer to:
 
-- [Alertmanager contact point](ref:alertmanager-contact-point)
-- [Configure Grafana-managed alert rules](ref:configure-grafana-alerts-notifications)
-- [Configure notification policies](ref:configure-notification-policies)
+- [Alertmanager contact point](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/)
+- [Configure Grafana-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-notifications)
+- [Configure notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/)
 
 ## Manage Alertmanager configurations
 
@@ -162,6 +131,6 @@ Grafana stores up to the last 100 configuration versions for the built-in Grafan
 
 To avoid losing a working configuration:
 
-- **Back up your configuration**: [Export and store](ref:export-alerting-resources) your Alertmanager configuration outside of Grafana before you automate changes or run large-scale updates.
+- **Back up your configuration**: [Export and store](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/) your Alertmanager configuration outside of Grafana before you automate changes or run large-scale updates.
 - **Test changes in a low-impact environment**: Run automations and configuration experiments against a development or staging Grafana instance before applying them to production.
 - **Limit the frequency of automated changes**: Frequent automated updates consume the available configuration history. Batch changes where possible so that a single mistake doesn't overwrite every recoverable version.

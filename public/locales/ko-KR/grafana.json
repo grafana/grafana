@@ -5764,10 +5764,16 @@
       "paste-panel": "패널 붙여넣기",
       "remove": "{{typeName}} 제거",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "행 제목 변경",
       "switch-layout": "레이아웃 전환",
       "switch-layout-row": "레이아웃 전환",
       "switch-layout-tab": "레이아웃 전환",
+      "tab-repeat-variable": "",
       "tab-title": "탭 제목 변경",
       "variable-description": "변수 설명 변경",
       "variable-hide": "변수 숨기기 옵션 변경",
@@ -9404,6 +9410,8 @@
     "menu": "메뉴 열기",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "저장",
     "title": "기능 제어"
   },
@@ -13124,6 +13132,12 @@
       "query": {
         "add": "쿼리 추가",
         "run": "쿼리 실행"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13207,7 +13221,9 @@
       "redo-action": "다시 실행: {{action}}",
       "remove-query": "쿼리 제거",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "쿼리 선택",
+      "set-cell-time-range": "",
       "split-block": "블록 분할",
       "switch-datasource": "데이터 소스 전환",
       "undo": "실행 취소",
@@ -15733,8 +15749,7 @@
       "deleted-by-removed": "삭제된 계정",
       "deleted-by-unknown-short": "<0></0> 알 수 없음",
       "deleted-by-unknown-tooltip": "이 대시보드를 삭제한 계정을 조회하지 못했습니다",
-      "deleted-less-than-1-min": "1분 미만",
-      "deleted-remaining-header": "남은 시간",
+      "deleted-header": "",
       "location-header": "위치",
       "name-header": "이름",
       "tags-header": "태그",

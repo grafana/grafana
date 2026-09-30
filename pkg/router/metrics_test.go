@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -22,14 +24,14 @@ func metricsService(t *testing.T, group, upstream string) *Service {
 	t.Helper()
 	backend, err := NewForwardBackend(metav1.APIGroup{Name: group}, forwardSpec(upstream), "1", &http.Transport{})
 	require.NoError(t, err)
-	svc := newService(&mutableLoader{backends: []Backend{backend}}, prometheus.NewRegistry())
+	svc := newService(&mutableLoader{backends: []Backend{backend}}, nil, prometheus.NewRegistry())
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	return svc
 }
 
 func instrumented(svc *Service, target string) int {
 	recorder := httptest.NewRecorder()
-	svc.metrics.instrument(svc.router, recorder, httptest.NewRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+	svc.metrics.instrument(svc.router, recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
 	return recorder.Code
 }
 
@@ -118,7 +120,7 @@ func TestDiscoveryResultMetrics(t *testing.T) {
 			discovery:   thingsDiscovery("provided.ext.grafana.app"),
 		},
 		&fakeBackend{group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: &countingDiscoveryBackend{group: cachedGroup}},
-	}}, prometheus.NewRegistry())
+	}}, nil, prometheus.NewRegistry())
 	require.NoError(t, svc.router.reconcile(t.Context()))
 
 	aggregatedDiscovery(t, svc.router)
@@ -181,7 +183,7 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 		},
 	}
 	reg := prometheus.NewRegistry()
-	svc := newService(loader, reg)
+	svc := newService(loader, nil, reg)
 	svc.router.storeServing(t.Context(), svc.router.reconcile(t.Context()))
 	return svc, loader, reg
 }
@@ -245,4 +247,56 @@ grafana_router_stack_lookups_total{result="resolved"} 1
 		"grafana_router_shadowed_groups", "grafana_router_source_last_success_timestamp_seconds",
 		"grafana_router_source_polls_total", "grafana_router_stack_lookups_total"))
 	require.Equal(t, 1, testutil.CollectAndCount(reg, "grafana_router_last_reconcile_timestamp_seconds"))
+}
+
+func TestRequestMetricsVerbLabelIsBounded(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))
+	t.Cleanup(upstream.Close)
+	svc := metricsService(t, "test-app", upstream.URL)
+
+	for i := range 20 {
+		for _, target := range []string{"/apis", "/apis/test-app/v1/namespaces/ns/things"} {
+			req := newAuthenticatedRequest(http.MethodGet, target, nil)
+			req.Method = fmt.Sprintf("FOO%d", i)
+			svc.metrics.instrument(svc.router, httptest.NewRecorder(), req, http.NotFoundHandler())
+		}
+	}
+	require.Equal(t, 2, testutil.CollectAndCount(svc.metrics.duration), "arbitrary methods must not create new series")
+	require.Equal(t, uint64(20), requestCount(t, svc, "", "other", routeDiscovery, "200"))
+	require.Equal(t, uint64(20), requestCount(t, svc, "test-app", "other", routeBackend, "204"))
+
+	for verb, want := range map[string]string{"list": "list", "watch": "watch", "deletecollection": "deletecollection", "head": "head", "foo": "other", "": "other"} {
+		require.Equal(t, want, metricVerb(verb), verb)
+	}
+}
+
+func TestRequestMetricsAuthenticationFailures(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))
+	t.Cleanup(upstream.Close)
+	svc := metricsService(t, "test-app", upstream.URL)
+	svc.router.authn = tokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+		return nil, apierrors.NewUnauthorized("invalid token")
+	})
+	nextCalled := false
+	next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) { nextCalled = true })
+
+	for _, tc := range []struct{ target, group, verb, token string }{
+		{"/apis/test-app/v1/namespaces/ns/things", "test-app", "list", ""},
+		{"/apis/test-app/v1/namespaces/ns/things", "test-app", "list", "bad-token"},
+		{"/apis", "", "get", ""},
+		{"/apis/other-app/v1/things", unknownGroupLabel, "list", ""},
+	} {
+		req := httptest.NewRequest(http.MethodGet, tc.target, nil)
+		if tc.token != "" {
+			req.Header.Set("X-Access-Token", tc.token)
+		}
+		recorder := httptest.NewRecorder()
+		svc.metrics.instrument(svc.router, recorder, req, next)
+		require.Equal(t, http.StatusUnauthorized, recorder.Code, tc.target)
+	}
+	require.False(t, nextCalled, "a rejected request never reaches next")
+	require.Equal(t, uint64(2), requestCount(t, svc, "test-app", "list", routeUnauthenticated, "401"))
+	require.Equal(t, uint64(1), requestCount(t, svc, "", "get", routeUnauthenticated, "401"))
+	require.Equal(t, uint64(1), requestCount(t, svc, unknownGroupLabel, "list", routeUnauthenticated, "401"))
+	require.Zero(t, requestCount(t, svc, "test-app", "list", routeNext, "401"))
 }

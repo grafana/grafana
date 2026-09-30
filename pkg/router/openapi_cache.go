@@ -2,6 +2,7 @@ package router
 
 import (
 	"bytes"
+	"maps"
 	"net/http"
 	"strings"
 )
@@ -71,23 +72,63 @@ func stripHashQueryParam(req *http.Request) {
 	req.URL.RawQuery = q.Encode()
 }
 
+// Bounds on what captureWriter buffers. The documents are served whole from
+// memory, so a backend must not be able to grow one without limit. Variables
+// so that tests can lower them.
+var (
+	maxCachedOpenAPIDocBytes = 32 << 20
+	maxDiscoveryDocBytes     = 16 << 20
+)
+
 // captureWriter records a proxied response (status + body) so it can be
 // cached on success before being relayed to the real client, without letting
 // the backend write directly to the real ResponseWriter first.
+//
+// A body larger than limit is not buffered. With a passthrough writer, the
+// response streams to it from then on; without one, the rest is discarded.
+// Either way overflowed is set. Writes never fail, since ReverseProxy aborts
+// the handler with a panic on a failed write.
 type captureWriter struct {
 	header     http.Header
 	statusCode int
 	body       bytes.Buffer
+
+	limit       int
+	passthrough http.ResponseWriter
+	overflowed  bool
 }
 
-func newCaptureWriter() *captureWriter {
-	return &captureWriter{header: make(http.Header), statusCode: http.StatusOK}
+func newCaptureWriter(limit int, passthrough http.ResponseWriter) *captureWriter {
+	return &captureWriter{header: make(http.Header), statusCode: http.StatusOK, limit: limit, passthrough: passthrough}
 }
 
-func (c *captureWriter) Header() http.Header         { return c.header }
-func (c *captureWriter) Write(p []byte) (int, error) { return c.body.Write(p) }
-func (c *captureWriter) WriteHeader(code int)        { c.statusCode = code }
+func (c *captureWriter) Header() http.Header  { return c.header }
+func (c *captureWriter) WriteHeader(code int) { c.statusCode = code }
 
-// Flush is a no-op: the body is buffered and copied out after ServeHTTP
-// returns, but ReverseProxy still expects a Flusher.
-func (c *captureWriter) Flush() {}
+func (c *captureWriter) Write(p []byte) (int, error) {
+	if !c.overflowed && c.body.Len()+len(p) <= c.limit {
+		return c.body.Write(p)
+	}
+	if !c.overflowed {
+		c.overflowed = true
+		if c.passthrough != nil {
+			maps.Copy(c.passthrough.Header(), c.header)
+			c.passthrough.WriteHeader(c.statusCode)
+			_, _ = c.passthrough.Write(c.body.Bytes()) // nolint:gosec // G705: the backend's response, relayed unchanged
+		}
+		c.body = bytes.Buffer{}
+	}
+	if c.passthrough != nil {
+		_, _ = c.passthrough.Write(p)
+	}
+	return len(p), nil
+}
+
+// Flush flushes a response that streams to passthrough. Otherwise it is a
+// no-op: the body is buffered and copied out after ServeHTTP returns, but
+// ReverseProxy still expects a Flusher.
+func (c *captureWriter) Flush() {
+	if f, ok := c.passthrough.(http.Flusher); ok && c.overflowed {
+		f.Flush()
+	}
+}

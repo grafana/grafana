@@ -13,6 +13,45 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+func TestResourceInfoResourceIdent_FolderScope(t *testing.T) {
+	tests := []struct {
+		desc   string
+		name   string
+		folder string
+		want   string
+	}{
+		{desc: "concrete folder scope", folder: "f1", want: "folder:f1"},
+		{desc: "wildcard folder scope", folder: "*", want: ""},
+		{desc: "explicit wildcard name", name: "*", folder: "f1", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			t.Run("Check", func(t *testing.T) {
+				info := NewResourceInfoFromCheck(&authzv1.CheckRequest{
+					Verb:     utils.VerbGet,
+					Group:    folders.GROUP,
+					Resource: folders.RESOURCE,
+					Name:     tt.name,
+					Folder:   tt.folder,
+				})
+				require.Equal(t, tt.want, info.ResourceIdent(), tt.desc)
+			})
+
+			t.Run("BatchCheck", func(t *testing.T) {
+				info := NewResourceInfoFromBatchCheckItem(&authzv1.BatchCheckItem{
+					Verb:     utils.VerbGet,
+					Group:    folders.GROUP,
+					Resource: folders.RESOURCE,
+					Name:     tt.name,
+					Folder:   tt.folder,
+				})
+				require.Equal(t, tt.want, info.ResourceIdent(), tt.desc)
+			})
+		})
+	}
+}
+
 func TestNewResourceInfoFromCheck_FolderCreateUnderParentUsesParentForPermissionTarget(t *testing.T) {
 	parentUID := "dfjngc949fr40e"
 	r := &authzv1.CheckRequest{

@@ -12,10 +12,17 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker/v2"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // drainWake consumes a wake already queued on dirty, if any. It returns nil
@@ -113,6 +120,8 @@ type GrafanaRouter struct {
 
 	loader RoutesLoader
 
+	authn authn.TokenAuthenticator
+
 	// served is the desired-state map, keyed by group: the groups actually
 	// installed into the last reconcile's snapshot. Owned by reconcile (single
 	// goroutine); never read from the serving path.
@@ -166,9 +175,10 @@ type GrafanaRouter struct {
 	endWatches context.CancelFunc
 }
 
-func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
+func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *GrafanaRouter {
 	r := &GrafanaRouter{
 		loader: loader,
+		authn:  tokens,
 		served: map[string]*handlerEntry{},
 	}
 	r.watches, r.endWatches = context.WithCancel(context.Background())
@@ -200,6 +210,11 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		return
 	}
 
+	req = r.authenticate(w, req)
+	if req == nil {
+		return
+	}
+
 	// OpenAPI v3 discovery index and per-group-version documents.
 	if isOpenAPI {
 		r.serveOpenAPIV3(w, req, next)
@@ -221,6 +236,7 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		r.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
+
 	setRoute(req, routeBackend)
 	if rejectUpgrade(w, req) {
 		return
@@ -235,6 +251,44 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		return
 	}
 	serve(w, req)
+}
+
+// authenticate trusts Grafana middleware authentication and verifies tokens for standalone requests.
+func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *http.Request {
+	info, _ := identity.GetRequester(req.Context())
+	if info != nil {
+		return req
+	}
+
+	ctx, span := otel.Tracer("github.com/grafana/grafana/pkg/router").Start(routerTraceContext(req), "router.authenticate")
+	defer span.End()
+
+	var err error
+	errorType := "authentication_failure"
+	switch token := req.Header.Get("X-Access-Token"); {
+	case token == "":
+		err = apierrors.NewUnauthorized("missing access token header")
+		errorType = "missing_token"
+	case r.authn == nil:
+		err = apierrors.NewUnauthorized("token authenticator is not configured")
+	default:
+		info, err = r.authn.AuthenticateToken(ctx, token)
+		if err == nil && info == nil {
+			err = apierrors.NewUnauthorized("token has no requester")
+		}
+		if apierrors.IsUnauthorized(err) {
+			errorType = "invalid_token"
+		}
+	}
+	if err != nil {
+		setRoute(req, routeUnauthenticated)
+		span.SetAttributes(semconv.ErrorTypeKey.String(errorType))
+		span.SetStatus(codes.Error, "")
+		_ = errhttp.Write(ctx, err, w)
+		return nil
+	}
+
+	return req.WithContext(identity.WithRequester(req.Context(), info))
 }
 
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
@@ -346,6 +400,11 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 		return
 	}
 	setRoute(req, routeBackend)
+	if req.Method != http.MethodGet && req.Method != http.MethodHead {
+		w.Header().Set("Allow", "GET, HEAD")
+		http.Error(w, "OpenAPI documents are read-only", http.StatusMethodNotAllowed)
+		return
+	}
 
 	cacheKey := group + "/" + version
 	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
@@ -369,8 +428,11 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	proxyReq := req.Clone(req.Context())
 	stripConditionalHeaders(proxyReq)
 	stripHashQueryParam(proxyReq)
-	rec := newCaptureWriter()
+	rec := newCaptureWriter(maxCachedOpenAPIDocBytes, w)
 	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)
+	if rec.overflowed {
+		return // too large to cache; already streamed to the client
+	}
 
 	maps.Copy(w.Header(), rec.header)
 	// Private schemas pass through authorization on every request. Honor their

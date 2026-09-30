@@ -21,7 +21,6 @@ import (
 )
 
 type fakeIndexClient struct {
-	resourcepb.ResourceIndexClient
 	got  *resourcepb.ResourceSearchRequest
 	resp *resourcepb.ResourceSearchResponse
 	err  error

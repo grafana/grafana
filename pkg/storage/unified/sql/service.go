@@ -55,6 +55,7 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 
 	// -- Shared Components
+	watchExpiry   resource.WatchExpiry
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
@@ -90,6 +91,11 @@ type service struct {
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
 // ServiceOption allows customizing service behavior
 type ServiceOption func(*service)
+
+// WithWatchExpiry shares notification invalidation with the resource server.
+func WithWatchExpiry(expiry resource.WatchExpiry) ServiceOption {
+	return func(s *service) { s.watchExpiry = expiry }
+}
 
 // WithAuthenticator sets a custom authenticator for the service
 // This is primarily intended for testing scenarios
@@ -182,10 +188,9 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	}
 
 	if cfg.QOSEnabled {
-		qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
 		queue := scheduler.NewQueue(&scheduler.QueueOptions{
 			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-			Registerer:       qosReg,
+			Registerer:       reg,
 		})
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
@@ -429,6 +434,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	}
 
 	serverOptions := ServerOptions{
+		WatchExpiry:    s.watchExpiry,
 		Backend:        s.backend,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,

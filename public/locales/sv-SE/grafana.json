@@ -5809,10 +5809,16 @@
       "paste-panel": "Klistra in panel",
       "remove": "Ta bort {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Ändra radtitel",
       "switch-layout": "Byt layout",
       "switch-layout-row": "Byt layout",
       "switch-layout-tab": "Byt layout",
+      "tab-repeat-variable": "",
       "tab-title": "Ändra fliktitel",
       "variable-description": "Ändra variabelbeskrivning",
       "variable-hide": "Ändra alternativ för att dölja variabel",
@@ -9460,6 +9466,8 @@
     "menu": "Öppna meny",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Spara",
     "title": "Funktionskontroll"
   },
@@ -13217,6 +13225,12 @@
       "query": {
         "add": "Lägg till fråga",
         "run": "Kör fråga"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13300,7 +13314,9 @@
       "redo-action": "Gör om: {{action}}",
       "remove-query": "Ta bort fråga",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Välj fråga",
+      "set-cell-time-range": "",
       "split-block": "Dela block",
       "switch-datasource": "Byt datakälla",
       "undo": "Ångra",
@@ -15856,8 +15872,7 @@
       "deleted-by-removed": "Raderat konto",
       "deleted-by-unknown-short": "<0></0> Okänd",
       "deleted-by-unknown-tooltip": "Det gick inte att hitta kontot som tog bort den här instrumentpanelen",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Återstående tid",
+      "deleted-header": "",
       "location-header": "Plats",
       "name-header": "Namn",
       "tags-header": "Taggar",

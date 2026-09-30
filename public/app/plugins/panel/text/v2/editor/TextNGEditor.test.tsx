@@ -174,6 +174,21 @@ describe('TextNGEditor', () => {
       expect(screen.getByTestId(PREVIEW_TEST_ID)).toBeInTheDocument();
     });
 
+    it('keeps Escape in the editor from reaching the global handler that exits panel edit', async () => {
+      setup('# Hello', TextMode.Markdown);
+      await enterWriteMode();
+      const documentKeyDown = jest.fn();
+      document.addEventListener('keydown', documentKeyDown);
+
+      try {
+        await userEvent.type(screen.getByRole('textbox'), '{Escape}a');
+
+        expect(documentKeyDown.mock.calls.map(([event]) => event.key)).toEqual(['a']);
+      } finally {
+        document.removeEventListener('keydown', documentKeyDown);
+      }
+    });
+
     it('sanitizes script tags in the HTML mode preview', () => {
       setup('<script>alert(1)</script><p>safe</p>', TextMode.HTML);
 

@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -512,6 +511,9 @@ func (f *fallbackBackend) Load(context.Context) (http.Handler, error) {
 	return f.st, nil
 }
 
+// maxStackResponseBytes bounds a grafana.com instance response.
+const maxStackResponseBytes = 1 << 20 // 1MB
+
 // The results of this call are cached
 func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Context, int64) (singleTenantStack, error) {
 	// mirroring grafana's pkg/services/gcom
@@ -548,7 +550,7 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 		}
 
 		var result instance
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		if err := decodeLimitedJSON(resp.Body, maxStackResponseBytes, &result); err != nil {
 			return singleTenantStack{}, fmt.Errorf("decoding gcom instance: %w", err)
 		}
 		return singleTenantStack{

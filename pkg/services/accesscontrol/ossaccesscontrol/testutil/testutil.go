@@ -90,6 +90,7 @@ func ProvideFolderPermissions(
 		routing.NewRouteRegister(),
 		sqlStore,
 		ac,
+		iam.Features{},
 		license,
 		fService,
 		acSvc,
