@@ -59,15 +59,18 @@ func ProvideDBStore(
 	bus bus.Bus,
 ) (*DBstore, error) {
 	store := DBstore{
-		Cfg:                    cfg.UnifiedAlerting,
-		FeatureToggles:         featureToggles,
-		SQLStore:               sqlstore,
-		Logger:                 log.New("ngalert.dbstore"),
-		FolderService:          folderService,
-		DashboardService:       dashboards,
-		AccessControl:          ac,
-		Bus:                    bus,
-		LegacyDatabaseProvider: legacysql.NewDatabaseProvider(sqlstore),
+		Cfg:              cfg.UnifiedAlerting,
+		FeatureToggles:   featureToggles,
+		SQLStore:         sqlstore,
+		Logger:           log.New("ngalert.dbstore"),
+		FolderService:    folderService,
+		DashboardService: dashboards,
+		AccessControl:    ac,
+		Bus:              bus,
+		// LegacyDatabaseProvider is left unset here: it must stay nil unless a deployment
+		// explicitly routes to a different database, so DeleteAlertRulesByUID can tell "no routed
+		// database" apart from "identity provider" and keep the folder-key read on sess.
+		// legacyDatabaseProvider still supplies bare table names on demand when this is nil.
 	}
 	if err := folderService.RegisterService(store); err != nil {
 		return nil, err
