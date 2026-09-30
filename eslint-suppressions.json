@@ -3643,11 +3643,6 @@
       "count": 1
     }
   },
-  "public/swagger/SwaggerPage.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/swagger/plugins.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
