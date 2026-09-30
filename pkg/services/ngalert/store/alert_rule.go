@@ -865,14 +865,27 @@ func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}
+
+	conn := st.SQLStore
+	alertRuleTable := "alert_rule"
+	if st.LegacyDatabaseProvider != nil {
+		dbHelper, err := st.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return 0, err
+		}
+		conn = dbHelper.DB
+		alertRuleTable = dbHelper.Table("alert_rule")
+		ctx = withoutAmbientSession(ctx)
+	}
+
 	var count int64
 	var err error
-	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+	err = conn.WithDbSession(ctx, func(sess *db.Session) error {
 		args := make([]any, 0, len(folderUIDs))
 		for _, folderUID := range folderUIDs {
 			args = append(args, folderUID)
 		}
-		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Repeat("?,", len(folderUIDs)-1)+"?"), args...)
+		q := sess.Table(alertRuleTable).Where("org_id = ?", orgID).Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Repeat("?,", len(folderUIDs)-1)+"?"), args...)
 		count, err = q.Count()
 		return err
 	})

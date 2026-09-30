@@ -1111,6 +1111,41 @@ func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
 	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
 }
 
+// TestIntegration_CountInFolders_LegacyDatabaseProvider is a regression test: the folder delete
+// preflight check (in folder_unifiedstorage.go) relies on this count to block deleting a
+// non-empty folder. If it read st.SQLStore instead of a routed database, it would see zero rules
+// and let the delete proceed, orphaning the routed database's alert rules.
+func TestIntegration_CountInFolders_LegacyDatabaseProvider(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	var requestedTables []string
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB: spy,
+			Table: func(n string) string {
+				requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+				return n
+			},
+		}, nil
+	}
+
+	rule := createRule(t, store, nil)
+
+	count, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+	require.NoError(t, err)
+
+	assert.Equal(t, int64(1), count)
+	assert.Contains(t, requestedTables, "alert_rule")
+	assert.True(t, spy.withDbSessionCalled, "count should run on dbHelper.DB, not st.SQLStore directly")
+}
+
 func TestIntegrationInsertAlertRules(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
