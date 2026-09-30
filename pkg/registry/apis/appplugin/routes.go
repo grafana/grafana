@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -305,10 +304,9 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 			info.Parent = parent
 		}
 		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
+		// The caller's identity reaches the plugin only as the access token the
+		// v3 client exchanges for it, never as an ID token in the HTTP headers.
 		req.Header.Del(proxyutil.IDHeaderName)
-		if requester, err := identity.GetRequester(ctx); err == nil {
-			proxyutil.ApplyForwardIDHeader(req.Context(), req, requester, nil)
-		}
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}
 }
