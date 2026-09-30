@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"maps"
 	"net/http"
 	"slices"
 	"sync"
@@ -40,6 +41,11 @@ type MockResourceIndex struct {
 
 	buildInfo IndexBuildInfo
 	docCount  int64
+
+	// Import times recorded through RecordImportTime, and an error to fail reading
+	// them with.
+	importTimes    map[schema.GroupResource]time.Time
+	importTimesErr error
 
 	// What the index reports holding, for reconciliation tests.
 	documentRefs    map[schema.GroupResource][]DocumentRef
@@ -95,6 +101,25 @@ func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStat
 
 func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
 	return m.docCount, nil
+}
+
+func (m *MockResourceIndex) ImportTimes() (map[schema.GroupResource]time.Time, error) {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	if m.importTimesErr != nil {
+		return nil, m.importTimesErr
+	}
+	return maps.Clone(m.importTimes), nil
+}
+
+func (m *MockResourceIndex) RecordImportTime(gr schema.GroupResource, t time.Time) error {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	if m.importTimes == nil {
+		m.importTimes = map[schema.GroupResource]time.Time{}
+	}
+	m.importTimes[gr] = t
+	return nil
 }
 
 // documentRefs is what ListDocumentRefs answers with, by resource type.
