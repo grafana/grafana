@@ -87,6 +87,10 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.T
 	if err != nil {
 		return nil, err
 	}
+	managers, err := t.provenanceStore.GetAllManagerProperties(ctx, orgID, (&v1.TemplateGroup{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
 
 	imported := make(map[v1.ResourceUID]struct{}, len(importedUIDs))
 	for _, uid := range importedUIDs {
@@ -96,9 +100,11 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.T
 	templates := make([]v1.TemplateGroup, 0, len(allTemplates))
 	for _, tmpl := range allTemplates {
 		if _, isImported := imported[tmpl.UID]; isImported {
-			tmpl.Provenance = models.ProvenanceConvertedPrometheus
+			// Imported templates are not tracked in the provisioning store and may share a title
+			// with a Grafana template, so they must not pick up its record.
+			tmpl.SetImported()
 		} else {
-			tmpl.Provenance = provenances[tmpl.ResourceID()]
+			tmpl.AssignManager(provenances[tmpl.ResourceID()], managers[tmpl.ResourceID()])
 		}
 		templates = append(templates, tmpl)
 	}
@@ -141,6 +147,7 @@ func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl 
 	if err != nil {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(err)
 	}
+	tmpl.NormalizeManager()
 
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -178,6 +185,7 @@ func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl 
 	if tmpl.Kind == v1.TemplateKindMimir {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
 	}
+	tmpl.NormalizeManager()
 	if err := t.validator(ctx, models.ProvenanceNone, tmpl.Provenance); err != nil {
 		return v1.TemplateGroup{}, err
 	}
@@ -212,7 +220,7 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return t.provenanceStore.SetProvenance(ctx, &created, orgID, created.Provenance)
+		return t.provenanceStore.SetManagerProperties(ctx, &created, orgID, created.Manager)
 	})
 	if err != nil {
 		return v1.TemplateGroup{}, err
@@ -226,6 +234,7 @@ func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl 
 	if err != nil {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(err)
 	}
+	tmpl.NormalizeManager()
 
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -293,7 +302,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return t.provenanceStore.SetProvenance(ctx, &updated, orgID, updated.Provenance)
+		return t.provenanceStore.SetManagerProperties(ctx, &updated, orgID, updated.Manager)
 	})
 	if err != nil {
 		return v1.TemplateGroup{}, err
@@ -362,21 +371,30 @@ func (t *TemplateService) getTemplateByName(ctx context.Context, revision *legac
 	if !ok {
 		return v1.TemplateGroup{}, false, nil
 	}
-	provenance, err := t.provenanceStore.GetProvenance(ctx, &existingContent, orgID)
-	if err != nil {
+	if err := t.assignTemplateManager(ctx, orgID, &existingContent); err != nil {
 		return v1.TemplateGroup{}, false, err
 	}
-	existingContent.Provenance = provenance
 	return existingContent, true, nil
+}
+
+func (t *TemplateService) assignTemplateManager(ctx context.Context, orgID int64, tmpl *v1.TemplateGroup) error {
+	provenance, err := t.provenanceStore.GetProvenance(ctx, tmpl, orgID)
+	if err != nil {
+		return err
+	}
+	manager, err := t.provenanceStore.GetManagerProperties(ctx, tmpl, orgID)
+	if err != nil {
+		return err
+	}
+	tmpl.AssignManager(provenance, manager)
+	return nil
 }
 
 func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, uid string) (v1.TemplateGroup, bool, error) {
 	if tmpl, ok := revision.Config.Templates[v1.ResourceUID(uid)]; ok {
-		provenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
-		if err != nil {
+		if err := t.assignTemplateManager(ctx, orgID, &tmpl); err != nil {
 			return v1.TemplateGroup{}, false, err
 		}
-		tmpl.Provenance = provenance
 		return tmpl, true, nil
 	}
 
@@ -388,7 +406,7 @@ func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy
 			return v1.TemplateGroup{}, false, err
 		}
 		if tmpl, ok := merged[v1.ResourceUID(uid)]; ok {
-			tmpl.Provenance = models.ProvenanceConvertedPrometheus
+			tmpl.SetImported()
 			return tmpl, true, nil
 		}
 	}
