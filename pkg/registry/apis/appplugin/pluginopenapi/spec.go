@@ -66,6 +66,7 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 		plugin,
 		offlinePluginClient{},
 		offlineClientV3{},
+		nil, // offline spec generation never makes a real plugin request
 		offlinePluginContext{},
 		nil, // no decrypter: reading secrets is a request time concern
 		appplugin.NewPluginAccessChecker(nil),

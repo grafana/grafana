@@ -25,6 +25,8 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 
+	authnlib "github.com/grafana/authlib/authn"
+
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -54,6 +56,7 @@ type Options struct {
 	Storage         StorageProvider
 	PluginClient    appplugin.PluginClient
 	ClientV3        v3.ClientV3
+	IDTokenDeriver  authnlib.IDTokenDeriver
 	ContextProvider appplugin.PluginContextWrapper
 	Decrypter       decrypt.DecryptService
 	AccessChecker   appplugin.PluginAccessChecker
@@ -224,7 +227,7 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 	if opts.Features == nil {
 		opts.Features = featuremgmt.WithFeatures()
 	}
-	return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient, opts.ClientV3,
+	return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient, opts.ClientV3, opts.IDTokenDeriver,
 		opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Search, opts.Store,
 		opts.Runner, opts.Tracer, opts.Features)
 }

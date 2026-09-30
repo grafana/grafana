@@ -22,6 +22,8 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
+	authnlib "github.com/grafana/authlib/authn"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
@@ -44,6 +46,11 @@ type Options struct {
 	// cannot be completed without its options: they used to be declared through a
 	// separate by-GroupResource registration that every version of a kind shared.
 	StorageOptsGetter func(apistore.StorageOptions) generic.RESTOptionsGetter
+
+	// IDTokenDeriver mints the caller's Grafana ID token from an OBO access token
+	// when the requester carries no id token of its own (see WithCallerIDToken).
+	// Nil when the caller already has one (Grafana's own embedded apiserver).
+	IDTokenDeriver authnlib.IDTokenDeriver
 }
 
 func IsFolderScoped(kind app.ManifestVersionKind) bool {
@@ -63,7 +70,8 @@ type Store struct {
 	clusterScoped bool
 
 	// used for admission hooks
-	admission pluginv3.AdmissionServiceClient
+	admission      pluginv3.AdmissionServiceClient
+	idTokenDeriver authnlib.IDTokenDeriver
 
 	// mutation and validation are the operations the manifest declared each
 	// admission capability for. Nil when the kind declares none.
@@ -119,10 +127,11 @@ func New(
 	}
 
 	wrap := &Store{
-		NameGenerator: names.SimpleNameGenerator,
-		gvk:           gvk,
-		clusterScoped: clusterScoped,
-		admission:     admission,
+		NameGenerator:  names.SimpleNameGenerator,
+		gvk:            gvk,
+		clusterScoped:  clusterScoped,
+		admission:      admission,
+		idTokenDeriver: opts.IDTokenDeriver,
 	}
 
 	if kind.Admission != nil {
