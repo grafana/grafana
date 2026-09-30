@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // GetReceiversQuery represents a query for receiver groups.
@@ -50,8 +52,21 @@ type Receiver struct {
 	Name         string
 	Integrations []*Integration
 	Provenance   Provenance
-	Version      string
-	Origin       ResourceOrigin
+	// Manager is the richer form of Provenance (see v1.ResourceMetadata). It is not part of the
+	// fingerprint.
+	Manager utils.ManagerProperties
+	Version string
+	Origin  ResourceOrigin
+}
+
+// NormalizeManager makes Manager and Provenance consistent. A known Manager determines Provenance;
+// otherwise Manager is derived from Provenance.
+func (r *Receiver) NormalizeManager() {
+	if r.Manager.Kind != utils.ManagerKindUnknown {
+		r.Provenance = ManagerPropertiesToProvenance(r.Manager)
+		return
+	}
+	r.Manager = ProvenanceToManagerProperties(r.Provenance)
 }
 
 func (r *Receiver) Clone() Receiver {
@@ -59,6 +74,7 @@ func (r *Receiver) Clone() Receiver {
 		UID:        r.UID,
 		Name:       r.Name,
 		Provenance: r.Provenance,
+		Manager:    r.Manager,
 		Version:    r.Version,
 		Origin:     r.Origin,
 	}

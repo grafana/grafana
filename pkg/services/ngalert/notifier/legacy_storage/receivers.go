@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/util"
@@ -211,6 +212,16 @@ func validateAndSetIntegrationUIDs(receiver *models.Receiver) error {
 func (rev *ConfigRevision) AssignReceiverProvenances(provenances map[string]models.Provenance) {
 	for uid, r := range rev.Config.Receivers {
 		r.Provenance = GetReceiverProvenance(provenances, &r, models.ResourceOriginGrafana)
+		rev.Config.Receivers[uid] = r
+	}
+}
+
+// AssignReceiverManagers assigns each receiver's manager from the managers of its integrations,
+// keyed by integration UID. It must run after AssignReceiverProvenances: receivers without a known
+// manager get one derived from their provenance.
+func (rev *ConfigRevision) AssignReceiverManagers(integrationManagers map[string]utils.ManagerProperties) {
+	for uid, r := range rev.Config.Receivers {
+		r.Manager = GetReceiverManager(integrationManagers, &r, models.ResourceOriginGrafana)
 		rev.Config.Receivers[uid] = r
 	}
 }

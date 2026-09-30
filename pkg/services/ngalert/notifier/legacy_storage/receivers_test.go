@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
@@ -358,6 +359,48 @@ func TestGetReceivers(t *testing.T) {
 		expected, err := rev.GetReceiver(NameToUid("receiver1"))
 		require.NoError(t, err)
 		require.Equal(t, expected, receivers[0])
+	})
+}
+
+func TestAssignReceiverManagers(t *testing.T) {
+	terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "workspace"}
+
+	t.Run("should assign the manager of the first integration with a known manager", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		rev.AssignReceiverProvenances(map[string]models.Provenance{
+			"integration-uid-1": models.ProvenanceAPI,
+			"integration-uid-3": models.ProvenanceAPI,
+		})
+		rev.AssignReceiverManagers(map[string]utils.ManagerProperties{
+			"integration-uid-1": models.ProvenanceToManagerProperties(models.ProvenanceAPI),
+			"integration-uid-2": {}, // unknown kind is skipped
+			"integration-uid-3": terraform,
+		})
+
+		assert.Equal(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicAPI}, rev.Config.Receivers[v1.ReceiverUID("receiver1")].Manager) //nolint:staticcheck
+		assert.Equal(t, terraform, rev.Config.Receivers[v1.ReceiverUID("dupe-receiver")].Manager)
+
+		// The manager is carried over to the domain receiver.
+		r, err := rev.GetReceiver(NameToUid("dupe-receiver"))
+		require.NoError(t, err)
+		assert.Equal(t, terraform, r.Manager)
+		assert.Equal(t, models.ProvenanceAPI, r.Provenance)
+	})
+
+	t.Run("should derive the manager from the provenance when none is stored", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		rev.AssignReceiverProvenances(map[string]models.Provenance{"integration-uid-1": models.ProvenanceFile})
+		rev.AssignReceiverManagers(nil)
+
+		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), rev.Config.Receivers[v1.ReceiverUID("receiver1")].Manager)
+		assert.Equal(t, utils.ManagerProperties{}, rev.Config.Receivers[v1.ReceiverUID("dupe-receiver")].Manager)
+	})
+
+	t.Run("imported receivers get the converted-prometheus manager", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		r := rev.Config.Receivers[v1.ReceiverUID("receiver1")]
+		require.Equal(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicConvertedPrometheus}, //nolint:staticcheck
+			GetReceiverManager(nil, &r, models.ResourceOriginImported))
 	})
 }
 
