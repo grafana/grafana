@@ -13,44 +13,42 @@ description: Create and manage notebooks, a linear, narrative artifact for inves
 
 {{< docs/public-preview product="Notebooks" featureFlag="`dashboard.notebooks`" >}}
 
-A notebook is a linear page of blocks.
-Text blocks hold narrative and notes, and panel blocks hold queries that render inline.
-The sequence mirrors how an investigation proceeds, so it tells the story of an investigation without extra authoring.
+A notebook is a page of text and panel blocks arranged in sequence.
+Text blocks capture notes and context, and panel blocks display query results inline.
+The sequence tells the story of your investigation as you work, without additional authoring.
 
-Every block is directly editable, and you can rewrite, reorder, or remove anything in the notebook.
-You can also add more context, as needed.
+Every block is directly editable, and you can rewrite, reorder, remove, or add more context, as needed.
 
-You can share a saved notebook with your teammates and reload it as context for a new or continuing investigation in a Grafana Assistant investigation.
-This way, the next investigation builds on what was already learned.
+A notebook:
+
+- Removes the need for incident-specific dashboards that contribute to dashboard sprawl.
+- Doesn't require you to declare an incident to be able to generate an investigation artifact, providing a space for pre-escalation work.
+- Provides a space to persist what you learned from your Grafana Assistant chats.
+- Keeps your investigation notes within Grafana rather than in external tools, like chat apps, wikis, or stand-alone documents.
 
 ![A notebook with a latency investigation](./screenshot-notebook-v13.3.png)
 <!-- TODO: Update screenshot -->
 
-A notebook has the following benefits:
-
-- Provides a space to persist what you learned from your Grafana Assistant chats.
-- Removes the need for incident-specific dashboards that contribute to dashboard sprawl.
-- Doesn't require you to declare an incident to be able to generate an investigation artifact, providing a space for pre-escalation work.
-- Keeps your investigation notes within Grafana rather than in external tools, like chat apps, wikis, or stand-alone documents.
+You can share a saved notebook with your teammates and reload it as context for a new or continuing investigation in a Grafana Assistant investigation.
+This way, the next investigation builds on what was already learned.
 
 Many investigations never become incidents, but the pre-escalation work often includes important signals, and notebooks let you keep that.
 Additionally, they provide reusable context you can return to the next time something similar happens.
 Each investigation in a notebook makes the next one faster.
 
-## Notebooks, Dashboards, and Workspace
+## Choose a space for your investigation
+<!-- TODO: New title and reformat -->
 
-Notebooks offer the following advantages over other tools for recording investigations:
-<!-- TODO: Refine this section -->
+Dashboards, the Workspace canvas, and notebooks offer different ways to investigate, with trade-offs in design effort, ease of editing, and reuse.
 
-<!-- prettier-ignore-start -->
+- **Dashboard: A reusable, curated view**
+   Building a dashboard during an investigation requires design decisions while you're still exploring. Adding investigative work can also make it less curated.
 
-| Feature | Pro  | Con                                                     |
-| ------- | ---------- | ------------------------------------------------------- |
-| Dashboard | Reusable | <ul><li>You have to design the dashboard while you're still in the investigation stage.</li><li>Dashboard is no longer a curated surface.</li></ul>                            |
-| Workspace canvas | No design concerns | <ul><li>Ephemeral</li><li>Agent-authored</li><li>Not editable</li></ul>                                                                                       |
-| Notebook | <ul><li>Scratch pad while you work that you can clean up later</li><li>Picks up where the Workspace canvas leaves off</li><li>Human-authored and editable.</li><li>Reusable</li></ul> |    |
+- **Workspace canvas: A temporary exploration space**
+   The Workspace canvas lets you explore without design work, but it's temporary, created by an agent, and can't be edited.
 
-<!-- prettier-ignore-end -->
+- **Notebook: A scratchpad you can refine and reuse**
+   A notebook picks up where the Workspace canvas leaves off. You can write and edit it during an investigation, then clean it up into a reusable record.
 
 ## Manage notebooks
 
@@ -67,7 +65,7 @@ The **Notebooks** page lists all of the notebooks in your organization, along wi
 
 You can search the page by notebook title and filter by tags or by notebooks you authored.
 
-Each notebook row includes and **Edit** button and a menu where you can access the following actions:
+Each notebook row includes an **Edit** button and a menu where you can access the following actions:
 
 - Copy a shareable link
 - Export by copying the raw Markdown
@@ -95,18 +93,18 @@ To create a notebook from the **Notebooks** page, follow these steps:
 
 1. Navigate to **Notebooks**.
 1. Click **+ New notebook**.
-1. Update the title of the notebook to something descriptive and searchable.
-1. Add tags to further define the subject of your notebook.
+1. (Optional) Update the title of the notebook to something descriptive and searchable.
+1. (Optional) Add tags to further define the subject of your notebook.
 1. Start typing to create a text block or click one of the other options to add:
 
    - **Heading**: Adds an H3 heading.
    - **Paragraph**: The default. Use this to revert to paragraph text if you've previously selected another option.
-   - **Code**: Select a language to write the code, like plain text, Go, or SQL.
+   - **Code**: Adds a code block. Select a language, like Go, SQL, or plain text.
    - **Visualization**: Opens the panel query editor with a graph panel below it.
 
 1. Add as many blocks as you need.
 
-    You can duplicate or delete blocks.
+    You can also duplicate or delete blocks.
 
 1. In the toolbar, take the following actions, as needed:
 
@@ -118,46 +116,60 @@ To create a notebook from the **Notebooks** page, follow these steps:
 
 You don't need to save a notebook because it auto-saves throughout the creation process.
 
-You can also get a share link, export, and delete a notebook from this screen.
+After you start adding to a notebook, you can access options to  share, export, or delete it in the toolbar.
 
 ## Create notebooks from Grafana Assistant Workspace
 
-<!-- TODO: Confirm this is the desired workflow given new Pages UI -->
-
 When you complete a chat with the Grafana Assistant in Workspace, notebooks help you pick up where the canvas leaves off.
 
-While you investigate in Workspace, the canvas assembles the work as an ephemeral notebook of the questions, panels, and findings.
+While you investigate in Workspace, the canvas assembles the work as a temporary collection of questions, panels, and findings.
 The Assistant builds the canvas autonomously in **Investigation** mode, or by way of your chat.
 
-When the canvas is worth keeping, you can direct Assistant to create a notebook or click the option:
+When the canvas is worth keeping, you can direct Assistant to create a notebook or click the **Create notebook** option:
 
 ![Canvas with the option to create a notebook](./screenshot-create-notebook-v13.3.png)
 
-## Add notebooks to incidents
+## Notebooks and incidents
 
-You can add a notebook to an incident or declare an incident based on your notebook.
+You can attach a notebook to an existing incident or declare an incident based on your notebook.
 
-To associate a notebook with an incident, follow these steps:
+### Attach notebooks to incidents
+
+To attach a notebook to an existing incident, follow these steps:
 
 1. Navigate to **Notebooks**.
-1. Open the notebook you want to add.
-1. Click the menu in the top-right corner and click **IRM**.
-1. Choose one of the following options:
+1. Open the notebook you want to attach.
+1. Click the menu in the top-right corner.
+1. Select **IRM > Attach to incident**.
+1. In the dialog box that opens, select the incident to which you want to attach the notebook.
+1. (Optional) Add a caption to provide context.
+1. Click **Attach**.
 
-   - **Declare incident**: Complete the form in the **Declare incident** dialog box. Then click **Declare incident**. You'll then be taken to **Incidents** with your new incident open.
-   - **Attach to incident**: In the dialog box, select an incident to attach the notebook to and add a contextual caption. Then click **Attach**.
+### Declare incidents from notebooks
+
+To declare an incident from a notebook, follow these steps:
+
+1. Navigate to **Notebooks**.
+1. Open the notebook you want to use.
+1. Click the menu in the top-right corner.
+1. Select **IRM > Declare incident**.
+1. In the dialog box that opens, complete the incident form.
+1. Click **Declare incident**.
+
+   This opens the incident you've just created in **IRM > Incidents**.
+
+1. Add any other needed context to the incident.
 
 ## Edit notebooks
 
 To edit a notebook, follow these steps:
 
 1. Navigate to **Notebooks**.
-1. Click the title of the notebook you want to update.
-1. Click **Edit** at the top of the notebook to leave view mode.
-1. Make any needed updates.
+1. Click **Edit** on the row of the notebook you want to update.
+1. Make any needed changes.
 
    Note that you might need to expand panel queries to edit them as they might be collapsed, by default.
 
-1. When you've finished making changes, click **View** to leave edit mode.
+1. When you've finished updating the notebook, click **View** to leave edit mode.
 
 You don't need to save a notebook because it auto-saves throughout the creation process.
