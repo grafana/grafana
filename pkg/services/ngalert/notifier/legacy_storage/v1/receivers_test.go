@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
@@ -62,6 +63,7 @@ func TestReceiverFingerprint(t *testing.T) {
 			UID:        "some-other-uid",
 			Version:    "some-other-version",
 			Provenance: models.ProvenanceFile,
+			Manager:    utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "some-identity"},
 		})
 		for i := 0; i < metadataType.NumField(); i++ {
 			field := metadataType.Field(i).Name

@@ -110,7 +110,7 @@ func (e ImportedConfigRevision) GetTimeIntervals() ([]v1.TimeInterval, error) {
 			continue
 		}
 
-		ti.Provenance = models.ProvenanceConvertedPrometheus
+		ti.SetImported()
 		result = append(result, ti)
 	}
 
