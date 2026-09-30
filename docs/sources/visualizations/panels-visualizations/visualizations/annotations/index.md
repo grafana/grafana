@@ -47,6 +47,8 @@ The following options control the source query for the list of annotations:
 
 <!-- prettier-ignore-end -->
 
+When you filter the list in view mode, by clicking a tag or a creator's avatar, Grafana displays a **Filter:** bar above the list showing the active filters. Click a filter to remove it.
+
 #### Query filter
 
 Use the **Query filter** option to create a list of annotations from all dashboards in your organization or the current dashboard in which this panel is located.
@@ -71,7 +73,7 @@ These options control additional metadata included in the annotations list displ
 
 | Option     | Description                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
-| Show user | Show or hide which user created the annotation.  |
+| Show user | Show or hide which user created the annotation. When shown, you can click the creator's avatar in the list to filter the results to that user. |
 | Show time | Show or hide the time the annotation creation time. |
 | Show tags | Show or hide the tags associated with an annotation. Note that you can use the tags to filter the annotations list. |
 

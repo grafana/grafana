@@ -82,6 +82,8 @@ Use the following options to refine your dashboard list visualization.
 
 <!-- prettier-ignore-end -->
 
+If you turn off **Starred**, **Recently viewed**, and **Search**, the panel displays an empty state indicating that no dashboard groups are configured.
+
 #### Query
 
 Use this field to search by dashboard name. Query terms are case-insensitive and partial values are accepted.

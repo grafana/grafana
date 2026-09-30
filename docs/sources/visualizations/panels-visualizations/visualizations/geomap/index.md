@@ -239,7 +239,7 @@ Geomap has nine data layer types and five basemap layer types.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 There are also two experimental, alpha layer types.
 
@@ -315,7 +315,7 @@ Similar to `Markers`, you are prompted with various options to determine which d
 | ------ | ----------- |
 | Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
 | Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Weight values | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Weight values | Configures how much each data point contributes to the heatmap intensity. The default is `Fixed`, which gives every point the same weight regardless of the data; however, there is also an option to scale the weight based on data corresponding to a selected field. `Min` and `Max` have to be set such that the weight can scale within this range. |
 | Radius | Configures the size of the heatmap clusters. |
 | Blur | Configures the amount of blur on each cluster. |
 | Opacity | Configures the opacity of each cluster. |
@@ -535,9 +535,9 @@ The XYZ Tile layer is a map from a generic tile layer.
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of OpenStreetMap Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
-#### MapLibre Style layer
+#### MapLibre layer
 
-The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
+The MapLibre layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
 - **URL template** - Set a valid style URL. For example: `https://demotiles.maplibre.org/style.json`
 - **Public access token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
@@ -555,7 +555,7 @@ There are five basemap layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 

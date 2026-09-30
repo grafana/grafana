@@ -161,7 +161,7 @@ Tooltip options control the information overlay that appears when you hover over
 | [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                        |
 | [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display. |
 | Max width                               | Set the maximum width of the tooltip box.                                                                                      |
-| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                          |
+| Max height                              | Set the maximum height of the tooltip box. If you leave this unset, the tooltip box has no maximum height.                     |
 
 #### Tooltip mode
 
@@ -177,7 +177,7 @@ Use an override to hide individual series from the tooltip.
 
 When you set the **Tooltip mode** to **All**, the **Values sort order** option is displayed. This option controls the order in which values are listed in a tooltip. Choose from the following:
 
-- **None** - Grafana automatically sorts the values displayed in a tooltip.
+- **None** - Values in the tooltip are listed in the order their series appear in the visualization. No additional sorting is applied.
 - **Ascending** - Values in the tooltip are listed from smallest to largest.
 - **Descending** - Values in the tooltip are listed from largest to smallest.
 
@@ -213,6 +213,7 @@ The options under the **Graph styles** section let you control the general appea
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
 | [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected. |
 | [Show points](#show-points)                 | Set whether to show data points to lines or bars. |
+| Show values                                 | Set whether to show data values on top of lines, bars, or points. |
 | Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter. |
 | [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other. |
 | [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point. |
