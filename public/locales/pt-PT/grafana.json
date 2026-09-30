@@ -5809,10 +5809,16 @@
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Alterar título da linha",
       "switch-layout": "Mudar o layout",
       "switch-layout-row": "Mudar o layout",
       "switch-layout-tab": "Mudar o layout",
+      "tab-repeat-variable": "",
       "tab-title": "Alterar título do separador",
       "variable-description": "Alterar a descrição da variável",
       "variable-hide": "Alterar opção de ocultar variável",
@@ -9460,6 +9466,8 @@
     "menu": "Abrir menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Guardar",
     "title": "Controlo de funcionalidade"
   },
@@ -13217,6 +13225,12 @@
       "query": {
         "add": "Adicionar consulta",
         "run": "Executar consulta"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13300,7 +13314,9 @@
       "redo-action": "Refazer: {{action}}",
       "remove-query": "Remover consulta",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Selecionar consulta",
+      "set-cell-time-range": "",
       "split-block": "Dividir bloco",
       "switch-datasource": "Mudar de origem de dados",
       "undo": "Anular",
@@ -15856,8 +15872,7 @@
       "deleted-by-removed": "Conta eliminada",
       "deleted-by-unknown-short": "<0></0> Desconhecido",
       "deleted-by-unknown-tooltip": "Não foi possível procurar a conta que eliminou este painel de controlo",
-      "deleted-less-than-1-min": "<1 min",
-      "deleted-remaining-header": "Tempo restante",
+      "deleted-header": "",
       "location-header": "Localização",
       "name-header": "Nome",
       "tags-header": "Etiquetas",

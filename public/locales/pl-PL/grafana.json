@@ -5899,10 +5899,16 @@
       "paste-panel": "Wklej panel",
       "remove": "Usuń: {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Zmień tytuł wiersza",
       "switch-layout": "Przełącz układ",
       "switch-layout-row": "Przełącz układ",
       "switch-layout-tab": "Przełącz układ",
+      "tab-repeat-variable": "",
       "tab-title": "Zmień tytuł karty",
       "variable-description": "Zmień opis zmiennej",
       "variable-hide": "Zmień opcję ukrywania zmiennej",
@@ -9572,6 +9578,8 @@
     "menu": "Otwórz menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Zapisz",
     "title": "Sterowanie funkcjami"
   },
@@ -13403,6 +13411,12 @@
       "query": {
         "add": "Dodaj zapytanie",
         "run": "Uruchom zapytanie"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13486,7 +13500,9 @@
       "redo-action": "Ponów: {{action}}",
       "remove-query": "Usuń zapytanie",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Wybierz zapytanie",
+      "set-cell-time-range": "",
       "split-block": "Podziel blok",
       "switch-datasource": "Przełącz źródło danych",
       "undo": "Cofnij",
@@ -16102,8 +16118,7 @@
       "deleted-by-removed": "Usunięte konto",
       "deleted-by-unknown-short": "<0></0> Nieznane konto",
       "deleted-by-unknown-tooltip": "Nie udało się wyszukać konta użytkownika, który usunął ten pulpit",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Pozostały czas",
+      "deleted-header": "",
       "location-header": "Lokalizacja",
       "name-header": "Nazwa",
       "tags-header": "Znaczniki",

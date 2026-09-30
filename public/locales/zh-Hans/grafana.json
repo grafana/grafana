@@ -5764,10 +5764,16 @@
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "更改行标题",
       "switch-layout": "切换布局",
       "switch-layout-row": "切换布局",
       "switch-layout-tab": "切换布局",
+      "tab-repeat-variable": "",
       "tab-title": "更改选项卡标题",
       "variable-description": "更改变量描述",
       "variable-hide": "更改变量隐藏选项",
@@ -9404,6 +9410,8 @@
     "menu": "打开菜单",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "保存",
     "title": "功能控制"
   },
@@ -13124,6 +13132,12 @@
       "query": {
         "add": "添加查询",
         "run": "运行查询"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13207,7 +13221,9 @@
       "redo-action": "重做：{{action}}",
       "remove-query": "移除查询",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "选择查询",
+      "set-cell-time-range": "",
       "split-block": "拆分块",
       "switch-datasource": "切换数据源",
       "undo": "撤销",
@@ -15733,8 +15749,7 @@
       "deleted-by-removed": "已删除帐户",
       "deleted-by-unknown-short": "<0></0> 未知",
       "deleted-by-unknown-tooltip": "查找删除此数据面板的账户失败",
-      "deleted-less-than-1-min": "< 1 分钟",
-      "deleted-remaining-header": "剩余时间",
+      "deleted-header": "",
       "location-header": "位置",
       "name-header": "名称",
       "tags-header": "标签",

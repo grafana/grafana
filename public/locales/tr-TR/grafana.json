@@ -5809,10 +5809,16 @@
       "paste-panel": "Paneli yapıştır",
       "remove": "{{typeName}} ögesini kaldır",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Satır başlığını değiştir",
       "switch-layout": "Düzeni değiştir",
       "switch-layout-row": "Düzeni değiştir",
       "switch-layout-tab": "Düzeni değiştir",
+      "tab-repeat-variable": "",
       "tab-title": "Sekme başlığını değiştir",
       "variable-description": "Değişken açıklamasını değiştir",
       "variable-hide": "Değişken gizleme seçeneğini değiştir",
@@ -9460,6 +9466,8 @@
     "menu": "Menüyü aç",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Kaydet",
     "title": "Özellik denetimi"
   },
@@ -13217,6 +13225,12 @@
       "query": {
         "add": "Sorgu ekle",
         "run": "Sorgu çalıştır"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13300,7 +13314,9 @@
       "redo-action": "{{action}} işlemini yinele",
       "remove-query": "Sorguyu kaldır",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Sorgu seç",
+      "set-cell-time-range": "",
       "split-block": "Bloğu böl",
       "switch-datasource": "Veri kaynağını değiştir",
       "undo": "Geri al",
@@ -15856,8 +15872,7 @@
       "deleted-by-removed": "Silinen hesap",
       "deleted-by-unknown-short": "<0></0> Bilinmeyen",
       "deleted-by-unknown-tooltip": "Bu panoyu silen hesap bulunamadı",
-      "deleted-less-than-1-min": "< 1 dk",
-      "deleted-remaining-header": "Kalan süre",
+      "deleted-header": "",
       "location-header": "Konum",
       "name-header": "Ad",
       "tags-header": "Etiketler",

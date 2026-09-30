@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Pilih ruang nama kustom",
+      "aria-label-select-dimension-name": "",
+      "aria-label-select-metric-name": "",
       "aria-label-select-namespace": "Pilih namespace",
       "aria-label-select-query-type": "Pilih jenis kueri",
       "aria-label-select-region": "Pilih wilayah",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "Pilih kelompok sumber daya",
       "aria-label-select-subscription": "Pilih langganan",
       "label-custom-namespace": "Ruang Nama Kustom",
+      "label-dimension-name": "",
+      "label-metric-name": "",
       "label-namespace": "Ruang nama",
       "label-query-type": "Jenis Kueri",
       "label-region": "Wilayah",

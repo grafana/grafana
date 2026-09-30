@@ -795,6 +795,19 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
 }
 
+type fakeResourceIndexClient struct {
+	resourcepb.ResourceIndexClient
+	statsResponse *resourcepb.ResourceStatsResponse
+}
+
+func newFakeResourceIndexClient() *fakeResourceIndexClient {
+	return &fakeResourceIndexClient{}
+}
+
+func (f *fakeResourceIndexClient) GetStats(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return f.statsResponse, nil
+}
+
 func TestGetQuotaUsage(t *testing.T) {
 	ctx := t.Context()
 
@@ -1422,6 +1435,8 @@ func newWatchTestUser() *identity.StaticRequester {
 }
 
 type watchTestServerOpts struct {
+	EventSubscriber   EventSubscriber
+	EventPublisher    EventPublisher
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
@@ -1436,14 +1451,20 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
+	watchExpiry := NewWatchExpiry()
 	store, err := NewKVStorageBackend(KVBackendOptions{
-		KvStore:      NewBadgerKV(db),
-		WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
+		KvStore:            NewBadgerKV(db),
+		EventSubscriber:    opts.EventSubscriber,
+		EventPublisher:     opts.EventPublisher,
+		EnableNatsNotifier: opts.EventSubscriber != nil,
+		WatchInvalidator:   watchExpiry,
+		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond},
 	})
 	require.NoError(t, err)
 
 	srv, err := NewResourceServer(ResourceServerOptions{
 		Backend:           store,
+		WatchExpiry:       watchExpiry,
 		BookmarkFrequency: opts.BookmarkFrequency,
 		StorageMetrics:    opts.StorageMetrics,
 		AccessClient:      opts.AccessClient,
@@ -2176,12 +2197,12 @@ func TestWatchTerminationErrors(t *testing.T) {
 }
 
 func TestWatchExpiryGeneration(t *testing.T) {
-	expiry := newWatchExpiry()
-	first := expiry.current()
-	second := expiry.current()
+	expiry := NewWatchExpiry()
+	first := expiry.WatchInvalidation()
+	second := expiry.WatchInvalidation()
 	require.Equal(t, first, second)
 
-	expiry.expire()
+	expiry.Invalidate()
 
 	for _, generation := range []<-chan struct{}{first, second} {
 		select {
@@ -2191,7 +2212,7 @@ func TestWatchExpiryGeneration(t *testing.T) {
 		}
 	}
 	select {
-	case <-expiry.current():
+	case <-expiry.WatchInvalidation():
 		t.Fatal("new generation is already expired")
 	default:
 	}

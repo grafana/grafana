@@ -46,6 +46,14 @@ func TestParseResults(t *testing.T) {
 						Name: "description",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
+					{
+						Name: resource.SEARCH_FIELD_RV,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+					{
+						Name: resource.SEARCH_FIELD_LEGACY_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -59,6 +67,8 @@ func TestParseResults(t *testing.T) {
 							[]byte("100"),
 							[]byte("25"),
 							[]byte("description"),
+							[]byte("123"),
+							[]byte("42"),
 						},
 					},
 				},
@@ -70,6 +80,8 @@ func TestParseResults(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, results.Hits, 1)
 		require.Equal(t, "description", results.Hits[0].Description)
+		assert.Equal(t, int64(123), results.Hits[0].Field.Object[resource.SEARCH_FIELD_RV])
+		assert.Equal(t, int64(42), results.Hits[0].Field.Object[resource.SEARCH_FIELD_LEGACY_ID])
 	})
 
 	t.Run("should parse field-value results", func(t *testing.T) {
@@ -86,10 +98,12 @@ func TestParseResults(t *testing.T) {
 				{Name: resource.SEARCH_FIELD_OWNER_REFERENCES, Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
 				{Name: builders.DASHBOARD_ERRORS_LAST_1_DAYS, Type: resourcepb.ResourceSearchField_INT64},
 				{Name: "customFlags", Type: resourcepb.ResourceSearchField_BOOLEAN, IsArray: true},
+				{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
 			},
 			Rows: []*resourcepb.ResourceSearchRow{{
-				Key:   &resourcepb.ResourceKey{Name: "uid", Resource: "dashboards"},
-				Score: &score,
+				Key:             &resourcepb.ResourceKey{Name: "uid", Resource: "dashboards"},
+				ResourceVersion: 9007199254740993,
+				Score:           &score,
 				Values: []*resourcepb.ResourceSearchValue{
 					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
 					{FieldIndex: 1, StringValues: []string{"folder1"}},
@@ -100,6 +114,7 @@ func TestParseResults(t *testing.T) {
 					{FieldIndex: 6, StringValues: []string{"iam.grafana.app/Team/devops"}},
 					{FieldIndex: 7, Int64Values: []int64{100}},
 					{FieldIndex: 8, BooleanValues: []bool{true, false}},
+					{FieldIndex: 9, Int64Values: []int64{42}},
 				},
 			}},
 			TotalHits: 1,
@@ -120,6 +135,8 @@ func TestParseResults(t *testing.T) {
 		assert.Equal(t, score, hit.Score)
 		assert.Equal(t, int64(100), hit.Field.Object[builders.DASHBOARD_ERRORS_LAST_1_DAYS])
 		assert.Equal(t, []any{true, false}, hit.Field.Object["customFlags"])
+		assert.Equal(t, int64(9007199254740993), hit.Field.Object[resource.SEARCH_FIELD_RV])
+		assert.Equal(t, int64(42), hit.Field.Object[resource.SEARCH_FIELD_LEGACY_ID])
 	})
 
 	t.Run("should reject an invalid field-value index", func(t *testing.T) {

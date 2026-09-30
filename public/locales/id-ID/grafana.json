@@ -5764,10 +5764,16 @@
       "paste-panel": "Tempel panel",
       "remove": "Hapus {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Ubah judul baris",
       "switch-layout": "Ganti tata letak",
       "switch-layout-row": "Ganti tata letak",
       "switch-layout-tab": "Ganti tata letak",
+      "tab-repeat-variable": "",
       "tab-title": "Ubah judul tab",
       "variable-description": "Ubah deskripsi variabel",
       "variable-hide": "Ubah opsi sembunyikan variabel",
@@ -9404,6 +9410,8 @@
     "menu": "Buka menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Simpan",
     "title": "Kontrol fitur"
   },
@@ -13124,6 +13132,12 @@
       "query": {
         "add": "Tambahkan kueri",
         "run": "Jalankan kueri"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13207,7 +13221,9 @@
       "redo-action": "Ulangi: {{action}}",
       "remove-query": "Hapus kueri",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Pilih kueri",
+      "set-cell-time-range": "",
       "split-block": "Pisahkan blok",
       "switch-datasource": "Ganti sumber data",
       "undo": "Batalkan",
@@ -15733,8 +15749,7 @@
       "deleted-by-removed": "Akun yang dihapus",
       "deleted-by-unknown-short": "<0></0> Tidak Diketahui",
       "deleted-by-unknown-tooltip": "Gagal mencari akun yang menghapus dasbor ini",
-      "deleted-less-than-1-min": "< 1 menit",
-      "deleted-remaining-header": "Waktu yang tersisa",
+      "deleted-header": "",
       "location-header": "Lokasi",
       "name-header": "Nama",
       "tags-header": "Tag",

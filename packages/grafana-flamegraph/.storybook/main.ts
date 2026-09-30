@@ -31,42 +31,6 @@ const config: StorybookConfig = {
 
       tools: {
         rspack: (rspackConfig) => {
-          // Rsbuild's own CSS pipeline has no `lazyStyleTag` equivalent, so the theme
-          // stylesheets get their own chain. `url: false` keeps relative url() refs
-          // (fonts, checkbox sprites) unresolved so they resolve at runtime against the
-          // assets copyAssets.ts puts in staticDirs.
-          rspackConfig.module ??= {};
-          rspackConfig.module.rules ??= [];
-          rspackConfig.module.rules.push({
-            test: /\.scss$/,
-            type: 'javascript/auto',
-            use: [
-              {
-                loader: require.resolve('style-loader'),
-                options: {
-                  // this is required for theme switching .use() and .unuse()
-                  injectType: 'lazyStyleTag',
-                },
-              },
-              {
-                loader: require.resolve('css-loader'),
-                options: {
-                  url: false,
-                  importLoaders: 2,
-                },
-              },
-              {
-                loader: require.resolve('sass-loader'),
-                options: {
-                  sassOptions: {
-                    // silencing these warnings since we're planning to remove sass when angular is gone
-                    silenceDeprecations: ['import', 'global-builtin'],
-                  },
-                },
-              },
-            ],
-          });
-
           // Tell storybook to resolve imports with the @grafana-app/source condition for
           // the packages in this repo. Set here rather than via rsbuild's
           // resolve.conditionNames, which replaces the defaults instead of extending them.
