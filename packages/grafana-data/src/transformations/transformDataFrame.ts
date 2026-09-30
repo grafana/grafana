@@ -165,9 +165,9 @@ function isCustomTransformation(t: DataTransformerConfig | CustomTransformOperat
   return typeof t === 'function';
 }
 
-function deepIterate<T extends object>(obj: T, doSomething: (current: any) => any): T;
+function deepIterate<T extends object>(obj: T, doSomething: (current: unknown) => unknown): T;
 // eslint-disable-next-line no-redeclare
-function deepIterate(obj: any, doSomething: (current: any) => any): any {
+function deepIterate(obj: any, doSomething: (current: unknown) => unknown): any {
   if (Array.isArray(obj)) {
     return obj.map((o) => deepIterate(o, doSomething));
   }

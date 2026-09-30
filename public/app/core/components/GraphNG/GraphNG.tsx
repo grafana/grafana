@@ -74,7 +74,7 @@ export interface GraphNGProps extends Themeable2 {
    * should cause invalidation. we can drop this in favor of something like panelOptionsRev that gets passed in
    * similar to structureRev. then we can drop propsToDiff entirely.
    */
-  options?: Record<string, any>;
+  options?: object;
 
   // Annotation lanes count
   annotationLanes?: number;
@@ -276,7 +276,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
             data={alignedData!}
             width={vizWidth}
             height={vizHeight}
-            plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
+            plotRef={(u) => (this.plotInstance.current = u)}
           >
             {children ? children(config, alignedFrame) : null}
           </UPlotChart>

@@ -14,9 +14,9 @@ import { type LocationUpdate } from './LocationSrv';
  * A wrapper to help work with browser location and history
  */
 export interface LocationService {
-  partial: (query: Record<string, any>, replace?: boolean) => void;
-  push: (location: H.Path | H.LocationDescriptor<any>) => void;
-  replace: (location: H.Path | H.LocationDescriptor<any>) => void;
+  partial: (query: UrlQueryMap, replace?: boolean) => void;
+  push: (location: H.LocationDescriptor) => void;
+  replace: (location: H.LocationDescriptor) => void;
   reload: () => void;
   getLocation: () => H.Location;
   getHistory: () => H.History;
@@ -151,7 +151,7 @@ export class HistoryWrapper implements LocationService, H.History {
     return locationSearchToObject(this.base.location.search);
   };
 
-  partial = (query: Record<string, any>, replace?: boolean) => {
+  partial = (query: UrlQueryMap, replace?: boolean) => {
     const currentLocation = this.base.location;
     const newQuery = this.getSearchObject();
 

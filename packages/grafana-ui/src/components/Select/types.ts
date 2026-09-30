@@ -39,7 +39,7 @@ export interface SelectCommonProps<T> {
   components?: any;
   /** Sets the position of the createOption element in your options list. Defaults to 'last' */
   createOptionPosition?: 'first' | 'last';
-  defaultValue?: any;
+  defaultValue?: SelectValue<T> | null;
   disabled?: boolean;
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
   formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;

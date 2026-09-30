@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { type DataFrame, type TimeRange } from '@grafana/data';
+import { type VizTooltipOptions, type VizOrientation } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { hasVisibleLegendSeries, PlotLegend, type UPlotConfigBuilder } from '@grafana/ui/internal';
 import { type TimeSeriesLegendOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
@@ -13,6 +14,7 @@ const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'annotatio
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme' | 'legend'> & {
   legend: TimeSeriesLegendOptions;
+  options?: { tooltip?: Partial<VizTooltipOptions> & { hoverProximity?: number }; orientation?: VizOrientation };
   onPinnedToSidebarChange?: (pinned: boolean) => void;
 };
 

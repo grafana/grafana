@@ -13,17 +13,17 @@ export interface KeyedVariablesState {
 
 export const initialKeyedVariablesState: KeyedVariablesState = { keys: {} };
 
-export interface KeyedAction {
+export interface KeyedAction<T = unknown> {
   key: string;
-  action: PayloadAction<any>;
+  action: PayloadAction<T>;
 }
 
-const keyedAction = (payload: KeyedAction) => ({
+const keyedAction = <T>(payload: KeyedAction<T>) => ({
   type: `templating/keyed/${payload.action.type.replace(/^templating\//, '')}`,
   payload,
 });
 
-export function toKeyedAction(key: string, action: PayloadAction<any>): PayloadAction<KeyedAction> {
+export function toKeyedAction<T>(key: string, action: PayloadAction<T>): PayloadAction<KeyedAction<T>> {
   const keyAsString = toStateKey(key);
   return keyedAction({ key: keyAsString, action });
 }

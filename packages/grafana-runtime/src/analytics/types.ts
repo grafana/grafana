@@ -139,28 +139,34 @@ export interface ExperimentViewEchoEventPayload {
 export type ExperimentViewEchoEvent = EchoEvent<EchoEventType.ExperimentView, ExperimentViewEchoEventPayload>;
 
 /**
- * Pageview event typeguard.
+ * Pageview payload typeguard. The declared event type stays unchanged.
  *
  * @public
  */
-export const isPageviewEvent = (event: EchoEvent): event is PageviewEchoEvent => {
+export const isPageviewEvent = <T extends EchoEventType>(
+  event: EchoEvent<T>
+): event is EchoEvent<T, PageviewEchoEventPayload> => {
   return Boolean(event.payload.page);
 };
 
 /**
- * Interaction event typeguard.
+ * Interaction payload typeguard.
  *
  * @public
  */
-export const isInteractionEvent = (event: EchoEvent): event is InteractionEchoEvent => {
+export const isInteractionEvent = <T extends EchoEventType>(
+  event: EchoEvent<T>
+): event is EchoEvent<T, InteractionEchoEventPayload> => {
   return Boolean(event.payload.interactionName);
 };
 
 /**
- * Experimentview event typeguard.
+ * Experimentview payload typeguard.
  *
  * @public
  */
-export const isExperimentViewEvent = (event: EchoEvent): event is ExperimentViewEchoEvent => {
+export const isExperimentViewEvent = <T extends EchoEventType>(
+  event: EchoEvent<T>
+): event is EchoEvent<T, ExperimentViewEchoEventPayload> => {
   return Boolean(event.payload.experimentId);
 };

@@ -21,7 +21,7 @@ export default class TableModel implements TableData {
   refId?: string;
   meta?: QueryResultMeta;
 
-  constructor(table?: any) {
+  constructor(table?: Partial<Omit<TableData, 'columns'> & { columns: MutableColumn[] }> | null) {
     this.columns = [];
     this.columnMap = {};
     this.rows = [];

@@ -19,6 +19,7 @@ import {
   getSearchFilterScopedVar,
   type MetricFindValue,
   type QueryResultMetaStat,
+  type SearchFilterOptions,
   type ScopedVars,
   type TimeRange,
   toDataFrame,
@@ -55,6 +56,13 @@ import {
 } from './types';
 import { reduceError } from './utils';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
+
+type GraphiteFindOptions = SearchFilterOptions & {
+  range?: TimeRange;
+  timezone?: TimeZone;
+  requestId?: string;
+  limit?: number;
+};
 
 const GRAPHITE_TAG_COMPARATORS = {
   '=': AbstractLabelOperator.Equal,
@@ -686,7 +694,10 @@ export class GraphiteDatasource
     return parsedDate.unix();
   }
 
-  metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {
+  metricFindQuery(
+    findQuery: string | GraphiteQuery,
+    optionalOptions?: GraphiteFindOptions
+  ): Promise<MetricFindValue[]> {
     const options = optionalOptions || {};
 
     const queryObject = convertToGraphiteQueryObject(findQuery);
@@ -757,7 +768,7 @@ export class GraphiteDatasource
    */
   private async requestMetricRender(
     queryObject: GraphiteQuery,
-    options: any,
+    options: GraphiteFindOptions,
     queryType: GraphiteQueryType
   ): Promise<MetricFindValue[]> {
     const requestId: string = options.requestId ?? `Q${this.requestCounter++}`;
@@ -828,7 +839,7 @@ export class GraphiteDatasource
    */
   private async requestMetricFind(
     query: string,
-    requestId: string,
+    requestId: string | undefined,
     range?: { from: string | number; until: string | number }
   ): Promise<MetricFindValue[]> {
     const params: BackendSrvRequest['params'] = {};
@@ -879,7 +890,7 @@ export class GraphiteDatasource
    */
   private async requestMetricExpand(
     query: string,
-    requestId: string,
+    requestId: string | undefined,
     range?: { from: string | number; until: string | number }
   ): Promise<MetricFindValue[]> {
     const params: BackendSrvRequest['params'] = { query };
@@ -925,7 +936,7 @@ export class GraphiteDatasource
     );
   }
 
-  async getTagsAutoComplete(expressions: string[], tagPrefix?: string, optionalOptions?: any) {
+  async getTagsAutoComplete(expressions: string[], tagPrefix?: string, optionalOptions?: GraphiteFindOptions) {
     const options = optionalOptions || {};
     const params: BackendSrvRequest['params'] = {
       expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
@@ -965,7 +976,12 @@ export class GraphiteDatasource
     return lastValueFrom(this.doGraphiteRequest(httpOptions).pipe(mapToTags()));
   }
 
-  async getTagValuesAutoComplete(expressions: string[], tag: string, valuePrefix?: string, optionalOptions?: any) {
+  async getTagValuesAutoComplete(
+    expressions: string[],
+    tag: string,
+    valuePrefix?: string,
+    optionalOptions?: GraphiteFindOptions
+  ) {
     const options = optionalOptions || {};
     const params: BackendSrvRequest['params'] = {
       expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
@@ -1007,7 +1023,7 @@ export class GraphiteDatasource
     return lastValueFrom(this.doGraphiteRequest(httpOptions).pipe(mapToTags()));
   }
 
-  async getVersion(optionalOptions: any) {
+  async getVersion(optionalOptions: Pick<GraphiteFindOptions, 'requestId'>) {
     const options = optionalOptions || {};
 
     const httpOptions = {
@@ -1128,11 +1144,7 @@ export class GraphiteDatasource
     return lastValueFrom(this.query(query)).then(() => ({ status: 'success', message: 'Data source is working' }));
   }
 
-  doGraphiteRequest<T>(
-    options: BackendSrvRequest & {
-      inspect?: any;
-    }
-  ) {
+  doGraphiteRequest<T>(options: BackendSrvRequest & { inspect?: { type: string } }) {
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
     }

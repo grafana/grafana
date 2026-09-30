@@ -48,7 +48,7 @@ export const updateQueryVariableOptions = (
   };
 };
 
-export function hasSelfReferencingQuery(name: string, query: any): boolean {
+export function hasSelfReferencingQuery(name: string, query: unknown): boolean {
   if (typeof query === 'string' && query.match(new RegExp('\\$' + name + '(/| |$)'))) {
     return true;
   }

@@ -70,8 +70,8 @@ export interface EchoBackend<T extends EchoEvent = any, O = any> {
  *
  * @public
  */
-export interface EchoEvent<T extends EchoEventType = any, P = any> {
-  type: EchoEventType;
+export interface EchoEvent<T extends EchoEventType = EchoEventType, P = any> {
+  type: T;
   /**
    * Event payload containing event specific data.
    */

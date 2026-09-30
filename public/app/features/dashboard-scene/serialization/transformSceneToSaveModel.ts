@@ -134,7 +134,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     state.$behaviors?.find((b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer)?.isEnabled ||
     undefined;
 
-  const dashboard: Dashboard = {
+  const dashboard: Dashboard & { scopeMeta?: typeof state.scopeMeta } = {
     ...defaultDashboard,
     title: state.title,
     description: state.description,
@@ -162,7 +162,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
     refresh: refreshPicker?.state.refresh,
-    // @ts-expect-error not in dashboard schema because it's experimental
     scopeMeta: state.scopeMeta,
   };
 
@@ -242,7 +241,7 @@ export function vizPanelToPanel(
   }
 
   if (vizPanel.state.options) {
-    const { angularOptions, ...rest } = vizPanel.state.options as any;
+    const { angularOptions, ...rest }: { angularOptions?: unknown } = vizPanel.state.options;
     panel.options = rest;
 
     if (angularOptions) {
@@ -385,7 +384,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
 
       const localVariable = panel.state.$variables!.getByName(repeater.state.variableName!) as LocalValueVariable;
 
-      const result: Panel = {
+      const result: Panel & { scopedVars: ScopedVars } = {
         id: djb2Hash(panel.state.key!),
         type: panel.state.pluginId,
         title: panel.state.title,
@@ -394,7 +393,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
         fieldConfig: (panel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
         transformations: [],
         transparent: panel.state.displayMode === 'transparent',
-        // @ts-expect-error scopedVars are runtime only properties, not part of the persisted Dashboardmodel
+        // Scoped variables are snapshot-only and not part of the persisted dashboard schema.
         scopedVars: {
           [repeater.state.variableName!]: {
             text: localVariable?.state.text,
@@ -412,7 +411,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
 
 export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Panel | RowPanel>, isSnapshot = false) {
   const collapsed = Boolean(gridRow.state.isCollapsed);
-  const rowPanel: RowPanel = {
+  const rowPanel: RowPanel & { scopedVars?: ScopedVars } = {
     type: 'row',
     id: getPanelIdForVizPanel(gridRow),
     title: gridRow.state.title,
@@ -446,7 +445,6 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
           },
         };
       }, {});
-      // @ts-expect-error
       rowPanel.scopedVars = scopedVars;
     }
   }

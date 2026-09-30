@@ -13,10 +13,10 @@ export function sortedDeepCloneWithoutNulls<T>(value: T, convertInfinity?: boole
     return value.map((item) => sortedDeepCloneWithoutNulls(item, convertInfinity, stripBOMs)) as unknown as T;
   }
   if (isPlainObject(value)) {
-    return Object.keys(value as { [key: string]: any })
+    return Object.keys(value as object)
       .sort()
       .reduce((acc: any, key) => {
-        let v = (value as any)[key];
+        let v = (value as Record<string, unknown>)[key];
         // Remove null values
         if (v != null) {
           // Strip BOMs from strings

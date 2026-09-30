@@ -24,10 +24,10 @@ type ProcessedTemplate = {
 };
 
 export type ProcessedLinkPattern = {
-  object: any;
+  object: unknown;
   type: (link: string) => boolean;
   key: (link: string) => boolean;
-  value: (value: any) => boolean;
+  value: (value: unknown) => boolean;
   url: ProcessedTemplate;
   text: ProcessedTemplate;
   parameters: string[];
@@ -93,7 +93,7 @@ export function createTestFunction(entry?: unknown) {
   throw new Error(`Invalid value: ${entry}`);
 }
 
-const identity = (a: any): typeof a => a;
+const identity = <T,>(a: T): T => a;
 
 export function processLinkPattern(pattern: any): ProcessedLinkPattern | null {
   try {

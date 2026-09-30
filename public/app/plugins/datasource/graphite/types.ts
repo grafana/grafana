@@ -33,7 +33,8 @@ export enum GraphiteType {
 }
 
 export interface MetricTankRequestMeta {
-  [key: string]: any;
+  stats?: Record<string, number>;
+  [key: string]: unknown;
 }
 
 export interface MetricTankSeriesMeta {

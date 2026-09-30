@@ -65,12 +65,14 @@ function convertTableToDataFrame(table: TableData): DataFrame {
   };
 }
 
-function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
+function convertTimeSeriesToDataFrame(
+  timeSeries: TimeSeries & { points?: TimeSeries['datapoints']; name?: string }
+): DataFrame {
   const times: number[] = [];
   const values: TimeSeriesValue[] = [];
 
   // Sometimes the points are sent as datapoints
-  const points = timeSeries.datapoints || (timeSeries as any).points;
+  const points = timeSeries.datapoints || timeSeries.points;
   for (const point of points) {
     values.push(point[0]);
     times.push(point[1] as number);
@@ -99,7 +101,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   }
 
   return {
-    name: timeSeries.target || (timeSeries as any).name,
+    name: timeSeries.target || timeSeries.name,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
     fields,
@@ -143,7 +145,7 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
   };
 }
 
-function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
+function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries & { filterable?: boolean }): DataFrame {
   const fields: Field[] = [
     {
       name: timeSeries.target,
@@ -151,7 +153,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
       labels: timeSeries.tags,
       config: {
         unit: timeSeries.unit,
-        filterable: (timeSeries as any).filterable,
+        filterable: timeSeries.filterable,
       },
       values: [],
     },

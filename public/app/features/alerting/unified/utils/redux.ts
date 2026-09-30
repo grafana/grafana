@@ -29,7 +29,12 @@ export const initialAsyncRequestState: Pick<
 
 export type AsyncRequestMapSlice<T> = Record<string, AsyncRequestState<T>>;
 
-export type AsyncRequestAction<T> = PayloadAction<Draft<T>, string, any, any>;
+export type AsyncRequestAction<T, ThunkArg = unknown> = PayloadAction<
+  Draft<T>,
+  string,
+  { requestId: string; arg: ThunkArg },
+  SerializedError | undefined
+>;
 
 const asyncActionStatuses = ['pending', 'fulfilled', 'rejected'] as const;
 
@@ -106,7 +111,7 @@ export function createAsyncMapSlice<T, ThunkArg>(
     extraReducers: (builder) =>
       builder.addDefaultCase((state, action) => {
         if (getAsyncActionStatus(typePrefix, action)) {
-          const asyncAction = action as unknown as AsyncRequestAction<T>;
+          const asyncAction = action as unknown as AsyncRequestAction<T, ThunkArg>;
           const entityId = getEntityId(asyncAction.meta.arg);
           return {
             ...state,

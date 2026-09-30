@@ -119,7 +119,7 @@ export interface FetchResponse<T = any> {
 export interface FetchErrorDataProps {
   message?: string;
   status?: string;
-  error?: string | any;
+  error?: unknown;
 }
 
 /**

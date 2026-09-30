@@ -56,7 +56,7 @@ export interface DataLinksFieldConfigSettings {
 }
 
 export const dataLinksOverrideProcessor = (
-  value: any,
+  value: DataLink[],
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
 ): DataLink[] => {
@@ -64,8 +64,7 @@ export const dataLinksOverrideProcessor = (
 };
 
 export const actionsOverrideProcessor = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any,
+  value: Action[],
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
 ): Action[] => {
@@ -75,7 +74,7 @@ export const actionsOverrideProcessor = (
 export interface ValueMappingFieldConfigSettings {}
 
 export const valueMappingsOverrideProcessor = (
-  value: any,
+  value: ValueMapping[],
   _context: FieldOverrideContext,
   _settings?: ValueMappingFieldConfigSettings
 ): ValueMapping[] => {

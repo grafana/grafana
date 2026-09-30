@@ -26,7 +26,9 @@ import { SelectOptionGroup } from './SelectOptionGroup';
  * - noOptionsMessage & loadingMessage is of string type
  * - isDisabled is renamed to disabled
  */
-type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value' | 'loadingMessage'>;
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value' | 'loadingMessage'> & {
+  defaultValue?: SelectableValue<T> | Array<SelectableValue<T>> | null;
+};
 
 interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;

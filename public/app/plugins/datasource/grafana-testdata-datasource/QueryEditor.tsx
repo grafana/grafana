@@ -172,16 +172,17 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, [name]: newValue });
   };
 
-  const onFieldChange = (field: string) => (e: { target: { name: string; value: string; type: string } }) => {
-    const { name, value, type } = e.target;
-    let newValue: string | number = value;
+  const onFieldChange =
+    (field: 'stream' | 'pulseWave') => (e: { target: { name: string; value: string; type: string } }) => {
+      const { name, value, type } = e.target;
+      let newValue: string | number = value;
 
-    if (type === 'number') {
-      newValue = Number(value);
-    }
+      if (type === 'number') {
+        newValue = Number(value);
+      }
 
-    onUpdate({ ...query, [field]: { ...(query as any)[field], [name]: newValue } });
-  };
+      onUpdate({ ...query, [field]: { ...query[field], [name]: newValue } });
+    };
 
   const onEndPointChange = ({ value }: SelectableValue) => {
     onUpdate({ ...query, stringInput: value });

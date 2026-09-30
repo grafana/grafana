@@ -12,17 +12,17 @@ import { hoverColor } from '../../themes/mixins';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { type VizLegendItem } from './types';
 
-export interface Props {
+export interface Props<T = unknown> {
   key?: React.Key;
-  item: VizLegendItem;
+  item: VizLegendItem<T>;
   className?: string;
-  onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLButtonElement>) => void;
+  onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLButtonElement>) => void;
   onLabelMouseOver?: (
-    item: VizLegendItem,
+    item: VizLegendItem<T>,
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   onLabelMouseOut?: (
-    item: VizLegendItem,
+    item: VizLegendItem<T>,
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
@@ -33,7 +33,7 @@ export interface Props {
 /**
  * @internal
  */
-export const LegendTableItem = ({
+export const LegendTableItem = <T,>({
   item,
   onLabelClick,
   onLabelMouseOver,
@@ -42,7 +42,7 @@ export const LegendTableItem = ({
   readonly,
   hasMixedAxes,
   overflow,
-}: Props) => {
+}: Props<T>) => {
   const styles = useStyles2(getStyles, overflow);
 
   const onMouseOver = useCallback(
