@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -49,6 +51,10 @@ func GlobalSearchFieldsHash() string {
 	}
 	sum := sha256.Sum256(blob)
 	return hex.EncodeToString(sum[:])
+}
+
+func groupResourceOf(key NamespacedResource) schema.GroupResource {
+	return schema.GroupResource{Group: key.Group, Resource: key.Resource}
 }
 
 // GlobalSearchResourceTypes lists the resource types a namespace-wide index
@@ -145,6 +151,127 @@ func IndexFieldDefinitions(group, resource string) (standard, deleted []SearchFi
 		return GlobalSearchFieldDefinitions(), nil
 	}
 	return StandardSearchFieldDefinitions(), TrashSearchFieldDefinitions()
+}
+
+// queueImportedTypeRebuilds queues a rebuild of the types each open global index
+// has not caught up with since an import. An import replaces a type without
+// announcing any change, so nothing else would notice. The rebuild queue bounds
+// how many run at once and never overlaps a full rebuild of the same index.
+//
+// openIndexes is every open index, per-resource and global, as the rebuild scan
+// lists them; only the global ones have imported types to catch up with.
+func (s *searchServer) queueImportedTypeRebuilds(ctx context.Context, openIndexes []NamespacedResource) ([]chan struct{}, error) {
+	var completeChs []chan struct{}
+	var errs []error
+	for _, key := range openIndexes {
+		if !key.IsGlobal() {
+			continue
+		}
+		idx := s.search.GetIndex(key)
+		if idx == nil {
+			continue
+		}
+		pending, err := s.importedSinceRecorded(ctx, key, idx, nil)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("checking %s for imports: %w", key.String(), err))
+			continue
+		}
+		if len(pending) == 0 {
+			continue
+		}
+		types := make([]schema.GroupResource, 0, len(pending))
+		for _, p := range pending {
+			types = append(types, groupResourceOf(p.src))
+		}
+		completeCh := make(chan struct{})
+		completeChs = append(completeChs, completeCh)
+		s.rebuildQueue.Add(rebuildRequest{
+			NamespacedResource: key,
+			importedTypes:      types,
+			completeChannels:   []chan<- struct{}{completeCh},
+		})
+		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+	}
+	return completeChs, errors.Join(errs...)
+}
+
+// pendingImport is a covered type storage reports as imported at a time the
+// index has not recorded.
+type pendingImport struct {
+	src        NamespacedResource
+	importedAt time.Time
+}
+
+// importedSinceRecorded returns the covered types, limited to only when it is not
+// empty, that storage reports as imported later than the index recorded. Only a
+// newer import counts, the same as for a per-resource index, which is rebuilt when
+// its build time is before the last import.
+func (s *searchServer) importedSinceRecorded(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource) ([]pendingImport, error) {
+	recorded, err := idx.ImportTimes()
+	if err != nil {
+		return nil, err
+	}
+	var pending []pendingImport
+	for _, src := range indexSources(key) {
+		gr := groupResourceOf(src)
+		if len(only) > 0 && !slices.Contains(only, gr) {
+			continue
+		}
+		importedAt, err := s.storage.GetResourceLastImportTime(ctx, src)
+		if err != nil {
+			return nil, err
+		}
+		if !importedAt.After(recorded[gr]) {
+			continue
+		}
+		pending = append(pending, pendingImport{src: src, importedAt: importedAt})
+	}
+	return pending, nil
+}
+
+// rebuildImportedTypes rebuilds the given types of a global index, or every
+// covered type when none are given, that the index has not caught up with since
+// an import, and records each once rebuilt. Each type is checked again first, so
+// a request that waited behind a full rebuild does nothing.
+func (s *searchServer) rebuildImportedTypes(ctx context.Context, key NamespacedResource, only []schema.GroupResource) error {
+	idx := s.search.GetIndex(key)
+	if idx == nil {
+		return nil
+	}
+	// The import time is read before the rebuild, so an import that lands during
+	// it is still seen as newer next time.
+	pending, err := s.importedSinceRecorded(ctx, key, idx, only)
+	if err != nil || len(pending) == 0 {
+		return err
+	}
+	// The rebuild does not move the index's checkpoint, and a checkpoint from
+	// before the import would replay changes the import undid, such as a delete
+	// of an object it restored. Updating first moves it past the import.
+	if _, err := idx.UpdateIndex(ctx); err != nil {
+		return err
+	}
+	for _, p := range pending {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		res, err := s.rebuildResourceType(ctx, idx, key, p.src)
+		if err != nil {
+			return err
+		}
+		s.log.Info("rebuilt an imported type in the global search index", "namespace", key.Namespace, "resource", p.src.GroupResource(),
+			"reindexed", res.Reindexed, "removed", res.Removed, "failed", res.Failed)
+		// Recorded even when some objects could not be built, or a failure that
+		// comes from the object would rebuild the type forever. Those objects are
+		// removed, so a reconcile sees them missing and retries them. Read failures
+		// return above, unrecorded, and are retried.
+		if res.Failed > 0 {
+			s.log.Warn("some objects of an imported type could not be indexed", "namespace", key.Namespace, "resource", p.src.GroupResource(), "failed", res.Failed)
+		}
+		if err := idx.RecordImportTime(groupResourceOf(p.src), p.importedAt); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // reconcileReadChunkSize bounds how many drifted objects are read at once.
