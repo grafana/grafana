@@ -21,7 +21,7 @@ export const Page = () => {
 
     const rsp = await fetch('openapi/v3');
     const apis = await rsp.json();
-    for (const [key, val] of Object.entries<any>(apis.paths)) {
+    for (const [key, val] of Object.entries<{ serverRelativeURL: string }>(apis.paths)) {
       const parts = key.split('/');
       if (parts.length === 3) {
         urls.push({

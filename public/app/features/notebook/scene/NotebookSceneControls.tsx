@@ -1,6 +1,7 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -9,6 +10,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
+import { useNotebookEmbedHostConfig } from './NotebookEmbeddedContext';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { type NotebookScene } from './NotebookScene';
 
@@ -39,7 +41,7 @@ interface Props {
  */
 export function NotebookSceneControls({ model, stickyOffset }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, stickyOffset, visualRefreshEnabled);
+  const styles = useStyles2(getStyles, stickyOffset);
   const { timePicker, refreshPicker, hideTimeControls, isEditing, uid } = model.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
@@ -48,16 +50,26 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
   // want the range visible.
   const isKioskFull = kioskMode === KioskMode.Full;
 
+  const hostConfig = useNotebookEmbedHostConfig();
+  const usesCanvasBackground = hostConfig.embedded || !visualRefreshEnabled;
+
   return (
     <div className={styles.controls}>
       {!isKioskFull && (
-        <>
+        <div
+          className={cx(
+            styles.controls,
+            usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground
+          )}
+          style={{ top: stickyOffset, background: hostConfig.controlsBackground }}
+          data-testid={selectors.pages.Notebooks.Item.controls}
+        >
           {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has
               to be visible and retryable there too. This renders nothing until there is something to
               say. */}
           <NotebookSaveStatus autosave={model.autosave} />
           {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
-        </>
+        </div>
       )}
       {!hideTimeControls && (
         <>
@@ -72,7 +84,7 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, stickyOffset: number, visualRefreshEnabled: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, stickyOffset: number) => ({
   controls: css({
     display: 'flex',
     alignItems: 'center',
@@ -81,10 +93,6 @@ const getStyles = (theme: GrafanaTheme2, stickyOffset: number, visualRefreshEnab
     flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
-    // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two
-    // tokens are the page's own background (PageLayoutType.Custom, see getDefaultBackgroundForLayout), so
-    // the row reads as chrome rather than as a tinted band — same pairing DashboardControlsChrome uses.
-    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
     // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
     // it scroll away rather than eat the reading area, and this follows suit.
     [theme.breakpoints.up('md')]: {
@@ -94,5 +102,11 @@ const getStyles = (theme: GrafanaTheme2, stickyOffset: number, visualRefreshEnab
       // token the dashboard's controls chrome uses.
       zIndex: theme.zIndex.sidemenu,
     },
+  }),
+  controlsCanvasBackground: css({
+    background: theme.colors.background.canvas,
+  }),
+  controlsPageBackground: css({
+    background: theme.colors.background.page,
   }),
 });

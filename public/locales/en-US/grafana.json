@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Proceed"
-        },
-        "title": {
-          "proceed-to-external-site": "Proceed to external site?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} dashboard",
       "label-no-dashboards-found": "No dashboards found"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
       "refresh": "Refresh dashboard",
-      "save": "Save dashboard",
       "save-as-template": {
         "label": "Save as template"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Save",
       "save-library-panel": "Save library panel",
       "save-library-panel-short": "Save",
-      "settings": "Dashboard settings",
-      "share-button": "Share",
       "star-add-error": "Failed to add to starred",
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
@@ -18188,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Check it out",
-      "description": "We've had a redesign!",
-      "revert": "Take me back",
-      "title": "New styles"
+      "apply": "Try new style",
+      "description": "The new UI is currently in Public Preview. <2>Learn more.</2>",
+      "revert": "Use old style",
+      "title": "Grafana has a new look. Ready to try it?",
+      "title-visual-refresh": "Grafana has a new look"
     }
   },
   "visualization": {

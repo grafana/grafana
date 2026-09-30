@@ -1,5 +1,6 @@
 import { act, render, screen } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -129,6 +130,21 @@ describe('NotebookView', () => {
     });
 
     expect(onTitleChange).toHaveBeenCalledWith('Q2 latency regression');
+  });
+
+  it('paints the sticky controls row with the host-supplied background', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const { instances } = captureStateManager();
+
+    render(<NotebookView uid="nb-1" controlsBackground="rebeccapurple" />);
+
+    await act(async () => {
+      instances[0].setState({ isLoading: false, scene: aNotebookScene() });
+    });
+
+    expect(screen.getByTestId(selectors.pages.Notebooks.Item.controls)).toHaveStyle({
+      background: 'rebeccapurple',
+    });
   });
 
   // Without the route's breadcrumb to carry it, the body is the only place the difference between

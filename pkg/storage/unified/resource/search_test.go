@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"maps"
 	"net/http"
 	"slices"
 	"sync"
@@ -29,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var _ ResourceIndex = &MockResourceIndex{}
+var _ ResourceIndex = (*MockResourceIndex)(nil)
 
 // Mock implementations
 type MockResourceIndex struct {
@@ -41,12 +42,19 @@ type MockResourceIndex struct {
 	buildInfo IndexBuildInfo
 	docCount  int64
 
+	// Import times recorded through RecordImportTime, and an error to fail reading
+	// them with.
+	importTimes    map[schema.GroupResource]time.Time
+	importTimesErr error
+
 	// What the index reports holding, for reconciliation tests.
 	documentRefs    map[schema.GroupResource][]DocumentRef
 	documentRefsErr error
 
-	// Items passed to BulkIndex, guarded by updateIndexMu.
+	// Items passed to BulkIndex, and how many writes carried them, guarded by
+	// updateIndexMu.
 	bulkItems []*BulkIndexItem
+	bulkCalls int
 
 	// Optional configured results for the managed-object RPCs. When nil the
 	// methods return an error, matching the default "not expected" behaviour.
@@ -68,6 +76,7 @@ func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
 func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
+	m.bulkCalls++
 	m.bulkItems = append(m.bulkItems, req.Items...)
 	return nil
 }
@@ -92,6 +101,25 @@ func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStat
 
 func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
 	return m.docCount, nil
+}
+
+func (m *MockResourceIndex) ImportTimes() (map[schema.GroupResource]time.Time, error) {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	if m.importTimesErr != nil {
+		return nil, m.importTimesErr
+	}
+	return maps.Clone(m.importTimes), nil
+}
+
+func (m *MockResourceIndex) RecordImportTime(gr schema.GroupResource, t time.Time) error {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	if m.importTimes == nil {
+		m.importTimes = map[schema.GroupResource]time.Time{}
+	}
+	m.importTimes[gr] = t
+	return nil
 }
 
 // documentRefs is what ListDocumentRefs answers with, by resource type.
@@ -1837,7 +1865,7 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, codes.Unimplemented, status.Code(err))
 
-	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "grafana_vector_storage_search_duration_seconds"))
 }
 
 // TestSearchServer_HybridSearch_ObservesDuration mirrors the VectorSearch
@@ -1862,7 +1890,7 @@ func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, codes.Unimplemented, status.Code(err))
 
-	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "vector_storage_hybrid_search_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "grafana_vector_storage_hybrid_search_duration_seconds"))
 }
 
 func TestFolderFilterSet(t *testing.T) {

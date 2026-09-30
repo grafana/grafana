@@ -271,10 +271,9 @@ func newClient(opts options.StorageOptions,
 		}
 
 		if cfg.QOSEnabled {
-			qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
 			queue := scheduler.NewQueue(&scheduler.QueueOptions{
 				MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-				Registerer:       qosReg,
+				Registerer:       reg,
 				Logger:           cfg.Logger,
 			})
 			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
