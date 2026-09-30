@@ -2,14 +2,17 @@ import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
+import { config, setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
-import { setPrometheusRules } from '../mocks/server/configure';
+import { addPlugin, setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
+import { pluginMeta } from '../testSetup/plugins';
 import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 import { SupportedPlugin } from '../types/pluginBridges';
 
@@ -127,6 +130,33 @@ describe('RuleList - GroupedView', () => {
 
     expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
     expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
+  });
+
+  it('should stop counting a data source as "hidden" once the route proxy drops it from the list', async () => {
+    setPrometheusRules(prometheusDs, []);
+    const originalUnifiedAlertingEnabled = config.unifiedAlertingEnabled;
+
+    try {
+      const { rerender } = render(<GroupedView />);
+
+      await ui.dsSection(/Mimir/).find();
+      expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
+
+      // The route proxy takes over: external sources disappear from the list entirely. The
+      // dropped loader's unmount cleanup reports it as "settled, no rules" one last time, which
+      // must not linger in the hidden count once it's no longer one of externalRuleSources.
+      config.unifiedAlertingEnabled = true;
+      setTestFlags({ [FlagKeys.AlertingDataSourceManagedRouteProxy]: true });
+      addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
+      rerender(<GroupedView />);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/data sources? with no rules (is|are) hidden/)).not.toBeInTheDocument();
+      });
+    } finally {
+      config.unifiedAlertingEnabled = originalUnifiedAlertingEnabled;
+      setTestFlags();
+    }
   });
 
   it('should reveal hidden data sources when "Show all" is clicked', async () => {

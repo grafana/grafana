@@ -6,7 +6,7 @@ import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
-import { GRAFANA_RULES_SOURCE_NAME, GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
+import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
@@ -42,8 +42,14 @@ export function GroupedView({
   const { updateState, loadingDataSources, dataSourcesWithNoRules, settledDataSourceUids } =
     useDataSourceLoadingStates();
 
+  // Both counts are re-derived against the *current* set of external data sources, not just
+  // filtered from the raw reported-state map: a uid can linger in that map (e.g. reported empty
+  // on unmount) after it stops being one of externalRuleSources - e.g. once routeProxyActive
+  // flips true and drops every external source. Grafana-managed is never in this list either, so
+  // no separate exclusion for it is needed.
+  const externalUidSet = useMemo(() => new Set(externalRuleSources.map((ds) => ds.uid)), [externalRuleSources]);
   const hiddenDataSourcesCount = hideEmptyDataSources
-    ? dataSourcesWithNoRules.filter((uid) => uid !== GRAFANA_RULES_SOURCE_NAME).length
+    ? dataSourcesWithNoRules.filter((uid) => externalUidSet.has(uid)).length
     : 0;
 
   // A data source has no reported state at all until its feature discovery resolves, so treat
