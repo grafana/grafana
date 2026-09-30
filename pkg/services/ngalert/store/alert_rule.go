@@ -48,11 +48,6 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
 
-	dbHelper, err := st.legacyDatabaseProvider(ctx)
-	if err != nil {
-		return err
-	}
-
 	// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
 	// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
 	// because this is an extra query on every delete and the only subscriber is behind the flag.
@@ -60,6 +55,10 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 	var folderKeys []ngmodels.FolderKey
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
+		dbHelper, err := st.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return err
+		}
 		folderKeys, err = deletedRuleFolderKeys(ctx, dbHelper, orgID, ruleUID)
 		if err != nil {
 			return err
