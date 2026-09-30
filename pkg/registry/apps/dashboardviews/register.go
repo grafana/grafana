@@ -13,6 +13,7 @@ import (
 	dashboardviewsapp "github.com/grafana/grafana/apps/dashboardviews/pkg/app"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -24,7 +25,8 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	ac accesscontrol.AccessControl
+	ac           accesscontrol.AccessControl
+	dashboardSvc dashboards.DashboardService
 }
 
 // GetAuthorizer allows every resource request through. Real, dashboard-scoped authorization
@@ -45,8 +47,9 @@ func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	ac accesscontrol.AccessControl,
+	dashboardSvc dashboards.DashboardService,
 ) (*AppInstaller, error) {
-	installer := &AppInstaller{ac: ac}
+	installer := &AppInstaller{ac: ac, dashboardSvc: dashboardSvc}
 	provider := simple.NewAppProvider(manifestdata.LocalManifest(), nil, dashboardviewsapp.New)
 
 	appConfig := app.Config{
