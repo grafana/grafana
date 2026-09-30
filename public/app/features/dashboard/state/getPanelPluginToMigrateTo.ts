@@ -1,6 +1,10 @@
 import { autoMigrateAngular } from './PanelModel';
 
-export function getPanelPluginToMigrateTo(panel: any): string | undefined {
+export function getPanelPluginToMigrateTo(panel: {
+  type: string;
+  xaxis?: { mode?: string };
+  legend?: { show?: boolean; sort?: string; sortDesc?: boolean; values?: unknown };
+}): string | undefined {
   // Graph needs special logic as it can be migrated to multiple panels
   // Also, graphite was previously migrated to graph in the schema version 2 migration in DashboardMigrator.ts
   // but this was a bug because in there graphite was set to graph, but since those migrations run

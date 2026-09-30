@@ -1,10 +1,6 @@
 import { has, isArray, isNil, omitBy, pickBy } from 'lodash';
 
-import {
-  type CloudNotifierType,
-  type NotifierDTO,
-  type NotifierType,
-} from 'app/features/alerting/unified/types/alerting';
+import { type NotifierDTO } from 'app/features/alerting/unified/types/alerting';
 import {
   type AlertmanagerReceiver,
   type GrafanaManagedContactPoint,
@@ -54,10 +50,7 @@ export function cloudReceiverToFormValues(
     // filter out only config items that are relevant to cloud
     .filter(([type]) => type.endsWith('_configs') && type !== 'grafana_managed_receiver_configs')
     // map property names to cloud notifier types by removing the `_config` suffix
-    .map(([type, configs]): [CloudNotifierType, CloudChannelConfig[]] => [
-      type.replace('_configs', '') as CloudNotifierType,
-      configs,
-    ])
+    .map(([type, configs]): [string, CloudChannelConfig[]] => [type.replace('_configs', ''), configs])
     // convert channel configs to form values
     .map(([type, configs]) =>
       configs.map((config) => {
@@ -163,7 +156,7 @@ export function convertJsonToJiraField(object: Record<string, any>) {
 
 function cloudChannelConfigToFormChannelValues(
   id: string,
-  type: CloudNotifierType,
+  type: string,
   channel: CloudChannelConfig
 ): CloudChannelValues {
   return {
@@ -183,7 +176,7 @@ function grafanaChannelConfigToFormChannelValues(
 ): GrafanaChannelValues {
   const values: GrafanaChannelValues = {
     __id: id,
-    type: channel.type as NotifierType,
+    type: channel.type,
     version: channel.version,
     provenance: channel.provenance,
     settings: { ...channel.settings },

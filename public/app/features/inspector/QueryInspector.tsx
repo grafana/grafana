@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { LoadingState, type DataFrame, type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
 import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Space, Stack, useStyles2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -56,11 +57,28 @@ function getExecutedQueries(frames: DataFrame[] | undefined): ExecutedQueryInfo[
   return executedQueries;
 }
 
+type InspectableRequest = BackendSrvRequest &
+  Partial<
+    Record<
+      'transformRequest' | 'transformResponse' | 'paramSerializer' | 'jsonpCallbackParam' | 'inspect' | 'timeout',
+      unknown
+    >
+  >;
+
+type InspectableResponse = {
+  -readonly [Key in keyof (FetchResponse<unknown> & FetchError<unknown>)]?: (FetchResponse<unknown> &
+    FetchError<unknown>)[Key];
+} & {
+  request?: InspectableRequest;
+  response?: unknown;
+  $$config?: unknown;
+};
+
 /**
  * Strip the transport details off a response so only the request and payload are shown.
  * Returns undefined for responses that opted out of the inspector.
  */
-function normalizeResponse(response: any): {} | undefined {
+function normalizeResponse(response: InspectableResponse): {} | undefined {
   // ignore silent requests
   if (response.config?.hideFromInspector) {
     return undefined;

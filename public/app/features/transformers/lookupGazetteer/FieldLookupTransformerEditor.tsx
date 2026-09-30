@@ -16,9 +16,9 @@ import {
 
 import { type FieldLookupOptions } from './fieldLookup';
 
-const fieldLookupSettings = {
+const fieldLookupSettings: Pick<StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings>, 'settings'> = {
   settings: {},
-} as StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings>;
+};
 
 export const FieldLookupTransformerEditor = ({ input, options, onChange }: TransformerUIProps<FieldLookupOptions>) => {
   const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {

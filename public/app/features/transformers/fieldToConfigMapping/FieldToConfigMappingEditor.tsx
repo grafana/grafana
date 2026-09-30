@@ -62,7 +62,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
     }
   };
 
-  const onChangeReducer = (row: FieldToConfigRowViewModel, reducerId: ReducerID) => {
+  const onChangeReducer = (row: FieldToConfigRowViewModel, reducerId: string) => {
     const existingIdx = mappings.findIndex((x) => x.fieldName === row.fieldName);
 
     if (existingIdx !== -1) {
@@ -128,7 +128,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
                 <StatsPicker
                   stats={[row.reducerId]}
                   defaultStat={row.reducerId}
-                  onChange={(stats: string[]) => onChangeReducer(row, stats[0] as ReducerID)}
+                  onChange={(stats: string[]) => onChangeReducer(row, stats[0])}
                 />
               </td>
             )}

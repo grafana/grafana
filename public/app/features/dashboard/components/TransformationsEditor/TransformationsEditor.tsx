@@ -8,7 +8,6 @@ import {
   type DataQueryRequest,
   type DataTransformerConfig,
   type PanelData,
-  type SelectableValue,
   standardTransformersRegistry,
   type TransformerCategory,
 } from '@grafana/data';
@@ -178,7 +177,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     return `${name}-${nextId}`;
   };
 
-  onTransformationAdd = (selectable: SelectableValue<string>) => {
+  onTransformationAdd = (selectable: { value: string }) => {
     const eventName = 'transformations_redesign_panel_editor_tabs_transformations_management';
 
     reportInteraction(eventName, {
@@ -187,14 +186,14 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     });
     const { transformations } = this.state;
 
-    const nextId = this.getTransformationNextId(selectable.value!);
+    const nextId = this.getTransformationNextId(selectable.value);
     this.setState({ search: '', showPicker: false });
     this.onChange([
       ...transformations,
       {
         id: nextId,
         transformation: {
-          id: selectable.value as string,
+          id: selectable.value,
           options: {},
         },
       },

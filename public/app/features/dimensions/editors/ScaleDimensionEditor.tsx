@@ -11,7 +11,10 @@ import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { validateScaleOptions, validateScaleConfig } from '../scale';
 import { type ScaleDimensionOptions } from '../types';
 
-export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>) => {
+type ScaleEditorProps = StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>;
+type Props = Omit<ScaleEditorProps, 'item'> & { item: Partial<ScaleEditorProps['item']> };
+
+export const ScaleDimensionEditor = (props: Props) => {
   const { value, context, onChange, item, id } = props;
   const { settings } = item;
   const styles = useStyles2(getStyles);

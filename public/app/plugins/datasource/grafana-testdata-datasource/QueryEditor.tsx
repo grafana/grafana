@@ -43,8 +43,8 @@ const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
 
 const scenarioCollator = new Intl.Collator();
 
-export interface EditorProps {
-  onChange: (value: any) => void;
+export interface EditorProps<Change = TestDataDataQuery> {
+  onChange: (value: Change) => void;
   query: TestDataDataQuery;
   ds: TestDataDataSource;
 }
@@ -70,10 +70,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     }
 
     const vals = await datasource.getScenarios();
-    const hideAlias = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
+    const hideAlias: string[] = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
     return vals.map((v) => ({
       ...v,
-      hideAliasField: hideAlias.includes(v.id as TestDataQueryType),
+      hideAliasField: hideAlias.includes(v.id),
     }));
   }, []);
 
@@ -173,9 +173,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   };
 
   const onFieldChange =
-    (field: 'stream' | 'pulseWave') => (e: { target: { name: string; value: string; type: string } }) => {
+    (field: 'stream' | 'pulseWave') =>
+    (e: { target: { name: string; value: string | number | undefined; type?: string } }) => {
       const { name, value, type } = e.target;
-      let newValue: string | number = value;
+      let newValue: string | number | undefined = value;
 
       if (type === 'number') {
         newValue = Number(value);

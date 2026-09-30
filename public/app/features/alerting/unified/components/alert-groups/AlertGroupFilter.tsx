@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { type AlertState, type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { getFiltersFromUrlParams } from '../../utils/misc';
 
@@ -61,7 +61,7 @@ export const AlertGroupFilter = ({ groups }: Props) => {
             }
           />
           <AlertStateFilter
-            stateFilter={alertState as AlertState}
+            stateFilter={alertState}
             onStateFilterChange={(value) => setQueryParams({ alertState: value ? value : null })}
           />
         </div>

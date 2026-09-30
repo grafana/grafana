@@ -41,14 +41,23 @@ interface Rudderstack {
     }
   ) => void;
   page: () => void;
-  track: (eventName: string, properties?: Properties) => void;
+  track: (eventName: string, properties?: Record<string, unknown>) => void;
 }
+
+type RudderstackPreloadMethod =
+  | keyof Rudderstack
+  | 'alias'
+  | 'group'
+  | 'ready'
+  | 'reset'
+  | 'getAnonymousId'
+  | 'setAnonymousId';
 
 declare global {
   interface Window {
     // We say all methods are undefined because we can't be sure they're there
     // and we should be extra cautious
-    rudderanalytics?: Partial<Rudderstack>;
+    rudderanalytics?: Partial<Rudderstack> & { length?: number };
   }
 }
 
@@ -72,9 +81,10 @@ export class RudderstackBackend
     const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
     loadScript(url);
 
-    const tempRudderstack = ((window as any).rudderanalytics = []);
+    const tempRudderstack: unknown[] & Partial<Record<RudderstackPreloadMethod, () => void>> = (window.rudderanalytics =
+      []);
 
-    const methods = [
+    const methods: RudderstackPreloadMethod[] = [
       'load',
       'page',
       'track',
@@ -89,9 +99,8 @@ export class RudderstackBackend
 
     for (let i = 0; i < methods.length; i++) {
       const method = methods[i];
-      (tempRudderstack as Record<string, any>)[method] = (function (methodName) {
+      tempRudderstack[method] = (function (methodName) {
         return function () {
-          // @ts-ignore
           tempRudderstack.push([methodName].concat(Array.prototype.slice.call(arguments)));
         };
       })(method);

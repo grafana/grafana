@@ -159,7 +159,7 @@ export class LivePanel extends PureComponent<Props, State> {
 
     if (options.display === MessageDisplayMode.Auto) {
       if (message instanceof StreamingDataFrame) {
-        const data: PanelData = {
+        const data: Pick<PanelData, 'series' | 'state'> = {
           series: applyFieldOverrides({
             data: [message],
             theme: config.theme2,
@@ -170,7 +170,7 @@ export class LivePanel extends PureComponent<Props, State> {
             },
           }),
           state: LoadingState.Streaming,
-        } as PanelData;
+        };
         const props: PanelProps = {
           ...this.props,
           options: { frameIndex: 0, showHeader: true },

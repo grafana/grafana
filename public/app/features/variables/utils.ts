@@ -53,7 +53,9 @@ export function containsVariable(...args: any[]) {
   return !!isMatchingVariable;
 }
 
-export const isAllVariable = (variable: any): boolean => {
+export const isAllVariable = (
+  variable: { readonly current?: { readonly value?: unknown; readonly text?: unknown } | null } | null | undefined
+): boolean => {
   if (!variable) {
     return false;
   }
@@ -239,13 +241,15 @@ export const toKeyedVariableIdentifier = (variable: BaseVariableModel): KeyedVar
   return { type: variable.type, id: variable.id, rootStateKey: variable.rootStateKey };
 };
 
-export function toVariablePayload<T = undefined>(identifier: VariableIdentifier, data?: T): VariablePayload<T>;
-export function toVariablePayload<T = undefined>(model: BaseVariableModel, data?: T): VariablePayload<T>;
+export function toVariablePayload(identifier: VariableIdentifier): VariablePayload<undefined>;
+export function toVariablePayload(model: BaseVariableModel): VariablePayload<undefined>;
+export function toVariablePayload<T = undefined>(identifier: VariableIdentifier, data: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(model: BaseVariableModel, data: T): VariablePayload<T>;
 export function toVariablePayload<T = undefined>(
   obj: VariableIdentifier | BaseVariableModel,
   data?: T
-): VariablePayload<T> {
-  return { type: obj.type, id: obj.id, data: data as T };
+): VariablePayload<T | undefined> {
+  return { type: obj.type, id: obj.id, data: data };
 }
 
 export function getVariablesFromUrl() {

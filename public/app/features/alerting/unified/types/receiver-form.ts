@@ -1,6 +1,5 @@
 import type * as React from 'react';
 
-import { type CloudNotifierType, type NotifierType } from 'app/features/alerting/unified/types/alerting';
 import { type GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { type ControlledField } from '../hooks/useControlledFieldArray';
@@ -24,7 +23,6 @@ export interface CloudChannelValues extends ChannelValues {
 }
 
 export interface GrafanaChannelValues extends ChannelValues {
-  type: NotifierType;
   provenance?: string;
   disableResolveMessage?: boolean;
 }
@@ -46,7 +44,7 @@ export type GrafanaChannelMap = Record<string, GrafanaManagedReceiverConfig>;
 export type CloudChannelMap = Record<
   string,
   {
-    type: CloudNotifierType;
+    type: string;
     config: CloudChannelConfig;
   }
 >;

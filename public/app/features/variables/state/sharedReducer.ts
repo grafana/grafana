@@ -174,7 +174,7 @@ const sharedReducerSlice = createSlice({
     },
     changeVariableProp: (
       state: VariablesState,
-      action: PayloadAction<VariablePayload<{ propName: string; propValue: any }>>
+      action: PayloadAction<VariablePayload<{ propName: string; propValue: unknown }>>
     ) => {
       const instanceState = getInstanceState(state, action.payload.id);
       (instanceState as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;

@@ -31,9 +31,9 @@ export interface RegistryItemWithOptions<TOptions = any> extends RegistryItem {
   defaultOptions?: TOptions;
 }
 
-interface RegistrySelectInfo {
-  options: Array<SelectableValue<string>>;
-  current: Array<SelectableValue<string>>;
+interface RegistrySelectInfo<TId extends string> {
+  options: Array<SelectableValue<TId>>;
+  current: Array<SelectableValue<TId>>;
 }
 
 export class Registry<T extends RegistryItem> {
@@ -86,17 +86,17 @@ export class Registry<T extends RegistryItem> {
     current?: string[],
     filter?: (ext: T) => boolean,
     formatLabel: (ext: T) => string = (ext) => ext.name
-  ): RegistrySelectInfo {
+  ): RegistrySelectInfo<T['id']> {
     if (!this.initialized) {
       this.initialize();
     }
 
-    const select: RegistrySelectInfo = {
+    const select: RegistrySelectInfo<T['id']> = {
       options: [],
       current: [],
     };
 
-    const currentOptions: Record<string, SelectableValue<string>> = {};
+    const currentOptions: Record<string, SelectableValue<T['id']>> = {};
     if (current) {
       for (const id of current) {
         currentOptions[id] = {};

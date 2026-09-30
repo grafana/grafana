@@ -63,7 +63,7 @@ import { logWarning, unboxRegexesFromMembraneProxy } from './utils';
 
 type DistortionMap = Map<
   unknown,
-  (originalAttrOrMethod: unknown, pluginMeta: SandboxPluginMeta, sandboxEnv?: SandboxEnvironment) => unknown
+  (originalAttrOrMethod: ProxyTarget, pluginMeta: SandboxPluginMeta, sandboxEnv?: SandboxEnvironment) => ProxyTarget
 >;
 const generalDistortionMap: DistortionMap = new Map();
 
@@ -527,7 +527,7 @@ function distortLodash(distortions: DistortionMap) {
    * in places such as query editors.
    *
    */
-  function cloneDeepDistortion(originalValue: unknown) {
+  function cloneDeepDistortion(originalValue: ProxyTarget) {
     // here to please typescript, this if is never true
     if (!isFunction(originalValue)) {
       return originalValue;

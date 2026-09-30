@@ -254,7 +254,12 @@ export class DatasourceSrv implements DataSourceService {
 
       // Some old plugins does not extend DataSourceApi so we need to manually patch them
       if (!(instance instanceof DataSourceApi)) {
-        const anyInstance: any = instance;
+        const anyInstance: {
+          -readonly [Key in keyof Pick<
+            DataSourceApi,
+            'name' | 'id' | 'type' | 'meta' | 'uid' | 'getRef'
+          >]?: DataSourceApi[Key];
+        } = instance;
         anyInstance.name = instanceSettings.name;
         anyInstance.id = instanceSettings.id;
         anyInstance.type = pluginId;
@@ -433,6 +438,6 @@ const isDatasourceRef = (ref: string | DataSourceRef | null | undefined): ref is
   return false;
 };
 
-export const getDatasourceSrv = (): DatasourceSrv => {
-  return getDataSourceService() as DatasourceSrv;
+export const getDatasourceSrv = (): DataSourceService => {
+  return getDataSourceService();
 };

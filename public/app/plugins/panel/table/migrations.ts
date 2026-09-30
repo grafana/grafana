@@ -83,7 +83,7 @@ const generateThresholds = (thresholds: string[], colors: string[]) => {
 
 const migrateTransformations = (
   panel: PanelModel<Partial<Options>>,
-  oldOpts: { columns: any; transform: Transformations }
+  oldOpts: { columns: Column[]; transform: Transformations }
 ) => {
   const transformations: Transformation[] = panel.transformations ?? [];
   if (Object.keys(transformsMap).includes(oldOpts.transform)) {

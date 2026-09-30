@@ -59,7 +59,7 @@ export interface Props<TQuery extends DataQuery> {
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
   onDataSourceLoaded?: (instance: DataSourceApi) => void;
   renderHeaderExtras?: () => ReactNode;
-  onAddQuery: (query: TQuery) => void;
+  onAddQuery: (query: DataQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
   onChange: (query: TQuery) => void;
   onReplace?: (query: DataQuery) => void;
@@ -494,7 +494,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           query,
           queries,
           timeRange: data.timeRange,
-          onAddQuery: onAddQuery as (query: DataQuery) => void,
+          onAddQuery: onAddQuery,
           dataSource,
           key: index,
         })

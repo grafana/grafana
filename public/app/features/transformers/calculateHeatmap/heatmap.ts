@@ -400,8 +400,7 @@ export function calculateHeatmapFromData(
           : undefined,
     yMode: yBucketsCfg.mode,
     ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
-    yLog:
-      scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as 2 | 10 | undefined) : undefined,
+    yLog: scaleDistribution?.type === ScaleDistribution.Log ? scaleDistribution?.log : undefined,
 
     xMin: options.timeRange?.from.valueOf(),
     xMax: options.timeRange?.to.valueOf(),
@@ -511,9 +510,9 @@ interface HeatmapOpts {
   xCeil?: boolean;
   yCeil?: boolean;
 
-  // log2 or log10 buckets
+  // Logarithmic bucket bases; bases other than 2 use log10 for binning.
   xLog?: 2 | 10;
-  yLog?: 2 | 10;
+  yLog?: number;
 
   xTime?: boolean;
   yTime?: boolean;

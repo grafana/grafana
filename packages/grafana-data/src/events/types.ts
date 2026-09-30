@@ -55,7 +55,7 @@ export abstract class BusEventWithPayload<T> extends BusEventBase {
  */
 export interface BusEventType<T extends BusEvent> {
   type: string;
-  new (...args: any[]): T;
+  new (...args: never[]): T;
 }
 
 /**

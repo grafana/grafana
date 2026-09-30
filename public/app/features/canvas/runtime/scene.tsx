@@ -150,7 +150,7 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(options: Options, enableEditing: boolean) {
+  load(options: Options, enableEditing: boolean | undefined) {
     const { root, showAdvancedTypes, panZoom, zoomToContent, tooltip } = options;
     const tooltipMode = tooltip?.mode ?? TooltipDisplayMode.Single;
     const tooltipDisableForOneClick = tooltip?.disableForOneClick ?? false;

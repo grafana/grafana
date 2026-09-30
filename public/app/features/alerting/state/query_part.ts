@@ -3,10 +3,10 @@ import { clone, each } from 'lodash';
 export class QueryPartDef {
   type: string;
   params: any[];
-  defaultParams: any[];
+  defaultParams: unknown[];
   renderer: any;
-  category: any;
-  addStrategy: any;
+  category: unknown;
+  addStrategy: unknown;
 
   constructor(options: any) {
     this.type = options.type;
@@ -19,12 +19,12 @@ export class QueryPartDef {
 }
 
 export class QueryPart {
-  part: any;
+  part: { type: string; params?: unknown[] };
   def: QueryPartDef;
-  params: any[];
+  params: unknown[];
   text: string;
 
-  constructor(part: any, def: QueryPartDef) {
+  constructor(part: { type: string; params?: unknown[] }, def: QueryPartDef) {
     this.part = part;
     this.def = def;
     if (!this.def) {

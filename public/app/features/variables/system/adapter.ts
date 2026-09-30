@@ -1,12 +1,9 @@
-import { type ComponentType } from 'react';
-
 import { LoadingState, type SystemVariable, VariableHide } from '@grafana/data';
 
 import { type VariableAdapter } from '../adapters';
-import { type VariablePickerProps } from '../pickers/types';
 import { initialVariableModelState } from '../types';
 
-export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<any>> => {
+export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<{ toString: () => string }>> => {
   return {
     id: 'system',
     description: '',
@@ -19,8 +16,8 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
       current: { value: { toString: () => '' } },
       state: LoadingState.Done,
     },
-    reducer: (state: any) => state,
-    picker: null as unknown as ComponentType<VariablePickerProps<SystemVariable<any>>>,
+    reducer: (state) => state,
+    picker: null,
     dependsOn: () => {
       return false;
     },

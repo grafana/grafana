@@ -47,7 +47,7 @@ export function seriesVisibilityConfigFactory(
   }
 
   const overridesCopy = Array.from(overrides);
-  const [current] = overridesCopy.splice(currentIndex, 1) as SystemConfigOverrideRule[];
+  const [current] = overridesCopy.splice(currentIndex, 1);
 
   if (mode === SeriesVisibilityChangeMode.ToggleSelection) {
     let existing = getExistingDisplayNames(current);
@@ -126,7 +126,7 @@ function createOverride(
 }
 
 const createExtendedOverride = (
-  current: SystemConfigOverrideRule,
+  current: ConfigOverrideRule,
   displayName: string,
   mode = ByNamesMatcherMode.exclude
 ): SystemConfigOverrideRule => {
@@ -143,7 +143,7 @@ const createExtendedOverride = (
   return createOverride(existing, mode, property);
 };
 
-const getExistingDisplayNames = (rule: SystemConfigOverrideRule): string[] => {
+const getExistingDisplayNames = (rule: ConfigOverrideRule): string[] => {
   const names = rule.matcher.options?.names;
   if (!Array.isArray(names)) {
     return [];

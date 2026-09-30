@@ -93,11 +93,7 @@ export interface SelectFieldConfigSettings<T> {
   getOptions?: (context: FieldOverrideContext) => Promise<Array<SelectableValue<T>>>;
 }
 
-export const selectOverrideProcessor = (
-  value: any,
-  _context: FieldOverrideContext,
-  _settings?: SelectFieldConfigSettings<any>
-) => {
+export const selectOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings?: unknown) => {
   return value;
 };
 

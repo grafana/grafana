@@ -87,6 +87,16 @@ for (let i = 0; i < 128; i++) {
 
 const identifierPartTable = identifierStartTable;
 
+type LexerToken = {
+  type: string;
+  value: string;
+  pos?: number;
+  isUnclosed?: boolean;
+  quote?: string;
+  base?: number;
+  isMalformed?: boolean;
+};
+
 export class Lexer {
   input: string;
   char: number;
@@ -134,7 +144,7 @@ export class Lexer {
       }
     }
 
-    let match = this.scanStringLiteral();
+    let match: LexerToken | null = this.scanStringLiteral();
     if (match) {
       return match;
     }
@@ -334,7 +344,7 @@ export class Lexer {
    * This method's implementation was heavily influenced by the
    * scanNumericLiteral function in the Esprima parser's source code.
    */
-  scanNumericLiteral(): any {
+  scanNumericLiteral() {
     let index = 0;
     let value = '';
     const length = this.input.length;

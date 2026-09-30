@@ -9,7 +9,10 @@ import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/inter
 
 import { type ColorDimensionOptions } from '../types';
 
-export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionConfig, ColorDimensionOptions>) => {
+type ColorEditorProps = StandardEditorProps<ColorDimensionConfig, ColorDimensionOptions>;
+type Props = Omit<ColorEditorProps, 'item'> & { item: Partial<ColorEditorProps['item']> };
+
+export const ColorDimensionEditor = (props: Props) => {
   const fixedColorOption = useMemo(
     () => ({
       label: t('dimensions.color-dimension-editor.label-fixed-color', 'Fixed color'),

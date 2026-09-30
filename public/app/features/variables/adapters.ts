@@ -1,9 +1,9 @@
 import { type ComponentType } from 'react';
-import { type Reducer } from 'redux';
+import { type UnknownAction } from 'redux';
 
 import {
   Registry,
-  type TypedVariableModel,
+  type BaseVariableModel,
   type UrlQueryValue,
   type VariableOption,
   type VariableType,
@@ -12,7 +12,7 @@ import {
 import { type VariablePickerProps } from './pickers/types';
 import { type VariablesState } from './state/types';
 
-export interface VariableAdapter<Model extends TypedVariableModel> {
+export interface VariableAdapter<Model extends BaseVariableModel> {
   id: VariableType;
   description: string;
   name: string;
@@ -23,9 +23,9 @@ export interface VariableAdapter<Model extends TypedVariableModel> {
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
   getSaveModel: (variable: Model, saveCurrentAsDefault?: boolean) => Partial<Model>;
   getValueForUrl: (variable: Model) => string | string[];
-  picker: ComponentType<VariablePickerProps<Model>>;
-  reducer: Reducer<VariablesState>;
-  beforeAdding?: (model: any) => any;
+  picker: ComponentType<VariablePickerProps<Model>> | null;
+  reducer: (state: VariablesState, action: UnknownAction) => VariablesState;
+  beforeAdding?: (model: Partial<Model>) => object;
 }
 
 export const variableAdapters = new Registry<VariableAdapter<any>>();

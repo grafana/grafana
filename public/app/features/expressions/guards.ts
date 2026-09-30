@@ -12,12 +12,12 @@ export const isExpressionQuery = (dataQuery?: DataQuery): dataQuery is Expressio
     return true;
   }
 
-  const expression = dataQuery as ExpressionQuery;
+  const expression: DataQuery & { type?: unknown } = dataQuery;
 
   if (typeof expression.type !== 'string') {
     return false;
   }
-  return Object.values(ExpressionQueryType).includes(expression.type);
+  return Object.values<string>(ExpressionQueryType).includes(expression.type);
 };
 
 export function isReducerType(value: string): value is ReducerType {

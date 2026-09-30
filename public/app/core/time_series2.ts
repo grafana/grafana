@@ -41,7 +41,11 @@ function getFillGradient(amount: number) {
  * @param panel
  * @param height
  */
-export function updateLegendValues(data: TimeSeries[], panel: any, height: number) {
+export function updateLegendValues(
+  data: TimeSeries[],
+  panel: { yaxes: Array<{ format?: string | null; decimals?: DecimalCount }>; decimals?: DecimalCount },
+  height: number
+) {
   for (let i = 0; i < data.length; i++) {
     const series = data[i];
     const yaxes = panel.yaxes;
@@ -351,7 +355,7 @@ export default class TimeSeries {
     return false;
   }
 
-  hideFromLegend(options: any) {
+  hideFromLegend(options: { hideEmpty?: boolean; hideZero?: boolean }) {
     if (options.hideEmpty && this.allIsNull) {
       return true;
     }

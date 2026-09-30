@@ -65,12 +65,12 @@ export class DashboardModel implements TimeModel {
   // TODO: use proper type and fix all the places where uid is set to null
   uid: any;
   title: string;
-  description: any;
-  tags: any;
-  style: any;
-  timezone: any;
-  weekStart: any;
-  editable: any;
+  description?: string;
+  tags: string[];
+  style: undefined;
+  timezone: TimeZone;
+  weekStart: string;
+  editable: boolean;
   graphTooltip: DashboardCursorSync;
   time: any;
   liveNow?: boolean;
@@ -1077,7 +1077,7 @@ export class DashboardModel implements TimeModel {
     return this.timezone ? this.timezone : contextSrv?.user?.timezone;
   }
 
-  private updateSchema(old: any, targetVersion?: number) {
+  private updateSchema(old: Dashboard, targetVersion?: number) {
     const migrator = new DashboardMigrator(this);
     migrator.updateSchema(old, targetVersion);
   }

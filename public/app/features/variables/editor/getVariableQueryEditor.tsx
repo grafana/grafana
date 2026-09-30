@@ -61,9 +61,9 @@ export function StandardVariableQueryEditor<
   datasource: propsDatasource,
   query: propsQuery,
   onChange: propsOnChange,
-}: QueryEditorProps<any, TQuery, TOptions, StandardVariableQuery>) {
+}: QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions, StandardVariableQuery>) {
   const onChange = useCallback(
-    (query: any) => {
+    (query: string) => {
       propsOnChange({ refId: 'StandardVariableQuery', query });
     },
     [propsOnChange]

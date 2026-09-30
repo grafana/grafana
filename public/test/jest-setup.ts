@@ -23,7 +23,20 @@ import './mocks/workers';
 import '../vendor/flot/jquery.flot';
 import '../vendor/flot/jquery.flot.time';
 
-const global = window as any;
+// Mock constructors do not implement every browser interface; this view is write-only.
+const global: Partial<
+  Record<
+    | 'grafanaBootData'
+    | 'IntersectionObserver'
+    | 'TextEncoder'
+    | 'TextDecoder'
+    | 'TransformStream'
+    | 'ResizeObserver'
+    | 'MessageChannel'
+    | 'BroadcastChannel',
+    unknown
+  >
+> = window;
 
 // mock the default window.grafanaBootData settings
 const settings: Partial<GrafanaBootConfig> = {

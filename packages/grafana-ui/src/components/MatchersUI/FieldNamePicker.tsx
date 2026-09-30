@@ -7,7 +7,9 @@ import { Combobox } from '../Combobox/Combobox';
 
 import { useFieldDisplayNames, useMatcherSelectOptions, frameHasName } from './utils';
 
-type Props = StandardEditorProps<string, FieldNamePickerConfigSettings>;
+type Props = Omit<StandardEditorProps<string, FieldNamePickerConfigSettings>, 'item'> & {
+  item: Partial<StandardEditorProps<string, FieldNamePickerConfigSettings>['item']>;
+};
 
 // Pick a field name out of the fields
 export const FieldNamePicker = ({ value, onChange, context, item, id }: Props) => {

@@ -54,7 +54,7 @@ import {
 
 import { type DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
-import { convertRowsToGridPanels } from './convertRowsToGridPanels';
+import { type LegacyRow, convertRowsToGridPanels } from './convertRowsToGridPanels';
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
@@ -322,7 +322,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 19 && finalTargetVersion >= 19) {
       // migrate change to gauge options
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         if (panel.links && isArray(panel.links)) {
           panel.links = panel.links.map(upgradePanelLink);
         }
@@ -338,7 +338,7 @@ export class DashboardMigrator {
           url: updateVariablesSyntax(link.url),
         };
       };
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         // For graph panel
         if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
           panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
@@ -367,7 +367,7 @@ export class DashboardMigrator {
           url: link.url.replace(/__series.labels/g, '__field.labels'),
         };
       };
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         // For graph panel
         if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
           panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
@@ -806,7 +806,7 @@ export class DashboardMigrator {
     }
   }
 
-  upgradeToGridLayout(old: any) {
+  upgradeToGridLayout(old: { rows?: LegacyRow[] }) {
     if (!old.rows) {
       return;
     }
@@ -820,7 +820,16 @@ export class DashboardMigrator {
   }
 }
 
-function upgradePanelLink(link: any): DataLink {
+function upgradePanelLink(
+  link: Omit<DataLink, 'url'> & {
+    url?: string;
+    dashboard?: string;
+    dashUri?: string;
+    keepTime?: boolean;
+    includeVars?: boolean;
+    params?: string;
+  }
+): DataLink {
   let url = link.url;
 
   if (!url && link.dashboard) {

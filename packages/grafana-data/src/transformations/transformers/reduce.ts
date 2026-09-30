@@ -18,7 +18,7 @@ export enum ReduceTransformerMode {
 }
 
 export interface ReduceTransformerOptions {
-  reducers: ReducerID[];
+  reducers: string[];
   fields?: MatcherConfig; // Assume all fields
   mode?: ReduceTransformerMode;
   includeTimeField?: boolean;
@@ -78,7 +78,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 function reduceSeriesToRows(
   data: DataFrame[],
   matcher: FieldMatcher,
-  reducerId: ReducerID[],
+  reducerId: string[],
   labelsToFields?: boolean
 ): DataFrame | undefined {
   const calculators = fieldReducers.list(reducerId);
@@ -223,7 +223,7 @@ function mergeResults(data: DataFrame[]): DataFrame | undefined {
 /**
  * @internal -- only exported for testing
  */
-export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId: ReducerID[]): DataFrame[] {
+export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId: string[]): DataFrame[] {
   const calculators = fieldReducers.list(reducerId);
   const reducers = calculators.map((c) => c.id);
   const processed: DataFrame[] = [];

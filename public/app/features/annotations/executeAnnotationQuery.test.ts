@@ -1,6 +1,5 @@
 import { type DataSourceApi, dateTime, type DataQuery } from '@grafana/data';
 
-import { type PanelModel } from '../dashboard/state/PanelModel';
 import { createDashboardModelFixture } from '../dashboard/state/__fixtures__/dashboardFixtures';
 import { type TestQuery, getMockDataSource } from '../query/state/mocks/mockDataSource';
 
@@ -18,7 +17,7 @@ describe('executeAnnotationQuery', () => {
       dashboard: createDashboardModelFixture({
         panels: [{ id: 1, type: 'graph' }],
       }),
-      panel: {} as PanelModel,
+      panel: {},
     };
 
     const ds = getMockDataSource();

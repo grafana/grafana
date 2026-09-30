@@ -7,7 +7,6 @@ import {
   type DataQueryRequest,
   type DataSourceApi,
   LoadingState,
-  type PanelData,
   type QueryVariableModel,
   type ScopedVars,
   generateUUID,
@@ -22,7 +21,7 @@ import { type KeyedVariableIdentifier } from '../state/types';
 import { getTemplatedRegex } from '../utils';
 
 import { toMetricFindValuesOperator, updateOptionsState, validateVariableSelection } from './operators';
-import { QueryRunners } from './queryRunners';
+import { QueryRunners, type VariableQueryPanelData } from './queryRunners';
 
 interface UpdateOptionsArgs {
   identifier: KeyedVariableIdentifier;
@@ -133,7 +132,7 @@ export class VariableQueryRunner {
           }),
           filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error), // we only care about done or error for now
           take(1), // take the first result, using first caused a bug where it in some situations throw an uncaught error because of no results had been received yet
-          mergeMap((data: PanelData) => {
+          mergeMap((data: VariableQueryPanelData) => {
             if (data.state === LoadingState.Error) {
               return throwError(() => data.error);
             }

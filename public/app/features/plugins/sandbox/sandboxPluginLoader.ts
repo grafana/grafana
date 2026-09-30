@@ -75,7 +75,7 @@ async function doImportPluginModuleInSandbox(meta: SandboxPluginMeta): Promise<S
       // static distortions are faster distortions with direct object descriptors checks
       const staticDistortion = generalDistortionMap.get(originalValue);
       if (staticDistortion) {
-        return staticDistortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
+        return staticDistortion(originalValue, meta, sandboxEnvironment);
       }
 
       // live distortions are slower and have to do runtime checks

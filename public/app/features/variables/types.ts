@@ -2,6 +2,7 @@ import { type ComponentType } from 'react';
 
 import {
   BusEventWithPayload,
+  type DataSourceApi,
   type DataQuery,
   type DataSourceJsonData,
   LoadingState,
@@ -38,7 +39,7 @@ export const initialVariableModelState: BaseVariableModel = {
 export interface VariableQueryEditorProps {
   query: any;
   onChange: (query: any, definition: string) => void;
-  datasource: any;
+  datasource: DataSourceApi;
   templateSrv: TemplateSrv;
 }
 

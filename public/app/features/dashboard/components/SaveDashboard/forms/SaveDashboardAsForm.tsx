@@ -11,7 +11,7 @@ import { type SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardAsFormDTO {
   title: string;
-  description: string;
+  description?: string;
   $folder: { uid?: string; title?: string };
   copyTags: boolean;
 }

@@ -155,7 +155,7 @@ export interface MetricRequest {
 }
 
 interface MetricQuery {
-  [key: string]: any;
+  [key: string]: unknown;
   datasource?: DataSourceRef;
   refId?: string;
   maxDataPoints?: number;

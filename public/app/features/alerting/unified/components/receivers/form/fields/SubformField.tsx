@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -19,7 +19,7 @@ interface Props {
   option: NotificationChannelOption;
   getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
   pathPrefix: string;
-  errors?: DeepMap<any, FieldError>;
+  errors?: Record<string, unknown>;
   readOnly?: boolean;
   secureFields: NotificationChannelSecureFields;
   /**

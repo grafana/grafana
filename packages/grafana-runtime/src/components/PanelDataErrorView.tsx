@@ -8,7 +8,7 @@ import { type FieldConfigSource, type PanelData, type PanelPluginVisualizationSu
 export interface PanelDataErrorViewProps {
   message?: string;
   panelId: number;
-  data: PanelData;
+  data: Pick<PanelData, 'state' | 'series'> & Partial<PanelData>;
   fieldConfig?: FieldConfigSource;
   needsTimeField?: boolean;
   needsNumberField?: boolean;

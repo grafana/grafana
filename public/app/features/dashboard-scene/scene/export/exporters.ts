@@ -1,6 +1,6 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
+import { type DataSourceRef, VariableRefresh } from '@grafana/data';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type Panel } from '@grafana/schema';
@@ -46,7 +46,7 @@ export interface Input {
   name: string;
   type: string;
   label: string;
-  value: any;
+  value?: string;
   description: string;
   usage?: InputUsage;
 }
@@ -255,7 +255,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
       if (variable.type === 'query') {
         await templateizeDatasourceUsage(variable);
         variable.options = [];
-        variable.current = {} as unknown as VariableOption;
+        variable.current = {};
         variable.refresh =
           variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
       } else if (variable.type === 'datasource') {
@@ -298,7 +298,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
       }
     }
 
-    each(datasources, (value: any) => {
+    each(datasources, (value) => {
       inputs.push(value);
     });
 

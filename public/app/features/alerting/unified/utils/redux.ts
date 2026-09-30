@@ -83,9 +83,9 @@ function requestStateReducer<T>(
  * takes care to only use state of the latest invocation of the action if there are several in flight.
  */
 export function createAsyncSlice<T>(name: string, typePrefix: string) {
-  return createSlice({
+  return createSlice<AsyncRequestState<T>, {}, string, {}>({
     name,
-    initialState: initialAsyncRequestState as AsyncRequestState<T>,
+    initialState: initialAsyncRequestState,
     reducers: {},
     extraReducers: (builder) =>
       builder.addDefaultCase((state, action) =>
@@ -104,9 +104,9 @@ export function createAsyncMapSlice<T, ThunkArg>(
   typePrefix: string,
   getEntityId: (arg: ThunkArg) => string
 ) {
-  return createSlice({
+  return createSlice<AsyncRequestMapSlice<T>, {}, string, {}>({
     name,
-    initialState: {} as AsyncRequestMapSlice<T>,
+    initialState: {},
     reducers: {},
     extraReducers: (builder) =>
       builder.addDefaultCase((state, action) => {

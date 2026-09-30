@@ -163,7 +163,7 @@ export class FieldConfigEditorBuilder<TOptions, TContextOptions = unknown> exten
   }
 
   addGenericEditor<TSettings>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & any, unknown, TContextOptions>, // & any... i give up!
+    config: FieldConfigEditorConfig<TOptions, TSettings, unknown, TContextOptions>,
     editor: (props: StandardEditorProps<TSettings>) => JSX.Element
   ): this {
     return this.addCustomEditor({
@@ -184,9 +184,9 @@ export class FieldConfigEditorBuilder<TOptions, TContextOptions = unknown> exten
  * {@link PanelOptionsEditorBuilder.addNestedOptions}.
  */
 export interface NestedValueAccess {
-  getValue: (path: string) => any;
+  getValue: (path: string) => unknown;
   onChange: (path: string, value: any) => void;
-  getContext?: (parent: StandardEditorContext<any>) => StandardEditorContext<any>;
+  getContext?: (parent: StandardEditorContext<unknown, unknown>) => StandardEditorContext<unknown, unknown>;
 }
 
 /**
@@ -208,7 +208,9 @@ export interface NestedPanelOptions<TSub = any> {
   values?: (parent: NestedValueAccess) => NestedValueAccess;
 }
 
-class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<TSub, any, any, any> {
+class NestedPanelOptionsBuilder<TSub = any>
+  implements OptionsEditorItem<TSub, unknown, StandardEditorProps<TSub>, TSub, TSub>
+{
   path = '';
   category?: string[];
   defaultValue?: TSub;

@@ -5,7 +5,7 @@ import { thunk } from 'redux-thunk';
 const mockStore = configureMockStore([thunk]);
 
 export interface ThunkGiven {
-  givenThunk: (thunkFunction: any) => ThunkWhen;
+  givenThunk: (thunkFunction: (...args: never[]) => unknown) => ThunkWhen;
 }
 
 export interface ThunkWhen {
@@ -17,7 +17,7 @@ export const thunkTester = (initialState: unknown, debug?: boolean): ThunkGiven 
   let thunkUnderTest: any = null;
   let dispatchedActions: PayloadAction[] = [];
 
-  const givenThunk = (thunkFunction: any): ThunkWhen => {
+  const givenThunk = (thunkFunction: (...args: never[]) => unknown): ThunkWhen => {
     thunkUnderTest = thunkFunction;
 
     return instance;

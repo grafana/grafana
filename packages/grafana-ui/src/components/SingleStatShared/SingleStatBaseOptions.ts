@@ -114,7 +114,7 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
   return options;
 }
 
-function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
+function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOptions>>, prevOptions: any) {
   const prevPanel = prevOptions.angular;
   const reducer = fieldReducers.getIfExists(prevPanel.valueName);
   const options: SingleStatBaseOptions = {
@@ -185,7 +185,9 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
   return options;
 }
 
-export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBaseOptions>): SingleStatBaseOptions {
+export function sharedSingleStatMigrationHandler(
+  panel: PanelModel<SingleStatBaseOptions> & { fieldConfig: { defaults: FieldConfig & { title?: string } } }
+): SingleStatBaseOptions {
   if (!panel.options) {
     // This happens on the first load or when migrating from angular
     return {
@@ -276,10 +278,10 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
 
   if (previousVersion < 7.1) {
     // move title to displayName
-    const oldTitle = (panel.fieldConfig.defaults as any).title;
+    const oldTitle = panel.fieldConfig.defaults.title;
     if (oldTitle !== undefined && oldTitle !== null) {
       panel.fieldConfig.defaults.displayName = oldTitle;
-      delete (panel.fieldConfig.defaults as any).title;
+      delete panel.fieldConfig.defaults.title;
     }
   }
 
@@ -347,8 +349,13 @@ function migrateFromValueOptions(old: any) {
     return old;
   }
 
-  const fieldOptions: any = {};
-  const fieldDefaults: any = {};
+  const fieldOptions: {
+    mappings?: unknown;
+    thresholds?: unknown;
+    defaults?: { unit?: unknown; decimals?: unknown; min?: unknown; max?: unknown };
+    calcs?: string[];
+  } = {};
+  const fieldDefaults: { unit?: unknown; decimals?: unknown; min?: unknown; max?: unknown } = {};
 
   fieldOptions.mappings = old.valueMappings;
   fieldOptions.thresholds = old.thresholds;
@@ -385,7 +392,9 @@ function migrateFromValueOptions(old: any) {
   return cleanedOptions;
 }
 
-function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {
+function migrateOldThresholds(
+  thresholds?: Array<Omit<Threshold, 'value'> & { value: number | null }>
+): Threshold[] | undefined {
   if (!thresholds || !thresholds.length) {
     return undefined;
   }
@@ -405,7 +414,7 @@ function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {
  * @deprecated use convertOldAngularValueMappings instead
  * Convert the angular single stat mapping to new react style
  */
-export function convertOldAngularValueMapping(panel: any): ValueMapping[] {
+export function convertOldAngularValueMapping(panel: unknown): ValueMapping[] {
   return convertOldAngularValueMappings(panel);
 }
 

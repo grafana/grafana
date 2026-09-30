@@ -3,8 +3,9 @@ import { type FormEvent } from 'react';
 import { InlineField, InlineFieldRow, Input, Select, Icon } from '@grafana/ui';
 
 import { type EditorProps } from '../QueryEditor';
+import { type TestDataDataQuery } from '../dataquery';
 
-const ERROR_SOURCE_OPTIONS = [
+const ERROR_SOURCE_OPTIONS: Array<{ label: string; value: NonNullable<TestDataDataQuery['errorSource']> }> = [
   {
     label: 'Plugin',
     value: 'plugin',

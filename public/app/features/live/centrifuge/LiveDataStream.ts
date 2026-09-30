@@ -121,10 +121,8 @@ const reduceNewValuesSameSchemaMessages = (
   type: InternalStreamMessageType.NewValuesSameSchema,
 });
 
-const filterMessages = <T extends InternalStreamMessageType>(
-  packets: InternalStreamMessage[],
-  type: T
-): Array<InternalStreamMessage<T>> => packets.filter((p) => p.type === type) as Array<InternalStreamMessage<T>>;
+const filterMessages = <T extends InternalStreamMessageType>(packets: InternalStreamMessage[], type: T) =>
+  packets.filter((p): p is Extract<InternalStreamMessage, { type: T }> => p.type === type);
 
 export class LiveDataStream<T = unknown> {
   private frameBuffer: StreamingDataFrame;

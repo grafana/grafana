@@ -4,11 +4,11 @@ import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 
 import { NetworkGraphModal } from './NetworkGraphModal';
-import { type UsagesToNetwork } from './types';
+import { type UnknownVariable, type UsagesToNetwork } from './types';
 
 interface Props {
   id: string;
-  usages: UsagesToNetwork[];
+  usages: Array<UsagesToNetwork<UnknownVariable>>;
 }
 
 export const VariablesUnknownButton = ({ id, usages }: Props) => {

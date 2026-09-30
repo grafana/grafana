@@ -14,6 +14,7 @@ import { containsVariable, variableRegex, variableRegexExec } from '../utils';
 import {
   type GraphEdge,
   type GraphNode,
+  type UnknownVariable,
   type UsagesToNetwork,
   type VariableUsages,
   type VariableUsageTree,
@@ -215,7 +216,7 @@ export const createUsagesNetwork = (
 export async function getUnknownsNetwork(
   variables: BaseVariableModel[],
   dashboard: DashboardModel | null
-): Promise<UsagesToNetwork[]> {
+): Promise<Array<UsagesToNetwork<UnknownVariable>>> {
   return new Promise((resolve, reject) => {
     // can be an expensive call so we avoid blocking the main thread
     setTimeout(() => {
@@ -229,19 +230,22 @@ export async function getUnknownsNetwork(
   });
 }
 
-function createUnknownsNetwork(variables: BaseVariableModel[], dashboard: DashboardModel | null): VariableUsageTree[] {
+function createUnknownsNetwork(
+  variables: BaseVariableModel[],
+  dashboard: DashboardModel | null
+): Array<VariableUsageTree<UnknownVariable>> {
   if (!dashboard) {
     return [];
   }
 
-  let unknown: VariableUsageTree[] = [];
+  let unknown: Array<VariableUsageTree<UnknownVariable>> = [];
   const model = dashboard.getSaveModelCloneOld();
 
   const unknownVariables = getUnknownVariableStrings(variables, model);
   for (const unknownVariable of unknownVariables) {
     const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
     if (Object.keys(props).length) {
-      const variable = { id: unknownVariable, name: unknownVariable } as unknown as BaseVariableModel;
+      const variable: UnknownVariable = { id: unknownVariable, name: unknownVariable };
       unknown.push({ variable, tree: props });
     }
   }
@@ -286,7 +290,10 @@ export function getDependentPanels(variables: string[], panelsByVarUsage: Record
   return new Set(thePanels);
 }
 
-export const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value: any }): UsagesToNetwork => {
+export const traverseTree = <TVariable extends UnknownVariable>(
+  usage: UsagesToNetwork<TVariable>,
+  parent: { id: string; value: any }
+): UsagesToNetwork<TVariable> => {
   const { id, value } = parent;
   const { nodes, edges } = usage;
 
@@ -313,12 +320,14 @@ export const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value
   return usage;
 };
 
-export const transformUsagesToNetwork = (usages: VariableUsageTree[]): UsagesToNetwork[] => {
-  const results: UsagesToNetwork[] = [];
+export const transformUsagesToNetwork = <TVariable extends UnknownVariable>(
+  usages: Array<VariableUsageTree<TVariable>>
+): Array<UsagesToNetwork<TVariable>> => {
+  const results: Array<UsagesToNetwork<TVariable>> = [];
 
   for (const usage of usages) {
     const { variable, tree } = usage;
-    const result: UsagesToNetwork = {
+    const result: UsagesToNetwork<TVariable> = {
       variable,
       nodes: [
         { id: 'dashboard', label: t('variables.transform-usages-to-network.result.label.dashboard', 'dashboard') },

@@ -4,7 +4,10 @@ import * as React from 'react';
 import { type StandardEditorProps, type StringFieldConfigSettings } from '@grafana/data';
 import { Input, TextArea } from '@grafana/ui';
 
-interface Props extends StandardEditorProps<string, StringFieldConfigSettings> {
+type StringEditorProps = StandardEditorProps<string, StringFieldConfigSettings>;
+
+interface Props extends Omit<StringEditorProps, 'item'> {
+  item: Partial<StringEditorProps['item']>;
   suffix?: ReactNode;
 }
 

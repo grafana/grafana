@@ -1,11 +1,10 @@
-import { type PanelModel } from '@grafana/data';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
-import { type DataSourceRef, type DataTransformerConfig } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { getQueryRunnerFor } from './getQueryRunnerFor';
 import { getPanelIdForVizPanel } from './utils-panels';
 
-export class PanelModelCompatibilityWrapper implements PanelModel {
+export class PanelModelCompatibilityWrapper {
   constructor(private _vizPanel: VizPanel) {}
 
   public get id() {
@@ -33,7 +32,7 @@ export class PanelModelCompatibilityWrapper implements PanelModel {
 
   public get transformations() {
     if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
-      return this._vizPanel.state.$data.state.transformations as DataTransformerConfig[];
+      return this._vizPanel.state.$data.state.transformations;
     }
 
     return [];

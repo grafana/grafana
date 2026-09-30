@@ -10,7 +10,7 @@ import { CollapsableSection, Icon, Spinner, Stack, Text, Tooltip, useStyles2 } f
 import { type DashboardModel } from '../../dashboard/state/DashboardModel';
 
 import { VariablesUnknownButton } from './VariablesUnknownButton';
-import { type UsagesToNetwork } from './types';
+import { type UnknownVariable, type UsagesToNetwork } from './types';
 import { getUnknownsNetwork } from './utils';
 
 export interface VariablesUnknownTableProps {
@@ -21,7 +21,7 @@ export interface VariablesUnknownTableProps {
 export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknownTableProps): ReactElement {
   const [open, setOpen] = useState(false);
   const [changed, setChanged] = useState(0);
-  const [usages, setUsages] = useState<UsagesToNetwork[]>([]);
+  const [usages, setUsages] = useState<Array<UsagesToNetwork<UnknownVariable>>>([]);
   const style = useStyles2(getStyles);
   useEffect(() => setChanged((prevState) => prevState + 1), [variables, dashboard]);
   const { loading } = useAsync(async () => {
@@ -96,7 +96,7 @@ function NoUnknowns(): ReactElement {
   );
 }
 
-function UnknownTable({ usages }: { usages: UsagesToNetwork[] }): ReactElement {
+function UnknownTable({ usages }: { usages: Array<UsagesToNetwork<UnknownVariable>> }): ReactElement {
   const style = useStyles2(getStyles);
   return (
     <table className="filter-table filter-table--hover">

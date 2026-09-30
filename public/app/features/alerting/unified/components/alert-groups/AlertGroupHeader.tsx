@@ -10,7 +10,7 @@ interface Props {
 }
 
 export const AlertGroupHeader = ({ group }: Props) => {
-  const textStyles = useStyles2(getNotificationsTextColors);
+  const textStyles: Partial<Record<string, string>> = useStyles2(getNotificationsTextColors);
   const total = group.alerts.length;
   const countByStatus = group.alerts.reduce(
     (statusObj, alert) => {
@@ -29,10 +29,7 @@ export const AlertGroupHeader = ({ group }: Props) => {
       {`${total} ${pluralize('alert', total)}: `}
       {Object.entries(countByStatus).map(([state, count], index) => {
         return (
-          <span
-            key={`${JSON.stringify(group.labels)}-notifications-${index}`}
-            className={textStyles[state as AlertState]}
-          >
+          <span key={`${JSON.stringify(group.labels)}-notifications-${index}`} className={textStyles[state]}>
             {index > 0 && ', '}
             {`${count} ${state}`}
           </span>

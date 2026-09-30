@@ -14,6 +14,12 @@ import unifiedAlertingReducer from '../unified/state/reducers';
 
 import alertDef from './alertDef';
 
+type NotificationChannelPayload = {
+  type: string;
+  settings: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
 export const initialState: AlertRulesState = {
   items: [],
   searchQuery: '',
@@ -82,7 +88,7 @@ const notificationChannelSlice = createSlice({
         notifiers: action.payload,
       };
     },
-    notificationChannelLoaded: (state, action: PayloadAction<any>): NotificationChannelState => {
+    notificationChannelLoaded: (state, action: PayloadAction<NotificationChannelPayload>): NotificationChannelState => {
       const notificationChannel = action.payload;
       const selectedType: NotifierDTO = state.notifiers.find((t) => t.type === notificationChannel.type)!;
       const secureChannelOptions = (selectedType.options ?? []).filter((o: NotificationChannelOption) => o.secure);
@@ -127,11 +133,11 @@ export default {
 
 function migrateSecureFields(
   state: NotificationChannelState,
-  notificationChannel: any,
+  notificationChannel: NotificationChannelPayload,
   secureChannelOptions: NotificationChannelOption[]
 ) {
   const cleanedSettings: { [key: string]: string } = {};
-  const secureSettings: { [key: string]: string } = {};
+  const secureSettings: Record<string, unknown> = {};
 
   secureChannelOptions.forEach((option) => {
     secureSettings[option.propertyName] = notificationChannel.settings[option.propertyName];

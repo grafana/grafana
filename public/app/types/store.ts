@@ -25,7 +25,7 @@ export type StoreState = ReturnType<ReturnType<typeof createRootReducer>>;
 /*
  * Utility type to get strongly types thunks
  */
-export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, PayloadAction<any>>;
+export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, PayloadAction<unknown>>;
 
 export type ThunkDispatch = GenericThunkDispatch<StoreState, undefined, Action>;
 

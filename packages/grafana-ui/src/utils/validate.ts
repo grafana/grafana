@@ -16,7 +16,7 @@ export const validate = (value: string, validationRules: ValidationRule[]) => {
   return errors.length > 0 ? errors : null;
 };
 
-export const hasValidationEvent = (event: EventsWithValidation, validationEvents: ValidationEvents | undefined) => {
+export const hasValidationEvent = (event: string, validationEvents: ValidationEvents | undefined) => {
   return validationEvents && validationEvents[event];
 };
 

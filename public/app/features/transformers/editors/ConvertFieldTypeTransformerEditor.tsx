@@ -1,12 +1,6 @@
 import { type ChangeEvent, useCallback } from 'react';
 
-import {
-  type FieldNamePickerConfigSettings,
-  FieldType,
-  type SelectableValue,
-  type StandardEditorsRegistryItem,
-  type TransformerUIProps,
-} from '@grafana/data';
+import { FieldType, type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { type ConvertFieldTypeOptions, type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
@@ -19,7 +13,7 @@ import { EnumMappingEditor } from './EnumMappingEditor';
 
 const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },
-} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
+} satisfies Parameters<typeof FieldNamePicker>[0]['item'];
 
 export const ConvertFieldTypeTransformerEditor = ({
   input,

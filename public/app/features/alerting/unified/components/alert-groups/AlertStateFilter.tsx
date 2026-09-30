@@ -6,13 +6,13 @@ import { Icon, Label, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui'
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {
-  stateFilter?: AlertState;
-  onStateFilterChange: (value: AlertState) => void;
+  stateFilter?: string;
+  onStateFilterChange: (value: string) => void;
 }
 
 export const AlertStateFilter = ({ onStateFilterChange, stateFilter }: Props) => {
   const styles = useStyles2(getStyles);
-  const alertStateOptions: SelectableValue[] = Object.entries(AlertState)
+  const alertStateOptions: Array<SelectableValue<string>> = Object.entries(AlertState)
     .sort(([labelA], [labelB]) => (labelA < labelB ? -1 : 1))
     .map(([label, state]) => ({
       label,

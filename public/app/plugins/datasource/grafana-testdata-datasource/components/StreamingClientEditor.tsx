@@ -20,7 +20,10 @@ const types = [
   { value: 'watch', label: 'Watch' },
 ];
 
-export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
+export const StreamingClientEditor = ({
+  onChange,
+  query,
+}: EditorProps<{ target: { name: string; value: string | number | undefined; type?: string } }>) => {
   const onSelectChange = ({ value }: SelectableValue) => {
     onChange({ target: { name: 'type', value } });
   };

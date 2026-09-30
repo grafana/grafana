@@ -35,6 +35,16 @@ export function getVariable(
   return variable;
 }
 
+function getFilteredVariablesByKey<T extends TypedVariableModel>(
+  filter: (model: TypedVariableModel) => model is T,
+  key: string,
+  state?: StoreState
+): T[];
+function getFilteredVariablesByKey(
+  filter: (model: TypedVariableModel) => boolean,
+  key: string,
+  state?: StoreState
+): TypedVariableModel[];
 function getFilteredVariablesByKey(
   filter: (model: TypedVariableModel) => boolean,
   key: string,
@@ -72,6 +82,14 @@ export function getLastKey(state: StoreState = getState()): string {
 }
 
 // selectors used by template srv, assumes that lastKey is in state. Needs to change when/if dashboard redux state becomes keyed too.
+export function getFilteredVariables<T extends TypedVariableModel>(
+  filter: (model: TypedVariableModel) => model is T,
+  state?: StoreState
+): T[];
+export function getFilteredVariables(
+  filter: (model: TypedVariableModel) => boolean,
+  state?: StoreState
+): TypedVariableModel[];
 export function getFilteredVariables(filter: (model: TypedVariableModel) => boolean, state: StoreState = getState()) {
   const lastKey = getIfExistsLastKey(state);
   if (!lastKey) {

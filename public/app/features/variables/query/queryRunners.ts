@@ -5,6 +5,7 @@ import {
   type DataQuery,
   type DataQueryRequest,
   type DataSourceApi,
+  type MetricFindValue,
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
@@ -20,6 +21,11 @@ import {
   hasStandardVariableSupport,
 } from '../guard';
 import { getLegacyQueryOptions } from '../utils';
+
+export type VariableQueryPanelData = Omit<PanelData, 'series' | 'timeRange'> & {
+  series: PanelData['series'] | MetricFindValue[];
+  timeRange: PanelData['timeRange'] | undefined;
+};
 
 export interface RunnerArgs {
   variable: QueryVariableModel;
@@ -39,7 +45,7 @@ export interface QueryRunner {
   type: VariableSupportType;
   canRun: (dataSource: DataSourceApi) => boolean;
   getTarget: (args: GetTargetArgs) => DataQuery;
-  runRequest: (args: RunnerArgs, request: DataQueryRequest) => Observable<PanelData>;
+  runRequest: (args: RunnerArgs, request: DataQueryRequest) => Observable<VariableQueryPanelData>;
 }
 
 export class QueryRunners {
@@ -88,7 +94,7 @@ class LegacyQueryRunner implements QueryRunner {
       return getEmptyMetricFindValueObservable();
     }
 
-    const queryOptions: any = getLegacyQueryOptions(variable, searchFilter, timeSrv, request.scopedVars);
+    const queryOptions = getLegacyQueryOptions(variable, searchFilter, timeSrv, request.scopedVars);
 
     return from(datasource.metricFindQuery(variable.query, queryOptions)).pipe(
       mergeMap((values) => {
@@ -96,7 +102,7 @@ class LegacyQueryRunner implements QueryRunner {
           return getEmptyMetricFindValueObservable();
         }
 
-        const series: any = values;
+        const series = values;
         return of({ series, state: LoadingState.Done, timeRange: queryOptions.range });
       })
     );

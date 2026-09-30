@@ -33,7 +33,10 @@ const fields: Array<{
   },
 ];
 
-export const PredictablePulseEditor = ({ onChange, query }: EditorProps) => {
+export const PredictablePulseEditor = ({
+  onChange,
+  query,
+}: EditorProps<{ target: { name: string; value: number } }>) => {
   // Convert values to numbers before saving
   const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

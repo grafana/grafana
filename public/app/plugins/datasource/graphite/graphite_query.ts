@@ -23,9 +23,9 @@ export type GraphiteTarget = {
   /**
    * Contains full query after interpolating sub-queries (e.g. "function(#A)" referencing query with refId=A)
    */
-  targetFull: string;
-  textEditor: boolean;
-  paused: boolean;
+  targetFull?: string;
+  textEditor?: boolean;
+  paused?: boolean;
 };
 
 export default class GraphiteQuery {
@@ -41,7 +41,12 @@ export default class GraphiteQuery {
   templateSrv: TemplateSrv | undefined;
   scopedVars?: ScopedVars;
 
-  constructor(datasource: GraphiteDatasource, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
+  constructor(
+    datasource: GraphiteDatasource,
+    target: GraphiteTarget,
+    templateSrv?: TemplateSrv,
+    scopedVars?: ScopedVars
+  ) {
     this.datasource = datasource;
     this.target = target;
     this.templateSrv = templateSrv;
@@ -115,7 +120,7 @@ export default class GraphiteQuery {
     );
   }
 
-  parseTargetRecursive(astNode: any, func: any): any {
+  parseTargetRecursive(astNode: any, func: any): null | void {
     if (astNode === null) {
       return null;
     }
@@ -224,7 +229,7 @@ export default class GraphiteQuery {
     this.functions.forEach((func) => (func.added = false));
   }
 
-  updateRenderedTarget(target: { refId: string | number; target: string; targetFull: any }, targets: any) {
+  updateRenderedTarget(target: GraphiteTarget, targets: any) {
     // render nested query
     const targetsByRefId = keyBy(targets, 'refId');
 

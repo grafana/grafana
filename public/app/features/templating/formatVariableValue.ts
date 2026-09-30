@@ -1,11 +1,16 @@
-import { formatRegistry } from '@grafana/scenes';
+import { formatRegistry, type VariableValue } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { isAdHoc } from '../variables/guard';
 
 import { getVariableWrapper } from './LegacyVariableWrapper';
 
-export function formatVariableValue(value: any, format?: any, variable?: any, text?: string): string {
+export function formatVariableValue(
+  value: any,
+  format?: string | Function,
+  variable?: any,
+  text?: VariableValue
+): string {
   // for some scopedVars there is no variable
   variable = variable || {};
 

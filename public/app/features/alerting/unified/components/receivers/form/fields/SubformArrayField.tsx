@@ -1,4 +1,4 @@
-import { type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -19,7 +19,7 @@ interface Props {
   defaultValues?: any[];
   option: NotificationChannelOption;
   pathPrefix: string;
-  errors?: Array<DeepMap<any, FieldError>>;
+  errors?: Array<Record<string, unknown> | undefined>;
   readOnly?: boolean;
   secureFields: NotificationChannelSecureFields;
   getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;

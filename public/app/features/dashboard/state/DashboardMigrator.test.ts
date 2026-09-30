@@ -801,7 +801,7 @@ describe('DashboardModel', () => {
     });
 
     it('should not migrate panel with old Text Panel id', () => {
-      const oldAngularPanel: any = model.panels[0];
+      const oldAngularPanel: PanelModel & { content?: string; mode?: string } = model.panels[0];
       expect(oldAngularPanel.id).toEqual(2);
       expect(oldAngularPanel.type).toEqual('text');
       expect(oldAngularPanel.title).toEqual('Angular Text Panel');
@@ -2454,16 +2454,26 @@ describe('when migrating table panels at schema version 24', () => {
   });
 });
 
-function createRow(options: any, panelDescriptions: any[]) {
+function createRow(
+  options: {
+    height: number;
+    collapse?: boolean;
+    showTitle?: boolean;
+    title?: string;
+    repeat?: string;
+    repeatIteration?: number;
+    repeatRowId?: number;
+  },
+  panelDescriptions: number[][]
+) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
   const { collapse, showTitle, title, repeat, repeatIteration } = options;
   let { height } = options;
   height = height * PANEL_HEIGHT_STEP;
-  const panels: any[] = [];
+  const panels: Array<{ span: number; height?: number }> = [];
   each(panelDescriptions, (panelDesc) => {
-    const panel = { span: panelDesc[0] };
+    const panel: { span: number; height?: number } = { span: panelDesc[0] };
     if (panelDesc.length > 1) {
-      //@ts-ignore
       panel['height'] = panelDesc[1] * PANEL_HEIGHT_STEP;
     }
     panels.push(panel);

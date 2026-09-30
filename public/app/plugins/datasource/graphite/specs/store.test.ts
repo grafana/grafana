@@ -24,7 +24,10 @@ jest.mock('@grafana/runtime', () => ({
 /**
  * Simulate switching to text editor, changing the query and switching back to visual editor
  */
-async function changeTarget(ctx: any, target: string): Promise<void> {
+async function changeTarget(
+  ctx: { dispatch: (action: { type: string }) => Promise<void> },
+  target: string
+): Promise<void> {
   await ctx.dispatch(actions.toggleEditorMode());
   await ctx.dispatch(actions.updateQuery({ query: target }));
   await ctx.dispatch(actions.runQuery());

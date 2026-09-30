@@ -7,7 +7,6 @@ import {
   getProcessedDataFrames,
   isDataFrame,
   type MetricFindValue,
-  type PanelData,
   type QueryVariableModel,
 } from '@grafana/data';
 import { type ThunkDispatch } from 'app/types/store';
@@ -16,13 +15,14 @@ import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { type getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
+import { type VariableQueryPanelData } from './queryRunners';
 import { updateVariableOptions } from './reducer';
 
-export function toMetricFindValuesOperator(): OperatorFunction<PanelData, MetricFindValue[]> {
+export function toMetricFindValuesOperator(): OperatorFunction<VariableQueryPanelData, MetricFindValue[]> {
   return (source) => source.pipe(map(toMetricFindValues));
 }
 
-export function toMetricFindValues(panelData: PanelData): MetricFindValue[] {
+export function toMetricFindValues(panelData: VariableQueryPanelData): MetricFindValue[] {
   const frames = panelData.series;
   if (!frames || !frames.length) {
     return [];

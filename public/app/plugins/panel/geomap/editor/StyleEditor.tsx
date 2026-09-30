@@ -2,12 +2,7 @@ import { capitalize } from 'lodash';
 import { useId, useMemo } from 'react';
 import { type Observable, of } from 'rxjs';
 
-import {
-  type FieldConfigPropertyItem,
-  type StandardEditorProps,
-  type StandardEditorsRegistryItem,
-  type FrameMatcher,
-} from '@grafana/data';
+import { type StandardEditorProps, type StandardEditorsRegistryItem, type FrameMatcher } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import {
@@ -175,14 +170,12 @@ export const StyleEditor = (props: Props) => {
                 value={value?.rotation ?? defaultStyleConfig.rotation}
                 context={context}
                 onChange={onRotationChange}
-                item={
-                  {
-                    settings: {
-                      min: defaultStyleConfig.rotation.min,
-                      max: defaultStyleConfig.rotation.max,
-                    },
-                  } as StandardEditorsRegistryItem
-                }
+                item={{
+                  settings: {
+                    min: defaultStyleConfig.rotation.min,
+                    max: defaultStyleConfig.rotation.max,
+                  },
+                }}
               />
             </Field>
           </>
@@ -207,15 +200,13 @@ export const StyleEditor = (props: Props) => {
               value={value?.opacity ?? defaultStyleConfig.opacity}
               context={context}
               onChange={onOpacityChange}
-              item={
-                {
-                  settings: {
-                    min: 0,
-                    max: 1,
-                    step: 0.1,
-                  },
-                } as FieldConfigPropertyItem
-              }
+              item={{
+                settings: {
+                  min: 0,
+                  max: 1,
+                  step: 0.1,
+                },
+              }}
             />
           </InlineField>
         </InlineFieldRow>
@@ -231,14 +222,12 @@ export const StyleEditor = (props: Props) => {
           value={value?.size ?? defaultStyleConfig.size}
           context={context}
           onChange={onSizeChange}
-          item={
-            {
-              settings: {
-                min: 1,
-                max: 100,
-              },
-            } as StandardEditorsRegistryItem
-          }
+          item={{
+            settings: {
+              min: 1,
+              max: 100,
+            },
+          }}
         />
       </Field>
       {!settings?.hideSymbol && (
@@ -249,23 +238,21 @@ export const StyleEditor = (props: Props) => {
               value={value?.symbol ?? defaultStyleConfig.symbol}
               context={context}
               onChange={onSymbolChange}
-              item={
-                {
-                  settings: {
-                    resourceType: MediaType.Icon,
-                    folderName: ResourceFolderName.Marker,
-                    placeholderText: hasTextLabel
-                      ? t('geomap.style-editor.placeholderText-select-symbol', 'Select a symbol')
-                      : t(
-                          'geomap.style-editor.placeholderText-select-symbol-or-add-text',
-                          'Select a symbol or add a text label'
-                        ),
-                    placeholderValue: defaultStyleConfig.symbol.fixed,
-                    showSourceRadio: false,
-                    maxFiles,
-                  },
-                } as StandardEditorsRegistryItem
-              }
+              item={{
+                settings: {
+                  resourceType: MediaType.Icon,
+                  folderName: ResourceFolderName.Marker,
+                  placeholderText: hasTextLabel
+                    ? t('geomap.style-editor.placeholderText-select-symbol', 'Select a symbol')
+                    : t(
+                        'geomap.style-editor.placeholderText-select-symbol-or-add-text',
+                        'Select a symbol or add a text label'
+                      ),
+                  placeholderValue: defaultStyleConfig.symbol.fixed,
+                  showSourceRadio: false,
+                  maxFiles,
+                },
+              }}
             />
           </Field>
           <Field label={t('geomap.style-editor.label-symbol-vertical-align', 'Symbol vertical align')}>
@@ -314,7 +301,7 @@ export const StyleEditor = (props: Props) => {
           value={value?.color ?? defaultStyleConfig.color}
           context={context}
           onChange={onColorChange}
-          item={{} as StandardEditorsRegistryItem}
+          item={{}}
         />
       </Field>
       <Field label={t('geomap.style-editor.label-fill-opacity', 'Fill opacity')}>
@@ -323,15 +310,13 @@ export const StyleEditor = (props: Props) => {
           value={value?.opacity ?? defaultStyleConfig.opacity}
           context={context}
           onChange={onOpacityChange}
-          item={
-            {
-              settings: {
-                min: 0,
-                max: 1,
-                step: 0.1,
-              },
-            } as FieldConfigPropertyItem
-          }
+          item={{
+            settings: {
+              min: 0,
+              max: 1,
+              step: 0.1,
+            },
+          }}
         />
       </Field>
       {settings?.displayRotation && (
@@ -341,14 +326,12 @@ export const StyleEditor = (props: Props) => {
             value={value?.rotation ?? defaultStyleConfig.rotation}
             context={context}
             onChange={onRotationChange}
-            item={
-              {
-                settings: {
-                  min: defaultStyleConfig.rotation.min,
-                  max: defaultStyleConfig.rotation.max,
-                },
-              } as StandardEditorsRegistryItem
-            }
+            item={{
+              settings: {
+                min: defaultStyleConfig.rotation.min,
+                max: defaultStyleConfig.rotation.max,
+              },
+            }}
           />
         </Field>
       )}
@@ -358,7 +341,7 @@ export const StyleEditor = (props: Props) => {
           value={value?.text ?? defaultTextConfig}
           context={context}
           onChange={onTextChange}
-          item={{} as StandardEditorsRegistryItem}
+          item={{}}
         />
       </Field>
 
@@ -371,7 +354,7 @@ export const StyleEditor = (props: Props) => {
                 value={value?.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
                 context={context}
                 onChange={onTextFontSizeChange}
-                item={{} as FieldConfigPropertyItem}
+                item={{}}
               />
             </Field>
             <Field label={t('geomap.style-editor.label-x-offset', 'X offset')}>
@@ -380,7 +363,7 @@ export const StyleEditor = (props: Props) => {
                 value={value?.textConfig?.offsetX ?? defaultStyleConfig.textConfig.offsetX}
                 context={context}
                 onChange={onTextOffsetXChange}
-                item={{} as FieldConfigPropertyItem}
+                item={{}}
               />
             </Field>
             <Field label={t('geomap.style-editor.label-y-offset', 'Y offset')}>
@@ -389,7 +372,7 @@ export const StyleEditor = (props: Props) => {
                 value={value?.textConfig?.offsetY ?? defaultStyleConfig.textConfig.offsetY}
                 context={context}
                 onChange={onTextOffsetYChange}
-                item={{} as FieldConfigPropertyItem}
+                item={{}}
               />
             </Field>
           </Stack>

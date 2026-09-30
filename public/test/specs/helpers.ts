@@ -43,9 +43,25 @@ export class ContextSrvStub extends ContextSrv {
   }
 }
 
-export function TemplateSrvStub(this: any) {
+interface TemplateSrvStubInstance {
+  variables: unknown[];
+  getVariables(): unknown[];
+  templateSettings: { interpolate: RegExp };
+  data: Record<string, string>;
+  replace(text: string): string;
+  init(): void;
+  getAdhocFilters(): unknown[];
+  fillVariableValuesForUrl(): void;
+  updateIndex(): void;
+  containsTemplate(): boolean;
+  variableInitialized(): void;
+  highlightVariablesAsHtml(str: string): string;
+  setGrafanaVariable(name: string, value: string): void;
+}
+
+export function TemplateSrvStub(this: TemplateSrvStubInstance) {
   this.variables = [];
-  this.getVariables = function () {
+  this.getVariables = function (this: TemplateSrvStubInstance) {
     return this.variables;
   };
   this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
@@ -66,7 +82,7 @@ export function TemplateSrvStub(this: any) {
   this.highlightVariablesAsHtml = (str: string) => {
     return str;
   };
-  this.setGrafanaVariable = function (name: string, value: string) {
+  this.setGrafanaVariable = function (this: TemplateSrvStubInstance, name: string, value: string) {
     this.data[name] = value;
   };
 }

@@ -91,7 +91,7 @@ const executionErrorModes = [
   { text: 'Keep Last State', value: 'keep_state' },
 ];
 
-function createReducerPart(model: any) {
+function createReducerPart(model: ConstructorParameters<typeof QueryPart>[0]) {
   const def = new QueryPartDef({ type: model.type, defaultParams: [] });
   return new QueryPart(model, def);
 }
@@ -210,7 +210,7 @@ function joinEvalMatches(matches: any, separator: string) {
   ).join(separator);
 }
 
-function getAlertAnnotationInfo(ah: any) {
+function getAlertAnnotationInfo(ah: { data: unknown[] | { evalMatches?: unknown[]; error?: unknown } }) {
   // backward compatibility, can be removed in grafana 5.x
   // old way stored evalMatches in data property directly,
   // new way stores it in evalMatches property on new data object

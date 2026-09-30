@@ -13,7 +13,7 @@ import { changeVariableProp } from './sharedReducer';
 interface Args {
   query?: any;
   variable?: TypedVariableModel;
-  datasource?: any;
+  datasource?: unknown;
   transactionStatus?: TransactionStatus;
 }
 function getTestContext({

@@ -4,7 +4,8 @@ import { type StandardEditorProps, type NumberFieldConfigSettings } from '@grafa
 
 import { NumberInput } from './NumberInput';
 
-type Props = StandardEditorProps<number, NumberFieldConfigSettings>;
+type NumberEditorProps = StandardEditorProps<number, NumberFieldConfigSettings>;
+type Props = Omit<NumberEditorProps, 'item'> & { item: Partial<NumberEditorProps['item']> };
 
 export const NumberValueEditor = ({ value, onChange, item, id }: Props) => {
   const { settings } = item;

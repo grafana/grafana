@@ -4,14 +4,14 @@ import { LegendDisplayMode } from '@grafana/schema';
 import { type Options, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
 
 export const PieChartPanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
+  panel: PanelModel<Partial<Options>>,
   prevPluginId: string,
   prevOptions: any
 ) => {
   if (prevPluginId === 'grafana-piechart-panel' && prevOptions.angular) {
     const angular = prevOptions.angular;
     const overrides = [];
-    let options: Options = panel.options;
+    let options: Partial<Options> = panel.options;
 
     // Migrate color overrides for series
     if (angular.aliasColors) {

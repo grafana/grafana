@@ -12,7 +12,14 @@ export function toAsyncOfResult<T>(result: T): Observable<T> {
 export const LEGACY_DS_NAME = 'Legacy';
 export const NEXT_GEN_DS_NAME = 'NextGen';
 
-function getSnapshotData(annotation: any): AnnotationEvent[] {
+function getSnapshotData(annotation: {
+  id: string | undefined;
+  enable: boolean;
+  hide: boolean;
+  name: string;
+  iconColor: string;
+  datasource: string;
+}): AnnotationEvent[] {
   return [{ annotation, source: {}, timeEnd: 2, time: 1 }];
 }
 

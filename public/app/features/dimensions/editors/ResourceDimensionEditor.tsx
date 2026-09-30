@@ -1,11 +1,7 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import {
-  type FieldNamePickerConfigSettings,
-  type StandardEditorProps,
-  type StandardEditorsRegistryItem,
-} from '@grafana/data';
+import { type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
@@ -18,11 +14,12 @@ import { ResourcePicker } from './ResourcePicker';
 
 const dummyFieldSettings = {
   settings: {},
-} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
+};
 
-export const ResourceDimensionEditor = (
-  props: StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>
-) => {
+type ResourceEditorProps = StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>;
+type Props = Omit<ResourceEditorProps, 'item'> & { item: Partial<ResourceEditorProps['item']> };
+
+export const ResourceDimensionEditor = (props: Props) => {
   const { value, context, onChange, item, id } = props;
   const labelWidth = 9;
   const resourceOptions = [

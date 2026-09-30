@@ -1,5 +1,4 @@
 import {
-  type DataFrame,
   type DataLink,
   type DataQueryRequest,
   type DataQueryResponse,
@@ -32,7 +31,7 @@ export async function addDataLinksToLogsResponse(
   const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, false, fieldName);
   const getVariableValue = (target: string) => getVariableValueFn(target, request.scopedVars);
 
-  for (const dataFrame of response.data as DataFrame[]) {
+  for (const dataFrame of response.data) {
     const curTarget = request.targets.find((target) => target.refId === dataFrame.refId) as CloudWatchLogsQuery;
     const interpolatedRegion = getRegion(replace(curTarget.region ?? '', 'region'));
 

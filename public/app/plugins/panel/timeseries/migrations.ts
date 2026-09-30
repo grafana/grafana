@@ -33,6 +33,7 @@ import {
   GraphTransform,
   type AnnotationQuery,
   ComparisonOperation,
+  type HideSeriesConfig,
 } from '@grafana/schema';
 import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -627,7 +628,20 @@ interface AngularThreshold {
 //   "$$hashKey": "object:19",
 //   "decimals": 3
 // },
-function getFieldConfigFromOldAxis(obj: any): FieldConfig<GraphFieldConfig> {
+function getFieldConfigFromOldAxis(
+  obj:
+    | {
+        show?: boolean;
+        label?: string | null;
+        logBase?: number;
+        format?: string;
+        decimals?: unknown;
+        min?: unknown;
+        max?: unknown;
+      }
+    | null
+    | undefined
+): FieldConfig<GraphFieldConfig> {
   if (!obj) {
     return {};
   }
@@ -716,7 +730,10 @@ function getReducersFromLegend(obj: Record<string, unknown>): string[] {
 }
 
 function migrateHideFrom(panel: {
-  fieldConfig?: { defaults?: { custom?: { hideFrom?: any } }; overrides: ConfigOverrideRule[] };
+  fieldConfig?: {
+    defaults?: { custom?: { hideFrom?: Partial<HideSeriesConfig> & { graph?: boolean } } };
+    overrides: ConfigOverrideRule[];
+  };
 }) {
   if (panel.fieldConfig?.defaults?.custom?.hideFrom?.graph !== undefined) {
     panel.fieldConfig.defaults.custom.hideFrom.viz = panel.fieldConfig.defaults.custom.hideFrom.graph;

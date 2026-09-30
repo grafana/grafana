@@ -9,7 +9,8 @@ import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { type ScalarDimensionOptions } from '../types';
 
-type Props = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions>;
+type ScalarEditorProps = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions>;
+type Props = Omit<ScalarEditorProps, 'item'> & { item: Partial<ScalarEditorProps['item']> };
 
 export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props) => {
   const { settings } = item;

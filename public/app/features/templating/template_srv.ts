@@ -35,7 +35,7 @@ import { macroRegistry } from './macroRegistry';
 type ReplaceFunction = (fullMatch: string, variableName: string, fieldPath: string, format: string) => string;
 
 export interface TemplateSrvDependencies {
-  getFilteredVariables: typeof getFilteredVariables;
+  getFilteredVariables: <T extends TypedVariableModel>(filter: (model: TypedVariableModel) => model is T) => T[];
   getVariables: typeof getVariables;
   getVariableWithName: typeof getVariableWithName;
 }
@@ -47,10 +47,10 @@ const runtimeDependencies: TemplateSrvDependencies = {
 };
 
 export class TemplateSrv implements BaseTemplateSrv {
-  private _variables: any[];
+  private _variables: Array<{ name: string; current?: { isNone?: boolean; value?: unknown; text?: unknown } }>;
   private regex = variableRegex;
   private index: any = {};
-  private grafanaVariables = new Map<string, any>();
+  private grafanaVariables = new Map<string, unknown>();
   private _timeRange?: TimeRange | null = null;
   private _adhocFiltersDeprecationWarningLogged = new Map<string, boolean>();
 
@@ -58,7 +58,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     this._variables = [];
   }
 
-  init(variables: any, timeRange?: TimeRange) {
+  init<Variable extends TemplateSrv['_variables'][number]>(variables: Variable[], timeRange?: TimeRange) {
     this._variables = variables;
     this._timeRange = timeRange;
     this.updateIndex();
@@ -96,7 +96,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   updateIndex() {
     const existsOrEmpty = (value: unknown) => value || value === '';
 
-    this.index = this._variables.reduce((acc, currentValue) => {
+    this.index = this._variables.reduce<Record<string, (typeof this._variables)[number]>>((acc, currentValue) => {
       if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
         acc[currentValue.name] = currentValue;
       }
@@ -124,7 +124,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     this.updateIndex();
   }
 
-  variableInitialized(variable: any) {
+  variableInitialized(variable: { name: string }) {
     this.index[variable.name] = variable;
   }
 
@@ -170,7 +170,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return filters;
   }
 
-  setGrafanaVariable(name: string, value: any) {
+  setGrafanaVariable(name: string, value: unknown) {
     this.grafanaVariables.set(name, value);
   }
 
@@ -179,7 +179,7 @@ export class TemplateSrv implements BaseTemplateSrv {
    *
    * Use addVariable action to add variables to Redux instead
    */
-  setGlobalVariable(name: string, variable: any) {
+  setGlobalVariable(name: string, variable: unknown) {
     deprecationWarning('template_srv.ts', 'setGlobalVariable', '');
     this.index = {
       ...this.index,
@@ -236,7 +236,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
-  getAllValue(variable: any) {
+  getAllValue(variable: { allValue?: unknown; options: Array<{ value: unknown }> }) {
     if (variable.allValue) {
       return variable.allValue;
     }
@@ -255,7 +255,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  private getVariableText(scopedVar: ScopedVar, value: any) {
+  private getVariableText(scopedVar: ScopedVar, value: unknown) {
     if (scopedVar.value === value || typeof value !== 'string') {
       return scopedVar.text;
     }
@@ -408,7 +408,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   private getAdHocVariables(): AdHocVariableModel[] {
-    return this.dependencies.getFilteredVariables(isAdHoc) as AdHocVariableModel[];
+    return this.dependencies.getFilteredVariables(isAdHoc);
   }
 }
 

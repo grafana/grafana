@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Select, Alert, Label, stylesFactory, Combobox, useStyles2 } from '@grafana/ui';
+import { Select, Alert, Label, stylesFactory, Combobox, useStyles2, type ComboboxOption } from '@grafana/ui';
 import {
   discoveryResources,
   getAPIGroupDiscoveryList,
@@ -138,8 +138,8 @@ export function LiveChannelEditor(props: Props) {
                 'live.live-channel-editor.placeholder-select-watchable-resource',
                 'Select watchable resource'
               )}
-              onChange={(v) => {
-                const resource: GroupDiscoveryResource = (v as any).resource;
+              onChange={(v: ComboboxOption<string> & { resource?: GroupDiscoveryResource }) => {
+                const resource = v.resource;
                 if (resource) {
                   props.onChange({
                     scope: LiveChannelScope.Watch,

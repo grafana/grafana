@@ -1,3 +1,5 @@
+import { type FormEvent } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
@@ -32,7 +34,7 @@ const randomWalkFields: Array<{
 
 const testSelectors = selectors.components.DataSource.TestData.QueryTab;
 type Selector = 'max' | 'min' | 'noise' | 'seriesCount' | 'spread' | 'startValue' | 'drop';
-type RandomWalkEditorProps = Omit<EditorProps, 'query'> & {
+type RandomWalkEditorProps = Omit<EditorProps<FormEvent<HTMLInputElement | HTMLTextAreaElement>>, 'query'> & {
   query: TestDataDataQuery & Partial<Record<Selector, number>>;
 };
 

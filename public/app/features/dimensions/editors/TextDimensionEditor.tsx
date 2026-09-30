@@ -1,11 +1,6 @@
 import { useCallback, useId } from 'react';
 
-import {
-  type FieldNamePickerConfigSettings,
-  type StandardEditorProps,
-  type StandardEditorsRegistryItem,
-  type StringFieldConfigSettings,
-} from '@grafana/data';
+import { type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
@@ -16,13 +11,14 @@ import { type TextDimensionOptions } from '../types';
 
 const dummyFieldSettings = {
   settings: {},
-} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
+};
 
 const dummyStringSettings = {
   settings: {},
-} as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
+};
 
-type Props = StandardEditorProps<TextDimensionConfig, TextDimensionOptions>;
+type TextEditorProps = StandardEditorProps<TextDimensionConfig, TextDimensionOptions>;
+type Props = Omit<TextEditorProps, 'item'> & { item: Partial<TextEditorProps['item']> };
 
 export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
   const textOptions = [

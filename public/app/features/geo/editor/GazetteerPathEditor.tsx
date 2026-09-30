@@ -14,12 +14,12 @@ export interface GazetteerPathEditorConfigSettings {
   options?: Array<SelectableValue<string>>;
 }
 
-export const GazetteerPathEditor = ({
-  value,
-  onChange,
-  context,
-  item,
-}: StandardEditorProps<string, GazetteerPathEditorConfigSettings>) => {
+type GazetteerEditorProps = StandardEditorProps<string, GazetteerPathEditorConfigSettings>;
+type Props = Omit<GazetteerEditorProps, 'item'> & {
+  item: Partial<GazetteerEditorProps['item']>;
+};
+
+export const GazetteerPathEditor = ({ value, onChange, context, item }: Props) => {
   const styles = useStyles2(getStyles);
   const [gaz, setGaz] = useState<Gazetteer>();
   const settings = item.settings;

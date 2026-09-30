@@ -11,14 +11,14 @@ import { isPrivateLabelKey } from '../../utils/labels';
 interface Props {
   groups: AlertmanagerGroup[];
   groupBy: string[];
-  onGroupingChange: (keys: string[]) => void;
+  onGroupingChange: (keys: Array<string | undefined>) => void;
 }
 
 export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
   const styles = useStyles2(getStyles);
   const labelKeyOptions = uniq(groups.flatMap((group) => group.alerts).flatMap(({ labels }) => Object.keys(labels)))
     .filter((label) => !isPrivateLabelKey(label)) // Filter out private labels
-    .map<SelectableValue>((key) => ({
+    .map<SelectableValue<string>>((key) => ({
       label: key,
       value: key,
     }));
@@ -42,13 +42,13 @@ export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
           <Icon name="info-circle" size="sm" />
         </Tooltip>
       </Label>
-      <MultiSelect
+      <MultiSelect<string>
         aria-label={t('alerting.group-by.aria-label-group-by-label-keys', 'Group by label keys')}
         value={groupBy}
         placeholder={t('alerting.group-by.placeholder-group-by', 'Group by')}
         prefix={<Icon name={'tag-alt'} />}
         onChange={(items) => {
-          onGroupingChange(items.map(({ value }) => value as string));
+          onGroupingChange(items.map(({ value }) => value));
         }}
         options={labelKeyOptions}
         width={32}

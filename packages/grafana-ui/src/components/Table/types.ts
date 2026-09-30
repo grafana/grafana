@@ -28,7 +28,7 @@ export {
   type TableJsonViewCellOptions,
 } from '@grafana/schema';
 
-export type InspectCell = { value: any; mode: TableCellInspectorMode };
+export type InspectCell = { value: unknown; mode: TableCellInspectorMode };
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -48,7 +48,7 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableCellProps extends CellProps<any> {
+export interface TableCellProps extends CellProps<{}> {
   tableStyles: TableStyles;
   cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;
@@ -57,6 +57,11 @@ export interface TableCellProps extends CellProps<any> {
   frame: DataFrame;
   actions?: ActionModel[]; // unused in NG
   setInspectCell?: TableInspectCellCallback;
+  timeRange?: TimeRange;
+  rowStyled?: boolean;
+  rowExpanded?: boolean;
+  textWrapped?: boolean;
+  height?: number;
 }
 
 export type CellComponent = FC<TableCellProps>;

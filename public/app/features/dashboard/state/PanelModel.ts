@@ -107,7 +107,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   key: true,
 };
 
-const defaults: any = {
+const defaults: Record<string, unknown> = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
@@ -138,7 +138,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   gridPos!: GridPos;
   type!: string;
   title!: string;
-  alert?: any;
+  alert?: unknown;
   scopedVars?: ScopedVars;
   repeat?: string;
   repeatIteration?: number;
@@ -152,7 +152,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   declare targets: DataQuery[];
   transformations?: DataTransformerConfig[];
   datasource: DataSourceRef | null = null;
-  thresholds?: any;
+  thresholds?: unknown;
   pluginVersion?: string;
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
@@ -596,7 +596,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events.publish(new PanelTransformationsChangedEvent());
   }
 
-  setProperty(key: keyof this, value: any) {
+  setProperty<K extends keyof this>(key: K, value: this[K]) {
     this[key] = value;
     this.configRev++;
 
@@ -655,7 +655,7 @@ function getPluginVersion(plugin: PanelPlugin): string {
 }
 
 interface PanelOptionsCache {
-  properties: any;
+  properties: Record<string, unknown>;
   fieldConfig: FieldConfigSource;
 }
 

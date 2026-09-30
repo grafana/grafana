@@ -43,7 +43,7 @@ import { type PanelDataSummary } from './suggestions/getPanelDataSummary';
 
 /** @beta */
 export type StandardOptionConfig<TContextOptions = unknown> = {
-  defaultValue?: any;
+  defaultValue?: unknown;
   settings?: any;
   hideFromDefaults?: boolean;
   /**
@@ -180,7 +180,7 @@ export class PanelPlugin<
   TFieldConfigOptions extends object = {},
 > extends GrafanaPlugin<PanelPluginMeta> {
   private _defaults?: TOptions;
-  private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
+  private _fieldConfigDefaults: FieldConfigSource<Partial<TFieldConfigOptions>> = {
     defaults: {},
     overrides: [],
   };
@@ -245,9 +245,9 @@ export class PanelPlugin<
     return result;
   }
 
-  get fieldConfigDefaults(): FieldConfigSource<TFieldConfigOptions> {
+  get fieldConfigDefaults(): FieldConfigSource<Partial<TFieldConfigOptions>> {
     const configDefaults = this._fieldConfigDefaults.defaults;
-    configDefaults.custom = {} as TFieldConfigOptions;
+    configDefaults.custom = {};
 
     for (const option of this.fieldConfigRegistry.list()) {
       if (option.defaultValue === undefined) {

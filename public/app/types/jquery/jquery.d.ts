@@ -1,6 +1,6 @@
 interface JQueryPlot {
-  (element: HTMLElement | JQuery, data: any, options: any): void;
-  plugins: any[];
+  (element: HTMLElement | JQuery, data: unknown, options: unknown): void;
+  plugins: unknown[];
 }
 
 interface JQueryStatic {

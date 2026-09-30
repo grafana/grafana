@@ -14,9 +14,10 @@ export const formatVariableLabel = (variable: VariableWithOptions | TypedVariabl
   return current.text;
 };
 
-const isVariableWithOptions = (variable: unknown): variable is VariableWithOptions => {
-  return (
-    Array.isArray((variable as VariableWithOptions)?.options) ||
-    typeof (variable as VariableWithOptions)?.current === 'object'
-  );
+const isVariableWithOptions = (variable: {
+  name: string;
+  options?: unknown;
+  current?: unknown;
+}): variable is VariableWithOptions => {
+  return Array.isArray(variable?.options) || typeof variable?.current === 'object';
 };

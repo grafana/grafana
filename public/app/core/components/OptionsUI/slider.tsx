@@ -3,7 +3,8 @@ import { useCallback } from 'react';
 import { type StandardEditorProps, type SliderFieldConfigSettings } from '@grafana/data';
 import { Slider } from '@grafana/ui';
 
-type Props = StandardEditorProps<number, SliderFieldConfigSettings>;
+type SliderEditorProps = StandardEditorProps<number, SliderFieldConfigSettings>;
+type Props = Omit<SliderEditorProps, 'item'> & { item: Partial<SliderEditorProps['item']> };
 
 export const SliderValueEditor = ({ value, onChange, item, id }: Props) => {
   // Settings

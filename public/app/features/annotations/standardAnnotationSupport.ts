@@ -4,8 +4,8 @@ import { map, mergeMap } from 'rxjs/operators';
 
 import {
   type AnnotationEvent,
+  type AnnotationEventFieldMapping,
   AnnotationEventFieldSource,
-  type AnnotationEventMappings,
   type AnnotationQuery,
   type AnnotationSupport,
   type DataFrame,
@@ -20,6 +20,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+
+type AlertAnnotationEvent = AnnotationEvent & { data?: unknown; prevState?: unknown };
+type AlertAnnotationEventMappings = Partial<Record<keyof AlertAnnotationEvent, AnnotationEventFieldMapping>>;
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -86,7 +89,7 @@ function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | u
 }
 
 interface AnnotationEventFieldSetter {
-  key: keyof AnnotationEvent;
+  key: keyof AlertAnnotationEvent;
   field?: Field;
   text?: string;
   regex?: RegExp;
@@ -160,7 +163,7 @@ const publicDashboardEventNames: AnnotationFieldInfo[] = [
 
 // Given legacy infrastructure, alert events are passed though the same annotation
 // pipeline, but include fields that should not be exposed generally
-const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
+const alertEventAndAnnotationFields: Array<Omit<AnnotationFieldInfo, 'key'> & { key: keyof AlertAnnotationEvent }> = [
   ...(config.publicDashboardAccessToken ? publicDashboardEventNames : []),
   ...getAnnotationEventNames(),
   { key: 'userId' },
@@ -168,7 +171,7 @@ const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
   { key: 'email' },
   { key: 'prevState' },
   { key: 'newState' },
-  { key: 'data' as any },
+  { key: 'data' },
   { key: 'panelId' },
   { key: 'alertId' },
   { key: 'dashboardId' },
@@ -177,7 +180,7 @@ const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
 
 export function getAnnotationsFromData(
   data: DataFrame[],
-  options?: AnnotationEventMappings
+  options?: AlertAnnotationEventMappings
 ): Observable<AnnotationEvent[]> {
   return of(data).pipe(
     singleFrameFromPanelData(),
@@ -240,7 +243,7 @@ export function getAnnotationsFromData(
       const events: AnnotationEvent[] = [];
 
       for (let i = 0; i < frame.length; i++) {
-        const anno: AnnotationEvent = {
+        const anno: AlertAnnotationEvent = {
           type: 'default',
           color: 'red',
         };

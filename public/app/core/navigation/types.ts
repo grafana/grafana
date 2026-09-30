@@ -10,7 +10,7 @@ export interface GrafanaRouteComponentProps<T extends {} = {}, Q = UrlQueryMap> 
   location: Location;
 }
 
-export type GrafanaRouteComponent<T extends {} = any> = ComponentType<GrafanaRouteComponentProps<T>>;
+export type GrafanaRouteComponent<T extends {} = {}> = ComponentType<GrafanaRouteComponentProps<T>>;
 
 export interface RouteDescriptor {
   path: string;

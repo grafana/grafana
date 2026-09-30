@@ -9,9 +9,13 @@ import { TextArea, useStyles2 } from '@grafana/ui';
 import { getStyles } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { type VariableQueryEditorProps } from '../types';
 
+type LegacyVariableQueryEditorProps = Omit<VariableQueryEditorProps, 'datasource'> & {
+  datasource: Pick<VariableQueryEditorProps['datasource'], 'uid' | 'type'>;
+};
+
 export const LEGACY_VARIABLE_QUERY_EDITOR_NAME = 'Grafana-LegacyVariableQueryEditor';
 
-export const LegacyVariableQueryEditor = ({ onChange, query }: VariableQueryEditorProps) => {
+export const LegacyVariableQueryEditor = ({ onChange, query }: LegacyVariableQueryEditorProps) => {
   const styles = useStyles2(getStyles);
   const [value, setValue] = useState(query);
 
