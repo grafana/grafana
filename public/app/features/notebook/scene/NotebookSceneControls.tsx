@@ -44,22 +44,22 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
   const usesCanvasBackground = hostConfig.embedded || !visualRefreshEnabled;
 
   return (
-    <div className={styles.controls}>
+    <div
+      className={cx(
+        styles.controls,
+        usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground
+      )}
+      style={{ top: stickyOffset, background: hostConfig.controlsBackground }}
+      data-testid={selectors.pages.Notebooks.Item.controls}
+    >
       {!isKioskFull && (
-        <div
-          className={cx(
-            styles.controls,
-            usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground
-          )}
-          style={{ top: stickyOffset, background: hostConfig.controlsBackground }}
-          data-testid={selectors.pages.Notebooks.Item.controls}
-        >
+        <>
           {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has
               to be visible and retryable there too. This renders nothing until there is something to
               say. */}
           <NotebookSaveStatus autosave={model.autosave} />
           {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
-        </div>
+        </>
       )}
       {!hideTimeControls && (
         <>
@@ -74,7 +74,7 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, stickyOffset: number) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   controls: css({
     display: 'flex',
     alignItems: 'center',
@@ -87,7 +87,6 @@ const getStyles = (theme: GrafanaTheme2, stickyOffset: number) => ({
     // it scroll away rather than eat the reading area, and this follows suit.
     [theme.breakpoints.up('md')]: {
       position: 'sticky',
-      top: stickyOffset,
       // Above the docked sidebar, or the time picker's popover opens behind it. Same reasoning and same
       // token the dashboard's controls chrome uses.
       zIndex: theme.zIndex.sidemenu,

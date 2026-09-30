@@ -11,7 +11,6 @@ import { NotebookPdfLayout } from '../scene/NotebookPdfLayout';
 import { type NotebookScene } from '../scene/NotebookScene';
 
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
-import { reportRenderFailed } from './notebookRenderReadiness';
 
 /**
  * The page the headless browser behind "Export as PDF" loads (see export/openNotebookPdf).
@@ -34,20 +33,12 @@ export function NotebookRenderPage() {
 
     return () => {
       stateManager.clearState();
-      // Evicted, not just cleared: the cache outlives a route change, and this page latches
-      // autosave off on the scene it renders, so a later in-app visit would reuse a notebook that
-      // can never save again.
       if (uid) {
         stateManager.removeSceneCache(uid);
       }
     };
   }, [stateManager, uid, notebooksEnabled]);
 
-  // Above the early returns below, so hook order never varies. Only the failure is reported: a
-  // successful capture is detected by the renderer polling for the page to settle. Under the
-  // `reportRenderBinding` toggle it waits for a message instead and never falls back to polling, so
-  // a successful export waits out its timeout — fixing that means waiting for every panel's queries
-  // to go idle, since the renderer ends its wait on any call to the binding without reading it.
   useEffect(() => {
     if (loadError) {
       reportRenderFailed();
@@ -58,8 +49,6 @@ export function NotebookRenderPage() {
     return <PageNotFound />;
   }
 
-  // Shown rather than swallowed: the renderer captures the page either way, so a blank one becomes
-  // a blank PDF. An error on the sheet is at least diagnosable.
   if (loadError) {
     return (
       <Alert title={t('notebook.errors.failed-to-load', 'Failed to load notebook')} severity="error">
@@ -95,6 +84,20 @@ function NotebookRenderDocument({ scene }: { scene: NotebookScene }) {
   }, [scene]);
 
   return <scene.Component model={scene} />;
+}
+
+/**
+ * Tells grafana-image-renderer a capture has ended, over the chromedp binding it injects — a no-op
+ * unless the `reportRenderBinding` toggle made Grafana advertise support for it.
+ *
+ * The renderer only notices that a message arrived, never reads it, so this amounts to "stop
+ * waiting": useful for a failure, and worse than nothing if sent early. Duplicated from
+ * dashboard/services/ReportRenderReadinessObserver, whose own sender is module-private.
+ */
+function reportRenderFailed(): void {
+  window.__grafanaImageRendererMessageChannel?.(
+    JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: false } })
+  );
 }
 
 export default NotebookRenderPage;
