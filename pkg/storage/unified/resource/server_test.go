@@ -795,6 +795,19 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
 }
 
+type fakeResourceIndexClient struct {
+	resourcepb.ResourceIndexClient
+	statsResponse *resourcepb.ResourceStatsResponse
+}
+
+func newFakeResourceIndexClient() *fakeResourceIndexClient {
+	return &fakeResourceIndexClient{}
+}
+
+func (f *fakeResourceIndexClient) GetStats(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return f.statsResponse, nil
+}
+
 func TestGetQuotaUsage(t *testing.T) {
 	ctx := t.Context()
 
