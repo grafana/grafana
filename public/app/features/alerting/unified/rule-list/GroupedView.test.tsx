@@ -196,7 +196,7 @@ describe('RuleList - GroupedView', () => {
   it('should replace the "checking" notice with the hidden-count notice once a slow empty data source settles', async () => {
     server.use(
       http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, async () => {
-        await delay(50);
+        await delay(300);
         return HttpResponse.json({ status: 'success', data: { groups: [] } });
       })
     );
