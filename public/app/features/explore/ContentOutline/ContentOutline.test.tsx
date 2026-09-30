@@ -371,7 +371,9 @@ describe('<ContentOutline />', () => {
       await setup(false, true, promQueries);
       expect(screen.getByText('Datasource explorer')).toBeInTheDocument();
       expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+      ).toBeInTheDocument();
     });
 
     it('renders the metrics explorer once a Prometheus card is expanded', async () => {
@@ -379,7 +381,9 @@ describe('<ContentOutline />', () => {
       await setup(false, true, promQueries);
       expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+      );
 
       // Only that the list mounted: its contents come from the datasource now, which this test does
       // not stand up. `MetricsList.test.tsx` covers what the list does with a catalog.
