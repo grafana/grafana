@@ -106,6 +106,33 @@ describe('DashboardSceneUrlSync', () => {
 
       expect(scene.urlSync?.getUrlState().viewFilter).toBe('view-1');
     });
+
+    it('does not clobber an explicit time-range override that lands in the same url-sync pass', () => {
+      // Regression test for a link like "?viewFilter=view-1&from=now-15m": $timeRange's own
+      // updateFromUrl runs synchronously, in the SAME pass, right after this handler's -- before
+      // this test's simulated equivalent of that.
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      scene.state.$timeRange?.urlSync?.updateFromUrl({ from: 'now-15m' });
+
+      jest.runAllTimers();
+
+      expect(scene.state.$timeRange?.state.from).toBe('now-15m'); // explicit override survives
+      expect(scene.state.$timeRange?.state.to).toBe('now-1h'); // untouched -- still gets the default
+    });
+
+    it('does not schedule a second apply when the url already matches the current viewFilter', () => {
+      // Pins the fix for SavedViewsPane.handleSelect's double-apply: it now sets viewFilter
+      // synchronously before the url round-trips, so by the time locationService.partial's change
+      // reaches here, this guard is already false and the branch never runs at all.
+      const { scene } = buildSceneWithSavedViews();
+      scene.setState({ viewFilter: 'view-1' });
+
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      jest.runAllTimers();
+
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h'); // unchanged: branch never fired
+    });
   });
 
   describe('Scroll to row', () => {

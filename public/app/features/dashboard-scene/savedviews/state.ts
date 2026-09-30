@@ -132,6 +132,97 @@ export function applySavedViewState(dashboard: DashboardScene, spec: SavedDashbo
   applySectionFilters(dashboard, spec.sectionFilters);
 }
 
+/**
+ * The default-aware counterpart to applySavedViewState, for the URL-driven apply path only. A
+ * saved view is meant to be a default an explicit var- or from/to param in the SAME url change
+ * still overrides (e.g. a shared link like "?viewFilter=view-1&from=now-15m") -- but $timeRange's and
+ * every variable's own updateFromUrl already ran synchronously, in the same pass, by the time the
+ * caller's deferred applySavedViewState would normally run, so a blind full apply would clobber
+ * whatever they just set. `before` is a captureSavedViewState snapshot taken synchronously, BEFORE
+ * those sibling handlers ran; this re-captures the CURRENT state (`after`) and, field by field
+ * (time range's from/to/timezone independently, each variable by name, each section's variables by
+ * name within that section), applies the saved spec's value only where `before` and `after` are
+ * equal -- i.e. nothing explicit touched it during this pass. Where they differ, the just-applied
+ * explicit value is left alone.
+ */
+export function applySavedViewStateAsDefault(
+  dashboard: DashboardScene,
+  spec: SavedDashboardViewSpec,
+  before: SavedDashboardViewSpec
+): void {
+  const after = captureSavedViewState(dashboard);
+
+  applyTimeRange(dashboard, mergeTimeRangeAsDefault(spec.timeRange, before.timeRange, after.timeRange));
+  if (dashboard.state.$variables) {
+    applyVariablesToSet(
+      dashboard.state.$variables,
+      mergeVariablesAsDefault(spec.variables, before.variables, after.variables)
+    );
+  }
+  applySectionFilters(
+    dashboard,
+    mergeSectionFiltersAsDefault(spec.sectionFilters, before.sectionFilters, after.sectionFilters)
+  );
+}
+
+function mergeTimeRangeAsDefault(
+  spec: SavedViewTimeRange,
+  before: SavedViewTimeRange,
+  after: SavedViewTimeRange
+): SavedViewTimeRange {
+  // from/to/timezone are independent url keys (SceneTimeRange.updateFromUrl applies each on its
+  // own), so a link with only ?from= leaves `to` untouched -- merging as one atomic unit would see
+  // "timeRange differs" and wrongly skip the saved to as well.
+  const timezone = (before.timezone ?? '') === (after.timezone ?? '') ? spec.timezone : after.timezone;
+  return {
+    from: before.from === after.from ? spec.from : after.from,
+    to: before.to === after.to ? spec.to : after.to,
+    ...(timezone ? { timezone } : {}),
+  };
+}
+
+function mergeVariablesAsDefault(
+  spec: SavedViewVariable[],
+  before: SavedViewVariable[],
+  after: SavedViewVariable[]
+): SavedViewVariable[] {
+  const beforeByName = new Map(before.map((v) => [v.name, v]));
+  const afterByName = new Map(after.map((v) => [v.name, v]));
+  // A saved variable absent from BOTH before and after (deleted/renamed since the view was saved,
+  // or an unsupported type captureVariable already skips) has nothing to compare, so it's treated
+  // as untouched and passed through -- applyVariablesToSet's own getByName lookup already no-ops
+  // harmlessly when the target doesn't exist live.
+  return spec.filter((saved) => variableEqual(beforeByName.get(saved.name), afterByName.get(saved.name)));
+}
+
+function mergeSectionFiltersAsDefault(
+  spec: SavedViewSectionFilter[] | undefined,
+  before: SavedViewSectionFilter[] | undefined,
+  after: SavedViewSectionFilter[] | undefined
+): SavedViewSectionFilter[] | undefined {
+  if (!spec) {
+    return undefined;
+  }
+  const beforeByKey = new Map((before ?? []).map((s) => [s.sectionKey, s]));
+  const afterByKey = new Map((after ?? []).map((s) => [s.sectionKey, s]));
+
+  // Only ever iterates spec's own sections, never before/after's -- a section present live but
+  // absent from spec is never touched, matching applySectionFilters' own "absence in spec ⇒ no
+  // effect" behavior.
+  const merged = spec
+    .map((section) => {
+      const variables = mergeVariablesAsDefault(
+        section.variables,
+        beforeByKey.get(section.sectionKey)?.variables ?? [],
+        afterByKey.get(section.sectionKey)?.variables ?? []
+      );
+      return variables.length > 0 ? { ...section, variables } : undefined;
+    })
+    .filter((s): s is SavedViewSectionFilter => s !== undefined);
+
+  return merged.length > 0 ? merged : undefined;
+}
+
 function applyTimeRange(dashboard: DashboardScene, timeRange: SavedViewTimeRange): void {
   const $timeRange = dashboard.state.$timeRange;
   if (!$timeRange) {
@@ -168,7 +259,12 @@ function applyVariablesToSet(variableSet: SceneVariables, variables: SavedViewVa
 
 function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
   if (target instanceof AdHocFiltersVariable && saved.filters) {
-    target.setState({ filters: saved.filters });
+    // updateFilters, not a raw setState: it also publishes SceneVariableValueChangedEvent when the
+    // filter expression/groupBy actually changed, which is what dependent panels/repeats/
+    // interpolated content listen for. A raw setState updates the filter-chip UI (reads
+    // state.filters directly) but leaves dependents silently showing data from the previous
+    // filters until an unrelated refresh.
+    target.updateFilters(saved.filters);
     return;
   }
   if (target instanceof MultiValueVariable && saved.value !== undefined) {
@@ -248,6 +344,6 @@ function sectionFiltersDiffer(
 
 // Both sides come from captureVariable's fixed field order, so a plain JSON comparison is safe here
 // (no risk of the same object serializing differently on either side).
-function variableEqual(a: SavedViewVariable, b: SavedViewVariable): boolean {
+function variableEqual(a: SavedViewVariable | undefined, b: SavedViewVariable | undefined): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }

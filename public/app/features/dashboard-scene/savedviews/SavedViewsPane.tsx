@@ -132,14 +132,20 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   const [editDescription, setEditDescription] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // undefined means "not fetched yet" (e.g. the pane was opened without a ?viewFilter= link
   // having already loaded them) -- distinct from an empty array, which means "fetched, none saved".
   useEffect(() => {
     if (savedViews === undefined) {
-      loadSavedViews(dashboard);
+      loadSavedViews(dashboard).then((ok) => setLoadFailed(!ok));
     }
   }, [dashboard, savedViews]);
+
+  function retryLoad() {
+    setLoadFailed(false);
+    loadSavedViews(dashboard).then((ok) => setLoadFailed(!ok));
+  }
 
   const authorUids = useMemo(
     () =>
@@ -175,7 +181,16 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       <div>
         <Sidebar.PaneHeader title={t('dashboard.sidebar.saved-views.pane-header', 'Saved views')} />
         <Box padding={1}>
-          <LoadingPlaceholder text={t('dashboard.sidebar.saved-views.loading', 'Loading saved views…')} />
+          {loadFailed ? (
+            <Stack direction="column" gap={1}>
+              <Text color="error">{t('dashboard.sidebar.saved-views.load-error', 'Failed to load saved views.')}</Text>
+              <Button variant="secondary" onClick={retryLoad}>
+                {t('dashboard.sidebar.saved-views.load-retry', 'Retry')}
+              </Button>
+            </Stack>
+          ) : (
+            <LoadingPlaceholder text={t('dashboard.sidebar.saved-views.loading', 'Loading saved views…')} />
+          )}
         </Box>
       </div>
     );
@@ -202,12 +217,15 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   }
 
   function handleSelect(view: SavedDashboardView) {
-    // Apply directly rather than relying solely on DashboardSceneUrlSync's viewFilter handling:
-    // that path only fires when the URL's viewFilter value actually changes, so re-clicking a
-    // view that's already selected (the common "I tweaked things, put it back" case) would
-    // otherwise be a silent no-op. locationService.partial still keeps the URL/highlight/Overwrite
-    // gating in sync for the normal "select a different view" and cold-load-via-link cases; that
-    // path may end up applying the same spec a second time, which is harmless (idempotent).
+    // Set viewFilter synchronously, in the same tick as the direct apply below. That's what makes
+    // DashboardSceneUrlSync's own `values.viewFilter !== viewFilter` guard already false by the
+    // time locationService.partial's url change reaches it (wherever a UrlSyncManager is actually
+    // live) -- without this, that path schedules a SECOND, redundant apply of the same spec, a
+    // real double query-refresh cascade, not a harmless no-op. Applying directly here is still
+    // required regardless: re-clicking an already-selected view leaves the url unchanged, so that
+    // path never fires at all, and this component needs to work with no live UrlSyncManager too
+    // (e.g. its own tests).
+    dashboard.setState({ viewFilter: view.metadata.name });
     applySavedViewState(dashboard, view.spec);
     locationService.partial({ viewFilter: view.metadata.name });
   }
