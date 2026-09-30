@@ -99,6 +99,28 @@ describe('SavedViewsPane', () => {
     partialSpy.mockRestore();
   });
 
+  it('re-applies a saved view when its (already-selected) row is clicked again', async () => {
+    // Regression test: DashboardSceneUrlSync only applies a saved view when the URL's viewFilter
+    // value actually changes, so re-clicking the currently-selected view -- after editing the time
+    // range/variables locally and wanting to snap back -- must not depend on that URL diff, or it's
+    // a silent no-op (found via manual testing on a real dashboard).
+    const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
+    const { scene } = renderPane([
+      buildView('view-1', { name: 'My view', timeRange: { from: 'now-24h', to: 'now-1h' } }),
+    ]);
+
+    await userEvent.click(screen.getByText('My view'));
+    expect(scene.state.$timeRange?.state.from).toBe('now-24h');
+
+    act(() => scene.state.$timeRange?.setState({ from: 'now-5m', to: 'now' }));
+    expect(scene.state.$timeRange?.state.from).toBe('now-5m');
+
+    await userEvent.click(screen.getByText('My view'));
+
+    expect(scene.state.$timeRange?.state.from).toBe('now-24h');
+    partialSpy.mockRestore();
+  });
+
   it('disables Overwrite until a view is active for the dashboard, then enables it', () => {
     const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
 

@@ -34,7 +34,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { savedDashboardViewsApi, type SavedDashboardView } from './api';
 import { loadSavedViews } from './loadSavedViews';
-import { captureSavedViewState } from './state';
+import { applySavedViewState, captureSavedViewState } from './state';
 
 type ViewMode = 'compact' | 'expanded';
 
@@ -202,6 +202,13 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   }
 
   function handleSelect(view: SavedDashboardView) {
+    // Apply directly rather than relying solely on DashboardSceneUrlSync's viewFilter handling:
+    // that path only fires when the URL's viewFilter value actually changes, so re-clicking a
+    // view that's already selected (the common "I tweaked things, put it back" case) would
+    // otherwise be a silent no-op. locationService.partial still keeps the URL/highlight/Overwrite
+    // gating in sync for the normal "select a different view" and cold-load-via-link cases; that
+    // path may end up applying the same spec a second time, which is harmless (idempotent).
+    applySavedViewState(dashboard, view.spec);
     locationService.partial({ viewFilter: view.metadata.name });
   }
 
