@@ -102,27 +102,27 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	require.NoError(tb, err)
 
 	return ng, &store.DBstore{
-			FeatureToggles: options.featureToggles,
-			SQLStore:       ng.SQLStore,
-			Logger:         log.New("ngalert-test"),
-		}, &rulestore.RuleStore{
-			FeatureToggles: options.featureToggles,
-			SQLStore:       ng.SQLStore,
-			Cfg: setting.UnifiedAlertingSettings{
-				BaseInterval: baseInterval * time.Second,
-			},
-			Logger:        log.New("ngalert-test"),
-			FolderService: folderService,
-			Provenance:    provenanceStore,
-		}
+		FeatureToggles: options.featureToggles,
+		SQLStore:       ng.SQLStore,
+		Logger:         log.New("ngalert-test"),
+	}, &rulestore.RuleStore{
+		FeatureToggles: options.featureToggles,
+		SQLStore:       ng.SQLStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: baseInterval * time.Second,
+		},
+		Logger:        log.New("ngalert-test"),
+		FolderService: folderService,
+		Provenance:    provenanceStore,
+	}
 }
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t testing.TB, ctx context.Context, dbstore *rulestore.RuleStore, intervalSeconds int64, orgID int64) *models.AlertRule {
-	return CreateTestAlertRuleWithLabels(t, ctx, dbstore, intervalSeconds, orgID, nil)
+func CreateTestAlertRule(t testing.TB, ctx context.Context, rulestore *rulestore.RuleStore, intervalSeconds int64, orgID int64) *models.AlertRule {
+	return CreateTestAlertRuleWithLabels(t, ctx, rulestore, intervalSeconds, orgID, nil)
 }
 
-func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *rulestore.RuleStore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
+func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, rulestore *rulestore.RuleStore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
 	folderUID := "namespace"
 	user := &user.SignedInUser{
@@ -139,13 +139,13 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *r
 	}
 
 	ctx = identity.WithRequester(ctx, user)
-	_, err := dbstore.FolderService.Create(ctx, &folder.CreateFolderCommand{OrgID: orgID, Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID, SignedInUser: user})
+	_, err := rulestore.FolderService.Create(ctx, &folder.CreateFolderCommand{OrgID: orgID, Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID, SignedInUser: user})
 	if errors.Is(err, folder.ErrSameUIDExists) || errors.Is(err, folder.ErrVersionMismatch) {
-		_, err = dbstore.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID, SignedInUser: user})
+		_, err = rulestore.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID, SignedInUser: user})
 	}
 	require.NoError(t, err)
 
-	_, err = dbstore.InsertAlertRules(ctx, models.NewUserUID(user), []models.InsertRule{{
+	_, err = rulestore.InsertAlertRules(ctx, models.NewUserUID(user), []models.InsertRule{{
 		AlertRule: models.AlertRule{
 
 			ID:        0,
@@ -182,7 +182,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *r
 		NamespaceUIDs: []string{folderUID},
 		RuleGroups:    []string{ruleGroup},
 	}
-	ruleList, err := dbstore.ListAlertRules(ctx, &q)
+	ruleList, err := rulestore.ListAlertRules(ctx, &q)
 	require.NoError(t, err)
 	require.NotEmpty(t, ruleList)
 
