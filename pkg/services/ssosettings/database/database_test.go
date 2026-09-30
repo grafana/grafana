@@ -455,7 +455,7 @@ func populateSSOSettings(sqlStore db.DB, template models.SSOSettings, providers 
 	return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		for _, provider := range providers {
 			settings := models.SSOSettings{
-				ID:        uuid.New().String(),
+				ID:        uuid.NewV4().String(),
 				Provider:  provider,
 				Settings:  template.Settings,
 				Created:   time.Now().UTC(),

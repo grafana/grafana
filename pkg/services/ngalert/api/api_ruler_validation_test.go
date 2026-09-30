@@ -108,7 +108,7 @@ func randFolder() *folder.Folder {
 		// UpdatedBy: 0,
 		// CreatedBy: 0,
 		// HasACL:    false,
-		ParentUID: uuid.New().String(),
+		ParentUID: uuid.NewV4().String(),
 		Fullpath:  path.Join("parent-folder", title),
 	}
 }
@@ -656,7 +656,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			name: "fail if Condition does not exist",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.GrafanaManagedAlert.Condition = uuid.New().String()
+				r.GrafanaManagedAlert.Condition = uuid.NewV4().String()
 				return &r
 			},
 		},

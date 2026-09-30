@@ -91,7 +91,7 @@ type redisPeer struct {
 
 func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	pushPullInterval time.Duration) (*redisPeer, error) {
-	name := "peer-" + uuid.New().String()
+	name := "peer-" + uuid.NewV4().String()
 	// If a specific name is provided, overwrite default one.
 	if cfg.name != "" {
 		name = cfg.name

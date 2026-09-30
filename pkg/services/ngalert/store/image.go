@@ -111,7 +111,7 @@ func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
 			// and an expiration time. The expiration time of the image is derived from the created
 			// timestamp rather than the current time as it helps assert that the expiration time
 			// has the intended duration in tests.
-			token := uuid.New()
+			token := uuid.NewV4()
 			img.Token = token.String()
 			img.CreatedAt = TimeNow().UTC()
 			img.ExpiresAt = img.CreatedAt.Add(imageExpirationDuration)

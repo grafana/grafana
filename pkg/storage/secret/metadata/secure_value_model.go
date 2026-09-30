@@ -131,7 +131,7 @@ func toCreateRow(createdAt, updatedAt int64, keeper string, sv *secretv1beta1.Se
 		return nil, fmt.Errorf("failed to convert SecureValue to secureValueDB: %w", err)
 	}
 
-	row.GUID = uuid.New().String()
+	row.GUID = uuid.NewV4().String()
 	row.Created = createdAt
 	row.CreatedBy = createdBy
 	row.Updated = updatedAt

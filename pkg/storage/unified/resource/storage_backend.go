@@ -335,7 +335,7 @@ func newLeaseHolder(instanceID string) string {
 		}
 		instanceID = hostname
 	}
-	return fmt.Sprintf("%s-%s", instanceID, uuid.New().String())
+	return fmt.Sprintf("%s-%s", instanceID, uuid.NewV4().String())
 }
 
 var (
@@ -1130,7 +1130,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	}
 
 	if k.rvManager != nil {
-		dataKey.GUID = uuid.New().String()
+		dataKey.GUID = uuid.NewV4().String()
 		var err error
 		// ExecWithRV commits the data on its own context regardless of client cancellation.
 		// Passing a detached context makes ExecWithRV wait for that guaranteed commit
@@ -2961,7 +2961,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 			batchItems = append(batchItems, item)
 			importRow := kv.DataImportRow{
-				GUID:    uuid.New().String(),
+				GUID:    uuid.NewV4().String(),
 				KeyPath: kv.DataSection + "/" + dataKey.String(),
 				Value:   req.Value,
 			}

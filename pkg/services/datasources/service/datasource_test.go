@@ -379,7 +379,7 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		dsService := initDSService(t)
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			UID:   uuid.New().String(),
+			UID:   uuid.NewV4().String(),
 			ID:    1,
 			OrgID: 1,
 		}
@@ -840,7 +840,7 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		cmd := &datasources.DeleteDataSourceCommand{
-			UID:   uuid.New().String(),
+			UID:   uuid.NewV4().String(),
 			ID:    1,
 			OrgID: 1,
 		}

@@ -95,7 +95,7 @@ func (s *Server) SendJSON(req *http.Request) (*http.Response, error) {
 }
 
 func generateRequestIdentifier() string {
-	return uuid.New().String()
+	return uuid.NewV4().String()
 }
 
 func requestWithRequestIdentifier(req *http.Request, id string) *http.Request {

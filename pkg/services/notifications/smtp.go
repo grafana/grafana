@@ -142,7 +142,7 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, smtp setting.SmtpSettings,
 		at := strings.LastIndex(from.Address, "@")
 		if at >= 0 {
 			domain := from.Address[at+1:]
-			m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.New().String(), domain))
+			m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.NewV4().String(), domain))
 		}
 	}
 

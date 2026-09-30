@@ -175,7 +175,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			Value:      value,
 			Object:     meta,
 			PreviousRV: prev,
-			GUID:       uuid.New().String(),
+			GUID:       uuid.NewV4().String(),
 		})
 		require.NoError(t, err)
 		require.Greater(t, rv, int64(0))

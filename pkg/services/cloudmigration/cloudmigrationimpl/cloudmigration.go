@@ -883,7 +883,7 @@ func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
 		return anonId, nil
 	}
 
-	anonId = uuid.New().String()
+	anonId = uuid.NewV4().String()
 
 	err = s.kvStore.Set(ctx, "anonymous_id", anonId)
 	if err != nil {

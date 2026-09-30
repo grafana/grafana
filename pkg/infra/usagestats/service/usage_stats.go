@@ -194,7 +194,7 @@ func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 		return anonId
 	}
 
-	newId := uuid.New()
+	newId := uuid.NewV4()
 
 	anonId = newId.String()
 

@@ -314,7 +314,7 @@ func TestRuleSequencesNeedUpdate(t *testing.T) {
 
 func TestRuleWithFolderFingerprint(t *testing.T) {
 	rule := models.RuleGen.GenerateRef()
-	title := uuid.New().String()
+	title := uuid.NewV4().String()
 	f := ruleWithFolder{rule: rule, folderTitle: title}.Fingerprint()
 	t.Run("should calculate a fingerprint", func(t *testing.T) {
 		require.NotEqual(t, 0, uint64(f))
@@ -332,7 +332,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		require.Equal(t, f, f2)
 	})
 	t.Run("folder name should be used in fingerprint", func(t *testing.T) {
-		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.New().String()}.Fingerprint()
+		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.NewV4().String()}.Fingerprint()
 		require.NotEqual(t, f, f2)
 	})
 	t.Run("Version, Updated, IntervalSeconds, GUID, Annotations and RuleGroupIndex should be excluded from fingerprint", func(t *testing.T) {
@@ -343,7 +343,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		cp.Annotations = make(map[string]string)
 		cp.Annotations["test"] = "test"
 		cp.RuleGroupIndex++
-		cp.GUID = uuid.New().String()
+		cp.GUID = uuid.NewV4().String()
 
 		f2 := ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
 		require.Equal(t, f, f2)

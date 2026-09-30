@@ -80,7 +80,7 @@ func (c setRuleGuidMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) er
 		}
 		bd := strings.Builder{}
 		for idx, id := range results {
-			u := uuid.New().String()
+			u := uuid.NewV4().String()
 			if idx == 0 {
 				bd.WriteString(fmt.Sprintf("SELECT %d as id, '%s' as guid", id, u))
 				continue

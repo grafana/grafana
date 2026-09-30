@@ -102,7 +102,7 @@ func toKeeperCreateRow(kp *secretv1beta1.Keeper, actorUID string) (*keeperDB, er
 
 	now := time.Now().UTC().Unix()
 
-	row.GUID = uuid.New().String()
+	row.GUID = uuid.NewV4().String()
 	row.Created = now
 	row.CreatedBy = actorUID
 	row.Updated = now

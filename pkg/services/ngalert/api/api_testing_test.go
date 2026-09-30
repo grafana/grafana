@@ -166,7 +166,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.PostableExtendedRuleNodeExtended{
 				Rule:           rule,
-				NamespaceUID:   uuid.New().String(),
+				NamespaceUID:   uuid.NewV4().String(),
 				NamespaceTitle: "test-folder",
 			})
 

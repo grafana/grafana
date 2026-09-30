@@ -396,7 +396,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	rule3 := createRule(t, store, recordingGen)
 	rule4 := createRule(t, store, gen.With(gen.WithGroupName("")))
 
-	parentFolderUid := uuid.New().String()
+	parentFolderUid := uuid.NewV4().String()
 	parentFolderTitle := "Very Parent Folder"
 	rule1FolderTitle := "folder-" + rule1.Title
 	rule2FolderTitle := "folder-" + rule2.Title
@@ -1132,7 +1132,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 
-	receiverName := "receiver\"-" + uuid.New().String()
+	receiverName := "receiver\"-" + uuid.NewV4().String()
 	timeIntervalName := "time-" + util.GenerateShortUID()
 
 	gen := models.RuleGen

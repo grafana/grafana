@@ -657,7 +657,7 @@ func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Conte
 		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	leaseToken := uuid.New().String()
+	leaseToken := uuid.NewV4().String()
 	if err := s.acquireLeases(ctx, leaseToken, maxBatchSize); err != nil {
 		return nil, fmt.Errorf("acquiring leases for inactive secure values: %w", err)
 	}

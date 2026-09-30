@@ -18,7 +18,7 @@ func BenchmarkRuleWithFolderFingerprint(b *testing.B) {
 			rule.Data = append(rule.Data, gen.GenerateQuery())
 		}
 	}).GenerateManyRef(b.N)
-	folder := uuid.New().String()
+	folder := uuid.NewV4().String()
 	b.ReportAllocs()
 	b.ResetTimer()
 	var f fingerprint

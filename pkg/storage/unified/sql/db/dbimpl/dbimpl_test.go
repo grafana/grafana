@@ -43,7 +43,7 @@ func setupDBForGrafana(t *testing.T, ctx context.Context, m cfgMap) {
 		m["database"] = dbSection
 	}
 	dbSection["type"] = "sqlite3"
-	dbSection["path"] = t.TempDir() + "/" + uuid.New().String()
+	dbSection["path"] = t.TempDir() + "/" + uuid.NewV4().String()
 
 	db, err := sql.Open("sqlite3", "file:"+dbSection["path"])
 	require.NoError(t, err)

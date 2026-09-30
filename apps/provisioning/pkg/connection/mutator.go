@@ -134,7 +134,7 @@ func generateShortUID() string {
 
 	// Use UUIDs if snowflake failed (should be never)
 	if node == nil {
-		uuid := uuid.New().String()
+		uuid := uuid.NewV4().String()
 		if rune(uuid[0]) < rune('a') {
 			uuid = string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
 		}

@@ -160,7 +160,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetUID() == "" {
-		obj.SetUID(types.UID(uuid.New().String()))
+		obj.SetUID(types.UID(uuid.NewV4().String()))
 	}
 	if err = s.verifyFolder(obj); err != nil {
 		return v, err

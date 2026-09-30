@@ -1868,7 +1868,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, status)
 			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 
-			group.Rules[0].GrafanaManagedAlert.Title = uuid.New().String()
+			group.Rules[0].GrafanaManagedAlert.Title = uuid.NewV4().String()
 			resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 
 			if status == http.StatusAccepted {

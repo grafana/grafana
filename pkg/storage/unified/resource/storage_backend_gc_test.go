@@ -115,7 +115,7 @@ func writeEvent(t *testing.T, ctx context.Context, storageBackend *kvStorageBack
 	event := WriteEvent{
 		Type:  action,
 		Value: value,
-		GUID:  uuid.New().String(),
+		GUID:  uuid.NewV4().String(),
 		Key: &resourcepb.ResourceKey{
 			Namespace: options.Namespace,
 			Group:     options.Group,

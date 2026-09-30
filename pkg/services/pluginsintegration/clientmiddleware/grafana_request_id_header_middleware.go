@@ -82,7 +82,7 @@ func IsRequestURLInAllowList(url *url.URL, cfg *setting.Cfg) bool {
 
 func GetGrafanaRequestIDHeaders(req *http.Request, cfg *setting.Cfg, logger log.Logger) map[string]string {
 	// Generate a new Grafana request ID and sign it with the secret key
-	uid := uuid.New()
+	uid := uuid.NewV4()
 	grafanaRequestID := uid.String()
 
 	hmac := hmac.New(sha256.New, []byte(cfg.IPRangeACSecretKey))

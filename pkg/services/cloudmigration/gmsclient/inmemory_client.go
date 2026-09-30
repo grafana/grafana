@@ -35,7 +35,7 @@ func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.
 		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
 
-	snapshotUid := uuid.New().String()
+	snapshotUid := uuid.NewV4().String()
 
 	metadataBuffer, err := json.Marshal(struct {
 		SnapshotID string `json:"snapshotID"`

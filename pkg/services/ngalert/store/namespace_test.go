@@ -38,9 +38,9 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	}
 
 	folders := []*folder.Folder{
-		{UID: uuid.New().String(), Title: "folder1", ParentUID: "", OrgID: 1},
-		{UID: uuid.New().String(), Title: "folder2", ParentUID: "", OrgID: 1},
-		{UID: uuid.New().String(), Title: "nested/folder", ParentUID: "", OrgID: 1},
+		{UID: uuid.NewV4().String(), Title: "folder1", ParentUID: "", OrgID: 1},
+		{UID: uuid.NewV4().String(), Title: "folder2", ParentUID: "", OrgID: 1},
+		{UID: uuid.NewV4().String(), Title: "nested/folder", ParentUID: "", OrgID: 1},
 	}
 
 	for _, f := range folders {

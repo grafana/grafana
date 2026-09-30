@@ -202,7 +202,7 @@ func generateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtende
 		rules = append(rules, gen())
 	}
 	return apimodels.PostableRuleGroupConfig{
-		Name:     "arulegroup-" + uuid.New().String(),
+		Name:     "arulegroup-" + uuid.NewV4().String(),
 		Interval: model.Duration(10 * time.Second),
 		Rules:    rules,
 	}
@@ -792,7 +792,7 @@ func (a apiClient) CreateTestDatasource(t *testing.T) (result api.CreateOrUpdate
 func (a apiClient) CreateDatasource(t *testing.T, dsType string) (result api.CreateOrUpdateDatasourceResponse) {
 	t.Helper()
 
-	payload := fmt.Sprintf(`{"name":"TestDatasource-%s","type":"%s","access":"proxy","isDefault":false}`, uuid.New().String(), dsType)
+	payload := fmt.Sprintf(`{"name":"TestDatasource-%s","type":"%s","access":"proxy","isDefault":false}`, uuid.NewV4().String(), dsType)
 	buf := bytes.Buffer{}
 	buf.Write([]byte(payload))
 

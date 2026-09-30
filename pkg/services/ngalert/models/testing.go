@@ -114,7 +114,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 
 	rule := AlertRule{
 		ID:                          0,
-		GUID:                        uuid.New().String(),
+		GUID:                        uuid.NewV4().String(),
 		OrgID:                       rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
 		Title:                       fmt.Sprintf("title-%s", util.GenerateShortUID()),
 		Condition:                   "A",

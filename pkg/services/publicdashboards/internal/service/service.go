@@ -538,7 +538,7 @@ func publicDashboardIsEnabledChanged(existingPubdash *models.PublicDashboard, ne
 
 // GenerateAccessToken generates an uuid formatted without dashes to use as access token
 func GenerateAccessToken() (string, error) {
-	token := uuid.New()
+	token := uuid.NewV4()
 	return fmt.Sprintf("%x", token[:]), nil
 }
 

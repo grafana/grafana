@@ -44,7 +44,7 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRe
 	}
 
 	info := &utils.BlobInfo{
-		UID:  uuid.New().String(),
+		UID:  uuid.NewV4().String(),
 		Size: int64(len(req.Value)),
 		Hash: hex.EncodeToString(hasher.Sum(nil)),
 	}

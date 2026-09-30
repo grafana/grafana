@@ -58,7 +58,7 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, backwardsCompatible 
 
 		kvOpts.RvManager = rvManager
 	} else {
-		kvOpts.Holder = "test-holder-" + uuid.New().String()
+		kvOpts.Holder = "test-holder-" + uuid.NewV4().String()
 	}
 
 	backend, err := resource.NewKVStorageBackend(kvOpts)

@@ -385,7 +385,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	uid := uuid.New().String()
+	uid := uuid.NewV4().String()
 	err = s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 		UID:            uid,
 		SessionUID:     sess.UID,
@@ -423,7 +423,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		cloudmigration.SnapshotStatusProcessing,
 	} {
 		// in this case since the background sync will run, we can create a brand new snapshot to avoid race problems.
-		snapshotUID := uuid.New().String()
+		snapshotUID := uuid.NewV4().String()
 		require.NoError(t, s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 			UID:            snapshotUID,
 			SessionUID:     sess.UID,
@@ -918,7 +918,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 
 	cfg.CloudMigration.Enabled = true
 	cfg.CloudMigration.IsDeveloperMode = true // ensure local implementations are used
-	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.New().String())
+	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewV4().String())
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
 

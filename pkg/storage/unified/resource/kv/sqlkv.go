@@ -484,7 +484,7 @@ func (w *sqlWriteCloser) Close() error {
 		// This can be simplified once resource_history columns are dropped
 		_, err := w.kv.Get(w.ctx, w.section, w.key)
 		if errors.Is(err, ErrNotFound) {
-			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
+			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.NewV4().String())
 			_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 			if err != nil {
 				return fmt.Errorf("failed to insert to datastore: %w", err)

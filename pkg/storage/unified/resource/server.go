@@ -1036,7 +1036,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		Value:  value,
 		Key:    key,
 		Object: obj,
-		GUID:   uuid.New().String(),
+		GUID:   uuid.NewV4().String(),
 	}
 
 	if oldValue == nil {
@@ -1490,7 +1490,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
 		PreviousRV: req.ResourceVersion,
-		GUID:       uuid.New().String(),
+		GUID:       uuid.NewV4().String(),
 	}
 	marker := &unstructured.Unstructured{}
 	err = json.Unmarshal(latest.Value, marker)

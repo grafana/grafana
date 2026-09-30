@@ -616,7 +616,7 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 			OrgID: orgID,
 			UID:   "test",
 		}
-		guid := uuid.New().String()
+		guid := uuid.NewV4().String()
 		historyRules := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
 		history := make([]*models.AlertRuleVersion, len(historyRules))
 		for i, alertRule := range historyRules {
@@ -641,7 +641,7 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 			OrgID: orgID,
 			UID:   "test",
 		}
-		guid := uuid.New().String()
+		guid := uuid.NewV4().String()
 		rule := gen.With(gen.WithKey(ruleKey), gen.WithGUID(guid)).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 		ruleStore.History[guid] = nil
@@ -665,7 +665,7 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 			OrgID: orgID,
 			UID:   "test",
 		}
-		guid := uuid.New().String()
+		guid := uuid.NewV4().String()
 		rule := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey), gen.WithNamespaceUID(anotherFolder.UID)).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 		historyRules := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)

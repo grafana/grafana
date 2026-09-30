@@ -71,7 +71,7 @@ func TestUnmarshalCommand(t *testing.T) {
 			{
 				name: "field 'type' is not known",
 				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
-					cmd["type"] = uuid.New().String()
+					cmd["type"] = uuid.NewV4().String()
 				}),
 				err: "unsupported command type. Should be one of [outlier]",
 			},

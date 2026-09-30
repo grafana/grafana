@@ -49,7 +49,7 @@ type bundleStore interface {
 }
 
 func (s *store) Create(ctx context.Context, usr identity.Requester) (*supportbundles.Bundle, error) {
-	uid := uuid.New()
+	uid := uuid.NewV4()
 
 	bundle := supportbundles.Bundle{
 		UID:       uid.String(),

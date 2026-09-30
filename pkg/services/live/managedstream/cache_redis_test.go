@@ -32,7 +32,7 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 		Addr: addr,
 		DB:   db,
 	})
-	prefix := uuid.New().String()
+	prefix := uuid.NewV4().String()
 
 	t.Cleanup(redisCleanup(t, redisClient, prefix))
 

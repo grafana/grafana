@@ -67,7 +67,7 @@ func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
 
 func createTestTable(t *testing.T, dbstore db.DB) string {
 	t.Helper()
-	name := fmt.Sprintf("test_lock_%s", uuid.New().String()[:8])
+	name := fmt.Sprintf("test_lock_%s", uuid.NewV4().String()[:8])
 	engine := dbstore.GetEngine()
 	_, err := engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY, val TEXT)", engine.Quote(name)))
 	require.NoError(t, err)

@@ -50,7 +50,7 @@ func setupBadgerKV(t *testing.T) resource.StorageBackend {
 		KvStore: resource.NewBadgerKV(db),
 		// keep it low in tests as most of them don't exercise concurrent writes
 		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
-		Holder:       fmt.Sprintf("badger-holder-%s", uuid.New().String()),
+		Holder:       fmt.Sprintf("badger-holder-%s", uuid.NewV4().String()),
 	}
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)

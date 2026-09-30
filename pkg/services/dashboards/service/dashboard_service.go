@@ -2381,7 +2381,7 @@ func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *uns
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (*unstructured.Unstructured, error) {
 	uid := cmd.GetDashboardModel().UID
 	if uid == "" {
-		uid = uuid.New().String()
+		uid = uuid.NewV4().String()
 	}
 
 	finalObj := &unstructured.Unstructured{

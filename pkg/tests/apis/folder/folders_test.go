@@ -1627,7 +1627,7 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 	})
 
 	// Create parent and child folders
-	uid := uuid.New().String()[:8]
+	uid := uuid.NewV4().String()[:8]
 	parentUID := fmt.Sprintf("connected-parent-%s", uid)
 	childUID := fmt.Sprintf("connected-child-%s", uid)
 	createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %s", uid), "")
@@ -1690,7 +1690,7 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 	})
 
 	// Create parent and child folders
-	uid := uuid.New().String()[:8]
+	uid := uuid.NewV4().String()[:8]
 	parentUID := fmt.Sprintf("dangling-parent-%s", uid)
 	childUID := fmt.Sprintf("dangling-child-%s", uid)
 	createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %s", uid), "")
