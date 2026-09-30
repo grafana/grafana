@@ -48,24 +48,31 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
 
-	// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
-	// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
-	// because this is an extra query on every delete and the only subscriber is behind the flag.
-	// Runs on dbHelper.DB ahead of the transaction below, which may be a different connection.
-	var folderKeys []ngmodels.FolderKey
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
-		dbHelper, err := st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return err
-		}
-		folderKeys, err = deletedRuleFolderKeys(ctx, dbHelper, orgID, ruleUID)
-		if err != nil {
-			return err
-		}
-	}
-
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
+		// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
+		// because this is an extra query on every delete and the only subscriber is behind the flag.
+		// With no routed database configured, this stays on the delete's own transaction (sess), so
+		// a concurrent folder move can't leave FolderKeys pointing at the wrong folder. A routed
+		// database may be a different connection, so it gets its own read instead.
+		var folderKeys []ngmodels.FolderKey
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
+			var err error
+			if st.LegacyDatabaseProvider == nil {
+				folderKeys, err = deletedRuleFolderKeys(sess, orgID, ruleUID, "alert_rule")
+			} else {
+				var dbHelper *legacysql.LegacyDatabaseHelper
+				dbHelper, err = st.legacyDatabaseProvider(ctx)
+				if err == nil {
+					folderKeys, err = deletedRuleFolderKeysOnDB(ctx, dbHelper, orgID, ruleUID)
+				}
+			}
+			if err != nil {
+				return err
+			}
+		}
+
 		rows, err := sess.Table(alertRule{}).Where("org_id = ?", orgID).In("uid", ruleUID).Delete(alertRule{})
 		if err != nil {
 			return err
@@ -487,9 +494,21 @@ func collectNamespaceUIDsByOrg(rules []*ngmodels.AlertRule) []orgNamespaces {
 	return result
 }
 
-// deletedRuleFolderKeys returns the deduplicated parent folders of the given rules. It must be
-// invoked before the rules are deleted, since the rows carrying namespace_uid are gone afterwards.
-func deletedRuleFolderKeys(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
+// deletedRuleFolderKeys returns the deduplicated parent folders of the given rules, read on the
+// given session so it shares the delete's own transaction. It must be invoked before the rules
+// are deleted, since the rows carrying namespace_uid are gone afterwards.
+func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string, alertRuleTable string) ([]ngmodels.FolderKey, error) {
+	var uids []string
+	if err := sess.Table(alertRuleTable).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids); err != nil {
+		return nil, err
+	}
+	return dedupFolderKeys(orgID, uids), nil
+}
+
+// deletedRuleFolderKeysOnDB is deletedRuleFolderKeys for a routed database, which may live on a
+// different connection than the delete's own transaction, so it reads on its own session instead
+// of sharing one.
+func deletedRuleFolderKeysOnDB(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
 	var uids []string
 	err := dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(dbHelper.Table("alert_rule")).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids)
@@ -497,6 +516,10 @@ func deletedRuleFolderKeys(ctx context.Context, dbHelper *legacysql.LegacyDataba
 	if err != nil {
 		return nil, err
 	}
+	return dedupFolderKeys(orgID, uids), nil
+}
+
+func dedupFolderKeys(orgID int64, uids []string) []ngmodels.FolderKey {
 	seen := make(map[string]struct{}, len(uids))
 	keys := make([]ngmodels.FolderKey, 0, len(uids))
 	for _, uid := range uids {
@@ -509,7 +532,7 @@ func deletedRuleFolderKeys(ctx context.Context, dbHelper *legacysql.LegacyDataba
 		seen[uid] = struct{}{}
 		keys = append(keys, ngmodels.FolderKey{OrgID: orgID, UID: uid})
 	}
-	return keys, nil
+	return keys
 }
 
 // fetchFolderFullpathsByOrg fetches folder fullpaths for all namespace UIDs grouped by org ID.
