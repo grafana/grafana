@@ -1840,7 +1840,7 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, codes.Unimplemented, status.Code(err))
 
-	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "grafana_vector_storage_search_duration_seconds"))
 }
 
 // TestSearchServer_HybridSearch_ObservesDuration mirrors the VectorSearch
@@ -1865,7 +1865,7 @@ func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, codes.Unimplemented, status.Code(err))
 
-	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "vector_storage_hybrid_search_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "grafana_vector_storage_hybrid_search_duration_seconds"))
 }
 
 func TestFolderFilterSet(t *testing.T) {
