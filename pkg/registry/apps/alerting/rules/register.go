@@ -83,10 +83,10 @@ func RegisterAppInstaller(
 	// Search routes through a dual-writer-aware client per kind: the legacy
 	// backend (provisioning service) serves modes 0-3, the unified client 4+.
 	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
-	searchAdapter := dualwrite.NewSearchAdapter(dual)
+	unifiedSearch := search.NewUnifiedClient(unifiedClient)
 	searchHandler := search.NewHandler(
-		unifiedresource.NewSearchClient(searchAdapter, alertrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
-		unifiedresource.NewSearchClient(searchAdapter, recordingrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
+		dualwrite.NewSelector[search.Backend](dual, alertrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
+		dualwrite.NewSelector[search.Backend](dual, recordingrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
 	)
 
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{

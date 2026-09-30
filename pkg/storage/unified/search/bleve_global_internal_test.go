@@ -1,11 +1,13 @@
 package search
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -270,4 +272,69 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 		"dashboard.grafana.app/dashboards/zzz",
 	}, seen)
 	assert.Len(t, seen, 3, "no document is repeated")
+}
+
+var (
+	importTimesKey = resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	importedA      = schema.GroupResource{Group: "a.grafana.app", Resource: "as"}
+	importedB      = schema.GroupResource{Group: "b.grafana.app", Resource: "bs"}
+	importMonday   = time.Date(2026, 9, 28, 10, 0, 0, 123456789, time.UTC)
+)
+
+func TestImportTimesAreEmptyOnANewIndex(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), importTimesKey, 1, "test", indexTestDocs(importTimesKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	times, err := idx.ImportTimes()
+	require.NoError(t, err)
+	assert.Empty(t, times)
+}
+
+// Recording one type keeps what is recorded for the others, to the nanosecond.
+func TestImportTimesAreRecordedPerType(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), importTimesKey, 1, "test", indexTestDocs(importTimesKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	require.NoError(t, idx.RecordImportTime(importedA, importMonday))
+	require.NoError(t, idx.RecordImportTime(importedB, importMonday.Add(time.Hour)))
+	require.NoError(t, idx.RecordImportTime(importedA, importMonday.Add(2*time.Hour)))
+
+	times, err := idx.ImportTimes()
+	require.NoError(t, err)
+	assert.Equal(t, map[schema.GroupResource]time.Time{
+		importedA: importMonday.Add(2 * time.Hour),
+		importedB: importMonday.Add(time.Hour),
+	}, times)
+}
+
+// Kept inside the index, so a restarted server does not redo an import it has
+// already caught up with.
+func TestImportTimesSurviveReopening(t *testing.T) {
+	dir := t.TempDir()
+	const docs = 10
+	{
+		backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(dir))
+		build := func(index resource.ResourceIndex) (int64, error) {
+			rv, err := indexTestDocs(importTimesKey, docs, 100)(index)
+			if err != nil {
+				return rv, err
+			}
+			return rv, index.RecordImportTime(importedA, importMonday)
+		}
+		_, err := backend.BuildIndex(t.Context(), importTimesKey, docs, "test", build, nil, false, time.Time{}, 0)
+		require.NoError(t, err)
+		backend.Stop()
+	}
+
+	reopened, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(dir))
+	idx, err := reopened.BuildIndex(t.Context(), importTimesKey, docs, "test", func(resource.ResourceIndex) (int64, error) {
+		return 0, errors.New("the index on disk should have been reused, not built again")
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	times, err := idx.ImportTimes()
+	require.NoError(t, err)
+	assert.Equal(t, map[schema.GroupResource]time.Time{importedA: importMonday}, times)
 }

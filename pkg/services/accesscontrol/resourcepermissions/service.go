@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -86,11 +87,12 @@ func New(cfg *setting.Cfg,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService ActionSetService,
+	iamFeatures iamapi.Features,
 ) (*Service, error) {
 	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
 	// is configured.
-	if options.APIGroup == "" && requiresAPIGroup(context.Background(), options.Resource, options.K8sActionFormat) {
-		return nil, fmt.Errorf("APIGroup is required for resource %q when Kubernetes-native permissions are enabled (K8sActionFormat or the resource-permission redirect)", options.Resource)
+	if options.APIGroup == "" && requiresAPIGroup(options.Resource, options.K8sActionFormat, iamFeatures) {
+		return nil, fmt.Errorf("APIGroup is required for resource %q when Kubernetes-native permissions are enabled (K8sActionFormat or the resource-permission API)", options.Resource)
 	}
 
 	permissions := make([]string, 0, len(options.PermissionsToActions))
@@ -132,7 +134,7 @@ func New(cfg *setting.Cfg,
 	}
 	s.dynamicClient = s.dynamicClientForContext
 
-	s.api = newApi(cfg, ac, router, s, features, s.options.RestConfigProvider)
+	s.api = newApi(cfg, ac, router, s, s.options.RestConfigProvider, iamFeatures)
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err
@@ -899,15 +901,10 @@ func (s *Service) scopeResource() string {
 // APIGroup configured, since it can no longer be guessed (see getAPIGroup). It is
 // required for any Kubernetes-native flow:
 //   - K8sActionFormat is enabled (K8s-format actions/scopes), or
-//   - the resource-permission redirect is enabled for a resource that routes
-//     through the generic K8s adapter.
-//
-// The redirect gate is read through the same OpenFeature helper used at runtime
-// (k8sResourcePermissionRedirectEnabled), so this startup check stays aligned with
-// when getAPIGroup is actually exercised. Called at construction with a background
-// context, so it sees the global flag values; per-tenant overrides are still
-// guarded at runtime by getAPIGroup.
-func requiresAPIGroup(ctx context.Context, resource string, k8sActionFormat bool) bool {
+//   - the resource-permission API is available for a resource that can route
+//     through the generic K8s adapter. The redirect is request-scoped and may be
+//     enabled later, so construction cannot use its current value for validation.
+func requiresAPIGroup(resource string, k8sActionFormat bool, iamFeatures iamapi.Features) bool {
 	if k8sActionFormat {
 		return true
 	}
@@ -926,5 +923,5 @@ func requiresAPIGroup(ctx context.Context, resource string, k8sActionFormat bool
 		return false
 	}
 
-	return k8sResourcePermissionRedirectEnabled(ctx)
+	return iamFeatures.ResourcePermissionsAPI
 }

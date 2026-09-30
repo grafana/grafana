@@ -13132,6 +13132,12 @@
       "query": {
         "add": "Tambahkan kueri",
         "run": "Jalankan kueri"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13215,7 +13221,9 @@
       "redo-action": "Ulangi: {{action}}",
       "remove-query": "Hapus kueri",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Pilih kueri",
+      "set-cell-time-range": "",
       "split-block": "Pisahkan blok",
       "switch-datasource": "Ganti sumber data",
       "undo": "Batalkan",
@@ -15741,8 +15749,7 @@
       "deleted-by-removed": "Akun yang dihapus",
       "deleted-by-unknown-short": "<0></0> Tidak Diketahui",
       "deleted-by-unknown-tooltip": "Gagal mencari akun yang menghapus dasbor ini",
-      "deleted-less-than-1-min": "< 1 menit",
-      "deleted-remaining-header": "Waktu yang tersisa",
+      "deleted-header": "",
       "location-header": "Lokasi",
       "name-header": "Nama",
       "tags-header": "Tag",
