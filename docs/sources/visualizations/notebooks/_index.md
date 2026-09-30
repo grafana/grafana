@@ -36,19 +36,13 @@ Many investigations never become incidents, but the pre-escalation work often in
 Additionally, they provide reusable context you can return to the next time something similar happens.
 Each investigation in a notebook makes the next one faster.
 
-## Choose a space for your investigation
-<!-- TODO: New title and reformat -->
+## When to use notebooks
 
-Dashboards, the Workspace canvas, and notebooks offer different ways to investigate, with trade-offs in design effort, ease of editing, and reuse.
+Dashboards, the Workspace canvas, and notebooks each support investigations in a different way. They differ in design effort, ease of editing, and reuse.
 
-- **Dashboard: A reusable, curated view**
-   Building a dashboard during an investigation requires design decisions while you're still exploring. Adding investigative work can also make it less curated.
-
-- **Workspace canvas: A temporary exploration space**
-   The Workspace canvas lets you explore without design work, but it's temporary, created by an agent, and can't be edited.
-
-- **Notebook: A scratchpad you can refine and reuse**
-   A notebook picks up where the Workspace canvas leaves off. You can write and edit it during an investigation, then clean it up into a reusable record.
+- **Dashboards** are reusable, curated views. Building one during an investigation requires design decisions while you're still exploring, and adding investigative work can make the dashboard less curated.
+- **The Workspace canvas** is a temporary exploration space. You can explore without design work, but an agent creates the canvas, you can't edit it, and it doesn't persist.
+- **Notebooks** are a scratchpad you can refine and reuse. A notebook picks up where the Workspace canvas leaves off. You write and edit it during an investigation, then clean it up into a reusable record.
 
 ## Manage notebooks
 
@@ -116,7 +110,7 @@ To create a notebook from the **Notebooks** page, follow these steps:
 
 You don't need to save a notebook because it auto-saves throughout the creation process.
 
-After you start adding to a notebook, you can access options to  share, export, or delete it in the toolbar.
+After you start adding to a notebook, you can access options to share, export, or delete it in the toolbar.
 
 ## Create notebooks from Grafana Assistant Workspace
 
