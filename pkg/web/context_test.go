@@ -1,8 +1,11 @@
 package web
 
 import (
+	"fmt"
+	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -110,4 +113,49 @@ func TestContext_noHandler(t *testing.T) {
 	c.run()
 
 	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+}
+
+type disconnectResponseWriter struct {
+	http.ResponseWriter
+	err error
+}
+
+func (w *disconnectResponseWriter) Write([]byte) (int, error) {
+	return 0, w.err
+}
+
+func TestContext_HTML_disconnectHandling(t *testing.T) {
+	t.Run("gracefully ignores client disconnect errors", func(t *testing.T) {
+		disconnectErrors := []error{
+			syscall.EPIPE,
+			syscall.ECONNRESET,
+			http.ErrAbortHandler,
+		}
+
+		for _, disconnErr := range disconnectErrors {
+			t.Run(fmt.Sprintf("handles %v", disconnErr), func(t *testing.T) {
+				tmpl := template.Must(template.New("test").Parse("hello {{ . }}"))
+				c := &Context{
+					Resp:     NewResponseWriter(http.MethodGet, &disconnectResponseWriter{ResponseWriter: httptest.NewRecorder(), err: disconnErr}),
+					template: tmpl,
+				}
+
+				assert.NotPanics(t, func() {
+					c.HTML(http.StatusOK, "test", "world")
+				})
+			})
+		}
+	})
+
+	t.Run("panics on standard template execution errors", func(t *testing.T) {
+		tmpl := template.Must(template.New("test").Parse("hello {{ .NonExistentField }}"))
+		c := &Context{
+			Resp:     NewResponseWriter(http.MethodGet, httptest.NewRecorder()),
+			template: tmpl,
+		}
+
+		assert.Panics(t, func() {
+			c.HTML(http.StatusOK, "test", struct{}{})
+		})
+	})
 }
