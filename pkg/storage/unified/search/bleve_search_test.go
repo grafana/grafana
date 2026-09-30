@@ -760,7 +760,7 @@ func TestSearchResultFormatMetric(t *testing.T) {
 	require.NotNil(t, res.Error)
 	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")), "a response without a result format is not counted")
 
-	require.Equal(t, 2, testutil.CollectAndCount(metrics.SearchResultFormats, "index_server_search_result_format_total"))
+	require.Equal(t, 2, testutil.CollectAndCount(metrics.SearchResultFormats, "grafana_index_server_search_result_format_total"))
 }
 
 func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
