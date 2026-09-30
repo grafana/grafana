@@ -6541,6 +6541,8 @@
         "edit-modal-confirm": "Save",
         "edit-modal-title": "Edit view",
         "empty": "No saved views yet",
+        "load-error": "Failed to load saved views.",
+        "load-retry": "Retry",
         "loading": "Loading saved views…",
         "new-name-label": "View name",
         "new-name-placeholder": "New view name",
