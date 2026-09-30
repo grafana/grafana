@@ -354,6 +354,12 @@ The colored background cell type has the following options:
 If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable.
 If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override.
 
+Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
+For more information, refer to [Tooltip from field](#tooltip-from-field).
+
+Toggle on the **Styling from field** switch to apply the styling from another field (or column).
+For more information, refer to [Styling from field](#styling-from-field).
+
 #### Gauge
 
 With this cell type, cells can be displayed as a graphical gauge, with several different presentation types.
@@ -456,6 +462,9 @@ The following data formats are supported for the pill cell type:
 Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
 For more information, refer to [Tooltip from field](#tooltip-from-field).
 
+Toggle on the **Styling from field** switch to apply the styling from another field (or column).
+For more information, refer to [Styling from field](#styling-from-field).
+
 #### Markdown + HTML
 
 The **Markdown + HTML** cell type displays rich Markdown or HTML content, rendered using the
@@ -467,12 +476,16 @@ For this cell type, you can toggle the **Dynamic height** switch, which allows t
 dynamically based on the cell content. If you use dynamic height, we strongly recommend that you
 also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
 Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
+Dynamic height is currently an alpha feature.
 
 By default, the HTML rendered is sanitized, and un-sanitized HTML can only be rendered
 in these cells if the [`disable_sanitize_html`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html) option is set to true for your Grafana instance.
 
 Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
 For more information, refer to [Tooltip from field](#tooltip-from-field).
+
+Toggle on the **Styling from field** switch to apply the styling from another field (or column).
+For more information, refer to [Styling from field](#styling-from-field).
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-markdown-v12.2.png" max-width="600px" alt="Table using the pill cell type" >}}
 
@@ -490,6 +503,7 @@ It has the following options:
 | Alt text           | Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded. |
 | Title text         | Set the text that's displayed when the image is hovered over with a cursor. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). For more information, refer to [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
 #### Actions
@@ -506,6 +520,7 @@ Actions add a button to a cell that triggers a basic, unauthenticated API call w
 | Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
 | Payload            | Enter the body of the API call. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). For more information, refer to [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
 #### Tooltip from field
