@@ -146,6 +146,33 @@ function buildSceneWithPanelOverride(timeFrom: string) {
   return { scene, cell, panel };
 }
 
+/**
+ * Two cells referencing one panel element, each with its own panel. A layout may legally do this —
+ * NotebookLayoutManager.setElementBody only renames a converted cell when a sibling still shares the
+ * name — and anything keyed by element name keeps just one of them.
+ */
+function buildSceneWithSharedElementName() {
+  const cells = [1, 2].map(
+    (panelId) =>
+      new NotebookCellItem({
+        elementName: 'panel1',
+        source: 'user',
+        body: new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), panelId)),
+      })
+  );
+
+  const scene = new NotebookScene({
+    uid: 'nb-1',
+    title: 'My notebook',
+    body: new NotebookLayoutManager({ cells }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({ refresh: '', intervals: ['10s'] }),
+  });
+
+  return { scene, firstCell: cells[0] };
+}
+
 /** What reading does to a panel: picking a colour off the legend writes a field override. */
 function recolourLegend(panel: VizPanel, color = 'red') {
   panel.setState({
@@ -712,6 +739,40 @@ describe('NotebookAutosave', () => {
       await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
 
       expect(savedCellTimeRanges().at(-1)).toEqual({ from: 'now-24h', to: 'now' });
+    });
+
+    it('restores the cell range of every cell sharing an element name, not only the last', () => {
+      const { scene, firstCell } = buildSceneWithSharedElementName();
+      readAndClose(scene);
+
+      scene.state.body.setCellTimeRange(firstCell, { from: 'now-24h', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(firstCell.state.$timeRange).toBeUndefined();
+    });
+
+    // Holding off for the whole of any save would skip the restore for that visit: nothing runs it
+    // again when the request lands, so the reader's range would stay until the next navigation.
+    it("drops a reader's range on a reopen while a save carrying something else is in flight", () => {
+      let settle = () => {};
+      jest
+        .mocked(updateNotebook)
+        .mockReturnValue(new Promise((resolve) => (settle = () => resolve({ generation: 2 }))));
+
+      const scene = buildScene();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+      editFirstCell(scene, 'an edit of its content, not of its time range');
+      scene.onExitEditMode();
+      expect(scene.autosave.state.status).toBe('saving');
+
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      deactivate();
+      deactivate = undefined;
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(scene.state.$timeRange.state.from).toBe('now-6h');
+      settle();
     });
 
     // setCellTimeRange clears the panel's own one-sided override to make room for the cell range, so a

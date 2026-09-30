@@ -75,8 +75,17 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private vizConfigsEdited = new Set<string>();
   /** Each cell's own time range in `baseline`, by cell identity. As `savedVizConfigs`. */
   private savedCellTimeRanges = new Map<NotebookCellItem, CellTimeRangeSpec | undefined>();
-  /** The panel's own time override in `baseline`, by cell identity. As `savedCellTimeRanges`. */
-  private savedPanelTimeRanges = new Map<NotebookCellItem, SceneTimeRangeLike | undefined>();
+  /**
+   * The panel in `baseline` and its own time override, by cell identity. As `savedCellTimeRanges`.
+   *
+   * The panel is held here rather than looked up in `savedVizPanels`, which is keyed by element name:
+   * a layout may legally reference one element from more than one cell (see
+   * NotebookLayoutManager.setElementBody), and that map keeps only the last of them.
+   */
+  private savedPanelTimeRanges = new Map<
+    NotebookCellItem,
+    { panel: VizPanel | undefined; timeRange: SceneTimeRangeLike | undefined }
+  >();
   /** The cells whose own time range was edited this session, by cell identity. As `vizConfigsEdited`. */
   private cellTimeRangesEdited = new Set<NotebookCellItem>();
   /** The panels a reader changed, by element name, waiting on the prompt edit mode opens with. */
@@ -96,6 +105,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private editedByWriter = false;
   private changeSub?: Unsubscribable;
   private inFlight = false;
+  /**
+   * The time settings and cell ranges the save in flight carries, because `saveNow` clears the flags
+   * that said so when the request starts. Without them a restore could not tell a writer's edit that
+   * is mid-write from a reader's, and a blanket "not while saving" would skip the restore for the whole
+   * visit — nothing runs it again when the request lands.
+   */
+  private inFlightTimeSettingsEdited = false;
+  private inFlightCellTimeRangesEdited: ReadonlySet<NotebookCellItem> = new Set();
   /** Set while `write` adopts a freshly created uid, so that is not mistaken for someone's edit. */
   private adoptingUid = false;
   /** The save now running, so a caller that reports an outcome can wait for the write to land. */
@@ -340,17 +357,12 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       return;
     }
 
-    // A save in flight already cleared the flags saying what it carries, and the saved values still
-    // describe the notebook from before it. Closing a notebook flushes a pending save, so this is the
-    // ordinary shape of leaving one mid-edit.
-    if (this.inFlight) {
-      return;
-    }
-
     const saved = this.savedTimeSettings;
-    // A range edited this session is the notebook's own, and may still be waiting on the debounce or on
-    // a retry after a failed save (`saveNow` puts the flag back).
-    if (!saved || this.timeSettingsEdited) {
+    // A range edited this session is the notebook's own, and may still be waiting on the debounce, on a
+    // retry after a failed save (`saveNow` puts the flag back), or in the request itself. A save that
+    // carries something else is no reason to hold off: what it writes for the time settings is the
+    // saved value being put back here.
+    if (!saved || this.timeSettingsEdited || this.inFlightTimeSettingsEdited) {
       return;
     }
 
@@ -370,18 +382,21 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     const currentCells = new Set(this.scene.state.body.state.cells);
 
     for (const [cell, savedRange] of this.savedCellTimeRanges) {
-      // Same identity checks `withSavedCellTimeRanges` and `restorablePanels` make: a cell that has
-      // left the notebook, or whose panel was replaced, is not the one this entry was recorded for.
+      // A cell that has left the notebook, or whose panel was replaced, is not the one this entry was
+      // recorded for.
       const panel = cell.state.body;
+      const savedPanel = this.savedPanelTimeRanges.get(cell);
       if (
+        !savedPanel ||
         this.cellTimeRangesEdited.has(cell) ||
+        this.inFlightCellTimeRangesEdited.has(cell) ||
         !currentCells.has(cell) ||
-        panel !== this.savedVizPanels?.get(cell.state.elementName)
+        panel !== savedPanel.panel
       ) {
         continue;
       }
 
-      const savedPanelRange = this.savedPanelTimeRanges.get(cell);
+      const savedPanelRange = savedPanel.timeRange;
       const currentRange = cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : undefined;
       if (isEqual(currentRange, savedRange) && panel?.state.$timeRange === savedPanelRange) {
         continue;
@@ -616,13 +631,13 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private collectPanelTimeRanges(
     cells: NotebookCellItem[],
     cellTimeRangesEdited: ReadonlySet<NotebookCellItem>
-  ): Map<NotebookCellItem, SceneTimeRangeLike | undefined> {
+  ): typeof this.savedPanelTimeRanges {
     const previous = this.savedPanelTimeRanges;
-    const ranges = new Map<NotebookCellItem, SceneTimeRangeLike | undefined>();
+    const ranges: typeof this.savedPanelTimeRanges = new Map();
 
     for (const cell of cells) {
-      const carryForward = previous.has(cell) && !cellTimeRangesEdited.has(cell);
-      ranges.set(cell, carryForward ? previous.get(cell) : cell.state.body?.state.$timeRange);
+      const carried = !cellTimeRangesEdited.has(cell) ? previous.get(cell) : undefined;
+      ranges.set(cell, carried ?? { panel: cell.state.body, timeRange: cell.state.body?.state.$timeRange });
     }
 
     return ranges;
@@ -691,6 +706,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.cellTimeRangesEdited.clear();
     this.editedByWriter = false;
     this.inFlight = true;
+    this.inFlightTimeSettingsEdited = timeSettingsEdited;
+    this.inFlightCellTimeRangesEdited = cellTimeRangesEdited;
     this.setState({ status: 'saving', errorMessage: undefined });
 
     // Read here rather than at the top: a notebook with no uid has not been created yet, and its first
@@ -735,6 +752,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       })
       .finally(() => {
         this.inFlight = false;
+        // A write that landed is in `savedTimeSettings` now, and one that failed put the flags back, so
+        // either way these have nothing left to say.
+        this.inFlightTimeSettingsEdited = false;
+        this.inFlightCellTimeRangesEdited = new Set();
         // Cleared before the queued save runs, so that save can record its own request here.
         this.inFlightSave = undefined;
         if (this.saveAgainWhenIdle) {
