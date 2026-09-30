@@ -38,12 +38,7 @@ import { RadioButtonGroup, Switch, TimeZonePicker } from '@grafana/ui';
 import type { DashboardPickerOptions } from './DashboardPicker';
 import type { ColorValueEditorSettings } from './color';
 
-/**
- * Wraps an editor so its module is only fetched when the editor first renders. The registry is
- * built during app boot, so importing editors directly would put all of them in the initial chunk.
- * Each wrapper has its own Suspense boundary because plugins render `registryItem.editor` directly
- * and must not need to provide one.
- */
+// Wraps lazily-loaded editor components in a Suspense fallback so they can be used as standard editors
 function lazyEditor<P extends object>(load: () => Promise<ComponentType<P>>): ComponentType<P> {
   const LazyComponent = lazy(() => load().then((component) => ({ default: component })));
   const LazyEditor = (props: P) => (
@@ -54,11 +49,11 @@ function lazyEditor<P extends object>(load: () => Promise<ComponentType<P>>): Co
   return LazyEditor;
 }
 
-// Editors are grouped into a few named chunks by how often they render and how large they are:
-// - core: small editors that appear as soon as almost any panel editor opens
-// - unit: needed by most panels, but its picker is several times larger than all of core
-// - links: only renders when "Data links and actions" is expanded or already has items
-// - mappings: only renders when "Value mappings" is expanded or already has items
+// Because this OptionsUI is built eagerly into the initial chunks, all editors are lazy-loaded.
+// To avoid then needing to async load 16 editors when a panel editor opened, grouped into a few bundles
+// depending on their size and how often they're used.
+// The webpackChunkName comments are magically used by the build system. Don't change them unless you know
+// what you're doing :D
 const ThresholdsValueEditor = lazyEditor(() =>
   import(
     /* webpackChunkName: "options-ui-editors-core" */ 'app/features/dimensions/editors/ThresholdsEditor/thresholds'
