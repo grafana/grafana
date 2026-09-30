@@ -10,8 +10,8 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -585,7 +585,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 
 			// assign unique identifier that will identify resource across space and time. The probability of collision is so low that we do not need to check for uniqueness.
 			// The unique keys will ensure uniqueness in rule and versions tables
-			converted.GUID = uuid.NewString()
+			converted.GUID = uuid.NewV4().String()
 
 			newRules = append(newRules, converted)
 			v := alertRuleToAlertRuleVersion(converted)
@@ -774,12 +774,12 @@ func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session
 
 	for _, update := range titleUpdates {
 		r := update.Existing
-		u := uuid.New().String()
+		u := uuid.NewV4().String()
 
 		// Some defensive programming in case the temporary title is somehow persisted it will still be recognizable.
 		uniqueTempTitle := r.Title + u
 		if len(uniqueTempTitle) > AlertRuleMaxTitleLength {
-			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.New().String()
+			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.NewV4().String()
 		}
 
 		if updated, err := sess.Table(alertRule{}).ID(r.ID).Cols("title").Update(&alertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {

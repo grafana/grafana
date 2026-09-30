@@ -1330,6 +1330,9 @@ export const versionedPages = {
       panelCell: {
         '13.3.0': (elementName: string) => `data-testid notebooks item panel-cell ${elementName}`,
       },
+      controls: {
+        '13.3.0': 'data-testid notebooks item controls',
+      },
     },
   },
   Provisioning: {

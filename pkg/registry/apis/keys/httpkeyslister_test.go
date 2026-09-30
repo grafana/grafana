@@ -1,4 +1,4 @@
-package informer
+package keys
 
 import (
 	"encoding/json"
@@ -9,10 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-
-	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 // recordedRequest is what the server saw, so a test can assert the shape the
@@ -25,7 +24,7 @@ type recordedRequest struct {
 
 // serveKeys stands up an apiserver-shaped endpoint. handler returns the status and
 // body for each successive request, so a test can page or degrade mid-stream.
-func serveKeys(t *testing.T, handler func(i int, opts metav1.ListOptions) (int, any)) (KeysLister, *[]recordedRequest) {
+func serveKeys(t *testing.T, handler func(i int, opts metav1.ListOptions) (int, any), opts ...ListerOption) (Lister, *[]recordedRequest) {
 	t.Helper()
 	var seen []recordedRequest
 
@@ -41,7 +40,8 @@ func serveKeys(t *testing.T, handler func(i int, opts metav1.ListOptions) (int, 
 	}))
 	t.Cleanup(srv.Close)
 
-	gv := provisioningapis.ConnectionResourceInfo.GroupVersionResource().GroupVersion()
+	gvr := schema.GroupVersionResource{Group: testGroup, Version: testVersion, Resource: testResource}
+	gv := gvr.GroupVersion()
 	client, err := rest.RESTClientFor(&rest.Config{
 		Host:          srv.URL,
 		APIPath:       "/apis",
@@ -49,7 +49,7 @@ func serveKeys(t *testing.T, handler func(i int, opts metav1.ListOptions) (int, 
 	})
 	require.NoError(t, err)
 
-	return NewHTTPConnectionKeysLister(client), &seen
+	return NewHTTPLister(client, gvr, opts...), &seen
 }
 
 func keysPage(rv, cont string, items ...metav1.PartialObjectMetadata) metav1.PartialObjectMetadataList {
@@ -64,7 +64,7 @@ func partial(namespace, name, rv string) metav1.PartialObjectMetadata {
 	return metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name, ResourceVersion: rv}}
 }
 
-func drain(t *testing.T, lister KeysLister) ([]Key, error) {
+func drain(t *testing.T, lister Lister) ([]Key, error) {
 	t.Helper()
 	_, seq := lister.ListKeys(t.Context())
 	var keys []Key
@@ -79,7 +79,7 @@ func drain(t *testing.T, lister KeysLister) ([]Key, error) {
 
 // The endpoint takes a POST with the paging fields and nothing else; it refuses a
 // request carrying anything it does not read.
-func TestHTTPKeysLister_RequestShape(t *testing.T) {
+func TestHTTPLister_RequestShape(t *testing.T) {
 	lister, seen := serveKeys(t, func(int, metav1.ListOptions) (int, any) {
 		return http.StatusOK, keysPage("100", "", partial("ns1", "a", "10"))
 	})
@@ -91,13 +91,13 @@ func TestHTTPKeysLister_RequestShape(t *testing.T) {
 	require.Len(t, *seen, 1)
 	got := (*seen)[0]
 	assert.Equal(t, http.MethodPost, got.method)
-	assert.Equal(t, "/apis/provisioning.grafana.app/v0alpha1/connections/list-keys", got.path)
-	assert.Equal(t, int64(keysListerPageLimit), got.opts.Limit)
+	assert.Equal(t, "/apis/dashboard.grafana.app/v1beta1/dashboards/list-keys", got.path)
+	assert.Equal(t, int64(DefaultPageSize), got.opts.Limit)
 	assert.Empty(t, got.opts.Continue, "the first page carries no token")
 	assert.Empty(t, got.opts.LabelSelector, "a selector would be refused by the endpoint")
 }
 
-func TestHTTPKeysLister_FollowsContinue(t *testing.T) {
+func TestHTTPLister_FollowsContinue(t *testing.T) {
 	lister, seen := serveKeys(t, func(i int, _ metav1.ListOptions) (int, any) {
 		if i == 0 {
 			return http.StatusOK, keysPage("100", "tok", partial("ns1", "a", "10"))
@@ -124,7 +124,7 @@ func TestHTTPKeysLister_FollowsContinue(t *testing.T) {
 // The route is mounted only when the server has the endpoint enabled, and a POST to
 // an unmounted path resolves to the object handler, so both statuses mean "no
 // endpoint here" rather than "your request was wrong".
-func TestHTTPKeysLister_TreatsAbsentRouteAsUnsupported(t *testing.T) {
+func TestHTTPLister_TreatsAbsentRouteAsUnsupported(t *testing.T) {
 	for name, code := range map[string]int{
 		"not found":          http.StatusNotFound,
 		"method not allowed": http.StatusMethodNotAllowed,
@@ -135,51 +135,65 @@ func TestHTTPKeysLister_TreatsAbsentRouteAsUnsupported(t *testing.T) {
 			})
 
 			_, err := drain(t, lister)
-			require.ErrorIs(t, err, ErrKeysOnlyUnsupported)
+			require.ErrorIs(t, err, ErrUnsupported)
 		})
 	}
 }
 
 // A refusal is not an absent endpoint. Falling back on it would turn a
 // misconfigured identity into a permanently more expensive re-list, silently.
-func TestHTTPKeysLister_SurfacesForbidden(t *testing.T) {
+func TestHTTPLister_SurfacesForbidden(t *testing.T) {
 	lister, _ := serveKeys(t, func(int, metav1.ListOptions) (int, any) {
 		return http.StatusForbidden, metav1.Status{Status: metav1.StatusFailure, Code: http.StatusForbidden, Reason: metav1.StatusReasonForbidden}
 	})
 
 	_, err := drain(t, lister)
 	require.Error(t, err)
-	assert.NotErrorIs(t, err, ErrKeysOnlyUnsupported, "a 403 must not read as an absent endpoint")
+	assert.NotErrorIs(t, err, ErrUnsupported, "a 403 must not read as an absent endpoint")
 }
 
 // Something else answered the path: a 200 whose body is not the projection.
-func TestHTTPKeysLister_RefusesAnotherKind(t *testing.T) {
+func TestHTTPLister_RefusesAnotherKind(t *testing.T) {
 	lister, _ := serveKeys(t, func(int, metav1.ListOptions) (int, any) {
 		return http.StatusOK, map[string]any{"kind": "ConnectionList", "items": []any{}}
 	})
 
 	_, err := drain(t, lister)
-	require.ErrorIs(t, err, ErrKeysOnlyUnsupported)
+	require.ErrorIs(t, err, ErrUnsupported)
 }
 
 // An item with no name would key every entry the same in the informer's Store.
-func TestHTTPKeysLister_RefusesItemWithoutName(t *testing.T) {
+func TestHTTPLister_RefusesItemWithoutName(t *testing.T) {
 	lister, _ := serveKeys(t, func(int, metav1.ListOptions) (int, any) {
 		return http.StatusOK, keysPage("100", "", partial("ns1", "", "10"))
 	})
 
 	_, err := drain(t, lister)
-	require.ErrorIs(t, err, ErrKeysOnlyUnsupported)
+	require.ErrorIs(t, err, ErrUnsupported)
 }
 
 // The informer arbitrates its snapshot against the list version, so one it cannot
 // read has to fail the tick rather than pass a zero.
-func TestHTTPKeysLister_RefusesUnreadableResourceVersion(t *testing.T) {
+func TestHTTPLister_RefusesUnreadableResourceVersion(t *testing.T) {
 	lister, _ := serveKeys(t, func(int, metav1.ListOptions) (int, any) {
 		return http.StatusOK, keysPage("not-a-number", "", partial("ns1", "a", "10"))
 	})
 
 	_, err := drain(t, lister)
 	require.Error(t, err)
-	assert.NotErrorIs(t, err, ErrKeysOnlyUnsupported, "a broken version is not an absent endpoint")
+	assert.NotErrorIs(t, err, ErrUnsupported, "a broken version is not an absent endpoint")
+}
+
+// The route forwards Limit to storage, which clamps it, so a smaller page is the
+// caller's way of bounding one response rather than a hard guarantee.
+func TestHTTPLister_PageSize(t *testing.T) {
+	lister, seen := serveKeys(t, func(int, metav1.ListOptions) (int, any) {
+		return http.StatusOK, keysPage("100", "", partial("ns", "a", "1"))
+	}, WithPageSize(7))
+
+	_, err := drain(t, lister)
+	require.NoError(t, err)
+
+	require.Len(t, *seen, 1)
+	assert.Equal(t, int64(7), (*seen)[0].opts.Limit)
 }

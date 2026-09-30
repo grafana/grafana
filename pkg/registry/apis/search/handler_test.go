@@ -68,36 +68,12 @@ func TestHandler_TranslatesAndReturnsEnvelope(t *testing.T) {
 	assert.Equal(t, testKind.group, client.got.Options.Key.Group)
 	assert.Equal(t, testKind.resource, client.got.Options.Key.Resource)
 	assert.Equal(t, int64(25), client.got.Limit)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.got.ResultFormat)
 
 	var out searchv0.SearchResults
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
 	assert.Equal(t, searchv0.KindSearchResults, out.Kind)
 	assert.Equal(t, searchv0.TotalHitsEqual, out.Metadata.TotalHitsRelation)
-}
-
-func TestHandler_ResultFormatFollowsSelector(t *testing.T) {
-	body := `{"apiVersion":"` + searchv0.APIVERSION + `","kind":"` + searchv0.KindSearchQuery + `"}`
-
-	for name, enabled := range map[string]bool{
-		"disabled": false,
-		"enabled":  true,
-	} {
-		t.Run(name, func(t *testing.T) {
-			client := &fakeIndexClient{resp: emptyResponse()}
-			h := NewHandlerWithOptions(client, testProvider(), noop.NewTracerProvider().Tracer(""), HandlerOptions{
-				FieldValueResultsEnabled: func(context.Context) bool { return enabled },
-			})
-
-			w := doRequest(t, h, body)
-
-			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
-			want := resourcepb.ResourceSearchRequest_UNSPECIFIED
-			if enabled {
-				want = resourcepb.ResourceSearchRequest_FIELD_VALUES
-			}
-			assert.Equal(t, want, client.got.ResultFormat)
-		})
-	}
 }
 
 func TestHandler_RejectsInvalidBody(t *testing.T) {

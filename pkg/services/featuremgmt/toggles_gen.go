@@ -942,18 +942,6 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
-	// FlagDashboardSearchFieldValueResults
-	// Uses field-value results for dashboard search requests
-	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
-
-	// FlagDashboardApiSearchFieldValueResults
-	// Uses field-value results for requests from the /api/search endpoint
-	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
-
-	// FlagSearchApiFieldValueResults
-	// Uses field-value results for generic resource search API requests
-	FlagSearchApiFieldValueResults = "search.apiFieldValueResults"
-
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
