@@ -13411,6 +13411,12 @@
       "query": {
         "add": "Добавить запрос",
         "run": "Выполнить запрос"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13494,7 +13500,9 @@
       "redo-action": "Повторить: {{action}}",
       "remove-query": "Удалить запрос",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Выбрать запрос",
+      "set-cell-time-range": "",
       "split-block": "Разделить блок",
       "switch-datasource": "Изменить источник данных",
       "undo": "Отменить",
@@ -16110,8 +16118,7 @@
       "deleted-by-removed": "Удаленный аккаунт",
       "deleted-by-unknown-short": "<0></0> Неизвестно",
       "deleted-by-unknown-tooltip": "Не удалось определить аккаунт, который удалил этот дашборд",
-      "deleted-less-than-1-min": "< 1 мин.",
-      "deleted-remaining-header": "Оставшееся время",
+      "deleted-header": "",
       "location-header": "Расположение",
       "name-header": "Имя",
       "tags-header": "Теги",
