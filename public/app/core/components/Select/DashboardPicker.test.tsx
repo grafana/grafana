@@ -28,6 +28,15 @@ describe('DashboardPicker', () => {
   describe('using app platform', () => {
     const onChange = jest.fn();
 
+    beforeEach(() => {
+      // No-arg getDashboardAPI() follows the flag. The v2 dto mock has a folder uid annotation and no folder title, so the picker labels the value "Dashboards/<title>".
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     testWithFeatureToggles({ enable: [] });
 
     it('should fetch and display dashboards', async () => {

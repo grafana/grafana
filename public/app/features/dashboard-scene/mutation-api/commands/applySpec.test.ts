@@ -13,6 +13,7 @@ import { cloneDeep } from 'lodash';
 
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
@@ -276,6 +277,10 @@ describe('APPLY_SPEC with a user-set transformation refId', () => {
 });
 
 describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
   // Regression: the rebuild swaps in a freshly-deserialized layout manager whose grid is not
   // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
   // (via entering edit mode), so panels stayed frozen in the new tree until the command also

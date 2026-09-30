@@ -1,5 +1,6 @@
 import { VariableHide } from '@grafana/data';
 import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -162,6 +163,8 @@ describe('RowsLayoutManager', () => {
     });
 
     it('should sync edit mode to a new row inner layout when the dashboard is already editing', () => {
+      // addNewRow's editModeChanged runs inside an edit action the sidebar performs. This test never activates it.
+      setTestFlags({ dashboardNewLayouts: false });
       // New rows use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
       // RowItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
       // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.

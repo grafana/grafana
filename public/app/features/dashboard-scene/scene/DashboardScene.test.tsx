@@ -761,6 +761,8 @@ describe('DashboardScene', () => {
       });
 
       it('Should create and add a new panel to the dashboard', async () => {
+        // addPanel parents the panel through the edit-action bus when new layouts are on, and this scene never activates the sidebar.
+        setTestFlags({ dashboardNewLayouts: false });
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
 
@@ -769,6 +771,7 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
         expect(panel.state.key).toBe('panel-7');
+        setTestFlags({});
       });
 
       it('Should select new row', () => {
@@ -779,6 +782,8 @@ describe('DashboardScene', () => {
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
+        // With new layouts on, a panel with no grid parent throws instead of returning.
+        setTestFlags({ dashboardNewLayouts: false });
         const vizPanel = new VizPanel({
           title: 'Panel Title',
           key: 'panel-5',
@@ -788,9 +793,12 @@ describe('DashboardScene', () => {
         scene.copyPanel(vizPanel);
 
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+        setTestFlags({});
       });
 
       it('Should fail to copy a library panel if it does not have a grid item parent', () => {
+        // With new layouts on, a panel with no grid parent throws instead of returning.
+        setTestFlags({ dashboardNewLayouts: false });
         const libVizPanel = new VizPanel({
           title: 'Library Panel',
           pluginId: 'table',
@@ -801,6 +809,7 @@ describe('DashboardScene', () => {
         scene.copyPanel(libVizPanel);
 
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+        setTestFlags({});
       });
 
       it('Should copy a panel', () => {
@@ -843,6 +852,8 @@ describe('DashboardScene', () => {
       });
 
       it('Should paste a library viz panel', () => {
+        // New layouts paste through the layout manager, which does not use the buildGridItemForPanel mock.
+        setTestFlags({ dashboardNewLayouts: false });
         store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
         jest.mocked(buildGridItemForPanel).mockReturnValue(
           new DashboardGridItem({
@@ -863,6 +874,7 @@ describe('DashboardScene', () => {
         expect(addedPanel).toBeDefined();
         expect(addedPanel.state.key).toBe('panel-7');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+        setTestFlags({});
       });
 
       it('Should do nothing when pasting with an empty clipboard', () => {
