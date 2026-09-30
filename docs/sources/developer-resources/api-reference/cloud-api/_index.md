@@ -1090,7 +1090,7 @@ Example response:
 }
 ```
 
-### Get a stack
+### Get a stack's details
 
 ```http
 GET https://grafana.com/api/instances/<STACK_SLUG>
