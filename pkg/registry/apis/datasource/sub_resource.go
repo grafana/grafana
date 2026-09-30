@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -90,6 +92,22 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 			attribute.String("http_method", req.Method),
 		)
 		defer reqSpan.End()
+		req = req.WithContext(reqCtx)
+
+		var dsURL string
+		var jsonData map[string]any
+		if settings := pluginCtx.DataSourceInstanceSettings; settings != nil {
+			dsURL = settings.URL
+			if len(settings.JSONData) > 0 {
+				_ = json.Unmarshal(settings.JSONData, &jsonData)
+			}
+		}
+		if err := r.builder.validateDataSourceRequest(dsURL, jsonData, req); err != nil {
+			_ = tracing.Error(reqSpan, err)
+			m.SetError()
+			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
+			return
+		}
 
 		callCtx := config.WithGrafanaConfig(reqCtx, pluginCtx.GrafanaConfig)
 		callCtx = contextualMiddlewares(callCtx)
