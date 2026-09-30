@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -713,6 +714,8 @@ func TestReceiverService_Create(t *testing.T) {
 			}
 
 			tc.expectedCreate.Version = receiverFingerprintCompat(t, &tc.expectedCreate)
+			// Without an explicit manager, the service derives it from the provenance.
+			tc.expectedCreate.NormalizeManager()
 
 			assert.Equal(t, tc.expectedCreate, *created)
 
@@ -1057,6 +1060,8 @@ func TestReceiverService_Update(t *testing.T) {
 			}
 
 			tc.expectedUpdate.Version = receiverFingerprintCompat(t, &tc.expectedUpdate)
+			// Without an explicit manager, the service derives it from the provenance.
+			tc.expectedUpdate.NormalizeManager()
 
 			assert.Equal(t, tc.expectedUpdate, *updated)
 
@@ -2063,6 +2068,58 @@ func withAMReceiverStatuses(statuses ...alertingModels.ReceiverStatus) createRec
 	return func(_ *testing.T, sut *ReceiverService) {
 		sut.amStatusFetcher = &fakeAMStatusFetcher{statuses: statuses}
 	}
+}
+
+func TestReceiverService_Manager(t *testing.T) {
+	secretsService := fake_secrets.NewFakeSecretsService()
+	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
+		},
+	}}
+	terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
+
+	sut := createReceiverServiceSut(t, secretsService)
+	// The fake store only keeps provenance, so record the managers it is given.
+	stored := map[string]utils.ManagerProperties{}
+	provStore := sut.provisioningStore.(*fakes.FakeProvisioningStore)
+	provStore.SetManagerPropertiesFunc = func(_ context.Context, o models.Provisionable, _ int64, m utils.ManagerProperties) error {
+		stored[o.ResourceID()] = m
+		return nil
+	}
+	provStore.GetAllManagerPropertiesFunc = func(_ context.Context, _ int64, _ string) (map[string]utils.ManagerProperties, error) {
+		return stored, nil
+	}
+	provStore.GetProvenancesFunc = func(_ context.Context, _ int64, _ string) (map[string]models.Provenance, error) {
+		result := make(map[string]models.Provenance, len(stored))
+		for k, m := range stored {
+			result[k] = models.ManagerPropertiesToProvenance(m)
+		}
+		return result, nil
+	}
+
+	slack := models.IntegrationGen(models.IntegrationMuts.WithName("managed"), models.IntegrationMuts.WithValidConfig("slack"))()
+	email := models.IntegrationGen(models.IntegrationMuts.WithName("managed"), models.IntegrationMuts.WithValidConfig("email"))()
+	receiver := models.ReceiverGen(models.ReceiverMuts.WithName("managed"), models.ReceiverMuts.WithIntegrations(slack, email))()
+	receiver.Manager = terraform
+
+	created, err := sut.CreateReceiver(context.Background(), &receiver, writer.GetOrgID(), writer)
+	require.NoError(t, err)
+	assert.Equal(t, terraform, created.Manager)
+	assert.Equal(t, models.ProvenanceAPI, created.Provenance)
+	// The manager is persisted on every integration.
+	assert.Equal(t, map[string]utils.ManagerProperties{slack.UID: terraform, email.UID: terraform}, stored)
+
+	got, err := sut.GetReceiver(context.Background(), created.UID, false, writer)
+	require.NoError(t, err)
+	assert.Equal(t, terraform, got.Manager)
+	assert.Equal(t, models.ProvenanceAPI, got.Provenance)
+
+	list, err := sut.GetReceivers(context.Background(), models.GetReceiversQuery{OrgID: writer.GetOrgID(), Names: []string{"managed"}}, writer)
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	assert.Equal(t, terraform, list[0].Manager)
 }
 
 func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...createReceiverServiceSutOpt) *ReceiverService {
