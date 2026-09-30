@@ -152,8 +152,8 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 }
 
 // FindExistingAncestor resolves directories nearest-first, including the repository
-// root. An empty result means no real folder exists; this method never makes
-// authorization decisions.
+// root, and verifies the stored folder belongs to that repository path. An empty
+// result means no real folder exists; callers must still check read permission.
 func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref string) (string, error) {
 	if grafanautil.IsInterfaceNil(fm.client) {
 		return "", errors.New("folder client is required to find an existing ancestor")
@@ -182,8 +182,20 @@ func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref stri
 
 		// Instance-target repositories have no root folder to probe.
 		if folderID != "" {
-			_, err := fm.client.Get(folderCtx, folderID, metav1.GetOptions{})
+			obj, err := fm.client.Get(folderCtx, folderID, metav1.GetOptions{})
 			if err == nil {
+				meta, err := utils.MetaAccessor(obj)
+				if err != nil {
+					return "", fmt.Errorf("get ancestor folder metadata: %w", err)
+				}
+				manager, _ := meta.GetManagerProperties()
+				source, _ := meta.GetSourceProperties()
+				// UIDs can collide with unrelated folders. Such a folder cannot stand
+				// in for this path, even if the caller can read it. The repository
+				// root legitimately has no source path annotation.
+				if manager.Kind != utils.ManagerKindRepo || manager.Identity != cfg.Name || safepath.EnsureTrailingSlash(source.Path) != dir {
+					return "", apierrors.NewForbidden(FolderResource.GroupResource(), folderID, errors.New("folder does not belong to the configured repository path"))
+				}
 				return folderID, nil
 			}
 			if !apierrors.IsNotFound(err) {

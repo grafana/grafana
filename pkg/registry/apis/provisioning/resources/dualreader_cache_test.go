@@ -124,7 +124,7 @@ func TestDualReadWriter_ReadSharesGitCacheWithinRequest(t *testing.T) {
 			folders := &MockDynamicResourceInterface{}
 			t.Cleanup(func() { folders.AssertExpectations(t) })
 			folders.On("Get", mock.Anything, "team-folder", metav1.GetOptions{}, mock.Anything).
-				Run(checkPrivilegedContext).Return(&unstructured.Unstructured{}, nil).Twice()
+				Run(checkPrivilegedContext).Return(newManagedAncestorFolder(t, cfg, "team-folder", "team/"), nil).Twice()
 
 			clients := NewMockResourceClients(t)
 			clients.EXPECT().ForKind(mock.Anything, dashboard.DashboardResourceInfo.GroupVersionKind()).

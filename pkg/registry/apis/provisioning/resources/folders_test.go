@@ -12,6 +12,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/mock"
@@ -81,6 +82,19 @@ func TestPathCreationError(t *testing.T) {
 		require.False(t, errors.As(regularErr, &extractedErr))
 		require.Nil(t, extractedErr)
 	})
+}
+
+func newManagedAncestorFolder(t *testing.T, cfg *provisioning.Repository, uid, path string) *unstructured.Unstructured {
+	t.Helper()
+	folder := &unstructured.Unstructured{}
+	folder.SetName(uid)
+	folder.SetNamespace(cfg.Namespace)
+	folder.SetGroupVersionKind(FolderKind)
+	meta, err := utils.MetaAccessor(folder)
+	require.NoError(t, err)
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name})
+	meta.SetSourceProperties(utils.SourceProperties{Path: path})
+	return folder
 }
 
 func TestFolderManager_FindExistingAncestor(t *testing.T) {
@@ -295,19 +309,20 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			}
 			client := &MockDynamicResourceInterface{}
 			var probes []string
+			dir := safepath.EnsureTrailingSlash(tt.dir)
 			for _, folderID := range tt.wantProbes {
 				var folder *unstructured.Unstructured
 				var lookupErr error
 				if folderID == tt.lookupErrorID {
 					lookupErr = tt.wantErr
 				} else if slices.Contains(tt.existing, folderID) {
-					folder = &unstructured.Unstructured{}
-					folder.SetName(folderID)
+					folder = newManagedAncestorFolder(t, cfg, folderID, dir)
 				} else {
 					lookupErr = apierrors.NewNotFound(FolderResource.GroupResource(), folderID)
 				}
 				client.On("Get", folderContext, folderID, metav1.GetOptions{}, []string(nil)).Return(folder, lookupErr).
 					Run(func(args mock.Arguments) { probes = append(probes, args.String(1)) }).Once()
+				dir = safepath.Dir(dir)
 			}
 			manager := NewFolderManager(repo, client, tree, FolderKind, WithFolderMetadataEnabled(tt.metadataEnabled))
 			ancestor, err := manager.FindExistingAncestor(ctx, tt.dir, tt.ref)
@@ -334,6 +349,85 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			ancestor, err := manager.FindExistingAncestor(context.Background(), "a/b/", "")
 			require.EqualError(t, err, "folder client is required to find an existing ancestor")
 			require.Empty(t, ancestor)
+		})
+	}
+}
+
+func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "ancestor-repo", Namespace: "stacks-123"},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+	}
+	owner := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name}
+	for _, tt := range []struct {
+		name          string
+		dir           string
+		sourcePath    string
+		metadataUID   string
+		manager       utils.ManagerProperties
+		legacy        bool
+		wantForbidden bool
+	}{
+		{name: "owned directory", dir: "a/b/", sourcePath: "a/b/", manager: owner},
+		{name: "source without trailing slash", dir: "a/b/", sourcePath: "a/b", manager: owner},
+		{name: "owned root without source annotations", manager: owner},
+		{name: "legacy repository annotations", dir: "a/b/", sourcePath: "a/b/", manager: owner, legacy: true},
+		{name: "unmanaged decoy", dir: "a/b/", sourcePath: "a/b/", wantForbidden: true},
+		{
+			name: "other repository even when edits are allowed", dir: "a/b/", sourcePath: "a/b/",
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other-repo", AllowsEdits: true}, wantForbidden: true,
+		},
+		{
+			name: "same identity with a different manager kind", dir: "a/b/", sourcePath: "a/b/",
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindPlugin, Identity: cfg.Name}, wantForbidden: true,
+		},
+		{name: "same repository with a different source path", dir: "a/b/", sourcePath: "elsewhere/", manager: owner, wantForbidden: true},
+		{name: "nested folder without a source path", dir: "a/b/", manager: owner, wantForbidden: true},
+		{name: "unmanaged root decoy", wantForbidden: true},
+		{name: "root with a nested source path", sourcePath: "a/b/", manager: owner, wantForbidden: true},
+		{name: "owned configured UID", dir: "a/b/", sourcePath: "a/b/", metadataUID: "stable-uid", manager: owner},
+		{name: "configured UID at a different path", dir: "a/b/", sourcePath: "elsewhere/", metadataUID: "stable-uid", manager: owner, wantForbidden: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockReaderWriter(t)
+			repo.EXPECT().Config().Return(cfg)
+			folderID := cfg.Name
+			if tt.dir != "" {
+				folderID = ParseFolder(tt.dir, cfg.Name).ID
+			}
+			if tt.metadataUID != "" {
+				folderID = tt.metadataUID
+				repo.EXPECT().Read(mock.Anything, tt.dir+folderMetadataFileName, "").Return(&repository.FileInfo{
+					Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, folderID)),
+				}, nil).Once()
+			}
+			folder := newManagedAncestorFolder(t, cfg, folderID, tt.sourcePath)
+			meta, err := utils.MetaAccessor(folder)
+			require.NoError(t, err)
+			meta.SetManagerProperties(tt.manager)
+			if tt.legacy {
+				folder.SetAnnotations(map[string]string{
+					"grafana.app/repoName": cfg.Name,
+					"grafana.app/repoPath": tt.sourcePath,
+				})
+			}
+			original := folder.DeepCopy()
+			client := &MockDynamicResourceInterface{}
+			client.Test(t)
+			t.Cleanup(func() { client.AssertExpectations(t) })
+			client.On("Get", mock.Anything, folderID, metav1.GetOptions{}, []string(nil)).Return(folder, nil).Once()
+			manager := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(tt.metadataUID != ""))
+
+			ancestor, err := manager.FindExistingAncestor(t.Context(), tt.dir, "")
+			if tt.wantForbidden {
+				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				require.Empty(t, ancestor)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, folderID, ancestor)
+			}
+			require.Equal(t, original, folder, "ancestor lookup must not claim or relocate a folder")
+			require.Len(t, client.Calls, 1, "an ownership mismatch must not fall back to a higher ancestor")
 		})
 	}
 }

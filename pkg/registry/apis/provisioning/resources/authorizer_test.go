@@ -235,6 +235,10 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 	teamID := ParseFolder("team/", repoName).ID
 	newID := ParseFolder("team/new/", repoName).ID
 	deepID := ParseFolder("team/new/deep/", repoName).ID
+	ancestorPaths := map[string]string{
+		teamID: "team/", newID: "team/new/", deepID: "team/new/deep/",
+		repoName: "", "configured-folder": "team/new/",
+	}
 	denied := apierrors.NewForbidden(gvr.GroupResource(), "test-resource", errors.New("no read permission"))
 	accessErr := errors.New("authorization service unavailable")
 	forbiddenAccessErr := apierrors.NewForbidden(gvr.GroupResource(), "test-resource", accessErr)
@@ -465,8 +469,7 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 				var getErr error = apierrors.NewNotFound(FolderResource.GroupResource(), id)
 				for _, existingID := range tt.existing {
 					if existingID == id {
-						obj = &unstructured.Unstructured{}
-						obj.SetName(id)
+						obj = newManagedAncestorFolder(t, cfg, id, ancestorPaths[id])
 						getErr = nil
 					}
 				}
@@ -534,6 +537,74 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 				assert.Equal(t, existingOriginal, parsed.Existing)
 			}
 			assert.Equal(t, destination, parsed.Meta.GetFolder())
+		})
+	}
+}
+
+func TestAuthorizeResource_ReadRejectsUnrelatedAncestor(t *testing.T) {
+	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
+	cfg.Spec.Sync.Target = provisioning.SyncTargetTypeFolder
+	manager := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name}
+	otherRepo := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other-repo"}
+	for _, gvr := range []schema.GroupVersionResource{DashboardResource, FolderResource} {
+		t.Run(gvr.Resource, func(t *testing.T) {
+			for _, tt := range []struct {
+				name       string
+				manager    utils.ManagerProperties
+				sourcePath string
+				root       bool
+			}{
+				{name: "unmanaged folder", sourcePath: "team/new/"},
+				{name: "different manager kind", manager: utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: cfg.Name}, sourcePath: "team/new/"},
+				{name: "different repository", manager: otherRepo, sourcePath: "team/new/"},
+				{name: "different source path", manager: manager, sourcePath: "elsewhere/"},
+				{name: "missing source path", manager: manager},
+				{name: "unmanaged root", root: true},
+				{name: "different repository root", manager: otherRepo, root: true},
+				{name: "mislocated root", manager: manager, sourcePath: "team/", root: true},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					caller := &identity.StaticRequester{
+						Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace,
+					}
+					ctx := identity.WithRequester(context.Background(), caller)
+					decoyID, path := "configured-folder", "team/new/resource.json"
+					if tt.root {
+						decoyID, path = cfg.Name, "resource.json"
+					}
+					parsed, _ := makeAuthorizeResourceReadParsed(t, gvr, "new", decoyID, path)
+					reader := repository.NewMockReaderWriter(t)
+					reader.EXPECT().Config().Return(cfg).Maybe()
+					manifest, err := json.Marshal(NewFolderManifest(decoyID, "New", FolderKind))
+					require.NoError(t, err)
+					expectConfiguredAncestorMetadata(t, reader, caller, manifest, nil)
+					decoy := newManagedAncestorFolder(t, cfg, decoyID, tt.sourcePath)
+					meta, err := utils.MetaAccessor(decoy)
+					require.NoError(t, err)
+					meta.SetManagerProperties(tt.manager)
+					folderClient := &MockDynamicResourceInterface{}
+					folderClient.Test(t)
+					t.Cleanup(func() { folderClient.AssertExpectations(t) })
+					var probes []string
+					folderClient.On("Get", mock.Anything, decoyID, metav1.GetOptions{}, []string(nil)).Return(decoy, nil).
+						Run(func(args mock.Arguments) { probes = append(probes, args.String(1)) }).Once()
+					for id, ancestorPath := range map[string]string{ParseFolder("team/", cfg.Name).ID: "team/", cfg.Name: ""} {
+						if id != decoyID {
+							folderClient.On("Get", mock.Anything, id, metav1.GetOptions{}, []string(nil)).
+								Return(newManagedAncestorFolder(t, cfg, id, ancestorPath), nil).
+								Run(func(args mock.Arguments) { probes = append(probes, args.String(1)) }).Maybe()
+						}
+					}
+					access := auth.NewMockAccessChecker(t)
+					access.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+					folders := NewFolderManager(reader, folderClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+
+					err = NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), folders, true).AuthorizeResource(ctx, parsed, utils.VerbGet)
+					require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+					assert.Equal(t, []string{decoyID}, probes, "an unrelated folder must prevent ancestor fallback")
+					access.AssertNotCalled(t, "Check", mock.Anything, mock.Anything, mock.Anything)
+				})
+			}
 		})
 	}
 }
@@ -653,7 +724,7 @@ func TestAuthorizeResource_ReadMatchingPRMetadataRetainsSourceCheck(t *testing.T
 			t.Cleanup(func() { folderClient.AssertExpectations(t) })
 			found := false
 			folderClient.On("Get", mock.Anything, ancestor, metav1.GetOptions{}, []string(nil)).
-				Return(&unstructured.Unstructured{}, nil).Run(func(mock.Arguments) { found = true }).Once()
+				Return(newManagedAncestorFolder(t, cfg, ancestor, "team/new/"), nil).Run(func(mock.Arguments) { found = true }).Once()
 			denied := apierrors.NewForbidden(gvr.GroupResource(), parsed.Existing.GetName(), errors.New("no source access"))
 			access := auth.NewMockAccessChecker(t)
 			access.On("Check", ctx, authlib.CheckRequest{
@@ -746,6 +817,10 @@ func TestAuthorizeResource_ExistingFolderUsesConfiguredDirectory(t *testing.T) {
 	})
 	parent := ParseFolder("team/", cfg.Name).ID
 	destination := ParseFolder("team/new/", cfg.Name).ID
+	ancestorPaths := map[string]string{
+		parent: "team/", destination: "team/new/", cfg.Name: "",
+		"existing-folder": "team/new/child/", "configured-folder": "team/new/child/",
+	}
 	denied := apierrors.NewForbidden(FolderResource.GroupResource(), "existing-folder", errors.New("no read permission"))
 	for _, tt := range []struct {
 		name           string
@@ -853,8 +928,7 @@ func TestAuthorizeResource_ExistingFolderUsesConfiguredDirectory(t *testing.T) {
 				var err error = apierrors.NewNotFound(FolderResource.GroupResource(), id)
 				for _, existing := range tt.existing {
 					if existing == id {
-						obj = &unstructured.Unstructured{}
-						obj.SetName(id)
+						obj = newManagedAncestorFolder(t, cfg, id, ancestorPaths[id])
 						err = nil
 					}
 				}
@@ -934,6 +1008,7 @@ func TestAuthorizeResource_ReadStopsOnWrappedAccessErrors(t *testing.T) {
 					ctx := identity.WithRequester(context.Background(), caller)
 					destination := ParseFolder("team/new/", cfg.Name).ID
 					parent := ParseFolder("team/", cfg.Name).ID
+					ancestorPaths := map[string]string{destination: "team/new/", parent: "team/", cfg.Name: ""}
 					parsed := makeAuthorizeResourceParsed(t, destination, "source-folder", tt.moved)
 					parsed.FolderScoped = true
 					parsed.Info = &repository.FileInfo{Path: "team/new/resource.json", Ref: "feature"}
@@ -957,8 +1032,7 @@ func TestAuthorizeResource_ReadStopsOnWrappedAccessErrors(t *testing.T) {
 						if tt.sourceFailure {
 							break
 						}
-						obj := &unstructured.Unstructured{}
-						obj.SetName(id)
+						obj := newManagedAncestorFolder(t, cfg, id, ancestorPaths[id])
 						var lookupErr error
 						if id == destination && !tt.destinationExists {
 							obj = nil

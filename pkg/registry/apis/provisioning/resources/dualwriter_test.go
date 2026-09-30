@@ -1764,9 +1764,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 					Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
 			}
 			folders.On("Get", provisioningContext, cfg.Name, metav1.GetOptions{}, mock.Anything).
-				Return(&unstructured.Unstructured{Object: map[string]interface{}{
-					"metadata": map[string]interface{}{"name": cfg.Name, "namespace": cfg.Namespace},
-				}}, nil).Once()
+				Return(newManagedAncestorFolder(t, cfg, cfg.Name, ""), nil).Once()
 
 			resourceClient := &MockDynamicResourceInterface{}
 			t.Cleanup(func() { resourceClient.AssertExpectations(t) })
@@ -1834,6 +1832,79 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 				assert.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
 			}
 		})
+	}
+}
+
+func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
+	const resourcePath = "team/new/dashboard.json"
+	const resourceName = "decoy-preview-dashboard"
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "decoy-preview-repo", Namespace: "default"},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitRepositoryType,
+			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+		},
+	}
+	repo := repository.NewMockReaderWriter(t)
+	repo.EXPECT().Config().Return(cfg)
+	repo.EXPECT().Read(mock.Anything, resourcePath, "feature").Return(&repository.FileInfo{
+		Path: resourcePath, Ref: "feature",
+		Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Decoy preview"}}`, DashboardKind.GroupVersion().String(), DashboardKind.Kind, resourceName)),
+	}, nil).Once()
+	caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+	ctx := authlib.WithAuthInfo(context.Background(), caller)
+	_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+	require.NoError(t, err)
+	provisioningContext := mock.MatchedBy(func(ctx context.Context) bool {
+		id, ok := authlib.AuthInfoFrom(ctx)
+		return ok && id.GetUID() == provisioningID.GetUID() && id.GetNamespace() == cfg.Namespace
+	})
+	decoyUID := ParseFolder(safepath.Dir(resourcePath), cfg.Name).ID
+	decoy := &unstructured.Unstructured{}
+	decoy.SetName(decoyUID)
+	decoy.SetNamespace(cfg.Namespace)
+	original := decoy.DeepCopy()
+	folders := &MockDynamicResourceInterface{}
+	t.Cleanup(func() { folders.AssertExpectations(t) })
+	folders.On("Get", provisioningContext, decoyUID, metav1.GetOptions{}, mock.Anything).
+		Return(decoy, nil).Once()
+	resourceClient := &MockDynamicResourceInterface{}
+	t.Cleanup(func() { resourceClient.AssertExpectations(t) })
+	resourceClient.On("Get", provisioningContext, resourceName, metav1.GetOptions{}, mock.Anything).
+		Return(nil, apierrors.NewNotFound(DashboardResource.GroupResource(), resourceName)).Once()
+	resourceClient.On("Create", provisioningContext, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			require.Equal(t, []string{metav1.DryRunAll}, args.Get(2).(metav1.CreateOptions).DryRun)
+		}).Return(&unstructured.Unstructured{}, nil).Once()
+	clients := NewMockResourceClients(t)
+	clients.EXPECT().ForKind(mock.Anything, DashboardKind).Return(resourceClient, DashboardResource, nil).Once()
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{
+		{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+	}).Once()
+	parser := &parser{
+		repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
+		reader: repo, config: cfg, clients: clients,
+	}
+	var checkedFolders []string
+	access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(_ context.Context, id authlib.AuthInfo, _ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+		require.Same(t, caller, id)
+		checkedFolders = append(checkedFolders, folder)
+		return authlib.CheckResponse{Allowed: folder == decoyUID}, nil
+	})).WithFallbackRole(identity.RoleViewer)
+	fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
+	authorizer := NewAuthorizer(cfg, repo, access, clients, fm, false)
+	readWriter := NewDualReadWriter(repo, parser, nil, authorizer, false)
+
+	parsed, err := readWriter.Read(ctx, resourcePath, "feature")
+	require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+	require.Nil(t, parsed)
+	require.Empty(t, checkedFolders, "an unmanaged decoy must not be used for authorization")
+	require.Equal(t, original, decoy, "preview must not claim the unmanaged folder")
+	require.Len(t, folders.Calls, 1, "an ownership conflict must stop the ancestor lookup")
+	require.Len(t, resourceClient.Calls, 2, "preview only gets the resource and dry-runs its creation")
+	for _, call := range repo.Calls {
+		require.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
 	}
 }
 
@@ -1928,10 +1999,12 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 						Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
 					continue
 				}
+				folderPath := safepath.Dir(resourcePath)
+				if folderID == cfg.Name {
+					folderPath = ""
+				}
 				folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
-					Return(&unstructured.Unstructured{Object: map[string]interface{}{
-						"metadata": map[string]interface{}{"name": folderID, "namespace": cfg.Namespace},
-					}}, nil).Once()
+					Return(newManagedAncestorFolder(t, cfg, folderID, folderPath), nil).Once()
 			}
 
 			resourceClient := &MockDynamicResourceInterface{}
@@ -2066,17 +2139,13 @@ func TestDualReadWriter_ReadNewFolderPreviewUsesParentAncestors(t *testing.T) {
 				Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
 			if tt.parentExists {
 				folders.On("Get", provisioningContext, parentFolder, metav1.GetOptions{}, mock.Anything).
-					Return(&unstructured.Unstructured{Object: map[string]interface{}{
-						"metadata": map[string]interface{}{"name": parentFolder, "namespace": cfg.Namespace},
-					}}, nil).Once()
+					Return(newManagedAncestorFolder(t, cfg, parentFolder, "team/"), nil).Once()
 			} else {
 				folders.On("Get", provisioningContext, parentFolder, metav1.GetOptions{}, mock.Anything).
 					Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), parentFolder)).Once()
 				if tt.rootExists {
 					folders.On("Get", provisioningContext, cfg.Name, metav1.GetOptions{}, mock.Anything).
-						Return(&unstructured.Unstructured{Object: map[string]interface{}{
-							"metadata": map[string]interface{}{"name": cfg.Name, "namespace": cfg.Namespace},
-						}}, nil).Once()
+						Return(newManagedAncestorFolder(t, cfg, cfg.Name, ""), nil).Once()
 				} else {
 					folders.On("Get", provisioningContext, cfg.Name, metav1.GetOptions{}, mock.Anything).
 						Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), cfg.Name)).Once()
@@ -2328,11 +2397,13 @@ func (f movedResourcePreviewFixture) expectFolderProbes(t *testing.T, tt movedRe
 			folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
 				Run(checkOrder).Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
 		} else {
+			folderPath := "team/"
+			if tt.sameFolder {
+				folderPath = safepath.Dir(f.resourcePath)
+			}
 			folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
 				Run(checkOrder).
-				Return(&unstructured.Unstructured{Object: map[string]interface{}{
-					"metadata": map[string]interface{}{"name": folderID, "namespace": cfg.Namespace},
-				}}, nil).Once()
+				Return(newManagedAncestorFolder(t, cfg, folderID, folderPath), nil).Once()
 		}
 	}
 	return folders
