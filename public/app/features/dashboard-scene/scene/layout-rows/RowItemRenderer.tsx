@@ -21,6 +21,7 @@ import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
+import { PanelSearchGrid, PanelSearchRow, SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { SectionVariableControls } from '../VariableControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
@@ -56,6 +57,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
   const rowVariablesSet = model.state.$variables;
+  const isPanelSearch = soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
 
   const myIndex = rows.findIndex((row) => row === model);
 
@@ -68,14 +70,14 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
-  const isDraggable = !isClone && isEditing;
+  const isDraggable = !soloPanelContext && !isClone && isEditing;
   const { Draggable } = useDragAndDrop(isDraggable);
 
   if (isHidden) {
     return null;
   }
 
-  if (soloPanelContext) {
+  if (soloPanelContext && !isPanelSearch) {
     return <layout.Component model={layout} />;
   }
 
@@ -103,7 +105,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     </span>
   );
 
-  return (
+  const renderRow = (showRow = true) => (
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
         <div
@@ -145,7 +147,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           data-testid={selectors.components.DashboardRow.wrapper(title!)}
           {...dragProvided.draggableProps}
         >
-          {(!isHeaderHidden || isEditing) && (
+          {showRow && (!isHeaderHidden || isEditing) && (
             <div
               className={cx(styles.rowHeader, 'dashboard-row-header')}
               onMouseEnter={isSelectable ? onHeaderEnter : undefined}
@@ -189,10 +191,20 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
-          {!isCollapsed && (
-            <div className={styles.rowLayoutWrapper} id={contentId}>
-              {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
-              <layout.Component model={layout} />
+          {(!isCollapsed || isPanelSearch) && (
+            <div
+              className={styles.rowLayoutWrapper}
+              id={contentId}
+              style={{ display: isCollapsed ? 'none' : undefined }}
+            >
+              {!isCollapsed && rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+              {isPanelSearch ? (
+                <PanelSearchGrid>
+                  <layout.Component model={layout} />
+                </PanelSearchGrid>
+              ) : (
+                <layout.Component model={layout} />
+              )}
             </div>
           )}
           {conditionalRenderingOverlay}
@@ -200,6 +212,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
       )}
     </Draggable>
   );
+
+  return isPanelSearch ? <PanelSearchRow isCollapsed={isCollapsed === true}>{renderRow}</PanelSearchRow> : renderRow();
 }
 
 function getStyles(theme: GrafanaTheme2) {

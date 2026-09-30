@@ -11,7 +11,7 @@ import { type ConditionalRenderingGroup } from '../../conditional-rendering/grou
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext, renderMatchingSoloPanels } from '../../solo/SoloPanelContext';
 import { useDashboardState } from '../../utils/utils';
-import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
+import { PanelSearchResult, SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { PanelEditActionsWrapper } from '../edit-actions-popover/PanelEditActions';
 import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
@@ -167,9 +167,14 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
 
+  if (soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter) {
+    return [body, ...repeatedPanels].map((panel) => (
+      <PanelSearchResult key={panel.state.key} panel={panel} filter={soloPanelContext} isLazy={isLazy} />
+    ));
+  }
+
   if (soloPanelContext) {
-    const useLazyForSoloPanel = isLazy && soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
   }
 
   const isDragging = !!draggingKey;
