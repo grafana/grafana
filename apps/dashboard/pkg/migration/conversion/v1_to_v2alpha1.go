@@ -2354,6 +2354,11 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 				},
 			}
 
+			// Extract the static refId if present (optional, otherwise derived from the input frames)
+			if refID := schemaversion.GetStringValue(tMap, "refId"); refID != "" {
+				transformationKind.Spec.RefId = &refID
+			}
+
 			// Extract disabled if present (optional, transformations are enabled by default)
 			if disabled, ok := tMap["disabled"].(bool); ok && disabled {
 				transformationKind.Spec.Disabled = &disabled

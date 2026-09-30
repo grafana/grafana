@@ -50,7 +50,7 @@ var validSaveSections = map[string]bool{
 	VersionPolicySection:          true,
 }
 
-var _ KV = &SqlKV{}
+var _ KV = (*SqlKV)(nil)
 
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {

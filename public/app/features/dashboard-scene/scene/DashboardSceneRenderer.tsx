@@ -13,6 +13,7 @@ import { useSelector } from 'app/types/store';
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
+import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { PlanningControls } from './new-toolbar/PlanningControls';
@@ -20,7 +21,6 @@ import { PlanningControls } from './new-toolbar/PlanningControls';
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
     controls,
-    overlay,
     editview,
     body,
     editPanel,
@@ -86,7 +86,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return (
       <>
         <editview.Component model={editview} />
-        {overlay && <overlay.Component model={overlay} />}
+        <DashboardOverlay dashboard={model} />
       </>
     );
   }
@@ -136,7 +136,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             body={renderBody()}
           />
         )}
-        {overlay && <overlay.Component model={overlay} />}
+        <DashboardOverlay dashboard={model} />
       </Page>
     </>
   );

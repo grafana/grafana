@@ -806,11 +806,6 @@ export interface FeatureToggles {
   */
   alertingMigrationUI?: boolean;
   /**
-  * Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
-  * @default true
-  */
-  alertingImportYAMLUI?: boolean;
-  /**
   * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
   * @default false
   */
@@ -1137,11 +1132,6 @@ export interface FeatureToggles {
   */
   secretsManagementAppPlatformAwsKeeper?: boolean;
   /**
-  * Enables profiles exemplars support in profiles drilldown
-  * @default true
-  */
-  profilesExemplars?: boolean;
-  /**
   * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
   * @default false
   */
@@ -1347,7 +1337,7 @@ export interface FeatureToggles {
   */
   ['alerting.notificationsAPIV1Beta1']?: boolean;
   /**
-  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+  * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;

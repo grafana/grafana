@@ -35,7 +35,7 @@ export default function RepositoryStatusPage() {
 
   const tab = queryParams['tab'] ?? TabSelection.Overview;
 
-  const notFound = query.isError && isNotFoundError(query.error);
+  const notFound = (query.isError && isNotFoundError(query.error)) || (query.isSuccess && !data);
   const hasError = query.isError && !notFound;
 
   const tabInfo = useMemo<SelectableValue<TabSelection>>(
@@ -90,42 +90,36 @@ export default function RepositoryStatusPage() {
             </TextLink>
           </EmptyState>
         ) : (
-          <>
-            {data ? (
-              <Stack gap={2} direction="column">
-                <TabsBar>
-                  {tabInfo.map((t: SelectableValue) => (
-                    <Tab
-                      href={urlUtil.renderUrl(location.pathname, { ...queryParams, tab: t.value })}
-                      key={t.value}
-                      label={t.label!}
-                      active={tab === t.value}
-                      title={t.title}
-                    />
-                  ))}
-                </TabsBar>
-                <TabContent>
-                  {data.metadata?.deletionTimestamp && !data.status?.deletion && !data.status?.deleteError && (
-                    <Alert
-                      title={t('provisioning.repository-status-page.title-queued-for-deletion', 'Queued for deletion')}
-                      severity="warning"
-                    >
-                      <Spinner />{' '}
-                      <Trans i18nKey="provisioning.repository-status-page.cleaning-up-resources">
-                        Cleaning up repository resources
-                      </Trans>
-                    </Alert>
-                  )}
-                  {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
-                  {tab === TabSelection.Resources && <ResourceTreeView repo={data} />}
-                </TabContent>
-              </Stack>
-            ) : (
-              <div>
-                <Trans i18nKey="provisioning.repository-status-page.not-found">not found</Trans>
-              </div>
-            )}
-          </>
+          data && (
+            <Stack gap={2} direction="column">
+              <TabsBar>
+                {tabInfo.map((t: SelectableValue) => (
+                  <Tab
+                    href={urlUtil.renderUrl(location.pathname, { ...queryParams, tab: t.value })}
+                    key={t.value}
+                    label={t.label!}
+                    active={tab === t.value}
+                    title={t.title}
+                  />
+                ))}
+              </TabsBar>
+              <TabContent>
+                {data.metadata?.deletionTimestamp && !data.status?.deletion && !data.status?.deleteError && (
+                  <Alert
+                    title={t('provisioning.repository-status-page.title-queued-for-deletion', 'Queued for deletion')}
+                    severity="warning"
+                  >
+                    <Spinner />{' '}
+                    <Trans i18nKey="provisioning.repository-status-page.cleaning-up-resources">
+                      Cleaning up repository resources
+                    </Trans>
+                  </Alert>
+                )}
+                {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
+                {tab === TabSelection.Resources && <ResourceTreeView repo={data} />}
+              </TabContent>
+            </Stack>
+          )
         )}
       </Page.Contents>
     </Page>

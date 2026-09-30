@@ -636,7 +636,7 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		// Verify that the datasource was created with the correct JsonData
 		createdDS, err := dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
 			OrgID: ds.OrgID,
-			ID:    ds.ID,
+			ID:    ds.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 		})
 		require.NoError(t, err)
 		require.NotNil(t, createdDS.JsonData)
@@ -692,7 +692,7 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		// Verify that the datasource was created with the correct JsonData
 		createdDS, err := dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
 			OrgID: ds.OrgID,
-			ID:    ds.ID,
+			ID:    ds.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 		})
 		require.NoError(t, err)
 		require.NotNil(t, createdDS.JsonData)

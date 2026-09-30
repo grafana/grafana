@@ -10,6 +10,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { reorderRows } from '../../actions/layout/reorderRows';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, getLayoutOrchestratorFor, getDashboardSceneFor } from '../../utils/utils';
@@ -60,7 +61,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
         return;
       }
 
-      model.moveRow(result.draggableId, result.source.index, result.destination.index);
+      reorderRows(model, result.source.index, result.destination.index);
     },
     [model, orchestrator]
   );

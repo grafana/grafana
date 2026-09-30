@@ -49,7 +49,12 @@ function buildApplyDashboard(uid?: string): DashboardScene {
       isEditing: true,
       meta: {},
       body: { editModeChanged: jest.fn() },
-      sidebar: { closePane: jest.fn(), enableSelection: jest.fn(), disableSelection: jest.fn() },
+      sidebar: {
+        closePane: jest.fn(),
+        enableSelection: jest.fn(),
+        disableSelection: jest.fn(),
+        refreshAfterRebuild: jest.fn(),
+      },
     },
     serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),

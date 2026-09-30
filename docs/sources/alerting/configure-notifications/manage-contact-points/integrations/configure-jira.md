@@ -14,22 +14,6 @@ labels:
 menuTitle: Jira
 title: Configure Jira for Alerting
 weight: 121
-refs:
-  configure-contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
-  notification-policies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/
-  custom-payload-webhook:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload
 ---
 
 # Configure Jira for Alerting
@@ -55,18 +39,18 @@ To create a contact point with a Jira integration, complete the following steps:
 5. Set up the required [settings](#required-settings) for your Jira configuration.
 6. Click **Save contact point**.
 
-For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](ref:configure-contact-points).
+For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/).
 
 ### Required Settings
 
-| Key                 | Description                                                                                                                                                                                                                            |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| URL                 | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`). This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud.     |
-| Basic Auth User     | Username for authentication. For Jira Cloud, use your email address.                                                                                                                                                                   |
-| Basic Auth Password | Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens) and use it as the password.                                                        |
-| API Token           | An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information. |
-| Project Key         | The project key identifying the project where issues will be created. Project keys are unique identifiers for a project.                                                                                                               |
-| Issue Type          | The type of issue to create (e.g., `Task`, `Bug`, `Incident`). Make sure that you specify a type that is available in your project.                                                                                                    |
+| Key                 | Description                                                                                                                                                                                                                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| URL                 | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`). This field is [protected](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) from modification in Grafana Cloud. |
+| Basic Auth User     | Username for authentication. For Jira Cloud, use your email address.                                                                                                                                                                                                                          |
+| Basic Auth Password | Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens) and use it as the password.                                                                                                               |
+| API Token           | An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information.                                                        |
+| Project Key         | The project key identifying the project where issues will be created. Project keys are unique identifiers for a project.                                                                                                                                                                      |
+| Issue Type          | The type of issue to create (e.g., `Task`, `Bug`, `Incident`). Make sure that you specify a type that is available in your project.                                                                                                                                                           |
 
 ### Optional Settings
 
@@ -81,10 +65,10 @@ For more details on contact points, including how to test them and enable notifi
 | Reopen Duration         | The time duration (in minutes) to control whether to reopen an issue that was closed within this duration or create a new one. If not specified, the most recent issue that matches the deduplication key will be updated and reopened (if reopen transition is specified).                                           |
 | "Won't fix" Transition  | Specify a resolution status that should be ignored when searching for existing issues. For example, issues with this resolution will not be reopened or updated by subsequent alerts.                                                                                                                                 |
 | Deduplication Key Field | Custom field to store the deduplication key. Must be a text field. <br> If not specified, the deduplication key is added to labels in the format of `ALERT(hash sum)`. See [Jira documentation](https://support.atlassian.com/jira-cloud-administration/docs/create-a-custom-field/) for how to create custom fields. |
-| Fields                  | Extra Jira issue fields, including custom fields. The field name must use the format `customfield_<FIELD_ID>`, where `<FIELD_ID>` is the numeric ID of the field in your Jira instance. Templated values are sent as strings, not JSON objects. Refer to [Custom field data](#custom-field-data).                     |
+| Fields                  | Extra Jira issue fields, including standard and custom fields. For custom fields, use `customfield_<FIELD_ID>`, where `<FIELD_ID>` is the numeric field ID in your Jira instance. For JSON parsing and templating behavior, refer to [Custom field data](#custom-field-data).                                         |
 
 ### Custom field data
 
-Grafana parses static field values as JSON when it loads the contact point, so you can set objects and arrays such as `{"value": "High"}`. Templated values are sent as strings and aren't parsed as JSON, so they can't populate fields that need an object or array, such as Jira select-list fields.
+Grafana attempts to parse each string field value as JSON when it loads the contact point. Grafana sends values parsed as objects or arrays as structured JSON, such as `{"value": "High"}`, but doesn't evaluate templates inside them. Grafana evaluates values that remain strings as notification templates, but doesn't parse their rendered output as JSON. Templates therefore can't generate dynamic object or array field values, such as those required by Jira select-list fields.
 
-To set different structured values for different alerts, create a Jira contact point for each static value and route alerts with [notification policies](ref:notification-policies). Or use a [Webhook contact point with a custom payload](ref:custom-payload-webhook) to send structured JSON that includes alert data.
+To set different structured values for different alerts, create a Jira contact point for each static value and route alerts with [notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/). Or use a [Webhook contact point with a custom payload](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload) to send structured JSON that includes alert data.

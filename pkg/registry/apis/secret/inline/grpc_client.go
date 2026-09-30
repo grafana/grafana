@@ -28,7 +28,7 @@ type GRPCInlineClient struct {
 	tokenExchanger authnlib.TokenExchanger
 }
 
-var _ contracts.InlineSecureValueSupport = &GRPCInlineClient{}
+var _ contracts.InlineSecureValueSupport = (*GRPCInlineClient)(nil)
 
 type TLSConfig struct {
 	UseTLS             bool

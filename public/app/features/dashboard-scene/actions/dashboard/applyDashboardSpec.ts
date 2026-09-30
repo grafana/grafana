@@ -24,13 +24,13 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
 
   // Keep sidebar alive - otherwise undo/redo stack would be wiped out
-  const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, {
+  const { isOverlayLoading: rebuiltLoading, ...newState } = sceneUtils.cloneSceneObjectState(rebuilt.state, {
     key: scene.state.key,
     sidebar: scene.state.sidebar,
     // Template identity is not part of the dashboard spec or its access DTO.
     meta: { ...rebuilt.state.meta, isDashboardTemplate: scene.state.meta.isDashboardTemplate },
   });
-  const previousState = { ...scene.state };
+  const { isOverlayLoading: previousLoading, ...previousState } = scene.state;
 
   // `setState` merges, so an open panel editor would survive the swap still driving the
   // VizPanel and layout item of the tree we just discarded: edits made through it never reach
@@ -64,9 +64,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
       scene.applyEditPresentation();
 
-      // Sidebar keeps selected element memoized. In case assistant calls applySpec while an element
-      // is selected it may lead to interacting with the old copy of the element.
-      scene.state.sidebar.closePane();
+      scene.state.sidebar.refreshAfterRebuild();
 
       // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
       // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
@@ -81,7 +79,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
     undo: () => {
       scene.setState({ ...previousState, mode: scene.state.mode, codeSession: scene.state.codeSession });
       scene.applyEditPresentation();
-      scene.state.sidebar.closePane();
+      scene.state.sidebar.refreshAfterRebuild();
       scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
     },
   });

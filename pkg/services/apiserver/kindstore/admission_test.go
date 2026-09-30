@@ -242,7 +242,7 @@ func TestMutatingAdmission(t *testing.T) {
 			Operation:  metav1.ManagedFieldsOperationUpdate,
 			APIVersion: testAdmissionGVK.GroupVersion().String(),
 			FieldsType: "FieldsV1",
-			FieldsV1:   &metav1.FieldsV1{Raw: []byte(`{"f:spec":{}}`)},
+			FieldsV1:   metav1.NewFieldsV1(`{"f:spec":{}}`),
 		}}
 		obj.SetManagedFields(entries)
 

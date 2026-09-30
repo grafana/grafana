@@ -12,7 +12,7 @@ import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
-import { type DashboardSceneState } from './types/dashboard';
+import { isFullDashboardEditing, type DashboardSceneState } from './types/dashboard';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**
@@ -54,6 +54,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   private _releaseEditPanel() {
+    if (this._heldEditPanelId !== undefined) {
+      this._scene.cancelPendingViews();
+    }
     this._libPanelSub?.unsubscribe();
     this._libPanelSub = undefined;
     this._heldEditPanelId = undefined;
@@ -68,8 +71,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { viewPanel, isEditing, editPanel, shareView } = this._scene.state;
+    const { viewPanel, isEditing, editPanel, editview, shareView } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
+    let panelToEdit: VizPanel | undefined;
 
     // Reachable directly via ?editview=, independent of any settings entry point: without this
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
@@ -90,7 +94,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
           update.editview = undefined;
         }
       }
-    } else if (values.hasOwnProperty('editview')) {
+    } else if (editview && values.hasOwnProperty('editview')) {
       update.editview = undefined;
     }
 
@@ -128,7 +132,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       // If we are not in editing (for example after full page reload)
-      this._scene.openFullEditor();
+      if (!isEditing || !isFullDashboardEditing(this._scene.state)) {
+        // Keep the editor URL while entering full editing before its view has loaded.
+        this._heldEditPanelId = values.editPanel;
+        this._scene.openFullEditor();
+      }
 
       const libPanelBehavior = getLibraryPanelBehavior(panel);
       if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
@@ -136,7 +144,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      this._enterPanelEdit(values.editPanel, panel);
+      panelToEdit = panel;
     } else if (typeof values.editPanel === 'string') {
       // Refused while planning: clear the param rather than leaving it to keep re-triggering on
       // every sync tick.
@@ -176,6 +184,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
+    }
+
+    // Apply synchronous URL changes first so they do not cancel the editor requested by this same update.
+    if (panelToEdit && typeof values.editPanel === 'string') {
+      this._enterPanelEdit(values.editPanel, panelToEdit);
     }
 
     if (typeof values.drow === 'string') {

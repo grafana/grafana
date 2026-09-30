@@ -32,6 +32,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/authz"
@@ -57,8 +58,8 @@ const (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search")
 
-var _ resource.SearchBackend = &bleveBackend{}
-var _ resource.ResourceIndex = &bleveIndex{}
+var _ resource.SearchBackend = (*bleveBackend)(nil)
+var _ resource.ResourceIndex = (*bleveIndex)(nil)
 
 type BleveOptions struct {
 	// The root folder where file objects are saved
@@ -896,8 +897,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
-	selectableFields, searchFieldsHash, searchFieldsProvider := b.fields.For(sfKey)
+	selectableFields, searchFieldsHash, searchFieldsProvider := b.fields.ForKey(key)
 
 	mapper, err := GetBleveMappings(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 	if err != nil {
@@ -1308,7 +1308,7 @@ type adaptiveBuildIndex struct {
 	cleanupDir    string
 }
 
-var _ resource.ResourceIndex = &adaptiveBuildIndex{}
+var _ resource.ResourceIndex = (*adaptiveBuildIndex)(nil)
 
 func newAdaptiveBuildIndex(delegate *bleveIndex, threshold int64, promote promoteBuildIndexFunc) *adaptiveBuildIndex {
 	return &adaptiveBuildIndex{
@@ -2514,6 +2514,109 @@ func (b *bleveIndex) deletedDocCount(ctx context.Context) (int64, error) {
 
 // DocCount counts live documents, so callers using it as a size estimate
 // undercount by whatever trash the index holds. Close enough for a threshold.
+// listDocumentRefsPageSize is how many documents one page of an enumeration
+// reads. Reconciliation walks every document, so this trades the number of
+// searches against how much is held at once. A variable so a test can page
+// without indexing thousands of documents.
+var listDocumentRefsPageSize = 1000
+
+// ListDocumentRefs implements resource.ResourceIndex.
+//
+// Paged rather than returned at once: an index can hold hundreds of thousands of
+// documents, and the caller compares them a page at a time.
+func (b *bleveIndex) ListDocumentRefs(ctx context.Context, gr schema.GroupResource) iter.Seq2[resource.DocumentRef, error] {
+	return func(yield func(resource.DocumentRef, error) bool) {
+		ctx, span := tracer.Start(ctx, "search.bleveIndex.ListDocumentRefs")
+		defer span.End()
+
+		q, err := b.documentsOfQuery(gr)
+		if err != nil {
+			yield(resource.DocumentRef{}, err)
+			return
+		}
+
+		var searchAfter []string
+		for {
+			req := &bleve.SearchRequest{
+				Size:  listDocumentRefsPageSize,
+				Query: scopeQuery(q, false, 0),
+				// The stored copy, because a resource version is too large to survive
+				// being held as the float64 bleve stores numbers as.
+				Fields:      []string{resource.SEARCH_FIELD_RV_STRING},
+				SearchAfter: searchAfter,
+			}
+			// By document id, which is unique, so paging cannot repeat or skip a
+			// document the way ordering by a shared value could.
+			req.SortBy([]string{"_id"})
+
+			rsp, err := b.index.SearchInContext(ctx, req)
+			if err != nil {
+				yield(resource.DocumentRef{}, err)
+				return
+			}
+			for _, hit := range rsp.Hits {
+				ref, err := documentRefFromHit(hit)
+				if err != nil {
+					if !yield(resource.DocumentRef{}, err) {
+						return
+					}
+					continue
+				}
+				if !yield(ref, nil) {
+					return
+				}
+			}
+			if len(rsp.Hits) < listDocumentRefsPageSize {
+				return
+			}
+			searchAfter = rsp.Hits[len(rsp.Hits)-1].Sort
+		}
+	}
+}
+
+// documentsOfQuery matches the documents of one resource type. A global index
+// holds several types of one namespace and indexes which is which; every other
+// index holds one, and does not.
+func (b *bleveIndex) documentsOfQuery(gr schema.GroupResource) (query.Query, error) {
+	if b.key.IsGlobal() {
+		if !resource.GlobalIndexCoversType(gr) {
+			return nil, fmt.Errorf("resource type %s is not covered by the global index", gr.String())
+		}
+		return &query.TermQuery{
+			Term:     gr.Group + "/" + gr.Resource,
+			FieldVal: resource.SEARCH_FIELD_GROUP_RESOURCE,
+		}, nil
+	}
+	if gr.Group != b.key.Group || gr.Resource != b.key.Resource {
+		return nil, fmt.Errorf("index holds %s, not %s", b.key.GroupResource(), gr.String())
+	}
+	return bleve.NewMatchAllQuery(), nil
+}
+
+// documentRefFromHit reads the name and resource version off a hit. The name
+// comes from the document id, which every document has, rather than from a
+// stored field that a document could be missing.
+func documentRefFromHit(hit *search.DocumentMatch) (resource.DocumentRef, error) {
+	parts := strings.Split(hit.ID, "/")
+	if len(parts) != 4 {
+		return resource.DocumentRef{}, fmt.Errorf("unexpected document id %q", hit.ID)
+	}
+	ref := resource.DocumentRef{Name: parts[3]}
+
+	rv, ok := hit.Fields[resource.SEARCH_FIELD_RV_STRING].(string)
+	if !ok || rv == "" {
+		// Nothing to compare against, so the caller treats it as out of date and
+		// reindexes rather than skipping it.
+		return ref, nil
+	}
+	parsed, err := strconv.ParseInt(rv, 10, 64)
+	if err != nil {
+		return ref, nil
+	}
+	ref.RV = parsed
+	return ref, nil
+}
+
 func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.DocCount")
 	defer span.End()
@@ -2546,6 +2649,11 @@ func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resourc
 func (b *bleveIndex) verifyKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	if key.Namespace != b.key.Namespace {
 		return resource.NewBadRequestError("namespace mismatch (expected " + b.key.Namespace + ")")
+	}
+	// A namespace-wide index holds documents of several resource types, so a request
+	// to it names only the namespace. Type selection happens through query fields.
+	if b.key.IsGlobal() {
+		return nil
 	}
 	if key.Group != b.key.Group {
 		return resource.NewBadRequestError("group mismatch (expected " + b.key.Group + ")")
@@ -2685,6 +2793,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		if !b.keepsDeletedDocuments {
 			return nil, resource.NewServiceUnavailableError("trash is not available for this resource until its search index has been rebuilt")
 		}
+		if sortsByDeletedResourceVersion(req) && !slices.Contains(b.features, resource.IndexFeatureSortableTrashResourceVersion) {
+			return nil, resource.NewServiceUnavailableError("sorting trash by resource version is not available for this resource until its search index has been rebuilt")
+		}
 		if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, time.Now()); ok {
 			expirationThreshold = t
 		}
@@ -2740,7 +2851,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		})
 	}
 
-	if postRankAuthz {
+	// A namespace-wide index holds several resource types, and two of them can
+	// share a name, so the name is no longer a total order there either.
+	if postRankAuthz || b.key.IsGlobal() {
 		// Total-order tie-breaker for stable SearchAfter/SearchBefore cursors.
 		// The doc ID {namespace}/{group}/{resource}/{name} is globally unique
 		// across a federated alias (dashboards + folders differ by the resource
@@ -3523,6 +3636,15 @@ func safeInt64ToInt(i64 int64) (int, error) {
 		return 0, fmt.Errorf("int64 value %d overflows int", i64)
 	}
 	return int(i64), nil
+}
+
+func sortsByDeletedResourceVersion(req *resourcepb.ResourceSearchRequest) bool {
+	for _, sort := range req.SortBy {
+		if sort.GetField() == resource.SEARCH_FIELD_DELETED_RV {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *bleveIndex) getSortFields(req *resourcepb.ResourceSearchRequest) []string {

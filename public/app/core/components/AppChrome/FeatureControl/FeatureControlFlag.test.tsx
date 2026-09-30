@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 
@@ -17,9 +17,9 @@ jest.mock('@grafana/runtime/internal', () => ({
   },
   getOFREPWebProvider: jest.fn().mockReturnValue({
     flagCache: {
-      'feature-alpha': { value: true, reason: 'DEFAULT' },
-      'feature-beta': { value: false, reason: 'TARGETING_MATCH' },
-      'feature-object': { value: { enabled: true, cohort: 'staff' }, reason: 'STATIC' },
+      'feature-alpha': { value: true, reason: 'DEFAULT', variant: 'enabled' },
+      'feature-beta': { value: false, reason: 'TARGETING_MATCH', variant: 'disabled' },
+      'feature-object': { value: { enabled: true, cohort: 'staff' }, reason: 'STATIC', variant: 'staff' },
       'feature-error': { errorCode: 'FLAG_NOT_FOUND', errorDetails: 'No provider result found for this flag.' },
     } as Record<string, unknown>,
     events: { addHandler: jest.fn(), removeHandler: jest.fn() },
@@ -28,8 +28,18 @@ jest.mock('@grafana/runtime/internal', () => ({
 
 jest.mock('@grafana/ui/unstable', () => ({
   ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: ({ value, onChange, 'aria-label': ariaLabel }: CodeMirrorEditorProps) => (
-    <textarea aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />
+  CodeMirrorEditor: ({
+    value,
+    onChange,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+  }: CodeMirrorEditorProps) => (
+    <textarea
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   ),
 }));
 
@@ -71,6 +81,18 @@ describe('FeatureControlFlag', () => {
     jest.clearAllMocks();
     window.localStorage.clear();
     getLocalStorageProvider().clearFlags();
+  });
+
+  it.each([
+    { type: 'boolean', value: 'true' },
+    { type: 'number', value: '42' },
+    { type: 'string', value: 'hello' },
+    { type: 'object', value: '{"enabled":true}' },
+  ])('labels the $type value control with a screen-reader-only label', async ({ value }) => {
+    renderComponent({ key: 'alpha', value });
+    await expandFlag('alpha');
+
+    expect(screen.getByLabelText('Flag value')).toHaveAccessibleName('Flag value');
   });
 
   [
@@ -198,7 +220,7 @@ describe('FeatureControlFlag', () => {
     expect(screen.getAllByText('true')).toHaveLength(2);
   });
 
-  it('shows the OFREP evaluation value and reason for an existing flag', async () => {
+  it('shows the OFREP evaluation value, variant and reason for an existing flag', async () => {
     renderComponent({ key: 'feature-alpha', value: 'false' });
     await expandFlag('feature-alpha');
 
@@ -206,7 +228,9 @@ describe('FeatureControlFlag', () => {
     expect(screen.getAllByText('true')).toHaveLength(2);
 
     await userEvent.hover(screen.getByTestId('icon-info-circle'));
-    expect(await screen.findByText('DEFAULT')).toBeInTheDocument();
+    const tooltip = await screen.findByRole('tooltip');
+    expect(within(tooltip).getByText('enabled')).toBeInTheDocument();
+    expect(within(tooltip).getByText('DEFAULT')).toBeInTheDocument();
   });
 
   it('shows the full OFREP object value in the badge tooltip', async () => {

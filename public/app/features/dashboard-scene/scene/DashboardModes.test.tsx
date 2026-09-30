@@ -23,6 +23,7 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { createDeferred } from '../utils/test-utils';
 
 import { DashboardModePicker } from './DashboardModePicker';
 import { toggleVizPanelLegend } from './PanelMenuBehavior';
@@ -971,4 +972,23 @@ it('keeps invalid YAML separate from Save and blocks mode switches until correct
   await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
   expect(scene.state.title).toBe('My YAML title');
   expect(scene.state.description).toBe('Assistant addition');
+});
+
+it('cancels a pending drawer when switching from Viewing to Code', async () => {
+  const scene = setup();
+  scene.setDashboardMode('edit');
+  scene.setDashboardMode('view');
+  const pending = createDeferred<SaveDashboardDrawer>();
+  const opening = scene.showModalAsync(() => pending.promise);
+  expect(scene.state.isOverlayLoading).toBe(true);
+
+  scene.setDashboardMode('code');
+  expect(scene.state.isOverlayLoading).toBe(false);
+  const drawer = new SaveDashboardDrawer({ dashboardRef: scene.getRef() });
+  pending.resolve(drawer);
+  await opening;
+  expect(scene.state.overlay).toBeUndefined();
+
+  await scene.openSaveDrawer({});
+  expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer);
 });

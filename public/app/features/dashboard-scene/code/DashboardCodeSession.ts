@@ -5,7 +5,8 @@ import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { getDashboardResourceText, validateDashboardResourceEnvelope } from '../sidebar/codePaneUtils';
+import { getDashboardResourceText } from '../sidebar/codePaneUtils';
+import { validateDashboardResourceEnvelope } from '../sidebar/dashboardResource';
 import { dashboardV2SpecSchema } from '../v2schema/dashboardV2Schema';
 
 import { mergeDashboardCode, type CodeConflict, type CodeResolution } from './mergeDashboardCode';
