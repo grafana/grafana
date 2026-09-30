@@ -19,13 +19,13 @@ describe('loadSavedViews', () => {
   it('does nothing when the dashboard has no uid', async () => {
     const scene = new DashboardScene({ title: 'unsaved' });
 
-    await loadSavedViews(scene);
+    await expect(loadSavedViews(scene)).resolves.toBe(true);
 
     expect(listForDashboardMock).not.toHaveBeenCalled();
     expect(scene.state.savedViews).toBeUndefined();
   });
 
-  it('fetches views for the dashboard and attaches them to state', async () => {
+  it('fetches views for the dashboard, attaches them to state, and resolves true', async () => {
     const view: SavedDashboardView = {
       apiVersion: 'dashboardviews.grafana.app/v0alpha1',
       kind: 'SavedDashboardView',
@@ -35,18 +35,18 @@ describe('loadSavedViews', () => {
     listForDashboardMock.mockResolvedValue([view]);
     const scene = new DashboardScene({ title: 'hello', uid: 'dash-1' });
 
-    await loadSavedViews(scene);
+    await expect(loadSavedViews(scene)).resolves.toBe(true);
 
     expect(listForDashboardMock).toHaveBeenCalledWith('dash-1');
     expect(scene.state.savedViews).toEqual([view]);
   });
 
-  it('logs and swallows a fetch failure rather than throwing', async () => {
+  it('logs and swallows a fetch failure, resolving false so the caller can tell it apart from success', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     listForDashboardMock.mockRejectedValue(new Error('boom'));
     const scene = new DashboardScene({ title: 'hello', uid: 'dash-1' });
 
-    await expect(loadSavedViews(scene)).resolves.toBeUndefined();
+    await expect(loadSavedViews(scene)).resolves.toBe(false);
 
     expect(scene.state.savedViews).toBeUndefined();
     expect(consoleErrorSpy).toHaveBeenCalled();
