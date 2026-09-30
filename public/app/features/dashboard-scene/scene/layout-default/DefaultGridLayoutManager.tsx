@@ -45,7 +45,6 @@ import {
   getDashboardSceneFor,
 } from '../../utils/utils';
 import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
-import { PanelSearchGrid, PanelSearchRow, SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
@@ -712,27 +711,13 @@ SceneGridRow.Component = SceneGridRowRenderer;
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const soloPanelContext = useSoloPanelContext();
-  const { children, isCollapsed } = model.useState();
 
-  if (soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter) {
-    return (
-      <PanelSearchRow isCollapsed={isCollapsed === true}>
-        {(showRow) => (
-          <>
-            {showRow && <OriginalSceneGridRowRenderer model={model} />}
-            <PanelSearchGrid>
-              {children.map((child) => (
-                <child.Component model={child} key={child.state.key!} />
-              ))}
-            </PanelSearchGrid>
-          </>
-        )}
-      </PanelSearchRow>
-    );
+  if (soloPanelContext?.renderRow) {
+    return soloPanelContext.renderRow(model, <OriginalSceneGridRowRenderer model={model} />);
   }
 
   if (soloPanelContext) {
-    return children.map((child) => <child.Component model={child} key={child.state.key!} />);
+    return model.state.children.map((child) => <child.Component model={child} key={child.state.key!} />);
   }
 
   return <OriginalSceneGridRowRenderer model={model} />;

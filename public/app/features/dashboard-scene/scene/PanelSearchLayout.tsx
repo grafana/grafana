@@ -13,7 +13,7 @@ import {
 } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { type VizPanel, sceneGraph, SceneVariableValueChangedEvent } from '@grafana/scenes';
+import { type SceneGridRow, type VizPanel, sceneGraph, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { renderMatchingSoloPanels, SoloPanelContextProvider } from '../solo/SoloPanelContext';
@@ -75,6 +75,25 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
         </SoloPanelContextProvider>
       </PanelSearchScopeContext.Provider>
     </div>
+  );
+}
+
+function PanelSearchGridRow({ model, header }: { model: SceneGridRow; header: ReactNode }) {
+  const { children, isCollapsed } = model.useState();
+
+  return (
+    <PanelSearchRow isCollapsed={isCollapsed === true}>
+      {(showRow) => (
+        <>
+          {showRow && header}
+          <PanelSearchGrid>
+            {children.map((child) => (
+              <child.Component model={child} key={child.state.key!} />
+            ))}
+          </PanelSearchGrid>
+        </>
+      )}
+    </PanelSearchRow>
   );
 }
 
@@ -185,6 +204,10 @@ export class SoloPanelContextValueWithSearchStringFilter {
   public matchFound = false;
 
   public constructor(private searchQuery: string) {}
+
+  public renderRow(row: SceneGridRow, header: ReactNode): ReactNode {
+    return <PanelSearchGridRow model={row} header={header} />;
+  }
 
   public matches(panel: VizPanel): boolean {
     const interpolatedSearchString = sceneGraph.interpolate(panel, this.searchQuery);
