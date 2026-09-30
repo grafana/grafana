@@ -140,7 +140,7 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.60.6 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.60.7 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.60.6 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/plugin v0.60.6 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.5.5 // @grafana/data-sources-plugins
@@ -184,7 +184,7 @@ require (
 	github.com/grafana/otel-profiling-go v0.6.0 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // @grafana/data-sources-plugins
 	github.com/grafana/saml v0.4.15-0.20260916103902-393394c6d16c // @grafana/identity-access-team
-	github.com/grafana/schemads v0.2.2 // @grafana/data-sources
+	github.com/grafana/schemads v0.2.3 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/grafana-catalog
@@ -202,7 +202,6 @@ require (
 	github.com/jmoiron/sqlx v1.4.0 // @grafana/grafana-backend-group
 	github.com/jonboulle/clockwork v0.5.0 // @grafana/identity-access-team
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
-	github.com/klauspost/pgzip v1.2.6 // @grafana/grafana-backend-group
 	github.com/ktrysmt/go-bitbucket v0.10.0 // @grafana/grafana-app-platform-squad
 	github.com/lib/pq v1.12.3 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
@@ -706,6 +705,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
+
+require github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.18 // @grafana/data-sources-plugins
 
 replace (
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints

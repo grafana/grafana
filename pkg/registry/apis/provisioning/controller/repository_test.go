@@ -1361,7 +1361,7 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().
-				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Maybe()
 
 			tester := repository.NewTester()
@@ -1493,7 +1493,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().
-				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Maybe()
 
 			tester := repository.NewTester()
@@ -2208,7 +2208,7 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 
 			patcher := &capturePatcher{}
 			healthMetrics := NewMockHealthMetricsRecorder(t)
-			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 			healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
 			repoFactory := repository.NewMockFactory(t)
 
@@ -2257,7 +2257,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
 	mockMetrics := NewMockHealthMetricsRecorder(t)
-	mockMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Return()
+	mockMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
 
 	tester := repository.NewTester()
 	healthChecker := NewRepositoryHealthChecker(nil, tester, mockMetrics)
@@ -2458,7 +2458,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Maybe()
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
-	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 
 	patcher := &capturePatcher{}
 	tester := repository.NewTester()
@@ -2667,7 +2667,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Once()
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
-	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 
 	patcher := &capturePatcher{}
 	healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
@@ -3079,7 +3079,7 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()
@@ -3168,7 +3168,7 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()
@@ -3249,7 +3249,7 @@ func TestRepositoryController_process_RotationErrorRecordsMetric(t *testing.T) {
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()
@@ -3399,7 +3399,7 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()
@@ -3685,7 +3685,7 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 
 	patcher := &capturePatcher{}
 	healthMetrics := NewMockHealthMetricsRecorder(t)
-	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 	tester := repository.NewTester()
 	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
@@ -4072,7 +4072,7 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()

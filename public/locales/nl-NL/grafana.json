@@ -13225,6 +13225,12 @@
       "query": {
         "add": "Query toevoegen",
         "run": "Query uitvoeren"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13308,7 +13314,9 @@
       "redo-action": "Opnieuw uitvoeren: {{action}}",
       "remove-query": "Query verwijderen",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Query selecteren",
+      "set-cell-time-range": "",
       "split-block": "Blok splitsen",
       "switch-datasource": "Gegevensbron wisselen",
       "undo": "Ongedaan maken",
@@ -15864,8 +15872,7 @@
       "deleted-by-removed": "Verwijderd account",
       "deleted-by-unknown-short": "<0></0> Onbekend",
       "deleted-by-unknown-tooltip": "Kan het account dat dit dashboard heeft verwijderd niet opzoeken",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Resterende tijd",
+      "deleted-header": "",
       "location-header": "Locatie",
       "name-header": "Naam",
       "tags-header": "Tags",
