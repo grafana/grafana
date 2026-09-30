@@ -139,10 +139,13 @@ func (svc *MuteTimingService) GetMuteTimingByName(ctx context.Context, name stri
 }
 
 // CreateMuteTiming adds a new mute timing within the specified org. The created mute timing is returned.
+// The mute timing's Manager is persisted; when it is unknown, it is derived from its Provenance.
 func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return v1.TimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
+
+	mt.NormalizeManager()
 
 	if err := svc.validator(ctx, models.ProvenanceNone, mt.Provenance); err != nil {
 		return v1.TimeInterval{}, err
@@ -163,7 +166,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return svc.provenanceStore.SetProvenance(ctx, &created, orgID, created.Provenance)
+		return svc.provenanceStore.SetManagerProperties(ctx, &created, orgID, created.Manager)
 	})
 	if err != nil {
 		return v1.TimeInterval{}, err
@@ -173,10 +176,13 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 }
 
 // UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, ErrMuteTimingsNotFound is returned.
+// The mute timing's Manager is persisted; when it is unknown, it is derived from its Provenance.
 func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return v1.TimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
+
+	mt.NormalizeManager()
 
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -240,7 +246,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return svc.provenanceStore.SetProvenance(ctx, &updated, orgID, updated.Provenance)
+		return svc.provenanceStore.SetManagerProperties(ctx, &updated, orgID, updated.Manager)
 	})
 	if err != nil {
 		return v1.TimeInterval{}, err
@@ -352,13 +358,17 @@ func (svc *MuteTimingService) assignTimeIntervalProvenance(ctx context.Context, 
 	if err != nil {
 		return err
 	}
+	managers, err := svc.provenanceStore.GetAllManagerProperties(ctx, orgID, (&v1.TimeInterval{}).ResourceType())
+	if err != nil {
+		return err
+	}
 
 	for uid, interval := range rev.Config.TimeIntervals {
 		prov, ok := provenances[interval.ResourceID()]
 		if !ok {
 			prov = models.ProvenanceNone
 		}
-		interval.Provenance = prov
+		interval.AssignManager(prov, managers[interval.ResourceID()])
 		rev.Config.TimeIntervals[uid] = interval
 	}
 	return nil
