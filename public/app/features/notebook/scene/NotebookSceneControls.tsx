@@ -31,7 +31,7 @@ interface Props {
  */
 export function NotebookSceneControls({ model, stickyOffset }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, stickyOffset);
+  const styles = useStyles2(getStyles);
   const { timePicker, refreshPicker, hideTimeControls, isEditing, uid } = model.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
