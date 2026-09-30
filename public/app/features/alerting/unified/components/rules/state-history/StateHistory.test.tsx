@@ -11,7 +11,7 @@ const server = setupMswServer();
 
 describe('StateHistory', () => {
   it.each(['switching rules', 'reopening for another rule'])(
-    'does not show the previous history when %s',
+    'hides previous history when %s and fetches it again on return',
     async (navigation) => {
       server.use(
         http.get('/api/annotations', ({ request }) =>
@@ -27,34 +27,51 @@ describe('StateHistory', () => {
         )
       );
       const store = configureStore();
-      const { rerender, unmount } = render(<StateHistory ruleUID="first-rule" />, { store });
+      let view = render(<StateHistory ruleUID="first-rule" />, { store });
       expect(await screen.findByText('History for first-rule')).toBeInTheDocument();
 
       if (navigation === 'switching rules') {
-        rerender(<StateHistory ruleUID="second-rule" />);
+        view.rerender(<StateHistory ruleUID="second-rule" />);
       } else {
-        unmount();
-        render(<StateHistory ruleUID="second-rule" />, { store });
+        view.unmount();
+        view = render(<StateHistory ruleUID="second-rule" />, { store });
       }
 
       expect(screen.getByText('Loading history...')).toBeInTheDocument();
       expect(screen.queryByText('History for first-rule')).not.toBeInTheDocument();
       expect(await screen.findByText('History for second-rule')).toBeInTheDocument();
+
+      view.rerender(<StateHistory ruleUID="first-rule" />);
+
+      expect(screen.getByText('Loading history...')).toBeInTheDocument();
+      expect(screen.queryByText('History for first-rule')).not.toBeInTheDocument();
+      expect(screen.queryByText('History for second-rule')).not.toBeInTheDocument();
+      expect(await screen.findByText('History for first-rule')).toBeInTheDocument();
     }
   );
 
-  it('requests history again after the polling interval', async () => {
+  it('polls the same rule without unmounting its history', async () => {
     const requestedRuleUIDs: Array<string | null> = [];
     server.use(
       http.get('/api/annotations', ({ request }) => {
         requestedRuleUIDs.push(new URL(request.url).searchParams.get('alertUID'));
-        return HttpResponse.json([]);
+        return HttpResponse.json([
+          {
+            id: 1,
+            newState: AlertState.Alerting,
+            updated: 1658834395024,
+            text: 'Existing history event',
+            data: {},
+          },
+        ]);
       })
     );
 
     render(<StateHistory ruleUID="ABC123" pollingInterval={50} />);
+    const event = await screen.findByText('Existing history event');
 
     await waitFor(() => expect(requestedRuleUIDs.slice(0, 2)).toEqual(['ABC123', 'ABC123']));
+    expect(event).toBeInTheDocument();
   });
 });
 

@@ -2,19 +2,15 @@ import { useEffect } from 'react';
 import { useInterval } from 'react-use';
 
 import { useDispatch } from 'app/types/store';
-import { type StateHistoryItem } from 'app/types/unified-alerting';
 
 import { fetchGrafanaAnnotationsAction } from '../state/actions';
 import { STATE_HISTORY_POLL_INTERVAL_MS } from '../utils/constants';
-import { type AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export function useManagedAlertStateHistory(ruleUID: string, pollingInterval = STATE_HISTORY_POLL_INTERVAL_MS) {
   const dispatch = useDispatch();
-  const history = useUnifiedAlertingSelector<AsyncRequestState<StateHistoryItem[]>>(
-    (state) => state.managedAlertStateHistory[ruleUID] ?? initialAsyncRequestState
-  );
+  const history = useUnifiedAlertingSelector((state) => state.managedAlertStateHistory);
 
   useEffect(() => {
     dispatch(fetchGrafanaAnnotationsAction(ruleUID));
@@ -26,5 +22,8 @@ export function useManagedAlertStateHistory(ruleUID: string, pollingInterval = S
     }
   }, pollingInterval);
 
-  return history;
+  return {
+    ...history,
+    result: history.result?.ruleUID === ruleUID ? history.result.history : undefined,
+  };
 }
