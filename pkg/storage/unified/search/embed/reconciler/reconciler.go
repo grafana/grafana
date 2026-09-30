@@ -533,7 +533,9 @@ func (s *Reconciler) ensureCheckpoint(ctx context.Context) (int64, error) {
 			}
 			return 0, nil
 		}
-		rv = seed - 1
+		// A full millisecond keeps this predecessor below the seed after a
+		// legacy SQL RV is converted back from Snowflake format.
+		rv = resource.SubtractDurationFromSnowflake(seed, time.Millisecond)
 		// Persist before any provider call so the first write survives a restart.
 		if err := s.vectorBackend.SetLatestRV(ctx, rv); err != nil {
 			return 0, fmt.Errorf("seed checkpoint: %w", err)

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/enrollment"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
 
 const dashGroup = "dashboard.grafana.app"
@@ -1717,7 +1718,7 @@ func TestReconciler_Sweep_SeedSurvivesProviderFailure(t *testing.T) {
 	addStoredEvent(t, s, dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
 	text.failNext = &embedder.RetryableError{Err: errBoom}
 	s.sweep(t.Context())
-	require.Equal(t, snowflakeRV(100)-1, vec.latestRV)
+	require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), time.Millisecond), vec.latestRV)
 	s, _ = newReconciler(t, st, vec)
 	s.sweep(t.Context())
 	assert.Len(t, vec.upserts, 1)
@@ -1776,10 +1777,10 @@ func TestReconciler_SeedLookback(t *testing.T) {
 	for _, restart := range []bool{false, true} {
 		t.Run(fmt.Sprintf("restart=%t", restart), func(t *testing.T) {
 			s, st, vec, _ := setupEmbeddingRetry(t, 0)
-			st.lookback = 20
+			st.lookback = 8192
 			s.observeWrite(&resource.WrittenEvent{Key: &st.changes[0].Key, ResourceVersion: snowflakeRV(100)})
 			vec.onSetLatestRV = func(rv int64) {
-				if rv != snowflakeRV(100)-1 {
+				if rv != resource.SubtractDurationFromSnowflake(snowflakeRV(100), time.Millisecond) {
 					return
 				}
 				late := dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "late", snowflakeRV(90), minimalDashboard("late", "Late"))
@@ -1799,7 +1800,7 @@ func TestReconciler_SeedLookback(t *testing.T) {
 			if restart {
 				st.listErr = errBoom
 				s.sweep(t.Context())
-				require.Equal(t, snowflakeRV(100)-1, vec.latestRV)
+				require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), time.Millisecond), vec.latestRV)
 				require.Empty(t, vec.upserts)
 				st.listErr = nil
 				s, _ = newReconciler(t, st, vec)
@@ -2048,4 +2049,14 @@ func TestReconciler_MultipleBuildersKeepRetriesSeparate(t *testing.T) {
 	assert.Empty(t, s.retries)
 	assert.True(t, vec.hasUpsertFor("ns", "first_documents", "same-name"))
 	assert.Equal(t, snowflakeRV(100), vec.latestRV)
+}
+
+func TestReconciler_SeedPredecessorSurvivesSQLRVConversion(t *testing.T) {
+	sqlSeed := time.Now().Truncate(time.Millisecond).UnixMicro()
+	seed := rvmanager.SnowflakeFromRV(sqlSeed)
+	legacyPredecessor := rvmanager.RVFromSnowflake(seed - 1)
+	assert.Greater(t, legacyPredecessor, sqlSeed, "subtracting one Snowflake tick can cross into the next millisecond when converted to SQL RV")
+
+	predecessor := resource.SubtractDurationFromSnowflake(seed, time.Millisecond)
+	assert.Less(t, rvmanager.RVFromSnowflake(predecessor), sqlSeed)
 }
