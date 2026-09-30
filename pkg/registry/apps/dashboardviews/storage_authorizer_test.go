@@ -2,9 +2,11 @@ package dashboardviews
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	dashboardviewsv0alpha1 "github.com/grafana/grafana/apps/dashboardviews/pkg/apis/dashboardviews/v0alpha1"
@@ -46,8 +48,21 @@ func requesterWithNoPermissions() context.Context {
 	})
 }
 
+// newTestAuthorizer's dashboard service always reports the dashboard as existing -- every test
+// exercising BeforeCreate (other than TestCheckDashboardExists, which sets up its own) cares about
+// permission behavior, not existence, so this keeps them unaffected by that separate check.
 func newTestAuthorizer() *savedViewStorageAuthorizer {
-	return &savedViewStorageAuthorizer{ac: acimpl.ProvideAccessControl(nil)}
+	return newTestAuthorizerWithDashboardService(fakeDashboardServiceAlwaysFound())
+}
+
+func newTestAuthorizerWithDashboardService(svc dashboards.DashboardService) *savedViewStorageAuthorizer {
+	return &savedViewStorageAuthorizer{ac: acimpl.ProvideAccessControl(nil), dashboardSvc: svc}
+}
+
+func fakeDashboardServiceAlwaysFound() *dashboards.FakeDashboardService {
+	svc := &dashboards.FakeDashboardService{}
+	svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
+	return svc
 }
 
 func viewWithDashboardUID(uid string) *dashboardviewsv0alpha1.SavedDashboardView {
@@ -125,6 +140,38 @@ func TestBeforeCreateUpdateDeleteAfterGet(t *testing.T) {
 		// New object accessible, old one is not — still denied, since both must pass.
 		err = authz.BeforeUpdate(allowedCtx, viewWithDashboardUID("some-other-dash"), viewWithDashboardUID(testDashboardUID))
 		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
+	})
+}
+
+func TestCheckDashboardExists(t *testing.T) {
+	allowedCtx := requesterWithDashboardRead(testDashboardUID)
+
+	t.Run("create succeeds when the dashboard resolves", func(t *testing.T) {
+		authz := newTestAuthorizer() // always-found fake
+		require.NoError(t, authz.BeforeCreate(allowedCtx, viewWithDashboardUID(testDashboardUID)))
+	})
+
+	t.Run("create is denied when a caller with a wildcard grant names a nonexistent dashboard", func(t *testing.T) {
+		svc := &dashboards.FakeDashboardService{}
+		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, dashboards.ErrDashboardNotFound)
+		authz := newTestAuthorizerWithDashboardService(svc)
+
+		// A wildcard-style grant would pass checkAccess's Evaluate without ever resolving a real
+		// dashboard -- requesterWithDashboardRead grants a direct scope on this exact UID, which is
+		// enough to reach checkDashboardExists regardless of how broad the grant actually is.
+		err := authz.BeforeCreate(allowedCtx, viewWithDashboardUID(testDashboardUID))
+		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
+	})
+
+	t.Run("does not affect update/delete/get, which never repeat this check", func(t *testing.T) {
+		svc := &dashboards.FakeDashboardService{}
+		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, errors.New("dashboard service unreachable"))
+		authz := newTestAuthorizerWithDashboardService(svc)
+
+		require.NoError(t, authz.BeforeUpdate(allowedCtx, viewWithDashboardUID(testDashboardUID), viewWithDashboardUID(testDashboardUID)))
+		require.NoError(t, authz.BeforeDelete(allowedCtx, viewWithDashboardUID(testDashboardUID)))
+		require.NoError(t, authz.AfterGet(allowedCtx, viewWithDashboardUID(testDashboardUID)))
+		svc.AssertNotCalled(t, "GetDashboard", mock.Anything, mock.Anything)
 	})
 }
 

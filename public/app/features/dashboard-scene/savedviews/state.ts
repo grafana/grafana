@@ -104,7 +104,12 @@ function applyVariables(dashboard: DashboardScene, variables: SavedViewVariable[
 
 function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
   if (target instanceof AdHocFiltersVariable && saved.filters) {
-    target.setState({ filters: saved.filters });
+    // updateFilters, not a raw setState: it also publishes SceneVariableValueChangedEvent when the
+    // filter expression/groupBy actually changed, which is what dependent panels/repeats/
+    // interpolated content listen for. A raw setState updates the filter-chip UI (reads
+    // state.filters directly) but leaves dependents silently showing data from the previous
+    // filters until an unrelated refresh.
+    target.updateFilters(saved.filters);
     return;
   }
   if (target instanceof MultiValueVariable && saved.value !== undefined) {

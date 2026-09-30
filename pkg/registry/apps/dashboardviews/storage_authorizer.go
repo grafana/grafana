@@ -19,7 +19,7 @@ import (
 // real, per-object check lives, because it's the earliest point in the request path that has both the
 // object body (for spec.dashboardUID) and the caller's identity.
 func (a *AppInstaller) GetNamespaceScopedStorageAuthorizer(_ schema.GroupResource) storewrapper.ResourceStorageAuthorizer {
-	return &savedViewStorageAuthorizer{ac: a.ac}
+	return &savedViewStorageAuthorizer{ac: a.ac, dashboardSvc: a.dashboardSvc}
 }
 
 // savedViewStorageAuthorizer gates every verb on the same check: the dashboard's existing View
@@ -27,11 +27,15 @@ func (a *AppInstaller) GetNamespaceScopedStorageAuthorizer(_ schema.GroupResourc
 // deliberate — any viewer, not just an editor, can list/apply/save/rename/overwrite/delete a dashboard's
 // Saved Views (spec section 2.2).
 type savedViewStorageAuthorizer struct {
-	ac accesscontrol.AccessControl
+	ac           accesscontrol.AccessControl
+	dashboardSvc dashboards.DashboardService
 }
 
 func (s *savedViewStorageAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
-	return s.checkAccess(ctx, obj)
+	if err := s.checkAccess(ctx, obj); err != nil {
+		return err
+	}
+	return s.checkDashboardExists(ctx, obj)
 }
 
 func (s *savedViewStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
@@ -104,6 +108,34 @@ func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtim
 		return err
 	}
 	if !allowed {
+		return storewrapper.ErrUnauthorized
+	}
+	return nil
+}
+
+// checkDashboardExists confirms spec.dashboardUID actually identifies a real dashboard, only on
+// create. checkAccess alone can't establish this: a caller with a wildcard dashboards:read scope
+// passes Evaluate without ever resolving a specific dashboard, so without this a create for a
+// deleted or made-up UID would otherwise succeed and become visible again if that UID is later
+// reused (dashboard restored, or newly created with the same UID). Update/delete/get/list all
+// operate on a record that already passed this check once, at create time, so they don't repeat it.
+// Returns the same ErrUnauthorized as a denied permission, rather than a distinct not-found, so this
+// doesn't become an oracle for guessing which dashboard UIDs exist.
+func (s *savedViewStorageAuthorizer) checkDashboardExists(ctx context.Context, obj runtime.Object) error {
+	view, ok := obj.(*dashboardviewsv0alpha1.SavedDashboardView)
+	if !ok {
+		return storewrapper.ErrUnexpectedType
+	}
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return storewrapper.ErrUnauthenticated
+	}
+
+	if _, err := s.dashboardSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		UID:   view.Spec.DashboardUID,
+		OrgID: requester.GetOrgID(),
+	}); err != nil {
 		return storewrapper.ErrUnauthorized
 	}
 	return nil

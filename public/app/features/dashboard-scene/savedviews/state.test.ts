@@ -1,5 +1,11 @@
 import { type AdHocVariableFilter } from '@grafana/data';
-import { AdHocFiltersVariable, QueryVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  QueryVariable,
+  SceneTimeRange,
+  SceneVariableSet,
+  SceneVariableValueChangedEvent,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -70,6 +76,29 @@ describe('applySavedViewState', () => {
     if (env instanceof QueryVariable) {
       expect(env.state.value).toBe('prod');
     }
+  });
+
+  it('publishes SceneVariableValueChangedEvent when applying a changed ad-hoc filter', () => {
+    // Regression test: a plain setState({ filters }) updates the filter-chip UI (which reads
+    // state.filters directly) but never notifies dependent panels/repeats/interpolated content,
+    // which listen for this event to know they need to re-run. updateFilters() is the API that
+    // publishes it -- that's what this pins.
+    const scene = buildScene({ adhocFilters: [{ key: 'host', operator: '=', value: 'a' }] });
+    const adhoc = scene.state.$variables?.getByName('adhocFilter');
+    if (!(adhoc instanceof AdHocFiltersVariable)) {
+      throw new Error('expected an AdHocFiltersVariable');
+    }
+    const onChanged = jest.fn();
+    adhoc.subscribeToEvent(SceneVariableValueChangedEvent, onChanged);
+
+    applySavedViewState(scene, {
+      dashboardUID: 'dash-1',
+      name: '',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [{ name: 'adhocFilter', type: 'adhoc', filters: [{ key: 'host', operator: '=', value: 'b' }] }],
+    });
+
+    expect(onChanged).toHaveBeenCalledTimes(1);
   });
 
   it('round-trips through capture → apply → capture unchanged', () => {
