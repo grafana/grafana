@@ -22,7 +22,7 @@ aliases:
 
 {{< admonition type="note" >}}
 
-Git Sync only manages dashboards and folders. Alerts, data sources, and library panels are **not** supported yet.
+At the moment Git Sync only manages dashboards and folders. Alerts, data sources, and library panels are **not** supported yet.
 
 To migrate your existing dashboards, refer to [Migrate existing dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/add-resources/dashboards-migrate).
 

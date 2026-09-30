@@ -28,7 +28,7 @@ Git Sync functionalities are constantly evolving. [Contact Grafana](https://graf
 
 {{< /admonition >}}
 
-Git Sync currently only manages dashboards and folders. Alerts, data sources, and library panels are **not** supported yet. If you want to sync existing, non-provisioned resources, you have two options:
+At the moment Git Sync only manages dashboards and folders. Alerts, data sources, and library panels are **not** supported yet. If you want to sync existing, non-provisioned resources, you have two options:
 
 - [Cherry-pick and copy individual dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/add-resources/dashboards-copy): Add a copy of a selected dashboard to a provisioned folder. Grafana creates a **new** dashboard with a **new UID**; the original is left untouched and existing links keep pointing to it.
   - This is the simplest option and doesn't require deleting anything.
