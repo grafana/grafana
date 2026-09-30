@@ -32,6 +32,8 @@ interface CommonProps {
    * everything else.
    */
   onTitleChange?: (title: string) => void;
+  /** Background for the sticky controls row */
+  controlsBackground?: string;
 }
 
 /** A notebook that exists. Its autosave writes edits straight through to the resource. */
@@ -91,15 +93,19 @@ export function NotebookView(props: NotebookViewProps) {
     return null;
   }
 
-  return props.uid !== undefined ? (
-    <SavedNotebookView uid={props.uid} onTitleChange={props.onTitleChange} />
-  ) : (
-    <DraftNotebookView
-      spec={props.spec}
-      onChange={props.onChange}
-      onDirtyChange={props.onDirtyChange}
-      onTitleChange={props.onTitleChange}
-    />
+  return (
+    <NotebookEmbeddedHost controlsBackground={props.controlsBackground}>
+      {props.uid !== undefined ? (
+        <SavedNotebookView uid={props.uid} onTitleChange={props.onTitleChange} />
+      ) : (
+        <DraftNotebookView
+          spec={props.spec}
+          onChange={props.onChange}
+          onDirtyChange={props.onDirtyChange}
+          onTitleChange={props.onTitleChange}
+        />
+      )}
+    </NotebookEmbeddedHost>
   );
 }
 
@@ -260,16 +266,7 @@ function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTi
     onTitleChange?.(title);
   }, [onTitleChange, title]);
 
-  /**
-   * Wrapped rather than flagged on the scene: this tree has no app header, but the same scene may
-   * also be mounted on /notebooks, which does, and the two share one object so they share one
-   * autosave. Only the tree can answer per mount.
-   */
-  return (
-    <NotebookEmbeddedHost>
-      <scene.Component model={scene} />
-    </NotebookEmbeddedHost>
-  );
+  return <scene.Component model={scene} />;
 }
 
 /**
