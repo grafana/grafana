@@ -144,7 +144,7 @@ func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClient
 	} else {
 		exchangeOpts := []authnlib.ExchangeClientOpts{}
 		if cfg.AllowInsecure {
-			exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
+			exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS13, InsecureSkipVerify: true}}}))
 		}
 		client, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 			Token:            cfg.Token,
