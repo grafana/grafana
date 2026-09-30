@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
@@ -440,7 +441,7 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
           usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground
         )}
         style={{ top: stickyOffset, background: hostConfig.controlsBackground }}
-        data-testid="notebook-controls"
+        data-testid={selectors.pages.Notebooks.Item.controls}
       >
         {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has to
             be visible and retryable there too. This renders nothing until there is something to say. */}

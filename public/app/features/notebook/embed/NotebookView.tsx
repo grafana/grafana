@@ -93,24 +93,23 @@ export function NotebookView(props: NotebookViewProps) {
     return null;
   }
 
-  return props.uid !== undefined ? (
-    <SavedNotebookView
-      uid={props.uid}
-      onTitleChange={props.onTitleChange}
-      controlsBackground={props.controlsBackground}
-    />
-  ) : (
-    <DraftNotebookView
-      spec={props.spec}
-      onChange={props.onChange}
-      onDirtyChange={props.onDirtyChange}
-      onTitleChange={props.onTitleChange}
-      controlsBackground={props.controlsBackground}
-    />
+  return (
+    <NotebookEmbeddedHost controlsBackground={props.controlsBackground}>
+      {props.uid !== undefined ? (
+        <SavedNotebookView uid={props.uid} onTitleChange={props.onTitleChange} />
+      ) : (
+        <DraftNotebookView
+          spec={props.spec}
+          onChange={props.onChange}
+          onDirtyChange={props.onDirtyChange}
+          onTitleChange={props.onTitleChange}
+        />
+      )}
+    </NotebookEmbeddedHost>
   );
 }
 
-function SavedNotebookView({ uid, onTitleChange, controlsBackground }: SavedNotebookViewProps) {
+function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
   // Per instance, not the module singleton: the singleton holds one scene for the whole app, so an
   // embedded notebook would evict whatever the notebooks route had open and be evicted by it in
   // turn. The cost is that this instance's scene is not shared with the route's.
@@ -129,16 +128,10 @@ function SavedNotebookView({ uid, onTitleChange, controlsBackground }: SavedNote
     return loadError ? <NotebookViewError error={loadError} /> : <Centered>{isLoading && <PageLoader />}</Centered>;
   }
 
-  return <NotebookDocument scene={scene} onTitleChange={onTitleChange} controlsBackground={controlsBackground} />;
+  return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
 }
 
-function DraftNotebookView({
-  spec,
-  onChange,
-  onDirtyChange,
-  onTitleChange,
-  controlsBackground,
-}: DraftNotebookViewProps) {
+function DraftNotebookView({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
   /**
    * Built once, from the first spec. The prop is the document's starting point, not a live mirror of
    * it: rebuilding whenever the host echoed an edited spec back would throw away the caret, the undo
@@ -155,7 +148,7 @@ function DraftNotebookView({
 
   useNotebookDraftChanges(scene, onChange, onDirtyChange);
 
-  return <NotebookDocument scene={scene} onTitleChange={onTitleChange} controlsBackground={controlsBackground} />;
+  return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
 }
 
 /**
@@ -264,15 +257,7 @@ function useNotebookDraftChanges(
   }, [scene, Boolean(onChange)]);
 }
 
-function NotebookDocument({
-  scene,
-  onTitleChange,
-  controlsBackground,
-}: {
-  scene: NotebookScene;
-  onTitleChange?: (title: string) => void;
-  controlsBackground?: string;
-}) {
+function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTitleChange?: (title: string) => void }) {
   const { title } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
@@ -281,16 +266,7 @@ function NotebookDocument({
     onTitleChange?.(title);
   }, [onTitleChange, title]);
 
-  /**
-   * Wrapped rather than flagged on the scene: this tree has no app header, but the same scene may
-   * also be mounted on /notebooks, which does, and the two share one object so they share one
-   * autosave. Only the tree can answer per mount.
-   */
-  return (
-    <NotebookEmbeddedHost controlsBackground={controlsBackground}>
-      <scene.Component model={scene} />
-    </NotebookEmbeddedHost>
-  );
+  return <scene.Component model={scene} />;
 }
 
 /**
