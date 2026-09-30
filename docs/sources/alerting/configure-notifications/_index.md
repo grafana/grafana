@@ -13,47 +13,6 @@ labels:
 menuTitle: Configure notifications
 title: Configure notifications
 weight: 125
-refs:
-  intro-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
-  configure-contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
-  configure-notification-policies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/
-  configure-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
-  configure-silences:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
-  configure-mute-timings:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
-  configure-inhibition-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/inhibition-rules/
-  view-notification-history:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-notification-history/
 ---
 
 # Configure notifications
@@ -67,17 +26,17 @@ By default, Grafana Alerting provides default notification messages with relevan
 
 {{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="In the alert rule, you can configure alert forwarding directly to a contact point or through notification policies" >}}
 
-Notification setup is essential for an effective alerting system to scale across multiple teams and services. For a quick overview about the various components involved in handling notifications, refer to the [introduction about notifications](ref:intro-notifications).
+Notification setup is essential for an effective alerting system to scale across multiple teams and services. For a quick overview about the various components involved in handling notifications, refer to the [introduction about notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/).
 
 The topics in this section include step-by-step instructions for:
 
-- [Configuring contact points](ref:configure-contact-points) to specify where to receive alert notifications.
-- [Configuring notification policies](ref:configure-notification-policies) to determine how alerts are routed to contact points.
-- [Templating notifications](ref:configure-templates) to customize notification messages.
-- [Configuring silences](ref:configure-silences) or [mute timings](ref:configure-mute-timings) to stop notifications.
-- [Configuring inhibition rules](ref:configure-inhibition-rules) to suppress notifications for dependent alerts when a root-cause alert is already firing.
+- [Configuring contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) to specify where to receive alert notifications.
+- [Configuring notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/) to determine how alerts are routed to contact points.
+- [Templating notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) to customize notification messages.
+- [Configuring silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/) or [mute timings](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/) to stop notifications.
+- [Configuring inhibition rules](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/) to suppress notifications for dependent alerts when a root-cause alert is already firing.
 
-After you configure notifications, you can refer to [View notification history](ref:view-notification-history) to confirm delivery and troubleshoot failed notifications.
+After you configure notifications, you can refer to [View notification history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/) to confirm delivery and troubleshoot failed notifications.
 
 ## Alertmanager architecture
 

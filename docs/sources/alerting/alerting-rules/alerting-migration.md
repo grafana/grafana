@@ -11,25 +11,6 @@ labels:
 title: Import data source-managed rules to Grafana-managed rules
 menuTitle: Import to Grafana-managed rules
 weight: 300
-refs:
-  configure-grafana-rule_query_offset:
-    - pattern: /docs/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#rule_query_offset
-  evaluation-strategies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/
-  missing_series_evaluations_to_resolve:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve
-  configure-recording-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
 ---
 
 # Import data source-managed rules to Grafana-managed rules
@@ -63,7 +44,7 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
   A query offset is applied to each rule. For example, an offset of `1m` adjusts the query's time range to `To: now-1m`.
 
-  The rule query offset is taken from the `query_offset` value in the rule group configuration. If empty, it defaults to the [`rule_query_offset` configuration setting](ref:configure-grafana-rule_query_offset), which is `1m` by default.
+  The rule query offset is taken from the `query_offset` value in the rule group configuration. If empty, it defaults to the [`rule_query_offset` configuration setting](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#rule_query_offset), which is `1m` by default.
 
 - **Rule query conversion**
 
@@ -71,7 +52,7 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
 - **Missing series evaluations to resolve**
 
-  The [Missing series evaluations to resolve](ref:missing_series_evaluations_to_resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
+  The [Missing series evaluations to resolve](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
 
 - **Rule group labels**
 
@@ -79,7 +60,7 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
 - **Sequential evaluation**
 
-  Imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. This differs from native Grafana-managed alert rules, where the evaluation order is not enforced. For more details, refer to [evaluation strategies](ref:evaluation-strategies).
+  Imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. This differs from native Grafana-managed alert rules, where the evaluation order is not enforced. For more details, refer to [evaluation strategies](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/).
 
 - **Feature compatibility**
 

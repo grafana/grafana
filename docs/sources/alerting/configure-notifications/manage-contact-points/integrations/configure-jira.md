@@ -14,12 +14,6 @@ labels:
 menuTitle: Jira
 title: Configure Jira for Alerting
 weight: 121
-refs:
-  configure-contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
 ---
 
 # Configure Jira for Alerting
@@ -45,18 +39,18 @@ To create a contact point with a Jira integration, complete the following steps:
 5. Set up the required [settings](#required-settings) for your Jira configuration.
 6. Click **Save contact point**.
 
-For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](ref:configure-contact-points).
+For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/).
 
 ### Required Settings
 
-| Key                 | Description                                                                                                                                                                                                                            |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| URL                 | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`). This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud.     |
-| Basic Auth User     | Username for authentication. For Jira Cloud, use your email address.                                                                                                                                                                   |
-| Basic Auth Password | Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens) and use it as the password.                                                        |
-| API Token           | An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information. |
-| Project Key         | The project key identifying the project where issues will be created. Project keys are unique identifiers for a project.                                                                                                               |
-| Issue Type          | The type of issue to create (e.g., `Task`, `Bug`, `Incident`). Make sure that you specify a type that is available in your project.                                                                                                    |
+| Key                 | Description                                                                                                                                                                                                                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| URL                 | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`). This field is [protected](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) from modification in Grafana Cloud. |
+| Basic Auth User     | Username for authentication. For Jira Cloud, use your email address.                                                                                                                                                                                                                          |
+| Basic Auth Password | Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens) and use it as the password.                                                                                                               |
+| API Token           | An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information.                                                        |
+| Project Key         | The project key identifying the project where issues will be created. Project keys are unique identifiers for a project.                                                                                                                                                                      |
+| Issue Type          | The type of issue to create (e.g., `Task`, `Bug`, `Incident`). Make sure that you specify a type that is available in your project.                                                                                                                                                           |
 
 ### Optional Settings
 
