@@ -12,6 +12,8 @@ import (
 
 const maxErrorLength = 256
 
+const unsupportedForkMessage = "Grafana doesn't currently support previews for pull requests from forks."
+
 type commenter struct {
 	templateDashboard        *template.Template
 	templateTable            *template.Template
@@ -19,10 +21,12 @@ type commenter struct {
 	templateFooter           *template.Template
 	templateValidationErrors *template.Template
 	templateMetadataNotice   *template.Template
+	templateUnsupportedFork  *template.Template
 	showImageRendererNote    bool
+	urls                     URLProvider
 }
 
-func NewCommenter(showImageRendererNote bool) Commenter {
+func NewCommenter(showImageRendererNote bool, urls URLProvider) Commenter {
 	return &commenter{
 		templateDashboard:        template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
 		templateTable:            template.Must(template.New("table").Parse(commentTemplateTable)),
@@ -30,11 +34,22 @@ func NewCommenter(showImageRendererNote bool) Commenter {
 		templateFooter:           template.Must(template.New("footer").Parse(commentTemplateFooter)),
 		templateValidationErrors: template.Must(template.New("errors").Parse(commentTemplateValidationErrors)),
 		templateMetadataNotice:   template.Must(template.New("metadata").Parse(commentTemplateMetadataNotice)),
+		templateUnsupportedFork:  template.Must(template.New("unsupported-fork").Parse(commentTemplateUnsupportedFork)),
 		showImageRendererNote:    showImageRendererNote,
+		urls:                     urls,
 	}
 }
 
 func (c *commenter) Comment(ctx context.Context, prRepo repository.PullRequestRepo, pr int, info changeInfo) error {
+	if info.UnsupportedFork {
+		// Fork jobs skip evaluation, which normally supplies the comment's attribution.
+		cfg := prRepo.Config()
+		info.GrafanaBaseURL = c.urls.Internal(ctx, cfg.Namespace)
+		info.RepositoryName = cfg.Name
+		info.RepositoryTitle = cfg.Spec.Title
+		info.RepositoryAdminURL = repositoryAdminURL(info.GrafanaBaseURL, cfg.Name, orgIDForLinks(cfg.Namespace))
+	}
+
 	comment, err := c.generateComment(ctx, info)
 	if err != nil {
 		return fmt.Errorf("unable to generate comment text: %w", err)
@@ -51,7 +66,11 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	var buf bytes.Buffer
 
 	// TODO: should we comment even if there are no changes?
-	if len(info.Changes) == 0 {
+	if info.UnsupportedFork {
+		if err := c.templateUnsupportedFork.Execute(&buf, info); err != nil {
+			return "", fmt.Errorf("unable to execute unsupported fork template: %w", err)
+		}
+	} else if len(info.Changes) == 0 {
 		buf.WriteString("Grafana didn't find any changes in this pull request.")
 	} else if len(info.Changes) == 1 && info.Changes[0].Parsed != nil && info.Changes[0].Parsed.GVK.Kind == dashboardKind {
 		if err := c.templateDashboard.Execute(&buf, &info.Changes[0]); err != nil {
@@ -90,6 +109,8 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	}
 	return result, nil
 }
+
+const commentTemplateUnsupportedFork = "ℹ️ **Pull request preview skipped**\n\n" + unsupportedForkMessage
 
 const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{.SafeTitle}}**]({{.SourceURL}}){{else}}**{{.SafeTitle}}**{{end}}{{end -}}
 📊 Grafana detected dashboard changes in this pull request.

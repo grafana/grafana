@@ -104,6 +104,7 @@ func TestPullRequestWorker_Process_NotReaderRepository(t *testing.T) {
 }
 
 func TestPullRequestWorker_Process(t *testing.T) {
+	fork, sameRepo := true, false
 	tests := []struct {
 		name          string
 		opts          *provisioning.PullRequestJobOptions
@@ -125,6 +126,32 @@ func TestPullRequestWorker_Process(t *testing.T) {
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 			},
 			expectedError: "missing spec.ref",
+		},
+		{
+			name: "fork posts unsupported notice without reading or evaluating files",
+			opts: &provisioning.PullRequestJobOptions{PR: 123, Ref: "contributor-branch", Hash: "unavailable-sha", IsFork: &fork},
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+				commenter.On("Comment", mock.Anything, *repo, 123, changeInfo{UnsupportedFork: true}).Return(nil).Once()
+				progress.On("SetFinalMessage", mock.Anything, "Grafana doesn't currently support previews for pull requests from forks.").Return().Once()
+			},
+		},
+		{
+			name: "fork comment failure is surfaced",
+			opts: &provisioning.PullRequestJobOptions{PR: 123, Ref: "contributor-branch", IsFork: &fork},
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+				commenter.On("Comment", mock.Anything, *repo, 123, changeInfo{UnsupportedFork: true}).Return(errors.New("comment unavailable")).Once()
+			},
+			expectedError: "comment pull request: comment unavailable",
+		},
+		{
+			name: "same-repository PR keeps branch-based comparison even with a head hash",
+			opts: &provisioning.PullRequestJobOptions{PR: 123, Ref: "test-ref", Hash: "abcdef0123456789abcdef0123456789abcdef01", IsFork: &sameRepo},
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
+				repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return([]repository.VersionedFileChange{}, nil)
+				progress.On("SetFinalMessage", mock.Anything, "no files to process").Return()
+			},
 		},
 		{
 			name: "failed to list pull request files",
