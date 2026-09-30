@@ -30,7 +30,7 @@ export function GitSyncLimitationsAlert({ syncTarget }: GitSyncLimitationsAlertP
       <Stack direction="column" gap={2}>
         <Text>
           <Trans i18nKey="provisioning.wizard.alert-intro">
-            Please be aware of the following limitations. For more details, see the{' '}
+            Understand Git Sync usage and resource limitations. For more details, refer to the{' '}
             <TextLink external href={GIT_SYNC_DOCS_URL}>
               Git Sync documentation
             </TextLink>
@@ -40,12 +40,12 @@ export function GitSyncLimitationsAlert({ syncTarget }: GitSyncLimitationsAlertP
         <ul style={{ marginLeft: '16px', marginTop: 0, marginBottom: 0 }}>
           <li>
             <Trans i18nKey="provisioning.wizard.alert-point-1">
-              Resources can still be created, edited, or deleted during this process, but changes may not be exported.
+              You can still create, edit, or delete resources during this process, but changes may not be exported.
             </Trans>
           </li>
           <li>
             <Trans i18nKey="provisioning.wizard.alert-point-unsupported">
-              Alerts and library panels are not supported in provisioned folders.
+              Alerts and library panels are not supported in folders provisioned with Git Sync.
             </Trans>
           </li>
           {!provisioningFolderMetadataEnabled && (
@@ -64,7 +64,7 @@ export function GitSyncLimitationsAlert({ syncTarget }: GitSyncLimitationsAlertP
           {syncTarget === 'instance' && (
             <li>
               <Trans i18nKey="provisioning.wizard.alert-point-instance-alerts">
-                Existing alerts and library panels will be lost and will not be usable after migration.
+                Existing alerts and library panels will not be migrated to folders provisioned with Git Sync. Back them up to use them after migration.
               </Trans>
             </li>
           )}
@@ -72,14 +72,16 @@ export function GitSyncLimitationsAlert({ syncTarget }: GitSyncLimitationsAlertP
             <>
               <li>
                 <Trans i18nKey="provisioning.wizard.alert-point-folder-structure">
-                  When migrating existing dashboards, the folder structure will be replicated in the repository.
-                  Original folders will be emptied of dashboards but may still contain alerts or library panels.
+                  When you migrate non-provisioned resources, Git Sync replicates the original folder structure in the provisioned repository and moves all dashboards.
+                  However, other resources such as alerts or library panels will remain in the original folders.
                 </Trans>
               </li>
               <li>
                 <Trans i18nKey="provisioning.wizard.alert-point-folder-cleanup">
-                  You may need to manually remove or manage original folders after migration.
-                </Trans>
+                  You may need to manually manage or remove original folders after migration. For more details, refer to the{' '}
+                    <TextLink external href={GIT_SYNC_DOCS_URL}>
+                    Git Sync documentation
+                    </TextLink>                
               </li>
             </>
           )}
