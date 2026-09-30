@@ -3,11 +3,7 @@ import { test, expect } from './fixture';
 test.use({
   featureToggles: {
     cujTracking: true,
-  },
-  openFeature: {
-    flags: {
-      dashboardNewLayouts: false,
-    },
+    dashboardNewLayouts: false,
   },
 });
 

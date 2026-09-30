@@ -75,16 +75,8 @@ function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
 }
 
 describe('DashboardControls', () => {
-  beforeEach(() => {
+  afterEach(() => {
     setTestFlags({});
-  });
-
-  afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   describe('Given a standard scene', () => {

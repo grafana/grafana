@@ -1,8 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
-
 import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 
 import {
@@ -13,6 +11,7 @@ import {
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 // Mock the config to provide datasource information
 jest.mock('@grafana/runtime', () => {
@@ -82,7 +81,6 @@ jest.mock('@grafana/runtime', () => {
       },
     },
     featureToggles: {
-      dashboardNewLayouts: true,
       unifiedAlertingEnabled: true,
       scopeFilters: false,
       reloadDashboardsOnParamsChange: false,
@@ -100,8 +98,6 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-setTestFlags({ dashboardNewLayouts: true });
-
 /*
  * V1 to V2 Dashboard Transformation Comparison Test
  *
@@ -112,11 +108,15 @@ setTestFlags({ dashboardNewLayouts: true });
 
 describe('V1 to V2 Dashboard Transformation Comparison', () => {
   beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
     jest.clearAllMocks();
 
     // Mock console methods to avoid test failures from expected warnings
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    setTestFlags({});
   });
 
   const inputDir = path.join(

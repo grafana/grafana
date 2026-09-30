@@ -118,6 +118,7 @@ jest.mock('@grafana/runtime', () => {
 
 describe('V1 to V2 Dashboard Transformation Comparison (ResponseTransformers)', () => {
   beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
     jest.clearAllMocks();
 
     // Mock console methods to avoid test failures from expected warnings
@@ -176,8 +177,6 @@ describe('V1 to V2 Dashboard Transformation Comparison (ResponseTransformers)', 
 
       const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
       expect(backendOutput.apiVersion).toBe(LATEST_API_VERSION);
-
-      setTestFlags({ dashboardNewLayouts: true });
 
       // Backend path: Load backend output into Scene, then serialize back to v2beta1
       // This normalizes the backend output through the same Scene

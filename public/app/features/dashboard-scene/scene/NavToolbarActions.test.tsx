@@ -321,10 +321,6 @@ function setup(meta?: DashboardMeta, editable?: boolean) {
 }
 
 describe('when previewing an unbuilt dashboard plan', () => {
-  beforeEach(() => {
-    setTestFlags({ dashboardNewLayouts: true });
-  });
-
   afterEach(() => {
     setTestFlags({});
   });
@@ -371,6 +367,7 @@ describe('when previewing an unbuilt dashboard plan', () => {
   }
 
   it.each([true, false])('offers only Build and Dismiss (dashboardNewLayouts=%s)', async (newLayouts) => {
+    setTestFlags({ dashboardNewLayouts: newLayouts });
     setupPlanning();
 
     expect(await screen.findByText('Kafka overview')).toBeInTheDocument();
