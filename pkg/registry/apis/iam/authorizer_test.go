@@ -548,11 +548,21 @@ func TestSSOSettingAuthorizerIdentityGuards(t *testing.T) {
 
 	t.Run("nameless list allowed for authenticated caller without Check", func(t *testing.T) {
 		checkCalled := false
-		ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser})
 		decision, _, err := newAuth(&checkCalled).Authorize(ctx, ssoSettingAttr("list", ""))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionAllow, decision)
 		assert.False(t, checkCalled, "nameless list must not Check; filtered per-item downstream")
+	})
+
+	t.Run("nameless list denied for anonymous without Check", func(t *testing.T) {
+		checkCalled := false
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeAnonymous})
+		decision, reason, err := newAuth(&checkCalled).Authorize(ctx, ssoSettingAttr("list", ""))
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionDeny, decision)
+		assert.Equal(t, "anonymous identities cannot access ssosettings", reason)
+		assert.False(t, checkCalled)
 	})
 
 	t.Run("nameless list denied without identity", func(t *testing.T) {
