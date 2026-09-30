@@ -13132,6 +13132,12 @@
       "query": {
         "add": "新增查詢",
         "run": "執行查詢"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13215,7 +13221,9 @@
       "redo-action": "重做：{{action}}",
       "remove-query": "移除查詢",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "選取查詢項目",
+      "set-cell-time-range": "",
       "split-block": "分割區塊",
       "switch-datasource": "切換資料來源",
       "undo": "還原",
@@ -15741,8 +15749,7 @@
       "deleted-by-removed": "已刪除的帳戶",
       "deleted-by-unknown-short": "<0></0> 不明",
       "deleted-by-unknown-tooltip": "無法查詢刪除此儀表板的帳戶",
-      "deleted-less-than-1-min": "< 1 分鐘",
-      "deleted-remaining-header": "剩餘時間",
+      "deleted-header": "",
       "location-header": "位置",
       "name-header": "名稱",
       "tags-header": "標籤",
