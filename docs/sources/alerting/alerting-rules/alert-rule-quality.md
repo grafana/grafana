@@ -80,7 +80,7 @@ A single quality policy applies to Grafana-managed alert rules across folders in
 Data source-managed alert rules and recording rules are excluded.
 
 Alert Advisor reports a finding when a required label or annotation is missing, empty, or contains only whitespace.
-These checks validate presence, not content.
+The checks do not validate the content itself, they only check for the presence of a particular field.
 For example, requiring a runbook URL doesn't check whether the link works.
 
 ### Detection and enforcement
@@ -97,15 +97,12 @@ Enabling enforcement doesn't stop existing rules from evaluating or sending noti
 
 ### Supported enforcement paths
 
-Enforcement applies to provisioned rules created or updated through Terraform, `kubectl`, or the Alerting provisioning HTTP API, with the following exceptions:
+Enforcement applies to provisioned rules created or updated through Terraform and the Alerting provisioning HTTP API, with the following exceptions:
 
 - Provisioning API requests that set the `X-Disable-Provenance` header, including Terraform `grafana_rule_group` resources with `disable_provenance = true`, aren't enforced.
 - `kubectl` writes are enforced only when the manifest sets `grafana.app/managedBy` to `kubectl` or `terraform` together with a non-empty `grafana.app/managerId`, or sets `grafana.com/provenance` to `api`.
 
 Writes from the Grafana rule editor aren't enforced, but the resulting rules can still have quality findings.
-File provisioning is also excluded from enforcement.
-
-If Grafana can't read the policy, it allows the write to proceed without enforcing quality requirements.
 
 ## Configure a quality policy
 
@@ -115,24 +112,23 @@ The following example requires a runbook URL and a `team` label.
 To configure a quality policy, follow these steps:
 
 1. Go to **Alerting** > **Settings** and select **Alert rule quality**.
-1. Under **Required annotations**, turn on **Runbook URL**.
+2. Under **Required annotations**, turn on **Runbook URL**.
 
    You can also require **Summary** and **Description**.
 
-1. Under **Required labels**, enter `team` in **Label keys** and select the matching option.
+3. Under **Required labels**, enter `team` in **Label keys** and select the matching option.
 
    You can select keys already used by your rules or add a new key.
 
-1. Keep **Enforce** off for the requirements you add.
+4. Keep **Enforce** off for the requirements you add.
 
    New requirements start in detect-only mode.
 
-1. Click **Save**.
+5. Click **Save**.
 
    Grafana displays **Policy saved** to confirm the change.
 
 The saved policy identifies rules with missing or empty `runbook_url` annotations or `team` labels.
-Continue to [Review alert quality](#review-alert-quality) to inspect the findings.
 
 A policy with no required annotations or labels checks nothing.
 
@@ -143,13 +139,10 @@ In Alert Advisor, the **Alert quality** tab lists rules that don't meet your pol
 To review the findings, follow these steps:
 
 1. Go to **Alerting** > **Alert rules** and select **Alert quality**.
-1. Review the **Alert quality score** and the number of rules that need attention.
-1. Inspect the missing-field badges on each rule.
+2. Review the **Alert quality score** and the number of rules that need attention.
+3. Inspect the missing annotations and labels in the **Findings** list.
 
-   Each badge names the missing field and its mode, for example **Runbook URL · Enforced** or **Runbook URL · Detect-only**.
-   The list shows rules with the most missing fields first.
-
-1. Use **Search** to narrow the list by rule name, folder, group, or label.
+Each missing field appears as a badge. To check whether a requirement is enforced or detect-only, hover over its badge.
 
 ### Understand the score
 
@@ -157,31 +150,11 @@ The score represents the proportion of assessed rules that meet every configured
 For example, if 8 of 10 rules meet the policy, the score is 8.0.
 Grafana rounds the score to one decimal place.
 
-Both detect-only and enforced requirements count toward the score.
-The score measures compliance with your policy, not alert accuracy, severity, or noise.
+The score measures compliance with your policy, not alert accuracy, severity, or noise. Both detect-only and enforced requirements count toward the score.
 
 Your permissions determine which rules you can view and assess.
-Search filters change the findings list, not the score or the total rule count.
+Search filters change the findings' list, not the score or the total rule count.
 Grafana also displays 10.0 when there are no rules to assess, so check the rule count alongside the score.
-
-If no requirements are configured, Grafana displays a message instead of a score.
-With a configured policy and no findings, Grafana displays a score of 10.0 and a completion message.
-
-### Filter the findings
-
-Enter a rule name in **Search**, or use the following filters:
-
-| Example               | Finds                                                    |
-| --------------------- | -------------------------------------------------------- |
-| `rule:cpu`            | Rules with names that contain `cpu`, regardless of case. |
-| `namespace:Platform`  | Rules in the top-level folder `Platform`.                |
-| `group:production`    | Rules in the evaluation group named `production`.        |
-| `label:team=platform` | Rules with a `team` label set to `platform`.             |
-
-Combine filters to narrow the results further.
-Use quotes around values containing spaces, such as `namespace:"Platform alerts"`.
-Label filters match labels already on the rule, not missing label requirements.
-The `namespace` filter requires the full folder path, such as `namespace:Parent/Platform` for a nested folder, and is case-sensitive.
 
 ## Resolve quality findings
 
@@ -198,9 +171,9 @@ For provisioned rules, make changes in the source configuration so they remain p
 To resolve a finding on a provisioned rule, follow these steps:
 
 1. Locate the rule in its source configuration, using the rule name, folder, and group shown in **Alert quality**.
-1. Add values for the missing annotations and labels.
-1. Reapply the configuration through your usual provisioning workflow.
-1. Reload the **Alert quality** page and check the rule's findings.
+2. Add values for the missing annotations and labels.
+3. Reapply the configuration through your usual provisioning workflow.
+4. Reload the **Alert quality** page and check the rule's findings.
 
 A rule disappears from the findings list when it meets every configured requirement.
 If other required fields are still missing, the rule remains in the list with those findings.
@@ -212,9 +185,9 @@ For rules that you can edit in Grafana, use the **Edit** action on the quality p
 To resolve a finding in the rule editor, follow these steps:
 
 1. Click **Edit** for the affected rule.
-1. Fill in the missing annotations and labels in the rule editor.
-1. Click **Save**.
-1. Return to **Alert quality** and reload the page to check the findings.
+2. Fill in the missing annotations and labels in the rule editor.
+3. Click **Save**.
+4. Return to **Alert quality** and reload the page to check the findings.
 
 ## Optional: Enforce quality requirements
 
@@ -224,18 +197,14 @@ You can enforce selected requirements while keeping others detect-only.
 To enable enforcement, follow these steps:
 
 1. Go to **Alerting** > **Settings** and select **Alert rule quality**.
-1. Turn on **Enforce** beside each requirement you want to enforce.
+2. Turn on **Enforce** beside each requirement you want to enforce.
 
    For example, enforce `team` while keeping **Runbook URL** detect-only.
    To enforce all currently configured requirements, turn on **Enforce all requirements** instead.
 
-1. Click **Save**.
+3. Click **Save**.
 
    Grafana displays **Policy saved** to confirm the change.
-
-When only some requirements are enforced, the form displays **Some requirements enforced**.
-New requirements still start detect-only, even if you previously enforced all requirements.
-The **Enforce all requirements** control is unavailable when the policy has no requirements.
 
 ### Disable enforcement or remove a requirement
 
