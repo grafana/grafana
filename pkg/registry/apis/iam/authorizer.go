@@ -204,9 +204,11 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 
 // newSSOSettingAuthorizer authorizes ssosettings against the legacy settings RBAC:
 // the check targets the foreign setting.grafana.app/settings resource named
-// auth.<provider>. Nameless list is allowed (the read path filters per-provider).
+// auth.<provider>. The identity guards run first, so a nameless list and create
+// (neither carries a provider name at authz time) are only allowed after the
+// no-identity/anonymous denials; the redacting store then filters per-provider.
 func newSSOSettingAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
-	base := authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 		// The "~" login singleton is public and secret-free, not a provider; skip RBAC.
 		if attr.GetVerb() == utils.VerbGet && attr.GetName() == sso.LoginConfigName {
 			return authorizer.DecisionAllow, "", nil
@@ -220,8 +222,9 @@ func newSSOSettingAuthorizer(accessClient authlib.AccessClient) authorizer.Autho
 			return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
 		}
 
-		// Collection create has no object name at authz time; the redacting store enforces per-provider write.
-		if attr.GetVerb() == utils.VerbCreate {
+		// Neither a nameless list nor a create carries a provider name at authz time;
+		// the redacting store filters the list and enforces per-provider write on create.
+		if (attr.GetVerb() == utils.VerbList && attr.GetName() == "") || attr.GetVerb() == utils.VerbCreate {
 			return authorizer.DecisionAllow, "", nil
 		}
 
@@ -240,8 +243,6 @@ func newSSOSettingAuthorizer(accessClient authlib.AccessClient) authorizer.Autho
 		}
 		return authorizer.DecisionAllow, "", nil
 	})
-
-	return allowListAuthorizer(base)
 }
 
 // allowSelfAuthorizer allows any authenticated identity to GET the current-user
