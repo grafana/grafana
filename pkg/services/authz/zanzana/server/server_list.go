@@ -219,6 +219,11 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	// Stored root objects can still have an empty parent until they are rewritten.
 	if resource.UsesRootFolderPermissions() && slices.Contains(folderUIDs, accesscontrol.GeneralFolderUID) {
 		folderUIDs = append(folderUIDs, "")
+	} else if !resource.UsesRootFolderPermissions() && relation != common.RelationCreate {
+		// Match Check: the root sentinel is not an inheritable parent for these resources.
+		folderUIDs = slices.DeleteFunc(folderUIDs, func(uid string) bool {
+			return uid == accesscontrol.GeneralFolderUID
+		})
 	}
 
 	return &authzv1.ListResponse{
