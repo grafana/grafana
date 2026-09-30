@@ -156,7 +156,7 @@ const getRolePickerInputStyles = (
       css({
         minWidth: width || ROLE_PICKER_WIDTH + 'px',
         width: width,
-        minHeight: '32px',
+        minHeight: theme.spacing(theme.components.height.md),
         maxHeight: '200px',
         overflow: 'scroll',
         overflowX: 'hidden',
