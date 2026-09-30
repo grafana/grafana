@@ -1151,7 +1151,7 @@ A custom error message for when users are unauthorized. Default is a key for an 
 
 Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.
 
-The wait time between retries is calculated as random(n, n * 1.5). Values below `100` are treated as `100`. Retries stop once [`oauth_refresh_token_server_lock_wait_budget_ms`](#oauth_refresh_token_server_lock_wait_budget_ms) is spent. A lower value lets a request continue sooner after another instance finishes refreshing the token, at the cost of more lock checks while it waits.
+The wait time between retries is calculated as `random(n, n * 1.5)`. Values below `100` are treated as `100`. Retries stop once [`oauth_refresh_token_server_lock_wait_budget_ms`](#oauth_refresh_token_server_lock_wait_budget_ms) is spent. A lower value lets a request continue sooner after another instance finishes refreshing the token, at the cost of more lock checks while it waits.
 
 #### `oauth_refresh_token_server_lock_wait_budget_ms`
 
