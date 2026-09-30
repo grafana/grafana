@@ -88,4 +88,15 @@ describe('NotebookPdfLayout', () => {
     expect(own.length).toBeGreaterThan(0);
     expect(own.join('\n')).not.toContain('!important');
   });
+  it('keeps a cell off a page boundary, so a break goes before it rather than through it', () => {
+    render(<NotebookPdfLayout />);
+
+    expect(ruleFor('notebook-cell-content {')).toMatch(/break-inside:\s*avoid/);
+  });
+
+  it('keeps a heading with what follows it', () => {
+    render(<NotebookPdfLayout />);
+
+    expect(ruleFor('notebook-cell-content :is(h1')).toMatch(/break-after:\s*avoid/);
+  });
 });

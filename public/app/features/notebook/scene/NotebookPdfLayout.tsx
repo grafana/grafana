@@ -4,6 +4,7 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useTheme2 } from '@grafana/ui';
 
 import { NOTEBOOK_DOCUMENT_CLASS } from './layout-notebook/NotebookLayoutManager';
+import { NOTEBOOK_CELL_CONTENT_CLASS } from './layout-notebook/edit/NotebookCellFrame';
 
 // A4 portrait, in millimetres because the target is a physical sheet.
 export const PDF_PAGE_WIDTH_MM = 210;
@@ -38,6 +39,17 @@ export function NotebookPdfLayout() {
           width: `${PDF_PAGE_WIDTH_MM}mm`,
           maxWidth: 'none',
           padding: `0 ${PDF_PAGE_MARGIN_MM}mm`,
+        },
+        // A cell is one unit, so a break goes before it rather than through it — otherwise a heading
+        // ends up stranded at the foot of a page with its own paragraph overleaf. Chromium drops
+        // this when the cell is taller than a page, which is the only case where splitting is
+        // unavoidable; the heading rule below covers what happens then.
+        [`.${NOTEBOOK_CELL_CONTENT_CLASS}`]: {
+          breakInside: 'avoid',
+        },
+        // A heading introduces what follows it, so it travels with it.
+        [`.${NOTEBOOK_CELL_CONTENT_CLASS} :is(h1, h2, h3, h4, h5, h6)`]: {
+          breakAfter: 'avoid',
         },
         // `margin` is the only inset a page break sees: a box's own vertical padding is spent once,
         // at the start and end of its whole flow, which leaves every break between them flush
