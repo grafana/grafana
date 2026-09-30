@@ -4,7 +4,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { getDefaultDataSourceInstanceListItem as rtGetDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 
 /**
- * Resolve the item flagged as the default data source, or `undefined` when the list holds none.
+ * Resolve the item whose data source is the org default, or `undefined` when the list holds none.
  *
  * At most one instance per org carries the flag, so a filtered list need not contain it.
  */

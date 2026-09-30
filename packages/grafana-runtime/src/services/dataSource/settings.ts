@@ -230,7 +230,7 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
 }
 
 /**
- * Resolve the item flagged as the default data source, or `undefined` when the list holds none.
+ * Resolve the item whose data source is the org default, or `undefined` when the list holds none.
  *
  * At most one instance per org carries the flag, so a filtered list need not contain it.
  *
@@ -239,7 +239,9 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
 export async function getDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): Promise<DataSourceInstanceListItem | undefined> {
-  return items.find((item) => (lookupByUid(item.uid) ?? getInstanceSettingsFallback(item.uid, undefined))?.isDefault);
+  return items.find(
+    (item) => (lookupFromMaps(item.uid, undefined) ?? getInstanceSettingsFallback(item.uid, undefined))?.isDefault
+  );
 }
 
 /**

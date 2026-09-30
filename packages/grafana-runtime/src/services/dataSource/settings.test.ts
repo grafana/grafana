@@ -1236,6 +1236,19 @@ describe('instanceSettings', () => {
         expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
         expect(getInstanceSettings).not.toHaveBeenCalled();
       });
+
+      it('never consults the legacy srv for a template-variable item the cache resolves', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const getInstanceSettings = jest.fn();
+        setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+        const variableItem = { uid: '${myds}', type: 'test-db', name: '${myds}', meta: ds({}).meta };
+
+        const items = [variableItem, ...(await getDataSourceInstanceList())];
+
+        expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+        expect(getInstanceSettings).not.toHaveBeenCalled();
+        expect(logWarning).not.toHaveBeenCalled();
+      });
     });
   });
 });
