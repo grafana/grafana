@@ -230,7 +230,7 @@ export interface LegacyAnnotationQuery extends raw.MetricStat, DataQuery {
   target: {
     limit: number;
     matchAny: boolean;
-    tags: any[];
+    tags: unknown[];
     type: string;
   };
   type: string;

@@ -122,7 +122,11 @@ const validVariableNames: Record<string, RegExp[]> = {
   query: [/^timeFilter$/],
 };
 
-export const getPropsWithVariable = (variableId: string, parent: { key: string; value: any }, result: any) => {
+export const getPropsWithVariable = (
+  variableId: string,
+  parent: { key: string; value: any },
+  result: Record<string, string | object>
+) => {
   const stringValues = Object.keys(parent.value).reduce<Record<string, string>>((all, key) => {
     const value = parent.value[key];
     if (!value || typeof value !== 'string') {

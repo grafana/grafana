@@ -117,12 +117,12 @@ export abstract class FunctionalVector<T = unknown> {
   lastIndexOf(searchElement: T, fromIndex?: number | undefined): number {
     return this.toArray().lastIndexOf(searchElement, fromIndex);
   }
-  every<S extends T>(predicate: (value: T, index: number, array: T[]) => value is S, thisArg?: any): this is S[];
-  every(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: any): boolean;
-  every(predicate: any, thisArg?: unknown): boolean {
+  every<S extends T>(predicate: (value: T, index: number, array: T[]) => value is S, thisArg?: unknown): this is S[];
+  every(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: unknown): boolean;
+  every(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: unknown): boolean {
     return this.toArray().every(predicate, thisArg);
   }
-  some(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: any): boolean {
+  some(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: unknown): boolean {
     return this.toArray().some(predicate, thisArg);
   }
   reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: T[]) => T): T;
@@ -145,12 +145,12 @@ export abstract class FunctionalVector<T = unknown> {
   }
   find<S extends T>(
     predicate: (this: void, value: T, index: number, obj: T[]) => value is S,
-    thisArg?: any
+    thisArg?: unknown
   ): S | undefined;
-  find(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: any): T | undefined {
+  find(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: unknown): T | undefined {
     return this.toArray().find(predicate, thisArg);
   }
-  findIndex(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: any): number {
+  findIndex(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: unknown): number {
     return this.toArray().findIndex(predicate, thisArg);
   }
   entries(): ArrayIterator<[number, T]> {
@@ -176,7 +176,7 @@ export abstract class FunctionalVector<T = unknown> {
   }
 }
 
-const emptyarray: any[] = [];
+const emptyarray: never[] = [];
 
 /**
  * Use functional programming with your vector

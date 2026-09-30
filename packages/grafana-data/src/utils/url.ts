@@ -46,7 +46,7 @@ type EncodeURIComponentParams = Parameters<typeof encodeURIComponent>[0];
  *  Use `serializeParams` to encode parameters using `encodeURIComponent` instead.
  */
 function toUrlParams(a: any, encodeAsAngularJS = true) {
-  const s: any[] = [];
+  const s: string[] = [];
   const rbracket = /\[\]$/;
 
   const encodingFunction = encodeAsAngularJS

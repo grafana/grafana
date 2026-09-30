@@ -87,7 +87,7 @@ export const isAllVariable = (variable: any): boolean => {
   return false;
 };
 
-export const getCurrentText = (variable: any): string => {
+export const getCurrentText = (variable: { current?: { text?: unknown } } | null | undefined): string => {
   if (!variable) {
     return '';
   }

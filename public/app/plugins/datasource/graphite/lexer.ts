@@ -88,11 +88,11 @@ for (let i = 0; i < 128; i++) {
 const identifierPartTable = identifierStartTable;
 
 export class Lexer {
-  input: any;
+  input: string;
   char: number;
   from: number;
 
-  constructor(expression: any) {
+  constructor(expression: string) {
     this.input = expression;
     this.char = 1;
     this.from = 1;

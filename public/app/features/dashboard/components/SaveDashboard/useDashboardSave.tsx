@@ -18,7 +18,7 @@ import { trackDashboardCreatedOrSaved } from '../../utils/tracking';
 import { type SaveDashboardOptions } from './types';
 
 const saveDashboard = async (
-  saveModel: any,
+  saveModel: Dashboard & { meta?: { folderUid?: string } },
   options: SaveDashboardOptions,
   dashboard: DashboardModel,
   saveDashboardRtkQuery: ReturnType<typeof useSaveDashboardMutation>[0]

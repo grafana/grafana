@@ -49,7 +49,7 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
 
   footerProps.style = footerProps.style ?? {};
   footerProps.style.position = 'absolute';
-  footerProps.style.justifyContent = (column as any).justifyContent;
+  footerProps.style.justifyContent = column.justifyContent;
 
   return (
     <div key={key} className={tableStyles.headerCell} {...footerProps}>

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { type ColumnInstance } from 'react-table';
 
 import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 
@@ -12,7 +13,7 @@ import { FilterPopup } from './FilterPopup';
 import { type TableStyles } from './styles';
 
 interface Props {
-  column: any;
+  column: ColumnInstance;
   tableStyles: TableStyles;
   field?: Field;
 }

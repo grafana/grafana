@@ -194,7 +194,7 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
 function joinEvalMatches(matches: any, separator: string) {
   return reduce(
     matches,
-    (res, ev) => {
+    (res: string[], ev) => {
       if (ev.metric !== undefined && ev.value !== undefined) {
         res.push(ev.metric + '=' + ev.value);
       }
@@ -206,7 +206,7 @@ function joinEvalMatches(matches: any, separator: string) {
 
       return res;
     },
-    [] as string[]
+    []
   ).join(separator);
 }
 

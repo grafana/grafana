@@ -13,7 +13,7 @@ export interface AlertRuleDTO {
   state: string;
   newStateDate: string;
   evalDate: string;
-  evalData?: { noData?: boolean; evalMatches?: any };
+  evalData?: { noData?: boolean; evalMatches?: unknown };
   executionError: string;
   url: string;
 }
@@ -35,7 +35,7 @@ export interface AlertRule {
   info?: string;
   executionError?: string;
   evalDate?: string;
-  evalData?: { noData?: boolean; evalMatches?: any };
+  evalData?: { noData?: boolean; evalMatches?: unknown };
 }
 
 export type GrafanaNotifierType =

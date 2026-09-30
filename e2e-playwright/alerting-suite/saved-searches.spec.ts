@@ -1,5 +1,6 @@
 import { type Page } from '@playwright/test';
 
+import { type BootData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { test, expect } from '@grafana/plugin-e2e';
 
@@ -59,8 +60,7 @@ const ui = {
 async function clearSavedSearches(page: Page) {
   // Get namespace and user info from Grafana config
   const storageInfo = await page.evaluate(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const bootData = (window as any).grafanaBootData;
+    const bootData = (window as typeof window & { grafanaBootData?: BootData }).grafanaBootData;
     const user = bootData?.user;
     const userUID = user?.uid === '' || !user?.uid ? String(user?.id ?? 'anonymous') : user.uid;
     const resourceName = `alerting:${userUID}`;

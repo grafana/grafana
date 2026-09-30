@@ -145,7 +145,7 @@ function worldmapToGeomapOptions(angular: any): {
   // mapCenterLongitude: 14,
   //
   // Map center (from worldmap)
-  const mapCenters: any = {
+  const mapCenters: Record<string, string> = {
     '(0°, 0°)': MapCenterID.Zero,
     'North America': 'north-america',
     Europe: 'europe',

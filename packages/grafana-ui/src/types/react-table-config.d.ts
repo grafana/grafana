@@ -1,3 +1,4 @@
+import type { Property } from 'csstype';
 import type {
   UseColumnOrderInstanceProps,
   UseColumnOrderState,
@@ -47,6 +48,8 @@ import type {
   UseSortByOptions,
   UseSortByState,
 } from 'react-table';
+
+import type { Field } from '@grafana/data';
 
 declare module 'react-table' {
   export interface TableOptions<D extends Record<string, unknown>>
@@ -99,6 +102,8 @@ declare module 'react-table' {
       UseResizeColumnsColumnOptions<D>,
       UseSortByColumnOptions<D> {
     widthClass?: string;
+    field?: Field;
+    justifyContent?: Property.JustifyContent;
   }
 
   export interface ColumnInstance<D extends Record<string, unknown> = Record<string, unknown>>

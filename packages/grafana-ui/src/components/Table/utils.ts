@@ -212,7 +212,7 @@ export function filterByValue(field?: Field) {
   };
 }
 
-export function calculateUniqueFieldValues(rows: any[], field?: Field) {
+export function calculateUniqueFieldValues(rows: Array<{ index: number }>, field?: Field) {
   if (!field || rows.length === 0) {
     return {};
   }
@@ -227,7 +227,7 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
   return set;
 }
 
-export function rowToFieldValue(row: any, field?: Field): string {
+export function rowToFieldValue(row: { index: number } | undefined, field?: Field): string {
   if (!field || !row) {
     return '';
   }

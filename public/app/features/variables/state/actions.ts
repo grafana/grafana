@@ -627,13 +627,15 @@ export interface OnTimeRangeUpdatedDependencies {
 const getVariablesThatNeedRefresh = (key: string, state: StoreState): VariableWithOptions[] => {
   const allVariables = getVariablesByKey(key, state);
 
-  const variablesThatNeedRefresh = allVariables.filter((variable) => {
-    if ('refresh' in variable && 'options' in variable) {
-      const variableWithRefresh = variable;
-      return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
+  const variablesThatNeedRefresh = allVariables.filter(
+    (variable): variable is Extract<TypedVariableModel, VariableWithOptions> => {
+      if ('refresh' in variable && 'options' in variable) {
+        const variableWithRefresh = variable;
+        return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
+      }
+      return false;
     }
-    return false;
-  }) as VariableWithOptions[];
+  );
 
   return variablesThatNeedRefresh;
 };
