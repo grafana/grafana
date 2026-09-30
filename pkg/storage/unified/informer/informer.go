@@ -511,8 +511,6 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 	// are the keys to dispatch as adds/updates/deletes, with objects a live write
 	// already delivered here filtered out.
 	added, updated, removed := n.store.Replace(objs, listRV)
-	// One line per resource per resync, which is what makes a quiet informer
-	// distinguishable from a stalled one without turning on debug logging.
 	n.log.Info("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
 		"count", len(objs), "added", len(added), "updated", len(updated), "removed", len(removed))
 
