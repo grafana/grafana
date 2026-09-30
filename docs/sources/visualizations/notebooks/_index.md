@@ -24,6 +24,7 @@ You can share a saved notebook with your teammates and reload it as context for 
 This way, the next investigation builds on what was already learned.
 
 ![A notebook with a latency investigation](./screenshot-notebook-v13.3.png)
+<!-- TODO: Update screenshot -->
 
 A notebook has the following benefits:
 
@@ -39,11 +40,12 @@ Each investigation in a notebook makes the next one faster.
 ## Notebooks, Dashboards, and Workspace
 
 Notebooks offer the following advantages over other tools for recording investigations:
+<!-- TODO: Refine this section -->
 
 <!-- prettier-ignore-start -->
 
-| Feature | Pro                                                                                                                               | Con                                                     |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Feature | Pro  | Con                                                     |
+| ------- | ---------- | ------------------------------------------------------- |
 | Dashboard | Reusable | <ul><li>You have to design the dashboard while you're still in the investigation stage.</li><li>Dashboard is no longer a curated surface.</li></ul>                            |
 | Workspace canvas | No design concerns | <ul><li>Ephemeral</li><li>Agent-authored</li><li>Not editable</li></ul>                                                                                       |
 | Notebook | <ul><li>Scratch pad while you work that you can clean up later</li><li>Picks up where the Workspace canvas leaves off</li><li>Human-authored and editable.</li><li>Reusable</li></ul> |    |
@@ -61,16 +63,16 @@ The **Notebooks** page lists all of the notebooks in your organization, along wi
 - Date of last update
 
 ![Notebooks page](./screenshot-manage-notebooks-v13.3.png)
+<!-- TODO: Update screenshot -->
 
 You can search the page by notebook title and filter by tags or by notebooks you authored.
 
-On this page, you can also take the following actions on a notebook:
+Each notebook row includes and **Edit** button and a menu where you can access the following actions:
 
-- Edit
 - Copy a shareable link
-- Delete
 - Export by copying the raw Markdown
 - Export by downloading a .md file
+- Delete
 
 When you export a notebook, panels render as JSON code blocks, like this:
 
@@ -93,9 +95,9 @@ To create a notebook from the **Notebooks** page, follow these steps:
 
 1. Navigate to **Notebooks**.
 1. Click **+ New notebook**.
-1. Update the title of the notebook to something more descriptive and easy to search.
+1. Update the title of the notebook to something descriptive and searchable.
 1. Add tags to further define the subject of your notebook.
-1. Start typing to start a text block or click one of the other options to add:
+1. Start typing to create a text block or click one of the other options to add:
 
    - **Heading**: Adds an H3 heading.
    - **Paragraph**: The default. Use this to revert to paragraph text if you've previously selected another option.
@@ -103,6 +105,9 @@ To create a notebook from the **Notebooks** page, follow these steps:
    - **Visualization**: Opens the panel query editor with a graph panel below it.
 
 1. Add as many blocks as you need.
+
+    You can duplicate or delete blocks.
+
 1. In the toolbar, take the following actions, as needed:
 
    - Click the undo and redo icons at the top of the notebook to revert or reinstate changes.
@@ -117,6 +122,8 @@ You can also get a share link, export, and delete a notebook from this screen.
 
 ## Create notebooks from Grafana Assistant Workspace
 
+<!-- TODO: Confirm this is the desired workflow given new Pages UI -->
+
 When you complete a chat with the Grafana Assistant in Workspace, notebooks help you pick up where the canvas leaves off.
 
 While you investigate in Workspace, the canvas assembles the work as an ephemeral notebook of the questions, panels, and findings.
@@ -128,7 +135,17 @@ When the canvas is worth keeping, you can direct Assistant to create a notebook 
 
 ## Add notebooks to incidents
 
-TBD
+You can add a notebook to an incident or declare an incident based on your notebook.
+
+To associate a notebook with an incident, follow these steps:
+
+1. Navigate to **Notebooks**.
+1. Open the notebook you want to add.
+1. Click the menu in the top-right corner and click **IRM**.
+1. Choose one of the following options:
+
+   - **Declare incident**: Complete the form in the **Declare incident** dialog box. Then click **Declare incident**. You'll then be taken to **Incidents** with your new incident open.
+   - **Attach to incident**: In the dialog box, select an incident to attach the notebook to and add a contextual caption. Then click **Attach**.
 
 ## Edit notebooks
 
