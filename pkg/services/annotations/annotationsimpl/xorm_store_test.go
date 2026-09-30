@@ -238,6 +238,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 				}
 			}
 			items[0].Tags = []string{"type:test"}
+			items[1].Tags = []string{"type:test", "env:prod"}
+			items[2].Tags = []string{"env:prod"}
 
 			err := store.AddMany(context.Background(), items)
 
@@ -247,6 +249,13 @@ func TestIntegrationAnnotations(t *testing.T) {
 			inserted, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
+
+			tags, err := store.GetTags(context.Background(), annotations.TagsQuery{OrgID: 101})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []*annotations.TagsDTO{
+				{Tag: "env:prod", Count: 2},
+				{Tag: "type:test", Count: 2},
+			}, tags.Tags)
 		})
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
