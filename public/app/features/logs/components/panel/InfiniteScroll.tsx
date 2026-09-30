@@ -221,6 +221,9 @@ export const InfiniteScroll = ({
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);
       lastEvent.current = event;
       lastScroll.current = scrollElement.scrollTop;
+      if (infiniteLoaderState === 'loading') {
+        return;
+      }
       if (infiniteLoaderState !== 'pre-scroll-bottom' && infiniteLoaderState !== 'pre-scroll-top') {
         if (scrollDirection === ScrollDirection.Top && canLoadMoreTop()) {
           setInfiniteLoaderState('pre-scroll-top');
@@ -331,6 +334,11 @@ export const InfiniteScroll = ({
       const preScrollIndex = logs.length - 2;
       if (props.visibleStopIndex >= lastLogIndex) {
         setInfiniteLoaderState('pre-scroll-bottom');
+      } else if (infiniteLoaderState === 'pre-scroll-top') {
+        // Only leaving the top cancels the prompt; re-renders at the top (e.g. line remeasurement) keep it.
+        if (props.visibleStartIndex > 0) {
+          setInfiniteLoaderState('idle');
+        }
       } else if (props.visibleStartIndex < preScrollIndex) {
         setInfiniteLoaderState('idle');
       }
