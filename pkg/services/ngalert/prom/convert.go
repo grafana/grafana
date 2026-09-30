@@ -1,6 +1,7 @@
 package prom
 
 import (
+	// #nosec G505 SHA-1 is required for compatibility with existing UUIDv5 rule IDs.
 	"crypto/sha1"
 	"fmt"
 	"maps"
@@ -211,6 +212,8 @@ func getUID(orgID int64, namespaceUID string, group string, position int, promRu
 // ruleUUID preserves the UUIDv5 OID namespace IDs used by existing imported rules.
 func ruleUUID(data string) uuid.UUID {
 	namespace := uuid.MustParse("6ba7b812-9dad-11d1-80b4-00c04fd430c8")
+	// SHA-1 preserves existing UUIDv5 rule IDs; this hash is not used for cryptographic security.
+	// #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-sha1
 	hash := sha1.New()
 	hash.Write(namespace[:])
 	hash.Write([]byte(data))
