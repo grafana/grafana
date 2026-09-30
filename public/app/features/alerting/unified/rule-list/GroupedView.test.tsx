@@ -172,9 +172,7 @@ describe('RuleList - GroupedView', () => {
     expect(onHideEmptyDataSourcesChange).toHaveBeenCalledWith(false);
 
     // the button itself doesn't own the toggle state - the parent re-renders with the new value
-    rerender(
-      <GroupedView hideEmptyDataSources={false} onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange} />
-    );
+    rerender(<GroupedView hideEmptyDataSources={false} onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange} />);
 
     expect(await ui.dsSection(/Prometheus/).find()).toBeInTheDocument();
   });

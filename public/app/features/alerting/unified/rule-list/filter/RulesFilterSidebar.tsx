@@ -322,8 +322,8 @@ function FilterSidebarForm({
                   <div>
                     <p>
                       <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
-                        Data sources containing configured alert rules are Mimir or Loki data sources where alert
-                        rules are stored and evaluated in the data source itself.
+                        Data sources containing configured alert rules are Mimir or Loki data sources where alert rules
+                        are stored and evaluated in the data source itself.
                       </Trans>
                     </p>
                     <p>
@@ -553,9 +553,7 @@ function FilterSidebarForm({
               <SidebarField
                 label={
                   <FieldLabelWithTooltip
-                    label={
-                      <Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources">Empty data sources</Trans>
-                    }
+                    label={<Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources">Empty data sources</Trans>}
                     tooltip={
                       <Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources-tooltip">
                         Shows or hides data sources that have no alert rules configured.
