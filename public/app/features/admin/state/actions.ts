@@ -11,6 +11,8 @@ import { type LdapUser } from 'app/types/ldap';
 import { type ThunkResult } from 'app/types/store';
 import { type UserDTO, type UserSession, type UserFilter, type AnonUserFilter } from 'app/types/user';
 
+import { getUsersSearchUrl } from '../Users/userSearch';
+
 import {
   userAdminPageLoadedAction,
   userProfileLoadedAction,
@@ -277,25 +279,11 @@ export function clearUserMappingInfo(): ThunkResult<void> {
 
 // UserListAdminPage
 
-const getFilters = (filters: UserFilter[]) => {
-  return filters
-    .map((filter) => {
-      if (Array.isArray(filter.value)) {
-        return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
-      }
-      return `${filter.name}=${filter.value}`;
-    })
-    .join('&');
-};
-
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
       const { perPage, page, query, filters, sort } = getState().userListAdmin;
-      let url = `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`;
-      if (sort) {
-        url += `&sort=${sort}`;
-      }
+      const url = getUsersSearchUrl({ perPage, page, query, filters, sort });
       const result = await getBackendSrv().get(url);
       dispatch(usersFetched(result));
     } catch (error) {

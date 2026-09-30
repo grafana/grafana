@@ -4,6 +4,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
+import { ExportUsersButton } from 'app/features/admin/Users/ExportUsersButton';
 import { useUserListTabExtensions } from 'app/features/admin/useUserListTabExtensions';
 import { type StoreState } from 'app/types/store';
 
@@ -22,6 +23,7 @@ interface OwnProps {
 function mapStateToProps(state: StoreState) {
   return {
     searchQuery: getUsersSearchQuery(state.users),
+    sort: state.users.sort,
     pendingInvitesCount: selectTotal(state.invites),
   };
 }
@@ -36,6 +38,7 @@ export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export const UsersActionBarUnconnected = ({
   searchQuery,
+  sort,
   pendingInvitesCount,
   changeSearchQuery,
   onShowInvites,
@@ -72,6 +75,7 @@ export const UsersActionBarUnconnected = ({
           <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
         </div>
       )}
+      {!showInvites && <ExportUsersButton scope="organization" query={searchQuery} sort={sort} />}
       {getCanInviteUsersToOrg() && (
         <LinkButton href="org/users/invite">
           <Trans i18nKey="users.users-action-bar-unconnected.invite">Invite</Trans>
