@@ -10,7 +10,7 @@ import {
   type QueryRunner,
 } from '@grafana/data';
 import { type BackendSrv, config, createQueryRunner, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList, getDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 
 import {
   fetchClusterCpuSeries,
@@ -31,10 +31,12 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceList: jest.fn(),
+  getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
 
 const mockCreateQueryRunner = jest.mocked(createQueryRunner);
 const mockGetDataSourceInstanceList = jest.mocked(getDataSourceInstanceList);
+const mockGetDefaultDataSourceInstanceListItem = jest.mocked(getDefaultDataSourceInstanceListItem);
 
 const run = jest.fn();
 const destroy = jest.fn();
@@ -49,12 +51,15 @@ function createPrometheusListItem(ds: { uid: string; name: string; isDefault?: b
     name: ds.name,
     type: 'prometheus',
     meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-    isDefault: ds.isDefault ?? false,
   };
 }
 
 function setDataSources(list: Array<{ uid: string; name: string; isDefault?: boolean }>) {
+  const defaultUids = new Set(list.filter((ds) => ds.isDefault).map((ds) => ds.uid));
   mockGetDataSourceInstanceList.mockResolvedValue(list.map(createPrometheusListItem));
+  mockGetDefaultDataSourceInstanceListItem.mockImplementation(async (items) =>
+    items.find((item) => defaultUids.has(item.uid))
+  );
 }
 
 async function resolveRequiredDatasource(): Promise<DataSourceInstanceListItem> {
@@ -87,6 +92,7 @@ beforeEach(() => {
   destroy.mockReset();
   mockCreateQueryRunner.mockReset();
   mockGetDataSourceInstanceList.mockReset();
+  mockGetDefaultDataSourceInstanceListItem.mockReset();
   healthGet.mockReset();
   // Health gate: every candidate healthy unless a test overrides by uid.
   healthGet.mockResolvedValue({ status: 'OK' });
@@ -418,7 +424,6 @@ describe('Kubernetes Prometheus resolution', () => {
       name: partial.name,
       type: partial.type,
       meta: { id: partial.metaId } as DataSourceInstanceListItem['meta'],
-      isDefault: false,
     });
     // Builtin rejected by meta.id; real and alias prometheus datasources pass.
     expect(filter!(item({ name: '-- Grafana --', type: 'datasource', metaId: 'grafana' }))).toBe(false);

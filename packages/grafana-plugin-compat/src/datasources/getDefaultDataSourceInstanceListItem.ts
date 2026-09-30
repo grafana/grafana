@@ -1,4 +1,6 @@
+/* eslint-disable @grafana/no-get-data-source-srv */
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { getDefaultDataSourceInstanceListItem as rtGetDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 
 /**
@@ -19,5 +21,5 @@ export async function getDefaultDataSourceInstanceListItem(
 async function backwardsCompatibleGetDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): Promise<DataSourceInstanceListItem | undefined> {
-  return items.find((item) => item?.isDefault);
+  return items.find((item) => item && getDataSourceSrv().getInstanceSettings(item.uid)?.isDefault);
 }

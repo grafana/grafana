@@ -12,7 +12,7 @@ jest.mock('./getDefaultDataSourceInstanceListItem', () => ({
 const mockGetDefaultDataSourceInstanceListItem = jest.mocked(getDefaultDataSourceInstanceListItem);
 
 const alpha = getMockedListItem({ uid: 'ds-a', name: 'A' });
-const bravo = getMockedListItem({ uid: 'ds-b', name: 'B', isDefault: true });
+const bravo = getMockedListItem({ uid: 'ds-b', name: 'B' });
 
 describe('useDefaultDataSourceInstanceListItem', () => {
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe('useDefaultDataSourceInstanceListItem', () => {
     expect(mockGetDefaultDataSourceInstanceListItem).toHaveBeenCalledTimes(1);
   });
 
-  it('should re-resolve when the flag moves to another item', async () => {
+  it('should re-resolve when the uids of the items change', async () => {
     const { result, rerender } = renderHook(({ items }) => useDefaultDataSourceInstanceListItem(items), {
       initialProps: { items: [alpha, bravo] },
     });
@@ -69,12 +69,7 @@ describe('useDefaultDataSourceInstanceListItem', () => {
     await waitFor(() => expect(result.current.item?.uid).toBe('ds-b'));
 
     mockGetDefaultDataSourceInstanceListItem.mockResolvedValue(alpha);
-    rerender({
-      items: [
-        { ...alpha, isDefault: true },
-        { ...bravo, isDefault: false },
-      ],
-    });
+    rerender({ items: [alpha] });
 
     await waitFor(() => expect(result.current.item?.uid).toBe('ds-a'));
     expect(mockGetDefaultDataSourceInstanceListItem).toHaveBeenCalledTimes(2);

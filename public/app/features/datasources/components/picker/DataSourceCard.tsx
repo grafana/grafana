@@ -31,7 +31,6 @@ export function DataSourceCard({
       apiVersion: ds.apiVersion,
       name: ds.name,
       meta: ds.meta,
-      isDefault: ds.isDefault ?? false,
     },
   ]);
   const isDefaultDataSource = defaultDataSource?.uid === ds.uid;

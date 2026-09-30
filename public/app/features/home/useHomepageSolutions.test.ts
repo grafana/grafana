@@ -37,7 +37,6 @@ const datasource: DataSourceInstanceListItem = {
   name: 'Prometheus',
   type: 'prometheus',
   meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  isDefault: true,
 };
 // The detection the owner hands to every Kubernetes solution it creates.
 const detect = jest.fn(async () => ({ status: 'active' as const, datasource }));

@@ -33,7 +33,6 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
     apiVersion: ds.apiVersion,
     name: ds.name,
     meta: ds.meta,
-    isDefault: ds.isDefault ?? false,
   }));
   const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSourceListItems);
 
