@@ -149,7 +149,7 @@ type ProvisioningAuthorizer struct {
 
 // NewAuthorizer creates a new ProvisioningAuthorizer. The clients provide the set of
 // supported resources to authorize against. The folder manager is required for
-// folder-scoped reads with a destination; callers that only authorize writes may pass nil.
+// reads that resolve configured folders; callers that only authorize writes may pass nil.
 func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, clients ResourceClients, folders *FolderManager, folderMetadataEnabled bool) Authorizer {
 	return &ProvisioningAuthorizer{
 		repo:                  repo,
@@ -251,9 +251,10 @@ func (a *ProvisioningAuthorizer) checkReadAncestorAccess(ctx context.Context, re
 // destinations inherit from an ancestor; denial never falls back.
 func (a *ProvisioningAuthorizer) authorizeResourceRead(ctx context.Context, parsed *ParsedResource, req authlib.CheckRequest) error {
 	destination := parsed.Meta.GetFolder()
-	// Org-scoped resources and resources at an unwrapped root have no folder to inherit
-	// from. Reads without a usable repository path retain their direct checks too.
-	if !parsed.FolderScoped || destination == "" || parsed.Info == nil || parsed.Info.Path == "" {
+	isFolder := parsed.GVR.GroupResource() == FolderResource.GroupResource()
+	// A folder at an unwrapped root still resolves its own configured directory;
+	// its empty parent context must not allow a PR-controlled UID to bypass that check.
+	if !parsed.FolderScoped || (destination == "" && !isFolder) || parsed.Info == nil || parsed.Info.Path == "" {
 		return a.access.Check(ctx, req, destination)
 	}
 	if IsPathSupported(parsed.Info.Path) != nil || safepath.IsDir(parsed.Info.Path) {

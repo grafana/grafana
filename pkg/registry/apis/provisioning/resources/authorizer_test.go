@@ -586,6 +586,77 @@ func TestAuthorizeResource_ReadUsesRoot(t *testing.T) {
 	}
 }
 
+func TestAuthorizeResource_TopLevelFolderUsesConfiguredDirectory(t *testing.T) {
+	for _, target := range []provisioning.SyncTargetType{provisioning.SyncTargetTypeInstance, provisioning.SyncTargetTypeFolderless} {
+		t.Run(string(target), func(t *testing.T) {
+			for _, state := range []string{"new", "same-folder"} {
+				t.Run(state, func(t *testing.T) {
+					for _, allowed := range []bool{false, true} {
+						t.Run(fmt.Sprintf("configured access %t", allowed), func(t *testing.T) {
+							const configuredID = "configured-folder"
+							const proposedID = "readable-pr-folder"
+							cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
+							cfg.Spec.Sync.Target = target
+							caller := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace}
+							ctx := identity.WithRequester(context.Background(), caller)
+							parsed, _ := makeAuthorizeResourceReadParsed(t, FolderResource, state, "", "team/resource.json")
+							parsed.Obj.SetName(proposedID)
+							if parsed.Existing != nil {
+								parsed.Existing.SetName(proposedID)
+							}
+							reader := repository.NewMockReaderWriter(t)
+							reader.EXPECT().Config().Return(cfg)
+							callerContext := mock.MatchedBy(func(readCtx context.Context) bool {
+								id, err := identity.GetRequester(readCtx)
+								return err == nil && id == caller
+							})
+							reader.EXPECT().Read(callerContext, "team/_folder.json", "").Return(&repository.FileInfo{
+								Path: "team/_folder.json", Data: []byte(`{"metadata":{"name":"configured-folder"}}`),
+							}, nil).Once()
+							folderClient := &MockDynamicResourceInterface{}
+							folderClient.Test(t)
+							t.Cleanup(func() { folderClient.AssertExpectations(t) })
+							folderClient.On("Get", mock.Anything, configuredID, metav1.GetOptions{}, []string(nil)).
+								Return(newManagedAncestorFolder(t, cfg, configuredID, "team/"), nil).Once()
+							denied := apierrors.NewForbidden(FolderResource.GroupResource(), configuredID, errors.New("no read permission"))
+							var checkedNames, checkedFolders []string
+							access := auth.NewMockAccessChecker(t)
+							access.EXPECT().Check(ctx, mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, req authlib.CheckRequest, folder string) error {
+								checkedNames = append(checkedNames, req.Name)
+								checkedFolders = append(checkedFolders, folder)
+								require.Equal(t, authlib.CheckRequest{
+									Group: FolderResource.Group, Resource: FolderResource.Resource, Name: req.Name, Verb: utils.VerbGet,
+								}, req)
+								if req.Name == configuredID && !allowed {
+									return denied
+								}
+								return nil
+							})
+							folders := NewFolderManager(reader, folderClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+
+							err := NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), folders, true).AuthorizeResource(ctx, parsed, utils.VerbGet)
+							if allowed {
+								require.NoError(t, err)
+							} else {
+								require.ErrorIs(t, err, denied)
+							}
+							wantNames := []string{configuredID}
+							wantFolders := []string{configuredID}
+							if parsed.Existing != nil {
+								wantNames = append([]string{proposedID}, wantNames...)
+								wantFolders = append([]string{""}, wantFolders...)
+							}
+							assert.Equal(t, wantNames, checkedNames)
+							assert.Equal(t, wantFolders, checkedFolders)
+							assert.Empty(t, parsed.Meta.GetFolder())
+						})
+					}
+				})
+			}
+		})
+	}
+}
+
 func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.SyncTargetType) {
 	t.Helper()
 	for _, gvr := range []schema.GroupVersionResource{
@@ -907,12 +978,13 @@ func testResourceDirectAuthorization(t *testing.T, gvr schema.GroupVersionResour
 		require.NoError(t, err)
 		meta.SetFolder("source-folder")
 	}
-	tests := []struct {
+	type testCase struct {
 		name   string
 		verb   string
 		result error
 		modify func(*ParsedResource)
-	}{
+	}
+	tests := []testCase{
 		{name: "same-folder existing resource update", verb: utils.VerbUpdate, modify: func(p *ParsedResource) { p.Existing = p.Obj.DeepCopy() }},
 		{name: "create", verb: utils.VerbCreate, result: denied},
 		{name: "update", verb: utils.VerbUpdate, result: denied},
@@ -932,8 +1004,12 @@ func testResourceDirectAuthorization(t *testing.T, gvr schema.GroupVersionResour
 		{name: "traversal", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Path = "../resource.json" }},
 		{name: "absolute path", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Path = "/resource.json" }},
 		{name: "directory", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Path = "team/new/" }},
-		{name: "missing destination", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Meta.SetFolder("") }},
-		{name: "successful root read", verb: utils.VerbGet, modify: func(p *ParsedResource) { p.Meta.SetFolder("") }},
+	}
+	if gvr.GroupResource() != FolderResource.GroupResource() {
+		tests = append(tests,
+			testCase{name: "missing destination", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Meta.SetFolder("") }},
+			testCase{name: "successful root read", verb: utils.VerbGet, modify: func(p *ParsedResource) { p.Meta.SetFolder("") }},
+		)
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

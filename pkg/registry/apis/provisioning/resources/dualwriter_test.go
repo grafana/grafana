@@ -1839,16 +1839,18 @@ func TestDualReadWriter_ReadPreviewAtRoot(t *testing.T) {
 	for _, target := range []provisioning.SyncTargetType{provisioning.SyncTargetTypeInstance, provisioning.SyncTargetTypeFolderless} {
 		t.Run(string(target), func(t *testing.T) {
 			forEachPreviewResource(t, func(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource) {
-				testReadPreviewAtRoot(t, kind, resource, target)
+				testReadPreviewAtRoot(t, kind, resource, target, "new/nested/resource.json")
 			})
-			t.Run("Folder", func(t *testing.T) {
-				testReadPreviewAtRoot(t, FolderKind, FolderResource, target)
-			})
+			for _, path := range []string{"new/nested/_folder.json", "new/_folder.json"} {
+				t.Run(path, func(t *testing.T) {
+					testReadPreviewAtRoot(t, FolderKind, FolderResource, target, path)
+				})
+			}
 		})
 	}
 }
 
-func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource, target provisioning.SyncTargetType) {
+func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource, target provisioning.SyncTargetType, resourcePath string) {
 	t.Helper()
 	for _, tt := range []struct {
 		name        string
@@ -1873,11 +1875,7 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 				},
 			}
 			resourceName := "root-" + resource.Resource
-			resourcePath := "new/nested/resource.json"
 			folderMetadata := resource == FolderResource
-			if folderMetadata {
-				resourcePath = "new/nested/_folder.json"
-			}
 			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: tt.role}
 			ctx := identity.WithRequester(context.Background(), caller)
 			callerContext := mock.MatchedBy(func(readCtx context.Context) bool {
@@ -1894,17 +1892,18 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 				Path: resourcePath, Ref: "feature",
 				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Root preview"}}`, kind.GroupVersion().String(), kind.Kind, resourceName)),
 			}, nil).Once()
-			if folderMetadata {
-				repo.EXPECT().Read(callerContext, "new/_folder.json", "feature").Return(nil, repository.ErrFileNotFound).Once()
+			if parent := safepath.Dir(safepath.Dir(resourcePath)); folderMetadata && parent != "" {
+				repo.EXPECT().Read(callerContext, safepath.Join(parent, folderMetadataFileName), "feature").Return(nil, repository.ErrFileNotFound).Once()
 			}
 			folders := &MockDynamicResourceInterface{}
 			t.Cleanup(func() { folders.AssertExpectations(t) })
-			var probedFolders []string
-			for _, dir := range []string{"new/nested/", "new/"} {
+			var probedFolders, expectedProbes []string
+			for dir := safepath.Dir(resourcePath); dir != ""; dir = safepath.Dir(dir) {
 				if folderMetadata {
 					repo.EXPECT().Read(callerContext, safepath.Join(dir, folderMetadataFileName), "").Return(nil, repository.ErrFileNotFound).Once()
 				}
 				folderID := ParseFolder(dir, cfg.Name).ID
+				expectedProbes = append(expectedProbes, folderID)
 				folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
 					Run(func(args mock.Arguments) { probedFolders = append(probedFolders, args.String(1)) }).
 					Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
@@ -1936,7 +1935,7 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 					Namespace: cfg.Namespace, Group: resource.Group, Resource: resource.Resource, Name: resourceName, Verb: utils.VerbGet,
 				}, req, "root authorization must retain the resource name, including Folder previews")
 				require.Empty(t, folder)
-				require.Equal(t, []string{ParseFolder("new/nested/", cfg.Name).ID, ParseFolder("new/", cfg.Name).ID}, probedFolders)
+				require.Equal(t, expectedProbes, probedFolders)
 				checkedFolders = append(checkedFolders, folder)
 				return authlib.CheckResponse{Allowed: tt.rootAllowed}, nil
 			})).WithFallbackRole(identity.RoleViewer)
@@ -1962,9 +1961,13 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 			if folderMetadata {
 				destinationPath = safepath.Dir(destinationPath)
 			}
-			require.Equal(t, ParseFolder(destinationPath, cfg.Name).ID, meta.GetFolder(), "root authorization must preserve the unsynced destination")
+			if destinationPath == "" {
+				require.Empty(t, meta.GetFolder(), "top-level folders must retain their root parent context")
+			} else {
+				require.Equal(t, ParseFolder(destinationPath, cfg.Name).ID, meta.GetFolder(), "root authorization must preserve the unsynced destination")
+			}
 			require.Len(t, resourceClient.Calls, 2, "preview only gets the resource and dry-runs its creation")
-			require.Len(t, folders.Calls, 2, "preview probes directories without creating or probing a root folder")
+			require.Len(t, folders.Calls, len(expectedProbes), "preview probes directories without creating or probing a root folder")
 			for _, call := range repo.Calls {
 				require.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
 			}
