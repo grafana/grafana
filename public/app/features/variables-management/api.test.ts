@@ -52,12 +52,16 @@ beforeEach(() => {
   clearSceneCacheMock.mockReset();
 });
 
-function expectCachesInvalidated() {
+const flushCacheInvalidation = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+async function expectCachesInvalidated() {
+  await flushCacheInvalidation();
   expect(clearPredefinedVariablesCacheMock).toHaveBeenCalledTimes(1);
   expect(clearSceneCacheMock).toHaveBeenCalledTimes(1);
 }
 
-function expectCachesNotInvalidated() {
+async function expectCachesNotInvalidated() {
+  await flushCacheInvalidation();
   expect(clearPredefinedVariablesCacheMock).not.toHaveBeenCalled();
   expect(clearSceneCacheMock).not.toHaveBeenCalled();
 }
@@ -70,7 +74,7 @@ describe('bulkDeleteVariables', () => {
     expect(deleteMock.mock.calls[0][0]).toContain('/variables/a');
     expect(deleteMock.mock.calls[1][0]).toContain('/variables/b--folder-1');
     expect(result).toEqual({ succeeded: 2, skipped: 0, failed: [] });
-    expectCachesInvalidated();
+    await expectCachesInvalidated();
   });
 
   it('reports partial failures and continues', async () => {
@@ -161,7 +165,7 @@ describe('recreateVariable', () => {
 
     expect(calls).toEqual(['create', 'delete']);
     expect(result).toEqual({ deletedOriginal: true });
-    expectCachesInvalidated();
+    await expectCachesInvalidated();
   });
 
   it('propagates a create failure without deleting the original', async () => {
@@ -169,7 +173,7 @@ describe('recreateVariable', () => {
 
     await expect(recreateVariable('a', kind, 'folder-1')).rejects.toThrow('conflict');
     expect(deleteMock).not.toHaveBeenCalled();
-    expectCachesNotInvalidated();
+    await expectCachesNotInvalidated();
   });
 
   it('reports a delete failure without throwing, since the copy already exists', async () => {
@@ -180,6 +184,6 @@ describe('recreateVariable', () => {
     expect(postMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ deletedOriginal: false });
     // Copy exists — caches must refresh even when the original could not be removed.
-    expectCachesInvalidated();
+    await expectCachesInvalidated();
   });
 });
