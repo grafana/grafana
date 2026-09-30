@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
 
 import {
-  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type SelectableValue,
   getDataSourceUID,
@@ -27,14 +26,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
 
   const [state, setState] = useState<{ error?: string }>();
 
-  const dataSourceListItems: DataSourceInstanceListItem[] = dataSourceSrv.getList().map((ds) => ({
-    uid: ds.uid,
-    type: ds.type,
-    apiVersion: ds.apiVersion,
-    name: ds.name,
-    meta: ds.meta,
-  }));
-  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSourceListItems);
+  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSourceSrv.getList());
 
   const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
     if (actionMeta.action === 'clear' && props.onClear) {
