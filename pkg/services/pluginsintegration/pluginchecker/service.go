@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"

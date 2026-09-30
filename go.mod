@@ -56,7 +56,6 @@ require (
 	github.com/Bose/minisentinel v0.0.0-20200130220412-917c5a9223bb // @grafana/alerting-backend
 	github.com/BurntSushi/toml v1.6.0 // @grafana/identity-access-team
 	github.com/DATA-DOG/go-sqlmock v1.5.2 // @grafana/grafana-search-and-storage
-	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.5.0 // @grafana/grafana-backend-services-squad
 	github.com/Masterminds/sprig/v3 v3.3.0 // @grafana/grafana-backend-group
 	github.com/PaesslerAG/jsonpath v0.1.1 // @grafana/grafana-search-and-storage
