@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -23,10 +26,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -823,5 +828,89 @@ func TestIntegrationKinds(t *testing.T) {
 		created.Spec.Kind = v1beta1.TemplateGroupTemplateKindMimir
 		_, err = client.Update(ctx, created, resource.UpdateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+	})
+}
+
+// TestIntegrationTemplateGroupManagerPropertiesRoundTrip verifies that ManagerProperties set via the
+// k8s API survive a round-trip through legacy storage, and that templates provisioned through the
+// legacy API keep their provenance and are exposed via k8s with the classic-API manager shim.
+func TestIntegrationTemplateGroupManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	t.Run("k8s ManagerKindTerraform survives round-trip through legacy storage", func(t *testing.T) {
+		tmpl := &v1beta1.TemplateGroup{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+				},
+			},
+			Spec: v1beta1.TemplateGroupSpec{
+				Title:   "mp-terraform",
+				Content: `{{ define "mp-terraform" }} test {{ end }}`,
+				Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
+			},
+		}
+		created, err := adminClient.Create(ctx, tmpl, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus(), "create response provenance should reflect terraform->api mapping")
+		require.Equal(t, string(utils.ManagerKindTerraform), created.Annotations[utils.AnnoKeyManagerKind])
+		require.Equal(t, "my-terraform-workspace", created.Annotations[utils.AnnoKeyManagerIdentity])
+
+		legacy, status, body := legacyCli.GetTemplateByNameWithStatus(t, created.Spec.Title)
+		require.Equalf(t, http.StatusOK, status, body)
+		require.Equal(t, definitions.Provenance(ngmodels.ProvenanceAPI), legacy.Provenance, "terraform manager should map to ProvenanceAPI in legacy API")
+
+		retrieved, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindTerraform), retrieved.Annotations[utils.AnnoKeyManagerKind], "ManagerKindTerraform should survive a fresh read")
+		require.Equal(t, "my-terraform-workspace", retrieved.Annotations[utils.AnnoKeyManagerIdentity], "manager identity should survive a fresh read")
+
+		list, err := adminClient.List(ctx, "default", resource.ListOptions{})
+		require.NoError(t, err)
+		idx := slices.IndexFunc(list.Items, func(i v1beta1.TemplateGroup) bool { return i.Spec.Title == created.Spec.Title })
+		require.GreaterOrEqual(t, idx, 0)
+		require.Equal(t, string(utils.ManagerKindTerraform), list.Items[idx].Annotations[utils.AnnoKeyManagerKind], "ManagerKindTerraform should be present in list results")
+	})
+
+	t.Run("legacy ProvenanceAPI is persisted and maps to ManagerKindClassicAPI when read via k8s", func(t *testing.T) {
+		const name = "mp-legacy-api"
+		created, status, body := legacyCli.PutTemplateWithStatus(t, name, definitions.NotificationTemplateContent{
+			Template: `{{ define "mp-legacy-api" }} test {{ end }}`,
+		})
+		require.Equalf(t, http.StatusAccepted, status, body)
+		require.Equal(t, definitions.Provenance(ngmodels.ProvenanceAPI), created.Provenance)
+
+		legacy, status, body := legacyCli.GetTemplateByNameWithStatus(t, name)
+		require.Equalf(t, http.StatusOK, status, body)
+		require.Equal(t, definitions.Provenance(ngmodels.ProvenanceAPI), legacy.Provenance, "legacy upsert should persist ProvenanceAPI")
+
+		list, err := adminClient.List(ctx, "default", resource.ListOptions{})
+		require.NoError(t, err)
+		idx := slices.IndexFunc(list.Items, func(i v1beta1.TemplateGroup) bool { return i.Spec.Title == name })
+		require.GreaterOrEqual(t, idx, 0, "legacy-created template should be listed via k8s")
+		listed := list.Items[idx]
+		t.Cleanup(func() {
+			_ = adminClient.Delete(ctx, listed.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+		require.Equal(t, string(ngmodels.ProvenanceAPI), listed.GetProvenanceStatus())
+		require.Equal(t, string(utils.ManagerKindClassicAPI), listed.Annotations[utils.AnnoKeyManagerKind]) //nolint:staticcheck
+
+		got, err := adminClient.Get(ctx, listed.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindClassicAPI), got.Annotations[utils.AnnoKeyManagerKind]) //nolint:staticcheck
 	})
 }
