@@ -92,9 +92,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: NotebookPageComponent,
     },
     {
-      // What the PDF export points the headless browser at, loaded as the user who asked for it.
-      // Order here is for readability, not precedence: `render` is a static segment, which v6 ranks
-      // above the view route's `:slug?`.
       path: notebookRenderUrl(':uid'),
       roles: () => contextSrv.evaluatePermission([AccessControlAction.NotebooksRead]),
       routeName: DashboardRoutes.Notebook,
