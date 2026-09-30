@@ -178,11 +178,15 @@ const getRolePickerInputStyles = (
           paddingLeft: 0,
         })
     ),
-    input: css({
-      maxWidth: '120px',
-      border: 'none',
-      cursor: focused ? 'default' : 'pointer',
-    }),
+    input: cx(
+      sharedInputStyle(theme, invalid),
+      css({
+        maxWidth: '120px',
+        border: 'none',
+        cursor: focused ? 'default' : 'pointer',
+        minHeight: `calc(${theme.spacing(theme.components.height.md)} - 2px)`,
+      })
+    ),
     suffix: styles.suffix,
     dropdownIndicator: css({
       cursor: 'pointer',
