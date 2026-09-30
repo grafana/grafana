@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -52,20 +53,20 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		return err
 	}
 
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
-		// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
-		// because this is an extra query on every delete and the only subscriber is behind the flag.
-		var folderKeys []ngmodels.FolderKey
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
-			var err error
-			folderKeys, err = deletedRuleFolderKeys(sess, orgID, ruleUID, dbHelper.Table("alert_rule"))
-			if err != nil {
-				return err
-			}
+	// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
+	// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
+	// because this is an extra query on every delete and the only subscriber is behind the flag.
+	// Runs on dbHelper.DB ahead of the transaction below, which may be a different connection.
+	var folderKeys []ngmodels.FolderKey
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
+		folderKeys, err = deletedRuleFolderKeys(ctx, dbHelper, orgID, ruleUID)
+		if err != nil {
+			return err
 		}
+	}
 
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		rows, err := sess.Table(alertRule{}).Where("org_id = ?", orgID).In("uid", ruleUID).Delete(alertRule{})
 		if err != nil {
 			return err
@@ -138,7 +139,7 @@ func (st DBstore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64,
 	alertRuleVersionTable := dbHelper.Table("alert_rule_version")
 
 	var result []alertRuleVersion
-	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		args, in := getINSubQueryArgs(ruleUIDs)
 		// take only the latest versions of each rule by GUID
 		rows, err := sess.SQL(fmt.Sprintf(`
@@ -508,11 +509,14 @@ func collectNamespaceUIDsByOrg(rules []*ngmodels.AlertRule) []orgNamespaces {
 	return result
 }
 
-// deletedRuleFolderKeys returns the deduplicated parent folders of the given rules. It runs on the
-// caller's session so it must be invoked before the rules are deleted in the same transaction.
-func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string, alertRuleTable string) ([]ngmodels.FolderKey, error) {
+// deletedRuleFolderKeys returns the deduplicated parent folders of the given rules. It must be
+// invoked before the rules are deleted, since the rows carrying namespace_uid are gone afterwards.
+func deletedRuleFolderKeys(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
 	var uids []string
-	if err := sess.Table(alertRuleTable).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids); err != nil {
+	err := dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(dbHelper.Table("alert_rule")).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids)
+	})
+	if err != nil {
 		return nil, err
 	}
 	seen := make(map[string]struct{}, len(uids))
@@ -1811,7 +1815,7 @@ func (st DBstore) listAlertRuleUIDsInFolder(ctx context.Context, orgID int64, fo
 	}
 
 	var uids []string
-	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(dbHelper.Table("alert_rule")).Cols("uid").Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).Find(&uids)
 	})
 	if err != nil {

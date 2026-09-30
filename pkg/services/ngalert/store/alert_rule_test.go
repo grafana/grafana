@@ -937,6 +937,18 @@ func TestDBstore_legacyDatabaseProvider(t *testing.T) {
 	})
 }
 
+// dbSpy wraps a db.DB and records whether WithDbSession was called on it, so a test can prove a
+// read went through this specific connection rather than through st.SQLStore directly.
+type dbSpy struct {
+	db.DB
+	withDbSessionCalled bool
+}
+
+func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withDbSessionCalled = true
+	return s.DB.WithDbSession(ctx, callback)
+}
+
 func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
@@ -949,9 +961,10 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 		featuremgmt.FlagAlertingFolderHasRulesLabel, featuremgmt.FlagAlertRuleRestore)
 
 	var requestedTables []string
+	spy := &dbSpy{DB: sqlStore}
 	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{
-			DB: sqlStore,
+			DB: spy,
 			Table: func(n string) string {
 				requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
 				return n
@@ -966,6 +979,7 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 
 	assert.Contains(t, requestedTables, "alert_rule")
 	assert.Contains(t, requestedTables, "alert_rule_version")
+	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
 }
 
 func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
@@ -981,9 +995,10 @@ func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
 	})
 
 	var requestedTables []string
+	spy := &dbSpy{DB: sqlStore}
 	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{
-			DB: sqlStore,
+			DB: spy,
 			Table: func(n string) string {
 				requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
 				return n
@@ -997,6 +1012,7 @@ func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, requestedTables, "alert_rule")
+	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
