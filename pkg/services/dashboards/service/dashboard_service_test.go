@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1718,14 +1719,16 @@ func TestCountInFolders(t *testing.T) {
 }
 
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
-	t.Run("uses unspecified result format by default", func(t *testing.T) {
+	t.Run("uses field-value results with the requested response fields", func(t *testing.T) {
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		fields := []string{resource.SEARCH_FIELD_TITLE}
 
-		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1})
+		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1}, fields)
 		require.NoError(t, err)
-		assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, request.ResultFormat)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		assert.Equal(t, fields, request.Fields)
 	})
 
 	t.Run("internal searches request field-value results and accept a legacy response", func(t *testing.T) {
@@ -1758,21 +1761,13 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
-			OrgId:                1,
-			Sort:                 sort.SortAlphaAsc,
-			UseFieldValueResults: true,
+			OrgId: 1,
+			Sort:  sort.SortAlphaAsc,
 		}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
-				slices.Equal(req.Fields, []string{
-					resource.SEARCH_FIELD_TITLE,
-					resource.SEARCH_FIELD_TAGS,
-					resource.SEARCH_FIELD_FOLDER,
-					resource.SEARCH_FIELD_DESCRIPTION,
-					resource.SEARCH_FIELD_LEGACY_ID,
-					resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
-				}) &&
+				slices.Equal(req.Fields, dashboardsearch.FieldValueIncludeFields) &&
 				len(req.SortBy) == 1 &&
 				// should be converted to "title" due to ParseSortName
 				req.SortBy[0].Field == "title" &&

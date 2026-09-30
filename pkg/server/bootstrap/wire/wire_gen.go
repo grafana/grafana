@@ -698,7 +698,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	dataSourceProxyService := datasourceproxy.ProvideService(cacheServiceImpl, ossDataSourceRequestValidator, pluginstoreService, cfg, httpclientProvider, oauthtokenService, service13, tracingService, secretsService, featureToggles)
 	k8sClients := api2.ProvideK8sClients(cfg, eventualRestConfigProvider)
-	searchService := search2.ProvideService(cfg, sqlStore, k8sClients, dashboardService, folderimplService, featureToggles, sortService)
+	searchService := search2.ProvideService(cfg, sqlStore, k8sClients, dashboardService, folderimplService, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
 	dashboardAccessService := service7.ProvideDashboardAccessService(featureToggles, dashboardServiceImpl)
 	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, eventualRestConfigProvider)
@@ -1481,7 +1481,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	oauthtokenService := oauthtoken.ProvideService(socialService, authinfoimplService, configProvider, registerer, serverLockService, tracingService, userAuthTokenService, featureToggles)
 	dataSourceProxyService := datasourceproxy.ProvideService(cacheServiceImpl, ossDataSourceRequestValidator, pluginstoreService, cfg, httpclientProvider, oauthtokenService, service13, tracingService, secretsService, featureToggles)
 	k8sClients := api2.ProvideK8sClients(cfg, eventualRestConfigProvider)
-	searchService := search2.ProvideService(cfg, sqlStore, k8sClients, dashboardService, folderimplService, featureToggles, sortService)
+	searchService := search2.ProvideService(cfg, sqlStore, k8sClients, dashboardService, folderimplService, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
 	dashboardAccessService := service7.ProvideDashboardAccessService(featureToggles, dashboardServiceImpl)
 	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, eventualRestConfigProvider)
