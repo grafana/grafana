@@ -6,8 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -98,7 +100,7 @@ func TestIntegrationGitFiles_PreviewUnsyncedFolders(t *testing.T) {
 				Namespace("default").
 				Resource("repositories").
 				Name(repoName).
-				SubResource("files", tt.path).
+				Suffix("files/"+tt.path).
 				Param("ref", branch).
 				Do(t.Context())
 
@@ -121,52 +123,133 @@ func TestIntegrationGitFiles_PreviewUnsyncedFolders(t *testing.T) {
 	}
 }
 
-func TestIntegrationGitFiles_PreviewWithoutExistingAncestor(t *testing.T) {
-	for _, target := range []string{"folder", "instance"} {
+func TestIntegrationGitFiles_PreviewRootAcrossTargets(t *testing.T) {
+	for _, target := range []string{"folder", "instance", "folderless"} {
 		t.Run(target, func(t *testing.T) {
 			helper := sharedGitHelper(t)
-			repoName := "hash-preview-no-ancestor-" + target
+			repoName := "hash-preview-root-" + target
 			const (
 				branch = "feature-preview"
 				path   = "new/deep/dashboard.json"
-				uid    = "hash-preview-no-ancestor"
+				uid    = "hash-preview-root"
 			)
 
 			createRepo := helper.CreateFolderTargetGitRepo
-			if target == "instance" {
+			switch target {
+			case "instance":
 				createRepo = helper.CreateGitRepo
+			case "folderless":
+				createRepo = helper.CreateFolderlessTargetGitRepo
 			}
 			_, local := createRepo(t, repoName, nil, "write", "branch")
+			rootGrant := resourcepermissions.SetResourcePermissionCommand{
+				Actions: []string{"dashboards:read"}, Resource: "dashboards", ResourceAttribute: "uid", ResourceID: uid,
+			}
+			if target == "folder" {
+				helper.ProvisioningTestHelper.SyncAndWait(t, repoName, nil)
+				helper.RequireFolders(t, repoName)
+				rootGrant.Resource, rootGrant.ResourceID = "folders", repoName
+			}
 			_, err := local.Git("checkout", "-b", branch)
 			require.NoError(t, err)
-			require.NoError(t, local.CreateFile(path, string(common.DashboardJSON(uid, "Preview without an ancestor", 1))))
+			require.NoError(t, local.CreateFile(path, string(common.DashboardJSON(uid, "Root preview", 1))))
 			_, err = local.Git("add", ".")
 			require.NoError(t, err)
-			_, err = local.Git("commit", "-m", "Add dashboard before syncing the repository")
+			_, err = local.Git("commit", "-m", "Add dashboard below unsynced directories")
 			require.NoError(t, err)
 			_, err = local.Git("push", "origin", branch)
 			require.NoError(t, err)
 
 			missingFolders := []string{
-				repoName,
 				resources.ParseFolder("new/", repoName).ID,
 				resources.ParseFolder("new/deep/", repoName).ID,
+			}
+			if target != "folder" {
+				missingFolders = append(missingFolders, repoName)
 			}
 			helper.RequireFoldersNotFound(t, missingFolders...)
 			helper.RequireDashboardsNotFound(t, uid)
 
-			result := helper.AdminREST.Get().
-				Namespace("default").
-				Resource("repositories").
-				Name(repoName).
-				SubResource("files", path).
-				Param("ref", branch).
-				Do(t.Context())
-			require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden even for an admin, got %v", result.Error())
-			require.ErrorContains(t, result.Error(), "no existing folder for read authorization")
+			for _, tt := range []struct {
+				name        string
+				role        org.RoleType
+				permissions []resourcepermissions.SetResourcePermissionCommand
+				allowed     bool
+			}{
+				{name: "root-grant", role: org.RoleNone, permissions: []resourcepermissions.SetResourcePermissionCommand{rootGrant}, allowed: true},
+				{name: "no-grant", role: org.RoleNone},
+				{name: "general-only", role: org.RoleNone, permissions: []resourcepermissions.SetResourcePermissionCommand{{
+					Actions: []string{"folders:read", "dashboards:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: "general",
+				}}},
+				{name: "unrelated-folder", role: org.RoleNone, permissions: []resourcepermissions.SetResourcePermissionCommand{{
+					Actions: []string{"folders:read", "dashboards:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: "unrelated-folder",
+				}}},
+				{name: "viewer", role: org.RoleViewer, allowed: true},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					reader := helper.CreateUser(repoName+"-"+tt.name, apis.Org1, tt.role, tt.permissions)
+					gv := provisioning.RepositoryResourceInfo.GroupVersion()
+					result := reader.RESTClient(t, &gv).Get().Namespace("default").Resource("repositories").Name(repoName).
+						Suffix("files/"+path).Param("ref", branch).Do(t.Context())
+					if tt.allowed {
+						require.NoError(t, result.Error())
+						var preview provisioning.ResourceWrapper
+						require.NoError(t, result.Into(&preview))
+						require.Empty(t, preview.Errors)
+						require.Equal(t, uid, common.MustNestedString(preview.Resource.File.Object, "metadata", "name"))
+						require.Empty(t, preview.Resource.Existing.Object)
+					} else {
+						require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden, got %v", result.Error())
+					}
+					helper.RequireFoldersNotFound(t, missingFolders...)
+					helper.RequireDashboardsNotFound(t, uid)
+				})
+			}
 
-			helper.RequireFoldersNotFound(t, missingFolders...)
-			helper.RequireDashboardsNotFound(t, uid)
+			t.Run("readable unmanaged decoy blocks root fallback", func(t *testing.T) {
+				decoyUID := resources.ParseFolder("new/deep/", repoName).ID
+				helper.CreateUnmanagedFolderWithName(t, decoyUID, "Readable decoy", "")
+				reader := helper.CreateUser(repoName+"-decoy-reader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{rootGrant, {
+					Actions: []string{"folders:read", "dashboards:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: decoyUID,
+				}})
+				gv := provisioning.RepositoryResourceInfo.GroupVersion()
+				result := reader.RESTClient(t, &gv).Get().Namespace("default").Resource("repositories").Name(repoName).
+					Suffix("files/"+path).Param("ref", branch).Do(t.Context())
+				require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden, got %v", result.Error())
+				require.ErrorContains(t, result.Error(), "folder does not belong to the configured repository path")
+				decoy, err := helper.Folders.Resource.Get(t.Context(), decoyUID, metav1.GetOptions{})
+				require.NoError(t, err)
+				require.Empty(t, decoy.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+				helper.RequireFoldersNotFound(t, resources.ParseFolder("new/", repoName).ID)
+				helper.RequireDashboardsNotFound(t, uid)
+			})
 		})
 	}
+}
+
+func TestIntegrationGitFiles_PreviewWithoutRepositoryRoot(t *testing.T) {
+	helper := sharedGitHelper(t)
+	const (
+		repoName = "hash-preview-missing-root"
+		branch   = "feature-preview"
+		path     = "new/deep/dashboard.json"
+		uid      = "hash-preview-missing-root"
+	)
+	_, local := helper.CreateFolderTargetGitRepo(t, repoName, nil, "write", "branch")
+	_, err := local.Git("checkout", "-b", branch)
+	require.NoError(t, err)
+	require.NoError(t, local.CreateFile(path, string(common.DashboardJSON(uid, "Preview without a wrapper", 1))))
+	_, err = local.Git("add", ".")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "Add dashboard before syncing the repository")
+	require.NoError(t, err)
+	_, err = local.Git("push", "origin", branch)
+	require.NoError(t, err)
+
+	result := helper.AdminREST.Get().Namespace("default").Resource("repositories").Name(repoName).
+		Suffix("files/"+path).Param("ref", branch).Do(t.Context())
+	require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden even for an admin, got %v", result.Error())
+	require.ErrorContains(t, result.Error(), "no existing folder for read authorization")
+	helper.RequireFoldersNotFound(t, repoName, resources.ParseFolder("new/", repoName).ID, resources.ParseFolder("new/deep/", repoName).ID)
+	helper.RequireDashboardsNotFound(t, uid)
 }

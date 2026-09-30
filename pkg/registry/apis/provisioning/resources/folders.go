@@ -180,7 +180,7 @@ func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref stri
 			}
 		}
 
-		// Instance-target repositories have no root folder to probe.
+		// Instance and folderless repositories have no wrapper root folder to probe.
 		if folderID != "" {
 			obj, err := fm.client.Get(folderCtx, folderID, metav1.GetOptions{})
 			if err == nil {
@@ -203,7 +203,7 @@ func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref stri
 			}
 		}
 
-		// The empty path may identify a real repository folder, so try it before stopping.
+		// Stop at the repository root, after checking its wrapper folder if applicable.
 		if dir == "" {
 			return "", nil
 		}

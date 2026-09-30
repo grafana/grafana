@@ -1835,6 +1835,143 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 	}
 }
 
+func TestDualReadWriter_ReadPreviewAtRoot(t *testing.T) {
+	for _, target := range []provisioning.SyncTargetType{provisioning.SyncTargetTypeInstance, provisioning.SyncTargetTypeFolderless} {
+		t.Run(string(target), func(t *testing.T) {
+			forEachPreviewResource(t, func(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource) {
+				testReadPreviewAtRoot(t, kind, resource, target)
+			})
+			t.Run("Folder", func(t *testing.T) {
+				testReadPreviewAtRoot(t, FolderKind, FolderResource, target)
+			})
+		})
+	}
+}
+
+func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource, target provisioning.SyncTargetType) {
+	t.Helper()
+	for _, tt := range []struct {
+		name        string
+		newChecker  func(authlib.AccessChecker) auth.AccessChecker
+		role        identity.RoleType
+		rootAllowed bool
+		wantAllowed bool
+	}{
+		{name: "token permits root", newChecker: auth.NewTokenAccessChecker, role: identity.RoleNone, rootAllowed: true, wantAllowed: true},
+		{name: "token denies root without role fallback", newChecker: auth.NewTokenAccessChecker, role: identity.RoleViewer},
+		{name: "session permits root", newChecker: auth.NewSessionAccessChecker, role: identity.RoleNone, rootAllowed: true, wantAllowed: true},
+		{name: "session denies root without matching role", newChecker: auth.NewSessionAccessChecker, role: identity.RoleNone},
+		{name: "session viewer fallback permits root", newChecker: auth.NewSessionAccessChecker, role: identity.RoleViewer, wantAllowed: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "root-preview", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.SyncOptions{Target: target},
+				},
+			}
+			resourceName := "root-" + resource.Resource
+			resourcePath := "new/nested/resource.json"
+			folderMetadata := resource == FolderResource
+			if folderMetadata {
+				resourcePath = "new/nested/_folder.json"
+			}
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: tt.role}
+			ctx := identity.WithRequester(context.Background(), caller)
+			callerContext := mock.MatchedBy(func(readCtx context.Context) bool {
+				id, err := identity.GetRequester(readCtx)
+				return err == nil && id == caller
+			})
+			provisioningContext := mock.MatchedBy(func(lookupCtx context.Context) bool {
+				id, err := identity.GetRequester(lookupCtx)
+				return err == nil && identity.IsProvisioningServiceIdentity(id) && id.GetNamespace() == cfg.Namespace
+			})
+			repo := repository.NewMockReaderWriter(t)
+			repo.EXPECT().Config().Return(cfg)
+			repo.EXPECT().Read(callerContext, resourcePath, "feature").Return(&repository.FileInfo{
+				Path: resourcePath, Ref: "feature",
+				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Root preview"}}`, kind.GroupVersion().String(), kind.Kind, resourceName)),
+			}, nil).Once()
+			if folderMetadata {
+				repo.EXPECT().Read(callerContext, "new/_folder.json", "feature").Return(nil, repository.ErrFileNotFound).Once()
+			}
+			folders := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { folders.AssertExpectations(t) })
+			var probedFolders []string
+			for _, dir := range []string{"new/nested/", "new/"} {
+				if folderMetadata {
+					repo.EXPECT().Read(callerContext, safepath.Join(dir, folderMetadataFileName), "").Return(nil, repository.ErrFileNotFound).Once()
+				}
+				folderID := ParseFolder(dir, cfg.Name).ID
+				folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+					Run(func(args mock.Arguments) { probedFolders = append(probedFolders, args.String(1)) }).
+					Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
+			}
+			resourceClient := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { resourceClient.AssertExpectations(t) })
+			resourceClient.On("Get", provisioningContext, resourceName, metav1.GetOptions{}, mock.Anything).
+				Return(nil, apierrors.NewNotFound(resource.GroupResource(), resourceName)).Once()
+			var dryRunObject *unstructured.Unstructured
+			resourceClient.On("Create", provisioningContext, mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					dryRunObject = args.Get(1).(*unstructured.Unstructured)
+					require.Equal(t, []string{metav1.DryRunAll}, args.Get(2).(metav1.CreateOptions).DryRun)
+				}).Return(&unstructured.Unstructured{}, nil).Once()
+			clients := NewMockResourceClients(t)
+			clients.EXPECT().ForKind(callerContext, kind).Return(resourceClient, resource, nil).Once()
+			clients.EXPECT().SupportedResources().Return([]SupportedResource{
+				{GroupKind: kind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+			}).Once()
+			parser := &parser{
+				repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
+				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: folderMetadata,
+			}
+			var checkedFolders []string
+			access := tt.newChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				require.Same(t, caller, id)
+				require.NotNil(t, storage.FromContext(checkCtx))
+				require.Equal(t, authlib.CheckRequest{
+					Namespace: cfg.Namespace, Group: resource.Group, Resource: resource.Resource, Name: resourceName, Verb: utils.VerbGet,
+				}, req, "root authorization must retain the resource name, including Folder previews")
+				require.Empty(t, folder)
+				require.Equal(t, []string{ParseFolder("new/nested/", cfg.Name).ID, ParseFolder("new/", cfg.Name).ID}, probedFolders)
+				checkedFolders = append(checkedFolders, folder)
+				return authlib.CheckResponse{Allowed: tt.rootAllowed}, nil
+			})).WithFallbackRole(identity.RoleViewer)
+			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(folderMetadata))
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, folderMetadata)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, folderMetadata)
+
+			parsed, err := readWriter.Read(ctx, resourcePath, "feature")
+			if tt.wantAllowed {
+				require.NoError(t, err)
+				require.NotNil(t, parsed)
+				require.Nil(t, parsed.Existing)
+				require.Nil(t, parsed.Upsert)
+			} else {
+				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				require.Nil(t, parsed)
+			}
+			require.Equal(t, []string{""}, checkedFolders)
+			require.NotNil(t, dryRunObject)
+			meta, err := utils.MetaAccessor(dryRunObject)
+			require.NoError(t, err)
+			destinationPath := safepath.Dir(resourcePath)
+			if folderMetadata {
+				destinationPath = safepath.Dir(destinationPath)
+			}
+			require.Equal(t, ParseFolder(destinationPath, cfg.Name).ID, meta.GetFolder(), "root authorization must preserve the unsynced destination")
+			require.Len(t, resourceClient.Calls, 2, "preview only gets the resource and dry-runs its creation")
+			require.Len(t, folders.Calls, 2, "preview probes directories without creating or probing a root folder")
+			for _, call := range repo.Calls {
+				require.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
+			}
+		})
+	}
+}
+
 func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
 	const resourcePath = "team/new/dashboard.json"
 	const resourceName = "decoy-preview-dashboard"
@@ -1934,7 +2071,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 		{name: "different allowed configured folder permits preview", folderMetadata: true, configuredFolder: "other-allowed-folder", canReadConfigured: true, wantAllowed: true},
 		{name: "denied PR folder cannot override allowed configured folder", folderMetadata: true, configuredFolder: "other-allowed-folder", denyDestination: true, canReadConfigured: true, wantAllowed: true},
 		{name: "matching allowed folder permits preview", folderMetadata: true, configuredFolder: "preview-folder", wantAllowed: true},
-		{name: "missing hash folder without an instance root forbids preview", target: provisioning.SyncTargetTypeInstance, unsynced: true, canReadConfigured: true},
+		{name: "missing hash folder requires instance root permission", target: provisioning.SyncTargetTypeInstance, unsynced: true, canReadConfigured: true},
 		{name: "missing repository root before folder sync forbids preview", path: "dashboard.json", unsynced: true, canReadConfigured: true},
 		{name: "matching allowed metadata folder requires ancestor permission", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true},
 		{name: "matching allowed metadata folder inherits from allowed ancestor", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true, canReadAncestor: true, wantAllowed: true},
@@ -2065,6 +2202,8 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 				checkedFolderIDs = append(checkedFolderIDs, configuredFolder)
 			} else if tt.ancestorExists {
 				checkedFolderIDs = append(checkedFolderIDs, cfg.Name)
+			} else if target == provisioning.SyncTargetTypeInstance {
+				checkedFolderIDs = append(checkedFolderIDs, "")
 			}
 			assert.Equal(t, checkedFolderIDs, checkedFolders)
 			require.NotNil(t, dryRunObject)

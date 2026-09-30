@@ -115,7 +115,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		name            string
 		dir             string
 		ref             string
-		instanceTarget  bool
+		target          provisioning.SyncTargetType
 		metadataEnabled bool
 		metadataReads   []metadataRead
 		existing        []string
@@ -150,11 +150,11 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			wantProbes: []string{leafID, parentID, ancestorID, repoName},
 		},
 		{
-			name: "instance target has no root to probe", dir: "a/b/c/", instanceTarget: true,
+			name: "instance target has no root to probe", dir: "a/b/c/", target: provisioning.SyncTargetTypeInstance,
 			wantProbes: []string{leafID, parentID, ancestorID},
 		},
 		{
-			name: "instance target can use a real parent", dir: "a/b/c/", instanceTarget: true,
+			name: "instance target can use a real parent", dir: "a/b/c/", target: provisioning.SyncTargetTypeInstance,
 			existing: []string{parentID}, wantID: parentID,
 			wantProbes: []string{leafID, parentID},
 		},
@@ -178,7 +178,18 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			name: "missing root for an empty path", wantProbes: []string{repoName},
 		},
 		{
-			name: "empty instance root does not look up a folder", instanceTarget: true,
+			name: "empty instance root does not look up a folder", target: provisioning.SyncTargetTypeInstance,
+		},
+		{
+			name: "folderless target exhausts directories without probing a wrapper root", dir: "a/b/c/", target: provisioning.SyncTargetTypeFolderless,
+			wantProbes: []string{leafID, parentID, ancestorID},
+		},
+		{
+			name: "folderless target stops at a real parent", dir: "a/b/c/", target: provisioning.SyncTargetTypeFolderless,
+			existing: []string{parentID}, wantID: parentID, wantProbes: []string{leafID, parentID},
+		},
+		{
+			name: "empty folderless root does not look up a folder", target: provisioning.SyncTargetTypeFolderless,
 		},
 		{
 			name: "lookup error stops before a higher existing ancestor", dir: "a/b/c/",
@@ -280,8 +291,8 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 				},
 			}
-			if tt.instanceTarget {
-				cfg.Spec.Sync.Target = provisioning.SyncTargetTypeInstance
+			if tt.target != "" {
+				cfg.Spec.Sync.Target = tt.target
 			}
 			caller := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace}
 			ctx := identity.WithRequester(context.Background(), caller)

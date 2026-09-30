@@ -167,7 +167,8 @@ func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, acce
 // Authorization Model:
 //   - For new resources: checks the destination folder (derived from the file path).
 //     Folder-scoped reads can inherit access from the nearest existing configured
-//     ancestor when the destination folder has not been synced yet.
+//     ancestor when the destination folder has not been synced yet. Repositories
+//     without a wrapper folder can reach the top-level authorization context.
 //   - For existing resources where the folder is unchanged: checks that single folder.
 //   - For existing resources where the folder changes (cross-folder move): checks both
 //     the current DB location AND the destination. The user must have the required verb
@@ -236,18 +237,21 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 }
 
 func (a *ProvisioningAuthorizer) checkReadAncestorAccess(ctx context.Context, req authlib.CheckRequest, folderID string) error {
-	if req.Group == FolderResource.Group && req.Resource == FolderResource.Resource {
-		// Folder GET authorizes the named folder, not its contextual parent.
+	if folderID != "" && req.Group == FolderResource.Group && req.Resource == FolderResource.Resource {
+		// Folder GET authorizes the named ancestor, not its contextual parent.
+		// At an unwrapped root, keep the resource name: an unnamed GET can be
+		// interpreted as a capability check rather than access to this resource.
 		req.Name = folderID
 	}
 	return a.access.Check(ctx, req, folderID)
 }
 
 // authorizeResourceRead checks the first existing configured folder, independently
-// of PR metadata. Missing destinations inherit from an ancestor; denial never falls back.
+// of PR metadata, or the top-level context for a repository without a wrapper. Missing
+// destinations inherit from an ancestor; denial never falls back.
 func (a *ProvisioningAuthorizer) authorizeResourceRead(ctx context.Context, parsed *ParsedResource, req authlib.CheckRequest) error {
 	destination := parsed.Meta.GetFolder()
-	// Org-scoped resources and instance-root resources have no folder to inherit
+	// Org-scoped resources and resources at an unwrapped root have no folder to inherit
 	// from. Reads without a usable repository path retain their direct checks too.
 	if !parsed.FolderScoped || destination == "" || parsed.Info == nil || parsed.Info.Path == "" {
 		return a.access.Check(ctx, req, destination)
@@ -266,7 +270,9 @@ func (a *ProvisioningAuthorizer) authorizeResourceRead(ctx context.Context, pars
 	if err != nil {
 		return fmt.Errorf("find read ancestor: %w", err)
 	}
-	if ancestor == "" {
+	// Instance and folderless repositories intentionally have no wrapper folder.
+	// A missing required wrapper (or an unknown target) must not grant root access.
+	if ancestor == "" && a.repo.Spec.Sync.Target != provisioning.SyncTargetTypeFolderless && a.repo.Spec.Sync.Target != provisioning.SyncTargetTypeInstance {
 		return apierrors.NewForbidden(parsed.GVR.GroupResource(), req.Name, fmt.Errorf("no existing folder for read authorization"))
 	}
 

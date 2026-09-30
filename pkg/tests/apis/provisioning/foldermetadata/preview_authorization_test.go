@@ -197,3 +197,87 @@ func TestIntegrationGitFiles_PreviewAuthorizationWithFolderMetadata(t *testing.T
 		require.Equal(t, sourceUID, dashboard.GetAnnotations()[utils.AnnoKeyFolder])
 	}
 }
+
+func TestIntegrationGitFiles_PreviewAtUnwrappedRootWithFolderMetadata(t *testing.T) {
+	for _, target := range []string{"instance", "folderless"} {
+		t.Run(target, func(t *testing.T) {
+			helper := sharedGitHelper(t)
+			repoName := "metadata-root-preview-" + target
+			const (
+				branch    = "feature-preview"
+				parentUID = "root-preview-parent"
+				folderUID = "root-preview-folder"
+				dashUID   = "root-preview-dashboard"
+				dashPath  = "new/deep/dashboard.json"
+			)
+			createRepo := helper.CreateGitRepo
+			if target == "folderless" {
+				createRepo = helper.CreateFolderlessTargetGitRepo
+			}
+			_, local := createRepo(t, repoName, map[string][]byte{
+				"new/_folder.json":      folderMetadataJSON(parentUID, "New"),
+				"new/deep/_folder.json": folderMetadataJSON(folderUID, "Deep"),
+			}, "write", "branch")
+			_, err := local.Git("checkout", "-b", branch)
+			require.NoError(t, err)
+			require.NoError(t, local.CreateFile(dashPath, string(common.DashboardJSON(dashUID, "Root preview", 1))))
+			_, err = local.Git("add", ".")
+			require.NoError(t, err)
+			_, err = local.Git("commit", "-m", "Add preview below unsynced metadata folders")
+			require.NoError(t, err)
+			_, err = local.Git("push", "origin", branch)
+			require.NoError(t, err)
+			helper.RequireFoldersNotFound(t, repoName, parentUID, folderUID)
+			helper.RequireDashboardsNotFound(t, dashUID)
+
+			for _, tt := range []struct {
+				name        string
+				role        org.RoleType
+				permissions []resourcepermissions.SetResourcePermissionCommand
+				allowed     bool
+			}{
+				{name: "named-grants", role: org.RoleNone, allowed: true, permissions: []resourcepermissions.SetResourcePermissionCommand{
+					{Actions: []string{"dashboards:read"}, Resource: "dashboards", ResourceAttribute: "uid", ResourceID: dashUID},
+					{Actions: []string{"folders:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: folderUID},
+				}},
+				{name: "no-grant", role: org.RoleNone},
+				{name: "general-only", role: org.RoleNone, permissions: []resourcepermissions.SetResourcePermissionCommand{{
+					Actions: []string{"folders:read", "dashboards:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: "general",
+				}}},
+				{name: "unrelated-folder", role: org.RoleNone, permissions: []resourcepermissions.SetResourcePermissionCommand{{
+					Actions: []string{"folders:read", "dashboards:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: "unrelated-folder",
+				}}},
+				{name: "viewer", role: org.RoleViewer, allowed: true},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					reader := helper.CreateUser(repoName+"-"+tt.name, apis.Org1, tt.role, tt.permissions)
+					gv := provisioning.RepositoryResourceInfo.GroupVersion()
+					for _, resource := range []struct {
+						path string
+						uid  string
+					}{
+						{path: dashPath, uid: dashUID},
+						{path: "new/deep/_folder.json", uid: folderUID},
+					} {
+						t.Run(resource.path, func(t *testing.T) {
+							result := reader.RESTClient(t, &gv).Get().Namespace("default").Resource("repositories").Name(repoName).
+								Suffix("files/"+resource.path).Param("ref", branch).Do(t.Context())
+							if tt.allowed {
+								require.NoError(t, result.Error())
+								var preview provisioning.ResourceWrapper
+								require.NoError(t, result.Into(&preview))
+								require.Empty(t, preview.Errors)
+								require.Equal(t, resource.uid, common.MustNestedString(preview.Resource.File.Object, "metadata", "name"))
+								require.Empty(t, preview.Resource.Existing.Object)
+							} else {
+								require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden, got %v", result.Error())
+							}
+							helper.RequireFoldersNotFound(t, repoName, parentUID, folderUID)
+							helper.RequireDashboardsNotFound(t, dashUID)
+						})
+					}
+				})
+			}
+		})
+	}
+}

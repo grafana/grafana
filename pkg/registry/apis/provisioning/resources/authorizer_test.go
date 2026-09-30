@@ -356,8 +356,54 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 			existing: []string{teamID}, allowed: teamID, wantProbes: []string{newID, teamID}, wantChecks: []string{teamID},
 		},
 		{
-			name: "instance repository cannot substitute General", target: provisioning.SyncTargetTypeInstance,
+			name: "unknown repository target cannot use an implicit root", target: provisioning.SyncTargetType("unknown"),
 			wantProbes: []string{newID, teamID}, wantForbidden: true,
+		},
+		{
+			name: "instance ancestor denial prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			existing: []string{teamID}, wantProbes: []string{newID, teamID}, wantChecks: []string{teamID}, wantErr: denied,
+		},
+		{
+			name: "instance ancestor access error prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			existing: []string{teamID}, accessErrorID: teamID, accessErr: accessErr,
+			wantProbes: []string{newID, teamID}, wantChecks: []string{teamID}, wantErr: accessErr,
+		},
+		{
+			name: "instance lookup error prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			lookupErrorID: teamID, wantProbes: []string{newID, teamID}, wantErr: lookupErr,
+		},
+		{
+			name: "instance metadata error prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			metadataEnabled: true, metadataErr: readErr, wantErr: readErr,
+		},
+		{
+			name: "instance malformed metadata prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			metadataEnabled: true, metadata: []byte("{invalid"), wantErr: ErrInvalidFolderMetadata,
+		},
+		{
+			name: "folderless repository uses a real ancestor", target: provisioning.SyncTargetTypeFolderless,
+			existing: []string{teamID}, allowed: teamID, wantProbes: []string{newID, teamID}, wantChecks: []string{teamID},
+		},
+		{
+			name: "folderless ancestor denial prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			existing: []string{teamID}, wantProbes: []string{newID, teamID}, wantChecks: []string{teamID}, wantErr: denied,
+		},
+		{
+			name: "folderless ancestor access error prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			existing: []string{teamID}, accessErrorID: teamID, accessErr: accessErr,
+			wantProbes: []string{newID, teamID}, wantChecks: []string{teamID}, wantErr: accessErr,
+		},
+		{
+			name: "folderless lookup error prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			lookupErrorID: teamID, wantProbes: []string{newID, teamID}, wantErr: lookupErr,
+		},
+		{
+			name: "folderless metadata error prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			metadataEnabled: true, metadataErr: readErr, wantErr: readErr,
+		},
+		{
+			name: "folderless malformed metadata prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			metadataEnabled: true, metadata: []byte("{invalid"), wantErr: ErrInvalidFolderMetadata,
 		},
 		{
 			name: "grant on missing destination is skipped for an allowed ancestor", existing: []string{teamID},
@@ -372,10 +418,6 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 			wantProbes: []string{newID, teamID, repoName}, wantForbidden: true,
 		},
 		{
-			name: "allowed missing destination cannot substitute General", target: provisioning.SyncTargetTypeInstance, allowed: newID,
-			wantProbes: []string{newID, teamID}, wantForbidden: true,
-		},
-		{
 			name: "allowed missing configured UID still requires an ancestor", destination: "configured-folder",
 			metadataEnabled: true, metadata: metadata, allowed: "configured-folder",
 			wantProbes: []string{"configured-folder", teamID, repoName}, wantForbidden: true,
@@ -388,11 +430,6 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 			name: "allowed PR UID cannot authorize a missing repository root", destination: "pr-controlled-uid", allowed: "pr-controlled-uid",
 			existing: []string{"pr-controlled-uid"}, wantProbes: []string{newID, teamID, repoName},
 			wantForbidden: true,
-		},
-		{
-			name: "allowed PR UID cannot substitute General", destination: "pr-controlled-uid", allowed: "pr-controlled-uid",
-			target: provisioning.SyncTargetTypeInstance, existing: []string{"pr-controlled-uid"},
-			wantProbes: []string{newID, teamID}, wantForbidden: true,
 		},
 		{
 			name: "destination lookup errors propagate", lookupErrorID: newID,
@@ -541,6 +578,115 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 	}
 }
 
+func TestAuthorizeResource_ReadUsesRoot(t *testing.T) {
+	for _, target := range []provisioning.SyncTargetType{provisioning.SyncTargetTypeInstance, provisioning.SyncTargetTypeFolderless} {
+		t.Run(string(target), func(t *testing.T) {
+			testAuthorizeResourceReadUsesRoot(t, target)
+		})
+	}
+}
+
+func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.SyncTargetType) {
+	t.Helper()
+	for _, gvr := range []schema.GroupVersionResource{
+		DashboardResource,
+		FolderResource,
+		{Group: "example.grafana.app", Version: "v1alpha1", Resource: "widgets"},
+	} {
+		t.Run(gvr.Resource, func(t *testing.T) {
+			for _, tt := range []struct {
+				name        string
+				state       string
+				destination string
+				denySource  bool
+				denyRoot    bool
+			}{
+				{name: "new resource root allowed", state: "new"},
+				{name: "new resource root denied", state: "new", denyRoot: true},
+				{name: "allowed PR UID still requires root permission", state: "new", destination: "pr-controlled-uid", denyRoot: true},
+				{name: "moved resource root allowed", state: "moved"},
+				{name: "moved resource root denied", state: "moved", denyRoot: true},
+				{name: "moved resource source denied", state: "moved", denySource: true},
+				{name: "matching metadata root allowed", state: "same-folder"},
+				{name: "matching metadata root denied", state: "same-folder", denyRoot: true},
+				{name: "matching metadata source denied", state: "same-folder", denySource: true},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
+					cfg.Spec.Sync.Target = target
+					caller := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace}
+					ctx := identity.WithRequester(context.Background(), caller)
+					destination := tt.destination
+					if destination == "" {
+						destination = ParseFolder("team/new/", cfg.Name).ID
+					}
+					parsed, source := makeAuthorizeResourceReadParsed(t, gvr, tt.state, destination, "team/new/resource.json")
+					name := parsed.Obj.GetName()
+					if parsed.Existing != nil {
+						name = parsed.Existing.GetName()
+					}
+					req := authlib.CheckRequest{Group: gvr.Group, Resource: gvr.Resource, Name: name, Verb: utils.VerbGet}
+					denied := apierrors.NewForbidden(gvr.GroupResource(), name, errors.New("no read permission"))
+					reader := repository.NewMockReaderWriter(t)
+					reader.EXPECT().Config().Return(cfg).Maybe()
+					expectConfiguredAncestorMetadata(t, reader, caller, nil, nil)
+					folderClient := &MockDynamicResourceInterface{}
+					folderClient.Test(t)
+					t.Cleanup(func() { folderClient.AssertExpectations(t) })
+					wantProbes := []string{ParseFolder("team/new/", cfg.Name).ID, ParseFolder("team/", cfg.Name).ID}
+					if tt.state == "moved" && tt.denySource {
+						wantProbes = nil
+					}
+					var probes []string
+					for _, id := range wantProbes {
+						folderClient.On("Get", mock.Anything, id, metav1.GetOptions{}, []string(nil)).
+							Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), id)).
+							Run(func(args mock.Arguments) { probes = append(probes, args.String(1)) }).Once()
+					}
+					access := auth.NewMockAccessChecker(t)
+					if parsed.Existing == nil {
+						access.On("Check", ctx, req, destination).Return(nil).Maybe()
+					}
+					if parsed.Existing != nil {
+						var sourceErr error
+						if tt.denySource {
+							sourceErr = denied
+						}
+						access.On("Check", ctx, req, source).Return(sourceErr).Run(func(mock.Arguments) {
+							if tt.state == "moved" {
+								assert.Empty(t, probes, "moved source must be authorized before ancestor lookup")
+							} else {
+								assert.Equal(t, wantProbes, probes, "matching metadata must retain the source check after ancestor lookup")
+							}
+						}).Once()
+					}
+					if !tt.denySource {
+						var rootErr error
+						if tt.denyRoot {
+							rootErr = denied
+						}
+						access.On("Check", ctx, req, "").Return(rootErr).Run(func(mock.Arguments) {
+							assert.Equal(t, wantProbes, probes, "root access must follow the complete ancestor lookup")
+						}).Once()
+					}
+					folders := NewFolderManager(reader, folderClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+
+					err := NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), folders, true).AuthorizeResource(ctx, parsed, utils.VerbGet)
+					if tt.denySource || tt.denyRoot {
+						require.ErrorIs(t, err, denied)
+					} else {
+						require.NoError(t, err)
+					}
+					assert.Equal(t, wantProbes, probes)
+					if parsed.Existing == nil {
+						access.AssertNotCalled(t, "Check", ctx, req, destination)
+					}
+				})
+			}
+		})
+	}
+}
+
 func TestAuthorizeResource_ReadRejectsUnrelatedAncestor(t *testing.T) {
 	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
 	cfg.Spec.Sync.Target = provisioning.SyncTargetTypeFolder
@@ -553,6 +699,7 @@ func TestAuthorizeResource_ReadRejectsUnrelatedAncestor(t *testing.T) {
 				manager    utils.ManagerProperties
 				sourcePath string
 				root       bool
+				target     provisioning.SyncTargetType
 			}{
 				{name: "unmanaged folder", sourcePath: "team/new/"},
 				{name: "different manager kind", manager: utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: cfg.Name}, sourcePath: "team/new/"},
@@ -562,8 +709,18 @@ func TestAuthorizeResource_ReadRejectsUnrelatedAncestor(t *testing.T) {
 				{name: "unmanaged root", root: true},
 				{name: "different repository root", manager: otherRepo, root: true},
 				{name: "mislocated root", manager: manager, sourcePath: "team/", root: true},
+				{name: "folderless unmanaged folder", sourcePath: "team/new/", target: provisioning.SyncTargetTypeFolderless},
+				{name: "folderless different repository", manager: otherRepo, sourcePath: "team/new/", target: provisioning.SyncTargetTypeFolderless},
+				{name: "folderless different source path", manager: manager, sourcePath: "elsewhere/", target: provisioning.SyncTargetTypeFolderless},
+				{name: "instance unmanaged folder", sourcePath: "team/new/", target: provisioning.SyncTargetTypeInstance},
+				{name: "instance different repository", manager: otherRepo, sourcePath: "team/new/", target: provisioning.SyncTargetTypeInstance},
+				{name: "instance different source path", manager: manager, sourcePath: "elsewhere/", target: provisioning.SyncTargetTypeInstance},
 			} {
 				t.Run(tt.name, func(t *testing.T) {
+					cfg := cfg.DeepCopy()
+					if tt.target != "" {
+						cfg.Spec.Sync.Target = tt.target
+					}
 					caller := &identity.StaticRequester{
 						Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace,
 					}
