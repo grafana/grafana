@@ -1,6 +1,8 @@
 package appplugin
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -67,4 +69,19 @@ func TestClientV3TokenExchanger(t *testing.T) {
 	local := ClientV3TokenExchanger(dev, "insecure-app", nil)
 	require.NotNil(t, local)
 	require.Same(t, local, ClientV3TokenExchanger(dev, "insecure-app", nil), "one signing key is shared")
+}
+
+func TestInvalidClientV3TokenExchanger(t *testing.T) {
+	cfgErr := errors.New("the access policy token and token exchange URL must be set together")
+	invalid := InvalidClientV3TokenExchanger(cfgErr)
+
+	_, err := invalid.Exchange(context.Background(), authnlib.TokenExchangeRequest{Namespace: "default", Audiences: []string{"example-app"}})
+	require.ErrorIs(t, err, cfgErr)
+	require.ErrorContains(t, err, "misconfigured")
+
+	// An invalid configuration must not fall back to local development tokens.
+	dev := setting.NewCfg()
+	dev.Env = setting.Dev
+	dev.PluginSettings = config.PluginSettings{"insecure-app": {"insecure_skip_authentication": "true"}}
+	require.Equal(t, invalid, ClientV3TokenExchanger(dev, "insecure-app", invalid))
 }

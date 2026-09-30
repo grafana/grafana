@@ -1,6 +1,8 @@
 package appplugin
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -39,10 +41,14 @@ func NewClientV3TokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error
 // that skips verification accepts, so local development sees the caller's
 // identity. Otherwise it is nil, and requests carry no identity.
 func ClientV3TokenExchanger(cfg *setting.Cfg, pluginID string, exchanger authnlib.TokenExchanger) authnlib.TokenExchanger {
+	insecure := cfg != nil && cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] == "true"
 	if exchanger != nil {
+		if insecure && cfg.Env == setting.Dev {
+			clientV3AuthLogger.Warn("Plugin does not verify requests (insecure_skip_authentication); use only for local development", "pluginId", pluginID)
+		}
 		return exchanger
 	}
-	if cfg == nil || cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] != "true" {
+	if !insecure {
 		return nil
 	}
 	if cfg.Env != setting.Dev {
@@ -56,4 +62,18 @@ func ClientV3TokenExchanger(cfg *setting.Cfg, pluginID string, exchanger authnli
 	}
 	clientV3AuthLogger.Warn("Plugin requests use unverifiable local tokens; use only for local development", "pluginId", pluginID)
 	return local
+}
+
+// InvalidClientV3TokenExchanger returns an exchanger that fails every exchange
+// with err, for an invalid exchange configuration. Requests to plugins then
+// fail with the configuration error, rather than being sent without a caller
+// identity or with local development tokens.
+func InvalidClientV3TokenExchanger(err error) authnlib.TokenExchanger {
+	return invalidTokenExchanger{err: err}
+}
+
+type invalidTokenExchanger struct{ err error }
+
+func (e invalidTokenExchanger) Exchange(context.Context, authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
+	return nil, fmt.Errorf("plugin v3 token exchange is misconfigured: %w", e.err)
 }

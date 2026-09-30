@@ -89,13 +89,12 @@ func ProvidePluginLoaderDependencies(
 	builderMetrics *builder.BuilderMetrics,
 	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
-	// A missing or invalid exchange configuration leaves requests
-	// unauthenticated: the caller's identity is not propagated, and plugins
-	// that authenticate reject them rather than trust them.
+	// A missing exchange configuration leaves requests unauthenticated: the
+	// caller's identity is not propagated, and plugins that authenticate reject
+	// them. An invalid one fails each request with the configuration error.
 	exchanger, err := appplugin.NewClientV3TokenExchanger(cfg)
 	if err != nil {
-		logging.DefaultLogger.Error("router: plugin v3 requests will not be authenticated", "err", err)
-		exchanger = nil
+		exchanger = appplugin.InvalidClientV3TokenExchanger(err)
 	}
 
 	return PluginLoaderDependencies{
