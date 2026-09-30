@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
 import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 
 import {
@@ -11,7 +13,6 @@ import {
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 // Mock the config to provide datasource information
 jest.mock('@grafana/runtime', () => {
