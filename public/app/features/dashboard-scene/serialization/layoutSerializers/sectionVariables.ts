@@ -1,7 +1,7 @@
 import { type SceneVariables, SceneVariableSet } from '@grafana/scenes';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { sceneVariablesSetToSchemaV2Variables } from '../sceneVariablesSetToVariables';
+import { sceneVariablesSetToSchemaV2Variables } from '../sceneVariablesSetToSchemaV2Variables';
 import { createSceneVariableFromVariableModel } from '../transformSaveModelSchemaV2ToScene';
 
 export function serializeSectionVariables(variableSet?: SceneVariables): VariableKind[] | undefined {

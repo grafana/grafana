@@ -29,7 +29,8 @@ import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/sche
 import { toControlSourceRef } from '../utils/predefinedVariables';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
-import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
+import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToSchemaV2Variables';
+import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({
@@ -87,6 +88,7 @@ jest.mock('@grafana/runtime', () => ({
       getDataSourceMock(ds, vars);
       return Promise.resolve(fakeDsMock);
     },
+    getInstanceSettings: (name: string) => (name === 'fake-std' ? { uid: 'fake-uid', type: 'fake-type' } : undefined),
   }),
 }));
 
@@ -1129,6 +1131,37 @@ describe('sceneVariablesSetToVariables', () => {
 
       expect(result.map((v) => v.name)).toEqual(expect.arrayContaining(['predefined', 'local']));
       expect(result).toHaveLength(2);
+    });
+  });
+
+  describe('QueryVariable datasource', () => {
+    const datasourceOf = (datasource: unknown) => {
+      const variable = new QueryVariable({ name: 'test', query: 'query', datasource: datasource as DataSourceRef });
+      return sceneVariablesSetToVariables(new SceneVariableSet({ variables: [variable] }))[0].datasource;
+    };
+
+    it('keeps a full datasource ref', () => {
+      expect(datasourceOf({ uid: 'fake-uid', type: 'fake-type' })).toEqual({ uid: 'fake-uid', type: 'fake-type' });
+    });
+
+    it('keeps a uid-only datasource ref', () => {
+      expect(datasourceOf({ uid: 'fake-uid' })).toEqual({ uid: 'fake-uid' });
+    });
+
+    it('resolves a legacy datasource name to its ref', () => {
+      expect(datasourceOf('fake-std')).toEqual({ uid: 'fake-uid', type: 'fake-type' });
+    });
+
+    it('keeps a legacy variable reference as a uid', () => {
+      expect(datasourceOf('$ds')).toEqual({ uid: '$ds' });
+    });
+
+    it('keeps an unknown legacy datasource name as a uid', () => {
+      expect(datasourceOf('unknown')).toEqual({ uid: 'unknown' });
+    });
+
+    it.each([null, undefined, {}])('omits the datasource when it is %p', (datasource) => {
+      expect(datasourceOf(datasource)).toBeUndefined();
     });
   });
 
