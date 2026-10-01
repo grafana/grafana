@@ -1789,7 +1789,37 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
+	if query.K8sUseStoredAPIVersion {
+		out, err = dr.reloadInStoredAPIVersion(ctx, query, out)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return dr.UnstructuredToLegacyDashboard(ctx, out, query.OrgID)
+}
+
+// reloadInStoredAPIVersion re-reads a dashboard in the API version it was stored with when the first read
+// returned it successfully converted to a different version. Failed conversions are left alone because
+// UnstructuredToLegacyDashboard already falls back to the stored payload for those.
+func (dr *DashboardServiceImpl) reloadInStoredAPIVersion(ctx context.Context, query *dashboards.GetDashboardQuery, out *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	failed, storedVersion, _ := dashboardclient.GetConversionStatus(out)
+	gv, _ := schema.ParseGroupVersion(out.GetAPIVersion())
+	if failed || storedVersion == "" || storedVersion == gv.Version {
+		return out, nil
+	}
+
+	// When the stored version cannot be read, the client retries the default version and returns that
+	// result, so the caller gets the converted payload back instead of an error. An error here means
+	// both reads failed.
+	stored, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{}, storedVersion, "")
+	if err != nil && !apierrors.IsNotFound(err) {
+		return nil, fmt.Errorf("failed to load dashboard %q in stored API version %q: %w", query.UID, storedVersion, err)
+	}
+	if err != nil || stored == nil {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+	return stored, nil
 }
 
 func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning, unprovision bool) (*dashboards.Dashboard, error) {

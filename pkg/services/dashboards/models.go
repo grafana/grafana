@@ -348,6 +348,11 @@ type GetDashboardQuery struct {
 	OrgID     int64
 	// k8s version to try first when loading (e.g. v1beta1). empty uses the default. on error, falls back to default
 	K8sGetAPIVersion string
+	// K8sUseStoredAPIVersion returns the dashboard in the API version it was stored with. The first read
+	// (in K8sGetAPIVersion or the default) is repeated in status.conversion.storedVersion when that differs,
+	// so a v2beta1 dashboard is not returned down-converted to v0alpha1. Use it when the payload must keep
+	// the schema the author saved, such as public dashboards.
+	K8sUseStoredAPIVersion bool
 }
 
 type DashboardTagCloudItem struct {

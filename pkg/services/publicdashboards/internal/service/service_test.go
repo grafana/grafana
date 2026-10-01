@@ -1742,3 +1742,124 @@ func createTestDashboard(t *testing.T, title string, orgId int64, folderUID stri
 	dash.Data.Set("uid", dash.UID)
 	return dash
 }
+
+func TestIntegrationFindDashboardRequestsStoredAPIVersion(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	fakeDashboardService := &dashboards.FakeDashboardService{}
+	fakeDashboardService.On("GetDashboard", mock.Anything, mock.MatchedBy(func(q *dashboards.GetDashboardQuery) bool {
+		return q.UID == "abc" && q.OrgID == 7 && q.K8sUseStoredAPIVersion && q.K8sGetAPIVersion == ""
+	})).Return(&dashboards.Dashboard{UID: "abc", OrgID: 7}, nil)
+	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, &publicdashboards.FakePublicDashboardStore{}, fakeDashboardService, nil)
+
+	dash, err := service.FindDashboard(context.Background(), 7, "abc")
+	require.NoError(t, err)
+	require.Equal(t, "abc", dash.UID)
+	fakeDashboardService.AssertExpectations(t)
+}
+
+func TestIntegrationGetPublicDashboardForViewKeepsStoredSchema(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	const v2DashboardWithTabs = `{
+		"title": "tabs",
+		"timeSettings": {"from": "now-6h", "to": "now", "hideTimepicker": false},
+		"elements": {
+			"panel-1": {"kind": "Panel", "spec": {"id": 1, "title": "panel-1", "data": {"kind": "QueryGroup", "spec": {"queries": [
+				{"kind": "PanelQuery", "spec": {"refId": "A", "query": {"kind": "DataQuery", "group": "prometheus", "datasource": {"name": "prom"}, "spec": {"expr": "up", "refId": "A"}}}}
+			]}}}},
+			"panel-2": {"kind": "Panel", "spec": {"id": 2, "title": "panel-2", "data": {"kind": "QueryGroup", "spec": {"queries": [
+				{"kind": "PanelQuery", "spec": {"refId": "A", "query": {"kind": "DataQuery", "group": "mysql", "datasource": {"name": "sql"}, "spec": {"rawSql": "select 1", "refId": "A"}}}}
+			]}}}}
+		},
+		"layout": {"kind": "TabsLayout", "spec": {"tabs": [
+			{"kind": "TabsLayoutTab", "spec": {"title": "Tab A", "layout": {"kind": "GridLayout", "spec": {"items": [
+				{"kind": "GridLayoutItem", "spec": {"x": 0, "y": 0, "width": 12, "height": 8, "element": {"kind": "ElementReference", "name": "panel-1"}}}
+			]}}}},
+			{"kind": "TabsLayoutTab", "spec": {"title": "Tab B", "layout": {"kind": "GridLayout", "spec": {"items": [
+				{"kind": "GridLayoutItem", "spec": {"x": 0, "y": 0, "width": 12, "height": 8, "element": {"kind": "ElementReference", "name": "panel-2"}}}
+			]}}}}
+		]}}
+	}`
+
+	const v1DashboardWithRows = `{
+		"title": "rows",
+		"timepicker": {},
+		"panels": [
+			{"id": 1, "type": "row", "title": "Row A", "collapsed": false, "gridPos": {"x": 0, "y": 0, "w": 24, "h": 1}},
+			{"id": 2, "type": "timeseries", "title": "panel-2", "gridPos": {"x": 0, "y": 1, "w": 12, "h": 8},
+				"targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prom"}, "expr": "up"}]}
+		]
+	}`
+
+	tests := []struct {
+		name       string
+		apiVersion string
+		data       string
+		wantTabs   []string
+	}{
+		{
+			name:       "v1 stored dashboard keeps panels",
+			apiVersion: "v1beta1",
+			data:       v1DashboardWithRows,
+		},
+		{
+			name:       "v2beta1 stored dashboard keeps its tabs layout",
+			apiVersion: "v2beta1",
+			data:       v2DashboardWithTabs,
+			wantTabs:   []string{"Tab A", "Tab B"},
+		},
+		{
+			name:       "v2 stored dashboard keeps its tabs layout",
+			apiVersion: "v2",
+			data:       v2DashboardWithTabs,
+			wantTabs:   []string{"Tab A", "Tab B"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := simplejson.NewJson([]byte(tt.data))
+			require.NoError(t, err)
+			dash := &dashboards.Dashboard{UID: "dash", Data: data, Slug: "dash", Version: 1, APIVersion: tt.apiVersion}
+
+			fakeStore := &publicdashboards.FakePublicDashboardStore{}
+			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(
+				&models.PublicDashboard{AccessToken: "token", IsEnabled: true, TimeSelectionEnabled: false}, nil,
+			)
+			fakeDashboardService := &dashboards.FakeDashboardService{}
+			fakeDashboardService.On("GetDashboard", mock.Anything, mock.MatchedBy(func(q *dashboards.GetDashboardQuery) bool {
+				return q.K8sUseStoredAPIVersion
+			})).Return(dash, nil)
+			service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
+
+			result, err := service.GetPublicDashboardForView(context.Background(), "token")
+			require.NoError(t, err)
+
+			if tt.wantTabs == nil {
+				assert.NotEmpty(t, result.Dashboard.Get("panels").MustArray())
+				assert.Nil(t, result.Dashboard.Get("elements").Interface())
+				assert.True(t, result.Dashboard.Get("timepicker").Get("hidden").MustBool())
+				return
+			}
+
+			assert.Nil(t, result.Dashboard.Get("panels").Interface(), "v2 payload must not be down-converted to panels")
+			assert.Equal(t, "TabsLayout", result.Dashboard.Get("layout").Get("kind").MustString())
+			tabs := result.Dashboard.Get("layout").Get("spec").Get("tabs").MustArray()
+			require.Len(t, tabs, len(tt.wantTabs))
+			for i, want := range tt.wantTabs {
+				assert.Equal(t, want, simplejson.NewFromAny(tabs[i]).Get("spec").Get("title").MustString())
+			}
+
+			// queries are still sanitized on the v2 path
+			for _, elem := range result.Dashboard.Get("elements").MustMap() {
+				for _, q := range simplejson.NewFromAny(elem).Get("spec").Get("data").Get("spec").Get("queries").MustArray() {
+					spec := simplejson.NewFromAny(q).Get("spec").Get("query").Get("spec")
+					assert.Empty(t, spec.Get("expr").MustString())
+					assert.Empty(t, spec.Get("rawSql").MustString())
+					assert.NotEmpty(t, spec.Get("refId").MustString())
+				}
+			}
+		})
+	}
+}

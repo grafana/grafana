@@ -147,7 +147,13 @@ func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId i
 
 	// We don't have a signed in user for public dashboards. We are using Grafana's Identity to query the dashboard.
 	dash, err := identity.WithServiceIdentityFn(ctx, orgId, func(ctx context.Context) (*dashboards.Dashboard, error) {
-		return pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
+		// Keep the schema the dashboard was saved with: a v2 dashboard read in the default (v1) version is
+		// down-converted and loses layouts such as tabs.
+		return pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+			UID:                    dashboardUid,
+			OrgID:                  orgId,
+			K8sUseStoredAPIVersion: true,
+		})
 	})
 	if err != nil {
 		var dashboardErr dashboardaccess.DashboardErr
