@@ -1,6 +1,7 @@
+import { testWithFeatureToggles } from 'test/test-utils';
+
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { replacePanel } from '../actions/panel/replacePanel';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -31,10 +32,9 @@ describe('AddLibraryPanelWidget', () => {
   let dashboard: DashboardScene;
   let addLibPanelDrawer: AddLibraryPanelDrawer;
 
-  afterEach(() => setTestFlags({}));
+  testWithFeatureToggles({ disable: ['dashboardNewLayouts'] });
 
   beforeEach(async () => {
-    setTestFlags({ dashboardNewLayouts: false });
     const result = await buildTestScene();
     dashboard = result.dashboard;
     addLibPanelDrawer = result.drawer;
@@ -155,7 +155,7 @@ describe('AddLibraryPanelWidget', () => {
   });
 
   describe('with new layouts', () => {
-    beforeEach(() => setTestFlags({ dashboardNewLayouts: true }));
+    testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
 
     it('delegates replacement to the action with the prepared library panel', async () => {
       const oldPanel = new VizPanel({ key: 'panel-1', title: 'Original', pluginId: 'table' });

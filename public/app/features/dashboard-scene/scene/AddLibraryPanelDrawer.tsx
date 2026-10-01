@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { config } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -43,7 +43,8 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       const layoutItem = panelToReplace.parent;
 
       if (layoutItem && isDashboardLayoutItem(layoutItem)) {
-        if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true)) {
+        // eslint-disable-next-line @grafana/no-config-feature-toggles -- blocked by #133263
+        if (config.featureToggles.dashboardNewLayouts) {
           replacePanel({ source: layoutItem, oldPanel: panelToReplace, newPanel });
         } else {
           // This else block is needed only for old architecture which reuses the same component
