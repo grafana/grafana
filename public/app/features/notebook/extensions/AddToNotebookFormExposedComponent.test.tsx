@@ -11,13 +11,13 @@ import { type NotebookRow } from '../list/useNotebooksList';
 
 import { AddToNotebookFormExposedComponent } from './AddToNotebookFormExposedComponent';
 
-jest.mock('./useNotebookPicker', () => ({
-  ...jest.requireActual('./useNotebookPicker'),
+jest.mock('../addPanel/useNotebookPicker', () => ({
+  ...jest.requireActual('../addPanel/useNotebookPicker'),
   useNotebookPicker: jest.fn(),
 }));
 
-jest.mock('./addPanelToNotebook', () => ({
-  ...jest.requireActual('./addPanelToNotebook'),
+jest.mock('../addPanel/addPanelToNotebook', () => ({
+  ...jest.requireActual('../addPanel/addPanelToNotebook'),
   addPanelToExistingNotebook: jest.fn(),
   createNotebookWithPanel: jest.fn(),
 }));
@@ -63,9 +63,11 @@ describe('AddToNotebookFormExposedComponent', () => {
 
   beforeEach(() => {
     mockComboboxRect();
-    jest.spyOn(contextSrv, 'hasPermission').mockImplementation(
-      (action) => action === AccessControlAction.NotebooksCreate || action === AccessControlAction.NotebooksWrite
-    );
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation(
+        (action) => action === AccessControlAction.NotebooksCreate || action === AccessControlAction.NotebooksWrite
+      );
     mockUseNotebookPicker.mockReturnValue({
       rows: [row('nb2', 'Checkout error spike')],
       isFiltered: false,
