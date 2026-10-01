@@ -18,7 +18,7 @@ import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/l
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
+import { NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION, NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { defaultVisualizationPanelKind } from '../types';
@@ -49,6 +49,7 @@ jest.mock('../analytics/main', () => ({
     editSessionStarted: jest.fn(),
     editSessionEnded: jest.fn(),
     autosaveFailed: jest.fn(),
+    autosaveConflictResolved: jest.fn(),
   },
 }));
 
@@ -210,6 +211,7 @@ describe('NotebookAutosave', () => {
       .mockResolvedValue({ uid: 'nb-new', url: '/notebooks/nb-new', generation: 1 });
     jest.mocked(NotebookAnalytics.created).mockClear();
     jest.mocked(NotebookAnalytics.autosaveFailed).mockClear();
+    jest.mocked(NotebookAnalytics.autosaveConflictResolved).mockClear();
     jest
       .mocked(transformNotebookSceneToSaveModel)
       .mockReset()
@@ -500,6 +502,52 @@ describe('NotebookAutosave', () => {
       title: 'Someone else has updated this notebook',
       yesText: 'Save and overwrite',
     });
+  });
+
+  it('tracks choosing to overwrite, distinctly from the conflict itself', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new NotebookConflictError('the object has been modified'));
+    jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3, resourceVersion: '1757' });
+    const publish = jest.spyOn(appEvents, 'publish');
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    const event = publish.mock.calls
+      .map(([published]) => published)
+      .find((published): published is ShowConfirmModalEvent => published instanceof ShowConfirmModalEvent);
+    event?.payload.onConfirm?.();
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(NotebookAnalytics.autosaveConflictResolved).toHaveBeenCalledWith(
+      'nb-1',
+      NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION.OVERWRITE
+    );
+    // The choice is tracked once, separately from whether the forced write then succeeded.
+    expect(NotebookAnalytics.autosaveConflictResolved).toHaveBeenCalledTimes(1);
+  });
+
+  it('tracks choosing to cancel, and does not attempt another write', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new NotebookConflictError('the object has been modified'));
+    const publish = jest.spyOn(appEvents, 'publish');
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
+
+    const event = publish.mock.calls
+      .map(([published]) => published)
+      .find((published): published is ShowConfirmModalEvent => published instanceof ShowConfirmModalEvent);
+    event?.payload.onDismiss?.();
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(NotebookAnalytics.autosaveConflictResolved).toHaveBeenCalledWith(
+      'nb-1',
+      NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION.CANCEL
+    );
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
+    expect(scene.autosave.state.status).toBe('error');
   });
 
   it('does not raise the conflict prompt for a plain write failure', async () => {

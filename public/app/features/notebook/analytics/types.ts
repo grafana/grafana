@@ -305,6 +305,26 @@ export interface NotebookAutosaveFailedProperties extends EventProperty {
   attempt: number;
 }
 
+/**
+ * How the user answered the "someone else has updated this notebook" prompt. `overwrite` writes the
+ * current content over theirs; `cancel` covers every way of not confirming (the Cancel button, the
+ * close button, Escape), since none of them says anything more specific than "not this".
+ */
+export const NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION = {
+  OVERWRITE: 'overwrite',
+  CANCEL: 'cancel',
+} as const;
+
+export type NotebookAutosaveConflictResolution =
+  (typeof NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION)[keyof typeof NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION];
+
+export interface NotebookAutosaveConflictResolvedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which way the user answered. */
+  resolution: NotebookAutosaveConflictResolution;
+}
+
 /** Where the panel was headed. Either a notebook the user picked, or one the same submit creates. */
 export const NOTEBOOK_ADD_TARGET = {
   NEW: 'new',

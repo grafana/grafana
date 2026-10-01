@@ -13,7 +13,11 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import {
+  NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION,
+  NOTEBOOK_AUTOSAVE_FAILED_REASON,
+  NOTEBOOK_ENTRY_POINT,
+} from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
@@ -39,6 +43,9 @@ export interface NotebookAutosaveState {
   status: NotebookSaveStatus;
   errorMessage?: string;
   isConflict?: boolean;
+  // TODO: belongs on NotebookSceneState instead, flat, the way Dashboard keeps `version` on
+  // DashboardSceneState — external readers (NotebookPageStateManager, the mutation-api commands)
+  // already reach into this sibling object's state to get at it.
   /** The resource generation the last successful save produced, when the server reported one. */
   savedGeneration?: number;
   /** The resourceVersion the last successful save produced, when the server reported one. */
@@ -676,6 +683,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         });
 
         if (isConflict) {
+          const notebookUid = this.scene.state.uid ?? '';
           appEvents.publish(
             new ShowConfirmModalEvent({
               title: t('notebooks.autosave.conflict-title', 'Someone else has updated this notebook'),
@@ -683,7 +691,16 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
               yesText: t('notebooks.autosave.conflict-confirm', 'Save and overwrite'),
               yesButtonVariant: 'destructive',
               noText: t('notebooks.autosave.conflict-cancel', 'Cancel'),
-              onConfirm: () => this.overwriteConflict(),
+              onConfirm: () => {
+                NotebookAnalytics.autosaveConflictResolved(
+                  notebookUid,
+                  NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION.OVERWRITE
+                );
+                this.overwriteConflict();
+              },
+              onDismiss: () => {
+                NotebookAnalytics.autosaveConflictResolved(notebookUid, NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION.CANCEL);
+              },
             })
           );
         }
