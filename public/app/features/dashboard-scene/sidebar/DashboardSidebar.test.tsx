@@ -425,7 +425,7 @@ describe('DashboardSidebar', () => {
       expect(reportInteraction).not.toHaveBeenCalled();
     });
 
-    it('reports the undone action and how undo was invoked without including the description', () => {
+    it('reports the undone action without including the description', () => {
       const scene = buildTestScene();
       edit({
         source: scene,
@@ -435,19 +435,17 @@ describe('DashboardSidebar', () => {
         undo: () => scene.setState({ title: 'hello' }),
       });
 
-      scene.state.sidebar.undoAction({ trigger: 'keyboard' });
+      scene.state.sidebar.undoAction();
 
       expect(scene.state.title).toBe('hello');
       expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'dashboard.changeTitle',
-        trigger: 'keyboard',
-        undoStackLength: 1,
-        redoStackLength: 0,
+        redoDepth: 0,
       });
     });
 
-    it('reports the redone action and how redo was invoked', () => {
+    it('reports the redone action', () => {
       const scene = buildTestScene();
       edit({
         source: scene,
@@ -455,18 +453,16 @@ describe('DashboardSidebar', () => {
         perform: () => scene.setState({ title: 'new title' }),
         undo: () => scene.setState({ title: 'hello' }),
       });
-      scene.state.sidebar.undoAction({ trigger: 'sidebar' });
+      scene.state.sidebar.undoAction();
       jest.mocked(reportInteraction).mockClear();
 
-      scene.state.sidebar.redoAction({ trigger: 'api' });
+      scene.state.sidebar.redoAction();
 
       expect(scene.state.title).toBe('new title');
       expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_redo', {
         actionId: 'dashboard.changeTitle',
-        trigger: 'api',
-        undoStackLength: 0,
-        redoStackLength: 1,
+        redoDepth: 1,
       });
     });
 
@@ -478,9 +474,7 @@ describe('DashboardSidebar', () => {
 
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'unknown',
-        trigger: undefined,
-        undoStackLength: 1,
-        redoStackLength: 0,
+        redoDepth: 0,
       });
     });
 
@@ -491,20 +485,18 @@ describe('DashboardSidebar', () => {
         true
       );
 
-      scene.state.sidebar.undoAction({ trigger: 'sidebar' });
+      scene.state.sidebar.undoAction();
 
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'scene.stateCommitted',
-        trigger: 'sidebar',
-        undoStackLength: 1,
-        redoStackLength: 0,
+        redoDepth: 0,
       });
     });
 
     it('does not report an undo when history is empty', () => {
       const scene = buildTestScene();
 
-      scene.state.sidebar.undoAction({ trigger: 'keyboard' });
+      scene.state.sidebar.undoAction();
 
       expect(reportInteraction).not.toHaveBeenCalled();
     });
@@ -516,18 +508,16 @@ describe('DashboardSidebar', () => {
       edit({ source: scene, tracking: { actionId: 'element.removeElement' }, perform: jest.fn(), undo: jest.fn() });
       endBatch(scene);
 
-      scene.state.sidebar.undoAction({ trigger: 'sidebar' });
+      scene.state.sidebar.undoAction();
 
       expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
         actionId: 'element.removeSelection',
-        trigger: 'sidebar',
-        undoStackLength: 1,
-        redoStackLength: 0,
+        redoDepth: 0,
       });
     });
 
-    it('reports the undo and redo stack lengths from before the undo or redo happened', () => {
+    it('reports the redo stack size from before the undo or redo happened as redoDepth', () => {
       const scene = buildTestScene();
       edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
       edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
@@ -541,12 +531,12 @@ describe('DashboardSidebar', () => {
       expect(reportInteraction).toHaveBeenNthCalledWith(
         1,
         'grafana_dashboard_undo',
-        expect.objectContaining({ undoStackLength: 2, redoStackLength: 1 })
+        expect.objectContaining({ redoDepth: 1 })
       );
       expect(reportInteraction).toHaveBeenNthCalledWith(
         2,
         'grafana_dashboard_redo',
-        expect.objectContaining({ undoStackLength: 1, redoStackLength: 2 })
+        expect.objectContaining({ redoDepth: 2 })
       );
     });
   });

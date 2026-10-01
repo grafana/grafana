@@ -2,10 +2,6 @@
 import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { type SceneObject } from '@grafana/scenes';
 
-export interface UndoRedoCallOptions {
-  trigger?: 'sidebar' | 'keyboard' | 'api';
-}
-
 export interface DashboardActionTracking {
   actionId?: `${string}.${string}`;
 }
