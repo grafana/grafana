@@ -33,7 +33,8 @@ export function DataSourceAddButton(): JSX.Element | null {
       mode: 'assistant',
       context: [
         createAssistantContextItem('structured', {
-          data: { title: t('data-sources.datasource-add-button.assistant-context', 'Add a new data source') },
+          title: t('data-sources.datasource-add-button.assistant-context', 'Add a new data source'),
+          data: {},
         }),
       ],
       prompt: 'Help me set up a new data source.',
