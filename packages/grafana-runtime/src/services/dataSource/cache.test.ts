@@ -6,7 +6,7 @@ import {
   awaitFill,
   getListItemByUid,
   loadSettingsCached,
-  selectDataSourceCacheSource,
+  setDataSourceCacheSource,
   toListItem,
   upsertRuntimeSettings,
 } from './cache';
@@ -61,7 +61,7 @@ beforeEach(() => {
 
 describe('fill', () => {
   it('applies the initial snapshot synchronously when the source has one', () => {
-    selectDataSourceCacheSource(fetchingSource({ getInitialSnapshot: () => snapshotOf(alpha) }));
+    setDataSourceCacheSource(fetchingSource({ getInitialSnapshot: () => snapshotOf(alpha) }));
 
     expect(getListItemByUid('uid-alpha')?.name).toBe('Alpha');
   });
@@ -69,7 +69,7 @@ describe('fill', () => {
   it('makes concurrent callers share one list load and resolves them once it is applied', async () => {
     const list = deferred<DataSourceListSnapshot>();
     const loadList = jest.fn().mockReturnValue(list.promise);
-    selectDataSourceCacheSource(fetchingSource({ loadList }));
+    setDataSourceCacheSource(fetchingSource({ loadList }));
 
     const waiting = Promise.all([awaitFill(), awaitFill()]);
     expect(getListItemByUid('uid-alpha')).toBeUndefined();
@@ -85,7 +85,7 @@ describe('fill', () => {
       .fn()
       .mockRejectedValueOnce(new Error('connections failed'))
       .mockResolvedValueOnce(snapshotOf(bravo));
-    selectDataSourceCacheSource(fetchingSource({ loadList }));
+    setDataSourceCacheSource(fetchingSource({ loadList }));
 
     await expect(awaitFill()).rejects.toThrow('connections failed');
     await awaitFill();
@@ -95,7 +95,7 @@ describe('fill', () => {
   });
 
   it('does not bump the cache generation when the list load fails', async () => {
-    selectDataSourceCacheSource(fetchingSource({ loadList: jest.fn().mockRejectedValue(new Error('down')) }));
+    setDataSourceCacheSource(fetchingSource({ loadList: jest.fn().mockRejectedValue(new Error('down')) }));
     const generation = getDataSourceCacheGeneration();
 
     await expect(awaitFill()).rejects.toThrow('down');
@@ -105,7 +105,7 @@ describe('fill', () => {
 
   it('drops a list load that resolves after a newer snapshot was applied', async () => {
     const list = deferred<DataSourceListSnapshot>();
-    selectDataSourceCacheSource(fetchingSource({ loadList: () => list.promise }));
+    setDataSourceCacheSource(fetchingSource({ loadList: () => list.promise }));
 
     applySnapshot(snapshotOf(bravo));
     list.resolve(snapshotOf(alpha));
@@ -117,7 +117,7 @@ describe('fill', () => {
 
   it('resolves waiting callers when the list load fails after a newer snapshot was applied', async () => {
     const list = deferred<DataSourceListSnapshot>();
-    selectDataSourceCacheSource(fetchingSource({ loadList: () => list.promise }));
+    setDataSourceCacheSource(fetchingSource({ loadList: () => list.promise }));
     const waiting = awaitFill();
 
     applySnapshot(snapshotOf(bravo));
@@ -139,7 +139,7 @@ describe('fill', () => {
 describe('loadSettingsCached', () => {
   it('returns preloaded settings without asking the source', async () => {
     const loadSettings = jest.fn();
-    selectDataSourceCacheSource(fetchingSource({ loadSettings }));
+    setDataSourceCacheSource(fetchingSource({ loadSettings }));
     applySnapshot({ ...snapshotOf(alpha), settings: { 'uid-alpha': alpha } });
 
     expect(await loadSettingsCached('uid-alpha')).toBe(alpha);
@@ -148,7 +148,7 @@ describe('loadSettingsCached', () => {
 
   it('makes concurrent callers for one uid share a single load, then serves it from the cache', async () => {
     const loadSettings = jest.fn().mockResolvedValue(alpha);
-    selectDataSourceCacheSource(fetchingSource({ loadSettings }));
+    setDataSourceCacheSource(fetchingSource({ loadSettings }));
     applySnapshot(snapshotOf(alpha));
 
     const [first, second] = await Promise.all([loadSettingsCached('uid-alpha'), loadSettingsCached('uid-alpha')]);
@@ -161,7 +161,7 @@ describe('loadSettingsCached', () => {
 
   it('does not cache a miss, so the next call asks the source again', async () => {
     const loadSettings = jest.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(alpha);
-    selectDataSourceCacheSource(fetchingSource({ loadSettings }));
+    setDataSourceCacheSource(fetchingSource({ loadSettings }));
     applySnapshot(snapshotOf(alpha));
 
     expect(await loadSettingsCached('uid-alpha')).toBeUndefined();
@@ -172,7 +172,7 @@ describe('loadSettingsCached', () => {
   it('does not cache settings whose load was in flight when a new snapshot replaced the layer', async () => {
     const stale = deferred<DataSourceInstanceSettings>();
     const loadSettings = jest.fn().mockReturnValueOnce(stale.promise).mockResolvedValueOnce(bravo);
-    selectDataSourceCacheSource(fetchingSource({ loadSettings }));
+    setDataSourceCacheSource(fetchingSource({ loadSettings }));
     applySnapshot(snapshotOf(alpha));
 
     const inflight = loadSettingsCached('uid-alpha');

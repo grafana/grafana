@@ -43,10 +43,10 @@ export function getDataSourceCacheSource(): DataSourceCacheSource | undefined {
 }
 
 /**
- * Select the source that fills the cache. Applies its initial snapshot right away when it has
+ * Set the source that fills the cache. Also applies its initial snapshot right away when it has
  * one; otherwise starts the first fill without waiting for it.
  */
-export function selectDataSourceCacheSource(selected: DataSourceCacheSource): void {
+export function setDataSourceCacheSource(selected: DataSourceCacheSource): void {
   source = selected;
   const initial = selected.getInitialSnapshot();
   if (initial) {

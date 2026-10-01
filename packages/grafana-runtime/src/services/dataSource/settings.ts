@@ -15,7 +15,7 @@ import {
   awaitFill,
   getDataSourceCacheSource,
   loadSettingsCached,
-  selectDataSourceCacheSource,
+  setDataSourceCacheSource,
   toListItem,
   upsertRuntimeSettings,
 } from './cache';
@@ -43,7 +43,7 @@ export function initDataSourceInstanceSettings(
   settings: Record<string, DataSourceInstanceSettings>,
   defaultDsName: string
 ): void {
-  selectDataSourceCacheSource(createDataSourceCacheSource({ datasources: settings, defaultDatasource: defaultDsName }));
+  setDataSourceCacheSource(createDataSourceCacheSource({ datasources: settings, defaultDatasource: defaultDsName }));
 }
 
 /**
@@ -64,7 +64,7 @@ export function setDataSourceInstanceSettings(
   }
 
   _resetForTests();
-  selectDataSourceCacheSource(
+  setDataSourceCacheSource(
     createBootDataSource({
       datasources: structuredClone(settings),
       defaultDatasource: defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '',
