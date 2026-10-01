@@ -615,8 +615,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           // its cached scene by comparing this, so a number we guessed could make it keep a stale one.
           ...(generation !== undefined ? { savedGeneration: generation } : {}),
           // Lets a caller that just wrote through this save (e.g. the mutation-api commands) report the
-          // new revision directly, without a second, separately-racing read of its own.
-          ...(resourceVersion !== undefined ? { savedResourceVersion: resourceVersion } : {}),
+          // new revision directly, without a second, separately-racing read of its own. Unlike
+          // savedGeneration above, this must be assigned unconditionally: setState merges, so omitting
+          // the key on a save whose response carried none would leave an *earlier* save's revision in
+          // place, and a reader has no way to tell that leftover apart from a genuinely fresh one.
+          savedResourceVersion: resourceVersion,
         });
       })
       .catch((error) => {

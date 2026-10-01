@@ -446,6 +446,23 @@ describe('NotebookAutosave', () => {
     expect(scene.autosave.state.savedResourceVersion).toBeUndefined();
   });
 
+  it('clears a previously recorded resourceVersion when a later save response omits it', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 2, resourceVersion: '1756' });
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    expect(scene.autosave.state.savedResourceVersion).toBe('1756');
+
+    // A reader of savedResourceVersion treats any defined value as the latest save's revision, so a
+    // later save that didn't report one must clear it rather than leave the first save's value behind.
+    jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3 });
+    editFirstCell(scene, 'Hello world again');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(scene.autosave.state.savedGeneration).toBe(3);
+    expect(scene.autosave.state.savedResourceVersion).toBeUndefined();
+  });
+
   it('does not save a time range change made outside edit mode', async () => {
     const scene = buildScene();
     deactivate = scene.activate();
