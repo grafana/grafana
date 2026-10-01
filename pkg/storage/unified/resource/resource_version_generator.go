@@ -21,10 +21,6 @@ const (
 	resourceVersionTimestampOutOfRange = "timestamp_out_of_range"
 )
 
-type resourceVersionGenerator interface {
-	Generate() (int64, error)
-}
-
 type resourceVersionGenerationError struct {
 	reason        string
 	currentMillis int64
@@ -49,7 +45,7 @@ func newResourceVersionGenerator(node int64, now func() time.Time) *snowflakeRes
 
 // Share the node and sequence across backends so instances in one process cannot
 // issue the same resource version.
-var processResourceVersions resourceVersionGenerator = func() resourceVersionGenerator {
+var processResourceVersions = func() *snowflakeResourceVersionGenerator {
 	var nodeBytes [2]byte
 	if _, err := rand.Read(nodeBytes[:]); err != nil {
 		panic(fmt.Errorf("failed to generate resource version node ID: %w", err))

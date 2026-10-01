@@ -78,7 +78,7 @@ type GarbageCollectionConfig struct {
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	resourceVersions        resourceVersionGenerator
+	resourceVersions        *snowflakeResourceVersionGenerator
 	kv                      KV
 	bulkLock                *BulkLock
 	dataStore               *dataStore

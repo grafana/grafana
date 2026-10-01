@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func requireGeneratedResourceVersion(t *testing.T, g resourceVersionGenerator) int64 {
+func requireGeneratedResourceVersion(t *testing.T, g *snowflakeResourceVersionGenerator) int64 {
 	t.Helper()
 	rv, err := g.Generate()
 	require.NoError(t, err)
 	return rv
 }
 
-func requireResourceVersionFailure(t *testing.T, g resourceVersionGenerator, reason string) {
+func requireResourceVersionFailure(t *testing.T, g *snowflakeResourceVersionGenerator, reason string) {
 	t.Helper()
 	rv, err := g.Generate()
 	require.Zero(t, rv)
@@ -27,8 +27,7 @@ func requireResourceVersionFailure(t *testing.T, g resourceVersionGenerator, rea
 }
 
 func TestProcessResourceVersionGeneratorNodeID(t *testing.T) {
-	g, ok := processResourceVersions.(*snowflakeResourceVersionGenerator)
-	require.True(t, ok)
+	g := processResourceVersions
 	require.GreaterOrEqual(t, g.node, int64(0))
 	require.Less(t, g.node, int64(1<<resourceVersionNodeBits))
 }
