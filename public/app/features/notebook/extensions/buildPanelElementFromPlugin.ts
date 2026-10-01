@@ -18,26 +18,17 @@ const TRANSIENT_PANEL_ID = 1;
 
 /**
  * Turns the `Panel` a plugin built for the add-to-notebook form into the element a notebook stores.
- *
- * The same panel model grafana/add-to-dashboard-form/v1 accepts, so a plugin does not learn a second
- * shape. Assembled the same way as Explore's builder: a PanelModel, then a VizPanel with no menus or
- * header actions, because vizPanelToSchemaV2 reads neither and both only make sense inside a
- * dashboard. The panel is cloned first because PanelModel writes refIds onto queries that lack
- * them, and that write would land on the plugin's own objects.
- *
- * Queries should already be interpolated. A notebook has no dashboard variables, so a `$service`
- * left in a query resolves to nothing there.
  */
 export function buildPanelElementFromPlugin(panel: Panel): PanelElement {
+  const source = cloneDeep(panel);
   const model = new PanelModel({
+    ...source,
     id: TRANSIENT_PANEL_ID,
-    title: panel.title || t('notebooks.add-to-notebook-form.title.new-panel', 'New panel'),
-    type: panel.type || 'timeseries',
-    targets: cloneDeep(panel.targets ?? []),
-    datasource: cloneDeep(panel.datasource),
-    options: cloneDeep(panel.options) ?? {},
-    fieldConfig: cloneDeep(panel.fieldConfig),
-    transformations: cloneDeep(panel.transformations),
+    title: source.title || t('notebooks.add-to-notebook-form.title.new-panel', 'New panel'),
+    type: source.type || 'timeseries',
+    // An omitted query list must stay empty. PanelModel otherwise seeds a blank query.
+    targets: source.targets ?? [],
+    options: source.options ?? {},
   });
 
   const vizPanel = new VizPanel({
