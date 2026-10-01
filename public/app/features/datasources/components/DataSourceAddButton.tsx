@@ -82,6 +82,7 @@ export function DataSourceAddButton(): JSX.Element | null {
       }}
       source="datasources_list"
       buttonProps={{ variant: 'primary' }}
+      data-testid={Pages.DataSources.dataSourceAddButton}
     >
       {addNewDataSourceLabel}
     </AssistantSetupDropdown>

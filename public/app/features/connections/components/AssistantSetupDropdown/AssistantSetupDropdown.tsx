@@ -29,6 +29,8 @@ type Props = {
   buttonProps?: Omit<ButtonProps, 'children'>;
   /** Content of the dropdown trigger button (the angle icon is appended automatically). */
   children: React.ReactNode;
+  /** data-testid applied to the dropdown trigger button. */
+  'data-testid'?: string;
 };
 
 /**
@@ -41,6 +43,7 @@ export function AssistantSetupDropdown({
   source,
   buttonProps,
   children,
+  'data-testid': dataTestId,
 }: Props): React.ReactElement {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -68,7 +71,7 @@ export function AssistantSetupDropdown({
 
   return (
     <Dropdown overlay={menu} placement="bottom-end" onVisibleChange={setIsOpen}>
-      <Button {...buttonProps}>
+      <Button {...buttonProps} data-testid={dataTestId}>
         <Stack direction="row" alignItems="center" gap={1}>
           {children}
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
