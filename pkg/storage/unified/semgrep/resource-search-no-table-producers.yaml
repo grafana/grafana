@@ -1,0 +1,25 @@
+rules:
+  - id: resource-search-no-table-producers
+    languages: [go]
+    message: >-
+      ResourceTable search results are being retired. New producers must return
+      FIELD_VALUES. Suppress this rule at the construction or assignment with a
+      reason only when compatibility requires a table result.
+    severity: ERROR
+    paths:
+      exclude:
+        - '*_test.go'
+        - '*.pb.go'
+    pattern-either:
+      - pattern: '$PB.ResourceSearchResponse{..., Results: $RESULTS, ...}'
+      - pattern: >-
+          $PB.ResourceSearchResponse{..., ResultFormat:
+          $PB.ResourceSearchRequest_RESOURCE_TABLE, ...}
+      - pattern: '($RESPONSE : *$PB.ResourceSearchResponse).Results = $RESULTS'
+      - pattern: '($RESPONSE : $PB.ResourceSearchResponse).Results = $RESULTS'
+      - pattern: >-
+          ($RESPONSE : *$PB.ResourceSearchResponse).ResultFormat =
+          $PB.ResourceSearchRequest_RESOURCE_TABLE
+      - pattern: >-
+          ($RESPONSE : $PB.ResourceSearchResponse).ResultFormat =
+          $PB.ResourceSearchRequest_RESOURCE_TABLE

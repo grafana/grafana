@@ -124,7 +124,7 @@ func (a *recordingAccessControlFake) Evaluate(ctx context.Context, ur identity.R
 	return a.Callback(u, evaluator)
 }
 
-var _ ac.AccessControl = &recordingAccessControlFake{}
+var _ ac.AccessControl = (*recordingAccessControlFake)(nil)
 
 type fakeRuleAccessControlService struct {
 }

@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Continuer"
-        },
-        "title": {
-          "proceed-to-external-site": "Accéder au site externe ?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Tableau de bord {{dashboardName}}",
       "label-no-dashboards-found": "Aucun tableau de bord trouvé"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Accéder au tableau de bord précédent",
       "playlist-stop": "Arrêter la liste de lecture",
       "refresh": "Actualiser le tableau de bord",
-      "save": "Enregistrer le tableau de bord",
       "save-as-template": {
         "label": "Enregistrer comme modèle"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Enregistrer",
       "save-library-panel": "Enregistrer le panneau de la bibliothèque",
       "save-library-panel-short": "Enregistrer",
-      "settings": "Paramètres du tableau de bord",
-      "share-button": "Partager",
       "star-add-error": "Échec de l’ajout aux favoris",
       "star-added": "Ajouté aux favoris",
       "star-remove-error": "Échec de la suppression des favoris",
@@ -13225,6 +13212,12 @@
       "query": {
         "add": "Ajoutez une requête",
         "run": "Exécutez la requête"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13292,7 +13285,9 @@
       "copy-markdown": "Copier en tant que Markdown",
       "download-markdown": "Télécharger au format .md",
       "error": "Échec de l’exportation du notebook",
-      "label": "Exporter"
+      "label": "Exporter",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Ajouter un bloc",
@@ -13308,7 +13303,9 @@
       "redo-action": "Rétablir : {{action}}",
       "remove-query": "Supprimez la requête",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Sélectionnez la requête",
+      "set-cell-time-range": "",
       "split-block": "Fractionner le bloc",
       "switch-datasource": "Changer de source de données",
       "undo": "Annuler",
@@ -15864,8 +15861,7 @@
       "deleted-by-removed": "Compte supprimé",
       "deleted-by-unknown-short": "<0></0> Inconnu",
       "deleted-by-unknown-tooltip": "Impossible de trouver le compte ayant supprimé ce tableau de bord",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Temps restant",
+      "deleted-header": "",
       "location-header": "Emplacement",
       "name-header": "Nom",
       "tags-header": "Balises",
@@ -18179,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Découvrez-le",
-      "description": "Nous avons repensé l’interface !",
-      "revert": "Retour",
-      "title": "Nouveaux styles"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

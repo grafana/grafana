@@ -2335,6 +2335,45 @@ func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repositories should be cleaned up between subtests")
 }
 
+// GithubConnectionObject builds a minimal GitHub connection body: the fields the
+// API requires and nothing test-specific, so a caller only has to name it. Pass
+// it to CreateGithubConnection, which installs the mocked GitHub client.
+func (h *ProvisioningTestHelper) GithubConnectionObject(name string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": provisioning.APIVERSION,
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      name,
+			"namespace": h.Namespace,
+		},
+		"spec": map[string]any{
+			"title": name,
+			"type":  provisioning.GitHubRepositoryType,
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "454545",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": base64.StdEncoding.EncodeToString([]byte(TestGithubPrivateKeyPEM)),
+			},
+		},
+	}}
+}
+
+// CreateNamedGithubConnection builds and creates a connection in one step, and
+// removes it when the test ends.
+func (h *ProvisioningTestHelper) CreateNamedGithubConnection(t *testing.T, name string) *unstructured.Unstructured {
+	t.Helper()
+	created, err := h.CreateGithubConnection(t, h.GithubConnectionObject(name))
+	require.NoError(t, err, "failed to create connection %q", name)
+	t.Cleanup(func() {
+		_ = h.Connections.Resource.Delete(context.WithoutCancel(t.Context()), created.GetName(), metav1.DeleteOptions{})
+	})
+	return created
+}
+
 func (h *ProvisioningTestHelper) CreateGithubConnection(
 	t *testing.T,
 

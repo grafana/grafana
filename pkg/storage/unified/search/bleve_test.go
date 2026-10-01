@@ -1120,7 +1120,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
 			require.Nil(t, errResult)
 			require.NotNil(t, searchReq)
-			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "index_server_search_capability_violations_total"))
+			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "grafana_index_server_search_capability_violations_total"))
 		})
 	}
 
@@ -1990,11 +1990,11 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 
 func checkOpenIndexes(t *testing.T, reg prometheus.Gatherer, memory, file int) {
 	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} %d
-		index_server_open_indexes{index_storage="file"} %d
-	`, memory, file)), "index_server_open_indexes"))
+		# HELP grafana_index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE grafana_index_server_open_indexes gauge
+		grafana_index_server_open_indexes{index_storage="memory"} %d
+		grafana_index_server_open_indexes{index_storage="file"} %d
+	`, memory, file)), "grafana_index_server_open_indexes"))
 }
 
 func verifyDirEntriesCount(t *testing.T, dir string, count int) {

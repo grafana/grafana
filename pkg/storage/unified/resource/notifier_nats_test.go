@@ -19,8 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -132,7 +131,7 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sub := &fakeEventSubscriber{enabled: true}
 			expiry := NewWatchExpiry()
-			n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
+			n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
 			ctx := t.Context()
 			out := n.Watch(ctx, WatchOptions{})
@@ -180,7 +179,7 @@ func TestNatsNotifierDecode_PreviousMetadata(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			expiry := NewWatchExpiry()
-			n := newNatsNotifier(nil, expiry, nil, log.NewNopLogger())
+			n := newNatsNotifier(nil, expiry, nil, &logging.NoOpLogger{})
 			data := mustMarshalNotification(t, &resourcepb.WatchNotification{
 				Type:                    resourcepb.WatchNotification_MODIFIED,
 				Group:                   "playlist.grafana.app",
@@ -215,7 +214,7 @@ func TestNatsNotifierDecode_PreviousMetadata(t *testing.T) {
 func TestNatsNotifierWatch_EmitsInResourceVersionOrder(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	expiry := NewWatchExpiry()
-	n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
+	n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
 	ctx := t.Context()
 	out := n.Watch(ctx, WatchOptions{})
@@ -245,7 +244,7 @@ func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
 	expiry := NewWatchExpiry()
-	n := newNatsNotifier(sub, expiry, dropped, log.NewNopLogger())
+	n := newNatsNotifier(sub, expiry, dropped, &logging.NoOpLogger{})
 
 	ctx := t.Context()
 	out := n.Watch(ctx, WatchOptions{})
@@ -265,7 +264,7 @@ func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
 	expiry := NewWatchExpiry()
-	n := newNatsNotifier(sub, expiry, dropped, log.NewNopLogger())
+	n := newNatsNotifier(sub, expiry, dropped, &logging.NoOpLogger{})
 
 	ctx := t.Context()
 	out := n.Watch(ctx, WatchOptions{})
@@ -322,7 +321,7 @@ func TestNatsNotifierDrop_CountsEveryDropWhileThrottlingLogs(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := &fakeEventSubscriber{enabled: true}
 		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		expiry := NewWatchExpiry()
 		n := newNatsNotifier(sub, expiry, dropped, logger)
 
@@ -339,15 +338,15 @@ func TestNatsNotifierDrop_CountsEveryDropWhileThrottlingLogs(t *testing.T) {
 		time.Sleep(dropLogInterval)
 		n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", "some.subject")
 		require.Equal(t, 2, logger.WarnLogs.Calls)
-		assert.Contains(t, logger.WarnLogs.Ctx, "suppressed_since_last_log")
-		assert.Contains(t, logger.WarnLogs.Ctx, int64(99))
+		assert.Contains(t, logger.WarnLogs.Args, "suppressed_since_last_log")
+		assert.Contains(t, logger.WarnLogs.Args, int64(99))
 	})
 }
 
 func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	expiry := NewWatchExpiry()
-	n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
+	n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	out := n.Watch(ctx, WatchOptions{})
@@ -371,7 +370,7 @@ func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 	// and re-subscribe rather than closing it and losing the watch.
 	sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("boom")}
 	expiry := NewWatchExpiry()
-	n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
+	n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
 	ctx := t.Context()
 	// Small backoff bounds keep the subscription retry loop fast for the test.
@@ -403,7 +402,7 @@ func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 
 func TestNatsNotifierPublishIsNoOp(t *testing.T) {
 	expiry := NewWatchExpiry()
-	n := newNatsNotifier(&fakeEventSubscriber{enabled: true}, expiry, nil, log.NewNopLogger())
+	n := newNatsNotifier(&fakeEventSubscriber{enabled: true}, expiry, nil, &logging.NoOpLogger{})
 	assert.NotPanics(t, func() {
 		n.Publish(Event{Group: "g", Resource: "r", ResourceVersion: 1})
 	})
@@ -557,7 +556,7 @@ func TestNATSNotifierInvalidatesAfterEachReconnect(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := &fakeEventSubscriber{enabled: true}
 		expiry := NewWatchExpiry()
-		n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
+		n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		n.Watch(ctx, WatchOptions{})

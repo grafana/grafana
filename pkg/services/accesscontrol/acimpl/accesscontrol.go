@@ -16,7 +16,7 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
 
-var _ accesscontrol.AccessControl = new(AccessControl)
+var _ accesscontrol.AccessControl = (*AccessControl)(nil)
 
 func ProvideAccessControl(features featuremgmt.FeatureToggles) *AccessControl {
 	logger := log.New("accesscontrol")
