@@ -1659,6 +1659,11 @@
       "count": 1
     }
   },
+  "public/app/features/dashboard-scene/actions/layout/duplicateDefaultGridPanel.ts": {
+    "@grafana/no-config-feature-toggles": {
+      "count": 1
+    }
+  },
   "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -1803,7 +1808,7 @@
   },
   "public/app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 7
+      "count": 6
     }
   },
   "public/app/features/dashboard-scene/scene/layout-default/row-actions/RowOptionsForm.tsx": {

@@ -911,10 +911,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     throw new Error("Trying to replace a panel that doesn't have a parent layout item");
   }
 
-  public duplicatePanel(vizPanel: VizPanel) {
-    getLayoutManagerFor(vizPanel).duplicatePanel?.(vizPanel);
-  }
-
   public copyPanel(vizPanel: VizPanel) {
     if (config.featureToggles.dashboardNewLayouts) {
       const gridItem = vizPanel.parent;
