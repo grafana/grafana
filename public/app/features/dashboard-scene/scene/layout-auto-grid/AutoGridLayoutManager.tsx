@@ -24,7 +24,7 @@ import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { forceRenderChildren, getDashboardSceneFor, useDashboard } from '../../utils/utils';
-import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
@@ -289,36 +289,6 @@ export class AutoGridLayoutManager
       child.clearParent();
     });
     this.state.layout.setState({ children: [...this.state.layout.state.children, ...movedChildren] });
-  }
-
-  public duplicatePanel(panel: VizPanel) {
-    const gridItem = panel.parent;
-    if (!(gridItem instanceof AutoGridItem)) {
-      console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
-      return;
-    }
-
-    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
-    const grid = this.state.layout;
-
-    const newPanel = panel.clone({
-      key: getVizPanelKeyForPanelId(newPanelId),
-    });
-
-    const newGridItem = gridItem.clone({
-      key: getGridItemKeyForPanelId(newPanelId),
-      body: newPanel,
-    });
-
-    const sourceIndex = grid.state.children.indexOf(gridItem);
-    const newChildren = [...grid.state.children];
-
-    // insert after
-    newChildren.splice(sourceIndex + 1, 0, newGridItem);
-
-    grid.setState({ children: newChildren });
-
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 
   public getVizPanels(): VizPanel[] {
