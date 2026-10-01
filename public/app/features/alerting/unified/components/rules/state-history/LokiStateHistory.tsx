@@ -64,6 +64,7 @@ const LokiStateHistory = ({ ruleUID, pollingInterval = STATE_HISTORY_POLL_INTERV
       refetchOnFocus: true,
       refetchOnReconnect: true,
       pollingInterval,
+      skipPollingIfUnfocused: true,
     }
   );
 

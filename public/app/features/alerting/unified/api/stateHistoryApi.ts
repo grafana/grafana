@@ -8,22 +8,20 @@ export const stateHistoryApi = alertingApi.injectEndpoints({
       DataFrameJSON,
       {
         ruleUid?: string;
-        from?: number;
-        to?: number;
-        timeRange?: RawTimeRange;
+        timeRange: RawTimeRange;
         limit?: number;
         matchers?: string;
         previous?: string;
         current?: string;
       }
     >({
-      query: ({ ruleUid, from, to, timeRange, limit = 100, matchers, previous, current }) => {
-        // Resolve relative bounds for each request so polling advances the time window.
-        const resolvedTimeRange = timeRange && rangeUtil.convertRawToRange(timeRange);
+      query: ({ ruleUid, timeRange, limit = 100, matchers, previous, current }) => {
+        // Resolve relative bounds like "now-30d" on every request so polling moves the time window forward.
+        const resolvedTimeRange = rangeUtil.convertRawToRange(timeRange);
         const params: Record<string, string | number | undefined> = {
           ruleUID: ruleUid,
-          from: resolvedTimeRange?.from.unix() ?? from,
-          to: resolvedTimeRange?.to.unix() ?? to,
+          from: resolvedTimeRange.from.unix(),
+          to: resolvedTimeRange.to.unix(),
           limit,
           previous,
           current,
