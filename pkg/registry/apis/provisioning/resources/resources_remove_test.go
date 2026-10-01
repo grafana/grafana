@@ -504,7 +504,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, _, _, netNew, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", quota)
 
-		require.Error(t, err, "old resource may need manual cleanup")
+		require.NoError(t, err, "the old path was never parseable, so nothing is left to clean up and the rename succeeded")
 		require.Equal(t, "brand-new-uid", name)
 		mockClient.AssertCalled(t, "Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything)
 		require.True(t, netNew, "a create with no matching delete is a net-new resource the caller must account for")

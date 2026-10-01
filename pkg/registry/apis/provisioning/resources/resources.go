@@ -473,10 +473,10 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		if pathErr := IsPathSupported(previousPath); pathErr != nil {
 			// Bad path, not a content problem: proceed with the new write;
 			// other parse failures fall through to the fatal return below.
-			// One Get (regardless of hash) gates quota exactly once; hash
-			// match additionally proves old and new are the same object, so
-			// nothing is left to orphan -- hash-differ leaves that unconfirmed.
-			resolved := shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash)
+			// One Get (regardless of hash) gates quota exactly once; a hash
+			// match additionally lets an existing object skip strict
+			// validation, since the content it already accepted is unchanged.
+			unchangedContent := shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash)
 			// Same identity Run() writes with -- a mismatch can read as
 			// NotFound and wrongly choose ForceCreate.
 			identityCtx, _, err := identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
@@ -488,7 +488,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			switch {
 			case getErr == nil:
 				newParsed.Existing = existing
-				if resolved {
+				if unchangedContent {
 					newParsed.SkipStrictValidation = true
 				}
 			case apierrors.IsNotFound(getErr):
@@ -518,10 +518,10 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			if reserved && !netNew {
 				quota.Release()
 			}
-			if resolved {
-				return newName, "", gvk, size, netNew, nil
-			}
-			return newName, "", gvk, size, netNew, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
+			// The old path is unsupported, so the parser rejected it and no resource
+			// was ever created from that file: there is nothing to clean up, and the
+			// write above succeeded whether or not the content changed.
+			return newName, "", gvk, size, netNew, nil
 		}
 		return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("failed to parse previous file: %w", oldParseErr)
 	}
