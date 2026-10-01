@@ -803,7 +803,7 @@ func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
 
 	// An index built before the stored facet mapping is reused with the option
 	// off, and rebuilt once it is on.
-	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
+	buildInfo := IndexBuildInfo{Features: slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})}
 	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
 	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
 }
@@ -812,9 +812,19 @@ func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
 // trash, whatever the facet option is set to.
 func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureStoredFacets}}
+	want := slices.Sorted(slices.Values(slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})))
 	for _, postRankAuthz := range []bool{false, true} {
-		require.Equal(t, TrashIndexFeatures(), MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
+		require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
 	}
+}
+
+// An index that maps the trash fields but was built before deleted documents were kept
+// holds none, so it has to rebuild rather than report an empty trash.
+func TestHoldingDeletedDocumentsIsRequired(t *testing.T) {
+	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
+	require.Equal(t,
+		[]IndexFeature{IndexFeatureHoldsDeletedDocuments},
+		MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
 }
 
 func TestShouldRebuildIndex(t *testing.T) {
