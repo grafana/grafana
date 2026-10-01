@@ -69,6 +69,7 @@ func ProvideService(
 	ac accesscontrol.AccessControl,
 	ruleMutationValidator provisioning.RuleMutationValidator,
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	sqlStore db.DB,
 	pluginStore pluginstore.Store,
 	alertingStore *alertstore.DBstore,
@@ -96,6 +97,7 @@ func ProvideService(
 	s := &ProvisioningServiceImpl{
 		ruleMutationValidator:        ruleMutationValidator,
 		Cfg:                          cfg,
+		features:                     features,
 		SQLStore:                     sqlStore,
 		ac:                           ac,
 		pluginStore:                  pluginStore,
@@ -309,6 +311,7 @@ func newProvisioningServiceImpl(
 type ProvisioningServiceImpl struct {
 	services.NamedService
 	Cfg                          *setting.Cfg
+	features                     featuremgmt.FeatureToggles
 	SQLStore                     db.DB
 	orgService                   org.Service
 	userService                  user.Service
@@ -424,17 +427,13 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		alertingauthz.NewRuleService(ps.ac),
 		ps.ruleMutationValidator,
 	)
-	var features featuremgmt.FeatureToggles
-	if ps.alertingStore != nil {
-		features = ps.alertingStore.FeatureToggles
-	}
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), features)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), ps.features)
 	routeService := routes.NewService(
 		configStore,
 		ps.provenanceStore,
 		ps.alertingStore,
 		ps.Cfg.UnifiedAlerting,
-		features,
+		ps.features,
 		ps.log,
 		validation.ValidateProvenanceRelaxed,
 		ps.tracer,

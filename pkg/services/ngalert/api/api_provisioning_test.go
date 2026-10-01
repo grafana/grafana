@@ -2375,9 +2375,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
 	}
 	store := store.DBstore{
-		Logger:         log,
-		SQLStore:       sqlStore,
-		FeatureToggles: featuremgmt.WithFeatures(),
+		Logger:   log,
+		SQLStore: sqlStore,
 	}
 	ruleStore := &rulestore.RuleStore{
 		Logger:         log,

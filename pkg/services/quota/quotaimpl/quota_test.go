@@ -558,7 +558,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	require.NoError(t, err)
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 
-	alertingStore, err := ngstore.ProvideDBStore(featuremgmt.WithFeatures(), sqlStore)
+	alertingStore, err := ngstore.ProvideDBStore(sqlStore)
 	require.NoError(t, err)
 	provenanceStore := ngprovenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore)
 	ruleStore, err := ngrules.ProvideRuleStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, ac, provenanceStore)

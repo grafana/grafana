@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -43,11 +42,12 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ng, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+			_, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+			features := featuremgmt.WithFeatures()
 			if tc.featureEnabled {
-				dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
+				features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
 			}
-			store := createProvisioningStoreSut(ng, dbStore)
+			store := createProvisioningStoreSut(dbStore, features)
 
 			t.Run("Default provenance of a known type is None", func(t *testing.T) {
 				rule := models.AlertRule{
@@ -252,11 +252,12 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ng, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+			_, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+			features := featuremgmt.WithFeatures()
 			if tc.featureEnabled {
-				dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
+				features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
 			}
-			store := createProvisioningStoreSut(ng, dbStore)
+			store := createProvisioningStoreSut(dbStore, features)
 
 			t.Run("Default manager properties of an unset record are empty", func(t *testing.T) {
 				rule := models.AlertRule{UID: "mp-unset"}
@@ -396,9 +397,8 @@ func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 		t.Skip("DeadlockScenarios targets MySQL gap-lock semantics; skipped on SQLite")
 	}
 
-	ng, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
-	dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
-	store := createProvisioningStoreSut(ng, dbStore)
+	_, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+	store := createProvisioningStoreSut(dbStore, featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites))
 	concurrency := 20
 
 	t.Run("Same record, different orgs", func(t *testing.T) {
@@ -457,6 +457,6 @@ func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 	})
 }
 
-func createProvisioningStoreSut(_ *ngalert.AlertNG, db *store.DBstore) provisioning.ProvisioningStore {
-	return provenance.ProvideProvenanceStore(db.FeatureToggles, db.SQLStore)
+func createProvisioningStoreSut(db *store.DBstore, features featuremgmt.FeatureToggles) provisioning.ProvisioningStore {
+	return provenance.ProvideProvenanceStore(features, db.SQLStore)
 }

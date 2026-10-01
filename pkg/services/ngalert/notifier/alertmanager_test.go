@@ -50,9 +50,8 @@ func setupAMTest(t *testing.T) *alertmanager {
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry(), l)
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	dbStore := &store.DBstore{
-		FeatureToggles: featuremgmt.WithFeatures(),
-		SQLStore:       sqlStore,
-		Logger:         l,
+		SQLStore: sqlStore,
+		Logger:   l,
 	}
 	s := CompositeAlertingStore{
 		AlertingStore:             dbStore,

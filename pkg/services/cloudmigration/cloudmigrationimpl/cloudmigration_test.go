@@ -949,7 +949,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
 	cfg.UnifiedAlerting.BaseInterval = time.Minute
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
-	alertingStore, err := ngalertstore.ProvideDBStore(featureToggles, sqlStore)
+	alertingStore, err := ngalertstore.ProvideDBStore(sqlStore)
 	require.NoError(t, err)
 	provenanceStore := ngalertprovenance.ProvideProvenanceStore(featureToggles, sqlStore)
 	ruleStore, err := ngalertrules.ProvideRuleStore(cfg, featureToggles, sqlStore, mockFolder, accessControl, provenanceStore)

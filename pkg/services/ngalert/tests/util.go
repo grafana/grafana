@@ -88,7 +88,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
 	folderService := foldertest.NewFakeService()
-	alertingStore, err := store.ProvideDBStore(options.featureToggles, sqlStore)
+	alertingStore, err := store.ProvideDBStore(sqlStore)
 	require.NoError(tb, err)
 	provenanceStore := provenance.ProvideProvenanceStore(options.featureToggles, sqlStore)
 	ruleStore, err := rulestore.ProvideRuleStore(cfg, options.featureToggles, sqlStore, folderService, ac, provenanceStore)
@@ -102,9 +102,8 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	require.NoError(tb, err)
 
 	return ng, &store.DBstore{
-		FeatureToggles: options.featureToggles,
-		SQLStore:       ng.SQLStore,
-		Logger:         log.New("ngalert-test"),
+		SQLStore: ng.SQLStore,
+		Logger:   log.New("ngalert-test"),
 	}, &rulestore.RuleStore{
 		FeatureToggles: options.featureToggles,
 		SQLStore:       ng.SQLStore,

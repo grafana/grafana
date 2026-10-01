@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -135,9 +134,8 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 func SetupStoreForTesting(t *testing.T, db db.DB) *DBstore {
 	t.Helper()
 	store := &DBstore{
-		FeatureToggles: featuremgmt.WithFeatures(),
-		SQLStore:       db,
-		Logger:         &logtest.Fake{},
+		SQLStore: db,
+		Logger:   &logtest.Fake{},
 	}
 	return store
 }

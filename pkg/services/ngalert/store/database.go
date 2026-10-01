@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -28,21 +27,14 @@ type AlertingStore interface {
 // DBstore stores the Alertmanager configuration, admin configuration, alert instances and images.
 // Rules and provenance have their own stores and are deliberately not re-exported here.
 type DBstore struct {
-	// Unused here; read by callers that only hold a DBstore.
-	// TODO: inject featuremgmt.FeatureToggles into ProvisioningServiceImpl and drop this.
-	FeatureToggles featuremgmt.FeatureToggles
-	SQLStore       db.DB
-	Logger         log.Logger
+	SQLStore db.DB
+	Logger   log.Logger
 }
 
-func ProvideDBStore(
-	featureToggles featuremgmt.FeatureToggles,
-	sqlstore db.DB,
-) (*DBstore, error) {
+func ProvideDBStore(sqlstore db.DB) (*DBstore, error) {
 	store := DBstore{
-		FeatureToggles: featureToggles,
-		SQLStore:       sqlstore,
-		Logger:         log.New("ngalert.dbstore"),
+		SQLStore: sqlstore,
+		Logger:   log.New("ngalert.dbstore"),
 	}
 	return &store, nil
 }
