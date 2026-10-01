@@ -245,6 +245,53 @@ func TestCreateOrReplaceRejectsRepoManagedResource(t *testing.T) {
 	require.Contains(t, err.Error(), "managed by a repository")
 }
 
+func TestCreateOrReplaceRejectsWhenCallerLacksUpdateRights(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t, withAccessClient(claims.FixedAccessClient(false)))
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/no-update-rights"
+	obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "no-update-rights", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	out := &example.Pod{}
+	err = store.Create(ctx, key, obj, out, 0)
+	require.Error(t, err, "deny-everything AccessClient should block even the first Create attempt, confirming the harness genuinely enforces access control end to end")
+}
+
+type createOnlyAccessClient struct{}
+
+func (createOnlyAccessClient) Check(_ context.Context, _ claims.AuthInfo, req claims.CheckRequest, _ string) (claims.CheckResponse, error) {
+	return claims.CheckResponse{Allowed: req.Verb == utils.VerbCreate}, nil
+}
+
+func (createOnlyAccessClient) Compile(_ context.Context, _ claims.AuthInfo, _ claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+	return func(_, _ string) bool { return true }, &claims.NoopZookie{}, nil
+}
+
+func (createOnlyAccessClient) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	return claims.BatchCheckResponse{}, nil
+}
+
+func TestCreateOrReplaceRejectsUpdateWithoutUpdateRights(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t, withAccessClient(createOnlyAccessClient{}))
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/create-only"
+	first := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "create-only", Namespace: "test-ns"}}
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, first, firstOut, 0), "create-only access should still allow a genuine first create")
+
+	second := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "create-only", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	secondOut := &example.Pod{}
+	err = store.Create(ctx, key, second, secondOut, 0)
+	require.Error(t, err, "the object exists, so this must now require VerbUpdate, which this AccessClient denies")
+	require.True(t, apierrors.IsForbidden(err))
+}
+
 func TestValidUpdate(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
