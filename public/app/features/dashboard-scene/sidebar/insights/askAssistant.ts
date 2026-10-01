@@ -1,10 +1,10 @@
 import { ensureInlineAssistantInitialized, getInlineAssistantFactory } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
 
-import { INSIGHT_SYSTEM_PROMPT } from './prompt';
+import { INSIGHT_ANSWER_SCHEMA, INSIGHT_SYSTEM_PROMPT } from './prompt';
 import { type InsightSnapshot } from './types';
 
-const INSIGHTS_ORIGIN = 'grafana/dashboard/insights';
+export const INSIGHTS_ORIGIN = 'grafana/dashboard/insights';
 
 function throwIfAborted(signal: AbortSignal) {
   if (signal.aborted) {
@@ -22,11 +22,16 @@ export function askInsightAssistant(
   signal: AbortSignal,
   systemPrompt: string = INSIGHT_SYSTEM_PROMPT
 ): Promise<string> {
-  return sendInsightPrompt(snapshot, systemPrompt, signal);
+  return sendInsightPrompt(snapshot, systemPrompt, INSIGHT_ANSWER_SCHEMA, signal);
 }
 
 /** Sends `input` as JSON under `systemPrompt`, with the same isolation as an insight question. */
-export async function sendInsightPrompt(input: object, systemPrompt: string, signal: AbortSignal): Promise<string> {
+export async function sendInsightPrompt(
+  input: object,
+  systemPrompt: string,
+  responseSchema: object,
+  signal: AbortSignal
+): Promise<string> {
   await ensureInlineAssistantInitialized();
   throwIfAborted(signal);
 
@@ -43,6 +48,7 @@ export async function sendInsightPrompt(input: object, systemPrompt: string, sig
       systemPrompt,
       agentName: 'dashboard-insights',
       tools: [],
+      responseSchema,
       onComplete: (text) => {
         outcome.text = text;
       },

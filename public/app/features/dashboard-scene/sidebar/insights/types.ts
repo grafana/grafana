@@ -132,6 +132,18 @@ export interface InsightShare {
   sharedAt: string;
 }
 
+/** An Assistant investigation started from an answer. It keeps running when the viewer leaves the dashboard. */
+export type InsightInvestigation =
+  | { phase: 'starting' }
+  | {
+      phase: 'started';
+      investigationId: string;
+      url: string;
+      /** The Assistant's lifecycle state, such as `in_progress` or `completed`. */
+      state: string;
+    }
+  | { phase: 'failed'; error: string };
+
 export interface InsightResult {
   content: InsightAnswer;
   snapshot: InsightSnapshot;

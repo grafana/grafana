@@ -2,11 +2,12 @@ import { useEffect, useMemo, useReducer, useSyncExternalStore } from 'react';
 
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { type DashboardSceneLike } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { getRunningInvestigationId } from 'app/features/dashboard-scene/sidebar/insights/investigation';
 import { canShareInsightAnswers } from 'app/features/dashboard-scene/sidebar/insights/sharedAnswers';
 import { captureInsightSnapshot } from 'app/features/dashboard-scene/sidebar/insights/snapshot';
 import { getInsightSourcePanels, type InsightSourcePanel } from 'app/features/dashboard-scene/sidebar/insights/sources';
 import { getInsightStaleReasons } from 'app/features/dashboard-scene/sidebar/insights/staleness';
-import { type InsightResult } from 'app/features/dashboard-scene/sidebar/insights/types';
+import { type InsightInvestigation, type InsightResult } from 'app/features/dashboard-scene/sidebar/insights/types';
 
 import { type InsightOptions } from '../../panelcfg.gen';
 
@@ -19,6 +20,8 @@ import {
 
 /** Panel data, time range, and variable changes are what make an answer out of date. */
 const RERENDER_KEYS = ['data', 'value', 'text', 'filters'];
+
+const INVESTIGATION_POLL_MS = 15_000;
 
 export interface InsightState {
   /** The main question's answer, if it has been asked. */
@@ -37,9 +40,13 @@ export interface InsightState {
   shareError?: string;
   /** The viewer may make an answer the one everyone who opens the dashboard sees. */
   canShare: boolean;
+  investigation?: InsightInvestigation;
+  /** Starting another investigation would fail the same way, so the action is hidden. */
+  investigationsUnavailable: boolean;
   ask: () => void;
   askFollowUp: (question: string) => void;
   share: () => void;
+  investigate: () => void;
 }
 
 const subscribeToNothing = () => () => {};
@@ -58,6 +65,10 @@ export function useInsight(
   const session = useSyncExternalStore(
     sessions?.subscribe ?? subscribeToNothing,
     () => sessions?.get(id) ?? EMPTY_INSIGHT_SESSION
+  );
+  const investigationsUnavailable = useSyncExternalStore(
+    sessions?.subscribe ?? subscribeToNothing,
+    () => sessions?.areInvestigationsUnavailable() ?? false
   );
 
   // Staleness and source availability derive from live panel data, so re-read them when the
@@ -90,6 +101,15 @@ export function useInsight(
   useEffect(() => {
     sessions?.loadShared();
   }, [sessions]);
+
+  const runningInvestigationId = getRunningInvestigationId(session.investigation);
+  useEffect(() => {
+    if (!sessions || !runningInvestigationId) {
+      return;
+    }
+    const timer = setInterval(() => void sessions.refreshInvestigation(id), INVESTIGATION_POLL_MS);
+    return () => clearInterval(timer);
+  }, [sessions, id, runningInvestigationId]);
 
   const { compareWithPreviousPeriod, breakdownVariable } = options;
   const question: InsightAskQuestion = {
@@ -149,8 +169,11 @@ export function useInsight(
     sharing: Boolean(session.sharing),
     shareError: session.shareError,
     canShare: Boolean(dashboard && canShareInsightAnswers(dashboard)),
+    investigation: session.investigation,
+    investigationsUnavailable,
     ask: () => void sessions?.ask(id, question),
     askFollowUp: (followUp) => void sessions?.askFollowUp(id, followUp),
     share: () => void sessions?.share(id),
+    investigate: () => void sessions?.investigate(id),
   };
 }

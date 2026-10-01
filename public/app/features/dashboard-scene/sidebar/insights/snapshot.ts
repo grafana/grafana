@@ -92,15 +92,6 @@ function readySeries(source: InsightSourceWithData, context: InsightContext): Da
       )
     );
   }
-  if (!data.series.some((frame) => frame.length > 0 && frame.fields.length > 0)) {
-    throw new Error(
-      t(
-        'dashboard.insights.snapshot.source-empty',
-        '“{{title}}” has no data for this selection. Adjust the filters or time range.',
-        { title }
-      )
-    );
-  }
   // Panel time overrides are not supported: refuse to describe mismatched ranges as one dashboard interval.
   if (
     data.timeRange &&
@@ -118,6 +109,10 @@ function readySeries(source: InsightSourceWithData, context: InsightContext): Da
     );
   }
   return data.series;
+}
+
+function hasRows(series: DataFrame[]): boolean {
+  return series.some((frame) => frame.length > 0 && frame.fields.length > 0);
 }
 
 function exactField(field: Field, frame: DataFrame, series: DataFrame[]): InsightSnapshotField {
@@ -351,6 +346,21 @@ export function buildInsightSnapshot(
     }
     return { source, series: readySeries(source, context) };
   });
+  // A panel with no rows is still evidence, such as no restarts, as long as another source has data.
+  if (!sources.some(({ series }) => hasRows(series))) {
+    throw new Error(
+      sources.length === 1
+        ? t(
+            'dashboard.insights.snapshot.source-empty',
+            '“{{title}}” has no data for this selection. Adjust the filters or time range.',
+            { title: sources[0].source.title }
+          )
+        : t(
+            'dashboard.insights.snapshot.sources-empty',
+            'None of the source panels has data for this selection. Adjust the filters or time range.'
+          )
+    );
+  }
 
   type Entry = (typeof sources)[number];
   const withVariant = (panels: InsightVariantPanels, variant: string): Entry[] =>
@@ -389,13 +399,15 @@ export function buildInsightSnapshot(
         title: source.title,
         description: source.description,
         section: source.section,
-        frames: series.map(
-          (frame): InsightSnapshotFrame =>
-            (summarize && summarizeFrame(frame, series)) || {
-              name: frame.name,
-              fields: frame.fields.map((field) => exactField(field, frame, series)),
-            }
-        ),
+        frames: hasRows(series)
+          ? series.map(
+              (frame): InsightSnapshotFrame =>
+                (summarize && summarizeFrame(frame, series)) || {
+                  name: frame.name,
+                  fields: frame.fields.map((field) => exactField(field, frame, series)),
+                }
+            )
+          : [],
       }));
     const snapshot: InsightSnapshot = {
       ...context,

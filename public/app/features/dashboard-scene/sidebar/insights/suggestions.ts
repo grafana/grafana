@@ -5,7 +5,7 @@ import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { sendInsightPrompt } from './askAssistant';
 import { getInsightPanelOptions, getInsightPanels } from './insightPanels';
 import { getInsightsDashboard, readInsightQuestions } from './insightsStorage';
-import { SUGGESTION_SYSTEM_PROMPT } from './prompt';
+import { SUGGESTION_SYSTEM_PROMPT, SUGGESTIONS_SCHEMA } from './prompt';
 import { getPanelLocation } from './sections';
 import { type InsightSourcePanel } from './sources';
 
@@ -75,5 +75,8 @@ export async function suggestInsightQuestions(
     })),
     existingQuestions: getExistingQuestions(dashboard),
   };
-  return parseSuggestions(await sendInsightPrompt(input, SUGGESTION_SYSTEM_PROMPT, signal), sources);
+  return parseSuggestions(
+    await sendInsightPrompt(input, SUGGESTION_SYSTEM_PROMPT, SUGGESTIONS_SCHEMA, signal),
+    sources
+  );
 }

@@ -6,10 +6,12 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { InsightInvestigationView } from './InsightInvestigationView';
 import { InsightSourceLinks } from './InsightSourceLinks';
+import { canStartInvestigation } from './investigation';
 import { getInsightExploreUrl, revealInsightSourcePanel } from './navigation';
 import { type InsightSourcePanel } from './sources';
-import { type InsightEvidence, type InsightResult } from './types';
+import { type InsightEvidence, type InsightInvestigation, type InsightResult } from './types';
 
 const UTC_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 const WINDOW_FORMAT = 'MMM D, HH:mm';
@@ -21,6 +23,13 @@ export interface InsightShareControl {
   onShare: () => void;
 }
 
+export interface InsightInvestigateControl {
+  investigation?: InsightInvestigation;
+  /** The Assistant cannot start investigations here; an earlier failure still shows its explanation. */
+  unavailable: boolean;
+  onInvestigate: () => void;
+}
+
 interface Props {
   result: InsightResult;
   sources: InsightSourcePanel[];
@@ -28,9 +37,11 @@ interface Props {
   onFollowUp?: () => void;
   /** Main answers can be shared; follow-up answers cannot. */
   share?: InsightShareControl;
+  /** Main answers can start an investigation; follow-up answers cannot. */
+  investigate?: InsightInvestigateControl;
 }
 
-export function InsightAnswerView({ result, sources, onFollowUp, share }: Props) {
+export function InsightAnswerView({ result, sources, onFollowUp, share, investigate }: Props) {
   const styles = useStyles2(getStyles);
   const { content, snapshot } = result;
   const breakdownVariable = snapshot.breakdown?.variable;
@@ -175,6 +186,23 @@ export function InsightAnswerView({ result, sources, onFollowUp, share }: Props)
               <Trans i18nKey="dashboard.insights.answer.share">Share with viewers</Trans>
             </Button>
           )}
+          {investigate && !investigate.unavailable && canStartInvestigation(investigate.investigation) && (
+            <Button
+              size="sm"
+              variant="secondary"
+              fill="text"
+              icon="search"
+              tooltip={t(
+                'dashboard.insights.answer.investigate-tooltip',
+                'Start an Assistant investigation that checks these findings against your data sources and looks for the cause'
+              )}
+              onClick={investigate.onInvestigate}
+            >
+              {investigate.investigation
+                ? t('dashboard.insights.answer.investigate-again', 'Investigate again')
+                : t('dashboard.insights.answer.investigate', 'Investigate')}
+            </Button>
+          )}
         </Stack>
         {/* Keyed so a new answer can be rated again. */}
         <InsightFeedback key={result.completedAt} result={result} />
@@ -184,6 +212,7 @@ export function InsightAnswerView({ result, sources, onFollowUp, share }: Props)
           {share.error}
         </Text>
       )}
+      {investigate?.investigation && <InsightInvestigationView investigation={investigate.investigation} />}
     </Stack>
   );
 }
