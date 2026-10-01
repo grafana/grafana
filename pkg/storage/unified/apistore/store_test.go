@@ -32,6 +32,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -206,6 +207,42 @@ func TestCreateOrReplaceGetErrorPropagatesUnchanged(t *testing.T) {
 	err = store.Create(ctx, "pods/test-ns/", obj, out, 0)
 	require.Error(t, err)
 	require.False(t, storage.IsNotFound(err), "expected a real error to propagate, not be treated as NotFound and silently proceed to create")
+}
+
+func TestCreateOrReplaceRejectsRepoManagedResource(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/repo-managed"
+	first := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "repo-managed", Namespace: "test-ns"}}
+	firstMeta, err := utils.MetaAccessor(first)
+	require.NoError(t, err)
+	firstMeta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "test-repo",
+	})
+	// Only the provisioning identity may create a repo-managed resource directly; the default
+	// test identity (a Grafana admin, not the provisioning service) would be rejected here too.
+	provisioningCtx, _, err := identity.WithProvisioningIdentity(ctx, "default")
+	require.NoError(t, err)
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(provisioningCtx, key, first, firstOut, 0))
+
+	second := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "repo-managed", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	secondMeta, err := utils.MetaAccessor(second)
+	require.NoError(t, err)
+	secondMeta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "test-repo",
+	})
+
+	secondOut := &example.Pod{}
+	err = store.Create(ctx, key, second, secondOut, 0)
+	require.Error(t, err, "the default test identity is not a provisioning service identity, so this must be rejected exactly like a normal Update to a repo-managed resource would be")
+	require.Contains(t, err.Error(), "managed by a repository")
 }
 
 func TestValidUpdate(t *testing.T) {
