@@ -1,8 +1,9 @@
 package resource
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
-	"math/rand/v2"
 	"sync"
 	"time"
 )
@@ -48,7 +49,14 @@ func newResourceVersionGenerator(node int64, now func() time.Time) *snowflakeRes
 
 // Share the node and sequence across backends so instances in one process cannot
 // issue the same resource version.
-var processResourceVersions resourceVersionGenerator = newResourceVersionGenerator(rand.Int64N(1<<resourceVersionNodeBits), time.Now)
+var processResourceVersions resourceVersionGenerator = func() resourceVersionGenerator {
+	var nodeBytes [2]byte
+	if _, err := rand.Read(nodeBytes[:]); err != nil {
+		panic(fmt.Errorf("failed to generate resource version node ID: %w", err))
+	}
+	node := int64(binary.BigEndian.Uint16(nodeBytes[:])) & (1<<resourceVersionNodeBits - 1)
+	return newResourceVersionGenerator(node, time.Now)
+}()
 
 func (g *snowflakeResourceVersionGenerator) Generate() (int64, error) {
 	g.mu.Lock()

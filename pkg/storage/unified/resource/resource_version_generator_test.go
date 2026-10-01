@@ -26,6 +26,13 @@ func requireResourceVersionFailure(t *testing.T, g resourceVersionGenerator, rea
 	require.Equal(t, reason, failure.reason)
 }
 
+func TestProcessResourceVersionGeneratorNodeID(t *testing.T) {
+	g, ok := processResourceVersions.(*snowflakeResourceVersionGenerator)
+	require.True(t, ok)
+	require.GreaterOrEqual(t, g.node, int64(0))
+	require.Less(t, g.node, int64(1<<resourceVersionNodeBits))
+}
+
 func TestResourceVersionGeneratorWallTime(t *testing.T) {
 	now := time.Now()
 	g := newResourceVersionGenerator(42, func() time.Time { return now })
