@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"net/http"
 	"testing"
 	"time"
 
@@ -1564,4 +1565,19 @@ func TestSyncRemovesAPartlyWrittenTypeNoLongerCovered(t *testing.T) {
 	require.Len(t, items, 1)
 	assert.Equal(t, ActionDelete, items[0].Action)
 	assert.Equal(t, "playlist-a", items[0].Key.Name)
+}
+
+// The API that serves this search is enabled separately, so a search before the
+// index is enabled is answered as unavailable rather than as a server error.
+func TestGlobalSearchIsUnavailableWhileTheIndexIsDisabled(t *testing.T) {
+	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{})
+	server.globalIndexEnabled = false
+
+	rsp, err := server.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
+		Limit:   10,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, rsp.Error)
+	assert.Equal(t, int32(http.StatusServiceUnavailable), rsp.Error.Code)
 }
