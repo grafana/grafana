@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -418,8 +419,8 @@ func TestCreateMuteTimings(t *testing.T) {
 			assertInTransaction(t, ctx)
 			return nil
 		}
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
-			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
+			func(ctx context.Context, _ models.Provisionable, _ int64, _ utils.ManagerProperties) error {
 				assertInTransaction(t, ctx)
 				return nil
 			})
@@ -450,7 +451,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		require.Contains(t, revision.Config.TimeIntervals, v1.TimeIntervalUID("TEST2"))
 		require.Len(t, revision.Config.TimeIntervals, 3)
 
-		prov.AssertCalled(t, "SetProvenance", mock.Anything, &result, orgID, expectedProvenance)
+		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, &result, orgID, models.ProvenanceToManagerProperties(expectedProvenance))
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
@@ -471,7 +472,7 @@ func TestCreateMuteTimings(t *testing.T) {
 			}
 			expectedErr := fmt.Errorf("failed to save provenance")
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().
-				SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Return(expectedErr)
 
 			_, err := sut.CreateMuteTiming(context.Background(), timing, orgID)
@@ -674,8 +675,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 			return nil
 		}
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
-			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
+			func(ctx context.Context, _ models.Provisionable, _ int64, _ utils.ManagerProperties) error {
 				assertInTransaction(t, ctx)
 				return nil
 			})
@@ -702,7 +703,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Equal(t, expected.Title, stored.Title)
 		require.EqualValues(t, expected.TimeIntervals, stored.TimeIntervals)
 
-		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool { return m.Title == timing.Title }), orgID, expectedProvenance)
+		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool { return m.Title == timing.Title }), orgID, models.ProvenanceToManagerProperties(expectedProvenance))
 
 		t.Run("bypass optimistic concurrency check if version is empty", func(t *testing.T) {
 			store.Calls = nil
@@ -753,8 +754,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 		original := initialConfig().TimeIntervals[v1.TimeIntervalUID("Test2")]
 
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{original.Title: expectedProvenance}, nil)
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
-			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
+			func(ctx context.Context, _ models.Provisionable, _ int64, _ utils.ManagerProperties) error {
 				assertInTransaction(t, ctx)
 				return nil
 			})
@@ -791,7 +792,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Equal(t, expected.Title, stored.Title)
 		require.EqualValues(t, expected.TimeIntervals, stored.TimeIntervals)
 
-		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool { return m.Title == timing.Title }), orgID, expectedProvenance)
+		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool { return m.Title == timing.Title }), orgID, models.ProvenanceToManagerProperties(expectedProvenance))
 	})
 
 	t.Run("renames interval and all its dependencies", func(t *testing.T) {
@@ -810,8 +811,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 			assertInTransaction(t, ctx)
 			return nil
 		})
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
-			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
+			func(ctx context.Context, _ models.Provisionable, _ int64, _ utils.ManagerProperties) error {
 				assertInTransaction(t, ctx)
 				return nil
 			})
@@ -851,9 +852,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 		assert.NotNil(t, ruleStore.Calls[0].Args[4])
 		assert.False(t, ruleStore.Calls[0].Args[5].(bool))
 
-		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool {
+		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool {
 			return m.Title == interval.Title
-		}), orgID, expectedProvenance)
+		}), orgID, models.ProvenanceToManagerProperties(expectedProvenance))
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool {
 			return m.Title == original.Title
 		}), orgID)
@@ -973,7 +974,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 				GetProvenances(mock.Anything, mock.Anything, mock.Anything).
 				Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().
-				SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Return(expectedErr)
 
 			_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
@@ -1019,7 +1020,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
 			prov.EXPECT().GetProvenance(mock.Anything, mock.MatchedBy(func(*v1.Route) bool { return true }), mock.Anything).Return(expectedProvenance, nil).Maybe()
 			prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+			prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 			expectedErr := errors.New("test-err")
 
 			ruleStore := &fakeAlertRuleNotificationStore{
@@ -1391,6 +1392,8 @@ func TestDeleteMuteTimings(t *testing.T) {
 func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
 	store := &legacy_storage.AlertmanagerConfigStoreFake{}
 	prov := &MockProvisioningStore{}
+	// Tests that only care about provenance don't need to stub the stored managers.
+	prov.EXPECT().GetAllManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(map[string]utils.ManagerProperties{}, nil).Maybe()
 	return &MuteTimingService{
 		configStore:     store,
 		provenanceStore: prov,
@@ -1482,4 +1485,93 @@ func createConfigWithImportedIntervals(grafanaIntervals []v1.TimeInterval, impor
 	}
 
 	return &legacy_storage.ConfigRevision{Config: cfg}
+}
+
+func TestMuteTimingManagerProperties(t *testing.T) {
+	orgID := int64(1)
+	terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
+
+	newRevision := func() *legacy_storage.ConfigRevision {
+		return &legacy_storage.ConfigRevision{
+			Config: &v1.AMConfigV1{
+				TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+					v1.TimeIntervalUID("Managed"): v1.NewTimeInterval("Managed", nil, models.ProvenanceNone),
+					v1.TimeIntervalUID("Legacy"):  v1.NewTimeInterval("Legacy", nil, models.ProvenanceNone),
+					v1.TimeIntervalUID("None"):    v1.NewTimeInterval("None", nil, models.ProvenanceNone),
+				},
+			},
+		}
+	}
+
+	t.Run("reads assign the stored manager to the interval metadata", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		prov.ExpectedCalls = nil
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(), nil
+		}
+		// The provisioning store keys mute timings by title.
+		prov.EXPECT().GetProvenances(mock.Anything, orgID, mock.Anything).Return(map[string]models.Provenance{
+			"Managed": models.ProvenanceAPI,
+			"Legacy":  models.ProvenanceFile,
+		}, nil)
+		prov.EXPECT().GetAllManagerProperties(mock.Anything, orgID, mock.Anything).Return(map[string]utils.ManagerProperties{
+			"Managed": terraform,
+		}, nil)
+
+		result, err := sut.GetMuteTimings(context.Background(), orgID)
+		require.NoError(t, err)
+		require.Len(t, result, 3)
+		byTitle := make(map[string]v1.TimeInterval, len(result))
+		for _, r := range result {
+			byTitle[r.Title] = r
+		}
+
+		assert.Equal(t, terraform, byTitle["Managed"].Manager)
+		assert.Equal(t, models.ProvenanceAPI, byTitle["Managed"].Provenance)
+		// Without a stored manager, it is derived from the provenance.
+		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), byTitle["Legacy"].Manager)
+		assert.Equal(t, models.ProvenanceFile, byTitle["Legacy"].Provenance)
+		assert.Equal(t, utils.ManagerProperties{}, byTitle["None"].Manager)
+		assert.Equal(t, models.ProvenanceNone, byTitle["None"].Provenance)
+
+		single, err := sut.GetMuteTimingByUID(context.Background(), v1.TimeIntervalUID("Managed"), orgID)
+		require.NoError(t, err)
+		assert.Equal(t, terraform, single.Manager)
+	})
+
+	t.Run("create persists the interval's manager and derives its provenance", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(), nil
+		}
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, orgID, terraform).Return(nil)
+
+		mt := v1.NewTimeInterval("New", nil, models.ProvenanceNone)
+		mt.Manager = terraform
+		result, err := sut.CreateMuteTiming(context.Background(), mt, orgID)
+		require.NoError(t, err)
+
+		assert.Equal(t, terraform, result.Manager)
+		assert.Equal(t, models.ProvenanceAPI, result.Provenance)
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("update without a manager falls back to the interval's provenance", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(), nil
+		}
+		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{"Legacy": models.ProvenanceFile}, nil)
+		fileManager := models.ProvenanceToManagerProperties(models.ProvenanceFile)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, orgID, fileManager).Return(nil)
+
+		mt := v1.NewTimeInterval("Legacy", []timeinterval.TimeInterval{{}}, models.ProvenanceFile)
+		mt.Version = ""
+		result, err := sut.UpdateMuteTiming(context.Background(), mt, orgID)
+		require.NoError(t, err)
+
+		assert.Equal(t, fileManager, result.Manager)
+		assert.Equal(t, models.ProvenanceFile, result.Provenance)
+		prov.AssertExpectations(t)
+	})
 }

@@ -12,7 +12,9 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/provenance"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
@@ -26,8 +28,8 @@ type RouteService interface {
 	GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (v1.ManagedRoutes, error)
 	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error)
 	DeleteManagedRoute(ctx context.Context, orgID int64, name string, p alerting_models.Provenance, version string, user identity.Requester) error
-	CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, user identity.Requester) (*v1.ManagedRoute, error)
-	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, version string, user identity.Requester) (*v1.ManagedRoute, error)
+	CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, manager utils.ManagerProperties, user identity.Requester) (*v1.ManagedRoute, error)
+	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, manager utils.ManagerProperties, version string, user identity.Requester) (*v1.ManagedRoute, error)
 }
 
 type MetadataService interface {
@@ -139,11 +141,11 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	prov, err := alerting_models.ProvenanceFromString(p.GetProvenanceStatus())
+	_, manager, err := provenance.FromAnnotations(p)
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
-	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, user)
+	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, manager, user)
 	if err != nil {
 		return nil, err
 	}
@@ -200,11 +202,11 @@ func (s *legacyStorage) Update(
 	if err != nil {
 		return nil, false, err
 	}
-	prov, err := alerting_models.ProvenanceFromString(p.GetProvenanceStatus())
+	_, manager, err := provenance.FromAnnotations(p)
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, version, user)
+	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, manager, version, user)
 	if err != nil {
 		return nil, false, err
 	}
