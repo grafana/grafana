@@ -169,6 +169,45 @@ func TestCreateOrReplaceReplacesWhenFound(t *testing.T) {
 	require.NotEqual(t, firstOut.ResourceVersion, secondOut.ResourceVersion, "a real write must bump the resourceVersion")
 }
 
+func TestCreateNonSentinelResourceVersionsUnchanged(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	t.Run("empty RV creates normally", func(t *testing.T) {
+		obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "empty-rv", Namespace: "test-ns"}}
+		out := &example.Pod{}
+		err := store.Create(ctx, "pods/test-ns/empty-rv", obj, out, 0)
+		require.NoError(t, err)
+	})
+
+	t.Run("arbitrary non-empty, non-sentinel RV is rejected exactly as before", func(t *testing.T) {
+		obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+			Name: "bogus-rv", Namespace: "test-ns", ResourceVersion: "12345",
+		}}
+		out := &example.Pod{}
+		err := store.Create(ctx, "pods/test-ns/bogus-rv", obj, out, 0)
+		require.ErrorIs(t, err, storage.ErrResourceVersionSetOnCreate)
+	})
+}
+
+func TestCreateOrReplaceGetErrorPropagatesUnchanged(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	// An empty name produces a key the backend itself rejects when read, independent of
+	// whether anything exists there - exercising the "Get fails for a reason other than
+	// NotFound" branch without needing a second, more invasive test harness.
+	obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	out := &example.Pod{}
+	err = store.Create(ctx, "pods/test-ns/", obj, out, 0)
+	require.Error(t, err)
+	require.False(t, storage.IsNotFound(err), "expected a real error to propagate, not be treated as NotFound and silently proceed to create")
+}
+
 func TestValidUpdate(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
