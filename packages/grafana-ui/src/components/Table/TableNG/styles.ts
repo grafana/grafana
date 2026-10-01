@@ -218,11 +218,12 @@ export const getGridStyles = memoize(
         },
 
         // Row hover is painted on `.rdg-row`, but frozen cells carry a solid background to occlude
-        // scrolled content, so they'd otherwise miss the highlight. Give them the hover surface too
-        // (selected rows are handled below and win via higher specificity).
-        '[role="row"]:hover .rdg-cell.rdg-cell-frozen-start': {
-          backgroundColor: 'var(--rdg-row-hover-background-color)',
-        },
+        // scrolled content, so they'd otherwise miss the highlight. Exclude expansion containers
+        // because hovering a nested table also hovers its container. Selected rows are handled below.
+        [`.rdg-row:not(.rdg-header-row, .rdg-summary-row, .${NESTED_ROW_CLASS}, [aria-selected='true']):hover > .rdg-cell.rdg-cell-frozen-start`]:
+          {
+            backgroundColor: 'var(--rdg-row-hover-background-color)',
+          },
 
         // have to override styles for row selection to workaround safari styles workaround
         '[role="row"][aria-selected="true"]': {
