@@ -33,7 +33,10 @@ import { getAppEvents } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import { type LoadMoreLogsRange, withLokiInfiniteScrollBound } from 'app/features/logs/components/infiniteScrollUtils';
+import {
+  type InfiniteScrollTimeRange,
+  withLokiInfiniteScrollBound,
+} from 'app/features/logs/components/infiniteScrollUtils';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
@@ -398,7 +401,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
   }, [options.displayedFields]);
 
   const loadMoreLogs = useCallback(
-    async (scrollRange: LoadMoreLogsRange) => {
+    async (scrollRange: InfiniteScrollTimeRange) => {
       if (!data.request || loadingRef.current) {
         return;
       }
@@ -597,7 +600,7 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
 async function requestMoreLogs(
   dataSourcesMap: Map<string, DataSourceApi>,
   panelData: PanelData,
-  timeRange: LoadMoreLogsRange,
+  timeRange: InfiniteScrollTimeRange,
   timeZone: TimeZone,
   onNewLogsReceived?: onNewLogsReceivedType
 ) {

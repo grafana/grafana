@@ -49,7 +49,7 @@ import {
 import { createAsyncThunk, type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { withLokiInfiniteScrollBound, type LoadMoreLogsRange } from '../../logs/components/infiniteScrollUtils';
+import { withLokiInfiniteScrollBound, type InfiniteScrollTimeRange } from '../../logs/components/infiniteScrollUtils';
 import { SupportingQueryType } from '../../loki-helpers/types';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
@@ -719,7 +719,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
 interface RunLoadMoreLogsQueriesOptions {
   exploreId: string;
-  absoluteRange: LoadMoreLogsRange;
+  absoluteRange: InfiniteScrollTimeRange;
 }
 /**
  * Dedicated action to run log queries requesting more results.
