@@ -78,8 +78,10 @@ linters:
         apps-secret:
           list-mode: lax
           files:
-            - ./apps/secret/*
-            - ./apps/secret/**/*
+            - '**/apps/secret/*'
+            - '**/apps/secret/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/secret is not allowed to import grafana core
