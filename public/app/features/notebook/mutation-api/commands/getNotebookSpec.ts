@@ -54,7 +54,10 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
 
       return {
         success: true,
-        data: { spec: notebook },
+        // `resourceVersion` is only present once something has been saved through this scene
+        // (see NotebookAutosave.savedResourceVersion) — before that, REST and the scene agree,
+        // so a caller with no resourceVersion here can safely fall back to a REST read instead.
+        data: { spec: notebook, resourceVersion: scene.autosave.state.savedResourceVersion },
         changes: [],
         warnings: warnings.length > 0 ? warnings : undefined,
       };
