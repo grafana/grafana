@@ -545,7 +545,7 @@ function FilterSidebarForm({
         )}
 
         {/* Display preferences stay outside the URL-backed filter state. */}
-        {viewMode === 'grouped' && (
+        {viewMode === 'grouped' && !routeProxyActive && (
           <>
             <div className={styles.divider} />
             <SidebarSection>

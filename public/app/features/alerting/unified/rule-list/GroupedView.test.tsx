@@ -215,19 +215,28 @@ describe('RuleList - GroupedView', () => {
   });
 
   it('should replace the "checking" notice with the hidden-count notice once a slow empty data source settles', async () => {
+    let releaseResponse!: () => void;
+    const responseReady = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+
     server.use(
       http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, async () => {
-        await delay(300);
+        await responseReady;
         return HttpResponse.json({ status: 'success', data: { groups: [] } });
       })
     );
 
     render(<GroupedView />);
 
-    expect(await screen.findByText('Checking 1 more data source')).toBeInTheDocument();
+    try {
+      expect(await screen.findByText('Checking 1 more data source')).toBeInTheDocument();
+    } finally {
+      releaseResponse();
+    }
 
-    await waitFor(() => expect(screen.queryByText('Checking 1 more data source')).not.toBeInTheDocument());
     expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
+    expect(screen.queryByText('Checking 1 more data source')).not.toBeInTheDocument();
     expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
   });
 });

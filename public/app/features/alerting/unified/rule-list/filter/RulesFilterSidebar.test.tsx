@@ -312,6 +312,19 @@ describe('RulesFilterSidebar — empty data sources', () => {
   });
 });
 
+describe('RulesFilterSidebar — empty data sources with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
+
+  it('hides the empty data sources toggle when the plugin owns data source managed rules', async () => {
+    render(<RulesFilterSidebar viewMode="grouped" />);
+
+    const grafanaManaged = await screen.findByRole('radio', { name: 'Grafana managed' });
+    await waitFor(() => expect(grafanaManaged).toBeChecked());
+
+    expect(screen.queryByRole('radiogroup', { name: 'Empty data sources' })).not.toBeInTheDocument();
+  });
+});
+
 describe('RulesFilterSidebar — rule source filter', () => {
   it('offers the rule source filter while data source managed rules are still in this list', async () => {
     render(<RulesFilterSidebar />);
