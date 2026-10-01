@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var _ auth.ExternalSessionStore = (*store)(nil)
@@ -305,7 +306,7 @@ func (s *store) encryptAndEncode(ctx context.Context, str string) (string, error
 		return "", nil
 	}
 
-	encrypted, err := s.secretsService.Encrypt(ctx, []byte(str), secrets.WithoutScope())
+	encrypted, err := s.secretsService.Encrypt(spanOnlyCtx(ctx), []byte(str), secrets.WithoutScope())
 	if err != nil {
 		return "", err
 	}
@@ -321,9 +322,14 @@ func (s *store) decodeAndDecrypt(ctx context.Context, str string) (string, error
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := s.secretsService.Decrypt(ctx, decoded)
+	decrypted, err := s.secretsService.Decrypt(spanOnlyCtx(ctx), decoded)
 	if err != nil {
 		return "", err
 	}
 	return string(decrypted), nil
+}
+
+// spanOnlyCtx detaches from any caller transaction, since the secrets service must not run inside one.
+func spanOnlyCtx(ctx context.Context) context.Context {
+	return trace.ContextWithSpan(context.Background(), trace.SpanFromContext(ctx))
 }
