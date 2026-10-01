@@ -36,9 +36,7 @@ export interface Props {
 export function FieldToConfigMappingEditor({ frame, mappings, onChange, withReducers, withNameAndValue }: Props) {
   const styles = useStyles2(getStyles);
   const rows = getViewModelRows(frame, mappings, withNameAndValue);
-  const configProps = configMapHandlers.map((def) => configHandlerToSelectOption(def, false)) as Array<
-    SelectableValue<string>
-  >;
+  const configProps = configMapHandlers.map((def) => configHandlerToSelectOption(def, false));
   const hasAdditionalSettings = mappings.reduce(
     (prev, mapping) => prev || createsArgumentsEditor(mapping.handlerKey),
     false
@@ -202,6 +200,11 @@ function getViewModelRows(
   return Object.values(rows);
 }
 
+function configHandlerToSelectOption(def: FieldToConfigMapHandler, isAutomatic: boolean): SelectableValue<string>;
+function configHandlerToSelectOption(
+  def: FieldToConfigMapHandler | null,
+  isAutomatic: boolean
+): SelectableValue<string> | null;
 function configHandlerToSelectOption(
   def: FieldToConfigMapHandler | null,
   isAutomatic: boolean

@@ -32,8 +32,9 @@ describe('Merge multiple to single', () => {
     });
   });
 
-  it('combine two series into one', async () => {
+  it('combine two series into one with dynamic refId', async () => {
     const seriesA = toDataFrame({
+      refId: 'A',
       name: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [1000] },
@@ -42,6 +43,7 @@ describe('Merge multiple to single', () => {
     });
 
     const seriesB = toDataFrame({
+      refId: 'B',
       name: 'B',
       fields: [
         { name: 'Time', type: FieldType.time, values: [2000] },
@@ -55,7 +57,7 @@ describe('Merge multiple to single', () => {
         createField('Time', FieldType.time, [1000, 2000]),
         createField('Temp', FieldType.number, [1, -1]),
       ];
-
+      expect(result[0].refId).toBe('merge-A-B');
       expect(unwrap(result[0].fields)).toEqual(expected);
     });
   });
@@ -77,13 +79,15 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+    const config = { ...cfg, refId: 'test' };
+
+    await expect(transformDataFrame([config], [seriesA, seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
         createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3]),
       ];
-
+      expect(result[0].refId).toBe('test');
       expect(unwrap(result[0].fields)).toEqual(expected);
     });
   });
@@ -582,6 +586,65 @@ describe('Merge multiple to single', () => {
 
       expect(fields).toEqual(expected);
       expect(result.length).toEqual(1);
+    });
+  });
+
+  describe('static refId', () => {
+    const seriesA = toDataFrame({
+      refId: 'A',
+      name: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [100, 150] },
+        { name: 'Temp', type: FieldType.number, values: [1, 4] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      refId: 'B',
+      name: 'B',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [200, 250] },
+        { name: 'Temp', type: FieldType.number, values: [5, 6] },
+      ],
+    });
+
+    const staticCfg = { ...cfg, refId: 'T-A' };
+
+    it('keeps the static refId when the input shrinks from two frames to one', async () => {
+      await expect(transformDataFrame([staticCfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+        expect(received[0][0].refId).toBe('T-A');
+      });
+
+      // A hidden or failing query leaves merge nothing to do, but the name a downstream byRefId
+      // filter targets still has to hold, which is the whole point of setting it.
+      await expect(transformDataFrame([staticCfg], [seriesA])).toEmitValuesWith((received) => {
+        expect(received[0]).toHaveLength(1);
+        expect(received[0][0].refId).toBe('T-A');
+      });
+    });
+
+    it('keeps the static refId when every input frame is empty', async () => {
+      const emptyA = toDataFrame({ refId: 'A', name: 'A', fields: [] });
+      const emptyB = toDataFrame({ refId: 'B', name: 'B', fields: [] });
+
+      await expect(transformDataFrame([staticCfg], [emptyA, emptyB])).toEmitValuesWith((received) => {
+        expect(received[0]).toHaveLength(1);
+        expect(received[0][0].refId).toBe('T-A');
+      });
+    });
+
+    it('leaves the refIds of a multi-frame passthrough alone', async () => {
+      // No field shared by every frame, so merge hands all of them back. Naming them all 'T-A'
+      // would make a single byRefId filter match several frames at once.
+      const noSharedField = toDataFrame({
+        refId: 'B',
+        name: 'B',
+        fields: [{ name: 'Humidity', type: FieldType.number, values: [6, 7] }],
+      });
+
+      await expect(transformDataFrame([staticCfg], [seriesA, noSharedField])).toEmitValuesWith((received) => {
+        expect(received[0].map((frame) => frame.refId)).toEqual(['A', 'B']);
+      });
     });
   });
 });

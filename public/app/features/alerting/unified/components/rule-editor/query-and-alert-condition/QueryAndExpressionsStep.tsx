@@ -31,6 +31,7 @@ import {
 } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { useRouteProxyActive } from '../../../plugin-proxy/withRouteProxy';
 import {
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
@@ -103,6 +104,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   } = useFormContext<RuleFormValues>();
 
   const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading } = useAlertQueryRunner();
+  const routeProxyActive = useRouteProxyActive();
 
   const initialState = {
     queries: getValues('queries'),
@@ -421,9 +423,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
   // Only show the data source managed option if there are data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
-  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
-  const canSelectDataSourceManaged =
-    onlyOneDSInQueries(queries) && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
+  // The Prometheus Alerting plugin has its own form for data source managed rules, so core only
+  // authors Grafana managed ones once it's installed.
+  const canSelectDataSourceManaged = onlyOneDSInQueries(queries) && hasAlertEnabledDataSources && !routeProxyActive;
   if (!type) {
     return null;
   }

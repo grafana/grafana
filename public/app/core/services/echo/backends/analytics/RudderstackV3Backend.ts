@@ -13,14 +13,8 @@ import { loadScript } from '../../utils';
 
 type Properties = Record<string, string | boolean | number>;
 
-interface RudderstackAPIOptions {
-  Intercom?: {
-    user_hash: string;
-  };
-}
-
 interface Rudderstack {
-  identify: (identifier: string, traits: Properties, options?: RudderstackAPIOptions) => void;
+  identify: (identifier: string, traits: Properties) => void;
   load: (
     writeKey: string,
     dataPlaneURL: string,
@@ -32,6 +26,14 @@ interface Rudderstack {
           version: 'V3' | 'legacy';
         };
         migrate?: boolean;
+      };
+      queueOptions?: {
+        maxAttempts?: number;
+      };
+      useBeacon?: boolean;
+      beaconQueueOptions?: {
+        maxItems?: number;
+        flushQueueInterval?: number;
       };
     }
   ) => void;
@@ -55,6 +57,7 @@ export interface RudderstackBackendOptions {
   sdkUrl?: string;
   configUrl?: string;
   integrationsUrl?: string;
+  batchInterval?: number;
 }
 
 export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
@@ -111,29 +114,29 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
         },
         migrate: false,
       },
+      // reduce the maximum number of retries for failed requests to avoid network spam.
+      queueOptions: {
+        maxAttempts: 3,
+      },
+      // enable batching via beacon of the events we generate to reduce network spam.
+      // xhr queue defaults to 100 items, beacon queue defaults to 10 items, meet in the middle.
+      useBeacon: (options.batchInterval ?? 0) > 0,
+      beaconQueueOptions: {
+        maxItems: 50,
+        flushQueueInterval: options.batchInterval ?? 0,
+      },
     });
 
     if (options.user) {
-      const { identifier, intercomIdentifier } = options.user.analytics;
-      const apiOptions: RudderstackAPIOptions = {};
+      const { identifier } = options.user.analytics;
 
-      if (intercomIdentifier) {
-        apiOptions.Intercom = {
-          user_hash: intercomIdentifier,
-        };
-      }
-
-      window.rudderanalytics?.identify?.(
-        identifier,
-        {
-          email: options.user.email,
-          orgId: options.user.orgId,
-          language: options.user.language,
-          version: options.buildInfo.version,
-          edition: options.buildInfo.edition,
-        },
-        apiOptions
-      );
+      window.rudderanalytics?.identify?.(identifier, {
+        email: options.user.email,
+        orgId: options.user.orgId,
+        language: options.user.language,
+        version: options.buildInfo.version,
+        edition: options.buildInfo.edition,
+      });
     }
   }
 

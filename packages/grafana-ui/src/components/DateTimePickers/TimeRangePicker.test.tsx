@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, makeTimeRange, type TimeRange } from '@grafana/data';
+import { dateTime, dateTimeFormat, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { TimeRangeProvider } from './TimeRangeContext';
@@ -94,6 +94,47 @@ describe('TimePicker', () => {
     expect(overlayContent).not.toBeInTheDocument();
   });
 
+  it('shows the "change time settings" footer by default', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        timeZone="utc"
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByTestId(selectors.openButton));
+
+    expect(screen.getByTestId(e2eSelectors.components.TimeZonePicker.changeTimeSettingsButton)).toBeInTheDocument();
+  });
+
+  it('hides the "change time settings" footer when hideTimeZone is set, without affecting the from/to fields', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        timeZone="utc"
+        hideTimeZone
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByTestId(selectors.openButton));
+
+    expect(
+      screen.queryByTestId(e2eSelectors.components.TimeZonePicker.changeTimeSettingsButton)
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId(selectors.fromField)).toHaveValue(dateTimeFormat(value.raw.from, { timeZone: 'utc' }));
+    expect(screen.getByTestId(selectors.toField)).toHaveValue(dateTimeFormat(value.raw.to, { timeZone: 'utc' }));
+  });
+
   it('shows a sync button if two are rendered inside a TimeRangeProvider', async () => {
     const onChange1 = jest.fn();
     const onChange2 = jest.fn();
@@ -181,10 +222,16 @@ describe('TimePickerTooltip', () => {
     };
 
     jest.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => mockIntl as Intl.DateTimeFormat);
+
+    // the browser timezone is cached process-wide and was already resolved (to jest's
+    // Pacific/Easter TZ) before this mock was installed, so force a refresh through the mock
+    guessBrowserTimeZone(true);
   });
 
   afterAll(() => {
     jest.restoreAllMocks();
+    // re-resolve the real zone so the mocked America/New_York doesn't leak into later tests
+    guessBrowserTimeZone(true);
   });
 
   const timeRange: TimeRange = {

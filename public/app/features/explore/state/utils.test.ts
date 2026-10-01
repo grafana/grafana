@@ -4,11 +4,10 @@ import * as exploreUtils from 'app/core/utils/explore';
 
 import { loadAndInitDatasource, getRange, fromURLRange, MAX_HISTORY_AUTOCOMPLETE_ITEMS } from './utils';
 
-const dataSourceMock = {
-  get: jest.fn(),
-};
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: jest.fn(() => dataSourceMock),
+const mockGetDataSourceInstance = jest.fn();
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (...args: unknown[]) => mockGetDataSourceInstance(...args),
 }));
 
 const mockLocalDataStorage = {
@@ -37,22 +36,22 @@ describe('loadAndInitDatasource', () => {
 
   it('falls back to default datasource if the provided one was not found', async () => {
     setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
-    dataSourceMock.get.mockRejectedValueOnce(new Error('Datasource not found'));
-    dataSourceMock.get.mockResolvedValue(DEFAULT_DATASOURCE);
+    mockGetDataSourceInstance.mockRejectedValueOnce(new Error('Datasource not found'));
+    mockGetDataSourceInstance.mockResolvedValue(DEFAULT_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValue({ total: 0, richHistory: [] });
 
     const { instance } = await loadAndInitDatasource(1, { uid: 'Unknown' });
 
-    expect(dataSourceMock.get).toBeCalledTimes(2);
-    expect(dataSourceMock.get).toHaveBeenCalledWith({ uid: 'Unknown' });
-    expect(dataSourceMock.get).toHaveBeenCalledWith();
+    expect(mockGetDataSourceInstance).toBeCalledTimes(2);
+    expect(mockGetDataSourceInstance).toHaveBeenCalledWith({ uid: 'Unknown' });
+    expect(mockGetDataSourceInstance).toHaveBeenCalledWith();
     expect(instance).toMatchObject(DEFAULT_DATASOURCE);
     expect(setLastUsedDatasourceUIDSpy).toHaveBeenCalledWith(1, DEFAULT_DATASOURCE.uid);
   });
 
   it('saves last loaded data source uid', async () => {
     setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
-    dataSourceMock.get.mockResolvedValue(TEST_DATASOURCE);
+    mockGetDataSourceInstance.mockResolvedValue(TEST_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValue({
       total: 0,
       richHistory: [],
@@ -60,8 +59,8 @@ describe('loadAndInitDatasource', () => {
 
     const { instance } = await loadAndInitDatasource(1, { uid: 'Test' });
 
-    expect(dataSourceMock.get).toHaveBeenCalledTimes(1);
-    expect(dataSourceMock.get).toHaveBeenCalledWith({ uid: 'Test' });
+    expect(mockGetDataSourceInstance).toHaveBeenCalledTimes(1);
+    expect(mockGetDataSourceInstance).toHaveBeenCalledWith({ uid: 'Test' });
     expect(getLocalRichHistoryStorage).toHaveBeenCalledTimes(1);
 
     expect(instance).toMatchObject(TEST_DATASOURCE);
@@ -70,7 +69,7 @@ describe('loadAndInitDatasource', () => {
 
   it('pulls history data and returns the history by query', async () => {
     setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
-    dataSourceMock.get.mockResolvedValue(TEST_DATASOURCE);
+    mockGetDataSourceInstance.mockResolvedValue(TEST_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValueOnce({
       total: 1,
       richHistory: [
@@ -93,7 +92,7 @@ describe('loadAndInitDatasource', () => {
 
   it('pulls history data and returns the history by query with Mixed results', async () => {
     setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
-    dataSourceMock.get.mockResolvedValue(TEST_DATASOURCE);
+    mockGetDataSourceInstance.mockResolvedValue(TEST_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValueOnce({
       total: 1,
       richHistory: [
@@ -138,7 +137,7 @@ describe('loadAndInitDatasource', () => {
     });
 
     setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
-    dataSourceMock.get.mockResolvedValue(TEST_DATASOURCE);
+    mockGetDataSourceInstance.mockResolvedValue(TEST_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValueOnce({
       total: 1,
       richHistory: [

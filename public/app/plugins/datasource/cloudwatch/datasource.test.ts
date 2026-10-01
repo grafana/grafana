@@ -23,6 +23,11 @@ import { TimeRangeMock } from './mocks/timeRange';
 import { type CloudWatchQuery, type CloudWatchLogsRequest, type CloudWatchDefaultQuery } from './types';
 import * as templateUtils from './utils/templateVariableUtils';
 
+jest.mock('./utils/templateVariableUtils', () => ({
+  ...jest.requireActual('./utils/templateVariableUtils'),
+  getVariableName: jest.fn((name: string) => name.replace('$', '')),
+}));
+
 describe('datasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -354,9 +359,7 @@ describe('datasource', () => {
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
       const { datasource, templateService } = setupMockedDataSource();
       templateService.replace = jest.fn();
-      const mockGetVariableName = jest
-        .spyOn(templateUtils, 'getVariableName')
-        .mockImplementation((name: string) => name.replace('$', ''));
+      const mockGetVariableName = jest.mocked(templateUtils.getVariableName);
       const variableName = 'someVar';
       const metricsQuery: CloudWatchMetricsQuery = {
         queryMode: 'Metrics',
@@ -374,13 +377,14 @@ describe('datasource', () => {
         matchExact: false,
         statistic: '',
         sqlExpression: `$${variableName}`,
+        promqlExpression: `$${variableName}`,
       };
 
       datasource.interpolateVariablesInQueries([metricsQuery], {});
 
-      // We interpolate `expression`, `sqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, `statistic`, `id`, and `nameSpace` in CloudWatchMetricsQuery
+      // We interpolate `expression`, `sqlExpression`, `promqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, `statistic`, `id`, and `namespace` in CloudWatchMetricsQuery
       expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateService.replace).toHaveBeenCalledTimes(10);
+      expect(templateService.replace).toHaveBeenCalledTimes(11);
 
       expect(mockGetVariableName).toHaveBeenCalledWith(`$${variableName}`);
       expect(mockGetVariableName).toHaveBeenCalledTimes(1);

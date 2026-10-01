@@ -1949,6 +1949,44 @@
         }
       },
       "parameters": []
+    },
+    "/translations": {
+      "get": {
+        "operationId": "getTranslations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTranslationsResponse"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTranslationsResponse"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTranslationsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "lang",
+          "in": "query",
+          "description": "BCP 47 locale (e.g. \"es-ES\"). Defaults to \"en-US\" server-side if empty.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -1994,6 +2032,10 @@
         "properties": {
           "message": {
             "description": "Human readable error message",
+            "type": "string"
+          },
+          "messageKey": {
+            "description": "i18n key for the message (e.g. \"advisor.link.fix-me\"), so the\nfrontend can translate without deriving the key from the text",
             "type": "string"
           },
           "url": {
@@ -2323,6 +2365,27 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "GetTranslationsResponse": {
+        "type": "object",
+        "required": ["translations", "apiVersion", "kind"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "translations": {
+            "description": "Flat map of i18n key -> translated string for the requested locale.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },

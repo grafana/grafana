@@ -43,7 +43,7 @@ func TestNewCommand(t *testing.T) {
 func createFrameWithRowsAndCols(rows int, cols int) *data.Frame {
 	frame := data.NewFrame("dummy")
 
-	for c := 0; c < cols; c++ {
+	for c := range cols {
 		values := make([]string, rows)
 		frame.Fields = append(frame.Fields, data.NewField(fmt.Sprintf("col%d", c), nil, values))
 	}

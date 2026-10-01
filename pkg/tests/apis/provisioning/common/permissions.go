@@ -19,6 +19,72 @@ const (
 	FolderPermissionAdmin = 4
 )
 
+// RolePermission is a built-in role → permission level pair for the legacy
+// folder permissions API.
+type RolePermission struct {
+	Role       string
+	Permission int
+}
+
+// SetFolderPermissions replaces the folder's ACL with the given role-based
+// entries via the legacy folder permissions API and asserts the request
+// succeeds.
+func SetFolderPermissions(t *testing.T, helper *ProvisioningTestHelper, folderUID string, items ...RolePermission) {
+	t.Helper()
+	entries := make([]map[string]interface{}, 0, len(items))
+	for _, item := range items {
+		entries = append(entries, map[string]interface{}{
+			"role":       item.Role,
+			"permission": item.Permission,
+		})
+	}
+	_, code, err := PostHelper(t, *helper.K8sTestHelper,
+		fmt.Sprintf("/api/folders/%s/permissions", folderUID),
+		map[string]interface{}{"items": entries},
+		helper.Org1.Admin)
+	require.NoError(t, err, "setting permissions on folder %q should succeed", folderUID)
+	require.Equal(t, http.StatusOK, code)
+}
+
+// RequireRolePermissionSetEqual asserts that the set of (role → permission)
+// mappings is identical between want and got. Entry ordering and non-role
+// fields (which may legitimately change after a move, such as internal
+// parent-folder references) are ignored.
+func RequireRolePermissionSetEqual(t *testing.T, want, got []interface{}) {
+	t.Helper()
+	extractRoleMap := func(perms []interface{}) map[string]int {
+		m := make(map[string]int)
+		for _, p := range perms {
+			entry, ok := p.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			role, _ := entry["role"].(string)
+			if role == "" {
+				continue
+			}
+			level, _ := entry["permission"].(float64)
+			m[role] = int(level)
+		}
+		return m
+	}
+	require.Equal(t, extractRoleMap(want), extractRoleMap(got),
+		"role→permission map must be identical")
+}
+
+// RequireFolderAccessible asserts that GET /api/folders/{folderUID} returns
+// HTTP 200 when performed with the supplied Basic Auth credentials. This
+// exercises real authorization logic, not just the stored ACL data.
+func RequireFolderAccessible(t *testing.T, helper *ProvisioningTestHelper, folderUID, login, password string) {
+	t.Helper()
+	u := fmt.Sprintf("http://%s:%s@%s/api/folders/%s", login, password, folderAddr(helper), folderUID)
+	resp, err := http.Get(u) //nolint:gosec
+	require.NoError(t, err, "GET folder %q as user %q", folderUID, login)
+	defer resp.Body.Close() //nolint:errcheck
+	require.Equal(t, http.StatusOK, resp.StatusCode,
+		"folder %q should be accessible to %q", folderUID, login)
+}
+
 // FolderPermissions fetches the managed ACL entries for a folder via the legacy
 // folder permissions API using admin credentials. It fails the test if the
 // request does not return 200. The entries are returned as decoded JSON objects

@@ -1,8 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { of } from 'rxjs';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
-import { CoreApp, type TimeRange } from '@grafana/data';
-import { usePluginLinks } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { CoreApp, type LinkModel, toDataFrame, type TimeRange } from '@grafana/data';
+import { locationService, usePluginLinks } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { SpanLinkType } from '../../types/links';
 import { type TraceSpan } from '../../types/trace';
@@ -17,6 +20,10 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+  useDataSourceInstanceList: jest.fn().mockReturnValue({ isLoading: false, items: [] }),
+  // LogsLinkButton resolves the query datasource to check for logs; the links used
+  // here have no interpolated query, so this is only a safety net against real calls.
+  getDataSourceInstance: jest.fn().mockResolvedValue({ query: jest.fn() }),
 }));
 
 const span = {
@@ -32,13 +39,22 @@ const timeRange = {
   to: new Date(1000),
 } as unknown as TimeRange;
 
+// The Share button is always rendered by SpanDetailLinkButtons, so every render
+// below produces this button in addition to any link buttons under test.
+const focusSpanLink = {
+  href: '/focus',
+  title: 'Focus',
+  target: '_self',
+  origin: {},
+} as unknown as LinkModel;
+
 describe('SpanDetailLinkButtons', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should render nothing when createSpanLink is not provided', () => {
-    const { container } = render(
+  it('should render only the share button when createSpanLink is not provided', () => {
+    render(
       <SpanDetailLinkButtons
         span={span}
         createSpanLink={undefined}
@@ -47,10 +63,12 @@ describe('SpanDetailLinkButtons', () => {
         traceToProfilesOptions={undefined}
         timeRange={timeRange}
         app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getByText('Share')).toBeInTheDocument();
   });
 
   it('should render log link button when logs link exists', () => {
@@ -65,10 +83,12 @@ describe('SpanDetailLinkButtons', () => {
         traceToProfilesOptions={undefined}
         timeRange={timeRange}
         app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    // Log link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByText('Related logs')).toBeInTheDocument();
   });
 
@@ -114,10 +134,12 @@ describe('SpanDetailLinkButtons', () => {
           traceToProfilesOptions={undefined}
           timeRange={timeRange}
           app={CoreApp.Explore}
+          focusSpanLink={focusSpanLink}
         />
       );
 
-      expect(screen.getAllByRole('button')).toHaveLength(1);
+      // Log link + the always-present share button.
+      expect(screen.getAllByRole('button')).toHaveLength(2);
       expect(screen.getByText(expectedCTA)).toBeInTheDocument();
     });
   });
@@ -138,10 +160,12 @@ describe('SpanDetailLinkButtons', () => {
         }}
         timeRange={timeRange}
         app={CoreApp.Dashboard}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    // Profile link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByText('Profiles for this span')).toBeInTheDocument();
   });
 
@@ -157,10 +181,12 @@ describe('SpanDetailLinkButtons', () => {
         traceToProfilesOptions={undefined}
         timeRange={timeRange}
         app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    // Session link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByText('Session for this span')).toBeInTheDocument();
   });
 
@@ -190,10 +216,12 @@ describe('SpanDetailLinkButtons', () => {
         }}
         timeRange={timeRange}
         app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(2);
+    // Profile link + profiles drilldown link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(3);
     expect(screen.getByText('Profiles for this span')).toBeInTheDocument();
     expect(screen.getByText('Open in Profiles Drilldown')).toBeInTheDocument();
   });
@@ -224,12 +252,85 @@ describe('SpanDetailLinkButtons', () => {
         }}
         timeRange={timeRange}
         app={CoreApp.Dashboard}
+        focusSpanLink={focusSpanLink}
       />
     );
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    // Profile link + the always-present share button (no drilldown outside Explore).
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByText('Profiles for this span')).toBeInTheDocument();
     expect(screen.queryByText('Open in Profiles Drilldown')).not.toBeInTheDocument();
+  });
+
+  describe('logs link click-through', () => {
+    afterEach(() => {
+      // The rendered LogsLinkButton is still mounted at this point (RTL's own cleanup
+      // runs after this hook), and it reacts to the flag change, so wrap it in act().
+      act(() => {
+        setTestFlags({});
+      });
+    });
+
+    it("opens the discovered href, not the link's original pre-discovery href", async () => {
+      setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+
+      const query = jest.fn().mockReturnValue(of({ data: [toDataFrame({ fields: [{ name: 'time', values: [1] }] })] }));
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ query, type: 'loki' });
+
+      // The href/onClick a Logs link starts with, before the presence-check discovers
+      // which query variation actually has logs and rewrites the link in place.
+      createSpanLink.mockReturnValue([
+        {
+          type: SpanLinkType.Logs,
+          href: '/logs-initial',
+          title: 'Logs',
+          field: {},
+          linkModel: {
+            href: '/logs-initial',
+            title: 'Logs',
+            target: '_self',
+            origin: {},
+            interpolatedParams: {
+              query: { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' }, expr: '{job="api"} |= "t1"' },
+            },
+          },
+        },
+      ]);
+
+      const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+      const pushSpy = jest.spyOn(locationService, 'push');
+
+      render(
+        <SpanDetailLinkButtons
+          span={span}
+          createSpanLink={createSpanLink}
+          datasourceType="test"
+          datasourceUid="test-datasource-uid"
+          traceToProfilesOptions={undefined}
+          timeRange={timeRange}
+          app={CoreApp.Explore}
+          focusSpanLink={focusSpanLink}
+        />
+      );
+
+      // Wait for the presence check to resolve and rewrite the link in place.
+      await waitFor(() =>
+        expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='))
+      );
+      const discoveredHref = screen.getByRole('link').getAttribute('href');
+      expect(discoveredHref).not.toBe('/logs-initial');
+
+      await userEvent.click(screen.getByRole('link'));
+
+      // The click must navigate to the discovered href, not the stale pre-discovery one,
+      // and — since this is a Logs link — always via a new tab, never in-place.
+      expect(openSpy).toHaveBeenCalledWith(discoveredHref, '_blank', 'noopener,noreferrer');
+      expect(pushSpy).not.toHaveBeenCalled();
+
+      openSpy.mockRestore();
+      pushSpy.mockRestore();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ query: jest.fn() });
+    });
   });
 });
 
@@ -246,7 +347,7 @@ describe('getProfileLinkButtonsContext', () => {
     expect(context).toEqual({
       serviceName: 'test-service',
       profileTypeId: 'test-type',
-      spanSelector: 'test-profile',
+      spanSelector: ['test-profile'],
       explorationType: 'flame-graph',
       timeRange: {
         from: new Date(0).toISOString(),
@@ -264,7 +365,7 @@ describe('getProfileLinkButtonsContext', () => {
     expect(context).toEqual({
       serviceName: 'test-service',
       profileTypeId: '',
-      spanSelector: 'test-profile',
+      spanSelector: ['test-profile'],
       explorationType: 'flame-graph',
       timeRange: {
         from: new Date(0).toISOString(),
@@ -295,6 +396,6 @@ describe('getProfileLinkButtonsContext', () => {
 
     const context = getProfileLinkButtonsContext(spanWithoutProfileId, traceToProfilesOptions, timeRange);
 
-    expect(context.spanSelector).toBe('');
+    expect(context.spanSelector).toEqual([]);
   });
 });

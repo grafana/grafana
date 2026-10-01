@@ -113,7 +113,7 @@ func generateFolderHierarchy(childrenPerFolder, depth int) ([]*openfgav1.TupleKe
 
 		// Each parent gets exactly childrenPerFolder children
 		for _, parentUID := range parentFolders {
-			for j := 0; j < childrenPerFolder; j++ {
+			for range childrenPerFolder {
 				folderUID := fmt.Sprintf("folder-%d", folderIdx)
 
 				data.folders = append(data.folders, folderUID)
@@ -253,10 +253,7 @@ func generatePermissionTuples(data *benchmarkData) []*openfgav1.TupleKey {
 	// Use relative depth range: 1/3 to 2/3 of max depth
 	// Use "view" relation which grants get through the optimized schema
 	minMidDepth := data.maxDepth / 3
-	maxMidDepth := 2 * data.maxDepth / 3
-	if maxMidDepth < minMidDepth {
-		maxMidDepth = minMidDepth
-	}
+	maxMidDepth := max(2*data.maxDepth/3, minMidDepth)
 	// Collect folders in the mid-depth range
 	var midDepthFolders []string
 	for d := minMidDepth; d <= maxMidDepth; d++ {
@@ -340,6 +337,9 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	}
 
 	cfg := setting.NewCfg()
+	// The benchmark's large synthetic folder hierarchy needs a larger budget than production
+	// so ListObjects cases measure completion time instead of the production timeout.
+	cfg.ZanzanaServer.ListObjectsDeadline = listTimeout
 
 	// Enable all caching options for optimal performance
 	cfg.ZanzanaServer.CacheSettings.CheckCacheLimit = 100000             // Cache check results
@@ -354,7 +354,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector(), nil)
 	require.NoError(b, err)
 
 	// Generate test data
@@ -406,10 +406,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	// Write tuples in batches (OpenFGA limits to 100 per write)
 	batchSize := 100
 	for i := 0; i < len(allTuples); i += batchSize {
-		end := i + batchSize
-		if end > len(allTuples) {
-			end = len(allTuples)
-		}
+		end := min(i+batchSize, len(allTuples))
 		batch := allTuples[i:end]
 
 		_, err = srv.openFGAClient.Write(ctx, &openfgav1.WriteRequest{
@@ -454,7 +451,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector(), nil)
 	require.NoError(b, err)
 
 	// Build only the hierarchy needed to force TTU walks.
@@ -467,10 +464,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 
 	batchSize := 100
 	for i := 0; i < len(folderTuples); i += batchSize {
-		end := i + batchSize
-		if end > len(folderTuples) {
-			end = len(folderTuples)
-		}
+		end := min(i+batchSize, len(folderTuples))
 		_, err = srv.openFGAClient.Write(ctx, &openfgav1.WriteRequest{
 			StoreId:              storeInf.ID,
 			AuthorizationModelId: storeInf.ModelID,
@@ -1007,6 +1001,8 @@ func BenchmarkBatchCheck(b *testing.B) {
 	}
 
 	usersPerPattern := len(data.users) / numPermissionPatterns
+	listObjectsFolderCheckThreshold := srv.getFolderCheckBatchThreshold()
+	nativeBatchFolderCheckThreshold := batchCheckSize * len(expandedSubresourcePermissionRelations(common.RelationSubresourceGet))
 
 	b.Run("GroupResourceDirect", func(b *testing.B) {
 		// User with group_resource permission - should have access to everything
@@ -1024,37 +1020,46 @@ func BenchmarkBatchCheck(b *testing.B) {
 		}
 	})
 
-	b.Run("FolderInheritance/Depth1", func(b *testing.B) {
-		// User with folder permission on shallow folder
-		user := data.users[usersPerPattern]
-		items := createFolderBatchItems(data.folders, 1, data.folderDepths)
-		b.Logf("Testing BatchCheck with %d items at depth 1", len(items))
+	folderCases := []struct {
+		name  string
+		user  string
+		depth int
+	}{
+		{name: "Depth1", user: data.users[usersPerPattern], depth: 1},
+		{name: "Depth4", user: data.users[2*usersPerPattern], depth: 4},
+	}
 
-		b.ResetTimer()
-		for range b.N {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
+	for _, strategy := range []struct {
+		name      string
+		threshold int
+	}{
+		{name: "NativeBatchCheck", threshold: nativeBatchFolderCheckThreshold},
+		{name: "ListObjects", threshold: listObjectsFolderCheckThreshold},
+	} {
+		b.Run("FolderInheritance/"+strategy.name, func(b *testing.B) {
+			previousThreshold := srv.cfg.FolderCheckBatchThreshold
+			srv.cfg.FolderCheckBatchThreshold = strategy.threshold
+			defer func() {
+				srv.cfg.FolderCheckBatchThreshold = previousThreshold
+			}()
+
+			for _, folderCase := range folderCases {
+				b.Run(folderCase.name, func(b *testing.B) {
+					items := createFolderBatchItems(data.folders, folderCase.depth, data.folderDepths)
+					b.Logf("Testing BatchCheck with %d items at depth %d using %s", len(items), folderCase.depth, strategy.name)
+
+					b.ResetTimer()
+					for range b.N {
+						res, err := srv.BatchCheck(ctx, newBatchCheckReq(folderCase.user, items))
+						if err != nil {
+							b.Fatal(err)
+						}
+						_ = res.Results
+					}
+				})
 			}
-			_ = res.Results
-		}
-	})
-
-	b.Run("FolderInheritance/Depth4", func(b *testing.B) {
-		// User with folder permission on mid-depth folder
-		user := data.users[2*usersPerPattern]
-		items := createFolderBatchItems(data.folders, 4, data.folderDepths)
-		b.Logf("Testing BatchCheck with %d items at depth 4", len(items))
-
-		b.ResetTimer()
-		for range b.N {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
-			}
-			_ = res.Results
-		}
-	})
+		})
+	}
 
 	b.Run("DirectResource", func(b *testing.B) {
 		// User with direct resource permission
@@ -1094,7 +1099,7 @@ func BenchmarkBatchCheck(b *testing.B) {
 		items := make([]*authzv1.BatchCheckItem, 0, batchCheckSize)
 
 		// Mix of accessible and inaccessible resources
-		for i := 0; i < batchCheckSize; i++ {
+		for i := range batchCheckSize {
 			folder := data.folders[i%len(data.folders)]
 			items = append(items, &authzv1.BatchCheckItem{
 				Verb:          utils.VerbGet,

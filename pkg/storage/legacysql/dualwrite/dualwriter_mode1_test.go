@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/apis/example"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -358,4 +359,88 @@ func TestMode1_Update(t *testing.T) {
 			require.NotEqual(t, obj, anotherObj)
 		})
 	}
+}
+
+func TestMode1_UpdateBackgroundOutlivesRequest(t *testing.T) {
+	legacy := &fakeStorage{}
+	legacy.onUpdate(exampleObj, nil)
+
+	unified := &blockingUpdateStorage{
+		fakeStorage: &fakeStorage{},
+		started:     make(chan struct{}),
+		release:     make(chan struct{}),
+		result:      make(chan backgroundUpdateResult, 1),
+	}
+
+	dw, err := newStorage(kind, rest.Mode1, legacy, unified)
+	require.NoError(t, err)
+
+	requestCtx := context.WithValue(context.Background(), backgroundUpdateContextKey{}, "fake-request-value")
+	requestCtx, cancelRequest := context.WithCancel(requestCtx)
+
+	obj, _, err := dw.Update(
+		requestCtx,
+		"foo",
+		updatedObjInfoObj{},
+		func(context.Context, runtime.Object) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object) error { return nil },
+		false,
+		&metav1.UpdateOptions{},
+	)
+	require.NoError(t, err)
+	require.Equal(t, exampleObj, obj)
+
+	select {
+	case <-unified.started:
+	case <-time.After(time.Second):
+		t.Fatal("background unified update did not start")
+	}
+
+	cancelRequest()
+	close(unified.release)
+
+	select {
+	case got := <-unified.result:
+		require.NoError(t, got.contextErr)
+		require.NoError(t, got.updateErr)
+		require.Equal(t, "fake-request-value", got.contextValue)
+	case <-time.After(time.Second):
+		t.Fatal("background unified update did not complete")
+	}
+}
+
+type backgroundUpdateContextKey struct{}
+
+type blockingUpdateStorage struct {
+	*fakeStorage
+	started chan struct{}
+	release chan struct{}
+	result  chan backgroundUpdateResult
+}
+
+type backgroundUpdateResult struct {
+	contextErr   error
+	updateErr    error
+	contextValue any
+}
+
+func (s *blockingUpdateStorage) Update(
+	ctx context.Context,
+	_ string,
+	objInfo k8srest.UpdatedObjectInfo,
+	_ k8srest.ValidateObjectFunc,
+	_ k8srest.ValidateObjectUpdateFunc,
+	_ bool,
+	_ *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
+	close(s.started)
+	<-s.release
+
+	_, err := objInfo.UpdatedObject(ctx, exampleObj)
+	s.result <- backgroundUpdateResult{
+		contextErr:   ctx.Err(),
+		updateErr:    err,
+		contextValue: ctx.Value(backgroundUpdateContextKey{}),
+	}
+	return anotherObj, false, err
 }

@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -38,7 +39,15 @@ describe('PlaylistPage', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = false;
-    config.featureToggles.playlistsRBAC = false;
+    setTestFlags({ playlistsRBAC: false });
+  });
+
+  afterEach(async () => {
+    // Wrap in act() — setTestFlags fires OpenFeature events that trigger state updates
+    // while the previous test's component is still mounted (RTL cleanup runs afterward).
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   describe('when mounted without a playlist', () => {
@@ -54,7 +63,7 @@ describe('PlaylistPage', () => {
 
     describe('with playlistsRBAC toggle on', () => {
       beforeEach(() => {
-        config.featureToggles.playlistsRBAC = true;
+        setTestFlags({ playlistsRBAC: true });
       });
 
       describe('and user has playlists:write', () => {
@@ -133,7 +142,7 @@ describe('PlaylistPage', () => {
 
     describe('with playlistsRBAC toggle on', () => {
       beforeEach(() => {
-        config.featureToggles.playlistsRBAC = true;
+        setTestFlags({ playlistsRBAC: true });
       });
 
       describe('and user has playlists:write', () => {
@@ -144,9 +153,9 @@ describe('PlaylistPage', () => {
           setup();
           expect(await screen.findByText('A test playlist'));
           expect(await screen.findByRole('link', { name: /New playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument();
+          expect(await screen.findByRole('link', { name: /Edit/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Delete/i })).toBeInTheDocument();
         });
       });
 
@@ -157,9 +166,9 @@ describe('PlaylistPage', () => {
           setup();
           expect(await screen.findByText('A test playlist')).toBeInTheDocument();
           expect(screen.queryByRole('link', { name: /New playlist/i })).not.toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-          expect(screen.queryByRole('link', { name: /Edit playlist/i })).not.toBeInTheDocument();
-          expect(screen.queryByRole('button', { name: /Delete playlist/i })).not.toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: /Edit/i })).not.toBeInTheDocument();
+          expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
         });
       });
     });
@@ -172,9 +181,9 @@ describe('PlaylistPage', () => {
           setup();
           expect(await screen.findByText('A test playlist'));
           expect(await screen.findByRole('link', { name: /New playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument();
+          expect(await screen.findByRole('link', { name: /Edit/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Delete/i })).toBeInTheDocument();
         });
       });
 
@@ -183,9 +192,9 @@ describe('PlaylistPage', () => {
           setup();
           expect(await screen.findByText('A test playlist')).toBeInTheDocument();
           expect(screen.queryByRole('link', { name: /New playlist/i })).not.toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-          expect(screen.queryByRole('link', { name: /Edit playlist/i })).not.toBeInTheDocument();
-          expect(screen.queryByRole('button', { name: /Delete playlist/i })).not.toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: /Edit/i })).not.toBeInTheDocument();
+          expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
         });
       });
     });

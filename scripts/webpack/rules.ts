@@ -22,8 +22,8 @@ export const esbuildRule: RuleSetRule = {
   },
 };
 
-export const sassRule: RuleSetRule = {
-  test: /\.(sa|sc|c)ss$/,
+export const cssRule: RuleSetRule = {
+  test: /\.css$/,
   use: [
     {
       loader: MiniCssExtractPlugin.loader,
@@ -34,28 +34,8 @@ export const sassRule: RuleSetRule = {
     {
       loader: 'css-loader',
       options: {
-        importLoaders: 2,
         url: true,
         sourceMap: false,
-      },
-    },
-    {
-      loader: 'postcss-loader',
-      options: {
-        sourceMap: false,
-        postcssOptions: {
-          config: import.meta.dirname,
-        },
-      },
-    },
-    {
-      loader: 'sass-loader',
-      options: {
-        sourceMap: false,
-        sassOptions: {
-          // silencing these warnings since we're planning to remove sass when angular is gone
-          silenceDeprecations: ['import', 'global-builtin'],
-        },
       },
     },
   ],

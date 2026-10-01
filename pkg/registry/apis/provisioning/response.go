@@ -9,8 +9,7 @@ import (
 
 // respondWithError checks if the provided error contains an API error and unwraps it before passing it to the responder.
 func respondWithError(responder rest.Responder, err error) {
-	var statusErr *apierrors.StatusError
-	if errors.As(err, &statusErr) {
+	if statusErr, ok := errors.AsType[*apierrors.StatusError](err); ok {
 		responder.Error(statusErr)
 	} else {
 		responder.Error(err)

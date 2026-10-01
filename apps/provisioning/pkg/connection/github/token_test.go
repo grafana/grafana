@@ -18,7 +18,7 @@ func TestGenerateJWTToken(t *testing.T) {
 	appID := "123456"
 
 	t.Run("generates valid JWT token", func(t *testing.T) {
-		token, err := github.GenerateJWTToken(appID, common.RawSecureValue(privateKeyBase64))
+		token, _, err := github.GenerateJWTToken(appID, common.RawSecureValue(privateKeyBase64))
 		require.NoError(t, err)
 		assert.NotEmpty(t, token)
 
@@ -35,14 +35,14 @@ func TestGenerateJWTToken(t *testing.T) {
 	})
 
 	t.Run("fails with invalid base64", func(t *testing.T) {
-		_, err := github.GenerateJWTToken(appID, "invalid!@#")
+		_, _, err := github.GenerateJWTToken(appID, "invalid!@#")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "decode base64")
 	})
 
 	t.Run("fails with invalid PEM", func(t *testing.T) {
 		invalidPEM := base64.StdEncoding.EncodeToString([]byte("not a PEM"))
-		_, err := github.GenerateJWTToken(appID, common.RawSecureValue(invalidPEM))
+		_, _, err := github.GenerateJWTToken(appID, common.RawSecureValue(invalidPEM))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "parse private key")
 	})

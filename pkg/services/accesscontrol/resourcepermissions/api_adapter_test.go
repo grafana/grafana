@@ -2,6 +2,7 @@ package resourcepermissions
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,16 +18,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/web"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -166,6 +170,270 @@ func TestBuildResourcePermissionName(t *testing.T) {
 	}
 }
 
+func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
+	viewer := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"}
+	editor := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"}
+
+	tests := []struct {
+		name           string
+		exists         bool
+		initial        []iamv0.ResourcePermissionspecPermission
+		commands       []accesscontrol.SetResourcePermissionCommand
+		expected       []iamv0.ResourcePermissionspecPermission
+		expectedMethod string
+		userSvc        user.Service
+	}{
+		{
+			name:     "preserves unmentioned permissions on upsert",
+			exists:   true,
+			initial:  []iamv0.ResourcePermissionspecPermission{viewer, editor},
+			commands: []accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Editor", Permission: "Admin"}},
+			expected: []iamv0.ResourcePermissionspecPermission{
+				viewer,
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "admin"},
+			},
+			expectedMethod: http.MethodPut,
+		},
+		{
+			name:           "deletes only the addressed permission",
+			exists:         true,
+			initial:        []iamv0.ResourcePermissionspecPermission{viewer, editor},
+			commands:       []accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Viewer", Permission: ""}},
+			expected:       []iamv0.ResourcePermissionspecPermission{editor},
+			expectedMethod: http.MethodPut,
+		},
+		{
+			name:    "applies mixed deletes and upserts incrementally",
+			exists:  true,
+			initial: []iamv0.ResourcePermissionspecPermission{viewer, editor},
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: "Viewer", Permission: ""},
+				{BuiltinRole: "Admin", Permission: "View"},
+			},
+			expected: []iamv0.ResourcePermissionspecPermission{
+				editor,
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Admin", Verb: "view"},
+			},
+			expectedMethod: http.MethodPut,
+		},
+		{
+			name:           "deletes the object after removing its final permission",
+			exists:         true,
+			initial:        []iamv0.ResourcePermissionspecPermission{viewer},
+			commands:       []accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Viewer", Permission: ""}},
+			expectedMethod: http.MethodDelete,
+		},
+		{
+			name:     "does not write for an empty command batch",
+			exists:   true,
+			initial:  []iamv0.ResourcePermissionspecPermission{viewer, editor},
+			expected: []iamv0.ResourcePermissionspecPermission{viewer, editor},
+		},
+		{
+			name:           "creates an object for a permission on a new resource",
+			commands:       []accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Viewer", Permission: "View"}},
+			expected:       []iamv0.ResourcePermissionspecPermission{viewer},
+			expectedMethod: http.MethodPost,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			existing := &iamv0.ResourcePermission{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+					Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "dashboard.grafana.app-dashboards-1",
+					Namespace:       "org-1",
+					ResourceVersion: "1",
+				},
+				Spec: iamv0.ResourcePermissionSpec{
+					Resource: iamv0.ResourcePermissionspecResource{
+						ApiGroup: dashboardv1.APIGroup,
+						Resource: "dashboards",
+						Name:     "1",
+					},
+					Permissions: tt.initial,
+				},
+			}
+
+			var updated iamv0.ResourcePermission
+			writeCalls := 0
+			writeMethod := ""
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch r.Method {
+				case http.MethodGet:
+					if !tt.exists {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(&metav1.Status{
+							Status: metav1.StatusFailure,
+							Code:   http.StatusNotFound,
+							Reason: metav1.StatusReasonNotFound,
+						}))
+						return
+					}
+					require.NoError(t, json.NewEncoder(w).Encode(existing))
+				case http.MethodPut, http.MethodPost:
+					writeCalls++
+					writeMethod = r.Method
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&updated))
+					require.NoError(t, json.NewEncoder(w).Encode(&updated))
+				case http.MethodDelete:
+					writeCalls++
+					writeMethod = r.Method
+					var opts metav1.DeleteOptions
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&opts))
+					require.NotNil(t, opts.Preconditions)
+					require.NotNil(t, opts.Preconditions.ResourceVersion)
+					assert.Equal(t, "1", *opts.Preconditions.ResourceVersion)
+				default:
+					t.Fatalf("unexpected method %s", r.Method)
+				}
+			}))
+			t.Cleanup(ts.Close)
+
+			a := &api{
+				restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
+				service: &Service{
+					userService: tt.userSvc,
+					options: Options{
+						Resource: "dashboards",
+						APIGroup: dashboardv1.APIGroup,
+					},
+				},
+			}
+
+			err := a.setResourcePermissionsToK8s(makeReqCtx(), "org-1", "1", tt.commands)
+			require.NoError(t, err)
+			if tt.expectedMethod != "" {
+				assert.Equal(t, 1, writeCalls)
+				assert.Equal(t, tt.expectedMethod, writeMethod)
+				if tt.expectedMethod == http.MethodPut || tt.expectedMethod == http.MethodPost {
+					assert.Equal(t, tt.expected, updated.Spec.Permissions)
+				}
+			} else {
+				assert.Zero(t, writeCalls)
+				assert.Equal(t, tt.expected, existing.Spec.Permissions)
+			}
+		})
+	}
+}
+
+func TestSetUserPermissionToK8sUsesServiceAccountKind(t *testing.T) {
+	var created iamv0.ResourcePermission
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			w.WriteHeader(http.StatusNotFound)
+			require.NoError(t, json.NewEncoder(w).Encode(&metav1.Status{
+				Status: metav1.StatusFailure,
+				Code:   http.StatusNotFound,
+				Reason: metav1.StatusReasonNotFound,
+			}))
+		case http.MethodPost:
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&created))
+			require.NoError(t, json.NewEncoder(w).Encode(&created))
+		default:
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+	}))
+	t.Cleanup(ts.Close)
+
+	a := &api{
+		restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
+		service: &Service{
+			userService: &usertest.FakeUserService{
+				GetSignedInUserFn: func(_ context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					require.Equal(t, &user.GetSignedInUserQuery{OrgID: 1, UserID: 42, SkipTeamLookup: true}, query)
+					return &user.SignedInUser{UserID: 42, UserUID: "sa-uid", IsServiceAccount: true}, nil
+				},
+			},
+			options: Options{Resource: "dashboards", APIGroup: dashboardv1.APIGroup},
+		},
+	}
+
+	err := a.setUserPermissionToK8s(makeReqCtx(), "org-1", "1", 42, "Edit")
+	require.NoError(t, err)
+	require.Len(t, created.Spec.Permissions, 1)
+	assert.Equal(t, iamv0.ResourcePermissionSpecPermissionKindServiceAccount, created.Spec.Permissions[0].Kind)
+}
+
+func TestSetResourcePermissionsToK8sRetriesConflicts(t *testing.T) {
+	viewer := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"}
+	admin := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Admin", Verb: "admin"}
+	existing := &iamv0.ResourcePermission{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "dashboard.grafana.app-dashboards-1",
+			Namespace:       "org-1",
+			ResourceVersion: "1",
+		},
+		Spec: iamv0.ResourcePermissionSpec{
+			Resource:    iamv0.ResourcePermissionspecResource{ApiGroup: dashboardv1.APIGroup, Resource: "dashboards", Name: "1"},
+			Permissions: []iamv0.ResourcePermissionspecPermission{viewer},
+		},
+	}
+
+	updateCalls := 0
+	var updated iamv0.ResourcePermission
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			require.NoError(t, json.NewEncoder(w).Encode(existing))
+		case http.MethodPut:
+			updateCalls++
+			if updateCalls == 1 {
+				existing.ResourceVersion = "2"
+				existing.Spec.Permissions = append(existing.Spec.Permissions, admin)
+				w.WriteHeader(http.StatusConflict)
+				require.NoError(t, json.NewEncoder(w).Encode(&metav1.Status{
+					Status:  metav1.StatusFailure,
+					Code:    http.StatusConflict,
+					Reason:  metav1.StatusReasonConflict,
+					Message: "resource was modified",
+				}))
+				return
+			}
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&updated))
+			require.NoError(t, json.NewEncoder(w).Encode(&updated))
+		default:
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+	}))
+	t.Cleanup(ts.Close)
+
+	a := &api{
+		restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
+		service: &Service{options: Options{
+			Resource: "dashboards",
+			APIGroup: dashboardv1.APIGroup,
+		}},
+	}
+
+	err := a.setResourcePermissionsToK8s(
+		makeReqCtx(),
+		"org-1",
+		"1",
+		[]accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Editor", Permission: "Edit"}},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 2, updateCalls)
+	assert.Equal(t, "2", updated.ResourceVersion)
+	assert.Equal(t, []iamv0.ResourcePermissionspecPermission{
+		viewer,
+		admin,
+		{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+	}, updated.Spec.Permissions)
+}
+
 // TestGetAPIGroup tests API group resolution
 func TestGetAPIGroup(t *testing.T) {
 	t.Run("returns configured API group when set", func(t *testing.T) {
@@ -274,7 +542,7 @@ func TestConvertK8sResourcePermissionToDTO(t *testing.T) {
 		},
 	}
 
-	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(context.Background(), folderPermission, "stack-123-org-1", true)
+	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(context.Background(), folderPermission, "stacks-123", true)
 
 	require.NoError(t, err)
 	require.Len(t, inheritedPerms, 2, "should have 2 inherited permissions (Editor and Viewer)")
@@ -290,6 +558,453 @@ func TestConvertK8sResourcePermissionToDTO(t *testing.T) {
 	assert.True(t, viewerPerm.IsInherited, "Viewer permission should be marked as inherited from parent folder")
 	assert.Contains(t, viewerPerm.Actions, "dashboards:read")
 	assert.NotContains(t, viewerPerm.Actions, "dashboards:write", "Viewer permission should not include write")
+}
+
+// countingUserService fails any per-entry lookup so a regression away from the
+// batched path is visible rather than merely slower.
+type countingUserService struct {
+	*usertest.FakeUserService
+	users     map[string]*user.User
+	listCalls int
+	getCalls  int
+	lastUIDs  []string
+}
+
+func (s *countingUserService) GetByUID(context.Context, *user.GetUserByUIDQuery) (*user.User, error) {
+	s.getCalls++
+	return nil, user.ErrUserNotFound
+}
+
+func (s *countingUserService) ListByIdOrUID(_ context.Context, uids []string, _ []int64) ([]*user.User, error) {
+	s.listCalls++
+	s.lastUIDs = uids
+	out := make([]*user.User, 0, len(uids))
+	for _, uid := range uids {
+		if u, ok := s.users[uid]; ok {
+			out = append(out, u)
+		}
+	}
+	return out, nil
+}
+
+type countingTeamService struct {
+	*teamtest.FakeService
+	teams         map[string]*team.TeamDTO
+	searchCalls   int
+	getCalls      int
+	lastQuery     *team.SearchTeamsQuery
+	lastRequester identity.Requester
+	querySizes    []int
+}
+
+func (s *countingTeamService) GetTeamByID(context.Context, *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
+	s.getCalls++
+	return nil, team.ErrTeamNotFound
+}
+
+func (s *countingTeamService) SearchTeams(ctx context.Context, q *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+	s.searchCalls++
+	s.lastQuery = q
+	s.lastRequester, _ = identity.GetRequester(ctx)
+	s.querySizes = append(s.querySizes, len(q.UIDs))
+	res := team.SearchTeamQueryResult{}
+	for _, uid := range q.UIDs {
+		if t, ok := s.teams[uid]; ok {
+			res.Teams = append(res.Teams, t)
+		}
+	}
+	res.TotalCount = int64(len(res.Teams))
+	return res, nil
+}
+
+// TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups pins the number of
+// identity lookups to one per subject kind regardless of how many assignments
+// reference them.
+func TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups(t *testing.T) {
+	userSvc := &countingUserService{
+		FakeUserService: usertest.NewUserServiceFake(),
+		users: map[string]*user.User{
+			"user-uid-1": {ID: 1, UID: "user-uid-1", Login: "user-1"},
+			"user-uid-2": {ID: 2, UID: "user-uid-2", Login: "user-2"},
+		},
+	}
+	teamSvc := &countingTeamService{
+		FakeService: teamtest.NewFakeService(),
+		teams: map[string]*team.TeamDTO{
+			"team-uid-1": {ID: 1, UID: "team-uid-1", Name: "team-1"},
+			"team-uid-2": {ID: 2, UID: "team-uid-2", Name: "team-2"},
+		},
+	}
+
+	resourcePerm := &iamv0.ResourcePermission{
+		Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team-uid-1", Verb: "edit"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-2", Verb: "edit"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team-uid-2", Verb: "view"},
+				// A repeat of an earlier subject must not add a lookup.
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-1", Verb: "edit"},
+			},
+		},
+	}
+
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:       &mockResourcePermissionStore{},
+			userService: userSvc,
+			teamService: teamSvc,
+			options: Options{
+				Resource:          "folders",
+				ResourceAttribute: "uid",
+				PermissionsToActions: map[string][]string{
+					"View": {"folders:read"},
+					"Edit": {"folders:read", "folders:write"},
+				},
+			},
+		},
+	}
+
+	perms, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "org-123", false)
+	require.NoError(t, err)
+	require.Len(t, perms, 5)
+
+	assert.Equal(t, 1, userSvc.listCalls, "all users must resolve in a single batch")
+	assert.Zero(t, userSvc.getCalls, "no per-entry user lookups")
+	assert.ElementsMatch(t, []string{"user-uid-1", "user-uid-2"}, userSvc.lastUIDs, "duplicate subjects must be deduplicated")
+
+	assert.Equal(t, 1, teamSvc.searchCalls, "all teams must resolve in a single batch")
+	assert.Zero(t, teamSvc.getCalls, "no per-entry team lookups")
+	require.NotNil(t, teamSvc.lastQuery)
+	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, teamSvc.lastQuery.UIDs)
+
+	// SearchTeams filters on teams:read, so the batch silently returns nothing
+	// unless the identity passed in holds it.
+	require.NotNil(t, teamSvc.lastQuery.SignedInUser, "SearchTeams applies an access-control filter and rejects a nil identity")
+	assert.Contains(t, teamSvc.lastQuery.SignedInUser.GetPermissions()[accesscontrol.ActionTeamsRead], "*",
+		"the service identity must hold wildcard teams:read for the batch to return anything")
+	require.NotNil(t, teamSvc.lastRequester)
+	assert.Equal(t, "org-123", teamSvc.lastRequester.GetNamespace())
+	assert.Equal(t, int64(123), teamSvc.lastRequester.GetOrgID())
+
+	assert.Equal(t, "user-1", perms[0].UserLogin)
+	assert.Equal(t, int64(100), perms[0].ID, "managed role ID should be attached")
+	assert.Equal(t, "team-1", perms[1].Team)
+	assert.Equal(t, int64(200), perms[1].ID, "managed role ID should be attached")
+	assert.Equal(t, "user-2", perms[2].UserLogin)
+	assert.Equal(t, "team-2", perms[3].Team)
+	assert.Equal(t, "user-1", perms[4].UserLogin)
+}
+
+func TestConvertK8sResourcePermissionToDTOChunksTeamLookupsAtUIDFilterLimit(t *testing.T) {
+	const teamCount = 201
+	teamSvc := &countingTeamService{
+		FakeService: teamtest.NewFakeService(),
+		teams:       make(map[string]*team.TeamDTO, teamCount),
+	}
+	permissions := make([]iamv0.ResourcePermissionspecPermission, 0, teamCount)
+	for i := range teamCount {
+		uid := fmt.Sprintf("team-uid-%d", i)
+		teamSvc.teams[uid] = &team.TeamDTO{ID: int64(i + 1), UID: uid, Name: fmt.Sprintf("team-%d", i)}
+		permissions = append(permissions, iamv0.ResourcePermissionspecPermission{
+			Kind: iamv0.ResourcePermissionSpecPermissionKindTeam,
+			Name: uid,
+			Verb: "view",
+		})
+	}
+
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:       &mockResourcePermissionStore{},
+			userService: usertest.NewUserServiceFake(),
+			teamService: teamSvc,
+			options: Options{
+				Resource:             "folders",
+				ResourceAttribute:    "uid",
+				PermissionsToActions: map[string][]string{"View": {"folders:read"}},
+			},
+		},
+	}
+
+	perms, err := testApi.convertK8sResourcePermissionToDTO(
+		context.Background(),
+		&iamv0.ResourcePermission{Spec: iamv0.ResourcePermissionSpec{Permissions: permissions}},
+		"stacks-123",
+		false,
+	)
+	require.NoError(t, err)
+	require.Len(t, perms, teamCount)
+	assert.Equal(t, []int{100, 100, 1}, teamSvc.querySizes,
+		"the searchTeams endpoint rejects more than 100 uid filters per request")
+}
+
+type fakeServiceAccountRetriever struct {
+	serviceAccounts map[string]*serviceaccounts.ServiceAccountProfileDTO
+	calls           int
+	lastUIDs        []string
+}
+
+func (f *fakeServiceAccountRetriever) RetrieveServiceAccount(context.Context, *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return nil, serviceaccounts.ErrServiceAccountNotFound.Errorf("not found")
+}
+
+func (f *fakeServiceAccountRetriever) RetrieveServiceAccountsByUIDs(_ context.Context, _ int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	f.calls++
+	f.lastUIDs = uids
+	result := make([]*serviceaccounts.ServiceAccountProfileDTO, 0, len(uids))
+	for _, uid := range uids {
+		if serviceAccount, ok := f.serviceAccounts[uid]; ok {
+			result = append(result, serviceAccount)
+		}
+	}
+	return result, nil
+}
+
+func TestConvertK8sResourcePermissionToDTOResolvesServiceAccountsOutsideUserRedirect(t *testing.T) {
+	userSvc := &countingUserService{
+		FakeUserService: usertest.NewUserServiceFake(),
+		users:           map[string]*user.User{},
+	}
+	serviceAccountRetriever := &fakeServiceAccountRetriever{
+		serviceAccounts: map[string]*serviceaccounts.ServiceAccountProfileDTO{
+			"sa-uid-1": {
+				Id:    1,
+				UID:   "sa-uid-1",
+				Login: "sa-1",
+			},
+		},
+	}
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:                   &mockResourcePermissionStore{},
+			userService:             userSvc,
+			teamService:             teamtest.NewFakeService(),
+			serviceAccountRetriever: serviceAccountRetriever,
+			options: Options{
+				Resource:             "folders",
+				ResourceAttribute:    "uid",
+				PermissionsToActions: map[string][]string{"View": {"folders:read"}},
+			},
+		},
+	}
+
+	perms, err := testApi.convertK8sResourcePermissionToDTO(
+		context.Background(),
+		&iamv0.ResourcePermission{Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{{
+				Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount,
+				Name: "sa-uid-1",
+				Verb: "view",
+			}},
+		}},
+		"stacks-123",
+		false,
+	)
+	require.NoError(t, err)
+	require.Len(t, perms, 1)
+	assert.Zero(t, userSvc.listCalls, "service accounts must not use the redirected user service")
+	assert.Equal(t, 1, serviceAccountRetriever.calls)
+	assert.Equal(t, []string{"sa-uid-1"}, serviceAccountRetriever.lastUIDs)
+	assert.Equal(t, int64(1), perms[0].UserID)
+	assert.Equal(t, "sa-uid-1", perms[0].UserUID)
+	assert.Equal(t, "sa-1", perms[0].UserLogin)
+	assert.True(t, perms[0].IsServiceAccount)
+	assert.Equal(t, int64(100), perms[0].ID)
+}
+
+func TestConvertK8sResourcePermissionToDTOFailsWithoutServiceAccountRetriever(t *testing.T) {
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:       &mockResourcePermissionStore{},
+			userService: usertest.NewUserServiceFake(),
+			teamService: teamtest.NewFakeService(),
+			options: Options{
+				Resource:             "folders",
+				ResourceAttribute:    "uid",
+				PermissionsToActions: map[string][]string{"View": {"folders:read"}},
+			},
+		},
+	}
+
+	_, err := testApi.convertK8sResourcePermissionToDTO(
+		context.Background(),
+		&iamv0.ResourcePermission{Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{{
+				Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount,
+				Name: "sa-uid-1",
+				Verb: "view",
+			}},
+		}},
+		"default",
+		false,
+	)
+	require.EqualError(t, err, "service account retriever is not configured")
+}
+
+// TestConvertK8sResourcePermissionToDTODropsStaleAssignments checks that an
+// assignment whose subject no longer exists is omitted rather than returned
+// with a blank subject, matching the INNER JOINs on the legacy read path.
+func TestConvertK8sResourcePermissionToDTODropsStaleAssignments(t *testing.T) {
+	userSvc := &countingUserService{
+		FakeUserService: usertest.NewUserServiceFake(),
+		users: map[string]*user.User{
+			"user-uid-1": {ID: 1, UID: "user-uid-1", Login: "user-1"},
+		},
+	}
+	teamSvc := &countingTeamService{
+		FakeService: teamtest.NewFakeService(),
+		teams: map[string]*team.TeamDTO{
+			"team-uid-1": {ID: 1, UID: "team-uid-1", Name: "team-1"},
+		},
+	}
+
+	resourcePerm := &iamv0.ResourcePermission{
+		Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "deleted-user", Verb: "edit"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, Name: "deleted-sa", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "deleted-team", Verb: "edit"},
+				// Basic roles name a role rather than a stored subject, so they
+				// are always kept.
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+			},
+		},
+	}
+
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:                   &mockResourcePermissionStore{},
+			userService:             userSvc,
+			teamService:             teamSvc,
+			serviceAccountRetriever: &fakeServiceAccountRetriever{serviceAccounts: map[string]*serviceaccounts.ServiceAccountProfileDTO{}},
+			options: Options{
+				Resource:             "folders",
+				ResourceAttribute:    "uid",
+				PermissionsToActions: map[string][]string{"View": {"folders:read"}, "Edit": {"folders:read", "folders:write"}},
+			},
+		},
+	}
+
+	perms, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stacks-123", false)
+	require.NoError(t, err)
+
+	require.Len(t, perms, 3, "the deleted user, service account and team should all be dropped")
+	assert.Equal(t, "user-1", perms[0].UserLogin)
+	assert.Equal(t, "team-1", perms[1].Team)
+	assert.Equal(t, "Editor", perms[2].BuiltInRole)
+
+	for _, perm := range perms {
+		assert.NotEmpty(t, perm.UserLogin+perm.Team+perm.BuiltInRole, "every returned entry must name its subject")
+	}
+}
+
+type failingUserService struct {
+	*usertest.FakeUserService
+	err error
+}
+
+func (s *failingUserService) ListByIdOrUID(context.Context, []string, []int64) ([]*user.User, error) {
+	return nil, s.err
+}
+
+type failingTeamService struct {
+	*teamtest.FakeService
+	err error
+}
+
+func (s *failingTeamService) SearchTeams(context.Context, *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+	return team.SearchTeamQueryResult{}, s.err
+}
+
+type failingPermissionIDStore struct {
+	*mockResourcePermissionStore
+	err error
+}
+
+func (s *failingPermissionIDStore) GetPermissionIDsByRoleNames(context.Context, int64, string, []string) (map[string]int64, error) {
+	return nil, s.err
+}
+
+// TestConvertK8sResourcePermissionToDTOBatchLookupFailure checks that a failed
+// batch fails the request. Batching means one failure costs every subject of
+// that kind its details, so answering with a response full of unnamed
+// assignments would silently misrepresent who has access.
+func TestConvertK8sResourcePermissionToDTOBatchLookupFailure(t *testing.T) {
+	lookupErr := errors.New("database unavailable")
+
+	resourcePerm := &iamv0.ResourcePermission{
+		Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+			},
+		},
+	}
+
+	tests := []struct {
+		name        string
+		mutate      func(*Service)
+		expectedMsg string
+	}{
+		{
+			name: "user lookup fails",
+			mutate: func(s *Service) {
+				s.userService = &failingUserService{FakeUserService: usertest.NewUserServiceFake(), err: lookupErr}
+			},
+			expectedMsg: "failed to resolve 1 users",
+		},
+		{
+			name: "team lookup fails",
+			mutate: func(s *Service) {
+				s.teamService = &failingTeamService{FakeService: teamtest.NewFakeService(), err: lookupErr}
+			},
+			expectedMsg: "failed to resolve 1 teams",
+		},
+		{
+			name: "permission ID lookup fails",
+			mutate: func(s *Service) {
+				s.store = &failingPermissionIDStore{mockResourcePermissionStore: &mockResourcePermissionStore{}, err: lookupErr}
+			},
+			expectedMsg: "failed to resolve permission IDs",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc := &Service{
+				store:       &mockResourcePermissionStore{},
+				userService: usertest.NewUserServiceFake(),
+				teamService: teamtest.NewFakeService(),
+				options: Options{
+					Resource:             "folders",
+					ResourceAttribute:    "uid",
+					PermissionsToActions: map[string][]string{"View": {"folders:read"}, "Edit": {"folders:read", "folders:write"}},
+				},
+			}
+			tt.mutate(svc)
+
+			testApi := &api{cfg: &setting.Cfg{}, logger: log.New("test"), service: svc}
+
+			_, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stacks-123", false)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.expectedMsg)
+			assert.ErrorIs(t, err, lookupErr, "the underlying cause should be preserved")
+		})
+	}
 }
 
 // TestGetFolderHierarchyPermissions tests the folder hierarchy permissions logic
@@ -421,7 +1136,7 @@ func TestGetFolderHierarchyPermissions(t *testing.T) {
 			}
 
 			fakeClient, fakeResourceInterface := setupFakeDynamicClient(t, tt.folderUID, tt.folderInfoList, tt.folderPermissions)
-			perms, err := api.getFolderHierarchyPermissions(context.Background(), "stack-123-org-1", tt.folderUID, fakeClient, tt.skipSelf)
+			perms, err := api.getFolderHierarchyPermissions(context.Background(), "stacks-123", tt.folderUID, fakeClient, tt.skipSelf)
 
 			require.NoError(t, err)
 			assert.Len(t, perms, tt.expectedCount, "expected %d permissions", tt.expectedCount)
@@ -614,7 +1329,7 @@ func TestGetProvisionedPermissions(t *testing.T) {
 			},
 		}
 
-		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stacks-123", "dashboard-123")
 
 		require.NoError(t, err)
 		require.Len(t, provisionedPerms, 2, "should return only provisioned permissions")
@@ -684,7 +1399,7 @@ func TestGetProvisionedPermissions(t *testing.T) {
 			},
 		}
 
-		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stacks-123", "dashboard-123")
 
 		require.NoError(t, err)
 		require.Len(t, provisionedPerms, 2, "should return both inherited and direct provisioned permissions")
@@ -746,7 +1461,7 @@ func TestGetProvisionedPermissions(t *testing.T) {
 			},
 		}
 
-		_, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+		_, err := api.getProvisionedPermissions(context.Background(), "stacks-123", "dashboard-123")
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedError, "should return error from InheritedScopesSolver")
@@ -797,7 +1512,7 @@ func TestGetResourcePermissionsFromK8s_AdminRole(t *testing.T) {
 			SignedInUser: &user.SignedInUser{},
 		}
 
-		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stack-123-org-1", "dashboard-123")
+		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stacks-123", "dashboard-123")
 
 		// Should fail to get K8s permissions but still add Admin role
 		require.Error(t, err)
@@ -846,7 +1561,7 @@ func TestGetResourcePermissionsFromK8s_AdminRole(t *testing.T) {
 			SignedInUser: &user.SignedInUser{},
 		}
 
-		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stack-123-org-1", "dashboard-123")
+		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stacks-123", "dashboard-123")
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrRestConfigNotAvailable)
@@ -979,6 +1694,18 @@ func (m *mockResourcePermissionStore) GetPermissionIDByRoleName(ctx context.Cont
 	}
 }
 
+func (m *mockResourcePermissionStore) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, _ string, roleNames []string) (map[string]int64, error) {
+	result := make(map[string]int64, len(roleNames))
+	for _, roleName := range roleNames {
+		id, err := m.GetPermissionIDByRoleName(ctx, orgID, roleName)
+		if err != nil {
+			continue
+		}
+		result[roleName] = id
+	}
+	return result, nil
+}
+
 func makeReqCtx() *contextmodel.ReqContext {
 	return &contextmodel.ReqContext{
 		Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)},
@@ -1001,7 +1728,7 @@ func TestListTeamMemberPermissions(t *testing.T) {
 				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
 				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
 			},
-			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123-org-1"},
+			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123"},
 			Spec:       iamv0.TeamSpec{Members: members},
 		}
 	}
@@ -1217,7 +1944,7 @@ func TestListTeamMemberPermissions(t *testing.T) {
 				},
 			}
 
-			perms, err := testApi.listTeamMemberPermissions(makeReqCtx(), fakeClient, "stacks-123-org-1", tt.resourceID)
+			perms, err := testApi.listTeamMemberPermissions(makeReqCtx(), fakeClient, "stacks-123", tt.resourceID)
 
 			if tt.expectedErrMsg != "" {
 				require.Error(t, err)
@@ -1246,7 +1973,7 @@ func TestSetTeamMember(t *testing.T) {
 				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
 				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
 			},
-			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123-org-1", ResourceVersion: "42"},
+			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123", ResourceVersion: "42"},
 			Spec:       iamv0.TeamSpec{Members: members},
 		}
 		obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
@@ -1264,6 +1991,7 @@ func TestSetTeamMember(t *testing.T) {
 		name            string
 		permission      string
 		userID          int64
+		external        bool
 		userSvc         func() *usertest.MockService
 		fakeResource    func(t *testing.T) *fakeResourceInterface
 		expectedErrMsg  string
@@ -1517,6 +2245,60 @@ func TestSetTeamMember(t *testing.T) {
 			},
 		},
 		{
+			// Team sync owns externally-synced members, so it is the one caller allowed
+			// to write them and its adds must be marked External.
+			name:       "team sync adds an external member",
+			permission: "Member",
+			userID:     1,
+			external:   true,
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.True(t, members[0].External, "team sync adds must be marked External")
+			},
+		},
+		{
+			name:       "team sync removes an external member",
+			permission: "",
+			userID:     1,
+			external:   true,
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember, External: true}), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate:  true,
+			expectRemoved: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				assert.Empty(t, members)
+			},
+		},
+		{
 			name:       "accepts lowercase permission",
 			permission: "admin",
 			userID:     1,
@@ -1606,18 +2388,14 @@ func TestSetTeamMember(t *testing.T) {
 			}
 			fakeClient := &fakeDynamicClient{resourceInterface: fr}
 
-			testApi := &api{
-				cfg:    &setting.Cfg{},
-				logger: log.New("test"),
-				service: &Service{
-					store:       &mockResourcePermissionStore{},
-					teamService: teamtest.NewFakeServiceWithTeamDTO(testTeam),
-					userService: tt.userSvc(),
-					options:     Options{Resource: "teams"},
-				},
+			svc := &Service{
+				store:       &mockResourcePermissionStore{},
+				teamService: teamtest.NewFakeServiceWithTeamDTO(testTeam),
+				userService: tt.userSvc(),
+				options:     Options{Resource: "teams"},
 			}
 
-			removed, err := testApi.setTeamMember(makeReqCtx(), fakeClient, "stacks-123-org-1", "10", tt.userID, tt.permission)
+			removed, err := svc.setTeamMember(context.Background(), fakeClient, 1, "stacks-123", "10", tt.userID, tt.permission, tt.external)
 
 			if tt.expectedErrMsg != "" {
 				require.Error(t, err)
@@ -1646,7 +2424,172 @@ func TestSetTeamMember(t *testing.T) {
 	}
 }
 
-// TestTeamMemberWrappers_RestConfigNotAvailable tests that both wrappers return
+// TestSetTeamMembers covers the batch counterpart of setTeamMember: the whole
+// batch must be applied in a single Team update (atomic), and any external member
+// must abort the batch before any write so no partial update is persisted.
+func TestSetTeamMembers(t *testing.T) {
+	testTeam := &team.TeamDTO{ID: 10, UID: "team-uid-1"}
+
+	makeTeamObj := func(t *testing.T, members ...iamv0.TeamTeamMember) *unstructured.Unstructured {
+		t.Helper()
+		teamObj := iamv0.Team{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
+				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123", ResourceVersion: "42"},
+			Spec:       iamv0.TeamSpec{Members: members},
+		}
+		obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
+		require.NoError(t, err)
+		return &unstructured.Unstructured{Object: obj}
+	}
+	decodeMembers := func(t *testing.T, obj *unstructured.Unstructured) []iamv0.TeamTeamMember {
+		t.Helper()
+		var decoded iamv0.Team
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &decoded))
+		return decoded.Spec.Members
+	}
+	// userSvc resolves userID N to UID "user-uid-N".
+	userSvc := func() *usertest.MockService {
+		svc := &usertest.MockService{}
+		svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(&user.User{ID: 1, UID: "user-uid-1"}, nil)
+		svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(2)}).Return(&user.User{ID: 2, UID: "user-uid-2"}, nil)
+		return svc
+	}
+
+	tests := []struct {
+		name            string
+		commands        []accesscontrol.SetResourcePermissionCommand
+		initialMembers  []iamv0.TeamTeamMember
+		expectedErrMsg  string
+		expectUpdate    bool
+		expectRemoved   bool
+		validateMembers func(t *testing.T, members []iamv0.TeamTeamMember)
+	}{
+		{
+			name: "applies the whole batch in a single update",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Member"},
+				{UserID: 2, Permission: "Admin"},
+			},
+			expectUpdate: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 2)
+				assert.Equal(t, "user-uid-1", members[0].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionMember, members[0].Permission)
+				assert.Equal(t, "user-uid-2", members[1].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionAdmin, members[1].Permission)
+			},
+		},
+		{
+			name: "removes and adds in one update",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: ""},
+				{UserID: 2, Permission: "Admin"},
+			},
+			initialMembers: []iamv0.TeamTeamMember{
+				{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember},
+			},
+			expectUpdate:  true,
+			expectRemoved: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.Equal(t, "user-uid-2", members[0].Name)
+			},
+		},
+		{
+			// Only the removed member is reported, so the caller keeps running the legacy
+			// membership hook for the rest of the batch.
+			name: "reports only the removed member of a mixed batch",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: ""},
+				{UserID: 2, Permission: "Admin"},
+			},
+			initialMembers: []iamv0.TeamTeamMember{
+				{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember},
+				{Kind: "User", Name: "user-uid-2", Permission: iamv0.TeamTeamPermissionMember},
+			},
+			expectUpdate:  true,
+			expectRemoved: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.Equal(t, "user-uid-2", members[0].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionAdmin, members[0].Permission)
+			},
+		},
+		{
+			name: "aborts the whole batch on an external member without updating",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Member"},
+				{UserID: 2, Permission: "Member"},
+			},
+			initialMembers: []iamv0.TeamTeamMember{
+				{Kind: "User", Name: "user-uid-2", Permission: iamv0.TeamTeamPermissionMember, External: true},
+			},
+			expectedErrMsg: "externally-synced",
+			expectUpdate:   false,
+		},
+		{
+			name: "no update when removing non-members",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: ""},
+			},
+			expectUpdate: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				lastUpdated *unstructured.Unstructured
+				updateCalls int
+			)
+			fr := &fakeResourceInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+					return makeTeamObj(t, tt.initialMembers...), nil
+				},
+				updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+					updateCalls++
+					lastUpdated = obj
+					return obj, nil
+				},
+			}
+			fakeClient := &fakeDynamicClient{resourceInterface: fr}
+
+			svc := &Service{
+				store:       &mockResourcePermissionStore{},
+				teamService: teamtest.NewFakeServiceWithTeamDTO(testTeam),
+				userService: userSvc(),
+				options:     Options{Resource: "teams"},
+			}
+
+			removed, err := svc.setTeamMembers(context.Background(), fakeClient, 1, "stacks-123", "10", tt.commands, false)
+
+			if tt.expectedErrMsg != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				assert.Zero(t, updateCalls, "no update should be persisted when the batch aborts")
+				assert.False(t, removed, "should not report a removal on error")
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectRemoved, removed, "removed return value")
+
+			if tt.expectUpdate {
+				assert.Equal(t, 1, updateCalls, "the batch must be applied in a single update")
+				require.NotNil(t, lastUpdated)
+				if tt.validateMembers != nil {
+					tt.validateMembers(t, decodeMembers(t, lastUpdated))
+				}
+			} else {
+				assert.Zero(t, updateCalls, "expected no update")
+			}
+		})
+	}
+}
+
+// TestTeamMemberWrappers_RestConfigNotAvailable tests that the wrappers return
 // ErrRestConfigNotAvailable when no rest config provider is set, so the caller (api.go)
 // can stop the operation and return the error.
 func TestTeamMemberWrappers_RestConfigNotAvailable(t *testing.T) {
@@ -1655,16 +2598,9 @@ func TestTeamMemberWrappers_RestConfigNotAvailable(t *testing.T) {
 		call func(a *api) error
 	}{
 		{
-			name: "setUserPermissionInTeamMembers",
-			call: func(a *api) error {
-				_, err := a.setUserPermissionInTeamMembers(makeReqCtx(), "stacks-123-org-1", "10", 1, "Admin")
-				return err
-			},
-		},
-		{
 			name: "getTeamPermissionsFromMembers",
 			call: func(a *api) error {
-				_, err := a.getTeamPermissionsFromMembers(makeReqCtx(), "stacks-123-org-1", "10")
+				_, err := a.getTeamPermissionsFromMembers(makeReqCtx(), "stacks-123", "10")
 				return err
 			},
 		},

@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -13,6 +14,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+func TestEmbeddedContactPointToGrafanaIntegrationConfig_UsesV1(t *testing.T) {
+	settings := simplejson.NewFromAny(map[string]any{
+		"url": "https://example.com",
+	})
+	cp := &definitions.EmbeddedContactPoint{
+		UID:      "test-uid",
+		Name:     "test-name",
+		Type:     "webhook",
+		Settings: settings,
+	}
+
+	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(cp)
+	require.NoError(t, err)
+	assert.Equal(t, schema.V1, integration.Version)
+}
 
 func TestPostableGrafanaReceiverToEmbeddedContactPoint(t *testing.T) {
 	expectedProvenance := models.KnownProvenances[rand.Intn(len(models.KnownProvenances))]

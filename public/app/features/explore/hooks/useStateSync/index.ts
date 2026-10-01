@@ -78,7 +78,7 @@ export function useStateSync(params: ExploreQueryParams) {
     prevParams.current = params;
 
     if (isURLOutOfSync && initState.current === 'done') {
-      syncFromURL(urlState, panesStateRef.current, dispatch);
+      syncFromURL(urlState, panesStateRef.current, dispatch, location);
     }
   }, [dispatch, orgId, location, params, warning]);
 }

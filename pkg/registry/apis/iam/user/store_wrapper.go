@@ -62,7 +62,7 @@ func (f *StoreWrapper) getHiddenUsers(ctx context.Context) (map[string]struct{},
 		}
 		hidden := make(map[string]struct{})
 		for _, s := range settings {
-			for _, login := range strings.Split(s.Value, ",") {
+			for login := range strings.SplitSeq(s.Value, ",") {
 				login = strings.TrimSpace(login)
 				if login != "" {
 					hidden[login] = struct{}{}

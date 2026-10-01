@@ -125,8 +125,7 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 		compatOpts := plugins.NewAddOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, installPlugin.URL)
 		err := s.pluginInstaller.Add(ctx, installPlugin.ID, installPlugin.Version, compatOpts)
 		if err != nil {
-			var dupeErr plugins.DuplicateError
-			if errors.As(err, &dupeErr) {
+			if _, ok := errors.AsType[plugins.DuplicateError](err); ok {
 				s.log.Debug("Plugin already installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 				continue
 			}

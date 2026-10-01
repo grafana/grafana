@@ -245,7 +245,7 @@ func runListBenchmark(t *testing.T, backend resource.StorageBackend, opts *Bench
 		listResource = "bench-list-resource"
 	)
 
-	// --- Seed phase (sequential to avoid Optimistic locking conflicts) ---
+	// --- Seed phase (sequential to avoid write conflicts) ---
 	t.Log("List benchmark: seeding resources with history...")
 	seedStart := time.Now()
 
@@ -488,7 +488,7 @@ func runStorageAndSearchBenchmark(
 	}
 
 	// Discover group/resource pairs from the configured document builders
-	builders, err := searchOpts.Resources.GetDocumentBuilders()
+	builders, err := searchOpts.Resources.GetDocumentBuilders(searchOpts.SearchFields)
 	require.NoError(t, err)
 	require.NotEmpty(t, builders, "search options must have at least one document builder")
 
@@ -536,7 +536,6 @@ func runStorageAndSearchBenchmark(
 				QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 					{
 						Name: resource.SEARCH_FIELD_TITLE_PHRASE,
-						Type: resourcepb.QueryFieldType_KEYWORD,
 					},
 				},
 				Limit: 10,

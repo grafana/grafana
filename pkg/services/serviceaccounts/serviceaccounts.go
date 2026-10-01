@@ -22,6 +22,7 @@ do not have a password.
 // to avoid cyclic dependency between the ServiceAccountService and the ServiceAccountPermissionsService
 type ServiceAccountRetriever interface {
 	RetrieveServiceAccount(ctx context.Context, query *GetServiceAccountQuery) (*ServiceAccountProfileDTO, error)
+	RetrieveServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*ServiceAccountProfileDTO, error)
 }
 
 //go:generate mockery --name Service --structname MockServiceAccountService --output tests --outpkg tests --filename mocks.go

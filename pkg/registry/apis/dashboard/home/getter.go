@@ -7,10 +7,12 @@ import (
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,11 +29,7 @@ type HomeDashboardGetter interface {
 }
 
 func NewHomeDashboardSupport(cfg *setting.Cfg) *homeDashboard {
-	filePath := cfg.DefaultHomeDashboardPath
-	if filePath == "" {
-		filePath = filepath.Join(cfg.StaticRootPath, "dashboards/home.json")
-	}
-	return newHomeDashboardSupportForFile(filePath)
+	return newHomeDashboardSupportForFile(cfg.DefaultHomeDashboardPath)
 }
 
 func newHomeDashboardSupportForFile(defaultDashboardFile string) *homeDashboard {
@@ -39,7 +37,7 @@ func newHomeDashboardSupportForFile(defaultDashboardFile string) *homeDashboard 
 		log: logging.DefaultLogger.With("logger", "dashboards-apiserver-home"),
 	}
 
-	// With no file configured we always serve the built-in fallback, so there is nothing to watch.
+	// With no file configured there is no dashboard to serve or watch.
 	if defaultDashboardFile == "" {
 		return home
 	}
@@ -120,19 +118,21 @@ func (h *homeDashboard) Get(version string) (runtime.Object, error) {
 	return obj, err
 }
 
-// load reads the configured file (falling back to a built-in dashboard if the
-// file is missing or invalid), refreshes the cached source, and invalidates any
-// previously cached version conversions. Must be called with versionsMu held.
+// load reads the configured file, refreshes the cached source, and invalidates
+// any previously cached version conversions. Must be called with versionsMu held.
+// Returns a Kubernetes NotFound status when no custom home path is configured
+// (matching legacy /api/dashboards/home), or an error when the file cannot be read.
 func (h *homeDashboard) load() error {
+	if h.fpath == "" {
+		return apierrors.NewNotFound(dashv0.DashboardResourceInfo.GroupResource(), DASHBOARD_NAME)
+	}
+
 	obj, err := readDashboard(h.fpath)
 	if err != nil {
-		h.log.Error("failed to read home dashboard, using default", "path", h.fpath, "err", err)
+		return err
 	}
 	if obj == nil {
-		obj, err = defaultHomeDashboard()
-		if err != nil {
-			return err
-		}
+		return apierrors.NewNotFound(dashv0.DashboardResourceInfo.GroupResource(), DASHBOARD_NAME)
 	}
 
 	now := metav1.Now()

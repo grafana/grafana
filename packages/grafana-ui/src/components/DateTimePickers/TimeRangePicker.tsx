@@ -11,7 +11,6 @@ import {
   type TimeOption,
   type TimeRange,
   dateMath,
-  getTimeZoneInfo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -28,6 +27,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
+import { getTimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
 import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
@@ -38,6 +38,7 @@ export interface TimeRangePickerProps {
   value: TimeRange;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
+  hideTimeZone?: boolean;
 
   /**
    * If you handle sync state between pickers yourself use this prop to pass the sync button component.
@@ -86,6 +87,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onError,
     timeZone,
     fiscalYearStartMonth,
+    hideTimeZone,
     history,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
@@ -195,6 +197,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
               <TimePickerContent
                 timeZone={timeZone}
                 fiscalYearStartMonth={fiscalYearStartMonth}
+                hideTimeZone={hideTimeZone}
                 value={value}
                 onChange={onChange}
                 quickOptions={quickRanges || getQuickOptions()}
@@ -256,7 +259,7 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   const now = Date.now();
 
   // Get timezone info only if timeZone is provided
-  const timeZoneInfo = timeZone ? getTimeZoneInfo(timeZone, now) : undefined;
+  const timeZoneInfo = timeZone ? getTimeZoneDisplayInfo(timeZone, now) : undefined;
 
   return (
     <Stack alignItems="center" direction="column" gap={0}>

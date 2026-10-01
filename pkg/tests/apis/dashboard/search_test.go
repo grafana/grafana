@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -100,7 +99,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 
 		var statusCode int
 		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
-			//Param("explain", "true") // helpful to understand which field made things match
 			Param("limit", "1000").
 			Param("type", "dashboard") // Only search dashboards
 
@@ -120,9 +118,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		sr.MaxScore = roundTo(sr.MaxScore, 3)
 		for i := range sr.Hits {
 			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
-			if sr.Hits[i].Explain != nil {
-				roundExplainValues(sr.Hits[i].Explain.Object, 3)
-			}
 		}
 		return sr
 	}
@@ -182,7 +177,24 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			params: map[string]string{
 				"query":            "orange",
 				"panelTitleSearch": "true",
-				"explain":          "true",
+			},
+		},
+		{
+			// Queries below the ngram minimum are matched as prefix wildcards, so
+			// they find titles with a word starting with the query.
+			name: "short-query-word-prefix",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "ze", // should match "Zero Decimals Y Ticks"
+			},
+		},
+		{
+			// The same short query does not match inside a word: "ec" must not
+			// find "Zero Decimals Y Ticks" via "decimals".
+			name: "short-query-mid-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "ec",
 			},
 		},
 	}
@@ -443,7 +455,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 			require.NoError(t, err)
 
 			var statusCode int
-			body := []byte(fmt.Sprintf(`{"uid":"%s","title":"Permission Test Folder"}`, folderUID))
+			body := fmt.Appendf(nil, `{"uid":"%s","title":"Permission Test Folder"}`, folderUID)
 			result := restClient.Post().AbsPath("api", "folders").
 				Body(body).
 				SetHeader("Content-type", "application/json").
@@ -478,7 +490,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 				Param("limit", "1000").
 				Param("type", "folder") // Only search folders
 
-			for _, kv := range strings.Split(params, "&") {
+			for kv := range strings.SplitSeq(params, "&") {
 				if kv == "" {
 					continue
 				}
@@ -669,37 +681,6 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	}, &struct{}{})
 
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
-}
-
-// bleveInternalDocIDRegex matches the 8-byte internal segment doc ID that bleve
-// includes in explain messages (e.g. "in \x00\x00\x00\x00\x00\x00\x00\r)").
-// The value depends on segment layout and is not stable across runs.
-var bleveInternalDocIDRegex = regexp.MustCompile(` in \x00[^)]*\)`)
-
-func roundExplainValues(obj map[string]any, decimals uint32) {
-	for k, val := range obj {
-		switch k {
-		case "value":
-			v, ok := val.(float64)
-			if ok {
-				obj[k] = roundTo(v, decimals)
-			}
-		case "message":
-			s, ok := val.(string)
-			if ok {
-				obj[k] = bleveInternalDocIDRegex.ReplaceAllString(s, " in <docID>)")
-			}
-		case "children":
-			children, ok := val.([]any)
-			if ok {
-				for _, child := range children {
-					if v, ok := child.(map[string]any); ok {
-						roundExplainValues(v, decimals)
-					}
-				}
-			}
-		}
-	}
 }
 
 // roundTo rounds a float64 to a specified number of decimal places.

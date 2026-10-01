@@ -14,10 +14,13 @@ export interface ScopesDashboardsTreeFolderItemProps {
   folderPath: string[];
   folders: SuggestedNavigationsFoldersMap;
   onFolderUpdate: OnFolderUpdate;
+  /** Inherited from a parent ChildScope folder; used by group folders that have no subScopeName of their own. */
+  subScope?: string;
   subScopePath?: string[];
 }
 
 export function ScopesDashboardsTreeFolderItem({
+  subScope,
   subScopePath,
   folder,
   folderPath,
@@ -86,7 +89,7 @@ export function ScopesDashboardsTreeFolderItem({
         <div className={styles.children}>
           <ScopesDashboardsTree
             subScopePath={subScopePath}
-            subScope={folder.subScopeName}
+            subScope={folder.subScopeName ?? subScope}
             folders={folders}
             folderPath={folderPath}
             onFolderUpdate={onFolderUpdate}

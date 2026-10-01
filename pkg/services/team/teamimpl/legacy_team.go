@@ -8,28 +8,30 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 // At package level
 const defaultCacheDuration = 5 * time.Minute
 
+// LegacyService caches team memberships by org and user only. Its store resolves
+// table names per operation from sql, so a single instance must only be used with
+// a provider that resolves to one database.
 type LegacyService struct {
 	cache  *localcache.CacheService
 	store  store
 	tracer tracing.Tracer
 }
 
-func NewLegacyService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
-	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
+var _ team.Service = (*LegacyService)(nil)
+var _ teamdelete.Registrar = (*LegacyService)(nil)
 
-	if err := store.teamMemberUidMigration(); err != nil {
-		return nil, err
-	}
+func NewLegacyService(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) (*LegacyService, error) {
+	store := &xormStore{sql: sql, deleteRenderers: []teamdelete.Renderer{}}
 
 	return &LegacyService{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
@@ -103,13 +105,13 @@ func (s *LegacyService) GetTeamIDsByUser(ctx context.Context, query *team.GetTea
 }
 
 func (s *LegacyService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	_, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
 		attribute.Int64("orgID", orgId),
 		attribute.Int64("teamID", teamId),
 		attribute.Int64("userID", userId),
 	))
 	defer span.End()
-	return s.store.IsMember(orgId, teamId, userId)
+	return s.store.IsMember(ctx, orgId, teamId, userId)
 }
 
 func (s *LegacyService) RemoveUsersMemberships(ctx context.Context, userID int64) error {
@@ -161,6 +163,6 @@ func (s *LegacyService) GetTeamMembers(ctx context.Context, query *team.GetTeamM
 	return s.store.GetMembers(ctx, query)
 }
 
-func (s *LegacyService) RegisterDelete(query string) {
-	s.store.RegisterDelete(query)
+func (s *LegacyService) RegisterDelete(renderer teamdelete.Renderer) {
+	s.store.RegisterDelete(renderer)
 }

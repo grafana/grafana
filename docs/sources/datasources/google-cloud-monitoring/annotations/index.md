@@ -17,6 +17,7 @@ labels:
 menuTitle: Annotations
 title: Google Cloud Monitoring annotations
 weight: 400
+review_date: 2026-08-11
 ---
 
 # Google Cloud Monitoring annotations

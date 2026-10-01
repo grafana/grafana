@@ -43,7 +43,7 @@ func TestReplayCache(t *testing.T) {
 
 		var newCount int64
 		var mu sync.Mutex
-		for i := 0; i < goroutines; i++ {
+		for range goroutines {
 			go func() {
 				defer wg.Done()
 				if !c.seenOrAdd("same") {

@@ -82,9 +82,18 @@ var (
 		prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "meta_requests_total",
-			Help:      "Total number of metadata requests by plugin ID and version (useful for cache warming analysis)",
+			Help:      "Total number of metadata requests by plugin ID, version and calling service identity",
 		},
-		[]string{"plugin_id", "version"},
+		[]string{"plugin_id", "version", "caller"},
+	)
+
+	MetaResolutionFailuresTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "meta_resolution_failures_total",
+			Help:      "Total number of per-plugin metadata resolution failures across all providers",
+		},
+		[]string{"plugin_id", "reason"}, // reason: "not_found" or "error"
 	)
 )
 
@@ -98,12 +107,12 @@ func MustRegister(registerer prometheus.Registerer) {
 		MetaFetchDurationSeconds,
 		MetaFetchErrorsTotal,
 		MetaRequestsTotal,
+		MetaResolutionFailuresTotal,
 	}
 
 	for _, metric := range metricsToRegister {
 		if err := registerer.Register(metric); err != nil {
-			var alreadyRegistered prometheus.AlreadyRegisteredError
-			if errors.As(err, &alreadyRegistered) {
+			if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 				continue
 			}
 			panic(err)

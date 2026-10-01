@@ -8,14 +8,8 @@ import { type SaveDashboardOptions } from 'app/features/dashboard/components/Sav
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
-import {
-  type DashboardChangeInfo,
-  NameAlreadyExistsError,
-  SaveButton,
-  isNameExistsError,
-  isPluginDashboardError,
-  isVersionMismatchError,
-} from './shared';
+import { getSaveDashboardErrorInfo } from './saveErrors';
+import { type DashboardChangeInfo, SaveButton, SaveDashboardErrorAlert } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
 export interface Props {
@@ -28,17 +22,38 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   const { hasChanges, hasMigratedToV2, changedSaveModel } = changeInfo;
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
+  const k8sMeta = dashboard.serializer.getK8SMetadata();
   const [options, setOptions] = useState<SaveDashboardOptions>({
     folderUid: dashboard.state.meta.folderUid,
     // we need to set the uid here in order to save the dashboard
     // in schema v2 we don't have the uid in the spec
+    // meta.k8s.annotations is the editor source of truth for the denylist / other client annotations
     k8s: {
-      ...dashboard.serializer.getK8SMetadata(),
+      ...k8sMeta,
+      annotations: {
+        ...k8sMeta?.annotations,
+        ...dashboard.state.meta.k8s?.annotations,
+      },
     },
   });
 
   const onSave = async (overwrite: boolean) => {
-    const result = await onSaveDashboard(dashboard, { ...options, rawDashboardJSON: changedSaveModel, overwrite });
+    // Re-merge annotations at save time so denylist edits after the form mounted still persist.
+    const latestK8s = dashboard.serializer.getK8SMetadata();
+    const result = await onSaveDashboard(dashboard, {
+      ...options,
+      k8s: {
+        ...latestK8s,
+        ...options.k8s,
+        annotations: {
+          ...latestK8s?.annotations,
+          ...options.k8s?.annotations,
+          ...dashboard.state.meta.k8s?.annotations,
+        },
+      },
+      rawDashboardJSON: changedSaveModel,
+      overwrite,
+    });
     if (result.status === 'success') {
       dashboard.closeModal();
       drawer.state.onSaveSuccess?.();
@@ -75,7 +90,9 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       );
     }
 
-    if (isVersionMismatchError(error)) {
+    const errorInfo = getSaveDashboardErrorInfo(error);
+
+    if (errorInfo?.kind === 'version-mismatch') {
       return (
         <Alert
           title={t(
@@ -89,6 +106,8 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
               Would you still like to save this dashboard?
             </Trans>
           </p>
+          {/* Bare text: a <p> here would stack its bottom margin onto the Box padding below. */}
+          {errorInfo.message}
           <Box paddingTop={2}>
             <Stack alignItems="center">
               {cancelButton}
@@ -99,11 +118,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       );
     }
 
-    if (isNameExistsError(error)) {
-      return <NameAlreadyExistsError />;
-    }
-
-    if (isPluginDashboardError(error)) {
+    if (errorInfo?.kind === 'plugin-dashboard') {
       return (
         <Alert
           title={t('dashboard-scene.save-dashboard-form.render-footer.title-plugin-dashboard', 'Plugin dashboard')}
@@ -125,19 +140,12 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       );
     }
 
+    // Everything else, `already-exists` included, keeps Save and Cancel. This form has no title or
+    // folder field, so the "pick a different name or folder" alert would be unactionable advice
+    // that also replaced the footer, leaving the user no way to retry.
     return (
       <>
-        {error && (
-          <Alert
-            title={t(
-              'dashboard-scene.save-dashboard-form.render-footer.title-failed-to-save-dashboard',
-              'Failed to save dashboard'
-            )}
-            severity="error"
-          >
-            <p>{error.message}</p>
-          </Alert>
-        )}
+        {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">
           {cancelButton}
           {saveButton(false)}
@@ -174,7 +182,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           </p>
         </Alert>
       )}
-      <Field label={t('dashboard-scene.save-dashboard-form.label-message', 'Message')}>
+      <Field label={t('dashboard-scene.save-dashboard-form.label-message', 'Message')} noMargin>
         <TextArea
           aria-label={t('dashboard-scene.save-dashboard-form.aria-label-message', 'message')}
           value={options.message ?? ''}

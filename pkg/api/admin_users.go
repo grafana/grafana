@@ -159,7 +159,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 	}
 
 	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil && authInfo != nil {
-		if hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule) {
+		if hs.isGrafanaAdminExternallySynced(c.Req.Context(), hs.Cfg, authInfo.AuthModule) {
 			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
 		}
 	}

@@ -25,7 +25,7 @@ const shortURLBenchmarkRows = 26000
 func BenchmarkShortURLBulkProcessBatching(b *testing.B) {
 	b.Setenv("SQLITE_TEST_DB", filepath.Join(b.TempDir(), "shorturl-benchmark.db"))
 
-	store := infraDB.InitTestDB(b)
+	store := infraDB.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	resourceDB, err := dbimpl.ProvideResourceDB(store, cfg, nil)
 	require.NoError(b, err)

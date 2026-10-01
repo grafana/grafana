@@ -9,6 +9,7 @@ import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { type QueryActionComponent, RowActionComponents } from 'app/features/query/components/QueryActionComponent';
+import { useQueryEditorRowExtensionActions } from 'app/features/query/components/QueryEditorRowExtensionActions';
 
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
@@ -56,12 +57,19 @@ export function PluginActions({ app }: PluginActionsProps) {
   }, [selectedQuery, app, queries, data?.timeRange, addQuery, selectedQueryDsData?.dsSettings]);
 
   const telemetryComponents = useAdaptiveTelemetryComponents(selectedQuery);
+  const extensionActions = useQueryEditorRowExtensionActions({
+    query: selectedQuery ?? { refId: '' },
+    queries,
+    dataSource: selectedQueryDsData?.dsSettings,
+    app,
+    timeRange: data?.timeRange,
+  });
 
   if (!selectedQuery || cardType === QueryEditorType.Expression) {
     return null;
   }
 
-  if (extraActions.length === 0 && !telemetryComponents) {
+  if (extraActions.length === 0 && !telemetryComponents && extensionActions.length === 0) {
     return null;
   }
 
@@ -69,6 +77,7 @@ export function PluginActions({ app }: PluginActionsProps) {
     <Stack gap={0.5} alignItems="center">
       {extraActions}
       {telemetryComponents}
+      {extensionActions}
     </Stack>
   );
 }

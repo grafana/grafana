@@ -1,18 +1,16 @@
+import { HttpResponse, http } from 'msw';
 import { wellFormedPanelModel } from 'test/fixtures/panelModel.fixture';
 
 import { type PanelModel } from '@grafana/data';
+import { setBackendSrv } from '@grafana/runtime';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { mockFolderDTO } from 'app/features/browse-dashboards/fixtures/folder.fixture';
 
 import { dashlistMigrationHandler, type AngularModel } from './migrations';
 
-const getMock = jest.fn();
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({
-    get: getMock,
-  }),
-}));
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('dashlist migrations', () => {
   it('migrates angular panel model to react model', async () => {
@@ -49,7 +47,7 @@ describe('dashlist migrations', () => {
       id: 77,
       uid: 'abc-124',
     });
-    getMock.mockResolvedValue(folderDTO);
+    server.use(http.get('/api/folders/id/77', () => HttpResponse.json(folderDTO)));
 
     const basePanelOptions = {
       showStarred: true,
@@ -79,25 +77,18 @@ describe('dashlist migrations', () => {
   it("doesn't fail if the api request fails", async () => {
     const spyConsoleWarn = jest.spyOn(console, 'warn').mockImplementation();
 
-    getMock.mockRejectedValue({
-      status: 403,
-      statusText: 'Forbidden',
-      data: {
-        accessErrorId: 'ACE0577385389',
-        message: "You'll need additional permissions to perform this action. Permissions needed: folders:read",
-        title: 'Access denied',
-      },
-      config: {
-        showErrorAlert: false,
-        method: 'GET',
-        url: 'api/folders/id/0',
-        retry: 0,
-        headers: {
-          'X-Grafana-Org-Id': 1,
-        },
-        hideFromInspector: true,
-      },
-    });
+    server.use(
+      http.get('/api/folders/id/:id', () =>
+        HttpResponse.json(
+          {
+            accessErrorId: 'ACE0577385389',
+            message: "You'll need additional permissions to perform this action. Permissions needed: folders:read",
+            title: 'Access denied',
+          },
+          { status: 403 }
+        )
+      )
+    );
 
     const basePanelOptions = {
       showStarred: true,
@@ -119,5 +110,7 @@ describe('dashlist migrations', () => {
 
     expect(newOptions).toStrictEqual(basePanelOptions);
     expect(spyConsoleWarn).toHaveBeenCalledTimes(1);
+
+    spyConsoleWarn.mockRestore();
   });
 });

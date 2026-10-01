@@ -1,6 +1,8 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-// ConversionStatus is the status of the conversion of the dashboard.
+/**
+ * ConversionStatus is the status of the conversion of the dashboard.
+ */
 export interface ConversionStatus {
 	// Whether from another version has failed.
 	// If true, means that the dashboard is not valid,

@@ -94,6 +94,11 @@ func (r *DisplayHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 				},
 				Handler: r.handleDisplay,
 			},
+			{
+				Path:    currentUserPath,
+				Spec:    r.selfRouteSpec(),
+				Handler: r.handleSelf,
+			},
 		},
 	}
 }

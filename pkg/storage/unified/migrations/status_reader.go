@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -25,7 +26,7 @@ var (
 	registerStatusReaderMetricsOnce sync.Once
 
 	migrationLogBootstrapFailuresMetric = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name: "migration_status_reader_bootstrap_failures_total",
+		Name: "grafana_migration_status_reader_bootstrap_failures_total",
 		Help: "Total number of failures when ensuring the migration log table exists at startup",
 	})
 )
@@ -179,4 +180,31 @@ func (r *migrationStatusReader) findDefinition(gr schema.GroupResource) (Migrati
 		}
 	}
 	return MigrationDefinition{}, false
+}
+
+// GetFloorVersion implements contract.MigrationStatusReader.
+func (r *migrationStatusReader) GetFloorVersion(gr schema.GroupResource) (string, bool) {
+	for _, def := range r.registry.All() {
+		for _, ri := range def.Resources {
+			if ri.FloorVersion == "" {
+				continue
+			}
+			if floorResourceMatches(gr, ri.GroupResource) {
+				return ri.FloorVersion, true
+			}
+		}
+	}
+	return "", false
+}
+
+// floorResourceMatches reports whether gr is covered by the registered floor
+// GroupResource. Besides an exact match, it accepts plugin-specific subgroups: the
+// datasource migration registers a single "datasource.grafana.app" floor, but dual
+// writing addresses each plugin under its own group (e.g. "prometheus.datasource.grafana.app").
+// Those share the resource and carry the registered group as a suffix.
+func floorResourceMatches(gr, floor schema.GroupResource) bool {
+	if gr == floor {
+		return true
+	}
+	return gr.Resource == floor.Resource && strings.HasSuffix(gr.Group, "."+floor.Group)
 }

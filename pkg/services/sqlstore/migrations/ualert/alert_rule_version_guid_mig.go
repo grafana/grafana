@@ -5,8 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -81,7 +80,7 @@ func (c setRuleGuidMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) er
 		}
 		bd := strings.Builder{}
 		for idx, id := range results {
-			u := uuid.NewString()
+			u := uuid.NewV4().String()
 			if idx == 0 {
 				bd.WriteString(fmt.Sprintf("SELECT %d as id, '%s' as guid", id, u))
 				continue
@@ -170,10 +169,7 @@ func (c cleanUpRuleVersionsMigration) Exec(sess *xorm.Session, mg *migrator.Migr
 	mg.Logger.Info("Cleaning up table `alert_rule_version`", "batchSize", batchSize, "batches", batches, "keepVersions", toKeep)
 
 	for i := 0; i < batches; i++ {
-		end := i*batchSize + batchSize
-		if end > len(rules) {
-			end = len(rules)
-		}
+		end := min(i*batchSize+batchSize, len(rules))
 		bd := strings.Builder{}
 		for idx, r := range rules[i*batchSize : end] {
 			if idx == 0 {

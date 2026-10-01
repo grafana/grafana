@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { memo, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, Field, Input, TextArea } from '@grafana/ui';
 import {
@@ -113,9 +114,16 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
 
     const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
 
+    // A new branch only exists after the save creates it; until the selected branch
+    // is a known remote ref, list folders from the configured branch instead of
+    // requesting an unborn ref (which 404s).
+    const selectedBranchExists = Boolean(
+      selectedBranch && branchData?.items?.some((branch) => branch.name === selectedBranch)
+    );
+
     const { options: folderOptions, loading: isFoldersLoading } = useGetRepositoryFolders({
       repositoryName: showFolderFilename ? repository?.name : undefined,
-      ref: selectedBranch || undefined,
+      ref: selectedBranchExists ? selectedBranch : undefined,
     });
 
     const pathText =
@@ -135,7 +143,10 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         {repository?.type && isGitProvider(repository.type) && !readOnly && (
           <>
             <Field
-              disabled={canOnlyPushToConfiguredBranch || lockBranch}
+              // Do not disable for lockBranch: `Field` clones `disabled` onto the input, and
+              // react-hook-form drops disabled fields from the submitted values, which would strip
+              // the enforced template branch from `ref`. The Input below stays read-only instead.
+              disabled={canOnlyPushToConfiguredBranch}
               htmlFor="provisioned-ref"
               noMargin
               label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
@@ -310,6 +321,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             {lockComment ? (
               <TextArea
                 id="provisioned-resource-form-comment"
+                data-testid={selectors.components.ProvisionedResourceForm.commentInput}
                 value={commitMessage ?? ''}
                 readOnly
                 disabled={readOnly}
@@ -318,6 +330,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             ) : (
               <TextArea
                 id="provisioned-resource-form-comment"
+                data-testid={selectors.components.ProvisionedResourceForm.commentInput}
                 {...register('comment')}
                 disabled={readOnly}
                 placeholder={t(

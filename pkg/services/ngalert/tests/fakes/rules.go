@@ -130,13 +130,7 @@ func (f *RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 	var result = make([]*models.AlertRule, 0, len(rules))
 
 	for _, rule := range rules {
-		add := true
-		for _, UID := range UIDs {
-			if rule.UID == UID {
-				add = false
-				break
-			}
-		}
+		add := !slices.Contains(UIDs, rule.UID)
 		if add {
 			result = append(result, rule)
 		}
@@ -785,4 +779,26 @@ func applyPluginOriginFilter(rules []*models.AlertRule, filter models.PluginOrig
 		}
 	}
 	return filteredList
+}
+
+func (f *RuleStore) SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	q := GenericRecordedQuery{Name: "SaveAlertRuleStatus", Params: []any{orgID, ruleUID, data}}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+
+	if err := f.Hook(q); err != nil {
+		return err
+	}
+
+	orgRules := f.Rules[orgID]
+	for _, rule := range orgRules {
+		if rule.UID == ruleUID {
+			rule.K8sStatus = data
+		}
+	}
+
+	return nil
 }

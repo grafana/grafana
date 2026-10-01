@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	"maps"
 	"math/rand"
 	"testing"
 
@@ -822,9 +823,7 @@ func TestSilenceAccess(t *testing.T) {
 			for _, silence := range silences {
 				expectedPermissions := tc.expectedPermissions.Clone()
 				if s, ok := tc.overrides[silence]; ok {
-					for k, v := range s.expectedPermissions {
-						expectedPermissions[k] = v
-					}
+					maps.Copy(expectedPermissions, s.expectedPermissions)
 				}
 				for _, permission := range models.SilencePermissions() {
 					assert.Equalf(t, expectedPermissions.Has(permission), perms[silence].Has(permission), "expected %s=%t permission for silence %s but got %t", permission, expectedPermissions.Has(permission), *silence.ID, perms[silence].Has(permission))

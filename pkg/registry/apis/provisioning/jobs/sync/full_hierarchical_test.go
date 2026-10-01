@@ -69,7 +69,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				// WriteResourceFromFile fails with PathCreationError for folder1/
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file.json", "ref").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				// File will be recorded with error, triggering automatic tracking of folder1/ failure
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -90,7 +90,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "ref").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "folder1/file1.json" && r.Error() != nil
@@ -169,7 +169,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "ref").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "folder1/file1.json" && r.Error() != nil
@@ -205,7 +205,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "level1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "level1/file1.json", "ref").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "level1/file1.json" && r.Error() != nil
@@ -232,7 +232,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				// Success path works
 				progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "ref").
-					Return("resource1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+					Return("resource1", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "success/file1.json" && r.Error() == nil
 				})).Return().Once()
@@ -241,7 +241,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "failure/file2.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "failure/", Err: fmt.Errorf("disk full")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "failure/file2.json", "ref").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "failure/file2.json" && r.Error() != nil
 				})).Return().Once()

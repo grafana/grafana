@@ -1,5 +1,8 @@
 📋 Grafana detected **3** resource changes in this pull request — ⚠️ 2 need attention.
 
+**By action:** ➕ Added (2), ✏️ Updated (1)
+**By kind:** Dashboard (2), Playlist (1)
+
 | Action | Kind | Resource | File | Preview | Status |
 |--------|------|----------|------|---------|--------|
 | ➕ Added | Dashboard | Good Dashboard | good.json | [preview](http://grafana/admin/preview) | ✅ |

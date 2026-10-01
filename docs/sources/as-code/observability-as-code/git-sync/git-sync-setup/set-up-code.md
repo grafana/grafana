@@ -27,8 +27,10 @@ You can also configure Git Sync using `gcx`, the Grafana CLI. Since Git Sync con
 For more information, refer to the following documents:
 
 - [Repository resource](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#git-sync-repository-resource) and [Connection resource](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#git-sync-repository-resource) overview
-- [Dashboard CRD Format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources/)
+- [Dashboard CRD Format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/add-resources/dashboards-migrate)
 - [Grafana CLI documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/)
+
+To provision resources from a local file system as code instead of a Git repository, refer to [Set up file provisioning as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/file-path-setup#set-up-file-provisioning-as-code).
 
 ## Set up Git Sync as code with the Grafana CLI
 

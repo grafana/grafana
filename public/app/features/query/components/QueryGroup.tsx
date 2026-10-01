@@ -15,7 +15,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { Button, InlineFormLabel, Modal, ScrollContainer, Stack, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
@@ -60,7 +61,6 @@ interface State {
 
 export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
-  dataSourceSrv = getDataSourceSrv();
   querySubscription: Unsubscribable | null = null;
 
   state: State = {
@@ -97,7 +97,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   async componentDidUpdate() {
     const { options } = this.props;
 
-    const currentDS = await getDataSourceSrv().get(options.dataSource);
+    const currentDS = await getDataSourceInstance(options.dataSource);
     if (this.state.dataSource && currentDS.uid !== this.state.dataSource?.uid) {
       this.setNewQueriesAndDatasource(options);
     }
@@ -105,10 +105,10 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   async setNewQueriesAndDatasource(options: QueryGroupOptions) {
     try {
-      const ds = await this.dataSourceSrv.get(options.dataSource);
-      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
+      const ds = await getDataSourceInstance(options.dataSource);
+      const dsSettings = await getDataSourceInstanceSettings(options.dataSource);
 
-      const defaultDataSource = await this.dataSourceSrv.get();
+      const defaultDataSource = await getDataSourceInstance();
       const datasource = ds.getRef();
       const queries = options.queries.map((q) => ({
         ...(queryIsEmpty(q) && ds?.getDefaultQuery?.(CoreApp.PanelEditor)),
@@ -136,13 +136,13 @@ export class QueryGroup extends PureComponent<Props, State> {
     defaultQueries?: DataQuery[] | GrafanaQuery[]
   ) => {
     const { dsSettings } = this.state;
-    const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
-    const nextDS = await getDataSourceSrv().get(newSettings.uid);
+    const currentDS = dsSettings ? await getDataSourceInstance(dsSettings.uid) : undefined;
+    const nextDS = await getDataSourceInstance(newSettings.uid);
 
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
     const queries = defaultQueries || (await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS));
 
-    const dataSource = await this.dataSourceSrv.get(newSettings.name);
+    const dataSource = await getDataSourceInstance(newSettings.name);
 
     this.onChange({
       queries,

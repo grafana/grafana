@@ -288,7 +288,7 @@ func TestKeyRegexCoversValidationCharSets(t *testing.T) {
 
 	// so upstream regex don't reject the probe byte for the wrong reason.
 	// Only sweep ASCII (0..127) because upstream regex's characters are ASCII.
-	for b := 0; b < 128; b++ {
+	for b := range 128 {
 		// Probe ASCII bytes between a alphanumeric string to pass name validation
 		sample := "ab" + string(rune(b)) + "cd"
 

@@ -232,12 +232,9 @@ describe('UPlotScaleBuilder', () => {
         log: 10,
         min: -5,
       }).getConfig()['y'].range as uPlot.Range.Function;
-      const rangeFnNoMin = new UPlotScaleBuilder({
-        ...baseProps,
-        distribution: ScaleDistribution.Log,
-        log: 10,
-      }).getConfig()['y'].range as uPlot.Range.Function;
-      expect(rangeFnInvalid(u, 2, 50, 'y')).toEqual(rangeFnNoMin(u, 2, 50, 'y'));
+      // -5 is ignored, so data 2..50 auto-ranges to the log10 power boundaries [1, 100]
+      // (identical to the no-hard-min result asserted by the snapping tests below)
+      expect(rangeFnInvalid(u, 2, 50, 'y')).toEqual([1, 100]);
     });
 
     it('snaps hard min down to the nearest log10 power boundary', () => {

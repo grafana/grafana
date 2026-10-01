@@ -36,6 +36,19 @@ Object.defineProperty(document, 'fonts', {
   value: { ready: Promise.resolve({}) },
 });
 
+// jsdom's URL predates URL.canParse, which @braintree/sanitize-url calls. Only the
+// static method is added - core-js's polyfill swaps out the whole URL implementation.
+if (typeof URL.canParse !== 'function') {
+  URL.canParse = (url, base) => {
+    try {
+      new URL(url, base);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+}
+
 // jsdom doesn't implement Range client-rect measurement, which CodeMirror uses
 // to position its cursor and tooltips. Provide inert stubs so editors render in
 // tests without measurement errors.

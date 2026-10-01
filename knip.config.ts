@@ -9,16 +9,7 @@ const packageIgnoreDeps = [
 
 const defaultEntries = ['i18next.config.ts'];
 
-const externalisedDatasources = [
-  'azuremonitor',
-  'grafana-postgresql-datasource',
-  'grafana-testdata-datasource',
-  'graphite',
-  'influxdb',
-  'jaeger',
-  'loki',
-  'mysql',
-];
+const externalisedDatasources = ['azuremonitor', 'cloudwatch', 'grafana-testdata-datasource', 'graphite'];
 
 const config: KnipConfig = {
   compilers: {
@@ -38,16 +29,19 @@ const config: KnipConfig = {
     'public/app/features/alerting/unified/search/search.terms.js',
     'scripts/grafana-server/tmp/**',
     'devenv/**',
+
+    // vendored temporarily
+    'packages/grafana-data/src/datetime/easytz.js',
+    'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
+    // TODO: Remove once Rspack replaces Webpack.
+    'public/app/core/utils/CorsWorker.rspack.ts',
+    'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {
       ignoreDependencies: [
-        // TODO remove these ignores when react 19 is released
-        'react-19',
-        'react-dom-19',
-
         // used by yarn test:ci
         'jest-junit',
 
@@ -61,9 +55,16 @@ const config: KnipConfig = {
         // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
         '@arethetypeswrong/cli',
         'publint',
+
+        // not imported directly, but the pin keeps react-router@5 hoisted to the top level so
+        // @types/react-router-dom resolves v5 types (otherwise react-router@6 from
+        // react-router-dom-v5-compat wins the hoist). Remove both when core swaps to react-router 6.
+        'react-router',
+        '@types/react-router',
       ],
       project: [
         'public/app/**',
+        'public/swagger/**',
         'scripts/**',
         '.github/**',
         'e2e-playwright/**',
@@ -71,14 +72,17 @@ const config: KnipConfig = {
         // paths to ignore
         '!e2e-playwright/test-plugins/**',
         '!packages/**',
+        'packages/rollup.config.parts.ts',
         '!pkg/**',
         '!scripts/grafana-server/tmp/**',
         ...externalisedDatasources.map((ds) => `!public/app/plugins/datasource/${ds}/**`),
       ],
       entry: [
         ...defaultEntries,
+        'packages/rollup.config.parts.ts',
         'public/app/app.ts',
         'public/app/index.ts',
+        'public/swagger/index.tsx',
         'public/app/api/clients/**/index.ts',
         'public/app/extensions/index.ts',
         'public/app/extensions/api/clients/**/index.ts',
@@ -97,6 +101,9 @@ const config: KnipConfig = {
       ],
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
+      },
+      rspack: {
+        config: ['scripts/rspack/rspack.dev.ts', 'scripts/rspack/rspack.prod.ts'],
       },
       postcss: {
         config: 'scripts/webpack/postcss.config.js',
@@ -124,19 +131,12 @@ const config: KnipConfig = {
       ignoreDependencies: packageIgnoreDeps,
       jest: true,
     },
-    // `grafana-alerting` has stories that are included in `grafana-ui`'s storybook
-    // this means:
-    //   - we need to manually enable the storybook plugin since there's no storybook dep in package.json
-    //   - its stories/mdx docs reference dependencies that are managed by `grafana-ui`
+    // `grafana-alerting` has stories that are included in `grafana-ui`'s storybook,
+    // so we need to manually enable the storybook plugin since there's no storybook dep in package.json
     // TODO `grafana-alerting` should probably have its own storybook (like `grafana-flamegraph`)
     'packages/grafana-alerting': {
       entry: defaultEntries,
-      ignoreDependencies: [
-        ...packageIgnoreDeps,
-        '@storybook/addon-docs',
-        '@storybook/react-webpack5',
-        '@storybook/react',
-      ],
+      ignoreDependencies: packageIgnoreDeps,
       storybook: true,
     },
     'packages/grafana-api-clients': {
@@ -146,6 +146,9 @@ const config: KnipConfig = {
       // this package contains shared code that isn't immediately used by the package
       webpack: false,
       ignoreDependencies: ['.*'],
+    },
+    'packages/grafana-plugin-compat': {
+      ignoreDependencies: packageIgnoreDeps,
     },
   },
 };

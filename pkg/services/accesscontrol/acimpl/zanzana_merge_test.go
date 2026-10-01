@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
@@ -294,7 +295,7 @@ func setupServiceWithFakeStore(t *testing.T, store accesscontrol.Store, zClient 
 	svc := ProvideOSSService(
 		cfg, store, resourcepermissions.NewActionSetService(), localcache.ProvideService(),
 		featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), tracing.InitializeTracerForTest(),
-		nil, permreg.ProvidePermissionRegistry(), nil,
+		nil, permreg.ProvidePermissionRegistry(), nil, iam.Features{},
 	)
 	if zClient != nil {
 		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc, nil, false)
@@ -358,6 +359,33 @@ func TestService_GetUserPermissions_ReloadCacheBypassesZanzanaCache(t *testing.T
 	_, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{ReloadCache: true})
 	require.NoError(t, err)
 	require.Greater(t, zClient.ListCallCount(), firstCalls, "ReloadCache should bypass Zanzana cache")
+}
+
+func TestService_GetUserPermissions_SkipZanzanaCacheDoesNotReadOrWriteCache(t *testing.T) {
+	store := &actest.FakeStore{}
+	zClient := &countingZanzanaClient{
+		fakeZanzanaClient: fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{Items: []string{"cached-dash"}},
+		},
+	}
+	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, true)
+	siu := testSignedInUser()
+
+	permissions, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Contains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:cached-dash"})
+
+	zClient.listResp = &authzv1.ListResponse{Items: []string{"contextual-dash"}}
+	permissions, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{SkipZanzanaCache: true})
+	require.NoError(t, err)
+	require.Contains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:contextual-dash"})
+	require.NotContains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:cached-dash"})
+
+	zClient.listResp = &authzv1.ListResponse{Items: []string{"unexpected-dash"}}
+	permissions, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Contains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:cached-dash"})
+	require.NotContains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:contextual-dash"})
 }
 
 func TestService_GetUserPermissions_ClearUserPermissionCacheBypassesZanzanaCache(t *testing.T) {

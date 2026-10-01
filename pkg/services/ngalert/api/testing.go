@@ -61,7 +61,7 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRule
 	evaluationTime := timeNow()
 	evaluationDuration := 1 * time.Minute
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		_, ok := f.states[orgID]
 		if !ok {
 			f.states[orgID] = map[string][]*state.State{}
@@ -124,7 +124,7 @@ func (a *recordingAccessControlFake) Evaluate(ctx context.Context, ur identity.R
 	return a.Callback(u, evaluator)
 }
 
-var _ ac.AccessControl = &recordingAccessControlFake{}
+var _ ac.AccessControl = (*recordingAccessControlFake)(nil)
 
 type fakeRuleAccessControlService struct {
 }

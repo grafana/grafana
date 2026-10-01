@@ -53,7 +53,7 @@ export const EmptyState = ({
   role,
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
-  const imageToShow = image ?? getDefaultImageForVariant(variant);
+  const imageToShow = image ?? getDefaultImageForVariant(variant, styles.image);
 
   return (
     <Box paddingY={4} display="flex" direction="column" alignItems="center" role={role}>
@@ -75,17 +75,16 @@ export const EmptyState = ({
   );
 };
 
-function getDefaultImageForVariant(variant: Props['variant']) {
+function getDefaultImageForVariant(variant: Props['variant'], className?: string) {
   switch (variant) {
     case 'call-to-action': {
-      return <GrotCTA width={300} />;
+      return <GrotCTA width={300} className={className} />;
     }
     case 'not-found': {
-      return <GrotNotFound width={300} />;
+      return <GrotNotFound width={300} className={className} />;
     }
     case 'completed': {
-      // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
-      return <SVG src={GrotCompleted} width={300} />;
+      return <SVG src={GrotCompleted} width={300} className={className} />;
     }
     default: {
       throw new Error(`Unknown variant: ${variant}`);
@@ -100,5 +99,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(4),
     maxWidth: '600px',
+  }),
+  image: css({
+    maxWidth: '100%',
   }),
 });

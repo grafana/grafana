@@ -1,7 +1,8 @@
+import { type TimeRange } from '@grafana/data';
 import { type TemplateSrv } from '@grafana/runtime';
 
 import { type AzureMonitorResource } from '../dataquery.gen';
-import { type GetMetricNamespacesQuery, type GetMetricNamesQuery } from '../types/types';
+import { type GetDimensionValuesQuery, type GetMetricNamespacesQuery, type GetMetricNamesQuery } from '../types/types';
 
 export default class UrlBuilder {
   static buildResourceUri(templateSrv: TemplateSrv, resource: AzureMonitorResource, multipleResources?: boolean) {
@@ -80,9 +81,15 @@ export default class UrlBuilder {
     query: GetMetricNamesQuery,
     templateSrv: TemplateSrv,
     multipleResources?: boolean,
-    region?: string
+    region?: string,
+    batchAPIEnabled?: boolean
   ) {
     let resourceUri: string;
+    // The subscription-level metricdefinitions API is not used when the batch API is enabled,
+    // as the batch API handles multi-resource queries via regional endpoints.
+    if (batchAPIEnabled) {
+      multipleResources = false;
+    }
     const { customNamespace, metricNamespace } = query;
     if ('resourceUri' in query) {
       resourceUri = query.resourceUri;
@@ -122,5 +129,30 @@ export default class UrlBuilder {
     apiVersion = '2025-02-01'
   ) {
     return `${baseUrl}${resourceUri}/tables/${tableName}?api-version=${apiVersion}`;
+  }
+
+  static buildAzureMonitorGetDimensionValuesUrl(
+    baseUrl: string,
+    apiVersion: string,
+    query: GetDimensionValuesQuery,
+    range: TimeRange,
+    templateSrv: TemplateSrv
+  ) {
+    const resourceUri = UrlBuilder.buildResourceUri(templateSrv, {
+      subscription: query.subscription,
+      resourceGroup: query.resourceGroup,
+      metricNamespace: query.metricNamespace,
+      resourceName: query.resourceName,
+    });
+    const searchParams = new URLSearchParams();
+    searchParams.set('api-version', apiVersion);
+    searchParams.set('timespan', `${range.from.toISOString()}/${range.to.toISOString()}`);
+    searchParams.set('metricnames', query.metricName);
+    searchParams.set('metricnamespace', query.customNamespace || query.metricNamespace);
+    searchParams.set('resultType', 'metadata');
+    // Azure requires at least one dimension under eq for resultType=metadata.
+    searchParams.set('$filter', `${query.dimension.trim()} eq '*'`);
+    searchParams.set('top', '1000');
+    return `${baseUrl}${resourceUri}/providers/microsoft.insights/metrics?${searchParams}`;
   }
 }

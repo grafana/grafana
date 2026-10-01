@@ -2,9 +2,8 @@ import { type ReactElement } from 'react';
 
 import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Icon, SegmentAsync } from '@grafana/ui';
-
-import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   datasource: DataSourceRef;
@@ -66,7 +65,7 @@ const fetchFilterKeys = async (
   currentKey: string | null,
   allFilters: AdHocVariableFilter[]
 ): Promise<Array<SelectableValue<string>>> => {
-  const ds = await getDatasourceSrv().get(datasource);
+  const ds = await getDataSourceInstance(datasource);
 
   if (!ds || !ds.getTagKeys) {
     return [];

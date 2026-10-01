@@ -23,7 +23,7 @@ const ui = {
   },
   dsImport: {
     dsPicker: byLabelText(/data source/i, { selector: '#datasource-picker' }),
-    mimirDsOption: byRole('button', { name: /Mimir Prometheus$/ }),
+    mimirDsOption: byRole('option', { name: /Mimir$/ }),
   },
   yamlImport: {
     fileUpload: byLabelText('Upload file'),
@@ -53,7 +53,7 @@ describe('ImportToGMARules', () => {
   });
 
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
-  testWithFeatureToggles({ enable: ['alertingImportYAMLUI', 'alertingMigrationUI'] });
+  testWithFeatureToggles({ enable: ['alertingMigrationUI'] });
 
   it('should render the import source options', () => {
     render(<ImportToGMARules />);

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.yaml.in/yaml/v3"
@@ -13,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/dynamic"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -23,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -201,11 +204,19 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 	}
 
-	// Remove the internal dashboard UID,version and id if they exist
+	// Remove the internal dashboard UID, version and id if they exist. The
+	// deprecated internal ID is likewise owned by the storage layer, not the
+	// repository file, so strip its label too. Otherwise a repo-authored ID
+	// would ride a create straight past the uniqueness guard, which relies on
+	// an eventually-consistent search index and so lets duplicate IDs through
+	// when several dashboards are created within a single sync operation. With
+	// the label cleared, storage mints a fresh unique ID on create and restores
+	// the previous value on update.
 	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "uid")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "version")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "id") // now managed as a label
+		unstructured.RemoveNestedField(parsed.Obj.Object, "metadata", "labels", utils.LabelKeyDeprecatedInternalID)
 	}
 
 	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)
@@ -235,6 +246,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 		// Generate a new UID
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
+	}
+
+	if errs := validation.IsValidGrafanaName(obj.GetName()); len(errs) > 0 {
+		return nil, NewResourceValidationError(field.Invalid(field.NewPath("metadata", "name"), obj.GetName(), strings.Join(errs, "; ")))
 	}
 
 	obj.SetUID("")             // clear identifiers

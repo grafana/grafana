@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
@@ -25,7 +26,11 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
   const styles = useStyles2(getStyles);
 
   return (
-    <Card noMargin href={hasWriteRights ? dsLink : undefined}>
+    <Card
+      noMargin
+      href={hasWriteRights ? dsLink : undefined}
+      data-testid={selectors.pages.DataSources.dataSources(dataSource.name)}
+    >
       <Card.Heading>{dataSource.name}</Card.Heading>
       <Card.Figure>
         <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />

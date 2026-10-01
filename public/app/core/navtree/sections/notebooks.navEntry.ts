@@ -1,0 +1,23 @@
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { NavID, NavWeight } from '../constants';
+import { isSignedIn, type NavEntryBuilder } from '../utils';
+
+// An unscoped notebooks:read grants the list page, and the apiserver filters the list down to
+// what the user may see.
+export const notebooksNavEntry: NavEntryBuilder = {
+  when: () =>
+    isSignedIn() &&
+    contextSrv.hasPermission(AccessControlAction.NotebooksRead) &&
+    getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false),
+  build: () => ({
+    text: 'Notebooks',
+    id: NavID.notebooks,
+    subTitle: 'Create and manage notebooks to tell a story with your data',
+    icon: 'book',
+    sortWeight: NavWeight.notebooks,
+    url: '/notebooks',
+  }),
+};

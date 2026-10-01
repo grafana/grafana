@@ -261,9 +261,14 @@ export default AzureCheatSheet;
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css({
+      background: theme.colors.background.secondary,
       width: '90%',
       display: 'flex',
       flexDirection: 'column',
+
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
     }),
     rawQuery: css({
       backgroundColor: `${theme.colors.background.primary}`,

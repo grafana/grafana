@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -75,6 +75,40 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	savedFolder := createFolder(t, grafanaListedAddr, "Saved folder")
 	savedDashInFolder := createDashboard(t, grafanaListedAddr, "Saved dash in folder", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
 	savedDashInGeneralFolder := createDashboard(t, grafanaListedAddr, "Saved dashboard in general folder", 0, "")
+
+	t.Run("searches dashboards and folders with field-value results", func(t *testing.T) {
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			u := fmt.Sprintf("http://admin:admin@%s/api/search?query=Saved", grafanaListedAddr)
+			resp, err := http.Get(u) // nolint:gosec
+			if !assert.NoError(collect, err) {
+				return
+			}
+			defer resp.Body.Close() // nolint:errcheck
+			if !assert.Equal(collect, http.StatusOK, resp.StatusCode) {
+				return
+			}
+
+			var results model.HitList
+			if !assert.NoError(collect, json.NewDecoder(resp.Body).Decode(&results)) {
+				return
+			}
+			byUID := make(map[string]*model.Hit, len(results))
+			for _, hit := range results {
+				byUID[hit.UID] = hit
+			}
+			if assert.Contains(collect, byUID, savedFolder.UID) {
+				assert.Equal(collect, model.DashHitFolder, byUID[savedFolder.UID].Type)
+				assert.NotZero(collect, byUID[savedFolder.UID].ID)
+			}
+			if assert.Contains(collect, byUID, savedDashInFolder.UID) {
+				assert.Equal(collect, savedFolder.UID, byUID[savedDashInFolder.UID].FolderUID)
+				assert.NotZero(collect, byUID[savedDashInFolder.UID].ID)
+			}
+			if assert.Contains(collect, byUID, savedDashInGeneralFolder.UID) {
+				assert.NotZero(collect, byUID[savedDashInGeneralFolder.UID].ID)
+			}
+		}, 10*time.Second, 25*time.Millisecond)
+	})
 
 	t.Run("When saving a dashboard with non-existing id in org A", func(t *testing.T) {
 		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
@@ -389,7 +423,7 @@ func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
 	provDashboardsCfg := filepath.Join(provDashboardsDir, "dev.yaml")
-	blob := []byte(fmt.Sprintf(`
+	blob := fmt.Appendf(nil, `
 apiVersion: 1
 
 providers:
@@ -397,7 +431,7 @@ providers:
   type: file
   allowUiUpdates: false
   options:
-   path: %s`, provDashboardsDir))
+   path: %s`, provDashboardsDir)
 	err := os.WriteFile(provDashboardsCfg, blob, 0644)
 	require.NoError(t, err)
 	input, err := os.ReadFile(filepath.Join("./home.json"))

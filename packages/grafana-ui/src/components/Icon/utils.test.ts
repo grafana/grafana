@@ -22,22 +22,22 @@ describe('Icon utils', () => {
       jest.resetModules();
     });
 
-    describe('when public path is configured', () => {
+    describe('when the build path is configured', () => {
       beforeAll(() => {
         //@ts-ignore
-        window.__grafana_public_path__ = 'somepath/public/';
+        window.__grafana_build_path__ = 'somepath/public/build/rspack/';
       });
 
-      it('should return icon root based on __grafana_public_path__', () => {
+      it('should return icon root based on __grafana_build_path__', () => {
         const { getIconRoot } = require('./utils');
-        expect(getIconRoot()).toEqual('somepath/public/build/img/icons/');
+        expect(getIconRoot()).toEqual('somepath/public/build/rspack/img/icons/');
       });
     });
 
-    describe('when public path is not configured', () => {
+    describe('when the build path is not configured', () => {
       beforeAll(() => {
         //@ts-ignore
-        window.__grafana_public_path__ = undefined;
+        window.__grafana_build_path__ = undefined;
       });
 
       it('should return default icon root', () => {

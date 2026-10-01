@@ -8,12 +8,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 
 	"github.com/stretchr/testify/require"
 )
@@ -59,23 +57,13 @@ func BenchmarkBleveBuildIndexStorageSelection(b *testing.B) {
 }
 
 func benchmarkBuildIndex(b *testing.B, docs int, fileThreshold int64) {
-	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &builders.DashboardDocumentBuilder{
-			Namespace:        namespace,
-			Blob:             blob,
-			Stats:            make(map[string]map[string]int64),
-			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
-		}, nil
-	})
-	require.NoError(b, err)
-
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          b.TempDir(),
 		FileThreshold: fileThreshold,
 		BuildVersion:  "12.3.45-789",
-		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
-		},
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
+		}),
 	}, nil)
 	require.NoError(b, err)
 	defer backend.Stop()

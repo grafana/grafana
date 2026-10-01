@@ -1,7 +1,7 @@
 import { filter, Observable, scan, share, type Subscriber } from 'rxjs';
 
-import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -63,16 +63,42 @@ function sortLinks(a: DashboardLink, b: DashboardLink): number {
 }
 
 async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<DefaultControlEvent>) {
-  let ds: DataSourceApi;
+  // Default controls are opportunistic; a missing datasource is a skip, not a failure.
+  // Ask the settings cache first so plugin-load errors (e.g. "module not found") are
+  // not mistaken for a missing datasource. Match getDataSourceInstance's empty-uid
+  // normalization so { uid: '', type } is a type-only lookup, not a miss on uid ''.
+  //
+  // A type-only ref means "any instance of this plugin". Both async APIs fall back to the
+  // default datasource when no instance matches; legacy get() rejected, and skipping is what
+  // we want — otherwise the default DS's controls get emitted under the wrong type.
+  // settings.type may still differ when the instance matched via meta.aliasIDs (legacy
+  // plugin ids on DataSourceVariable refs); that is a real instance, not a fallback.
+  const settings = await getDataSourceInstanceSettings(settingsLookupRef(ref));
+  if (!settings) {
+    return;
+  }
+  if (!ref.uid && ref.type && !matchesRequestedType(settings, ref.type)) {
+    return;
+  }
 
+  let ds: DataSourceApi;
   try {
-    ds = await getDataSourceSrv().get(ref);
+    ds = await getDataSourceInstance(ref);
   } catch (e) {
     console.warn('Failed to load datasource', ref, e);
     return;
   }
 
   await Promise.all([emitDefaultVariables(ds, subscriber), emitDefaultLinks(ds, subscriber)]);
+}
+
+function settingsLookupRef(ref: DataSourceRef): DataSourceRef {
+  return ref.uid === '' ? { ...ref, uid: undefined } : ref;
+}
+
+// Mirrors getDataSourceInstanceSettings type lookup: exact type or aliasIDs match.
+function matchesRequestedType(settings: DataSourceInstanceSettings, type: string): boolean {
+  return settings.type === type || (settings.meta?.aliasIDs?.includes(type) ?? false);
 }
 
 async function emitDefaultVariables(ds: DataSourceApi, subscriber: Subscriber<DefaultControlEvent>) {

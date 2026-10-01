@@ -32,22 +32,29 @@ const randomWalkFields: Array<{
 
 const testSelectors = selectors.components.DataSource.TestData.QueryTab;
 type Selector = 'max' | 'min' | 'noise' | 'seriesCount' | 'spread' | 'startValue' | 'drop';
+type RandomWalkEditorProps = Omit<EditorProps, 'query'> & {
+  query: TestDataDataQuery & Partial<Record<Selector, number>>;
+};
 
-export const RandomWalkEditor = ({ onChange, query }: EditorProps) => {
+export const RandomWalkEditor = ({ onChange, query }: RandomWalkEditorProps) => {
   return (
     <InlineFieldRow>
       {randomWalkFields.map(({ label, id, min, step, placeholder, tooltip }) => {
         const selector = testSelectors[id];
+        // Entries upgraded to data-testid matching resolve to a 'data-testid ...' string, which
+        // must not become the accessible name — fall back to the visible label for those.
+        const ariaLabel = selector.startsWith('data-testid') ? label : selector;
         return (
-          <InlineField label={label} labelWidth={14} key={id} aria-label={selector} tooltip={tooltip}>
+          <InlineField label={label} labelWidth={14} key={id} aria-label={ariaLabel} tooltip={tooltip}>
             <Input
               width={32}
               name={id}
               type="number"
+              data-testid={selector}
               id={`randomWalk-${id}-${query.refId}`}
               min={min}
               step={step}
-              value={(query as any)[id as keyof TestDataDataQuery] ?? placeholder}
+              value={query[id] ?? placeholder}
               placeholder={placeholder}
               onChange={onChange}
             />

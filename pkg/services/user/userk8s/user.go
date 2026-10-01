@@ -707,6 +707,7 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 			Created:       time.UnixMilli(hit.Created),
 			IsDisabled:    hit.Disabled,
 			IsProvisioned: hit.Provisioned,
+			AuthModule:    user.AuthModuleConversion(hit.ExternalAuthModules),
 		})
 	}
 

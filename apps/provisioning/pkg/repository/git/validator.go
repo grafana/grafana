@@ -40,6 +40,15 @@ func validateGitConfig(repo *provisioning.Repository, cfg *provisioning.GitRepos
 	return ValidateGitConfigFields(repo, cfg.URL, cfg.Branch, cfg.Path, allowInsecure)
 }
 
+// IsInsecureURLWithToken reports whether url is an http:// URL that would
+// send a configured token in cleartext. hasToken is a presence check
+// (IsZero) so this works before secrets are decrypted. URL schemes are
+// case-insensitive, so url is normalized before comparing (https:// is
+// unaffected, since it does not have the http:// prefix).
+func IsInsecureURLWithToken(url string, hasToken bool) bool {
+	return strings.HasPrefix(strings.ToLower(url), "http://") && hasToken
+}
+
 // ValidateGitConfigFields validates common git configuration fields (Branch, Path, token/connection).
 // This can be reused by git-based repository types (github, gitlab, bitbucket).
 // The URL parameter is only used for token/connection validation logic, not for URL format validation
@@ -62,11 +71,8 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 		}
 	}
 
-	// Reject http:// together with a token: the token would travel in cleartext on every git
-	// operation. The token is a presence check (IsZero) that works without decryption.
-	// URL schemes are case-insensitive, so normalize before comparing (https:// is unaffected,
-	// since it does not have the http:// prefix).
-	if !allowInsecure && strings.HasPrefix(strings.ToLower(url), "http://") && !repo.Secure.Token.IsZero() {
+	// Reject http:// together with a token: the token would travel in cleartext on every git operation.
+	if !allowInsecure && IsInsecureURLWithToken(url, !repo.Secure.Token.IsZero() || repo.HasConnection()) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "url"), url,
 			"http:// is not allowed when a token is configured; use https:// to avoid sending credentials in cleartext"))
 	}

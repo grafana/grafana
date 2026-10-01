@@ -1202,8 +1202,8 @@ func parseOpts(name string, o values) error {
 
 	name = strings.TrimSpace(name)
 
-	ps := strings.Split(name, " ")
-	for _, p := range ps {
+	ps := strings.SplitSeq(name, " ")
+	for p := range ps {
 		kv := strings.Split(p, "=")
 		if len(kv) < 2 {
 			return fmt.Errorf("invalid option: %q", p)

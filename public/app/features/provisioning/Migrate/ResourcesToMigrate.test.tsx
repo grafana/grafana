@@ -9,6 +9,7 @@ const folders: FolderRow[] = [
   {
     uid: 'team-a',
     title: 'Team A',
+    path: [],
     resourceCount: 2,
     directResources: [
       { uid: 'd1', title: 'Dashboard One', kind: resourceKindInfos.dashboard },
@@ -43,6 +44,25 @@ describe('ResourcesToMigrate', () => {
     expect(screen.getByText('Resources to migrate')).toBeInTheDocument();
     expect(screen.getByText('Team A')).toBeInTheDocument();
     expect(screen.getByText('Showing 1–1 of 1 folder')).toBeInTheDocument();
+  });
+
+  it('shows the ancestor path breadcrumb for a nested folder', () => {
+    setup({
+      folders: [{ ...folders[0], path: ['Parent', 'Child'] }],
+    });
+
+    expect(screen.getByText('Parent / Child')).toBeInTheDocument();
+    // The folder's own title still renders separately below the breadcrumb.
+    expect(screen.getByText('Team A')).toBeInTheDocument();
+  });
+
+  it('omits the breadcrumb for a root-level folder', () => {
+    setup();
+
+    // Team A has an empty path, so the breadcrumb line (folder titles joined by
+    // " / ") is never rendered. Match the separator with its surrounding spaces
+    // so unrelated slashes elsewhere in the UI can't trip this assertion.
+    expect(screen.queryByText(/ \/ /)).not.toBeInTheDocument();
   });
 
   it('expands a folder to reveal its resources', async () => {
@@ -130,6 +150,7 @@ describe('ResourcesToMigrate', () => {
       {
         uid: '__playlists__',
         title: 'Playlists',
+        path: [],
         resourceCount: 2,
         directResources: [
           { uid: 'p1', title: 'Morning rotation', kind: resourceKindInfos.playlist },
@@ -175,6 +196,7 @@ describe('ResourcesToMigrate', () => {
     const manyFolders: FolderRow[] = Array.from({ length: 25 }, (_, i) => ({
       uid: `folder-${i}`,
       title: `Folder ${i}`,
+      path: [],
       resourceCount: 25 - i,
       directResources: [{ uid: `r-${i}`, title: `Resource ${i}`, kind: resourceKindInfos.dashboard }],
     }));
@@ -261,6 +283,7 @@ describe('ResourcesToMigrate', () => {
       {
         uid: 'alpha',
         title: 'Alpha',
+        path: [],
         resourceCount: 2,
         directResources: [
           { uid: 'a1', title: 'Alpha One', kind: resourceKindInfos.dashboard },
@@ -270,6 +293,7 @@ describe('ResourcesToMigrate', () => {
       {
         uid: 'beta',
         title: 'Beta',
+        path: [],
         resourceCount: 5,
         directResources: [{ uid: 'b1', title: 'Beta One', kind: resourceKindInfos.dashboard }],
       },

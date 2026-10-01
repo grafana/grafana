@@ -473,6 +473,7 @@ func TestRefreshHealth(t *testing.T) {
 			testError: nil,
 			existingStatus: provisioning.HealthStatus{
 				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().Add(-15 * time.Second).UnixMilli(),
 				Message: []string{"connection failed", "timeout"},
 			},
@@ -508,6 +509,7 @@ func TestRefreshHealth(t *testing.T) {
 			testError: nil,
 			existingStatus: provisioning.HealthStatus{
 				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 				Message: []string{"connection failed", "timeout"},
 			},
@@ -560,7 +562,7 @@ func TestRefreshHealth(t *testing.T) {
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
-			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything).Return()
+			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything, mock.Anything).Return()
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
 			if tt.expectPatch {
@@ -713,7 +715,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
-			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything).Return()
+			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything, mock.Anything).Return()
 			hc := NewRepositoryHealthChecker(nil, repository.NewTester(validator), mockMetricsRecorder)
 
 			// Call RefreshHealthWithPatchOps
@@ -892,6 +894,38 @@ func TestHasHealthStatusChanged(t *testing.T) {
 			new: provisioning.HealthStatus{
 				Healthy: false,
 				Message: []string{"error1", "error2"},
+			},
+			expected: false,
+		},
+		{
+			// Healthy and Message can stay identical while the classified
+			// failure type changes (e.g. a hook failure superseded by a
+			// content/reachability failure), so Error must be compared on its
+			// own rather than relying on Message to catch this case.
+			name: "same messages, different error type",
+			old: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHook,
+				Message: []string{"error1"},
+			},
+			new: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Message: []string{"error1"},
+			},
+			expected: true,
+		},
+		{
+			name: "same messages, same error type",
+			old: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Message: []string{"error1"},
+			},
+			new: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Message: []string{"error1"},
 			},
 			expected: false,
 		},

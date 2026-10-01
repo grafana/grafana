@@ -68,7 +68,7 @@ receivers:
   - name: dupe-receiver
 `
 		extra := extraConfig(dupeConfig)
-		expectedDedupSuffix := extra.Identifier
+		expectedDedupSuffix := "_" + extra.Identifier
 		rev := getConfigRevisionForTest(withExtraConfig(extra))
 		imported, err = rev.Imported()
 		require.NoError(t, err)
@@ -151,7 +151,7 @@ receivers:
   - name: r1
 `
 		extra := extraConfig(dupeConfig)
-		expectedDedupSuffix := extra.Identifier
+		expectedDedupSuffix := "_" + extra.Identifier
 		rev := getConfigRevisionForTest(withExtraConfig(extra))
 
 		imported, err := rev.Imported()
@@ -197,16 +197,17 @@ receivers:
 		require.NoError(t, err)
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
-		require.Equal(t, &ManagedRoute{
-			Name:     extra.Identifier,
-			Version:  "",
+		require.Equal(t, &v1.ManagedRoute{
+			ResourceMetadata: v1.ResourceMetadata{
+				UID:        v1.RouteUID(extra.Identifier),
+				Provenance: models.ProvenanceConvertedPrometheus,
+			},
 			Receiver: "r1",
 			Routes: []*v1.Route{
 				{Receiver: "r2", Routes: []*v1.Route{{Receiver: "r1", Routes: make([]*v1.Route, 0)}}},
 				{Receiver: "", Routes: []*v1.Route{{Receiver: "r2", Routes: make([]*v1.Route, 0)}}},
 			},
-			Provenance: models.ProvenanceConvertedPrometheus,
-			Origin:     models.ResourceOriginImported,
+			Origin: models.ResourceOriginImported,
 		}, route)
 	})
 
@@ -231,7 +232,7 @@ mute_time_intervals:
   - name: mute-interval-1
 `
 		extra := extraConfig(dupeConfig)
-		expectedDedupSuffix := extra.Identifier
+		expectedDedupSuffix := "_" + extra.Identifier
 		rev := getConfigRevisionForTest(withExtraConfig(extra))
 
 		imported, err := rev.Imported()
@@ -240,16 +241,17 @@ mute_time_intervals:
 		require.NoError(t, err)
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
-		require.Equal(t, &ManagedRoute{
-			Name:     extra.Identifier,
-			Version:  "",
+		require.Equal(t, &v1.ManagedRoute{
+			ResourceMetadata: v1.ResourceMetadata{
+				UID:        v1.RouteUID(extra.Identifier),
+				Provenance: models.ProvenanceConvertedPrometheus,
+			},
 			Receiver: "receiver1" + expectedDedupSuffix,
 			Routes: []*v1.Route{
 				{Receiver: "dupe-receiver" + expectedDedupSuffix, MuteTimeIntervals: []string{"mute-interval-1" + expectedDedupSuffix}, Routes: make([]*v1.Route, 0)},
 				{Receiver: "r1", ActiveTimeIntervals: []string{"time-interval-1" + expectedDedupSuffix}, Routes: make([]*v1.Route, 0)},
 			},
-			Provenance: models.ProvenanceConvertedPrometheus,
-			Origin:     models.ResourceOriginImported,
+			Origin: models.ResourceOriginImported,
 		}, route)
 	})
 }

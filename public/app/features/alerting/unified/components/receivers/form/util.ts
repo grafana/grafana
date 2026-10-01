@@ -16,9 +16,9 @@ export interface HTTPAuthConfig {
 }
 
 // convert the newer http_config to the older (deprecated) format
-export function normalizeFormValues(
-  values?: ReceiverFormValues<ChannelValues>
-): ReceiverFormValues<ChannelValues> | undefined {
+export function normalizeFormValues<R extends ChannelValues>(
+  values?: ReceiverFormValues<R>
+): ReceiverFormValues<R> | undefined {
   if (!values) {
     return;
   }

@@ -3,6 +3,7 @@ import { useId, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 
@@ -61,7 +62,7 @@ export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enablePro
         <Field
           noMargin
           label={label}
-          data-testid="group-picker"
+          data-testid={selectors.components.AlertRules.groupPicker}
           className={styles.formInput}
           error={errors.group?.message}
           invalid={!!errors.group?.message}

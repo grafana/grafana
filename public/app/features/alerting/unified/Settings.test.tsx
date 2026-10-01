@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { render, testWithFeatureToggles } from 'test/test-utils';
+import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import SettingsPage from './Settings';
@@ -8,7 +8,7 @@ import { setupGrafanaManagedServer, withExternalOnlySetting } from './components
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
 import { addSettingsSection } from './settings/extensions';
-import { setupDataSources } from './testSetup/datasources';
+import { setupPrometheusAlertingPlugin } from './testSetup/prometheusAlertingPlugin';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -20,7 +20,6 @@ const server = setupMswServer();
 const ui = {
   builtInAlertmanagerSection: byText('Built-in Alertmanager'),
   otherAlertmanagerSection: byText('Other Alertmanagers'),
-  autoSyncCard: byRole('region', { name: /auto-sync configuration/i }),
 
   alertmanagerCard: (name: string) => byTestId(`alertmanager-card-${name}`),
   builtInAlertmanagerCard: byTestId('alertmanager-card-Grafana built-in'),
@@ -40,7 +39,7 @@ const ui = {
   provisionedBadge: byText(/^Provisioned$/),
 
   // New selectors for extension tabs
-  alertmanagerTab: byRole('tab', { name: 'Alert managers' }),
+  alertmanagerTab: byRole('tab', { name: 'Alertmanagers' }),
   enrichmentTab: byRole('tab', { name: 'Enrichment' }),
   notificationsTab: byRole('tab', { name: 'Notifications' }),
   customTab: (name: string) => byRole('tab', { name }),
@@ -261,31 +260,39 @@ describe('Alerting settings', () => {
     expect(ui.enrichmentTab.query()).not.toBeInTheDocument();
     expect(ui.notificationsTab.query()).not.toBeInTheDocument();
   });
+});
 
-  it('should not render the auto-sync configuration card when the feature flag is off', async () => {
-    render(<SettingsPage />);
+describe('Alerting settings with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
 
-    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
-    expect(ui.autoSyncCard.query()).not.toBeInTheDocument();
+  beforeEach(() => {
+    grantUserRole('ServerAdmin');
+    setupGrafanaManagedServer(server);
   });
 
-  describe('with alerting.syncExternalAlertmanager feature flag enabled', () => {
-    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+  it('leaves external Alertmanager configuration to the plugin but keeps enable/disable', async () => {
+    render(<SettingsPage />);
 
-    it('renders the auto-sync configuration card above the Built-in Alertmanager section', async () => {
-      // DataSourcePicker reads from getDataSourceSrv(); initialise it (empty list is fine here).
-      setupDataSources();
-      render(<SettingsPage />);
+    expect(await ui.builtInAlertmanagerSection.find()).toBeInTheDocument();
 
-      await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+    for (const ds of DataSourcesResponse) {
+      const card = ui.alertmanagerCard(ds.name).get();
 
-      const card = await ui.autoSyncCard.find();
-      expect(card).toBeInTheDocument();
+      await waitFor(() => {
+        expect(ui.editConfigurationButton.query(card)).not.toBeInTheDocument();
+      });
+      expect(ui.viewConfigurationButton.query(card)).not.toBeInTheDocument();
+    }
 
-      // The card should precede the Built-in Alertmanager heading in document order.
-      const builtInHeading = ui.builtInAlertmanagerSection.get();
-      // eslint-disable-next-line no-bitwise
-      expect(card.compareDocumentPosition(builtInHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    });
+    // Whether Grafana delivers its own alerts to an external Alertmanager is still ours to decide,
+    // so the delivery controls stay. (Provisioned data sources never had them.)
+    expect(ui.enableButton.queryAll().length + ui.disableButton.queryAll().length).toBeGreaterThan(0);
+  });
+
+  it('keeps "View configuration" on the built-in Alertmanager', async () => {
+    render(<SettingsPage />);
+
+    const internalAMCard = await ui.builtInAlertmanagerCard.find();
+    expect(await ui.viewConfigurationButton.find(internalAMCard)).toBeInTheDocument();
   });
 });

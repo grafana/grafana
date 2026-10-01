@@ -16,6 +16,8 @@ export interface TransformationCardProps {
   data?: DataFrame[];
   fullWidth?: boolean;
   onClick: (id: string) => void;
+  /** Set when the card is rendered inside a role="list" container */
+  role?: 'listitem';
   showIllustrations?: boolean;
   showPluginState?: boolean;
   showTags?: boolean;
@@ -26,6 +28,7 @@ export function TransformationCard({
   data = [],
   fullWidth = false,
   onClick,
+  role,
   showIllustrations,
   showPluginState = true,
   showTags = true,
@@ -59,6 +62,7 @@ export function TransformationCard({
       data-testid={selectors.components.TransformTab.newTransform(transform.name)}
       onClick={() => onClick(transform.id)}
       noMargin
+      role={role}
     >
       <Card.Heading>
         <Stack alignItems="center" justifyContent="space-between">

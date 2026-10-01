@@ -3,7 +3,7 @@ import { type ReplaySubject } from 'rxjs';
 import { type AppPluginConfig, type PluginExtensionExposedComponentConfig } from '@grafana/data';
 
 import * as errors from '../errors';
-import { isGrafanaDevMode } from '../utils';
+import { isGrafanaDevMode } from '../isGrafanaDevMode';
 import { isExposedComponentMetaInfoMissing } from '../validators';
 
 import { Registry, type RegistryType, type PluginExtensionConfigs } from './Registry';

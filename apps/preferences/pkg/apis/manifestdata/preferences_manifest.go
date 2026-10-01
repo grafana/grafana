@@ -44,6 +44,12 @@ var appManifestData = app.ManifestData{
 					Plural:     "Preferences",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Storage: &app.ManifestVersionKindStorage{
+						ListKeys: func(b bool) *bool { return &b }(false),
+					},
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -71,6 +77,12 @@ var appManifestData = app.ManifestData{
 					Plural:     "Preferences",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Storage: &app.ManifestVersionKindStorage{
+						ListKeys: func(b bool) *bool { return &b }(false),
+					},
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{

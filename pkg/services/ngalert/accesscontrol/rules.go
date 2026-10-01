@@ -65,8 +65,7 @@ func (r *RuleService) getRulesQueryEvaluator(rules ...*models.AlertRule) accessc
 	evals := make([]accesscontrol.Evaluator, 0, 2)
 	for _, rule := range rules {
 		for _, query := range rule.Data {
-			if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.DatasourceUID || query.
-				DatasourceUID == expr.OldDatasourceUID {
+			if query.DatasourceUID == expr.DatasourceUID || query.DatasourceUID == expr.OldDatasourceUID {
 				continue
 			}
 			if _, ok := added[query.DatasourceUID]; ok {
@@ -177,7 +176,7 @@ func checkFolderAccessByFullpath(user identity.Requester, rule models.Namespaced
 
 	folderUID := rule.GetNamespaceUID()
 	targetScopes := []string{folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}
-	for _, uid := range strings.Split(fullpath, "/") {
+	for uid := range strings.SplitSeq(fullpath, "/") {
 		if uid != "" && uid != folderUID {
 			targetScopes = append(targetScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(uid))
 		}

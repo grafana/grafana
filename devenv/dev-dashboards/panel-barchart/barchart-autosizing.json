@@ -157,7 +157,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, -5\nLong value, 15,10",
@@ -257,7 +257,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8,Stat9,Stat10\nA, 10, 15,8,3,4,12,14,1,5,10\nB, 19, 5,8,3,4,12,14,6,7,2\nC, 15, 5,8,3,4,10,4,6,7,2\n",
@@ -356,7 +356,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8,Stat9,Stat10\nA, 10, 15,8,3,4,12,14,1,5,10\nB, 19, 5,8,3,4,12,14,6,7,2\nC, 15, 5,8,3,4,10,4,6,7,2\n",
@@ -455,7 +455,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, -5\nLondon, 10, 1\nLong value, 15,10",
@@ -555,7 +555,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8,Stat9,Stat10\nA, 10, 15,8,3,4,12,14,1,5,10\nB, 19, 5,8,3,4,12,14,6,7,2\nC, 15, 5,8,3,4,10,4,6,7,2\n",
@@ -654,7 +654,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "month,sales\nJan,10\nFeb,20\nMar,15\nApr,25\nMay,18",
@@ -734,7 +734,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "no_data_points"
@@ -799,7 +799,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "month,sales\nJan,10\nFeb,20\nMar,15\nApr,25\nMay,18",
@@ -879,7 +879,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "month,sales\nJan,10\nFeb,20\nMar,15\nApr,25\nMay,18",
@@ -959,7 +959,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "month,sales,expenses\nJan,10,5\nFeb,20,12\nMar,15,8\nApr,25,14\nMay,18,9",
@@ -1039,7 +1039,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "Time,Name,Stat1,Stat2\n2020-01-01T00:00:00Z,Stockholm, 10, 15\n2020-01-01T00:00:00Z,New York, 19, 5\n2020-01-01T00:00:00Z,London, 10, 1\n2020-01-01T00:00:00Z,Negative, 15, -5\n2020-01-01T00:00:00Z,Long value, 15,10",

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -132,7 +132,7 @@ func toCreateRow(createdAt, updatedAt int64, keeper string, sv *secretv1beta1.Se
 		return nil, err
 	}
 
-	row.GUID = uuid.New().String()
+	row.GUID = uuid.NewV4().String()
 	row.Created = createdAt
 	row.CreatedBy = createdBy
 	row.Updated = updatedAt

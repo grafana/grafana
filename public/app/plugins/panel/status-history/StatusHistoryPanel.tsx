@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { DashboardCursorSync, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { DashboardCursorSync, type DataFrame, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
@@ -19,6 +19,7 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
+import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
 import { usePagination } from '../state-timeline/hooks';
@@ -48,12 +49,26 @@ export const StatusHistoryPanel = ({
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, eventsScope, canAddAnnotations, eventBus, canExecuteActions } = usePanelContext();
+  const {
+    sync,
+    eventsScope,
+    canAddAnnotations,
+    eventBus,
+    canExecuteActions,
+    getFiltersBasedOnGrouping,
+    onAddAdHocFilters,
+  } = usePanelContext();
   const { dataLinkPostProcessor } = useDataLinksContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+
+  const getFilterByGroupedLabelsModel = useCallback(
+    (frame: DataFrame, seriesIdx: number | null | undefined) =>
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters),
+    [getFiltersBasedOnGrouping, onAddAdHocFilters]
+  );
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, false, timeRange, theme),
@@ -165,6 +180,7 @@ export const StatusHistoryPanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
+                        filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                         canExecuteActions={userCanExecuteActions}
                       />
                     );

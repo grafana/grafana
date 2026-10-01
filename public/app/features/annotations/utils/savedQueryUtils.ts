@@ -5,7 +5,7 @@ import {
   hasQueryExportSupport,
   hasQueryImportSupport,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 
 import { standardAnnotationSupport } from '../standardAnnotationSupport';
@@ -62,7 +62,7 @@ export async function updateAnnotationFromSavedQuery(
 
   // Step 2: Use datasource's export/import to normalize saved query
   try {
-    const newDatasource = await getDataSourceSrv().get(replacedQuery.datasource);
+    const newDatasource = await getDataSourceInstance(replacedQuery.datasource);
 
     // Normalize saved query using export/import approach (strips context, keeps content)
     // This follows the same pattern as updateQueries.ts for datasource transitions

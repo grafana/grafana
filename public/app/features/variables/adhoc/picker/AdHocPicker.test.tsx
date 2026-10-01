@@ -1,8 +1,8 @@
 import { screen, within } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { type AdHocVariableModel } from '@grafana/data';
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type AdHocVariableModel, type DataSourceApi } from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { adHocBuilder } from '../../shared/testing/builders';
 import { getPreloadedState } from '../../state/helpers';
@@ -10,6 +10,13 @@ import * as actions from '../actions';
 
 import { REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocPicker } from './AdHocPicker';
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
+}));
+
+const mockGetDataSourceInstance = getDataSourceInstance as jest.MockedFunction<typeof getDataSourceInstance>;
 
 const defaultVariable = adHocBuilder()
   .withId('adhoc0')
@@ -19,18 +26,14 @@ const defaultVariable = adHocBuilder()
   .build();
 
 function setup(overrides: Partial<AdHocVariableModel> = {}, readOnly = false) {
-  setDataSourceSrv({
-    get() {
-      return {
-        getTagKeys() {
-          return [{ text: 'app' }];
-        },
-        getTagValues() {
-          return [{ text: 'frontend' }, { text: 'backend' }];
-        },
-      };
+  mockGetDataSourceInstance.mockResolvedValue({
+    getTagKeys() {
+      return [{ text: 'app' }];
     },
-  } as unknown as DataSourceSrv);
+    getTagValues() {
+      return [{ text: 'frontend' }, { text: 'backend' }];
+    },
+  } as unknown as DataSourceApi);
 
   const variable = { ...defaultVariable, ...overrides };
   const templatingState = {

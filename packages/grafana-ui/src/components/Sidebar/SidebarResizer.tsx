@@ -80,7 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: 'col-resize',
       zIndex: 1,
       '&:hover': {
-        borderRight: `1px solid ${theme.colors.accent.border}`,
+        borderRight: `1px solid ${theme.colors.accent.main}`,
       },
     }),
     left: css({
@@ -92,7 +92,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: 'col-resize',
       zIndex: 1,
       '&:hover': {
-        borderLeft: `1px solid ${theme.colors.accent.border}`,
+        borderLeft: `1px solid ${theme.colors.accent.main}`,
       },
     }),
   };

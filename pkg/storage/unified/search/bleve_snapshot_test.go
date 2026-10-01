@@ -20,11 +20,9 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/memblob"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -42,9 +40,16 @@ func writeFakeSnapshot(dir string, meta *IndexMeta) error {
 	if err := setRV(idx, meta.LatestResourceVersion); err != nil {
 		return err
 	}
+	features := meta.Features
+	if features == nil {
+		// Otherwise the index is rejected after download for missing a required feature.
+		features = resource.CurrentIndexFeatures()
+	}
 	bi, err := json.Marshal(buildInfo{
-		BuildTime:    meta.UploadTimestamp.Unix(),
-		BuildVersion: meta.BuildVersion,
+		BuildTime:          meta.UploadTimestamp.Unix(),
+		BuildVersion:       meta.BuildVersion,
+		Features:           features,
+		ReaderRequirements: meta.ReaderRequirements,
 	})
 	if err != nil {
 		return err
@@ -164,6 +169,87 @@ func TestPickBestSnapshot(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): snap("not-a-version", 100, time.Minute)}
 		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
+	})
+
+	requiring := func(ver string, rv int64, age time.Duration, requirements ...resource.IndexFeature) *IndexMeta {
+		m := snap(ver, rv, age)
+		m.ReaderRequirements = requirements
+		return m
+	}
+
+	t.Run("dropped for unknown reader requirements", func(t *testing.T) {
+		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): requiring("11.5.0", 100, time.Minute, "feature-from-the-future")}
+		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		assert.False(t, ok)
+	})
+
+	t.Run("requirements this instance understands are accepted", func(t *testing.T) {
+		key := makeULID(t, now)
+		all := map[ulid.ULID]*IndexMeta{key: requiring("11.5.0", 100, time.Minute, resource.IndexFeatureDeletedMarker)}
+		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, key, c.key)
+	})
+
+	requiringFeatures := func(features ...resource.IndexFeature) *bleveBackend {
+		be := newBackend(minV)
+		be.requiredFeatures = features
+		return be
+	}
+	having := func(ver string, rv int64, age time.Duration, features ...resource.IndexFeature) *IndexMeta {
+		m := snap(ver, rv, age)
+		m.Features = features
+		m.FeaturesRecorded = true
+		return m
+	}
+
+	t.Run("dropped when missing a required feature", func(t *testing.T) {
+		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): having("11.5.0", 100, time.Minute)}
+		_, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		assert.False(t, ok)
+	})
+
+	t.Run("kept when it has the required feature", func(t *testing.T) {
+		key := makeULID(t, now)
+		all := map[ulid.ULID]*IndexMeta{key: having("11.5.0", 100, time.Minute, "alpha")}
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, key, c.key)
+	})
+
+	// Snapshots uploaded before features were recorded are unknown, not known to be
+	// unusable, so they stay in the running as before.
+	t.Run("kept when features were not recorded", func(t *testing.T) {
+		key := makeULID(t, now)
+		all := map[ulid.ULID]*IndexMeta{key: snap("11.5.0", 100, time.Minute)}
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, key, c.key)
+	})
+
+	// What the filter is for: the newest snapshot lacks the feature, so an older one
+	// that has it is used instead of downloading, rejecting and rebuilding.
+	t.Run("falls back to an older snapshot that has the feature", func(t *testing.T) {
+		usable := makeULID(t, now.Add(-30*time.Second))
+		all := map[ulid.ULID]*IndexMeta{
+			usable:           having("11.4.5", 100, time.Minute, "alpha"),
+			makeULID(t, now): having("11.5.0", 999, time.Minute),
+		}
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, usable, c.key)
+	})
+
+	// Without the filter the newer one wins as tier 2 and its documents are misread.
+	t.Run("falls back to an older snapshot when the newest needs an unknown feature", func(t *testing.T) {
+		compatible := makeULID(t, now.Add(-30*time.Second))
+		all := map[ulid.ULID]*IndexMeta{
+			compatible:       snap("11.5.0", 100, time.Minute),
+			makeULID(t, now): requiring("12.0.0", 999, time.Minute, "feature-from-the-future"),
+		}
+		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, compatible, c.key)
 	})
 
 	t.Run("tier 0 preferred over 1 and 2", func(t *testing.T) {
@@ -290,7 +376,7 @@ func (dt downloadTest) run(t *testing.T) (bleve.Index, int64, error) {
 }
 
 func (dt downloadTest) counter(status string) float64 {
-	return testutil.ToFloat64(dt.metrics.IndexSnapshotDownloads.WithLabelValues(snapshotPolicyTiered, status))
+	return testutil.ToFloat64(dt.metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicyTiered, status))
 }
 
 func TestTryDownloadRemoteSnapshot_Empty(t *testing.T) {
@@ -315,7 +401,7 @@ func TestTryDownloadRemoteSnapshot_DownloadError(t *testing.T) {
 	store := newHookableStore(t)
 	store.setDownloadErr(errors.New("network dropped"))
 	dt := newDownloadTest(t, store)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), &IndexMeta{
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
@@ -333,7 +419,7 @@ func TestTryDownloadRemoteSnapshot_DownloadError(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_ValidationError(t *testing.T) {
 	store := newHookableStore(t)
 	dt := newDownloadTest(t, store)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), &IndexMeta{
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 0, // invalid (<=0)
 		UploadTimestamp:       time.Now(),
@@ -351,7 +437,7 @@ func TestTryDownloadRemoteSnapshot_ValidationError(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_Success(t *testing.T) {
 	store := newHookableStore(t)
 	dt := newDownloadTest(t, store)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), &IndexMeta{
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
@@ -368,10 +454,61 @@ func TestTryDownloadRemoteSnapshot_Success(t *testing.T) {
 	assert.Equal(t, uint64(1), m.GetHistogram().GetSampleCount())
 }
 
+// Without the fallback this would rebuild from scratch instead.
+func TestTryDownloadRemoteSnapshot_FallsBackToNextCandidate(t *testing.T) {
+	store := newHookableStore(t)
+	dt := newDownloadTest(t, store)
+	dt.be.requiredFeatures = []resource.IndexFeature{"alpha"}
+
+	// Ranked first on RV, but its index lacks the required feature — which selection
+	// cannot see, because the manifest recorded no features.
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), &IndexMeta{
+		BuildVersion:          "11.5.0",
+		LatestResourceVersion: 100,
+		UploadTimestamp:       time.Now(),
+	})
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now().Add(-time.Minute)), &IndexMeta{
+		BuildVersion:          "11.5.0",
+		LatestResourceVersion: 50,
+		UploadTimestamp:       time.Now().Add(-time.Minute),
+		Features:              []resource.IndexFeature{"alpha"},
+	})
+
+	idx, rv, err := dt.run(t)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+	assert.Equal(t, int64(50), rv, "should end up on the older snapshot that validates")
+	// One outcome per attempt, not per call.
+	assert.Equal(t, 1.0, dt.counter(snapshotStatusValidateError))
+	assert.Equal(t, 1.0, dt.counter(snapshotStatusSuccess))
+}
+
+// The cap keeps a namespace full of unusable snapshots from delaying startup.
+func TestTryDownloadRemoteSnapshot_StopsAtAttemptCap(t *testing.T) {
+	store := newHookableStore(t)
+	dt := newDownloadTest(t, store)
+	dt.be.requiredFeatures = []resource.IndexFeature{"alpha"}
+
+	for i := range maxSnapshotDownloadAttempts + 2 {
+		age := time.Duration(i) * time.Minute
+		seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now().Add(-age)), &IndexMeta{
+			BuildVersion:          "11.5.0",
+			LatestResourceVersion: int64(100 - i),
+			UploadTimestamp:       time.Now().Add(-age),
+		})
+	}
+
+	_, _, err := dt.run(t)
+	require.Error(t, err)
+	// Stops at the cap rather than working through all five candidates.
+	assert.Equal(t, float64(maxSnapshotDownloadAttempts), dt.counter(snapshotStatusValidateError))
+	assert.Zero(t, dt.counter(snapshotStatusSuccess))
+}
+
 func TestTryDownloadRemoteSnapshot_AllFilteredOut(t *testing.T) {
 	store := newHookableStore(t)
 	dt := newDownloadTest(t, store)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now().Add(-2*time.Hour)), &IndexMeta{
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now().Add(-2*time.Hour)), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now().Add(-2 * time.Hour),
@@ -391,7 +528,7 @@ func TestTryDownloadRemoteSnapshot_AllFilteredOut(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_NoAgeLimitWhenZero(t *testing.T) {
 	store := newHookableStore(t)
 	dt := newDownloadTest(t, store)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now().Add(-30*24*time.Hour)), &IndexMeta{
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now().Add(-30*24*time.Hour)), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now().Add(-30 * 24 * time.Hour),
@@ -446,7 +583,7 @@ func (dt freshDownloadTest) run(t *testing.T, lastImportTime time.Time, maxFresh
 }
 
 func (dt freshDownloadTest) counter(status string) float64 {
-	return testutil.ToFloat64(dt.metrics.IndexSnapshotDownloads.WithLabelValues(snapshotPolicySameVersion, status))
+	return testutil.ToFloat64(dt.metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, status))
 }
 
 // freshSnapshot returns metadata for a freshly-built same-version snapshot at age.
@@ -463,7 +600,7 @@ func freshSnapshot(buildAge time.Duration) *IndexMeta {
 func TestTryDownloadFreshSnapshot_Hit(t *testing.T) {
 	store := newHookableStore(t)
 	dt := newFreshDownloadTest(t, store)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 
 	idx, rv, err := dt.run(t, time.Time{}, time.Hour)
 	require.NoError(t, err)
@@ -478,7 +615,7 @@ func TestTryDownloadFreshSnapshot_Hit(t *testing.T) {
 func TestTryDownloadFreshSnapshot_NoAgeLimitWhenZero(t *testing.T) {
 	store := newHookableStore(t)
 	dt := newFreshDownloadTest(t, store)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), freshSnapshot(30*24*time.Hour))
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), freshSnapshot(30*24*time.Hour))
 
 	idx, rv, err := dt.run(t, time.Time{}, 0)
 	require.NoError(t, err)
@@ -492,7 +629,7 @@ func TestTryDownloadFreshSnapshot_VersionMismatchSkipped(t *testing.T) {
 	dt := newFreshDownloadTest(t, store)
 	meta := freshSnapshot(time.Minute)
 	meta.BuildVersion = "11.4.0" // backend runs 11.5.0
-	seedSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), meta)
+	seedSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), meta)
 
 	idx, _, err := dt.run(t, time.Time{}, time.Hour)
 	require.NoError(t, err)
@@ -511,7 +648,7 @@ func TestTryDownloadFreshSnapshot_BuildTimeOlderThanMaxAge(t *testing.T) {
 		UploadTimestamp:       time.Now(),
 		BuildTime:             time.Now().Add(-3 * time.Hour),
 	}
-	seedSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), meta)
+	seedSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), meta)
 
 	idx, _, err := dt.run(t, time.Time{}, time.Hour)
 	require.NoError(t, err)
@@ -526,7 +663,7 @@ func TestTryDownloadFreshSnapshot_RejectedByLastImportTime(t *testing.T) {
 	// Snapshot built 5 minutes ago, but lastImportTime says KV mutated 2 minutes ago.
 	// The snapshot pre-dates known mutations and must be rejected even though it
 	// fits the maxFreshSnapshotAge window.
-	seedSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), freshSnapshot(5*time.Minute))
+	seedSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), freshSnapshot(5*time.Minute))
 
 	lastImportTime := time.Now().Add(-2 * time.Minute)
 	idx, _, err := dt.run(t, lastImportTime, time.Hour)
@@ -541,7 +678,7 @@ func TestTryDownloadFreshSnapshot_AcceptedWhenBuiltAfterLastImportTime(t *testin
 	dt := newFreshDownloadTest(t, store)
 	// Snapshot built 1 minute ago, lastImportTime 5 minutes ago: snapshot is
 	// strictly newer than the latest known mutation, so it's safe to use.
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 
 	lastImportTime := time.Now().Add(-5 * time.Minute)
 	idx, _, err := dt.run(t, lastImportTime, time.Hour)
@@ -577,14 +714,14 @@ func TestTryDownloadFreshSnapshot_WalksPastStaleNewerCandidate(t *testing.T) {
 	now := time.Now()
 	// Newer ULID (uploaded just now) but stale BuildTime: a periodic re-upload
 	// of a long-lived index. Must be rejected by build-start freshness.
-	seedSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, now), &IndexMeta{
+	seedSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, now), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 10,
 		UploadTimestamp:       now,
 		BuildTime:             now.Add(-3 * time.Hour),
 	})
 	// Older ULID, fresh BuildTime: this is the one we want.
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, now.Add(-30*time.Minute)), &IndexMeta{
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, now.Add(-30*time.Minute)), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       now.Add(-30 * time.Minute),
@@ -604,7 +741,7 @@ func TestTryDownloadFreshSnapshot_WalksPastStaleNewerCandidate(t *testing.T) {
 func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 	store := newHookableStore(t)
 	ns := newTestNsResource()
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	seedDownloadableSnapshot(t, t.Context(), store.inner, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
 		MinDocCount: 1,
@@ -621,7 +758,7 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 	assert.Zero(t, builderCalled.Load(), "builder should not run when a fresh remote snapshot is used")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloads.WithLabelValues(snapshotPolicySameVersion, snapshotStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusSuccess)))
 }
 
 // TestBuildIndex_RebuildFallsBackToBuilder verifies that on the rebuild path
@@ -632,7 +769,7 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 	ns := newTestNsResource()
 	// Older snapshot present — would be acceptable to the tiered policy on
 	// the initial-startup path, but must be ignored on the rebuild path.
-	seedSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now().Add(-3*time.Hour)), &IndexMeta{
+	seedSnapshot(t, t.Context(), store.inner, ns, makeULID(t, time.Now().Add(-3*time.Hour)), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now().Add(-3 * time.Hour),
@@ -654,7 +791,7 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 	assert.Equal(t, int32(1), builderCalled.Load(), "builder should run when no fresh snapshot is available")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloads.WithLabelValues(snapshotPolicySameVersion, snapshotStatusEmpty)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusEmpty)))
 	assert.Zero(t, store.downloadCalls.Load(), "older snapshot must not be downloaded on the rebuild path")
 }
 
@@ -754,7 +891,7 @@ func TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return store.lockAcquireCalls.Load() > 0
 	}, time.Second, 5*time.Millisecond)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	seedDownloadableSnapshot(t, t.Context(), store.inner, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 
 	select {
 	case result := <-resultCh:
@@ -803,7 +940,7 @@ func TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return store.lockAcquireCalls.Load() > 0
 	}, time.Second, 5*time.Millisecond)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	seedDownloadableSnapshot(t, t.Context(), store.inner, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 
 	select {
 	case result := <-resultCh:
@@ -822,7 +959,7 @@ func TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait(t *testing.T) {
 func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
 	store := newHookableStore(t)
 	ns := newTestNsResource()
-	seedSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	seedSnapshot(t, t.Context(), store.inner, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 	be, _ := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
 		MinDocCount: 1,
@@ -1023,12 +1160,12 @@ func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
+func TestBleveSnapshotLifecycleWithSharedStore(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "default"})
-	bucketURL := fileBucketURL(t, t.TempDir())
+	store := newTestKVRemoteIndexStore(t)
 	key := newTestNsResource()
 
-	beA, metricsA := newConfiguredSnapshotBackend(t, bucketURL)
+	beA, metricsA := newConfiguredSnapshotBackend(t, store)
 	beAStopped := false
 	t.Cleanup(func() {
 		if !beAStopped {
@@ -1081,7 +1218,7 @@ func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
 	beA.Stop()
 	beAStopped = true
 
-	beB, metricsB := newConfiguredSnapshotBackend(t, bucketURL)
+	beB, metricsB := newConfiguredSnapshotBackend(t, store)
 	t.Cleanup(beB.Stop)
 	var builderCalled atomic.Bool
 	idxB, err := beB.BuildIndex(ctx, key, 10, "startup", func(resource.ResourceIndex) (int64, error) {
@@ -1092,7 +1229,7 @@ func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
 	require.NotNil(t, idxB)
 
 	assert.False(t, builderCalled.Load())
-	assert.Equal(t, 1.0, testutil.ToFloat64(metricsB.IndexSnapshotDownloads.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metricsB.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
 
 	res, err := idxB.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
@@ -1108,16 +1245,15 @@ func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
 	require.Equal(t, "dash-prod", res.Results.Rows[0].Key.Name)
 }
 
-func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend, *resource.BleveIndexMetrics) {
+func newConfiguredSnapshotBackend(t *testing.T, store RemoteIndexStore) (*bleveBackend, *resource.BleveIndexMetrics) {
 	t.Helper()
 	cfg := snapshotOptionsTestCfg(t)
 	cfg.EnableSearch = true
 	cfg.BuildVersion = "11.5.0"
 	cfg.IndexSnapshotEnabled = true
-	cfg.IndexSnapshotBucketURL = bucketURL
 
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
-	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil, nil)
+	opts, err := NewSearchOptions(cfg, nil, metrics, nil, store)
 	require.NoError(t, err)
 	be, ok := opts.Backend.(*bleveBackend)
 	require.True(t, ok)
@@ -1127,17 +1263,7 @@ func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend
 
 func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-	bucket := memblob.OpenBucket(nil)
-	t.Cleanup(func() { _ = bucket.Close() })
-
-	lockOpts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
-	store := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
-		Bucket:      bucket,
-		LockBackend: newFakeBackend(newConditionalBucket()),
-		LockOwner:   "test-owner",
-		BuildLock:   lockOpts,
-		CleanupLock: lockOpts,
-	})
+	store := newTestKVRemoteIndexStore(t)
 	key := newTestNsResource()
 	meta := IndexMeta{
 		BuildVersion:          "11.5.0",
@@ -1154,7 +1280,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	// so the assertion below is exact and not subject to scheduling delays.
 	expectedUploadedAt := ulid.Time(uploadedKey.Time())
 
-	// Fresh backend pointing at the same bucket should download instead of building.
+	// Fresh backend pointing at the same store should download instead of building.
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
 	be, err := NewBleveBackend(BleveOptions{
 		Root:          t.TempDir(),
@@ -1178,7 +1304,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	require.NotNil(t, idx)
 
 	assert.False(t, builderCalled.Load(), "builder should not be called when a remote snapshot is available")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloads.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexBuildSkipped))
 
 	bi, ok := idx.(*bleveIndex)
@@ -1242,19 +1368,19 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		{
 			name: "homogeneous cluster: newest same-version returned",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
-				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
 				k := mk(-5 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, k, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, k, &IndexMeta{BuildVersion: "11.5.0"})
 				return k
 			},
 		},
 		{
 			name: "mixed version: walks past newer wrong-version",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
-				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0"})
 				match := mk(-30 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
-				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
 				return match
 			},
 		},
@@ -1263,7 +1389,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				format := testIndexFormat(t)
 				match := mk(-5 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: format})
+				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: format})
 				return match
 			},
 		},
@@ -1271,7 +1397,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 			name: "uses older index format",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				match := mk(-5 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, -1)})
+				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, -1)})
 				return match
 			},
 		},
@@ -1279,9 +1405,9 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 			name: "skips newer index format",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				format := testIndexFormat(t)
-				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, 1)})
+				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, 1)})
 				match := mk(-10 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: format})
+				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: format})
 				return match
 			},
 		},
@@ -1289,7 +1415,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 			name: "uses legacy empty index format",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				match := mk(-5 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
 				return match
 			},
 		},
@@ -1301,13 +1427,13 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				nf := mk(-5 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, nf, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, nf, &IndexMeta{BuildVersion: "11.5.0"})
 				s.setReadManifestErr(nf, ErrSnapshotNotFound)
 				iv := mk(-10 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, iv, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, iv, &IndexMeta{BuildVersion: "11.5.0"})
 				s.setReadManifestErr(iv, ErrInvalidManifest)
 				m := mk(-15 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, m, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, m, &IndexMeta{BuildVersion: "11.5.0"})
 				return m
 			},
 		},
@@ -1323,7 +1449,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 			name: "surfaces unexpected GET error",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				bad := mk(-5 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, bad, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, bad, &IndexMeta{BuildVersion: "11.5.0"})
 				s.setReadManifestErr(bad, errors.New("transport boom"))
 				return ulid.ULID{}
 			},
@@ -1340,19 +1466,19 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 		{
 			name: "homogeneous cluster: newest same-version returned",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
-				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.inner, ns, mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
 				k := mk(-5 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, k, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.inner, ns, k, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
 				return k
 			},
 		},
 		{
 			name: "mixed version: walks past newer wrong-version",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
-				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0", BuildTime: now.Add(-10 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0", BuildTime: now.Add(-10 * time.Minute)})
 				match := mk(-30 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
-				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-55 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.inner, ns, mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-55 * time.Minute)})
 				return match
 			},
 		},
@@ -1362,7 +1488,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			// re-upload of a long-lived index) must be rejected.
 			name: "skips recent re-upload of old build",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
-				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-3 * time.Hour)})
+				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-3 * time.Hour)})
 				return ulid.ULID{}
 			},
 		},
@@ -1370,7 +1496,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			// Zero-value BuildTime carries no freshness signal.
 			name: "skips zero BuildTime",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
-				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
 				return ulid.ULID{}
 			},
 		},
@@ -1382,13 +1508,13 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				nf := mk(-5 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, nf, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.inner, ns, nf, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
 				s.setReadManifestErr(nf, ErrSnapshotNotFound)
 				iv := mk(-10 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, iv, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-15 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.inner, ns, iv, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-15 * time.Minute)})
 				s.setReadManifestErr(iv, ErrInvalidManifest)
 				m := mk(-15 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, m, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-20 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.inner, ns, m, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-20 * time.Minute)})
 				return m
 			},
 		},
@@ -1404,7 +1530,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			name: "surfaces unexpected GET error",
 			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				bad := mk(-5 * time.Minute)
-				seedSnapshot(t, t.Context(), s.bucket, ns, bad, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.inner, ns, bad, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
 				s.setReadManifestErr(bad, errors.New("transport boom"))
 				return ulid.ULID{}
 			},
@@ -1516,7 +1642,7 @@ func TestColdStart_WaitedForLeader(t *testing.T) {
 	errCh := make(chan error, 1)
 	go func() {
 		time.Sleep(25 * time.Millisecond)
-		errCh <- snap.publish(ctx, store.bucket)
+		errCh <- snap.publish(ctx, store.inner)
 	}()
 
 	role, lock, err := ct.coordinate(context.Background(), time.Time{})
@@ -1652,7 +1778,7 @@ func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra f
 // downloads it before the cold-start path is even considered.
 func TestBuildIndex_ColdStartFastPathDownloads(t *testing.T) {
 	store := newHookableStore(t)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, newTestNsResource(), makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	seedDownloadableSnapshot(t, t.Context(), store.inner, newTestNsResource(), makeULID(t, time.Now()), freshSnapshot(time.Minute))
 	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
 	require.NoError(t, err)
 	require.NotNil(t, idx)
@@ -1661,7 +1787,7 @@ func TestBuildIndex_ColdStartFastPathDownloads(t *testing.T) {
 	// that's enough to skip the builder. The cold-start path only runs if
 	// the tiered selection misses; here it finds the snapshot first.
 	assert.Zero(t, builderCalled.Load(), "builder must not run when a snapshot is available")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloads.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
 }
 
 // TestBuildIndex_ColdStartLeaderUploads exercises the leader path: empty

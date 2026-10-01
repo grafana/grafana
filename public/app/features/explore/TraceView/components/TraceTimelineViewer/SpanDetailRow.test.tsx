@@ -24,6 +24,13 @@ jest.mock('@grafana/runtime/unstable', () => ({
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
+// useAttributePluginPromoGetter uses useAppPluginMetas (async); stub it so SpanDetail
+// doesn't schedule an un-acted state update when rendered via SpanDetailRow.
+jest.mock('./SpanDetail/pluginPromo/attributePluginPromos', () => ({
+  ...jest.requireActual('./SpanDetail/pluginPromo/attributePluginPromos'),
+  useAttributePluginPromoGetter: jest.fn(() => () => undefined),
+}));
+
 import DetailState from './SpanDetail/DetailState';
 import SpanDetailRow, { type SpanDetailRowProps } from './SpanDetailRow';
 

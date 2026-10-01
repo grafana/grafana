@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -219,7 +220,7 @@ func TestRemoteSettingService_List(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "could not find the requested resource")
+		assert.Contains(t, err.Error(), "not found")
 	})
 
 	t.Run("should handle 500 internal server error", func(t *testing.T) {
@@ -247,7 +248,8 @@ func TestRemoteSettingService_List(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "error on the server")
+		// Now decodes the server's Status message instead of a generic one.
+		assert.Contains(t, err.Error(), "database connection failed")
 	})
 
 	t.Run("should handle connection errors", func(t *testing.T) {
@@ -422,7 +424,7 @@ func TestRemoteSettingService_List(t *testing.T) {
 func TestParseSettingList(t *testing.T) {
 	t.Run("should parse valid settings list", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {"continue": ""},
 			"items": [
@@ -443,7 +445,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should parse continue token", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {"continue": "next-page-token"},
 			"items": []
@@ -457,7 +459,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should handle empty items", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {},
 			"items": []
@@ -471,7 +473,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should parse labels from metadata", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {"continue": ""},
 			"items": [
@@ -510,7 +512,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should handle items without labels", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {"continue": ""},
 			"items": [
@@ -905,7 +907,7 @@ func newTestClientWithCache(t *testing.T, serverURL string, pageSize int64, cach
 
 func generateSettingsJSON(settings []Setting, continueToken string) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`{"apiVersion":"setting.grafana.app/v1beta1","kind":"SettingList","metadata":{"continue":"%s"},"items":[`, continueToken))
+	sb.WriteString(fmt.Sprintf(`{"apiVersion":"setting.grafana.app/v1","kind":"SettingList","metadata":{"continue":"%s"},"items":[`, continueToken))
 
 	for i, s := range settings {
 		if i > 0 {
@@ -913,12 +915,10 @@ func generateSettingsJSON(settings []Setting, continueToken string) string {
 		}
 		// Generate labels - always include section/key, merge with any custom labels
 		labels := map[string]string{"section": s.Section, "key": s.Key}
-		for k, v := range s.Labels {
-			labels[k] = v
-		}
+		maps.Copy(labels, s.Labels)
 		labelsJSON, _ := json.Marshal(labels)
 		sb.WriteString(fmt.Sprintf(
-			`{"apiVersion":"setting.grafana.app/v1beta1","kind":"Setting","metadata":{"name":"%s--%s","namespace":"test-namespace","labels":%s},"spec":{"section":"%s","key":"%s","value":"%s"}}`,
+			`{"apiVersion":"setting.grafana.app/v1","kind":"Setting","metadata":{"name":"%s--%s","namespace":"test-namespace","labels":%s},"spec":{"section":"%s","key":"%s","value":"%s"}}`,
 			s.Section, s.Key, labelsJSON, s.Section, s.Key, s.Value,
 		))
 	}
@@ -1003,18 +1003,18 @@ func BenchmarkParseSettingList_SinglePage(b *testing.B) {
 // generateSettingListJSON generates a K8s-style SettingList JSON response for benchmarks
 func generateSettingListJSON(totalSettings, numSections int) string {
 	var sb strings.Builder
-	sb.WriteString(`{"apiVersion":"setting.grafana.app/v1beta1","kind":"SettingList","metadata":{"continue":""},"items":[`)
+	sb.WriteString(`{"apiVersion":"setting.grafana.app/v1","kind":"SettingList","metadata":{"continue":""},"items":[`)
 
 	settingsPerSection := totalSettings / numSections
 	first := true
-	for section := 0; section < numSections; section++ {
-		for key := 0; key < settingsPerSection; key++ {
+	for section := range numSections {
+		for key := range settingsPerSection {
 			if !first {
 				sb.WriteString(",")
 			}
 			first = false
 			sb.WriteString(fmt.Sprintf(
-				`{"apiVersion":"setting.grafana.app/v1beta1","kind":"Setting","metadata":{"name":"section-%03d--key-%03d","namespace":"bench-ns","labels":{"section":"section-%03d","key":"key-%03d"}},"spec":{"section":"section-%03d","key":"key-%03d","value":"value-for-section-%d-key-%d"}}`,
+				`{"apiVersion":"setting.grafana.app/v1","kind":"Setting","metadata":{"name":"section-%03d--key-%03d","namespace":"bench-ns","labels":{"section":"section-%03d","key":"key-%03d"}},"spec":{"section":"section-%03d","key":"key-%03d","value":"value-for-section-%d-key-%d"}}`,
 				section, key, section, key, section, key, section, key,
 			))
 		}

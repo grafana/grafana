@@ -4,6 +4,7 @@ manifest: {
 	appName:          "folder"
 	groupOverride:    "folder.grafana.app"
 	preferredVersion: "v1"
+	embed: folders: reembedVersion: 1
 
 	versions: {
 		"v1": {

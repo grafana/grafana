@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 var (
@@ -265,11 +265,11 @@ func (s RouteAccess[T]) AuthorizeReadByUID(ctx context.Context, user identity.Re
 	return s.read.Authorize(ctx, user, identified{uid: models.CanonicalizeRoutingTreeName(name)})
 }
 
-func (s RouteAccess[T]) DeleteAllPermissions(ctx context.Context, orgID int64, route *legacy_storage.ManagedRoute) error {
+func (s RouteAccess[T]) DeleteAllPermissions(ctx context.Context, orgID int64, route *v1.ManagedRoute) error {
 	return s.permissionService.DeleteResourcePermissions(ctx, orgID, route.GetUID())
 }
 
-func (s RouteAccess[T]) SetDefaultPermissions(ctx context.Context, user identity.Requester, route *legacy_storage.ManagedRoute) error {
+func (s RouteAccess[T]) SetDefaultPermissions(ctx context.Context, user identity.Requester, route *v1.ManagedRoute) error {
 	return s.permissionService.SetDefaultPermissions(ctx, user.GetOrgID(), user, route.GetUID())
 }
 

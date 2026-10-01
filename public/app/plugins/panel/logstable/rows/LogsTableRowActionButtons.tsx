@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, type MouseEvent } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -25,9 +25,13 @@ export function LogsTableRowActionButtons(props: Props) {
   const styles = getStyles(theme);
   const { enableLogDetails, detailsDisplayed, toggleDetails } = useLogDetailsContext();
 
-  const handleDetailsClick = useCallback(() => {
-    toggleDetails(rowIndex);
-  }, [rowIndex, toggleDetails]);
+  const handleDetailsClick = useCallback(
+    (e: MouseEvent<HTMLElement>) => {
+      const modifierKeyPressed = e.ctrlKey || e.metaKey || e.shiftKey;
+      toggleDetails(rowIndex, modifierKeyPressed);
+    },
+    [rowIndex, toggleDetails]
+  );
 
   return (
     <>

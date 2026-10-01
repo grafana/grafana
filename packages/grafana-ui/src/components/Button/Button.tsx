@@ -314,39 +314,36 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill) {
+export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill, visualRefreshEnabled?: boolean) {
+  let backgroundColor = 'transparent';
+  if (fill === 'solid') {
+    backgroundColor = visualRefreshEnabled ? color.background : color.main;
+  }
   return {
-    background: fill === 'solid' ? color.main : 'transparent',
+    background: backgroundColor,
   };
 }
 
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';
-
-  // Secondary button has some special rules as we lack the color token to
-  // specify border color for normal button vs border color for outline button
-  if (color.name === 'secondary') {
-    borderColor = color.border;
-    hoverBorderColor = theme.colors.emphasize(color.border, 0.25);
-    outlineBorderColor = theme.colors.border.strong;
-  }
 
   if (fill === 'outline') {
     return {
       background: 'transparent',
       color: color.text,
-      border: `1px solid ${outlineBorderColor}`,
+      border: `1px solid ${color.border}`,
 
-      '&:hover, &:focus': {
-        background: color.transparent,
-        borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
-        color: color.text,
+      '&:hover': {
+        background: visualRefreshEnabled ? color.subtleBackground : color.transparent,
+        borderColor: visualRefreshEnabled ? color.borderEmphasis : theme.colors.emphasize(outlineBorderColor, 0.25),
+        color: visualRefreshEnabled ? color.textEmphasis : color.text,
       },
 
       '&:active': {
-        ...getActiveButtonStyles(color, fill),
+        ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
       },
     };
   }
@@ -358,36 +355,48 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       border: '1px solid transparent',
 
       '&:hover, &:focus': {
-        background: color.transparent,
+        background: visualRefreshEnabled ? color.subtleBackground : color.transparent,
+        color: visualRefreshEnabled ? color.textEmphasis : color.text,
         textDecoration: 'none',
         outline: 'none',
       },
 
       '&:active': {
-        ...getActiveButtonStyles(color, fill),
+        ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
       },
     };
   }
 
+  let backgroundColor = color.main;
+  let hoverBackgroundColor = color.shade;
+  let textColor = color.contrastText;
+  let hoverTextColor = color.contrastText;
+
+  if (visualRefreshEnabled) {
+    backgroundColor = color.background;
+    hoverBackgroundColor = color.backgroundEmphasis;
+  }
+
+  // Only exception right now is the secondary button which is the only solid button with a subtle border
+  if (color.name === 'secondary') {
+    borderColor = color.subtleBorder;
+    hoverBorderColor = color.border;
+  }
+
   return {
-    background: color.main,
-    color: color.contrastText,
+    background: backgroundColor,
+    color: textColor,
     border: `1px solid ${borderColor}`,
 
     '&:hover': {
-      background: color.shade,
-      color: color.contrastText,
+      background: hoverBackgroundColor,
+      color: hoverTextColor,
       boxShadow: theme.shadows.z1,
       borderColor: hoverBorderColor,
     },
 
-    '&:focus': {
-      background: color.shade,
-      color: color.contrastText,
-    },
-
     '&:active': {
-      ...getActiveButtonStyles(color, fill),
+      ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
     },
   };
 }

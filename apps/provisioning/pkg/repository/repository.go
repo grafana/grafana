@@ -37,6 +37,20 @@ var ErrRefNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "ref not found",
 }}
 
+// CompareRefNotFoundError identifies which CompareFiles operand could not be resolved.
+type CompareRefNotFoundError struct {
+	Ref string
+	Err error
+}
+
+func (e *CompareRefNotFoundError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *CompareRefNotFoundError) Unwrap() error {
+	return e.Err
+}
+
 var ErrFileAlreadyExists error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Status:  metav1.StatusFailure,
 	Code:    http.StatusConflict,
@@ -58,6 +72,18 @@ var ErrPermissionDenied error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Code:    http.StatusForbidden,
 	Reason:  metav1.StatusReasonForbidden,
 	Message: "permission denied",
+}}
+
+// WritePermissionDeniedDetail is the TestResults.Errors[].Detail reported when a repository
+// is reachable (auth and connectivity succeeded) but the configured credentials lack write
+// access. Unlike a generic 403, this specific case shouldn't be treated as unreachable.
+const WritePermissionDeniedDetail = "write permission denied"
+
+var ErrTooManyRequests error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusTooManyRequests,
+	Reason:  metav1.StatusReasonTooManyRequests,
+	Message: "too many requests",
 }}
 
 // ErrServerUnavailable indicates that the remote server is unavailable or returned a 5xx error.
@@ -197,27 +223,6 @@ type WebhookRepository interface {
 	SubscribedEvents() []string
 }
 
-// WebhookConfig is the provider-agnostic representation of a git provider webhook.
-// Each provider implements it with its own struct holding the common fields
-// plus any provider-specific ones.
-type WebhookConfig interface {
-	GetID() int64
-	GetURL() string
-	GetEvents() []string
-	GetSecret() string
-	SetURL(url string)
-	SetEvents(events []string)
-	SetSecret(secret string)
-}
-
-//go:generate mockery --name WebhookClient --structname MockWebhookClient --inpackage --filename mock_webhook_client.go --with-expecter
-type WebhookClient interface {
-	CreateWebhook(ctx context.Context, url string, events []string, secret string) (WebhookConfig, error)
-	GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error)
-	EditWebhook(ctx context.Context, hook WebhookConfig) error
-	DeleteWebhook(ctx context.Context, webhookID int64) error
-}
-
 type FileAction string
 
 const (
@@ -256,6 +261,19 @@ type BranchHandler interface {
 	GetDefaultBranch(ctx context.Context) (string, error)
 	GetCurrentBranch() string
 	SetBranch(branch string)
+}
+
+// RepoIDHandler is a repository whose backend repo ID may need to be
+// resolved lazily (e.g. for repos written before the ID was pinned at
+// admission time) and backfilled into the spec once resolved. Each
+// provider decides for itself, based on its own spec fields, whether
+// its ID is already pinned and whether a resolved value should be persisted.
+type RepoIDHandler interface {
+	// ResolvedRepoID returns the backend repo ID this repository was built with.
+	ResolvedRepoID() string
+
+	// ShouldUpdateRepoID reports whether ResolvedRepoID should be backfilled into the spec.
+	ShouldUpdateRepoID() bool
 }
 
 // PullRequestRepo is implemented by repositories that can be evaluated and

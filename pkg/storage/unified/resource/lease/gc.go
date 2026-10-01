@@ -33,7 +33,7 @@ const (
 	gcGracePeriod = time.Minute
 
 	// batch size used when running a GC cycle.
-	batchSize = 200
+	batchSize = 199
 )
 
 // gcMetadata is the data written on the `gcKey` entry.

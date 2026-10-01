@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
@@ -6,8 +7,12 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { type DataFrame, FieldType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { type TableNG } from '@grafana/ui/unstable';
 
 import { InspectDataTab } from './InspectDataTab';
+
+type TableNGProps = ComponentProps<typeof TableNG>;
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
@@ -17,6 +22,22 @@ jest.mock('react-virtualized-auto-sizer', () => {
       scaledWidth: 1,
       width: 1,
     });
+});
+
+// Whether every field already had a displayName cached at the moment InspectDataTab handed the
+// frame to TableNG — snapshotted here, before TableNG's own fallback caching pass (which mutates
+// field.state on the same object in place) can run and mask the thing we're trying to observe.
+let dataArrivedWithCachedDisplayNames: boolean | undefined;
+jest.mock('@grafana/ui/unstable', () => {
+  const actual = jest.requireActual('@grafana/ui/unstable');
+  return {
+    ...actual,
+    // Delegate to the real component so the "grid renders" assertions keep working.
+    TableNG: (props: TableNGProps) => {
+      dataArrivedWithCachedDisplayNames = props.data.fields.every((f) => Boolean(f.state?.displayName));
+      return <actual.TableNG {...props} />;
+    },
+  };
 });
 
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
@@ -53,16 +74,19 @@ const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTa
 
 describe('InspectDataTab', () => {
   describe('when panel is not passed as prop (Explore)', () => {
-    it('should render InspectDataTab', () => {
+    it('should render InspectDataTab', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
     });
-    it('should render Data Option row', () => {
+    it('should render Data Option row', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.getByText(/Data options/i)).toBeInTheDocument();
     });
     it('should show available options', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       const dataOptions = screen.getByText(/Data options/i);
       await userEvent.click(dataOptions);
       expect(screen.getByText(/Show data frame/i)).toBeInTheDocument();
@@ -70,13 +94,14 @@ describe('InspectDataTab', () => {
     });
     it('should show available dataFrame options', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       const dataOptions = screen.getByText(/Data options/i);
       await userEvent.click(dataOptions);
       const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
       await userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
-    it('should show download logs button if logs data', () => {
+    it('should show download logs button if logs data', async () => {
       const oldConfig = config.exploreHideLogsDownload;
       config.exploreHideLogsDownload = false;
       const dataWithLogs = [
@@ -94,10 +119,11 @@ describe('InspectDataTab', () => {
         },
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
+      await screen.findByRole('table');
       expect(screen.getByText(/Download logs/i)).toBeInTheDocument();
       config.exploreHideLogsDownload = oldConfig;
     });
-    it('should not show download logs button if logs data but config disabled', () => {
+    it('should not show download logs button if logs data but config disabled', async () => {
       const oldConfig = config.exploreHideLogsDownload;
       config.exploreHideLogsDownload = true;
       const dataWithLogs = [
@@ -115,14 +141,16 @@ describe('InspectDataTab', () => {
         },
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
+      await screen.findByRole('table');
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
       config.exploreHideLogsDownload = oldConfig;
     });
-    it('should not show download logs button if no logs data', () => {
+    it('should not show download logs button if no logs data', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
     });
-    it('should show download traces button if traces data', () => {
+    it('should show download traces button if traces data', async () => {
       const dataWithtraces = [
         {
           name: 'Data frame with traces',
@@ -180,13 +208,15 @@ describe('InspectDataTab', () => {
         },
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithtraces })} />);
+      await screen.findByRole('table');
       expect(screen.getByText(/Download traces/i)).toBeInTheDocument();
     });
-    it('should not show download traces button if no traces data', () => {
+    it('should not show download traces button if no traces data', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.queryByText(/Download traces/i)).not.toBeInTheDocument();
     });
-    it('should show download service graph button', () => {
+    it('should show download service graph button', async () => {
       const sgFrames = [
         {
           name: 'Nodes',
@@ -212,7 +242,42 @@ describe('InspectDataTab', () => {
           })}
         />
       );
+      await screen.findByRole('table');
       expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('when useTableNG is true', () => {
+    beforeEach(() => {
+      dataArrivedWithCachedDisplayNames = undefined;
+    });
+
+    it('should render the data with TableNG instead of the legacy Table', () => {
+      // CommonTableNG reads table.refresh via useFlagTableRefresh, which needs an OpenFeature client.
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ useTableNG: true })} />
+        </OpenFeatureProvider>
+      );
+      expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
+      // react-data-grid (TableNG) uses role="grid", unlike the legacy Table's role="table"
+      expect(screen.getByRole('grid')).toBeInTheDocument();
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
+
+    it('should pass TableNG data with display names already cached, even with withFieldConfig applied', () => {
+      // withFieldConfig runs the data through applyFieldOverrides, which always clears any
+      // previously cached displayName (see fieldOverrides.ts) — the fix must re-cache after that,
+      // not before, or the pre-cache never survives to the frame TableNG actually renders.
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab
+            {...createProps({ useTableNG: true, options: { withTransforms: false, withFieldConfig: true } })}
+          />
+        </OpenFeatureProvider>
+      );
+
+      expect(dataArrivedWithCachedDisplayNames).toBe(true);
     });
   });
 });

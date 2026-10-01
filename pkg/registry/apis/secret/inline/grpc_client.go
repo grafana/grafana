@@ -10,6 +10,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -27,7 +28,7 @@ type GRPCInlineClient struct {
 	tokenExchanger authnlib.TokenExchanger
 }
 
-var _ contracts.InlineSecureValueSupport = &GRPCInlineClient{}
+var _ contracts.InlineSecureValueSupport = (*GRPCInlineClient)(nil)
 
 type TLSConfig struct {
 	UseTLS             bool
@@ -48,6 +49,8 @@ func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tr
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
+
+	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 
 	if clientLoadBalancingEnabled {
 		// Use round_robin to balances requests more evenly over the available replicas.

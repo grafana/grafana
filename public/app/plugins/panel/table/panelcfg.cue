@@ -36,6 +36,8 @@ composableKinds: PanelCfg: {
 					sortBy?: [...ui.TableSortByFieldState]
 					// Enable pagination on the table
 					enablePagination?: bool
+					// When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
+					pageSize?: number
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
 					// limits the maximum height of a row, if text wrapping or dynamic height is enabled
@@ -46,6 +48,11 @@ composableKinds: PanelCfg: {
 					}
 					// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 					disableKeyboardEvents?: bool
+					// Controls whether cells overflow when hovered. Selected cells always overflow.
+					hoverOverflow?: bool | *true
+					// Alternates the background color of every other row. Only applies when the
+					// `table.refreshNewFeatures` feature toggle is enabled.
+					zebraStriping?: bool | *false
 				} @cuetsy(kind="interface")
 				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}

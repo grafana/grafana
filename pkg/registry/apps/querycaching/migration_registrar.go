@@ -7,19 +7,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 )
 
-const (
-	apiGroup = "querycaching.grafana.app"
-	resource = "querycacheconfigs"
-)
-
 func QueryCacheConfigMigration(m migrator.QueryCacheConfigMigrator) migrations.MigrationDefinition {
-	gr := schema.GroupResource{Group: apiGroup, Resource: resource}
+	gr := schema.GroupResource{Group: migrator.APIGroup, Resource: migrator.Resource}
 
 	return migrations.MigrationDefinition{
 		ID:          "querycacheconfigs",
 		MigrationID: "querycacheconfigs migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: gr, LockTables: []string{"data_source_cache", "data_source"}},
+			{
+				GroupResource: gr,
+				LockTables:    []string{"data_source_cache", "data_source"},
+				FloorVersion:  migrator.APIVersion,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			gr: m.MigrateQueryCacheConfigs,

@@ -20,6 +20,11 @@ import {
   getK8sResponse,
   paginatedHandlerFor,
 } from 'app/features/alerting/unified/mocks/server/utils';
+import {
+  installAppPluginMeta,
+  pluginMeta as pluginMetas,
+  uninstallAppPluginMeta,
+} from 'app/features/alerting/unified/testSetup/plugins';
 import { type SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import {
   type AlertmanagerAlert,
@@ -224,6 +229,35 @@ export const setMuteTimingsListError = () => {
 };
 
 /**
+ * Makes the mock server respond with an error when deleting a time interval,
+ * mirroring the API server conflict returned when the interval is still in use.
+ */
+export const setDeleteTimeIntervalError = (
+  message = 'Time interval is used',
+  messageId = 'alerting.notifications.time-intervals.used',
+  status = 409
+) => {
+  const handler = http.delete(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals/:name`, () => {
+    const errorResponse: ApiMachineryError = {
+      kind: 'Status',
+      apiVersion: 'v1',
+      metadata: {},
+      status: 'Failure',
+      message,
+      reason: 'Conflict',
+      details: {
+        uid: messageId,
+      },
+      code: status,
+    };
+    return HttpResponse.json<ApiMachineryError>(errorResponse, { status });
+  });
+
+  server.use(handler);
+  return handler;
+};
+
+/**
  * Makes the mock server respond with no time intervals
  */
 export const setTimeIntervalsListEmpty = () => {
@@ -337,23 +371,28 @@ export const setAlertmanagerAlertsHandler = (alerts: AlertmanagerAlert[]) => {
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
   invalidatePluginSettingsCache(pluginId);
+  installAppPluginMeta(pluginMetas[pluginId]);
   server.use(getDisabledPluginHandler(pluginId));
 };
 
 /** Make a plugin respond with a 404, as if it is not installed */
 export const removePlugin = (pluginId: SupportedPlugin) => {
   invalidatePluginSettingsCache(pluginId);
+  uninstallAppPluginMeta(pluginId);
   server.use(getPluginMissingHandler(pluginId));
 };
 
 /** Make an additional plugin respond as installed and enabled */
 export const addPlugin = (pluginMeta: PluginMeta) => {
+  installAppPluginMeta(pluginMeta);
   server.use(getSpecificPluginHandler(pluginMeta));
 };
 
 /** Make a plugin settings request fail with a given HTTP status code (default 500) */
 export const failPlugin = (pluginId: SupportedPlugin, status = 500) => {
   invalidatePluginSettingsCache(pluginId);
+  // the plugin must look installed, otherwise the settings request is never made
+  installAppPluginMeta(pluginMetas[pluginId]);
   server.use(
     http.get(`/api/plugins/${pluginId}/settings`, () =>
       HttpResponse.json({ message: 'Internal server error' }, { status })

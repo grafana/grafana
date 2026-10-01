@@ -14,7 +14,6 @@ interface NewsPanelProps extends PanelProps<Options> {}
 
 export function NewsPanel(props: NewsPanelProps) {
   const {
-    width,
     options: { feedUrl = DEFAULT_FEED_URL, showImage },
   } = props;
 
@@ -59,7 +58,7 @@ export function NewsPanel(props: NewsPanelProps) {
   return (
     <ScrollContainer minHeight="100%">
       {state.value.map((_, index) => {
-        return <News key={index} index={index} width={width} showImage={showImage} data={state.value} />;
+        return <News key={index} index={index} showImage={showImage} data={state.value} />;
       })}
     </ScrollContainer>
   );

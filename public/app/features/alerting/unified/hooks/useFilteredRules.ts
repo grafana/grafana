@@ -2,7 +2,7 @@ import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
-import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type CombinedRuleGroup, type CombinedRuleNamespace, type Rule } from 'app/types/unified-alerting';
@@ -54,8 +54,8 @@ export function useRulesFilter() {
   );
 
   const setSearchQuery = useCallback(
-    (newSearchQuery: string | undefined) => {
-      updateQueryParams({ search: newSearchQuery });
+    (newSearchQuery: string | undefined, options?: { replace?: boolean }) => {
+      updateQueryParams({ search: newSearchQuery }, options?.replace);
     },
     [updateQueryParams]
   );
@@ -252,7 +252,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       if ('policy' in matchesFilterFor) {
         const policy = filterState.policy;
         if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const isDefaultPolicyFilter = policy === USER_DEFINED_TREE_NAME;
+          const isDefaultPolicyFilter = isDefaultRoutingTreeName(policy ?? undefined);
 
           if (isDefaultPolicyFilter) {
             if (ruleUsesDefaultPolicy(rule.rulerRule.grafana_alert.notification_settings)) {

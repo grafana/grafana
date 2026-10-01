@@ -26,9 +26,13 @@ const (
 	INNER JOIN team_member AS tm ON tm.team_id = tr.team_id`
 
 	// basicRoleAssignsSQL is a query to select all users basic role (Admin, Editor, Viewer, None) assignments.
+	// The join must match on org_id as well as role name: builtin_role has one row
+	// per org per managed role, so joining on name alone would match a user's managed
+	// role to another org's managed role and leak its permissions cross-org.
+	// However the basic_role -> role join is global, so we need to add the global org ID to the query.
 	basicRoleAssignsSQL = `SELECT ou.user_id, ou.org_id, br.role_id
 	FROM builtin_role AS br
-	INNER JOIN org_user AS ou ON ou.role = br.role`
+	INNER JOIN org_user AS ou ON ou.role = br.role AND (ou.org_id = br.org_id OR br.org_id = ?)`
 
 	// grafanaAdminAssignsSQL is a query to select all grafana admin users.
 	// it has to be formatted with the quoted user table.
@@ -221,7 +225,6 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 
 		direct := userAssignsSQL
 		team := teamAssignsSQL
-		basic := basicRoleAssignsSQL
 
 		if options.UserID > 0 {
 			direct += " WHERE ur.user_id = ?"
@@ -229,7 +232,12 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 
 			team += " WHERE tm.user_id = ?"
 			params = append(params, options.UserID)
+		}
 
+		// Basic role link to its role is global
+		basic := basicRoleAssignsSQL
+		params = append(params, accesscontrol.GlobalOrgID)
+		if options.UserID > 0 {
 			basic += " WHERE ou.user_id = ?"
 			params = append(params, options.UserID)
 		}
@@ -262,7 +270,11 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		params = append(params, orgID, accesscontrol.GlobalOrgID)
 
 		if options.ActionPrefix != "" {
-			q += ` AND p.action LIKE ?`
+			// The action-prefix and action-set conditions must be grouped so the
+			// preceding org filter (and trailing role-prefix filter) always apply.
+			// Without the parentheses, SQL precedence detaches the action-set OR
+			// branch from the org filter and leaks permissions across orgs.
+			q += ` AND (p.action LIKE ?`
 			params = append(params, options.ActionPrefix+"%")
 			if len(options.ActionSets) > 0 {
 				q += ` OR p.action IN ( ? ` + strings.Repeat(", ?", len(options.ActionSets)-1) + ")"
@@ -270,6 +282,7 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 					params = append(params, a)
 				}
 			}
+			q += `)`
 		}
 		if options.Action != "" {
 			if len(options.ActionSets) == 0 {

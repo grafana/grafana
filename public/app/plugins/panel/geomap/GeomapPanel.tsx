@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
+import memoizeOne from 'memoize-one';
 import type OpenLayersMap from 'ol/Map';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import View, { type ViewOptions } from 'ol/View';
@@ -17,8 +18,8 @@ import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, type PanelData, type PanelProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
-import { type PanelContext, PanelContextRoot } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { type PanelContext, PanelContextRoot, type Themeable2, withTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { VariablesChanged } from 'app/features/variables/types';
 import { PanelEditExitedEvent } from 'app/types/events';
@@ -35,8 +36,9 @@ import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
 import { type Options, type MapViewConfig, TooltipMode } from './panelcfg.gen';
 import { type ControlsOptions, type MapLayerState } from './types';
 import { getActions } from './utils/actions';
+import { updateAttributionVisibility } from './utils/attribution';
 import { getLayersExtent } from './utils/getLayersExtent';
-import { applyLayerFilter, initLayer } from './utils/layers';
+import { applyLayerFilter, initLayer, reinitLayers } from './utils/layers';
 import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tooltip';
 import {
   updateMap,
@@ -50,7 +52,7 @@ import { centerPointRegistry, MapCenterID } from './view';
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
 
-type Props = PanelProps<Options>;
+type Props = PanelProps<Options> & Themeable2;
 interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
@@ -64,7 +66,7 @@ export class GeomapPanel extends Component<Props, State> {
   panelContext: PanelContext | undefined = undefined;
   private subs = new Subscription();
 
-  globalCSS = getGlobalStyles(config.theme2);
+  getGlobalCSS = memoizeOne(getGlobalStyles);
 
   mouseWheelZoom?: MouseWheelZoom;
   hoverPayload: GeomapHoverPayload = { point: {}, pageX: -1, pageY: -1 };
@@ -172,6 +174,9 @@ export class GeomapPanel extends Component<Props, State> {
     if (this.props.options !== prevProps.options) {
       this.optionsChanged(prevProps.options, this.props.options);
     }
+    if (this.map && this.props.theme !== prevProps.theme) {
+      reinitLayers(this);
+    }
   }
 
   /** This function will actually update the JSON model */
@@ -239,6 +244,7 @@ export class GeomapPanel extends Component<Props, State> {
     // Handle controls changes
     if (newOptions.controls !== oldOptions.controls) {
       this.initControls(newOptions.controls ?? { showZoom: true, showAttribution: true });
+      updateAttributionVisibility(this.layers, newOptions.controls);
     }
   }
 
@@ -475,9 +481,8 @@ export class GeomapPanel extends Component<Props, State> {
 
     this.mouseWheelZoom?.setActive(Boolean(options.mouseWheelZoom));
 
-    if (options.showAttribution) {
-      this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
-    }
+    // Attribution visibility is handled per layer, and the control hides itself when no layer supplies any
+    this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
 
     // Update the react overlays
     let topRight1: ReactNode[] = [];
@@ -530,7 +535,7 @@ export class GeomapPanel extends Component<Props, State> {
 
     return (
       <>
-        <Global styles={this.globalCSS} />
+        <Global styles={this.getGlobalCSS(this.props.theme)} />
         <div className={styles.wrap} onMouseLeave={this.clearTooltip}>
           <div
             role="application"
@@ -552,6 +557,8 @@ export class GeomapPanel extends Component<Props, State> {
     );
   }
 }
+
+export const GeomapPanelWithTheme = withTheme2(GeomapPanel);
 
 const styles = {
   wrap: css({

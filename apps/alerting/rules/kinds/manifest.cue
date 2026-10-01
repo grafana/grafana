@@ -13,7 +13,9 @@ manifest: {
 				alertRulev0alpha1,
 				recordingRulev0alpha1,
 				ruleSequencev0alpha1,
+				configv0alpha1,
 			]
+			routes: searchRoutes
 		}
 	}
 	roles: {}

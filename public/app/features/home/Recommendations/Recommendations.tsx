@@ -1,428 +1,179 @@
-import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useRef } from 'react';
 import { useAsync } from 'react-use';
 
-import { type GrafanaTheme2, type IconName, locationUtil } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
+import { useStoredBoolean } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { RecommendationCard } from './RecommendationCard';
-import { RecommendationExisting } from './RecommendationExisting';
-import { RecommendationPill } from './RecommendationPill';
-import { KUBERNETES_APP_ID } from './kubernetesData';
+import { setupGuideEnabled } from '../solutions/pluginAvailability';
+import { type SolutionState } from '../solutions/solutionState';
+import { getTelemetrySetupLink } from '../solutions/telemetrySetup';
+import { type SolutionId } from '../solutions/types';
+import { type HomepageSolutions } from '../useHomepageSolutions';
+
+import { RecommendationsSkeleton } from './RecommendationsSkeleton';
+import { RecommendationsView } from './RecommendationsView';
+import { fetchInstalledPlugins, getRecommendationCards, type PluginRecommendationCard } from './pluginRecommendations';
+import { orderCardsForSolution, type RecommendedCardId, selectRecommendations } from './solutionsMatrix';
+import { type RecommendationItem } from './types';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
 
-export interface RecommendationItem {
-  id: string; // stable telemetry id (recommendation_id)
-  pluginId: string; // app plugin id — drives the CTA href AND the enabled-filter
-  title: string;
-  icon: IconName;
-  color: string | ((theme: GrafanaTheme2) => string);
-  context: string; // short "why you are seeing this" line under the title
-  description: string;
-  action: string; // CTA label, e.g. "Enable Hosted Traces"
-  href: string;
+interface RecommendationsProps {
+  solutions: HomepageSolutions;
 }
 
-function getRecommendations(): RecommendationItem[] {
-  const recommendationDefinitions: Array<Omit<RecommendationItem, 'href'>> = [
-    {
-      id: 'hosted-traces',
-      pluginId: 'grafana-exploretraces-app',
-      icon: 'gf-traces',
-      color: (theme) => theme.visualization.getColorByName('orange'),
-      title: t('home.recommendations.hosted-traces.title', 'Trace requests across services'),
-      context: t('home.recommendations.hosted-traces.context', 'Because you set up Kubernetes Monitoring'),
-      description: t(
-        'home.recommendations.hosted-traces.description',
-        'Add distributed tracing to see how requests flow between services and where they slow down.'
-      ),
-      action: t('home.recommendations.hosted-traces.action', 'Enable Hosted Traces'),
-    },
-    {
-      id: 'synthetic-monitoring',
-      pluginId: 'grafana-synthetic-monitoring-app',
-      icon: 'globe',
-      color: (theme) => theme.visualization.getColorByName('purple'),
-      title: t('home.recommendations.synthetic-monitoring.title', 'Watch your cluster from outside'),
-      context: t('home.recommendations.synthetic-monitoring.context', 'Catch outages before your users do'),
-      description: t(
-        'home.recommendations.synthetic-monitoring.description',
-        'Probe your endpoints from 20+ global locations before your users notice.'
-      ),
-      action: t('home.recommendations.synthetic-monitoring.action', 'Add Synthetic Monitoring'),
-    },
-    {
-      id: 'application-observability',
-      pluginId: 'grafana-app-observability-app',
-      icon: 'application-observability',
-      color: (theme) => theme.visualization.getColorByName('green'),
-      title: t('home.recommendations.application-observability.title', 'Explore your service map'),
-      context: t('home.recommendations.application-observability.context', 'Built automatically from your telemetry'),
-      description: t(
-        'home.recommendations.application-observability.description',
-        'Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.'
-      ),
-      action: t('home.recommendations.application-observability.action', 'Enable Application Observability'),
-    },
-    {
-      id: 'frontend-observability',
-      pluginId: 'grafana-kowalski-app',
-      icon: 'frontend-observability',
-      color: (theme) => theme.visualization.getColorByName('blue'),
-      title: t('home.recommendations.frontend-observability.title', 'Measure real user experience'),
-      context: t('home.recommendations.frontend-observability.context', 'Connect the browser to your backend traces'),
-      description: t(
-        'home.recommendations.frontend-observability.description',
-        'Capture Core Web Vitals and errors from the browser and tie them back to backend traces.'
-      ),
-      action: t('home.recommendations.frontend-observability.action', 'Enable Frontend Observability'),
-    },
-  ];
-
-  return recommendationDefinitions.map((recommendation) => ({
-    ...recommendation,
-    href: locationUtil.assureBaseUrl(`/plugins/${recommendation.pluginId}/`),
-  }));
-}
-
-// Bypass getLocalPlugins(): it drops hidden plugins, which must still be classified here.
-async function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
-  return getBackendSrv().get('/api/plugins', accessControlQueryParam({ embedded: 0 }));
-}
-
-export function Recommendations() {
-  const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall) && config.pluginAdminEnabled;
-  // Unscoped pre-gate only; each disabled card re-checks plugins:write scoped to its own plugin.
+export function Recommendations({ solutions }: RecommendationsProps) {
+  if (isOnPrem()) {
+    return null;
+  }
+  // Unscoped pre-gate; each card re-checks its scoped permission. Plugin management or
+  // datasource creation qualifies — everyone else is spared the recommendation work.
   const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
-  if (!canInstall && !canWriteSome) {
+  const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
+  if (!canWriteSome && !canCreateDataSources) {
     return null;
   }
-  return <GatedRecommendations canInstall={canInstall} />;
+  return <GatedRecommendations solutions={solutions} />;
 }
 
-function GatedRecommendations({ canInstall }: { canInstall: boolean }) {
-  const { installed, loading: bridgeLoading } = usePluginBridge(KUBERNETES_APP_ID);
-  const { value: installedPlugins, loading: pluginsLoading } = useAsync(
-    async () => (installed ? fetchInstalledPlugins() : undefined),
-    [installed]
-  );
-
-  // An unavailable plugin list fails closed. An empty list contradicts the bridge
-  // reporting Kubernetes Monitoring installed, so it is treated as unavailable too.
-  if (bridgeLoading || pluginsLoading || !installed || !installedPlugins || installedPlugins.length === 0) {
-    return null;
-  }
-
-  const pluginsById = new Map(installedPlugins.map((plugin) => [plugin.id, plugin]));
-  const recommendations = getRecommendations().filter((recommendation) => {
-    const plugin = pluginsById.get(recommendation.pluginId);
-    if (!plugin) {
-      // Unlistable plugins take the install-only path.
-      return canInstall;
-    }
-    if (plugin.enabled) {
-      return false;
-    }
-    // plugins:write is scoped to this plugin.
-    return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
-  });
-
-  if (recommendations.length === 0) {
-    return null;
-  }
-
-  return <RecommendationsView recommendations={recommendations} />;
+interface GatedRecommendationsProps {
+  solutions: HomepageSolutions;
 }
 
-function RecommendationsView({ recommendations }: { recommendations: RecommendationItem[] }) {
-  const styles = useStyles2(getStyles);
+function toEnableItem(recommendation: PluginRecommendationCard): RecommendationItem {
+  return { ...recommendation, cta: 'enable' };
+}
+
+// Enabled but silent: send the user into the app to finish setup, not back to the catalog.
+function toSetupItem(recommendation: PluginRecommendationCard): RecommendationItem {
+  return { ...recommendation, action: recommendation.setupAction, href: recommendation.appHref, cta: 'setup' };
+}
+
+function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionState, setupGuideEnabled: boolean) {
+  const pluginsById = new Map(inventory.map((plugin) => [plugin.id, plugin]));
+  const selection = selectRecommendations(signals);
+  const cardsById = getRecommendationCards();
+
+  // An unavailable plugin list fails closed (plugin cards only). /api/plugins always lists at
+  // least the core plugins, so an empty response means the list is unreliable and also fails closed.
+  const listReady = inventory.length > 0;
+
+  const toItems = (cards: RecommendedCardId[]): RecommendationItem[] =>
+    cards.flatMap((cardId): RecommendationItem[] => {
+      const card = cardsById[cardId];
+      if (card.kind === 'connection') {
+        // Independent of the plugin list: a failing /api/plugins must not hide a connection card.
+        if (!contextSrv.hasPermission(AccessControlAction.DataSourcesCreate)) {
+          return [];
+        }
+        if (card.telemetryType) {
+          return [{ ...card, ...getTelemetrySetupLink(card.telemetryType, { setupGuideEnabled }) }];
+        }
+        return [card];
+      }
+      if (!listReady) {
+        return [];
+      }
+      const plugin = pluginsById.get(card.pluginId);
+      if (!plugin) {
+        return [];
+      }
+      if (plugin.enabled) {
+        // Telemetry onboarding can happen without drilldown access. Other app-specific setup
+        // flows still require access to the app page they open.
+        if (card.telemetryType) {
+          return [
+            {
+              ...toSetupItem(card),
+              ...getTelemetrySetupLink(card.telemetryType, { setupGuideEnabled }),
+            },
+          ];
+        }
+        // App access gates the destination page; setupPermission gates the flow itself.
+        const canSetup =
+          contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin) &&
+          (!card.setupPermission || contextSrv.hasPermission(card.setupPermission));
+        return canSetup ? [toSetupItem(card)] : [];
+      }
+      // plugins:write is scoped to this plugin.
+      return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];
+    });
+
+  const recommendations = toItems(selection.cards);
+  // Per-solution views are permutations of the same selection (membership is the matrix's
+  // call, never the view's), so the skeleton and region-hide gates below stay list-agnostic.
+  // The Record type keeps the literal in lockstep with SOLUTION_IDS.
+  const forSolution = (id: SolutionId) => toItems(orderCardsForSolution(selection.cards, id));
+  const recommendationsBySolution: Record<SolutionId, RecommendationItem[]> = {
+    kubernetes: forSolution('kubernetes'),
+    metrics: forSolution('metrics'),
+    logs: forSolution('logs'),
+    traces: forSolution('traces'),
+    synthetics: forSolution('synthetics'),
+  };
+
+  return { selection, recommendations, recommendationsBySolution };
+}
+
+function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
   const [collapsed, setCollapsed] = useStoredBoolean(HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY, false);
+  // A stored collapsed preference must not start recommendation selection. Monotonic
+  // render-time latch: expanding never commits an ungated frame, re-collapsing never reselects.
+  const everExpanded = useRef(!collapsed);
+  if (!collapsed) {
+    everExpanded.current = true;
+  }
+  const selectionEnabled = everExpanded.current;
 
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-
-  // Clamp on the render itself, not via useEffect: if the list shrinks (an app gets enabled) while
-  // `index` is past the new end, reading recommendations[index] would be undefined before an effect fires.
-  const safeIndex = Math.min(index, recommendations.length - 1);
-
-  useEffect(() => {
-    if (collapsed || paused) {
-      return;
+  // Keyed on the signal snapshot, not the solution set: the set changes when the Kubernetes filter
+  // changes, but the signals do not, and re-selecting would re-report the shown recommendations.
+  const { signals } = solutions;
+  const selected = useAsync(async () => {
+    if (!selectionEnabled) {
+      return undefined;
     }
+    const [inventory, state, guideEnabled] = await Promise.all([
+      fetchInstalledPlugins().catch(() => []),
+      signals(),
+      setupGuideEnabled(),
+    ]);
+    return selectRecommendationState(inventory, state, guideEnabled);
+  }, [selectionEnabled, signals]);
 
-    const timeout = setTimeout(() => {
-      setIndex((safeIndex + 1) % recommendations.length);
-    }, 5000);
+  // The region renders once the selection settles; recommendations only decide the right column.
+  // Collapsed (gated-off) renders immediately as just the header row.
+  const state = selected.value;
+  if (selectionEnabled && !state) {
+    return <RecommendationsSkeleton />;
+  }
 
-    return () => clearTimeout(timeout);
-  }, [collapsed, paused, safeIndex, recommendations.length]);
+  // All-or-nothing: the region never renders one column alone. An empty right column —
+  // inconclusive detection (the matrix's unknown short-circuit), nothing left to recommend,
+  // or every card failing closed — hides the whole region. The collapsed-gated render
+  // (selectionEnabled false) keeps its header row: without selection, emptiness is unknowable.
+  if (selectionEnabled && state && state.recommendations.length === 0) {
+    return null;
+  }
 
   return (
-    <div>
-      <Stack direction="row" alignItems="center" columnGap={2} rowGap={1} wrap="wrap">
-        <Text element="h2" variant="h5">
-          <Trans i18nKey="home.recommendations.title">Recommendations for your stack</Trans>
-        </Text>
-
-        {collapsed && (
-          <div className={styles.pills}>
-            <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
-              {recommendations.map((recommendation) => (
-                <RecommendationPill key={recommendation.id} recommendation={recommendation} />
-              ))}
-            </Stack>
-          </div>
-        )}
-
-        <Stack direction="row" alignItems="center" gap={1} flex="1 1 auto">
-          <div className={cx(styles.spacer, collapsed && styles.line)} />
-
-          <Button
-            variant="secondary"
-            size="sm"
-            fill="text"
-            icon={collapsed ? 'angle-down' : 'angle-up'}
-            iconPlacement="right"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-expanded={!collapsed}
-          >
-            {collapsed ? (
-              <Trans i18nKey="home.recommendations.show">Show</Trans>
-            ) : (
-              <Trans i18nKey="home.recommendations.hide">Hide</Trans>
-            )}
-          </Button>
-        </Stack>
-      </Stack>
-
-      {!collapsed && (
-        <div className={styles.cards}>
-          <Grid gap={0} columns={{ xs: 1, md: 2 }}>
-            <div className={styles.card}>
-              <RecommendationExisting />
-
-              <div className={styles.arrow}>
-                <Icon name="arrow-right" size="xl" />
-              </div>
-            </div>
-
-            <div
-              className={cx(styles.card, styles.recommended)}
-              role="region"
-              aria-roledescription={t('home.recommendations.carousel-roledescription', 'carousel')}
-              aria-label={t('home.recommendations.carousel-label', 'Recommended apps')}
-            >
-              <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
-                <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
-
-                <Stack direction="row" alignItems="center" gap={1}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    fill="text"
-                    icon="angle-left"
-                    onClick={() => setIndex((safeIndex - 1 + recommendations.length) % recommendations.length)}
-                    aria-label={t('home.recommendations.previous', 'Previous')}
-                  />
-
-                  {recommendations.map((_, i) =>
-                    i === safeIndex ? (
-                      <Button
-                        key={i}
-                        variant="secondary"
-                        size="sm"
-                        fill="solid"
-                        icon={paused ? 'play' : 'pause'}
-                        onClick={() => setPaused(!paused)}
-                        aria-label={
-                          paused ? t('home.recommendations.resume', 'Resume') : t('home.recommendations.pause', 'Pause')
-                        }
-                        data-paused={paused ? true : undefined}
-                        className={cx(styles.dot, styles.active)}
-                      />
-                    ) : (
-                      <Button
-                        key={i}
-                        variant="secondary"
-                        size="sm"
-                        fill="solid"
-                        onClick={() => setIndex(i)}
-                        aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index: i + 1 })}
-                        className={styles.dot}
-                      />
-                    )
-                  )}
-
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    fill="text"
-                    icon="angle-right"
-                    onClick={() => setIndex((safeIndex + 1) % recommendations.length)}
-                    aria-label={t('home.recommendations.next', 'Next')}
-                  />
-                </Stack>
-              </Stack>
-
-              <div className={styles.outer}>
-                <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
-                  {recommendations.map((recommendation, i) => (
-                    <div
-                      key={recommendation.id}
-                      className={styles.item}
-                      aria-hidden={i !== safeIndex}
-                      {...(i !== safeIndex && { inert: '' })}
-                    >
-                      <RecommendationCard recommendation={recommendation} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Grid>
-        </div>
-      )}
-    </div>
+    <RecommendationsView
+      recommendations={state?.recommendations ?? []}
+      recommendationsBySolution={state?.recommendationsBySolution ?? EMPTY_BY_SOLUTION}
+      startingState={state?.selection.baseRow ?? 'unknown'}
+      collapsed={collapsed}
+      setCollapsed={setCollapsed}
+      solutions={solutions.solutions}
+    />
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  pills: css({
-    [theme.breakpoints.down('md')]: {
-      order: 1,
-    },
-  }),
-  spacer: css({
-    flex: '1 1 0%',
-  }),
-  line: css({
-    [theme.breakpoints.up('md')]: {
-      background: theme.colors.border.medium,
-      height: '1px',
-    },
-  }),
-  cards: css({
-    background: theme.colors.background.canvas,
-    borderRadius: theme.shape.radius.default,
-    margin: theme.spacing(2, 0, 0),
-    overflow: 'hidden',
-  }),
-  card: css({
-    display: 'flex',
-    flexDirection: 'column',
-    padding: theme.spacing(3, 4),
-    position: 'relative',
-    minWidth: 0,
-  }),
-  recommended: css({
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      inset: 0,
-      background: theme.colors.gradients.brandHorizontal,
-      opacity: 0.05,
-      pointerEvents: 'none',
-    },
-  }),
-  arrow: css({
-    background: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.circle,
-    border: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(0.25),
-    lineHeight: 0,
-    position: 'absolute',
-    zIndex: 1,
-    left: '50%',
-    top: '100%',
-    transform: 'translate(-50%, -50%) rotate(90deg)',
-
-    [theme.breakpoints.up('md')]: {
-      top: theme.spacing(2),
-      left: '100%',
-      transform: 'translate(-50%, 0)',
-    },
-  }),
-  dot: css({
-    background: theme.colors.background.secondary,
-    lineHeight: 0,
-    padding: 0,
-    width: theme.spacing(1),
-    height: theme.spacing(1),
-    borderRadius: theme.shape.radius.pill,
-    position: 'relative',
-
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: theme.spacing(2),
-      height: theme.spacing(2),
-    },
-
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: theme.transitions.create(['background-color', 'width', 'height'], {
-        duration: theme.transitions.duration.short,
-      }),
-    },
-  }),
-  active: css({
-    '&, &::after': {
-      width: theme.spacing(3),
-    },
-
-    '&, &:hover, &:focus': {
-      background: theme.colors.text.maxContrast,
-      color: theme.colors.background.secondary,
-    },
-
-    '&:hover, &[data-paused]': {
-      height: theme.spacing(2),
-    },
-
-    '& > svg': {
-      margin: '0 auto',
-
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-    },
-
-    '&:not(:hover):not([data-paused])': {
-      '& > svg': {
-        opacity: 0,
-      },
-    },
-  }),
-  outer: css({
-    overflow: 'hidden',
-    flex: 1,
-    margin: theme.spacing(2, 0, 0),
-  }),
-  inner: css({
-    display: 'flex',
-    // Fill .outer so each slide stretches to the card cell and the card's
-    // space-between can pin its CTA to the bottom, matching the Existing card.
-    height: '100%',
-
-    [theme.transitions.handleMotion('no-preference')]: {
-      transition: theme.transitions.create(['transform']),
-    },
-  }),
-  item: css({
-    display: 'flex',
-    minWidth: '100%',
-  }),
-});
+const EMPTY_BY_SOLUTION: Record<SolutionId, RecommendationItem[]> = {
+  kubernetes: [],
+  metrics: [],
+  logs: [],
+  traces: [],
+  synthetics: [],
+};

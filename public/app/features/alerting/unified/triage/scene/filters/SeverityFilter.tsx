@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { useSceneContext } from '@grafana/scenes-react';
 import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -70,6 +71,7 @@ export function SeverityFilter({ labels }: SeverityFilterProps) {
             <button
               className={cx(styles.severityButton, activeLevel === def.level && styles.severityButtonActive)}
               onClick={() => toggle(def.level)}
+              data-testid={selectors.pages.Alerting.Triage.severityFilterButton(def.level)}
             >
               <SeverityBars level={def.level} />
               <span className={styles.severityLabel}>

@@ -42,7 +42,15 @@ You can install and run Grafana using the following official Docker images.
 
 - **Grafana Open Source**: `grafana/grafana`
 
-Each edition is available in two variants: Alpine and Ubuntu.
+Each edition is available with an Alpine, Ubuntu, or Distroless base image. Each base image also has a slim variant.
+
+Append the variant suffix to the Grafana version in the image tag:
+
+| Base image | Standard tag           | Slim tag                    |
+| ---------- | ---------------------- | --------------------------- |
+| Alpine     | `<version>`            | `<version>-slim`            |
+| Ubuntu     | `<version>-ubuntu`     | `<version>-ubuntu-slim`     |
+| Distroless | `<version>-distroless` | `<version>-distroless-slim` |
 
 ## Alpine image (recommended)
 
@@ -58,6 +66,20 @@ The Ubuntu-based Grafana Enterprise and OSS images are built using the [Ubuntu](
 - **Grafana Enterprise**: `grafana/grafana-enterprise:<version>-ubuntu`
 
 - **Grafana Open Source**: `grafana/grafana:<version>-ubuntu`
+
+## Distroless image
+
+The Distroless-based Grafana Enterprise and OSS images use the [Distroless](https://github.com/GoogleContainerTools/distroless) base image. Distroless images contain fewer operating system packages than the Alpine and Ubuntu images. They don't include a shell, package manager, or other general-purpose operating system utilities, which results in a smaller footprint.
+
+- **Grafana Enterprise**: `grafana/grafana-enterprise:<version>-distroless`
+
+- **Grafana Open Source**: `grafana/grafana:<version>-distroless`
+
+## Slim images
+
+Slim images don't include the plugins that Grafana bundles with the standard images. You can still install plugins when the container starts by setting the `GF_PLUGINS_PREINSTALL` environment variable. For instructions, refer to [Install plugins in the Docker container](../installation/docker/#install-plugins-in-the-docker-container).
+
+To use a slim image, add `-slim` to the base image suffix. For example, use `<version>-slim` for Alpine, `<version>-ubuntu-slim` for Ubuntu, or `<version>-distroless-slim` for Distroless.
 
 ## Run a specific version of Grafana
 

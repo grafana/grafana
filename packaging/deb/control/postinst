@@ -33,8 +33,13 @@ if [ "$1" = configure ]; then
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
   mkdir -p /var/log/grafana /var/lib/grafana
-  # Move plugins-bundled into place, see https://github.com/grafana/grafana/issues/123110
-  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+  # Bundled plugins must live under $DATA_DIR (writable by grafana) so the
+  # plugin auto-updater can replace them; the service points
+  # paths.bundled_plugins there. Copy instead of move so the packaged files
+  # stay in place and `dpkg --verify` stays clean. Only replace the existing
+  # bundled plugins when the package actually contains plugin definitions.
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ] && \
+     find "$GRAFANA_HOME/data/plugins-bundled" -type f -name plugin.json -print | grep -q .; then
     if [ "$IS_UPGRADE" = "true" ] && [ "$RESTART_ON_UPGRADE" = "true" ]; then
       if command -v systemctl >/dev/null; then
         systemctl stop grafana-server || true
@@ -42,7 +47,7 @@ if [ "$1" = configure ]; then
     fi
     mkdir -p "$DATA_DIR"
     rm -rf "${DATA_DIR:?}/plugins-bundled"
-    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
+    cp -a "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
     chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
   fi
 

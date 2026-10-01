@@ -1,4 +1,4 @@
-import { each, find, findIndex, flattenDeep, isArray, isString, map, max, some } from 'lodash';
+import { each, find, findIndex, isArray, map } from 'lodash';
 
 import {
   type AnnotationQuery,
@@ -32,14 +32,7 @@ import { type DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, type GraphFieldConfig } from '@grafana/ui';
 import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/internal';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
-import {
-  DEFAULT_PANEL_SPAN,
-  DEFAULT_ROW_HEIGHT,
-  GRID_CELL_HEIGHT,
-  GRID_CELL_VMARGIN,
-  GRID_COLUMN_COUNT,
-  MIN_PANEL_HEIGHT,
-} from 'app/core/constants';
+import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -61,6 +54,7 @@ import {
 
 import { type DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
+import { convertRowsToGridPanels } from './convertRowsToGridPanels';
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
@@ -813,187 +807,16 @@ export class DashboardMigrator {
   }
 
   upgradeToGridLayout(old: any) {
-    let yPos = 0;
-    const widthFactor = GRID_COLUMN_COUNT / 12;
-
-    // Find max panel ID from both rows and existing top-level panels
-    // Top-level panels may have been assigned IDs by ensurePanelsHaveUniqueIds
-    const rowPanelIds = flattenDeep(
-      map(old.rows, (row) => {
-        return map(row.panels, 'id');
-      })
-    ).filter((id) => id != null);
-
-    const topLevelPanelIds = map(this.dashboard.panels, 'id').filter((id) => id != null);
-
-    const maxPanelId = max([...rowPanelIds, ...topLevelPanelIds]) || 0;
-    let nextRowId = maxPanelId + 1;
-
     if (!old.rows) {
       return;
     }
 
-    // Add special "row" panels if even one row is collapsed, repeated or has visible title
-    const showRows = some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
+    // Top-level panels may have been assigned IDs by ensurePanelsHaveUniqueIds
+    const topLevelPanelIds = map(this.dashboard.panels, 'id');
 
-    for (const row of old.rows) {
-      if (row.repeatIteration) {
-        continue;
-      }
-
-      const height = row.height || DEFAULT_ROW_HEIGHT;
-      const rowGridHeight = getGridHeight(height);
-
-      const rowPanel: any = {};
-      let rowPanelModel: PanelModel | undefined;
-
-      if (showRows) {
-        // add special row panel
-        rowPanel.id = nextRowId;
-        rowPanel.type = 'row';
-        rowPanel.title = row.title;
-        rowPanel.collapsed = row.collapse;
-        rowPanel.repeat = row.repeat;
-        rowPanel.panels = [];
-        rowPanel.gridPos = {
-          x: 0,
-          y: yPos,
-          w: GRID_COLUMN_COUNT,
-          h: rowGridHeight,
-        };
-        rowPanelModel = new PanelModel(rowPanel);
-        nextRowId++;
-        yPos++;
-      }
-
-      const rowArea = new RowArea(rowGridHeight, GRID_COLUMN_COUNT, yPos);
-
-      for (const panel of row.panels) {
-        panel.span = panel.span || DEFAULT_PANEL_SPAN;
-        if (panel.minSpan) {
-          panel.minSpan = Math.min(GRID_COLUMN_COUNT, (GRID_COLUMN_COUNT / 12) * panel.minSpan);
-        }
-        const panelWidth = Math.floor(panel.span) * widthFactor;
-        const panelHeight = panel.height ? getGridHeight(panel.height) : rowGridHeight;
-
-        const panelPos = rowArea.getPanelPosition(panelHeight, panelWidth);
-        yPos = rowArea.yPos;
-        panel.gridPos = {
-          x: panelPos.x,
-          y: yPos + panelPos.y,
-          w: panelWidth,
-          h: panelHeight,
-        };
-        rowArea.addPanel(panel.gridPos);
-
-        delete panel.span;
-
-        if (rowPanelModel && rowPanel.collapsed) {
-          rowPanelModel.panels?.push(panel);
-        } else {
-          this.dashboard.panels.push(new PanelModel(panel));
-        }
-      }
-
-      if (rowPanelModel) {
-        this.dashboard.panels.push(rowPanelModel);
-      }
-
-      if (!(rowPanelModel && rowPanel.collapsed)) {
-        yPos += rowGridHeight;
-      }
+    for (const panel of convertRowsToGridPanels(old.rows, topLevelPanelIds)) {
+      this.dashboard.panels.push(new PanelModel(panel));
     }
-  }
-}
-
-function getGridHeight(height: number | string) {
-  if (isString(height)) {
-    height = parseInt(height.replace('px', ''), 10);
-  }
-
-  if (height < MIN_PANEL_HEIGHT) {
-    height = MIN_PANEL_HEIGHT;
-  }
-
-  const gridHeight = Math.ceil(height / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
-  return gridHeight;
-}
-
-/**
- * RowArea represents dashboard row filled by panels
- * area is an array of numbers represented filled column's cells like
- *  -----------------------
- * |******** ****
- * |******** ****
- * |********
- *  -----------------------
- *  33333333 2222 00000 ...
- */
-class RowArea {
-  area: number[];
-  yPos: number;
-  height: number;
-
-  constructor(height: number, width = GRID_COLUMN_COUNT, rowYPos = 0) {
-    this.area = new Array(width).fill(0);
-    this.yPos = rowYPos;
-    this.height = height;
-  }
-
-  reset() {
-    this.area.fill(0);
-  }
-
-  /**
-   * Update area after adding the panel.
-   */
-  addPanel(gridPos: any) {
-    for (let i = gridPos.x; i < gridPos.x + gridPos.w; i++) {
-      if (!this.area[i] || gridPos.y + gridPos.h - this.yPos > this.area[i]) {
-        this.area[i] = gridPos.y + gridPos.h - this.yPos;
-      }
-    }
-    return this.area;
-  }
-
-  /**
-   * Calculate position for the new panel in the row.
-   */
-  getPanelPosition(panelHeight: number, panelWidth: number, callOnce = false): any {
-    let startPlace, endPlace;
-    let place;
-    for (let i = this.area.length - 1; i >= 0; i--) {
-      if (this.height - this.area[i] > 0) {
-        if (endPlace === undefined) {
-          endPlace = i;
-        } else {
-          if (i < this.area.length - 1 && this.area[i] <= this.area[i + 1]) {
-            startPlace = i;
-          } else {
-            break;
-          }
-        }
-      } else {
-        break;
-      }
-    }
-
-    if (startPlace !== undefined && endPlace !== undefined && endPlace - startPlace >= panelWidth - 1) {
-      const yPos = max(this.area.slice(startPlace));
-      place = {
-        x: startPlace,
-        y: yPos,
-      };
-    } else if (!callOnce) {
-      // wrap to next row
-      this.yPos += this.height;
-      this.reset();
-      return this.getPanelPosition(panelHeight, panelWidth, true);
-    } else {
-      return null;
-    }
-
-    return place;
   }
 }
 

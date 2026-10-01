@@ -66,6 +66,10 @@ Logs of usage insights contain the following fields, where the fields followed b
 
 ## Configuration
 
+{{< admonition type="caution" >}}
+Grafana Cloud provides provisioned dashboards for usage insights. Refer to the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/) for more information. If you export usage insights to a separate Loki instance, these dashboards stop receiving usage insights data. This is a current limitation of the feature in Grafana Cloud.
+{{< /admonition >}}
+
 To export your logs, enable the usage insights feature and [configure](../../configure-grafana/) an export location in the configuration file:
 
 ```ini

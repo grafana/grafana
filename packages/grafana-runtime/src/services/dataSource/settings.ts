@@ -7,12 +7,13 @@ import {
   matchPluginId,
 } from '@grafana/data';
 
-import { isExpressionReference } from '../../utils/DataSourceWithBackend';
+import { isExpressionReference } from '../../utils/expressionRef';
 import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
+import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { describeRef, logDataSourceWarning } from './logging';
@@ -46,9 +47,19 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
   }
 }
 
+function replaceInstanceSettings(
+  settings: Record<string, DataSourceInstanceSettings>,
+  defaultDatasourceName: string
+): void {
+  populateMaps(settings);
+  defaultName = defaultDatasourceName;
+  notifyDataSourceCacheChanged();
+}
+
 /**
  * Populate the instance-settings cache from boot data. Intended to be called
  * exactly once at application startup via the `@grafana/runtime/internal` export.
+ * In tests, use {@link setDataSourceInstanceSettings} instead.
  *
  * @internal
  */
@@ -56,8 +67,31 @@ export function initDataSourceInstanceSettings(
   settings: Record<string, DataSourceInstanceSettings>,
   defaultDsName: string
 ): void {
-  defaultName = defaultDsName;
-  populateMaps(settings);
+  replaceInstanceSettings(settings, defaultDsName);
+}
+
+/**
+ * Test helper — the sanctioned way to seed the instance-settings cache in tests.
+ * Fully resets all module state (including runtime and expression data sources),
+ * then populates the cache from a clone of `settings` so test fixtures are never
+ * mutated. When `defaultDatasourceName` is omitted, the entry flagged with
+ * `isDefault: true` becomes the default. Should only be called from tests.
+ *
+ * @internal
+ */
+export function setDataSourceInstanceSettings(
+  settings: Record<string, DataSourceInstanceSettings>,
+  defaultDatasourceName?: string
+): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('setDataSourceInstanceSettings() function can only be called from tests.');
+  }
+
+  _resetForTests();
+  replaceInstanceSettings(
+    structuredClone(settings),
+    defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? ''
+  );
 }
 
 /**
@@ -70,8 +104,7 @@ const RELOAD_CACHE_KEY = 'grafana-runtime:ds-reload';
 
 async function fetchAndPopulate(): Promise<void> {
   const settings = await getBackendSrv().get('/api/frontend/settings');
-  populateMaps(settings.datasources);
-  defaultName = settings.defaultDatasource;
+  replaceInstanceSettings(settings.datasources, settings.defaultDatasource);
 }
 
 async function performReload(): Promise<void> {
@@ -112,8 +145,7 @@ interface SyncDataSourceSettings {
  */
 export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings): void {
   clearPluginCache();
-  populateMaps(settings.datasources);
-  defaultName = settings.defaultDatasource;
+  replaceInstanceSettings(settings.datasources, settings.defaultDatasource);
 }
 
 /**
@@ -173,16 +205,54 @@ export async function getDataSourceInstanceList(
   return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
 }
 
-function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+// Expressions are included because `__expr__` (and the legacy `-100`) is the uid they are
+// registered under; they sit outside `byUid` only because they are set at boot.
+export function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
+  if (isExpressionReference(uid)) {
+    return getExpressionDataSourceSettings();
+  }
+  return byUid[uid];
+}
+
+export function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
     uid: settings.uid,
     type: settings.type,
     apiVersion: settings.apiVersion,
     name: settings.name,
     meta: settings.meta,
-    readOnly: settings.readOnly,
     isDefault: settings.isDefault ?? false,
   };
+}
+
+// Mirrors the type predicate inside applyFilters, aliasID arm included.
+function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
+  return item.type === type || (item.meta.aliasIDs?.includes(type) ?? false);
+}
+
+/**
+ * Resolve the item flagged as the default data source, or `undefined` when the list holds none.
+ *
+ * At most one instance per org carries the flag, so a filtered list need not contain it.
+ *
+ * @public
+ */
+export async function getDefaultDataSourceInstanceListItem(
+  items: DataSourceInstanceListItem[]
+): Promise<DataSourceInstanceListItem | undefined> {
+  return items.find((item) => item.isDefault);
+}
+
+/**
+ * Check whether at least one data source instance of the given type is installed.
+ *
+ * Covers presence checks (`getList({ type }).length > 0`) without returning a list.
+ *
+ * @public
+ */
+export async function hasDataSourceInstance(type: string): Promise<boolean> {
+  const list = await getDataSourceInstanceList({ type, all: true });
+  return list.some((item) => matchesType(item, type));
 }
 
 /**
@@ -219,20 +289,31 @@ function lookupFromMaps(
     return byUid[defaultName] ?? byName[defaultName];
   }
 
-  // Template variable reference — interpolate and preserve the raw ref.
-  if (nameOrUid[0] === '$') {
+  // Template variable reference — interpolate and preserve the raw ref. The variable can
+  // sit anywhere in the string (e.g. `logs-${stage}-loki`), not only at the start; legacy
+  // DataSourceSrv.get() interpolates unconditionally. When interpolation changes nothing
+  // (a datasource name that merely contains `$`), fall through to the plain lookup.
+  if (nameOrUid.includes('$')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
-    const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
-    if (!resolved) {
-      return undefined;
+    if (interpolated !== nameOrUid) {
+      // The plain lookup below reads three maps; this branch must read the same three. Legacy
+      // DataSourceSrv.get() interpolates itself and then re-enters getInstanceSettings through
+      // that plain branch, so it reaches the id map and this one has to as well.
+      const resolved =
+        interpolated === 'default'
+          ? byName[defaultName]
+          : (byUid[interpolated] ?? byName[interpolated] ?? byId[interpolated]);
+      if (!resolved) {
+        return undefined;
+      }
+      return {
+        ...resolved,
+        isDefault: false,
+        name: nameOrUid,
+        uid: nameOrUid,
+        rawRef: { type: resolved.type, uid: resolved.uid },
+      };
     }
-    return {
-      ...resolved,
-      isDefault: false,
-      name: nameOrUid,
-      uid: nameOrUid,
-      rawRef: { type: resolved.type, uid: resolved.uid },
-    };
   }
 
   return byUid[nameOrUid] ?? byName[nameOrUid] ?? byId[nameOrUid];

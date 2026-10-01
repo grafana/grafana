@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -21,6 +21,7 @@ import {
 import { setFolderResponse } from '../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupDataSources } from '../testSetup/datasources';
+import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 import { Annotation } from '../utils/constants';
 import { grafanaRuleDtoToFormValues } from '../utils/rule-form';
 
@@ -247,8 +248,8 @@ describe('RuleEditor grafana managed rules', () => {
   });
 });
 
-describe('RuleEditor with alertingDisableDMAinUI feature toggle', () => {
-  testWithFeatureToggles({ enable: ['alertingDisableDMAinUI'] });
+describe('RuleEditor with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -256,20 +257,14 @@ describe('RuleEditor with alertingDisableDMAinUI feature toggle', () => {
     contextSrv.hasEditPermissionInFolders = true;
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
-      AccessControlAction.AlertingRuleUpdate,
-      AccessControlAction.AlertingRuleDelete,
       AccessControlAction.AlertingRuleCreate,
       AccessControlAction.DataSourcesRead,
-      AccessControlAction.DataSourcesWrite,
-      AccessControlAction.DataSourcesCreate,
-      AccessControlAction.FoldersWrite,
       AccessControlAction.FoldersRead,
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
 
-    // Setup data source with manageAlerts enabled
-    // This ensures the option would be shown if not for the feature toggle
+    // manageAlerts is on, so without the plugin the rule type switch would be offered.
     setupDataSources(
       mockDataSource(
         {
@@ -284,30 +279,16 @@ describe('RuleEditor with alertingDisableDMAinUI feature toggle', () => {
     );
   });
 
-  it('should not show rule type switch when alertingDisableDMAinUI is enabled', async () => {
-    renderRuleEditor();
-
-    // Wait for the form to load
-    await screen.findByRole('textbox', { name: 'name' });
-
-    // The rule type switch should NOT be visible even though manageAlerts is enabled
-    expect(screen.queryByText('Rule type')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('rule-type-radio-group')).not.toBeInTheDocument();
-  });
-
-  it('should allow creating Grafana-managed alerts when alertingDisableDMAinUI is enabled', async () => {
+  it('does not offer to author a data source managed rule', async () => {
     const { user } = renderRuleEditor();
 
-    // Wait for the form to load
-    await ui.inputs.name.find();
+    await screen.findByRole('textbox', { name: 'name' });
 
+    // Advanced mode is where the rule type switch lives — see the mirror of this test above.
     await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
 
-    // Should be able to interact with the alert name input
-    await user.type(ui.inputs.name.get(), 'My Grafana-managed alert');
-
-    // Expressions should still be available for Grafana-managed alerts in advanced mode
-    const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
-    expect(removeExpressionsButtons.length).toBeGreaterThan(0);
+    // Something in advanced mode has rendered, so the switch's absence is a real absence.
+    expect(await screen.findByText(/expressions/i)).toBeInTheDocument();
+    expect(screen.queryByText('Rule type')).not.toBeInTheDocument();
   });
 });

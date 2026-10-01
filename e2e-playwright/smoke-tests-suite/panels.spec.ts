@@ -29,13 +29,6 @@ test.describe(
         return win.grafanaBootData?.settings?.panels ?? {};
       });
 
-      const vizPicker = editPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
-
-      // the viz picker is auto-opened for new unconfigured panels
-      if (await vizPicker.filter({ hasText: 'Back' }).isVisible()) {
-        await vizPicker.click({ force: true });
-      }
-
       // Loop through every panel type and ensure no crash
       for (const [_, panel] of Object.entries(panelTypes)) {
         if (panel.hideFromList || panel.state === 'deprecated') {
@@ -43,7 +36,7 @@ test.describe(
         }
 
         try {
-          editPage.setVisualization(panel.name);
+          await editPage.setVisualization(panel.name);
 
           // Verify panel type is selected
           await expect(
@@ -59,10 +52,6 @@ test.describe(
             page.getByText('An unexpected error happened'),
             'ensure no unexpected error occurred'
           ).toBeHidden();
-
-          // open the viz picker to get ready to select the next panel type
-          await expect(vizPicker.filter({ hasText: 'Change' }), 'we should be viewing panel options').toBeVisible();
-          await vizPicker.click({ force: true });
         } catch (error) {
           throw new Error(`Panel '${panel.name}' failed: ${error}`);
         }

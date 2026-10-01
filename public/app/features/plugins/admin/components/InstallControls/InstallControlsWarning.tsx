@@ -89,7 +89,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
             <TextLink href="https://www.grafana.com/plugins" external>
               grafana.com/plugins
             </TextLink>{' '}
-            and can't be managed via the catalog.
+            and can&apos;t be managed via the catalog.
           </Trans>
         </div>
       </Alert>

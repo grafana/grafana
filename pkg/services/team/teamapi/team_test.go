@@ -1,20 +1,36 @@
 package teamapi
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -189,7 +205,10 @@ func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
-	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}})
+	searcher := &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{}}
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
+		tapi.folderSearcher = searcher
+	})
 
 	request := func(teamID any, user *user.SignedInUser) (*http.Response, error) {
 		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, teamID), http.NoBody)
@@ -213,6 +232,9 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
+		require.NotNil(t, searcher.request)
+		assert.Equal(t, "default", searcher.request.Options.Key.Namespace)
+		assert.Equal(t, []string{"iam.grafana.app/Team/a00001"}, searcher.request.Options.Fields[0].Values)
 	})
 
 	t.Run("Access control allows deleting teams with the correct permissions by UID", func(t *testing.T) {
@@ -223,14 +245,186 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
+
+	t.Run("Prevents deleting a team that owns folders", func(t *testing.T) {
+		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
+			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
+		})
+		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+		}))
+
+		res, err := server.Send(req)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusConflict, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Prevents deleting a team that owns folders when only the teams redirect is enabled", func(t *testing.T) {
+		setTeamRedirectFlag(t, true)
+		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
+			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
+		})
+		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+		}))
+
+		res, err := server.Send(req)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusConflict, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Returns conflict when the Kubernetes admission check prevents deletion", func(t *testing.T) {
+		setTeamRedirectFlag(t, true)
+		searcher := &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{}}
+		server := SetupAPITestServer(t, &deleteTeamService{
+			FakeService: &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}},
+			err: apierrors.NewConflict(
+				schema.GroupResource{Group: "iam.grafana.app", Resource: "teams"},
+				"a00001",
+				errors.New("team owns one or more folders"),
+			),
+		}, func(tapi *TeamAPI) {
+			tapi.folderSearcher = searcher
+			tapi.iamFeatures = iamapi.Features{UsersAPI: true}
+		})
+		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+		}))
+
+		res, err := server.Send(req)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusConflict, res.StatusCode)
+		assert.Nil(t, searcher.request)
+		var body struct {
+			Message string `json:"message"`
+		}
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+		assert.Equal(t, "Cannot delete team that owns folders", body.Message)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Fails closed when checking folder ownership fails", func(t *testing.T) {
+		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
+			tapi.folderSearcher = &teamFolderSearchClient{err: errors.New("search unavailable")}
+		})
+		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+		}))
+
+		res, err := server.Send(req)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+}
+
+func TestDeleteTeamPreservesFolderSearchErrorStatus(t *testing.T) {
+	for _, redirected := range []bool{false, true} {
+		for name, input := range map[string]struct {
+			resp *resourcepb.ResourceSearchResponse
+			err  error
+			code int
+		}{
+			"embedded": {resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+				Code: http.StatusTooManyRequests, Message: "index busy",
+			}}, code: http.StatusTooManyRequests},
+			"transport": {err: status.Error(codes.Unavailable, "index unavailable"), code: http.StatusServiceUnavailable},
+			"plain":     {err: errors.New("private database failure"), code: http.StatusInternalServerError},
+		} {
+			t.Run(fmt.Sprintf("redirected=%t/%s", redirected, name), func(t *testing.T) {
+				setTeamRedirectFlag(t, redirected)
+				searcher := &teamFolderSearchClient{response: input.resp, err: input.err}
+				service := &deleteTeamService{FakeService: &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}}
+				if redirected {
+					service.err = resource.StatusErrorFromResponse(input.resp.GetError(), input.err)
+				}
+				server := SetupAPITestServer(t, service, func(tapi *TeamAPI) {
+					tapi.folderSearcher = searcher
+					tapi.iamFeatures = iamapi.Features{UsersAPI: true}
+				})
+				req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
+				req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+				}))
+				res, err := server.Send(req)
+				require.NoError(t, err)
+				defer func() { require.NoError(t, res.Body.Close()) }()
+				require.Equal(t, input.code, res.StatusCode)
+				var body struct {
+					Message string `json:"message"`
+				}
+				require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+				if redirected {
+					require.Nil(t, searcher.request)
+					require.Equal(t, 1, service.calls)
+					require.Equal(t, "Failed to delete Team", body.Message)
+				} else {
+					require.NotNil(t, searcher.request)
+					require.Zero(t, service.calls)
+					require.Equal(t, "Failed to check if team owns folders", body.Message)
+				}
+			})
+		}
+	}
+}
+
+type teamFolderSearchClient struct {
+	resourcepb.ResourceIndexClient
+	request  *resourcepb.ResourceSearchRequest
+	response *resourcepb.ResourceSearchResponse
+	err      error
+}
+
+type deleteTeamService struct {
+	*teamtest.FakeService
+	err   error
+	calls int
+}
+
+func (s *deleteTeamService) DeleteTeam(_ context.Context, _ *team.DeleteTeamCommand) error {
+	s.calls++
+	return s.err
+}
+
+func (s *teamFolderSearchClient) Search(_ context.Context, request *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	s.request = request
+	return s.response, s.err
+}
+
+func setTeamRedirectFlag(t *testing.T, teamsRedirect bool) {
+	t.Helper()
+	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesTeamsRedirect: {
+			Key:            featuremgmt.FlagKubernetesTeamsRedirect,
+			DefaultVariant: "default",
+			Variants:       map[string]any{"default": teamsRedirect},
+		},
+	})
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
+	})
 }
 
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Get(mock.Anything, mock.Anything).Return(&preferences.PreferencesSpec{}, nil)
+
 	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(hs *TeamAPI) {
-		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 	})
 
 	request := func(teamID any, user *user.SignedInUser) (*http.Response, error) {
@@ -271,8 +465,11 @@ func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeamPreferences(t *testing.T) {
-	server := SetupAPITestServer(t, nil, func(hs *TeamAPI) {
-		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(hs *TeamAPI) {
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 	})
 
 	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {

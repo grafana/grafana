@@ -45,7 +45,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   const canReadTeams = contextSrv.hasPermission(AccessControlAction.ActionTeamsRead);
 
   return (
-    <Stack alignItems="center">
+    <Stack alignItems="center" wrap>
       {starredFoldersEnabled() && folderDTO && (
         <StarToolbarButton
           group="folder.grafana.app"

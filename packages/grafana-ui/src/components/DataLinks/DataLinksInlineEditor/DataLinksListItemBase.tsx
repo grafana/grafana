@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
 
 import { type Action, type DataFrame, type DataLink, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Badge } from '../../Badge/Badge';
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
 
@@ -28,6 +28,7 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
   index,
   itemKey,
 }: DataLinksListItemBaseProps<T>) {
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getDataLinkListItemStyles);
   const { title = '', oneClick = false } = item;
 

@@ -71,7 +71,7 @@ Permissions for managing Grafana-managed alert rules.
 | Action               | Applicable scope               | Description                                                                                                                                                                                                                                       |
 | -------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `alert.rules:create` | `folders:*`<br>`folders:uid:*` | Create Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder and `datasources:query` in the scope of data sources the user can query.                               |
-| `alert.rules:read`   | `folders:*`<br>`folders:uid:*` | Read Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder.                                                                                                         |
+| `alert.rules:read`   | `folders:*`<br>`folders:uid:*` | Read Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder. To view alert state history, add `datasources:query` in the scope of the data source that records it.   |
 | `alert.rules:write`  | `folders:*`<br>`folders:uid:*` | Update Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder. To allow query modifications add `datasources:query` in the scope of data sources the user can query. |
 | `alert.rules:delete` | `folders:*`<br>`folders:uid:*` | Delete Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder.                                                                                                       |
 
@@ -169,12 +169,14 @@ Permissions for managing alerting resources via the provisioning API.
 
 ### Alert enrichments
 
-Permissions for managing alert enrichments.
+Permissions for managing [alert enrichment](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/alert-enrichment/) in Grafana Cloud.
 
 | Action                    | Applicable scope | Description                                                                             |
 | ------------------------- | ---------------- | --------------------------------------------------------------------------------------- |
 | `alert.enrichments:read`  | n/a              | Read alert enrichment configurations in the current organization.                       |
 | `alert.enrichments:write` | n/a              | Create, update, and delete alert enrichment configurations in the current organization. |
+
+These permissions apply to per-rule enrichments, configured on the **Alert enrichment** tab of an individual alert rule. Managing global enrichments from **Alerting** > **Settings** requires the **Admin** basic role and isn't granted by the `alert.enrichments` permissions or the Enrichments fixed roles.
 
 To help plan your RBAC rollout strategy, refer to [Plan your RBAC rollout strategy](https://grafana.com/docs/grafana/next/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/).
 

@@ -99,7 +99,7 @@ describe('LogsSQLCompletionItemProvider', () => {
       expect(suggestionLabels).toEqual(
         expect.arrayContaining([
           FROM,
-          `${FROM} \`$__logGroups\``,
+          `${FROM} \`$__source\``,
           `${FROM} \`logGroups(logGroupIdentifier: [...])\``,
           CASE,
           ...ALL_FUNCTIONS,
@@ -107,11 +107,11 @@ describe('LogsSQLCompletionItemProvider', () => {
       );
     });
 
-    it('returns logGroups and $__logGroups suggestion after from keyword', async () => {
+    it('returns logGroups and macro suggestions after from keyword', async () => {
       const suggestions = await getSuggestions(singleLineFullQuery.query, { lineNumber: 1, column: 108 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(
-        expect.arrayContaining(['`$__logGroups`', '`logGroups(logGroupIdentifier: [...])`'])
+        expect.arrayContaining(['`$__source`', '`logGroups(logGroupIdentifier: [...])`'])
       );
     });
 

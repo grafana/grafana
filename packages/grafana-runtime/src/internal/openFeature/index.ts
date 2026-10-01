@@ -48,8 +48,12 @@ export function getLocalStorageProvider() {
 //  to allow the feature control developer UI to discover flags from the provider
 let ofrepWebProvider: OFREPWebProvider;
 export function getOFREPWebProvider() {
+  const baseUrl = window.__grafanaOFREPRootUrlEnabled
+    ? `${config.appSubUrl || ''}`
+    : `${config.appSubUrl || ''}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`;
+
   return (ofrepWebProvider ??= new OFREPWebProvider({
-    baseUrl: `${config.appSubUrl || ''}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`,
+    baseUrl,
     disableVisibilityRefresh: true, // Do not refresh
     cacheMode: 'disabled', // Do not write to localStorage
     timeoutMs: 5_000,

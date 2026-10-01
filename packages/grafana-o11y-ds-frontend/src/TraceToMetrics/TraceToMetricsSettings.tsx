@@ -165,9 +165,9 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
           </InlineField>
 
           <Button
-            variant="destructive"
+            variant="secondary"
             aria-label="Remove query"
-            icon="times"
+            icon="trash-alt"
             type="button"
             onClick={() => {
               const newQueries = options.jsonData.tracesToMetrics?.queries.filter((_, index) => index !== i);

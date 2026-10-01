@@ -283,6 +283,10 @@ export const Table = memo((props: Props) => {
   );
 
   const itemCount = enablePagination ? page.length : rows.length;
+
+  // Virtualization means only the visible rows exist in the DOM, so we announce the real
+  // row count to screen readers. ARIA row counts are 1-based and include the header row.
+  const ariaRowCount = (noHeader ? 0 : 1) + rows.length;
   let paginationEl = null;
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
@@ -338,6 +342,7 @@ export const Table = memo((props: Props) => {
         {...getTableProps()}
         className={tableStyles.table}
         aria-label={ariaLabel}
+        aria-rowcount={ariaRowCount}
         role="table"
         ref={tableDivRef}
         style={{ width, height }}
@@ -361,6 +366,7 @@ export const Table = memo((props: Props) => {
                   headerHeight={headerHeight}
                   rowHeight={tableStyles.rowHeight}
                   itemCount={itemCount}
+                  noHeader={noHeader}
                   pageIndex={state.pageIndex}
                   listHeight={listHeight}
                   listRef={listRef}

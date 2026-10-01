@@ -75,11 +75,12 @@ type AzureCorrelationAPIResponseProperties struct {
 	NextLink  *string  `json:"nextLink,omitempty"`
 }
 
-// BasicLogsUsagePayload is the payload that the frontend resourcerequest will send to the backend to calculate the basic logs query usage
-type BasicLogsUsagePayload struct {
-	Table     string `json:"table"`
-	Resource  string `json:"resource"`
-	QueryType string `json:"queryType"`
-	From      string `json:"from"`
-	To        string `json:"to"`
+// LogsUsagePayload is the payload that the frontend resource request sends to calculate Logs query usage.
+type LogsUsagePayload struct {
+	Table     string                           `json:"table"`
+	Resource  string                           `json:"resource"`
+	QueryType string                           `json:"queryType"`
+	From      string                           `json:"from"`
+	To        string                           `json:"to"`
+	LogTier   *dataquery.AzureLogsQueryLogTier `json:"logTier,omitempty"`
 }

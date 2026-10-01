@@ -25,15 +25,8 @@ Team folders is in public preview.
 
 Before you begin, ensure you have the following:
 
-- The `foldersAppPlatformAPI` feature toggle enabled.
 - Permission to create root-level folders, or permission to create subfolders in the parent folder you want to use.
 - Permission to manage folder permissions and read teams if you want to assign or change a folder owner in the UI.
-
-## Enable team folders
-
-To enable team folders in Grafana OSS or Grafana Enterprise, the `foldersAppPlatformAPI` feature toggle must be enabled.
-
-For more information about feature toggles, refer to [Configure feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
 
 ## Create a team folder when you create a team
 

@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
@@ -1049,6 +1050,278 @@ func TestConversionMetricsWrapper(t *testing.T) {
 			} else {
 				require.Equal(t, float64(0), successTotal, "success metric should not be incremented")
 				require.GreaterOrEqual(t, failureTotal, float64(1), "failure metric should be incremented")
+			}
+		})
+	}
+}
+
+// findHistogram returns the histogram metric matching the given label set from a gathered
+// registry, or nil if no such series was recorded.
+func findHistogram(t *testing.T, families []*dto.MetricFamily, name string, wantLabels map[string]string) *dto.Histogram {
+	t.Helper()
+	for _, mf := range families {
+		if mf.GetName() != name {
+			continue
+		}
+		for _, m := range mf.GetMetric() {
+			labels := map[string]string{}
+			for _, l := range m.GetLabel() {
+				labels[l.GetName()] = l.GetValue()
+			}
+			match := true
+			for k, v := range wantLabels {
+				if labels[k] != v {
+					match = false
+					break
+				}
+			}
+			if match {
+				return m.GetHistogram()
+			}
+		}
+	}
+	return nil
+}
+
+// TestConversionDurationAndSizeMetrics verifies the duration and object-size histograms are
+// observed once per conversion, with the correct outcome label and a size matching the
+// JSON-encoded source spec, on both the success and failure paths.
+func TestConversionDurationAndSizeMetrics(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewTestLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	registry := prometheus.NewRegistry()
+	migration.RegisterMetrics(registry)
+
+	tests := []struct {
+		name               string
+		source             *dashv0.Dashboard
+		conversionFunction func(a, b interface{}, scope conversion.Scope) error
+		expectedOutcome    string
+	}{
+		{
+			name: "success path observes duration and size",
+			source: &dashv0.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{UID: "test-hist-success"},
+				Spec: common.Unstructured{Object: map[string]any{
+					"title":         "test dashboard",
+					"schemaVersion": 20,
+					"panels":        []any{},
+				}},
+			},
+			conversionFunction: func(a, b interface{}, scope conversion.Scope) error {
+				tgt := b.(*dashv1.Dashboard)
+				tgt.Spec = common.Unstructured{Object: map[string]any{
+					"title":         "test dashboard",
+					"schemaVersion": 20,
+					"panels":        []any{},
+				}}
+				return nil
+			},
+			expectedOutcome: "success",
+		},
+		{
+			name: "failure path observes duration and size",
+			source: &dashv0.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{UID: "test-hist-failure"},
+				Spec: common.Unstructured{Object: map[string]any{
+					"title":         "test dashboard",
+					"schemaVersion": 30,
+					"panels":        []any{},
+				}},
+			},
+			conversionFunction: func(a, b interface{}, scope conversion.Scope) error {
+				return fmt.Errorf("conversion failed")
+			},
+			expectedOutcome: "failure",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			migration.MDashboardConversionDuration.Reset()
+			migration.MDashboardConversionObjectSizeBytes.Reset()
+
+			sourceAPI, targetAPI := dashv0.APIVERSION, dashv1.APIVERSION
+			wrappedFunc := withConversionMetrics(sourceAPI, targetAPI, tt.conversionFunction)
+			require.NoError(t, wrappedFunc(tt.source, &dashv1.Dashboard{}, nil))
+
+			families, err := registry.Gather()
+			require.NoError(t, err)
+
+			// Duration histogram is labelled by outcome and observed exactly once.
+			duration := findHistogram(t, families, "grafana_dashboard_migration_conversion_duration_seconds", map[string]string{
+				"source_version_api": sourceAPI,
+				"target_version_api": targetAPI,
+				"outcome":            tt.expectedOutcome,
+			})
+			require.NotNil(t, duration, "duration histogram should be recorded with the %q outcome", tt.expectedOutcome)
+			require.Equal(t, uint64(1), duration.GetSampleCount(), "duration should be observed exactly once")
+
+			// The other outcome must not have been observed.
+			otherOutcome := "failure"
+			if tt.expectedOutcome == "failure" {
+				otherOutcome = "success"
+			}
+			require.Nil(t, findHistogram(t, families, "grafana_dashboard_migration_conversion_duration_seconds", map[string]string{
+				"source_version_api": sourceAPI,
+				"target_version_api": targetAPI,
+				"outcome":            otherOutcome,
+			}), "duration should not be recorded with the %q outcome", otherOutcome)
+
+			// Size histogram is labelled by outcome and observed exactly once.
+			size := findHistogram(t, families, "grafana_dashboard_migration_conversion_object_size_bytes", map[string]string{
+				"source_version_api": sourceAPI,
+				"target_version_api": targetAPI,
+				"outcome":            tt.expectedOutcome,
+			})
+			require.NotNil(t, size, "object size histogram should be recorded with the %q outcome", tt.expectedOutcome)
+			require.Equal(t, uint64(1), size.GetSampleCount(), "size should be observed exactly once")
+
+			require.Nil(t, findHistogram(t, families, "grafana_dashboard_migration_conversion_object_size_bytes", map[string]string{
+				"source_version_api": sourceAPI,
+				"target_version_api": targetAPI,
+				"outcome":            otherOutcome,
+			}), "size should not be recorded with the %q outcome", otherOutcome)
+
+			wantBytes, err := json.Marshal(tt.source.Spec)
+			require.NoError(t, err)
+			require.Equal(t, float64(len(wantBytes)), size.GetSampleSum(), "observed size should match the JSON-encoded source spec")
+		})
+	}
+}
+
+// TestSpecSizeBytes verifies specSizeBytes returns the JSON-encoded byte length for
+// marshalable specs and the -1 "unknown" sentinel when a spec cannot be marshalled.
+func TestSpecSizeBytes(t *testing.T) {
+	tests := []struct {
+		name         string
+		spec         interface{}
+		wantSentinel bool // expect the -1 sentinel because the spec cannot be marshalled
+	}{
+		{
+			name: "empty typed spec",
+			spec: dashv2.DashboardSpec{},
+		},
+		{
+			name: "populated typed spec",
+			spec: dashv2.DashboardSpec{Title: "test"},
+		},
+		{
+			name: "unstructured spec",
+			spec: common.Unstructured{Object: map[string]any{"title": "test", "schemaVersion": 20}},
+		},
+		{
+			name:         "unmarshalable spec returns -1 sentinel",
+			spec:         make(chan int),
+			wantSentinel: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := specSizeBytes(tt.spec)
+			if tt.wantSentinel {
+				require.Equal(t, -1, got)
+				return
+			}
+
+			b, err := json.Marshal(tt.spec)
+			require.NoError(t, err)
+			require.Equal(t, len(b), got, "size should match the JSON-encoded spec length")
+		})
+	}
+}
+
+// TestExtractDashboardInfo verifies UID, schema versions and encoded source size are
+// extracted from every supported source/target type, including the -1 size sentinel
+// when the source spec cannot be marshalled.
+func TestExtractDashboardInfo(t *testing.T) {
+	tests := []struct {
+		name             string
+		source           interface{}
+		target           interface{}
+		wantUID          string
+		wantSourceSchema interface{}
+		wantTargetSchema interface{}
+		wantSizeUnknown  bool // expect the -1 sentinel because the spec cannot be marshalled
+	}{
+		{
+			name: "v0 unstructured source to v0 target keeps source schema",
+			source: &dashv0.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v0"},
+				Spec:       common.Unstructured{Object: map[string]any{"schemaVersion": 20, "title": "t"}},
+			},
+			target:           &dashv0.Dashboard{},
+			wantUID:          "uid-v0",
+			wantSourceSchema: 20,
+			wantTargetSchema: 20,
+		},
+		{
+			name: "v1 unstructured source to v1 target migrates to latest",
+			source: &dashv1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v1"},
+				Spec:       common.Unstructured{Object: map[string]any{"schemaVersion": 20, "title": "t"}},
+			},
+			target:           &dashv1.Dashboard{},
+			wantUID:          "uid-v1",
+			wantSourceSchema: 20,
+			wantTargetSchema: schemaversion.LATEST_VERSION,
+		},
+		{
+			name: "v2 typed source has no schema versions",
+			source: &dashv2.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v2"},
+				Spec:       dashv2.DashboardSpec{Title: "t"},
+			},
+			target:  &dashv1.Dashboard{},
+			wantUID: "uid-v2",
+		},
+		{
+			name: "v2alpha1 typed source has no schema versions",
+			source: &dashv2alpha1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v2alpha1"},
+				Spec:       dashv2alpha1.DashboardSpec{Title: "t"},
+			},
+			target:  &dashv1.Dashboard{},
+			wantUID: "uid-v2alpha1",
+		},
+		{
+			name: "v2beta1 typed source has no schema versions",
+			source: &dashv2beta1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v2beta1"},
+				Spec:       dashv2beta1.DashboardSpec{Title: "t"},
+			},
+			target:  &dashv1.Dashboard{},
+			wantUID: "uid-v2beta1",
+		},
+		{
+			name: "unmarshalable source spec records the size sentinel",
+			source: &dashv0.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-bad"},
+				Spec:       common.Unstructured{Object: map[string]any{"schemaVersion": 20, "bad": make(chan int)}},
+			},
+			target:           &dashv0.Dashboard{},
+			wantUID:          "uid-bad",
+			wantSourceSchema: 20,
+			wantTargetSchema: 20,
+			wantSizeUnknown:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info := extractDashboardInfo(tt.source, tt.target)
+
+			require.Equal(t, tt.wantUID, info.uid)
+			require.Equal(t, tt.wantSourceSchema, info.sourceSchema)
+			require.Equal(t, tt.wantTargetSchema, info.targetSchema)
+
+			if tt.wantSizeUnknown {
+				require.Equal(t, -1, info.sourceSizeBytes, "unmarshalable spec should record the -1 sentinel")
+			} else {
+				require.Greater(t, info.sourceSizeBytes, 0, "valid spec should record a positive encoded size")
 			}
 		})
 	}

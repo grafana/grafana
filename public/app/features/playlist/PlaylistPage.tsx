@@ -14,9 +14,10 @@ import { type Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { canWritePlaylists, searchPlaylists } from './utils';
+import { searchPlaylists, useCanWritePlaylists } from './utils';
 
 export const PlaylistPage = () => {
+  const canWrite = useCanWritePlaylists();
   const { data, isLoading } = useListPlaylistQuery({});
   const [deletePlaylist] = useDeletePlaylistMutation();
   // Set after a repository-managed playlist is committed to a new branch; surfaces the PR banner.
@@ -52,7 +53,7 @@ export const PlaylistPage = () => {
   return (
     <Page
       actions={
-        canWritePlaylists() && showSearch ? (
+        canWrite && showSearch ? (
           <LinkButton href="/playlists/new">
             <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
           </LinkButton>
@@ -82,7 +83,7 @@ export const PlaylistPage = () => {
               <EmptyState
                 variant="call-to-action"
                 button={
-                  <LinkButton disabled={!canWritePlaylists()} href="playlists/new" icon="plus" size="lg">
+                  <LinkButton disabled={!canWrite} href="playlists/new" icon="plus" size="lg">
                     <Trans i18nKey="playlist-page.empty.button">Create playlist</Trans>
                   </LinkButton>
                 }

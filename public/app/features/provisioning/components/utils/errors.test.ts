@@ -1,8 +1,24 @@
-import { getProvisionedRequestError } from './errors';
+import { getProvisionedRequestError, isRefNotFoundError } from './errors';
 
 function makeFetchError(status: number, data?: Record<string, unknown>) {
   return { status, data: data ?? {} };
 }
+
+describe('isRefNotFoundError', () => {
+  it('is true for a 404 fetch error when a ref was requested', () => {
+    expect(isRefNotFoundError(makeFetchError(404), 'feature/x')).toBe(true);
+  });
+
+  it('is false without a ref, since a 404 then means the file itself is missing', () => {
+    expect(isRefNotFoundError(makeFetchError(404), undefined)).toBe(false);
+    expect(isRefNotFoundError(makeFetchError(404), '')).toBe(false);
+  });
+
+  it('is false for other statuses and non-fetch errors', () => {
+    expect(isRefNotFoundError(makeFetchError(500), 'feature/x')).toBe(false);
+    expect(isRefNotFoundError(new Error('boom'), 'feature/x')).toBe(false);
+  });
+});
 
 describe('getProvisionedRequestError', () => {
   describe('404 - file not found', () => {

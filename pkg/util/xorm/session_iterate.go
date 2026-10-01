@@ -14,7 +14,12 @@ type IterFunc func(idx int, bean interface{}) error
 // Rows return sql.Rows compatible Rows obj, as a forward Iterator object for iterating record by record, bean's non-empty fields
 // are conditions.
 func (session *Session) Rows(bean interface{}) (*Rows, error) {
-	return newRows(session, bean)
+	rows, err := newRows(session, bean)
+	if err != nil {
+		// A successful query clears the statement itself, a failed one before the query does not.
+		session.resetStatement()
+	}
+	return rows, err
 }
 
 // Iterate record by record handle records from table, condiBeans's non-empty fields
@@ -24,6 +29,9 @@ func (session *Session) Iterate(bean interface{}, fun IterFunc) error {
 	if session.isAutoClose {
 		defer session.Close()
 	}
+
+	// Runs after bufferIterate has restored autoResetStatement, so the buffered path is covered too.
+	defer session.resetStatement()
 
 	if session.statement.lastError != nil {
 		return session.statement.lastError

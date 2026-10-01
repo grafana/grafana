@@ -451,7 +451,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvContent": "month,sales\nJan,10\nFeb,20\nMar,15\nApr,25\nMay,18",

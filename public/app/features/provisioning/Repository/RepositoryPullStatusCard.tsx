@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data/';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -30,7 +31,7 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
   const { url: lastCommitUrl, hasUrl } = getRepoCommitUrl(repo.spec, status?.sync.lastRef);
 
   return (
-    <Card noMargin className={styles.card}>
+    <Card noMargin className={styles.card} data-testid={selectors.pages.Provisioning.RepositoryOverview.pullStatusCard}>
       <Card.Heading>
         <Trans i18nKey="provisioning.repository-overview.pull-status">Pull status</Trans>
       </Card.Heading>

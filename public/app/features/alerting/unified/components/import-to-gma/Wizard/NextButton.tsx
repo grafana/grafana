@@ -1,9 +1,9 @@
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
 import { getNextStep, isLastStep } from './steps';
-import { useImportMethod } from './useImportMethod';
 
 interface NextButtonProps {
   /** Handler called when clicking next - should return true to proceed */
@@ -16,17 +16,18 @@ interface NextButtonProps {
   onSkip?: () => void;
   /** Disable the next button */
   disabled?: boolean;
+  /** Tooltip shown while the button is disabled, explaining why the user can't continue */
+  disabledTooltip?: string;
 }
 
 /**
  * NextButton - navigation button to proceed to the next step
  * Shows the next step name or "Submit" on the last step
  */
-export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled }: NextButtonProps) => {
+export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disabledTooltip }: NextButtonProps) => {
   const { activeStep, setActiveStep } = useStepperState();
-  const method = useImportMethod();
-  const nextStep = getNextStep(activeStep, method);
-  const isLast = isLastStep(activeStep, method);
+  const nextStep = getNextStep(activeStep);
+  const isLast = isLastStep(activeStep);
 
   const handleClick = async () => {
     const shouldProceed = await onNext();
@@ -52,7 +53,7 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled }: Nex
   return (
     <Stack direction="row" gap={1}>
       {canSkip && (
-        <Button variant="secondary" onClick={handleSkip} data-testid="wizard-skip-button">
+        <Button variant="secondary" onClick={handleSkip} data-testid={selectors.pages.Alerting.ImportToGMA.skipButton}>
           {skipLabel || t('alerting.import-to-gma.wizard.skip', 'Skip')}
         </Button>
       )}
@@ -61,7 +62,8 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled }: Nex
         icon="arrow-right"
         onClick={handleClick}
         disabled={disabled}
-        data-testid="wizard-next-button"
+        tooltip={disabled && disabledTooltip ? disabledTooltip : undefined}
+        data-testid={selectors.pages.Alerting.ImportToGMA.nextButton}
       >
         {nextStep.name}
       </Button>

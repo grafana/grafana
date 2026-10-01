@@ -92,18 +92,29 @@ export function ScopesDashboards() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    container: css({
-      backgroundColor: theme.colors.background.canvas,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      gap: theme.spacing(1),
-      padding: theme.spacing(0, 2),
-      margin: theme.spacing(2, 0),
-      width: theme.spacing(37.5),
-    }),
+    container: css(
+      {
+        backgroundColor: theme.colors.background.canvas,
+        borderRight: `1px solid ${theme.colors.border.weak}`,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        gap: theme.spacing(1),
+        padding: theme.spacing(0, 2),
+        margin: theme.spacing(2, 0),
+        width: theme.spacing(37.5),
+      },
+      visualRefreshEnabled && {
+        backgroundColor: theme.colors.background.page,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+        padding: theme.spacing(2),
+        margin: 0,
+        width: theme.spacing(39.5),
+      }
+    ),
     noResultsContainer: css({
       alignItems: 'center',
       display: 'flex',

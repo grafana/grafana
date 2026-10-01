@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useId } from 'react';
 
 import { type TypeaheadInput, type TypeaheadOutput } from '../../types/completion';
@@ -6,11 +6,15 @@ import { Field } from '../Forms/Field';
 import { Label } from '../Forms/Label';
 
 import { QueryField, type QueryFieldProps } from './QueryField';
+import mdx from './QueryField.mdx';
 
 const meta: Meta<typeof QueryField> = {
   title: 'Inputs/Deprecated/QueryField',
   component: QueryField,
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: [
         'onTypeahead',

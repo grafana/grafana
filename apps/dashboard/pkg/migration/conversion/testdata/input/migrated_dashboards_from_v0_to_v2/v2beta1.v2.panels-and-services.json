@@ -37,7 +37,6 @@
         "spec": {
           "id": 1,
           "title": "CPU Usage",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -85,6 +84,7 @@
         "spec": {
           "id": 2,
           "title": "Memory Usage",
+          "subtitle": "Memory usage over time",
           "description": "",
           "links": [],
           "data": {

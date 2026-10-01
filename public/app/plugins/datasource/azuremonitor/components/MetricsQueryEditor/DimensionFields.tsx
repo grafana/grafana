@@ -149,10 +149,18 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
     onChange: (item: Partial<AzureMetricDimension>) => void,
     onDelete: () => void
   ) => {
+    // None of the three inputs has a visible label of its own, and screen readers announce the
+    // "Dimensions" legend inconsistently, so each name has to identify the row on its own.
+    // EditorList doesn't pass an index to renderItem, but it renders the array we hand it.
+    const position = dimensionFilters.indexOf(item) + 1;
+
     return (
       <Stack gap={0}>
         <Select
           menuShouldPortal
+          aria-label={t('components.dimension-fields.aria-label-field', 'Dimension {{position}} field', {
+            position,
+          })}
           placeholder={t('components.dimension-fields.placeholder-field', 'Field')}
           value={item.dimension}
           options={getValidDimensionOptions(item.dimension || '')}
@@ -160,6 +168,9 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
         />
         <Select
           menuShouldPortal
+          aria-label={t('components.dimension-fields.aria-label-operator', 'Dimension {{position}} operator', {
+            position,
+          })}
           placeholder={t('components.dimension-fields.placeholder-operation', 'Operation')}
           value={item.operator}
           options={getValidOperators(item.operator || 'eq')}
@@ -169,6 +180,9 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
         {item.operator === 'eq' || item.operator === 'ne' ? (
           <MultiSelect
             menuShouldPortal
+            aria-label={t('components.dimension-fields.aria-label-values', 'Dimension {{position}} values', {
+              position,
+            })}
             placeholder={t('components.dimension-fields.placeholder-select-values', 'Select value(s)')}
             value={item.filters}
             options={getValidMultiSelectOptions(item.filters, item.dimension ?? '')}
@@ -187,6 +201,9 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
           // The API does not currently allow for multiple "starts with" clauses to be used.
           <Select
             menuShouldPortal
+            aria-label={t('components.dimension-fields.aria-label-value', 'Dimension {{position}} value', {
+              position,
+            })}
             placeholder={t('components.dimension-fields.placeholder-select-value', 'Select value')}
             value={item.filters ? item.filters[0] : ''}
             allowCustomValue
@@ -196,7 +213,9 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
           />
         )}
         <AccessoryButton
-          aria-label={t('components.dimension-fields.aria-label-remove', 'Remove')}
+          aria-label={t('components.dimension-fields.aria-label-remove', 'Remove dimension {{position}}', {
+            position,
+          })}
           icon="times"
           variant="secondary"
           onClick={onDelete}

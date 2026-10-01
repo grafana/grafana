@@ -42,6 +42,7 @@ import (
 //       202: EmbeddedContactPoint
 //       400: ValidationError
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route PUT /v1/provisioning/contact-points/{UID} provisioning stable RoutePutContactpoint
 //
@@ -56,6 +57,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/contact-points/{UID} provisioning stable RouteDeleteContactpoints
 //
@@ -69,6 +71,7 @@ import (
 //     Responses:
 //       202: description: The contact point was deleted successfully.
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {

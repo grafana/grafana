@@ -12,8 +12,9 @@ import { MigrateDrawer } from './MigrateDrawer';
 
 setupProvisioningMswServer();
 
-// Migration needs the `write` workflow (push to the configured branch), so
-// repos default to it; pass other workflows to exercise the blocked path.
+// Migration needs a write-capable workflow — `write` (direct commit) or
+// `branch` (pull request). Repos default to `write`; pass `[]` to exercise the
+// read-only/blocked path or `['branch']` for the pull-request path.
 function makeRepo(name: string, title: string, workflows: Array<'branch' | 'write'> = ['write']): Repository {
   return createRepository({ metadata: { name }, spec: { title, workflows } });
 }
@@ -62,10 +63,9 @@ describe('MigrateDrawer', () => {
     expect(onDismiss).toHaveBeenCalled();
   });
 
-  it('disables a repository that cannot push and explains how to enable it', async () => {
-    // A PR-only repository (no `write` workflow) can't run a migration, so it
-    // stays in the picker but disabled, is never pre-selected, and a note
-    // explains how to make it usable.
+  it('auto-generates the target branch for a branch-only repository', async () => {
+    // A branch-only repository migrates through a pull request, so the PR workflow
+    // is the only option and its branch is generated (prefixed `migrate-<repo>`).
     render(
       <MigrateDrawer
         selective={false}
@@ -74,15 +74,301 @@ describe('MigrateDrawer', () => {
       />
     );
 
-    expect(await screen.findByText(/enable pushing to the configured branch/i)).toBeInTheDocument();
-    // Nothing usable is pre-selected, so migration stays disabled.
-    expect(screen.getByRole('button', { name: /migrate everything/i })).toHaveAttribute('aria-disabled', 'true');
+    expect(await screen.findByRole('button', { name: /migrate everything/i })).toBeEnabled();
+    // No commit-to-configured-branch option is offered for a branch-only repo.
+    expect(screen.queryByText('Commit to the configured branch')).not.toBeInTheDocument();
+    expect(screen.getByText('Open a pull request')).toBeInTheDocument();
+
+    // The editable, auto-populated branch is shown.
+    const branchInput = screen.getByRole('textbox');
+    expect(branchInput).not.toHaveAttribute('readonly');
+    expect((branchInput as HTMLInputElement).value).toMatch(/^migrate-pr-only\//);
   });
 
-  it('pre-selects the only pushable repo and still flags the un-pushable ones', async () => {
-    // With one write-capable repo and one PR-only repo, the usable one is
-    // pre-selected (so migration is enabled) while the note still explains the
-    // disabled option.
+  it('offers no pull-request option for a write-only repository', async () => {
+    render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My repo', ['write'])]} onDismiss={jest.fn()} />
+    );
+
+    expect(await screen.findByText('Commit to the configured branch')).toBeInTheDocument();
+    // No PR option, and no target-branch input in commit mode.
+    expect(screen.queryByText('Open a pull request')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it('lets a write-capable repo open a pull request via the workflow card', async () => {
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('repo-1', 'My repo', ['write', 'branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    // Defaults to committing to the configured branch → no branch field shown.
+    expect(await screen.findByText('Commit to the configured branch')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+
+    // Choosing the pull-request card reveals the editable, auto-populated branch.
+    await user.click(screen.getByText('Open a pull request'));
+    const branchInput = screen.getByRole('textbox');
+    expect(branchInput).not.toHaveAttribute('readonly');
+    expect((branchInput as HTMLInputElement).value).toMatch(/^migrate-repo-1\//);
+
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toMatch(/"branch":"migrate-repo-1\//);
+  });
+
+  it('submits a user-edited target branch', async () => {
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    const branchInput = await screen.findByRole('textbox');
+    await user.clear(branchInput);
+    await user.type(branchInput, 'my-custom-branch');
+
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toMatch(/"branch":"my-custom-branch"/);
+  });
+
+  it('blocks migration when the edited branch name is invalid', async () => {
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    const branchInput = await screen.findByRole('textbox');
+    await user.clear(branchInput);
+    await user.type(branchInput, 'bad branch..name');
+
+    expect(screen.getByText(/invalid branch name/i)).toBeInTheDocument();
+    // A disabled button that keeps a tooltip renders with aria-disabled rather
+    // than the native disabled attribute.
+    const migrateButton = screen.getByRole('button', { name: /migrate everything/i });
+    expect(migrateButton).toHaveAttribute('aria-disabled', 'true');
+    // Hovering surfaces a tooltip explaining why the button is disabled.
+    await user.hover(migrateButton);
+    expect(await screen.findByText('Enter a valid target branch name')).toBeInTheDocument();
+  });
+
+  it('blocks a pull request that targets the configured branch', async () => {
+    // A PR against the configured branch is meaningless — the backend would fall
+    // back to a direct write and never return a pull-request URL. `makeRepo`
+    // inherits the factory's configured branch (`main`).
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    const branchInput = await screen.findByRole('textbox');
+    await user.clear(branchInput);
+    await user.type(branchInput, 'main');
+
+    expect(screen.getByText(/choose a branch other than the configured branch/i)).toBeInTheDocument();
+    const migrateButton = screen.getByRole('button', { name: /migrate everything/i });
+    expect(migrateButton).toHaveAttribute('aria-disabled', 'true');
+    await user.hover(migrateButton);
+    expect(await screen.findByText('Choose a target branch other than the configured branch')).toBeInTheDocument();
+  });
+
+  it('submits skipResourceDeletion (with a warning) when "Keep existing resources" is checked in the PR workflow', async () => {
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    await user.click(await screen.findByRole('checkbox', { name: /keep existing resources/i }));
+    // Keeping resources on a PR migration warns that they must be deleted before merge.
+    expect(screen.getByText(/delete these resources before merging/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toMatch(/"skipResourceDeletion":true/);
+  });
+
+  it('does not offer "Keep existing resources" in the configured-branch (write) workflow', async () => {
+    // A direct commit takes resources over in place, so there is nothing to skip
+    // deleting — the option is only meaningful (and shown) for the PR workflow.
+    render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My repo', ['write'])]} onDismiss={jest.fn()} />
+    );
+
+    expect(await screen.findByText('Commit to the configured branch')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /keep existing resources/i })).not.toBeInTheDocument();
+  });
+
+  it('hides "Keep existing resources" again when switching back to the commit workflow', async () => {
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('repo-1', 'My repo', ['write', 'branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    // Defaults to commit → no retain option.
+    expect(await screen.findByText('Commit to the configured branch')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /keep existing resources/i })).not.toBeInTheDocument();
+
+    // Switch to PR → option appears and can be checked.
+    await user.click(screen.getByText('Open a pull request'));
+    await user.click(await screen.findByRole('checkbox', { name: /keep existing resources/i }));
+    expect(screen.getByText(/delete these resources before merging/i)).toBeInTheDocument();
+
+    // Switch back to commit → option is gone and the choice is cleared.
+    await user.click(screen.getByText('Commit to the configured branch'));
+    expect(screen.queryByRole('checkbox', { name: /keep existing resources/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete these resources before merging/i)).not.toBeInTheDocument();
+  });
+
+  it('confirms before disabling "Generate new folder IDs" and warns while off', async () => {
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    const checkbox = await screen.findByRole('checkbox', { name: /generate new folder ids/i });
+    expect(checkbox).toBeChecked();
+
+    // Unchecking asks for confirmation before turning it off.
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+    await user.click(await screen.findByRole('button', { name: /keep existing ids/i }));
+
+    // Now off: a warning is shown and the job posts generateNewFolderIDs=false.
+    expect(checkbox).not.toBeChecked();
+    expect(screen.getByText(/existing folders will be taken over/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toMatch(/"generateNewFolderIDs":false/);
+  });
+
+  it('restores the folder-ID default when switching from PR back to the commit workflow', async () => {
+    // Turning off "Generate new folder IDs" in the PR workflow must not linger as
+    // a hidden `false` on a direct commit — switching back restores the default.
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('repo-1', 'My repo', ['write', 'branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    // Go to PR, disable folder-ID generation.
+    await user.click(await screen.findByText('Open a pull request'));
+    await user.click(await screen.findByRole('checkbox', { name: /generate new folder ids/i }));
+    await user.click(await screen.findByRole('button', { name: /keep existing ids/i }));
+    expect(screen.getByText(/existing folders will be taken over/i)).toBeInTheDocument();
+
+    // Switch back to a direct commit and migrate — the default (true) is restored.
+    await user.click(screen.getByText('Commit to the configured branch'));
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toMatch(/"generateNewFolderIDs":true/);
+  });
+
+  it('dismisses the folder-ID confirmation when the repository changes', async () => {
+    // Two usable repos so neither is pre-selected; pick one, open the confirm
+    // modal, then switch repos — the modal must close and not carry the choice
+    // over to the newly selected repository. Branch repos default to the PR
+    // workflow, where the folder-ID control lives.
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('a', 'Repo A', ['branch']), makeRepo('b', 'Repo B', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    await user.click(await screen.findByRole('combobox'));
+    await user.click(await screen.findByText('Repo A'));
+
+    const checkbox = await screen.findByRole('checkbox', { name: /generate new folder ids/i });
+    await user.click(checkbox);
+    expect(await screen.findByRole('button', { name: /keep existing ids/i })).toBeInTheDocument();
+
+    // Switching repositories closes the pending confirmation...
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByText('Repo B'));
+
+    expect(screen.queryByRole('button', { name: /keep existing ids/i })).not.toBeInTheDocument();
+    // ...and the checkbox default for the new repo is intact (still checked).
+    expect(await screen.findByRole('checkbox', { name: /generate new folder ids/i })).toBeChecked();
+  });
+
+  it('offers both write and branch-workflow repositories as migration targets', async () => {
+    // A write repo (direct commit) and a branch repo (pull request) are both
+    // usable, so neither is flagged as blocked. Two usable repos means none is
+    // pre-selected, so migration stays disabled until the user chooses.
     render(
       <MigrateDrawer
         selective={false}
@@ -91,14 +377,15 @@ describe('MigrateDrawer', () => {
       />
     );
 
-    expect(await screen.findByText('Pushable repo')).toBeInTheDocument();
-    expect(screen.getByText(/enable pushing to the configured branch/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /migrate everything/i })).toBeEnabled();
+    expect(await screen.findByText('Target repository')).toBeInTheDocument();
+    expect(screen.queryByText(/read-only repositories are disabled/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /migrate everything/i })).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('treats a repository with no spec as un-pushable without crashing', async () => {
-    // `spec` is optional on the API type; a repo missing it should be handled
-    // gracefully (disabled and never pre-selected) alongside a usable one.
+  it('treats a repository with no writable workflow as blocked without crashing', async () => {
+    // `spec` is optional on the API type; a repo missing it (hence no workflows)
+    // is read-only and should be handled gracefully — disabled and never
+    // pre-selected — alongside a usable one.
     render(
       <MigrateDrawer
         selective={false}
@@ -109,7 +396,7 @@ describe('MigrateDrawer', () => {
 
     // The usable repo is pre-selected; the spec-less one counts as blocked.
     expect(await screen.findByText('Usable repo')).toBeInTheDocument();
-    expect(screen.getByText(/enable pushing to the configured branch/i)).toBeInTheDocument();
+    expect(screen.getByText(/read-only repositories are disabled/i)).toBeInTheDocument();
   });
 
   it('enables migration once a repository is picked from the dropdown', async () => {
@@ -174,6 +461,53 @@ describe('MigrateDrawer', () => {
     expect(screen.queryByText(/target repository/i)).not.toBeInTheDocument();
   });
 
+  it('forwards the auto-generated target branch on the migrate job for a branch-only repo', async () => {
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    // The generated branch is forwarded, prefixed with `migrate-<repo>`.
+    expect(postedBody).toMatch(/"branch":"migrate-pr-only\//);
+  });
+
+  it('omits the branch when migrating directly into the configured branch', async () => {
+    // A write repo with no branch entered writes directly to the configured
+    // branch, so the migrate options must not carry a `branch` field.
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={jest.fn()} />
+    );
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toContain('"action":"migrate"');
+    expect(postedBody).not.toContain('"branch"');
+  });
+
   it('does not regenerate folder UIDs when migrating into an instance-sync repository', async () => {
     // Instance sync takes over the whole instance, so it must preserve the
     // existing folder UIDs instead of recreating folders.
@@ -196,6 +530,20 @@ describe('MigrateDrawer', () => {
     expect(await screen.findByText('Pulling...')).toBeInTheDocument();
     expect(postedBody).toContain('"action":"migrate"');
     expect(postedBody).toContain('"generateNewFolderIDs":false');
+  });
+
+  it('hides the "Generate new folder IDs" control for an instance-sync repository', async () => {
+    // The control never applies to instance sync (folder UIDs must be preserved),
+    // so it is hidden and cannot be toggled on.
+    const instanceRepo = createRepository({
+      metadata: { name: 'inst' },
+      spec: { title: 'Instance repo', workflows: ['write'], sync: { target: 'instance', enabled: true } },
+    });
+    render(<MigrateDrawer selective={false} repos={[instanceRepo]} onDismiss={jest.fn()} />);
+
+    // The drawer is ready (migrate button enabled) but the folder-ID control is absent.
+    expect(await screen.findByRole('button', { name: /migrate everything/i })).toBeEnabled();
+    expect(screen.queryByRole('checkbox', { name: /generate new folder ids/i })).not.toBeInTheDocument();
   });
 
   it('notifies onMigrated once the migration completes', async () => {
@@ -224,6 +572,45 @@ describe('MigrateDrawer', () => {
     });
 
     await waitFor(() => expect(onMigrated).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows an "Open pull request" link when a branch migration completes', async () => {
+    // A branch migration finishes with the backend-populated pull-request URL on
+    // the job status; the drawer surfaces it so the user can open the PR.
+    mockCreateJob(createJob());
+    mockJobList(createJob());
+    mockRepositoryLookup();
+
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+    await user.click(await screen.findByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+
+    act(() => {
+      getMockLiveSrv().emitWatchEvent('jobs', {
+        type: 'MODIFIED',
+        object: createJob({
+          status: {
+            state: 'success',
+            url: { newPullRequestURL: 'https://github.com/org/repo/compare/main...migrate-pr-only' },
+          },
+        }),
+      });
+    });
+
+    expect(await screen.findByRole('link', { name: /open pull request/i })).toHaveAttribute(
+      'href',
+      'https://github.com/org/repo/compare/main...migrate-pr-only'
+    );
+    // Migrate shows only the pull-request link, not the branch/compare links.
+    expect(screen.queryByRole('link', { name: /view branch/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /compare branch/i })).not.toBeInTheDocument();
   });
 
   it('surfaces the error message when the migration job fails', async () => {

@@ -13,7 +13,7 @@ labels:
 menuTitle: Annotations
 title: PostgreSQL annotations
 weight: 340
-review_date: 2026-05-04
+review_date: 2026-08-10
 ---
 
 # PostgreSQL annotations

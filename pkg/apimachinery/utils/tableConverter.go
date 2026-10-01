@@ -78,7 +78,7 @@ func NewTableConverter(gr schema.GroupResource, columns TableColumns) TableConve
 	}
 }
 
-var _ TableConvertor = &customTableConvertor{}
+var _ TableConvertor = (*customTableConvertor)(nil)
 var swaggerMetadataDescriptions = metav1.ObjectMeta{}.SwaggerDoc()
 
 func (c customTableConvertor) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {

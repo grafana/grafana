@@ -328,14 +328,14 @@ func TestAPI_Annotations(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				repo := annotationstest.NewFakeAnnotationsRepo()
-				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0, DashboardUID: ""})
-				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1, DashboardUID: "dashuid1"})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0, DashboardUID: ""})         //nolint:staticcheck // Exercise legacy field compatibility.
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1, DashboardUID: "dashuid1"}) //nolint:staticcheck // Exercise legacy field compatibility.
 				hs.annotationsRepo = repo
 				hs.Features = featuremgmt.WithFeatures()
 				dashService := &dashboards.FakeDashboardService{}
-				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID, FolderID: 1}, nil)
+				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID, FolderID: 1}, nil) //nolint:staticcheck // Exercise legacy field compatibility.
 				folderService := &foldertest.FakeService{}
-				folderService.ExpectedFolder = &folder.Folder{UID: folderUID, ID: 1}
+				folderService.ExpectedFolder = &folder.Folder{UID: folderUID, ID: 1} //nolint:staticcheck // Exercise legacy field compatibility.
 				hs.DashboardService = dashService
 				hs.folderService = folderService
 				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
@@ -356,6 +356,57 @@ func TestAPI_Annotations(t *testing.T) {
 	}
 }
 
+func TestAPI_GetAnnotationTags(t *testing.T) {
+	tests := []struct {
+		desc          string
+		path          string
+		expectedLimit int64
+	}{
+		{
+			desc:          "applies the default limit when none is supplied",
+			path:          "/api/annotations/tags",
+			expectedLimit: defaultAnnotationsLimit,
+		},
+		{
+			desc:          "passes an explicit limit through unchanged",
+			path:          "/api/annotations/tags?limit=250",
+			expectedLimit: 250,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			repo := annotations.FakeAnnotationsRepo{}
+			var gotQuery *annotations.TagsQuery
+			repo.On("FindTags", mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					gotQuery = args.Get(1).(*annotations.TagsQuery)
+				}).
+				Return(annotations.FindTagsResult{}, nil)
+
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.annotationsRepo = &repo
+				hs.Features = featuremgmt.WithFeatures()
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			})
+
+			permissions := []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}}
+			req := webtest.RequestWithSignedInUser(
+				server.NewRequest(http.MethodGet, tt.path, nil),
+				authedUserWithPermissions(1, 1, permissions),
+			)
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			require.NoError(t, res.Body.Close())
+			require.Equal(t, http.StatusOK, res.StatusCode)
+
+			require.NotNil(t, gotQuery)
+			assert.Equal(t, tt.expectedLimit, gotQuery.Limit)
+		})
+	}
+}
+
 func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	rootDashUID := "root-dashboard"
 	folderDashUID := "folder-dashboard"
@@ -366,8 +417,8 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: rootDash.UID, OrgID: 1}).Return(rootDash, nil)
 	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: folderDash.UID, OrgID: 1}).Return(folderDash, nil)
 
-	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID, DashboardUID: rootDash.UID}
-	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID, DashboardUID: folderDash.UID}
+	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID, DashboardUID: rootDash.UID}       //nolint:staticcheck // Exercise legacy field compatibility.
+	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID, DashboardUID: folderDash.UID} //nolint:staticcheck // Exercise legacy field compatibility.
 	organizationAnnotation := annotations.Item{ID: 2}
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()

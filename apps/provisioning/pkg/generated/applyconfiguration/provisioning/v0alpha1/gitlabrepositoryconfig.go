@@ -17,6 +17,11 @@ type GitLabRepositoryConfigApplyConfiguration struct {
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
 	Path *string `json:"path,omitempty"`
+	// RepoID is the GitLab project's immutable numeric ID. Resolved and set
+	// automatically whenever URL is set or changed; it survives a project
+	// transfer/move even if the project's path changes. Read-only: it is
+	// always system-derived and never taken from client-supplied input.
+	RepoID *string `json:"repoID,omitempty"`
 }
 
 // GitLabRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitLabRepositoryConfig type for use with
@@ -46,5 +51,13 @@ func (b *GitLabRepositoryConfigApplyConfiguration) WithBranch(value string) *Git
 // If called multiple times, the Path field is set to the value of the last call.
 func (b *GitLabRepositoryConfigApplyConfiguration) WithPath(value string) *GitLabRepositoryConfigApplyConfiguration {
 	b.Path = &value
+	return b
+}
+
+// WithRepoID sets the RepoID field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RepoID field is set to the value of the last call.
+func (b *GitLabRepositoryConfigApplyConfiguration) WithRepoID(value string) *GitLabRepositoryConfigApplyConfiguration {
+	b.RepoID = &value
 	return b
 }

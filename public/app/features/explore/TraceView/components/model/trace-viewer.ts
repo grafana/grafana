@@ -17,7 +17,7 @@ import { memoize } from 'lodash';
 import { type TraceSpan } from '../types/trace';
 import { getServiceDisplayName } from '../utils/service-name';
 
-export function _getTraceNameImpl(spans: TraceSpan[]) {
+export function getRootSpan(spans: TraceSpan[]): TraceSpan | undefined {
   // Use a span with no references to another span in given array
   // prefering the span with the fewest references
   // using start time as a tie breaker
@@ -47,6 +47,11 @@ export function _getTraceNameImpl(spans: TraceSpan[]) {
       candidateSpan = spans[i];
     }
   }
+  return candidateSpan;
+}
+
+export function _getTraceNameImpl(spans: TraceSpan[]) {
+  const candidateSpan = getRootSpan(spans);
   return candidateSpan ? `${getServiceDisplayName(candidateSpan.process)}: ${candidateSpan.operationName}` : '';
 }
 

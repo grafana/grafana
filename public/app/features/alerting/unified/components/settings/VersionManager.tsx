@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import { omit } from 'lodash';
-import moment from 'moment';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeAsMoment } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -17,7 +16,7 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
+import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -282,7 +281,13 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
           we're hiding the line numbers because the historical snapshots will have certain parts of the config hidden (ex. auto-generated policies)
           so the line numbers will not match up with what you can see in the JSON modal tab
         */}
-        <LazyDiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
+        <MonacoDiffEditor
+          original={right}
+          modified={left}
+          language="json"
+          height="65vh"
+          options={{ lineNumbers: 'off' }}
+        />
       </div>
       <Stack direction="row" alignItems="center">
         <Spacer />
@@ -298,7 +303,7 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
 }
 
 const LastAppliedCell = ({ value }: CellProps<VersionData>) => {
-  const date = moment(value);
+  const date = dateTimeAsMoment(value);
 
   return (
     <Stack direction="row" alignItems="center">

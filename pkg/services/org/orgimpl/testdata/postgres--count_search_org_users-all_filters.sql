@@ -1,0 +1,13 @@
+SELECT COUNT(*) AS count
+FROM "test_schema"."org_user" AS org_user
+INNER JOIN "test_schema"."user" AS u ON org_user.user_id = u.id
+WHERE org_user.org_id = 7
+AND org_user.user_id = 42
+AND u.is_service_account = FALSE
+AND org_user.user_id IN (11, 12)
+AND u.login NOT IN ('hidden-user', 'another-hidden-user')
+AND (
+    u.email ILIKE '%ops%'
+    OR u.name ILIKE '%ops%'
+    OR u.login ILIKE '%ops%'
+  )

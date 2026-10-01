@@ -2,10 +2,17 @@ import { type SceneObject } from '@grafana/scenes';
 
 export interface RowItemLike extends SceneObject {
   readonly dashboardLayoutItemType: 'row';
+
+  getSlug(): string;
+  scrollIntoView(): void;
+  getCollapsedState(): boolean;
+  setCollapsedState(collapsed: boolean): void;
 }
 
 export interface TabItemLike extends SceneObject {
   readonly dashboardLayoutItemType: 'tab';
+
+  getSlug(): string;
 }
 
 export function isRowItem(object: SceneObject): object is RowItemLike {

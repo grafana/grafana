@@ -458,8 +458,7 @@ func checkConversionDataLoss(sourceVersionAPI, targetVersionAPI string, a, b int
 
 	// If data loss was detected, update the error with API versions
 	if err != nil {
-		var dataLossErr *ConversionDataLossError
-		if errors.As(err, &dataLossErr) {
+		if dataLossErr, ok := errors.AsType[*ConversionDataLossError](err); ok {
 			dataLossErr.sourceAPIVersion = sourceVersionAPI
 			dataLossErr.targetAPIVersion = targetVersionAPI
 		}

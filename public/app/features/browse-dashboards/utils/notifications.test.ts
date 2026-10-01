@@ -1,7 +1,7 @@
 import { AppEvents } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getRestoreNotificationData } from './notifications';
+import { getRestoreNotificationData, RESTORE_FETCH_NOT_FOUND } from './notifications';
 
 describe('notifications', () => {
   describe('getRestoreNotificationData', () => {
@@ -142,6 +142,99 @@ describe('notifications', () => {
           alertType: AppEvents.alertError.name,
           message: 'Failed to restore 3 dashboard. Network timeout',
         },
+      });
+    });
+
+    describe('permission-aware failure guidance', () => {
+      it('returns folder guidance when a dashboard fails to create with 403', () => {
+        const result = getRestoreNotificationData(
+          [],
+          [{ uid: 'failed1', error: 'Forbidden', status: 403, step: 'create' }],
+          ''
+        );
+        expect(result).toEqual({
+          kind: 'event',
+          data: {
+            alertType: AppEvents.alertError.name,
+            message: expect.stringContaining('Choose a folder where you have edit permissions'),
+          },
+        });
+      });
+
+      it('returns admin guidance when a deleted dashboard is not visible in the recently-deleted listing', () => {
+        const result = getRestoreNotificationData(
+          [],
+          [{ uid: 'failed1', error: RESTORE_FETCH_NOT_FOUND, step: 'fetch' }],
+          ''
+        );
+        expect(result).toEqual({
+          kind: 'event',
+          data: {
+            alertType: AppEvents.alertError.name,
+            message: expect.stringContaining('Ask an administrator to restore them'),
+          },
+        });
+      });
+
+      it('returns admin guidance when the recently-deleted read fails with 403', () => {
+        const result = getRestoreNotificationData(
+          [],
+          [{ uid: 'failed1', error: 'Forbidden', status: 403, step: 'fetch' }],
+          ''
+        );
+        expect(result).toEqual({
+          kind: 'event',
+          data: {
+            alertType: AppEvents.alertError.name,
+            message: expect.stringContaining('Ask an administrator to restore them'),
+          },
+        });
+      });
+
+      it('prefers create guidance when both create and fetch permission failures exist', () => {
+        const result = getRestoreNotificationData(
+          [],
+          [
+            { uid: 'failed1', error: 'Forbidden', status: 403, step: 'fetch' },
+            { uid: 'failed2', error: 'Forbidden', status: 403, step: 'create' },
+          ],
+          ''
+        );
+        expect(result).toEqual({
+          kind: 'event',
+          data: {
+            alertType: AppEvents.alertError.name,
+            message: expect.stringContaining('Choose a folder where you have edit permissions'),
+          },
+        });
+      });
+
+      it('falls back to the first raw error for failures without permission info', () => {
+        const result = getRestoreNotificationData([], [{ uid: 'failed1', error: 'boom' }], '');
+        expect(result).toEqual({
+          kind: 'event',
+          data: {
+            alertType: AppEvents.alertError.name,
+            message: 'Failed to restore 1 dashboard. boom',
+          },
+        });
+      });
+
+      it('appends folder guidance to the partial-success warning', () => {
+        const successful = Array.from({ length: 9 }, (_, i) => `uid${i + 1}`);
+        const result = getRestoreNotificationData(
+          successful,
+          [{ uid: 'failed1', error: 'Forbidden', status: 403, step: 'create' }],
+          ''
+        );
+        expect(result).toEqual({
+          kind: 'event',
+          data: {
+            alertType: AppEvents.alertWarning.name,
+            message:
+              "9 dashboard restored successfully. 1 dashboard failed. You don't have permission to add dashboards to the selected folder. Choose a folder where you have edit permissions, or ask an administrator to restore the dashboards.",
+          },
+        });
       });
     });
 

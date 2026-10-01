@@ -1,4 +1,5 @@
 import { Node, createWrappedNode, type JSDoc, type Node as TsMorphNode, type Type, type ts } from 'ts-morph';
+
 import type { JSDocMetadata } from './types.mts';
 
 /**

@@ -1,8 +1,8 @@
 import { stringToJsRegex } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { getDataSourceInstanceList, getDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 import { type ThunkResult } from 'app/types/store';
 
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable } from '../state/selectors';
@@ -12,17 +12,22 @@ import { toVariablePayload } from '../utils';
 import { createDataSourceOptions } from './reducer';
 
 export interface DataSourceVariableActionDependencies {
-  getDatasourceSrv: typeof getDatasourceSrv;
+  getDataSourceInstanceList: typeof getDataSourceInstanceList;
+  getDefaultDataSourceInstanceListItem: typeof getDefaultDataSourceInstanceListItem;
 }
 
 export const updateDataSourceVariableOptions =
   (
     identifier: KeyedVariableIdentifier,
-    dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
+    dependencies: DataSourceVariableActionDependencies = {
+      getDataSourceInstanceList,
+      getDefaultDataSourceInstanceListItem,
+    }
   ): ThunkResult<void> =>
   async (dispatch, getState) => {
     const { rootStateKey } = identifier;
-    const sources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
+    const sources = await dependencies.getDataSourceInstanceList({ metrics: true, variables: false });
+    const defaultDataSourceInstance = await dependencies.getDefaultDataSourceInstanceListItem(sources);
     const variableInState = getVariable(identifier, getState());
     if (variableInState.type !== 'datasource') {
       return;
@@ -35,6 +40,13 @@ export const updateDataSourceVariableOptions =
       regex = stringToJsRegex(regex);
     }
 
-    dispatch(toKeyedAction(rootStateKey, createDataSourceOptions(toVariablePayload(identifier, { sources, regex }))));
+    dispatch(
+      toKeyedAction(
+        rootStateKey,
+        createDataSourceOptions(
+          toVariablePayload(identifier, { sources, regex, defaultDataSourceUid: defaultDataSourceInstance?.uid })
+        )
+      )
+    );
     await dispatch(validateVariableSelectionState(identifier));
   };

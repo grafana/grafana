@@ -76,13 +76,10 @@ Content-Type: application/json
 [
     {
         "id": 1124,
-        "alertId": 0,
         "dashboardUID": "uGlb_lG7z",
         "panelId": 2,
         "userId": 1,
         "userName": "",
-        "newState": "",
-        "prevState": "",
         "time": 1507266395000,
         "timeEnd": 1507266395000,
         "text": "test",
@@ -94,13 +91,10 @@ Content-Type: application/json
     },
     {
         "id": 1123,
-        "alertId": 0,
         "dashboardUID": "jcIIG-07z",
         "panelId": 2,
         "userId": 1,
         "userName": "",
-        "newState": "",
-        "prevState": "",
         "time": 1507265111000,
         "text": "test",
         "tags": [
@@ -111,6 +105,10 @@ Content-Type: application/json
     }
 ]
 ```
+
+{{< admonition type="note" >}}
+Alerting fields, `alertId`, `alertName`, `newState`, `prevState`, are omitted when the annotation isn't tied to an alert. A missing `alertId` means the same as `0`: not an alert annotation.
+{{< /admonition >}}
 
 > Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.
 

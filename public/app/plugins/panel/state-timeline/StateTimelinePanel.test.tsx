@@ -74,6 +74,29 @@ describe('StateTimelinePanel', () => {
     consoleSpy.mockRestore();
   });
 
+  describe('null values in the time field (#130379)', () => {
+    // A frame whose time field carries null cells must route to the error view
+    // instead of reaching the chart, where zoom-to-data would propagate a null
+    // timestamp into the dashboard time range and crash range parsing.
+    const frameWithNullTime = processFrames([
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, null, 3000], config: {} },
+          { name: 'state', type: FieldType.string, values: ['ok', 'warn', 'ok'], config: {} },
+        ],
+      }),
+    ])[0];
+
+    it('renders the error view instead of the chart when a time cell is null', () => {
+      renderStateTimelinePanel(undefined, [frameWithNullTime]);
+
+      expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
+      expect(screen.getByText(/Unable to render data/)).toBeVisible();
+      expect(screen.getByText(/query A returned a time field with null values/i)).toBeVisible();
+    });
+  });
+
   it('renders the chart when data is valid', () => {
     renderStateTimelinePanel();
 

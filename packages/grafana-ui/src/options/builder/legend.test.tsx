@@ -107,8 +107,8 @@ describe('addLegendOptions', () => {
   });
 
   describe('overflow editor', () => {
-    it('defaults to ellipsis', () => {
-      expect(getItem('legend.overflow').defaultValue).toBe('ellipsis');
+    it('has no default value so it is not persisted into panel options unless changed', () => {
+      expect(getItem('legend.overflow').defaultValue).toBeUndefined();
     });
 
     it('offers ellipsis and wrap options', () => {

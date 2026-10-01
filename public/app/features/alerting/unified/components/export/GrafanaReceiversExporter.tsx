@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { t } from '@grafana/i18n';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
@@ -52,6 +52,18 @@ export const GrafanaReceiversExporter = ({ onClose, decrypt }: GrafanaReceiversE
       onClose={onClose}
       formatProviders={Object.values(allGrafanaExportProviders)}
     >
+      <Alert
+        title={t(
+          'alerting.grafana-receivers-exporter.warning-v0-integrations-title',
+          'Legacy integrations are not included'
+        )}
+        severity="warning"
+      >
+        <Trans i18nKey="alerting.grafana-receivers-exporter.warning-v0-integrations-description">
+          Contact points that contain only legacy integrations are omitted. Contact points that contain both legacy and
+          v1 integrations are exported without their legacy integrations.
+        </Trans>
+      </Alert>
       <GrafanaReceiversExportPreview decrypt={decrypt} exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );

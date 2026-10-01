@@ -2,18 +2,23 @@ import { isArray } from 'lodash';
 
 import {
   anyToNumber,
+  colorManipulator,
   type DataFrame,
   FieldColorModeId,
   type FieldConfig,
   getFieldDisplayName,
   MappingType,
   ReducerID,
+  sortThresholds,
   ThresholdsMode,
   type ValueMapping,
   type ValueMap,
   type Field,
   FieldType,
 } from '@grafana/data';
+import { config as grafanaConfig } from '@grafana/runtime';
+
+const MAX_DECIMALS = 15;
 
 interface ThresholdArguments {
   color: string;
@@ -76,6 +81,14 @@ export function getFieldConfigFromFrame(
 
   if (context.mappingValues) {
     config.mappings = combineValueMappings(context);
+  }
+
+  // Threshold steps are pushed in the order their fields appear in the frame.
+  // Downstream consumers (getActiveThreshold, the filled-region gradient, ...)
+  // assume steps are sorted ascending by value, so mapping more than one field
+  // to a threshold could otherwise emit out-of-order steps and break rendering.
+  if (config.thresholds) {
+    config.thresholds.steps = sortThresholds(config.thresholds.steps);
   }
 
   return config;
@@ -144,7 +157,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'decimals',
-    processor: toNumericOrUndefined,
+    processor: toDecimalsOrUndefined,
   },
   {
     key: 'displayName',
@@ -153,7 +166,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'color',
-    processor: (value) => ({ fixedColor: value, mode: FieldColorModeId.Fixed }),
+    processor: toFixedColorOrUndefined,
   },
   {
     key: 'threshold1',
@@ -270,6 +283,46 @@ function toNumericOrUndefined(value: unknown) {
   }
 
   return numeric;
+}
+
+// The Decimals field option only accepts whole numbers from 0 to MAX_DECIMALS.
+// A value outside that range reaches Number.prototype.toFixed through the
+// display processor, which throws a RangeError for negative values and blanks
+// the panel, so skip the mapping rather than write a value the option itself
+// would reject.
+function toDecimalsOrUndefined(value: unknown) {
+  const numeric = anyToNumber(value);
+
+  if (!Number.isInteger(numeric) || numeric < 0 || numeric > MAX_DECIMALS) {
+    return;
+  }
+
+  return numeric;
+}
+
+// Panels resolve a fixed color through the theme and then colorManipulator,
+// which throws on anything it cannot parse (such as -3) and blanks the panel.
+// Run the value through the same two steps and skip it if they throw. A looser
+// check such as tinycolor accepts formats like 'ff0000' that still crash.
+// decomposeColor only checks the prefix, so 'rgb(foo)' parses to NaN channels
+// without throwing; skip those too.
+function toFixedColorOrUndefined(value: unknown) {
+  if (typeof value !== 'string') {
+    return;
+  }
+
+  let channels: number[];
+  try {
+    channels = colorManipulator.decomposeColor(grafanaConfig.theme2.visualization.getColorByName(value)).values;
+  } catch {
+    return;
+  }
+
+  if (channels.length < 3 || !channels.every(Number.isFinite)) {
+    return;
+  }
+
+  return { fixedColor: value, mode: FieldColorModeId.Fixed };
 }
 
 export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler | null {

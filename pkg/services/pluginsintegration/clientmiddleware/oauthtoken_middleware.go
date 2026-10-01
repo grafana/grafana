@@ -65,6 +65,11 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 				if idTokenHeader != "" {
 					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
 				}
+			case *backend.QueryChunkedDataRequest:
+				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
+				if idTokenHeader != "" {
+					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
+				}
 			case *backend.CheckHealthRequest:
 				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
@@ -93,6 +98,19 @@ func (m *OAuthTokenMiddleware) QueryData(ctx context.Context, req *backend.Query
 	}
 
 	return m.BaseHandler.QueryData(ctx, req)
+}
+
+func (m *OAuthTokenMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	err := m.applyToken(ctx, req.PluginContext, req)
+	if err != nil {
+		return err
+	}
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
 }
 
 func (m *OAuthTokenMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

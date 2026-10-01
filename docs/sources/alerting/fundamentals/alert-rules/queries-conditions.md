@@ -16,47 +16,6 @@ labels:
     - oss
 title: Queries and conditions
 weight: 104
-refs:
-  dynamic-threshold-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-thresholds/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/dynamic-thresholds/
-  alert-instance:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/#alert-instances
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/#alert-instances
-  state-and-health:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/state-and-health/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/state-and-health/
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
-  math-operation:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/#math
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#math
-  resample-operation:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/#resample
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#resample
-  reduce-operation:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/#reduce
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#reduce
-  table-data-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/table-data/
 ---
 
 # Queries and conditions
@@ -75,14 +34,14 @@ Alerting periodically runs the queries and expressions, evaluating the condition
 
 Alerting queries are the same as the queries used in Grafana panels, but Grafana-managed alerts are limited to querying [data sources that have Alerting enabled](/grafana/plugins/data-source-plugins/?features=alerting).
 
-Queries in Grafana can be applied in various ways, depending on the data source and query language being used. Each data source’s query editor provides a customized user interface to help you write queries that take advantage of its unique capabilities. For details about query editors and syntax in Grafana, refer to [Query and transform data](ref:query-transform-data).
+Queries in Grafana can be applied in various ways, depending on the data source and query language being used. Each data source’s query editor provides a customized user interface to help you write queries that take advantage of its unique capabilities. For details about query editors and syntax in Grafana, refer to [Query and transform data](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/).
 
 Alerting can work with two types of data:
 
 1. **Time series data** — The query returns a collection of time series, where each series must be [reduced](#reduce) to a single numeric value for evaluating the alert condition.
-1. **Tabular data** — The query must return data in a table format with only one numeric column. Each row must have a value in that column, used to evaluate the alert condition. See a [tabular data example](ref:table-data-example).
+1. **Tabular data** — The query must return data in a table format with only one numeric column. Each row must have a value in that column, used to evaluate the alert condition. See a [tabular data example](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/).
 
-Each time series or table row is evaluated as a separate [alert instance](ref:alert-instance).
+Each time series or table row is evaluated as a separate [alert instance](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/#alert-instances).
 
 {{< figure src="/media/docs/alerting/alerting-query-conditions-default-options.png" max-width="750px" caption="Alert query using the Prometheus query editor and alert condition" >}}
 
@@ -112,9 +71,9 @@ The following expressions are available:
 
 Aggregates time series values within the selected time range into a single number.
 
-Reduce takes one or more time series and transform each series into a single number, which can then be compared in the alert condition.
+Reduce takes one or more time series and transforms each series into a single number, which can then be compared in the alert condition.
 
-The following aggregations functions are included: `Min`, `Max`, `Mean`, `Median`, `Sum`, `Count`, and `Last`. For more details, refer to the [Reduce documentation](ref:reduce-operation).
+The following aggregations functions are included: `Min`, `Max`, `Mean`, `Median`, `Sum`, `Count`, and `Last`. For more details, refer to the [Reduce documentation](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/expression-queries/#reduce).
 
 ### Math
 
@@ -126,19 +85,25 @@ If queries being compared have **multiple series in their results**, series from
 
 In this case, only series with matching labels are joined, and the operation is calculated between them.
 
-For additional scenarios on how Math handles different data types, refer to the [Math documentation](ref:math-operation).
+For additional scenarios on how Math handles different data types, refer to the [Math documentation](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/expression-queries/#math).
 
 You can also use a Math expression to define the **alert condition**. For example:
 
 - `$B > 70` should fire if the value of B (query or expression) is more than 70.
 - `$B < $C * 100` should fire if the value of B is less than the value of C multiplied by 100.
-- Compare matching series from two queries, as shown in the [dynamic threshold example](ref:dynamic-threshold-example).
+- Compare matching series from two queries, as shown in the [dynamic threshold example](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-thresholds/).
 
 ### Resample
 
-Realigns a time range to a new set of timestamps, this is useful when comparing time series data from different data sources where the timestamps would otherwise not align.
+Realigns a time range to a new set of timestamps. This is useful when comparing time series data from different data sources where the timestamps would otherwise not align.
 
-For more details, refer to the [Resample documentation](ref:resample-operation).
+For more details, refer to the [Resample documentation](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/expression-queries/#resample).
+
+### SQL
+
+Transforms the results of previous queries or expressions using MySQL-like syntax, which is useful for filtering rows, joining data from multiple queries, and aggregating results before evaluating the alert condition.
+
+For more details, refer to the [SQL expressions documentation](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/sql-expressions/).
 
 ### Threshold
 
@@ -149,7 +114,7 @@ The threshold expression allows the comparison between two single values. Availa
 - **Is above**: `$A > 5`
 - **Is below**: `$B < 3`
 - **Is equal to**: `$A == 2`
-- **Is not equal to**: `$B =! 4`
+- **Is not equal to**: `$B != 4`
 - **Is above or equal to**: `$A >= 8`
 - **Is below or equal to**: `$B <= 16`
 - **Is within range**: `$A > 0 AND $A < 10`

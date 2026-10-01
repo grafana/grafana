@@ -40,6 +40,8 @@ Dashboard lists allow you to display dynamic links to other dashboards. You can 
 
 On each dashboard load, this panel queries the dashboard list, always providing the most up-to-date results.
 
+Dashboards that have a description show an info icon next to the dashboard link; hover over the icon to view the description.
+
 You can use a dashboard list visualization to display a list of important dashboards that you want to track.
 
 ## Configure a dashboard list visualization

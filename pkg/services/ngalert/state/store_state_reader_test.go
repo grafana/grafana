@@ -13,6 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+type mockInstanceReader struct {
+	mock.Mock
+}
+
+func (m *mockInstanceReader) ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error) {
+	args := m.Called(ctx, cmd)
+	return args.Get(0).([]*models.AlertInstance), args.Error(1)
+}
+
 func TestStoreStateReader_GetAll(t *testing.T) {
 	now := time.Now()
 	orgID := int64(1)

@@ -12,9 +12,9 @@ func setupTestEnv(resourceCount, permissionPerResource int) (map[string][]string
 	res := map[string][]string{}
 	ids := make(map[string]bool, resourceCount)
 
-	for p := 0; p < permissionPerResource; p++ {
+	for p := range permissionPerResource {
 		action := fmt.Sprintf("resources:action%v", p)
-		for r := 0; r < resourceCount; r++ {
+		for r := range resourceCount {
 			scope := fmt.Sprintf("resources:id:%v", r)
 			res[action] = append(res[action], scope)
 			ids[fmt.Sprintf("%d", r)] = true

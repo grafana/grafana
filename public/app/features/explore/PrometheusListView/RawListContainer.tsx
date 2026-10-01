@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
@@ -65,8 +64,7 @@ const numberOfColumnsBeforeExpandedViewIsDefault = 2;
  * @constructor
  */
 const RawListContainer = (props: RawListContainerProps) => {
-  const { tableResult } = props;
-  const dataFrame = cloneDeep(tableResult);
+  const { tableResult: dataFrame } = props;
   const listRef = useRef<List | null>(null);
 
   const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));

@@ -33,8 +33,9 @@ var (
 )
 
 type APIBuilder struct {
-	authorizer  authorizer.Authorizer
-	legacyPrefs grafanarest.Storage
+	authorizer   authorizer.Authorizer
+	accessClient authlib.AccessClient
+	legacyPrefs  grafanarest.Storage
 
 	merger *merger // joins all preferences
 }
@@ -49,7 +50,8 @@ func RegisterAPIService(
 ) (*APIBuilder, error) {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		merger: newMerger(cfg),
+		merger:       newMerger(cfg),
+		accessClient: accessClient,
 		authorizer: &utils.AuthorizeFromName{
 			OKNames:      []string{"merged"},
 			AccessClient: accessClient, // can i edit a team
@@ -130,7 +132,11 @@ func (b *APIBuilder) storageForVersion(
 			return nil, err
 		}
 	}
-	wrappedStorage := &preferencesStorage{Storage: store, gvk: prefs.GroupVersionKind()}
+	wrappedStorage := &preferencesStorage{
+		Storage:      store,
+		gvk:          prefs.GroupVersionKind(),
+		accessClient: b.accessClient,
+	}
 	storage[prefs.StoragePath()] = wrappedStorage
 
 	apiGroupInfo.VersionedResourcesStorageMap[prefs.GroupVersion().Version] = storage

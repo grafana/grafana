@@ -1,6 +1,7 @@
 import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
 
 import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
@@ -172,6 +173,7 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
       <Dropdown overlay={menu} placement="bottom-start">
         <IconButton
           className={styles.menuIcon}
+          data-testid={selectors.components.Logs.logLineMenu.menuButton}
           name={active ? 'angle-right' : 'ellipsis-v'}
           aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
           role="button"

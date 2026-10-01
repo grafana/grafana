@@ -28,20 +28,23 @@ describe('test comparisons', () => {
   const field0 = frameB.fields[0];
   const field1 = frameB.fields[1];
 
-  it('should support null/undefined without crash', () => {
-    expect(compareDataFrameStructures(frameA, frameA)).toBeTruthy();
-    expect(compareDataFrameStructures(frameA, { ...frameA })).toBeTruthy();
-    expect(compareDataFrameStructures(frameA, frameB)).toBeFalsy();
-    expect(compareDataFrameStructures(frameA, null as unknown as DataFrame)).toBeFalsy();
-    expect(compareDataFrameStructures(undefined as unknown as DataFrame, frameA)).toBeFalsy();
+  it('a frame is structurally equal to itself and to a shallow copy', () => {
+    expect(compareDataFrameStructures(frameA, frameA)).toBe(true);
+    expect(compareDataFrameStructures(frameA, { ...frameA })).toBe(true);
+  });
 
-    expect(compareArrayValues([frameA], [frameA], compareDataFrameStructures)).toBeTruthy();
-    expect(compareArrayValues([frameA], null as unknown as DataFrame[], compareDataFrameStructures)).toBeFalsy();
-    expect(compareArrayValues(null as unknown as DataFrame[], [frameA], compareDataFrameStructures)).toBeFalsy();
+  it('a differing field count should be a structure change', () => {
+    // frameA has time/name/value, frameB only time/value
+    expect(compareDataFrameStructures(frameA, frameB)).toBe(false);
+  });
+
+  it('a nullish frame on either side should be a structure change', () => {
+    expect(compareDataFrameStructures(frameA, null as unknown as DataFrame)).toBe(false);
+    expect(compareDataFrameStructures(undefined as unknown as DataFrame, frameA)).toBe(false);
   });
 
   it('name change should be a structure change', () => {
-    expect(compareDataFrameStructures(frameB, { ...frameB, name: 'AA' })).toBeFalsy();
+    expect(compareDataFrameStructures(frameB, { ...frameB, name: 'AA' })).toBe(false);
   });
 
   it('label change should be a structure change', () => {
@@ -55,14 +58,14 @@ describe('test comparisons', () => {
         },
       ],
     };
-    expect(compareDataFrameStructures(frameB, changedFrameB)).toBeFalsy();
+    expect(compareDataFrameStructures(frameB, changedFrameB)).toBe(false);
   });
 
   it('Field copy should not be a structure change', () => {
-    expect(compareDataFrameStructures(frameB, { ...frameB, fields: [field0, field1] })).toBeTruthy();
+    expect(compareDataFrameStructures(frameB, { ...frameB, fields: [field0, field1] })).toBe(true);
   });
 
-  it('changing type should change the config', () => {
+  it('changing a field type should be a structure change', () => {
     expect(
       compareDataFrameStructures(frameB, {
         ...frameB,
@@ -74,7 +77,7 @@ describe('test comparisons', () => {
           },
         ],
       })
-    ).toBeFalsy();
+    ).toBe(false);
   });
 
   it('full copy of config will not change structure', () => {
@@ -91,10 +94,10 @@ describe('test comparisons', () => {
           },
         ],
       })
-    ).toBeTruthy(); // no change
+    ).toBe(true);
   });
 
-  it('adding an additional config field', () => {
+  it('adding an additional config field should be a structure change', () => {
     expect(
       compareDataFrameStructures(frameB, {
         ...frameB,
@@ -109,116 +112,37 @@ describe('test comparisons', () => {
           },
         ],
       })
-    ).toBeFalsy();
+    ).toBe(false);
   });
 
   describe('custom config comparison', () => {
-    it('handles custom config shallow equality', () => {
-      const a = {
-        ...frameB,
-        fields: [
-          field0,
-          {
-            ...field1,
-            config: {
-              custom: {
-                a: 1,
-                b: 'test',
-              },
-            },
-          },
-        ],
-      };
-
-      const b = {
-        ...frameB,
-        fields: [
-          field0,
-          {
-            ...field1,
-            config: {
-              custom: {
-                a: 1,
-                b: 'test',
-              },
-            },
-          },
-        ],
-      };
-
-      expect(compareDataFrameStructures(a, b)).toBeTruthy();
+    const withCustomConfig = (custom: Record<string, unknown>): DataFrame => ({
+      ...frameB,
+      fields: [field0, { ...field1, config: { custom } }],
     });
 
-    it('handles custom config shallow inequality', () => {
-      const a = {
-        ...frameB,
-        fields: [
-          field0,
-          {
-            ...field1,
-            config: {
-              custom: {
-                a: 1,
-              },
-            },
-          },
-        ],
-      };
+    it.each([
+      { desc: 'equal flat custom configs', a: { a: 1, b: 'test' }, b: { a: 1, b: 'test' }, expected: true },
+      { desc: 'flat custom configs with a differing value', a: { a: 1 }, b: { a: 2 }, expected: false },
+      { desc: 'equal nested custom configs', a: { a: { b: 1 } }, b: { a: { b: 1 } }, expected: true },
+      { desc: 'nested custom configs with a differing leaf', a: { a: { b: 1 } }, b: { a: { b: 2 } }, expected: false },
+    ])('returns $expected for $desc', ({ a, b, expected }) => {
+      expect(compareDataFrameStructures(withCustomConfig(a), withCustomConfig(b))).toBe(expected);
+    });
+  });
 
-      const b = {
-        ...frameB,
-        fields: [
-          field0,
-          {
-            ...field1,
-            config: {
-              custom: {
-                a: 2,
-              },
-            },
-          },
-        ],
-      };
-
-      expect(compareDataFrameStructures(a, b)).toBeFalsy();
+  describe('compareArrayValues', () => {
+    it('returns true when every pair satisfies the comparator', () => {
+      expect(compareArrayValues([frameA], [frameA], compareDataFrameStructures)).toBe(true);
     });
 
-    it('does deep comparison', () => {
-      const a = {
-        ...frameB,
-        fields: [
-          field0,
-          {
-            ...field1,
-            config: {
-              custom: {
-                a: {
-                  b: 1,
-                },
-              },
-            },
-          },
-        ],
-      };
+    it('returns false when a pair fails the comparator', () => {
+      expect(compareArrayValues([frameA], [frameB], compareDataFrameStructures)).toBe(false);
+    });
 
-      const b = {
-        ...frameB,
-        fields: [
-          field0,
-          {
-            ...field1,
-            config: {
-              custom: {
-                a: {
-                  b: 1,
-                },
-              },
-            },
-          },
-        ],
-      };
-
-      expect(compareDataFrameStructures(a, b)).toBeTruthy();
+    it('returns false when either array is nullish', () => {
+      expect(compareArrayValues([frameA], null as unknown as DataFrame[], compareDataFrameStructures)).toBe(false);
+      expect(compareArrayValues(null as unknown as DataFrame[], [frameA], compareDataFrameStructures)).toBe(false);
     });
   });
 });

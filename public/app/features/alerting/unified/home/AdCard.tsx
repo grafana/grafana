@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useUserStorage } from '@grafana/runtime/internal';
-import { Button, Divider, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, Divider, Icon, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CloudBadge } from 'app/core/components/Branding/CloudBadge';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
+
+import { ContentBox } from './ContentBox';
 
 type AdCardProps = {
   title: string;
@@ -38,17 +40,21 @@ export default function AdCard({ title, description, href, logoUrl, items, stora
   }
 
   return (
-    <div className={styles.cardBody} title={title}>
+    <ContentBox title={title} flex={1}>
       <div className={styles.preHeader}>
         <CloudBadge />
         <IconButton name="times" size="sm" onClick={onDismiss} aria-label={t('alerting.ad.close', 'Close')} />
       </div>
       <header className={styles.header}>
         <img src={logoUrl} alt={title.concat(' logo')} className={styles.logo} />
-        <div className={styles.contentColumn}>
-          <h3 className={styles.title}>{title}</h3>
-          <p className={styles.description}>{description}</p>
-        </div>
+        <Stack direction="column" gap={1} flex={1}>
+          <Text element="h3" variant="h4">
+            {title}
+          </Text>
+          <Text element="p" color="secondary">
+            {description}
+          </Text>
+        </Stack>
       </header>
       <Divider />
       <div className={styles.itemsList}>
@@ -64,7 +70,7 @@ export default function AdCard({ title, description, href, logoUrl, items, stora
         <Trans i18nKey="alerting.ad.learn-more">Learn more</Trans>
         <Icon name="external-link-alt" className={styles.buttonIcon} />
       </Button>
-    </div>
+    </ContentBox>
   );
 }
 
@@ -80,24 +86,7 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'flex-start',
     gap: theme.spacing(2),
     paddingTop: theme.spacing(2),
-    height: theme.spacing(8),
-  }),
-
-  contentColumn: css({
-    flex: 1,
-  }),
-
-  title: css({
-    marginBottom: theme.spacing(1),
-    fontSize: theme.typography.h4.fontSize,
-    fontWeight: theme.typography.h4.fontWeight,
-    color: theme.colors.text.primary,
-  }),
-
-  description: css({
-    fontSize: theme.typography.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
-    lineHeight: theme.typography.bodySmall.lineHeight,
+    minHeight: theme.spacing(8),
   }),
 
   itemsList: css({
@@ -130,14 +119,6 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
 
   buttonIcon: css({
     marginLeft: theme.spacing(1),
-  }),
-
-  cardBody: css({
-    padding: `${theme.spacing(3)} ${theme.spacing(4)} ${theme.spacing(2.25)} ${theme.spacing(4)}`,
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.lg,
-    border: `1px solid ${theme.colors.border.weak}`,
-    flex: 1,
   }),
 
   preHeader: css({

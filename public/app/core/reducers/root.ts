@@ -4,7 +4,6 @@ import { type AnyAction, combineReducers } from 'redux';
 import { generatedAPI as legacyAPI } from '@grafana/api-clients/internal/rtkq/legacy';
 import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { allReducers as allApiClientReducers } from '@grafana/api-clients/rtkq';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import sharedReducers from 'app/core/reducers';
@@ -52,7 +51,6 @@ const rootReducers = {
   [legacyAPI.reducerPath]: legacyAPI.reducer,
   [migrateToCloudAPI.reducerPath]: migrateToCloudAPI.reducer,
   [preferencesUserAPI.reducerPath]: preferencesUserAPI.reducer,
-  [legacyUserAPI.reducerPath]: legacyUserAPI.reducer,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,

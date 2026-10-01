@@ -1,5 +1,5 @@
 import { type AdHocVariableFilter, type DrilldownsApplicability } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import {
   type AdHocFiltersVariable,
   type GroupByVariable,
@@ -37,7 +37,7 @@ export async function getDrilldownApplicability(
   const datasource = getDatasourceFromQueryRunner(queryRunner);
   const queries = queryRunner.state.data?.request?.targets ?? queryRunner.state.queries;
 
-  const ds = await getDataSourceSrv().get(datasource?.uid);
+  const ds = await getDataSourceInstance(datasource?.uid);
 
   if (!ds.getDrilldownsApplicability) {
     return;

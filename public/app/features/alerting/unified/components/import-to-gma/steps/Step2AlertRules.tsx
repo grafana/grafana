@@ -3,7 +3,12 @@ import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
 
+import {
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isValidRecordingRulesTarget,
+} from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -25,11 +30,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import {
-  DataSourceType,
-  isSupportedExternalPrometheusFlavoredRulesSourceType,
-  isValidRecordingRulesTarget,
-} from '../../../utils/datasource';
+import { DataSourceType } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';
@@ -233,6 +234,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                     placeholder={t('alerting.import-to-gma.step2.select-policy', 'Select a policy tree')}
                     loading={isLoadingRoutingTrees}
                     width={50}
+                    data-testid={selectors.pages.Alerting.ImportToGMA.policyTreeInput}
                   />
                 )}
                 control={control}
@@ -331,6 +333,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                             loading={isLoadingNamespaces}
                             disabled={isLoadingNamespaces || !rulesDatasourceName}
                             isClearable
+                            data-testid={selectors.pages.Alerting.ImportToGMA.namespaceInput}
                           />
                         )}
                         name="namespace"
@@ -355,6 +358,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                             loading={isLoadingNamespaces}
                             disabled={isLoadingNamespaces || !namespace || !rulesDatasourceName}
                             isClearable
+                            data-testid={selectors.pages.Alerting.ImportToGMA.groupInput}
                           />
                         )}
                         name="ruleGroup"

@@ -1,17 +1,14 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import getDefaultMonacoLanguages from 'lib/monaco-languages';
+import { Global } from '@emotion/react';
 import { useState } from 'react';
 import { useAsync } from 'react-use';
 import SwaggerUI from 'swagger-ui-react';
 
-import { createTheme, monacoLanguageRegistry, type SelectableValue } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { Icon, Stack, Select, UserIcon, type UserView, Button } from '@grafana/ui';
-import { setMonacoEnv } from 'app/core/monacoEnv';
-import { ThemeProvider } from 'app/core/utils/ConfigProvider';
+import { createTheme, ThemeContext, type SelectableValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { Alert, Button, Icon, Select, Stack, UserIcon, type UserView } from '@grafana/ui';
 
-import { NamespaceContext, WrappedPlugins } from './plugins';
+import { NamespaceContext } from './contexts';
+import { WrappedPlugins } from './plugins';
 
 export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
@@ -23,7 +20,7 @@ export const Page = () => {
 
     const rsp = await fetch('openapi/v3');
     const apis = await rsp.json();
-    for (const [key, val] of Object.entries<any>(apis.paths)) {
+    for (const [key, val] of Object.entries<{ serverRelativeURL: string }>(apis.paths)) {
       const parts = key.split('/');
       if (parts.length === 3) {
         urls.push({
@@ -45,9 +42,6 @@ export const Page = () => {
       });
     }
 
-    monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
-    setMonacoEnv();
-
     setURL(urls[idx]); // Remove to start at the generic landing page
     return urls;
   });
@@ -58,7 +52,7 @@ export const Page = () => {
     const response = await fetch('api/frontend/settings');
     if (!response.ok) {
       console.warn('No settings found');
-      return 'default';
+      return;
     }
     const val = await response.json();
     return val.namespace;
@@ -82,58 +76,74 @@ export const Page = () => {
 
   return (
     <div>
-      <OpenFeatureProvider client={getFeatureFlagClient()}>
-        <ThemeProvider value={theme}>
-          <NamespaceContext.Provider value={namespace.value}>
-            <div style={{ backgroundColor: '#000', padding: '10px' }}>
-              <Stack justifyContent={'space-between'}>
-                <Icon name="grafana" size="xxl" />
-                <Select
-                  options={urls.value}
-                  isClearable={false /* TODO -- when we allow a landing page, this can be true */}
-                  onChange={(v) => {
-                    const url = new URL(window.location.href);
-                    url.hash = '';
-                    if (v?.key) {
-                      url.searchParams.set('api', v.key);
-                    } else {
-                      url.searchParams.delete('api');
-                    }
-                    window.history.pushState(null, '', url);
-                    setURL(v);
-                  }}
-                  value={url}
-                  isLoading={urls.loading}
-                />
-                <div style={{ marginTop: '5px' }}>
-                  {userView ? (
-                    <UserIcon userView={userView} />
-                  ) : (
-                    <a href="/login">
-                      <Button variant="primary">
-                        <Trans i18nKey="swagger.login">Login</Trans>
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              </Stack>
-            </div>
-
-            {url?.value && (
-              <SwaggerUI
-                url={url.value}
-                presets={[WrappedPlugins]}
-                deepLinking={true}
-                tryItOutEnabled={true}
-                queryConfigEnabled={false}
-                persistAuthorization={false}
-                displayOperationId
+      <ThemeContext.Provider value={theme}>
+        <Global
+          styles={{
+            html: {
+              fontSize: `${theme.typography.htmlFontSize}px`,
+            },
+            body: {
+              margin: 0,
+              ...theme.typography.body,
+            },
+          }}
+        />
+        <NamespaceContext.Provider value={namespace.value}>
+          <div style={{ backgroundColor: '#000', padding: '10px' }}>
+            <Stack alignItems="center" justifyContent="space-between">
+              <Icon name="grafana" size="xxl" />
+              <Select
+                options={urls.value}
+                isClearable={false /* TODO -- when we allow a landing page, this can be true */}
+                onChange={(v) => {
+                  const url = new URL(window.location.href);
+                  url.hash = '';
+                  if (v?.key) {
+                    url.searchParams.set('api', v.key);
+                  } else {
+                    url.searchParams.delete('api');
+                  }
+                  window.history.pushState(null, '', url);
+                  setURL(v);
+                }}
+                value={url}
+                isLoading={urls.loading}
               />
-            )}
-            {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
-          </NamespaceContext.Provider>
-        </ThemeProvider>
-      </OpenFeatureProvider>
+              <div>
+                {userView ? (
+                  <UserIcon userView={userView} />
+                ) : (
+                  <a href="/login">
+                    <Button variant="primary">
+                      <Trans i18nKey="swagger.login">Login</Trans>
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </Stack>
+          </div>
+
+          {!namespace.loading && !namespace.value && (
+            <Alert title={t('swagger.namespace-unavailable-title', 'Unable to load namespace')} severity="warning">
+              <Trans i18nKey="swagger.namespace-unavailable">
+                Check the namespace before sending requests, or reload the page to try again.
+              </Trans>
+            </Alert>
+          )}
+          {url?.value && !namespace.loading && (
+            <SwaggerUI
+              url={url.value}
+              presets={[WrappedPlugins]}
+              deepLinking={true}
+              tryItOutEnabled={true}
+              queryConfigEnabled={false}
+              persistAuthorization={false}
+              displayOperationId
+            />
+          )}
+          {(!url?.value || namespace.loading) && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
+        </NamespaceContext.Provider>
+      </ThemeContext.Provider>
     </div>
   );
 };

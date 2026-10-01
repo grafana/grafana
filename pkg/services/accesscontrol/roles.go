@@ -284,6 +284,23 @@ var (
 		},
 	}
 
+	smtpSettingsWriterRole = RoleDTO{
+		Name:        "fixed:smtp.settings:writer",
+		DisplayName: "SMTP settings writer",
+		Description: "Read and update the Grafana instance's SMTP configuration.",
+		Group:       "Settings",
+		Permissions: []Permission{
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsSMTP,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsSMTP,
+			},
+		},
+	}
+
 	generalAuthConfigWriterRole = RoleDTO{
 		Name:        "fixed:general.auth.config:writer",
 		DisplayName: "General authentication config writer",
@@ -356,6 +373,11 @@ func FixedRoleRegistrations() []RoleRegistration {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
+	smtpSettingsWriter := RoleRegistration{
+		Role:   smtpSettingsWriterRole,
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
 	usageStatsReader := RoleRegistration{
 		Role:   usagestatsReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
@@ -364,7 +386,7 @@ func FixedRoleRegistrations() []RoleRegistration {
 	return []RoleRegistration{
 		ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
 		settingsReader, statsReader, usersReader, usersWriter,
-		authenticationConfigWriter, generalAuthConfigWriter, usageStatsReader,
+		authenticationConfigWriter, generalAuthConfigWriter, smtpSettingsWriter, usageStatsReader,
 	}
 }
 

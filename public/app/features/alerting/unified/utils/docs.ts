@@ -7,6 +7,7 @@ export const DOCS_URL_RULE_EVALUATION = `${DOCS_BASE_URL}/alerting/fundamentals/
 export const DOCS_URL_STALE_ALERT_INSTANCES = `${DOCS_BASE_URL}/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/`;
 export const DOCS_URL_NO_DATA_ERROR_HANDLING = `${DOCS_BASE_URL}/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling`;
 export const DOCS_URL_RECORDING_RULES = `${DOCS_BASE_URL}/alerting/alerting-rules/create-recording-rules/`;
+export const DOCS_URL_CONFIGURE_ALERT_STATE_HISTORY = `${DOCS_BASE_URL}/alerting/set-up/configure-alert-state-history/`;
 
 // Labels and Annotations
 export const DOCS_URL_ANNOTATION_LABEL = `${DOCS_BASE_URL}/alerting/fundamentals/alert-rules/annotation-label/`;

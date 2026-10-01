@@ -8,8 +8,11 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
 )
@@ -32,6 +35,12 @@ func ProvideGComSSOService(cfg *setting.Cfg) *GComSSOService {
 }
 
 func (s *GComSSOService) LogoutHook(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) error {
+	// Gated per-tenant: only call grafana.com logout when cloudRBACRoles
+	// is enabled for the requesting tenant.
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagCloudRBACRoles, false, openfeature.TransactionContext(ctx)) {
+		return nil
+	}
+
 	s.logger.Debug("Logging out from Grafana.com", "user", user.GetID(), "session", sessionToken.Id)
 	data, err := json.Marshal(&gcomLogoutRequest{
 		Token:     user.GetIDToken(),

@@ -43,7 +43,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Plugins",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaPluginv0alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+					Schema: &versionSchemaPluginv0alpha1,
 				},
 
 				{
@@ -51,7 +54,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Metas",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaMetav0alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+					Schema: &versionSchemaMetav0alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

@@ -1,16 +1,12 @@
 import { type PluginContextType } from '@grafana/data';
 
 import * as errors from './errors';
+import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { ExtensionsLog } from './logs/log';
-import { isGrafanaDevMode } from './utils';
 import { validateExtensionPoint } from './validateExtensionPoint';
 import * as validators from './validators';
 
-jest.mock('./utils', () => ({
-  ...jest.requireActual('./utils'),
-
-  // Manually set the dev mode to false
-  // (to make sure that by default we are testing a production scenario)
+jest.mock('./isGrafanaDevMode', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
 

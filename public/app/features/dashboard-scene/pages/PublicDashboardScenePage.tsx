@@ -123,6 +123,7 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     loadingPage: css({
       justifyContent: 'center',
@@ -137,7 +138,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       zIndex: theme.zIndex.navbarFixed,
-      background: theme.colors.background.canvas,
+      background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
       padding: theme.spacing(2, 0),
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column',

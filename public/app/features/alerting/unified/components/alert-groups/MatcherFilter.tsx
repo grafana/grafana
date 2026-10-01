@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -42,7 +43,8 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
 
   return (
     <Field
-      className={styles.fixMargin}
+      noMargin
+      className={styles.field}
       invalid={!inputValid}
       error={!inputValid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
       label={
@@ -80,7 +82,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
         placeholder={t('alerting.matcher-filter.search-query-input-placeholder-search', 'Search')}
         value={filterQuery}
         onChange={(e) => setFilterQuery(e.currentTarget.value)}
-        data-testid="search-query-input"
+        data-testid={selectors.pages.Alerting.searchInput}
         prefix={searchIcon}
         className={styles.inputWidth}
       />
@@ -89,8 +91,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  fixMargin: css({
-    marginBottom: 0,
+  field: css({
     minWidth: 0,
     flex: '1 1 0',
   }),

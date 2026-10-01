@@ -113,6 +113,9 @@ func (rows *Rows) Close() error {
 		defer rows.session.Close()
 	}
 
+	// Scan puts the scanned table back on the statement, so clear it once we are done reading.
+	defer rows.session.resetStatement()
+
 	if rows.rows != nil {
 		return rows.rows.Close()
 	}

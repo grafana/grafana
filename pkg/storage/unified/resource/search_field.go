@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -31,8 +32,8 @@ const (
 	// SearchCapabilityPartial enables substring matching (Bleve ngram
 	// analyzer). Requires SearchCapabilityText.
 	SearchCapabilityPartial SearchCapability = "partial"
-	// SearchCapabilitySort makes the field sortable. It also enables DocValues
-	// on the keyword variant for column-wise reads and stable sort tie-breakers.
+	// SearchCapabilitySort enables sorting on the field. A search request can only
+	// sort on fields that declare it.
 	SearchCapabilitySort     SearchCapability = "sort"
 	SearchCapabilityFacet    SearchCapability = "facet"    // facetable on the keyword variant
 	SearchCapabilityRetrieve SearchCapability = "retrieve" // value is stored and returned in search results
@@ -61,6 +62,11 @@ const (
 	// into a single int64. Standard fields never use INT32 today, and
 	// numeric search behaviour is identical (bleve indexes through float64
 	// internally).
+	//
+	// That float64 is exact only up to 2^53, which is far above a timestamp in
+	// millis but below a resource version. Declare a field whose values can reach
+	// that far as a string, the way SEARCH_FIELD_DELETED_RV is: filters and sorts
+	// on a larger int64 cannot tell neighbouring values apart.
 	SearchFieldTypeInt64 SearchFieldType = "int64"
 	// SearchFieldTypeDouble covers floating-point fields. The protobuf-level
 	// distinction between FLOAT and DOUBLE is similarly collapsed; SFDs use
@@ -106,37 +112,7 @@ type SearchFieldDefinition struct {
 	// indexed document. Set this when sort or range queries depend on every
 	// document having the field present.
 	EmitZeroIfAbsent bool
-
-	// CopyFromStandard copies a value from one of the IndexableDocument's
-	// standard top-level fields into doc.Fields[Name]. Used to expose a
-	// standard field (e.g. Created) under a resource-specific name in the
-	// per-kind fields.* sub-document, because some top-level fields lack a
-	// bleve FieldMapping and are otherwise unindexed / unretrievable.
-	//
-	// Mutually exclusive with Path: when CopyFromStandard is set, the
-	// extractor reads from the already-built IndexableDocument instead of
-	// from the raw JSON.
-	//
-	// This is a workaround for the current top-level mapping asymmetry.
-	// A planned follow-up promotes Created, Updated and similar fields to
-	// StandardSearchFieldDefinitions with their own top-level
-	// FieldMappings; once that lands, kinds can read those fields directly
-	// and the CopyFromStandard mirror becomes redundant.
-	CopyFromStandard StandardField
 }
-
-// StandardField identifies a top-level field of IndexableDocument that
-// CopyFromStandard can mirror into doc.Fields. The set is intentionally
-// closed; adding a new value requires extending the switch in document.go.
-type StandardField string
-
-const (
-	StandardFieldUnknown   StandardField = ""
-	StandardFieldCreated   StandardField = "Created"
-	StandardFieldUpdated   StandardField = "Updated"
-	StandardFieldCreatedBy StandardField = "CreatedBy"
-	StandardFieldUpdatedBy StandardField = "UpdatedBy"
-)
 
 // HasCapability reports whether the field declares the given capability.
 func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
@@ -173,6 +149,17 @@ func SearchFieldDefinitionsToTableColumns(sfds []SearchFieldDefinition) []*resou
 			}
 		}
 		out = append(out, col)
+	}
+	return out
+}
+
+// TableColumnsByName keys the table columns by field name, so the IAM legacy
+// SQL search backends can look one up by a requested field name.
+func TableColumnsByName(sfds []SearchFieldDefinition) map[string]*resourcepb.ResourceTableColumnDefinition {
+	cols := SearchFieldDefinitionsToTableColumns(sfds)
+	out := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
+	for _, c := range cols {
+		out[c.Name] = c
 	}
 	return out
 }
@@ -217,8 +204,8 @@ type SearchFieldsProvider interface {
 	// (group, resource), all declarations must agree on Type, Array, and
 	// Capabilities — the attributes that feed into the kind's bleve
 	// mapping. NewMapProvider rejects diverging declarations at
-	// construction time. Path, EmitZeroIfAbsent, CopyFromStandard, and
-	// Description may differ across versions: they are extractor- or
+	// construction time. Path, EmitZeroIfAbsent, and Description may
+	// differ across versions: they are extractor- or
 	// presentation-side and the extractor applies them per-document with
 	// the document's own version's declaration. The returned slice is
 	// owned by the provider; do not mutate it.
@@ -233,7 +220,7 @@ type SearchFieldsProvider interface {
 	// shared StandardSearchFieldDefinitions and every per-(group, resource)
 	// SearchFieldDefinition across all registered versions. Only fields
 	// that change what gets indexed contribute: Name, Path, Type, Array,
-	// Capabilities (sorted), EmitZeroIfAbsent, CopyFromStandard.
+	// Capabilities (sorted), and EmitZeroIfAbsent.
 	// Description is intentionally excluded so presentation-only edits do
 	// not trigger a rebuild.
 	//
@@ -296,8 +283,8 @@ func newMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefiniti
 // SearchFieldDefinition used for cross-version equality. Only Type, Array,
 // and Capabilities count: those are what GetBleveMappings reads to produce
 // the kind's mapping, which is built once per (group, resource) from the
-// union across versions. Path, EmitZeroIfAbsent, and CopyFromStandard are
-// extractor-side concerns applied per-document with the document's own
+// union across versions. Path and EmitZeroIfAbsent are extractor-side
+// concerns applied per-document with the document's own
 // version's declaration, so they may legitimately differ between versions.
 // Description is presentation-only.
 //
@@ -351,7 +338,7 @@ func diffMappingAttributes(a, b mappingAttributes) []string {
 // first.
 //
 // A field declared by only one version is fine: union without conflict.
-// Path, EmitZeroIfAbsent, CopyFromStandard, and Description may differ
+// Path, EmitZeroIfAbsent, and Description may differ
 // across versions: they do not feed into the mapping and the extractor
 // applies them per-document with the document's own version's declaration.
 func validateCrossVersionConsistency(fields map[schema.GroupVersionResource][]SearchFieldDefinition) error {
@@ -503,7 +490,6 @@ type hashableField struct {
 	Array            bool               `json:"a,omitempty"`
 	Capabilities     []SearchCapability `json:"c,omitempty"`
 	EmitZeroIfAbsent bool               `json:"z,omitempty"`
-	CopyFromStandard StandardField      `json:"s,omitempty"`
 }
 
 type hashableVersion struct {
@@ -515,6 +501,9 @@ type hashableVersion struct {
 // (shared by every kind) are mixed in alongside per-(group, resource)
 // versioned fields so that changes to the standard set shift every kind's
 // hash and trigger a rebuild via the SearchFieldsHash check.
+//
+// Mapping changes that no declaration describes are carried by an IndexFeature
+// instead, so only the deployments that depend on them rebuild.
 type hashablePayload struct {
 	Standard []hashableField   `json:"s"`
 	Versions []hashableVersion `json:"v"`
@@ -535,7 +524,6 @@ func canonicalHashableFields(sfds []SearchFieldDefinition) []hashableField {
 			Array:            sfd.Array,
 			Capabilities:     caps,
 			EmitZeroIfAbsent: sfd.EmitZeroIfAbsent,
-			CopyFromStandard: sfd.CopyFromStandard,
 		})
 	}
 	slices.SortFunc(fields, func(a, b hashableField) int {
@@ -584,4 +572,82 @@ func (p *mapProvider) IndexAffectingHash(group, resource string) string {
 	}
 	sum := sha256.Sum256(blob)
 	return hex.EncodeToString(sum[:])
+}
+
+// SearchFieldsRegistry holds the per-kind search-field wiring shared by the
+// index backend (which builds the bleve mapping) and the search server (which
+// decides when an index must be rebuilt). A mutex guards all three maps so a
+// future live-manifest source can replace them together, keeping the mapping
+// the backend builds and the hash the server compares consistent.
+type SearchFieldsRegistry struct {
+	mu                   sync.RWMutex
+	selectableFields     map[LowerGroupResource][]string
+	searchFieldsHashes   map[LowerGroupResource]string
+	searchFieldsProvider map[LowerGroupResource]SearchFieldsProvider
+}
+
+// NewSearchFieldsRegistry returns a registry seeded with the given per-kind
+// maps. Nil maps are allowed; lookups then return zero values.
+func NewSearchFieldsRegistry(
+	selectableFields map[LowerGroupResource][]string,
+	searchFieldsHashes map[LowerGroupResource]string,
+	searchFieldsProvider map[LowerGroupResource]SearchFieldsProvider,
+) *SearchFieldsRegistry {
+	return &SearchFieldsRegistry{
+		selectableFields:     selectableFields,
+		searchFieldsHashes:   searchFieldsHashes,
+		searchFieldsProvider: searchFieldsProvider,
+	}
+}
+
+// For returns the mapping inputs for a kind: its selectable fields, the hash of
+// its search-field definitions, and the provider that drives its bleve mapping.
+func (r *SearchFieldsRegistry) For(key LowerGroupResource) (selectableFields []string, hash string, provider SearchFieldsProvider) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.selectableFields[key], r.searchFieldsHashes[key], r.searchFieldsProvider[key]
+}
+
+// ForKey is For for a whole index key. A namespace-wide index declares its own
+// fields and covers a fixed set of resource types, so none of its inputs come
+// from a manifest.
+func (r *SearchFieldsRegistry) ForKey(key NamespacedResource) (selectableFields []string, hash string, provider SearchFieldsProvider) {
+	if key.IsGlobal() {
+		return nil, GlobalSearchFieldsHash(), nil
+	}
+	return r.For(NewLowerGroupResource(key.Group, key.Resource))
+}
+
+// Replace atomically swaps all three maps. Callers must not mutate the maps
+// afterwards. A live-manifest source uses this to reload search fields.
+func (r *SearchFieldsRegistry) Replace(
+	selectableFields map[LowerGroupResource][]string,
+	searchFieldsHashes map[LowerGroupResource]string,
+	searchFieldsProvider map[LowerGroupResource]SearchFieldsProvider,
+) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.warnRemovedKinds(searchFieldsProvider)
+	r.selectableFields = selectableFields
+	r.searchFieldsHashes = searchFieldsHashes
+	r.searchFieldsProvider = searchFieldsProvider
+}
+
+// warnRemovedKinds logs kinds that have search fields now but would not after
+// the swap. Losing a kind's search fields is silent otherwise: searches on
+// those fields still succeed and simply match nothing, and the index has to be
+// rebuilt to get them back. Caller holds the lock.
+func (r *SearchFieldsRegistry) warnRemovedKinds(next map[LowerGroupResource]SearchFieldsProvider) {
+	var removed []string
+	for key := range r.searchFieldsProvider {
+		if _, ok := next[key]; !ok {
+			removed = append(removed, key.Group+"/"+key.Resource)
+		}
+	}
+	if len(removed) == 0 {
+		return
+	}
+	slices.Sort(removed)
+	searchFieldLogger.Warn("search fields removed for kinds that had them; searches on those fields will match nothing until the manifests declaring them are restored and the index is rebuilt",
+		"kinds", strings.Join(removed, ","))
 }

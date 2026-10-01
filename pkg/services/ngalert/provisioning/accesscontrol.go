@@ -27,7 +27,7 @@ type provisioningRuleAccessControl struct {
 	RuleAccessControlService
 }
 
-var _ ruleAccessControlService = &provisioningRuleAccessControl{}
+var _ ruleAccessControlService = (*provisioningRuleAccessControl)(nil)
 
 // AuthorizeRuleRead authorizes the read access to a rule for a user.
 // It first checks if the user has permission to read all rules. If yes, it bypasses the authorization.

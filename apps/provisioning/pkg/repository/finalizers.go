@@ -9,8 +9,13 @@ const ReleaseOrphanResourcesFinalizer = "release-orphan-resources"
 // CleanFinalizer calls the "OnDelete" function for resource
 const CleanFinalizer = "cleanup"
 
+// RemovePendingJobsFinalizer clears the repository's job queue by deleting all queued
+// jobs that are not currently being executed.
+const RemovePendingJobsFinalizer = "remove-pending-jobs"
+
 var SupportedFinalizers = []string{
 	RemoveOrphanResourcesFinalizer,
 	ReleaseOrphanResourcesFinalizer,
+	RemovePendingJobsFinalizer,
 	CleanFinalizer,
 }

@@ -2,7 +2,9 @@ package api
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -23,9 +27,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/star/startest"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 const (
@@ -568,5 +577,172 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 		sc.m.Post(routePattern, sc.defaultHandler)
 
 		fn(sc)
+	})
+}
+
+func TestAdminUsersAuthorization_SingleOrgAdminCanDeleteWithPermission(t *testing.T) {
+	server := setupAdminUsersAuthorizationServer(t, true, nil)
+	caller := adminUsersAuthorizationCaller(map[string][]string{
+		accesscontrol.ActionUsersDelete: {"global.users:id:*"},
+	})
+
+	res, err := server.Send(webtest.RequestWithSignedInUser(server.NewRequest(http.MethodDelete, "/api/admin/users/42", nil), caller))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, res.Body.Close()) })
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, res.StatusCode, string(body))
+	require.JSONEq(t, `{"message":"User deleted"}`, string(body))
+}
+
+func TestAdminUsersAuthorization_MultiOrgRejectsOrganizationGrants(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		method string
+		path   string
+		action string
+	}{
+		{"create", http.MethodPost, "/api/admin/users", accesscontrol.ActionUsersCreate},
+		{"password", http.MethodPut, "/api/admin/users/42/password", accesscontrol.ActionUsersPasswordUpdate},
+		{"delete", http.MethodDelete, "/api/admin/users/42", accesscontrol.ActionUsersDelete},
+		{"disable", http.MethodPost, "/api/admin/users/42/disable", accesscontrol.ActionUsersDisable},
+		{"enable", http.MethodPost, "/api/admin/users/42/enable", accesscontrol.ActionUsersEnable},
+		{"read quotas", http.MethodGet, "/api/admin/users/42/quotas", accesscontrol.ActionUsersQuotasList},
+		{"update quota", http.MethodPut, "/api/admin/users/42/quotas/session", accesscontrol.ActionUsersQuotasUpdate},
+		{"logout", http.MethodPost, "/api/admin/users/42/logout", accesscontrol.ActionUsersLogout},
+		{"read tokens", http.MethodGet, "/api/admin/users/42/auth-tokens", accesscontrol.ActionUsersAuthTokenList},
+		{"revoke token", http.MethodPost, "/api/admin/users/42/revoke-auth-token", accesscontrol.ActionUsersAuthTokenUpdate},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := setupAdminUsersAuthorizationServer(t, false, nil)
+			caller := adminUsersAuthorizationCaller(map[string][]string{tc.action: {"global.users:*"}})
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewRequest(tc.method, tc.path, nil), caller))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, res.Body.Close()) })
+			body, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusForbidden, res.StatusCode, string(body))
+			require.Contains(t, string(body), "Permissions needed: "+tc.action)
+		})
+	}
+}
+
+func TestAdminUsersAuthorization_DeletePermissions(t *testing.T) {
+	for _, tc := range []struct {
+		name              string
+		singleOrg         bool
+		orgPermissions    map[string][]string
+		globalPermissions map[string][]string
+		expectedStatus    int
+	}{
+		{
+			name:           "single org admin without delete permission is denied",
+			singleOrg:      true,
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "single org admin with read permission cannot delete",
+			singleOrg:      true,
+			orgPermissions: map[string][]string{accesscontrol.ActionUsersRead: {"global.users:id:*"}},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "single org admin with permission for another user is denied",
+			singleOrg:      true,
+			orgPermissions: map[string][]string{accesscontrol.ActionUsersDelete: {"global.users:id:43"}},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "multi org admin without delete permission is denied",
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:              "multi org admin with global permission for another user is denied despite matching org permission",
+			orgPermissions:    map[string][]string{accesscontrol.ActionUsersDelete: {"global.users:id:42"}},
+			globalPermissions: map[string][]string{accesscontrol.ActionUsersDelete: {"global.users:id:43"}},
+			expectedStatus:    http.StatusForbidden,
+		},
+		{
+			name:              "multi org admin with global wildcard permission can delete",
+			globalPermissions: map[string][]string{accesscontrol.ActionUsersDelete: {"global.users:id:*"}},
+			expectedStatus:    http.StatusOK,
+		},
+		{
+			name:              "multi org admin with global permission for the target can delete",
+			globalPermissions: map[string][]string{accesscontrol.ActionUsersDelete: {"global.users:id:42"}},
+			expectedStatus:    http.StatusOK,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := setupAdminUsersAuthorizationServer(t, tc.singleOrg, tc.globalPermissions)
+			caller := adminUsersAuthorizationCaller(tc.orgPermissions)
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewRequest(http.MethodDelete, "/api/admin/users/42", nil), caller))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, res.Body.Close()) })
+			body, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedStatus, res.StatusCode, string(body))
+			if tc.expectedStatus == http.StatusOK {
+				require.JSONEq(t, `{"message":"User deleted"}`, string(body))
+			} else {
+				require.Contains(t, string(body), "Permissions needed: users:delete")
+			}
+		})
+	}
+}
+
+func TestAdminUsersAuthorization_OrgAdminCannotGrantServerAdmin(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		singleOrg bool
+	}{
+		{"single org", true},
+		{"multi org", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			permissions := map[string][]string{accesscontrol.ActionUsersPermissionsUpdate: {"global.users:id:*"}}
+			server := setupAdminUsersAuthorizationServer(t, tc.singleOrg, permissions)
+			caller := adminUsersAuthorizationCaller(permissions)
+			req := server.NewRequest(http.MethodPut, "/api/admin/users/42/permissions", strings.NewReader(`{"isGrafanaAdmin":true}`))
+			req.Header.Set("Content-Type", "application/json")
+			res, err := server.Send(webtest.RequestWithSignedInUser(req, caller))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, res.Body.Close()) })
+			require.Equal(t, http.StatusForbidden, res.StatusCode)
+		})
+	}
+}
+
+func adminUsersAuthorizationCaller(permissions map[string][]string) *user.SignedInUser {
+	return &user.SignedInUser{
+		UserID:      1,
+		UserUID:     "org-admin",
+		OrgID:       1,
+		OrgRole:     org.RoleAdmin,
+		Permissions: map[int64]map[string][]string{1: permissions},
+	}
+}
+
+func setupAdminUsersAuthorizationServer(t *testing.T, singleOrg bool, globalPermissions map[string][]string) *webtest.Server {
+	t.Helper()
+	return SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.Cfg.RBAC.SingleOrganization = singleOrg
+		// Authentication supplies separate permission snapshots for the same caller in each organization.
+		hs.authnService = &authntest.FakeService{ExpectedIdentity: &authn.Identity{
+			ID:          "1",
+			UID:         "org-admin",
+			OrgID:       accesscontrol.GlobalOrgID,
+			OrgRoles:    map[int64]org.RoleType{accesscontrol.GlobalOrgID: org.RoleNone},
+			Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: globalPermissions},
+		}}
+		hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 42, UID: "target-user"}}
+		hs.starService = &startest.FakeStarService{}
+		hs.orgService = &orgtest.FakeOrgService{}
+		hs.preferenceService = &preftest.FakePreferenceService{}
+		hs.TeamService = &teamtest.FakeService{}
+		hs.authInfoService = &authinfotest.FakeService{}
+		hs.AuthTokenService = authtest.NewFakeUserAuthTokenService()
+		hs.accesscontrolService = &actest.FakeService{}
 	})
 }

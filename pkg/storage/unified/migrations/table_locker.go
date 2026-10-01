@@ -20,11 +20,15 @@ type MigrationTableLocker interface {
 	LockMigrationTables(ctx context.Context, sess *xorm.Session, tables []string) (func(context.Context) error, error)
 }
 
-// newTableLocker returns the appropriate locker for the database type.
-func newTableLocker(sqlStore db.DB, sql legacysql.LegacyDatabaseProvider) MigrationTableLocker {
+// newTableLocker returns the appropriate locker for the database type. When lockingEnabled is
+// false, source tables are not locked during migration (see [unified_storage] migration_locking).
+func newTableLocker(sqlStore db.DB, sql legacysql.LegacyDatabaseProvider, lockingEnabled bool) MigrationTableLocker {
+	if !lockingEnabled {
+		return &noopTableLocker{}
+	}
 	switch string(sqlStore.GetDBType()) {
 	case "sqlite3":
-		return &sqliteTableLocker{}
+		return &noopTableLocker{}
 	case "postgres":
 		return &postgresTableLocker{sql: sql}
 	default:
@@ -32,10 +36,10 @@ func newTableLocker(sqlStore db.DB, sql legacysql.LegacyDatabaseProvider) Migrat
 	}
 }
 
-// sqliteTableLocker implements a no-op table locker
-type sqliteTableLocker struct{}
+// noopTableLocker implements a no-op table locker (used for SQLite and when locking is disabled).
+type noopTableLocker struct{}
 
-func (l *sqliteTableLocker) LockMigrationTables(_ context.Context, _ *xorm.Session, _ []string) (func(context.Context) error, error) {
+func (l *noopTableLocker) LockMigrationTables(_ context.Context, _ *xorm.Session, _ []string) (func(context.Context) error, error) {
 	return func(context.Context) error { return nil }, nil
 }
 

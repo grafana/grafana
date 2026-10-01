@@ -70,6 +70,10 @@ type NATSSettings struct {
 	// to polling.
 	Notifier bool
 
+	// NotifierWatchMaxAge bounds NATS-backed watch streams with jittered expiry.
+	// Zero disables expiry.
+	NotifierWatchMaxAge time.Duration
+
 	TLS  NATSTLSSettings
 	Auth NATSAuthSettings
 }
@@ -144,11 +148,12 @@ func readNATSSettings(cfg *Cfg) error {
 		ClusterPort:      section.Key("cluster_port").MustInt(6222),
 		AdvertiseAddress: section.Key("advertise_address").MustString(""),
 
-		DiscoveryEnabled:  section.Key("discovery_enabled").MustBool(true),
-		DiscoveryInterval: section.Key("discovery_interval").MustDuration(5 * time.Second),
-		DiscoveryTTL:      section.Key("discovery_ttl").MustDuration(30 * time.Second),
-		NotifierShadow:    section.Key("notifier_shadow").MustBool(false),
-		Notifier:          section.Key("notifier").MustBool(false),
+		DiscoveryEnabled:    section.Key("discovery_enabled").MustBool(true),
+		DiscoveryInterval:   section.Key("discovery_interval").MustDuration(5 * time.Second),
+		DiscoveryTTL:        section.Key("discovery_ttl").MustDuration(30 * time.Second),
+		NotifierShadow:      section.Key("notifier_shadow").MustBool(false),
+		Notifier:            section.Key("notifier").MustBool(false),
+		NotifierWatchMaxAge: section.Key("notifier_watch_max_age").MustDuration(0),
 		TLS: NATSTLSSettings{
 			Enabled:            section.Key("tls_enabled").MustBool(false),
 			CACertPath:         section.Key("tls_ca_cert_path").MustString(""),

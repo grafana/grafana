@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -23,7 +23,7 @@ import (
 func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	folderService := foldertest.NewFakeService()
 	b := &fakeBus{}
@@ -38,9 +38,9 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	}
 
 	folders := []*folder.Folder{
-		{UID: uuid.NewString(), Title: "folder1", ParentUID: "", OrgID: 1},
-		{UID: uuid.NewString(), Title: "folder2", ParentUID: "", OrgID: 1},
-		{UID: uuid.NewString(), Title: "nested/folder", ParentUID: "", OrgID: 1},
+		{UID: uuid.NewV4().String(), Title: "folder1", ParentUID: "", OrgID: 1},
+		{UID: uuid.NewV4().String(), Title: "folder2", ParentUID: "", OrgID: 1},
+		{UID: uuid.NewV4().String(), Title: "nested/folder", ParentUID: "", OrgID: 1},
 	}
 
 	for _, f := range folders {
@@ -59,6 +59,17 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, namespaces)
 	})
+}
+
+func TestGetNamespaceByUID(t *testing.T) {
+	store := DBstore{FolderService: foldertest.NewFakeService()}
+
+	for _, uid := range []string{folder.LegacyRootFolderUID, folder.GeneralFolderUID} { //nolint:staticcheck
+		t.Run("rejects root folder UID "+uid, func(t *testing.T) {
+			_, err := store.GetNamespaceByUID(context.Background(), uid, 1, nil)
+			require.ErrorIs(t, err, folder.ErrInvalidUID)
+		})
+	}
 }
 
 func TestGetNamespaceByTitle(t *testing.T) {

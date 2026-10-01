@@ -29,7 +29,7 @@ func TestIntegrationLeaseSQLKV(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	t.Cleanup(db.CleanupTestDB)
 
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())

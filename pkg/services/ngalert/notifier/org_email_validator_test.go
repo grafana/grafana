@@ -29,6 +29,22 @@ func emailConfig(addresses string) alertingModels.IntegrationConfig {
 	}
 }
 
+// emailV0Config builds a minimal email V0mimir1 IntegrationConfig with the given "to" string.
+// from and smarthost are required by v0mimir1's NewConfig, so they're set even though only "to"
+// is checked against org membership.
+func emailV0Config(to string) alertingModels.IntegrationConfig {
+	settings, _ := json.Marshal(map[string]any{
+		"to":        to,
+		"from":      "grafana@org.com",
+		"smarthost": "localhost:25",
+	})
+	return alertingModels.IntegrationConfig{
+		Type:     schema.EmailType,
+		Version:  schema.V0mimir1,
+		Settings: settings,
+	}
+}
+
 // orgHavingMember returns a FakeOrgService whose SearchOrgUsersByEmails returns the given email as an org member.
 func orgHavingMember(email string) *orgtest.FakeOrgService {
 	svc := orgtest.NewOrgServiceFake()
@@ -43,10 +59,31 @@ func orgHavingMember(email string) *orgtest.FakeOrgService {
 	return svc
 }
 
+// orgHavingMembers returns a FakeOrgService whose SearchOrgUsersByEmails returns any of the given
+// emails that appear in a query as org members.
+func orgHavingMembers(emails ...string) *orgtest.FakeOrgService {
+	svc := orgtest.NewOrgServiceFake()
+	svc.SearchOrgUsersByEmailsFn = func(_ context.Context, q *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+		var result []*org.OrgUserDTO
+		for _, e := range q.Emails {
+			for _, m := range emails {
+				if strings.EqualFold(e, m) {
+					result = append(result, &org.OrgUserDTO{Email: m})
+				}
+			}
+		}
+		return result, nil
+	}
+	return svc
+}
+
 // orgWithoutMember returns a FakeOrgService that finds no members for any query.
 func orgWithoutMember() *orgtest.FakeOrgService {
 	return orgtest.NewOrgServiceFake()
 }
+
+// decryptNoop is a DecryptFn for tests whose integrations carry no encrypted secure settings.
+func decryptNoop(s string) (string, error) { return s, nil }
 
 func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 	disabledMember := func() *orgtest.FakeOrgService {
@@ -71,9 +108,47 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 			orgSvc: orgWithoutMember(),
 		},
 		{
-			name:   "non-V1 version is skipped",
-			config: alertingModels.IntegrationConfig{Type: schema.EmailType, Version: "v0"},
-			orgSvc: orgWithoutMember(),
+			name:    "unsupported email version returns error",
+			config:  alertingModels.IntegrationConfig{Type: schema.EmailType, Version: "v0"},
+			orgSvc:  orgWithoutMember(),
+			wantErr: "unsupported email integration version",
+		},
+		{
+			name:   "v0mimir1 valid email matching org member succeeds",
+			config: emailV0Config("alice@org.com"),
+			orgSvc: orgHavingMember("alice@org.com"),
+		},
+		{
+			name:    "v0mimir1 email not found in org returns not-allowed error",
+			config:  emailV0Config("outsider@org.com"),
+			orgSvc:  orgWithoutMember(),
+			wantErr: "are not members of this organization",
+		},
+		{
+			name:    "v0mimir1 template in address returns error",
+			config:  emailV0Config("{{ .OrgName }}@org.com"),
+			orgSvc:  orgWithoutMember(),
+			wantErr: "templates in email addresses are not allowed",
+		},
+		{
+			name:    "v0mimir1 malformed address returns error",
+			config:  emailV0Config("not-an-email"),
+			orgSvc:  orgWithoutMember(),
+			wantErr: "parse 'to' addresses",
+		},
+		{
+			name:   "v0mimir1 multiple comma-separated addresses all pass",
+			config: emailV0Config("alice@org.com, bob@org.com"),
+			orgSvc: orgHavingMembers("alice@org.com", "bob@org.com"),
+		},
+		{
+			name: "v0mimir1 incomplete config (missing smarthost) fails parsing",
+			config: func() alertingModels.IntegrationConfig {
+				settings, _ := json.Marshal(map[string]any{"to": "alice@org.com", "from": "grafana@org.com"})
+				return alertingModels.IntegrationConfig{Type: schema.EmailType, Version: schema.V0mimir1, Settings: settings}
+			}(),
+			orgSvc:  orgHavingMember("alice@org.com"),
+			wantErr: "failed to parse email settings",
 		},
 		{
 			name:   "valid email matching org member succeeds",
@@ -182,7 +257,7 @@ func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 	t.Run("non-email integration type is skipped", func(t *testing.T) {
 		v := &OrgUserEmailValidator{orgSvc: orgWithoutMember()}
 		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(schema.SlackType))()
-		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, log.NewNopLogger()))
+		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()))
 	})
 
 	t.Run("email V1 with org member succeeds", func(t *testing.T) {
@@ -191,7 +266,7 @@ func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 			models.IntegrationMuts.WithValidConfig(schema.EmailType),
 			models.IntegrationMuts.WithSettings(map[string]any{"addresses": "alice@org.com"}),
 		)()
-		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, log.NewNopLogger()))
+		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()))
 	})
 
 	t.Run("email V1 with non-org address returns error", func(t *testing.T) {
@@ -200,7 +275,20 @@ func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 			models.IntegrationMuts.WithValidConfig(schema.EmailType),
 			models.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@evil.com"}),
 		)()
-		require.ErrorContains(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, log.NewNopLogger()), "are not members of this organization")
+		require.ErrorContains(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()), "are not members of this organization")
+	})
+
+	// The valid V0mimir1 email config uses "team@example.com" as its "to" address.
+	t.Run("email V0mimir1 with org member succeeds", func(t *testing.T) {
+		v := &OrgUserEmailValidator{orgSvc: orgHavingMember("team@example.com")}
+		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfigVersion(schema.EmailType, schema.V0mimir1))()
+		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()))
+	})
+
+	t.Run("email V0mimir1 with non-org address returns error", func(t *testing.T) {
+		v := &OrgUserEmailValidator{orgSvc: orgWithoutMember()}
+		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfigVersion(schema.EmailType, schema.V0mimir1))()
+		require.ErrorContains(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()), "are not members of this organization")
 	})
 }
 

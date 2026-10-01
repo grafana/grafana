@@ -1,3 +1,4 @@
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { appendSavedByTrailer, getSingleResourceCommitMessage, renderCommitMessage } from './commitMessage';
@@ -135,6 +136,12 @@ describe('appendSavedByTrailer', () => {
     expect(appendSavedByTrailer('Save dashboard: Latency', userVars)).toBe(
       'Save dashboard: Latency\n\nGrafana-saved-by: Ada Lovelace (ada)'
     );
+  });
+
+  it('skips the trailer when user attribution is enabled', () => {
+    setTestFlags({ 'provisioning.userAttribution': true });
+    expect(appendSavedByTrailer('Save dashboard: Latency', userVars)).toBe('Save dashboard: Latency');
+    setTestFlags({});
   });
 
   it('uses login alone when name is missing', () => {

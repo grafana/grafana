@@ -117,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   image: css({
     width: '100%',
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z1 : theme.shadows.z3,
   }),
   buttonIcon: css({
     marginRight: theme.spacing(1),

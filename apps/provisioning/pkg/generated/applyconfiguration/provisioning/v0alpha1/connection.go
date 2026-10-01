@@ -17,7 +17,7 @@ import (
 // As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning
 // If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
 type ConnectionApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration    `json:",inline"`
+	v1.TypeMetaApplyConfiguration    `json:""`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *ConnectionSpecApplyConfiguration   `json:"spec,omitempty"`
 	Secure                           *ConnectionSecureApplyConfiguration `json:"secure,omitempty"`

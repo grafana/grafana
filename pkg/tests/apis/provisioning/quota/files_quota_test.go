@@ -1,7 +1,6 @@
 package quota
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -17,7 +16,6 @@ import (
 func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 	t.Run("no quota configured allows create and update via files endpoint", func(t *testing.T) {
 		helper := sharedHelper(t)
-		ctx := context.Background()
 
 		const repo = "files-quota-unlimited-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -29,8 +27,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 
@@ -46,7 +43,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SubResource("files", "new-dashboard.json").
 			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&createStatusCode)
+			Do(t.Context()).StatusCode(&createStatusCode)
 		require.NoError(t, result.Error(), "POST (create) should succeed when no quota is configured")
 		require.Equal(t, http.StatusOK, createStatusCode, "should return 200 OK for create")
 
@@ -59,7 +56,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SubResource("files", "dashboard1.json").
 			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&updateStatusCode)
+			Do(t.Context()).StatusCode(&updateStatusCode)
 		require.NoError(t, result.Error(), "PUT (update) should succeed when no quota is configured")
 		require.Equal(t, http.StatusOK, updateStatusCode, "should return 200 OK for update")
 
@@ -77,7 +74,6 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 		// With folder target: 1 dashboard + 1 folder = 2 resources, limit 10 → within quota
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 10})
-		ctx := context.Background()
 
 		const repo = "files-quota-within-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -89,8 +85,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 		// Wait for quota condition to show within quota
@@ -105,7 +100,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SubResource("files", "new-dashboard.json").
 			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&createStatusCode)
+			Do(t.Context()).StatusCode(&createStatusCode)
 		require.NoError(t, result.Error(), "POST (create) should succeed when within quota")
 		require.Equal(t, http.StatusOK, createStatusCode, "should return 200 OK for create")
 
@@ -118,7 +113,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SubResource("files", "dashboard1.json").
 			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&updateStatusCode)
+			Do(t.Context()).StatusCode(&updateStatusCode)
 		require.NoError(t, result.Error(), "PUT (update) should succeed when within quota")
 		require.Equal(t, http.StatusOK, updateStatusCode, "should return 200 OK for update")
 
@@ -136,7 +131,6 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 		// With folder target: 1 dashboard + 1 folder = 2 resources, limit 2 → exactly at limit (reached)
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
-		ctx := context.Background()
 
 		const repo = "files-quota-reached-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -148,8 +142,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 		// Wait for quota condition to show reached
@@ -163,7 +156,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SubResource("files", "new-dashboard.json").
 			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 		require.Error(t, result.Error(), "POST (create) should be blocked when quota is reached")
 		require.True(t, apierrors.IsForbidden(result.Error()), "error should be Forbidden, got: %v", result.Error())
 
@@ -176,7 +169,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SubResource("files", "dashboard1.json").
 			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&updateStatusCode)
+			Do(t.Context()).StatusCode(&updateStatusCode)
 		require.NoError(t, result.Error(), "PUT (update) should succeed when quota is reached")
 		require.Equal(t, http.StatusOK, updateStatusCode, "should return 200 OK for update")
 
@@ -193,7 +186,6 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 	t.Run("quota exceeded blocks both create and update via files endpoint", func(t *testing.T) {
 		// With folder target: 2 dashboards + 1 folder = 3 resources, limit 1 → exceeded
 		helper := sharedHelper(t)
-		ctx := context.Background()
 
 		const repo = "files-quota-exceeded-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -207,8 +199,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
 			},
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+			SkipSync: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
 
@@ -227,7 +218,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SubResource("files", "new-dashboard.json").
 			Body(helper.LoadFile("../testdata/timeline-demo.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 		require.Error(t, result.Error(), "POST (create) should be blocked when quota is exceeded")
 		require.True(t, apierrors.IsForbidden(result.Error()), "error should be Forbidden, got: %v", result.Error())
 
@@ -239,7 +230,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SubResource("files", "dashboard1.json").
 			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+			Do(t.Context())
 		require.Error(t, result.Error(), "PUT (update) should be blocked when quota is exceeded")
 		require.True(t, apierrors.IsForbidden(result.Error()), "error should be Forbidden, got: %v", result.Error())
 

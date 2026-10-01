@@ -15,27 +15,6 @@ labels:
     - oss
 title: Template notifications
 weight: 450
-refs:
-  template-annotations-and-labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
-  manage-notification-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
-  reference:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  examples:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/examples/
 ---
 
 # Template notifications
@@ -55,7 +34,7 @@ However, there are limitations. You cannot:
 - Modify Visual Appearance: Add HTML or CSS to email notifications for visual changes. Alter the design of notifications in messaging services like Slack or Microsoft Teams, such as adding custom blocks or adaptive cards.
 - Manage Media and Data: Customize the data structure or format passed to the templates, like adding new JSON fields or sending XML data for webhooks. Modify HTTP headers in webhooks beyond those defined in the configuration, or adjust the number, size, or placement of images.
 
-Here's an [example](ref:examples) that displays the summary and description annotations for each alert in the notification:
+Here's an [example](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/) that displays the summary and description annotations for each alert in the notification:
 
 ```go
 {{ define "custom.alerts" -}}
@@ -82,13 +61,13 @@ The notification message would look like this:
 
   Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
   Status: resolved
-  Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+  Description: This alert fires when a web server responds with more 5xx errors than expected. This could be an issue with the web server or a backend service.
 ```
 
 {{< admonition type="note" >}}
 Avoid adding extra information about alert instances in notification templates, as this information will only be visible in the notification message.
 
-Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
+Instead, you should [use annotations or labels](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
 {{< /admonition >}}
 
 #### Select a notification template for a contact point
@@ -123,9 +102,9 @@ To use AI to create your template, follow these steps:
 
 For further details on how to write notification templates, refer to:
 
-- [Select, create, and preview a notification template](ref:manage-notification-templates)
-- [Notification template reference](ref:reference)
-- [Notification template examples](ref:examples)
+- [Select, create, and preview a notification template](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/)
+- [Notification template reference](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/)
+- [Notification template examples](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/)
 
 {{< admonition type="tip" >}}
 For a practical example of templating, refer to our [Getting Started with Templating tutorial](https://grafana.com/tutorials/alerting-get-started-pt4/).

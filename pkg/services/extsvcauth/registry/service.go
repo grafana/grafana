@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ extsvcauth.ExternalServiceRegistry = &Registry{}
+var _ extsvcauth.ExternalServiceRegistry = (*Registry)(nil)
 
 var lockTimeConfig = serverlock.LockTimeConfig{
 	MaxInterval: 2 * time.Minute,

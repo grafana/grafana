@@ -8,8 +8,9 @@ import { Alert, useStyles2 } from '@grafana/ui';
 import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { type DashboardTreeSelection } from '../../types';
+import { getSelectedUIDs } from '../../utils/dashboards';
 
-import { getFolderIsEmpty, getSelectedFolderUIDs } from './utils';
+import { getFolderIsEmpty } from './utils';
 
 interface Props {
   selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>;
@@ -31,7 +32,7 @@ interface Props {
  */
 export function AffectedFolderContents({ selectedItems, defaultMessage, emptyMessage, nonEmptyMessage }: Props) {
   const styles = useStyles2(getStyles);
-  const selectedFolders = getSelectedFolderUIDs(selectedItems);
+  const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
   const { data, isLoading, isFetching, error } = useGetAffectedItems(selectedItems);
 
   let contents: ReactNode = undefined;

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
@@ -21,6 +22,7 @@ import { useDeleteDashboardsMutation, useMoveDashboardsMutation } from '../../ap
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { type DashboardTreeSelection } from '../../types';
+import { getSelectedUIDs } from '../../utils/dashboards';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
@@ -41,7 +43,7 @@ export function BrowseActions({ folderDTO }: Props) {
   const [moveFolders] = useMoveMultipleFoldersMutationFacade();
   const [moveDashboards] = useMoveDashboardsMutation();
   const [, stateManager] = useSearchStateManager();
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
 
   const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
     selectedItems,
@@ -60,8 +62,8 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const onDelete = async () => {
-    const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-    const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+    const selectedDashboards = getSelectedUIDs(selectedItems, 'dashboard');
+    const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
     await deleteDashboards({ dashboardUIDs: selectedDashboards });
     await deleteFolders({ folderUIDs: selectedFolders });
     trackAction('delete', selectedItems);
@@ -69,8 +71,8 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const onMove = async (destinationUID: string) => {
-    const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-    const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+    const selectedDashboards = getSelectedUIDs(selectedItems, 'dashboard');
+    const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
 
     await moveFolders({ folderUIDs: selectedFolders, destinationUID });
     await moveDashboards({ dashboardUIDs: selectedDashboards, destinationUID });
@@ -135,7 +137,11 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const moveButton = (
-    <Button onClick={showMoveModal} variant="secondary">
+    <Button
+      onClick={showMoveModal}
+      variant="secondary"
+      data-testid={selectors.pages.BrowseDashboards.actions.moveButton}
+    >
       <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
     </Button>
   );
@@ -145,7 +151,11 @@ export function BrowseActions({ folderDTO }: Props) {
       <Stack gap={1} data-testid="manage-actions">
         {moveButton}
 
-        <Button onClick={showDeleteModal} variant="destructive">
+        <Button
+          onClick={showDeleteModal}
+          variant="destructive"
+          data-testid={selectors.pages.BrowseDashboards.actions.deleteButton}
+        >
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
         </Button>
       </Stack>
@@ -202,8 +212,8 @@ const actionMap = {
 } as const;
 
 function trackAction(action: keyof typeof actionMap, selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
-  const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-  const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+  const selectedDashboards = getSelectedUIDs(selectedItems, 'dashboard');
+  const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
 
   reportInteraction(actionMap[action], {
     item_counts: {

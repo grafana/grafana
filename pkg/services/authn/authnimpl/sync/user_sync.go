@@ -427,7 +427,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 	_, _, _ = s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (interface{}, error) {
 		err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: id.GetOrgID()})
 		if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
-			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
+			s.log.FromContext(goCtx).Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
 		return nil, nil
 	})
@@ -483,10 +483,6 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, ide
 			AuthId:     identity.AuthID,
 		}
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-			setAuthInfoCmd.OAuthToken = identity.OAuthToken
-		}
 		return s.authInfoService.SetAuthInfo(ctx, setAuthInfoCmd)
 	}
 
@@ -494,11 +490,6 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, ide
 		UserId:     usr.ID,
 		AuthId:     identity.AuthID,
 		AuthModule: identity.AuthenticatedBy,
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		updateAuthInfoCmd.OAuthToken = identity.OAuthToken
 	}
 
 	s.log.FromContext(ctx).Debug("Updating auth connection for user", "id", identity.ID)
@@ -511,7 +502,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 	needsConnectionCreation := userAuth == nil
 
-	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthenticatedBy); errProtection != nil {
+	if errProtection := s.userProtectionService.AllowUserMapping(ctx, usr, id.AuthenticatedBy); errProtection != nil {
 		span.RecordError(errProtection)
 		span.SetStatus(codes.Error, errProtection.Error())
 		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)

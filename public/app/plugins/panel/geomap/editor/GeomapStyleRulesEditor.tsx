@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { type StandardEditorProps, type StandardEditorsRegistryItem } from '@grafana/data';
+import { type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, useTheme2 } from '@grafana/ui';
 
@@ -46,7 +46,7 @@ export const GeomapStyleRulesEditor = ({ value, onChange, context, item }: Props
     value.map((style, idx: number) => {
       const itemSettings = {
         settings,
-      } as StandardEditorsRegistryItem<FeatureStyleConfig, StyleRuleEditorSettings>;
+      };
 
       return (
         <StyleRuleEditor

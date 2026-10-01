@@ -15,8 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	types "k8s.io/apimachinery/pkg/types"
 
 	claims "github.com/grafana/authlib/types"
+
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -44,7 +46,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	if err := openfeature.SetProvider(provider); err != nil {
+	if err := openfeature.SetProviderAndWait(provider); err != nil {
 		panic(err)
 	}
 
@@ -1836,6 +1838,14 @@ func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructu
 	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
 }
 
+func (m *MockK8sHandler) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, orgID int64, opts metav1.PatchOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, pt, data, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
 func (m *MockK8sHandler) Delete(ctx context.Context, name string, orgID int64, options metav1.DeleteOptions) error {
 	args := m.Called(ctx, name, orgID, options)
 	return args.Error(0)
@@ -2434,8 +2444,6 @@ func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
 	}
 }
 
-func strPtr(s string) *string { return &s }
-
 func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 	tests := []struct {
 		name                    string
@@ -2453,7 +2461,7 @@ func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 			syncOrgRoles:            true,
 			currentRole:             "Admin",
 			assertedRole:            org.RoleEditor,
-			wantUpdateRole:          strPtr("Editor"),
+			wantUpdateRole:          new("Editor"),
 		},
 		{
 			name:                    "explicit None role is synced (demotion)",
@@ -2462,7 +2470,7 @@ func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 			syncOrgRoles:            true,
 			currentRole:             "Editor",
 			assertedRole:            org.RoleNone,
-			wantUpdateRole:          strPtr("None"),
+			wantUpdateRole:          new("None"),
 		},
 		{
 			name:                    "unchanged role is not synced",

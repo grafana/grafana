@@ -2,18 +2,18 @@ package resource
 
 import (
 	"context"
-	"net"
 	"testing"
 	"time"
 
 	"github.com/grafana/dskit/services"
+	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -30,8 +30,9 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 
 	t.Run("committed write round-trips through NATS with every field intact", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
-		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
+		backend := newTestKVStorageBackend(pub)
+		expiry := NewWatchExpiry()
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, &logging.NoOpLogger{})
 		out := notifier.Watch(ctx, WatchOptions{})
 
 		event := Event{
@@ -42,6 +43,9 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 			ResourceVersion: 42,
 			Action:          DataActionUpdated,
 			Folder:          "folder-1",
+			PreviousRV:      41,
+			PreviousAction:  DataActionCreated,
+			PreviousFolder:  "old-folder",
 		}
 
 		// Interest propagates asynchronously; core NATS drops messages with no
@@ -57,21 +61,14 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 			}
 		}, 5*time.Second, time.Millisecond)
 
-		assert.Equal(t, event.Group, got.Group)
-		assert.Equal(t, event.Resource, got.Resource)
-		assert.Equal(t, event.Namespace, got.Namespace)
-		assert.Equal(t, event.Name, got.Name)
-		assert.Equal(t, event.ResourceVersion, got.ResourceVersion)
-		assert.Equal(t, event.Folder, got.Folder)
-		assert.Equal(t, DataActionUpdated, got.Action)
-		// WatchNotification carries no previous RV.
-		assert.Equal(t, int64(0), got.PreviousRV)
+		assert.Equal(t, event, got)
 	})
 
 	t.Run("every action type survives the marshal/transport/unmarshal round trip", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
-		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
+		backend := newTestKVStorageBackend(pub)
+		expiry := NewWatchExpiry()
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, &logging.NoOpLogger{})
 		out := notifier.Watch(ctx, WatchOptions{})
 
 		establishInterest(t, ctx, out, backend)
@@ -85,15 +82,29 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				Name:            "p-1",
 				ResourceVersion: 1,
 				Action:          action,
+				PreviousRV:      1,
+				PreviousAction:  action,
 			})
-			got := recvEvent(t, out)
+			// Watch subscribes to the whole change stream, so a late warm-up
+			// duplicate (establishInterest publishes many and drains only on a
+			// timeout) can still be queued ahead of ours. Skip anything that is not
+			// the playlist event we just published.
+			var got Event
+			for {
+				got = recvEvent(t, out)
+				if got.Namespace == "default" {
+					break
+				}
+			}
 			assert.Equal(t, action, got.Action, "action %q must survive the round trip", action)
+			assert.Equal(t, action, got.PreviousAction)
+			assert.Empty(t, got.PreviousFolder)
 		}
 	})
 
 	t.Run("publisher targets the resource-specific subject a per-resource consumer subscribes to", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 
 		const namespace = "default"
 		gvr := schema.GroupVersionResource{Group: "provisioning.grafana.app", Resource: "repositories"}
@@ -122,7 +133,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 			select {
 			case subj := <-got:
 				require.Equal(t, subject, subj)
-				require.Equal(t, "provisioning.grafana.app.default.repositories", subj)
+				require.Equal(t, "us.watch.v1.provisioning.grafana.app.default.repositories", subj)
 				return true
 			case <-time.After(20 * time.Millisecond):
 				return false
@@ -132,9 +143,10 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 
 	t.Run("malformed and unknown-type notifications are dropped, not delivered", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "nats_notifier_dropped_total"}, []string{"reason"})
-		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, dropped, log.NewNopLogger())
+		expiry := NewWatchExpiry()
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, dropped, &logging.NoOpLogger{})
 		out := notifier.Watch(ctx, WatchOptions{})
 
 		// Interest must be live first, else NATS drops the bad messages before the
@@ -168,8 +180,8 @@ type natsSubscriberAdapter struct{ sub nats.Subscriber }
 
 func (a natsSubscriberAdapter) Enabled() bool { return a.sub.Enabled() }
 
-func (a natsSubscriberAdapter) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (Subscription, error) {
-	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
+func (a natsSubscriberAdapter) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error) {
+	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
 
 // startNatsRoundTrip boots an embedded NATS server plus a real publisher and
@@ -184,10 +196,8 @@ func startNatsRoundTrip(t *testing.T) (context.Context, *nats.PublisherService, 
 		Enabled:       true,
 		Mode:          setting.NATSModeEmbedded,
 		ListenAddress: "127.0.0.1",
-		// Free ports avoid collisions; a zero ClusterPort leaves ClusterAddr() nil,
-		// which the server dereferences.
-		ClientPort:  freePort(t),
-		ClusterPort: freePort(t),
+		ClientPort:    natsserver.RANDOM_PORT,
+		ClusterPort:   natsserver.RANDOM_PORT,
 	}
 
 	server, err := nats.ProvideServer(cfg, nil, prometheus.NewRegistry())
@@ -244,13 +254,4 @@ func startNatsService(t *testing.T, ctx context.Context, svc services.Service) {
 		svc.StopAsync()
 		_ = svc.AwaitTerminated(context.Background())
 	})
-}
-
-func freePort(t *testing.T) int {
-	t.Helper()
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	port := l.Addr().(*net.TCPAddr).Port
-	require.NoError(t, l.Close())
-	return port
 }

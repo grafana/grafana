@@ -11,9 +11,30 @@ import { SupportedPlugin } from '../types/pluginBridges';
 
 import { canAccessPluginPage, useIrmPlugin } from './usePluginBridge';
 
-setupMswServer();
+const server = setupMswServer();
 
 describe('useIrmPlugin', () => {
+  let requestedPluginSettings: string[] = [];
+
+  const recordPluginSettingsRequest = ({ request }: { request: Request }) => {
+    const match = new URL(request.url).pathname.match(/^\/api\/plugins\/(.+)\/settings$/);
+    if (match) {
+      requestedPluginSettings.push(match[1]);
+    }
+  };
+
+  beforeAll(() => {
+    server.events.on('request:start', recordPluginSettingsRequest);
+  });
+
+  afterAll(() => {
+    server.events.removeListener('request:start', recordPluginSettingsRequest);
+  });
+
+  beforeEach(() => {
+    requestedPluginSettings = [];
+  });
+
   afterEach(() => {
     invalidateCachedPromisesCache();
   });
@@ -56,11 +77,58 @@ describe('useIrmPlugin', () => {
     expect(result.current.settings).toBeDefined();
   });
 
-  it('should return loading state while fetching plugins', () => {
+  it('should return loading state while fetching plugins', async () => {
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
 
     expect(result.current.loading).toBe(true);
     expect(result.current.installed).toBeUndefined();
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+  });
+
+  it('should never report "not installed" before the check has settled', async () => {
+    const states: Array<{ loading: boolean; installed?: boolean }> = [];
+
+    const { result } = renderHook(() => {
+      const bridge = useIrmPlugin(SupportedPlugin.OnCall);
+      states.push({ loading: bridge.loading, installed: bridge.installed });
+      return bridge;
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // a settled state must be the final answer – no flash of installed: false in between
+    const firstSettled = states.findIndex((state) => !state.loading);
+    expect(states.slice(firstSettled).every((state) => state.installed === true)).toBe(true);
+  });
+
+  it('should not request settings for a plugin that is not installed', async () => {
+    removePlugin(SupportedPlugin.OnCall);
+
+    const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(requestedPluginSettings).not.toContain(SupportedPlugin.OnCall);
+  });
+
+  it('should not request the fallback plugin settings when IRM is installed', async () => {
+    addPlugin(pluginMeta[SupportedPlugin.Irm]);
+
+    const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(requestedPluginSettings).toContain(SupportedPlugin.Irm);
+    expect(requestedPluginSettings).not.toContain(SupportedPlugin.OnCall);
   });
 
   it('should return installed false when neither plugin is installed (404)', async () => {

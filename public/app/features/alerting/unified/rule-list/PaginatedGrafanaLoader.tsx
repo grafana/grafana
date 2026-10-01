@@ -19,6 +19,7 @@ import { getPromGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { GrafanaRuleListItem } from './GrafanaRuleListItem';
+import { DataSourceManagedRulesInlineNotice } from './components/DataSourceManagedRulesNotice';
 import { DataSourceSection } from './components/DataSourceSection';
 import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
@@ -36,9 +37,15 @@ interface LoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
+  collapsible?: boolean;
 }
 
-export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
+export function PaginatedGrafanaLoader({
+  groupFilter,
+  namespaceFilter,
+  onLoadingStateChange,
+  collapsible,
+}: LoaderProps) {
   const key = `${groupFilter}-${namespaceFilter}`;
 
   // Key is crucial. It resets the generator when filters change.
@@ -48,11 +55,12 @@ export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoading
       groupFilter={groupFilter}
       namespaceFilter={namespaceFilter}
       onLoadingStateChange={onLoadingStateChange}
+      collapsible={collapsible}
     />
   );
 }
 
-function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
+function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateChange, collapsible }: LoaderProps) {
   // When backend filters are enabled, groupFilter is handled on the backend
   const filterState = { namespace: namespaceFilter, groupName: groupFilter };
   const { backendFilter } = getGrafanaFilter(filterState);
@@ -130,6 +138,8 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
       uid={GrafanaRulesSourceSymbol}
       isLoading={isLoading}
       error={error}
+      actions={<DataSourceManagedRulesInlineNotice />}
+      collapsible={collapsible}
     >
       <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {

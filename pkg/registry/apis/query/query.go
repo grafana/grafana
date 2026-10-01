@@ -70,7 +70,7 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 	connectLogger := b.log.New(
 		"traceId", traceId.String(),
 		"rule_uid", httpreq.Header.Get("X-Rule-Uid"),
-		"caller", getCaller(ctx),
+		"client", getClient(ctx),
 	)
 	responderOnObjectFn := func(statusCode *int, obj runtime.Object) {
 		if *statusCode/100 == 4 {
@@ -96,11 +96,11 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 				}
 			}
 		}
-		connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
+		connectLogger.Debug("responder sending status code", "statusCode", statusCode, "client", getClient(ctx))
 		b.reportStatus(ctx, *statusCode)
 	}
 	responderOnErrorFn := func(err error) {
-		connectLogger.Error("error caught in handler", "err", err, "caller", getCaller(ctx))
+		connectLogger.Error("error caught in handler", "err", err, "client", getClient(ctx))
 		span.SetStatus(codes.Error, "query error")
 
 		if err == nil {
@@ -472,7 +472,7 @@ func getValidDataSourceRef(ctx context.Context, ds *v0alpha1.DataSourceRef, id i
 	return ds, nil
 }
 
-func getCaller(ctx context.Context) string {
+func getClient(ctx context.Context) string {
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return "<auth-missing>"

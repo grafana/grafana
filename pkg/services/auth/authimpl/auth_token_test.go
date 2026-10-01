@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -172,8 +173,8 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		t.Run("When revoking users tokens in a batch", func(t *testing.T) {
 			t.Run("Can revoke all users tokens", func(t *testing.T) {
-				userIds := []int64{}
-				for i := 0; i < 3; i++ {
+				userIds := make([]int64, 0, 3)
+				for i := range 3 {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
 					_, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
@@ -241,9 +242,9 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		t.Run("When revoking users tokens in a batch", func(t *testing.T) {
 			t.Run("Can revoke all users tokens and associated external sessions", func(t *testing.T) {
-				userIds := []int64{}
-				extSessionIds := []int64{}
-				for i := 0; i < 3; i++ {
+				userIds := make([]int64, 0, 3)
+				extSessionIds := make([]int64, 0, 3)
+				for i := range 3 {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
 					token, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
@@ -319,7 +320,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			}
 
 			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&auth.TokenExpiredError{}))
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeFor[*auth.TokenExpiredError]())
 			require.Nil(t, notGood)
 
 			t.Run("should not find active token when expired", func(t *testing.T) {
@@ -356,7 +357,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			}
 
 			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&auth.TokenExpiredError{}))
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeFor[*auth.TokenExpiredError]())
 			require.Nil(t, notGood)
 		})
 	})
@@ -565,25 +566,25 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			assert.Equal(t, current.UnhashedToken, skipped.UnhashedToken, "rotation within SkipRotationTime should be skipped, returning the same token")
 		})
 
-		t.Run("should not rotate token when previous token is replayed and current is unseen", func(t *testing.T) {
+		t.Run("re-rotates when previous token is replayed and current is unseen", func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
+
 			initial, current := rotateOnceForReplay(t)
 
 			before, err := ctx.getAuthTokenByID(current.Id)
 			require.NoError(t, err)
 			require.False(t, before.AuthTokenSeen)
 
-			skipped, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: initial.UnhashedToken})
+			rotated, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: initial.UnhashedToken})
 			require.NoError(t, err)
 
 			after, err := ctx.getAuthTokenByID(current.Id)
 			require.NoError(t, err)
-			assert.Equal(t, before.AuthToken, after.AuthToken, "current auth token should not change")
-			assert.Equal(t, before.PrevAuthToken, after.PrevAuthToken, "previous auth token should not change")
-			assert.Equal(t, before.RotatedAt, after.RotatedAt, "rotated_at should not change when rotation is skipped")
-			assert.Equal(t, initial.UnhashedToken, skipped.UnhashedToken, "skipped rotation should return the replayed token")
+			assert.NotEqual(t, before.AuthToken, after.AuthToken, "presenting an already-superseded token must mint a new current token, not silently return the stale one")
+			assert.NotEqual(t, initial.UnhashedToken, rotated.UnhashedToken, "the replayed previous token must not be handed back unchanged")
 		})
 
-		t.Run("does not rotate when previous token is replayed and current is seen and grace period is enabled", func(t *testing.T) {
+		t.Run("re-rotates when previous token is replayed and current is seen and grace period is enabled", func(t *testing.T) {
 			setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
 
 			initial, current := rotateOnceForReplay(t)
@@ -596,15 +597,13 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, before.AuthTokenSeen)
 
-			skipped, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: initial.UnhashedToken})
+			rotated, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: initial.UnhashedToken})
 			require.NoError(t, err)
 
 			after, err := ctx.getAuthTokenByID(current.Id)
 			require.NoError(t, err)
-			assert.Equal(t, before.AuthToken, after.AuthToken, "current auth token should not change")
-			assert.Equal(t, before.PrevAuthToken, after.PrevAuthToken, "previous auth token should not change")
-			assert.Equal(t, before.RotatedAt, after.RotatedAt, "rotated_at should not change when rotation is skipped")
-			assert.Equal(t, initial.UnhashedToken, skipped.UnhashedToken, "skipped rotation should return the replayed token")
+			assert.NotEqual(t, before.AuthToken, after.AuthToken, "grace period only affects LookupToken bookkeeping; RotateToken must still mint a new token for an already-superseded presented token")
+			assert.NotEqual(t, initial.UnhashedToken, rotated.UnhashedToken, "the replayed previous token must not be handed back unchanged")
 		})
 
 		t.Run("re-rotates when previous token is replayed and current is seen and grace period is disabled", func(t *testing.T) {
@@ -624,6 +623,44 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotEqual(t, before.AuthToken, after.AuthToken, "current auth token should be rotated (legacy behaviour)")
 			assert.NotEqual(t, initial.UnhashedToken, rotated.UnhashedToken, "a new token should be minted (legacy behaviour)")
+		})
+
+		t.Run("replaying original token within SkipRotationTime after a concurrent rotation returns a stale token", func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
+
+			advanceTime(SkipRotationTime + time.Second)
+			initial, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  nil,
+				UserAgent: "",
+			})
+			require.NoError(t, err)
+
+			advanceTime(SkipRotationTime + time.Second)
+
+			// Tab A wins a race between two tabs that both held the same session cookie.
+			winner, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: initial.UnhashedToken})
+			require.NoError(t, err)
+			require.NotEqual(t, initial.UnhashedToken, winner.UnhashedToken)
+
+			// Tab B presents the same original cookie moments later, still inside
+			// SkipRotationTime relative to Tab A's rotation (e.g. a second HA replica --
+			// singleflight only dedupes within a single process).
+			loser, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: initial.UnhashedToken})
+			require.NoError(t, err)
+
+			assert.NotEqual(t, initial.UnhashedToken, loser.UnhashedToken,
+				"RotateToken must not silently hand back an already-superseded token as if it were still fresh")
+
+			// Prove the forced logout: once the next legitimate rotation happens on the
+			// winning tab, Tab B's cookie -- which it was told was fine -- stops working
+			// with no warning and no chance to recover.
+			advanceTime(SkipRotationTime + time.Second)
+			_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: winner.UnhashedToken})
+			require.NoError(t, err)
+
+			_, err = ctx.tokenService.LookupToken(context.Background(), loser.UnhashedToken)
+			require.NoError(t, err, "Tab B's session should not go silently invalid after being told its rotation succeeded")
 		})
 
 		t.Run("should return error when token is revoked", func(t *testing.T) {
@@ -879,7 +916,7 @@ func createTestContext(t *testing.T) *testContext {
 	t.Helper()
 	maxInactiveDurationVal, _ := time.ParseDuration("168h")
 	maxLifetimeDurationVal, _ := time.ParseDuration("720h")
-	sqlstore := db.InitTestDB(t)
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	tracer := tracing.InitializeTracerForTest()
 
 	cfg := &setting.Cfg{
@@ -888,13 +925,14 @@ func createTestContext(t *testing.T) *testContext {
 		TokenRotationIntervalMinutes: 10,
 	}
 
-	extSessionStore := provideExternalSessionStore(sqlstore, &fakes.FakeSecretsService{}, tracer)
+	sqlProvider := legacysql.NewDatabaseProvider(sqlstore)
+	extSessionStore := provideExternalSessionStore(sqlProvider, &fakes.FakeSecretsService{}, tracer)
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 
 	tokenService := &UserAuthTokenService{
-		sqlStore:             sqlstore,
+		sql:                  sqlProvider,
 		cfgProvider:          cfgProvider,
 		log:                  log.New("test-logger"),
 		singleflight:         new(singleflight.Group),

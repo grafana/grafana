@@ -38,24 +38,33 @@ func TestParseWebhooks(t *testing.T) {
 			PRURL:     "https://github.com/grafana/git-ui-sync-demo/pull/12",
 			SourceRef: "dashboard/1733653266690",
 			Hash:      "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
+			IsFork:    new(false),
+			Sender:    "ryantxu",
+			SenderID:  "705951",
 		}},
 		{"push", "different_branch", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
 			RepoSlug:     "grafana/git-ui-sync-demo",
 			Branch:       "not-main",
 			TotalChanges: 1,
+			Sender:       "ryantxu",
+			SenderID:     "705951",
 		}},
 		{"push", "nothing_relevant", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
 			RepoSlug:     "grafana/git-ui-sync-demo",
 			Branch:       "main",
 			TotalChanges: 1,
+			Sender:       "ryantxu",
+			SenderID:     "705951",
 		}},
 		{"push", "nested", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
 			RepoSlug:     "grafana/git-ui-sync-demo",
 			Branch:       "main",
 			TotalChanges: 5,
+			Sender:       "ryantxu",
+			SenderID:     "705951",
 		}},
 		{"push", "keep_file_only", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
@@ -63,6 +72,8 @@ func TestParseWebhooks(t *testing.T) {
 			Branch:       "main",
 			DeletedPaths: []string{"empty-folder/.keep"},
 			TotalChanges: 1,
+			Sender:       "testuser",
+			SenderID:     "123456",
 		}},
 		{"push", "keep_file_with_others", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
@@ -70,6 +81,8 @@ func TestParseWebhooks(t *testing.T) {
 			Branch:       "main",
 			DeletedPaths: []string{"dashboards/.keep", "dashboards/dashboard1.json", "dashboards/dashboard2.json"},
 			TotalChanges: 3,
+			Sender:       "testuser",
+			SenderID:     "123456",
 		}},
 		{"push", "multiple_keep_files", repo.WebhookEvent{
 			Type:         repo.WebhookEventPush,
@@ -77,6 +90,8 @@ func TestParseWebhooks(t *testing.T) {
 			Branch:       "main",
 			DeletedPaths: []string{"empty-folder1/.keep", "dashboards-to-delete/.keep", "dashboards-to-delete/dashboard.json"},
 			TotalChanges: 3,
+			Sender:       "testuser",
+			SenderID:     "123456",
 		}},
 		{"issue_comment", "created", repo.WebhookEvent{
 			Type:    repo.WebhookEventUnsupported,
@@ -99,6 +114,32 @@ func TestParseWebhooks(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expected, event)
+		})
+	}
+}
+
+func TestPullRequestWebhookForkStatus(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		headRepo string
+		baseRepo string
+		want     *bool
+		wantURL  string
+	}{
+		{name: "same repository", headRepo: `{"id":1,"fork":true,"html_url":"https://github.example.com/org/repo"}`, baseRepo: `{"id":1}`, want: new(false)},
+		{name: "fork", headRepo: `{"id":2,"html_url":"https://github.example.com/contributor/repo"}`, baseRepo: `{"id":1}`, want: new(true), wantURL: "https://github.example.com/contributor/repo"},
+		{name: "fork without URL", headRepo: `{"id":2}`, baseRepo: `{"id":1}`, want: new(true)},
+		{name: "deleted head repository", headRepo: `null`, baseRepo: `{"id":1}`},
+		{name: "missing head identity", headRepo: `{}`, baseRepo: `{"id":1}`},
+		{name: "missing base identity", headRepo: `{"id":2}`, baseRepo: `{}`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			gh := &githubWebhookRepository{secret: common.RawSecureValue("webhook-secret")}
+			payload := fmt.Sprintf(`{"action":"opened","repository":{"full_name":"org/repo"},"pull_request":{"number":123,"head":{"ref":"feature","sha":"abc","repo":%s},"base":{"ref":"main","repo":%s}}}`, tt.headRepo, tt.baseRepo)
+			event, err := verifyAndProcess(t, gh, signedWebhookRequest(t, "pull_request", "webhook-secret", "", payload))
+			require.NoError(t, err)
+			require.Equal(t, tt.want, event.IsFork)
+			require.Equal(t, tt.wantURL, event.ForkURL)
 		})
 	}
 }

@@ -14,11 +14,15 @@ jest.mock('./RecentQueriesList', () => ({
   RecentQueriesList: jest.fn(() => <div data-testid="list" />),
 }));
 
-jest.mock('app/core/utils/richHistory', () => ({
-  createDatasourcesList: jest.fn(() => [
-    { name: 'Prometheus', uid: 'prom-uid' },
-    { name: 'Loki', uid: 'loki-uid' },
-  ]),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({
+    isLoading: false,
+    items: [
+      { name: 'Prometheus', uid: 'prom-uid' },
+      { name: 'Loki', uid: 'loki-uid' },
+    ],
+  })),
 }));
 
 const mockRichHistoryQuery: RichHistoryQuery = {
@@ -112,7 +116,7 @@ describe('RecentQueriesLayout', () => {
     const { RecentQueriesFilters } = jest.requireMock('./RecentQueriesFilters');
     expect(RecentQueriesFilters).toHaveBeenCalledWith(
       expect.objectContaining({ availableDatasources: ['Prometheus', 'Loki'] }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -159,7 +163,7 @@ describe('RecentQueriesLayout', () => {
     const { RecentQueriesFilters } = jest.requireMock('./RecentQueriesFilters');
     expect(RecentQueriesFilters).toHaveBeenCalledWith(
       expect.objectContaining({ onAnalyticsEvent: mockOnAnalyticsEvent }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -168,6 +172,6 @@ describe('RecentQueriesLayout', () => {
     mockDataHook.isLoading = true;
     render(<RecentQueriesLayout {...defaultProps} />);
     const { RecentQueriesFilters } = jest.requireMock('./RecentQueriesFilters');
-    expect(RecentQueriesFilters).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }), expect.anything());
+    expect(RecentQueriesFilters).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }), undefined);
   });
 });

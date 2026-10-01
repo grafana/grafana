@@ -81,12 +81,12 @@ func SetupRBACPermission(t *testing.T, db db.DB, role *accesscontrol.Role, user 
 // auto-assigned sequential ID.
 func NewMockDashboardService(t *testing.T) *dashboards.FakeDashboardService {
 	t.Helper()
-	var counter int64
+	var counter atomic.Int64
 	svc := dashboards.NewFakeDashboardService(t)
 	svc.On("SaveDashboard", mock.Anything, mock.Anything, mock.Anything).
 		Return(
 			func(_ context.Context, dto *dashboards.SaveDashboardDTO, _ bool) *dashboards.Dashboard {
-				dto.Dashboard.ID = atomic.AddInt64(&counter, 1)
+				dto.Dashboard.ID = counter.Add(1)
 				return dto.Dashboard
 			},
 			func(_ context.Context, _ *dashboards.SaveDashboardDTO, _ bool) error {

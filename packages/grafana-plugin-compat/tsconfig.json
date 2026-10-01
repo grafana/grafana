@@ -1,0 +1,14 @@
+{
+  "extends": "../../scripts/tsconfig.base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
+    "rootDirs": ["."],
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx"
+  },
+  "exclude": ["dist/**/*"],
+  "include": ["../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts"]
+}

@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
@@ -32,7 +33,12 @@ function PluginListItemComponent({ plugin, pathName }: Props) {
     }
   };
   return (
-    <a href={`${pathName}/${plugin.id}`} className={cx(styles.container)} onClick={reportUserClickInteraction}>
+    <a
+      href={`${pathName}/${plugin.id}`}
+      className={cx(styles.container)}
+      onClick={reportUserClickInteraction}
+      data-testid={selectors.pages.PluginsList.listItem(plugin.id)}
+    >
       <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
       <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
       <div className={cx(styles.content, 'plugin-content')}>
@@ -95,26 +101,36 @@ export const PluginListItem = attachSkeleton(PluginListItemComponent, PluginList
 
 // Styles shared between the different type of list items
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    container: css({
-      display: 'grid',
-      gridTemplateColumns: `${LOGO_SIZE} 1fr ${theme.spacing(3)}`,
-      gridTemplateRows: 'auto',
-      gap: theme.spacing(2),
-      gridAutoFlow: 'row',
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.lg,
-      padding: theme.spacing(3),
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
+    container: css(
+      {
+        display: 'grid',
+        gridTemplateColumns: `${LOGO_SIZE} 1fr ${theme.spacing(3)}`,
+        gridTemplateRows: 'auto',
+        gap: theme.spacing(2),
+        gridAutoFlow: 'row',
+        background: theme.colors.background.secondary,
+        borderRadius: theme.shape.radius.lg,
+        padding: theme.spacing(3),
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+            duration: theme.transitions.duration.short,
+          }),
+        },
 
-      '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+        '&:hover': {
+          background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        background: theme.colors.background.primary,
+        border: `1px solid ${theme.colors.border.weak}`,
+        '&:hover': {
+          background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+        },
+      }
+    ),
     pluginType: css({
       gridArea: '1 / 3 / 2 / 4',
       color: theme.colors.text.secondary,

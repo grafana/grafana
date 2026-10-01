@@ -54,7 +54,7 @@ func TestLibraryPanelUIDScopeResolver_UsesContextFolder(t *testing.T) {
 	folderSvc := foldertest.NewFakeService() // GetParents returns no ancestors
 	svc := &LibraryElementService{
 		folderService: folderSvc,
-		treeCache:     newFolderTreeCache(folderSvc),
+		treeCache:     newFolderTreeCache(folderSvc, false),
 		log:           log.NewNopLogger(),
 		// deliberately no SQLStore: getLibraryElementByUid must not be reached
 	}

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Label, Stack } from '@grafana/ui';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
@@ -42,7 +43,7 @@ export function FolderSelector() {
             </Label>
           }
           error={errors.folder?.message}
-          data-testid="folder-picker"
+          data-testid={selectors.components.AlertRules.folderPicker}
         >
           <Stack direction="row" alignItems="center">
             <Controller

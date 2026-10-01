@@ -353,7 +353,7 @@ func TestPlanNameRanges(t *testing.T) {
 		const n = 500
 		names := make([]string, n)
 		sizes := make(map[string]int64, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			names[i] = fmtName(i)
 			// inject occasional objects larger than budget to exercise the tail.
 			s := int64(rng.Intn(50) + 1)

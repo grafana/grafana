@@ -207,7 +207,11 @@ if (!ghtoken) {
 const target = process.argv[2] || process.env.INPUT_TARGET;
 LOG(`Target tag/branch/commit: ${target}`);
 
-const previous = process.argv[3] || process.env.INPUT_PREVIOUS || (await getPreviousVersion(target));
+// getPreviousVersion needs an actual semver string to look up the prior tag; target may be a
+// branch name instead (not semver-parseable), so it isn't a safe fallback for this on its own.
+const version = process.env.INPUT_VERSION || target;
+
+const previous = process.argv[3] || process.env.INPUT_PREVIOUS || (await getPreviousVersion(version));
 
 LOG(`Previous tag/commit: ${previous}`);
 

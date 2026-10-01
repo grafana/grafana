@@ -334,6 +334,42 @@ describe('RadialGauge utils', () => {
       expect(result.startValueAngle).toBe(0);
       expect(result.endValueAngle).toBe(90);
     });
+
+    // Regression for #130075
+    // With a neutral point, values outside [min, max] must still produce arcs that fit the gauge.
+    it('should clamp overflow above max when neutral is set', () => {
+      const fieldDisplay = createFieldDisplay(10, -5, 5);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, 0);
+
+      expect(result.startValueAngle).toBe(180); // neutral at 0
+      expect(result.endValueAngle).toBe(180); // fill to max only
+    });
+
+    it('should clamp overflow below min when neutral is set', () => {
+      const fieldDisplay = createFieldDisplay(-10, -5, 5);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, 0);
+
+      expect(result.startValueAngle).toBe(0); // clamped value at min
+      expect(result.endValueAngle).toBe(180); // fill from min to neutral
+    });
+
+    // When min === max and both are negative, getFieldConfigMinMax inverts the range.
+    // Clamping must use ordered bounds so a constant series still maps to mid-scale.
+    it('should keep mid-scale arc when min equals max and both are negative', () => {
+      const fieldDisplay = createFieldDisplay(-10, -10, -10);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360);
+
+      expect(result.startValueAngle).toBe(0);
+      expect(result.endValueAngle).toBe(180);
+    });
+
+    it('should keep mid-scale arc with neutral when min equals max and both are negative', () => {
+      const fieldDisplay = createFieldDisplay(-10, -10, -10);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, -10);
+
+      expect(result.startValueAngle).toBe(180);
+      expect(result.endValueAngle).toBe(0);
+    });
   });
 
   describe('drawRadialArcPath', () => {
@@ -352,7 +388,8 @@ describe('RadialGauge utils', () => {
     describe('edge cases', () => {
       it('should adjust 360deg or greater  arcs to avoid SVG rendering issues', () => {
         expect(drawRadialArcPath(0, 360, 80)).toEqual(drawRadialArcPath(0, 359.99, 80));
-        expect(drawRadialArcPath(0, 380, 80)).toEqual(drawRadialArcPath(0, 380, 80));
+        // any end angle >360 is clamped to the same 359.99 path
+        expect(drawRadialArcPath(0, 380, 80)).toEqual(drawRadialArcPath(0, 359.99, 80));
       });
     });
   });

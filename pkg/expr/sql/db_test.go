@@ -399,6 +399,21 @@ func TestQueryFrames_Limits(t *testing.T) {
 	}
 }
 
+// TestQueryFrames_FileReadsDisabled verifies the engine-level defense-in-depth:
+// even if a file-reading query bypasses the query guard, the go-mysql-server
+// context disables LOAD_FILE via WithDisableFileReads.
+func TestQueryFrames_FileReadsDisabled(t *testing.T) {
+	// Use a permissive guard so the query reaches the engine instead of being
+	// rejected by the default AllowQuery parser guard.
+	db := DB{queryGuard: func(refID, rawSQL string) (bool, error) { return true, nil }}
+
+	_, err := db.QueryFrames(context.Background(), &testTracer{}, "a",
+		`SELECT LOAD_FILE('/etc/hostname') AS v`, nil)
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "file read operations")
+}
+
 type testTracer struct {
 	trace.Tracer
 }
@@ -425,4 +440,7 @@ func (ts *testSpan) IsRecording() bool {
 }
 
 func (ts *testSpan) AddEvent(name string, options ...trace.EventOption) {
+}
+
+func (ts *testSpan) RecordError(err error, options ...trace.EventOption) {
 }

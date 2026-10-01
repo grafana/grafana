@@ -12,12 +12,13 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBuildAppInsightsQuery(t *testing.T) {
@@ -105,7 +106,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -113,7 +114,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 								"traceTypes":	["trace"],
 								"operationId":	"test-op-id"
 							}
-						}`, dataquery.ResultFormatTable)),
+						}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -122,7 +123,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -130,7 +131,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 								"traceTypes":	["trace"],
 								"operationId":	"test-op-id"
 							}
-						}`, dataquery.ResultFormatTable)),
+						}`, dataquery.ResultFormatTable),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true trace` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -257,13 +258,13 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with no operation ID",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTable)),
+						}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -272,13 +273,13 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTable)),
+						}`, dataquery.ResultFormatTable),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 					`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -329,14 +330,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with no types",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s",
 								"operationId":	"test-op-id"
 							}
-						}`, dataquery.ResultFormatTable)),
+						}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -345,14 +346,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s",
 								"operationId":	"test-op-id"
 							}
-						}`, dataquery.ResultFormatTable)),
+						}`, dataquery.ResultFormatTable),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -404,7 +405,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with eq filter",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -412,7 +413,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "eq"}]
 								}
-							}`, dataquery.ResultFormatTable)),
+							}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -421,7 +422,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -429,7 +430,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "eq"}]
 								}
-							}`, dataquery.ResultFormatTable)),
+							}`, dataquery.ResultFormatTable),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -484,7 +485,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with ne filter",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -492,7 +493,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "ne"}]
 								}
-							}`, dataquery.ResultFormatTable)),
+							}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -501,7 +502,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -509,7 +510,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "ne"}]
 								}
-							}`, dataquery.ResultFormatTable)),
+							}`, dataquery.ResultFormatTable),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -564,7 +565,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with multiple filters",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -572,7 +573,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "ne"},{"filters": ["test-client-id"], "property": "clientId", "operation": "eq"}]
 							}
-						}`, dataquery.ResultFormatTable)),
+						}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -581,7 +582,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -589,7 +590,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "ne"},{"filters": ["test-client-id"], "property": "clientId", "operation": "eq"}]
 							}
-						}`, dataquery.ResultFormatTable)),
+						}`, dataquery.ResultFormatTable),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -644,13 +645,13 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with trace result format",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -659,13 +660,13 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 					`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -716,14 +717,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with trace result format and operation ID",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -732,14 +733,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests` +
 					`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -791,7 +792,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with trace result format and only trace type",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
@@ -799,7 +800,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 								"resultFormat": "%s",
 								"traceTypes":		["traces"]
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -808,7 +809,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
@@ -816,7 +817,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 								"resultFormat": "%s",
 								"traceTypes":		["traces"]
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				Query:                   "",
 				Resources:               []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 				TimeRange:               timeRange,
@@ -834,14 +835,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with operation ID and correlated workspaces",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -850,14 +851,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 					`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -913,13 +914,13 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with multiple resources",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -928,13 +929,13 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 					`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -989,14 +990,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with multiple resources and overlapping correlated workspaces",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -1005,14 +1006,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 					`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -1068,14 +1069,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with multiple resources and non-overlapping correlated workspaces",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-non-overlapping",
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -1084,14 +1085,14 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-non-overlapping",
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
-						}`, dataquery.ResultFormatTrace)),
+						}`, dataquery.ResultFormatTrace),
 				Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').requests` +
 					`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
 					`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -1154,7 +1155,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with missing operation ID",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -1162,7 +1163,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 								"traceTypes":	["trace"],
 								"operationId":	"missing-op-id"
 							}
-						}`, dataquery.ResultFormatTable)),
+						}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -1239,14 +1240,14 @@ func TestBuildAppInsightsQuery_EmptyResources(t *testing.T) {
 		{
 			name: "empty resources array should return error",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 					"queryType": "Azure Traces",
 					"azureTraces": {
 						"resources": [],
 						"resultFormat": "%s",
 						"traceTypes": ["trace"]
 					}
-				}`, dataquery.ResultFormatTable)),
+				}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -1256,13 +1257,13 @@ func TestBuildAppInsightsQuery_EmptyResources(t *testing.T) {
 		{
 			name: "missing resources field should return error",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 					"queryType": "Azure Traces",
 					"azureTraces": {
 						"resultFormat": "%s",
 						"traceTypes": ["trace"]
 					}
-				}`, dataquery.ResultFormatTable)),
+				}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
@@ -1272,7 +1273,7 @@ func TestBuildAppInsightsQuery_EmptyResources(t *testing.T) {
 		{
 			name: "trace exemplar with empty correlation resources should return error",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: fmt.Appendf(nil, `{
 					"queryType": "Azure Traces",
 					"azureTraces": {
 						"resources": ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -1280,7 +1281,7 @@ func TestBuildAppInsightsQuery_EmptyResources(t *testing.T) {
 						"traceTypes": ["trace"],
 						"operationId": "missing-op-id"
 					}
-				}`, dataquery.ResultFormatTable)),
+				}`, dataquery.ResultFormatTable),
 				RefID:     "A",
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeTraceExemplar),

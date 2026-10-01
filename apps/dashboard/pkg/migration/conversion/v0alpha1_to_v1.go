@@ -98,6 +98,12 @@ func ConvertDashboard_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scop
 	)
 	defer span.End()
 
+	// Resolve constant __inputs placeholders before the migration drops __inputs.
+	// Classic "Export for sharing externally" templates written outside the import
+	// API (e.g. Terraform) are stored raw as v0alpha1; without this, the constant's
+	// ${VAR_*} placeholder would survive into v1/v2 once its value is gone.
+	resolveConstantExportInputs(out.Spec.Object)
+
 	if err := migrateV0Dashboard(ctx, out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = new(err.Error())

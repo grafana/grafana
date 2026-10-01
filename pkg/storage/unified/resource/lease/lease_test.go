@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"slices"
 	"sync"
 	"testing"
@@ -23,7 +24,7 @@ func TestLease(t *testing.T) {
 }
 
 func TestAcquireNameValidation(t *testing.T) {
-	m := lease.NewManager(newMapKV(), "holder-validation", nil, lease.WithGarbageCollectionDisabled)
+	m := lease.NewManager(newMapKV(), "holder-validation", "test", nil, lease.WithGarbageCollectionDisabled)
 
 	t.Run("invalid keys are rejected", func(t *testing.T) {
 		for _, name := range []string{"", "invalid key", "invalid\nkey"} {
@@ -58,7 +59,7 @@ func TestAcquireNameValidation(t *testing.T) {
 
 func TestAcquireTTLValidation(t *testing.T) {
 	const minTTL = 100 * time.Millisecond
-	m := lease.NewManager(newMapKV(), "holder-validation", nil, lease.WithInternalMinTTL(minTTL), lease.WithGarbageCollectionDisabled)
+	m := lease.NewManager(newMapKV(), "holder-validation", "test", nil, lease.WithInternalMinTTL(minTTL), lease.WithGarbageCollectionDisabled)
 
 	testCases := []struct {
 		d       time.Duration
@@ -174,9 +175,7 @@ func (m *mapKV) Batch(ctx context.Context, sec string, ops []kv.BatchOp) error {
 
 	// Snapshot for atomic rollback on failure.
 	snapshot := make(map[string][]byte, len(m.data))
-	for k, v := range m.data {
-		snapshot[k] = v
-	}
+	maps.Copy(snapshot, m.data)
 
 	for i, op := range ops {
 		switch op.Mode {

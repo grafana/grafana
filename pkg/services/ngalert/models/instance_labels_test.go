@@ -57,7 +57,7 @@ func TestInstanceLabelsFingerprint(t *testing.T) {
 func BenchmarkTupleLabelsToLabels(b *testing.B) {
 	b.Run("10 labels", func(b *testing.B) {
 		in := make(tupleLabels, 0, 10)
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			key := fmt.Sprintf("key%d", i)
 			value := fmt.Sprintf("value%d", i)
 			in = append(in, tupleLabel{key, value})
@@ -75,7 +75,7 @@ func BenchmarkTupleLabelsToLabels(b *testing.B) {
 
 	b.Run("100 labels", func(b *testing.B) {
 		in := make(tupleLabels, 0, 100)
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			key := fmt.Sprintf("key%d", i)
 			value := fmt.Sprintf("value%d", i)
 			in = append(in, tupleLabel{key, value})
@@ -93,7 +93,7 @@ func BenchmarkTupleLabelsToLabels(b *testing.B) {
 
 	b.Run("10_000 labels", func(b *testing.B) {
 		in := make(tupleLabels, 0, 10_000)
-		for i := 0; i < 10_000; i++ {
+		for i := range 10_000 {
 			key := fmt.Sprintf("key%d", i)
 			value := fmt.Sprintf("value%d", i)
 			in = append(in, tupleLabel{key, value})
@@ -111,7 +111,7 @@ func BenchmarkTupleLabelsToLabels(b *testing.B) {
 
 	b.Run("1_000_000 labels", func(b *testing.B) {
 		in := make(tupleLabels, 0, 1_000_000)
-		for i := 0; i < 1_000_000; i++ {
+		for i := range 1_000_000 {
 			key := fmt.Sprintf("key%d", i)
 			value := fmt.Sprintf("value%d", i)
 			in = append(in, tupleLabel{key, value})

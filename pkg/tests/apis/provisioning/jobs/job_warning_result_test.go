@@ -23,8 +23,7 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/invalid.json": "dashboard1.json",
 		},
-		SkipSync:               true, // Skip initial sync so we can add the malformed file first
-		SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
+		SkipSync: true, // Skip initial sync so we can add the malformed file first
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -78,8 +77,7 @@ func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/dashboard-missing-name.json": "dashboard-no-name.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -124,8 +122,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 		Copies: map[string]string{
 			"../testdata/dashboard-refresh-too-low.json": "dashboard-refresh-low.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -173,8 +170,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardSchemaInvalid(t *test
 		Copies: map[string]string{
 			"../testdata/dashboard-v2-schema-invalid.json": "dashboard-v2-invalid.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -235,8 +231,7 @@ func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 			"../testdata/dashboard-duplicate-name.json":      "dashboard-dup1.json",
 			"../testdata/dashboard-duplicate-name-copy.json": "dashboard-dup2.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
 

@@ -1,9 +1,8 @@
-import { type BackendSrv, type BackendSrvRequest } from 'src/services';
-
 import { type DataQueryRequest, type DataSourceInstanceSettings } from '@grafana/data';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { config } from '../config';
+import { type BackendSrv, type BackendSrvRequest } from '../services';
 
 import { DataSourceWithBackend } from './DataSourceWithBackend';
 import { isMigrationHandler, migrateQuery, migrateRequest, type MigrationHandler } from './migrationHandler';

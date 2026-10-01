@@ -2,12 +2,15 @@ package authorizer
 
 import (
 	"context"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	"k8s.io/apiserver/pkg/authorization/union"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // NewAllowAuthorizer returns an authorizer that systematically allows access for resource requests.
@@ -25,6 +28,10 @@ func NewAllowAuthorizer() authorizer.Authorizer {
 var _ authorizer.Authorizer = (*GrafanaAuthorizer)(nil)
 
 type GrafanaAuthorizer struct {
+	// mu guards apis so per-CRD-group authorizers can be registered and
+	// unregistered dynamically at runtime (e.g. by CRDRegistrationController)
+	// while requests are being authorized concurrently.
+	mu   sync.RWMutex
 	apis map[string]authorizer.Authorizer
 	auth authorizer.Authorizer
 }
@@ -41,44 +48,99 @@ type GrafanaAuthorizer struct {
 //  5. As a last fallback we check Role, this will only happen if an api have not configured
 //     an authorizer or return authorizer.DecisionNoOpinion
 func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
-	authorizers := []authorizer.Authorizer{ //nolint:prealloc
-		NewImpersonationAuthorizer(),
-		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
-		newNamespaceAuthorizer(),
+	authorizers := []union.NamedAuthorizer{ //nolint:prealloc
+		{AuthorizerName: "impersonation", Authorizer: NewImpersonationAuthorizer()},
+		{AuthorizerName: "privileged-groups", Authorizer: authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup)},
+		{AuthorizerName: "namespace", Authorizer: NewNamespaceAuthorizer()},
 	}
 
 	// Individual services may have explicit implementations
 	apis := make(map[string]authorizer.Authorizer)
+	ga := &GrafanaAuthorizer{
+		apis: apis,
+	}
 	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
-	authorizers = append(authorizers, &authorizerForAPI{apis})
+	authorizers = append(authorizers, union.NamedAuthorizer{AuthorizerName: "api", Authorizer: &authorizerForAPI{apis: apis, mu: &ga.mu}})
 
 	// org role authorizer is last -- and will return allow for verbs that match expectations
 	// it is only helpful here for remote APIs in some cloud use-cases.
 	//nolint:staticcheck // remove once build handler chains are untangled between local and remote APIs handling
-	authorizers = append(authorizers, NewRoleAuthorizer())
-	return &GrafanaAuthorizer{
-		apis: apis,
-		auth: union.New(authorizers...),
+	authorizers = append(authorizers, union.NamedAuthorizer{AuthorizerName: "role", Authorizer: NewRoleAuthorizer()})
+	auth, err := union.New(authorizers...)
+	if err != nil {
+		panic(err)
 	}
+	ga.auth = auth
+	return ga
 }
 
 func (a *GrafanaAuthorizer) Register(gv schema.GroupVersion, fn authorizer.Authorizer) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.apis[gv.String()] = fn
+}
+
+// Unregister removes the authorizer for a specific GroupVersion. It is used for
+// dynamic removal of authorizers when CRD-backed API groups are deleted or no
+// longer served.
+func (a *GrafanaAuthorizer) Unregister(gv schema.GroupVersion) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	delete(a.apis, gv.String())
+}
+
+// IsListKeysRequest reports whether attr is a call to a kind's list-keys endpoint.
+//
+// Exported because the multi-tenant apiserver has its own chain and has to apply
+// the same rule.
+func IsListKeysRequest(attr authorizer.Attributes) bool {
+	if !attr.IsResourceRequest() || attr.GetVerb() != "create" || attr.GetSubresource() != "" {
+		return false
+	}
+	return attr.GetName() == utils.ListKeysPathSegment
 }
 
 // Authorize implements authorizer.Authorizer.
 func (a *GrafanaAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+	// Restated before the chain, not inside one link: the org role authorizer
+	// allows a viewer to list but not to create.
+	if IsSearchRequest(attr) || IsListKeysRequest(attr) {
+		attr = AsReadAttributes(attr)
+	}
 	return a.auth.Authorize(ctx, attr)
 }
 
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (a *GrafanaAuthorizer) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(a.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (a *GrafanaAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
+}
+
 type authorizerForAPI struct {
+	mu   *sync.RWMutex
 	apis map[string]authorizer.Authorizer
 }
 
 func (a *authorizerForAPI) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+	a.mu.RLock()
 	auth, ok := a.apis[attr.GetAPIGroup()+"/"+attr.GetAPIVersion()]
+	a.mu.RUnlock()
 	if ok {
 		return auth.Authorize(ctx, attr)
 	}
 	return authorizer.DecisionNoOpinion, "", nil
+}
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (a *authorizerForAPI) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(a.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (a *authorizerForAPI) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }

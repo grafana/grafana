@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { mergeMap } from 'rxjs';
+import { useMemo } from 'react';
 
-import { type DataFrame, type DataTransformContext, transformDataFrame } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { type DataFrame } from '@grafana/data';
 
 import { type Transformation } from '../types';
+
+import { NO_CONFIGS, precedingTransformations, useTransformedFrames } from './useTransformedFrames';
 
 interface UsePreviousTransformationOutputOptions {
   selectedTransformation: Transformation | null;
@@ -12,6 +12,9 @@ interface UsePreviousTransformationOutputOptions {
   queryData: DataFrame[];
   queryTargets?: Array<{ refId: string }>;
 }
+
+/** Stable identity for "no frames to offer", so it does not re-run a consumer's effect. */
+const NO_FRAMES: DataFrame[] = [];
 
 /**
  * Merges data frames with empty frames for any requested refIds that didn't return results.
@@ -27,12 +30,13 @@ function mergeWithEmptyFrames(frames: DataFrame[], queryTargets?: Array<{ refId:
   });
   return mergedResult;
 }
+
 /**
- * Calculates the output of the previous transformation in the pipeline.
- * Used by the filter display to show which data frames are available for filtering.
+ * Calculates the output of the previous transformation in the pipeline, for the filter display to
+ * show which data frames are available for filtering.
  *
- * @returns Output of the previous transformation, or raw query data if this is the first transformation.
- * Includes empty frames for refIds that were requested but didn't return results.
+ * @returns Output of everything preceding the selected transformation, or the query result if
+ * nothing does. Includes empty frames for refIds that were requested but didn't return results.
  */
 export function usePreviousTransformationOutput({
   selectedTransformation,
@@ -40,46 +44,25 @@ export function usePreviousTransformationOutput({
   queryData,
   queryTargets,
 }: UsePreviousTransformationOutputOptions): DataFrame[] {
-  const [prevOutput, setPrevOutput] = useState<DataFrame[]>([]);
+  // A transformation the pipeline does not contain has no preceding output to show, and neither does
+  // a query that has not returned anything yet.
+  const isInPipeline =
+    selectedTransformation !== null &&
+    queryData.length > 0 &&
+    transformations.some(({ transformId }) => transformId === selectedTransformation.transformId);
 
-  useEffect(() => {
-    if (!selectedTransformation || !queryData.length) {
-      setPrevOutput([]);
-      return;
-    }
+  const precedingConfigs = useMemo(
+    () =>
+      selectedTransformation && isInPipeline
+        ? precedingTransformations(selectedTransformation, transformations)
+        : NO_CONFIGS,
+    [isInPipeline, selectedTransformation, transformations]
+  );
 
-    const currentIndex = transformations.findIndex((t) => t.transformId === selectedTransformation.transformId);
-    if (currentIndex === -1) {
-      setPrevOutput([]);
-      return;
-    }
+  const precedingOutput = useTransformedFrames(precedingConfigs, queryData);
 
-    const prevTransformIndex = currentIndex - 1;
-
-    if (prevTransformIndex < 0) {
-      // This is the first transformation, use raw query data
-      setPrevOutput(mergeWithEmptyFrames(queryData, queryTargets));
-      return;
-    }
-
-    // Get all transformations before this one
-    const prevInputTransforms = transformations.slice(0, prevTransformIndex).map((t) => t.transformConfig);
-    const prevOutputTransforms = transformations.slice(prevTransformIndex, currentIndex).map((t) => t.transformConfig);
-
-    const ctx: DataTransformContext = {
-      interpolate: (v: string) => getTemplateSrv().replace(v),
-    };
-
-    const subscription = transformDataFrame(prevInputTransforms, queryData, ctx)
-      .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
-      .subscribe((result) => {
-        setPrevOutput(mergeWithEmptyFrames(result, queryTargets));
-      });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [selectedTransformation, transformations, queryData, queryTargets]);
-
-  return prevOutput;
+  return useMemo(
+    () => (isInPipeline ? mergeWithEmptyFrames(precedingOutput, queryTargets) : NO_FRAMES),
+    [isInPipeline, precedingOutput, queryTargets]
+  );
 }

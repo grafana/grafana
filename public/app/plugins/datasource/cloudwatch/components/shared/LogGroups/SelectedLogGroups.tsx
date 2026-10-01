@@ -1,9 +1,5 @@
-import { useEffect, useState } from 'react';
-
-import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
-
 import { type LogGroup } from '../../../dataquery.gen';
-import getStyles from '../../styles';
+import { SelectionChipList } from '../SelectionChipList';
 
 type CrossAccountLogsQueryProps = {
   selectedLogGroups?: LogGroup[];
@@ -18,72 +14,15 @@ export const SelectedLogGroups = ({
   onChange,
   maxNoOfVisibleLogGroups = MAX_NO_OF_VISIBLE_LOG_GROUPS,
 }: CrossAccountLogsQueryProps) => {
-  const styles = useStyles2(getStyles);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [visibleSelectecLogGroups, setVisibleSelectecLogGroups] = useState(
-    selectedLogGroups.slice(0, MAX_NO_OF_VISIBLE_LOG_GROUPS)
-  );
-
-  useEffect(() => {
-    setVisibleSelectecLogGroups(selectedLogGroups.slice(0, maxNoOfVisibleLogGroups));
-  }, [selectedLogGroups, maxNoOfVisibleLogGroups]);
-
-  if (selectedLogGroups.length === 0) {
-    return null;
-  }
-
   return (
-    <>
-      <div className={styles.selectedLogGroupsContainer}>
-        {visibleSelectecLogGroups.map((lg) => (
-          <Button
-            key={lg.arn}
-            size="sm"
-            variant="secondary"
-            icon="times"
-            className={styles.removeButton}
-            onClick={() => {
-              onChange(selectedLogGroups.filter((slg) => slg.arn !== lg.arn));
-            }}
-          >
-            {`${lg.name}${lg.accountLabel ? `(${lg.accountLabel})` : ''}`}
-          </Button>
-        ))}
-        {visibleSelectecLogGroups.length !== selectedLogGroups.length && (
-          <Button
-            size="sm"
-            variant="secondary"
-            icon="plus"
-            fill="outline"
-            className={styles.removeButton}
-            onClick={() => setVisibleSelectecLogGroups(selectedLogGroups)}
-          >
-            Show all
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="secondary"
-          icon="times"
-          fill="outline"
-          className={styles.removeButton}
-          onClick={() => setShowConfirm(true)}
-        >
-          Clear selection
-        </Button>
-      </div>
-      <ConfirmModal
-        isOpen={showConfirm}
-        title="Clear Log Group Selection"
-        body="Are you sure you want to clear all log groups?"
-        confirmText="Yes"
-        dismissText="No"
-        onConfirm={() => {
-          setShowConfirm(false);
-          onChange([]);
-        }}
-        onDismiss={() => setShowConfirm(false)}
-      />
-    </>
+    <SelectionChipList
+      items={selectedLogGroups}
+      onChange={onChange}
+      getKey={(logGroup) => logGroup.arn}
+      getLabel={(logGroup) => `${logGroup.name}${logGroup.accountLabel ? `(${logGroup.accountLabel})` : ''}`}
+      maxVisibleItems={maxNoOfVisibleLogGroups}
+      clearTitle="Clear Log Group Selection"
+      clearBody="Are you sure you want to clear all log groups?"
+    />
   );
 };

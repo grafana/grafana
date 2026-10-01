@@ -133,6 +133,38 @@ describe('style utils', () => {
     });
   });
 
+  describe('getStyleConfigState — missing branches', () => {
+    it('uses defaultStyleConfig when called with no argument', async () => {
+      const state = await getStyleConfigState();
+      expect(state.config).toBeDefined();
+      expect(state.hasText).toBe(false);
+    });
+
+    it('sets fields.rotation when config has a rotation field', async () => {
+      const cfg: StyleConfig = {
+        rotation: { field: 'bearing', fixed: 0, min: -180, max: 180 },
+      };
+      const state = await getStyleConfigState(cfg);
+      expect(state.fields?.rotation).toBe('bearing');
+    });
+
+    it('populates text state and fields.text when hasText is true with a field reference', async () => {
+      const cfg: StyleConfig = {
+        text: { mode: TextDimensionMode.Field, field: 'label', fixed: '' },
+      };
+      const state = await getStyleConfigState(cfg);
+      expect(state.hasText).toBe(true);
+      expect(state.fields?.text).toBe('label');
+      expect(state.base.textConfig).toBeDefined();
+    });
+
+    it('sets state.fields to undefined when no dynamic fields are configured', async () => {
+      const cfg: StyleConfig = {};
+      const state = await getStyleConfigState(cfg);
+      expect(state.fields).toBeUndefined();
+    });
+  });
+
   describe('getRGBValues — extra parsing branches', () => {
     let warnSpy: jest.SpyInstance;
     beforeEach(() => {

@@ -48,7 +48,7 @@ import { type RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { type TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getQueryRunnerFor } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -591,6 +591,28 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(intervalSnapshot.state.value).toBe('1m');
       expect(intervalSnapshot.state.text).toBe('1m');
       expect(intervalSnapshot.state.isReadOnly).toBe(true);
+    });
+
+    it('should not create annotation data layers for snapshots', () => {
+      // Snapshots embed annotation results in the per-panel snapshot query data, so annotation
+      // layers must not be created — they would fire live annotation queries (e.g. the authorized
+      // /api/annotations endpoint, which returns 401 for snapshots).
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.annotationLayers).toHaveLength(0);
     });
 
     it('should convert empty defaultKeys array to undefined for adhoc variables', () => {

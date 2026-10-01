@@ -40,10 +40,9 @@ func TestIntegrationProvisioning_FullSync_FolderUIDTooLong(t *testing.T) {
 	require.Equal(t, 41, len(tooLongUID), "test fixture must be exactly one over the 40-char limit")
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	// Shallow folder with a valid UID — must be created normally to prove

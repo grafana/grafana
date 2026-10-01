@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/mock"
@@ -166,7 +166,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.PostableExtendedRuleNodeExtended{
 				Rule:           rule,
-				NamespaceUID:   uuid.NewString(),
+				NamespaceUID:   uuid.NewV4().String(),
 				NamespaceTitle: "test-folder",
 			})
 

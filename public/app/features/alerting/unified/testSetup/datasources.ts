@@ -2,6 +2,7 @@ import { keyBy } from 'lodash';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { config, setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 /**
@@ -17,6 +18,9 @@ export function setupDataSources(...configs: DataSourceInstanceSettings[]) {
   config.datasources = datasourceSettings;
   dataSourceSrv.init(config.datasources, defaultDatasource?.name || config.defaultDatasource);
   setDataSourceSrv(dataSourceSrv);
+  // Also seed the newer instance-settings cache. getDataSourceInstanceSettings and
+  // getDataSourceInstanceList both read from this single cache, so one call covers both.
+  setDataSourceInstanceSettings(datasourceSettings, defaultDatasource?.name || config.defaultDatasource);
 
   return dataSourceSrv;
 }

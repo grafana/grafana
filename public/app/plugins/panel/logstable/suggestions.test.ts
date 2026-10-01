@@ -22,14 +22,23 @@ jest.mock('@grafana/runtime/internal', () => {
 });
 
 describe('logstable suggestions', () => {
-  beforeAll(() => {
-    mockGetBooleanValue.mockImplementation((key, defaultValue) =>
-      key === FlagKeys.LogsTablePanelNG ? true : defaultValue
-    );
+  afterEach(() => {
+    mockGetBooleanValue.mockImplementation((key, defaultValue) => defaultValue);
   });
 
-  afterAll(() => {
-    mockGetBooleanValue.mockImplementation((key, defaultValue) => defaultValue);
+  it('does not suggest logs table when the feature flag is off', () => {
+    mockGetBooleanValue.mockImplementation((key, defaultValue) =>
+      key === FlagKeys.LogsTablePanelNG ? false : defaultValue
+    );
+
+    const dataSummary = getPanelDataSummary([
+      createDataFrame({
+        meta: { preferredVisualisationType: 'logs' },
+        fields: [{ name: 'line', type: FieldType.string, values: ['a', 'b', 'c'] }],
+      }),
+    ]);
+
+    expect(logstableSuggestionsSupplier(dataSummary)).toBeUndefined();
   });
 
   it('does not suggest logs table for non-log data', () => {

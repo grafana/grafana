@@ -3,14 +3,17 @@ package resources
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -211,6 +214,17 @@ func (p *singleAPIClients) onlyOnce(ctx context.Context) error {
 			p.initErr = fmt.Errorf("get rest config: %w", e)
 			return
 		}
+
+		// Wrap the transport with otelhttp so outbound requests carry W3C trace
+		// context. Without this the operator's writes to the apiserver (resource
+		// creates, folder ensures, job status updates) are leaf spans with no
+		// children — the apiserver has no incoming traceparent to continue the
+		// trace. The gRPC search path already propagates via its own interceptor.
+		// Copy first: GetRestConfig returns a shared config used by other clients.
+		restConfig = rest.CopyConfig(restConfig)
+		restConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+			return otelhttp.NewTransport(rt)
+		})
 
 		p.dynamic, e = dynamic.NewForConfig(restConfig)
 		if e != nil {

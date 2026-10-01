@@ -3,8 +3,8 @@ package test
 import (
 	"context"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
@@ -88,7 +88,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 				Key:    key,
 				Value:  value,
 				Object: meta,
-				GUID:   uuid.New().String(),
+				GUID:   uuid.NewV4().String(),
 			})
 			require.NoError(t, err)
 			require.Greater(t, rv, int64(0))

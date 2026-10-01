@@ -34,15 +34,11 @@ export function VariableDisplaySelect({
       },
       {
         value: VariableHide.hideLabel,
-        label: t(
-          'dashboard-scene.variable-display-select.options.top-placement-hidden-label.label',
-          '{{placement}}, label hidden',
-          {
-            placement: resolvedTopPlacementLabel,
-          }
-        ),
+        label: t('dashboard.sidebar.variable.display-options.label-hidden', '{{placement}}, label hidden', {
+          placement: resolvedTopPlacementLabel,
+        }),
         description: t(
-          'dashboard-scene.variable-display-select.options.top-placement-hidden-label.description',
+          'dashboard.sidebar.variable.display-options.label-hidden-description',
           '{{placement}}, but without showing the name of variable',
           { placement: resolvedTopPlacementLabel }
         ),
@@ -51,9 +47,9 @@ export function VariableDisplaySelect({
         ? [
             {
               value: VariableHide.inControlsMenu,
-              label: t('dashboard-scene.variable-display-select.options.controls-menu.label', 'Controls menu'),
+              label: t('dashboard.sidebar.variable.display-options.controls-menu', 'Controls menu'),
               description: t(
-                'dashboard-scene.variable-display-select.options.controls-menu.description',
+                'dashboard.sidebar.variable.display-options.controls-menu-description',
                 'Visible when the controls menu is open'
               ),
             },
@@ -61,11 +57,8 @@ export function VariableDisplaySelect({
         : []),
       {
         value: VariableHide.hideVariable,
-        label: t('dashboard-scene.variable-display-select.options.hidden.label', 'Hidden'),
-        description: t(
-          'dashboard-scene.variable-display-select.options.hidden.description',
-          'Only visible in edit mode'
-        ),
+        label: t('dashboard.sidebar.variable.display-options.hidden', 'Hidden'),
+        description: t('dashboard.sidebar.variable.display-options.hidden-description', 'Only visible in edit mode'),
       },
     ],
     [hideControlsMenuOption, resolvedTopPlacementLabel]
@@ -78,7 +71,7 @@ export function VariableDisplaySelect({
   }
 
   return (
-    <Field label={t('dashboard-scene.variable-display-select.label', 'Display')} noMargin>
+    <Field label={t('dashboard.sidebar.variable.display', 'Display')} noMargin>
       <Combobox
         id={displayId}
         data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect}

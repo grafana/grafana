@@ -8,7 +8,7 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 import { PROVISIONING_URL } from '../../constants';
 
 export function ProvisionedFolderPreviewBanner({ queryParams }: CommonBannerProps) {
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
   const { prURL, newPrURL, repoURL, resourcePushedTo } = usePullRequestParam();
 
   if (!provisioningEnabled || 'kiosk' in queryParams) {

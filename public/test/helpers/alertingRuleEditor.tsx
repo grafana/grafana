@@ -27,10 +27,10 @@ export const ui = {
     targetDatasource: byTestId('target-data-source'),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId(selectors.components.DataSourcePicker.inputV2),
-    folder: byTestId('folder-picker'),
+    folder: byTestId(selectors.components.AlertRules.folderPicker),
     folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
     namespace: byTestId('namespace-picker'),
-    group: byTestId('group-picker'),
+    group: byTestId(selectors.components.AlertRules.groupPicker),
     pendingPeriod: byRole('textbox', { name: /^pending period/i }),
     annotationKey: (idx: number) => byTestId(`annotation-key-${idx}`),
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
@@ -39,7 +39,7 @@ export const ui = {
     expr: byTestId('expr'),
     simplifiedRouting: {
       contactPointRouting: byRole('radio', { name: /select contact point/i }),
-      contactPoint: byTestId('contact-point-picker'),
+      contactPoint: byTestId(selectors.components.AlertRules.contactPointPicker),
       routingOptions: byText(/muting, grouping and timings \(optional\)/i),
     },
     evaluationMode: {
@@ -52,7 +52,7 @@ export const ui = {
       byTestId(selectors.components.AlertRules.stepAdvancedModeSwitch(stepNo.toString())),
   },
   buttons: {
-    save: byTestId('save-rule'),
+    save: byTestId(selectors.components.AlertRules.saveRuleButton),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
     preview: byRole('button', { name: /^Preview$/ }),

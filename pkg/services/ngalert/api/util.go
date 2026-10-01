@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -42,12 +43,7 @@ var (
 )
 
 func isPrometheusCompatible(dsType string) bool {
-	for _, t := range prometheusCompatibleDsTypes {
-		if dsType == t {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(prometheusCompatibleDsTypes, dsType)
 }
 
 func isLotexRulerCompatible(dsType string) bool {
@@ -57,7 +53,7 @@ func isLotexRulerCompatible(dsType string) bool {
 func toMacaronPath(path string) string {
 	return string(searchRegex.ReplaceAllFunc([]byte(path), func(s []byte) []byte {
 		m := string(s[1 : len(s)-1])
-		return []byte(fmt.Sprintf(":%s", m))
+		return fmt.Appendf(nil, ":%s", m)
 	}))
 }
 

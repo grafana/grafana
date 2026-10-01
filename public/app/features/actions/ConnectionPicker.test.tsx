@@ -41,7 +41,6 @@ function createDataSource(name: string, uid: string, dsType: string): DataSource
     meta,
     isDefault: false,
     type: dsType,
-    readOnly: false,
   };
 }
 

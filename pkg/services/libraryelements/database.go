@@ -728,7 +728,7 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 		default:
 			f, err := l.folderService.Get(c, &folder.GetFolderQuery{
 				OrgID:        signedInUser.GetOrgID(),
-				ID:           &folderID,
+				ID:           &folderID, //nolint:staticcheck // Preserve legacy field compatibility.
 				SignedInUser: signedInUser,
 			})
 			if err != nil {

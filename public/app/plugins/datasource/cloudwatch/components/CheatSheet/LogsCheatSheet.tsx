@@ -4,12 +4,12 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Collapse, useStyles2, Text, TextLink } from '@grafana/ui';
-import { flattenTokens } from '@grafana/ui/internal';
 
 import { type CloudWatchLogsQuery, LogsQueryLanguage } from '../../dataquery.gen';
 import { trackSampleQuerySelection } from '../../tracking';
 import { type CloudWatchQuery } from '../../types';
 
+import { flattenTokens } from './flattenTokens';
 import * as sampleQueries from './sampleQueries';
 import { cwliTokenizer, pplTokenizer, sqlTokenizer } from './tokenizer';
 

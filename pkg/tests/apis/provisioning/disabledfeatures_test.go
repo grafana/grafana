@@ -4,11 +4,32 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
+
+// createJobExpectingError posts a job to the repositories/{repo}/jobs subresource
+// and returns the API error, asserting the request failed. The shared test env
+// disables the provisioningExport feature flag, so migrate and export jobs are
+// rejected up front at job creation time.
+func createJobExpectingError(t *testing.T, helper *common.ProvisioningTestHelper, repo string, spec provisioning.JobSpec) error {
+	t.Helper()
+
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("jobs").
+		Body(common.AsJSON(spec)).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context())
+
+	err := result.Error()
+	require.Error(t, err, "job creation should be rejected while the feature is disabled")
+	return err
+}
 
 func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 	helper := sharedHelper(t)
@@ -28,21 +49,9 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 		},
 	}
 
-	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-
-	status, found, err := unstructured.NestedMap(job.Object, "status")
-	require.NoError(t, err)
-	require.True(t, found, "job should have status")
-
-	state, found, err := unstructured.NestedString(status, "state")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, "error", state, "job should have error state")
-
-	message, found, err := unstructured.NestedString(status, "message")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Contains(t, message, "migrate functionality is disabled by configuration")
+	err := createJobExpectingError(t, helper, repo, spec)
+	require.True(t, apierrors.IsBadRequest(err), "expected a bad request, got %v", err)
+	require.Contains(t, err.Error(), "migrate jobs require the provisioningExport feature flag")
 }
 
 func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
@@ -64,19 +73,7 @@ func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 		},
 	}
 
-	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-
-	status, found, err := unstructured.NestedMap(job.Object, "status")
-	require.NoError(t, err)
-	require.True(t, found, "job should have status")
-
-	state, found, err := unstructured.NestedString(status, "state")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, "error", state, "job should have error state")
-
-	message, found, err := unstructured.NestedString(status, "message")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Contains(t, message, "export functionality is disabled by configuration")
+	err := createJobExpectingError(t, helper, repo, spec)
+	require.True(t, apierrors.IsBadRequest(err), "expected a bad request, got %v", err)
+	require.Contains(t, err.Error(), "push jobs require the provisioningExport feature flag")
 }

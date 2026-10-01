@@ -201,7 +201,7 @@ func TestGroupScopesByActionContext(t *testing.T) {
 			name: "multiple actions with varying scope counts",
 			permissions: func() []Permission {
 				var perms []Permission
-				for i := 0; i < 3; i++ {
+				for i := range 3 {
 					for j := 0; j < 2+i; j++ {
 						perms = append(perms, Permission{
 							Action: fmt.Sprintf("action:%d", i),
@@ -320,10 +320,7 @@ func generateTestPermissions(numActions, totalPerms int) []Permission {
 	permissions := make([]Permission, 0, totalPerms)
 
 	// Calculate base scopes per action
-	basePerAction := totalPerms / numActions
-	if basePerAction < 1 {
-		basePerAction = 1
-	}
+	basePerAction := max(totalPerms/numActions, 1)
 
 	for i := 0; i < numActions && len(permissions) < totalPerms; i++ {
 		// Add variance: some actions get 2x scopes, some get 0.5x

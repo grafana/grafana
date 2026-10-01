@@ -53,8 +53,7 @@ func schema_pkg_apis_folder_v1_DescendantCounts(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceStats{}.OpenAPIModelName()),
+										Ref: ref(ResourceStats{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -168,9 +167,8 @@ func schema_pkg_apis_folder_v1_FolderAccessInfo(ref common.ReferenceCallback) co
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: false,
-										Type:    []string{"boolean"},
-										Format:  "",
+										Type:   []string{"boolean"},
+										Format: "",
 									},
 								},
 							},
@@ -295,8 +293,7 @@ func schema_pkg_apis_folder_v1_FolderInfoList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(FolderInfo{}.OpenAPIModelName()),
+										Ref: ref(FolderInfo{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -354,8 +351,7 @@ func schema_pkg_apis_folder_v1_FolderList(ref common.ReferenceCallback) common.O
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Folder{}.OpenAPIModelName()),
+										Ref: ref(Folder{}.OpenAPIModelName()),
 									},
 								},
 							},

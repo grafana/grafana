@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -16,7 +16,11 @@ import (
 
 func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Settings, pluginsettings.DecryptedSecureJSONLoader, error) {
 	ctx = pluginsettings.WithSecureContextShim(ctx)
-	raw, err := b.getter.Get(ctx, apppluginV0.INSTANCE_NAME, &v1.GetOptions{})
+	raw, err := b.getter(ctx, schema.GroupVersionResource{
+		Group:    b.group,
+		Version:  apppluginV0.VERSION,
+		Resource: apppluginV0.APP_RESOURCE_NAME,
+	}, apppluginV0.INSTANCE_NAME)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -37,19 +41,17 @@ func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Set
 		return nil, nil, err
 	}
 
-	loader, err := pluginsettings.GetDecryptedSecureJSONLoader(ctx, obj, b.decrypter)
+	loader, err := b.decrypter.loader(ctx, obj)
 	return settings, loader, err
 }
 
 // Gets plugin context with decrypted secure values
-func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Context, backend.PluginContext, error) {
+func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context, apiVersion string) (context.Context, backend.PluginContext, error) {
 	settings, secure, err := b.getSettings(ctx)
 	if err != nil {
 		return ctx, backend.PluginContext{}, err
 	}
-	instance := &backend.AppInstanceSettings{
-		APIVersion: b.groupVersion.Version,
-	}
+	instance := &backend.AppInstanceSettings{APIVersion: apiVersion}
 	instance.JSONData, err = json.Marshal(settings.Spec.JsonData)
 	if err != nil {
 		return ctx, backend.PluginContext{}, fmt.Errorf("error marshalling JsonData: %w", err)

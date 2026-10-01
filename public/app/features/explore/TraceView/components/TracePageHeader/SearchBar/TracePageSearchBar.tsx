@@ -30,7 +30,7 @@ type TracePageSearchBarProps = {
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   focusedSpanIndexForSearch: number;
   setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
-  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
+  setFocusedSpanIdForSearch: (spanID: string) => void;
   datasourceType: string;
   showSpanFilters: boolean;
 };

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -53,9 +54,11 @@ func (e *WriteEvent) Validate() error {
 
 // WrittenEvent is a WriteEvent reported with a resource version.
 type WrittenEvent struct {
-	Type       resourcepb.WatchEvent_Type
-	Key        *resourcepb.ResourceKey
-	PreviousRV int64
+	Type           resourcepb.WatchEvent_Type
+	Key            *resourcepb.ResourceKey
+	PreviousRV     int64
+	PreviousAction kv.DataAction
+	PreviousFolder string
 
 	// The json payload (without resourceVersion)
 	Value []byte

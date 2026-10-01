@@ -31,6 +31,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
             {...headerGroupProps}
             key={key}
             aria-label={e2eSelectorsTable.header}
+            aria-rowindex={1}
             role="row"
           >
             {headerGroup.headers.map((column: Column, index: number) =>

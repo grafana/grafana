@@ -1,7 +1,6 @@
 package search
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -14,11 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 type expectedDashboardSearchFields struct {
@@ -266,19 +263,9 @@ func dashboardSearchLifecycleSeed(t *testing.T) int64 {
 func newFileBackedDashboardIndex(t *testing.T, key resource.NamespacedResource, docCount int64) *bleveIndex {
 	t.Helper()
 
-	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &builders.DashboardDocumentBuilder{
-			Namespace:        namespace,
-			Blob:             blob,
-			Stats:            make(map[string]map[string]int64),
-			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
-		}, nil
-	})
-	require.NoError(t, err)
-
-	backend, _ := setupBleveBackend(t, withFileThreshold(0), withSearchFieldsProvidersForKinds(map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-		resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
-	}))
+	backend, _ := setupBleveBackend(t, withFileThreshold(0), withSearchFields(resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+		resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
+	})))
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: key.Namespace})
 
 	resourceIndex, err := backend.BuildIndex(ctx, key, docCount, "test", func(index resource.ResourceIndex) (int64, error) {

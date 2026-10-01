@@ -12,6 +12,11 @@ import {
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+// The cleanup finalizer removes the provider-side webhook on delete. keep-resources
+// keeps it (the webhook is still removed) but swaps the resource finalizer so
+// resources are released instead of removed.
+const CLEANUP_FINALIZER = 'cleanup';
+
 type DeleteAction = 'remove-resources' | 'keep-resources';
 
 interface Props {
@@ -27,21 +32,36 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
 
   const performDelete = useCallback(
     async (deleteAction: DeleteAction) => {
-      if (deleteAction === 'keep-resources' && repository) {
-        const updatedRepository = {
-          ...repository,
-          metadata: {
-            ...repository.metadata,
-            finalizers: ['cleanup', 'release-orphan-resources'],
-          },
-        };
-        await replaceRepository({ name, repository: updatedRepository });
+      const keepResources = deleteAction === 'keep-resources';
+
+      // keep-resources swaps remove-orphan for release-orphan; remove-resources
+      // leaves the repository's finalizers as they are. If a delete then wedges
+      // (e.g. dead credentials block webhook cleanup) the backend surfaces it as
+      // status.deleteError and the Overview banner offers "Delete anyway".
+      let finalizers: string[] | undefined;
+      if (keepResources) {
+        finalizers = [CLEANUP_FINALIZER, 'release-orphan-resources'];
+      }
+
+      if (finalizers && repository) {
+        try {
+          // unwrap so a rejected PUT throws: RTK Query triggers resolve to an
+          // action even on error. If we don't stop here, deletion proceeds with
+          // the wrong finalizer set.
+          await replaceRepository({
+            name,
+            repository: { ...repository, metadata: { ...repository.metadata, finalizers } },
+          }).unwrap();
+        } catch {
+          return;
+        }
       }
 
       reportInteraction('grafana_provisioning_repository_deleted', {
         repositoryName: name,
         repositoryType: repository?.spec?.type ?? 'unknown',
         deleteAction,
+        forceDelete: false,
         target: repository?.spec?.sync?.target ?? 'unknown',
         workflows: repository?.spec?.workflows ?? [],
       });

@@ -14,22 +14,6 @@ labels:
     - oss
 title: View alert state history
 weight: 440
-refs:
-  time-series-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  meta-monitoring:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor/
 ---
 
 # View alert state history
@@ -46,11 +30,9 @@ Grafana OSS and Grafana Enterprise users must [configure alert state history in 
 
 The History page shows the history and state changes of all Grafana-managed alert rules. You can filter by labels and alert states.
 
-Users can only view the history of alert rules they have permission to access (RBAC).
+The **History** page also includes a **Notifications** tab for [notification history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/).
 
-{{< admonition type="note" >}}
-Grafana OSS and Grafana Enterprise users must also enable the [`alertingCentralAlertHistory`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) feature toggle to access this page.
-{{< /admonition >}}
+Users can only view the history of alert rules they have permission to access (RBAC).
 
 To access the History page, complete the following steps.
 
@@ -134,6 +116,6 @@ To access the State history view, complete the following steps.
 
 ## Explore and query the alert history
 
-You can also use [Grafana Explore](ref:explore) to query the data sources that store alert history.
+You can also use [Grafana Explore](/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/) to query the data sources that store alert history.
 
-For details on querying these data sources, refer to [Alerting Meta monitoring](ref:meta-monitoring).
+For details on querying these data sources, refer to [Alerting Meta monitoring](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor/).
