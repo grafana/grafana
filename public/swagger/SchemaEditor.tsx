@@ -4,7 +4,7 @@ import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 import { CodeMirrorEditor, type CodeMirrorExtension } from '@grafana/ui/unstable';
 
-import { NamespaceContext } from './plugins';
+import { NamespaceContext } from './contexts';
 import { schemaAnnotations } from './schemaAnnotations';
 
 interface Props {

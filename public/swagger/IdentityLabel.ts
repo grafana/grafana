@@ -9,11 +9,14 @@ export class IdentityLabel extends WidgetType {
     return this.label === other.label;
   }
 
-  toDOM() {
+  toDOM(view: EditorView) {
     const dom = document.createElement('span');
     dom.className = 'cm-identity-label';
     dom.setAttribute('contenteditable', 'false');
     dom.textContent = this.label;
+    // Inline UI must not trigger the surrounding JSON schema's hover description.
+    dom.onmouseenter = () => view.dom.dispatchEvent(new MouseEvent('mouseleave'));
+    dom.onmousemove = (event) => event.stopPropagation();
     return dom;
   }
 }

@@ -1,6 +1,7 @@
 import { createContext, lazy, Suspense, useContext, useEffect, useMemo, useRef } from 'react';
 
 import { K8sNameLookup } from './K8sNameLookup';
+import { NamespaceContext, ResourceContext, type ResourceInfo } from './contexts';
 
 const SchemaEditor = lazy(() => import('./SchemaEditor'));
 
@@ -10,17 +11,8 @@ interface UntypedProps {
 }
 
 type SchemaType = Record<string, any> | undefined;
-export type ResourceInfo = {
-  group: string;
-  version: string;
-  resource: string;
-  namespaced: boolean;
-};
-
 // Use react contexts to stash settings
 const SchemaContext = createContext<SchemaType>(undefined);
-export const NamespaceContext = createContext<string | undefined>(undefined);
-export const ResourceContext = createContext<ResourceInfo | undefined>(undefined);
 
 function NamespaceInput({ Original, ...props }: UntypedProps & { Original: React.ElementType }) {
   const namespace = useContext(NamespaceContext);

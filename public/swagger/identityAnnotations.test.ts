@@ -1,6 +1,6 @@
 import { json } from '@codemirror/lang-json';
-import { EditorView } from '@codemirror/view';
-import { screen } from '@testing-library/react';
+import { EditorView, hoverTooltip } from '@codemirror/view';
+import { fireEvent, screen } from '@testing-library/react';
 
 import { schemaAnnotations as identityAnnotations } from './schemaAnnotations';
 
@@ -21,6 +21,24 @@ function display(displayName: string) {
 afterEach(() => {
   view?.destroy();
   jest.restoreAllMocks();
+  jest.useRealTimers();
+});
+
+it('does not request a schema tooltip when hovering over an identity label', () => {
+  jest.useFakeTimers();
+  jest.spyOn(globalThis, 'fetch').mockReturnValue(new Promise(() => {}));
+  const schemaHover = jest.fn(() => null);
+  view = new EditorView({
+    doc,
+    extensions: [json(), identityAnnotations(), hoverTooltip(schemaHover, { hoverTime: 10 })],
+    parent: document.body,
+  });
+  const label = screen.getAllByText('Loading identity…')[0];
+  expect(label).toHaveAttribute('contenteditable', 'false');
+  fireEvent.mouseEnter(label);
+  fireEvent.mouseMove(label);
+  jest.advanceTimersByTime(50);
+  expect(schemaHover).not.toHaveBeenCalled();
 });
 
 it('resolves both metadata annotations independently and leaves the saved JSON unchanged', async () => {
