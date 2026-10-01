@@ -3,6 +3,9 @@ go 1.27.1
 // The `skip:golangci-lint` comment tag is used to exclude the package from the `golangci-lint` GitHub Action.
 // The module at the root of the repo (`.`) is excluded because ./pkg/... is included manually in the `golangci-lint` configuration.
 
+// Build every workspace module against the app SDK branch with resource KV support.
+replace github.com/grafana/grafana-app-sdk => github.com/grafana/grafana-app-sdk v0.60.9-0.20261001084359-82ed11252280
+
 use (
 	. // skip:golangci-lint
 	./apps/advisor

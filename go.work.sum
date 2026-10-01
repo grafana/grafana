@@ -1047,6 +1047,8 @@ github.com/grafana/grafana-app-sdk v0.60.3/go.mod h1:sI7/5QkOrkd5sYVl03UcOQAC76z
 github.com/grafana/grafana-app-sdk v0.60.4-0.20260925051815-d646a4dc00dd/go.mod h1:sI7/5QkOrkd5sYVl03UcOQAC76zBTO1cdFF7b20TF1M=
 github.com/grafana/grafana-app-sdk v0.60.6/go.mod h1:XM+J9Jzczi/sQV3JSP8LwMBoZmPD+jS4bxFbkIG/rs4=
 github.com/grafana/grafana-app-sdk v0.60.7-0.20260929200557-eb425ec5151f/go.mod h1:XM+J9Jzczi/sQV3JSP8LwMBoZmPD+jS4bxFbkIG/rs4=
+github.com/grafana/grafana-app-sdk v0.60.9-0.20261001084359-82ed11252280 h1:tLskvAZa1obuuIC6NBFD7SSiO85TOkU3Kh4+AxUr0zk=
+github.com/grafana/grafana-app-sdk v0.60.9-0.20261001084359-82ed11252280/go.mod h1:cdSayNCfBtb0u4mp086ypQar50TUHk60jGQNCKqUYQQ=
 github.com/grafana/grafana-app-sdk/logging v0.59.0/go.mod h1:YL+dFVw92Us2TNoeJbqUOhEEyl1DLdCGaTSwMXMMnJs=
 github.com/grafana/grafana-app-sdk/logging v0.60.0/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
 github.com/grafana/grafana-app-sdk/logging v0.60.2/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
