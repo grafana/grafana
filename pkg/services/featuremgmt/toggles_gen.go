@@ -942,18 +942,6 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
-	// FlagDashboardSearchFieldValueResults
-	// Uses field-value results for dashboard search requests
-	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
-
-	// FlagDashboardApiSearchFieldValueResults
-	// Uses field-value results for requests from the /api/search endpoint
-	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
-
-	// FlagSearchApiFieldValueResults
-	// Uses field-value results for generic resource search API requests
-	FlagSearchApiFieldValueResults = "search.apiFieldValueResults"
-
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -1045,6 +1033,10 @@ const (
 	// FlagDatasourcesGatewayGuardrails
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
+
+	// FlagDatasourcesQueryGatewaySlimAudit
+	// Only attach query payloads to query gateway audit events when a guardrail fires
+	FlagDatasourcesQueryGatewaySlimAudit = "datasources.queryGatewaySlimAudit"
 
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector

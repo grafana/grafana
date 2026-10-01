@@ -446,10 +446,12 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	var pendingSeconds int64
 	if ts := obj.GetDeletionTimestamp(); ts != nil {
 		age := time.Since(ts.Time)
-		rc.deletionMetrics.observePending(age)
 		if age > 0 {
 			pendingSeconds = int64(age.Seconds())
 		}
+		// Observe before finalizers run so a hung finalizer cannot hide the
+		// pending age. The cause was persisted by the previous failed reconcile.
+		rc.deletionMetrics.observePending(age, deletionErrorCause(obj))
 	}
 	logger.Info("handle repository delete",
 		"pendingSeconds", pendingSeconds,
@@ -550,6 +552,7 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	deletion := &provisioning.DeletionStatus{
 		State:   provisioning.DeletionStateBlocked,
 		Message: err.Error(),
+		Cause:   provisioning.DeletionCause(classifyTokenErrorCause(err)),
 	}
 	var fe *finalizerError
 	if errors.As(err, &fe) {
@@ -559,8 +562,29 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	if errors.As(err, &folderErr) {
 		// nonEmptyFolderError is ready for users; omit internal operation prefixes.
 		deletion.Message = folderErr.Error()
+		deletion.Cause = provisioning.DeletionCauseUser
 	}
 	return deletion
+}
+
+// deletionErrorCause prefers the structured cause because the legacy DeleteError
+// is set for both user and system failures. Unclassified failures default to
+// "system" until a failed reconcile persists their cause.
+func deletionErrorCause(obj *provisioning.Repository) string {
+	if deletion := obj.Status.Deletion; deletion != nil {
+		switch deletion.Cause {
+		case provisioning.DeletionCauseUser, provisioning.DeletionCauseSystem:
+			return string(deletion.Cause)
+		default:
+			// Older statuses have no cause. Unknown values must also stay in
+			// the alert population without introducing unbounded metric labels.
+			return reconcileCauseSystem
+		}
+	}
+	if obj.Status.DeleteError != "" {
+		return reconcileCauseSystem
+	}
+	return ""
 }
 
 func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {

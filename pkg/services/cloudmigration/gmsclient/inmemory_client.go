@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -36,7 +35,7 @@ func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.
 		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
 
-	snapshotUid := uuid.NewString()
+	snapshotUid := uuid.NewV4().String()
 
 	metadataBuffer, err := json.Marshal(struct {
 		SnapshotID string `json:"snapshotID"`

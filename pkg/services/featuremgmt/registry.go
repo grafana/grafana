@@ -1655,14 +1655,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "alertingImportYAMLUI",
-			Description: "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
-			Generate:    Generate{LegacyFrontend: true},
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "alertingMigrationWizardUI",
 			Description: "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
 			Generate:    Generate{LegacyFrontend: true},
@@ -2957,30 +2949,6 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:        "dashboard.searchFieldValueResults",
-			Description: "Uses field-value results for dashboard search requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
-			Name:        "dashboard.apiSearchFieldValueResults",
-			Description: "Uses field-value results for requests from the /api/search endpoint",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
-			Name:        "search.apiFieldValueResults",
-			Description: "Uses field-value results for generic resource search API requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
 			Name:        "dashboard.vectorSearch",
 			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
 			Stage:       FeatureStageExperimental,
@@ -3390,6 +3358,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "datasources.queryGatewaySlimAudit",
+			Description:  "Only attach query payloads to query gateway audit events when a guardrail fires",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// TODO: add docs for the unified_alerting.folder_label_full_sync_interval setting before removing this
 		{

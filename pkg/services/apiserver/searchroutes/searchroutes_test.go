@@ -162,7 +162,7 @@ func TestBuild_MountsBuilderAdvertisedKinds(t *testing.T) {
 	assert.Equal(t, []string{"widgets/search"}, got[gv.String()])
 }
 
-func TestBuildWithOptions_UsesFullBuilderManifest(t *testing.T) {
+func TestBuild_UsesFullBuilderManifest(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
 	info := utils.NewResourceInfo(gv.Group, gv.Version, "widgets", "widget", "Widget", nil, nil, utils.TableColumns{})
 	searchDisabled := false
@@ -185,7 +185,7 @@ func TestBuildWithOptions_UsesFullBuilderManifest(t *testing.T) {
 		manifest: manifest,
 	}}
 
-	got := paths(BuildWithOptions(true, false, nil, fakeClient{}, builders, nil, BuildOptions{}))
+	got := paths(Build(true, false, nil, fakeClient{}, builders, nil))
 
 	assert.Empty(t, got, "the full manifest opt-out must win over synthesized resource declarations")
 }
@@ -608,4 +608,26 @@ func TestBuildForServedGroupVersions_RejectsAMalformedDeclaration(t *testing.T) 
 	routes, err := BuildForServedGroupVersions(todoManifest(gv, "int64", "text"), served, true, true, nil, fakeClient{})
 	require.Error(t, err)
 	assert.Nil(t, routes)
+}
+
+func TestBuildGlobalSearch(t *testing.T) {
+	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{
+		{Group: "dashboard.grafana.app", Version: "v1"},
+	}}}
+	const searchGV = searchv0.GROUP + "/" + searchv0.VERSION
+
+	got := paths(BuildGlobalSearch(nil, fakeClient{}, builders))
+	assert.Equal(t, map[string][]string{searchGV: {resource.GlobalSearchResource + "/" + searchv0.SearchPathSegment}}, got,
+		"only the one route, under the search group")
+
+	assert.Nil(t, BuildGlobalSearch(nil, nil, builders), "nothing to serve it with without a client")
+}
+
+// Every covered type is named, whichever API versions this process serves, and
+// nothing else is.
+func TestGlobalSearchKinds(t *testing.T) {
+	assert.Equal(t, map[schema.GroupResource]string{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"}: "Dashboard",
+		{Group: "folder.grafana.app", Resource: "folders"}:       "Folder",
+	}, globalSearchKinds(resource.AppManifests()))
 }

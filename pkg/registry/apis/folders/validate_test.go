@@ -1540,7 +1540,7 @@ func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
 }
 
 var (
-	_ = resourcepb.ResourceIndexClient(&mockSearchClient{})
+	_ resourcepb.ResourceIndexClient = (*mockSearchClient)(nil)
 )
 
 type mockSearchClient struct {

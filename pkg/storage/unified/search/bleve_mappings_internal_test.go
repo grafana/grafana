@@ -3,6 +3,7 @@ package search
 import (
 	"maps"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,6 +36,42 @@ func flatMappings(t *testing.T, def resource.SearchFieldDefinition) map[string]*
 		out[name] = sub.Fields[0]
 	}
 	return out
+}
+
+func TestDeletedResourceVersionMappingOverrideIsTopLevelOnly(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {{
+			Name: resource.SEARCH_FIELD_DELETED_RV,
+			Type: resource.SearchFieldTypeInt64,
+			Capabilities: []resource.SearchCapability{
+				resource.SearchCapabilityFilter,
+				resource.SearchCapabilitySort,
+				resource.SearchCapabilityRetrieve,
+			},
+		}},
+	}, nil)
+
+	indexMapping, err := GetBleveMappings(provider, gvr.Group, gvr.Resource, nil)
+	require.NoError(t, err)
+	impl := indexMapping.(*mapping.IndexMappingImpl)
+
+	topLevel := impl.DefaultMapping.Properties[resource.SEARCH_FIELD_DELETED_RV]
+	require.NotNil(t, topLevel)
+	require.Len(t, topLevel.Fields, 1)
+	assert.Equal(t, "text", topLevel.Fields[0].Type)
+	assert.False(t, topLevel.Fields[0].Index)
+
+	fields := impl.DefaultMapping.Properties[strings.TrimSuffix(resource.SEARCH_FIELD_PREFIX, ".")]
+	require.NotNil(t, fields)
+	custom := fields.Properties[resource.SEARCH_FIELD_DELETED_RV]
+	require.NotNil(t, custom)
+	require.Len(t, custom.Fields, 1)
+	assert.Equal(t, "number", custom.Fields[0].Type)
+	assert.True(t, custom.Fields[0].Index)
+	assert.True(t, custom.Fields[0].Store)
+	assert.True(t, custom.Fields[0].DocValues)
+	assert.NotContains(t, fields.Properties, resource.SEARCH_FIELD_DELETED_RV_SORT)
 }
 
 func TestAddCapabilityFieldMappings_FilterRetrieve_LegacyShape(t *testing.T) {
