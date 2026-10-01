@@ -60,7 +60,7 @@ type repositoryDeletionMetrics struct {
 func registerRepositoryDeletionMetrics(registry prometheus.Registerer) *repositoryDeletionMetrics {
 	pendingSeconds := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "grafana_provisioning_repository_deletion_pending_seconds",
-		Help:    "Age of a repository still in Terminating, observed on each delete reconcile. cause is empty when nothing failed this pass; filter cause!=\"user\" to exclude customer-fixable blocks (e.g. revoked credentials) from alerting.",
+		Help:    "Age of a repository still in Terminating, observed on each delete reconcile. cause reflects the previously recorded deletion failure and is empty when none was recorded; filter cause!=\"user\" to exclude customer-fixable blocks (e.g. revoked credentials) from alerting.",
 		Buckets: repositoryDeletionPendingBuckets,
 	}, []string{"cause"})
 	deletionsTotal := prometheus.NewCounter(prometheus.CounterOpts{
@@ -83,8 +83,9 @@ func registerRepositoryDeletionMetrics(registry prometheus.Registerer) *reposito
 // observePending records how long a repository has been in Terminating. Called
 // once per delete reconcile, so a stuck repository re-observes its growing age at
 // resync cadence and its observations climb through the buckets. cause is the
-// classifyTokenErrorCause result for this pass's blocking error ("user" or
-// "system"), or "" when nothing failed this pass (e.g. no finalizers left).
+// persisted classifyTokenErrorCause result for the previous blocking error
+// ("user" or "system"), or "" when no failure was recorded. Older failures
+// without a cause default to "system".
 func (m *repositoryDeletionMetrics) observePending(age time.Duration, cause string) {
 	if m == nil {
 		return

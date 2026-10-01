@@ -836,6 +836,13 @@ func schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"cause": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Cause classifies the blocking error as \"user\" (requires user intervention) or \"system\" (an infrastructure failure). It may be absent on older statuses.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

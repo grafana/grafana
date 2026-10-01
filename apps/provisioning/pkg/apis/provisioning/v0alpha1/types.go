@@ -1137,6 +1137,10 @@ type DeletionStatus struct {
 	// Message is a human-readable explanation of what went wrong, suitable for
 	// showing to users.
 	Message string `json:"message,omitempty"`
+
+	// Cause classifies the blocking error as "user" (requires user intervention)
+	// or "system" (an infrastructure failure). It may be absent on older statuses.
+	Cause string `json:"cause,omitempty"`
 }
 
 func (DeletionStatus) OpenAPIModelName() string {

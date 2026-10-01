@@ -449,12 +449,9 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 		if age > 0 {
 			pendingSeconds = int64(age.Seconds())
 		}
-		// cause reflects the error this object was already blocked on going
-		// into this pass (status.deletion/deleteError, carried over from the
-		// previous reconcile's updateDeleteStatus) rather than this pass's own
-		// outcome, which isn't known yet. A pass that newly fails updates the
-		// status below, so the cause catches up on the next reconcile.
-		rc.deletionMetrics.observePending(age, classifyDeletionCauseFromMessage(deletionErrorMessage(obj)))
+		// Observe before finalizers run so a hung finalizer cannot hide the
+		// pending age. The cause was persisted by the previous failed reconcile.
+		rc.deletionMetrics.observePending(age, deletionErrorCause(obj))
 	}
 	logger.Info("handle repository delete",
 		"pendingSeconds", pendingSeconds,
@@ -555,6 +552,7 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	deletion := &provisioning.DeletionStatus{
 		State:   provisioning.DeletionStateBlocked,
 		Message: err.Error(),
+		Cause:   classifyTokenErrorCause(err),
 	}
 	var fe *finalizerError
 	if errors.As(err, &fe) {
@@ -568,40 +566,24 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	return deletion
 }
 
-// deletionErrorMessage returns the best-available description of why this
-// object's deletion is currently blocked, preferring the structured
-// status.deletion over the deprecated free-text deleteError (same precedence
-// the frontend's RepositoryStatusAlert uses). Empty if nothing is blocked.
-func deletionErrorMessage(obj *provisioning.Repository) string {
-	if obj.Status.Deletion != nil && obj.Status.Deletion.Message != "" {
-		return obj.Status.Deletion.Message
+// deletionErrorCause prefers the structured cause because the legacy DeleteError
+// is set for both user and system failures. Unclassified failures default to
+// "system" until a failed reconcile persists their cause.
+func deletionErrorCause(obj *provisioning.Repository) string {
+	if deletion := obj.Status.Deletion; deletion != nil {
+		switch deletion.Cause {
+		case reconcileCauseUser, reconcileCauseSystem:
+			return deletion.Cause
+		default:
+			// Older statuses have no cause. Unknown values must also stay in
+			// the alert population without introducing unbounded metric labels.
+			return reconcileCauseSystem
+		}
 	}
-	return obj.Status.DeleteError
-}
-
-// classifyDeletionCauseFromMessage is a stopgap classifier for the
-// pending-seconds metric: status.deletion/deleteError has no structured cause
-// field yet, so this pattern-matches the free-text message against the known
-// user-caused sentinel messages (repository.ErrUnauthorized,
-// repository.ErrPermissionDenied, connection.ErrAuthentication,
-// connection.ErrRepositoryAccess) to approximate what classifyTokenErrorCause
-// does for a live error elsewhere. Deliberately conservative: an unmatched or
-// ambiguous message defaults to "system" so a real failure never silently
-// drops out of the alert population.
-func classifyDeletionCauseFromMessage(message string) string {
-	if message == "" {
-		return ""
-	}
-	lower := strings.ToLower(message)
-	switch {
-	case strings.Contains(lower, "permission denied"),
-		strings.Contains(lower, "authentication failed"),
-		strings.Contains(lower, "token has expired"),
-		strings.Contains(lower, "cannot access repository"):
-		return reconcileCauseUser
-	default:
+	if obj.Status.DeleteError != "" {
 		return reconcileCauseSystem
 	}
+	return ""
 }
 
 func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {

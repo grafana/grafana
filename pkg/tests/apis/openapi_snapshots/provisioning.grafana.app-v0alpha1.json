@@ -4753,6 +4753,10 @@
         "description": "DeletionStatus reports the progress of an in-progress deletion and the problem blocking it. It is populated while the repository is Terminating and its finalizers run, so a client can explain the holdup and force-remove the blocking finalizer.",
         "type": "object",
         "properties": {
+          "cause": {
+            "description": "Cause classifies the blocking error as \"user\" (requires user intervention) or \"system\" (an infrastructure failure). It may be absent on older statuses.",
+            "type": "string"
+          },
           "finalizer": {
             "description": "Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer.",
             "type": "string"

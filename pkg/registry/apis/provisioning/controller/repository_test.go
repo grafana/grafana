@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -406,7 +407,10 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	statusPatcher.
 		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
 			mock.AnythingOfType("map[string]interface {}"),
-			mock.AnythingOfType("map[string]interface {}")).
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				deletion, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && deletion.Cause == reconcileCauseSystem
+			})).
 		Once().
 		Return(nil)
 
@@ -473,93 +477,138 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 	assert.Equal(t, 1.0, counterValue(t, reg, repositoryDeletionsMetric))
 }
 
-// TestRepositoryController_handleDelete_ObservesPendingCauseFromStatus verifies
-// that the pending-age histogram's cause label comes from the object's
-// already-persisted status.deletion (carried over from a prior failing pass),
-// not from this pass's own outcome -- so a repo already blocked on a
-// permission error is labeled cause="user" even on a pass where it succeeds.
-func TestRepositoryController_handleDelete_ObservesPendingCauseFromStatus(t *testing.T) {
-	finalizer := NewMockFinalizerProcessor(t)
-	finalizer.
-		On("process", mock.Anything, mock.Anything).
-		Once().
-		Return(nil)
-
-	repoClient := &mockRepoInterface{
-		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
-			return &provisioning.Repository{}, nil
-		},
-	}
-
-	reg := prometheus.NewPedanticRegistry()
-	c := &RepositoryController{
-		finalizer:       finalizer,
-		tracer:          tracing.InitializeTracerForTest(),
-		deletionMetrics: registerRepositoryDeletionMetrics(reg),
-		client: &mockProvisioningV0alpha1Interface{
-			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
-		},
-	}
-
-	deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
-	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			DeletionTimestamp: &deletion,
-			Finalizers:        []string{repository.CleanFinalizer},
-		},
-		Status: provisioning.RepositoryStatus{
-			Deletion: &provisioning.DeletionStatus{
-				Finalizer: repository.CleanFinalizer,
-				Message:   "remove finalizers: execute deletion hooks: delete webhook: permission denied",
-			},
-		},
-	}
-	err := c.handleDelete(context.Background(), repo)
-	require.NoError(t, err)
-	assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", "user"))
-}
-
-func TestClassifyDeletionCauseFromMessage(t *testing.T) {
+func TestRepositoryController_handleDelete_ObservesPendingCauseBeforeFinalizers(t *testing.T) {
 	tests := []struct {
-		name    string
-		message string
-		want    string
+		name   string
+		status provisioning.RepositoryStatus
+		cause  string
 	}{
-		{name: "empty", message: "", want: ""},
-		{name: "permission denied", message: "remove finalizers: execute deletion hooks: delete webhook: permission denied", want: reconcileCauseUser},
-		{name: "authentication failed", message: "create repository from configuration: create gitlab client: authentication failed", want: reconcileCauseUser},
-		{name: "token expired", message: "create gitlab client: authentication token has expired: authentication failed", want: reconcileCauseUser},
-		{name: "cannot access repository", message: "cannot access repository", want: reconcileCauseUser},
-		{name: "unmatched defaults to system", message: "dial tcp: connection refused", want: reconcileCauseSystem},
+		{name: "no recorded failure", cause: ""},
+		{
+			name: "user cause takes precedence over legacy error",
+			status: provisioning.RepositoryStatus{
+				DeleteError: "connection refused",
+				Deletion:    &provisioning.DeletionStatus{Cause: reconcileCauseUser, Message: "provider rejected deletion"},
+			},
+			cause: reconcileCauseUser,
+		},
+		{
+			name: "message does not override system cause",
+			status: provisioning.RepositoryStatus{
+				Deletion: &provisioning.DeletionStatus{Cause: reconcileCauseSystem, Message: "permission denied"},
+			},
+			cause: reconcileCauseSystem,
+		},
+		{
+			name: "structured failure without cause",
+			status: provisioning.RepositoryStatus{
+				Deletion: &provisioning.DeletionStatus{State: provisioning.DeletionStateBlocked, Message: "permission denied"},
+			},
+			cause: reconcileCauseSystem,
+		},
+		{
+			name: "unknown cause stays bounded",
+			status: provisioning.RepositoryStatus{
+				Deletion: &provisioning.DeletionStatus{Cause: "unexpected-cause"},
+			},
+			cause: reconcileCauseSystem,
+		},
+		{
+			name:   "legacy failure without structured status",
+			status: provisioning.RepositoryStatus{DeleteError: "permission denied"},
+			cause:  reconcileCauseSystem,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, classifyDeletionCauseFromMessage(tc.message))
+			reg := prometheus.NewPedanticRegistry()
+			finalizer := NewMockFinalizerProcessor(t)
+			finalizer.On("process", mock.Anything, mock.Anything).Once().Run(func(mock.Arguments) {
+				assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", tc.cause))
+			}).Return(nil)
+			repoClient := &mockRepoInterface{
+				patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
+					return &provisioning.Repository{}, nil
+				},
+			}
+			c := &RepositoryController{
+				finalizer:       finalizer,
+				tracer:          tracing.InitializeTracerForTest(),
+				deletionMetrics: registerRepositoryDeletionMetrics(reg),
+				client: &mockProvisioningV0alpha1Interface{
+					repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
+				},
+			}
+			deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					DeletionTimestamp: &deletion,
+					Finalizers:        []string{repository.CleanFinalizer},
+				},
+				Status: tc.status,
+			}
+			require.NoError(t, c.handleDelete(context.Background(), repo))
+			family := gatherMetrics(t, reg)[repositoryDeletionPendingMetric]
+			require.NotNil(t, family)
+			require.Len(t, family.GetMetric(), 1)
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", tc.cause))
 		})
 	}
 }
 
-func TestDeletionErrorMessage(t *testing.T) {
-	t.Run("prefers structured deletion message", func(t *testing.T) {
-		obj := &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{
-				DeleteError: "legacy text",
-				Deletion:    &provisioning.DeletionStatus{Message: "structured text"},
-			},
-		}
-		assert.Equal(t, "structured text", deletionErrorMessage(obj))
-	})
+func TestRepositoryController_handleDelete_RecordsCauseForNextReconcile(t *testing.T) {
+	tests := []struct {
+		name  string
+		err   error
+		cause string
+	}{
+		{name: "repository unauthorized", err: repository.ErrUnauthorized, cause: reconcileCauseUser},
+		{name: "repository permission denied", err: repository.ErrPermissionDenied, cause: reconcileCauseUser},
+		{name: "connection authentication", err: connection.ErrAuthentication, cause: reconcileCauseUser},
+		{name: "connection not found", err: connection.ErrNotFound, cause: reconcileCauseUser},
+		{name: "connection repository access", err: connection.ErrRepositoryAccess, cause: reconcileCauseUser},
+		{name: "infrastructure failure", err: errors.New("connection reset by peer"), cause: reconcileCauseSystem},
+		{name: "misleading message", err: errors.New("permission denied"), cause: reconcileCauseSystem},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			finalizer := NewMockFinalizerProcessor(t)
+			finalizer.On("process", mock.Anything, mock.Anything).Twice().Return(&finalizerError{
+				finalizer: repository.CleanFinalizer,
+				err:       fmt.Errorf("delete webhook: %w", tc.err),
+			})
+			patcher := &capturePatcher{}
+			reg := prometheus.NewPedanticRegistry()
+			c := &RepositoryController{
+				finalizer:       finalizer,
+				statusPatcher:   patcher,
+				tracer:          tracing.InitializeTracerForTest(),
+				deletionMetrics: registerRepositoryDeletionMetrics(reg),
+			}
+			deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					DeletionTimestamp: &deletion,
+					Finalizers:        []string{repository.CleanFinalizer},
+				},
+			}
 
-	t.Run("falls back to legacy deleteError", func(t *testing.T) {
-		obj := &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{DeleteError: "legacy text"},
-		}
-		assert.Equal(t, "legacy text", deletionErrorMessage(obj))
-	})
+			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
+			require.Len(t, patcher.ops, 2)
+			recorded := patcher.ops[1]["value"].(*provisioning.DeletionStatus)
+			assert.Equal(t, tc.cause, recorded.Cause)
+			assert.Equal(t, repository.CleanFinalizer, recorded.Finalizer)
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", ""))
 
-	t.Run("empty when nothing is blocked", func(t *testing.T) {
-		assert.Equal(t, "", deletionErrorMessage(&provisioning.Repository{}))
-	})
+			data, err := json.Marshal(recorded)
+			require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(data, &repo.Status.Deletion))
+			repo.Status.DeleteError = recorded.Message
+			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", tc.cause))
+			assert.Len(t, patcher.ops, 2, "unchanged status must not trigger another patch")
+		})
+	}
 }
 
 // TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount verifies that
@@ -601,11 +650,36 @@ func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T
 			Deletion: &provisioning.DeletionStatus{
 				State:   provisioning.DeletionStateBlocked,
 				Message: "boom",
+				Cause:   reconcileCauseSystem,
 			},
 		},
 	}
 	err := c.updateDeleteStatus(context.Background(), repo, errors.New("boom"))
 	require.NoError(t, err)
+}
+
+func TestRepositoryController_updateDeleteStatus_BackfillsCause(t *testing.T) {
+	for _, previousCause := range []string{"", reconcileCauseSystem} {
+		t.Run("previous cause="+previousCause, func(t *testing.T) {
+			patcher := &capturePatcher{}
+			c := &RepositoryController{statusPatcher: patcher}
+			err := fmt.Errorf("remove finalizers: %w", repository.ErrPermissionDenied)
+			repo := &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					DeleteError: err.Error(),
+					Deletion: &provisioning.DeletionStatus{
+						State:   provisioning.DeletionStateBlocked,
+						Message: err.Error(),
+						Cause:   previousCause,
+					},
+				},
+			}
+			require.NoError(t, c.updateDeleteStatus(context.Background(), repo, err))
+			require.Len(t, patcher.ops, 2)
+			deletion := patcher.ops[1]["value"].(*provisioning.DeletionStatus)
+			assert.Equal(t, reconcileCauseUser, deletion.Cause)
+		})
+	}
 }
 
 // TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatus
