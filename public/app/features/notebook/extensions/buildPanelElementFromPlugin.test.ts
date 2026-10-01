@@ -6,13 +6,16 @@ const datasource = { type: 'loki', uid: 'loki-1' };
 
 describe('buildPanelElementFromPlugin', () => {
   it('carries the queries, title, and datasource into the panel element', () => {
-    const targets: Panel['targets'] = [{ refId: 'A', expr: '{app="checkout"}' }, { refId: 'B', hide: true }];
+    const targets: Panel['targets'] = [
+      { refId: 'A', expr: '{app="checkout"}' },
+      { refId: 'B', hide: true },
+    ];
 
     const element = buildPanelElementFromPlugin({
       title: 'Checkout latency',
       targets,
       datasource,
-      type: ''
+      type: '',
     });
 
     expect(element.kind).toBe('Panel');
@@ -65,7 +68,7 @@ describe('buildPanelElementFromPlugin', () => {
   it('names an untitled panel "New panel" and defaults the visualization to timeseries', () => {
     const element = buildPanelElementFromPlugin({
       targets: [{ refId: 'A' }],
-      type: ''
+      type: '',
     });
 
     expect(element.kind === 'Panel' && element.spec.title).toBe('New panel');
