@@ -17,6 +17,8 @@ const (
 	listPathSearchFallbackFetchFirst     = "search_fallback_fetch_first"
 	listPathHistory                      = "history"
 	listPathTrash                        = "trash"
+	listPathTrashSearch                  = "trash_search"
+	listPathTrashSearchFallback          = "trash_search_fallback"
 )
 
 func annotateListRequest(span trace.Span, path, selectorType string, requestedLimit int64, req *resourcepb.ListRequest, rsp *resourcepb.ListResponse) {

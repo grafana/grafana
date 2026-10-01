@@ -609,3 +609,25 @@ func TestBuildForServedGroupVersions_RejectsAMalformedDeclaration(t *testing.T) 
 	require.Error(t, err)
 	assert.Nil(t, routes)
 }
+
+func TestBuildGlobalSearch(t *testing.T) {
+	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{
+		{Group: "dashboard.grafana.app", Version: "v1"},
+	}}}
+	const searchGV = searchv0.GROUP + "/" + searchv0.VERSION
+
+	got := paths(BuildGlobalSearch(nil, fakeClient{}, builders))
+	assert.Equal(t, map[string][]string{searchGV: {resource.GlobalSearchResource + "/" + searchv0.SearchPathSegment}}, got,
+		"only the one route, under the search group")
+
+	assert.Nil(t, BuildGlobalSearch(nil, nil, builders), "nothing to serve it with without a client")
+}
+
+// Every covered type is named, whichever API versions this process serves, and
+// nothing else is.
+func TestGlobalSearchKinds(t *testing.T) {
+	assert.Equal(t, map[schema.GroupResource]string{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"}: "Dashboard",
+		{Group: "folder.grafana.app", Resource: "folders"}:       "Folder",
+	}, globalSearchKinds(resource.AppManifests()))
+}

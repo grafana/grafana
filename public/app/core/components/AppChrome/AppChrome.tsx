@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'clsx';
 import { Resizable } from 're-resizable';
-import { type PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, type PropsWithChildren, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
@@ -13,7 +13,6 @@ import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 import { useVisualRefreshNudge } from 'app/features/visual-refresh/useVisualRefreshNudge';
 
@@ -33,6 +32,10 @@ import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
 
 export const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
+
+const CommandPalette = lazy(() =>
+  import('app/features/commandPalette/CommandPalette').then((module) => ({ default: module.CommandPalette }))
+);
 
 export interface Props extends PropsWithChildren<{}> {}
 
@@ -220,7 +223,11 @@ export function AppChrome({ children }: Props) {
         </div>
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
-      {!state.chromeless && <CommandPalette />}
+      {!state.chromeless && (
+        <Suspense fallback={null}>
+          <CommandPalette />
+        </Suspense>
+      )}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
       {!state.chromeless && <LazyFeatureControlFloating />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (

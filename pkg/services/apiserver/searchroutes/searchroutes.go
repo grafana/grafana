@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -163,6 +164,50 @@ func BuildForServedGroupVersions(
 	}
 
 	return toGroupVersionRoutes(byGroupVersion), nil
+}
+
+// BuildGlobalSearch returns the route for the search that spans resource types,
+// or nil when there is no client to serve it with.
+//
+// It is mounted under the search group itself, because it belongs to no kind's
+// group. Nothing serves kinds there, so the route is in no discovery document
+// and a caller has to know the path.
+func BuildGlobalSearch(
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
+	builders []builder.APIGroupBuilder,
+) []builder.GroupVersionRoutes {
+	if index == nil {
+		return nil
+	}
+	kinds := globalSearchKinds(slices.Concat(resource.AppManifests(), builder.ManifestsFromBuilders(builders)))
+	// No field provider: the global index has a fixed field set, which the
+	// manifests do not declare.
+	handler := searchapi.NewHandler(index, nil, tracer)
+	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
+	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalSearchRoute(kinds)}})
+}
+
+// globalSearchKinds names the Kubernetes kind of each resource type the global
+// index covers, which a result reports and which cannot be derived from its
+// group and resource. Taken from every manifest, served here or not: the index
+// covers its types whichever API versions this process serves.
+func globalSearchKinds(manifests []*app.ManifestData) map[schema.GroupResource]string {
+	kinds := map[schema.GroupResource]string{}
+	for _, m := range manifests {
+		if m == nil {
+			continue
+		}
+		for _, version := range m.Versions {
+			for _, kind := range version.Kinds {
+				gr := schema.GroupResource{Group: m.Group, Resource: resource.ManifestResourceName(kind)}
+				if resource.GlobalIndexCoversType(gr) {
+					kinds[gr] = kind.Kind
+				}
+			}
+		}
+	}
+	return kinds
 }
 
 func toGroupVersionRoutes(byGroupVersion map[schema.GroupVersion][]searchapi.Route) []builder.GroupVersionRoutes {
