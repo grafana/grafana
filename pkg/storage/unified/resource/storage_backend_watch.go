@@ -37,10 +37,20 @@ func eventToWrittenEvent(event Event, data []byte) *WrittenEvent {
 		kind = resourcepb.WatchEvent_DELETED
 	}
 	return &WrittenEvent{
-		Key:  &resourcepb.ResourceKey{Namespace: event.Namespace, Group: event.Group, Resource: event.Resource, Name: event.Name},
-		Type: kind, Folder: event.Folder, Value: data, ResourceVersion: event.ResourceVersion,
-		PreviousRV: event.PreviousRV, PreviousAction: event.PreviousAction, PreviousFolder: event.PreviousFolder,
-		Timestamp: ResourceVersionTime(event.ResourceVersion).Unix(),
+		Key: &resourcepb.ResourceKey{
+			Namespace: event.Namespace,
+			Group:     event.Group,
+			Resource:  event.Resource,
+			Name:      event.Name,
+		},
+		Type:            kind,
+		Folder:          event.Folder,
+		Value:           data,
+		ResourceVersion: event.ResourceVersion,
+		PreviousRV:      event.PreviousRV,
+		PreviousAction:  event.PreviousAction,
+		PreviousFolder:  event.PreviousFolder,
+		Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
 	}
 }
 
@@ -146,16 +156,12 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 	degraded := false
 	timer := time.NewTimer(opts.SettleDelay)
 	defer timer.Stop()
-settling:
-	for {
-		select {
-		case <-ctx.Done():
-			return watchSeed{}, nil, ctx.Err()
-		case <-overflow:
-			degraded = true
-		case <-timer.C:
-			break settling
-		}
+	select {
+	case <-ctx.Done():
+		return watchSeed{}, nil, ctx.Err()
+	case <-overflow:
+		degraded = true
+	case <-timer.C:
 	}
 
 	seed := watchSeed{initialCacheFloor: handoffRV, highestRV: handoffRV}
@@ -257,11 +263,11 @@ waiting:
 			return event.ResourceVersion <= highestRV || event.PreviousRV < 0
 		})
 		for batch := range slices.Chunk(events, dataBatchSize) {
-			if ctx.Err() != nil || !k.emitWriteEvents(ctx, batch, out) {
+			if !k.emitWriteEvents(ctx, batch, out) {
 				return false
 			}
 		}
-		return ctx.Err() == nil
+		return true
 	}
 	if !emit(pending) {
 		return
