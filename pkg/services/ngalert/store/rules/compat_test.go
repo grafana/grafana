@@ -1,4 +1,4 @@
-package store
+package rules
 
 import (
 	"testing"
@@ -84,7 +84,7 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 			Metadata:             `{"editor_settings":{"simplified_query_and_expressions_section":true}}`,
 		}
 
-		compactResult, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
+		compactResult, err := convertAlertRuleToModel(rule, &logtest.Fake{}, alertRuleConvertOptions{
 			ExcludeAlertQueries:        true,
 			ExcludeContactPointRouting: true,
 			ExcludeMetadata:            true,
@@ -165,7 +165,7 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 			Metadata:             `{"editor_settings":{"simplified_query_and_expressions_section":true}}`,
 		}
 
-		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
+		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, alertRuleConvertOptions{
 			ExcludeAlertQueries:        true,
 			ExcludeContactPointRouting: false,
 			ExcludeMetadata:            true,
@@ -203,7 +203,7 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 			Metadata:             `{"prometheus_style_rule":{"original_rule_definition":"alert: TestAlert\n  expr: rate(metric[5m]) > 1"}}`,
 		}
 
-		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
+		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, alertRuleConvertOptions{
 			ExcludeAlertQueries:        true,
 			ExcludeContactPointRouting: true,
 			ExcludeMetadata:            false,

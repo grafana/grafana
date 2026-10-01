@@ -1,4 +1,4 @@
-package store
+package rules
 
 import (
 	"context"
@@ -25,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -671,7 +673,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
-	protoInstanceStore := ProtoInstanceDBStore{
+	protoInstanceStore := ngstore.ProtoInstanceDBStore{
 		SQLStore:       sqlStore,
 		Logger:         logger,
 		FeatureToggles: featuremgmt.WithFeatures(),
@@ -1131,6 +1133,8 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	// The rule store only reads provenance, so writing it needs the provenance store.
+	provStore := provenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore)
 
 	receiverName := "receiver\"-" + uuid.NewV4().String()
 	timeIntervalName := "time-" + util.GenerateShortUID()
@@ -1154,7 +1158,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	for idx, rule := range append(timeIntervalRules, receiveRules...) {
 		p := models.KnownProvenances[idx%len(models.KnownProvenances)]
 		provenances[rule.GetKey()] = p
-		require.NoError(t, store.SetProvenance(context.Background(), rule, rule.OrgID, p))
+		require.NoError(t, provStore.SetProvenance(context.Background(), rule, rule.OrgID, p))
 	}
 
 	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(deref))
@@ -1817,54 +1821,6 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 	})
 }
 
-func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
-	tutil.SkipIntegrationTestInShortMode(t)
-
-	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
-	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
-	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
-	orgID := int64(1)
-	gen := models.RuleGen
-	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval)).With(gen.WithOrgID(orgID))
-
-	alertRules := make([]*models.AlertRule, 0, 5)
-	for range 5 {
-		alertRules = append(alertRules, createRule(t, store, gen))
-	}
-	alertRuleNamespaceUIDs := make([]string, 0, len(alertRules))
-	for _, rule := range alertRules {
-		alertRuleNamespaceUIDs = append(alertRuleNamespaceUIDs, rule.NamespaceUID)
-	}
-	alertRuleInAnotherNamespace := createRule(t, store, gen)
-
-	requireAlertRuleVersion := func(t *testing.T, ruleID int64, orgID int64, expectedVersion int64) {
-		t.Helper()
-		dbrule := &alertRule{}
-		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(alertRule{}).ID(ruleID).Get(dbrule)
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", ruleID))
-			return err
-		})
-		require.NoError(t, err)
-		require.Equal(t, expectedVersion, dbrule.Version)
-	}
-
-	t.Run("should increase version for all rules", func(t *testing.T) {
-		_, err := store.IncreaseVersionForAllRulesInNamespaces(context.Background(), orgID, alertRuleNamespaceUIDs)
-		require.NoError(t, err)
-
-		for _, rule := range alertRules {
-			requireAlertRuleVersion(t, rule.ID, orgID, rule.Version+1)
-		}
-
-		// this rule's version should not be changed
-		requireAlertRuleVersion(t, alertRuleInAnotherNamespace.ID, orgID, alertRuleInAnotherNamespace.Version)
-	})
-}
-
 func TestIntegrationGetRuleVersions(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
@@ -1897,7 +1853,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, versions, 2)
 		assert.IsDecreasing(t, []int64{versions[0].ID, versions[1].ID})
-		diff := versions[1].Diff(&versions[0].AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[1].Diff(&versions[0].AlertRule, alertRuleFieldsToIgnoreInDiff[:]...)
 		assert.ElementsMatch(t, []string{"Title", "RuleGroupIndex"}, diff.Paths())
 	})
 
@@ -1927,7 +1883,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV3.OrgID, ruleV3.GUID)
 		require.NoError(t, err)
 		assert.Len(t, versions, 3)
-		diff := versions[0].Diff(&versions[1].AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[0].Diff(&versions[1].AlertRule, alertRuleFieldsToIgnoreInDiff[:]...)
 		assert.ElementsMatch(t, []string{"RuleGroup", "NamespaceUID"}, diff.Paths())
 	})
 }
@@ -1983,7 +1939,7 @@ func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
+func createRule(tb testing.TB, store *RuleStore, generator *models.AlertRuleGenerator) *models.AlertRule {
 	tb.Helper()
 	if generator == nil {
 		generator = models.RuleGen.With(models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
@@ -3949,12 +3905,12 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
-	oldT := TimeNow
+	oldT := timeNow
 	t.Cleanup(func() {
-		TimeNow = oldT
+		timeNow = oldT
 	})
 	clk := clock.NewMock()
-	TimeNow = func() time.Time {
+	timeNow = func() time.Time {
 		return clk.Now()
 	}
 
@@ -4022,13 +3978,13 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	oldClk := TimeNow
+	oldClk := timeNow
 	t.Cleanup(func() {
-		TimeNow = oldClk
+		timeNow = oldClk
 	})
 
 	t0 := time.Now().UTC().Truncate(time.Second)
-	TimeNow = func() time.Time {
+	timeNow = func() time.Time {
 		return t0
 	}
 
@@ -4060,7 +4016,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	// simulate rule deletion at different time.
 	// t0, t0+10s, t0+20s
 	for idx, uid := range uids {
-		TimeNow = func() time.Time {
+		timeNow = func() time.Time {
 			return t0.Add(time.Duration(idx) * 10 * time.Second)
 		}
 		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uid)
@@ -4079,25 +4035,32 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, after, 1)
 	for _, rule := range after {
-		assert.GreaterOrEqual(t, rule.Updated, TimeNow().Add(-cfg.UnifiedAlerting.DeletedRuleRetention))
+		assert.GreaterOrEqual(t, rule.Updated, timeNow().Add(-cfg.UnifiedAlerting.DeletedRuleRetention))
 	}
 }
 
+// createTestStore builds a RuleStore over sqlStore. The bus argument is ignored: rule writes
+// publish through DBSession.PublishAfterCommit, which dispatches on the SQLStore's own bus.
 func createTestStore(
 	sqlStore db.DB,
 	folderService folder.Service,
 	logger log.Logger,
 	cfg setting.UnifiedAlertingSettings,
-	bus bus.Bus,
+	_ bus.Bus,
 	features ...any,
-) *DBstore {
-	return &DBstore{
+) *RuleStore {
+	toggles := featuremgmt.WithFeatures(features...)
+	return &RuleStore{
 		SQLStore:       sqlStore,
 		FolderService:  folderService,
 		Logger:         logger,
 		Cfg:            cfg,
-		Bus:            bus,
-		FeatureToggles: featuremgmt.WithFeatures(features...),
+		FeatureToggles: toggles,
+		Provenance: &provenance.ProvenanceStore{
+			FeatureToggles: toggles,
+			SQLStore:       sqlStore,
+			Logger:         logger,
+		},
 	}
 }
 
@@ -4196,9 +4159,8 @@ func Test_collectNamespaceUIDsByOrg(t *testing.T) {
 	})
 }
 
-// ruleChangeCapture observes RuleChangeEvents on the SQLStore's own bus. Rule writes publish via
-// DBSession.PublishAfterCommit, which dispatches through the bus the SQLStore was built with — not
-// DBstore.Bus — so a fakeBus injected into DBstore never sees these events.
+// ruleChangeCapture observes RuleChangeEvents on the SQLStore's own bus, which is where
+// DBSession.PublishAfterCommit dispatches them.
 type ruleChangeCapture struct {
 	fn func(*RuleChangeEvent)
 }
@@ -4230,7 +4192,7 @@ func (f *fakeBus) Publish(ctx context.Context, msg bus.Msg) error {
 	return nil
 }
 
-func createManyRules(tb testing.TB, store *DBstore, ruleGen *models.AlertRuleGenerator, numFolders, numRules, rulesPerGroup int) ([]*models.AlertRule, []string) {
+func createManyRules(tb testing.TB, store *RuleStore, ruleGen *models.AlertRuleGenerator, numFolders, numRules, rulesPerGroup int) ([]*models.AlertRule, []string) {
 	tb.Helper()
 
 	require.Greater(tb, numRules, 0, "numRules must be greater than 0")

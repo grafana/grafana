@@ -1,4 +1,4 @@
-package store
+package rules
 
 import (
 	"encoding/json"
@@ -14,21 +14,21 @@ type compactQuery struct {
 	DatasourceUID string `json:"datasourceUid"`
 }
 
-// AlertRuleConvertOptions controls which fields to parse during conversion from alertRule to models.AlertRule.
+// alertRuleConvertOptions controls which fields to parse during conversion from alertRule to models.AlertRule.
 // By default all fields are included. Set Exclude* to true to skip parsing expensive fields.
-type AlertRuleConvertOptions struct {
+type alertRuleConvertOptions struct {
 	ExcludeAlertQueries        bool // Only parse datasource UIDs from queries
 	ExcludeContactPointRouting bool
 	ExcludeMetadata            bool
 }
 
 func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, error) {
-	return convertAlertRuleToModel(ar, l, AlertRuleConvertOptions{})
+	return convertAlertRuleToModel(ar, l, alertRuleConvertOptions{})
 }
 
 // convertAlertRuleToModel creates a models.AlertRule from an alertRule.
 // opts.Exclude* fields control which expensive fields to skip parsing, reducing JSON serializations.
-func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOptions) (models.AlertRule, error) {
+func convertAlertRuleToModel(ar alertRule, l log.Logger, opts alertRuleConvertOptions) (models.AlertRule, error) {
 	var data []models.AlertQuery
 	if opts.ExcludeAlertQueries {
 		var cqs []compactQuery
