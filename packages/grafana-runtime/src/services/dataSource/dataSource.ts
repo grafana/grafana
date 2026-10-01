@@ -9,7 +9,7 @@ import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
 import { getExpressionDataSourceInstance } from './expressionDs';
 import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
-import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
+import { resolveDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourcePluginFn } from './types';
 
 let importDataSourcePlugin: ImportDataSourcePluginFn | undefined;
@@ -51,7 +51,7 @@ export async function getDataSourceInstance(
   }
 
   try {
-    let settings = await getDataSourceInstanceSettings(ref, scopedVars);
+    let settings = await resolveDataSourceInstanceSettings(ref, scopedVars, 'getDataSourceInstance');
     if (!settings) {
       throw new Error(`Datasource ${describeRef(ref)} was not found`);
     }
@@ -62,7 +62,7 @@ export async function getDataSourceInstance(
     // DatasourceSrv.get() interpolates and returns the concrete instance, so re-resolve
     // through rawRef and construct/cache from the concrete settings.
     if (settings.rawRef && settings.rawRef.uid !== settings.uid) {
-      settings = await getDataSourceInstanceSettings(settings.rawRef);
+      settings = await resolveDataSourceInstanceSettings(settings.rawRef, undefined, 'getDataSourceInstance');
       if (!settings) {
         throw new Error(`Datasource ${describeRef(ref)} was not found`);
       }
