@@ -472,27 +472,34 @@ This pipeline collects host metrics with the [`hostmetrics` receiver](https://gi
    receivers:
      hostmetrics:
        scrapers:
-         memory: null
-         load: null
+         load:
+         memory:
 
-   extensions:
-     basicauth/grafana_cloud:
-       client_auth:
-         username: '${fm_user_id}'
-         password: '${fm_token}'
+   processors:
+     resourcedetection:
+       detectors: ["env", "system"]
+       override: false
+     transform/add_host_metric_attributes:
+       error_mode: ignore
+       metric_statements:
+         - context: datapoint
+           statements:
+             - set(attributes["host.name"], resource.attributes["host.name"])
+             - set(attributes["os.type"], resource.attributes["os.type"])
+     batch:
 
    exporters:
      otlp_http/grafana_cloud:
        # Replace the following placeholder with the OTLP endpoint for your stack.
        endpoint: <OTLP_ENDPOINT>
-       auth:
-         authenticator: basicauth/grafana_cloud
+       headers:
+         Authorization: "Basic ${env:GCLOUD_BASIC_AUTH_BASE64}"
 
    service:
-     extensions: [basicauth/grafana_cloud]
      pipelines:
-       metrics:
+       metrics/hostmetrics:
          receivers: [hostmetrics]
+         processors: [resourcedetection, transform/add_host_metric_attributes, batch]
          exporters: [otlp_http/grafana_cloud]
    ```
 
