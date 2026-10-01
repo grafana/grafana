@@ -2,13 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import {
-  sceneGraph,
-  SceneDataTransformer,
-  SceneQueryRunner,
-  VizPanel,
-  type SceneObject,
-} from '@grafana/scenes';
+import { sceneGraph, SceneDataTransformer, SceneQueryRunner, VizPanel, type SceneObject } from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
