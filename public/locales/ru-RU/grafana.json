@@ -5764,16 +5764,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Продолжить"
-        },
-        "title": {
-          "proceed-to-external-site": "Перейти на внешний сайт?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Дашборд {{dashboardName}}",
       "label-no-dashboards-found": "Дашборды не найдены"
@@ -6839,7 +6829,6 @@
       "playlist-previous": "Перейти к предыдущему дашборду",
       "playlist-stop": "Остановить плейлист",
       "refresh": "Обновить дашборд",
-      "save": "Сохранить дашборд",
       "save-as-template": {
         "label": "Сохранить как шаблон"
       },
@@ -6854,8 +6843,6 @@
       "save-dashboard-short": "Сохранить",
       "save-library-panel": "Сохранить панель библиотеки",
       "save-library-panel-short": "Сохранить",
-      "settings": "Параметры дашборда",
-      "share-button": "Общий доступ",
       "star-add-error": "Не удалось добавить в избранное",
       "star-added": "Добавлено в избранное",
       "star-remove-error": "Не удалось удалить из избранного",
@@ -13484,7 +13471,9 @@
       "copy-markdown": "Скопировать как Markdown",
       "download-markdown": "Скачать как .md",
       "error": "Не удалось экспортировать блокнот",
-      "label": "Экспортировать"
+      "label": "Экспортировать",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Добавить блок",
@@ -18450,10 +18439,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Попробовать",
-      "description": "Мы изменили дизайн!",
-      "revert": "Назад к старому интерфейсу",
-      "title": "Новые стили"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

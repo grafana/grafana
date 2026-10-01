@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Prosseguir"
-        },
-        "title": {
-          "proceed-to-external-site": "Deseja prosseguir para o site externo?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Painel {{dashboardName}}",
       "label-no-dashboards-found": "Nenhum painel encontrado"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Ir para o painel de controle anterior",
       "playlist-stop": "Parar lista de reprodução",
       "refresh": "Atualizar painel de controle",
-      "save": "Salvar painel de controle",
       "save-as-template": {
         "label": "Salvar como modelo"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Salvar",
       "save-library-panel": "Salvar painel da biblioteca",
       "save-library-panel-short": "Salvar",
-      "settings": "Configurações do painel de controle",
-      "share-button": "Compartilhar",
       "star-add-error": "Falha ao adicionar aos favoritos",
       "star-added": "Adicionado aos favoritos",
       "star-remove-error": "Falha ao remover dos favoritos",
@@ -13298,7 +13285,9 @@
       "copy-markdown": "Copiar como linguagem de marcação",
       "download-markdown": "Baixar como .md",
       "error": "Erro ao exportar o bloco de anotações",
-      "label": "Exportar"
+      "label": "Exportar",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Adicionar bloco",
@@ -18186,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Dê uma olhada",
-      "description": "Estamos com um novo design!",
-      "revert": "Retornar ao original",
-      "title": "Novos estilos"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {
