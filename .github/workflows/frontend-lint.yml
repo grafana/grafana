@@ -55,7 +55,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run prettier:check
+    - run: yarn run format:check
     - run: yarn run lint
     - name: Verify generated theme styles
       run: |
@@ -87,7 +87,7 @@ jobs:
         token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run prettier:check
+    - run: yarn run format:check
     - run: yarn run lint
     - name: Verify generated theme styles
       run: |
