@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { type SelectableValue, type TransformerUIProps } from '@grafana/data';
+import { type ReducerID, type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { ReduceTransformerMode, type ReduceTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -80,7 +80,7 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
           onChange={(stats) => {
             onChange({
               ...options,
-              reducers: stats,
+              reducers: stats as ReducerID[],
             });
           }}
         />

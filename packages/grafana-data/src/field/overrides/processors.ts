@@ -56,7 +56,7 @@ export interface DataLinksFieldConfigSettings {
 }
 
 export const dataLinksOverrideProcessor = (
-  value: DataLink[],
+  value: any,
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
 ): DataLink[] => {
@@ -64,7 +64,8 @@ export const dataLinksOverrideProcessor = (
 };
 
 export const actionsOverrideProcessor = (
-  value: Action[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value: any,
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
 ): Action[] => {
@@ -74,7 +75,7 @@ export const actionsOverrideProcessor = (
 export interface ValueMappingFieldConfigSettings {}
 
 export const valueMappingsOverrideProcessor = (
-  value: ValueMapping[],
+  value: any,
   _context: FieldOverrideContext,
   _settings?: ValueMappingFieldConfigSettings
 ): ValueMapping[] => {
@@ -93,7 +94,11 @@ export interface SelectFieldConfigSettings<T> {
   getOptions?: (context: FieldOverrideContext) => Promise<Array<SelectableValue<T>>>;
 }
 
-export const selectOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings?: unknown) => {
+export const selectOverrideProcessor = (
+  value: any,
+  _context: FieldOverrideContext,
+  _settings?: SelectFieldConfigSettings<any>
+) => {
   return value;
 };
 

@@ -10,7 +10,7 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 
 import { type DashboardQueryRunnerWorkerResult } from './types';
 
-export function handleAnnotationQueryRunnerError(err: any): Observable<AnnotationEvent[]> {
+export function handleAnnotationQueryRunnerError(err: { cancelled?: boolean }): Observable<AnnotationEvent[]> {
   if (err.cancelled) {
     return of([]);
   }
@@ -27,7 +27,9 @@ export function handleDatasourceSrvError(err: unknown): Observable<DataSourceApi
 export const emptyResult: () => Observable<DashboardQueryRunnerWorkerResult> = () =>
   of({ annotations: [], alertStates: [] });
 
-export function handleDashboardQueryRunnerWorkerError(err: any): Observable<DashboardQueryRunnerWorkerResult> {
+export function handleDashboardQueryRunnerWorkerError(err: {
+  cancelled?: boolean;
+}): Observable<DashboardQueryRunnerWorkerResult> {
   if (err.cancelled) {
     return emptyResult();
   }

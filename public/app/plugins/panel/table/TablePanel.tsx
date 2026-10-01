@@ -4,7 +4,6 @@ import {
   type DataFrame,
   getFrameDisplayName,
   type GrafanaTheme2,
-  type PanelData,
   type PanelProps,
   type SelectableValue,
 } from '@grafana/data';
@@ -23,8 +22,7 @@ import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/featur
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 
-interface Props extends Omit<PanelProps<TableOptions>, 'data'> {
-  data: Pick<PanelData, 'state' | 'series'> & Partial<PanelData>;
+interface Props extends PanelProps<TableOptions> {
   initialRowIndex?: number;
   sortByBehavior?: 'initial' | 'managed';
 }

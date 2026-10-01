@@ -157,8 +157,13 @@ export function transformDataFrame(
     }
   }
 
-  // @ts-ignore TypeScript has a hard time understanding this construct
-  return stream.pipe.apply(stream, operators);
+  // pipe's overloads can't take an operator array, so apply needs explicit types. Only `operators` is checked
+  // against them; the return type is asserted.
+  return stream.pipe.apply<
+    Observable<DataFrame[]>,
+    Array<MonoTypeOperatorFunction<DataFrame[]>>,
+    Observable<DataFrame[]>
+  >(stream, operators);
 }
 
 function isCustomTransformation(t: DataTransformerConfig | CustomTransformOperator): t is CustomTransformOperator {

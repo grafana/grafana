@@ -95,7 +95,13 @@ export function createTestFunction(entry?: unknown) {
 
 const identity = <T,>(a: T): T => a;
 
-export function processLinkPattern(pattern: any): ProcessedLinkPattern | null {
+export function processLinkPattern(pattern: {
+  url?: unknown;
+  text?: unknown;
+  type?: unknown;
+  key?: unknown;
+  value?: unknown;
+}): ProcessedLinkPattern | null {
   try {
     const url = processTemplate(pattern.url, encodeURIComponent);
     const text = processTemplate(pattern.text, identity);

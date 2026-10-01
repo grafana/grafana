@@ -30,7 +30,7 @@ export interface HandlerArguments {
 
 export interface FieldToConfigMapping {
   fieldName: string;
-  reducerId?: string;
+  reducerId?: ReducerID;
   handlerKey: string | null;
   handlerArguments?: HandlerArguments;
 }
@@ -75,7 +75,7 @@ export function getFieldConfigFromFrame(
 
     const newValue = handler.processor(configValue, config, context, mapping.handlerArguments);
     if (newValue != null) {
-      (config as any)[handler.targetProperty ?? handler.key] = newValue;
+      (config as Record<string, unknown>)[handler.targetProperty ?? handler.key] = newValue;
     }
   }
 
@@ -337,7 +337,7 @@ interface EvaluatedMapping {
   automatic: boolean;
   handler: FieldToConfigMapHandler | null;
   handlerArguments: HandlerArguments;
-  reducerId: string;
+  reducerId: ReducerID;
 }
 export interface EvaluatedMappingResult {
   index: Record<string, EvaluatedMapping>;

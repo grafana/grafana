@@ -200,7 +200,7 @@ export interface BaseVariableModel {
   skipUrlSync: boolean;
   index: number;
   state: LoadingState;
-  error: unknown;
+  error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
   origin?: ControlSourceRef;

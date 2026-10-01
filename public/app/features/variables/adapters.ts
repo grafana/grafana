@@ -23,7 +23,7 @@ export interface VariableAdapter<Model extends BaseVariableModel> {
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
   getSaveModel: (variable: Model, saveCurrentAsDefault?: boolean) => Partial<Model>;
   getValueForUrl: (variable: Model) => string | string[];
-  picker: ComponentType<VariablePickerProps<Model>> | null;
+  picker: ComponentType<VariablePickerProps<Model>>;
   reducer: (state: VariablesState, action: UnknownAction) => VariablesState;
   beforeAdding?: (model: Partial<Model>) => object;
 }

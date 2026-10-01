@@ -163,7 +163,8 @@ export class FieldConfigEditorBuilder<TOptions, TContextOptions = unknown> exten
   }
 
   addGenericEditor<TSettings>(
-    config: FieldConfigEditorConfig<TOptions, TSettings, unknown, TContextOptions>,
+    // TSettings is also the editor's value type (StandardEditorProps<TSettings>), so settings stay unchecked.
+    config: FieldConfigEditorConfig<TOptions, TSettings & any, unknown, TContextOptions>,
     editor: (props: StandardEditorProps<TSettings>) => JSX.Element
   ): this {
     return this.addCustomEditor({
@@ -184,9 +185,9 @@ export class FieldConfigEditorBuilder<TOptions, TContextOptions = unknown> exten
  * {@link PanelOptionsEditorBuilder.addNestedOptions}.
  */
 export interface NestedValueAccess {
-  getValue: (path: string) => unknown;
+  getValue: (path: string) => any;
   onChange: (path: string, value: any) => void;
-  getContext?: (parent: StandardEditorContext<unknown, unknown>) => StandardEditorContext<unknown, unknown>;
+  getContext?: (parent: StandardEditorContext<any>) => StandardEditorContext<any>;
 }
 
 /**
@@ -209,7 +210,7 @@ export interface NestedPanelOptions<TSub = any> {
 }
 
 class NestedPanelOptionsBuilder<TSub = any>
-  implements OptionsEditorItem<TSub, unknown, StandardEditorProps<TSub>, TSub, TSub>
+  implements OptionsEditorItem<unknown, unknown, StandardEditorProps<TSub>, TSub>
 {
   path = '';
   category?: string[];
@@ -245,7 +246,7 @@ class NestedPanelOptionsBuilder<TSub = any>
     return this.cfg.build;
   };
 
-  getNestedValueAccess = (parent: NestedValueAccess) => {
+  getNestedValueAccess = (parent: NestedValueAccess): NestedValueAccess => {
     const values = this.cfg.values;
     if (values) {
       return values(parent);
@@ -253,7 +254,7 @@ class NestedPanelOptionsBuilder<TSub = any>
     // by default prefix the path
     return {
       getValue: (path: string) => parent.getValue(`${this.path}.${path}`),
-      onChange: (path: string, value: any) => parent.onChange(`${this.path}.${path}`, value),
+      onChange: (path: string, value: unknown) => parent.onChange(`${this.path}.${path}`, value),
     };
   };
 }

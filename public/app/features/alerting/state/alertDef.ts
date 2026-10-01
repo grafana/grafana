@@ -191,7 +191,9 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
   }
 }
 
-function joinEvalMatches(matches: any, separator: string) {
+type LegacyEvalMatch = { metric?: unknown; value?: unknown; Metric?: unknown; Value?: unknown };
+
+function joinEvalMatches(matches: LegacyEvalMatch[], separator: string) {
   return reduce(
     matches,
     (res: string[], ev) => {
@@ -210,7 +212,9 @@ function joinEvalMatches(matches: any, separator: string) {
   ).join(separator);
 }
 
-function getAlertAnnotationInfo(ah: { data: unknown[] | { evalMatches?: unknown[]; error?: unknown } }) {
+function getAlertAnnotationInfo(ah: {
+  data: LegacyEvalMatch[] | { evalMatches?: LegacyEvalMatch[]; error?: unknown };
+}) {
   // backward compatibility, can be removed in grafana 5.x
   // old way stored evalMatches in data property directly,
   // new way stores it in evalMatches property on new data object

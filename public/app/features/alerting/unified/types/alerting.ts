@@ -176,10 +176,17 @@ export interface NotificationChannelOption {
   setValueAs?: (value: string | boolean) => string | number | boolean | null;
 }
 
+export type NotificationChannelPayload = {
+  type: string;
+  settings: Record<string, unknown>;
+  secureFields?: Record<string, boolean>;
+  [key: string]: unknown;
+};
+
 export interface NotificationChannelState {
   notificationChannelTypes: NotificationChannelType[];
   notifiers: NotifierDTO[];
-  notificationChannel: any;
+  notificationChannel: Partial<NotificationChannelPayload>;
 }
 
 export interface NotifierStatus {

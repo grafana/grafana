@@ -48,7 +48,7 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableCellProps extends CellProps<{}> {
+export interface TableCellProps extends Pick<CellProps<{}>, 'cell' | 'row' | 'column' | 'value'> {
   tableStyles: TableStyles;
   cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;

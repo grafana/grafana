@@ -9,10 +9,9 @@ import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/inter
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { validateScaleOptions, validateScaleConfig } from '../scale';
-import { type ScaleDimensionOptions } from '../types';
+import { type ScaleDimensionOptions, type SettingsOnlyItemProps } from '../types';
 
-type ScaleEditorProps = StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>;
-type Props = Omit<ScaleEditorProps, 'item'> & { item: Partial<ScaleEditorProps['item']> };
+type Props = SettingsOnlyItemProps<StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>>;
 
 export const ScaleDimensionEditor = (props: Props) => {
   const { value, context, onChange, item, id } = props;

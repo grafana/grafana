@@ -11,7 +11,7 @@ import { isPrivateLabelKey } from '../../utils/labels';
 interface Props {
   groups: AlertmanagerGroup[];
   groupBy: string[];
-  onGroupingChange: (keys: Array<string | undefined>) => void;
+  onGroupingChange: (keys: string[]) => void;
 }
 
 export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
@@ -48,7 +48,7 @@ export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
         placeholder={t('alerting.group-by.placeholder-group-by', 'Group by')}
         prefix={<Icon name={'tag-alt'} />}
         onChange={(items) => {
-          onGroupingChange(items.map(({ value }) => value));
+          onGroupingChange(items.map(({ value }) => value!));
         }}
         options={labelKeyOptions}
         width={32}

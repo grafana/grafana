@@ -35,21 +35,11 @@ export function getVariable(
   return variable;
 }
 
-function getFilteredVariablesByKey<T extends TypedVariableModel>(
-  filter: (model: TypedVariableModel) => model is T,
-  key: string,
-  state?: StoreState
-): T[];
-function getFilteredVariablesByKey(
-  filter: (model: TypedVariableModel) => boolean,
-  key: string,
-  state?: StoreState
-): TypedVariableModel[];
 function getFilteredVariablesByKey(
   filter: (model: TypedVariableModel) => boolean,
   key: string,
   state: StoreState = getState()
-) {
+): TypedVariableModel[] {
   return Object.values(getVariablesState(key, state).variables)
     .filter(filter)
     .sort((s1, s2) => s1.index - s2.index);

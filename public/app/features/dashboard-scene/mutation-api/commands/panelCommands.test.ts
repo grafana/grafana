@@ -828,8 +828,7 @@ describe('Panel mutation commands', () => {
 
       expect(result.error).toBeUndefined();
       expect(result.success).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const opts = vizPanel.state.options as Record<string, any>;
+      const opts = vizPanel.state.options as { legend: { show: boolean }; tooltip: { mode: string } };
       expect(opts.legend.show).toBe(true);
       expect(opts.tooltip.mode).toBe('multi');
     });

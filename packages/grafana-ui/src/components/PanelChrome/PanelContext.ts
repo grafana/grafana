@@ -79,7 +79,7 @@ export interface PanelContext {
   instanceState?: any;
 
   /** Update instance state, this is only supported in dashboard panel context currently */
-  onInstanceStateChange?: (state: unknown) => void;
+  onInstanceStateChange?: (state: any) => void;
 
   /**
    * Called when a panel is changing the sort order of the legends.

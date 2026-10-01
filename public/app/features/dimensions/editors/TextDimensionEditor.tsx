@@ -7,7 +7,7 @@ import { Button, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 
-import { type TextDimensionOptions } from '../types';
+import { type SettingsOnlyItemProps, type TextDimensionOptions } from '../types';
 
 const dummyFieldSettings = {
   settings: {},
@@ -17,8 +17,7 @@ const dummyStringSettings = {
   settings: {},
 };
 
-type TextEditorProps = StandardEditorProps<TextDimensionConfig, TextDimensionOptions>;
-type Props = Omit<TextEditorProps, 'item'> & { item: Partial<TextEditorProps['item']> };
+type Props = SettingsOnlyItemProps<StandardEditorProps<TextDimensionConfig, TextDimensionOptions>>;
 
 export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
   const textOptions = [

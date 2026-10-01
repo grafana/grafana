@@ -34,6 +34,11 @@ import { macroRegistry } from './macroRegistry';
  */
 type ReplaceFunction = (fullMatch: string, variableName: string, fieldPath: string, format: string) => string;
 
+/**
+ * The part of a variable model that updateIndex and the index lookups read
+ */
+type IndexedVariable = { name: string; current?: { isNone?: boolean; value?: unknown; text?: unknown } };
+
 export interface TemplateSrvDependencies {
   getFilteredVariables: <T extends TypedVariableModel>(filter: (model: TypedVariableModel) => model is T) => T[];
   getVariables: typeof getVariables;
@@ -47,7 +52,7 @@ const runtimeDependencies: TemplateSrvDependencies = {
 };
 
 export class TemplateSrv implements BaseTemplateSrv {
-  private _variables: Array<{ name: string; current?: { isNone?: boolean; value?: unknown; text?: unknown } }>;
+  private _variables: IndexedVariable[];
   private regex = variableRegex;
   private index: any = {};
   private grafanaVariables = new Map<string, unknown>();
@@ -58,7 +63,9 @@ export class TemplateSrv implements BaseTemplateSrv {
     this._variables = [];
   }
 
-  init<Variable extends TemplateSrv['_variables'][number]>(variables: Variable[], timeRange?: TimeRange) {
+  // Callers pass whole variable models. The type parameter keeps object literals from failing excess-property checks
+  // on the fields (type, id, ...) that are only read later, through the untyped index.
+  init<Variable extends IndexedVariable>(variables: Variable[], timeRange?: TimeRange) {
     this._variables = variables;
     this._timeRange = timeRange;
     this.updateIndex();
@@ -96,7 +103,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   updateIndex() {
     const existsOrEmpty = (value: unknown) => value || value === '';
 
-    this.index = this._variables.reduce<Record<string, (typeof this._variables)[number]>>((acc, currentValue) => {
+    this.index = this._variables.reduce<Record<string, IndexedVariable>>((acc, currentValue) => {
       if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
         acc[currentValue.name] = currentValue;
       }

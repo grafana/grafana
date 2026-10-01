@@ -1,7 +1,7 @@
 import pluralize from 'pluralize';
 
 import { useStyles2 } from '@grafana/ui';
-import { type AlertState, type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { getNotificationsTextColors } from '../../styles/notifications';
 
@@ -12,17 +12,14 @@ interface Props {
 export const AlertGroupHeader = ({ group }: Props) => {
   const textStyles: Partial<Record<string, string>> = useStyles2(getNotificationsTextColors);
   const total = group.alerts.length;
-  const countByStatus = group.alerts.reduce(
-    (statusObj, alert) => {
-      if (statusObj[alert.status.state]) {
-        statusObj[alert.status.state] += 1;
-      } else {
-        statusObj[alert.status.state] = 1;
-      }
-      return statusObj;
-    },
-    {} as Record<AlertState, number>
-  );
+  const countByStatus = group.alerts.reduce<Record<string, number>>((statusObj, alert) => {
+    if (statusObj[alert.status.state]) {
+      statusObj[alert.status.state] += 1;
+    } else {
+      statusObj[alert.status.state] = 1;
+    }
+    return statusObj;
+  }, {});
 
   return (
     <div>

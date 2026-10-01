@@ -55,8 +55,10 @@ export function sharedSingleStatPanelChangedHandler(
   return options;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
+function migrateFromGraphPanel(
+  panel: PanelModel<Partial<SingleStatBaseOptions>>,
+  prevOptions: { angular: GraphOptions }
+) {
   const graphOptions: GraphOptions = prevOptions.angular;
 
   const options: SingleStatBaseOptions & OptionsWithLegend = {
@@ -185,6 +187,7 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
   return options;
 }
 
+export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBaseOptions>): SingleStatBaseOptions;
 export function sharedSingleStatMigrationHandler(
   panel: PanelModel<SingleStatBaseOptions> & { fieldConfig: { defaults: FieldConfig & { title?: string } } }
 ): SingleStatBaseOptions {
@@ -453,8 +456,7 @@ function getReducerForMigration(reducers: string[] | undefined) {
   const transformReducers: string[] = [];
 
   reducers?.forEach((reducer) => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    if (!Object.values(ReducerID).includes(reducer as ReducerID)) {
+    if (!Object.values<string>(ReducerID).includes(reducer)) {
       if (reducer === 'current') {
         transformReducers.push(ReducerID.lastNotNull);
       } else if (reducer === 'total') {

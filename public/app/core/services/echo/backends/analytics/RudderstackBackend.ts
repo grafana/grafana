@@ -41,7 +41,7 @@ interface Rudderstack {
     }
   ) => void;
   page: () => void;
-  track: (eventName: string, properties?: Record<string, unknown>) => void;
+  track: (eventName: string, properties?: Properties) => void;
 }
 
 type RudderstackPreloadMethod =
@@ -53,11 +53,13 @@ type RudderstackPreloadMethod =
   | 'getAnonymousId'
   | 'setAnonymousId';
 
+type RudderstackPreloadStub = unknown[] & Partial<Record<RudderstackPreloadMethod, () => void>>;
+
 declare global {
   interface Window {
     // We say all methods are undefined because we can't be sure they're there
     // and we should be extra cautious
-    rudderanalytics?: Partial<Rudderstack> & { length?: number };
+    rudderanalytics?: Partial<Rudderstack>;
   }
 }
 
@@ -81,8 +83,8 @@ export class RudderstackBackend
     const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
     loadScript(url);
 
-    const tempRudderstack: unknown[] & Partial<Record<RudderstackPreloadMethod, () => void>> = (window.rudderanalytics =
-      []);
+    // Without the assertion `[]` is `never[]`, which shares no properties with `Partial<Rudderstack>`.
+    const tempRudderstack = (window.rudderanalytics = [] as RudderstackPreloadStub);
 
     const methods: RudderstackPreloadMethod[] = [
       'load',

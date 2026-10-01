@@ -39,10 +39,11 @@ export const extractFieldsTransformerEditor = ({
     });
   };
 
-  const onFormatChange = (format?: SelectableValue<FieldExtractorID>) => {
+  const onFormatChange = (format?: SelectableValue<string>) => {
     onChange({
       ...options,
-      format: format?.value,
+      // The options come from the fieldExtractors registry, so every value is a FieldExtractorID.
+      format: format?.value as FieldExtractorID | undefined,
     });
   };
 

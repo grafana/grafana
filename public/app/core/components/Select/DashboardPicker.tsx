@@ -1,6 +1,5 @@
 import debounce from 'debounce-promise';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
-import type { SelectInstance } from 'react-select';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -44,7 +43,7 @@ async function findDashboards(query = '') {
 const getDashboards = debounce(findDashboards, 250, { leading: true });
 
 // TODO: this component should provide a way to apply different filters to the search APIs
-export const DashboardPicker = forwardRef<SelectInstance<SelectableValue<DashboardPickerDTO>, boolean>, Props>(
+export const DashboardPicker = forwardRef<HTMLElement, Props>(
   ({ value, onChange, placeholder, noOptionsMessage, showUnknown, ...props }, ref) => {
     const [current, setCurrent] = useState<SelectableValue<DashboardPickerDTO>>();
     const abortRef = useRef<AbortController | null>(null);

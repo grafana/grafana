@@ -110,7 +110,7 @@ export interface HeatmapRowsCustomMeta {
 
 /** simple utility to get heatmap metadata from a frame */
 export function readHeatmapRowsCustomMeta(frame?: DataFrame): HeatmapRowsCustomMeta {
-  return (frame?.meta?.custom ?? {}) as HeatmapRowsCustomMeta;
+  return frame?.meta?.custom ?? {};
 }
 
 export function isHeatmapCellsDense(frame: DataFrame) {
@@ -510,7 +510,7 @@ interface HeatmapOpts {
   xCeil?: boolean;
   yCeil?: boolean;
 
-  // Logarithmic bucket bases; bases other than 2 use log10 for binning.
+  // log2 or log10 buckets. yLog takes the schema's `number`, but other bases produce wrong buckets.
   xLog?: 2 | 10;
   yLog?: number;
 

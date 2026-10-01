@@ -714,8 +714,10 @@ describe('Layout mutation commands', () => {
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
       expect(result.success).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = result.data as { layout: any; elements: Record<string, unknown> };
+      const data = result.data as {
+        layout: { kind: string; spec: { rows: Array<{ path: string }> } };
+        elements: Record<string, unknown>;
+      };
       expect(data.layout.kind).toBe('RowsLayout');
       expect(data.layout.spec.rows).toHaveLength(2);
       expect(data.layout.spec.rows[0].path).toBe('/rows/0');
@@ -729,8 +731,10 @@ describe('Layout mutation commands', () => {
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
       expect(result.success).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = result.data as { layout: any; elements: Record<string, unknown> };
+      const data = result.data as {
+        layout: { kind: string; spec: { tabs: Array<{ path: string }> } };
+        elements: Record<string, unknown>;
+      };
       expect(data.layout.kind).toBe('TabsLayout');
       expect(data.layout.spec.tabs).toHaveLength(2);
       expect(data.layout.spec.tabs[0].path).toBe('/tabs/0');
@@ -744,8 +748,7 @@ describe('Layout mutation commands', () => {
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
       expect(result.success).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = result.data as { layout: any; elements: Record<string, unknown> };
+      const data = result.data as { layout: unknown; elements: Record<string, unknown> };
       expect(data.elements).toEqual({});
     });
 

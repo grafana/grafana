@@ -30,7 +30,7 @@ export interface AxisProps {
   ticks?: Axis.Ticks;
   filter?: Axis.Filter;
   space?: Axis.Space;
-  formatValue?: (v: number, decimals?: DecimalCount) => string;
+  formatValue?: (v: any, decimals?: DecimalCount) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: Axis.Values;

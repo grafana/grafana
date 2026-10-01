@@ -211,7 +211,6 @@ export interface LegacyAnnotationQuery extends raw.MetricStat, DataQuery {
   alarmNamePrefix: string;
   alias: string;
   builtIn: number;
-  datasource: any;
   dimensions: raw.Dimensions;
   enable: boolean;
   expression: string;

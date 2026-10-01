@@ -8,7 +8,13 @@ import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
-import { MediaType, type ResourceDimensionOptions, ResourceFolderName, ResourcePickerSize } from '../types';
+import {
+  MediaType,
+  type ResourceDimensionOptions,
+  ResourceFolderName,
+  ResourcePickerSize,
+  type SettingsOnlyItemProps,
+} from '../types';
 
 import { ResourcePicker } from './ResourcePicker';
 
@@ -16,8 +22,7 @@ const dummyFieldSettings = {
   settings: {},
 };
 
-type ResourceEditorProps = StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>;
-type Props = Omit<ResourceEditorProps, 'item'> & { item: Partial<ResourceEditorProps['item']> };
+type Props = SettingsOnlyItemProps<StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>>;
 
 export const ResourceDimensionEditor = (props: Props) => {
   const { value, context, onChange, item, id } = props;

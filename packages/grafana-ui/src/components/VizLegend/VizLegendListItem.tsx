@@ -17,11 +17,11 @@ export interface Props<T> {
   className?: string;
   onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLButtonElement>) => void;
   onLabelMouseOver?: (
-    item: VizLegendItem<T>,
+    item: VizLegendItem,
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   onLabelMouseOut?: (
-    item: VizLegendItem<T>,
+    item: VizLegendItem,
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;

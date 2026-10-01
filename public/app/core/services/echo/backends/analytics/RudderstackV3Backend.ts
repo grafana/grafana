@@ -40,14 +40,14 @@ interface Rudderstack {
     }
   ) => void;
   page: () => void;
-  track: (eventName: string, properties?: Record<string, unknown>) => void;
+  track: (eventName: string, properties?: Properties) => void;
 }
 
 declare global {
   interface Window {
     // We say all methods are undefined because we can't be sure they're there
     // and we should be extra cautious
-    rudderanalytics?: Partial<Rudderstack> & { length?: number };
+    rudderanalytics?: Partial<Rudderstack>;
   }
 }
 

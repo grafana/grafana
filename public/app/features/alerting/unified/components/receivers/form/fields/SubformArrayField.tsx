@@ -16,7 +16,7 @@ import { OptionField } from './OptionField';
 import { getReceiverFormFieldStyles } from './styles';
 
 interface Props {
-  defaultValues?: any[];
+  defaultValues?: Array<Record<string, unknown>>;
   option: NotificationChannelOption;
   pathPrefix: string;
   errors?: Array<Record<string, unknown> | undefined>;

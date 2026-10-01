@@ -74,13 +74,9 @@ export function getColumns(
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
-    const fieldTableOptions: TableFieldOptions = field.config.custom || {};
-    if (
-      // @ts-ignore this was the former hidden option; we support it for legacy use cases while TableRT is being sunset.
-      fieldTableOptions.hidden ||
-      fieldTableOptions.hideFrom?.viz ||
-      field.type === FieldType.nestedFrames
-    ) {
+    // `hidden` is the former hide option, still honoured for legacy configs while TableRT is being sunset.
+    const fieldTableOptions: TableFieldOptions & { hidden?: boolean } = field.config.custom || {};
+    if (fieldTableOptions.hidden || fieldTableOptions.hideFrom?.viz || field.type === FieldType.nestedFrames) {
       continue;
     }
 
@@ -308,7 +304,7 @@ function toNumber(value: any): number {
 
 export function getFooterItems(
   filterFields: Array<{ id: string; field?: Field } | undefined>,
-  values: any[number],
+  values: Record<string, unknown[]>,
   options: TableFooterCalc,
   theme2: GrafanaTheme2
 ): FooterItem[] {
@@ -388,7 +384,7 @@ function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2
 }
 
 // This strips the raw vales from the `rows` object.
-export function createFooterCalculationValues(rows: Row[]): any[number] {
+export function createFooterCalculationValues(rows: Row[]): Record<string, unknown[]> {
   const values: any[number] = [];
 
   for (const key in rows) {

@@ -18,8 +18,7 @@ interface TestCommandOverrides<T> {
   handler?: MutationCommand<T, MutationTargetScene>['handler'];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the fixture is generic over whatever payload a test's schema produces
-function command<T = any>(overrides: TestCommandOverrides<T> = {}): MutationCommand<T, MutationTargetScene> {
+function command<T = unknown>(overrides: TestCommandOverrides<T> = {}): MutationCommand<T, MutationTargetScene> {
   return {
     name: 'TEST_COMMAND',
     description: 'A command that exists only for this suite.',

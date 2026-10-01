@@ -95,10 +95,10 @@ export default class TimeSeries {
   dashes: any;
   bars: any;
   points: any;
-  yaxis: any;
-  zindex: any;
+  yaxis?: number;
+  zindex?: number;
   stack: any;
-  nullPointMode: any;
+  nullPointMode?: string | null;
   fillBelowTo: any;
   transform: any;
   flotpairs: any;

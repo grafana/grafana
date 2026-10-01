@@ -5,7 +5,6 @@ import {
   type IndicatorsContainerProps,
   type Props as ReactSelectProps,
   type ClearIndicatorProps,
-  type SelectInstance,
 } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
@@ -165,7 +164,7 @@ export function SelectBase<T, Rest = {}>({
   const disabled = disabledProp ?? fieldContext.disabled;
   const invalid = invalidProp ?? fieldContext.invalid;
 
-  const reactSelectRef = useRef<SelectInstance<SelectableValue<T>, boolean>>(null);
+  const reactSelectRef = useRef<HTMLElement & { controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);

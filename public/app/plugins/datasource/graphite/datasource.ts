@@ -17,9 +17,9 @@ import {
   dateTimeAsMoment,
   getFieldDisplayName,
   getSearchFilterScopedVar,
+  type LegacyMetricFindQueryOptions,
   type MetricFindValue,
   type QueryResultMetaStat,
-  type SearchFilterOptions,
   type ScopedVars,
   type TimeRange,
   toDataFrame,
@@ -57,8 +57,7 @@ import {
 import { reduceError } from './utils';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
-type GraphiteFindOptions = SearchFilterOptions & {
-  range?: TimeRange;
+type GraphiteFindOptions = LegacyMetricFindQueryOptions & {
   timezone?: TimeZone;
   requestId?: string;
   limit?: number;
@@ -1023,7 +1022,7 @@ export class GraphiteDatasource
     return lastValueFrom(this.doGraphiteRequest(httpOptions).pipe(mapToTags()));
   }
 
-  async getVersion(optionalOptions: Pick<GraphiteFindOptions, 'requestId'>) {
+  async getVersion(optionalOptions?: Pick<GraphiteFindOptions, 'requestId'>) {
     const options = optionalOptions || {};
 
     const httpOptions = {

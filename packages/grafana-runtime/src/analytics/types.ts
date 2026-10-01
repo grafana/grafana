@@ -104,7 +104,7 @@ export type PageviewEchoEvent = EchoEvent<EchoEventType.Pageview, PageviewEchoEv
  */
 export interface InteractionEchoEventPayload {
   interactionName: string;
-  properties?: Record<string, unknown>;
+  properties?: Record<string, any>;
   /**
    * If true, the event is dispatched to {@link EchoSrv} subscribers but is
    * not forwarded to analytics backends. Use for high-frequency UI signals
@@ -139,34 +139,28 @@ export interface ExperimentViewEchoEventPayload {
 export type ExperimentViewEchoEvent = EchoEvent<EchoEventType.ExperimentView, ExperimentViewEchoEventPayload>;
 
 /**
- * Pageview payload typeguard. The declared event type stays unchanged.
+ * Pageview event typeguard.
  *
  * @public
  */
-export const isPageviewEvent = <T extends EchoEventType>(
-  event: EchoEvent<T>
-): event is EchoEvent<T, PageviewEchoEventPayload> => {
+export const isPageviewEvent = (event: EchoEvent): event is PageviewEchoEvent => {
   return Boolean(event.payload.page);
 };
 
 /**
- * Interaction payload typeguard.
+ * Interaction event typeguard.
  *
  * @public
  */
-export const isInteractionEvent = <T extends EchoEventType>(
-  event: EchoEvent<T>
-): event is EchoEvent<T, InteractionEchoEventPayload> => {
+export const isInteractionEvent = (event: EchoEvent): event is InteractionEchoEvent => {
   return Boolean(event.payload.interactionName);
 };
 
 /**
- * Experimentview payload typeguard.
+ * Experimentview event typeguard.
  *
  * @public
  */
-export const isExperimentViewEvent = <T extends EchoEventType>(
-  event: EchoEvent<T>
-): event is EchoEvent<T, ExperimentViewEchoEventPayload> => {
+export const isExperimentViewEvent = (event: EchoEvent): event is ExperimentViewEchoEvent => {
   return Boolean(event.payload.experimentId);
 };

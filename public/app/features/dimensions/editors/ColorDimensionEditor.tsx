@@ -7,10 +7,9 @@ import { type ColorDimensionConfig } from '@grafana/schema';
 import { Combobox, ColorPicker, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 
-import { type ColorDimensionOptions } from '../types';
+import { type ColorDimensionOptions, type SettingsOnlyItemProps } from '../types';
 
-type ColorEditorProps = StandardEditorProps<ColorDimensionConfig, ColorDimensionOptions>;
-type Props = Omit<ColorEditorProps, 'item'> & { item: Partial<ColorEditorProps['item']> };
+type Props = SettingsOnlyItemProps<StandardEditorProps<ColorDimensionConfig, ColorDimensionOptions>>;
 
 export const ColorDimensionEditor = (props: Props) => {
   const fixedColorOption = useMemo(

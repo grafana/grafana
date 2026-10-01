@@ -15,7 +15,7 @@ import { OptionField } from './OptionField';
 import { getReceiverFormFieldStyles } from './styles';
 
 interface Props {
-  defaultValue: any;
+  defaultValue: Record<string, unknown> | undefined;
   option: NotificationChannelOption;
   getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
   pathPrefix: string;

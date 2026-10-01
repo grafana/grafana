@@ -1,6 +1,14 @@
 import { type FieldNamePickerBaseNameMode, type Field, type FieldType } from '@grafana/data';
 import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
+/**
+ * Props for an options editor that only reads `item.settings`. Other editors also render it directly and pass
+ * `{ settings }` or `{}` instead of a full registry item.
+ */
+export type SettingsOnlyItemProps<P extends { item: { settings?: unknown } }> = Omit<P, 'item'> & {
+  item: Pick<P['item'], 'settings'>;
+};
+
 export interface DimensionSupplier<T = any> {
   /**
    * This means an explicit value was not configured

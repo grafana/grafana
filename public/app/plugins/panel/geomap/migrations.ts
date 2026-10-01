@@ -145,7 +145,7 @@ function worldmapToGeomapOptions(angular: any): {
   // mapCenterLongitude: 14,
   //
   // Map center (from worldmap)
-  const mapCenters: Record<string, string> = {
+  const mapCenters: Partial<Record<string, string>> = {
     '(0°, 0°)': MapCenterID.Zero,
     'North America': 'north-america',
     Europe: 'europe',
@@ -153,7 +153,8 @@ function worldmapToGeomapOptions(angular: any): {
     'SE Asia': 'se-asia',
     'Last GeoHash': MapCenterID.Coordinates, // MapCenterID.LastPoint,
   };
-  options.view.id = mapCenters[angular.mapCenter];
+  // Worldmap centers with no geomap equivalent (e.g. 'custom') leave the id undefined at runtime.
+  options.view.id = mapCenters[angular.mapCenter] as string;
   options.view.lat = asNumber(angular.mapCenterLatitude);
   options.view.lon = asNumber(angular.mapCenterLongitude);
   return { fieldConfig, options, xform };

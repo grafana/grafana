@@ -90,11 +90,7 @@ const generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] 
 };
 
 // Main entry point for initializing / updating moveable and selecto configuration
-export const initMoveable = (
-  destroySelecto: boolean | undefined = false,
-  allowChanges: boolean | undefined = true,
-  scene: Scene
-) => {
+export const initMoveable = (destroySelecto = false, allowChanges = true, scene: Scene) => {
   const targetElements = generateTargetElements(scene.root.elements);
 
   if (destroySelecto && scene.selecto) {

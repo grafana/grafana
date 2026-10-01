@@ -5,7 +5,6 @@ import {
   type CommonProps as ReactSelectCommonProps,
   type GroupBase,
   type OptionsOrGroups,
-  type SelectInstance,
 } from 'react-select';
 
 import { type SelectableValue } from '@grafana/data';
@@ -40,7 +39,7 @@ export interface SelectCommonProps<T> {
   components?: any;
   /** Sets the position of the createOption element in your options list. Defaults to 'last' */
   createOptionPosition?: 'first' | 'last';
-  defaultValue?: SelectValue<T> | null;
+  defaultValue?: any;
   disabled?: boolean;
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
   formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;
@@ -119,7 +118,7 @@ export interface SelectCommonProps<T> {
   /** Disables wrapping of multi value values when closed */
   noMultiValueWrap?: boolean;
   /** Use a custom ref because generic component as output of React.forwardRef is not directly possible */
-  selectRef?: React.Ref<SelectInstance<SelectableValue<T>, boolean>>;
+  selectRef?: React.Ref<HTMLElement>;
 }
 
 export interface SelectAsyncProps<T> {
@@ -158,7 +157,7 @@ export interface SelectBaseProps<T> extends SelectCommonProps<T>, SelectAsyncPro
 
 // This is used for the `renderControl` prop on *our* SelectBase component
 export interface CustomControlProps<T> {
-  ref: React.Ref<HTMLDivElement>;
+  ref: React.Ref<any>;
   isOpen: boolean;
   /** Currently selected value */
   value?: SelectableValue<T>;
@@ -176,7 +175,7 @@ export interface SelectableOptGroup<T = any> {
   label: string;
   options: Array<SelectableValue<T>>;
 
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 export type SelectOptions<T = any> =

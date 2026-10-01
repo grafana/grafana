@@ -14,10 +14,11 @@ import {
   type TimeZone,
   type TypedVariableModel,
   type UrlQueryValue,
+  type VariableOption,
 } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { type Dashboard, type DashboardLink, type VariableModel } from '@grafana/schema';
+import { type Dashboard, type DashboardLink, type TimePickerConfig, type VariableModel } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -76,7 +77,7 @@ export class DashboardModel implements TimeModel {
   liveNow?: boolean;
   preload?: boolean;
   private originalTime: any;
-  timepicker: any;
+  timepicker: TimePickerConfig;
   templating: { list: any[] };
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
@@ -125,7 +126,7 @@ export class DashboardModel implements TimeModel {
   };
 
   constructor(
-    data: Dashboard,
+    data: Dashboard & { scopeMeta?: ScopeMeta },
     meta?: DashboardMeta,
     options?: {
       // By default this uses variables from redux state
@@ -160,7 +161,6 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData) => new PanelModel(panelData));
-    // @ts-expect-error - experimental and it's not included in the schema
     this.scopeMeta = data.scopeMeta;
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);
@@ -854,7 +854,7 @@ export class DashboardModel implements TimeModel {
   }
 
   getSelectedVariableOptions(variable: any) {
-    let selectedOptions: any[];
+    let selectedOptions: VariableOption[];
     if (isAllVariable(variable)) {
       selectedOptions = variable.options.slice(1, variable.options.length);
     } else {
@@ -1263,7 +1263,7 @@ function isPanelWithLegend(panel: PanelModel): panel is PanelModel & Pick<Requir
   return Boolean(panel.legend);
 }
 
-function setScopedVars(panel: PanelModel, variable: TypedVariableModel, variableOption: any) {
+function setScopedVars(panel: PanelModel, variable: TypedVariableModel, variableOption: VariableOption) {
   panel.scopedVars ??= {};
   panel.scopedVars[variable.name] = variableOption;
 }

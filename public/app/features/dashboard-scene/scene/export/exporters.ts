@@ -80,14 +80,9 @@ function isExportableLibraryPanel(
 }
 
 interface DataSources {
-  [key: string]: {
-    name: string;
-    label: string;
-    description: string;
-    type: string;
+  [key: string]: Input & {
     pluginId: string;
     pluginName: string;
-    usage?: InputUsage;
   };
 }
 
@@ -230,7 +225,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
 
       await templateizeDatasourceUsage(model);
 
-      const { gridPos, id, ...rest } = model as any;
+      const { gridPos, id, ...rest }: typeof model & { gridPos?: unknown; id?: unknown } = model;
       if (!libraryPanels.has(uid)) {
         libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model: rest });
       }

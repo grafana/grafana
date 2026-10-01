@@ -66,7 +66,10 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 }
 
 function convertTimeSeriesToDataFrame(
-  timeSeries: TimeSeries & { points?: TimeSeries['datapoints']; name?: string }
+  timeSeries: Omit<TimeSeries, 'datapoints'> & { name?: string } & (
+      | { datapoints: TimeSeries['datapoints']; points?: TimeSeries['datapoints'] }
+      | { datapoints?: undefined; points: TimeSeries['datapoints'] }
+    )
 ): DataFrame {
   const times: number[] = [];
   const values: TimeSeriesValue[] = [];

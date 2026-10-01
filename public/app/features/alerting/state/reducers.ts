@@ -6,6 +6,7 @@ import {
   type AlertRuleDTO,
   type AlertRulesState,
   type NotificationChannelOption,
+  type NotificationChannelPayload,
   type NotificationChannelState,
   type NotifierDTO,
 } from 'app/features/alerting/unified/types/alerting';
@@ -13,12 +14,6 @@ import {
 import unifiedAlertingReducer from '../unified/state/reducers';
 
 import alertDef from './alertDef';
-
-type NotificationChannelPayload = {
-  type: string;
-  settings: Record<string, unknown>;
-  [key: string]: unknown;
-};
 
 export const initialState: AlertRulesState = {
   items: [],

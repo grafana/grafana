@@ -19,11 +19,11 @@ export interface VizLegendBaseProps<T> {
   onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLButtonElement>) => void;
   itemRenderer?: (item: VizLegendItem<T>, index: number) => JSX.Element;
   onLabelMouseOver?: (
-    item: VizLegendItem<T>,
+    item: VizLegendItem,
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   onLabelMouseOut?: (
-    item: VizLegendItem<T>,
+    item: VizLegendItem,
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;

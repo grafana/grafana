@@ -12,7 +12,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-export function getTransformerOptionPane<T extends object = any>(
+export function getTransformerOptionPane<T extends object>(
   props: TransformerUIProps<T>,
   supplier: PanelOptionsSupplier<T>
 ): OptionsPaneCategoryDescriptor {
@@ -50,7 +50,7 @@ export function getTransformerOptionPane<T extends object = any>(
   return root;
 }
 
-export function getDefaultOptions<T = any>(supplier: PanelOptionsSupplier<T>): Partial<T> {
+export function getDefaultOptions<T>(supplier: PanelOptionsSupplier<T>): Partial<T> {
   const context: StandardEditorContext<T, unknown> = {
     data: [],
     options: {} as T,

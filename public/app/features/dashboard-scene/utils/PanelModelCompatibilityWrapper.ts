@@ -1,10 +1,12 @@
+import { type PanelModel } from '@grafana/data';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 
 import { getQueryRunnerFor } from './getQueryRunnerFor';
 import { getPanelIdForVizPanel } from './utils-panels';
 
-export class PanelModelCompatibilityWrapper {
+// Scene transformations can include custom transformers, which PanelModel['transformations'] does not allow.
+export class PanelModelCompatibilityWrapper implements Omit<PanelModel, 'transformations'> {
   constructor(private _vizPanel: VizPanel) {}
 
   public get id() {

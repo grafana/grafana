@@ -147,6 +147,7 @@ export abstract class FunctionalVector<T = unknown> {
     predicate: (this: void, value: T, index: number, obj: T[]) => value is S,
     thisArg?: unknown
   ): S | undefined;
+  find(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: unknown): T | undefined;
   find(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: unknown): T | undefined {
     return this.toArray().find(predicate, thisArg);
   }

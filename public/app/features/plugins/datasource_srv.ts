@@ -39,6 +39,11 @@ import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { pluginImporter } from './importer/pluginImporter';
 
+/** Fields patched onto instances of old plugins whose DataSourceClass does not extend DataSourceApi. */
+type LegacyDataSourcePatch = {
+  [Key in 'name' | 'id' | 'type' | 'meta' | 'uid' | 'getRef']?: DataSourceApi[Key];
+};
+
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
@@ -254,12 +259,9 @@ export class DatasourceSrv implements DataSourceService {
 
       // Some old plugins does not extend DataSourceApi so we need to manually patch them
       if (!(instance instanceof DataSourceApi)) {
-        const anyInstance: {
-          -readonly [Key in keyof Pick<
-            DataSourceApi,
-            'name' | 'id' | 'type' | 'meta' | 'uid' | 'getRef'
-          >]?: DataSourceApi[Key];
-        } = instance;
+        // DataSourceClass is typed to construct a DataSourceApi, so `instance` is `never` in this branch and the
+        // annotation cannot check it. It only types the property writes below.
+        const anyInstance: LegacyDataSourcePatch = instance;
         anyInstance.name = instanceSettings.name;
         anyInstance.id = instanceSettings.id;
         anyInstance.type = pluginId;

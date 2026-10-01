@@ -3,6 +3,7 @@ import { useMemo, useState, useEffect } from 'react';
 
 import { type StandardEditorProps, type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
+import { type SettingsOnlyItemProps } from 'app/features/dimensions/types';
 
 import { GAZETTEER_OPTIONS, type Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 
@@ -14,10 +15,7 @@ export interface GazetteerPathEditorConfigSettings {
   options?: Array<SelectableValue<string>>;
 }
 
-type GazetteerEditorProps = StandardEditorProps<string, GazetteerPathEditorConfigSettings>;
-type Props = Omit<GazetteerEditorProps, 'item'> & {
-  item: Partial<GazetteerEditorProps['item']>;
-};
+type Props = SettingsOnlyItemProps<StandardEditorProps<string, GazetteerPathEditorConfigSettings>>;
 
 export const GazetteerPathEditor = ({ value, onChange, context, item }: Props) => {
   const styles = useStyles2(getStyles);

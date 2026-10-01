@@ -23,6 +23,9 @@ import { type LivePanelOptions } from './types';
 
 type Props = StandardEditorProps<Partial<LiveChannelAddress>, {}, LivePanelOptions>;
 
+// Combobox types the selected option as a plain ComboboxOption, so `resource` can't be required in onChange.
+type WatchableResourceOption = ComboboxOption<string> & { resource?: GroupDiscoveryResource };
+
 const scopes: Array<SelectableValue<LiveChannelScope>> = [
   { label: 'Grafana', value: LiveChannelScope.Grafana, description: 'Core grafana live features' },
   { label: 'Data Sources', value: LiveChannelScope.DataSource, description: 'Data sources with live support' },
@@ -101,7 +104,7 @@ export function LiveChannelEditor(props: Props) {
     });
   };
 
-  const getWatchableResources = async (v: string) => {
+  const getWatchableResources = async (v: string): Promise<WatchableResourceOption[]> => {
     const apis = await getAPIGroupDiscoveryList();
     return discoveryResources(apis)
       .filter((v) => v.verbs.includes('watch'))
@@ -138,7 +141,7 @@ export function LiveChannelEditor(props: Props) {
                 'live.live-channel-editor.placeholder-select-watchable-resource',
                 'Select watchable resource'
               )}
-              onChange={(v: ComboboxOption<string> & { resource?: GroupDiscoveryResource }) => {
+              onChange={(v: WatchableResourceOption) => {
                 const resource = v.resource;
                 if (resource) {
                   props.onChange({

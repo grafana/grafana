@@ -1,4 +1,9 @@
-import { formatRegistry, type VariableValue } from '@grafana/scenes';
+import {
+  formatRegistry,
+  type InterpolationFormatParameter,
+  type VariableCustomFormatterFn,
+  type VariableValue,
+} from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { isAdHoc } from '../variables/guard';
@@ -7,7 +12,7 @@ import { getVariableWrapper } from './LegacyVariableWrapper';
 
 export function formatVariableValue(
   value: any,
-  format?: string | Function,
+  format?: InterpolationFormatParameter,
   variable?: any,
   text?: VariableValue
 ): string {
@@ -28,7 +33,9 @@ export function formatVariableValue(
   }
 
   if (typeof format === 'function') {
-    return format(value, variable, formatVariableValue);
+    // formatVariableValue takes the format, not the variable model, as its second argument, so it does not actually
+    // match the legacyDefaultFormatter signature it is passed as.
+    return format(value, variable, formatVariableValue as VariableCustomFormatterFn);
   }
 
   if (!format) {

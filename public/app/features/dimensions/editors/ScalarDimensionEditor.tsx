@@ -7,10 +7,9 @@ import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox } from '@grafan
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { type ScalarDimensionOptions } from '../types';
+import { type ScalarDimensionOptions, type SettingsOnlyItemProps } from '../types';
 
-type ScalarEditorProps = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions>;
-type Props = Omit<ScalarEditorProps, 'item'> & { item: Partial<ScalarEditorProps['item']> };
+type Props = SettingsOnlyItemProps<StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions>>;
 
 export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props) => {
   const { settings } = item;
