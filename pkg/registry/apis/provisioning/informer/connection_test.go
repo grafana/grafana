@@ -15,6 +15,7 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 )
 
 func conn(namespace, name string) *provisioningapis.Connection {
@@ -25,21 +26,21 @@ func conn(namespace, name string) *provisioningapis.Connection {
 // the re-list can be driven without a storage backend.
 type stubKeysLister struct {
 	listRV int64
-	keys   []Key
+	keys   []keysapi.Key
 	err    error
 	called int
 }
 
-func (s *stubKeysLister) ListKeys(context.Context) (int64, iter.Seq2[Key, error]) {
+func (s *stubKeysLister) ListKeys(context.Context) (int64, iter.Seq2[keysapi.Key, error]) {
 	s.called++
-	return s.listRV, func(yield func(Key, error) bool) {
+	return s.listRV, func(yield func(keysapi.Key, error) bool) {
 		for _, k := range s.keys {
 			if !yield(k, nil) {
 				return
 			}
 		}
 		if s.err != nil {
-			yield(Key{}, s.err)
+			yield(keysapi.Key{}, s.err)
 		}
 	}
 }
@@ -65,7 +66,7 @@ func recordProjection(seen *[]bool) func(bool) {
 }
 
 func TestConnectionList_KeysOnly(t *testing.T) {
-	keys := &stubKeysLister{listRV: 100, keys: []Key{
+	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{
 		{Namespace: "ns1", Name: "a", ResourceVersion: "10"},
 		{Namespace: "ns2", Name: "b", ResourceVersion: "11"},
 	}}
@@ -90,7 +91,7 @@ func TestConnectionList_KeysOnly(t *testing.T) {
 // Storage older than keys_only must degrade to the full list rather than stop
 // reconciling, since the re-list is the connection controller's only feed.
 func TestConnectionList_FallsBackWhenKeysOnlyUnsupported(t *testing.T) {
-	keys := &stubKeysLister{err: ErrKeysOnlyUnsupported}
+	keys := &stubKeysLister{err: keysapi.ErrUnsupported}
 	client := fake.NewClientset(conn(testNamespace, "from-full-list"))
 
 	var seen []bool
@@ -133,7 +134,7 @@ func TestRelistProjectionRecorder_ReportsTheProjection(t *testing.T) {
 	// The job delta source already owns the delivery metrics on this registry; the
 	// projection counter is the connection re-list's own, so it does not collide.
 	_ = newInformerMetrics(reg)
-	record := newRelistProjectionRecorder(reg, "connections")
+	record := newRelistProjectionRecorder(reg, provisioningapis.ConnectionResourceInfo.GroupVersionResource())
 
 	record(true)
 	record(true)
@@ -141,6 +142,21 @@ func TestRelistProjectionRecorder_ReportsTheProjection(t *testing.T) {
 
 	assert.Equal(t, float64(2), projectionCount(t, reg, "keys"))
 	assert.Equal(t, float64(1), projectionCount(t, reg, "objects"))
+}
+
+// The group is part of the series identity: the keys projection is a
+// unified-storage feature that any group can report here, so a query that reads
+// only the resource name would silently sum two of them together.
+func TestRelistProjectionRecorder_LabelsTheGroup(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
+	newRelistProjectionRecorder(reg, gvr)(true)
+
+	assert.Equal(t, map[string]string{
+		"group":      gvr.Group,
+		"resource":   gvr.Resource,
+		"projection": "keys",
+	}, projectionLabels(t, reg))
 }
 
 func projectionCount(t *testing.T, reg *prometheus.Registry, projection string) float64 {
@@ -161,4 +177,24 @@ func projectionCount(t *testing.T, reg *prometheus.Registry, projection string) 
 		}
 	}
 	return 0
+}
+
+// projectionLabels returns the labels of the single projection series in reg.
+func projectionLabels(t *testing.T, reg *prometheus.Registry) map[string]string {
+	t.Helper()
+	families, err := reg.Gather()
+	require.NoError(t, err)
+
+	for _, mf := range families {
+		if mf.GetName() != "grafana_provisioning_informer_relist_projection_total" {
+			continue
+		}
+		require.Len(t, mf.GetMetric(), 1, "the test records one series")
+		labels := map[string]string{}
+		for _, l := range mf.GetMetric()[0].GetLabel() {
+			labels[l.GetName()] = l.GetValue()
+		}
+		return labels
+	}
+	return nil
 }

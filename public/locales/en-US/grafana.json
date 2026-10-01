@@ -2980,6 +2980,8 @@
       "title-inspect-alert-rule": "Inspect Alert rule"
     },
     "rule-list": {
+      "checking-data-sources_one": "Checking {{count}} more data source",
+      "checking-data-sources_other": "Checking {{count}} more data sources",
       "configure-datasource": "Configure",
       "datasource-managed-notice": {
         "action": "View rules in Prometheus Alerting",
@@ -3013,6 +3015,9 @@
         "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules",
         "search-in-plugin": "Search data source managed rules in Prometheus Alerting"
       },
+      "hidden-empty-data-sources_one": "{{count}} data source with no rules is hidden",
+      "hidden-empty-data-sources_other": "{{count}} data sources with no rules are hidden",
+      "hidden-empty-data-sources-show-all": "Show all",
       "import-disabled-tooltip": {
         "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
       },
@@ -3193,7 +3198,10 @@
       "view-as": "View as"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Clear filters"
+      "clear-filters": "Clear filters",
+      "empty-data-sources": "Empty data sources",
+      "empty-data-sources-tooltip": "Shows or hides data sources that have no alert rules configured.",
+      "empty-data-sources-tooltip-title": "Empty data sources filter help"
     },
     "rules-group": {
       "deleting": "Deleting",
@@ -5674,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Proceed"
-        },
-        "title": {
-          "proceed-to-external-site": "Proceed to external site?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} dashboard",
       "label-no-dashboards-found": "No dashboards found"
@@ -6747,7 +6745,6 @@
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
       "refresh": "Refresh dashboard",
-      "save": "Save dashboard",
       "save-as-template": {
         "label": "Save as template"
       },
@@ -6762,8 +6759,6 @@
       "save-dashboard-short": "Save",
       "save-library-panel": "Save library panel",
       "save-library-panel-short": "Save",
-      "settings": "Dashboard settings",
-      "share-button": "Share",
       "star-add-error": "Failed to add to starred",
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
@@ -13298,7 +13293,9 @@
       "copy-markdown": "Copy as Markdown",
       "download-markdown": "Download as .md",
       "error": "Failed to export notebook",
-      "label": "Export"
+      "label": "Export",
+      "pdf": "Export as PDF",
+      "pdf-popup-blocked": "Your browser blocked the PDF export tab"
     },
     "history": {
       "add-block": "Add block",
@@ -18186,10 +18183,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Check it out",
-      "description": "We've had a redesign!",
-      "revert": "Take me back",
-      "title": "New styles"
+      "apply": "Try new style",
+      "description": "The new UI is currently in Public Preview. <2>Learn more.</2>",
+      "revert": "Use old style",
+      "title": "Grafana has a new look. Ready to try it?",
+      "title-visual-refresh": "Grafana has a new look"
     }
   },
   "visualization": {

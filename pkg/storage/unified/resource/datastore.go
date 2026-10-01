@@ -280,12 +280,12 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 // GetLatestResourceKey retrieves the data key for the latest version of a resource.
 // Returns the key with the highest resource version that is not deleted.
 func (d *dataStore) GetLatestResourceKey(ctx context.Context, key GetRequestKey) (DataKey, error) {
-	return d.GetResourceKeyAtRevision(ctx, key, 0)
+	return d.GetResourceKeyAtRevision(ctx, key, 0, false)
 }
 
 // GetResourceKeyAtRevision retrieves the data key for a resource at a specific revision.
-// If rv is 0, it returns the latest version. Returns the highest version <= rv that is not deleted.
-func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequestKey, rv int64) (DataKey, error) {
+// If rv is 0, it returns the latest version. Deleted keys are returned only when requested.
+func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequestKey, rv int64, includeDeleted bool) (DataKey, error) {
 	if err := key.Validate(); err != nil {
 		return DataKey{}, fmt.Errorf("invalid get request key: %w", err)
 	}
@@ -297,7 +297,7 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 	listKey := ListRequestKey(key)
 
-	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv})
+	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv, IncludeDeleted: includeDeleted})
 	for dataKey, err := range iter {
 		if err != nil {
 			return DataKey{}, err
@@ -316,6 +316,7 @@ type ListRequestOptions struct {
 	// ContinueName is the name to continue from.
 	ContinueName    string
 	ResourceVersion int64
+	IncludeDeleted  bool
 }
 
 // Validate checks that the ListRequestOptions are valid.
@@ -387,7 +388,7 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 }
 
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
-// If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
+// If rv is 0, it returns the latest versions. Deleted keys are returned only when requested.
 func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options ListRequestOptions) iter.Seq2[DataKey, error] {
 	if err := options.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
@@ -435,9 +436,9 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 		var candidateKey *DataKey // The current candidate key we are iterating over
 
 		// yieldCandidate is a helper function to yield results.
-		// Won't yield if the resource was last deleted.
+		// Won't yield if the resource was last deleted unless the caller requested it.
 		yieldCandidate := func() bool {
-			if candidateKey.Action == DataActionDeleted {
+			if candidateKey.Action == DataActionDeleted && !options.IncludeDeleted {
 				// Skip because the resource was last deleted.
 				return true
 			}

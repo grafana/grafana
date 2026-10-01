@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -49,6 +51,10 @@ func GlobalSearchFieldsHash() string {
 	}
 	sum := sha256.Sum256(blob)
 	return hex.EncodeToString(sum[:])
+}
+
+func groupResourceOf(key NamespacedResource) schema.GroupResource {
+	return schema.GroupResource{Group: key.Group, Resource: key.Resource}
 }
 
 // GlobalSearchResourceTypes lists the resource types a namespace-wide index
@@ -145,6 +151,127 @@ func IndexFieldDefinitions(group, resource string) (standard, deleted []SearchFi
 		return GlobalSearchFieldDefinitions(), nil
 	}
 	return StandardSearchFieldDefinitions(), TrashSearchFieldDefinitions()
+}
+
+// queueImportedTypeRebuilds queues a rebuild of the types each open global index
+// has not caught up with since an import. An import replaces a type without
+// announcing any change, so nothing else would notice. The rebuild queue bounds
+// how many run at once and never overlaps a full rebuild of the same index.
+//
+// openIndexes is every open index, per-resource and global, as the rebuild scan
+// lists them; only the global ones have imported types to catch up with.
+func (s *searchServer) queueImportedTypeRebuilds(ctx context.Context, openIndexes []NamespacedResource) ([]chan struct{}, error) {
+	var completeChs []chan struct{}
+	var errs []error
+	for _, key := range openIndexes {
+		if !key.IsGlobal() {
+			continue
+		}
+		idx := s.search.GetIndex(key)
+		if idx == nil {
+			continue
+		}
+		pending, err := s.importedSinceRecorded(ctx, key, idx, nil)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("checking %s for imports: %w", key.String(), err))
+			continue
+		}
+		if len(pending) == 0 {
+			continue
+		}
+		types := make([]schema.GroupResource, 0, len(pending))
+		for _, p := range pending {
+			types = append(types, groupResourceOf(p.src))
+		}
+		completeCh := make(chan struct{})
+		completeChs = append(completeChs, completeCh)
+		s.rebuildQueue.Add(rebuildRequest{
+			NamespacedResource: key,
+			importedTypes:      types,
+			completeChannels:   []chan<- struct{}{completeCh},
+		})
+		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+	}
+	return completeChs, errors.Join(errs...)
+}
+
+// pendingImport is a covered type storage reports as imported at a time the
+// index has not recorded.
+type pendingImport struct {
+	src        NamespacedResource
+	importedAt time.Time
+}
+
+// importedSinceRecorded returns the covered types, limited to only when it is not
+// empty, that storage reports as imported later than the index recorded. Only a
+// newer import counts, the same as for a per-resource index, which is rebuilt when
+// its build time is before the last import.
+func (s *searchServer) importedSinceRecorded(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource) ([]pendingImport, error) {
+	recorded, err := idx.ImportTimes()
+	if err != nil {
+		return nil, err
+	}
+	var pending []pendingImport
+	for _, src := range indexSources(key) {
+		gr := groupResourceOf(src)
+		if len(only) > 0 && !slices.Contains(only, gr) {
+			continue
+		}
+		importedAt, err := s.storage.GetResourceLastImportTime(ctx, src)
+		if err != nil {
+			return nil, err
+		}
+		if !importedAt.After(recorded[gr]) {
+			continue
+		}
+		pending = append(pending, pendingImport{src: src, importedAt: importedAt})
+	}
+	return pending, nil
+}
+
+// rebuildImportedTypes rebuilds the given types of a global index, or every
+// covered type when none are given, that the index has not caught up with since
+// an import, and records each once rebuilt. Each type is checked again first, so
+// a request that waited behind a full rebuild does nothing.
+func (s *searchServer) rebuildImportedTypes(ctx context.Context, key NamespacedResource, only []schema.GroupResource) error {
+	idx := s.search.GetIndex(key)
+	if idx == nil {
+		return nil
+	}
+	// The import time is read before the rebuild, so an import that lands during
+	// it is still seen as newer next time.
+	pending, err := s.importedSinceRecorded(ctx, key, idx, only)
+	if err != nil || len(pending) == 0 {
+		return err
+	}
+	// The rebuild does not move the index's checkpoint, and a checkpoint from
+	// before the import would replay changes the import undid, such as a delete
+	// of an object it restored. Updating first moves it past the import.
+	if _, err := idx.UpdateIndex(ctx); err != nil {
+		return err
+	}
+	for _, p := range pending {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		res, err := s.rebuildResourceType(ctx, idx, key, p.src)
+		if err != nil {
+			return err
+		}
+		s.log.Info("rebuilt an imported type in the global search index", "namespace", key.Namespace, "resource", p.src.GroupResource(),
+			"reindexed", res.Reindexed, "removed", res.Removed, "failed", res.Failed)
+		// Recorded even when some objects could not be built, or a failure that
+		// comes from the object would rebuild the type forever. Those objects are
+		// removed, so a reconcile sees them missing and retries them. Read failures
+		// return above, unrecorded, and are retried.
+		if res.Failed > 0 {
+			s.log.Warn("some objects of an imported type could not be indexed", "namespace", key.Namespace, "resource", p.src.GroupResource(), "failed", res.Failed)
+		}
+		if err := idx.RecordImportTime(groupResourceOf(p.src), p.importedAt); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // reconcileReadChunkSize bounds how many drifted objects are read at once.
@@ -445,4 +572,140 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 		}
 	}
 	return result, flush()
+}
+
+// watchRetryDelay is how long to wait before asking storage for a new
+// notification stream after one ends unexpectedly.
+const watchRetryDelay = 5 * time.Second
+
+// maxWatchBatch is how many notifications are taken at once. Notifications
+// arrive one at a time, so a busy instance would otherwise update once per
+// changed object.
+const maxWatchBatch = 100
+
+// runGlobalIndexWatch updates a global index when a write notification for it
+// arrives. Searches on a global index do not wait for an update, so without this
+// a change would appear only at the next background update.
+//
+// A notification only says that an index is behind; the update reads the change
+// from storage, as every other update does. Writing the notification into the
+// index instead would race with those updates, and a late notification could
+// overwrite a newer document.
+//
+// Notifications are the fast path, not the reliable one: a dropped or missed
+// one is picked up by the background update, so a failure here is logged and
+// the stream is reopened rather than escalated.
+func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
+	for ctx.Err() == nil {
+		events, err := s.storage.WatchWriteEvents(ctx)
+		if err != nil {
+			s.log.Warn("failed to watch write events for global search indexes", "error", err)
+		} else {
+			s.consumeWriteEvents(ctx, events)
+		}
+
+		// The stream ended. Wait before reopening so a backend that keeps failing
+		// is not asked in a tight loop.
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(watchRetryDelay):
+		}
+	}
+}
+
+// consumeWriteEvents applies notifications until the stream ends.
+func (s *searchServer) consumeWriteEvents(ctx context.Context, events <-chan *WrittenEvent) {
+	for {
+		batch, ok := nextWriteEventBatch(ctx, events)
+		if !ok {
+			return
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		s.applyWriteEvents(ctx, batch)
+	}
+}
+
+// nextWriteEventBatch blocks for one notification, then takes whatever else has
+// already arrived. It reports false once the stream is closed.
+func nextWriteEventBatch(ctx context.Context, events <-chan *WrittenEvent) ([]*WrittenEvent, bool) {
+	// Also on the context: a stream that never sends, as some backends return,
+	// would otherwise hold up shutdown.
+	var first *WrittenEvent
+	select {
+	case <-ctx.Done():
+		return nil, false
+	case event, ok := <-events:
+		if !ok {
+			return nil, false
+		}
+		first = event
+	}
+	batch := make([]*WrittenEvent, 0, maxWatchBatch)
+	batch = append(batch, first)
+	for len(batch) < maxWatchBatch {
+		select {
+		case event, ok := <-events:
+			if !ok {
+				return batch, true
+			}
+			batch = append(batch, event)
+		default:
+			return batch, true
+		}
+	}
+	return batch, true
+}
+
+// applyWriteEvents updates each global index a batch of notifications is for,
+// once however many of them it got. Notifications for types the index does not
+// cover, and for indexes this instance does not own or has not opened, are
+// ignored: an index that is not open is brought up to date when it is opened.
+func (s *searchServer) applyWriteEvents(ctx context.Context, batch []*WrittenEvent) {
+	var keys []NamespacedResource
+	for _, event := range batch {
+		if event == nil || event.Key == nil {
+			continue
+		}
+		if !GlobalIndexCoversType(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}) {
+			continue
+		}
+		if key := GlobalSearchKey(event.Key.Namespace); !slices.Contains(keys, key) {
+			keys = append(keys, key)
+		}
+	}
+
+	for _, key := range keys {
+		if ctx.Err() != nil {
+			return
+		}
+		if !s.ownsGlobalIndex(key) {
+			continue
+		}
+		idx := s.search.GetIndex(key)
+		if idx == nil {
+			continue
+		}
+		if _, err := idx.UpdateIndex(ctx); err != nil {
+			// The background update picks up whatever this missed.
+			s.log.Warn("failed to update the global search index for write notifications", "namespace", key.Namespace, "error", err)
+		}
+	}
+}
+
+// ownsGlobalIndex reports whether this instance owns a global index. The
+// background work skips one it does not own: fetching an index counts as using
+// it, and would keep an index another instance now owns from ever being closed
+// here.
+func (s *searchServer) ownsGlobalIndex(key NamespacedResource) bool {
+	owned, err := s.ownsIndexFn(key)
+	if err != nil {
+		// Kept up to date rather than left to go stale: the check failing says
+		// nothing about who owns it.
+		s.log.Warn("failed to check global search index ownership", "namespace", key.Namespace, "error", err)
+		return true
+	}
+	return owned
 }
