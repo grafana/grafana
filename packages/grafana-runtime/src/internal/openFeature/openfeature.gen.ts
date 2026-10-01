@@ -302,6 +302,8 @@ export const FlagKeys = {
   QueryService: "queryService",
   /** Routes requests to the new query service */
   QueryServiceFromUI: "queryServiceFromUI",
+  /** Adds datasource connections to the query service */
+  QueryServiceWithConnections: "queryServiceWithConnections",
   /** Enables the Query with Assistant button in the query editor */
   QueryWithAssistant: "queryWithAssistant",
   /** Enables AI-assisted coauthoring in code query editors */
@@ -1956,6 +1958,17 @@ export const useFlagQueryService = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagQueryServiceFromUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryServiceFromUI", false, options).value;
+};
+
+/**
+ * Adds datasource connections to the query service
+ *
+ * **Details:**
+ * - flag key: `queryServiceWithConnections`
+ * - default value: `false`
+ */
+export const useFlagQueryServiceWithConnections = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryServiceWithConnections", false, options).value;
 };
 
 /**
