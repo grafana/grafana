@@ -2050,7 +2050,7 @@ export type RepositorySpec = {
 };
 export type DeletionStatus = {
   /** Cause classifies the blocking error. It may be absent on older statuses.
-
+    
     Possible enum values:
      - `"system"` indicates an infrastructure or unclassified failure.
      - `"user"` indicates a failure that requires user intervention. */
