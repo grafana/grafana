@@ -26,11 +26,11 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -53,7 +53,7 @@ type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.Gro
 type Options struct {
 	Storage         StorageProvider
 	PluginClient    appplugin.PluginClient
-	ClientV3        v3.ClientV3
+	ClientV3        appclientv3.Client
 	ContextProvider appplugin.PluginContextWrapper
 	Decrypter       decrypt.DecryptService
 	AccessChecker   appplugin.PluginAccessChecker

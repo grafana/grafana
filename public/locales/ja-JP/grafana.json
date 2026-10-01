@@ -5629,16 +5629,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "続行"
-        },
-        "title": {
-          "proceed-to-external-site": "外部サイトに移動しますか？"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}}ダッシュボード",
       "label-no-dashboards-found": "ダッシュボードが見つかりませんでした"
@@ -6701,7 +6691,6 @@
       "playlist-previous": "前のダッシュボードに戻る",
       "playlist-stop": "プレイリストを停止",
       "refresh": "ダッシュボードを更新",
-      "save": "ダッシュボードを保存",
       "save-as-template": {
         "label": "テンプレートとして保存"
       },
@@ -6716,8 +6705,6 @@
       "save-dashboard-short": "保存",
       "save-library-panel": "ライブラリパネルを保存",
       "save-library-panel-short": "保存",
-      "settings": "ダッシュボードの設定",
-      "share-button": "共有",
       "star-add-error": "お気に入りに追加できませんでした",
       "star-added": "お気に入りに追加されました",
       "star-remove-error": "お気に入りから削除できませんでした",
@@ -13132,6 +13119,12 @@
       "query": {
         "add": "クエリを追加",
         "run": "クエリを実行"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13199,7 +13192,9 @@
       "copy-markdown": "マークダウンとしてコピー",
       "download-markdown": ".mdとしてダウンロード",
       "error": "ノートブックのエクスポートに失敗しました",
-      "label": "エクスポート"
+      "label": "エクスポート",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "ブロックを追加",
@@ -13215,7 +13210,9 @@
       "redo-action": "やり直し：{{action}}",
       "remove-query": "クエリを削除",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "クエリを選択",
+      "set-cell-time-range": "",
       "split-block": "ブロックを分割",
       "switch-datasource": "データソースを切り替える",
       "undo": "元に戻す",
@@ -15741,8 +15738,7 @@
       "deleted-by-removed": "削除されたアカウント",
       "deleted-by-unknown-short": "<0></0>不明",
       "deleted-by-unknown-tooltip": "このダッシュボードを削除したアカウントの検索に失敗しました",
-      "deleted-less-than-1-min": "1分以下",
-      "deleted-remaining-header": "残り時間",
+      "deleted-header": "",
       "location-header": "場所",
       "name-header": "名前",
       "tags-header": "タグ",
@@ -18047,10 +18043,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "お試しください",
-      "description": "デザインを一新しました！",
-      "revert": "戻る",
-      "title": "新しいスタイル"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

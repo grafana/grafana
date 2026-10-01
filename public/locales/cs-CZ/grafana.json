@@ -5764,16 +5764,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Pokračovat"
-        },
-        "title": {
-          "proceed-to-external-site": "Přejít na externí stránku?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Nástěnka {{dashboardName}}",
       "label-no-dashboards-found": "Nebyly nalezeny žádné nástěnky"
@@ -6839,7 +6829,6 @@
       "playlist-previous": "Přejít na předchozí nástěnku",
       "playlist-stop": "Zastavit playlist",
       "refresh": "Obnovit nástěnku",
-      "save": "Uložit nástěnku",
       "save-as-template": {
         "label": "Uložit jako šablonu"
       },
@@ -6854,8 +6843,6 @@
       "save-dashboard-short": "Uložit",
       "save-library-panel": "Uložit panel knihovny",
       "save-library-panel-short": "Uložit",
-      "settings": "Nastavení nástěnky",
-      "share-button": "Sdílet",
       "star-add-error": "Nepodařilo se přidat do oblíbených",
       "star-added": "Přidáno do oblíbených",
       "star-remove-error": "Nepodařilo se odebrat z oblíbených",
@@ -13411,6 +13398,12 @@
       "query": {
         "add": "Přidat dotaz",
         "run": "Spustit dotaz"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13478,7 +13471,9 @@
       "copy-markdown": "Kopírovat jako Markdown",
       "download-markdown": "Stáhnout jako .md",
       "error": "Zápisník se nepodařilo exportovat",
-      "label": "Exportovat"
+      "label": "Exportovat",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Přidat blok",
@@ -13494,7 +13489,9 @@
       "redo-action": "Opakovat: {{action}}",
       "remove-query": "Odebrat dotaz",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Vybrat dotaz",
+      "set-cell-time-range": "",
       "split-block": "Rozdělit blok",
       "switch-datasource": "Přepnout zdroj dat",
       "undo": "Zpět",
@@ -16110,8 +16107,7 @@
       "deleted-by-removed": "Odstraněný účet",
       "deleted-by-unknown-short": "<0></0> Neznámé",
       "deleted-by-unknown-tooltip": "Nepodařilo se vyhledat účet, který odstranil tuto nástěnku",
-      "deleted-less-than-1-min": "< 1 min.",
-      "deleted-remaining-header": "Zbývající čas",
+      "deleted-header": "",
       "location-header": "Poloha",
       "name-header": "Název",
       "tags-header": "Tagy",
@@ -18443,10 +18439,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Vyzkoušejte",
-      "description": "Máme nový design!",
-      "revert": "Vezměte mě zpět",
-      "title": "Nové styly"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

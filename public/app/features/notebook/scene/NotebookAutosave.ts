@@ -199,20 +199,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.vizConfigsBeforeReadingChange.clear();
     this.editedByWriter = true;
     this.schedule();
-    this.flush();
 
-    // `flush` runs the save synchronously, so anything to write is already in flight by now. A save that
-    // was already running when this arrived leaves this one queued behind it, and the queued one is the
-    // one carrying the change, so waiting on a single request would return before it was written.
-    while (this.inFlightSave) {
-      await this.inFlightSave;
-    }
-
-    // Nothing is left in flight, so the status now says how it went. Still no error means the write
-    // landed, or there was nothing to write and the notebook already holds what was asked for.
-    if (this.state.status === 'error') {
-      throw new Error(this.state.errorMessage ?? 'The notebook could not be saved.');
-    }
+    await this.awaitPendingSave();
   }
 
   /**
@@ -332,6 +320,27 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       if (panel && panel === savedPanels.get(elementName) && vizConfig && panel.getPlugin()) {
         yield { elementName, panel, vizConfig };
       }
+    }
+  }
+
+  /**
+   * Brings forward the save the debounce was already going to make, for a caller about to read the
+   * notebook back from the server. Unlike `saveDocumentChange` it claims nothing on the way.
+   *
+   * Throws when the save failed, including one that failed earlier and was never retried — either
+   * way the server's copy is behind.
+   */
+  public async awaitPendingSave(): Promise<void> {
+    this.flush();
+
+    // A save already running leaves this one queued behind it, and the queued one carries the
+    // change, so awaiting a single request would return too early.
+    while (this.inFlightSave) {
+      await this.inFlightSave;
+    }
+
+    if (this.state.status === 'error') {
+      throw new Error(this.state.errorMessage ?? 'The notebook could not be saved.');
     }
   }
 

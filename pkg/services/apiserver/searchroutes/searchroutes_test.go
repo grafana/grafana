@@ -162,7 +162,7 @@ func TestBuild_MountsBuilderAdvertisedKinds(t *testing.T) {
 	assert.Equal(t, []string{"widgets/search"}, got[gv.String()])
 }
 
-func TestBuildWithOptions_UsesFullBuilderManifest(t *testing.T) {
+func TestBuild_UsesFullBuilderManifest(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
 	info := utils.NewResourceInfo(gv.Group, gv.Version, "widgets", "widget", "Widget", nil, nil, utils.TableColumns{})
 	searchDisabled := false
@@ -185,7 +185,7 @@ func TestBuildWithOptions_UsesFullBuilderManifest(t *testing.T) {
 		manifest: manifest,
 	}}
 
-	got := paths(BuildWithOptions(true, false, nil, fakeClient{}, builders, nil, BuildOptions{}))
+	got := paths(Build(true, false, nil, fakeClient{}, builders, nil))
 
 	assert.Empty(t, got, "the full manifest opt-out must win over synthesized resource declarations")
 }

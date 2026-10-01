@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -71,7 +71,7 @@ type natsNotifier struct {
 	invalidator Invalidator
 	dropped     *prometheus.CounterVec // by reason; nil is allowed (no accounting)
 	dropLog     *throttledLog
-	log         log.Logger
+	log         logging.Logger
 }
 
 const (
@@ -88,7 +88,7 @@ const dropLogInterval = 10 * time.Second
 
 var dropReasons = []string{dropReasonBufferFull, dropReasonUnmarshalError, dropReasonUnknownType}
 
-func newNatsNotifier(subscriber EventSubscriber, invalidator Invalidator, dropped *prometheus.CounterVec, logger log.Logger) *natsNotifier {
+func newNatsNotifier(subscriber EventSubscriber, invalidator Invalidator, dropped *prometheus.CounterVec, logger logging.Logger) *natsNotifier {
 	if dropped != nil {
 		for _, r := range dropReasons {
 			dropped.WithLabelValues(r)

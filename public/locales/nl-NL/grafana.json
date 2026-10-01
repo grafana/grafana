@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Doorgaan"
-        },
-        "title": {
-          "proceed-to-external-site": "Doorgaan naar externe site?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "Geen dashboards gevonden"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
       "refresh": "Dashboard vernieuwen",
-      "save": "Dashboard opslaan",
       "save-as-template": {
         "label": "Opslaan als sjabloon"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Opslaan",
       "save-library-panel": "Bibliotheekpaneel",
       "save-library-panel-short": "Opslaan",
-      "settings": "Dashboardinstellingen",
-      "share-button": "Delen",
       "star-add-error": "Kan niet toevoegen aan favorieten",
       "star-added": "Toegevoegd aan favorieten",
       "star-remove-error": "Kan niet verwijderen uit favorieten",
@@ -13225,6 +13212,12 @@
       "query": {
         "add": "Query toevoegen",
         "run": "Query uitvoeren"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13292,7 +13285,9 @@
       "copy-markdown": "Kopiëren als Markdown",
       "download-markdown": "Downloaden als .md",
       "error": "Kan notitieboek niet exporteren",
-      "label": "Exporteren"
+      "label": "Exporteren",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Blok toevoegen",
@@ -13308,7 +13303,9 @@
       "redo-action": "Opnieuw uitvoeren: {{action}}",
       "remove-query": "Query verwijderen",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Query selecteren",
+      "set-cell-time-range": "",
       "split-block": "Blok splitsen",
       "switch-datasource": "Gegevensbron wisselen",
       "undo": "Ongedaan maken",
@@ -15864,8 +15861,7 @@
       "deleted-by-removed": "Verwijderd account",
       "deleted-by-unknown-short": "<0></0> Onbekend",
       "deleted-by-unknown-tooltip": "Kan het account dat dit dashboard heeft verwijderd niet opzoeken",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Resterende tijd",
+      "deleted-header": "",
       "location-header": "Locatie",
       "name-header": "Naam",
       "tags-header": "Tags",
@@ -18179,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Een kijkje nemen",
-      "description": "We hebben een nieuw ontwerp!",
-      "revert": "Teruggaan",
-      "title": "Nieuwe stijlen"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {
