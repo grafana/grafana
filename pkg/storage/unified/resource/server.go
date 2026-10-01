@@ -14,7 +14,6 @@ import (
 	"uuid"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -3064,8 +3063,7 @@ func classifyAuthError(err error) string {
 // Unix timestamps (SQL backend).
 func ResourceVersionTime(rv int64) time.Time {
 	if IsSnowflake(rv) {
-		msec := (rv >> (snowflake.NodeBits + snowflake.StepBits)) + snowflake.Epoch
-		return time.UnixMilli(msec)
+		return time.UnixMilli(snowflakeTimestampMillis(rv))
 	}
 	return time.UnixMicro(rv)
 }

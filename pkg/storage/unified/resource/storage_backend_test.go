@@ -117,7 +117,7 @@ func TestNewKvStorageBackend(t *testing.T) {
 
 	assert.NotNil(t, backend.eventStore)
 	assert.NotNil(t, backend.notifier)
-	assert.NotNil(t, backend.snowflake)
+	assert.NotNil(t, backend.resourceVersions)
 }
 
 func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {
@@ -189,7 +189,7 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 
 	// Reconciling a tenant writes its pending-delete record to the experimental
 	// KV while the resource label update goes through the main backend.
-	previousRV := backend.snowflake.Generate().Int64()
+	previousRV := requireGeneratedResourceVersion(t, backend.resourceVersions)
 	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", previousRV, nil)
 	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
 
