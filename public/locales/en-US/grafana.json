@@ -5296,11 +5296,6 @@
         "unknown-datasource": "Unknown datasource"
       }
     },
-    "datasource-troubleshooting-banner": {
-      "assistant-context": "Troubleshoot data source health",
-      "body": "Uncover and fix potential issues with your data sources.",
-      "fix-with-assistant": "Fix with assistant"
-    },
     "feature-highlight-page": {
       "foot-note": "After creating an account, you can easily <2>migrate this instance to Grafana Cloud</2> with our Migration Assistant.",
       "footer": "Create a Grafana Cloud Free account to start using data source permissions. This feature is also available with a Grafana Enterprise license.",
