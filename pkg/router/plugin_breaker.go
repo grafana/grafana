@@ -37,8 +37,7 @@ func pluginClientOutcome(ctx context.Context, err error) error {
 		apierrors.IsServiceUnavailable(err):
 		return err
 	}
-	switch status.Code(err) {
-	case codes.Unavailable, codes.DeadlineExceeded:
+	if code := status.Code(err); code == codes.Unavailable || code == codes.DeadlineExceeded {
 		return err
 	}
 	return nil
