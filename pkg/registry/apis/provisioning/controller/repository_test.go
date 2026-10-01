@@ -473,6 +473,95 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 	assert.Equal(t, 1.0, counterValue(t, reg, repositoryDeletionsMetric))
 }
 
+// TestRepositoryController_handleDelete_ObservesPendingCauseFromStatus verifies
+// that the pending-age histogram's cause label comes from the object's
+// already-persisted status.deletion (carried over from a prior failing pass),
+// not from this pass's own outcome -- so a repo already blocked on a
+// permission error is labeled cause="user" even on a pass where it succeeds.
+func TestRepositoryController_handleDelete_ObservesPendingCauseFromStatus(t *testing.T) {
+	finalizer := NewMockFinalizerProcessor(t)
+	finalizer.
+		On("process", mock.Anything, mock.Anything).
+		Once().
+		Return(nil)
+
+	repoClient := &mockRepoInterface{
+		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
+			return &provisioning.Repository{}, nil
+		},
+	}
+
+	reg := prometheus.NewPedanticRegistry()
+	c := &RepositoryController{
+		finalizer:       finalizer,
+		tracer:          tracing.InitializeTracerForTest(),
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
+		client: &mockProvisioningV0alpha1Interface{
+			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
+		},
+	}
+
+	deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			DeletionTimestamp: &deletion,
+			Finalizers:        []string{repository.CleanFinalizer},
+		},
+		Status: provisioning.RepositoryStatus{
+			Deletion: &provisioning.DeletionStatus{
+				Finalizer: repository.CleanFinalizer,
+				Message:   "remove finalizers: execute deletion hooks: delete webhook: permission denied",
+			},
+		},
+	}
+	err := c.handleDelete(context.Background(), repo)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", "user"))
+}
+
+func TestClassifyDeletionCauseFromMessage(t *testing.T) {
+	tests := []struct {
+		name    string
+		message string
+		want    string
+	}{
+		{name: "empty", message: "", want: ""},
+		{name: "permission denied", message: "remove finalizers: execute deletion hooks: delete webhook: permission denied", want: reconcileCauseUser},
+		{name: "authentication failed", message: "create repository from configuration: create gitlab client: authentication failed", want: reconcileCauseUser},
+		{name: "token expired", message: "create gitlab client: authentication token has expired: authentication failed", want: reconcileCauseUser},
+		{name: "cannot access repository", message: "cannot access repository", want: reconcileCauseUser},
+		{name: "unmatched defaults to system", message: "dial tcp: connection refused", want: reconcileCauseSystem},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, classifyDeletionCauseFromMessage(tc.message))
+		})
+	}
+}
+
+func TestDeletionErrorMessage(t *testing.T) {
+	t.Run("prefers structured deletion message", func(t *testing.T) {
+		obj := &provisioning.Repository{
+			Status: provisioning.RepositoryStatus{
+				DeleteError: "legacy text",
+				Deletion:    &provisioning.DeletionStatus{Message: "structured text"},
+			},
+		}
+		assert.Equal(t, "structured text", deletionErrorMessage(obj))
+	})
+
+	t.Run("falls back to legacy deleteError", func(t *testing.T) {
+		obj := &provisioning.Repository{
+			Status: provisioning.RepositoryStatus{DeleteError: "legacy text"},
+		}
+		assert.Equal(t, "legacy text", deletionErrorMessage(obj))
+	})
+
+	t.Run("empty when nothing is blocked", func(t *testing.T) {
+		assert.Equal(t, "", deletionErrorMessage(&provisioning.Repository{}))
+	})
+}
+
 // TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount verifies that
 // re-observing a terminating repository whose finalizers are already gone (an
 // informer re-enqueue before GC, or a resync while it lingers) does not
