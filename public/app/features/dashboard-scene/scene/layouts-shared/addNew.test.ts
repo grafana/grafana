@@ -1,5 +1,5 @@
-import { config } from '@grafana/runtime';
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -173,15 +173,12 @@ describe('addNewTabTo', () => {
 });
 
 describe('addNewRowTo', () => {
-  let originalDashboardNewLayouts: boolean | undefined;
-
   beforeAll(() => {
-    originalDashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
   });
 
   afterAll(() => {
-    config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
+    setTestFlags({});
   });
 
   describe('when layout has no rows', () => {

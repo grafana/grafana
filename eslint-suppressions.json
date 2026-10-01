@@ -757,7 +757,7 @@
   },
   "public/app/core/components/AppChrome/TopBar/useChromeHeaderHeight.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/core/components/DynamicImports/SafeDynamicImport.tsx": {
@@ -1664,11 +1664,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/addToDashboard/addPanelsOnLoadBehavior.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
@@ -1677,11 +1672,6 @@
   "public/app/features/dashboard-scene/inspect/HelpWizard/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/mutation-api/commands/types.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
     }
   },
   "public/app/features/dashboard-scene/pages/DashboardScenePage.tsx": {
@@ -1694,7 +1684,7 @@
   },
   "public/app/features/dashboard-scene/pages/DashboardScenePageStateManager.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 9
+      "count": 8
     }
   },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage.tsx": {
@@ -1712,11 +1702,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/getDashboardChanges.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 4
@@ -1724,28 +1709,15 @@
   },
   "public/app/features/dashboard-scene/scene/DashboardControls.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 7
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/scene/DashboardScene.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 3
-    },
     "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/DashboardSceneRenderer.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/LibraryPanelBehavior.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/scene/NavToolbarActions.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
     }
@@ -1753,16 +1725,6 @@
   "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/scene/VariableControls.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/dashboard-controls-menu/DashboardControlsMenu.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/dashboard-filters-overview/useFiltersOverviewState.ts": {
@@ -1788,22 +1750,9 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/layout-default/DashboardGridItemEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "react-hooks/rules-of-hooks": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 7
     }
   },
   "public/app/features/dashboard-scene/scene/layout-default/row-actions/RowOptionsForm.tsx": {
@@ -1840,11 +1789,6 @@
       "count": 1
     },
     "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/layouts-shared/addNew.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -1985,11 +1929,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/sharing/ShareExportTab.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/sharing/panel-share/SharePanelPreview.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
@@ -2001,11 +1940,6 @@
     }
   },
   "public/app/features/dashboard-scene/sidebar/DashboardSidebarRenderer.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/sidebar/DashboardSidebarSplitter.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
     }
@@ -2040,11 +1974,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/utils/interactions.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/utils/tracking.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 4
@@ -2052,7 +1981,7 @@
   },
   "public/app/features/dashboard-scene/utils/utils.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/utils/variables.ts": {
@@ -2065,11 +1994,6 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/api/utils.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2147,11 +2071,6 @@
       "count": 2
     },
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2527,11 +2446,6 @@
       "count": 1
     }
   },
-  "public/app/features/manage-dashboards/import/components/DashboardImportK8s.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2590,11 +2504,6 @@
   "public/app/features/playlist/ShareModal.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
-    }
-  },
-  "public/app/features/playlist/StartModal.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/plugins/admin/components/PluginDetailsBody.tsx": {

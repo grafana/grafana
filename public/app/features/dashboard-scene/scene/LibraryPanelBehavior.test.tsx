@@ -14,6 +14,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -240,11 +241,11 @@ describe('LibraryPanelBehavior', () => {
   // skipped — except for public and scripted dashboards, whose migrations still run in the frontend.
   describe('repeat migration', () => {
     afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({});
     });
 
     it('migrates repeat onto the grid item for legacy dashboards', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
 
@@ -254,7 +255,7 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('skips the migration when dashboardNewLayouts is enabled', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
 
@@ -262,7 +263,7 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('still migrates for a public dashboard when dashboardNewLayouts is enabled', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
@@ -273,7 +274,7 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('still migrates for a scripted dashboard when dashboardNewLayouts is enabled', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',

@@ -10,7 +10,7 @@ import {
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, sceneGraph, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -1384,15 +1384,12 @@ describe('Panel mutation commands', () => {
   });
 
   describe('MOVE_PANEL', () => {
-    let originalToggle: boolean | undefined;
-
     beforeEach(() => {
-      originalToggle = config.featureToggles.dashboardNewLayouts;
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
 
     afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = originalToggle;
+      setTestFlags({});
     });
 
     it('repositions panel within current group using layoutItem', async () => {

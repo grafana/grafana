@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { PluginType } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import {
   onCreateNewPanel,
@@ -50,6 +51,12 @@ function setup() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // reportDashboardInteraction stamps isDynamicDashboard from the flag, which defaults on.
+  setTestFlags({ dashboardNewLayouts: false });
+});
+
+afterEach(() => {
+  setTestFlags({});
 });
 
 it('renders menu list with correct menu items', () => {
