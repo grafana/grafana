@@ -149,15 +149,15 @@ func NewQueue(opts *QueueOptions) *Queue {
 	}
 
 	q.queueLength = promauto.With(opts.Registerer).NewGaugeVec(prometheus.GaugeOpts{
-		Name: "queue_length",
+		Name: "grafana_resource_server_qos_queue_length",
 		Help: "Number of items in the queue",
 	}, []string{"tenant"})
 	q.discardedRequests = promauto.With(opts.Registerer).NewCounterVec(prometheus.CounterOpts{
-		Name: "discarded_requests_total",
+		Name: "grafana_resource_server_qos_discarded_requests_total",
 		Help: "Total number of discarded requests",
 	}, []string{"tenant", "reason"})
 	q.queueWaitDuration = promauto.With(opts.Registerer).NewHistogramVec(prometheus.HistogramOpts{
-		Name:                            "queue_wait_duration_seconds",
+		Name:                            "grafana_resource_server_qos_queue_wait_duration_seconds",
 		Help:                            "Time items spend waiting in the queue before being dequeued, in seconds",
 		NativeHistogramBucketFactor:     1.1,
 		NativeHistogramMaxBucketNumber:  160,

@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "İlerleyin"
-        },
-        "title": {
-          "proceed-to-external-site": "Haricî siteye geçilsin mi?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} panosu",
       "label-no-dashboards-found": "Hiç pano bulunamadı"
@@ -5809,10 +5799,16 @@
       "paste-panel": "Paneli yapıştır",
       "remove": "{{typeName}} ögesini kaldır",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Satır başlığını değiştir",
       "switch-layout": "Düzeni değiştir",
       "switch-layout-row": "Düzeni değiştir",
       "switch-layout-tab": "Düzeni değiştir",
+      "tab-repeat-variable": "",
       "tab-title": "Sekme başlığını değiştir",
       "variable-description": "Değişken açıklamasını değiştir",
       "variable-hide": "Değişken gizleme seçeneğini değiştir",
@@ -6741,7 +6737,6 @@
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
       "refresh": "Panoyu yenile",
-      "save": "Panoyu kaydet",
       "save-as-template": {
         "label": "Şablon olarak kaydet"
       },
@@ -6756,8 +6751,6 @@
       "save-dashboard-short": "Kaydet",
       "save-library-panel": "Kütüphane panelini kaydet",
       "save-library-panel-short": "Kaydet",
-      "settings": "Pano ayarları",
-      "share-button": "Paylaş",
       "star-add-error": "Favorilere eklenemedi",
       "star-added": "Favorilere eklendi",
       "star-remove-error": "Favorilerden kaldırılamadı",
@@ -9460,6 +9453,8 @@
     "menu": "Menüyü aç",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Kaydet",
     "title": "Özellik denetimi"
   },
@@ -13217,6 +13212,12 @@
       "query": {
         "add": "Sorgu ekle",
         "run": "Sorgu çalıştır"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13284,7 +13285,9 @@
       "copy-markdown": "Markdown olarak kopyala",
       "download-markdown": ".md olarak indir",
       "error": "Not defteri dışa aktarılamadı",
-      "label": "Dışa aktar"
+      "label": "Dışa aktar",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Blok ekle",
@@ -13300,7 +13303,9 @@
       "redo-action": "{{action}} işlemini yinele",
       "remove-query": "Sorguyu kaldır",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Sorgu seç",
+      "set-cell-time-range": "",
       "split-block": "Bloğu böl",
       "switch-datasource": "Veri kaynağını değiştir",
       "undo": "Geri al",
@@ -15856,8 +15861,7 @@
       "deleted-by-removed": "Silinen hesap",
       "deleted-by-unknown-short": "<0></0> Bilinmeyen",
       "deleted-by-unknown-tooltip": "Bu panoyu silen hesap bulunamadı",
-      "deleted-less-than-1-min": "< 1 dk",
-      "deleted-remaining-header": "Kalan süre",
+      "deleted-header": "",
       "location-header": "Konum",
       "name-header": "Ad",
       "tags-header": "Etiketler",
@@ -18171,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "İnceleyin",
-      "description": "Yenilendik!",
-      "revert": "Beni geri götür",
-      "title": "Yeni stiller"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

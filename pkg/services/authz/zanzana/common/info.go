@@ -164,6 +164,14 @@ func (r ResourceInfo) GroupResourceIdent() string {
 }
 
 func (r ResourceInfo) ResourceIdent() string {
+	// When resource is a folder, use ResourceInfo.folder instead of empty name.
+	// This correctly handles folder-scoped folder permissions, like {folders:read, folders:uid:f1},
+	// translated to {Resource: folders, Name: "", Folder: "f1"} check. Otherwise, empty folder name
+	// leads to group/resource check only and rejection if user granted folder access.
+	if r.Type() == TypeFolder && r.name == "" && r.folder != "" && r.folder != "*" {
+		return NewTypedIdent(r.typ, r.folder)
+	}
+
 	// Treat "*" the same as "". Wildcard access ("can access all resources of this type")
 	// is handled at the group-resource level.
 	if r.name == "" || r.name == "*" {

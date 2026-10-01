@@ -263,7 +263,7 @@ func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request, bu
 	// The cookie only takes effect on stacks that have opted in.
 	if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
 		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
-			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value)
+			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value, buildDir)
 			if err == nil {
 				p.log.Info("resolved preview assets", "folder", cookie.Value)
 				return assets, cookie.Value, nil

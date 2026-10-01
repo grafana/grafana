@@ -17,14 +17,17 @@ import (
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	claims "github.com/grafana/authlib/types"
+	dashboardmanifest "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldermanifest "github.com/grafana/grafana/apps/folder/pkg/apis/manifestdata"
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -248,15 +251,6 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "filter by the user who created the resource (format: user:<uid>)",
 										Required:    false,
 										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "explain",
-										In:          "query",
-										Description: "add debugging info that may help explain why the result matched",
-										Required:    false,
-										Schema:      spec.BoolProperty(),
 									},
 								},
 								{
@@ -588,10 +582,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagDashboardSearchFieldValueResults) { // nolint:staticcheck
-		searchRequest.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-	}
-
 	result, err := s.client.Search(ctx, searchRequest)
 	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
 		errhttp.Write(ctx, err, w)
@@ -829,6 +819,38 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 	return out
 }
 
+var dashboardSearchResponseFields = func() map[string]bool {
+	dashboard := dashboardmanifest.LocalManifest()
+	folder := foldermanifest.LocalManifest()
+	provider := resource.NewManifestBackedProvider(dashboard.ManifestData, folder.ManifestData)
+
+	fields := map[string]bool{
+		resource.SEARCH_FIELD_RV:              true,
+		resource.SEARCH_FIELD_LEGACY_ID:       true,
+		resource.SEARCH_FIELD_SCORE:           true,
+		resource.SEARCH_FIELD_SOURCE_PATH:     true,
+		resource.SEARCH_FIELD_SOURCE_CHECKSUM: true,
+		resource.SEARCH_FIELD_SOURCE_TIME:     true,
+	}
+	for _, definition := range resource.StandardSearchFieldDefinitions() {
+		fields[definition.Name] = true
+	}
+	for _, gvr := range []schema.GroupVersionResource{
+		{Group: dashboardv0alpha1.GROUP, Resource: dashboardv0alpha1.DASHBOARD_RESOURCE},
+		{Group: folders.GROUP, Resource: folders.RESOURCE},
+	} {
+		for _, definition := range provider.Fields(gvr) {
+			fields[definition.Name] = true
+			fields[resource.SEARCH_FIELD_PREFIX+definition.Name] = true
+		}
+	}
+	return fields
+}()
+
+func isDashboardSearchResponseField(field string) bool {
+	return dashboardSearchResponseFields[field] || strings.HasPrefix(field, resource.SEARCH_FIELD_LABELS+".")
+}
+
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
 // nolint:gocyclo
@@ -852,18 +874,18 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{},
-		Query:   queryParams.Get("query"),
-		Limit:   int64(limit),
-		Offset:  int64(offset),
-		Page:    int64(page), // for modes 0-2 (legacy)
-		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
+		Options:      &resourcepb.ListOptions{},
+		Query:        queryParams.Get("query"),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Limit:        int64(limit),
+		Offset:       int64(offset),
+		Page:         int64(page), // for modes 0-2 (legacy)
 	}
 	fields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 	if queryParams.Has("field") {
 		// add fields to search and exclude duplicates
 		for _, f := range queryParams["field"] {
-			if f != "" && !slices.Contains(fields, f) {
+			if isDashboardSearchResponseField(f) && !slices.Contains(fields, f) {
 				fields = append(fields, f)
 			}
 		}

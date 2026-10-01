@@ -2,7 +2,6 @@ import path, { dirname, join } from 'node:path';
 import { mergeRsbuildConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import type { StorybookConfig } from 'storybook-react-rsbuild';
-import remarkGfm from 'remark-gfm';
 import { copyAssetsSync } from './copyAssets.ts';
 import { createRequire } from 'node:module';
 
@@ -42,19 +41,7 @@ copyAssetsSync();
 const mainConfig: StorybookConfig = {
   stories,
 
-  addons: [
-    {
-      name: getAbsolutePath('@storybook/addon-docs'),
-      options: {
-        mdxPluginOptions: {
-          mdxCompileOptions: {
-            remarkPlugins: [remarkGfm],
-          },
-        },
-      },
-    },
-    getAbsolutePath('@storybook/addon-a11y'),
-  ],
+  addons: [getAbsolutePath('@storybook/addon-docs'), getAbsolutePath('@storybook/addon-a11y')],
 
   framework: {
     name: getAbsolutePath('storybook-react-rsbuild'),
