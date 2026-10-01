@@ -15,35 +15,29 @@ jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn().mockResolvedValue({
     // Mock getDefaultQuery method for context-aware defaults
-    getDefaultQuery: jest.fn(
-      (app: CoreApp): Partial<PromQuery> => ({
-        refId: 'A',
-        expr: '',
-        range: true,
-        instant: false,
-      })
-    ),
+    getDefaultQuery: jest.fn((app: CoreApp): Partial<PromQuery> => ({
+      refId: 'A',
+      expr: '',
+      range: true,
+      instant: false,
+    })),
     // Mock export/import methods for query normalization
     exportToAbstractQueries: jest.fn(async (queries: DataQuery[]): Promise<AbstractQuery[]> => {
       // Mock export: strip context properties, keep core content
-      return queries.map(
-        (query): AbstractQuery => ({
-          refId: query.refId,
-          labelMatchers: [
-            { name: '__name__', operator: AbstractLabelOperator.Equal, value: (query as PromQuery).expr || 'up' },
-          ],
-        })
-      );
+      return queries.map((query): AbstractQuery => ({
+        refId: query.refId,
+        labelMatchers: [
+          { name: '__name__', operator: AbstractLabelOperator.Equal, value: (query as PromQuery).expr || 'up' },
+        ],
+      }));
     }),
     importFromAbstractQueries: jest.fn(async (abstractQueries: AbstractQuery[]): Promise<PromQuery[]> => {
       // Mock import: rebuild with appropriate defaults
-      return abstractQueries.map(
-        (abstractQuery): PromQuery => ({
-          refId: abstractQuery.refId,
-          expr: abstractQuery.labelMatchers?.[0]?.value || 'up',
-          range: true, // Dashboard default
-        })
-      );
+      return abstractQueries.map((abstractQuery): PromQuery => ({
+        refId: abstractQuery.refId,
+        expr: abstractQuery.labelMatchers?.[0]?.value || 'up',
+        range: true, // Dashboard default
+      }));
     }),
     annotations: {
       prepareAnnotation: (annotation: AnnotationQuery) => {

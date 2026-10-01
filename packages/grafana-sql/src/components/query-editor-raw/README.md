@@ -69,8 +69,10 @@ The `completionProvider` function is the core of the autocomplete customization.
 - providing custom `SuggestionKind` and resolvers for this kind of suggestions.
 
 ```ts
-export interface SQLCompletionItemProvider
-  extends Omit<monacoTypes.languages.CompletionItemProvider, 'provideCompletionItems'> {
+export interface SQLCompletionItemProvider extends Omit<
+  monacoTypes.languages.CompletionItemProvider,
+  'provideCompletionItems'
+> {
   /**
    * Allows dialect specific functions to be added to the completion list.
    * @alpha

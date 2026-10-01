@@ -196,12 +196,11 @@ interface PromResponse<T> {
 
 export interface PromRulesResponse extends PromResponse<{ groups: PromRuleGroupDTO[]; groupNextToken?: string }> {}
 
-export interface GrafanaPromRulesResponse
-  extends PromResponse<{
-    groups: GrafanaPromRuleGroupDTO[];
-    groupNextToken?: string;
-    totals?: AlertGroupTotals;
-  }> {}
+export interface GrafanaPromRulesResponse extends PromResponse<{
+  groups: GrafanaPromRuleGroupDTO[];
+  groupNextToken?: string;
+  totals?: AlertGroupTotals;
+}> {}
 
 // Ruler rule DTOs
 interface RulerRuleBaseDTO {

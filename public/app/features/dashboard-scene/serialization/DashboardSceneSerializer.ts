@@ -95,11 +95,10 @@ interface DynamicDashboardTrackingInformationStructureNode {
   children?: DynamicDashboardTrackingInformationStructureNode[];
 }
 
-interface DynamicDashboardsTrackingInformationLayoutParsing
-  extends Omit<
-    DynamicDashboardsTrackingInformation,
-    'dashStructure' | 'panelsByDatasourceType' | 'templateVariableCount'
-  > {
+interface DynamicDashboardsTrackingInformationLayoutParsing extends Omit<
+  DynamicDashboardsTrackingInformation,
+  'dashStructure' | 'panelsByDatasourceType' | 'templateVariableCount'
+> {
   dashStructure: DynamicDashboardTrackingInformationStructureNode[];
 }
 
@@ -112,9 +111,12 @@ export interface DSReferencesMapping {
   annotations: Map<string, string | undefined>;
 }
 
-export class V1DashboardSerializer
-  implements DashboardSceneSerializerLike<Dashboard, DashboardMeta, Dashboard, DashboardJson>
-{
+export class V1DashboardSerializer implements DashboardSceneSerializerLike<
+  Dashboard,
+  DashboardMeta,
+  Dashboard,
+  DashboardJson
+> {
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
   protected elementPanelMap = new Map<string, number>();
@@ -288,14 +290,11 @@ export class V1DashboardSerializer
   }
 }
 
-export class V2DashboardSerializer
-  implements
-    DashboardSceneSerializerLike<
-      DashboardV2Spec,
-      DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
-      Dashboard | DashboardV2Spec
-    >
-{
+export class V2DashboardSerializer implements DashboardSceneSerializerLike<
+  DashboardV2Spec,
+  DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+  Dashboard | DashboardV2Spec
+> {
   initialSaveModel?: DashboardV2Spec | Dashboard;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
   protected elementPanelMap = new Map<string, number>();

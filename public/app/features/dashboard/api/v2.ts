@@ -46,9 +46,10 @@ export function getK8sV2DashboardApiConfig() {
   };
 }
 
-export class K8sDashboardV2API
-  implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
-{
+export class K8sDashboardV2API implements DashboardAPI<
+  DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO,
+  DashboardV2Spec
+> {
   private client: ResourceClient<DashboardV2Spec, Status>;
 
   constructor() {

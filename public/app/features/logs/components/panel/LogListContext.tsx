@@ -41,8 +41,10 @@ import { collectInsights } from './analytics';
 import { logsSupportHighlighting } from './grammar';
 import { type LogListModel } from './processing';
 
-export interface LogListContextData
-  extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'showLevel' | 'unwrappedColumns'> {
+export interface LogListContextData extends Omit<
+  Props,
+  'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'showLevel' | 'unwrappedColumns'
+> {
   controlsExpanded: boolean;
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];

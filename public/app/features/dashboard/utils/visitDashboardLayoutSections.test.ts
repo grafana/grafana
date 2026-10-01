@@ -161,11 +161,10 @@ describe('mapDashboardLayoutSections', () => {
       if (!variables) {
         return variables;
       }
-      return variables.map(
-        (v): VariableKind =>
-          v.kind === 'ConstantVariable'
-            ? { ...v, spec: { ...v.spec, query: 'staging', current: { text: 'staging', value: 'staging' } } }
-            : v
+      return variables.map((v): VariableKind =>
+        v.kind === 'ConstantVariable'
+          ? { ...v, spec: { ...v.spec, query: 'staging', current: { text: 'staging', value: 'staging' } } }
+          : v
       );
     });
 
@@ -217,9 +216,8 @@ describe('mapDashboardLayoutSections', () => {
       if (!variables) {
         return variables;
       }
-      return variables.map(
-        (v): VariableKind =>
-          v.kind === 'ConstantVariable' ? { ...v, spec: { ...v.spec, name: `${v.spec.name}-mapped` } } : v
+      return variables.map((v): VariableKind =>
+        v.kind === 'ConstantVariable' ? { ...v, spec: { ...v.spec, name: `${v.spec.name}-mapped` } } : v
       );
     });
 

@@ -59,14 +59,12 @@ export class ScopesService implements ScopesContextValue {
       ])
         .pipe(
           // Map the 3 states into single ScopesContextValueState object
-          map(
-            ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
-              ...thisState,
-              value: selectorState.selectedScopes,
-              loading: selectorState.loading,
-              drawerOpened: dashboardsState.drawerOpened,
-            })
-          )
+          map(([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
+            ...thisState,
+            value: selectorState.selectedScopes,
+            loading: selectorState.loading,
+            drawerOpened: dashboardsState.drawerOpened,
+          }))
         )
         // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
         .subscribe(this._stateObservable)

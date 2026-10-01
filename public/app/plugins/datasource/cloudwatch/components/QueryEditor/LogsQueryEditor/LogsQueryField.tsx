@@ -19,8 +19,11 @@ import { LogsQLCodeEditor } from './code-editors/LogsQLCodeEditor';
 import { PPLQueryEditor } from './code-editors/PPLQueryEditor';
 import { SQLQueryEditor } from './code-editors/SQLCodeEditor';
 
-export interface CloudWatchLogsQueryFieldProps
-  extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
+export interface CloudWatchLogsQueryFieldProps extends QueryEditorProps<
+  CloudWatchDatasource,
+  CloudWatchQuery,
+  CloudWatchJsonData
+> {
   ExtraFieldElement?: ReactNode;
   query: CloudWatchLogsQuery;
 }

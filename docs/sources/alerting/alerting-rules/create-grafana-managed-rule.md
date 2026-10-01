@@ -70,7 +70,7 @@ Note that if you delete an alert resource created in the UI, you can no longer r
 
 To backup and manage alert rules, you can [provision alerting resources](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/) using options such as configuration files, Terraform, or the Alerting API.
 
-[//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
+[//]: <> '{{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
 
 ### Default versus Advanced options
 
@@ -268,4 +268,4 @@ Grafana provides several optional annotations.
 
 1. Click **Save rule**.
 
-[//]: <> ({{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}})
+[//]: <> '{{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}'

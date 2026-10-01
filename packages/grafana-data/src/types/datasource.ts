@@ -476,8 +476,9 @@ interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery
 /**
  * Options argument to DataSourceAPI.getTagKeys
  */
-export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuery>
-  extends DataSourceFilteringRequestOptions<TQuery> {
+export interface DataSourceGetTagKeysOptions<
+  TQuery extends DataQuery = DataQuery,
+> extends DataSourceFilteringRequestOptions<TQuery> {
   /**
    * The other existing filters or base filters. New in v10.3
    */
@@ -487,8 +488,9 @@ export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuer
 /**
  * Options argument to DataSourceAPI.getTagValues
  */
-export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQuery>
-  extends DataSourceFilteringRequestOptions<TQuery> {
+export interface DataSourceGetTagValuesOptions<
+  TQuery extends DataQuery = DataQuery,
+> extends DataSourceFilteringRequestOptions<TQuery> {
   key: string;
   /**
    * The other existing filters or base filters. New in v10.3
@@ -724,14 +726,16 @@ export interface MetricFindValue {
   properties?: Record<string, string>;
 }
 
-export interface DataSourceGetDrilldownsApplicabilityOptions<TQuery extends DataQuery = DataQuery>
-  extends DataSourceFilteringRequestOptions<TQuery> {
+export interface DataSourceGetDrilldownsApplicabilityOptions<
+  TQuery extends DataQuery = DataQuery,
+> extends DataSourceFilteringRequestOptions<TQuery> {
   filters?: AdHocVariableFilter[];
   groupByKeys?: string[];
 }
 
-export interface DataSourceGetRecommendedDrilldownsOptions<TQuery extends DataQuery = DataQuery>
-  extends DataSourceFilteringRequestOptions<TQuery> {
+export interface DataSourceGetRecommendedDrilldownsOptions<
+  TQuery extends DataQuery = DataQuery,
+> extends DataSourceFilteringRequestOptions<TQuery> {
   dashboardUid?: string;
   filters?: AdHocVariableFilter[];
   groupByKeys?: string[];
@@ -766,8 +770,10 @@ export interface DataSourceJsonData {
  * Data Source instance edit model.  This is returned from:
  *  /api/datasources
  */
-export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJsonData, S = {}>
-  extends WithAccessControlMetadata {
+export interface DataSourceSettings<
+  T extends DataSourceJsonData = DataSourceJsonData,
+  S = {},
+> extends WithAccessControlMetadata {
   id: number;
   uid: string;
   orgId: number;

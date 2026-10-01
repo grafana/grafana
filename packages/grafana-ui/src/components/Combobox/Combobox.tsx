@@ -29,11 +29,10 @@ import { isNewGroup, isKeyboardEvent } from './utils';
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
 
-interface ComboboxStaticProps<T extends string | number>
-  extends Pick<
-    InputProps,
-    'placeholder' | 'autoFocus' | 'id' | 'aria-label' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
-  > {
+interface ComboboxStaticProps<T extends string | number> extends Pick<
+  InputProps,
+  'placeholder' | 'autoFocus' | 'id' | 'aria-label' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
+> {
   /**
    * Allows the user to set a value which is not in the list of options.
    */

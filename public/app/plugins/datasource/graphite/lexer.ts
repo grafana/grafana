@@ -190,7 +190,7 @@ export class Lexer {
     // Google's Traceur.
 
     function isUnicodeLetter(code: number) {
-      for (let i = 0; i < unicodeLetterTable.length; ) {
+      for (let i = 0; i < unicodeLetterTable.length;) {
         if (code < unicodeLetterTable[i++]) {
           return false;
         }

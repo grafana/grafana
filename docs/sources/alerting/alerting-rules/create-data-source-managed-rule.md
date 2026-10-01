@@ -170,4 +170,4 @@ Grafana provides several optional annotations.
 
 1. Click **Save rule**.
 
-[//]: <> ({{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}})
+[//]: <> '{{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}'

@@ -39,7 +39,7 @@ export class AppChromeService {
 
   private megaMenuDocked = Boolean(
     window.innerWidth >= config.theme2.breakpoints.values.xl &&
-      store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xl))
+    store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xl))
   );
   private fullscreenWorkspaceUnlisten?: () => void;
 

@@ -14,8 +14,7 @@ import { type OptionEditorConfig } from './options';
  * Option editor registry item
  */
 export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue, TContextOptions = unknown>
-  extends RegistryItem,
-    OptionEditorConfig<TOptions, TSettings, TValue, TContextOptions> {
+  extends RegistryItem, OptionEditorConfig<TOptions, TSettings, TValue, TContextOptions> {
   /**
    * React component used to edit the options property
    */
@@ -87,8 +86,7 @@ export abstract class OptionsUIRegistryBuilder<
   TEditorProps,
   T extends OptionsEditorItem<TOptions, any, TEditorProps, any, TContextOptions>,
   TContextOptions = unknown,
-> implements OptionsUIRegistryBuilderAPI<TOptions, TEditorProps, T, TContextOptions>
-{
+> implements OptionsUIRegistryBuilderAPI<TOptions, TEditorProps, T, TContextOptions> {
   private properties: T[] = [];
 
   addCustomEditor<TSettings, TValue>(

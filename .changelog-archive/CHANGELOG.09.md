@@ -2314,7 +2314,7 @@ Labels prefixed with `grafana_` are reserved by Grafana for special use. If a ma
 
 The current list of labels created by Grafana and available for use anywhere manually configured labels are:
 
-| Label          | Description                               |
+| Label | Description |
 | -------------- | ----------------------------------------- | --------------------------------------------------------------- |
 | grafana_folder | Title of the folder containing the alert. | Issue [#50262](https://github.com/grafana/grafana/issues/50262) |
 
@@ -2705,13 +2705,14 @@ Issue [#50442](https://github.com/grafana/grafana/issues/50442)
 Removed deprecated `checkHealth` prop from the `@grafana/e2e` `addDataSource` config. Previously this value defaulted to `false`, and has not been used in end-to-end tests since Grafana 8.0.3. Issue [#50296](https://github.com/grafana/grafana/issues/50296)
 
 Removes the deprecated `LegacyBaseMap`, `LegacyValueMapping`, `LegacyValueMap`, and `LegacyRangeMap` types, and `getMappedValue` function from grafana-data. Migration is as follows:
-| Old | New |
-| ------------- | ------------- |
-| `LegacyBaseMap` | `MappingType` |
-| `LegacyValueMapping` | `ValueMapping` |
-| `LegacyValueMap` | `ValueMap` |
-| `LegacyRangeMap` | `RangeMap` |
-| `getMappedValue` | `getValueMappingResult` | Issue [#50035](https://github.com/grafana/grafana/issues/50035)
+
+| Old                  | New                     |
+| -------------------- | ----------------------- |
+| `LegacyBaseMap`      | `MappingType`           |
+| `LegacyValueMapping` | `ValueMapping`          |
+| `LegacyValueMap`     | `ValueMap`              |
+| `LegacyRangeMap`     | `RangeMap`              |
+| `getMappedValue`     | `getValueMappingResult` | Issue [#50035](https://github.com/grafana/grafana/issues/50035) |
 
 This change fixes a bug in Grafana where intermittent failure of database, network between Grafana and the database, or error in querying the database would cause all alert rules to be unscheduled in Grafana. Following this change scheduled alert rules are not updated unless the query is successful.
 

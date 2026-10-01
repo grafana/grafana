@@ -42,11 +42,11 @@ export interface ValidationError {
 export function isValidationError(error: unknown): error is ValidationError {
   return Boolean(
     error &&
-      typeof error === 'object' &&
-      'field' in error &&
-      'message' in error &&
-      error.field === 'name' &&
-      typeof error.message === 'string'
+    typeof error === 'object' &&
+    'field' in error &&
+    'message' in error &&
+    error.field === 'name' &&
+    typeof error.message === 'string'
   );
 }
 

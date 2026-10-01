@@ -56,15 +56,13 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
 
   const onChange = (newItems: Array<Partial<QueryEditorGroupByExpression>>) => {
     // As new (empty object) items come in, with need to make sure they have the correct type
-    const cleaned = newItems.map(
-      (v): QueryEditorGroupByExpression => ({
-        type: QueryEditorExpressionType.GroupBy,
-        property: {
-          type: QueryEditorPropertyType.String,
-          name: v.property?.name,
-        },
-      })
-    );
+    const cleaned = newItems.map((v): QueryEditorGroupByExpression => ({
+      type: QueryEditorExpressionType.GroupBy,
+      property: {
+        type: QueryEditorPropertyType.String,
+        name: v.property?.name,
+      },
+    }));
 
     setItems(cleaned);
 

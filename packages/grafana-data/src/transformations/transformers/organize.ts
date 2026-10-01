@@ -7,8 +7,7 @@ import { orderFieldsTransformer, type OrderFieldsTransformerOptions } from './or
 import { renameFieldsTransformer, type RenameFieldsTransformerOptions } from './rename';
 
 export interface OrganizeFieldsTransformerOptions
-  extends OrderFieldsTransformerOptions,
-    RenameFieldsTransformerOptions {
+  extends OrderFieldsTransformerOptions, RenameFieldsTransformerOptions {
   excludeByName: Record<string, boolean>;
   includeByName?: Record<string, boolean>;
 }

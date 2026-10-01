@@ -194,12 +194,10 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     if (results.state === 'Done') {
       const values = results.data?.[0]?.fields?.[0]?.values ?? [];
 
-      return values.toArray().map(
-        (v: unknown): ComboboxOption<string> => ({
-          label: String(v),
-          value: String(v),
-        })
-      );
+      return values.toArray().map((v: unknown): ComboboxOption<string> => ({
+        label: String(v),
+        value: String(v),
+      }));
     }
 
     return [];

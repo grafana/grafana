@@ -972,9 +972,9 @@ export class Mousetrap {
     // stop for input, select, and textarea
     return Boolean(
       element.tagName === 'INPUT' ||
-        element.tagName === 'SELECT' ||
-        element.tagName === 'TEXTAREA' ||
-        ('isContentEditable' in element && element.isContentEditable)
+      element.tagName === 'SELECT' ||
+      element.tagName === 'TEXTAREA' ||
+      ('isContentEditable' in element && element.isContentEditable)
     );
   };
 

@@ -9,11 +9,10 @@ import { fieldMap } from './fields';
 import { type SSOProviderDTO, type SSOSettingsField } from './types';
 import { isSelectableValueArray } from './utils/guards';
 
-interface FieldRendererProps
-  extends Pick<
-    UseFormReturn<SSOProviderDTO>,
-    'register' | 'control' | 'watch' | 'setValue' | 'getValues' | 'unregister'
-  > {
+interface FieldRendererProps extends Pick<
+  UseFormReturn<SSOProviderDTO>,
+  'register' | 'control' | 'watch' | 'setValue' | 'getValues' | 'unregister'
+> {
   field: SSOSettingsField;
   errors: UseFormReturn['formState']['errors'];
   secretConfigured: boolean;

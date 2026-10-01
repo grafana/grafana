@@ -163,19 +163,17 @@ export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectO
   const metadata = getEditableVariablesMetadata();
   const unifiedDrilldown = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls);
 
-  const results = EDITABLE_VARIABLES_SELECT_ORDER.map(
-    (variableType): SelectableValue<EditableVariableType> => ({
-      label: getVariableTypeLabel(variableType, { standalone }),
-      value: variableType,
-      description:
-        variableType === 'adhoc' && unifiedDrilldown && standalone
-          ? t(
-              'dashboard-scene.get-editable-variables.description.add-filters-and-group-by-keys-on-the-fly',
-              'Add key/value filters and group by keys on the fly'
-            )
-          : metadata[variableType].description,
-    })
-  );
+  const results = EDITABLE_VARIABLES_SELECT_ORDER.map((variableType): SelectableValue<EditableVariableType> => ({
+    label: getVariableTypeLabel(variableType, { standalone }),
+    value: variableType,
+    description:
+      variableType === 'adhoc' && unifiedDrilldown && standalone
+        ? t(
+            'dashboard-scene.get-editable-variables.description.add-filters-and-group-by-keys-on-the-fly',
+            'Add key/value filters and group by keys on the fly'
+          )
+        : metadata[variableType].description,
+  }));
 
   return results.filter((option) => {
     // Legacy standalone groupby is experimental/deprecated; leave it gated only
