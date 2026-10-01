@@ -28,9 +28,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
@@ -86,7 +86,7 @@ type kvStorageBackend struct {
 	notifier                notifier
 	eventPublisher          EventPublisher
 	natsShadow              *natsShadow
-	log                     log.Logger
+	log                     logging.Logger
 	disableStorageServices  bool
 	dashboardVersionsToKeep int
 	eventRetentionPeriod    time.Duration
@@ -242,7 +242,7 @@ type KVBackendOptions struct {
 	EventRetentionPeriod time.Duration // How long to keep events (default: 1 hour)
 	EventPruningInterval time.Duration // How often to run the event pruning (default: 5 minutes)
 	Reg                  prometheus.Registerer
-	Log                  log.Logger
+	Log                  logging.Logger
 	GarbageCollection    GarbageCollectionConfig
 
 	// DisableStorageServices stops the background jobs that write, for a process
@@ -360,7 +360,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	logger := opts.Log
 	if opts.Log == nil {
-		logger = log.NewNopLogger()
+		logger = &logging.NoOpLogger{}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -471,7 +471,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the shadow NATS notifier (metrics only; see natsShadow).
 	if opts.EnableNatsNotifierShadow && opts.EventSubscriber != nil && opts.EventSubscriber.Enabled() {
-		backend.natsShadow = newNatsShadow(opts.EventSubscriber, backend.watchOpts, opts.Reg, logger.New("notifier", "natsShadow"))
+		backend.natsShadow = newNatsShadow(opts.EventSubscriber, backend.watchOpts, opts.Reg, logger.With("notifier", "natsShadow"))
 		backend.natsShadow.start(ctx)
 		logger.Info("nats notifier shadow enabled")
 	}
@@ -986,7 +986,7 @@ func (k *kvStorageBackend) lookupCaseInsensitiveFallback(
 	}
 	dk, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group: group, Resource: resource, Namespace: namespace, Name: canonical,
-	}, rv)
+	}, rv, false)
 	if err != nil {
 		return DataKey{}, name, err
 	}
@@ -1298,7 +1298,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Resource:  req.Key.Resource,
 		Namespace: namespace,
 		Name:      req.Key.Name,
-	}, req.ResourceVersion)
+	}, req.ResourceVersion, false)
 	name := req.Key.Name
 
 	// TODO: remove this block when sql/backend backwards compatibility is no longer needed.
@@ -1341,7 +1341,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 }
 
-func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
+func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
 	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
 	// would otherwise resolve the highest retained revision below it, so the batch
 	// and single-read paths would disagree when search and storage briefly diverge.
@@ -1394,7 +1394,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 				Resource:  req.Key.Resource,
 				Namespace: req.Key.Namespace,
 				Name:      req.Key.Name,
-			}, rv)
+			}, rv, includeDeleted)
 			if errors.Is(err, ErrNotFound) {
 				entry.response = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 				entries = append(entries, entry)
@@ -2848,7 +2848,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		// we don't have transactions in the kv store, so we simply delete everything we created
 		err = b.dataStore.BatchDelete(ctx, saved)
 		if err != nil {
-			b.log.Error("failed to delete during rollback: %s", err)
+			b.log.Error("failed to delete during rollback", "error", err)
 		}
 	}
 

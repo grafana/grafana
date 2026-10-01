@@ -5629,16 +5629,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "繼續"
-        },
-        "title": {
-          "proceed-to-external-site": "是否繼續前往外部網站？"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "「{{dashboardName}}」儀表板",
       "label-no-dashboards-found": "未找到儀表板"
@@ -6701,7 +6691,6 @@
       "playlist-previous": "前往上一個儀表板",
       "playlist-stop": "停止播放清單",
       "refresh": "重新整理儀表板",
-      "save": "儲存儀表板",
       "save-as-template": {
         "label": "儲存為範本"
       },
@@ -6716,8 +6705,6 @@
       "save-dashboard-short": "儲存",
       "save-library-panel": "儲存資料庫面板",
       "save-library-panel-short": "儲存",
-      "settings": "儀表板設定",
-      "share-button": "分享",
       "star-add-error": "無法新增至星號標記",
       "star-added": "已新增至星號標記",
       "star-remove-error": "無法從星號標記中移除",
@@ -13205,7 +13192,9 @@
       "copy-markdown": "複製為 Markdown",
       "download-markdown": "下載為 .md",
       "error": "無法匯出筆記本",
-      "label": "匯出"
+      "label": "匯出",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "新增區塊",
@@ -18054,10 +18043,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "查看",
-      "description": "我們重新設計了介面！",
-      "revert": "帶我返回",
-      "title": "新樣式"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

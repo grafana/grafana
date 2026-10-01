@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -303,12 +302,12 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	if previous.GetUID() == "" {
-		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
+		logging.FromContext(ctx).Error("object is missing UID", "gvk", obj.GetGroupVersionKind().String(), "name", obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
 		// Eventually this should be a real error or logged
 		// However the dashboard dual write behavior hits this every time, so we will ignore it
 		// if obj.GetUID() != "" {
-		// 	klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		// 	logging.FromContext(ctx).Error("object UID mismatch", "gvk", obj.GetGroupVersionKind().String(), "was", previous.GetUID(), "now", obj.GetUID())
 		// }
 		obj.SetUID(previous.GetUID())
 	}

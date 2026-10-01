@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "İlerleyin"
-        },
-        "title": {
-          "proceed-to-external-site": "Haricî siteye geçilsin mi?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} panosu",
       "label-no-dashboards-found": "Hiç pano bulunamadı"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
       "refresh": "Panoyu yenile",
-      "save": "Panoyu kaydet",
       "save-as-template": {
         "label": "Şablon olarak kaydet"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Kaydet",
       "save-library-panel": "Kütüphane panelini kaydet",
       "save-library-panel-short": "Kaydet",
-      "settings": "Pano ayarları",
-      "share-button": "Paylaş",
       "star-add-error": "Favorilere eklenemedi",
       "star-added": "Favorilere eklendi",
       "star-remove-error": "Favorilerden kaldırılamadı",
@@ -13298,7 +13285,9 @@
       "copy-markdown": "Markdown olarak kopyala",
       "download-markdown": ".md olarak indir",
       "error": "Not defteri dışa aktarılamadı",
-      "label": "Dışa aktar"
+      "label": "Dışa aktar",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Blok ekle",
@@ -18186,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "İnceleyin",
-      "description": "Yenilendik!",
-      "revert": "Beni geri götür",
-      "title": "Yeni stiller"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

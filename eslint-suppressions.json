@@ -1953,9 +1953,6 @@
   "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {
@@ -3444,11 +3441,6 @@
   "public/app/plugins/panel/debug/EventBusLogger.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/plugins/panel/debug/RenderInfoViewer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/plugins/panel/debug/StateView.tsx": {

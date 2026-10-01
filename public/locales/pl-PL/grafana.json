@@ -5764,16 +5764,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Kontynuuj"
-        },
-        "title": {
-          "proceed-to-external-site": "Przejść do witryny zewnętrznej?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Pulpit {{dashboardName}}",
       "label-no-dashboards-found": "Nie znaleziono pulpitów"
@@ -6839,7 +6829,6 @@
       "playlist-previous": "Przejdź do poprzedniego pulpitu",
       "playlist-stop": "Zatrzymaj autoodtwarzanie",
       "refresh": "Odśwież pulpit",
-      "save": "Zapisz pulpit",
       "save-as-template": {
         "label": "Zapisz jako szablon"
       },
@@ -6854,8 +6843,6 @@
       "save-dashboard-short": "Zapisz",
       "save-library-panel": "Zapisz panel biblioteki",
       "save-library-panel-short": "Zapisz",
-      "settings": "Ustawienia panelu",
-      "share-button": "Udostępnij",
       "star-add-error": "Nie udało się oznaczyć gwiazdką",
       "star-added": "Oznaczono gwiazdką",
       "star-remove-error": "Nie udało się usunąć z oznaczonych gwiazdką",
@@ -13484,7 +13471,9 @@
       "copy-markdown": "Kopiuj jako Markdown",
       "download-markdown": "Pobierz jako plik .md",
       "error": "Nie udało się wyeksportować notatnika",
-      "label": "Eksportuj"
+      "label": "Eksportuj",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Dodaj blok",
@@ -18450,10 +18439,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Sprawdź",
-      "description": "Zmieniliśmy wygląd",
-      "revert": "Powrót",
-      "title": "Nowe style"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {
