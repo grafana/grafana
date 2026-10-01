@@ -134,7 +134,6 @@ type kvBackendMetrics struct {
 	WatchNotificationPublishFailures  *prometheus.CounterVec
 	GCGroupResourceDuration           *prometheus.HistogramVec
 	ResourceVersionGenerationFailures *prometheus.CounterVec
-	ResourceVersionClockRegression    prometheus.Gauge
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -142,15 +141,9 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 		Name: "grafana_storage_resource_version_generation_failures_total",
 		Help: "Resource version generation failures by reason.",
 	}, []string{"reason"})
-	for _, reason := range []string{resourceVersionClockRegression, resourceVersionTimestampOutOfRange} {
-		failures.WithLabelValues(reason)
-	}
+	failures.WithLabelValues(resourceVersionTimestampOutOfRange)
 	return &kvBackendMetrics{
 		ResourceVersionGenerationFailures: failures,
-		ResourceVersionClockRegression: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-			Name: "grafana_storage_resource_version_clock_regression_seconds",
-			Help: "Wall-clock regression relative to the last emitted resource version, reset on successful generation.",
-		}),
 		WriteConflicts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_storage_server_write_conflicts_total",
 			Help: "Total number of write conflicts in the KV storage backend (lease races and resource-version mismatches)",
@@ -999,18 +992,11 @@ func (k *kvStorageBackend) lookupCaseInsensitiveFallback(
 func (k *kvStorageBackend) generateResourceVersion() (int64, error) {
 	rv, err := k.resourceVersions.Generate()
 	if err == nil {
-		k.metrics.ResourceVersionClockRegression.Set(0)
 		return rv, nil
 	}
 	var failure *resourceVersionGenerationError
 	if errors.As(err, &failure) {
 		k.metrics.ResourceVersionGenerationFailures.WithLabelValues(failure.reason).Inc()
-		if failure.reason == resourceVersionClockRegression {
-			skewSeconds := float64(failure.lastMillis-failure.currentMillis) / 1000
-			k.metrics.ResourceVersionClockRegression.Set(skewSeconds)
-			k.log.Error("Resource version clock moved backwards", "currentTime", failure.currentMillis,
-				"lastEmittedTime", failure.lastMillis, "skewSeconds", skewSeconds, "error", err)
-		}
 	}
 	return 0, err
 }

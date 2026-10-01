@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -22,6 +21,7 @@ func TestKvStorageBackend_ResourceVersionForwardJump(t *testing.T) {
 	})
 	now := time.Now()
 	backend.resourceVersions = newResourceVersionGenerator(42, func() time.Time { return now })
+	backend.resourceVersions.elapsed = func(time.Time, time.Time) time.Duration { return 0 }
 	checkpoint := seedResource(t, backend, t.Context(), "checkpoint", "")
 	require.Equal(t, now.UnixMilli(), snowflake.ID(checkpoint).Time())
 	now = now.Add(38 * time.Second)
@@ -41,42 +41,52 @@ func TestKvStorageBackend_ResourceVersionForwardJump(t *testing.T) {
 	require.True(t, found, "the write after the clock jump must be visible with the one-second lookback")
 }
 
+func TestKvStorageBackend_ResourceVersionBackwardWallCorrection(t *testing.T) {
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) { opts.DisableStorageServices = true })
+	start := time.Now()
+	now := start
+	var elapsed time.Duration
+	g := newResourceVersionGenerator(42, func() time.Time { return now })
+	g.elapsed = func(time.Time, time.Time) time.Duration { return elapsed }
+	backend.resourceVersions = g
+	first := seedResource(t, backend, t.Context(), "before-correction", "")
+
+	now = start.Add(-90 * time.Millisecond)
+	elapsed = 10 * time.Millisecond
+	rv := seedResource(t, backend, t.Context(), "after-correction", "")
+	require.Greater(t, rv, first)
+	require.Equal(t, start.Add(elapsed).UnixMilli(), snowflakeTimestampMillis(rv))
+	response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{Key: appsKey("after-correction")})
+	require.Nil(t, response.Error)
+	require.Equal(t, rv, response.ResourceVersion)
+	require.Zero(t, promtest.ToFloat64(backend.metrics.ResourceVersionGenerationFailures.WithLabelValues(resourceVersionTimestampOutOfRange)))
+}
+
 func TestKvStorageBackend_ResourceVersionFailureDoesNotPersist(t *testing.T) {
-	for _, reason := range []string{resourceVersionClockRegression, resourceVersionTimestampOutOfRange} {
-		t.Run(reason, func(t *testing.T) {
-			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) { opts.DisableStorageServices = true })
-			now := time.Now()
-			g := newResourceVersionGenerator(42, func() time.Time { return now })
-			backend.resourceVersions = g
-			switch reason {
-			case resourceVersionClockRegression:
-				requireGeneratedResourceVersion(t, g)
-				now = now.Add(-38 * time.Second)
-			case resourceVersionTimestampOutOfRange:
-				now = time.UnixMilli(snowflake.Epoch - 1)
-			}
-			obj, err := createTestObjectWithName("rejected", appsNamespace, "data")
-			require.NoError(t, err)
-			meta, err := utils.MetaAccessor(obj)
-			require.NoError(t, err)
-			rv, err := backend.WriteEvent(t.Context(), WriteEvent{
-				Type:   resourcepb.WatchEvent_ADDED,
-				Key:    appsKey("rejected"),
-				Value:  objectToJSONBytes(t, obj),
-				Object: meta,
-			})
-			require.Zero(t, rv)
-			require.True(t, apierrors.IsServiceUnavailable(err), "error: %v", err)
-			require.Equal(t, float64(1), promtest.ToFloat64(backend.metrics.ResourceVersionGenerationFailures.WithLabelValues(reason)))
-			_, err = backend.eventStore.LastEventKey(t.Context())
-			require.ErrorIs(t, err, ErrNotFound)
-			for _, err := range backend.dataStore.Keys(t.Context(), ListRequestKey{
-				Group: appsNamespace.Group, Resource: appsNamespace.Resource, Namespace: appsNamespace.Namespace,
-			}, SortOrderAsc) {
-				require.NoError(t, err)
-				t.Fatal("generation failure persisted data")
-			}
-		})
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) { opts.DisableStorageServices = true })
+	backend.resourceVersions = newResourceVersionGenerator(42, func() time.Time {
+		return time.UnixMilli(resourceVersionEpoch - 1)
+	})
+	obj, err := createTestObjectWithName("rejected", appsNamespace, "data")
+	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	rv, err := backend.WriteEvent(t.Context(), WriteEvent{
+		Type:   resourcepb.WatchEvent_ADDED,
+		Key:    appsKey("rejected"),
+		Value:  objectToJSONBytes(t, obj),
+		Object: meta,
+	})
+	require.Zero(t, rv)
+	require.True(t, apierrors.IsServiceUnavailable(err), "error: %v", err)
+	require.Equal(t, float64(1), promtest.ToFloat64(backend.metrics.ResourceVersionGenerationFailures.WithLabelValues(resourceVersionTimestampOutOfRange)))
+	_, err = backend.eventStore.LastEventKey(t.Context())
+	require.ErrorIs(t, err, ErrNotFound)
+	for _, err := range backend.dataStore.Keys(t.Context(), ListRequestKey{
+		Group: appsNamespace.Group, Resource: appsNamespace.Resource, Namespace: appsNamespace.Namespace,
+	}, SortOrderAsc) {
+		require.NoError(t, err)
+		t.Fatal("generation failure persisted data")
 	}
 }
 
@@ -108,9 +118,7 @@ func TestKvStorageBackend_ResourceVersionSequenceWait(t *testing.T) {
 	response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{Key: appsKey("after-sequence-wait")})
 	require.Nil(t, response.Error)
 	require.Equal(t, rv, response.ResourceVersion)
-	for _, reason := range []string{resourceVersionClockRegression, resourceVersionTimestampOutOfRange} {
-		require.Zero(t, promtest.ToFloat64(backend.metrics.ResourceVersionGenerationFailures.WithLabelValues(reason)))
-	}
+	require.Zero(t, promtest.ToFloat64(backend.metrics.ResourceVersionGenerationFailures.WithLabelValues(resourceVersionTimestampOutOfRange)))
 }
 
 func TestKvStorageBackend_ReadResourceVersionsUseEventHead(t *testing.T) {
@@ -166,7 +174,7 @@ func TestKvStorageBackend_EmptyStoreResourceVersion(t *testing.T) {
 	require.Greater(t, historyRV, listRV)
 	require.Equal(t, now.UnixMilli(), snowflake.ID(historyRV).Time())
 
-	now = now.Add(-time.Second)
+	now = time.UnixMilli(resourceVersionEpoch + resourceVersionMaxTimestamp + 1)
 	_, _, err = backend.listResourceKeys(t.Context(), listReq)
 	require.Error(t, err)
 	_, err = backend.ListHistory(t.Context(), listReq, func(it ListIterator) error { return nil })
@@ -184,17 +192,13 @@ func TestResourceVersionGenerationMetrics(t *testing.T) {
 	backend := &kvStorageBackend{
 		resourceVersions: newResourceVersionGenerator(1, func() time.Time { return now }),
 		metrics:          newKVBackendMetrics(prometheus.NewRegistry()),
-		log:              &logging.NoOpLogger{},
 	}
+	failures := backend.metrics.ResourceVersionGenerationFailures.WithLabelValues(resourceVersionTimestampOutOfRange)
 	_, err := backend.generateResourceVersion()
 	require.NoError(t, err)
-	now = now.Add(-38 * time.Second)
+	require.Zero(t, promtest.ToFloat64(failures))
+	now = time.UnixMilli(resourceVersionEpoch + resourceVersionMaxTimestamp + 1)
 	_, err = backend.generateResourceVersion()
 	require.Error(t, err)
-	require.Equal(t, float64(38), promtest.ToFloat64(backend.metrics.ResourceVersionClockRegression))
-	require.Equal(t, float64(1), promtest.ToFloat64(backend.metrics.ResourceVersionGenerationFailures.WithLabelValues(resourceVersionClockRegression)))
-	now = now.Add(38 * time.Second)
-	_, err = backend.generateResourceVersion()
-	require.NoError(t, err)
-	require.Zero(t, promtest.ToFloat64(backend.metrics.ResourceVersionClockRegression))
+	require.Equal(t, float64(1), promtest.ToFloat64(failures))
 }

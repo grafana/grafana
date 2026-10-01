@@ -17,7 +17,6 @@ const (
 	resourceVersionMaxTimestamp   = int64(1<<41 - 1)
 	resourceVersionMaxSequence    = int64(1<<resourceVersionSequenceBits - 1)
 
-	resourceVersionClockRegression     = "clock_regression"
 	resourceVersionTimestampOutOfRange = "timestamp_out_of_range"
 )
 
@@ -34,13 +33,15 @@ func (e *resourceVersionGenerationError) Error() string {
 type snowflakeResourceVersionGenerator struct {
 	mu         sync.Mutex
 	now        func() time.Time
+	elapsed    func(time.Time, time.Time) time.Duration
+	baseline   time.Time
 	node       int64
 	lastMillis int64
 	sequence   int64
 }
 
 func newResourceVersionGenerator(node int64, now func() time.Time) *snowflakeResourceVersionGenerator {
-	return &snowflakeResourceVersionGenerator{node: node, now: now}
+	return &snowflakeResourceVersionGenerator{node: node, now: now, elapsed: time.Time.Sub, baseline: now()}
 }
 
 // Share the node and sequence across backends so instances in one process cannot
@@ -59,14 +60,19 @@ func (g *snowflakeResourceVersionGenerator) Generate() (int64, error) {
 	defer g.mu.Unlock()
 
 	for {
-		// UnixMilli deliberately discards the monotonic component: persisted RVs must
-		// track wall time even after a clock correction.
-		now := g.now().UnixMilli()
+		current := g.now()
+		baseline := g.baseline
+		monotonicElapsed := g.elapsed(current, baseline)
+		wallElapsed := current.Round(0).Sub(baseline.Round(0))
+		if monotonicElapsed < wallElapsed {
+			// Suspension can leave monotonic time behind wall time. Rebase forward
+			// to recover, while retaining monotonic progress after backward corrections.
+			baseline = current
+			monotonicElapsed = 0
+		}
+		now := baseline.Add(monotonicElapsed).UnixMilli()
 		if now < resourceVersionEpoch || now > resourceVersionEpoch+resourceVersionMaxTimestamp {
 			return 0, &resourceVersionGenerationError{reason: resourceVersionTimestampOutOfRange, currentMillis: now, lastMillis: g.lastMillis}
-		}
-		if now < g.lastMillis {
-			return 0, &resourceVersionGenerationError{reason: resourceVersionClockRegression, currentMillis: now, lastMillis: g.lastMillis}
 		}
 		sequence := int64(0)
 		if now == g.lastMillis {
@@ -76,6 +82,7 @@ func (g *snowflakeResourceVersionGenerator) Generate() (int64, error) {
 			}
 			sequence = g.sequence + 1
 		}
+		g.baseline = baseline
 		g.lastMillis = now
 		g.sequence = sequence
 		return (now-resourceVersionEpoch)<<resourceVersionTimestampShift | g.node<<resourceVersionSequenceBits | sequence, nil

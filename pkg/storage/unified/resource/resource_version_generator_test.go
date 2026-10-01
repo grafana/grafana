@@ -53,15 +53,72 @@ func TestResourceVersionGeneratorWallTime(t *testing.T) {
 	require.Zero(t, snowflake.ID(jumped).Step())
 }
 
-func TestResourceVersionGeneratorClockRegression(t *testing.T) {
-	now := time.Now()
-	g := newResourceVersionGenerator(1, func() time.Time { return now })
-	first := requireGeneratedResourceVersion(t, g)
-	now = now.Add(-38 * time.Second)
-	requireResourceVersionFailure(t, g, resourceVersionClockRegression)
-	requireResourceVersionFailure(t, g, resourceVersionClockRegression)
-	now = now.Add(38 * time.Second)
-	require.Equal(t, first+1, requireGeneratedResourceVersion(t, g))
+func TestResourceVersionGeneratorClockAdjustments(t *testing.T) {
+	start := time.Now().Round(0)
+	type clockStep struct {
+		// All offsets are relative to start, including the expected RV timestamp.
+		wall, monotonic, expected time.Duration
+	}
+	tests := []struct {
+		name  string
+		steps []clockStep
+	}{
+		{
+			name: "backward wall correction before first RV",
+			steps: []clockStep{
+				// The constructor's baseline must survive a correction before the first generation.
+				{-100 * time.Millisecond, 0, 0},
+				{-90 * time.Millisecond, 10 * time.Millisecond, 10 * time.Millisecond},
+			},
+		},
+		{
+			name: "backward wall correction",
+			steps: []clockStep{
+				{0, 0, 0},
+				// Wall time moves back 100ms; the RV stays at the baseline and advances its sequence.
+				{-100 * time.Millisecond, 0, 0},
+				// Both clocks advance 10ms; the RV follows monotonic time despite the wall-clock offset.
+				{-90 * time.Millisecond, 10 * time.Millisecond, 10 * time.Millisecond},
+				// Continued progress retains the 100ms lead over wall time without rebasing backward.
+				{100 * time.Millisecond, 200 * time.Millisecond, 200 * time.Millisecond},
+			},
+		},
+		{
+			name: "suspension then backward wall correction",
+			steps: []clockStep{
+				{0, 0, 0},
+				// Wall time advances 38s while monotonic time advances 1s; rebase to recover the missing 37s.
+				{38 * time.Second, time.Second, 38 * time.Second},
+				// Both clocks advance 10ms; monotonic progress must use the new baseline.
+				{38010 * time.Millisecond, 1010 * time.Millisecond, 38010 * time.Millisecond},
+				// A 100ms backward wall correction during another 10ms of progress must not decrease the RV.
+				{37920 * time.Millisecond, 1020 * time.Millisecond, 38020 * time.Millisecond},
+				// Another forward discrepancy must rebase again, even after the backward correction.
+				{76 * time.Second, 2 * time.Second, 76 * time.Second},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			now := start
+			var monotonic, baselineMonotonic time.Duration
+			g := newResourceVersionGenerator(1, func() time.Time { return now })
+			// Go does not expose construction of independent wall and monotonic readings.
+			g.elapsed = func(time.Time, time.Time) time.Duration { return monotonic - baselineMonotonic }
+			var previous int64
+			for _, step := range tt.steps {
+				now = start.Add(step.wall)
+				monotonic = step.monotonic
+				rv := requireGeneratedResourceVersion(t, g)
+				require.Equal(t, start.Add(step.expected).UnixMilli(), snowflakeTimestampMillis(rv))
+				require.Greater(t, rv, previous)
+				if g.baseline == now {
+					baselineMonotonic = monotonic
+				}
+				previous = rv
+			}
+		})
+	}
 }
 
 func TestResourceVersionGeneratorSequenceExhaustion(t *testing.T) {
@@ -89,31 +146,23 @@ func TestResourceVersionGeneratorSequenceExhaustion(t *testing.T) {
 	require.Zero(t, snowflake.ID(rv).Step())
 }
 
-func TestResourceVersionGeneratorSequenceWaitClockFailure(t *testing.T) {
-	for _, reason := range []string{resourceVersionClockRegression, resourceVersionTimestampOutOfRange} {
-		t.Run(reason, func(t *testing.T) {
-			now := time.Now()
-			invalid := now.Add(-time.Millisecond)
-			if reason == resourceVersionTimestampOutOfRange {
-				now = time.UnixMilli(resourceVersionEpoch + resourceVersionMaxTimestamp)
-				invalid = now.Add(time.Millisecond)
-			}
-			samples := 0
-			g := newResourceVersionGenerator(1, func() time.Time {
-				samples++
-				if samples == 1 {
-					return now
-				}
-				return invalid
-			})
-			g.lastMillis = now.UnixMilli()
-			g.sequence = resourceVersionMaxSequence
-			requireResourceVersionFailure(t, g, reason)
-			require.Equal(t, 2, samples)
-			require.Equal(t, now.UnixMilli(), g.lastMillis)
-			require.Equal(t, resourceVersionMaxSequence, g.sequence)
-		})
+func TestResourceVersionGeneratorSequenceWaitTimestampOutOfRange(t *testing.T) {
+	now := time.UnixMilli(resourceVersionEpoch + resourceVersionMaxTimestamp)
+	samples := 0
+	g := newResourceVersionGenerator(1, func() time.Time { return now })
+	g.now = func() time.Time {
+		samples++
+		if samples == 1 {
+			return now
+		}
+		return now.Add(time.Millisecond)
 	}
+	g.lastMillis = now.UnixMilli()
+	g.sequence = resourceVersionMaxSequence
+	requireResourceVersionFailure(t, g, resourceVersionTimestampOutOfRange)
+	require.Equal(t, 2, samples)
+	require.Equal(t, now.UnixMilli(), g.lastMillis)
+	require.Equal(t, resourceVersionMaxSequence, g.sequence)
 }
 
 func TestResourceVersionGeneratorTimestampRange(t *testing.T) {
@@ -133,6 +182,25 @@ func TestResourceVersionGeneratorTimestampRange(t *testing.T) {
 		require.Greater(t, rv, int64(0))
 		require.Equal(t, millis, snowflake.ID(rv).Time())
 	}
+}
+
+func TestResourceVersionGeneratorInvalidRebaseRecovery(t *testing.T) {
+	start := time.Now()
+	now := start
+	var elapsed time.Duration
+	g := newResourceVersionGenerator(1, func() time.Time { return now })
+	g.elapsed = func(time.Time, time.Time) time.Duration { return elapsed }
+	first := requireGeneratedResourceVersion(t, g)
+
+	now = time.UnixMilli(resourceVersionEpoch + resourceVersionMaxTimestamp + 1)
+	elapsed = time.Millisecond
+	requireResourceVersionFailure(t, g, resourceVersionTimestampOutOfRange)
+	require.Equal(t, start, g.baseline, "an invalid forward jump must not replace the baseline")
+
+	now = start.Add(time.Millisecond)
+	rv := requireGeneratedResourceVersion(t, g)
+	require.Greater(t, rv, first)
+	require.Equal(t, now.UnixMilli(), snowflakeTimestampMillis(rv))
 }
 
 func TestResourceVersionGeneratorConcurrent(t *testing.T) {
