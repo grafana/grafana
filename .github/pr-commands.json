@@ -22,7 +22,7 @@
       "package.json",
       "tsconfig.json",
       "lerna.json",
-      ".prettierrc.js",
+      ".oxfmtrc.json",
       ".eslintrc",
       "**/*.mdx"
     ],
