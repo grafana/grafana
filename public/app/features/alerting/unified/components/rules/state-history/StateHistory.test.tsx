@@ -11,6 +11,32 @@ const server = setupMswServer();
 
 describe('StateHistory', () => {
   it.each(['switching rules', 'reopening for another rule'])(
+    'shows loading instead of the previous error when %s, then shows the new rule error',
+    async (navigation) => {
+      server.use(
+        http.get('/api/annotations', ({ request }) => {
+          const ruleUID = new URL(request.url).searchParams.get('alertUID');
+          return HttpResponse.json({ message: `History unavailable for ${ruleUID}` }, { status: 500 });
+        })
+      );
+      const store = configureStore();
+      let view = render(<StateHistory ruleUID="first-rule" />, { store });
+      expect(await screen.findByRole('alert')).toHaveTextContent('History unavailable for first-rule');
+
+      if (navigation === 'switching rules') {
+        view.rerender(<StateHistory ruleUID="second-rule" />);
+      } else {
+        view.unmount();
+        view = render(<StateHistory ruleUID="second-rule" />, { store });
+      }
+
+      expect(screen.getByText('Loading history...')).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(await screen.findByRole('alert')).toHaveTextContent('History unavailable for second-rule');
+    }
+  );
+
+  it.each(['switching rules', 'reopening for another rule'])(
     'hides previous history when %s and fetches it again on return',
     async (navigation) => {
       server.use(
