@@ -288,6 +288,7 @@ This Terraform configuration creates a Supervisor configuration file that connec
 
    agent:
      executable: '<OTELCOL_EXECUTABLE_PATH>'
+     instance_id: '${collector_id}'
 
    storage:
      directory: '<STORAGE_DIRECTORY>'
@@ -306,6 +307,7 @@ This Terraform configuration creates a Supervisor configuration file that connec
      content = templatefile(
        "supervisor.yaml.tftpl",
        {
+         collector_id   = <COLLECTOR_ID>
          fm_auth_base64 = base64encode("${local.fm_id}:${var.otel_token}"),
          fm_url         = local.fm_url,
        },
@@ -317,7 +319,8 @@ This Terraform configuration creates a Supervisor configuration file that connec
 
 1. Replace the following field values:
    - `<OTELCOL_EXECUTABLE_PATH>` with the path to your OpenTelemetry Collector executable
-   - `<STORAGE_DIRECTORY>` with the path to a writable directory to use for [persistent data storage](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/opampsupervisor/README.md#persistent-data-storage).
+   - `<STORAGE_DIRECTORY>` with the path to a writable directory to use for [persistent data storage](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/opampsupervisor/README.md#persistent-data-storage)
+   - `<COLLECTOR_ID>` with the unique identifier of the Collector.
 
 ## Create a Fleet Management collector
 
@@ -352,7 +355,7 @@ You must complete the [Run the collector](#run-the-collector) step for the colle
    resource "grafana_fleet_management_collector" "fm_collector_otel" {
      provider = grafana.fm
 
-     id = "prod_otel_collector"
+     id = "<COLLECTOR_ID>"
      collector_type = "OTEL"
      remote_attributes = {
        "env" = "PROD"
@@ -360,6 +363,8 @@ You must complete the [Run the collector](#run-the-collector) step for the colle
      enabled = true
    }
    ```
+
+1. Replace `<COLLECTOR_ID>` with the same unique identifier used in the Supervisor configuration.
 
 ## Create a Fleet Management pipeline
 
