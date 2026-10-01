@@ -1,5 +1,4 @@
 import { getPackagesSync } from '@manypkg/get-packages';
-import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -127,18 +126,6 @@ export default (env: Env = {}) => {
             syntactic: true,
           },
         },
-      })
-    );
-  }
-
-  if (!Number(env.noLint)) {
-    devConfig.plugins?.push(
-      new ESLintPlugin({
-        cache: true,
-        lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
-        extensions: ['.ts', '.tsx'],
-        configType: 'flat',
-        failOnError: false,
       })
     );
   }

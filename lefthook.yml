@@ -13,8 +13,8 @@ pre-commit:
     frontend-lint:
       glob: '*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}'
       run: |
-        yarn eslint --ext .js,.jsx,.ts,.tsx,.mjs,.cjs,.mts,.cts --cache --prune-suppressions --fix {staged_files} &&
-        git add eslint-suppressions.json &&
+        yarn oxlint --prune-suppressions --fix --no-error-on-unmatched-pattern {staged_files} &&
+        git add oxlint-suppressions.json &&
         yarn prettier --write {staged_files}
       stage_fixed: true
 

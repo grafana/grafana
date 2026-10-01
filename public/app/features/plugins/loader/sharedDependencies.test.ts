@@ -5,7 +5,7 @@ import { QueryField, makeValue } from '@grafana/ui';
 import { sandboxPluginDependencies } from '../sandbox/pluginDependencies';
 
 import { SystemJS } from './systemjs';
-// eslint-disable-next-line import/order
+// eslint-disable-next-line import-js/order
 import { sharedDependenciesMap } from './sharedDependencies';
 import { buildImportMap } from './utils';
 

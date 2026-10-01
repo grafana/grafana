@@ -13,7 +13,7 @@ import {
   FieldColorModeId,
   type DecimalCount,
 } from '@grafana/data';
-// eslint-disable-next-line import/order
+// eslint-disable-next-line import-js/order
 import {
   AxisPlacement,
   GraphDrawStyle,

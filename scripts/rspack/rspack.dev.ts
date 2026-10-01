@@ -1,7 +1,6 @@
 import { getPackagesSync } from '@manypkg/get-packages';
 import rspack, { type Configuration } from '@rspack/core';
 import type { Configuration as DevServerConfiguration } from '@rspack/dev-server';
-import ESLintPlugin from 'eslint-rspack-plugin';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -220,20 +219,6 @@ export default (env: Env = {}) => {
             syntactic: true,
           },
         },
-      })
-    );
-  }
-
-  if (!Number(env.noLint)) {
-    devConfig.plugins?.push(
-      new ESLintPlugin({
-        cache: true,
-        lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
-        extensions: ['.ts', '.tsx'],
-        configType: 'flat',
-        // Replaces `failOnError: false`, dropped in eslint-rspack-plugin 5.x: lint problems
-        // are printed and the build still succeeds.
-        severity: { error: 'warning' },
       })
     );
   }

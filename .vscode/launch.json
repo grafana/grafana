@@ -122,11 +122,11 @@
       }
     },
     {
-      "name": "Debug ESLint",
+      "name": "Debug oxlint",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "yarn",
-      "runtimeArgs": ["run", "eslint", "${file}"],
+      "runtimeArgs": ["run", "oxlint", "${file}"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     },

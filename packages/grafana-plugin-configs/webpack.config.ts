@@ -1,5 +1,4 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
-import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import { createRequire } from 'node:module';
 import path from 'path';
@@ -308,18 +307,6 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
                 include: [{ file: '**/*.{ts,tsx}' }],
               },
               typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
-            }),
-            new ESLintPlugin({
-              extensions: ['.ts', '.tsx'],
-              lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
-              cacheLocation: path.resolve(
-                import.meta.dirname,
-                '../../node_modules/.cache/eslint-webpack-plugin',
-                path.basename(process.cwd()),
-                '.eslintcache'
-              ),
-              configType: 'flat',
-              failOnError: false,
             }),
           ]
         : []),

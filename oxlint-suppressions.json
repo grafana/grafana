@@ -873,9 +873,6 @@
     }
   },
   "public/app/core/components/TimeSeries/utils.ts": {
-    "import-js/order": {
-      "count": 1
-    },
     "typescript/consistent-type-assertions": {
       "count": 1
     },
@@ -2766,18 +2763,8 @@
       "count": 2
     }
   },
-  "public/app/features/plugins/loader/sharedDependencies.test.ts": {
-    "import-js/order": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/loader/sharedDependencies.ts": {
     "no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/loader/systemjsHooks.ts": {
-    "import-js/order": {
       "count": 1
     }
   },

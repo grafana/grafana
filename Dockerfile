@@ -49,7 +49,7 @@ RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
     yarn install --immutable; \
   fi
 
-COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
+COPY tsconfig.json .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
