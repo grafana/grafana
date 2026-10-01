@@ -3443,11 +3443,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/panel/debug/RenderInfoViewer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/debug/StateView.tsx": {
     "@grafana/require-no-margin": {
       "count": 1

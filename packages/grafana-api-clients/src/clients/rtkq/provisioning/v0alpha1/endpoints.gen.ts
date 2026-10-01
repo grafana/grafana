@@ -2049,6 +2049,12 @@ export type RepositorySpec = {
   workflows: ('branch' | 'write')[];
 };
 export type DeletionStatus = {
+  /** Cause classifies the blocking error. It may be absent on older statuses.
+    
+    Possible enum values:
+     - `"system"` indicates an infrastructure or unclassified failure.
+     - `"user"` indicates a failure that requires user intervention. */
+  cause?: 'system' | 'user';
   /** Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer. */
   finalizer?: string;
   /** Message is a human-readable explanation of what went wrong, suitable for showing to users. */
