@@ -1,5 +1,8 @@
 import {
+  AppEvents,
+  type DashboardQueryPolicy,
   type DataSourceInstanceSettings,
+  type DataSourceRef,
   type DataTransformerConfig,
   getDataSourceRef,
   PluginType,
@@ -8,21 +11,28 @@ import { config, reportInteraction } from '@grafana/runtime';
 import {
   SceneDataTransformer,
   sceneGraph,
+  SceneGridLayout,
   type SceneObjectRef,
   type SceneQueryRunner,
+  SceneTimeRange,
   type VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
+import { DashboardScene } from '../../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 
 const mockGetInstanceSettings = jest.fn();
 const mockGetDataSourceInstance = jest.fn();
+const mockPublish = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({ publish: mockPublish }),
   reportInteraction: jest.fn(),
 }));
 
@@ -107,6 +117,8 @@ describe('PanelDataPaneNext', () => {
       setState: jest.fn().mockImplementation((update: Partial<typeof panelState>) => {
         Object.assign(panelState, update);
       }),
+      // Dashboard query policies are resolved through the panel's root; a bare panel has none.
+      getRoot: () => mockPanel,
     } as unknown as VizPanel;
 
     const mockPanelRef = {
@@ -1717,6 +1729,130 @@ describe('PanelDataPaneNext', () => {
       await testDataPane.bulkChangeDataSource(['A'], { uid: 'prom-uid-2', type: 'prometheus' });
 
       expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+  });
+
+  describe('dashboard query policies', () => {
+    const RESTRICTED = 'restricted-datasource';
+    const settingsA = mockDataSource({ uid: 'instance-a', type: RESTRICTED, name: 'instance-a' }, { id: RESTRICTED });
+    const settingsB = mockDataSource({ uid: 'instance-b', type: RESTRICTED, name: 'instance-b' }, { id: RESTRICTED });
+    const mixedSettings = {
+      uid: '-- Mixed --',
+      type: 'mixed',
+      name: 'Mixed',
+      meta: { mixed: true },
+    } as unknown as DataSourceInstanceSettings;
+    const refA = { type: RESTRICTED, uid: 'instance-a' };
+    const refB = { type: RESTRICTED, uid: 'instance-b' };
+    const policy: DashboardQueryPolicy = {
+      restrictSamePluginToThisInstance: true,
+      defaultForNewPanels: true,
+      reason: 'Dashboard is bound to instance A.',
+    };
+    const refusalToast = {
+      type: AppEvents.alertError.name,
+      payload: ["This data source can't be used on this dashboard", policy.reason],
+    };
+
+    let testDataPane: PanelDataPaneNext;
+
+    beforeEach(() => {
+      mockPublish.mockClear();
+      mockGetInstanceSettings.mockImplementation((ref: DataSourceRef | string | null | undefined) => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        return uid === 'instance-a' ? settingsA : uid === 'instance-b' ? settingsB : undefined;
+      });
+
+      testDataPane = new PanelDataPaneNext({
+        panelRef: { resolve: () => mockPanel } as SceneObjectRef<VizPanel>,
+      });
+
+      const dashboard = new DashboardScene({
+        uid: 'dash-1',
+        title: 'Bound dashboard',
+        queryPolicies: { [RESTRICTED]: { uid: 'instance-a', policy } },
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
+      });
+      jest.spyOn(mockPanel, 'getRoot').mockReturnValue(dashboard);
+
+      mockQueryRunnerState.datasource = refA;
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: refA },
+        { refId: 'B', datasource: refA },
+      ];
+    });
+
+    it('refuses changeDataSource to an excluded instance before any state change', async () => {
+      await testDataPane.changeDataSource(refB, 'A');
+
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+      expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
+      expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+    });
+
+    it('allows changeDataSource to the bound instance', async () => {
+      await testDataPane.changeDataSource(refA, 'A');
+
+      expect(mockQueryRunner.setState).toHaveBeenCalled();
+      expect(mockPublish).not.toHaveBeenCalled();
+    });
+
+    it('refuses bulkChangeDataSource to an excluded instance before any state change', async () => {
+      await testDataPane.bulkChangeDataSource(['A', 'B'], refB);
+
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+      expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+    });
+
+    it('refuses addQuery when the query carries an excluded instance', () => {
+      testDataPane.setState({ dsSettings: settingsA });
+
+      const refId = testDataPane.addQuery({ datasource: refB });
+
+      expect(refId).toBeUndefined();
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+      expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+    });
+
+    it('refuses updateQueries when it introduces an excluded instance', () => {
+      testDataPane.updateQueries([...(mockQueryRunnerState.queries as DataQuery[]), { refId: 'C', datasource: refB }]);
+
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+      expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+    });
+
+    it('refuses a saved-query replacement that re-points a query to an excluded instance', () => {
+      testDataPane.updateSelectedQuery({ refId: 'A', datasource: refB }, 'A');
+
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+      expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+    });
+
+    it('lets an untouched query on an excluded instance be edited', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: refB }];
+
+      testDataPane.updateSelectedQuery({ refId: 'A', datasource: refB, expr: 'edited' } as DataQuery, 'A');
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [{ refId: 'A', datasource: refB, expr: 'edited' }],
+      });
+      expect(mockPublish).not.toHaveBeenCalled();
+    });
+
+    it('starts a new query on a mixed panel on the bound instance', () => {
+      mockQueryRunnerState.datasource = { type: 'mixed', uid: '-- Mixed --' };
+      testDataPane.setState({ dsSettings: mixedSettings });
+
+      const refId = testDataPane.addQuery();
+
+      expect(refId).toBe('C');
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: expect.arrayContaining([
+          expect.objectContaining({ refId: 'C', datasource: getDataSourceRef(settingsA) }),
+        ]),
+      });
+      expect(mockPublish).not.toHaveBeenCalled();
     });
   });
 

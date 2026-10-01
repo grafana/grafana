@@ -1,18 +1,36 @@
 import { render, screen } from '@testing-library/react';
 
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type ScopedVars } from '@grafana/data';
-import { type DataQuery } from '@grafana/schema';
+import {
+  type DashboardQueryPolicy,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type ScopedVars,
+} from '@grafana/data';
+import { SceneDataTransformer, SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
+import { DashboardScene } from '../../../../scene/DashboardScene';
+import { DashboardGridItem } from '../../../../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../../../../scene/layout-default/DefaultGridLayoutManager';
 import { QueryEditorType } from '../../constants';
 import { renderWithQueryEditorProvider } from '../testUtils';
 
 import { ContentHeader, ContentHeaderSceneWrapper } from './ContentHeader';
 
-// Capture the picker props so we can assert how `current` and `scopedVars` are resolved.
+const RESTRICTED = 'restricted-datasource';
+
+const mockSettings: Record<string, DataSourceInstanceSettings> = {
+  'instance-a': mockDataSource({ uid: 'instance-a', type: RESTRICTED, name: 'instance-a' }, { id: RESTRICTED }),
+  'instance-b': mockDataSource({ uid: 'instance-b', type: RESTRICTED, name: 'instance-b' }, { id: RESTRICTED }),
+  prom: mockDataSource({ uid: 'prom', type: 'prometheus', name: 'prom' }, { id: 'prometheus' }),
+};
+
+// Capture the picker props so we can assert how `current`, `scopedVars` and `filter` are resolved.
 const mockDataSourcePicker = jest.fn();
 
 jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => ({
-  DataSourcePicker: (props: { current?: unknown; scopedVars?: unknown }) => {
+  DataSourcePicker: (props: { current?: unknown; scopedVars?: unknown; filter?: unknown }) => {
     mockDataSourcePicker(props);
     return null;
   },
@@ -93,5 +111,71 @@ describe('ContentHeader query name', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Edit query name' })).toBeInTheDocument();
+  });
+});
+
+describe('ContentHeaderSceneWrapper dashboard query policies', () => {
+  const policy: DashboardQueryPolicy = {
+    restrictSamePluginToThisInstance: true,
+    reason: 'Dashboard is bound to instance A.',
+  };
+
+  const datasource: DataSourceRef = { type: RESTRICTED, uid: 'instance-a' };
+  const query: DataQuery = { refId: 'A', datasource };
+
+  function buildPanelInDashboard(queryPolicies?: DashboardScene['state']['queryPolicies']) {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      $data: new SceneDataTransformer({
+        transformations: [],
+        $data: new SceneQueryRunner({ datasource, queries: [query] }),
+      }),
+    });
+
+    new DashboardScene({
+      uid: 'dash-1',
+      title: 'Bound dashboard',
+      queryPolicies,
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [new DashboardGridItem({ key: 'griditem-1', body: panel })] }),
+      }),
+    });
+
+    return panel;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('hides data source instances the dashboard policy excludes from the query data source picker', () => {
+    const panel = buildPanelInDashboard({ [RESTRICTED]: { uid: 'instance-a', policy } });
+
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper />, {
+      queries: [query],
+      selectedQuery: query,
+      panelState: { panel },
+    });
+
+    const filter: ((ds: DataSourceInstanceSettings) => boolean) | undefined = pickerProps().filter;
+    expect(filter).toBeDefined();
+    expect(filter!(mockSettings['instance-b'])).toBe(false);
+    expect(filter!(mockSettings['instance-a'])).toBe(true);
+    expect(filter!(mockSettings['prom'])).toBe(true);
+  });
+
+  it('passes no filter when the dashboard has no policy', () => {
+    const panel = buildPanelInDashboard(undefined);
+
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper />, {
+      queries: [query],
+      selectedQuery: query,
+      panelState: { panel },
+    });
+
+    expect(pickerProps()).toBeDefined();
+    expect(pickerProps().filter).toBeUndefined();
   });
 });

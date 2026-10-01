@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { of, map } from 'rxjs';
 
 import {
+  AppEvents,
   CoreApp,
+  type DashboardQueryPolicy,
   type DataQuery,
   type DataQueryRequest,
   type DataSourceApi,
@@ -20,6 +22,7 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { ConstantVariable, SceneVariableSet } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { ExpressionQueryType } from 'app/features/expressions/types';
@@ -203,6 +206,37 @@ const MixedDsSettingsMock = {
   },
 };
 
+const RESTRICTED_DS_TYPE = 'restricted-datasource';
+
+function restrictedDsMock(uid: string): DataSourceApi {
+  return {
+    meta: { id: RESTRICTED_DS_TYPE },
+    name: uid,
+    type: RESTRICTED_DS_TYPE,
+    uid,
+    getRef: () => ({ type: RESTRICTED_DS_TYPE, uid }),
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+}
+
+function restrictedDsSettingsMock(uid: string): DataSourceInstanceSettings {
+  return {
+    id: 10,
+    uid,
+    name: uid,
+    type: RESTRICTED_DS_TYPE,
+    meta: { id: RESTRICTED_DS_TYPE },
+  } as DataSourceInstanceSettings;
+}
+
+const boundAMock = restrictedDsMock('bound-a');
+const boundBMock = restrictedDsMock('bound-b');
+const boundASettingsMock = restrictedDsSettingsMock('bound-a');
+const boundBSettingsMock = restrictedDsSettingsMock('bound-b');
+/** The instance the `$ds` data source variable currently resolves to. */
+let mockDsVariableTarget = 'bound-a';
+
+const mockPublish = jest.fn();
+
 const panelPlugin = getPanelPlugin({ id: 'timeseries', skipDataQuery: false });
 
 function resolveMockUid(ref?: DataSourceRef | string | null) {
@@ -228,6 +262,12 @@ jest.mock('@grafana/runtime/unstable', () => ({
     if (uid === SHARED_DASHBOARD_QUERY) {
       return ds3Mock;
     }
+    if (uid === 'bound-a') {
+      return boundAMock;
+    }
+    if (uid === 'bound-b') {
+      return boundBMock;
+    }
     return defaultDsMock;
   },
   getDataSourceInstanceSettings: async (ref?: DataSourceRef | string | null) => {
@@ -241,12 +281,27 @@ jest.mock('@grafana/runtime/unstable', () => ({
     if (uid === '-- Mixed --') {
       return MixedDsSettingsMock;
     }
+    if (uid === 'bound-a') {
+      return boundASettingsMock;
+    }
+    if (uid === 'bound-b') {
+      return boundBSettingsMock;
+    }
+    if (uid === '$ds') {
+      return {
+        ...restrictedDsSettingsMock(mockDsVariableTarget),
+        uid: '$ds',
+        name: '$ds',
+        rawRef: { type: RESTRICTED_DS_TYPE, uid: mockDsVariableTarget },
+      };
+    }
     return instance1SettingsMock;
   },
 }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({ publish: mockPublish }),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
@@ -277,12 +332,37 @@ jest.mock('@grafana/runtime', () => ({
         return ds3Mock;
       }
 
+      if (ref.uid === 'bound-a') {
+        return boundAMock;
+      }
+
+      if (ref.uid === 'bound-b') {
+        return boundBMock;
+      }
+
       // if datasource is not found, return default datasource
       return defaultDsMock;
     },
     getInstanceSettings: (ref: DataSourceRef) => {
       if (ref.uid === 'gdev-testdata') {
         return instance1SettingsMock;
+      }
+
+      if (ref.uid === 'bound-a') {
+        return boundASettingsMock;
+      }
+
+      if (ref.uid === 'bound-b') {
+        return boundBSettingsMock;
+      }
+
+      if (ref.uid === '$ds') {
+        return {
+          ...restrictedDsSettingsMock(mockDsVariableTarget),
+          uid: '$ds',
+          name: '$ds',
+          rawRef: { type: RESTRICTED_DS_TYPE, uid: mockDsVariableTarget },
+        };
       }
 
       if (ref.uid === 'gdev-prometheus') {
@@ -1053,6 +1133,245 @@ describe('PanelDataQueriesTab', () => {
         expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
       });
     });
+  });
+});
+
+describe('PanelDataQueriesTab dashboard query policies', () => {
+  const policy: DashboardQueryPolicy = {
+    restrictSamePluginToThisInstance: true,
+    defaultForNewPanels: true,
+    reason: 'Dashboard is bound to instance A. Panels of this type must use data source bound-a.',
+  };
+
+  beforeEach(() => {
+    mockPublish.mockClear();
+    mockDsVariableTarget = 'bound-a';
+  });
+
+  afterEach(() => {
+    deactivators.forEach((deactivate) => deactivate());
+    deactivators = [];
+  });
+
+  async function setupBoundScene(panelKey = 'panel-1') {
+    const result = await setupScene(panelKey);
+    result.scene.setState({
+      queryPolicies: { [RESTRICTED_DS_TYPE]: { uid: 'bound-a', policy } },
+      // A constant stands in for a data source variable: the activated scene would otherwise validate a
+      // DataSourceVariable against the (mocked, empty) instance list and clear its value.
+      $variables: new SceneVariableSet({
+        variables: [new ConstantVariable({ name: 'ds', value: mockDsVariableTarget })],
+      }),
+    });
+    return result;
+  }
+
+  const refusalToast = {
+    type: AppEvents.alertError.name,
+    payload: ["This data source can't be used on this dashboard", policy.reason],
+  };
+
+  it('refuses to switch to an excluded instance, keeps the current data source and shows the reason', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const before = queriesTab.queryRunner.state.datasource;
+    const queriesBefore = queriesTab.queryRunner.state.queries;
+
+    await queriesTab.onChangeDataSource(boundBSettingsMock);
+
+    expect(queriesTab.queryRunner.state.datasource).toEqual(before);
+    expect(queriesTab.queryRunner.state.queries).toBe(queriesBefore);
+    expect(queriesTab.state.dsSettings).toEqual(instance1SettingsMock);
+    expect(mockPublish).toHaveBeenCalledWith({
+      type: AppEvents.alertError.name,
+      payload: ["This data source can't be used on this dashboard", policy.reason],
+    });
+  });
+
+  it('switches to the bound instance', async () => {
+    const { queriesTab } = await setupBoundScene();
+
+    await queriesTab.onChangeDataSource(boundASettingsMock, []);
+
+    expect(queriesTab.queryRunner.state.datasource).toEqual({ type: RESTRICTED_DS_TYPE, uid: 'bound-a' });
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('still allows data sources of other plugin types', async () => {
+    const { queriesTab } = await setupBoundScene();
+
+    await queriesTab.onChangeDataSource(instance2SettingsMock as DataSourceInstanceSettings, []);
+
+    expect(queriesTab.queryRunner.state.datasource).toEqual({
+      type: 'grafana-prometheus-datasource',
+      uid: 'gdev-prometheus',
+    });
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('refuses to add a query on an excluded instance', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const queriesBefore = queriesTab.getQueries();
+
+    queriesTab.onAddQuery({ refId: 'Z', datasource: { type: RESTRICTED_DS_TYPE, uid: 'bound-b' } });
+
+    expect(queriesTab.getQueries()).toBe(queriesBefore);
+    expect(mockPublish).toHaveBeenCalledWith({
+      type: AppEvents.alertError.name,
+      payload: ["This data source can't be used on this dashboard", policy.reason],
+    });
+  });
+
+  it('adds a query on the bound instance', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const count = queriesTab.getQueries().length;
+
+    queriesTab.onAddQuery({ refId: 'Z', datasource: { type: RESTRICTED_DS_TYPE, uid: 'bound-a' } });
+
+    expect(queriesTab.getQueries()).toHaveLength(count + 1);
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('refuses a query change that introduces an excluded instance and keeps the current queries', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const queriesBefore = queriesTab.getQueries();
+
+    queriesTab.onQueriesChange([
+      ...queriesBefore,
+      { refId: 'Z', datasource: { type: RESTRICTED_DS_TYPE, uid: 'bound-b' } },
+    ]);
+
+    expect(queriesTab.getQueries()).toBe(queriesBefore);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+  });
+
+  it('accepts a data source variable that resolves to the bound instance', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const variableQuery = { refId: 'Z', datasource: { type: RESTRICTED_DS_TYPE, uid: '$ds' } };
+
+    queriesTab.onQueriesChange([...queriesTab.getQueries(), variableQuery]);
+
+    expect(queriesTab.getQueries()).toContainEqual(variableQuery);
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('refuses a data source variable that resolves to an excluded instance', async () => {
+    mockDsVariableTarget = 'bound-b';
+    const { queriesTab } = await setupBoundScene();
+    const queriesBefore = queriesTab.getQueries();
+
+    queriesTab.onQueriesChange([
+      ...queriesBefore,
+      { refId: 'Z', datasource: { type: RESTRICTED_DS_TYPE, uid: '$ds' } },
+    ]);
+
+    expect(queriesTab.getQueries()).toBe(queriesBefore);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+  });
+
+  it('lets a query without its own data source inherit the panel-level one', async () => {
+    const { queriesTab } = await setupBoundScene();
+
+    queriesTab.onQueriesChange([...queriesTab.getQueries(), { refId: 'Z' }]);
+
+    expect(queriesTab.getQueries().at(-1)).toEqual({ refId: 'Z' });
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('refuses a new query on an excluded instance even when another query already uses it', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const excluded = { refId: 'A', datasource: { type: RESTRICTED_DS_TYPE, uid: 'bound-b' } };
+    queriesTab.queryRunner.setState({ queries: [excluded] });
+
+    queriesTab.onQueriesChange([excluded, { refId: 'Z', datasource: { type: RESTRICTED_DS_TYPE, uid: 'bound-b' } }]);
+
+    expect(queriesTab.getQueries()).toEqual([excluded]);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+  });
+
+  it('refuses re-pointing an existing query to an excluded instance', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const queriesBefore = queriesTab.getQueries();
+
+    queriesTab.onQueriesChange(
+      queriesBefore.map((q) => ({ ...q, datasource: { type: RESTRICTED_DS_TYPE, uid: 'bound-b' } }))
+    );
+
+    expect(queriesTab.getQueries()).toBe(queriesBefore);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+  });
+
+  it('still lets a panel that already uses an excluded instance be edited', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const excluded = { refId: 'A', datasource: { type: RESTRICTED_DS_TYPE, uid: 'bound-b' } };
+    queriesTab.queryRunner.setState({ queries: [excluded] });
+
+    queriesTab.onQueriesChange([{ ...excluded, hide: true }]);
+
+    expect(queriesTab.getQueries()).toEqual([{ ...excluded, hide: true }]);
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('leaves a saved-query replacement on an excluded instance untouched and does not re-point the panel', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const queriesBefore = queriesTab.getQueries();
+    const datasourceBefore = queriesTab.queryRunner.state.datasource;
+
+    // QueryEditorRows.onReplaceQuery replaces the query first, then asks the panel to follow.
+    const replaced = queriesBefore.map((q, i) =>
+      i === 0 ? { refId: q.refId, datasource: { type: RESTRICTED_DS_TYPE, uid: 'bound-b' } } : q
+    );
+    queriesTab.onQueriesChange(replaced);
+    await queriesTab.onRowDatasourcesUpdated({ uid: 'bound-b' });
+
+    expect(queriesTab.getQueries()).toBe(queriesBefore);
+    expect(queriesTab.queryRunner.state.datasource).toEqual(datasourceBefore);
+    expect(mockPublish).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies a saved-query replacement on an allowed instance and re-points the panel', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const promQuery = {
+      refId: queriesTab.getQueries()[0].refId,
+      datasource: { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' },
+    };
+
+    queriesTab.onQueriesChange([promQuery]);
+    await queriesTab.onRowDatasourcesUpdated({ uid: 'gdev-prometheus' });
+
+    expect(queriesTab.queryRunner.state.datasource).toEqual({
+      type: 'grafana-prometheus-datasource',
+      uid: 'gdev-prometheus',
+    });
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('starts a new query on a mixed panel on the bound instance', async () => {
+    const { queriesTab } = await setupBoundScene('panel-7');
+    expect(queriesTab.state.dsSettings?.uid).toBe('-- Mixed --');
+
+    await queriesTab.addQueryClick();
+
+    expect(queriesTab.getQueries().at(-1)?.datasource).toEqual({ uid: 'bound-a', type: RESTRICTED_DS_TYPE });
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('refuses to re-point the panel at an excluded instance for a saved query', async () => {
+    const { queriesTab } = await setupBoundScene();
+    const before = queriesTab.queryRunner.state.datasource;
+
+    await queriesTab.updateDatasourceIfNeeded({ uid: 'bound-b' });
+
+    expect(queriesTab.queryRunner.state.datasource).toEqual(before);
+    expect(mockPublish).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not interfere when the dashboard has no policy', async () => {
+    const { queriesTab } = await setupScene('panel-1');
+
+    await queriesTab.onChangeDataSource(boundBSettingsMock, []);
+
+    expect(queriesTab.queryRunner.state.datasource).toEqual({ type: RESTRICTED_DS_TYPE, uid: 'bound-b' });
+    expect(mockPublish).not.toHaveBeenCalled();
   });
 });
 

@@ -16,6 +16,7 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
+import { getNewPanelDatasourceFor } from '../utils/dashboardQueryPolicies';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
@@ -600,8 +601,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public async addNewPanel(target: SceneObject | undefined) {
-    const panel = await getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
+    const panel = await getDefaultVizPanel(getNewPanelDatasourceFor(dashboard));
 
     if (target) {
       const layout = getLayoutForObject(target) ?? dashboard;

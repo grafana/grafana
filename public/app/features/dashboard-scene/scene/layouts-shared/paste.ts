@@ -1,4 +1,6 @@
 import { store } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type VizPanel } from '@grafana/scenes';
 import {
   type AutoGridLayoutItemKind,
   type Spec as DashboardV2Spec,
@@ -14,6 +16,7 @@ import { deserializeGridItem } from '../../serialization/layoutSerializers/Defau
 import { deserializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { deserializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { buildGridItemForPanel } from '../../serialization/transformSaveModelToScene';
+import { isVizPanelAllowed } from '../../utils/dashboardQueryPolicies';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { type DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -66,7 +69,6 @@ export function getRowFromClipboard(scene: DashboardScene): RowItem {
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const jsonObj: RowStore = JSON.parse(jsonData) as RowStore;
-  clearClipboard();
   const panelIdGenerator = dashboardSceneGraph.getPanelIdGenerator(scene);
 
   let row;
@@ -76,6 +78,10 @@ export function getRowFromClipboard(scene: DashboardScene): RowItem {
   } catch (error) {
     throw new Error(`Error pasting row from clipboard. Please try to copy again.`, { cause: error });
   }
+
+  assertPanelsAllowed(scene, row.getLayout().getVizPanels());
+  // Only a row that deserialised and passed the policy check consumes the clipboard.
+  clearClipboard();
   return row;
 }
 
@@ -84,7 +90,6 @@ export function getTabFromClipboard(scene: DashboardScene): TabItem {
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const jsonObj: TabStore = JSON.parse(jsonData) as TabStore;
-  clearClipboard();
   const panelIdGenerator = dashboardSceneGraph.getPanelIdGenerator(scene);
 
   let tab;
@@ -93,7 +98,23 @@ export function getTabFromClipboard(scene: DashboardScene): TabItem {
   } catch (error) {
     throw new Error(`Error pasting tab from clipboard. Please try to copy again.`, { cause: error });
   }
+
+  assertPanelsAllowed(scene, tab.getLayout().getVizPanels());
+  clearClipboard();
   return tab;
+}
+
+/** Throws when a dashboard policy excludes a pasted panel; callers surface `message` as the title and `cause` as text. */
+function assertPanelsAllowed(scene: DashboardScene, panels: VizPanel[]) {
+  for (const panel of panels) {
+    const check = isVizPanelAllowed(scene, panel);
+    if (!check.allowed) {
+      throw new Error(
+        t('dashboard-scene.query-policies.panel-not-allowed', "This panel can't be added to this dashboard"),
+        { cause: check.reason }
+      );
+    }
+  }
 }
 
 function getGridItemFromClipboard(scene: DashboardScene) {
@@ -115,6 +136,8 @@ function getGridItemFromClipboard(scene: DashboardScene) {
   } catch (error) {
     throw new Error('Error pasting panel from clipboard, please try to copy again.', { cause: error });
   }
+
+  assertPanelsAllowed(scene, [deserializedGridItem.state.body]);
   return deserializedGridItem;
 }
 

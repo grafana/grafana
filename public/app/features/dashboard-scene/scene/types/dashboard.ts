@@ -6,6 +6,7 @@ import { type DashboardMeta } from 'app/types/dashboard';
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
+import { type DashboardQueryPolicies } from '../../utils/dashboardQueryPolicies';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
 
@@ -82,6 +83,13 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   defaultVariablesLoading?: boolean;
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
+  /** Data source policies declared through `DataSourceApi.getDashboardQueryPolicy`, keyed by plugin type */
+  queryPolicies?: DashboardQueryPolicies;
+  /**
+   * True while data source policies are being (re)loaded. Policy checks fail open: until the first
+   * load completes nothing is hidden or refused.
+   */
+  queryPoliciesLoading?: boolean;
   /**
    * Set while a dashboard plan is being previewed: panels stay query-less placeholders and the
    * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.

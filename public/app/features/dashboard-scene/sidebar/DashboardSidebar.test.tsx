@@ -205,7 +205,7 @@ describe('DashboardSidebar', () => {
     it('single panel and multi panel selection', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
-      const panel1 = await scene.onCreateNewPanel();
+      const panel1 = (await scene.onCreateNewPanel())!;
 
       expect(sidebar.getSelectedObject()).toBe(panel1);
 
@@ -214,7 +214,7 @@ describe('DashboardSidebar', () => {
 
       expect(sidebar.getSelectedObject()).toBeUndefined();
 
-      const panel2 = await scene.onCreateNewPanel();
+      const panel2 = (await scene.onCreateNewPanel())!;
       sidebar.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
 
       expect(sidebar.state.selectionContext.selected).toHaveLength(2);
@@ -267,7 +267,7 @@ describe('DashboardSidebar', () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      const panel = await scene.onCreateNewPanel();
+      const panel = (await scene.onCreateNewPanel())!;
       sidebar.clearSelection();
 
       expect(sidebar.getSelectedObject()).toBeUndefined();
@@ -284,7 +284,7 @@ describe('DashboardSidebar', () => {
       const sidebar = scene.state.sidebar;
 
       // This selects panel
-      const panel = await scene.onCreateNewPanel();
+      const panel = (await scene.onCreateNewPanel())!;
 
       // Force select
       sidebar.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: false, force: true });
@@ -303,7 +303,7 @@ describe('DashboardSidebar', () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      const panel = await scene.onCreateNewPanel();
+      const panel = (await scene.onCreateNewPanel())!;
 
       sidebar.openPane(new DashboardOutline({}));
 
@@ -337,8 +337,8 @@ describe('DashboardSidebar', () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      const panel1 = await scene.onCreateNewPanel();
-      const panel2 = await scene.onCreateNewPanel();
+      const panel1 = (await scene.onCreateNewPanel())!;
+      const panel2 = (await scene.onCreateNewPanel())!;
 
       scene.removePanel(panel1);
 

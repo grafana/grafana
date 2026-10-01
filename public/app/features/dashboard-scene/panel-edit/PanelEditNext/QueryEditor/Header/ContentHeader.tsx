@@ -9,6 +9,7 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/Na
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
+import { useDashboardDatasourceFilter } from '../../../../utils/dashboardQueryPolicies';
 import { getQueryEditorTypeConfig, type QueryEditorTypeConfig, QueryEditorType } from '../../constants';
 import {
   useActionsContext,
@@ -30,9 +31,10 @@ interface DatasourceSectionProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   currentDatasource?: DataSourceInstanceSettings;
   scopedVars?: ScopedVars;
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
 }
 
-function DatasourceSection({ selectedQuery, onChange, currentDatasource, scopedVars }: DatasourceSectionProps) {
+function DatasourceSection({ selectedQuery, onChange, currentDatasource, scopedVars, filter }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
 
   return (
@@ -43,6 +45,7 @@ function DatasourceSection({ selectedQuery, onChange, currentDatasource, scopedV
         current={currentDatasource ?? selectedQuery.datasource}
         onChange={onChange}
         scopedVars={scopedVars}
+        filter={filter}
       />
     </div>
   );
@@ -99,6 +102,11 @@ interface ContentHeaderProps {
   currentDatasource?: DataSourceInstanceSettings;
   scopedVars?: ScopedVars;
   /**
+   * Optional predicate hiding data sources from the picker, for example instances a dashboard policy
+   * excludes.
+   */
+  datasourceFilter?: (ds: DataSourceInstanceSettings) => boolean;
+  /**
    * Optional callback to render additional elements in the header's left section.
    *
    * Used for feature parity with legacy QueryEditorRow's renderHeaderExtras prop.
@@ -146,6 +154,7 @@ export function ContentHeader({
   onCancelPendingTransformation,
   onChangeDataSource,
   onUpdateQuery,
+  datasourceFilter,
   renderHeaderExtras,
   renderTransformationName,
   containerRef: externalContainerRef,
@@ -216,6 +225,7 @@ export function ContentHeader({
               onChange={(ds) => onChangeDataSource(ds, selectedQuery.refId)}
               currentDatasource={currentDatasource}
               scopedVars={scopedVars}
+              filter={datasourceFilter}
             />
             <NavToolbarSeparator />
           </>
@@ -288,10 +298,11 @@ export function ContentHeaderSceneWrapper({
     selectedQueryDsData,
   } = useQueryEditorUIContext();
   const { queries, data } = useQueryRunnerContext();
-  const { transformations } = usePanelContext();
+  const { transformations, panel } = usePanelContext();
   const { changeDataSource, updateSelectedQuery, updateTransformation } = useActionsContext();
   const typeConfig = useQueryEditorTypeConfig();
   const scopedVars = usePanelScopedVars();
+  const datasourceFilter = useDashboardDatasourceFilter(panel);
 
   const renderTransformationName = useCallback(
     (transformation: Transformation) => (
@@ -320,6 +331,7 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
+      datasourceFilter={datasourceFilter}
       renderHeaderExtras={renderHeaderExtras}
       typeConfig={typeConfig}
       currentDatasource={selectedQueryDsData?.dsSettings}

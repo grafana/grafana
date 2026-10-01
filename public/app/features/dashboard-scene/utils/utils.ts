@@ -18,7 +18,7 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
-import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
+import { type Dashboard, type DataSourceRef, type Panel, type RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
 import kbn from 'app/core/utils/kbn';
 import { type RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
@@ -208,12 +208,16 @@ export function getDefaultPluginId(): string {
   return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
-export async function getDefaultVizPanel(): Promise<VizPanel> {
+/**
+ * Builds the panel "Add visualization" starts from. `datasource` overrides the default data source
+ * its first query runs on, for example when a dashboard policy binds new panels to an instance.
+ */
+export async function getDefaultVizPanel(datasource?: DataSourceRef): Promise<VizPanel> {
   const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
-  const datasourceSettings = await getDataSourceInstanceSettings(null);
+  const datasourceRef = datasource ?? (await getDefaultDatasourceRef());
 
   return new VizPanel({
     // Runtime only, from the rollout flag - it is deliberately not part of the save model.
@@ -232,17 +236,22 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
     headerActions: new VizPanelHeaderActions({
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
-    $data: datasourceSettings
+    $data: datasourceRef
       ? new SceneDataTransformer({
           $data: new SceneQueryRunner({
             queries: [{ refId: 'A' }],
-            datasource: getDataSourceRef(datasourceSettings),
+            datasource: datasourceRef,
             $behaviors: [new DashboardDatasourceBehaviour({})],
           }),
           transformations: [],
         })
       : undefined,
   });
+}
+
+async function getDefaultDatasourceRef(): Promise<DataSourceRef | undefined> {
+  const settings = await getDataSourceInstanceSettings(null);
+  return settings ? getDataSourceRef(settings) : undefined;
 }
 
 export function isLibraryPanel(vizPanel: VizPanel): boolean {

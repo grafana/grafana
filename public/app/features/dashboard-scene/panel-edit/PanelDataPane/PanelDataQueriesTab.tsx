@@ -40,6 +40,13 @@ import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
+import {
+  areQueryChangesAllowed,
+  getNewPanelDatasourceFor,
+  isDatasourceAllowed,
+  notifyQueryPolicyRefusal,
+  useDashboardDatasourceFilter,
+} from '../../utils/dashboardQueryPolicies';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { trackAddQuery } from '../PanelEditNext/tracking';
@@ -212,6 +219,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   public onChangeDataSource = async (newSettings: DataSourceInstanceSettings, defaultQueries?: SceneDataQuery[]) => {
+    if (!this.ensureDatasourceAllowed(getDataSourceRef(newSettings))) {
+      return;
+    }
+
     const { dsSettings } = this.state;
     const queryRunner = this.queryRunner;
     const panelContext = this.getPanelContext();
@@ -278,8 +289,34 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public onQueriesChange = (queries: SceneDataQuery[]) => {
     const runner = this.queryRunner;
+    if (!this.ensureQueriesAllowed(queries, runner)) {
+      return;
+    }
     runner.setState({ queries });
   };
+
+  /**
+   * Refuses a query update that adds a query on, or re-points a query to, an instance the dashboard
+   * policy excludes and keeps the current queries. Untouched queries are left alone, so a panel that
+   * became excluded after a policy change stays editable.
+   */
+  private ensureQueriesAllowed(queries: SceneDataQuery[], runner: SceneQueryRunner): boolean {
+    const check = areQueryChangesAllowed(
+      getDashboardSceneFor(this),
+      runner.state,
+      { datasource: runner.state.datasource, queries },
+      this.state.panelRef.resolve()
+    );
+    if (check.allowed) {
+      return true;
+    }
+
+    notifyQueryPolicyRefusal(
+      t('dashboard-scene.query-policies.data-source-not-allowed', "This data source can't be used on this dashboard"),
+      check.reason
+    );
+    return false;
+  }
 
   public onRunQueries = () => {
     this.queryRunner.runQueries();
@@ -298,7 +335,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     } else if (!datasource?.meta.mixed) {
       ds = datasource; // Use datasource if dsSettings is mixed but datasource is not
     } else {
-      // Use default datasource if both are mixed or just datasource is mixed
+      // Use the instance a dashboard policy binds new panels to, else the default datasource,
+      // if both are mixed or just datasource is mixed
+      const bound = getNewPanelDatasourceFor(this);
+      if (bound) {
+        return { ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor), datasource: bound };
+      }
       ds = await getDataSourceInstanceSettings(config.defaultDatasource);
     }
 
@@ -371,11 +413,43 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       }
     }
   };
+
+  /**
+   * `QueryEditorRows` re-points the panel after replacing a query from the library. When the policy
+   * refused that replacement the requested ref no longer matches the panel's queries, so nothing changes.
+   */
+  public onRowDatasourcesUpdated = async (newDatasourceRef: DataSourceRef): Promise<void> => {
+    const uids = new Set(this.getQueries().map((q) => q.datasource?.uid));
+    const matchesQueries =
+      newDatasourceRef.uid === MIXED_DATASOURCE_NAME ? uids.size > 1 : uids.has(newDatasourceRef.uid);
+
+    if (matchesQueries) {
+      await this.updateDatasourceIfNeeded(newDatasourceRef);
+    }
+  };
+
+  /**
+   * Checks the dashboard's data source policies for a ref. Surfaces the policy's reason and returns
+   * false when the data source is excluded on this dashboard.
+   */
+  public ensureDatasourceAllowed(ref: DataSourceRef | null | undefined): boolean {
+    const check = isDatasourceAllowed(getDashboardSceneFor(this), ref, this.state.panelRef.resolve());
+    if (check.allowed) {
+      return true;
+    }
+
+    notifyQueryPolicyRefusal(
+      t('dashboard-scene.query-policies.data-source-not-allowed', "This data source can't be used on this dashboard"),
+      check.reason
+    );
+    return false;
+  }
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings, scrollToRefId } = model.useState();
   const { data, queries, datasource: datasourceState } = model.queryRunner.useState();
+  const datasourceFilter = useDashboardDatasourceFilter(model);
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const canReadQueries = hasSavedQueryReadPermissions();
 
@@ -429,6 +503,10 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
   const onSelectQueryFromLibrary = async (query: DataQuery) => {
+    if (query.datasource && !model.ensureDatasourceAllowed(query.datasource)) {
+      return;
+    }
+
     // ensure all queries explicitly define a datasource
     const enrichedQueries = queries.map((q) =>
       q.datasource
@@ -461,6 +539,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         dataSource={datasource}
         options={model.buildQueryOptions()}
         scopedVars={model.getPanelContext()}
+        filter={datasourceFilter}
         onDataSourceChange={model.onChangeDataSource}
         onOptionsChange={model.onQueryOptionsChange}
         onOpenQueryInspector={model.onOpenInspector}
@@ -473,7 +552,8 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onAddQuery={model.onAddQuery}
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
-        onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
+        onUpdateDatasources={queryLibraryEnabled ? model.onRowDatasourcesUpdated : undefined}
+        dataSourceFilter={datasourceFilter}
         app={CoreApp.PanelEditor}
         panelRef={model.state.panelRef}
         scrollToRefId={scrollToRefId}

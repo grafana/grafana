@@ -94,6 +94,7 @@ import {
   resolvePredefinedVariablesForDashboard,
   type UseCrossDashboardVariables,
 } from '../utils/crossDashboardVariablesSelection';
+import { getNewPanelDatasourceFor, isVizPanelAllowed, notifyQueryPolicyRefusal } from '../utils/dashboardQueryPolicies';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
@@ -876,13 +877,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._initialState;
   }
 
-  public addPanel(vizPanel: VizPanel): void {
+  /** Adds a panel to the layout. Returns false when a data source policy refuses the panel. */
+  public addPanel(vizPanel: VizPanel): boolean {
+    if (!this.ensurePanelAllowed(vizPanel)) {
+      return false;
+    }
+
     if (!this.state.isEditing) {
       this.onEnterEditMode();
     }
 
     // Add panel to layout
     this.state.body.addPanel(vizPanel);
+    return true;
+  }
+
+  private ensurePanelAllowed(vizPanel: VizPanel): boolean {
+    const check = isVizPanelAllowed(this, vizPanel);
+    if (check.allowed) {
+      return true;
+    }
+
+    notifyQueryPolicyRefusal(
+      t('dashboard-scene.query-policies.panel-not-allowed', "This panel can't be added to this dashboard"),
+      check.reason
+    );
+    return false;
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
@@ -912,6 +932,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
+    // A panel can have become excluded after a policy change; its copy must not be added.
+    if (!this.ensurePanelAllowed(vizPanel)) {
+      return;
+    }
+
     getLayoutManagerFor(vizPanel).duplicatePanel?.(vizPanel);
   }
 
@@ -974,7 +999,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const gridItem = buildGridItemForPanel(panelModel);
     const panel = gridItem.state.body;
 
-    this.addPanel(panel);
+    if (!this.addPanel(panel)) {
+      // Keep the clipboard so the panel can be pasted on another dashboard.
+      return;
+    }
 
     store.delete(LS_PANEL_COPY_KEY);
   }
@@ -1284,12 +1312,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return addNewRowTo(this.state.body);
   }
 
-  public async onCreateNewPanel(): Promise<VizPanel> {
+  /** Creates and adds a new panel. Returns undefined when a data source policy refused it. */
+  public async onCreateNewPanel(): Promise<VizPanel | undefined> {
     const profiler = getDashboardSceneProfiler();
-    const vizPanel = await getDefaultVizPanel();
+    const vizPanel = await getDefaultVizPanel(getNewPanelDatasourceFor(this));
     profiler.attachProfilerToPanel(vizPanel);
 
-    this.addPanel(vizPanel);
+    if (!this.addPanel(vizPanel)) {
+      return undefined;
+    }
+
     return vizPanel;
   }
 

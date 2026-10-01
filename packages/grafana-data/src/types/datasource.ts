@@ -1,7 +1,7 @@
 import { type ComponentType } from 'react';
 import { type Observable } from 'rxjs';
 
-import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
+import { type DashboardLink, type DataSourceRef, type VariableModel } from '@grafana/schema';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
 import { deprecationWarning } from '../utils/deprecationWarning';
@@ -232,6 +232,55 @@ export interface DataSourceConstructor<
   new (instanceSettings: DataSourceInstanceSettings<TOptions>, ...args: any[]): DSType;
 }
 
+/**
+ * Returned by {@link DataSourceApi.getDashboardQueryPolicy} when a data source instance declares that
+ * a dashboard is bound to it.
+ *
+ * The dashboard editor consults the policy wherever panels and queries are created, pasted or
+ * re-pointed: other instances of the same plugin type are hidden from data source pickers, and a
+ * change that would introduce one is refused with `reason`. Data sources of other plugin types are
+ * not affected. This is authoring assistance, not enforcement: nothing is checked when a dashboard
+ * is saved through the API, and a panel that already references another instance keeps working.
+ * Policies are loaded asynchronously when a dashboard opens or its references and variables change;
+ * until the first load completes nothing is hidden or refused (the editor fails open), and
+ * `DashboardScene.state.queryPoliciesLoading` reports a load in flight.
+ *
+ * @alpha
+ */
+export interface DashboardQueryPolicy {
+  /**
+   * Other data source instances of this plugin type are excluded on this dashboard. The literal `true`
+   * is the required discriminant that marks this policy kind, so further kinds can be added later.
+   */
+  restrictSamePluginToThisInstance: true;
+  /**
+   * New panels, and new queries on mixed panels, start on this instance instead of the last-used or
+   * default data source. When instances of several plugin types ask for this, the lowest plugin type
+   * id wins.
+   */
+  defaultForNewPanels?: boolean;
+  /** Shown when a change is refused. Pickers that hide an excluded instance do not show it. */
+  reason: string;
+}
+
+/**
+ * Context handed to {@link DataSourceApi.getDashboardQueryPolicy}.
+ *
+ * @alpha
+ */
+export interface DashboardQueryPolicyContext {
+  /** The dashboard UID, when the dashboard has been saved. */
+  dashboardUID?: string;
+  /**
+   * The dashboard's variables in their persisted form. Every entry has `name` and `type`; `query`
+   * and `current` are present where the variable type has them (ad hoc filter variables, for
+   * example, carry `filters` instead). Interval variables are omitted: they follow the time range
+   * and carry nothing a data source decides on. The data source decides from these; Grafana never
+   * interprets them.
+   */
+  variables: VariableModel[];
+}
+
 // VariableSupport is hoisted up to its own type to fix the wonky intermittent
 // 'variables is references directly or indirectly' error
 type VariableSupport<TQuery extends DataQuery, TOptions extends DataSourceJsonData> =
@@ -386,6 +435,22 @@ abstract class DataSourceApi<
    * Get default dashboard links that should be added when this datasource is used.
    */
   getDefaultLinks?(): Promise<DashboardLink[]>;
+
+  /**
+   * Lets this data source instance declare that a dashboard is bound to it; see
+   * {@link DashboardQueryPolicy}. Return `undefined` when the dashboard is not bound.
+   *
+   * Grafana asks every concrete instance the dashboard references through its panels' queries and
+   * its variables (query, ad hoc filter, group-by and data source variables); instances the dashboard
+   * does not reference are not asked. The hook may be called repeatedly and concurrently while a
+   * dashboard is edited, whenever the referenced instances or the variables change, so it must be
+   * cheap and side-effect free. When two instances of the same plugin type both return a policy, the
+   * policy is void for that type and a diagnostic is logged. A hook that throws is ignored with a
+   * console warning.
+   *
+   * @alpha
+   */
+  getDashboardQueryPolicy?(context: DashboardQueryPolicyContext): Promise<DashboardQueryPolicy | undefined>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around

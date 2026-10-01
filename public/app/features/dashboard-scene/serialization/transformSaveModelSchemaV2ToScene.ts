@@ -67,6 +67,7 @@ import { type DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { DashboardQueryPoliciesBehavior } from '../behaviors/DashboardQueryPoliciesBehavior';
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -260,6 +261,7 @@ export function transformSaveModelSchemaV2ToScene(
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
         new DefaultControlsBehavior(),
+        new DashboardQueryPoliciesBehavior(),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,

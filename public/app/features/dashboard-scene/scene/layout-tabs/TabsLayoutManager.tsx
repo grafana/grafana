@@ -1,4 +1,6 @@
+import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getAppEvents } from '@grafana/runtime';
 import {
   sceneGraph,
   type SceneObject,
@@ -270,7 +272,18 @@ export class TabsLayoutManager
 
   public pasteTab() {
     const scene = getDashboardSceneFor(this);
-    const tab = getTabFromClipboard(scene);
+
+    let tab;
+    try {
+      tab = getTabFromClipboard(scene);
+    } catch (error) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: error instanceof Error ? [error.message, String(error.cause)] : [String(error)],
+      });
+      return;
+    }
+
     this.addNewTab(tab);
   }
 

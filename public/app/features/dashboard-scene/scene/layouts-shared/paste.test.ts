@@ -1,4 +1,4 @@
-import { store } from '@grafana/data';
+import { type DashboardQueryPolicy, store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
@@ -6,20 +6,30 @@ import {
   type AutoGridLayoutItemKind,
   type GridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2beta1';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
 
 import { ConditionalRenderingVariable } from '../../conditional-rendering/conditions/ConditionalRenderingVariable';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { RowItem } from '../layout-rows/RowItem';
+import { TabItem } from '../layout-tabs/TabItem';
 
-import { type PanelStore, getAutoGridItemFromClipboard, getDashboardGridItemFromClipboard } from './paste';
+import {
+  type PanelStore,
+  getAutoGridItemFromClipboard,
+  getDashboardGridItemFromClipboard,
+  getRowFromClipboard,
+  getTabFromClipboard,
+} from './paste';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
+
+const RESTRICTED = 'restricted-datasource';
 
 function buildDashboardScene(): DashboardScene {
   return new DashboardScene({
@@ -338,5 +348,182 @@ describe('getDashboardGridItemFromClipboard(dashboardScene, gridCell)', () => {
       expect(result.state.y).toBe(4);
       expect(result.state.body.state.title).toBe('Copied V1');
     });
+  });
+});
+
+describe('dashboard query policies', () => {
+  const policy: DashboardQueryPolicy = {
+    restrictSamePluginToThisInstance: true,
+    reason: 'Dashboard is bound to instance A. Panels of this type must use data source instance-a.',
+  };
+
+  function buildBoundScene(): DashboardScene {
+    const scene = buildDashboardScene();
+    scene.setState({ queryPolicies: { [RESTRICTED]: { uid: 'instance-a', policy } } });
+    return scene;
+  }
+
+  function buildV2ClipboardFor(uid: string): PanelStore {
+    const clipboard = buildAutoGridClipboard();
+    const element = clipboard.elements['panel-auto-grid'];
+    if (element.kind !== 'Panel') {
+      throw new Error('Expected a Panel element in the clipboard fixture');
+    }
+    element.spec.data.spec.queries = [
+      {
+        kind: 'PanelQuery',
+        spec: {
+          refId: 'A',
+          hidden: false,
+          query: { kind: 'DataQuery', group: RESTRICTED, version: 'v0', datasource: { name: uid }, spec: {} },
+        },
+      },
+    ];
+    return clipboard;
+  }
+
+  const v1ClipboardFor = (uid: string) => ({
+    id: 99,
+    type: 'timeseries',
+    title: 'Copied V1',
+    gridPos: { x: 0, y: 0, w: 12, h: 8 },
+    datasource: { type: RESTRICTED, uid },
+    targets: [{ refId: 'A', datasource: { type: RESTRICTED, uid } }],
+    fieldConfig: { defaults: {}, overrides: [] },
+    options: {},
+  });
+
+  const gridLayoutWithPanel = {
+    kind: 'GridLayout' as const,
+    spec: {
+      items: [
+        {
+          kind: 'GridLayoutItem' as const,
+          spec: {
+            x: 0,
+            y: 0,
+            width: 12,
+            height: 8,
+            element: { kind: 'ElementReference' as const, name: 'panel-auto-grid' },
+          },
+        },
+      ],
+    },
+  };
+
+  afterEach(() => {
+    store.delete(LS_PANEL_COPY_KEY);
+    store.delete(LS_ROW_COPY_KEY);
+    store.delete(LS_TAB_COPY_KEY);
+  });
+
+  test('refuses a pasted row containing a panel on an excluded instance', () => {
+    const dashboardScene = buildBoundScene();
+    const { elements } = buildV2ClipboardFor('instance-b');
+    store.set(
+      LS_ROW_COPY_KEY,
+      JSON.stringify({
+        elements,
+        row: { kind: 'RowsLayoutRow', spec: { title: 'Row', collapse: false, layout: gridLayoutWithPanel } },
+      })
+    );
+
+    expect(() => getRowFromClipboard(dashboardScene)).toThrow("This panel can't be added to this dashboard");
+    expect(store.exists(LS_ROW_COPY_KEY)).toBe(true);
+  });
+
+  test('pastes a row whose panels are on the bound instance', () => {
+    const dashboardScene = buildBoundScene();
+    const { elements } = buildV2ClipboardFor('instance-a');
+    store.set(
+      LS_ROW_COPY_KEY,
+      JSON.stringify({
+        elements,
+        row: { kind: 'RowsLayoutRow', spec: { title: 'Row', collapse: false, layout: gridLayoutWithPanel } },
+      })
+    );
+
+    expect(getRowFromClipboard(dashboardScene)).toBeInstanceOf(RowItem);
+    expect(store.exists(LS_ROW_COPY_KEY)).toBe(false);
+  });
+
+  test('refuses a pasted tab containing a panel on an excluded instance', () => {
+    const dashboardScene = buildBoundScene();
+    const { elements } = buildV2ClipboardFor('instance-b');
+    store.set(
+      LS_TAB_COPY_KEY,
+      JSON.stringify({ elements, tab: { kind: 'TabsLayoutTab', spec: { title: 'Tab', layout: gridLayoutWithPanel } } })
+    );
+
+    expect(() => getTabFromClipboard(dashboardScene)).toThrow("This panel can't be added to this dashboard");
+    expect(store.exists(LS_TAB_COPY_KEY)).toBe(true);
+  });
+
+  test('pastes a tab whose panels are on the bound instance', () => {
+    const dashboardScene = buildBoundScene();
+    const { elements } = buildV2ClipboardFor('instance-a');
+    store.set(
+      LS_TAB_COPY_KEY,
+      JSON.stringify({ elements, tab: { kind: 'TabsLayoutTab', spec: { title: 'Tab', layout: gridLayoutWithPanel } } })
+    );
+
+    expect(getTabFromClipboard(dashboardScene)).toBeInstanceOf(TabItem);
+    expect(store.exists(LS_TAB_COPY_KEY)).toBe(false);
+  });
+
+  test('refuses a v2 panel whose query uses an excluded instance, with the reason as cause', () => {
+    const { dashboardScene } = setup(buildV2ClipboardFor('instance-b'));
+    dashboardScene.setState({ queryPolicies: { [RESTRICTED]: { uid: 'instance-a', policy } } });
+
+    expect.assertions(2);
+
+    try {
+      getAutoGridItemFromClipboard(dashboardScene);
+    } catch (error) {
+      const thrown = error as Error;
+      expect(thrown.message).toBe("This panel can't be added to this dashboard");
+      expect(thrown.cause).toBe(policy.reason);
+    }
+  });
+
+  test('pastes a v2 panel on the bound instance', () => {
+    const { dashboardScene } = setup(buildV2ClipboardFor('instance-a'));
+    dashboardScene.setState({ queryPolicies: { [RESTRICTED]: { uid: 'instance-a', policy } } });
+
+    const result = getAutoGridItemFromClipboard(dashboardScene);
+
+    expect(result).toBeInstanceOf(AutoGridItem);
+    expect(result.state.body.state.title).toBe('Test Panel Auto Grid');
+  });
+
+  test('refuses a legacy v1 panel on an excluded instance', () => {
+    const dashboardScene = buildBoundScene();
+    store.set(LS_PANEL_COPY_KEY, JSON.stringify(v1ClipboardFor('instance-b')));
+
+    expect(() => getDashboardGridItemFromClipboard(dashboardScene, null)).toThrow(
+      "This panel can't be added to this dashboard"
+    );
+  });
+
+  test('pastes a legacy v1 panel on the bound instance', () => {
+    const dashboardScene = buildBoundScene();
+    store.set(LS_PANEL_COPY_KEY, JSON.stringify(v1ClipboardFor('instance-a')));
+
+    const result = getDashboardGridItemFromClipboard(dashboardScene, null);
+
+    expect(result).toBeInstanceOf(DashboardGridItem);
+    expect(result.state.body.state.title).toBe('Copied V1');
+  });
+
+  test('pastes a panel of another plugin type on a bound dashboard', () => {
+    const dashboardScene = buildBoundScene();
+    store.set(
+      LS_PANEL_COPY_KEY,
+      JSON.stringify({ ...v1ClipboardFor('instance-b'), datasource: { type: 'prometheus', uid: 'prom' }, targets: [] })
+    );
+
+    const result = getDashboardGridItemFromClipboard(dashboardScene, null);
+
+    expect(result).toBeInstanceOf(DashboardGridItem);
   });
 });

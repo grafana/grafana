@@ -9,6 +9,10 @@ import {
   getDefaultTimeRange,
   locationUtil,
   store,
+  AppEvents,
+  type DashboardQueryPolicy,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
 } from '@grafana/data';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
@@ -49,6 +53,7 @@ import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey } from '../utils/findVizPanel';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { DashboardInteractions } from '../utils/interactions';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { createDeferred } from '../utils/test-utils';
@@ -79,8 +84,12 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
 }));
 jest.mock('../serialization/transformSaveModelToScene');
 jest.mock('../serialization/transformSceneToSaveModel');
+const mockGetDataSourceInstanceSettings = jest.fn().mockResolvedValue({ uid: 'ds1' });
+const mockPublish = jest.fn();
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({ publish: mockPublish }),
   getDataSourceSrv: () => {
     return {
       getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
@@ -100,7 +109,8 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+  getDataSourceInstanceSettings: (ref?: unknown, scopedVars?: unknown) =>
+    mockGetDataSourceInstanceSettings(ref, scopedVars),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -770,7 +780,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
-        expect(panel.state.key).toBe('panel-7');
+        expect(panel?.state.key).toBe('panel-7');
       });
 
       it('Should select new row', () => {
@@ -3955,6 +3965,132 @@ void ((scene: DashboardScene, snapshot: DashboardSceneState, panel: VizPanel) =>
   dashboardViews.editPanel('not a panel');
   // @ts-expect-error Synchronous state keys are not exposed as loaders.
   dashboardViews.body();
+});
+
+describe('DashboardScene data source policies', () => {
+  const RESTRICTED = 'restricted-datasource';
+  const settingsFor = (uid: string) =>
+    ({ id: 1, uid, name: uid, type: RESTRICTED, meta: { id: RESTRICTED } }) as unknown as DataSourceInstanceSettings;
+  const settingsA = settingsFor('instance-a');
+  const settingsB = settingsFor('instance-b');
+  const refB: DataSourceRef = { type: RESTRICTED, uid: 'instance-b' };
+  const policy: DashboardQueryPolicy = {
+    restrictSamePluginToThisInstance: true,
+    defaultForNewPanels: true,
+    reason: 'Dashboard is bound to instance A.',
+  };
+  const refusalToast = {
+    type: AppEvents.alertError.name,
+    payload: ["This panel can't be added to this dashboard", policy.reason],
+  };
+
+  let scene: DashboardScene;
+
+  function excludedPanel(key: string) {
+    return new VizPanel({
+      key,
+      title: key,
+      pluginId: 'timeseries',
+      $data: new SceneDataTransformer({
+        transformations: [],
+        $data: new SceneQueryRunner({ datasource: refB, queries: [{ refId: 'A', datasource: refB }] }),
+      }),
+    });
+  }
+
+  beforeEach(() => {
+    mockPublish.mockClear();
+    // Instance B is the org default data source on this stack.
+    mockGetDataSourceInstanceSettings.mockImplementation(
+      async (ref: DataSourceRef | string | null | undefined): Promise<DataSourceInstanceSettings | undefined> => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        if (uid === undefined || uid === null) {
+          return settingsB;
+        }
+        return uid === 'instance-a' ? settingsA : uid === 'instance-b' ? settingsB : undefined;
+      }
+    );
+
+    // The scene is not activated: entering edit mode and adding panels do not need it, and
+    // activation is what wires the (mocked) dashboard service and keyboard shortcuts.
+    scene = buildTestScene();
+    scene.setState({ queryPolicies: { [RESTRICTED]: { uid: 'instance-a', policy } } });
+  });
+
+  afterEach(() => {
+    mockGetDataSourceInstanceSettings.mockReset();
+    mockGetDataSourceInstanceSettings.mockResolvedValue({ uid: 'ds1' });
+  });
+
+  it('refuses to add a panel on an excluded instance without entering edit mode or changing the layout', () => {
+    const panelsBefore = scene.state.body.getVizPanels().length;
+
+    expect(scene.addPanel(excludedPanel('panel-99'))).toBe(false);
+
+    expect(scene.state.isEditing).toBeFalsy();
+    expect(scene.state.body.getVizPanels()).toHaveLength(panelsBefore);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+  });
+
+  it('keeps the clipboard when a pasted panel is refused', () => {
+    store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-99' }));
+    jest
+      .mocked(buildGridItemForPanel)
+      .mockReturnValue(new DashboardGridItem({ key: 'griditem-99', body: excludedPanel('panel-99') }));
+    const panelsBefore = scene.state.body.getVizPanels().length;
+
+    scene.pastePanel();
+
+    expect(scene.state.body.getVizPanels()).toHaveLength(panelsBefore);
+    expect(store.exists(LS_PANEL_COPY_KEY)).toBe(true);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+    store.delete(LS_PANEL_COPY_KEY);
+  });
+
+  it('refuses to duplicate a panel that became excluded', () => {
+    scene.onEnterEditMode();
+    const panel = findVizPanelByKey(scene, 'panel-1')!;
+    getQueryRunnerFor(panel)!.setState({ datasource: refB });
+    const panelsBefore = scene.state.body.getVizPanels().length;
+
+    scene.duplicatePanel(panel);
+
+    expect(scene.state.body.getVizPanels()).toHaveLength(panelsBefore);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+  });
+
+  it('starts a new panel on the bound instance even when the org default is an excluded instance', async () => {
+    const panelsBefore = scene.state.body.getVizPanels().length;
+
+    const panel = await scene.onCreateNewPanel();
+
+    expect(scene.state.body.getVizPanels()).toHaveLength(panelsBefore + 1);
+    expect(getQueryRunnerFor(panel)?.state.datasource).toEqual({ type: RESTRICTED, uid: 'instance-a' });
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('returns no panel when the new panel is refused', async () => {
+    // No policy asks for a default and the load did not record the org default as excluded, so the
+    // new panel falls back to the org default: the excluded instance B.
+    scene.setState({
+      queryPolicies: { [RESTRICTED]: { uid: 'instance-a', policy: { ...policy, defaultForNewPanels: false } } },
+    });
+    const panelsBefore = scene.state.body.getVizPanels().length;
+
+    const panel = await scene.onCreateNewPanel();
+
+    expect(panel).toBeUndefined();
+    expect(scene.state.body.getVizPanels()).toHaveLength(panelsBefore);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+  });
+
+  it('starts a new panel on the org default when the dashboard has no policy', async () => {
+    scene.setState({ queryPolicies: undefined });
+
+    const panel = await scene.onCreateNewPanel();
+
+    expect(getQueryRunnerFor(panel)?.state.datasource).toEqual({ type: RESTRICTED, uid: 'instance-b' });
+  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {

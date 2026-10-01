@@ -15,6 +15,7 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   dataSource: DataSourceInstanceSettings;
   renderExtras?: () => ReactNode;
   onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
+  dataSourceFilter?: (ds: DataSourceInstanceSettings) => boolean;
   onChange: (query: TQuery) => void;
   collapsedText: string | null;
   alerting?: boolean;
@@ -134,7 +135,7 @@ const renderDataSource = <TQuery extends DataQuery>(
   props: Props<TQuery>,
   styles: ReturnType<typeof getStyles>
 ): ReactNode => {
-  const { alerting, dataSource, onChangeDataSource } = props;
+  const { alerting, dataSource, onChangeDataSource, dataSourceFilter } = props;
 
   if (!onChangeDataSource) {
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
@@ -148,6 +149,7 @@ const renderDataSource = <TQuery extends DataQuery>(
         alerting={alerting}
         current={dataSource.name}
         onChange={onChangeDataSource}
+        filter={dataSourceFilter}
       />
     </div>
   );

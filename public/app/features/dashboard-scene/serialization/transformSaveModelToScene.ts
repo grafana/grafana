@@ -33,6 +33,7 @@ import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { DashboardQueryPoliciesBehavior } from '../behaviors/DashboardQueryPoliciesBehavior';
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
 import { setPanelInspectorOpener } from '../inspect/panelInspectorOpener';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
@@ -387,6 +388,7 @@ export function createDashboardSceneFromDashboardModel(
   }
 
   behaviorList.push(new DefaultControlsBehavior());
+  behaviorList.push(new DashboardQueryPoliciesBehavior());
 
   // Will be enabled in the dashboard creation below
 

@@ -183,6 +183,9 @@ export function ToolbarActions({ dashboard }: Props) {
               label={t('dashboard.add-menu.visualization', 'Visualization')}
               onClick={async () => {
                 const vizPanel = await dashboard.onCreateNewPanel();
+                if (!vizPanel) {
+                  return;
+                }
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
                 openPanelEditor(dashboard, vizPanel, true);
               }}

@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
+import { getNewPanelDatasourceFor } from '../../utils/dashboardQueryPolicies';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -46,7 +47,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         size="sm"
         data-testid={selectors.components.CanvasGridAddActions.addPanel}
         onClick={async () => {
-          layoutManager.addPanel(await getDefaultVizPanel());
+          layoutManager.addPanel(await getDefaultVizPanel(getNewPanelDatasourceFor(layoutManager)));
           DashboardInteractions.trackAddPanelClick();
         }}
       >

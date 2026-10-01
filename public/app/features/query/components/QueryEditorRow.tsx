@@ -57,6 +57,7 @@ export interface Props<TQuery extends DataQuery> {
   index: number;
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
+  dataSourceFilter?: (ds: DataSourceInstanceSettings) => boolean;
   onDataSourceLoaded?: (instance: DataSourceApi) => void;
   renderHeaderExtras?: () => ReactNode;
   onAddQuery: (query: TQuery) => void;
@@ -605,6 +606,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         query={query}
         queries={queries}
         onChangeDataSource={onChangeDataSource}
+        dataSourceFilter={this.props.dataSourceFilter}
         dataSource={dataSource}
         hidden={query.hide}
         onChange={onChange}

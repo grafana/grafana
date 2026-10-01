@@ -33,6 +33,7 @@ import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
+import { defaultDatasourceFor } from '../utils/dashboardQueryPolicies';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -288,7 +289,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       }
 
       if (!panel.state.$data) {
-        let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
+        const dashboard = getDashboardSceneFor(this);
+        // An instance a dashboard policy marks as the default for new panels wins over the last-used one.
+        let ds =
+          defaultDatasourceFor(dashboard) ?? getLastUsedDatasourceFromStorage(dashboard.state.uid!)?.datasourceUid;
         if (!ds) {
           ds = config.defaultDatasource;
         }

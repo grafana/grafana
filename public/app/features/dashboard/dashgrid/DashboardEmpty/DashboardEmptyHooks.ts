@@ -47,6 +47,9 @@ export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: 
     return async () => {
       if (dashboard instanceof DashboardScene) {
         const panel = await dashboard.onCreateNewPanel();
+        if (!panel) {
+          return;
+        }
         openPanelEditor(dashboard, panel, true);
         locationService.partial({ firstPanel: true });
       } else {

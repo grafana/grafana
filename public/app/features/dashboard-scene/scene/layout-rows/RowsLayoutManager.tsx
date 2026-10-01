@@ -1,4 +1,6 @@
+import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getAppEvents } from '@grafana/runtime';
 import {
   sceneGraph,
   type SceneGridItemLike,
@@ -198,7 +200,18 @@ export class RowsLayoutManager
 
   public pasteRow() {
     const scene = getDashboardSceneFor(this);
-    const row = getRowFromClipboard(scene);
+
+    let row;
+    try {
+      row = getRowFromClipboard(scene);
+    } catch (error) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: error instanceof Error ? [error.message, String(error.cause)] : [String(error)],
+      });
+      return;
+    }
+
     this.addNewRow(row);
   }
 

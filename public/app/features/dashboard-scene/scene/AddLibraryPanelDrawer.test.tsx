@@ -1,6 +1,8 @@
+import { AppEvents, type DashboardQueryPolicy, type DataSourceRef } from '@grafana/data';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -8,8 +10,11 @@ import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
+const mockPublish = jest.fn();
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({ publish: mockPublish }),
   getDataSourceSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({}),
@@ -165,6 +170,97 @@ describe('AddLibraryPanelWidget', () => {
     const panel = panels[0];
     expect(panel.state.title).toBe('');
     expect(panel.state.hoverHeader).toBe(true);
+  });
+});
+
+describe('AddLibraryPanelDrawer with a dashboard query policy', () => {
+  const RESTRICTED = 'restricted-datasource';
+  const refA: DataSourceRef = { type: RESTRICTED, uid: 'instance-a' };
+  const refB: DataSourceRef = { type: RESTRICTED, uid: 'instance-b' };
+  const policy: DashboardQueryPolicy = {
+    restrictSamePluginToThisInstance: true,
+    defaultForNewPanels: true,
+    reason: 'Dashboard is bound to instance A.',
+  };
+  const refusalToast = {
+    type: AppEvents.alertError.name,
+    payload: ["This panel can't be added to this dashboard", policy.reason],
+  };
+
+  const libraryPanel = (model: Partial<LibraryPanel['model']>): LibraryPanel => ({
+    uid: 'uid',
+    model: { title: 'model title', type: 'timeseries', ...model },
+    name: 'name',
+    version: 1,
+    type: 'timeseries',
+  });
+
+  let dashboard: DashboardScene;
+  let drawer: AddLibraryPanelDrawer;
+
+  beforeEach(async () => {
+    mockPublish.mockClear();
+
+    const result = await buildTestScene();
+    dashboard = result.dashboard;
+    drawer = result.drawer;
+    dashboard.setState({ queryPolicies: { [RESTRICTED]: { uid: 'instance-a', policy } } });
+  });
+
+  it('refuses a library panel whose model uses an excluded instance and keeps the drawer open', async () => {
+    await drawer.onAddLibraryPanel(libraryPanel({ datasource: refB, targets: [{ refId: 'A' }] }));
+
+    expect(dashboard.state.body.getVizPanels()).toHaveLength(0);
+    expect(dashboard.state.overlay).toBe(drawer);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+  });
+
+  it('refuses a library panel with a target on an excluded instance', async () => {
+    await drawer.onAddLibraryPanel(libraryPanel({ datasource: refA, targets: [{ refId: 'A', datasource: refB }] }));
+
+    expect(dashboard.state.body.getVizPanels()).toHaveLength(0);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
+  });
+
+  it('adds a library panel on the bound instance and starts its placeholder there', async () => {
+    await drawer.onAddLibraryPanel(libraryPanel({ datasource: refA, targets: [{ refId: 'A' }] }));
+
+    const panels = dashboard.state.body.getVizPanels();
+    expect(panels).toHaveLength(1);
+    expect(getQueryRunnerFor(panels[0])?.state.datasource).toEqual(refA);
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('adds a library panel of another plugin type', async () => {
+    await drawer.onAddLibraryPanel(
+      libraryPanel({ datasource: { type: 'prometheus', uid: 'prom' }, targets: [{ refId: 'A' }] })
+    );
+
+    expect(dashboard.state.body.getVizPanels()).toHaveLength(1);
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('refuses to replace a panel with a library panel on an excluded instance', async () => {
+    const existing = new VizPanel({ title: 'Existing', pluginId: 'table', key: 'panel-1' });
+    const replaceDrawer = new AddLibraryPanelDrawer({ panelToReplaceRef: existing.getRef() });
+    const replaceDashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({}),
+      title: 'hello',
+      uid: 'dash-1',
+      version: 4,
+      meta: { canEdit: true },
+      queryPolicies: { [RESTRICTED]: { uid: 'instance-a', policy } },
+      body: DefaultGridLayoutManager.fromVizPanels([existing]),
+      overlay: replaceDrawer,
+    });
+
+    await replaceDrawer.onAddLibraryPanel(libraryPanel({ datasource: refB, targets: [{ refId: 'A' }] }));
+
+    const panels = replaceDashboard.state.body.getVizPanels();
+    expect(panels).toHaveLength(1);
+    expect(panels[0]).toBe(existing);
+    expect(replaceDashboard.state.overlay).toBe(replaceDrawer);
+    expect(mockPublish).toHaveBeenCalledWith(refusalToast);
   });
 });
 

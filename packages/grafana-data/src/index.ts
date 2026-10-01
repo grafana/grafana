@@ -698,6 +698,8 @@ export {
   type DataSourceGetTagValuesOptions,
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DataSourceGetRecommendedDrilldownsOptions,
+  type DashboardQueryPolicy,
+  type DashboardQueryPolicyContext,
   type MetadataInspectorProps,
   type ErrorsAndNoticesInspectorProps,
   type LegacyMetricFindQueryOptions,

@@ -394,6 +394,8 @@ interface QueryGroupTopSectionProps {
   dsSettings: DataSourceInstanceSettings;
   options: QueryGroupOptions;
   scopedVars?: ScopedVars;
+  /** Hides data sources the predicate rejects from the picker and the modal */
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
   onOpenQueryInspector?: () => void;
   onOptionsChange?: (options: QueryGroupOptions) => void;
   onDataSourceChange?: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => Promise<void>;
@@ -405,6 +407,7 @@ export function QueryGroupTopSection({
   data,
   dsSettings,
   scopedVars,
+  filter,
   onDataSourceChange,
   onOptionsChange,
   onOpenQueryInspector,
@@ -423,6 +426,7 @@ export function QueryGroupTopSection({
             <DataSourcePickerWithPrompt
               options={options}
               scopedVars={scopedVars}
+              filter={filter}
               onChange={async (ds, defaultQueries) => {
                 return await onDataSourceChange?.(ds, defaultQueries);
               }}
@@ -485,10 +489,17 @@ interface DataSourcePickerWithPromptProps {
   isDataSourceModalOpen?: boolean;
   options: QueryGroupOptions;
   scopedVars?: ScopedVars;
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
   onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => Promise<void>;
 }
 
-function DataSourcePickerWithPrompt({ options, scopedVars, onChange, ...otherProps }: DataSourcePickerWithPromptProps) {
+function DataSourcePickerWithPrompt({
+  options,
+  scopedVars,
+  filter,
+  onChange,
+  ...otherProps
+}: DataSourcePickerWithPromptProps) {
   const [isDataSourceModalOpen, setIsDataSourceModalOpen] = useState(Boolean(otherProps.isDataSourceModalOpen));
 
   useEffect(() => {
@@ -505,6 +516,7 @@ function DataSourcePickerWithPrompt({ options, scopedVars, onChange, ...otherPro
     variables: true,
     current: options.dataSource,
     scopedVars,
+    filter,
     onChange: async (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
       await onChange(ds, defaultQueries);
       setIsDataSourceModalOpen(false);

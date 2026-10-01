@@ -10,6 +10,11 @@ import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import { LibraryPanelsSearch } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
+import {
+  getNewPanelDatasourceFor,
+  isPanelModelAllowed,
+  notifyQueryPolicyRefusal,
+} from '../utils/dashboardQueryPolicies';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -26,7 +31,17 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
 
   public onAddLibraryPanel = async (panelInfo: LibraryPanel) => {
     const dashboard = getDashboardSceneFor(this);
-    const newPanel = await getDefaultVizPanel();
+
+    const check = isPanelModelAllowed(dashboard, panelInfo.model);
+    if (!check.allowed) {
+      notifyQueryPolicyRefusal(
+        t('dashboard-scene.query-policies.panel-not-allowed', "This panel can't be added to this dashboard"),
+        check.reason
+      );
+      return;
+    }
+
+    const newPanel = await getDefaultVizPanel(getNewPanelDatasourceFor(dashboard));
 
     newPanel.setState({
       // Panel title takes precedence over library panel title when resolving the library panel

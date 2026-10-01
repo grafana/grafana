@@ -9,6 +9,7 @@ import {
   getNextRefId,
   type ScopedVars,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, isExpressionReference, reportInteraction } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
@@ -28,6 +29,12 @@ import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
+import {
+  areQueryChangesAllowedFor,
+  getNewPanelDatasourceFor,
+  isDatasourceAllowedFor,
+  notifyQueryPolicyRefusal,
+} from '../../utils/dashboardQueryPolicies';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -45,7 +52,8 @@ const reportTransformationEditInteraction = throttle((context: string, type: str
 }, TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME);
 
 /**
- * Resolve the datasource ref to assign to a new query.
+ * Resolve the datasource ref to assign to a new query. `defaultDatasourceRef` is what a new query on a
+ * mixed panel starts on: the instance a dashboard policy binds new panels to, else the configured default.
  */
 function resolveNewQueryDatasource(
   callerDs: DataSourceRef | undefined,
@@ -288,13 +296,36 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     const updatedQueries = mutator(queries[index], index, queries);
+    if (!this.ensureQueriesAllowed(queryRunner, updatedQueries)) {
+      return;
+    }
     queryRunner.setState({ queries: updatedQueries });
+  }
+
+  /**
+   * Refuses a query update that adds a query on, or re-points a query to, an instance the dashboard
+   * policy excludes; untouched queries are left alone. Surfaces the policy's reason.
+   */
+  private ensureQueriesAllowed(queryRunner: SceneQueryRunner, queries: DataQuery[]): boolean {
+    const check = areQueryChangesAllowedFor(this.state.panelRef.resolve(), queryRunner.state, {
+      datasource: queryRunner.state.datasource,
+      queries,
+    });
+    if (check.allowed) {
+      return true;
+    }
+
+    notifyQueryPolicyRefusal(
+      t('dashboard-scene.query-policies.data-source-not-allowed', "This data source can't be used on this dashboard"),
+      check.reason
+    );
+    return false;
   }
 
   // Query Operations
   public updateQueries = (queries: DataQuery[]) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
-    if (queryRunner) {
+    if (queryRunner && this.ensureQueriesAllowed(queryRunner, queries)) {
       queryRunner.setState({ queries });
       this.resolveUniformDatasource();
     }
@@ -322,11 +353,17 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       ...query,
     };
 
+    // On a mixed panel a new query starts on the instance a dashboard policy binds new panels to,
+    // when there is one, instead of the configured default.
     newQuery.datasource = resolveNewQueryDatasource(
       newQuery.datasource ?? undefined,
       dsSettings,
-      this.state.defaultDatasourceRef
+      getNewPanelDatasourceFor(this.state.panelRef.resolve()) ?? this.state.defaultDatasourceRef
     );
+
+    if (!this.ensureDatasourceAllowed(newQuery.datasource)) {
+      return;
+    }
 
     const updatedQueries = addQuery(currentQueries, newQuery);
 
@@ -440,7 +477,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
   public bulkChangeDataSource = async (refIds: readonly string[], dsRef: DataSourceRef) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
-    if (!queryRunner) {
+    if (!queryRunner || !this.ensureDatasourceAllowed(dsRef)) {
       return;
     }
 
@@ -620,6 +657,24 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   };
 
   /**
+   * Checks the dashboard's data source policies for a ref. Surfaces the policy's reason and returns
+   * false when the data source is excluded on this dashboard.
+   */
+  private ensureDatasourceAllowed(ref: DataSourceRef | null | undefined): boolean {
+    // Resolve through the panel so a repeated row's local `$ds` value is honoured, as in the classic tab.
+    const check = isDatasourceAllowedFor(this.state.panelRef.resolve(), ref);
+    if (check.allowed) {
+      return true;
+    }
+
+    notifyQueryPolicyRefusal(
+      t('dashboard-scene.query-policies.data-source-not-allowed', "This data source can't be used on this dashboard"),
+      check.reason
+    );
+    return false;
+  }
+
+  /**
    * Changes the datasource for a specific query.
    *
    * Panel-level vs Per-query datasources:
@@ -639,7 +694,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
    */
   public changeDataSource = async (dsRef: DataSourceRef, queryRefId: string) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
-    if (!queryRunner) {
+    if (!queryRunner || !this.ensureDatasourceAllowed(dsRef)) {
       return;
     }
 

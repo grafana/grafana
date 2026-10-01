@@ -7638,6 +7638,10 @@
       "try-it": "Try it out",
       "upgrade-title": "New editor available"
     },
+    "query-policies": {
+      "data-source-not-allowed": "This data source can't be used on this dashboard",
+      "panel-not-allowed": "This panel can't be added to this dashboard"
+    },
     "query-variable-editor": {
       "modal": {
         "apply": "Apply",

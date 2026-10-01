@@ -7,6 +7,7 @@ import { isExpressionReference } from '@grafana/runtime';
 import { ConfirmModal, type IconName, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
+import { useDashboardDatasourceFilter } from '../../../../utils/dashboardQueryPolicies';
 import {
   useActionsContext,
   usePanelContext,
@@ -54,6 +55,8 @@ export function useBulkQueryActions(): BulkActionGroup {
   const { selectedQueryRefIds, setMultiSelectMode } = useQueryEditorUIContext();
   const { bulkDeleteQueries, bulkToggleQueriesHide, bulkChangeDataSource } = useActionsContext();
   const { queries } = useQueryRunnerContext();
+  const { panel } = usePanelContext();
+  const datasourceFilter = useDashboardDatasourceFilter(panel);
 
   const [showDsModal, setShowDsModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -113,6 +116,7 @@ export function useBulkQueryActions(): BulkActionGroup {
           current={null}
           onChange={handleDatasourceChange}
           onDismiss={() => setShowDsModal(false)}
+          filter={datasourceFilter}
           metrics
         />
       )}

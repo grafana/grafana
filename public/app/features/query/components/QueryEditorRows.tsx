@@ -46,6 +46,8 @@ export interface Props {
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   onQueryOpenChanged?: (status?: boolean | undefined) => void;
   onUpdateDatasources?: (datasource: DataSourceRef) => void;
+  /** Hides data sources the predicate rejects from the per-query pickers of mixed panels */
+  dataSourceFilter?: (ds: DataSourceInstanceSettings) => boolean;
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
   editSavedQueryRef?: string;
@@ -75,6 +77,7 @@ export function QueryEditorRows({
   onQueryToggled,
   onQueryOpenChanged,
   onUpdateDatasources,
+  dataSourceFilter,
   onQueryReplacedFromLibrary,
   queryRowWrapper,
   editSavedQueryRef,
@@ -261,6 +264,7 @@ export function QueryEditorRows({
                     groupSettings={dsSettings}
                     scopedVars={scopedVars}
                     onChangeDataSource={onChangeDataSourceSettings}
+                    dataSourceFilter={dataSourceFilter}
                     onChange={(query) => onChangeQuery(query, index)}
                     onReplace={(query) => onReplaceQuery(query, index)}
                     onReplaceQueries={(queries) => onReplaceQueries(queries, index)}

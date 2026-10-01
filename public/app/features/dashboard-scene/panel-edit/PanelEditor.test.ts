@@ -25,6 +25,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
@@ -72,6 +73,13 @@ const dataSources = {
   ds1: mockDataSource(
     {
       uid: 'ds1',
+      type: DataSourceType.Prometheus,
+    },
+    { module: 'core:plugin/prometheus' }
+  ),
+  ds2: mockDataSource(
+    {
+      uid: 'ds2',
       type: DataSourceType.Prometheus,
     },
     { module: 'core:plugin/prometheus' }
@@ -358,6 +366,64 @@ describe('PanelEditor', () => {
 
       expect(panel.state.$behaviors?.length).toBe(1);
       expect(panel.state.$behaviors![0]).toBe(otherBehavior);
+    });
+  });
+
+  describe('New panel data source', () => {
+    const policy = {
+      restrictSamePluginToThisInstance: true as const,
+      defaultForNewPanels: true,
+      reason: 'Dashboard is bound to instance A.',
+    };
+
+    function setupNewPanel(queryPolicies: DashboardSceneState['queryPolicies']) {
+      pluginPromise = Promise.resolve(getPanelPlugin({ id: 'timeseries', skipDataQuery: false }));
+
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'New panel' });
+      const gridItem = new DashboardGridItem({ body: panel });
+      const panelEditor = buildPanelEditScene(panel, true);
+      const dashboard = new DashboardScene({
+        editPanel: panelEditor,
+        isEditing: true,
+        queryPolicies,
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({ children: [gridItem] }),
+        }),
+      });
+
+      deactivate = activateFullSceneTree(dashboard);
+
+      return { panel };
+    }
+
+    let defaultDatasource: string;
+
+    beforeEach(() => {
+      defaultDatasource = config.defaultDatasource;
+      config.defaultDatasource = 'ds1';
+    });
+
+    afterEach(() => {
+      config.defaultDatasource = defaultDatasource;
+    });
+
+    it('defaults to the instance a dashboard policy marks for new panels', async () => {
+      const { panel } = setupNewPanel({ [DataSourceType.Prometheus]: { uid: 'ds2', policy } });
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(getQueryRunnerFor(panel)?.state.datasource).toEqual({ uid: 'ds2' });
+    });
+
+    it('falls back to the default data source when no policy asks for an instance', async () => {
+      const { panel } = setupNewPanel({
+        [DataSourceType.Prometheus]: { uid: 'ds2', policy: { ...policy, defaultForNewPanels: false } },
+      });
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(getQueryRunnerFor(panel)?.state.datasource).toEqual({ uid: 'ds1' });
     });
   });
 

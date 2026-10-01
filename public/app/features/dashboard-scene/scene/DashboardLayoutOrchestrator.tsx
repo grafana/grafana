@@ -21,6 +21,7 @@ import { moveGridItem } from '../actions/layout/moveGridItem';
 import { moveRowToTab } from '../actions/layout/moveRowToTab';
 import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
 import { ObjectsReorderedOnCanvasEvent, DashboardStateChangedEvent } from '../sidebar/events';
+import { getNewPanelDatasourceFor } from '../utils/dashboardQueryPolicies';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
@@ -560,7 +561,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   };
 
   private _addNewPanelToLayout = async (dropTarget: DashboardDropTarget | null) => {
-    const panel = await getDefaultVizPanel();
+    const panel = await getDefaultVizPanel(getNewPanelDatasourceFor(this._getDashboard()));
     this._getLayoutForDropTarget(dropTarget).addPanel(panel);
     DashboardInteractions.trackAddPanelClick('sidebar', dropTarget ? getLayoutType(dropTarget) : 'dashboard', 'drop');
   };
