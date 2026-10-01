@@ -3994,6 +3994,7 @@
         }
       },
       "DashboardPanelKindOrLibraryPanelKind": {
+        "description": "Supported dashboard elements |* more element types in the future",
         "type": "object",
         "properties": {
           "LibraryPanelKind": {
@@ -5396,6 +5397,7 @@
         }
       },
       "NotebookCellKindOrV2PanelKindOrLibraryPanelKind": {
+        "description": "A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec. CellKind is listed first so it is the generated default (a notebook is narrative-first).",
         "type": "object",
         "properties": {
           "CellKind": {
@@ -5884,6 +5886,7 @@
         }
       },
       "NotebookMarkdownCellContentKindOrCodeCellContentKind": {
+        "description": "Pluggable cell content discriminated by `kind`. New content types are added by extending this union with another <Name>CellContentKind member.",
         "type": "object",
         "properties": {
           "CodeCellContentKind": {

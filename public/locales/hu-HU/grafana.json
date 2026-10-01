@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Folytatás"
-        },
-        "title": {
-          "proceed-to-external-site": "Tovább a külső webhelyre?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} irányítópult",
       "label-no-dashboards-found": "Nem található irányítópult"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
       "refresh": "Irányítópult frissítése",
-      "save": "Irányítópult mentése",
       "save-as-template": {
         "label": "Mentés sablonként"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Mentés",
       "save-library-panel": "Könyvtárpanel mentése",
       "save-library-panel-short": "Mentés",
-      "settings": "Irányítópult beállításai",
-      "share-button": "Megosztás",
       "star-add-error": "Nem sikerült hozzáadni a kedvencekhez",
       "star-added": "Hozzáadva a kedvencekhez",
       "star-remove-error": "Nem sikerült eltávolítani a kedvencek közül",
@@ -13298,7 +13285,9 @@
       "copy-markdown": "Másolás Markdownként",
       "download-markdown": "Letöltés .md formátumban",
       "error": "A jegyzetfüzet exportálása nem sikerült",
-      "label": "Exportálás"
+      "label": "Exportálás",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Blokk hozzáadása",
@@ -18186,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Tekintse meg",
-      "description": "Újraterveztük a felületet!",
-      "revert": "Visszalépés",
-      "title": "Új stílusok"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

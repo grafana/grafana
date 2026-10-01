@@ -5629,16 +5629,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "続行"
-        },
-        "title": {
-          "proceed-to-external-site": "外部サイトに移動しますか？"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}}ダッシュボード",
       "label-no-dashboards-found": "ダッシュボードが見つかりませんでした"
@@ -6701,7 +6691,6 @@
       "playlist-previous": "前のダッシュボードに戻る",
       "playlist-stop": "プレイリストを停止",
       "refresh": "ダッシュボードを更新",
-      "save": "ダッシュボードを保存",
       "save-as-template": {
         "label": "テンプレートとして保存"
       },
@@ -6716,8 +6705,6 @@
       "save-dashboard-short": "保存",
       "save-library-panel": "ライブラリパネルを保存",
       "save-library-panel-short": "保存",
-      "settings": "ダッシュボードの設定",
-      "share-button": "共有",
       "star-add-error": "お気に入りに追加できませんでした",
       "star-added": "お気に入りに追加されました",
       "star-remove-error": "お気に入りから削除できませんでした",
@@ -13205,7 +13192,9 @@
       "copy-markdown": "マークダウンとしてコピー",
       "download-markdown": ".mdとしてダウンロード",
       "error": "ノートブックのエクスポートに失敗しました",
-      "label": "エクスポート"
+      "label": "エクスポート",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "ブロックを追加",
@@ -18054,10 +18043,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "お試しください",
-      "description": "デザインを一新しました！",
-      "revert": "戻る",
-      "title": "新しいスタイル"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

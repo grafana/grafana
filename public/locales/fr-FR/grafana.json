@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Continuer"
-        },
-        "title": {
-          "proceed-to-external-site": "Accéder au site externe ?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Tableau de bord {{dashboardName}}",
       "label-no-dashboards-found": "Aucun tableau de bord trouvé"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Accéder au tableau de bord précédent",
       "playlist-stop": "Arrêter la liste de lecture",
       "refresh": "Actualiser le tableau de bord",
-      "save": "Enregistrer le tableau de bord",
       "save-as-template": {
         "label": "Enregistrer comme modèle"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Enregistrer",
       "save-library-panel": "Enregistrer le panneau de la bibliothèque",
       "save-library-panel-short": "Enregistrer",
-      "settings": "Paramètres du tableau de bord",
-      "share-button": "Partager",
       "star-add-error": "Échec de l’ajout aux favoris",
       "star-added": "Ajouté aux favoris",
       "star-remove-error": "Échec de la suppression des favoris",
@@ -13298,7 +13285,9 @@
       "copy-markdown": "Copier en tant que Markdown",
       "download-markdown": "Télécharger au format .md",
       "error": "Échec de l’exportation du notebook",
-      "label": "Exporter"
+      "label": "Exporter",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Ajouter un bloc",
@@ -18186,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Découvrez-le",
-      "description": "Nous avons repensé l’interface !",
-      "revert": "Retour",
-      "title": "Nouveaux styles"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Procedi"
-        },
-        "title": {
-          "proceed-to-external-site": "Procedere al sito esterno?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "Nessuna dashboard trovata"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Vai al dashboard precedente",
       "playlist-stop": "Interrompi playlist",
       "refresh": "Aggiorna dashboard",
-      "save": "Salva dashboard",
       "save-as-template": {
         "label": "Salva come modello"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Salva",
       "save-library-panel": "Salva pannello della libreria",
       "save-library-panel-short": "Salva",
-      "settings": "Impostazioni dashboard",
-      "share-button": "Condividi",
       "star-add-error": "Impossibile aggiungere ai preferiti",
       "star-added": "Elemento aggiunto ai preferiti",
       "star-remove-error": "Impossibile rimuovere dai preferiti",
@@ -13298,7 +13285,9 @@
       "copy-markdown": "Copia come Markdown",
       "download-markdown": "Scarica come .md",
       "error": "Impossibile esportare il blocco appunti",
-      "label": "Esporta"
+      "label": "Esporta",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Aggiungi blocco",
@@ -18186,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Dai un'occhiata",
-      "description": "Abbiamo effettuato una riprogettazione!",
-      "revert": "Riportami indietro",
-      "title": "Nuovi stili"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {
