@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Folytatás"
-        },
-        "title": {
-          "proceed-to-external-site": "Tovább a külső webhelyre?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} irányítópult",
       "label-no-dashboards-found": "Nem található irányítópult"
@@ -5809,10 +5799,16 @@
       "paste-panel": "Panel beillesztése",
       "remove": "{{typeName}} eltávolítása",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Sor címének módosítása",
       "switch-layout": "Kiosztás váltása",
       "switch-layout-row": "Kiosztás váltása",
       "switch-layout-tab": "Kiosztás váltása",
+      "tab-repeat-variable": "",
       "tab-title": "Lap címének módosítása",
       "variable-description": "Változó leírásának módosítása",
       "variable-hide": "Változó elrejtési opciójának módosítása",
@@ -6741,7 +6737,6 @@
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
       "refresh": "Irányítópult frissítése",
-      "save": "Irányítópult mentése",
       "save-as-template": {
         "label": "Mentés sablonként"
       },
@@ -6756,8 +6751,6 @@
       "save-dashboard-short": "Mentés",
       "save-library-panel": "Könyvtárpanel mentése",
       "save-library-panel-short": "Mentés",
-      "settings": "Irányítópult beállításai",
-      "share-button": "Megosztás",
       "star-add-error": "Nem sikerült hozzáadni a kedvencekhez",
       "star-added": "Hozzáadva a kedvencekhez",
       "star-remove-error": "Nem sikerült eltávolítani a kedvencek közül",
@@ -9460,6 +9453,8 @@
     "menu": "Menü megnyitása",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Mentés",
     "title": "Funkcióvezérlő"
   },
@@ -13217,6 +13212,12 @@
       "query": {
         "add": "Lekérdezés hozzáadása",
         "run": "Lekérdezés futtatása"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13284,7 +13285,9 @@
       "copy-markdown": "Másolás Markdownként",
       "download-markdown": "Letöltés .md formátumban",
       "error": "A jegyzetfüzet exportálása nem sikerült",
-      "label": "Exportálás"
+      "label": "Exportálás",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Blokk hozzáadása",
@@ -13300,7 +13303,9 @@
       "redo-action": "Újra: {{action}}",
       "remove-query": "Lekérdezés eltávolítása",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Lekérdezés kijelölése",
+      "set-cell-time-range": "",
       "split-block": "Blokk felosztása",
       "switch-datasource": "Adatforrásváltás",
       "undo": "Visszavonás",
@@ -15856,8 +15861,7 @@
       "deleted-by-removed": "Törölt fiók",
       "deleted-by-unknown-short": "<0></0> Ismeretlen",
       "deleted-by-unknown-tooltip": "Nem sikerült megkeresni a fiókot, amely törölte ezt az irányítópultot",
-      "deleted-less-than-1-min": "< 1 perc",
-      "deleted-remaining-header": "Hátralévő idő",
+      "deleted-header": "",
       "location-header": "Hely",
       "name-header": "Név",
       "tags-header": "Címkék",
@@ -18171,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Tekintse meg",
-      "description": "Újraterveztük a felületet!",
-      "revert": "Visszalépés",
-      "title": "Új stílusok"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

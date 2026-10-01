@@ -440,7 +440,7 @@ type fakeAccessControl struct {
 	evaluateFunc func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error)
 }
 
-var _ accesscontrol.AccessControl = new(fakeAccessControl)
+var _ accesscontrol.AccessControl = (*fakeAccessControl)(nil)
 
 func (f *fakeAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	if f.evaluateFunc != nil {

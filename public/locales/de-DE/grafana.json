@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Fortfahren"
-        },
-        "title": {
-          "proceed-to-external-site": "Weiter zu externer Seite?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} Dashboard",
       "label-no-dashboards-found": "Keine Dashboards gefunden"
@@ -5809,10 +5799,16 @@
       "paste-panel": "Panel einfügen",
       "remove": "{{typeName}} entfernen",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Zeilentitel ändern",
       "switch-layout": "Layout wechseln",
       "switch-layout-row": "Layout wechseln",
       "switch-layout-tab": "Layout wechseln",
+      "tab-repeat-variable": "",
       "tab-title": "Tab-Titel ändern",
       "variable-description": "Variablenbeschreibung ändern",
       "variable-hide": "Option zum Ausblenden von Variablen ändern",
@@ -6741,7 +6737,6 @@
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
       "refresh": "Dashboard aktualisieren",
-      "save": "Dashboard speichern",
       "save-as-template": {
         "label": "Als Vorlage speichern"
       },
@@ -6756,8 +6751,6 @@
       "save-dashboard-short": "Speichern",
       "save-library-panel": "Bibliotheks-Panel speichern",
       "save-library-panel-short": "Speichern",
-      "settings": "Dashboard-Einstellungen",
-      "share-button": "Teilen",
       "star-add-error": "Hinzufügen zu Favoriten fehlgeschlagen",
       "star-added": "Zu Favoriten hinzugefügt",
       "star-remove-error": "Entfernen von Favoriten fehlgeschlagen",
@@ -9460,6 +9453,8 @@
     "menu": "Menü öffnen",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Speichern",
     "title": "Funktionssteuerung"
   },
@@ -13217,6 +13212,12 @@
       "query": {
         "add": "Abfrage hinzufügen",
         "run": "Abfrage ausführen"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13284,7 +13285,9 @@
       "copy-markdown": "Als Markdown kopieren",
       "download-markdown": "Als .md herunterladen",
       "error": "Notizbuch konnte nicht exportiert werden",
-      "label": "Exportieren"
+      "label": "Exportieren",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Block hinzufügen",
@@ -13300,7 +13303,9 @@
       "redo-action": "Wiederherstellen: {{action}}",
       "remove-query": "Abfrage entfernen",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Abfrage auswählen",
+      "set-cell-time-range": "",
       "split-block": "Block aufteilen",
       "switch-datasource": "Datenquelle wechseln",
       "undo": "Rückgängig machen",
@@ -15856,8 +15861,7 @@
       "deleted-by-removed": "Gelöschter Account",
       "deleted-by-unknown-short": "<0></0> Unbekannt",
       "deleted-by-unknown-tooltip": "Der Account, der dieses Dashboard gelöscht hat, konnte nicht gesucht werden",
-      "deleted-less-than-1-min": "< 1 Min.",
-      "deleted-remaining-header": "Verbleibende Zeit",
+      "deleted-header": "",
       "location-header": "Standort",
       "name-header": "Name",
       "tags-header": "Tags",
@@ -18171,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Mehr anzeigen",
-      "description": "Wir haben eine Neugestaltung vorgenommen!",
-      "revert": "Ich möchte zurück",
-      "title": "Neue Stile"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

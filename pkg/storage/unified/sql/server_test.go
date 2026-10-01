@@ -222,3 +222,12 @@ func TestWithNatsWatchMaxAge(t *testing.T) {
 		})
 	}
 }
+
+func TestWithBackendSharesWatchExpiry(t *testing.T) {
+	expiry := resource.NewWatchExpiry()
+	resourceOpts := &resource.ResourceServerOptions{}
+	require.NoError(t, withBackend(&ServerOptions{
+		Backend: &resource.UnimplementedStorageBackend{}, WatchExpiry: expiry,
+	}, resourceOpts))
+	require.Same(t, expiry, resourceOpts.WatchExpiry)
+}

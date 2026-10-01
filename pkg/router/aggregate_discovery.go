@@ -141,8 +141,8 @@ type aggregateBackend struct {
 }
 
 var (
-	_ Backend           = &aggregateBackend{}
-	_ DiscoveryProvider = &aggregateBackend{}
+	_ Backend           = (*aggregateBackend)(nil)
+	_ DiscoveryProvider = (*aggregateBackend)(nil)
 )
 
 func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
