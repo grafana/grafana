@@ -1,4 +1,4 @@
-import { type DataFrameJSON, type RawTimeRange, rangeUtil } from '@grafana/data';
+import { type DataFrameJSON, dateTimeParse } from '@grafana/data';
 
 import { alertingApi } from './alertingApi';
 
@@ -8,22 +8,20 @@ export const stateHistoryApi = alertingApi.injectEndpoints({
       DataFrameJSON,
       {
         ruleUid?: string;
-        from?: number;
-        to?: number;
-        timeRange?: RawTimeRange;
+        from?: number | string;
+        to?: number | string;
         limit?: number;
         matchers?: string;
         previous?: string;
         current?: string;
       }
     >({
-      query: ({ ruleUid, from, to, timeRange, limit = 100, matchers, previous, current }) => {
+      query: ({ ruleUid, from, to, limit = 100, matchers, previous, current }) => {
         // Resolve relative bounds for each request so polling advances the time window.
-        const resolvedTimeRange = timeRange && rangeUtil.convertRawToRange(timeRange);
         const params: Record<string, string | number | undefined> = {
           ruleUID: ruleUid,
-          from: resolvedTimeRange?.from.unix() ?? from,
-          to: resolvedTimeRange?.to.unix() ?? to,
+          from: parseTimeBound(from, false),
+          to: parseTimeBound(to, true),
           limit,
           previous,
           current,
@@ -38,3 +36,26 @@ export const stateHistoryApi = alertingApi.injectEndpoints({
     }),
   }),
 });
+
+function parseTimeBound(value: number | string | undefined, roundUp: boolean): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  // Normally the dateTimeParse doesn't throw, only in very specific circumstances, but the backing library isn't
+  // guarantied (moment vs luxon for example)
+  try {
+    const parsed = dateTimeParse(value, { roundUp });
+    if (!parsed.isValid()) {
+      return undefined;
+    }
+    const timestamp = parsed.unix();
+    return Number.isFinite(timestamp) ? timestamp : undefined;
+  } catch {
+    return undefined;
+  }
+}

@@ -55,7 +55,8 @@ const LokiStateHistory = ({ ruleUID, pollingInterval = STATE_HISTORY_POLL_INTERV
   } = useGetRuleHistoryQuery(
     {
       ruleUid: ruleUID,
-      timeRange: { from: 'now-30d', to: 'now' },
+      from: 'now-30d',
+      to: 'now',
       limit: 250,
       previous: stateFrom !== StateFilterValues.all ? stateFrom : undefined,
       current: stateTo !== StateFilterValues.all ? stateTo : undefined,
