@@ -16,7 +16,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -66,7 +66,7 @@ decode:
 		evt, err := d.client.Recv()
 
 		switch {
-		case resourceclient.IsResourceVersionExpired(err):
+		case resourceutil.IsResourceVersionExpired(err):
 			// Surface a 410/Expired status object (instead of an error) so clients
 			// such as reflectors re-list from scratch rather than retrying the
 			// watch from a resource version the server can no longer serve.
@@ -75,7 +75,7 @@ decode:
 			}
 			d.expiredSent = true
 			logger.Debug("client: watch resource version expired", "error", err)
-			status := resourceclient.AsErrorResult(err)
+			status := resourceutil.AsErrorResult(err)
 			return watch.Error, &metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    status.Code,

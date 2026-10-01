@@ -1,4 +1,4 @@
-package resourceclient
+package resourceutil
 
 import (
 	"errors"

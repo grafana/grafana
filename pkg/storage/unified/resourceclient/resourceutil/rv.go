@@ -1,4 +1,4 @@
-package resourceclient
+package resourceutil
 
 import (
 	"github.com/bwmarrin/snowflake"
