@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,30 +17,17 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// GlobalSearchFieldsHash fingerprints what a namespace-wide index contains: its
-// field set and the resource types it covers. An existing index recording a
-// different value is rebuilt.
+// GlobalSearchFieldsHash fingerprints the field set of a namespace-wide index,
+// which decides its mapping. An existing index recording a different value is
+// rebuilt.
 //
-// The field set has to be here: it decides the mapping, and the mapping is part
-// of the stored index. The covered types are here only for now. Without them an
-// index reused after a type is added would never hold that type's existing
-// objects, and one reused after a type is dropped would keep serving them. A full
-// rebuild is the wrong answer to a coverage change, though: adding one type to a
-// long list should index only that type. This has to be replaced by syncing just
-// the types that changed before the index is switched on by default.
+// The covered types are not part of it: the index records which types it holds,
+// and the rebuild scan adds or removes only the types that changed.
 func GlobalSearchFieldsHash() string {
-	covered := make([]string, 0, len(GlobalSearchResourceTypes()))
-	for _, gr := range GlobalSearchResourceTypes() {
-		covered = append(covered, gr.String())
-	}
-	slices.Sort(covered)
-
 	payload := struct {
-		Fields  []hashableField `json:"f"`
-		Covered []string        `json:"c"`
+		Fields []hashableField `json:"f"`
 	}{
-		Fields:  canonicalHashableFields(GlobalSearchFieldDefinitions()),
-		Covered: covered,
+		Fields: canonicalHashableFields(GlobalSearchFieldDefinitions()),
 	}
 
 	blob, err := json.Marshal(payload)
@@ -153,14 +141,15 @@ func IndexFieldDefinitions(group, resource string) (standard, deleted []SearchFi
 	return StandardSearchFieldDefinitions(), TrashSearchFieldDefinitions()
 }
 
-// queueImportedTypeRebuilds queues a rebuild of the types each open global index
-// has not caught up with since an import. An import replaces a type without
-// announcing any change, so nothing else would notice. The rebuild queue bounds
-// how many run at once and never overlaps a full rebuild of the same index.
+// queueTypeSyncs queues a sync of the types each open global index is out of
+// date for: types imported since it caught up, which an import replaces without
+// announcing any change, and types added to or dropped from what it covers. The
+// rebuild queue bounds how many run at once and never overlaps a full rebuild of
+// the same index.
 //
 // openIndexes is every open index, per-resource and global, as the rebuild scan
-// lists them; only the global ones have imported types to catch up with.
-func (s *searchServer) queueImportedTypeRebuilds(ctx context.Context, openIndexes []NamespacedResource) ([]chan struct{}, error) {
+// lists them; only the global ones have types to sync.
+func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []NamespacedResource) ([]chan struct{}, error) {
 	var completeChs []chan struct{}
 	var errs []error
 	for _, key := range openIndexes {
@@ -171,23 +160,23 @@ func (s *searchServer) queueImportedTypeRebuilds(ctx context.Context, openIndexe
 		if idx == nil {
 			continue
 		}
-		pending, err := s.importedSinceRecorded(ctx, key, idx, nil)
+		stale, err := s.outOfDateTypes(ctx, key, idx, nil)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("checking %s for imports: %w", key.String(), err))
+			errs = append(errs, fmt.Errorf("checking which types of %s are out of date: %w", key.String(), err))
 			continue
 		}
-		if len(pending) == 0 {
+		if len(stale) == 0 {
 			continue
 		}
-		types := make([]schema.GroupResource, 0, len(pending))
-		for _, p := range pending {
+		types := make([]schema.GroupResource, 0, len(stale))
+		for _, p := range stale {
 			types = append(types, groupResourceOf(p.src))
 		}
 		completeCh := make(chan struct{})
 		completeChs = append(completeChs, completeCh)
 		s.rebuildQueue.Add(rebuildRequest{
 			NamespacedResource: key,
-			importedTypes:      types,
+			staleTypes:         types,
 			completeChannels:   []chan<- struct{}{completeCh},
 		})
 		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
@@ -195,53 +184,82 @@ func (s *searchServer) queueImportedTypeRebuilds(ctx context.Context, openIndexe
 	return completeChs, errors.Join(errs...)
 }
 
-// pendingImport is a covered type storage reports as imported at a time the
-// index has not recorded.
-type pendingImport struct {
+// staleType is a resource type a global index has to rebuild, or, when dropped,
+// remove.
+type staleType struct {
 	src        NamespacedResource
 	importedAt time.Time
+	// dropped means the global index no longer covers this type, but may still
+	// hold documents of it.
+	dropped bool
 }
 
-// importedSinceRecorded returns the covered types, limited to only when it is not
-// empty, that storage reports as imported later than the index recorded. Only a
-// newer import counts, the same as for a per-resource index, which is rebuilt when
-// its build time is before the last import.
-func (s *searchServer) importedSinceRecorded(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource) ([]pendingImport, error) {
+// outOfDateTypes returns the types of a global index, limited to only when it is
+// not empty, that are out of date: covered types the index has not written in
+// full yet, or that storage reports as imported later than the index recorded,
+// and types it may hold documents of but no longer covers. Only a newer import counts, the same as for a
+// per-resource index, which is rebuilt when its build time is before the last
+// import.
+func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource) ([]staleType, error) {
 	recorded, err := idx.ImportTimes()
 	if err != nil {
 		return nil, err
 	}
-	var pending []pendingImport
+	wanted := func(gr schema.GroupResource) bool {
+		return len(only) == 0 || slices.Contains(only, gr)
+	}
+	var stale []staleType
 	for _, src := range indexSources(key) {
 		gr := groupResourceOf(src)
-		if len(only) > 0 && !slices.Contains(only, gr) {
+		if !wanted(gr) {
 			continue
 		}
 		importedAt, err := s.storage.GetResourceLastImportTime(ctx, src)
 		if err != nil {
 			return nil, err
 		}
-		if !importedAt.After(recorded[gr]) {
+		if recordedAt, held := recorded[gr]; held && !importedAt.After(recordedAt) {
 			continue
 		}
-		pending = append(pending, pendingImport{src: src, importedAt: importedAt})
+		stale = append(stale, staleType{src: src, importedAt: importedAt})
 	}
-	return pending, nil
+	// Both records: an import time is recorded only once a type is written in
+	// full, and one written in part, as when a release that added it is rolled
+	// back mid-sync, has to be removed too.
+	held, err := idx.DocumentTypes()
+	if err != nil {
+		return nil, err
+	}
+	for gr := range recorded {
+		held = append(held, gr)
+	}
+	slices.SortFunc(held, func(a, b schema.GroupResource) int { return strings.Compare(a.String(), b.String()) })
+	for _, gr := range slices.Compact(held) {
+		if GlobalIndexCoversType(gr) || !wanted(gr) {
+			continue
+		}
+		src := NamespacedResource{Namespace: key.Namespace, Group: gr.Group, Resource: gr.Resource}
+		stale = append(stale, staleType{src: src, dropped: true})
+	}
+	// Sorted so the work is done in the same order every time, not in map order.
+	slices.SortFunc(stale, func(a, b staleType) int { return strings.Compare(a.src.String(), b.src.String()) })
+	return stale, nil
 }
 
-// rebuildImportedTypes rebuilds the given types of a global index, or every
-// covered type when none are given, that the index has not caught up with since
-// an import, and records each once rebuilt. Each type is checked again first, so
-// a request that waited behind a full rebuild does nothing.
-func (s *searchServer) rebuildImportedTypes(ctx context.Context, key NamespacedResource, only []schema.GroupResource) error {
+// syncTypes brings the given types of a global index, or every type when none
+// are given, back in line with storage and with what it covers: it rebuilds the
+// covered types that are out of date and removes the dropped ones, recording each
+// once done. Each type is checked again first, so a request that waited behind a
+// full rebuild does nothing.
+func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, only []schema.GroupResource) error {
 	idx := s.search.GetIndex(key)
 	if idx == nil {
 		return nil
 	}
 	// The import time is read before the rebuild, so an import that lands during
 	// it is still seen as newer next time.
-	pending, err := s.importedSinceRecorded(ctx, key, idx, only)
-	if err != nil || len(pending) == 0 {
+	stale, err := s.outOfDateTypes(ctx, key, idx, only)
+	if err != nil || len(stale) == 0 {
 		return err
 	}
 	// The rebuild does not move the index's checkpoint, and a checkpoint from
@@ -250,22 +268,28 @@ func (s *searchServer) rebuildImportedTypes(ctx context.Context, key NamespacedR
 	if _, err := idx.UpdateIndex(ctx); err != nil {
 		return err
 	}
-	for _, p := range pending {
+	for _, p := range stale {
 		if ctx.Err() != nil {
 			return ctx.Err()
+		}
+		if p.dropped {
+			if err := s.removeResourceType(ctx, idx, key, p.src); err != nil {
+				return err
+			}
+			continue
 		}
 		res, err := s.rebuildResourceType(ctx, idx, key, p.src)
 		if err != nil {
 			return err
 		}
-		s.log.Info("rebuilt an imported type in the global search index", "namespace", key.Namespace, "resource", p.src.GroupResource(),
+		s.log.Info("rebuilt a resource type in the global search index", "namespace", key.Namespace, "resource", p.src.GroupResource(),
 			"reindexed", res.Reindexed, "removed", res.Removed, "failed", res.Failed)
 		// Recorded even when some objects could not be built, or a failure that
 		// comes from the object would rebuild the type forever. Those objects are
 		// removed, so a reconcile sees them missing and retries them. Read failures
 		// return above, unrecorded, and are retried.
 		if res.Failed > 0 {
-			s.log.Warn("some objects of an imported type could not be indexed", "namespace", key.Namespace, "resource", p.src.GroupResource(), "failed", res.Failed)
+			s.log.Warn("some objects of a rebuilt resource type could not be indexed", "namespace", key.Namespace, "resource", p.src.GroupResource(), "failed", res.Failed)
 		}
 		if err := idx.RecordImportTime(groupResourceOf(p.src), p.importedAt); err != nil {
 			return err
@@ -427,6 +451,28 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 	}
 	result.Removed = len(removed)
 	return result, nil
+}
+
+// removeResourceType removes every document of a type a global index no longer
+// covers, and then forgets the type, so a failure part way is retried.
+func (s *searchServer) removeResourceType(ctx context.Context, index ResourceIndex, key, src NamespacedResource) error {
+	if err := checkRepairTarget(key, src); err != nil {
+		return err
+	}
+	gr := groupResourceOf(src)
+	var names []string
+	for ref, err := range index.ListDocumentRefs(ctx, gr) {
+		if err != nil {
+			return err
+		}
+		names = append(names, ref.Name)
+	}
+	slices.Sort(names)
+	if err := s.removeFromIndex(index, src, names); err != nil {
+		return err
+	}
+	s.log.Info("removed a resource type the global search index no longer covers", "namespace", key.Namespace, "resource", gr.String(), "removed", len(names))
+	return index.ForgetType(gr)
 }
 
 // checkRepairTarget refuses per-resource indexes: they keep deleted documents for

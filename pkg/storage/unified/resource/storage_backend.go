@@ -992,7 +992,7 @@ func (k *kvStorageBackend) lookupCaseInsensitiveFallback(
 	}
 	dk, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group: group, Resource: resource, Namespace: namespace, Name: canonical,
-	}, rv)
+	}, rv, false)
 	if err != nil {
 		return DataKey{}, name, err
 	}
@@ -1273,7 +1273,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Resource:  req.Key.Resource,
 		Namespace: namespace,
 		Name:      req.Key.Name,
-	}, req.ResourceVersion)
+	}, req.ResourceVersion, false)
 	name := req.Key.Name
 
 	// TODO: remove this block when sql/backend backwards compatibility is no longer needed.
@@ -1316,7 +1316,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 }
 
-func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
+func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
 	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
 	// would otherwise resolve the highest retained revision below it, so the batch
 	// and single-read paths would disagree when search and storage briefly diverge.
@@ -1370,7 +1370,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 				Resource:  req.Key.Resource,
 				Namespace: req.Key.Namespace,
 				Name:      req.Key.Name,
-			}, rv)
+			}, rv, includeDeleted)
 			if errors.Is(err, ErrNotFound) {
 				entry.response = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 				entries = append(entries, entry)

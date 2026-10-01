@@ -25,6 +25,8 @@ type DeletionStatusApplyConfiguration struct {
 	// Message is a human-readable explanation of what went wrong, suitable for
 	// showing to users.
 	Message *string `json:"message,omitempty"`
+	// Cause classifies the blocking error. It may be absent on older statuses.
+	Cause *provisioningv0alpha1.DeletionCause `json:"cause,omitempty"`
 }
 
 // DeletionStatusApplyConfiguration constructs a declarative configuration of the DeletionStatus type for use with
@@ -54,5 +56,13 @@ func (b *DeletionStatusApplyConfiguration) WithFinalizer(value string) *Deletion
 // If called multiple times, the Message field is set to the value of the last call.
 func (b *DeletionStatusApplyConfiguration) WithMessage(value string) *DeletionStatusApplyConfiguration {
 	b.Message = &value
+	return b
+}
+
+// WithCause sets the Cause field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Cause field is set to the value of the last call.
+func (b *DeletionStatusApplyConfiguration) WithCause(value provisioningv0alpha1.DeletionCause) *DeletionStatusApplyConfiguration {
+	b.Cause = &value
 	return b
 }
