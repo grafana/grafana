@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,6 +76,116 @@ func TestBuild_NothingMountedWhenOffOrUnusable(t *testing.T) {
 	// A server without a unified storage client has nothing to search.
 	assert.Nil(t, Build(true, false, nil, nil, b, nil), "no client")
 	assert.Nil(t, Build(false, true, nil, nil, b, nil), "no client, trash on")
+}
+
+func TestBuild_HybridManifestOptIn(t *testing.T) {
+	yes, no := true, false
+	for _, tc := range []struct {
+		name    string
+		search  *app.ManifestVersionKindSearch
+		enabled bool
+		lexical bool
+		want    []string
+	}{
+		{"omitted search block", nil, true, true, []string{"widgets/search"}},
+		{"omitted hybrid", &app.ManifestVersionKindSearch{}, true, true, []string{"widgets/search"}},
+		{"explicit opt out", &app.ManifestVersionKindSearch{Hybrid: &no}, true, true, []string{"widgets/search"}},
+		{"deployment disabled", &app.ManifestVersionKindSearch{Hybrid: &yes}, false, true, []string{"widgets/search"}},
+		{"both enabled", &app.ManifestVersionKindSearch{Hybrid: &yes}, true, true, []string{"widgets/search", "widgets/search/hybrid"}},
+		{"hybrid only", &app.ManifestVersionKindSearch{Hybrid: &yes, Endpoint: &no, Trash: &no}, true, false, []string{"widgets/search/hybrid"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+			manifest := hybridManifest(gv)
+			manifest.Versions[0].Kinds[0].Search = tc.search
+			routes, err := BuildForServedGroupVersions([]*app.ManifestData{manifest}, map[schema.GroupVersion]bool{gv: true},
+				tc.lexical, false, nil, fakeClient{}, Options{HybridEnabled: tc.enabled})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, tc.want, paths(routes)[gv.String()])
+		})
+	}
+}
+
+func TestBuild_HybridEligibility(t *testing.T) {
+	for _, tc := range []struct {
+		name                                   string
+		served, registered, namespaced, client bool
+	}{
+		{"eligible", true, true, true, true},
+		{"unserved version", false, true, true, true},
+		{"version not registered", true, false, true, true},
+		{"cluster scoped", true, true, false, true},
+		{"no client", true, true, true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+			manifest := hybridManifest(gv)
+			manifest.Versions[0].Served = tc.served
+			if !tc.namespaced {
+				manifest.Versions[0].Kinds[0].Scope = "Cluster"
+			}
+			var client resourcepb.ResourceIndexClient
+			if tc.client {
+				client = fakeClient{}
+			}
+			routes, err := BuildForServedGroupVersions([]*app.ManifestData{manifest}, map[schema.GroupVersion]bool{gv: tc.registered},
+				false, false, nil, client, Options{HybridEnabled: true})
+			require.NoError(t, err)
+			if tc.served && tc.registered && tc.namespaced && tc.client {
+				assert.Equal(t, []string{"widgets/search/hybrid"}, paths(routes)[gv.String()])
+			} else {
+				assert.Empty(t, routes)
+			}
+		})
+	}
+}
+
+type hybridInstaller struct {
+	appsdkapiserver.AppInstaller
+	gv       schema.GroupVersion
+	manifest *app.ManifestData
+}
+
+func (i hybridInstaller) GroupVersions() []schema.GroupVersion { return []schema.GroupVersion{i.gv} }
+func (i hybridInstaller) ManifestData() *app.ManifestData      { return i.manifest }
+
+func hybridManifest(gv schema.GroupVersion) *app.ManifestData {
+	enabled := true
+	return &app.ManifestData{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name: gv.Version, Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+				Search: &app.ManifestVersionKindSearch{Hybrid: &enabled},
+			}},
+		}},
+	}
+}
+
+func TestBuild_HybridRegistrationPaths(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	manifest := hybridManifest(gv)
+	// A custom builder needs neither declarative embedding inputs nor search fields.
+	b := &manifestBuilder{
+		resourceBuilder: &resourceBuilder{fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}}},
+		manifest:        manifest,
+	}
+	installer := hybridInstaller{gv: gv, manifest: manifest}
+	for _, tc := range []struct {
+		name       string
+		builders   []builder.APIGroupBuilder
+		installers []appsdkapiserver.AppInstaller
+	}{
+		{"builder", []builder.APIGroupBuilder{b}, nil},
+		{"SDK installer", nil, []appsdkapiserver.AppInstaller{installer}},
+		{"both register the same resource", []builder.APIGroupBuilder{b}, []appsdkapiserver.AppInstaller{installer}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			routes := Build(false, false, nil, fakeClient{}, tc.builders, tc.installers, Options{HybridEnabled: true})
+			assert.Equal(t, map[string][]string{gv.String(): {"widgets/search/hybrid"}}, paths(routes))
+		})
+	}
 }
 
 // The two endpoints are switched separately, so turning one on must not turn the
@@ -310,13 +421,14 @@ func TestBuild_MountsEveryServedVersion(t *testing.T) {
 	require.NotEmpty(t, dashboardGVs)
 
 	got := paths(Build(true, false, nil, fakeClient{},
-		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil))
+		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil, Options{HybridEnabled: true}))
 
 	assert.Len(t, got, len(dashboardGVs))
 	for _, gv := range dashboardGVs {
 		// Contains, not Equal: a version may declare more than one allowed kind
 		// (v2beta1 serves Notebook alongside Dashboard).
 		assert.Contains(t, got[gv.String()], "dashboards/search", "missing route for %s", gv)
+		assert.Contains(t, got[gv.String()], "dashboards/search/hybrid", "missing hybrid route for %s", gv)
 	}
 }
 
