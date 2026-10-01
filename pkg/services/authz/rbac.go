@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -50,10 +51,19 @@ const AuthzServiceAudience = "authzService"
 type AuthZClients struct {
 	accessClient          authlib.AccessClient
 	userPermissionsClient authlib.UserPermissionsClient
+	legacyAuthzClient     authzextv1.LegacyAuthzServiceClient
 }
 
-func newAuthZClients(accessClient authlib.AccessClient, userPermissionsClient authlib.UserPermissionsClient) *AuthZClients {
-	return &AuthZClients{accessClient: accessClient, userPermissionsClient: userPermissionsClient}
+func newAuthZClients(
+	accessClient authlib.AccessClient,
+	userPermissionsClient authlib.UserPermissionsClient,
+	legacyAuthzClient authzextv1.LegacyAuthzServiceClient,
+) *AuthZClients {
+	return &AuthZClients{
+		accessClient:          accessClient,
+		userPermissionsClient: userPermissionsClient,
+		legacyAuthzClient:     legacyAuthzClient,
+	}
 }
 
 // ProvideAuthZAccessClient returns the client used for authorization checks.
@@ -64,6 +74,11 @@ func ProvideAuthZAccessClient(clients *AuthZClients) authlib.AccessClient {
 // ProvideAuthZUserPermissionsClient returns the RBAC client that implements GetUserPermissions.
 func ProvideAuthZUserPermissionsClient(clients *AuthZClients) authlib.UserPermissionsClient {
 	return clients.userPermissionsClient
+}
+
+// ProvideLegacyAuthzClient returns the compatibility client for deprecated APIs.
+func ProvideLegacyAuthzClient(clients *AuthZClients) authzextv1.LegacyAuthzServiceClient {
+	return clients.legacyAuthzClient
 }
 
 // ProvideAuthZClients provides AuthZ clients and creates the AuthZ service.
@@ -110,7 +125,7 @@ func ProvideAuthZClients(
 				return nil, err
 			}
 		}
-		return newAuthZClients(accessClient, rbacClient), nil
+		return newAuthZClients(accessClient, rbacClient, rbacClient), nil
 	default:
 		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
 		if !ok {
@@ -177,11 +192,13 @@ func ProvideAuthZClients(
 			return authInterceptor(inProcessContextWithClientSpan(ctx), req, info, handler)
 		})
 		authzv1.RegisterAuthzServiceServer(channel, server)
+		authzextv1.RegisterLegacyAuthzServiceServer(channel, server)
 		rbacClient := authzlib.NewClient(
 			channel,
 			authzlib.WithCacheClientOption(&NoopCache{}),
 			authzlib.WithTracerClientOption(tracer),
 		)
+		legacyAuthzClient := authzextv1.NewLegacyAuthzServiceClient(channel)
 
 		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
 		var accessClient authlib.AccessClient = rbacClient
@@ -193,7 +210,7 @@ func ProvideAuthZClients(
 				return nil, err
 			}
 		}
-		return newAuthZClients(accessClient, rbacClient), nil
+		return newAuthZClients(accessClient, rbacClient, legacyAuthzClient), nil
 	}
 }
 
@@ -281,6 +298,7 @@ func newShadowClient(engine setting.ZanzanaPrimaryEngine, rbacClient authlib.Acc
 type remoteRBACClient struct {
 	authlib.AccessClient
 	authlib.UserPermissionsClient
+	authzextv1.LegacyAuthzServiceClient
 }
 
 func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (*remoteRBACClient, error) {
@@ -357,6 +375,7 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 			authzlib.WithCacheClientOption(&NoopCache{}),
 			authzlib.WithTracerClientOption(tracer),
 		),
+		LegacyAuthzServiceClient: authzextv1.NewLegacyAuthzServiceClient(conn),
 	}, nil
 }
 
@@ -415,6 +434,7 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
+	authzextv1.RegisterLegacyAuthzServiceServer(srv, server)
 }
 
 type NoopCache struct{}
