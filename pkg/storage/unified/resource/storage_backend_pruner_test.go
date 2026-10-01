@@ -44,9 +44,10 @@ func TestKvStorageBackend_PruneEventsPerIncarnation(t *testing.T) {
 						})
 						require.NoError(t, err)
 						action := DataActionUpdated
-						if kind == resourcepb.WatchEvent_ADDED {
+						switch kind {
+						case resourcepb.WatchEvent_ADDED:
 							action = DataActionCreated
-						} else if kind == resourcepb.WatchEvent_DELETED {
+						case resourcepb.WatchEvent_DELETED:
 							action = DataActionDeleted
 						}
 						return DataKey{
