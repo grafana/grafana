@@ -297,6 +297,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
     reportInteraction('grafana_dashboard_undo', {
       actionId: action.meta.actionId,
+      scope: action.meta.scope,
       redoDepth,
     });
   }
@@ -358,6 +359,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
     reportInteraction('grafana_dashboard_redo', {
       actionId: action.meta.actionId,
+      scope: action.meta.scope,
       redoDepth,
     });
   }

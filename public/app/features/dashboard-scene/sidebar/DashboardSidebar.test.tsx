@@ -466,6 +466,30 @@ describe('DashboardSidebar', () => {
       });
     });
 
+    it('reports the scope of a generic action', () => {
+      const scene = buildTestScene();
+      edit({
+        source: scene,
+        meta: { actionId: 'layout.changeRepeat', scope: 'row' },
+        perform: jest.fn(),
+        undo: jest.fn(),
+      });
+
+      scene.state.sidebar.undoAction();
+      scene.state.sidebar.redoAction();
+
+      expect(reportInteraction).toHaveBeenNthCalledWith(1, 'grafana_dashboard_undo', {
+        actionId: 'layout.changeRepeat',
+        scope: 'row',
+        redoDepth: 0,
+      });
+      expect(reportInteraction).toHaveBeenNthCalledWith(2, 'grafana_dashboard_redo', {
+        actionId: 'layout.changeRepeat',
+        scope: 'row',
+        redoDepth: 1,
+      });
+    });
+
     it('reports an undone committed scene change under its own action id', () => {
       const scene = buildTestScene();
       scene.publishEvent(
