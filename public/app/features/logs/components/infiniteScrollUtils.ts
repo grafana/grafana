@@ -74,8 +74,7 @@ export interface VisibleLogsRange extends AbsoluteTimeRange {
 }
 
 /**
- * Millisecond range infinite scroll already sends, plus one Loki nanosecond bound.
- * The unused side is omitted so that edge stays the dashboard range.
+ * AbsoluteTimeRange + optional nanoseconds
  */
 export interface InfiniteScrollTimeRange extends AbsoluteTimeRange {
   startNs?: string;
