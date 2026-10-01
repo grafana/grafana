@@ -5,10 +5,13 @@ import (
 	"errors"
 	"testing"
 
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	claims "github.com/grafana/authlib/types"
 	dashboardviewsv0alpha1 "github.com/grafana/grafana/apps/dashboardviews/pkg/apis/dashboardviews/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -26,9 +29,17 @@ import (
 
 const testDashboardUID = "dash-1"
 
+// withTestNamespace mimics the namespace the real apiserver request pipeline always sets before
+// reaching storage -- checkDashboardExists derives OrgID from this, not from the requester, since
+// those two can diverge (Grafana Admin, service identity) for exactly the kind of caller a wildcard
+// dashboards:read grant is disproportionately likely to be.
+func withTestNamespace(ctx context.Context, orgID int64) context.Context {
+	return genericapirequest.WithNamespace(ctx, claims.OrgNamespaceFormatter(orgID))
+}
+
 func requesterWithDashboardRead(uid string) context.Context {
 	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid)
-	return identity.WithRequester(context.Background(), &identity.StaticRequester{
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgRole: identity.RoleViewer,
 		UserID:  1,
 		OrgID:   1,
@@ -38,14 +49,16 @@ func requesterWithDashboardRead(uid string) context.Context {
 			},
 		},
 	})
+	return withTestNamespace(ctx, 1)
 }
 
 func requesterWithNoPermissions() context.Context {
-	return identity.WithRequester(context.Background(), &identity.StaticRequester{
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgRole: identity.RoleViewer,
 		UserID:  1,
 		OrgID:   1,
 	})
+	return withTestNamespace(ctx, 1)
 }
 
 // newTestAuthorizer's dashboard service always reports the dashboard as existing -- every test
@@ -161,6 +174,32 @@ func TestCheckDashboardExists(t *testing.T) {
 		// enough to reach checkDashboardExists regardless of how broad the grant actually is.
 		err := authz.BeforeCreate(allowedCtx, viewWithDashboardUID(testDashboardUID))
 		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
+	})
+
+	t.Run("resolves the dashboard against the request's namespace, not the requester's own org", func(t *testing.T) {
+		// A Grafana Admin's own OrgID doesn't have to match the namespace they're operating in --
+		// the namespace authorizer explicitly allows that divergence. Using requester.GetOrgID()
+		// here would query org 1 for a dashboard that only exists in org 7, and wrongly deny.
+		svc := &dashboards.FakeDashboardService{}
+		svc.On("GetDashboard", mock.Anything, mock.MatchedBy(func(q *dashboards.GetDashboardQuery) bool {
+			return q.OrgID == 7
+		})).Return(&dashboards.Dashboard{}, nil)
+		authz := newTestAuthorizerWithDashboardService(svc)
+
+		scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(testDashboardUID)
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			OrgRole:        identity.RoleViewer,
+			IsGrafanaAdmin: true,
+			UserID:         1,
+			OrgID:          1, // diverges from the namespace below on purpose
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsRead: {scope}},
+			},
+		})
+		ctx = withTestNamespace(ctx, 7)
+
+		require.NoError(t, authz.BeforeCreate(ctx, viewWithDashboardUID(testDashboardUID)))
+		svc.AssertExpectations(t)
 	})
 
 	t.Run("does not affect update/delete/get, which never repeat this check", func(t *testing.T) {
