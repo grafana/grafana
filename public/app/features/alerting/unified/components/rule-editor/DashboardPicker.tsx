@@ -357,6 +357,10 @@ export function getVisualPanels(dashboardDTO: DashboardResponse | undefined) {
   return allDashboardPanels;
 }
 
+function isLegacyDashboardDTO(dashboardDTO: DashboardResponse): dashboardDTO is DashboardDTO {
+  return 'dashboard' in dashboardDTO;
+}
+
 export function getDashboardTitle(dashboardDTO: DashboardResponse | undefined) {
   if (!dashboardDTO) {
     return '';
@@ -366,7 +370,7 @@ export function getDashboardTitle(dashboardDTO: DashboardResponse | undefined) {
     return dashboardDTO.spec.title;
   }
 
-  if ('dashboard' in dashboardDTO) {
+  if (isLegacyDashboardDTO(dashboardDTO)) {
     return dashboardDTO.dashboard.title;
   }
 
@@ -382,7 +386,7 @@ export function getDashboardUid(dashboardDTO: DashboardResponse | undefined) {
     return dashboardDTO.metadata.name;
   }
 
-  if ('dashboard' in dashboardDTO) {
+  if (isLegacyDashboardDTO(dashboardDTO)) {
     return dashboardDTO.dashboard.uid;
   }
 
@@ -400,7 +404,7 @@ export function getDashboardFolderTitle(
     return dashboardDTO.metadata.annotations?.[AnnoKeyFolderTitle];
   }
 
-  if ('dashboard' in dashboardDTO) {
+  if (isLegacyDashboardDTO(dashboardDTO)) {
     return dashboardDTO.meta.folderTitle;
   }
 
