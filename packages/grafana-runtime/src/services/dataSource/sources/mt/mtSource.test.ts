@@ -146,11 +146,11 @@ describe('list', () => {
     expect(logWarning).toHaveBeenCalledWith(MISSING_PLUGIN_DROPPED_WARNING, { count: '1', types: 'not-installed' });
   });
 
-  it('keeps the MT list when DataSourceSrv syncs boot data into the cache', async () => {
+  it('refreshes from the MT APIs, not the boot data, when DataSourceSrv syncs the cache', async () => {
     initDataSourceInstanceSettings({}, '');
     await getDataSourceInstanceList();
 
-    syncDataSourceInstanceSettings({ datasources: {}, defaultDatasource: '' });
+    await syncDataSourceInstanceSettings({ datasources: {}, defaultDatasource: '' });
 
     expect((await getDataSourceInstanceList()).map((item) => item.uid)).toEqual(['uid-prom', 'grafana']);
   });
