@@ -7,10 +7,10 @@ import { InsightAnswerView } from 'app/features/dashboard-scene/sidebar/insights
 import { openInsightFollowUp } from 'app/features/dashboard-scene/sidebar/insights/followUp';
 import { type InsightSourcePanel } from 'app/features/dashboard-scene/sidebar/insights/sources';
 
-import { type FollowUpThread } from './useInsight';
+import { type InsightFollowUpThread } from './insightSessions';
 
 interface Props {
-  threads: FollowUpThread[];
+  threads: InsightFollowUpThread[];
   sources: InsightSourcePanel[];
   /** The main question is running, so a follow-up would answer against an answer about to be replaced. */
   disabled: boolean;

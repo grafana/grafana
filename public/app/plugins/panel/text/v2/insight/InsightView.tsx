@@ -15,6 +15,8 @@ import { useInsight } from './useInsight';
 
 export interface InsightViewProps {
   dashboard: DashboardSceneLike | undefined;
+  /** The panel key, or a saved question's id in the dashboard sidebar. Views with the same id share one answer. */
+  sessionId: string;
   options: InsightOptions;
   fitContent?: boolean;
   /**
@@ -24,10 +26,10 @@ export interface InsightViewProps {
   modePicker?: ReactNode;
 }
 
-export function InsightView({ dashboard, options, fitContent, modePicker }: InsightViewProps) {
+export function InsightView({ dashboard, sessionId, options, fitContent, modePicker }: InsightViewProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const insight = useInsight(dashboard, options);
+  const insight = useInsight(dashboard, sessionId, options);
   const { result, running, loadingSources, error, staleReasons, unavailable, sources } = insight;
 
   const question = (options.question ?? '').trim();
@@ -97,7 +99,7 @@ export function InsightView({ dashboard, options, fitContent, modePicker }: Insi
           <Spinner size="sm" inline />
           <Text variant="bodySmall" color="secondary">
             {loadingSources ? (
-              <Trans i18nKey="textng.insight.loading-sources">Loading source panels…</Trans>
+              <Trans i18nKey="textng.insight.loading-sources">Loading source data…</Trans>
             ) : (
               <Trans i18nKey="textng.insight.running">Analyzing selected panels…</Trans>
             )}
@@ -122,11 +124,21 @@ export function InsightView({ dashboard, options, fitContent, modePicker }: Insi
 
       {result ? (
         <>
-          <InsightAnswerView result={result} sources={sources} onFollowUp={() => openInsightFollowUp(result, stale)} />
+          <InsightAnswerView
+            result={result}
+            sources={sources}
+            onFollowUp={result.framesOmitted ? undefined : () => openInsightFollowUp(result, stale)}
+            share={{
+              canShare: insight.canShare,
+              sharing: insight.sharing,
+              error: insight.shareError,
+              onShare: insight.share,
+            }}
+          />
           <InsightFollowUps
             threads={insight.followUps}
             sources={sources}
-            disabled={running}
+            disabled={running || Boolean(result.framesOmitted)}
             onAsk={insight.askFollowUp}
           />
         </>
@@ -135,7 +147,8 @@ export function InsightView({ dashboard, options, fitContent, modePicker }: Insi
         !unavailable && (
           <Text element="p" variant="bodySmall" color="secondary">
             <Trans i18nKey="textng.insight.hint">
-              Get a takeaway and supporting findings from the source panels. Answers stay in this session.
+              Get a takeaway and supporting findings from the source panels. Answers stay in this session unless an
+              editor shares one.
             </Trans>
           </Text>
         )

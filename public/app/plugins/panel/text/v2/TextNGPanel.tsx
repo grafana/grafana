@@ -24,6 +24,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import config from 'app/core/config';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import {
@@ -71,7 +72,7 @@ export function TextNGPanel(props: Props) {
   return <TextNGContentPanel {...props} />;
 }
 
-function TextNGInsightPanel({ options, onOptionsChange, fitContent }: Props) {
+function TextNGInsightPanel({ id, options, onOptionsChange, fitContent }: Props) {
   const { app } = usePanelContext();
   const dashboard = usePanelDashboard();
   const isEditing = app === CoreApp.PanelEditor;
@@ -80,6 +81,7 @@ function TextNGInsightPanel({ options, onOptionsChange, fitContent }: Props) {
   return (
     <InsightView
       dashboard={dashboard}
+      sessionId={getVizPanelKeyForPanelId(id)}
       options={options.insight ?? { question: '', sourcePanelKeys: [], followUps: [] }}
       fitContent={fitContent && !isEditing}
       // Leaving insight mode keeps whatever content the panel already had, so switching

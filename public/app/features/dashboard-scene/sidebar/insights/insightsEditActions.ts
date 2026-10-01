@@ -12,7 +12,7 @@ import {
 } from './insightsStorage';
 import { type InsightQuestion } from './types';
 
-export type InsightQuestionDraft = Pick<InsightQuestion, 'question' | 'sourcePanelKeys'>;
+export type InsightQuestionDraft = Omit<InsightQuestion, 'id'>;
 
 /** Undo restores the raw previous value, so an unreadable annotation is not lost by undoing. */
 function commitInsightQuestions(dashboard: InsightsDashboard, next: InsightQuestion[], description: string) {
@@ -29,16 +29,19 @@ function commitInsightQuestions(dashboard: InsightsDashboard, next: InsightQuest
   });
 }
 
+/** Returns the new question's id. */
 export function addInsightQuestion(
   dashboard: InsightsDashboard,
   questions: InsightQuestion[],
   draft: InsightQuestionDraft
-) {
+): string {
+  const id = nanoid();
   commitInsightQuestions(
     dashboard,
-    [...questions, { id: nanoid(), ...draft }],
+    [...questions, { id, ...draft }],
     t('dashboard.insights.edit-action.add', 'Add insight question')
   );
+  return id;
 }
 
 export function updateInsightQuestion(
@@ -49,7 +52,8 @@ export function updateInsightQuestion(
 ) {
   commitInsightQuestions(
     dashboard,
-    questions.map((question) => (question.id === id ? { ...question, ...draft } : question)),
+    // Replaced rather than merged, so a setting the draft turned off does not survive the edit.
+    questions.map((question) => (question.id === id ? { id, ...draft } : question)),
     t('dashboard.insights.edit-action.edit', 'Edit insight question')
   );
 }

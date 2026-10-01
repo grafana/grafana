@@ -6,6 +6,8 @@ import { t } from '@grafana/i18n';
 import { Checkbox, Icon, Text, useStyles2 } from '@grafana/ui';
 
 import {
+  DASHBOARD_SOURCE_REF,
+  getDashboardSourceLabel,
   getInsightSourceTree,
   getMissingRefLabel,
   getPanelNodes,
@@ -16,7 +18,7 @@ import {
 import { type InsightSourcePanel } from './sources';
 
 /** The same icons as the dashboard outline. */
-const ICONS = { tab: 'layers', row: 'list-ul', panel: 'chart-line' } as const;
+const ICONS = { dashboard: 'apps', tab: 'layers', row: 'list-ul', panel: 'chart-line' } as const;
 
 interface Props {
   sources: InsightSourcePanel[];
@@ -42,7 +44,10 @@ function panelCount(count: number): string {
   });
 }
 
-/** Tabs, rows, and panels in dashboard order. A selected tab or row includes everything inside it. */
+/**
+ * The entire dashboard, then tabs, rows, and panels in dashboard order. A selected dashboard, tab, or row
+ * includes everything inside it.
+ */
 export function InsightSourcePicker({ sources, value, onChange }: Props) {
   const styles = useStyles2(getStyles);
   const id = useId();
@@ -51,15 +56,18 @@ export function InsightSourcePicker({ sources, value, onChange }: Props) {
   const tree = getInsightSourceTree(sources);
   if (!tree.length && !value.length) {
     return (
-      <Text element="p" color="secondary">
-        {t('dashboard.insights.picker.empty', 'This dashboard has no panels with queries yet.')}
+      <Text element="p" variant="bodySmall" color="secondary">
+        {t('dashboard.insights.picker.empty', 'This dashboard has no panels with queries to use as sources.')}
       </Text>
     );
   }
 
   const selected = new Set(value);
   const nodes = indexNodes(tree);
-  const missing = value.filter((ref) => !nodes.has(ref));
+  const allPanels = getPanelNodes(tree);
+  const dashboardSelected = selected.has(DASHBOARD_SOURCE_REF);
+  const dashboardLabel = getDashboardSourceLabel();
+  const missing = value.filter((ref) => ref !== DASHBOARD_SOURCE_REF && !nodes.has(ref));
   const hasSelectionInside = (section: InsightSourceSectionNode) =>
     getRefs(section.children).some((ref) => selected.has(ref));
   // Start with the sections that hold a selected item open, so existing choices are visible.
@@ -71,7 +79,8 @@ export function InsightSourcePicker({ sources, value, onChange }: Props) {
   const covered = new Set(
     value.flatMap((ref) => {
       const node = nodes.get(ref);
-      return node ? getPanelNodes([node]).map((panel) => panel.ref) : [];
+      const panels = ref === DASHBOARD_SOURCE_REF ? allPanels : node ? getPanelNodes([node]) : [];
+      return panels.map((panel) => panel.ref);
     })
   );
 
@@ -171,7 +180,33 @@ export function InsightSourcePicker({ sources, value, onChange }: Props) {
           ))}
         </ul>
       )}
-      {renderNodes(tree, id)}
+      <ul className={styles.tree}>
+        <li>
+          <div className={styles.row}>
+            <span className={styles.toggleSpace} />
+            <Checkbox
+              id={`${id}-dashboard`}
+              value={dashboardSelected}
+              indeterminate={!dashboardSelected && covered.size > 0}
+              onChange={(event) =>
+                onChange(
+                  event.currentTarget.checked
+                    ? [DASHBOARD_SOURCE_REF]
+                    : value.filter((ref) => ref !== DASHBOARD_SOURCE_REF)
+                )
+              }
+            />
+            <label htmlFor={`${id}-dashboard`} className={styles.label}>
+              <Icon size="sm" name={ICONS.dashboard} />
+              <span className={styles.title}>{dashboardLabel}</span>
+              <Text color="secondary" variant="bodySmall">
+                {panelCount(allPanels.length)}
+              </Text>
+            </label>
+          </div>
+        </li>
+      </ul>
+      {renderNodes(tree, id, dashboardSelected ? dashboardLabel : undefined)}
       {covered.size > 0 && (
         <Text color="secondary" variant="bodySmall">
           {t('dashboard.insights.picker.selected', '', {

@@ -24,7 +24,7 @@ export const textPanelMigrationHandler = (panel: LegacyTextPanel): Partial<Optio
   }
 
   // The 'text' mode has been removed so we need to update any panels still using it to markdown
-  const modes = [TextMode.Code, TextMode.HTML, TextMode.Markdown];
+  const modes = [TextMode.Code, TextMode.HTML, TextMode.Markdown, TextMode.Insight];
   if (!modes.find((f) => f === options.mode)) {
     options = { ...options, mode: TextMode.Markdown };
   }

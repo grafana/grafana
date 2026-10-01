@@ -40,10 +40,14 @@ composableKinds: PanelCfg: {
 					// The question Assistant answers about the source panels.
 					question: string | *""
 					// Scene keys of the panels whose loaded data Assistant may use, such as "panel-3".
-					// A "section:" prefixed key references every panel in a tab or row.
+					// A "section:" prefixed key references every panel in a tab or row; "section:[]" references every panel on the dashboard.
 					sourcePanelKeys: [...string]
 					// Questions the viewer can ask after the answer, each answered inside the panel.
 					followUps: [...string]
+					// Also send the source panels over the period just before the time range, so the answer can say what changed.
+					compareWithPreviousPeriod?: bool
+					// Name of a dashboard variable to break the answer down by. The source panels are captured once per value.
+					breakdownVariable?: string
 				} @cuetsy(kind="interface")
 
 				Options: {

@@ -29,6 +29,13 @@ export function sectionRef(path: string[]): string {
   return `${SECTION_PREFIX}${JSON.stringify(path)}`;
 }
 
+/** Every panel on the dashboard, including panels added later: the section with an empty path. */
+export const DASHBOARD_SOURCE_REF = sectionRef([]);
+
+export function getDashboardSourceLabel(): string {
+  return t('dashboard.insights.sources.entire-dashboard', 'Entire dashboard');
+}
+
 export function parseSectionRef(ref: string): string[] | undefined {
   if (!ref.startsWith(SECTION_PREFIX)) {
     return undefined;
@@ -116,6 +123,9 @@ export function getMissingSectionRefs(refs: string[], sources: InsightSourcePane
 /** Label for a saved reference that is no longer on the dashboard. */
 export function getMissingRefLabel(ref: string): string {
   const path = parseSectionRef(ref);
+  if (path?.length === 0) {
+    return getDashboardSourceLabel();
+  }
   return path ? path.map((title) => title || t('dashboard.insights.sources.untitled', 'Untitled')).join(' › ') : ref;
 }
 

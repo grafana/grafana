@@ -11,16 +11,25 @@ import { sceneGraph } from '@grafana/scenes';
 
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
-import { getMissingRefLabel, getMissingSectionRefs, getPanelLocation, resolveInsightSourceKeys } from './sections';
+import {
+  DASHBOARD_SOURCE_REF,
+  getMissingRefLabel,
+  getMissingSectionRefs,
+  getPanelLocation,
+  resolveInsightSourceKeys,
+} from './sections';
 import { getInsightSourceData, getInsightSourcePanels, type InsightSourcePanel } from './sources';
 import {
   type InsightContext,
   type InsightFieldStats,
   type InsightQuestion,
   type InsightSnapshot,
+  type InsightSnapshotAnnotation,
   type InsightSnapshotField,
   type InsightSnapshotFrame,
+  type InsightSnapshotPanel,
 } from './types';
+import { type InsightVariantPanels, type InsightVariantsData } from './variants';
 
 export const MAX_INSIGHT_INPUT_CHARACTERS = 100_000;
 const SUMMARY_BUCKETS = 60;
@@ -230,11 +239,96 @@ function summarizeFrame(frame: DataFrame, series: DataFrame[]): InsightSnapshotF
   };
 }
 
+/** A variant may legitimately have no data, such as a breakdown value with no errors, but it must have loaded. */
+function readyVariantSeries(title: string, variant: string, data: PanelData | undefined): DataFrame[] {
+  if (!data) {
+    throw new Error(
+      t(
+        'dashboard.insights.snapshot.variant-not-loaded',
+        '“{{title}}” did not load for {{variant}} in time. Try again.',
+        {
+          title,
+          variant,
+        }
+      )
+    );
+  }
+  if (data.state !== LoadingState.Done || data.error || data.errors?.length) {
+    throw new Error(
+      t('dashboard.insights.snapshot.variant-error', '“{{title}}” has a query error for {{variant}}.', {
+        title,
+        variant,
+      })
+    );
+  }
+  return data.series;
+}
+
+const MAX_ANNOTATIONS = 30;
+const MAX_ANNOTATION_TEXT = 300;
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+function toPlainText(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** The events the sources show within the time range, such as deploys, so the answer can relate changes to them. */
+function getSnapshotAnnotations(sources: InsightSourceWithData[], context: InsightContext) {
+  const from = Date.parse(context.from);
+  const to = Date.parse(context.to);
+  // Every panel sharing a data layer carries the same annotations.
+  const found = new Map<string, InsightSnapshotAnnotation & { at: number }>();
+  for (const frame of sources.flatMap((source) => source.data?.annotations ?? [])) {
+    const values = (name: string) => frame.fields.find((field) => field.name === name)?.values;
+    const times = values('time');
+    const ends = values('timeEnd');
+    const titles = values('title');
+    const texts = values('text');
+    const tags = values('tags');
+    for (let row = 0; times && row < frame.length; row++) {
+      const at: unknown = times[row];
+      const end: unknown = ends?.[row];
+      if (!isFiniteNumber(at)) {
+        continue;
+      }
+      const until = isFiniteNumber(end) && end > at ? end : undefined;
+      if (at > to || (until ?? at) < from) {
+        continue;
+      }
+      const text = toPlainText([titles?.[row], texts?.[row]].filter(isNonEmptyString).join(': ')).slice(
+        0,
+        MAX_ANNOTATION_TEXT
+      );
+      const rowTags: unknown = tags?.[row];
+      const tagList = Array.isArray(rowTags) ? rowTags.filter(isNonEmptyString) : [];
+      if (!text && !tagList.length) {
+        continue;
+      }
+      found.set(`${at}|${until}|${text}`, {
+        at,
+        time: new Date(at).toISOString(),
+        timeEnd: until === undefined ? undefined : new Date(until).toISOString(),
+        text,
+        tags: tagList.length ? tagList : undefined,
+      });
+    }
+  }
+  const sorted = [...found.values()].sort((a, b) => a.at - b.at).map(({ at, ...annotation }) => annotation);
+  return { annotations: sorted.slice(-MAX_ANNOTATIONS), omitted: Math.max(0, sorted.length - MAX_ANNOTATIONS) };
+}
+
 /** Never queries a datasource or silently drops a selected source; throws a user-facing message instead. */
 export function buildInsightSnapshot(
   context: InsightContext,
   selectedKeys: string[],
-  available: InsightSourceWithData[]
+  available: InsightSourceWithData[],
+  variants: InsightVariantsData = {}
 ): InsightSnapshot {
   if (!context.question.trim()) {
     throw new Error(t('dashboard.insights.snapshot.empty-question', 'This question is empty. Edit it to add text.'));
@@ -258,11 +352,39 @@ export function buildInsightSnapshot(
     return { source, series: readySeries(source, context) };
   });
 
-  const serialize = (summarize: boolean) =>
-    JSON.stringify({
-      ...context,
-      question: context.question.trim(),
-      panels: sources.map(({ source, series }) => ({
+  type Entry = (typeof sources)[number];
+  const withVariant = (panels: InsightVariantPanels, variant: string): Entry[] =>
+    sources
+      .filter(({ source }) => panels.has(source.key))
+      .map(({ source }) => ({ source, series: readyVariantSeries(source.title, variant, panels.get(source.key)) }));
+
+  const { previousPeriod, breakdown } = variants;
+  const previousEntries =
+    previousPeriod &&
+    withVariant(previousPeriod.panels, t('dashboard.insights.snapshot.variant-previous', 'the previous period'));
+  const breakdownEntries = breakdown?.values.map((item) => {
+    const label = `${breakdown.variable} = ${item.text}`;
+    return {
+      item,
+      panels: withVariant(item.panels, label),
+      previous:
+        item.previousPeriod &&
+        withVariant(
+          item.previousPeriod,
+          t('dashboard.insights.snapshot.variant-value-previous', '{{value}} over the previous period', {
+            value: label,
+          })
+        ),
+    };
+  });
+  const { annotations, omitted } = getSnapshotAnnotations(
+    sources.map(({ source }) => source),
+    context
+  );
+
+  const serialize = (summarize: boolean) => {
+    const toPanels = (entries: Entry[]): InsightSnapshotPanel[] =>
+      entries.map(({ source, series }) => ({
         key: source.key,
         title: source.title,
         description: source.description,
@@ -274,8 +396,29 @@ export function buildInsightSnapshot(
               fields: frame.fields.map((field) => exactField(field, frame, series)),
             }
         ),
-      })),
-    });
+      }));
+    const snapshot: InsightSnapshot = {
+      ...context,
+      question: context.question.trim(),
+      panels: toPanels(sources),
+      annotations: annotations.length ? annotations : undefined,
+      omittedAnnotations: omitted || undefined,
+      previousPeriod: previousPeriod &&
+        previousEntries && { from: previousPeriod.from, to: previousPeriod.to, panels: toPanels(previousEntries) },
+      breakdown: breakdown &&
+        breakdownEntries && {
+          variable: breakdown.variable,
+          omittedValues: breakdown.omittedValues,
+          values: breakdownEntries.map(({ item, panels, previous }) => ({
+            value: item.value,
+            text: item.text,
+            panels: toPanels(panels),
+            previousPeriod: previous && toPanels(previous),
+          })),
+        },
+    };
+    return JSON.stringify(snapshot);
+  };
 
   let serialized = serialize(false);
   if (serialized.length > MAX_INSIGHT_INPUT_CHARACTERS) {
@@ -285,7 +428,7 @@ export function buildInsightSnapshot(
     throw new Error(
       t(
         'dashboard.insights.snapshot.too-large',
-        'The selected data is too large to send, even after summarizing time series. Select fewer panels, series, or table rows.'
+        'The selected data is too large to send, even after summarizing time series. Select fewer panels, series, or table rows, or turn off the comparison or breakdown.'
       )
     );
   }
@@ -304,12 +447,25 @@ export interface InsightCapture {
   unloaded?: boolean;
 }
 
-export function captureInsightSnapshot(dashboard: DashboardSceneLike, question: InsightQuestion): InsightCapture {
+/**
+ * Without `variants`, captures only what the dashboard shows now; the previous period and breakdown are
+ * loaded on request, since they run extra queries.
+ */
+export function captureInsightSnapshot(
+  dashboard: DashboardSceneLike,
+  question: Pick<InsightQuestion, 'question' | 'sourcePanelKeys'>,
+  variants?: InsightVariantsData
+): InsightCapture {
   const context = getInsightContext(dashboard, question.question);
   const sources = getInsightSourcePanels(dashboard);
   const keys = resolveInsightSourceKeys(question.sourcePanelKeys, sources);
   try {
     const [missing] = getMissingSectionRefs(question.sourcePanelKeys, sources);
+    if (missing === DASHBOARD_SOURCE_REF) {
+      throw new Error(
+        t('dashboard.insights.snapshot.dashboard-empty', 'This dashboard has no panels with queries to use as sources.')
+      );
+    }
     if (missing !== undefined) {
       throw new Error(
         t(
@@ -329,7 +485,7 @@ export function captureInsightSnapshot(dashboard: DashboardSceneLike, question: 
         active: source.panel.isActive,
         data: getInsightSourceData(source.panel),
       }));
-    return { context, keys, snapshot: buildInsightSnapshot(context, keys, available) };
+    return { context, keys, snapshot: buildInsightSnapshot(context, keys, available, variants) };
   } catch (error) {
     return {
       context,

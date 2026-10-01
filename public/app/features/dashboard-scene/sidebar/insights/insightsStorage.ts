@@ -56,10 +56,17 @@ export function parseInsightQuestions(value: string | undefined): { questions: I
     }
     const questions: InsightQuestion[] = [];
     for (const item of parsed.questions) {
-      if (!isInsightQuestion(item)) {
+      if (!isStoredInsightQuestion(item)) {
         return { questions: [], invalid: true };
       }
-      questions.push({ id: item.id, question: item.question, sourcePanelKeys: [...item.sourcePanelKeys] });
+      questions.push({
+        id: item.id,
+        question: item.question,
+        sourcePanelKeys: [...item.sourcePanelKeys],
+        followUps: [...(item.followUps ?? [])],
+        ...(item.compareWithPreviousPeriod === true && { compareWithPreviousPeriod: true }),
+        ...(item.breakdownVariable ? { breakdownVariable: item.breakdownVariable } : {}),
+      });
     }
     return { questions, invalid: false };
   } catch {
@@ -77,7 +84,18 @@ export function serializeInsightQuestions(questions: InsightQuestion[]): string 
   }
   return JSON.stringify({
     version: INSIGHTS_ANNOTATION_VERSION,
-    questions: questions.map(({ id, question, sourcePanelKeys }) => ({ id, question, sourcePanelKeys })),
+    // Optional settings are omitted when unset, so a question saved before they existed serializes
+    // unchanged and an edit that changes nothing is not recorded as a change.
+    questions: questions.map(
+      ({ id, question, sourcePanelKeys, followUps, compareWithPreviousPeriod, breakdownVariable }) => ({
+        id,
+        question,
+        sourcePanelKeys,
+        ...(followUps.length > 0 && { followUps }),
+        ...(compareWithPreviousPeriod === true && { compareWithPreviousPeriod }),
+        ...(breakdownVariable ? { breakdownVariable } : {}),
+      })
+    ),
   });
 }
 
@@ -114,14 +132,22 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isInsightQuestion(value: unknown): value is InsightQuestion {
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+type StoredInsightQuestion = Omit<InsightQuestion, 'followUps'> & { followUps?: string[] };
+
+function isStoredInsightQuestion(value: unknown): value is StoredInsightQuestion {
   return (
     isRecord(value) &&
     typeof value.id === 'string' &&
     value.id.trim() !== '' &&
     typeof value.question === 'string' &&
     value.question.trim() !== '' &&
-    Array.isArray(value.sourcePanelKeys) &&
-    value.sourcePanelKeys.every((key) => typeof key === 'string')
+    isStringArray(value.sourcePanelKeys) &&
+    (value.followUps === undefined || isStringArray(value.followUps)) &&
+    (value.compareWithPreviousPeriod === undefined || typeof value.compareWithPreviousPeriod === 'boolean') &&
+    (value.breakdownVariable === undefined || typeof value.breakdownVariable === 'string')
   );
 }
