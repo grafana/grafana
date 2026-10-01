@@ -120,7 +120,7 @@ describe('plugin', () => {
       expect(first).toBe(second);
     });
 
-    it('names getDataSourceInstance in the warning when it resolves a numeric id', async () => {
+    it('names getDataSourceInstance in the warning stack when it resolves a numeric id', async () => {
       const settings = ds({ id: 42 });
       setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
       const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
@@ -133,7 +133,7 @@ describe('plugin', () => {
       expect(result).toBe(instance);
       expect(logWarning).toHaveBeenCalledWith(
         NUMERIC_ID_REF_WARNING,
-        expect.objectContaining({ id: '42', api: 'getDataSourceInstance' })
+        expect.objectContaining({ id: '42', stack: expect.stringMatching(/at (async )?getDataSourceInstance \(/) })
       );
     });
 
