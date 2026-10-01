@@ -1895,13 +1895,13 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		return mapErr
 	}
 
-	// The mutation count is part of writing the batch: it reads and writes the
-	// index's own data, so it belongs to the commit phase. Its failure does not
-	// unmake the write, so the bytes are reported on the batch alone.
 	if err := b.recordDocumentTypes(req.Items); err != nil {
 		return err
 	}
 
+	// The mutation count is part of writing the batch: it reads and writes the
+	// index's own data, so it belongs to the commit phase. Its failure does not
+	// unmake the write, so the bytes are reported on the batch alone.
 	commitStart := time.Now()
 	commitErr := b.index.Batch(batch)
 	err := commitErr

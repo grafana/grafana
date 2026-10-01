@@ -1401,11 +1401,11 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
 	// A global index is never imported itself; its covered types are, and only
 	// those are rebuilt.
-	importChs, err := s.queueTypeSyncs(ctx, filterKeys)
+	syncChs, err := s.queueTypeSyncs(ctx, filterKeys)
 	if err != nil {
 		return &resourcepb.RebuildIndexesResponse{Error: AsErrorResult(err)}, nil
 	}
-	completeChs = append(completeChs, importChs...)
+	completeChs = append(completeChs, syncChs...)
 	rebuildCount := len(completeChs)
 	for _, ch := range completeChs {
 		select {
@@ -1646,6 +1646,12 @@ func (s *searchServer) IsHealthy(ctx context.Context, req *resourcepb.HealthChec
 func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 	defer s.bgTaskWg.Done()
 
+	// A global index reused at startup may predate a type being added or
+	// dropped, so that is checked now rather than at the first tick.
+	if _, err := s.queueTypeSyncs(ctx, s.search.GetOpenIndexes()); err != nil {
+		s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
+	}
+
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
@@ -1662,7 +1668,7 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			}
 			s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
 			if _, err := s.queueTypeSyncs(ctx, keys); err != nil {
-				s.log.Warn("failed to check global search indexes for imports", "error", err)
+				s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
 			}
 		}
 	}

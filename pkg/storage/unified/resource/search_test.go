@@ -51,10 +51,16 @@ type MockResourceIndex struct {
 	documentRefs    map[schema.GroupResource][]DocumentRef
 	documentRefsErr error
 
+	// Types recorded as written, as the real index records them in BulkIndex
+	// and forgets them in ForgetType.
+	documentTypes map[schema.GroupResource]struct{}
+
 	// Items passed to BulkIndex, and how many writes carried them, guarded by
 	// updateIndexMu.
 	bulkItems []*BulkIndexItem
 	bulkCalls int
+	// Fails BulkIndex from this call on, counting from 1, when not zero.
+	failBulkFromCall int
 
 	// Optional configured results for the managed-object RPCs. When nil the
 	// methods return an error, matching the default "not expected" behaviour.
@@ -77,7 +83,18 @@ func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
 	m.bulkCalls++
+	if m.failBulkFromCall > 0 && m.bulkCalls >= m.failBulkFromCall {
+		return fmt.Errorf("bulk index failed")
+	}
 	m.bulkItems = append(m.bulkItems, req.Items...)
+	for _, item := range req.Items {
+		if item.Action == ActionIndex && item.Doc != nil && item.Doc.Key != nil {
+			if m.documentTypes == nil {
+				m.documentTypes = map[schema.GroupResource]struct{}{}
+			}
+			m.documentTypes[schema.GroupResource{Group: item.Doc.Key.Group, Resource: item.Doc.Key.Resource}] = struct{}{}
+		}
+	}
 	return nil
 }
 
@@ -122,23 +139,31 @@ func (m *MockResourceIndex) RecordImportTime(gr schema.GroupResource, t time.Tim
 	return nil
 }
 
-// DocumentTypes answers with the types documentRefs holds any documents of.
+// DocumentTypes answers with the types recorded as written, and the types a
+// test set up documentRefs for, which stand for documents written before it.
 func (m *MockResourceIndex) DocumentTypes() ([]schema.GroupResource, error) {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
-	var out []schema.GroupResource
+	types := maps.Clone(m.documentTypes)
+	if types == nil {
+		types = map[schema.GroupResource]struct{}{}
+	}
 	for gr, refs := range m.documentRefs {
 		if len(refs) > 0 {
-			out = append(out, gr)
+			types[gr] = struct{}{}
 		}
 	}
-	return out, nil
+	return slices.Collect(maps.Keys(types)), nil
 }
 
+// ForgetType forgets both records, and the documents a test set up, which the
+// caller has removed by now.
 func (m *MockResourceIndex) ForgetType(gr schema.GroupResource) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
 	delete(m.importTimes, gr)
+	delete(m.documentTypes, gr)
+	delete(m.documentRefs, gr)
 	return nil
 }
 

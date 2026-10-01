@@ -189,7 +189,8 @@ func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []Namespa
 type staleType struct {
 	src        NamespacedResource
 	importedAt time.Time
-	// dropped is a type the index may hold documents of but no longer covers.
+	// dropped means the global index no longer covers this type, but may still
+	// hold documents of it.
 	dropped bool
 }
 

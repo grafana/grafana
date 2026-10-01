@@ -1486,6 +1486,54 @@ func TestSyncRemovesATypeNoLongerCovered(t *testing.T) {
 	}
 	assert.Equal(t, []string{"playlist-a", "playlist-b"}, removed)
 	assert.Equal(t, heldAt(time.Time{}, time.Time{}), idx.importTimes)
+	types, err := idx.DocumentTypes()
+	require.NoError(t, err)
+	assert.NotContains(t, types, playlistsGroupResource, "forgotten from both records")
+}
+
+// A removal that fails part way keeps the type recorded, so the next sync
+// removes the rest.
+func TestSyncRetriesARemovalThatFailedPartWay(t *testing.T) {
+	refs := make([]DocumentRef, 0, maxBatchSize+1)
+	for i := range maxBatchSize + 1 {
+		refs = append(refs, DocumentRef{Name: fmt.Sprintf("playlist-%04d", i), RV: 40})
+	}
+	server, idx := repairServer(t, &reconcileStorage{}, map[schema.GroupResource][]DocumentRef{playlistsGroupResource: refs})
+	idx.importTimes = heldAt(time.Time{}, time.Time{})
+	idx.importTimes[playlistsGroupResource] = time.Time{}
+	// The first batch of deletes goes through, the second fails.
+	idx.failBulkFromCall = 2
+
+	require.Error(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	assert.Contains(t, idx.importTimes, playlistsGroupResource, "still recorded")
+
+	idx.failBulkFromCall = 0
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	assert.NotContains(t, idx.importTimes, playlistsGroupResource)
+}
+
+// An index reused at startup is synced at once, not at the first tick of the
+// rebuild scan.
+func TestStartupSyncsTheTypesOfAReusedGlobalIndex(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{folderType("ns"): {"folder-a"}},
+		listRVs: map[NamespacedResource]int64{folderType("ns"): 50},
+	}}
+	server, idx := repairServer(t, storage, nil)
+	server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
+	// Written when only dashboards were covered.
+	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: {}}
+	idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
+
+	require.NoError(t, server.init(t.Context()))
+	t.Cleanup(server.stop)
+
+	require.Eventually(t, func() bool {
+		times, err := idx.ImportTimes()
+		require.NoError(t, err)
+		_, ok := times[foldersGroupResource]
+		return ok
+	}, 5*time.Second, 10*time.Millisecond, "folders were synced without waiting for the scan")
 }
 
 // The rebuild scan notices a coverage change the same way it notices an import.
