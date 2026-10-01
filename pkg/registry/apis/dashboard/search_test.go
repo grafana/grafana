@@ -45,29 +45,31 @@ func TestSearch(t *testing.T) {
 		return client
 	}
 
-	t.Run("should hit unified storage search handler", func(t *testing.T) {
+	t.Run("requests field-value results", func(t *testing.T) {
 		mockClient := &MockClient{}
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
 		doSearch(t, searchHandler, "/search")
 
 		require.NotNil(t, mockClient.LastSearchRequest)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, mockClient.LastSearchRequest.ResultFormat)
 	})
 
-	t.Run("requests field-value results when enabled", func(t *testing.T) {
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+	t.Run("ignores response fields that field-value results do not support", func(t *testing.T) {
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, nil)
 
-		client := doSearch(t, searchHandler, "/search")
+		client := doSearch(t, searchHandler, "/search?field=panel_types&field=labels&field=not_declared&field=labels.custom&field=rv&field=grafana.app/deprecatedInternalID&field=_score&field=source.path&field=source.checksum&field=source.timestampMillis")
 
-		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
-	})
-
-	t.Run("ignores explanations when field-value results are enabled", func(t *testing.T) {
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
-
-		client := doSearch(t, searchHandler, "/search?explain=true")
-
-		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
+		assert.Contains(t, client.LastSearchRequest.Fields, "panel_types")
+		assert.Contains(t, client.LastSearchRequest.Fields, "labels.custom")
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_RV)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_LEGACY_ID)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SCORE)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_PATH)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_CHECKSUM)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_TIME)
+		assert.NotContains(t, client.LastSearchRequest.Fields, "labels")
+		assert.NotContains(t, client.LastSearchRequest.Fields, "not_declared")
 	})
 }
 
@@ -1100,29 +1102,27 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
-		"query string and explain": {
-			queryString: "query=test-query&explain=true",
+		"query string": {
+			queryString: "query=test-query",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options:   &resourcepb.ListOptions{Key: dashboardKey},
 				Query:     "test-query",
 				Limit:     50,
 				Offset:    0,
 				Page:      1,
-				Explain:   true,
 				Fields:    defaultFields,
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
 		"additional fields": {
-			queryString: "field=custom1&field=custom2",
+			queryString: "field=panel_types&field=labels.custom&field=labels&field=not_declared",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options:   &resourcepb.ListOptions{Key: dashboardKey},
 				Query:     "",
 				Limit:     50,
 				Offset:    0,
 				Page:      1,
-				Explain:   false,
-				Fields:    append(defaultFields, "custom1", "custom2"),
+				Fields:    append(defaultFields, "panel_types", "labels.custom"),
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
@@ -1581,6 +1581,9 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, result)
+
+			assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, result.ResultFormat)
+			tt.expected.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
 			// Exclude query fields from the expected search
 			if tt.queryString != "" {

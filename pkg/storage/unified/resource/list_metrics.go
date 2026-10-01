@@ -17,6 +17,11 @@ const (
 	listPathSearchFallbackFetchFirst     = "search_fallback_fetch_first"
 	listPathHistory                      = "history"
 	listPathTrash                        = "trash"
+	listPathTrashSearch                  = "trash_search"
+	listPathTrashSearchFallback          = "trash_search_fallback"
+
+	// listSelectorNone is the selector type of a list that filters on nothing.
+	listSelectorNone = "none"
 )
 
 func annotateListRequest(span trace.Span, path, selectorType string, requestedLimit int64, req *resourcepb.ListRequest, rsp *resourcepb.ListResponse) {
@@ -52,11 +57,11 @@ func annotateListRequest(span trace.Span, path, selectorType string, requestedLi
 
 func listSelectorType(req *resourcepb.ListRequest) string {
 	if req == nil {
-		return "none"
+		return listSelectorNone
 	}
 	opts := req.GetOptions()
 	if opts == nil {
-		return "none"
+		return listSelectorNone
 	}
 	hasFields := len(opts.GetFields()) > 0
 	hasLabels := len(opts.GetLabels()) > 0
@@ -68,6 +73,6 @@ func listSelectorType(req *resourcepb.ListRequest) string {
 	case hasLabels:
 		return "label"
 	default:
-		return "none"
+		return listSelectorNone
 	}
 }

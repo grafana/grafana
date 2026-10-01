@@ -181,7 +181,6 @@
     "react-dom": "19.2.8",
     "react-element-to-jsx-string": "^17.0.1",
     "react-select-event": "^5.1.0",
-    "remark-gfm": "^4.0.1",
     "rimraf": "6.0.1",
     "rollup": "^4.60.1",
     "rollup-plugin-copy": "3.5.0",

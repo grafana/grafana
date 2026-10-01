@@ -36,9 +36,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -262,7 +262,6 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 			dashboardBuilder := NewAPIService(
 				accessClient,
 				nil,
-				nil,
 				testutil.NewDataSourceProvider(testutil.StandardTestConfig),
 				testutil.NewLibraryElementProvider(),
 				nil,
@@ -356,7 +355,7 @@ func TestDashboardAPIBuilder_EmbeddedLibraryPanelFinalStorageKeepsAccessBoundary
 		t.Run(tt.name, func(t *testing.T) {
 			var selectedStorage grafanarest.Storage
 			builder := &DashboardsAPIBuilder{
-				features: featuremgmt.WithFeatures(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
+				iamFeatures: iamapi.Features{ResourcePermissionsAPI: true},
 			}
 			groupInfo := &genericapiserver.APIGroupInfo{
 				VersionedResourcesStorageMap: map[string]map[string]rest.Storage{},
@@ -449,7 +448,6 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 	}
 	dashboardBuilder := NewAPIService(
 		accessClient,
-		nil,
 		nil,
 		testutil.NewDataSourceProvider(testutil.StandardTestConfig),
 		testutil.NewLibraryElementProvider(),

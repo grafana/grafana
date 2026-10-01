@@ -64,6 +64,7 @@ const config: KnipConfig = {
       ],
       project: [
         'public/app/**',
+        'public/swagger/**',
         'scripts/**',
         '.github/**',
         'e2e-playwright/**',
@@ -81,6 +82,7 @@ const config: KnipConfig = {
         'packages/rollup.config.parts.ts',
         'public/app/app.ts',
         'public/app/index.ts',
+        'public/swagger/index.tsx',
         'public/app/api/clients/**/index.ts',
         'public/app/extensions/index.ts',
         'public/app/extensions/api/clients/**/index.ts',

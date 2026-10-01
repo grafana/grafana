@@ -93,6 +93,10 @@ func (c *connection) onReconnect(fn func()) (remove func()) {
 // or remove others without deadlocking.
 func (c *connection) fireReconnect() {
 	c.mu.Lock()
+	if c.closed {
+		c.mu.Unlock()
+		return
+	}
 	fns := make([]func(), 0, len(c.reconnectCbs))
 	for _, fn := range c.reconnectCbs {
 		fns = append(fns, fn)

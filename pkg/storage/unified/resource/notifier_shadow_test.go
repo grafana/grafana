@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // countingSubscriber records how many times Subscribe is called and fails the
@@ -44,7 +44,7 @@ func (c *countingSubscriber) callCount() int {
 func TestNatsShadow_ReSubscribesAfterInitialFailure(t *testing.T) {
 	sub := &countingSubscriber{failFirst: 2}
 	// Small backoff bounds keep the notifier's subscription retry loop fast.
-	s := newNatsShadow(sub, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond}, prometheus.NewRegistry(), log.NewNopLogger())
+	s := newNatsShadow(sub, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond}, prometheus.NewRegistry(), &logging.NoOpLogger{})
 
 	ctx := t.Context()
 	s.start(ctx)
