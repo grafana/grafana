@@ -815,11 +815,12 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 		return err
 	}
 	libraryElementTable := dbHelper.Table("library_element")
+	ctx := withoutAmbientSession(c)
 
 	var elements []struct {
 		UID string `xorm:"uid"`
 	}
-	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
+	err = dbHelper.DB.WithDbSession(ctx, func(session *db.Session) error {
 		return session.SQL(fmt.Sprintf("SELECT uid FROM %s WHERE folder_uid=? AND org_id=?", libraryElementTable), folderUID, orgID).Find(&elements)
 	})
 	if err != nil {
@@ -837,7 +838,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 		}
 	}
 
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
+	return dbHelper.DB.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		_, err := session.Exec(fmt.Sprintf("DELETE FROM %s WHERE folder_uid=? AND org_id=?", libraryElementTable), folderUID, orgID)
 		return err
 	})
