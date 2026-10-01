@@ -282,6 +282,38 @@ type RuleGroupStatusesOptions struct {
 	StatusPreparer    StatusPreparer
 }
 
+// filterAllowedNamespaces checks alerting rule read access for each namespace concurrently.
+// With many folders (e.g. 500+) the sequential loop is a meaningful overhead since each
+// HasAccessInFolder call evaluates RBAC in-memory against the user's permission set.
+func (srv PrometheusSrv) filterAllowedNamespaces(ctx context.Context, user identity.Requester, namespaceMap map[string]*folder.Folder) (map[string]string, error) {
+	type result struct {
+		uid      string
+		fullpath string
+		allowed  bool
+		err      error
+	}
+
+	results := make(chan result, len(namespaceMap))
+	for uid, f := range namespaceMap {
+		go func(uid string, f *folder.Folder) {
+			hasAccess, err := srv.authz.HasAccessInFolder(ctx, user, ngmodels.NewNamespace(f))
+			results <- result{uid: uid, fullpath: f.Fullpath, allowed: hasAccess, err: err}
+		}(uid, f)
+	}
+
+	allowed := make(map[string]string, len(namespaceMap))
+	for range namespaceMap {
+		r := <-results
+		if r.err != nil {
+			return nil, r.err
+		}
+		if r.allowed {
+			allowed[r.uid] = r.fullpath
+		}
+	}
+	return allowed, nil
+}
+
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
 	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
 	c.Query("")
@@ -311,19 +343,12 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	}
 	span.AddEvent("User visible namespaces retrieved")
 
-	allowedNamespaces := map[string]string{}
-	for namespaceUID, folder := range namespaceMap {
-		// only add namespaces that the user has access to rules in
-		hasAccess, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.NewNamespace(folder))
-		if err != nil {
-			ruleResponse.Status = "error"
-			ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
-			ruleResponse.ErrorType = apiv1.ErrServer
-			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
-		}
-		if hasAccess {
-			allowedNamespaces[namespaceUID] = folder.Fullpath
-		}
+	allowedNamespaces, err := srv.filterAllowedNamespaces(c.Req.Context(), c.SignedInUser, namespaceMap)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
+		ruleResponse.ErrorType = apiv1.ErrServer
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 	span.AddEvent("User permissions checked")
 	span.SetAttributes(attribute.Int("allowedNamespaces", len(allowedNamespaces)))
@@ -621,11 +646,12 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 	}
 
 	for _, rg := range groupedRules {
+		skipMutator := ctx.compact && len(ctx.stateFilterSet) == 0 && len(ctx.healthFilterSet) == 0
 		ruleGroup, totals := toRuleGroup(
 			ctx.opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules,
 			ctx.provenanceRecords, ctx.limitAlertsPerRule,
 			ctx.stateFilterSet, ctx.matchers, ctx.labelOptions,
-			ctx.ruleMutator, ctx.compact,
+			ctx.ruleMutator, ctx.compact, skipMutator,
 		)
 		ruleGroup.Totals = totals
 		accumulateTotals(result.totalsDelta, totals)
@@ -1096,7 +1122,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store rulestore.RuleLister, opts R
 			break
 		}
 
-		ruleGroup, totals := toRuleGroup(opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleMutator, false)
+		ruleGroup, totals := toRuleGroup(opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleMutator, false, false)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -1275,7 +1301,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleMutator RuleMutator, compact bool) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleMutator RuleMutator, compact bool, skipMutator bool) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -1318,25 +1344,26 @@ func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRul
 			alertingRule.NotificationSettings = apicompat.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings)
 		}
 
-		// mutate rule to apply status fields and alert states
-		totals, totalsFiltered := ruleMutator(ctx, rule, &alertingRule, stateFilterSet, matchers, labelOptions, limitAlerts)
+		var totals, totalsFiltered map[string]int64
+		if !skipMutator {
+			// mutate rule to apply status fields and alert states
+			totals, totalsFiltered = ruleMutator(ctx, rule, &alertingRule, stateFilterSet, matchers, labelOptions, limitAlerts)
 
-		if alertingRule.State != "" {
-			rulesTotals[alertingRule.State] += 1
-		}
+			if alertingRule.State != "" {
+				rulesTotals[alertingRule.State] += 1
+			}
 
-		if alertingRule.Health == "error" || alertingRule.Health == "nodata" {
-			rulesTotals[alertingRule.Health] += 1
-		}
+			if alertingRule.Health == "error" || alertingRule.Health == "nodata" {
+				rulesTotals[alertingRule.Health] += 1
+			}
 
-		alertsBy := apimodels.AlertsBy(apimodels.AlertsByImportance)
+			alertsBy := apimodels.AlertsBy(apimodels.AlertsByImportance)
 
-		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
-			alertingRule.Alerts = alertsBy.TopK(alertingRule.Alerts, int(limitAlerts))
-		} else {
-			// If there is no effective limit, then just sort the alerts.
-			// For large numbers of alerts, this can be faster.
-			alertsBy.Sort(alertingRule.Alerts)
+			if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
+				alertingRule.Alerts = alertsBy.TopK(alertingRule.Alerts, int(limitAlerts))
+			} else {
+				alertsBy.Sort(alertingRule.Alerts)
+			}
 		}
 
 		alertingRule.Totals = totals
