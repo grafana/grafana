@@ -26,7 +26,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
     getDashboardSceneFor(this).closeModal();
   };
 
-  public onAddLibraryPanel = async (panelInfo: LibraryPanel, isNewLayout: boolean) => {
+  public onAddLibraryPanel = async (panelInfo: LibraryPanel) => {
     const dashboard = getDashboardSceneFor(this);
     const newPanel = await getDefaultVizPanel();
 
@@ -43,7 +43,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       const layoutItem = panelToReplace.parent;
 
       if (layoutItem && isDashboardLayoutItem(layoutItem)) {
-        if (isNewLayout) {
+        if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true)) {
           replacePanelWithLibraryPanel({ source: layoutItem, oldPanel: panelToReplace, newPanel });
         } else {
           // Needed only for old architecture which reuses the same component
@@ -61,12 +61,11 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
   };
 
   static Component = ({ model }: SceneComponentProps<AddLibraryPanelDrawer>) => {
-    const isNewLayout = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true);
     const title = t('library-panel.add-widget.title', 'Add panel from panel library');
 
     return (
       <Drawer title={title} onClose={model.onClose}>
-        <LibraryPanelsSearch onClick={(panelInfo) => model.onAddLibraryPanel(panelInfo, isNewLayout)} showPanelFilter />
+        <LibraryPanelsSearch onClick={model.onAddLibraryPanel} showPanelFilter />
       </Drawer>
     );
   };
