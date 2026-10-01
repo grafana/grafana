@@ -39,6 +39,7 @@ import (
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -328,7 +329,7 @@ func TestDashboardAPIBuilder_EmbeddedLibraryPanelFinalStorageKeepsAccessBoundary
 	scheme := runtime.NewScheme()
 	require.NoError(t, dashv0.AddToScheme(scheme))
 	codecs := serializer.NewCodecFactory(scheme)
-	optsGetter, err := apistore.NewRESTOptionsGetterMemory(storagebackend.Config{
+	optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{
 		Codec: codecs.LegacyCodec(dashv0.LibraryPanelResourceInfo.GroupVersion()),
 	}, nil)
 	require.NoError(t, err)
