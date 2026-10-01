@@ -88,6 +88,7 @@ func NewInhibitionRule(
 		ResourceMetadata: ResourceMetadata{
 			UID:        ResourceUID(uid),
 			Provenance: provenance,
+			Manager:    models.ProvenanceToManagerProperties(provenance),
 		},
 		SourceMatchers: sourceMatchers,
 		TargetMatchers: targetMatchers,
