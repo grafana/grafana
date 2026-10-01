@@ -1424,6 +1424,18 @@
           "specifier": "eslint-plugin-import"
         }
       ]
+    },
+    {
+      "files": ["packages/grafana-ui/src/components/Combobox/useOptions.ts"],
+      "jsPlugins": [
+        {
+          "name": "eslint-js",
+          "specifier": "./scripts/oxlint/eslint-core-plugin.mjs"
+        }
+      ],
+      "rules": {
+        "eslint-js/no-restricted-syntax": ["error", "SpreadElement"]
+      }
     }
   ],
   "settings": {

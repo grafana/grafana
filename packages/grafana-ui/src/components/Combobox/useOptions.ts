@@ -1,5 +1,4 @@
-/* Spreading unbound arrays can be very slow or even crash the browser if used for arguments */
-/* eslint no-restricted-syntax: ["error", "SpreadElement"] */
+/* Spreading unbound arrays can be very slow or even crash the browser if used for arguments, so .oxlintrc.json bans spread syntax in this file */
 
 import { debounce } from 'lodash';
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
