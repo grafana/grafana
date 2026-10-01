@@ -5,7 +5,6 @@
 package xorm
 
 import (
-	"database/sql"
 	"fmt"
 	"reflect"
 
@@ -62,7 +61,7 @@ func (rows *Rows) Next() bool {
 	if rows.lastError == nil && rows.rows != nil {
 		hasNext := rows.rows.Next()
 		if !hasNext {
-			rows.lastError = sql.ErrNoRows
+			rows.lastError = rows.rows.Err()
 		}
 		return hasNext
 	}
