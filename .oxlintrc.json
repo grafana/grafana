@@ -1,0 +1,1414 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "unicorn", "typescript"],
+  "jsPlugins": [
+    {
+      "name": "@stylistic",
+      "specifier": "@stylistic/eslint-plugin"
+    },
+    {
+      "name": "react-js",
+      "specifier": "eslint-plugin-react"
+    },
+    {
+      "name": "eslint-js",
+      "specifier": "./scripts/oxlint/eslint-core-plugin.mjs"
+    },
+    {
+      "name": "jsdoc-js",
+      "specifier": "eslint-plugin-jsdoc"
+    },
+    {
+      "name": "typescript-js",
+      "specifier": "./scripts/oxlint/typescript-eslint-plugin.mjs"
+    }
+  ],
+  "categories": {
+    "correctness": "off"
+  },
+  "env": {
+    "builtin": true,
+    "es2019": true
+  },
+  "ignorePatterns": [
+    ".github",
+    ".yarn",
+    "**/.*",
+    "**/*.gen.ts",
+    "**/*_gen.ts",
+    "**/build/",
+    "**/compiled/",
+    "**/dist/",
+    "coverage/",
+    "data/",
+    "deployment_tools_config.json",
+    "devenv",
+    "e2e-playwright/test-plugins",
+    "e2e/tmp",
+    "packages/grafana-ui/src/components/Icon/iconBundle.ts",
+    "pkg",
+    "playwright-report",
+    "public/lib/monaco/",
+    "public/locales/_build",
+    "public/locales/**/*.js",
+    "public/vendor/",
+    "scripts/grafana-server/tmp",
+    "packages/grafana-ui/src/graveyard",
+    "public/build-swagger",
+    "apps/plugins/plugin/src/generated/meta/v0alpha1",
+    "apps/plugins/plugin/src/generated/plugin/v0alpha1",
+    "packages/get-document/index.js",
+    "packages/mapbox-jsonlint-lines-primitives/lib/jsonlint.js",
+    "packages/mapbox-jsonlint-lines-primitives/lib/formatter.js"
+  ],
+  "rules": {
+    "react/display-name": "error",
+    "react/jsx-key": "error",
+    "react/jsx-no-comment-textnodes": "error",
+    "react/jsx-no-duplicate-props": "error",
+    "react/jsx-no-target-blank": "error",
+    "react/jsx-no-undef": "error",
+    "react/no-children-prop": "error",
+    "react/no-danger-with-children": "error",
+    "react/no-direct-mutation-state": "error",
+    "react/no-find-dom-node": "error",
+    "react/no-is-mounted": "error",
+    "react/no-render-return-value": "error",
+    "react/no-string-refs": "error",
+    "react/no-unescaped-entities": "error",
+    "react/no-unknown-property": "error",
+    "curly": "error",
+    "eqeqeq": [
+      "error",
+      "always",
+      {
+        "null": "ignore"
+      }
+    ],
+    "no-array-constructor": "error",
+    "no-caller": "error",
+    "no-cond-assign": "error",
+    "no-console": [
+      "error",
+      {
+        "allow": ["error", "log", "warn", "info"]
+      }
+    ],
+    "no-debugger": "error",
+    "no-eval": "error",
+    "no-new-wrappers": "error",
+    "no-redeclare": "error",
+    "no-restricted-imports": ["error", "moment"],
+    "no-unused-expressions": [
+      "error",
+      {
+        "allowShortCircuit": true,
+        "allowTernary": true
+      }
+    ],
+    "no-unused-labels": "error",
+    "no-var": "error",
+    "radix": "error",
+    "use-isnan": "error",
+    "no-duplicate-imports": "error",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "typescript/array-type": [
+      "error",
+      {
+        "default": "array-simple"
+      }
+    ],
+    "typescript/consistent-type-assertions": "error",
+    "typescript/no-inferrable-types": "error",
+    "typescript/no-namespace": [
+      "error",
+      {
+        "allowDeclarations": false
+      }
+    ],
+    "typescript/triple-slash-reference": "error",
+    "react-js/no-deprecated": 2,
+    "react-js/require-render-return": 2,
+    "eslint-js/eol-last": "error",
+    "eslint-js/new-parens": "error",
+    "jsdoc-js/check-alignment": "error",
+    "typescript-js/naming-convention": [
+      "error",
+      {
+        "selector": "interface",
+        "format": ["PascalCase"],
+        "custom": {
+          "regex": "^I[A-Z]",
+          "match": false
+        }
+      }
+    ],
+    "@stylistic/type-annotation-spacing": [
+      "error",
+      {
+        "before": false,
+        "after": true,
+        "overrides": {
+          "arrow": "ignore"
+        }
+      }
+    ],
+    "@stylistic/arrow-spacing": [
+      "error",
+      {
+        "before": true,
+        "after": true
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}"],
+      "rules": {
+        "no-duplicate-case": "error",
+        "@grafana/no-border-radius-literal": "error",
+        "@grafana/no-unreduced-motion": "error",
+        "@grafana/no-restricted-img-srcs": "error",
+        "@grafana/zod-import-namespace": "error",
+        "@grafana/no-direct-date-fns": "error",
+        "@grafana/no-direct-create-monitoring-logger": "error",
+        "@grafana/no-get-data-source-srv": "error",
+        "react-prefer-function-component/react-prefer-function-component": [
+          "error",
+          {
+            "allowJsxUtilityClass": true
+          }
+        ],
+        "react/no-unknown-property": [
+          "error",
+          {
+            "ignore": ["css"]
+          }
+        ],
+        "@emotion/jsx-import": "error",
+        "@emotion/syntax-preference": ["error", "object"],
+        "lodash/import-scope": ["error", "member"],
+        "jest/no-focused-tests": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react-i18next", "i18next"],
+                "importNames": ["t"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["react-i18next"],
+                "importNames": ["Trans"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["@grafana/ui*", "*/Layout/*"],
+                "importNames": ["Layout", "HorizontalGroup", "VerticalGroup"],
+                "message": "Use Stack component instead."
+              },
+              {
+                "regex": "\\.test$",
+                "message": "Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests"
+              },
+              {
+                "group": ["@grafana/ui/src/*", "@grafana/runtime/src/*", "@grafana/data/src/*"],
+                "message": "Import from the public export instead."
+              },
+              {
+                "group": ["react-router", "react-router-dom"],
+                "message": "Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete."
+              }
+            ],
+            "paths": [
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types/store instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useObservable"],
+                "message": "react-use is being phased out. Import useObservable from @grafana/data/unstable instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useCopyToClipboard"],
+                "message": "Please import copyTextToClipboard from @grafana/ui instead."
+              }
+            ]
+          }
+        ],
+        "no-restricted-globals": [
+          "error",
+          "addEventListener",
+          "blur",
+          "close",
+          "closed",
+          "confirm",
+          "defaultStatus",
+          "defaultstatus",
+          "event",
+          "external",
+          "find",
+          "focus",
+          "frameElement",
+          "frames",
+          "history",
+          "innerHeight",
+          "innerWidth",
+          "length",
+          "location",
+          "locationbar",
+          "menubar",
+          "moveBy",
+          "moveTo",
+          "name",
+          "onblur",
+          "onerror",
+          "onfocus",
+          "onload",
+          "onresize",
+          "onunload",
+          "open",
+          "opener",
+          "opera",
+          "outerHeight",
+          "outerWidth",
+          "pageXOffset",
+          "pageYOffset",
+          "parent",
+          "print",
+          "removeEventListener",
+          "resizeBy",
+          "resizeTo",
+          "screen",
+          "screenLeft",
+          "screenTop",
+          "screenX",
+          "screenY",
+          "scroll",
+          "scrollbars",
+          "scrollBy",
+          "scrollTo",
+          "scrollX",
+          "scrollY",
+          "self",
+          "status",
+          "statusbar",
+          "stop",
+          "toolbar",
+          "top"
+        ],
+        "no-redeclare": ["error"],
+        "unicorn/no-empty-file": "error",
+        "no-constant-condition": "error",
+        "@grafana/define-feature-events": "error",
+        "@grafana/no-plain-links": "error",
+        "react/exhaustive-deps": [
+          "error",
+          {
+            "additionalHooks": "use(Async)$"
+          }
+        ],
+        "typescript/consistent-type-imports": [
+          "error",
+          {
+            "fixStyle": "inline-type-imports"
+          }
+        ]
+      },
+      "jsPlugins": [
+        {
+          "name": "@grafana",
+          "specifier": "@grafana/eslint-plugin"
+        },
+        {
+          "name": "react-prefer-function-component",
+          "specifier": "eslint-plugin-react-prefer-function-component"
+        },
+        {
+          "name": "@emotion",
+          "specifier": "./scripts/oxlint/emotion-plugin.mjs"
+        },
+        "eslint-plugin-lodash"
+      ],
+      "plugins": ["jest"],
+      "excludeFiles": ["packages/grafana-ui/src/components/Forms/Legacy/**"]
+    },
+    {
+      "files": ["public/**/*.{ts,tsx,js}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react-i18next", "i18next"],
+                "importNames": ["t"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["react-i18next"],
+                "importNames": ["Trans"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["@grafana/ui*", "*/Layout/*"],
+                "importNames": ["Layout", "HorizontalGroup", "VerticalGroup"],
+                "message": "Use Stack component instead."
+              },
+              {
+                "regex": "\\.test$",
+                "message": "Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests"
+              },
+              {
+                "group": ["@grafana/ui/src/*", "@grafana/runtime/src/*", "@grafana/data/src/*"],
+                "message": "Import from the public export instead."
+              },
+              {
+                "group": ["react-router", "react-router-dom"],
+                "message": "Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete."
+              },
+              {
+                "group": ["app/extensions", "app/extensions/*"],
+                "message": "Importing from app/extensions is not allowed"
+              }
+            ],
+            "paths": [
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types/store instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useObservable"],
+                "message": "react-use is being phased out. Import useObservable from @grafana/data/unstable instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useCopyToClipboard"],
+                "message": "Please import copyTextToClipboard from @grafana/ui instead."
+              }
+            ]
+          }
+        ]
+      },
+      "excludeFiles": ["public/app/extensions/**/*"]
+    },
+    {
+      "files": ["packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}"],
+      "rules": {
+        "react/rules-of-hooks": "off",
+        "react/exhaustive-deps": "off"
+      }
+    },
+    {
+      "files": ["packages/grafana-ui/src/components/ThemeDemos/**/*.{ts,tsx}"],
+      "rules": {
+        "@emotion/jsx-import": "off"
+      },
+      "jsPlugins": [
+        {
+          "name": "@emotion",
+          "specifier": "./scripts/oxlint/emotion-plugin.mjs"
+        }
+      ]
+    },
+    {
+      "files": ["packages/grafana-ui/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react-i18next", "i18next"],
+                "importNames": ["t"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["react-i18next"],
+                "importNames": ["Trans"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["@grafana/ui*", "*/Layout/*"],
+                "importNames": ["Layout", "HorizontalGroup", "VerticalGroup"],
+                "message": "Use Stack component instead."
+              },
+              {
+                "regex": "\\.test$",
+                "message": "Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests"
+              },
+              {
+                "group": ["@grafana/ui/src/*", "@grafana/runtime/src/*", "@grafana/data/src/*"],
+                "message": "Import from the public export instead."
+              },
+              {
+                "group": ["react-router", "react-router-dom"],
+                "message": "Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete."
+              },
+              {
+                "group": ["@grafana/test-utils"],
+                "message": "'@grafana/test-utils' creates a circular dependency with '@grafana/ui'"
+              }
+            ],
+            "paths": [
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types/store instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useObservable"],
+                "message": "react-use is being phased out. Import useObservable from @grafana/data/unstable instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useCopyToClipboard"],
+                "message": "Please import copyTextToClipboard from @grafana/ui instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/grafana-ui/src/**/*.story.tsx"],
+      "rules": {
+        "@grafana/consistent-story-titles": "error"
+      },
+      "jsPlugins": [
+        {
+          "name": "@grafana",
+          "specifier": "@grafana/eslint-plugin"
+        }
+      ]
+    },
+    {
+      "files": ["public/dashboards/scripted*.js"],
+      "rules": {
+        "no-redeclare": "off"
+      }
+    },
+    {
+      "files": ["**/*.tsx"],
+      "rules": {
+        "jsx-a11y/alt-text": "error",
+        "jsx-a11y/anchor-ambiguous-text": "off",
+        "jsx-a11y/anchor-has-content": "error",
+        "jsx-a11y/anchor-is-valid": "error",
+        "jsx-a11y/aria-activedescendant-has-tabindex": "error",
+        "jsx-a11y/aria-props": "error",
+        "jsx-a11y/aria-proptypes": "error",
+        "jsx-a11y/aria-role": "error",
+        "jsx-a11y/aria-unsupported-elements": "error",
+        "jsx-a11y/autocomplete-valid": "error",
+        "jsx-a11y/click-events-have-key-events": "error",
+        "jsx-a11y/control-has-associated-label": [
+          "off",
+          {
+            "ignoreElements": ["audio", "canvas", "embed", "input", "textarea", "tr", "video"],
+            "ignoreRoles": [
+              "grid",
+              "listbox",
+              "menu",
+              "menubar",
+              "radiogroup",
+              "row",
+              "tablist",
+              "toolbar",
+              "tree",
+              "treegrid"
+            ]
+          }
+        ],
+        "jsx-a11y/heading-has-content": "error",
+        "jsx-a11y/html-has-lang": "error",
+        "jsx-a11y/iframe-has-title": "error",
+        "jsx-a11y/img-redundant-alt": "error",
+        "jsx-a11y/interactive-supports-focus": [
+          "error",
+          {
+            "tabbable": ["button", "checkbox", "link", "searchbox", "spinbutton", "switch", "textbox"]
+          }
+        ],
+        "jsx-a11y/label-has-associated-control": [
+          "error",
+          {
+            "controlComponents": ["NumberInput"],
+            "depth": 2
+          }
+        ],
+        "jsx-a11y/media-has-caption": "error",
+        "jsx-a11y/mouse-events-have-key-events": "error",
+        "jsx-a11y/no-access-key": "error",
+        "jsx-a11y/no-autofocus": [
+          "error",
+          {
+            "ignoreNonDOM": true
+          }
+        ],
+        "jsx-a11y/no-distracting-elements": "error",
+        "jsx-a11y/no-interactive-element-to-noninteractive-role": [
+          "error",
+          {
+            "tr": ["none", "presentation"],
+            "canvas": ["img"]
+          }
+        ],
+        "jsx-a11y/no-noninteractive-element-interactions": [
+          "error",
+          {
+            "handlers": [
+              "onClick",
+              "onError",
+              "onLoad",
+              "onMouseDown",
+              "onMouseUp",
+              "onKeyPress",
+              "onKeyDown",
+              "onKeyUp"
+            ],
+            "alert": ["onKeyUp", "onKeyDown", "onKeyPress"],
+            "body": ["onError", "onLoad"],
+            "dialog": ["onKeyUp", "onKeyDown", "onKeyPress"],
+            "iframe": ["onError", "onLoad"],
+            "img": ["onError", "onLoad"]
+          }
+        ],
+        "jsx-a11y/no-noninteractive-element-to-interactive-role": [
+          "error",
+          {
+            "ul": ["listbox", "menu", "menubar", "radiogroup", "tablist", "tree", "treegrid"],
+            "ol": ["listbox", "menu", "menubar", "radiogroup", "tablist", "tree", "treegrid"],
+            "li": ["menuitem", "menuitemradio", "menuitemcheckbox", "option", "row", "tab", "treeitem"],
+            "table": ["grid"],
+            "td": ["gridcell"],
+            "fieldset": ["radiogroup", "presentation"]
+          }
+        ],
+        "jsx-a11y/no-noninteractive-tabindex": [
+          "error",
+          {
+            "tags": [],
+            "roles": ["tabpanel"],
+            "allowExpressionValues": true
+          }
+        ],
+        "jsx-a11y/no-redundant-roles": "error",
+        "jsx-a11y/no-static-element-interactions": [
+          "error",
+          {
+            "allowExpressionValues": true,
+            "handlers": ["onClick", "onMouseDown", "onMouseUp", "onKeyPress", "onKeyDown", "onKeyUp"]
+          }
+        ],
+        "jsx-a11y/role-has-required-aria-props": "error",
+        "jsx-a11y/role-supports-aria-props": "error",
+        "jsx-a11y/scope": "error",
+        "jsx-a11y/tabindex-no-positive": "error"
+      },
+      "plugins": ["jsx-a11y"],
+      "excludeFiles": ["**/*.{spec,test}.tsx"]
+    },
+    {
+      "files": ["packages/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react-i18next", "i18next"],
+                "importNames": ["t"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["react-i18next"],
+                "importNames": ["Trans"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["@grafana/ui*", "*/Layout/*"],
+                "importNames": ["Layout", "HorizontalGroup", "VerticalGroup"],
+                "message": "Use Stack component instead."
+              },
+              {
+                "regex": "\\.test$",
+                "message": "Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests"
+              },
+              {
+                "group": ["@grafana/ui/src/*", "@grafana/runtime/src/*", "@grafana/data/src/*"],
+                "message": "Import from the public export instead."
+              },
+              {
+                "group": ["react-router", "react-router-dom"],
+                "message": "Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete."
+              },
+              {
+                "group": ["@grafana/*/internal"],
+                "message": "'internal' exports are not available in NPM packages because they are not published to NPM"
+              }
+            ],
+            "paths": [
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types/store instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useObservable"],
+                "message": "react-use is being phased out. Import useObservable from @grafana/data/unstable instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useCopyToClipboard"],
+                "message": "Please import copyTextToClipboard from @grafana/ui instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "packages/grafana-ui/**/*.{ts,tsx}",
+        "packages/grafana-data/**/*.{ts,tsx}",
+        "packages/grafana-schema/**/*.{ts,tsx}",
+        "packages/grafana-e2e-selectors/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react-i18next", "i18next"],
+                "importNames": ["t"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["react-i18next"],
+                "importNames": ["Trans"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["@grafana/ui*", "*/Layout/*"],
+                "importNames": ["Layout", "HorizontalGroup", "VerticalGroup"],
+                "message": "Use Stack component instead."
+              },
+              {
+                "regex": "\\.test$",
+                "message": "Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests"
+              },
+              {
+                "group": ["@grafana/ui/src/*", "@grafana/runtime/src/*", "@grafana/data/src/*"],
+                "message": "Import from the public export instead."
+              },
+              {
+                "group": ["react-router", "react-router-dom"],
+                "message": "Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete."
+              },
+              {
+                "group": ["@grafana/*/internal"],
+                "message": "'internal' exports are not available in NPM packages because they are not published to NPM"
+              },
+              {
+                "group": ["@grafana/runtime"],
+                "message": "'@grafana/runtime' should not be imported from library packages"
+              }
+            ],
+            "paths": [
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types/store instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useObservable"],
+                "message": "react-use is being phased out. Import useObservable from @grafana/data/unstable instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useCopyToClipboard"],
+                "message": "Please import copyTextToClipboard from @grafana/ui instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/grafana-e2e-selectors/src/selectors/**/*.ts"],
+      "rules": {
+        "@grafana/serializable-e2e-selectors": "error"
+      },
+      "jsPlugins": [
+        {
+          "name": "@grafana",
+          "specifier": "@grafana/eslint-plugin"
+        }
+      ]
+    },
+    {
+      "files": ["public/app/features/alerting/**/*.{ts,tsx,js,jsx}", "packages/grafana-alerting/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "prefer-const": "error",
+        "react/self-closing-comp": "error",
+        "react/jsx-no-useless-fragment": [
+          "error",
+          {
+            "allowExpressions": true
+          }
+        ],
+        "no-nested-ternary": "error"
+      }
+    },
+    {
+      "files": ["public/app/features/alerting/unified/**/*.{ts,tsx}"],
+      "rules": {
+        "@grafana/no-invalid-css-properties": "error"
+      },
+      "jsPlugins": [
+        {
+          "name": "@grafana",
+          "specifier": "@grafana/eslint-plugin"
+        }
+      ]
+    },
+    {
+      "files": ["**/*.{ts,tsx,js}"],
+      "rules": {
+        "@grafana/i18n/t-plural-defaults": "error",
+        "@grafana/i18n/trans-plural-defaults": "error"
+      },
+      "jsPlugins": [
+        {
+          "name": "@grafana/i18n",
+          "specifier": "@grafana/i18n/eslint-plugin"
+        }
+      ]
+    },
+    {
+      "files": [
+        "public/app/!(plugins)/**/*.{ts,tsx,js,jsx}",
+        "packages/grafana-ui/**/*.{ts,tsx,js,jsx}",
+        "packages/grafana-data/**/*.{ts,tsx,js,jsx}",
+        "packages/grafana-sql/**/*.{ts,tsx,js,jsx}",
+        "public/app/plugins/panel/**/*.{ts,tsx,js,jsx}",
+        "public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx,js,jsx}"
+      ],
+      "rules": {
+        "@grafana/i18n/no-untranslated-strings": [
+          "error",
+          {
+            "calleesToIgnore": ["^css$", "use[A-Z].*"],
+            "basePaths": ["public/app/features"]
+          }
+        ],
+        "@grafana/i18n/no-translation-top-level": "error"
+      },
+      "jsPlugins": [
+        {
+          "name": "@grafana/i18n",
+          "specifier": "@grafana/i18n/eslint-plugin"
+        }
+      ],
+      "excludeFiles": [
+        "public/test/**",
+        "**/*.{test,spec,story}.{ts,tsx}",
+        "**/{tests,__mocks__,__tests__,fixtures,spec,mocks}/**",
+        "**/{test-utils,testHelpers,mocks}.{ts,tsx}",
+        "**/mock*.{ts,tsx}"
+      ]
+    },
+    {
+      "files": [
+        "public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)",
+        "public/app/features/alerting/**/?(*.)+(spec|test).[jt]s?(x)",
+        "packages/{grafana-ui,grafana-alerting}/**/*.{spec,test}.{ts,tsx}"
+      ],
+      "rules": {
+        "testing-library/await-async-events": [
+          "error",
+          {
+            "eventModule": "userEvent"
+          }
+        ],
+        "testing-library/await-async-queries": "error",
+        "testing-library/await-async-utils": "error",
+        "testing-library/no-await-sync-events": [
+          "error",
+          {
+            "eventModules": ["fire-event"]
+          }
+        ],
+        "testing-library/no-await-sync-queries": "error",
+        "testing-library/no-container": "error",
+        "testing-library/no-debugging-utils": "warn",
+        "testing-library/no-dom-import": ["error", "react"],
+        "testing-library/no-global-regexp-flag-in-query": "error",
+        "testing-library/no-manual-cleanup": "error",
+        "testing-library/no-node-access": "error",
+        "testing-library/no-promise-in-fire-event": "error",
+        "testing-library/no-render-in-lifecycle": "error",
+        "testing-library/no-unnecessary-act": "error",
+        "testing-library/no-wait-for-multiple-assertions": "error",
+        "testing-library/no-wait-for-side-effects": "error",
+        "testing-library/no-wait-for-snapshot": "error",
+        "testing-library/prefer-find-by": "error",
+        "testing-library/prefer-presence-queries": "error",
+        "testing-library/prefer-query-by-disappearance": "error",
+        "testing-library/prefer-screen-queries": "error",
+        "testing-library/render-result-naming-convention": "error",
+        "jest-dom/prefer-checked": "error",
+        "jest-dom/prefer-empty": "error",
+        "jest-dom/prefer-enabled-disabled": "error",
+        "jest-dom/prefer-focus": "error",
+        "jest-dom/prefer-in-document": "error",
+        "jest-dom/prefer-required": "error",
+        "jest-dom/prefer-to-have-attribute": "error",
+        "jest-dom/prefer-to-have-class": "error",
+        "jest-dom/prefer-to-have-style": "error",
+        "jest-dom/prefer-to-have-text-content": "error",
+        "jest-dom/prefer-to-have-value": "error",
+        "testing-library/prefer-user-event": "error",
+        "jest/expect-expect": [
+          "error",
+          {
+            "assertFunctionNames": ["expect*", "assert*", "reducerTester"]
+          }
+        ]
+      },
+      "jsPlugins": ["eslint-plugin-testing-library", "eslint-plugin-jest-dom"],
+      "plugins": ["jest"]
+    },
+    {
+      "files": ["packages/grafana-ui/**/*.{spec,test}.{ts,tsx}"],
+      "rules": {
+        "testing-library/no-node-access": "off",
+        "testing-library/no-container": "off"
+      },
+      "jsPlugins": ["eslint-plugin-testing-library"]
+    },
+    {
+      "files": ["**/*.{spec,test}.{ts,tsx}"],
+      "rules": {
+        "react/display-name": "off",
+        "react/no-children-prop": "off"
+      }
+    },
+    {
+      "files": ["packages/grafana-ui/src/components/Table/TableNG/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react-i18next", "i18next"],
+                "importNames": ["t"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["react-i18next"],
+                "importNames": ["Trans"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["@grafana/ui*", "*/Layout/*"],
+                "importNames": ["Layout", "HorizontalGroup", "VerticalGroup"],
+                "message": "Use Stack component instead."
+              },
+              {
+                "regex": "\\.test$",
+                "message": "Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests"
+              },
+              {
+                "group": ["@grafana/ui/src/*", "@grafana/runtime/src/*", "@grafana/data/src/*"],
+                "message": "Import from the public export instead."
+              },
+              {
+                "group": ["react-router", "react-router-dom"],
+                "message": "Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete."
+              },
+              {
+                "group": ["@emotion/css"],
+                "importNames": ["cx"],
+                "message": "Do not use \"cx\" from @emotion/css. Instead, use `clsx` and compose together only strings."
+              },
+              {
+                "group": ["@grafana/data"],
+                "importNames": ["getFieldDisplayName"],
+                "message": "Using the method inside Table can have performance implications which are unnecessary. Instead, use the local `getDisplayName` from the table utils."
+              }
+            ],
+            "paths": [
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types/store instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useObservable"],
+                "message": "react-use is being phased out. Import useObservable from @grafana/data/unstable instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useCopyToClipboard"],
+                "message": "Please import copyTextToClipboard from @grafana/ui instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react-i18next", "i18next"],
+                "importNames": ["t"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["react-i18next"],
+                "importNames": ["Trans"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["@grafana/ui*", "*/Layout/*"],
+                "importNames": ["Layout", "HorizontalGroup", "VerticalGroup"],
+                "message": "Use Stack component instead."
+              },
+              {
+                "regex": "\\.test$",
+                "message": "Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests"
+              },
+              {
+                "group": ["@grafana/ui/src/*", "@grafana/runtime/src/*", "@grafana/data/src/*"],
+                "message": "Import from the public export instead."
+              },
+              {
+                "group": ["react-router", "react-router-dom"],
+                "message": "Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete."
+              },
+              {
+                "group": ["@emotion/css"],
+                "importNames": ["cx"],
+                "message": "Do not use \"cx\" from @emotion/css. Instead, use `clsx` and compose together only strings."
+              },
+              {
+                "group": ["@grafana/data"],
+                "importNames": ["getFieldDisplayName"],
+                "message": "Using the method inside Table can have performance implications which are unnecessary. Instead, use the local `getDisplayName` from the table utils."
+              },
+              {
+                "group": ["**/themes/ThemeContext"],
+                "importNames": ["useStyles2", "useTheme2"],
+                "message": "Do not use \"useStyles2\" or \"useTheme2\" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`."
+              }
+            ],
+            "paths": [
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types/store instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useObservable"],
+                "message": "react-use is being phased out. Import useObservable from @grafana/data/unstable instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useCopyToClipboard"],
+                "message": "Please import copyTextToClipboard from @grafana/ui instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["public/app/plugins/panel/state-timeline/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react-i18next", "i18next"],
+                "importNames": ["t"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["react-i18next"],
+                "importNames": ["Trans"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["@grafana/ui*", "*/Layout/*"],
+                "importNames": ["Layout", "HorizontalGroup", "VerticalGroup"],
+                "message": "Use Stack component instead."
+              },
+              {
+                "regex": "\\.test$",
+                "message": "Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests"
+              },
+              {
+                "group": ["@grafana/ui/src/*", "@grafana/runtime/src/*", "@grafana/data/src/*"],
+                "message": "Import from the public export instead."
+              },
+              {
+                "group": ["react-router", "react-router-dom"],
+                "message": "Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete."
+              },
+              {
+                "group": ["@emotion/css"],
+                "importNames": ["cx"],
+                "message": "Do not use \"cx\" from @emotion/css. Instead, use `clsx` and compose together only strings."
+              }
+            ],
+            "paths": [
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types/store instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useObservable"],
+                "message": "react-use is being phased out. Import useObservable from @grafana/data/unstable instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useCopyToClipboard"],
+                "message": "Please import copyTextToClipboard from @grafana/ui instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}"],
+      "rules": {
+        "@grafana/no-direct-local-storage-access": "error",
+        "@grafana/require-no-margin": "error",
+        "@grafana/no-locale-compare": "error",
+        "@grafana/no-gf-form": "error",
+        "@grafana/no-config-apps": "error",
+        "@grafana/no-config-panels": "error",
+        "@grafana/no-config-datasources": "error",
+        "@grafana/no-config-feature-toggles": "error",
+        "typescript/consistent-type-assertions": [
+          "error",
+          {
+            "assertionStyle": "never"
+          }
+        ]
+      },
+      "jsPlugins": [
+        {
+          "name": "@grafana",
+          "specifier": "@grafana/eslint-plugin"
+        }
+      ],
+      "excludeFiles": [
+        "**/*.{test,spec}.{ts,tsx}",
+        "**/__mocks__/**",
+        "**/mocks/**/*.{ts,tsx}",
+        "**/public/test/**",
+        "**/{mocks,test-utils}.{ts,tsx}",
+        "**/*.mock.{ts,tsx}",
+        "**/{test-helpers,testHelpers}.{ts,tsx}",
+        "**/{spec,test-helpers}/**/*.{ts,tsx}",
+        "packages/grafana-test-utils/src/**/*.{ts,tsx}",
+        "public/app/extensions/**/*",
+        "e2e/extensions/**/*"
+      ]
+    },
+    {
+      "files": ["**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}"],
+      "excludeFiles": [
+        "public/app/extensions/**/*",
+        "e2e/extensions/**/*",
+        "packages/grafana-ui/src/components/Forms/Legacy/**"
+      ],
+      "jsPlugins": [
+        {
+          "name": "@grafana",
+          "specifier": "@grafana/eslint-plugin"
+        }
+      ],
+      "rules": {
+        "typescript/no-explicit-any": "error",
+        "@grafana/no-aria-label-selectors": "error"
+      }
+    },
+    {
+      "files": [
+        "**/*.{test,spec}.{ts,tsx}",
+        "**/__mocks__/**",
+        "**/mocks/**/*.{ts,tsx}",
+        "**/public/test/**",
+        "**/{mocks,test-utils}.{ts,tsx}",
+        "**/*.mock.{ts,tsx}",
+        "**/{test-helpers,testHelpers}.{ts,tsx}",
+        "**/{spec,test-helpers}/**/*.{ts,tsx}",
+        "packages/grafana-test-utils/src/**/*.{ts,tsx}",
+        "public/app/extensions/**/*",
+        "e2e/extensions/**/*"
+      ],
+      "rules": {
+        "@grafana/no-config-apps": "error",
+        "@grafana/no-config-panels": "error",
+        "@grafana/no-config-datasources": "error"
+      },
+      "jsPlugins": [
+        {
+          "name": "@grafana",
+          "specifier": "@grafana/eslint-plugin"
+        }
+      ]
+    },
+    {
+      "files": ["public/app/**/*.{ts,tsx}"],
+      "rules": {
+        "no-barrel-files/no-barrel-files": "error"
+      },
+      "jsPlugins": [
+        {
+          "name": "no-barrel-files",
+          "specifier": "eslint-plugin-no-barrel-files"
+        }
+      ],
+      "excludeFiles": [
+        "**/*.{test,spec}.{ts,tsx}",
+        "**/__mocks__/**",
+        "**/mocks/**/*.{ts,tsx}",
+        "**/public/test/**",
+        "**/{mocks,test-utils}.{ts,tsx}",
+        "**/*.mock.{ts,tsx}",
+        "**/{test-helpers,testHelpers}.{ts,tsx}",
+        "**/{spec,test-helpers}/**/*.{ts,tsx}",
+        "packages/grafana-test-utils/src/**/*.{ts,tsx}",
+        "public/app/extensions/**/*",
+        "e2e/extensions/**/*",
+        "public/app/**/webpack.config.ts"
+      ]
+    },
+    {
+      "files": ["packages/grafana-i18n/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react-i18next", "i18next"],
+                "importNames": ["t"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["react-i18next"],
+                "importNames": ["Trans"],
+                "message": "Please import from @grafana/i18n instead"
+              },
+              {
+                "group": ["@grafana/ui*", "*/Layout/*"],
+                "importNames": ["Layout", "HorizontalGroup", "VerticalGroup"],
+                "message": "Use Stack component instead."
+              },
+              {
+                "regex": "\\.test$",
+                "message": "Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests"
+              },
+              {
+                "group": ["@grafana/ui/src/*", "@grafana/runtime/src/*", "@grafana/data/src/*"],
+                "message": "Import from the public export instead."
+              },
+              {
+                "group": ["react-router", "react-router-dom"],
+                "message": "Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete."
+              },
+              {
+                "group": ["@grafana/*"],
+                "message": "'@grafana/* packages' should not be imported in @grafana/i18n"
+              }
+            ],
+            "paths": [
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types/store instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useObservable"],
+                "message": "react-use is being phased out. Import useObservable from @grafana/data/unstable instead."
+              },
+              {
+                "name": "react-use",
+                "importNames": ["useCopyToClipboard"],
+                "message": "Please import copyTextToClipboard from @grafana/ui instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}"],
+      "excludeFiles": ["packages/grafana-ui/src/components/Forms/Legacy/**"],
+      "rules": {
+        "import-js/order": [
+          "error",
+          {
+            "pathGroups": [
+              {
+                "pattern": "img/**",
+                "group": "internal"
+              }
+            ],
+            "groups": [["builtin", "external"], "internal", "parent", "sibling", "index"],
+            "newlines-between": "always",
+            "alphabetize": {
+              "order": "asc"
+            },
+            "pathGroupsExcludedImportTypes": ["builtin"]
+          }
+        ],
+        "eslint-js/no-restricted-syntax": [
+          "error",
+          {
+            "selector": "JSXElement[openingElement.name.name=/^(CSSTransition|Transition)$/]:not(:has(JSXAttribute[name.name='nodeRef']))",
+            "message": "CSSTransition components must have a nodeRef attribute to avoid findDOMNode usage which breaks in React 19. See https://reactcommunity.org/react-transition-group/transition#Transition-prop-nodeRef for more details."
+          }
+        ]
+      },
+      "jsPlugins": [
+        {
+          "name": "import-js",
+          "specifier": "eslint-plugin-import"
+        },
+        {
+          "name": "eslint-js",
+          "specifier": "./scripts/oxlint/eslint-core-plugin.mjs"
+        }
+      ]
+    },
+    {
+      "files": ["packages/**/*.{ts,tsx}"],
+      "rules": {
+        "import-js/no-extraneous-dependencies": [
+          "error",
+          {
+            "includeInternal": true
+          }
+        ]
+      },
+      "jsPlugins": [
+        {
+          "name": "import-js",
+          "specifier": "eslint-plugin-import"
+        }
+      ]
+    },
+    {
+      "files": ["public/app/features/alerting/**/*.{ts,tsx,js,jsx}", "packages/grafana-alerting/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "eslint-js/sort-imports": [
+          "error",
+          {
+            "ignoreDeclarationSort": true
+          }
+        ],
+        "eslint-js/dot-notation": "error",
+        "react-js/no-unused-prop-types": "error",
+        "unicorn-js/no-unused-properties": "error"
+      },
+      "jsPlugins": [
+        {
+          "name": "eslint-js",
+          "specifier": "./scripts/oxlint/eslint-core-plugin.mjs"
+        },
+        {
+          "name": "react-js",
+          "specifier": "eslint-plugin-react"
+        },
+        {
+          "name": "unicorn-js",
+          "specifier": "eslint-plugin-unicorn"
+        }
+      ]
+    },
+    {
+      "files": ["public/app/features/explore/TraceView/components/demo/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "import-js/no-extraneous-dependencies": "off"
+      },
+      "jsPlugins": [
+        {
+          "name": "import-js",
+          "specifier": "eslint-plugin-import"
+        }
+      ]
+    },
+    {
+      "files": [
+        "public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/graphite/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "import-js/no-restricted-paths": [
+          "error",
+          {
+            "zones": [
+              {
+                "target": "./public/app/plugins",
+                "from": "./public",
+                "except": ["./app/plugins"],
+                "message": "Core plugins are not allowed to depend on Grafana core packages"
+              }
+            ]
+          }
+        ]
+      },
+      "jsPlugins": [
+        {
+          "name": "import-js",
+          "specifier": "eslint-plugin-import"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "react": {
+      "version": "19.2.8"
+    },
+    "import/internal-regex": "^(app/)|(@grafana)",
+    "import/external-module-folders": ["node_modules", ".yarn"],
+    "import/resolver": {
+      "node": {
+        "extensions": [".mjs", ".js", ".json", ".node", ".ts", ".tsx"]
+      }
+    }
+  }
+}
