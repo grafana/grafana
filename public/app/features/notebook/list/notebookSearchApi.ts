@@ -198,10 +198,10 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
     /**
      * Title matches for the command palette.
      *
-     * Tagged so a notebook deleted between two identical searches stops being offered — otherwise
-     * the cached entry answers the repeat. Safe to share the tag `notebookFieldFacet` avoids,
-     * because the only caller passes `subscribe: false`: RTK drops an invalidated entry that has no
-     * subscribers rather than refetching it.
+     * Provides the `Notebook` tag that the generated notebook mutations invalidate, so a notebook
+     * deleted between two identical searches stops being offered — untagged, the cached entry would
+     * answer the repeat. Sharing that tag is free here because the only caller dispatches with
+     * `subscribe: false`: an invalidated entry with no subscribers is dropped rather than refetched.
      */
     searchNotebookTitles: build.query<SearchResults, { query: string; limit: number }>({
       query: ({ query, limit }) => ({

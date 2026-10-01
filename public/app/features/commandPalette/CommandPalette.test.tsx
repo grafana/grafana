@@ -7,13 +7,13 @@ import { PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
 import {
   setGetObservablePluginLinks,
-  useFlagDashboardNotebooks,
   useFlagDashboardVectorSearch,
   useFlagGrafanaCmdkHybridSearch,
   useFlagGrafanaVectorSearchCmdk,
 } from '@grafana/runtime/internal';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -46,7 +46,6 @@ jest.mock('@grafana/assistant', () => ({
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   useFlagDashboardVectorSearch: jest.fn(),
-  useFlagDashboardNotebooks: jest.fn(),
   useFlagGrafanaVectorSearchCmdk: jest.fn(),
   useFlagGrafanaCmdkHybridSearch: jest.fn(),
 }));
@@ -75,6 +74,7 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
+    setTestFlags({ 'dashboard.notebooks': false });
     jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
     setPluginLinksHook(() => ({
       links: [],
@@ -85,7 +85,6 @@ describe('CommandPalette', () => {
     // tests exercise the deep column, overridden where needed. Hybrid search
     // supersedes (and disables) the deep column, so default it off
     (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(true);
-    (useFlagDashboardNotebooks as jest.Mock).mockReturnValue(false);
     (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(true);
     (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(false);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
@@ -159,7 +158,7 @@ describe('CommandPalette', () => {
     const originalIsSignedIn = contextSrv.user.isSignedIn;
     contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
     contextSrv.user.isSignedIn = true;
-    (useFlagDashboardNotebooks as jest.Mock).mockReturnValue(true);
+    setTestFlags({ 'dashboard.notebooks': true });
     server.use(
       http.post('*/apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/search', () =>
         HttpResponse.json({
