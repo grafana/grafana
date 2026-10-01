@@ -1790,8 +1790,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 		rsp, err = s.listWithSelectors(ctx, req)
 		if !errors.Is(err, errSearchCannotAnswerList) {
 			path = listPathSearch
-			gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 			return rsp, err
 		}
 		// The store scan reads the objects themselves, so it answers what the index
@@ -1802,18 +1800,11 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 	if s.shouldUseSearchForTrash(req) {
 		path = listPathTrashSearch
 		rsp, err = s.listTrashFromSearch(ctx, req)
-		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 		if !errors.Is(err, errSearchCannotAnswerTrash) {
-			if s.storageMetrics != nil {
-				s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "trash_search").Inc()
-			}
 			return rsp, err
 		}
 
 		path = listPathTrashSearchFallback
-		if s.storageMetrics != nil {
-			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "trash_search_fallback").Inc()
-		}
 		s.log.Warn("Search cannot answer trash List, falling back to the store", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 		return s.listFromTrash(ctx, req)
 	}
@@ -2287,8 +2278,6 @@ func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListR
 
 	rsp.ResourceVersion = rv
 	rsp.NextPageToken = nextToken
-	gr := key.Group + "/" + key.Resource
-	s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	return rsp, nil
 }
 
