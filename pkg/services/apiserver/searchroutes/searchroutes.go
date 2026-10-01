@@ -53,9 +53,9 @@ func Build(
 	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
-	opts ...Options,
+	opts Options,
 ) []builder.GroupVersionRoutes {
-	return BuildFromManifests(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers, opts...)
+	return BuildFromManifests(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers, opts)
 }
 
 // BuildFromManifests is Build with the kind declarations supplied by the caller.
@@ -76,7 +76,7 @@ func BuildFromManifests(
 	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
-	opts ...Options,
+	opts Options,
 ) []builder.GroupVersionRoutes {
 	manifests = slices.Clone(manifests)
 	for _, installer := range installers {
@@ -90,7 +90,7 @@ func BuildFromManifests(
 		trashEnabled,
 		tracer,
 		index,
-		opts...,
+		opts,
 	)
 	if err != nil {
 		panic(err.Error())
@@ -111,13 +111,12 @@ func BuildForServedGroupVersions(
 	trashEnabled bool,
 	tracer tracing.Tracer,
 	index resourcepb.ResourceIndexClient,
-	opts ...Options,
+	opts Options,
 ) ([]builder.GroupVersionRoutes, error) {
 	// Whether an endpoint is on is read by the caller, because the two servers
 	// that mount them are configured differently: one from an ini file, one from
 	// flags.
-	hybridEnabled := len(opts) > 0 && opts[0].HybridEnabled
-	if (!searchEnabled && !trashEnabled && !hybridEnabled) || index == nil {
+	if (!searchEnabled && !trashEnabled && !opts.HybridEnabled) || index == nil {
 		return nil, nil
 	}
 
@@ -165,7 +164,7 @@ func BuildForServedGroupVersions(
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.TrashRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
-				if hybridEnabled && kind.HasHybridEndpoint() {
+				if opts.HybridEnabled && kind.HasHybridEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						hybridHandler.HybridSearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}

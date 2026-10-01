@@ -72,10 +72,10 @@ func paths(routes []builder.GroupVersionRoutes) map[string][]string {
 func TestBuild_NothingMountedWhenOffOrUnusable(t *testing.T) {
 	b := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{{Group: "dashboard.grafana.app", Version: "v1"}}}}
 
-	assert.Nil(t, Build(false, false, nil, fakeClient{}, b, nil), "both off")
+	assert.Nil(t, Build(false, false, nil, fakeClient{}, b, nil, Options{}), "both off")
 	// A server without a unified storage client has nothing to search.
-	assert.Nil(t, Build(true, false, nil, nil, b, nil), "no client")
-	assert.Nil(t, Build(false, true, nil, nil, b, nil), "no client, trash on")
+	assert.Nil(t, Build(true, false, nil, nil, b, nil, Options{}), "no client")
+	assert.Nil(t, Build(false, true, nil, nil, b, nil, Options{}), "no client, trash on")
 }
 
 func TestBuild_HybridManifestOptIn(t *testing.T) {
@@ -199,17 +199,17 @@ func TestBuild_SearchAndTrashAreIndependent(t *testing.T) {
 	const gv = "dashboard.grafana.app/v1"
 
 	t.Run("search only", func(t *testing.T) {
-		got := paths(Build(true, false, nil, fakeClient{}, newBuilders(), nil))
+		got := paths(Build(true, false, nil, fakeClient{}, newBuilders(), nil, Options{}))
 		assert.Equal(t, []string{"dashboards/search"}, got[gv])
 	})
 
 	t.Run("trash only", func(t *testing.T) {
-		got := paths(Build(false, true, nil, fakeClient{}, newBuilders(), nil))
+		got := paths(Build(false, true, nil, fakeClient{}, newBuilders(), nil, Options{}))
 		assert.Equal(t, []string{"dashboards/trash"}, got[gv])
 	})
 
 	t.Run("both", func(t *testing.T) {
-		got := paths(Build(true, true, nil, fakeClient{}, newBuilders(), nil))
+		got := paths(Build(true, true, nil, fakeClient{}, newBuilders(), nil, Options{}))
 		assert.ElementsMatch(t, []string{"dashboards/search", "dashboards/trash"}, got[gv])
 	})
 }
@@ -237,13 +237,13 @@ func TestBuild_MountsKindsWithoutSearchFields(t *testing.T) {
 
 	// No trash in either case: playlists are not in trashAllowlist.
 	t.Run("no fields, gets the search endpoint", func(t *testing.T) {
-		got := paths(BuildFromManifests(playlists(nil), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(playlists(nil), true, true, nil, fakeClient{}, builders, nil, Options{}))
 		assert.Equal(t, []string{"playlists/search"}, got[gv.String()])
 	})
 
 	t.Run("one field, gets the search endpoint", func(t *testing.T) {
 		fields := []app.ManifestVersionKindSearchField{{Name: "interval", Path: "spec.interval", Type: "string"}}
-		got := paths(BuildFromManifests(playlists(fields), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(playlists(fields), true, true, nil, fakeClient{}, builders, nil, Options{}))
 		assert.Equal(t, []string{"playlists/search"}, got[gv.String()])
 	})
 }
@@ -254,7 +254,7 @@ func TestBuild_MountsNamespacedKinds(t *testing.T) {
 		{Group: "folder.grafana.app", Version: "v1"},
 	}}
 
-	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
+	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{}))
 
 	assert.Equal(t, []string{"dashboards/search"}, got["dashboard.grafana.app/v1"])
 	assert.Equal(t, []string{"folders/search"}, got["folder.grafana.app/v1"])
@@ -268,7 +268,7 @@ func TestBuild_MountsBuilderAdvertisedKinds(t *testing.T) {
 		infos:       []utils.ResourceInfo{info},
 	}}
 
-	got := paths(BuildFromManifests(nil, true, true, nil, fakeClient{}, builders, nil))
+	got := paths(BuildFromManifests(nil, true, true, nil, fakeClient{}, builders, nil, Options{}))
 
 	assert.Equal(t, []string{"widgets/search"}, got[gv.String()])
 }
@@ -296,7 +296,7 @@ func TestBuild_UsesFullBuilderManifest(t *testing.T) {
 		manifest: manifest,
 	}}
 
-	got := paths(Build(true, false, nil, fakeClient{}, builders, nil))
+	got := paths(Build(true, false, nil, fakeClient{}, builders, nil, Options{}))
 
 	assert.Empty(t, got, "the full manifest opt-out must win over synthesized resource declarations")
 }
@@ -310,7 +310,7 @@ func TestBuild_SkipsBuilderAdvertisedClusterScopedKinds(t *testing.T) {
 		infos:       []utils.ResourceInfo{info},
 	}}
 
-	got := paths(BuildFromManifests(nil, true, true, nil, fakeClient{}, builders, nil))
+	got := paths(BuildFromManifests(nil, true, true, nil, fakeClient{}, builders, nil, Options{}))
 
 	assert.Empty(t, got)
 }
@@ -357,7 +357,7 @@ func TestBuild_MountsKindsDeclaredByManifestAndBuilderOnce(t *testing.T) {
 		}},
 	}}
 
-	got := paths(BuildFromManifests(manifests, true, true, nil, fakeClient{}, builders, nil))
+	got := paths(BuildFromManifests(manifests, true, true, nil, fakeClient{}, builders, nil, Options{}))
 
 	assert.Equal(t, []string{"widgets/search"}, got[gv.String()])
 }
@@ -367,7 +367,7 @@ func TestBuild_MountsKindsDeclaredByManifestAndBuilderOnce(t *testing.T) {
 func TestBuild_SkipsGroupVersionsNotServed(t *testing.T) {
 	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "dashboard.grafana.app", Version: "v1"}}}
 
-	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
+	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{}))
 
 	assert.Contains(t, got, "dashboard.grafana.app/v1")
 	assert.NotContains(t, got, "dashboard.grafana.app/v2", "v2 is a served version, but not served by this builder")
@@ -382,7 +382,7 @@ func TestBuild_MountsEveryNamespacedKindInAServedGroup(t *testing.T) {
 		{Group: "playlist.grafana.app", Version: "v0alpha1"},
 	}
 
-	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{&fakeBuilder{gvs: gvs}}, nil))
+	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{&fakeBuilder{gvs: gvs}}, nil, Options{}))
 
 	assert.ElementsMatch(t, []string{
 		// Declare search fields.
@@ -449,7 +449,7 @@ func TestBuild_MountsNotebooksOnDeclaringVersionOnly(t *testing.T) {
 	require.NotEmpty(t, dashboardGVs)
 
 	got := paths(Build(true, false, nil, fakeClient{},
-		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil))
+		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil, Options{}))
 
 	for _, gv := range dashboardGVs {
 		if gv.Version == "v2beta1" {
@@ -504,7 +504,7 @@ func allBuilders(t *testing.T) []builder.APIGroupBuilder {
 // Kinds that opt out in their own manifest are absent: secure values, keepers,
 // channels, plugins, plugin metas, checks, check types, preferences and stars.
 func TestBuild_MountedKindsAreListedHere(t *testing.T) {
-	got := paths(Build(true, true, nil, fakeClient{}, allBuilders(t), nil))
+	got := paths(Build(true, true, nil, fakeClient{}, allBuilders(t), nil, Options{}))
 
 	resources := map[string]bool{}
 	for _, ps := range got {
@@ -568,7 +568,7 @@ func TestBuild_PrivateResourceManifestsDisableSearch(t *testing.T) {
 		{Group: "dashboard.grafana.app", Version: "v1"},
 	}}
 
-	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
+	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{}))
 
 	assert.NotContains(t, got, "preferences.grafana.app/v1")
 	assert.NotContains(t, got, "preferences.grafana.app/v1alpha1")
@@ -578,7 +578,7 @@ func TestBuild_PrivateResourceManifestsDisableSearch(t *testing.T) {
 
 // A kind gaining /trash should fail this test rather than ship unnoticed.
 func TestBuild_KindsWithTrashAreListedHere(t *testing.T) {
-	got := paths(Build(true, true, nil, fakeClient{}, allBuilders(t), nil))
+	got := paths(Build(true, true, nil, fakeClient{}, allBuilders(t), nil, Options{}))
 
 	resources := map[string]bool{}
 	for _, ps := range got {
@@ -601,7 +601,7 @@ func TestBuild_KindsWithTrashAreListedHere(t *testing.T) {
 func TestBuild_FoldersGetSearchWithoutTrash(t *testing.T) {
 	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "folder.grafana.app", Version: "v1"}}}
 
-	got := paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
+	got := paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{}))
 
 	assert.Equal(t, []string{"folders/search"}, got["folder.grafana.app/v1"])
 }
@@ -633,25 +633,25 @@ func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
 	optOut := func(v bool) *bool { return &v }
 
 	t.Run("says nothing, so gets both", func(t *testing.T) {
-		got := paths(BuildFromManifests(dashboards(nil), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(dashboards(nil), true, true, nil, fakeClient{}, builders, nil, Options{}))
 		assert.ElementsMatch(t, []string{"dashboards/search", "dashboards/trash"}, got[gv.String()])
 	})
 
 	t.Run("declines search, keeps trash", func(t *testing.T) {
 		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false)}
-		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil, Options{}))
 		assert.Equal(t, []string{"dashboards/trash"}, got[gv.String()])
 	})
 
 	t.Run("declines trash, keeps search", func(t *testing.T) {
 		search := &app.ManifestVersionKindSearch{Trash: optOut(false)}
-		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil, Options{}))
 		assert.Equal(t, []string{"dashboards/search"}, got[gv.String()])
 	})
 
 	t.Run("declines both", func(t *testing.T) {
 		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false), Trash: optOut(false)}
-		assert.Empty(t, paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil)))
+		assert.Empty(t, paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil, Options{})))
 	})
 }
 
@@ -690,14 +690,14 @@ func TestBuildForServedGroupVersions_MountsWithoutBuildersOrInstallers(t *testin
 	t.Run("mounted when the caller serves the group version", func(t *testing.T) {
 		served := map[schema.GroupVersion]bool{gv: true}
 
-		routes, err := BuildForServedGroupVersions(manifests, served, true, true, nil, fakeClient{})
+		routes, err := BuildForServedGroupVersions(manifests, served, true, true, nil, fakeClient{}, Options{})
 		require.NoError(t, err)
 		// No trash: ext app kinds are not in trashAllowlist.
 		assert.Equal(t, []string{"todos/search"}, paths(routes)[gv.String()])
 	})
 
 	t.Run("nothing mounted for a group version the caller does not serve", func(t *testing.T) {
-		routes, err := BuildForServedGroupVersions(manifests, nil, true, true, nil, fakeClient{})
+		routes, err := BuildForServedGroupVersions(manifests, nil, true, true, nil, fakeClient{}, Options{})
 		require.NoError(t, err)
 		assert.Empty(t, paths(routes))
 	})
@@ -705,7 +705,7 @@ func TestBuildForServedGroupVersions_MountsWithoutBuildersOrInstallers(t *testin
 	t.Run("nothing mounted when both endpoints are off", func(t *testing.T) {
 		served := map[schema.GroupVersion]bool{gv: true}
 
-		routes, err := BuildForServedGroupVersions(manifests, served, false, false, nil, fakeClient{})
+		routes, err := BuildForServedGroupVersions(manifests, served, false, false, nil, fakeClient{}, Options{})
 		require.NoError(t, err)
 		assert.Nil(t, routes)
 	})
@@ -717,7 +717,7 @@ func TestBuildForServedGroupVersions_RejectsAMalformedDeclaration(t *testing.T) 
 	served := map[schema.GroupVersion]bool{gv: true}
 
 	// Full-text search over a number is not something the index can serve.
-	routes, err := BuildForServedGroupVersions(todoManifest(gv, "int64", "text"), served, true, true, nil, fakeClient{})
+	routes, err := BuildForServedGroupVersions(todoManifest(gv, "int64", "text"), served, true, true, nil, fakeClient{}, Options{})
 	require.Error(t, err)
 	assert.Nil(t, routes)
 }
