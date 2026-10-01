@@ -4663,7 +4663,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/types@npm:30.4.1, @jest/types@npm:^30.0.1":
+"@jest/types@npm:30.4.1":
   version: 30.4.1
   resolution: "@jest/types@npm:30.4.1"
   dependencies:
@@ -4678,7 +4678,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/types@npm:30.5.1":
+"@jest/types@npm:30.5.1, @jest/types@npm:^30.0.1":
   version: 30.5.1
   resolution: "@jest/types@npm:30.5.1"
   dependencies:
@@ -22918,14 +22918,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-regex-util@npm:30.4.0, jest-regex-util@npm:^30.0.0":
+"jest-regex-util@npm:30.4.0":
   version: 30.4.0
   resolution: "jest-regex-util@npm:30.4.0"
   checksum: 10/8664fcc1d07c8236a3bd012c0f06ae9d14d96e758b32ee340a3a7c4c326d0b5052d8c4ae4f4c4184f08bf78723d905352f22923647df9658ace3604f03bf074f
   languageName: node
   linkType: hard
 
-"jest-regex-util@npm:30.5.0":
+"jest-regex-util@npm:30.5.0, jest-regex-util@npm:^30.0.0":
   version: 30.5.0
   resolution: "jest-regex-util@npm:30.5.0"
   checksum: 10/2236cb0f3bc7f61690500d779afab57fbcb2a35925f416ab32e68e5c1efae6d916efa9c3ee49c94d4d0990e1316e6581a1545209b08715c848b919364e89e66f
@@ -23369,7 +23369,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-worker@npm:30.4.1, jest-worker@npm:^30.0.5":
+"jest-worker@npm:30.4.1":
   version: 30.4.1
   resolution: "jest-worker@npm:30.4.1"
   dependencies:
@@ -23405,7 +23405,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-worker@npm:^30.5.1":
+"jest-worker@npm:^30.0.5, jest-worker@npm:^30.5.1":
   version: 30.5.1
   resolution: "jest-worker@npm:30.5.1"
   dependencies:
