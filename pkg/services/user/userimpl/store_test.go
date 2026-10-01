@@ -403,6 +403,16 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				}) // zero
 			require.Error(t, err)
 		}
+
+		// UID resolution is an indexed, direct lookup — same result as by numeric ID.
+		uidQuery := &user.GetSignedInUserQuery{OrgID: users[1].OrgID, UID: users[1].UID}
+		uidResult, err := userStore.GetSignedInUser(context.Background(), uidQuery)
+		require.NoError(t, err)
+		require.Equal(t, "user1@test.com", uidResult.Email)
+
+		_, err = userStore.GetSignedInUser(context.Background(),
+			&user.GetSignedInUserQuery{OrgID: users[1].OrgID, UID: "no-such-uid"})
+		require.ErrorIs(t, err, user.ErrUserNotFound)
 	})
 
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {

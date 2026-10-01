@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net"
-	"strconv"
 	"strings"
 	"time"
 
@@ -30,6 +29,10 @@ const (
 	proxyFieldRole   = "Role"
 	proxyFieldGroups = "Groups"
 	proxyCachePrefix = "authn-proxy-sync-ttl"
+	// proxyCacheKeyPrefix must stay distinct from proxyCachePrefix: an older build caches
+	// the deprecated numeric internal ID there, and a UID can legitimately be an all-digit
+	// string, so sharing a key could resolve a cache hit to the wrong account.
+	proxyCacheKeyPrefix = "authn-proxy-sync-ttl-uid"
 )
 
 var proxyFields = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
@@ -138,13 +141,13 @@ func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *aut
 		return nil, err
 	}
 
-	_, err = strconv.ParseInt(string(entry), 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse user id from cache: %w - entry: %s", err, string(entry))
+	uid := string(entry)
+	if uid == "" {
+		return nil, fmt.Errorf("empty user UID entry in cache")
 	}
 
 	return &authn.Identity{
-		ID:    string(entry),
+		UID:   uid,
 		Type:  claims.TypeUser,
 		OrgID: r.OrgID,
 		// FIXME: This does not match the actual auth module used, but should not have any impact
@@ -181,9 +184,8 @@ func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) 
 		return nil
 	}
 
-	internalId, err := id.GetInternalID()
-	if err != nil {
-		c.log.Warn("Failed to cache proxy user", "error", err, "userId", id.GetID(), "err", err)
+	if id.UID == "" {
+		c.log.Warn("Failed to cache proxy user, identity has no UID", "userId", id.GetID())
 		return nil
 	}
 
@@ -203,11 +205,10 @@ func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) 
 		}
 	}
 
-	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", internalId)
-	bytes := []byte(strconv.FormatInt(internalId, 10))
+	c.log.FromContext(ctx).Debug("Cache proxy user", "userUID", id.UID)
 	duration := time.Duration(c.cfg.AuthProxy.SyncTTL) * time.Minute
-	if err := c.cache.Set(ctx, id.ClientParams.CacheAuthProxyKey, bytes, duration); err != nil {
-		c.log.Warn("Failed to cache proxy user", "error", err, "userId", internalId)
+	if err := c.cache.Set(ctx, id.ClientParams.CacheAuthProxyKey, []byte(id.UID), duration); err != nil {
+		c.log.Warn("Failed to cache proxy user", "error", err, "userUID", id.UID)
 	}
 
 	// store current cacheKey for the user
@@ -325,5 +326,5 @@ func getProxyCacheKey(username string, additional map[string]string) (string, bo
 		}
 	}
 
-	return strings.Join([]string{proxyCachePrefix, hex.EncodeToString(hash.Sum(nil))}, ":"), true
+	return strings.Join([]string{proxyCacheKeyPrefix, hex.EncodeToString(hash.Sum(nil))}, ":"), true
 }
