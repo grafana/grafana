@@ -3,9 +3,16 @@ import { useEffect, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useFlagGrafanaCmdkHybridSearch, useFlagDashboardVectorSearch } from '@grafana/runtime/internal';
+import {
+  useFlagDashboardNotebooks,
+  useFlagGrafanaCmdkHybridSearch,
+  useFlagDashboardVectorSearch,
+} from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
+import { searchNotebookTitles } from 'app/features/notebook/list/notebookSearchApi';
+import { canReadNotebooks } from 'app/features/notebook/permissions';
+import { notebookViewHref } from 'app/features/notebook/urls';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type LocationInfo } from 'app/features/search/service/types';
@@ -17,6 +24,7 @@ import { type CommandPaletteAction } from '../types';
 import {
   SECTION_DASHBOARDS,
   SECTION_FOLDERS,
+  SECTION_NOTEBOOKS,
   SECTION_RECENT_DASHBOARDS,
   RECENT_DASHBOARDS_PRIORITY,
   SEARCH_RESULTS_PRIORITY,
@@ -27,6 +35,7 @@ const MAX_SEARCH_RESULTS = 100;
 // so keep the dashboard list short
 const MAX_HYBRID_SEARCH_RESULTS = 20;
 const MAX_RECENT_DASHBOARDS = 5;
+const MAX_NOTEBOOK_SEARCH_RESULTS = 10;
 
 const debouncedSearch = debounce(getSearchResultActions, 200);
 
@@ -64,24 +73,57 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
 
 export async function getSearchResultActions(
   searchQuery: string,
-  useHybridSearch = false
+  useHybridSearch = false,
+  notebooksEnabled = false
 ): Promise<CommandPaletteAction[]> {
   // Empty strings should not come through to here
   if (searchQuery.length === 0 || (!contextSrv.user.isSignedIn && !config.anonymousEnabled)) {
     return [];
   }
 
+  const notebookActions = notebooksEnabled && canReadNotebooks() ? getNotebookSearchResultActions(searchQuery) : [];
+
   if (!useHybridSearch) {
-    return getClassicSearchResultActions(searchQuery, ['dashboard', 'folder']);
+    const [classicActions, notebooks] = await Promise.all([
+      getClassicSearchResultActions(searchQuery, ['dashboard', 'folder']),
+      notebookActions,
+    ]);
+    return [...classicActions, ...notebooks];
   }
 
   // Folders aren't indexed for hybrid search, so they still come from the classic searcher
-  const [dashboardActions, folderActions] = await Promise.all([
+  const [dashboardActions, folderActions, notebooks] = await Promise.all([
     getHybridDashboardActions(searchQuery),
     getClassicSearchResultActions(searchQuery, ['folder']),
+    notebookActions,
   ]);
 
-  return [...dashboardActions, ...folderActions];
+  return [...dashboardActions, ...folderActions, ...notebooks];
+}
+
+async function getNotebookSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {
+  try {
+    const items = await searchNotebookTitles(searchQuery, MAX_NOTEBOOK_SEARCH_RESULTS);
+    return items.flatMap((item) => {
+      const title = item.fields?.title;
+      const uid = item.resource.name;
+      if (!uid || typeof title !== 'string') {
+        return [];
+      }
+      return [
+        {
+          id: `go/notebook/${uid}`,
+          name: title,
+          section: t('command-palette.section.notebook-search-results', 'Notebooks'),
+          sectionId: SECTION_NOTEBOOKS,
+          priority: SEARCH_RESULTS_PRIORITY,
+          url: notebookViewHref(uid),
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
 }
 
 async function getClassicSearchResultActions(
@@ -164,13 +206,14 @@ export function useSearchResults({ searchQuery, show }: { searchQuery: string; s
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
   const lastSearchTimestamp = useRef<number>(0);
   const hybridSearchEnabled = useHybridSearchEnabled();
+  const notebooksEnabled = useFlagDashboardNotebooks();
 
   // Hit dashboards API
   useEffect(() => {
     const timestamp = Date.now();
     if (show && searchQuery.length > 0) {
       setIsFetchingSearchResults(true);
-      debouncedSearch(searchQuery, hybridSearchEnabled).then((resultActions) => {
+      debouncedSearch(searchQuery, hybridSearchEnabled, notebooksEnabled).then((resultActions) => {
         // Only keep the results if it's was issued after the most recently resolved search.
         // This prevents results showing out of order if first request is slower than later ones.
         // We don't need to worry about clearing the isFetching state either - if there's a later
@@ -186,7 +229,7 @@ export function useSearchResults({ searchQuery, show }: { searchQuery: string; s
       setIsFetchingSearchResults(false);
       lastSearchTimestamp.current = timestamp;
     }
-  }, [show, searchQuery, hybridSearchEnabled]);
+  }, [show, searchQuery, hybridSearchEnabled, notebooksEnabled]);
 
   return {
     searchResults,

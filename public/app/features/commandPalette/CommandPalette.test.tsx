@@ -1,4 +1,5 @@
 import { KBarPortal, KBarProvider } from 'kbar';
+import { HttpResponse, http } from 'msw';
 import { act, render, screen, userEvent } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
@@ -6,6 +7,7 @@ import { PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
 import {
   setGetObservablePluginLinks,
+  useFlagDashboardNotebooks,
   useFlagDashboardVectorSearch,
   useFlagGrafanaCmdkHybridSearch,
   useFlagGrafanaVectorSearchCmdk,
@@ -13,6 +15,8 @@ import {
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { getObservablePluginLinks } from '../plugins/extensions/getPluginExtensions';
 
@@ -42,6 +46,7 @@ jest.mock('@grafana/assistant', () => ({
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   useFlagDashboardVectorSearch: jest.fn(),
+  useFlagDashboardNotebooks: jest.fn(),
   useFlagGrafanaVectorSearchCmdk: jest.fn(),
   useFlagGrafanaCmdkHybridSearch: jest.fn(),
 }));
@@ -80,6 +85,7 @@ describe('CommandPalette', () => {
     // tests exercise the deep column, overridden where needed. Hybrid search
     // supersedes (and disables) the deep column, so default it off
     (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(true);
+    (useFlagDashboardNotebooks as jest.Mock).mockReturnValue(false);
     (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(true);
     (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(false);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
@@ -146,6 +152,39 @@ describe('CommandPalette', () => {
     const user = userEvent.setup();
     await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Dynamic extension action');
     expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
+  });
+
+  it('shows notebook search results alongside other palette actions', async () => {
+    const originalPermissions = contextSrv.user.permissions;
+    const originalIsSignedIn = contextSrv.user.isSignedIn;
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
+    contextSrv.user.isSignedIn = true;
+    (useFlagDashboardNotebooks as jest.Mock).mockReturnValue(true);
+    server.use(
+      http.post('*/apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/search', () =>
+        HttpResponse.json({
+          items: [
+            {
+              resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name: 'nb1' },
+              fields: { title: 'Incident latency notes' },
+            },
+          ],
+        })
+      )
+    );
+
+    try {
+      setup();
+      await userEvent.setup().type(screen.getByPlaceholderText('Search or jump to...'), 'Incident');
+
+      expect(await screen.findByRole('option', { name: 'Notebooks: Incident latency notes' })).toHaveAttribute(
+        'href',
+        expect.stringContaining('/notebooks/nb1')
+      );
+    } finally {
+      contextSrv.user.permissions = originalPermissions;
+      contextSrv.user.isSignedIn = originalIsSignedIn;
+    }
   });
 
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {
