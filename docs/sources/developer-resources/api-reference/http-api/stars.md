@@ -85,7 +85,7 @@ Status Codes:
 
 Unstars a resource for the signed-in user.
 
-Refer to [Star a resource](#star-a-resource).
+Refer to [Star a resource](#star-a-resource) for more details.
 
 ## Migration steps
 
