@@ -35,26 +35,27 @@ This API replaces `POST` and `DELETE` `/api/user/stars/dashboard/uid/{dashboard_
 
 These are the available endpoints:
 
-| Method | Summary |URI |Replaced endpoint
-| ------ | ---------------------------- | -------------------------------------- |
-| PUT/POST | [Star a resource](#star-a-resource) | /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id} | /api/user/stars/dashboard/uid/{dashboard_uid} |
-| DELETE | [Unstar a resource](#unstar-a-resource) | /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id} | /api/user/stars/dashboard/uid/{dashboard_uid} |
+| Method   | Summary                                 | URI                                                                                                            | Replaced endpoint                             |
+| -------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| PUT/POST | [Star a resource](#star-a-resource)     | /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id} | /api/user/stars/dashboard/uid/{dashboard_uid} |
+| DELETE   | [Unstar a resource](#unstar-a-resource) | /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id} | /api/user/stars/dashboard/uid/{dashboard_uid} |
 
 ### Path parameters
 
-One endpoint shape now covers every starrable resource instead of one endpoint per kind. The resource name is always `user-`, for example `user-a1b2c3d4`. For a given resource, {group} / {kind} / {id}: identify the resource being starred/unstarred:
-
-- {group} = resource.grafana.app. For example `dashboard.grafana.app` or `folder.grafana.app`
-- {kind} = resource. For example: `Dashboard` or `Folder`
-- {id} = the resource UID, which has the same value used in the legacy path
-
-Other parameters include:
+Parameters include:
 
 - {namespace} is the same namespace you already use for other Grafana App Platform APIs.
   - In Grafana Cloud: your stack slug. For example, `my-stack`
   - In Grafana OSS/Enterprise: your organization's ID. For example. `org-1`
 
 - {user_uid}: the signed-in user's UID, not their username or numeric ID. Look this up from the UID field returned by GET /api/user. Refer to [Migration steps](#migration-steps) for more details.
+  - The resource name is always `user-{user_uid}`, for example `user-a1b2c3d4`.
+
+One endpoint shape now covers every starrable resource instead of one endpoint per kind. For a given resource, {group} / {kind} / {id}: identify the resource being starred/unstarred:
+
+- {group} = resource.grafana.app. For example `dashboard.grafana.app` or `folder.grafana.app`
+- {kind} = resource. For example: `Dashboard` or `Folder`
+- {id} = the resource UID, which has the same value used in the legacy path
 
 ## Star a resource
 
@@ -84,7 +85,7 @@ Status Codes:
 
 Unstars a resource for the signed-in user.
 
-Refer to [Star a dashboard](#star-a-dashboard).
+Refer to [Star a resource](#star-a-resource).
 
 ## Migration steps
 
@@ -106,7 +107,7 @@ To migrate from `/api/user/stars/*` to `/apis/collections.grafana.app/*` follow 
 
 1. Leave any code that reads `GET /api/user/stars` as-is; it's unaffected by this change.
 
-## Example
+### Migration example
 
 The following call in the legacy API:
 
