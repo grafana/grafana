@@ -7,7 +7,8 @@ import { createTheme, ThemeContext, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, Icon, Select, Stack, UserIcon, type UserView } from '@grafana/ui';
 
-import { NamespaceContext, WrappedPlugins } from './plugins';
+import { NamespaceContext } from './contexts';
+import { WrappedPlugins } from './plugins';
 
 export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
