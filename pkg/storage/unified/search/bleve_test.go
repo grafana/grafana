@@ -976,6 +976,54 @@ func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
 }
 
 // TestBleveSortCapabilityCheck covers both the counting and the rejecting mode.
+func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
+	oldFeatures := []resource.IndexFeature{
+		resource.IndexFeatureDeletedMarker,
+		resource.IndexFeatureHoldsDeletedDocuments,
+		resource.IndexFeatureTrashFields,
+	}
+	newIndex := func(features []resource.IndexFeature) *bleveIndex {
+		return &bleveIndex{
+			features:              features,
+			fields:                resource.StandardSearchFields(),
+			searchFields:          newKindSearchFields(nil, "", "", nil),
+			keepsDeletedDocuments: true,
+		}
+	}
+	request := func(sort bool) *resourcepb.ResourceSearchRequest {
+		req := &resourcepb.ResourceSearchRequest{
+			Options:   &resourcepb.ListOptions{},
+			Limit:     10,
+			IsDeleted: true,
+		}
+		if sort {
+			req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		}
+		return req
+	}
+
+	t.Run("an older index still serves trash without the new sort", func(t *testing.T) {
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(false), nil, false, nil)
+		require.NotNil(t, searchReq)
+		require.Nil(t, errResult)
+	})
+
+	t.Run("an older index refuses the new sort", func(t *testing.T) {
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(true), nil, false, nil)
+		require.Nil(t, searchReq)
+		require.NotNil(t, errResult)
+		assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
+		assert.Equal(t, "sorting trash by resource version is not available for this resource until its search index has been rebuilt", errResult.Message)
+	})
+
+	t.Run("a rebuilt index accepts the new sort", func(t *testing.T) {
+		features := append(slices.Clone(oldFeatures), resource.IndexFeatureSortableTrashResourceVersion)
+		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), nil, false, nil)
+		require.NotNil(t, searchReq)
+		require.Nil(t, errResult)
+	})
+}
+
 func TestBleveSortCapabilityCheck(t *testing.T) {
 	const group, kindResource = "example.grafana.app", "widgets"
 	// v1 and v2 declare different fields on purpose: a request naming no version
@@ -1072,7 +1120,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
 			require.Nil(t, errResult)
 			require.NotNil(t, searchReq)
-			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "index_server_search_capability_violations_total"))
+			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "grafana_index_server_search_capability_violations_total"))
 		})
 	}
 
@@ -1942,11 +1990,11 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 
 func checkOpenIndexes(t *testing.T, reg prometheus.Gatherer, memory, file int) {
 	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} %d
-		index_server_open_indexes{index_storage="file"} %d
-	`, memory, file)), "index_server_open_indexes"))
+		# HELP grafana_index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE grafana_index_server_open_indexes gauge
+		grafana_index_server_open_indexes{index_storage="memory"} %d
+		grafana_index_server_open_indexes{index_storage="file"} %d
+	`, memory, file)), "grafana_index_server_open_indexes"))
 }
 
 func verifyDirEntriesCount(t *testing.T, dir string, count int) {

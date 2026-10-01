@@ -235,6 +235,32 @@ func TestIntegrationSearchBackedList(t *testing.T) {
 	})
 }
 
+func TestIntegrationSearchBackedTrashList(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	newBleve := func(t *testing.T) resource.SearchBackend {
+		sb, err := search.NewBleveBackend(search.BleveOptions{
+			FileThreshold:         0,
+			Root:                  t.TempDir(),
+			EnforceSortCapability: true,
+		}, nil)
+		require.NoError(t, err)
+		t.Cleanup(sb.Stop)
+		return sb
+	}
+
+	t.Run("kv backend (batched reads)", func(t *testing.T) {
+		ctx := context.Background()
+		backend, _ := unitest.NewTestSqlKvBackend(t, ctx, true)
+		unitest.RunTestSearchBackedTrashList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true})
+	})
+
+	t.Run("sql backend (storage fallback)", func(t *testing.T) {
+		ctx := context.Background()
+		unitest.RunTestSearchBackedTrashList(t, ctx, newTestBackend(t, false, 0, 0), newBleve(t), unitest.SearchBackedListOptions{})
+	})
+}
+
 func TestClientServer(t *testing.T) {
 	if db.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")

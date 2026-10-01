@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externos",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Nenhuma fonte de dados encontrada"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configuração",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Não é possível carregar regras para esta fonte de dados"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Não há mais resultados. Foram encontradas {{numberOfRules}} regras",
         "no-rules-found": "Nenhuma regra de alerta ou registro corresponde ao conjunto atual de filtros.",
         "results-loading": "Pesquisando. Foram encontradas {{numberOfRules}} regras",
-        "results-with-cancellation": "Pesquisa cancelada. Foram encontradas {{numberOfRules}} regras"
+        "results-with-cancellation": "Pesquisa cancelada. Foram encontradas {{numberOfRules}} regras",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "As importações não estão disponíveis enquanto a sincronização automática do Alertmanager do Mimir estiver ativa"
@@ -4392,6 +4405,7 @@
       "label-top": "Superior"
     },
     "name-show-unfilled-area": "Mostrar área não preenchida",
+    "name-text-mode": "",
     "name-value-display": "Exibição de valor",
     "presets": {
       "basic": "Básico",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Medidor de barra",
       "lcd": "Medidor de barra: LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Oculto",
@@ -5653,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Prosseguir"
-        },
-        "title": {
-          "proceed-to-external-site": "Deseja prosseguir para o site externo?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Painel {{dashboardName}}",
       "label-no-dashboards-found": "Nenhum painel encontrado"
@@ -5788,10 +5799,16 @@
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Alterar título da linha",
       "switch-layout": "Alternar layout",
       "switch-layout-row": "Trocar layout",
       "switch-layout-tab": "Trocar layout",
+      "tab-repeat-variable": "",
       "tab-title": "Alterar título da aba",
       "variable-description": "Alterar descrição da variável",
       "variable-hide": "Alterar opção de ocultar variável",
@@ -6040,6 +6057,12 @@
       "ungroup-groups-title": "Desagrupar grupos inseridos?",
       "ungroup-repeat-loss": "As opções de repetição configuradas nos grupos desfeitos serão perdidas.",
       "ungroup-repeat-loss-title": "Desagrupar?"
+    },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} de {{numberOfPages}}",
@@ -6714,7 +6737,6 @@
       "playlist-previous": "Ir para o painel de controle anterior",
       "playlist-stop": "Parar lista de reprodução",
       "refresh": "Atualizar painel de controle",
-      "save": "Salvar painel de controle",
       "save-as-template": {
         "label": "Salvar como modelo"
       },
@@ -6729,8 +6751,6 @@
       "save-dashboard-short": "Salvar",
       "save-library-panel": "Salvar painel da biblioteca",
       "save-library-panel-short": "Salvar",
-      "settings": "Configurações do painel de controle",
-      "share-button": "Compartilhar",
       "star-add-error": "Falha ao adicionar aos favoritos",
       "star-added": "Adicionado aos favoritos",
       "star-remove-error": "Falha ao remover dos favoritos",
@@ -6759,7 +6779,14 @@
         "title-remove": "Remover",
         "title-show-transform-help": "Exibir ajuda de transformação"
       },
-      "title-delete": "Excluir {{name}}?"
+      "title-delete": "Excluir {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -6808,9 +6835,6 @@
     },
     "variable": {
       "description-tooltip": "Descrição da variável"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
     },
     "view-panel": {
       "back-to-dashboard": "Voltar para o painel de controle",
@@ -7424,7 +7448,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Suas alterações serão perdidas quando você atualizar o plug-in. Use <strong>Salvar como</strong> para criar uma versão personalizada.",
-        "title-failed-to-save-dashboard": "Falha ao salvar o painel",
         "title-plugin-dashboard": "Painel de plug-ins",
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel",
         "would-still-dashboard": "Deseja salvar este painel mesmo assim?"
@@ -7692,9 +7715,6 @@
       },
       "label-copy-tags": "Copiar tags",
       "label-folder": "Pasta",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Falha ao salvar o painel"
-      },
       "required": "Obrigatório"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7761,9 @@
       "save-variables-label-update-default-variable-values": "Atualizar valores de variáveis padrão",
       "show-variables-warning-alert-body": "Falha ao carregar algumas variáveis. Se você mantiver marcada a opção \"Atualizar valores de variáveis padrão\", os valores atuais (com falha) se tornarão os padrões do painel. Você pode salvar mesmo assim ou desmarcar a opção para evitar armazenar esses valores (com falha).",
       "show-variables-warning-alert-title": "Falha nas consultas de variáveis"
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Cancelar",
@@ -9430,6 +9453,8 @@
     "menu": "Abrir menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Salvar",
     "title": "Controle de recurso"
   },
@@ -10552,7 +10577,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alertas",
       "alerting-settings-label": "Gerenciar regras de alerta na interface de alertas",
-      "alerting-settings-tooltip": "Gerenciar regras de alerta para esta fonte de dados. Para gerenciar outros recursos do alerting, adicione uma fonte de dados do Alertmanager.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Redefinir",
       "custom-headers-add": "Adicionar cabeçalho",
       "custom-headers-header": "Cabeçalho",
@@ -10840,6 +10865,7 @@
       "placeholder": "Escolher"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filtrar por valor",
       "cell-filter-out": "Filtrar fora do valor",
       "cell-inspect": "Inspecionar valor",
@@ -11200,10 +11226,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Alertas ativos",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidentes",
       "team-filter-all": "Todas as equipes",
       "team-filter-label": "Filtrar alertas por equipe",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Suas equipes",
       "title": "Alertas e incidentes",
       "title-alerts": "Alertas",
@@ -13185,6 +13212,12 @@
       "query": {
         "add": "Adicionar consulta",
         "run": "Executar consulta"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13252,7 +13285,9 @@
       "copy-markdown": "Copiar como linguagem de marcação",
       "download-markdown": "Baixar como .md",
       "error": "Erro ao exportar o bloco de anotações",
-      "label": "Exportar"
+      "label": "Exportar",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Adicionar bloco",
@@ -13268,7 +13303,9 @@
       "redo-action": "Refazer: {{action}}",
       "remove-query": "Remover consulta",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Selecionar consulta",
+      "set-cell-time-range": "",
       "split-block": "Dividir bloco",
       "switch-datasource": "Alternar fonte de dados",
       "undo": "Desfazer",
@@ -13318,7 +13355,7 @@
       "count-truncated_other": "Primeiros {{count}} blocos de anotações carregados"
     },
     "new": {
-      "default-title": "Bloco de anotações nº{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Falha ao salvar",
@@ -14857,12 +14894,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Voltar para os repositórios",
       "cleaning-up-resources": "Limpando recursos do repositório",
-      "not-found": "não encontrado",
       "not-found-message": "Repositório não encontrado",
       "repository-config-exists-configuration": "Verifique se a configuração do repositório existe no arquivo de configuração.",
       "tab-overview": "Visão geral",
@@ -15158,26 +15199,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Antes de tornar público o painel de controle, reconheça o seguinte:",
-      "data-src-ack-desc": "A publicação atualmente só funciona com um subconjunto de fontes de dados*",
-      "data-src-ack-tooltip": "Saiba mais sobre os dados públicos",
-      "public-ack-desc": "Todo o seu painel de controle será público*",
-      "public-ack-tooltip": "Saiba mais sobre painéis de controle públicos",
-      "usage-ack-desc": "Tornar um painel de controle público fará com que as consultas sejam executadas cada vez que forem visualizadas, o que pode aumentar os custos*",
-      "usage-ack-desc-tooltip": "Saiba mais sobre consultas de cache"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Pode visualizar o painel de controle",
-      "copy-button": "Copiar",
-      "dashboard-url-field-label": "URL do painel de controle",
-      "email-share-type-option-label": "Apenas pessoas especificadas",
-      "pause-sharing-dashboard-label": "Pausar compartilhamento de painel de controle",
-      "public-share-type-option-label": "Qualquer pessoa com um link",
-      "revoke-public-URL-button": "Revogar URL público",
-      "revoke-public-URL-button-title": "Revogar URL público",
-      "settings-title": "Configurações"
-    },
     "configuration": {
       "display-annotations-description": "Apresentar anotações neste painel de controle",
       "display-annotations-label": "Exibir anotações",
@@ -15190,21 +15211,11 @@
       "time-range-label": "Intervalo de tempo",
       "time-range-tooltip": "O painel de controle compartilhado usa as configurações de intervalo de tempo padrão do painel de controle"
     },
-    "create-page": {
-      "generate-public-url-button": "Gerar URL público",
-      "unsupported-features-desc": "Atualmente, não oferecemos suporte a variáveis de modelo ou fontes de dados frontend",
-      "welcome-title": "Boas-vindas aos painéis de controle públicos!"
-    },
     "email-sharing": {
       "accept-button": "Aceitar",
       "alert-text": "O compartilhamento de painéis de controle por e-mail é cobrado por usuário durante o período de validade do token (30 dias), independentemente da quantidade de painéis de controle compartilhados. A cobrança é interrompida após 30 dias, a menos que você renove o token.",
       "bill-ack": "Estou ciente de que é necessário pagar para adicionar usuários.*",
       "cancel-button": "Cancelar",
-      "input-invalid-email-text": "E-mail inválido",
-      "input-required-email-text": "O e-mail é obrigatório",
-      "invite-button": "Convidar",
-      "invite-field-desc": "Convidar pessoas por e-mail",
-      "invite-field-label": "Convidar",
       "learn-more-button": "Saiba mais",
       "recipient-email-placeholder": "E-mail",
       "recipient-invalid-email-text": "E-mail inválido",
@@ -15214,17 +15225,12 @@
       "recipient-list-description": "Apenas as pessoas que você convidou diretamente podem acessar este painel de controle",
       "recipient-list-title": "Pessoas com acesso",
       "recipient-required-email-text": "O e-mail é obrigatório",
-      "resend-button": "Reenviar",
-      "resend-button-title": "Reenviar",
       "resend-invite-label": "Enviar convite novamente",
       "revoke-access-label": "Revogar acesso",
-      "revoke-button": "Revogar",
-      "revoke-button-title": "Revogar",
       "success-creation": "Seu painel de controle está pronto para compartilhamento externo",
       "success-share-type-change": "Acesso ao painel de controle atualizado: agora, apenas pessoas específicas podem acessar com o link"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Salve as alterações do seu painel de controle antes de atualizar a configuração pública",
       "unsupport-data-source-alert-readmore-link": "Leia mais sobre as fontes de dados suportadas",
       "unsupported-data-source-alert-title": "Fontes de dados não suportadas",
       "unsupported-template-variable-alert-desc": "Este painel de controle público pode não funcionar, pois ele usa variáveis de modelo",
@@ -15238,25 +15244,6 @@
       "public-ack": "Estou ciente de que todas as informações deste painel de controle serão públicas.*",
       "success-creation": "Agora é possível acessar seu painel de controle publicamente",
       "success-share-type-change": "Acesso ao painel de controle atualizado: qualquer pessoa com o link já pode acessar"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Recolher configurações",
-      "expand-settings-tooltip": "Expandir configurações"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Intervalo de tempo padrão",
-      "default-time-range-label-desc": "O painel de controle público usa as configurações padrão do intervalo de tempo do painel de controle",
-      "show-annotations-label": "Mostrar anotações",
-      "show-annotations-label-desc": "Mostrar anotações no painel de controle público",
-      "time-range-picker-label": "Seletor de intervalo de tempo ativado",
-      "time-range-picker-label-desc": "Permitir que os espectadores alterem o intervalo de tempo"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Anotações = ocultar",
-      "annotations-show-text": "Anotações = mostrar",
-      "time-range-picker-disabled-text": "Seletor de intervalo de tempo = desativado",
-      "time-range-picker-enabled-text": "Seletor de intervalo de tempo = ativado",
-      "time-range-text": "Intervalo de tempo = "
     },
     "share": {
       "success-delete": "Não é mais possível compartilhar seu painel de controle"
@@ -15605,6 +15592,10 @@
       "label": "Aplicar transformação a",
       "series": "Resultados da consulta e da transformação"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "O nome da consulta já existe",
       "empty-name": "Um nome de consulta vazio não é permitido"
@@ -15784,6 +15775,12 @@
     "title": "Não foi possível encontrar o arquivo do aplicativo"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "A mensagem tem {{messageLength}} caracteres e excede o tamanho máximo de 500 caracteres. Reduza o tamanho da mensagem antes de salvar.",
       "title": "A mensagem é muito longa"
@@ -15864,8 +15861,7 @@
       "deleted-by-removed": "Conta excluída",
       "deleted-by-unknown-short": "<0></0> Desconhecido",
       "deleted-by-unknown-tooltip": "Erro ao procurar a conta que excluiu este painel de controle",
-      "deleted-less-than-1-min": "< 1 minuto",
-      "deleted-remaining-header": "Tempo restante",
+      "deleted-header": "",
       "location-header": "Localização",
       "name-header": "Nome",
       "tags-header": "Tags",
@@ -16031,9 +16027,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Compartilhar"
-    },
     "embed": {
       "copy": "Copiar para a área de transferência",
       "html": "HTML incorporado",
@@ -16080,9 +16073,6 @@
       "time-range-description": "Transforma o intervalo de tempo relativo atual para um intervalo de tempo absoluto",
       "time-range-label": "Bloquear intervalo de tempo"
     },
-    "panel": {
-      "title": "Compartilhar painel"
-    },
     "snapshot": {
       "cancel-button": "Cancelar",
       "copy-link-button": "Copiar",
@@ -16098,16 +16088,11 @@
       "local-button": "Publicar captura",
       "mistake-message": "Você cometeu um erro? ",
       "name": "Nome da captura",
-      "timeout": "Tempo limite (segundos)",
-      "timeout-description": "Talvez você precise configurar o valor de tempo limite se demorar muito para coletar as métricas do painel de controle.",
       "url-label": "URL da captura"
     },
     "tab-title": {
-      "embed": "Incorporado",
       "export": "Exportar",
-      "library-panel": "Painel de biblioteca",
       "link": "Link",
-      "public-dashboard-title": "Painel de controle público",
       "snapshot": "Captura"
     },
     "theme-picker": {
@@ -18190,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Dê uma olhada",
-      "description": "Estamos com um novo design!",
-      "revert": "Retornar ao original",
-      "title": "Novos estilos"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

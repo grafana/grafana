@@ -470,6 +470,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanager Eksternal",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Tidak ada sumber data yang ditemukan"
     },
     "alert-menu": {
@@ -2652,6 +2653,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2957,6 +2960,13 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurasikan",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_other": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Tidak dapat memuat aturan untuk sumber data ini"
       },
@@ -2977,7 +2987,8 @@
         "no-more-results": "Tidak ada hasil lagi – {{numberOfRules}} aturan ditemukan",
         "no-rules-found": "Tidak ada aturan peringatan atau pencatatan yang cocok dengan rangkaian filter Anda saat ini.",
         "results-loading": "Mencari–menemukan {{numberOfRules}} aturan",
-        "results-with-cancellation": "Pencarian dibatalkan – {{numberOfRules}} aturan ditemukan"
+        "results-with-cancellation": "Pencarian dibatalkan – {{numberOfRules}} aturan ditemukan",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Impor tidak tersedia saat sinkronisasi otomatis Mimir Alertmanager aktif"
@@ -4360,6 +4371,7 @@
       "label-top": "Atas"
     },
     "name-show-unfilled-area": "Tampilkan area yang tidak terisi",
+    "name-text-mode": "",
     "name-value-display": "Tampilan nilai",
     "presets": {
       "basic": "Dasar",
@@ -4378,6 +4390,13 @@
     "suggestions": {
       "basic": "Pengukur batang",
       "lcd": "Pengukur batang - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Tersembunyi",
@@ -5610,16 +5629,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Lanjutkan"
-        },
-        "title": {
-          "proceed-to-external-site": "Lanjutkan ke situs eksternal?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "dasbor {{dashboardName}}",
       "label-no-dashboards-found": "Tidak ada dasbor yang ditemukan"
@@ -5745,10 +5754,16 @@
       "paste-panel": "Tempel panel",
       "remove": "Hapus {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Ubah judul baris",
       "switch-layout": "Ganti tata letak",
       "switch-layout-row": "Ganti tata letak",
       "switch-layout-tab": "Ganti tata letak",
+      "tab-repeat-variable": "",
       "tab-title": "Ubah judul tab",
       "variable-description": "Ubah deskripsi variabel",
       "variable-hide": "Ubah opsi sembunyikan variabel",
@@ -5997,6 +6012,12 @@
       "ungroup-groups-title": "Batalkan pengelompokan grup yang bersarang?",
       "ungroup-repeat-loss": "Opsi pengulangan yang dikonfigurasi pada grup yang dibatalkan pengelompokannya akan hilang.",
       "ungroup-repeat-loss-title": "Batalkan pengelompokan?"
+    },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} dari {{numberOfPages}}",
@@ -6670,7 +6691,6 @@
       "playlist-previous": "Buka dasbor sebelumnya",
       "playlist-stop": "Hentikan daftar putar",
       "refresh": "Muat ulang dasbor",
-      "save": "Simpan dasbor",
       "save-as-template": {
         "label": "Simpan sebagai templat"
       },
@@ -6685,8 +6705,6 @@
       "save-dashboard-short": "Simpan",
       "save-library-panel": "Simpan panel pustaka",
       "save-library-panel-short": "Simpan",
-      "settings": "Pengaturan dasbor",
-      "share-button": "Bagikan",
       "star-add-error": "Gagal menambahkan ke yang dibintangi",
       "star-added": "Ditambahkan ke yang dibintangi",
       "star-remove-error": "Gagal menghapus dari yang dibintangi",
@@ -6715,7 +6733,14 @@
         "title-remove": "Hapus",
         "title-show-transform-help": "Tampilkan bantuan transformasi"
       },
-      "title-delete": "Hapus {{name}}?"
+      "title-delete": "Hapus {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -6763,9 +6788,6 @@
     },
     "variable": {
       "description-tooltip": "Deskripsi variabel"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
     },
     "view-panel": {
       "back-to-dashboard": "Kembali ke dasbor",
@@ -7378,7 +7400,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Perubahan Anda akan hilang saat Anda memperbarui plugin. Gunakan <strong>Simpan sebagai</strong> untuk membuat versi kustom.",
-        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor",
         "title-plugin-dashboard": "Dasbor plugin",
         "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
         "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
@@ -7645,9 +7666,6 @@
       },
       "label-copy-tags": "Salin tag",
       "label-folder": "Folder",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor"
-      },
       "required": "Wajib diisi"
     },
     "save-dashboard-drawer": {
@@ -7694,6 +7712,9 @@
       "save-variables-label-update-default-variable-values": "Perbarui nilai variabel default",
       "show-variables-warning-alert-body": "Beberapa variabel gagal dimuat. Jika Anda tetap mencentang \"Perbarui nilai variabel default\", nilai (gagal) saat ini akan menjadi default dasbor. Anda tetap dapat menyimpan atau menghapus centang opsi untuk menghindari menyimpan nilai (gagal) tersebut.",
       "show-variables-warning-alert-title": "Kueri variabel gagal"
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Batalkan",
@@ -9376,6 +9397,8 @@
     "menu": "Buka menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Simpan",
     "title": "Kontrol fitur"
   },
@@ -10488,7 +10511,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
       "alerting-settings-label": "Kelola aturan peringatan di UI Alerting",
-      "alerting-settings-tooltip": "Kelola aturan peringatan untuk sumber data ini. Untuk mengelola sumber daya alerting lainnya, tambahkan sumber data Alertmanager.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Atur ulang",
       "custom-headers-add": "Tambahkan header",
       "custom-headers-header": "Header",
@@ -10776,6 +10799,7 @@
       "placeholder": "Pilih"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filter nilai",
       "cell-filter-out": "Filter nilai",
       "cell-inspect": "Periksa nilai",
@@ -11136,10 +11160,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Peringatan aktif",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Insiden",
       "team-filter-all": "Semua tim",
       "team-filter-label": "Filter peringatan berdasarkan tim",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Tim Anda",
       "title": "Peringatan & insiden",
       "title-alerts": "Peringatan",
@@ -13094,6 +13119,12 @@
       "query": {
         "add": "Tambahkan kueri",
         "run": "Jalankan kueri"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13161,7 +13192,9 @@
       "copy-markdown": "Salin sebagai Markdown",
       "download-markdown": "Unduh sebagai .md",
       "error": "Gagal mengekspor notebook",
-      "label": "Ekspor"
+      "label": "Ekspor",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Tambahkan blok",
@@ -13177,7 +13210,9 @@
       "redo-action": "Ulangi: {{action}}",
       "remove-query": "Hapus kueri",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Pilih kueri",
+      "set-cell-time-range": "",
       "split-block": "Pisahkan blok",
       "switch-datasource": "Ganti sumber data",
       "undo": "Batalkan",
@@ -13225,7 +13260,7 @@
       "count-truncated_other": "{{count}} notebook pertama dimuat"
     },
     "new": {
-      "default-title": "Notebook #{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Penyimpanan gagal",
@@ -14746,12 +14781,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Kembali ke repositori",
       "cleaning-up-resources": "Membersihkan sumber daya repositori",
-      "not-found": "tidak ditemukan",
       "not-found-message": "Repositori tidak ditemukan",
       "repository-config-exists-configuration": "Pastikan konfigurasi repositori ada dalam file konfigurasi.",
       "tab-overview": "Gambaran Umum",
@@ -15047,26 +15086,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Sebelum Anda menjadikan dasbor publik, ketahui hal berikut:",
-      "data-src-ack-desc": "Publikasi saat ini hanya berfungsi dengan subset sumber data*",
-      "data-src-ack-tooltip": "Pelajari selengkapnya tentang sumber data publik",
-      "public-ack-desc": "Seluruh dasbor Anda akan menjadi publik*",
-      "public-ack-tooltip": "Pelajari selengkapnya tentang dasbor publik",
-      "usage-ack-desc": "Menjadikan dasbor publik akan menyebabkan kueri berjalan setiap kali dilihat, yang dapat meningkatkan biaya*",
-      "usage-ack-desc-tooltip": "Pelajari selengkapnya tentang caching kueri"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Dapat melihat dasbor",
-      "copy-button": "Salin",
-      "dashboard-url-field-label": "URL Dasbor",
-      "email-share-type-option-label": "Hanya orang yang disebutkan",
-      "pause-sharing-dashboard-label": "Jeda berbagi dasbor",
-      "public-share-type-option-label": "Siapa saja yang memiliki tautan",
-      "revoke-public-URL-button": "Cabut URL publik",
-      "revoke-public-URL-button-title": "Cabut URL publik",
-      "settings-title": "Pengaturan"
-    },
     "configuration": {
       "display-annotations-description": "Presentasikan anotasi di dasbor ini",
       "display-annotations-label": "Tampilkan anotasi",
@@ -15079,21 +15098,11 @@
       "time-range-label": "Rentang waktu",
       "time-range-tooltip": "Dasbor bersama menggunakan pengaturan rentang waktu default dasbor"
     },
-    "create-page": {
-      "generate-public-url-button": "Buat URL publik",
-      "unsupported-features-desc": "Saat ini, kami tidak mendukung variabel templat atau sumber data frontend",
-      "welcome-title": "Selamat datang di dasbor publik!"
-    },
     "email-sharing": {
       "accept-button": "Setuju",
       "alert-text": "Berbagi dasbor melalui email ditagih per pengguna selama token 30 hari, terlepas dari berapa banyak dasbor yang dibagikan. Penagihan berhenti setelah 30 hari kecuali jika Anda memperpanjang token.",
       "bill-ack": "Saya memahami bahwa menambahkan pengguna memerlukan pembayaran.*",
       "cancel-button": "Batalkan",
-      "input-invalid-email-text": "Email tidak valid",
-      "input-required-email-text": "Email wajib diisi",
-      "invite-button": "Undang",
-      "invite-field-desc": "Undang orang melalui email",
-      "invite-field-label": "Undang",
       "learn-more-button": "Pelajari lebih lanjut",
       "recipient-email-placeholder": "Email",
       "recipient-invalid-email-text": "Email tidak valid",
@@ -15103,17 +15112,12 @@
       "recipient-list-description": "Hanya orang yang Anda undang langsung yang dapat mengakses dasbor ini",
       "recipient-list-title": "Orang dengan akses",
       "recipient-required-email-text": "Email wajib diisi",
-      "resend-button": "Kirim ulang",
-      "resend-button-title": "Kirim ulang",
       "resend-invite-label": "Kirim Ulang Undangan",
       "revoke-access-label": "Cabut akses",
-      "revoke-button": "Cabut",
-      "revoke-button-title": "Cabut",
       "success-creation": "Dasbor Anda siap untuk berbagi eksternal",
       "success-share-type-change": "Akses dasbor diperbarui: Hanya orang tertentu yang sekarang dapat mengakses dengan tautan"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Simpan perubahan dasbor Anda sebelum memperbarui konfigurasi publik",
       "unsupport-data-source-alert-readmore-link": "Baca selengkapnya tentang sumber data yang didukung",
       "unsupported-data-source-alert-title": "Sumber data yang tidak didukung",
       "unsupported-template-variable-alert-desc": "Dasbor publik ini mungkin tidak berfungsi karena menggunakan variabel templat",
@@ -15127,25 +15131,6 @@
       "public-ack": "Saya memahami bahwa seluruh dasbor ini akan menjadi publik.*",
       "success-creation": "Dasbor Anda sekarang dapat diakses publik",
       "success-share-type-change": "Akses dasbor diperbarui: Siapa pun yang memiliki tautan sekarang dapat mengakses"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Ciutkan pengaturan",
-      "expand-settings-tooltip": "Perluas pengaturan"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Rentang waktu default",
-      "default-time-range-label-desc": "Dasbor publik menggunakan pengaturan rentang waktu default dasbor",
-      "show-annotations-label": "Tampilkan anotasi",
-      "show-annotations-label-desc": "Tampilkan anotasi di dasbor publik",
-      "time-range-picker-label": "Pemilih rentang waktu diaktifkan",
-      "time-range-picker-label-desc": "Izinkan pemirsa mengubah rentang waktu"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Anotasi = sembunyikan",
-      "annotations-show-text": "Anotasi = tampilkan",
-      "time-range-picker-disabled-text": "Pemilih rentang waktu = dinonaktifkan",
-      "time-range-picker-enabled-text": "Pemilih rentang waktu = diaktifkan",
-      "time-range-text": "Rentang waktu = "
     },
     "share": {
       "success-delete": "Dasbor Anda tidak lagi dapat dibagikan"
@@ -15487,6 +15472,10 @@
       "label": "Terapkan transformasi ke",
       "series": "Hasil Kueri dan Transformasi"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Nama kueri sudah ada",
       "empty-name": "Nama kueri tidak boleh kosong"
@@ -15663,6 +15652,12 @@
     "title": "Tidak dapat menemukan file aplikasi"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Pesan memiliki panjang {{messageLength}} karakter, yang melebihi panjang maksimum 500 karakter. Persingkat sebelum menyimpan.",
       "title": "Pesan terlalu panjang"
@@ -15743,8 +15738,7 @@
       "deleted-by-removed": "Akun yang dihapus",
       "deleted-by-unknown-short": "<0></0> Tidak Diketahui",
       "deleted-by-unknown-tooltip": "Gagal mencari akun yang menghapus dasbor ini",
-      "deleted-less-than-1-min": "< 1 menit",
-      "deleted-remaining-header": "Waktu yang tersisa",
+      "deleted-header": "",
       "location-header": "Lokasi",
       "name-header": "Nama",
       "tags-header": "Tag",
@@ -15909,9 +15903,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Bagikan"
-    },
     "embed": {
       "copy": "Salin ke papan klip",
       "html": "Sematkan HTML",
@@ -15958,9 +15949,6 @@
       "time-range-description": "Mengubah rentang waktu relatif saat ini menjadi rentang waktu absolut",
       "time-range-label": "Kunci rentang waktu"
     },
-    "panel": {
-      "title": "Bagikan Panel"
-    },
     "snapshot": {
       "cancel-button": "Batalkan",
       "copy-link-button": "Salin",
@@ -15976,16 +15964,11 @@
       "local-button": "Publikasikan Snapshot",
       "mistake-message": "Apakah Anda melakukan kesalahan? ",
       "name": "Nama snapshot",
-      "timeout": "Waktu habis (detik)",
-      "timeout-description": "Anda mungkin perlu mengonfigurasi nilai batas waktu jika membutuhkan waktu lama untuk mengumpulkan metrik dasbor.",
       "url-label": "URL Snapshot"
     },
     "tab-title": {
-      "embed": "Sematkan",
       "export": "Ekspor",
-      "library-panel": "Panel pustaka",
       "link": "Tautan",
-      "public-dashboard-title": "Dasbor publik",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
@@ -18060,10 +18043,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Coba lihat",
-      "description": "Kami telah mendesain ulang!",
-      "revert": "Bawa saya kembali",
-      "title": "Gaya tampilan baru"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

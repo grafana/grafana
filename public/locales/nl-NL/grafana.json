@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externe Alertmanagers",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Geen gegevensbronnen gevonden"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configureren",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Kan geen regels laden voor deze gegevensbron"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
         "no-rules-found": "Er kwamen geen waarschuwings- of opnameregels overeen met je huidige filterset.",
         "results-loading": "Zoeken: {{numberOfRules}} regels gevonden",
-        "results-with-cancellation": "Zoekopdracht geannuleerd - {{numberOfRules}} regels gevonden"
+        "results-with-cancellation": "Zoekopdracht geannuleerd - {{numberOfRules}} regels gevonden",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Importeren is niet beschikbaar terwijl de automatische synchronisatie van Mimir Alertmanager actief is"
@@ -4392,6 +4405,7 @@
       "label-top": "Boven"
     },
     "name-show-unfilled-area": "Niet-gevuld gebied weergeven",
+    "name-text-mode": "",
     "name-value-display": "Weergave van waarden",
     "presets": {
       "basic": "Basic",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Balkmeter",
       "lcd": "Staafmeter - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Verborgen",
@@ -5653,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Doorgaan"
-        },
-        "title": {
-          "proceed-to-external-site": "Doorgaan naar externe site?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "Geen dashboards gevonden"
@@ -5788,10 +5799,16 @@
       "paste-panel": "Paneel plakken",
       "remove": "{{typeName}} verwijderen",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Rijtitel wijzigen",
       "switch-layout": "Indeling wisselen",
       "switch-layout-row": "Indeling wisselen",
       "switch-layout-tab": "Indeling wisselen",
+      "tab-repeat-variable": "",
       "tab-title": "Tabbladtitel wijzigen",
       "variable-description": "Variabelebeschrijving wijzigen",
       "variable-hide": "Optie variabele verbergen wijzigen",
@@ -6040,6 +6057,12 @@
       "ungroup-groups-title": "Geneste groepen degroeperen?",
       "ungroup-repeat-loss": "Herhalingsopties die voor de opgeheven groepen zijn geconfigureerd, gaan verloren.",
       "ungroup-repeat-loss-title": "Groepering opheffen?"
+    },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} van {{numberOfPages}}",
@@ -6714,7 +6737,6 @@
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
       "refresh": "Dashboard vernieuwen",
-      "save": "Dashboard opslaan",
       "save-as-template": {
         "label": "Opslaan als sjabloon"
       },
@@ -6729,8 +6751,6 @@
       "save-dashboard-short": "Opslaan",
       "save-library-panel": "Bibliotheekpaneel",
       "save-library-panel-short": "Opslaan",
-      "settings": "Dashboardinstellingen",
-      "share-button": "Delen",
       "star-add-error": "Kan niet toevoegen aan favorieten",
       "star-added": "Toegevoegd aan favorieten",
       "star-remove-error": "Kan niet verwijderen uit favorieten",
@@ -6759,7 +6779,14 @@
         "title-remove": "Verwijderen",
         "title-show-transform-help": "Hulp bij transformatie weergeven"
       },
-      "title-delete": "{{name}} verwijderen?"
+      "title-delete": "{{name}} verwijderen?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -6808,9 +6835,6 @@
     },
     "variable": {
       "description-tooltip": "Beschrijving van variabele"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
     },
     "view-panel": {
       "back-to-dashboard": "Terug naar dashboard",
@@ -7424,7 +7448,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Je wijzigingen zullen verloren gaan wanneer je de plugin bijwerkt. Gebruik <strong>Opslaan als</strong> om een aangepaste versie te maken.",
-        "title-failed-to-save-dashboard": "Kan dashboard niet opslaan",
         "title-plugin-dashboard": "Plug-indashboard",
         "title-someone-else-has-updated-this-dashboard": "Iemand anders heeft dit dashboard bijgewerkt",
         "would-still-dashboard": "Wil je dit dashboard nog steeds opslaan?"
@@ -7692,9 +7715,6 @@
       },
       "label-copy-tags": "Labels kopiëren",
       "label-folder": "Map",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Kan dashboard niet opslaan"
-      },
       "required": "Vereist"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7761,9 @@
       "save-variables-label-update-default-variable-values": "Standaard variabelewaarden bijwerken",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Annuleren",
@@ -9430,6 +9453,8 @@
     "menu": "Menu openen",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Opslaan",
     "title": "Functiebeheer"
   },
@@ -10552,7 +10577,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
       "alerting-settings-label": "Waarschuwingsregels beheren in waarschuwingsinterface",
-      "alerting-settings-tooltip": "Waarschuwingsregels voor deze gegevensbron beheren. Om andere waarschuwingsbronnen te beheren, voeg je een Alertmanager-gegevensbron toe.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Resetten",
       "custom-headers-add": "Koptekst toevoegen",
       "custom-headers-header": "Koptekst",
@@ -10840,6 +10865,7 @@
       "placeholder": "Kies"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filter op waarde",
       "cell-filter-out": "Waarde uitfilteren",
       "cell-inspect": "Waarde inspecteren",
@@ -11200,10 +11226,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Actieve waarschuwingen",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidenten",
       "team-filter-all": "Alle teams",
       "team-filter-label": "Waarschuwingen filteren op team",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Je teams",
       "title": "Waarschuwingen en incidenten",
       "title-alerts": "Waarschuwingen",
@@ -13185,6 +13212,12 @@
       "query": {
         "add": "Query toevoegen",
         "run": "Query uitvoeren"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13252,7 +13285,9 @@
       "copy-markdown": "Kopiëren als Markdown",
       "download-markdown": "Downloaden als .md",
       "error": "Kan notitieboek niet exporteren",
-      "label": "Exporteren"
+      "label": "Exporteren",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Blok toevoegen",
@@ -13268,7 +13303,9 @@
       "redo-action": "Opnieuw uitvoeren: {{action}}",
       "remove-query": "Query verwijderen",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Query selecteren",
+      "set-cell-time-range": "",
       "split-block": "Blok splitsen",
       "switch-datasource": "Gegevensbron wisselen",
       "undo": "Ongedaan maken",
@@ -13318,7 +13355,7 @@
       "count-truncated_other": "Eerste {{count}} notitieboeken geladen"
     },
     "new": {
-      "default-title": "Notitieboek #{{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Opslaan mislukt",
@@ -14857,12 +14894,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Terug naar repositories",
       "cleaning-up-resources": "Bronnen van repository opschonen",
-      "not-found": "niet gevonden",
       "not-found-message": "Repository niet gevonden",
       "repository-config-exists-configuration": "Zorg ervoor dat de repository-configuratie in het configuratiebestand bestaat.",
       "tab-overview": "Overzicht",
@@ -15158,26 +15199,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Voordat je het dashboard openbaar maakt, moet je het volgende erkennen:",
-      "data-src-ack-desc": "Publiceren werkt momenteel alleen met een subset van gegevensbronnen*",
-      "data-src-ack-tooltip": "Meer informatie over openbare gegevensbronnen",
-      "public-ack-desc": "Je hele dashboard is openbaar*",
-      "public-ack-tooltip": "Meer informatie over openbare dashboards",
-      "usage-ack-desc": "Een openbaar dashboard voert de queries telkens uit wanneer het bekeken wordt, wat kan leiden tot hogere kosten*",
-      "usage-ack-desc-tooltip": "Meer informatie over querycaching"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Kan dashboard weergeven",
-      "copy-button": "Kopiëren",
-      "dashboard-url-field-label": "Dashboard-URL",
-      "email-share-type-option-label": "Alleen gespecificeerde personen",
-      "pause-sharing-dashboard-label": "Delen van het dashboard pauzeren",
-      "public-share-type-option-label": "Iedereen met een link",
-      "revoke-public-URL-button": "Openbare URL intrekken",
-      "revoke-public-URL-button-title": "Openbare URL intrekken",
-      "settings-title": "Instellingen"
-    },
     "configuration": {
       "display-annotations-description": "Annotaties presenteren op dit dashboard",
       "display-annotations-label": "Annotaties weergeven",
@@ -15190,21 +15211,11 @@
       "time-range-label": "Tijdsbereik",
       "time-range-tooltip": "Het openbare dashboard gebruikt de standaard tijdsbereikinstellingen van het dashboard"
     },
-    "create-page": {
-      "generate-public-url-button": "Openbare URL genereren",
-      "unsupported-features-desc": "Momenteel ondersteunen we geen sjabloonvariabelen of frontend-gegevensbronnen",
-      "welcome-title": "Welkom bij openbare dashboards!"
-    },
     "email-sharing": {
       "accept-button": "Accepteren",
       "alert-text": "Het delen van dashboards per e-mail wordt per gebruiker gefactureerd voor de duur van het token van 30 dagen, ongeacht hoeveel dashboards worden gedeeld. De facturering stopt na 30 dagen, tenzij je het token verlengt.",
       "bill-ack": "Ik begrijp dat het toevoegen van gebruikers betaling vereist.*",
       "cancel-button": "Annuleren",
-      "input-invalid-email-text": "Ongeldig e-mailadres",
-      "input-required-email-text": "E-mailadres is vereist",
-      "invite-button": "Uitnodigen",
-      "invite-field-desc": "Personen uitnodigen via e-mail",
-      "invite-field-label": "Uitnodigen",
       "learn-more-button": "Meer informatie",
       "recipient-email-placeholder": "E-mailadres",
       "recipient-invalid-email-text": "Ongeldig e-mailadres",
@@ -15214,17 +15225,12 @@
       "recipient-list-description": "Alleen mensen die je rechtstreeks hebt uitgenodigd, hebben toegang tot dit dashboard",
       "recipient-list-title": "Mensen met toegang",
       "recipient-required-email-text": "E-mailadres is vereist",
-      "resend-button": "Opnieuw versturen",
-      "resend-button-title": "Opnieuw versturen",
       "resend-invite-label": "Opnieuw uitnodigen",
       "revoke-access-label": "Toegang intrekken",
-      "revoke-button": "Intrekken",
-      "revoke-button-title": "Intrekken",
       "success-creation": "Je dashboard kan extern worden gedeeld",
       "success-share-type-change": "Dashboardtoegang bijgewerkt: alleen specifieke mensen hebben nu toegang via de link"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Sla je dashboardwijzigingen op voordat je de openbare configuratie bijwerkt",
       "unsupport-data-source-alert-readmore-link": "Meer informatie over ondersteunde gegevensbronnen",
       "unsupported-data-source-alert-title": "Niet-ondersteunde gegevensbronnen",
       "unsupported-template-variable-alert-desc": "Dit openbare dashboard werkt mogelijk niet omdat het sjabloonvariabelen gebruikt",
@@ -15238,25 +15244,6 @@
       "public-ack": "Ik begrijp dat dit hele dashboard openbaar is.*",
       "success-creation": "Je dashboard is nu openbaar toegankelijk",
       "success-share-type-change": "Dashboardtoegang bijgewerkt: iedereen met de link heeft nu toegang"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Instellingen samenvouwen",
-      "expand-settings-tooltip": "Instellingen uitvouwen"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Standaard tijdsbereik",
-      "default-time-range-label-desc": "Het openbare dashboard gebruikt de standaard tijdsbereikinstellingen van het dashboard",
-      "show-annotations-label": "Annotaties weergeven",
-      "show-annotations-label-desc": "Annotaties weergeven op openbaar dashboard",
-      "time-range-picker-label": "Tijdsbereikkiezer ingeschakeld",
-      "time-range-picker-label-desc": "Kijkers toestaan om tijdsbereik te wijzigen"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Annotaties = verbergen",
-      "annotations-show-text": "Annotaties = weergeven",
-      "time-range-picker-disabled-text": "Tijdsbereikkiezer = uitgeschakeld",
-      "time-range-picker-enabled-text": "Tijdsbereikkiezer = ingeschakeld",
-      "time-range-text": "Tijdsbereik = "
     },
     "share": {
       "success-delete": "Je dashboard kan niet meer worden gedeeld"
@@ -15605,6 +15592,10 @@
       "label": "Transformatie toepassen op",
       "series": "Resultaten van query en transformatie"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Querynaam bestaat al",
       "empty-name": "Een lege querynaam is niet toegestaan"
@@ -15784,6 +15775,12 @@
     "title": "Kan toepassingsbestand niet vinden"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Het bericht bestaat uit {{messageLength}} tekens. Dit overschrijdt de maximale lengte van 500 tekens. Verkort het voordat je het opslaat.",
       "title": "Bericht is te lang"
@@ -15864,8 +15861,7 @@
       "deleted-by-removed": "Verwijderd account",
       "deleted-by-unknown-short": "<0></0> Onbekend",
       "deleted-by-unknown-tooltip": "Kan het account dat dit dashboard heeft verwijderd niet opzoeken",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Resterende tijd",
+      "deleted-header": "",
       "location-header": "Locatie",
       "name-header": "Naam",
       "tags-header": "Tags",
@@ -16031,9 +16027,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Delen"
-    },
     "embed": {
       "copy": "Kopiëren naar klembord",
       "html": "HTML insluiten",
@@ -16080,9 +16073,6 @@
       "time-range-description": "Transformeert het huidige relatieve tijdsbereik naar een absoluut tijdsbereik",
       "time-range-label": "Tijdsbereik vergrendelen"
     },
-    "panel": {
-      "title": "Paneel delen"
-    },
     "snapshot": {
       "cancel-button": "Annuleren",
       "copy-link-button": "Kopiëren",
@@ -16098,16 +16088,11 @@
       "local-button": "Snapshot publiceren",
       "mistake-message": "Heb je een fout gemaakt? ",
       "name": "Snapshotnaam",
-      "timeout": "Time-out (seconden)",
-      "timeout-description": "Mogelijk moet je de time-outwaarde configureren als het lang duurt om je dashboardstatistieken te verzamelen.",
       "url-label": "Snapshot-URL"
     },
     "tab-title": {
-      "embed": "Insluiten",
       "export": "Exporteren",
-      "library-panel": "Bibliotheekpaneel",
       "link": "Koppelen",
-      "public-dashboard-title": "Openbaar dashboard",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
@@ -18190,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Een kijkje nemen",
-      "description": "We hebben een nieuw ontwerp!",
-      "revert": "Teruggaan",
-      "title": "Nieuwe stijlen"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

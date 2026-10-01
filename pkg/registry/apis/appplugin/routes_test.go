@@ -25,10 +25,10 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -341,7 +341,7 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 
 func TestRouteHandlerRouteInfo(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
-	newBuilder := func(client v3.ClientV3, get getter) *AppPluginAPIBuilder {
+	newBuilder := func(client appclientv3.Client, get getter) *AppPluginAPIBuilder {
 		return &AppPluginAPIBuilder{
 			group:      "example.ext.grafana.app",
 			pluginJSON: plugins.JSONData{ID: "example-app"},
@@ -388,7 +388,7 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 
 		newBuilder(client, get.get).routeHandler(gv, "testkinds", "reload")(httptest.NewRecorder(), req)
 
-		require.Equal(t, []string{"kind-token"}, client.req.GetHeaders()[proxyutil.IDHeaderName].GetValues())
+		require.NotContains(t, client.req.GetHeaders(), proxyutil.IDHeaderName, "the ID token must not be forwarded")
 
 		// Looked up under this version's own resource, not a hardcoded one.
 		require.Equal(t, gv.WithResource("testkinds"), get.gotGVR)
@@ -491,16 +491,14 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 	})
 }
 
-func TestRouteHandlerForwardID(t *testing.T) {
+func TestRouteHandlerDoesNotForwardCredentials(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
 		requester identity.Requester
-		wantToken string
 	}{
 		{
-			name:      "replaces untrusted identity with requester token",
+			name:      "does not forward the requester's ID token",
 			requester: &identity.StaticRequester{IDToken: "verified-token"},
-			wantToken: "verified-token",
 		},
 		{
 			name: "removes untrusted identity without a requester",
@@ -520,6 +518,8 @@ func TestRouteHandlerForwardID(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
 			req.Header.Add(proxyutil.IDHeaderName, "untrusted-token")
 			req.Header.Add(proxyutil.IDHeaderName, "another-untrusted-token")
+			req.Header.Set("Authorization", "Bearer user-token")
+			req.Header.Set("Cookie", "grafana_session=secret")
 			req.Header.Set("X-Request-Id", "request-id")
 			originalHeaders := req.Header.Clone()
 			if tc.requester != nil {
@@ -532,12 +532,10 @@ func TestRouteHandlerForwardID(t *testing.T) {
 			require.Equal(t, http.StatusOK, rec.Code)
 			require.NotNil(t, client.req)
 			headers := client.req.GetHeaders()
-			if tc.wantToken == "" {
-				require.NotContains(t, headers, proxyutil.IDHeaderName)
-			} else {
-				require.Equal(t, []string{tc.wantToken}, headers[proxyutil.IDHeaderName].GetValues())
-			}
+			require.NotContains(t, headers, proxyutil.IDHeaderName)
 			require.NotContains(t, headers, "X-Access-Token")
+			require.NotContains(t, headers, "Authorization")
+			require.NotContains(t, headers, "Cookie")
 			require.Equal(t, []string{"request-id"}, headers["X-Request-Id"].GetValues())
 			require.Equal(t, originalHeaders, req.Header)
 		})
@@ -546,12 +544,12 @@ func TestRouteHandlerForwardID(t *testing.T) {
 
 // fakeRouteClient records the request and returns an empty response stream.
 type fakeRouteClient struct {
-	v3.ClientV3
+	appclientv3.Client
 	req *pluginv3.CallRouteRequest
 	err error
 }
 
-func (f *fakeRouteClient) CallRoute(_ context.Context, req *pluginv3.CallRouteRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+func (f *fakeRouteClient) CallRoute(_ context.Context, req *pluginv3.CallRouteRequest) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
 	if f.err != nil {
 		return nil, f.err
 	}

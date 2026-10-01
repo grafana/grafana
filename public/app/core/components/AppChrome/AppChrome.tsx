@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'clsx';
 import { Resizable } from 're-resizable';
-import { type PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, type PropsWithChildren, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
@@ -14,8 +14,8 @@ import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashS
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { useNavTree } from 'app/core/navtree/useNavTree';
-import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
+import { useVisualRefreshNudge } from 'app/features/visual-refresh/useVisualRefreshNudge';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
@@ -34,11 +34,16 @@ import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useC
 
 export const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
 
+const CommandPalette = lazy(() =>
+  import('app/features/commandPalette/CommandPalette').then((module) => ({ default: module.CommandPalette }))
+);
+
 export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  useVisualRefreshNudge(visualRefreshEnabled);
   const {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,
@@ -222,7 +227,11 @@ export function AppChrome({ children }: Props) {
         </div>
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
-      {!state.chromeless && <CommandPalette />}
+      {!state.chromeless && (
+        <Suspense fallback={null}>
+          <CommandPalette />
+        </Suspense>
+      )}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
       {!state.chromeless && <LazyFeatureControlFloating />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
