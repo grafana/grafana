@@ -15,11 +15,6 @@ type watchSeed struct {
 	highestRV         int64 // fixed before settling; retained events may end below this boundary
 }
 
-type watchSeedResult struct {
-	seed watchSeed
-	err  error
-}
-
 func writtenEventIdentity(event *WrittenEvent) (GroupResource, int64) {
 	return GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, event.ResourceVersion
 }
@@ -166,29 +161,31 @@ settling:
 	seed := watchSeed{initialCacheFloor: handoffRV, highestRV: handoffRV}
 	if !degraded {
 		seedCtx, cancelSeed := context.WithCancel(ctx)
-		seedResult := make(chan watchSeedResult, 1)
+		seedDone := make(chan struct{})
+		var loaded watchSeed
+		var loadErr error
 		go func() {
-			loaded, err := k.loadWatchSeed(seedCtx, handoffRV)
-			seedResult <- watchSeedResult{seed: loaded, err: err}
+			loaded, loadErr = k.loadWatchSeed(seedCtx, handoffRV)
+			close(seedDone)
 		}()
 		select {
 		case <-ctx.Done():
 			cancelSeed()
-			<-seedResult
+			<-seedDone
 			return watchSeed{}, nil, ctx.Err()
 		case <-overflow:
 			degraded = true
 			cancelSeed()
-			<-seedResult
-		case result := <-seedResult:
+			<-seedDone
+		case <-seedDone:
 			cancelSeed()
-			if result.err != nil {
+			if loadErr != nil {
 				if ctx.Err() != nil {
 					return watchSeed{}, nil, ctx.Err()
 				}
-				k.log.Warn("failed to load watch seed, starting with an empty watch cache", "error", result.err, "handoff_rv", handoffRV)
+				k.log.Warn("failed to load watch seed, starting with an empty watch cache", "error", loadErr, "handoff_rv", handoffRV)
 			} else {
-				seed = result.seed
+				seed = loaded
 			}
 		}
 	}
