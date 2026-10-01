@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
@@ -127,14 +128,18 @@ func (s *savedViewStorageAuthorizer) checkDashboardExists(ctx context.Context, o
 		return storewrapper.ErrUnexpectedType
 	}
 
-	requester, err := identity.GetRequester(ctx)
+	// The dashboard being looked up belongs to this request's namespace, not necessarily to
+	// whatever org the caller's own identity resolves to -- those two diverge for a Grafana Admin
+	// or a service-identity caller, which a wildcard dashboards:read grant (the case this check
+	// exists for) is disproportionately likely to be.
+	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		return storewrapper.ErrUnauthenticated
+		return storewrapper.ErrUnauthorized
 	}
 
 	if _, err := s.dashboardSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 		UID:   view.Spec.DashboardUID,
-		OrgID: requester.GetOrgID(),
+		OrgID: nsInfo.OrgID,
 	}); err != nil {
 		return storewrapper.ErrUnauthorized
 	}
