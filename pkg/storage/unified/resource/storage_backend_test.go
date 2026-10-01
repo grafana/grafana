@@ -1358,6 +1358,71 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
 }
 
+func TestKvStorageBackend_BatchReadResource_ReturnsDeletionMarkerWhenIncluded(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	testObj, rv1 := createAndWriteTestObject(t, backend)
+	meta, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+	meta.SetFolder("folder-1")
+	rv2, err := writeObject(t, backend, testObj, resourcepb.WatchEvent_DELETED, rv1)
+	require.NoError(t, err)
+
+	key := storageTestKey("test-resource")
+	requests := []*resourcepb.ReadRequest{{Key: key, ResourceVersion: rv2}}
+	regularValues := batchReadResources(t, ctx, backend, requests, false)
+	require.Len(t, regularValues, 1)
+	require.Equal(t, int32(404), regularValues[0].Error.GetCode())
+
+	trashValues := batchReadResources(t, ctx, backend, requests, true)
+	require.Len(t, trashValues, 1)
+	require.Nil(t, trashValues[0].Error)
+	require.Equal(t, rv2, trashValues[0].ResourceVersion)
+	require.Equal(t, "folder-1", trashValues[0].Folder)
+	require.Equal(t, objectToJSONBytes(t, testObj), trashValues[0].Value)
+}
+
+func TestKvStorageBackend_BatchReadResource_MixesLiveAndDeletedResourcesWhenIncluded(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	live, liveRV := createAndWriteTestObject(t, backend)
+	deleted := live.DeepCopy()
+	deleted.SetName("deleted-resource")
+	deletedRV, err := writeObject(t, backend, deleted, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+	markerRV, err := writeObject(t, backend, deleted, resourcepb.WatchEvent_DELETED, deletedRV)
+	require.NoError(t, err)
+
+	values := batchReadResources(t, ctx, backend, []*resourcepb.ReadRequest{
+		{Key: storageTestKey("test-resource"), ResourceVersion: liveRV},
+		{Key: storageTestKey("deleted-resource"), ResourceVersion: markerRV},
+	}, true)
+	require.Len(t, values, 2)
+	require.Nil(t, values[0].Error)
+	require.Equal(t, liveRV, values[0].ResourceVersion)
+	require.Equal(t, objectToJSONBytes(t, live), values[0].Value)
+	require.Nil(t, values[1].Error)
+	require.Equal(t, markerRV, values[1].ResourceVersion)
+	require.Equal(t, objectToJSONBytes(t, deleted), values[1].Value)
+}
+
+func TestKvStorageBackend_BatchReadResource_RejectsTooHighResourceVersionWhenDeletedIncluded(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+	_, rv := createAndWriteTestObject(t, backend)
+
+	values := batchReadResources(t, ctx, backend, []*resourcepb.ReadRequest{{
+		Key:             storageTestKey("test-resource"),
+		ResourceVersion: rv + 1000000000000,
+	}}, true)
+	require.Len(t, values, 1)
+	require.NotNil(t, values[0].Error)
+	require.Equal(t, int32(400), values[0].Error.Code)
+	require.Contains(t, values[0].Error.Message, "too large resource version")
+}
+
 func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -1395,7 +1460,7 @@ func TestKvStorageBackend_BatchReadResource_TooHighResourceVersion(t *testing.T)
 	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{
 		{Key: key},
 		{Key: key, ResourceVersion: rv + 1000000000000},
-	})
+	}, false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, 2)
@@ -1415,7 +1480,7 @@ func TestKvStorageBackend_BatchReadResource_LatestResourceVersionFailureIsUpfron
 	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{{
 		Key:             appsKey("test-resource"),
 		ResourceVersion: rv,
-	}})
+	}}, false)
 
 	require.ErrorIs(t, err, context.Canceled)
 	require.Nil(t, responses)
@@ -1436,7 +1501,7 @@ func TestKvStorageBackend_BatchReadResource_YieldsInRequestOrder(t *testing.T) {
 	}
 	requests[0], requests[2] = requests[2], requests[0]
 
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, len(requests))
@@ -1459,7 +1524,7 @@ func TestKvStorageBackend_BatchReadResource_InvalidName(t *testing.T) {
 		{Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "a"}},
 		{Key: invalidKey, ResourceVersion: rv + 1000000000000},
 	}
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, 3)
@@ -1492,7 +1557,7 @@ func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(
 		})
 	}
 
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	const wanted = 3
 	read := 0
@@ -1525,7 +1590,7 @@ func TestKvStorageBackend_BatchReadResource_MissingBodyKeepsPosition(t *testing.
 		})
 	}
 
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, 3)
@@ -1548,7 +1613,7 @@ func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStop
 		{Key: appsKey("after"), ResourceVersion: seedResource(t, backend, t.Context(), "after", "")},
 	}
 
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	for response := range responses {
 		require.Equal(t, int32(http.StatusNotFound), response.Error.Code)
@@ -1597,7 +1662,7 @@ func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) 
 				folders = append(folders, folder)
 			}
 
-			responses, err := backend.BatchReadResource(t.Context(), requests)
+			responses, err := backend.BatchReadResource(t.Context(), requests, false)
 			require.NoError(t, err)
 			got := collectBatchReadResponses(t, responses)
 			require.Len(t, got, tc.firstError+1)
@@ -1617,7 +1682,7 @@ func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) 
 }
 
 func TestUnimplementedStorageBackend_BatchReadResourceReturnsUnsupportedUpFront(t *testing.T) {
-	responses, err := (UnimplementedStorageBackend{}).BatchReadResource(t.Context(), nil)
+	responses, err := (UnimplementedStorageBackend{}).BatchReadResource(t.Context(), nil, false)
 	require.ErrorIs(t, err, ErrBatchReadUnsupported)
 	require.Nil(t, responses)
 }
@@ -1629,6 +1694,17 @@ func collectBatchReadResponses(t *testing.T, responses iter.Seq[*BackendReadResp
 		got = append(got, response)
 	}
 	return got
+}
+
+func batchReadResources(t *testing.T, ctx context.Context, backend StorageBackend, requests []*resourcepb.ReadRequest, includeDeleted bool) []*BackendReadResponse {
+	t.Helper()
+	responses, err := backend.BatchReadResource(ctx, requests, includeDeleted)
+	require.NoError(t, err)
+	return collectBatchReadResponses(t, responses)
+}
+
+func storageTestKey(name string) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name}
 }
 
 type bodyReadCountingKV struct {
