@@ -404,12 +404,14 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // createOrReplace implements the upsert half of OverwriteOnCreateResourceVersion: if an
 // object of this name already exists, replace it via GuaranteedUpdate (full content, no
 // resourceVersion precondition) instead of letting Create fail with AlreadyExists.
+// Note: ttl is not honored on the create-because-missing path; GuaranteedUpdate's internal
+// upsert always calls Create with ttl=0, which is acceptable since current callers never use nonzero ttl.
 func (s *Storage) createOrReplace(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
 		return obj.DeepCopyObject(), nil, nil
 	}
 	// ignoreNotFound: true means GuaranteedUpdate itself falls through to a plain Create
-	// (see store.go's upsert-on-missing branch) when the object doesn't exist, so there's
+	// (see the upsert-on-missing branch below) when the object doesn't exist, so there's
 	// no separate pre-Get here at all - removing both the extra round trip and the narrow
 	// delete-between-Get-and-Update race a separate Get would otherwise open up.
 	return s.GuaranteedUpdate(ctx, key, out, true, nil, tryUpdate, nil)

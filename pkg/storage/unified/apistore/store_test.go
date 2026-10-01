@@ -292,7 +292,7 @@ func TestCreateOrReplaceRejectsUpdateWithoutUpdateRights(t *testing.T) {
 	require.True(t, apierrors.IsForbidden(err))
 }
 
-func TestCreateOrReplaceDeepCopiesObjectPerRetryAttempt(t *testing.T) {
+func TestCreateOrReplaceReplaceDoesNotMutateCallerObject(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	require.NoError(t, err)
