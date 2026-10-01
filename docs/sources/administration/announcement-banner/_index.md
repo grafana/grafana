@@ -54,5 +54,9 @@ To create or update an announcement banner, follow these steps:
    You can set a date and time for the banner to stop displaying.
 1. Select the type of banner in the **Variant** field.
    This determines the color of the banner's background.
+1. Toggle the **Dismissible** switch on to let users close the banner.
+   By default, users can't dismiss the banner.
+   When a user closes a dismissible banner, it stays hidden in that user's browser until the banner is updated.
+   Saving any change to the banner shows it again to users who dismissed it.
 1. Click **Save** to save the banner settings.
    The banner displays at the top of every page in Grafana between the start and end dates.
