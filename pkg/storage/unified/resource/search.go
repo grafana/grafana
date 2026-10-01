@@ -879,6 +879,13 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
+	// Unavailable rather than failed: the API that serves this search is enabled
+	// separately, and may be on before this server builds the index.
+	if nsr.IsGlobal() && !s.globalIndexEnabled {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"),
+		}, nil
+	}
 	idx, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
 	if err != nil {
 		return &resourcepb.ResourceSearchResponse{
