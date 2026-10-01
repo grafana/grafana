@@ -5,6 +5,7 @@ import {
   type FieldConfigPropertyItem,
   FieldType,
   standardEditorsRegistry,
+  type StandardEditorProps,
   type StandardEditorsRegistryItem,
   type ThresholdsConfig,
   type ThresholdsFieldConfigSettings,
@@ -16,6 +17,7 @@ import {
   type DataLink,
   dataLinksOverrideProcessor,
   type NumberFieldConfigSettings,
+  type SliderFieldConfigSettings,
   numberOverrideProcessor,
   type StringFieldConfigSettings,
   stringOverrideProcessor,
@@ -82,19 +84,19 @@ const DataLinksValueEditor = lazyEditor(() =>
 const MultiSelectValueEditor = lazyEditor(() =>
   import(/* webpackChunkName: "options-ui-editors-core" */ './multiSelect').then((m) => m.MultiSelectValueEditor)
 );
-const NumberValueEditor = lazyEditor(() =>
+const NumberValueEditor = lazyEditor<StandardEditorProps<number, NumberFieldConfigSettings>>(() =>
   import(/* webpackChunkName: "options-ui-editors-core" */ './number').then((m) => m.NumberValueEditor)
 );
 const SelectValueEditor = lazyEditor(() =>
   import(/* webpackChunkName: "options-ui-editors-core" */ './select').then((m) => m.SelectValueEditor)
 );
-const SliderValueEditor = lazyEditor(() =>
+const SliderValueEditor = lazyEditor<StandardEditorProps<number, SliderFieldConfigSettings>>(() =>
   import(/* webpackChunkName: "options-ui-editors-core" */ './slider').then((m) => m.SliderValueEditor)
 );
 const StatsPickerEditor = lazyEditor(() =>
   import(/* webpackChunkName: "options-ui-editors-core" */ './stats').then((m) => m.StatsPickerEditor)
 );
-const StringValueEditor = lazyEditor(() =>
+const StringValueEditor = lazyEditor<StandardEditorProps<string, StringFieldConfigSettings>>(() =>
   import(/* webpackChunkName: "options-ui-editors-core" */ './string').then((m) => m.StringValueEditor)
 );
 const StringArrayEditor = lazyEditor(() =>
@@ -103,7 +105,7 @@ const StringArrayEditor = lazyEditor(() =>
 const UnitValueEditor = lazyEditor(() =>
   import(/* webpackChunkName: "options-ui-editors-unit" */ './units').then((m) => m.UnitValueEditor)
 );
-const FieldNamePicker = lazyEditor(() =>
+const FieldNamePicker = lazyEditor<StandardEditorProps<string, FieldNamePickerConfigSettings>>(() =>
   import(/* webpackChunkName: "options-ui-editors-core" */ '@grafana/ui/internal').then((m) => m.FieldNamePicker)
 );
 
