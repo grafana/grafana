@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Fortsätt"
-        },
-        "title": {
-          "proceed-to-external-site": "Fortsätt till extern webbplats?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} instrumentpanel",
       "label-no-dashboards-found": "Inga instrumentpaneler hittades"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Gå till föregående instrumentpanel",
       "playlist-stop": "Stoppa spellista",
       "refresh": "Uppdatera instrumentpanel",
-      "save": "Spara instrumentpanel",
       "save-as-template": {
         "label": "Spara som mall"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Spara",
       "save-library-panel": "Spara bibliotekspanel",
       "save-library-panel-short": "Spara",
-      "settings": "Instrumentpanelens inställningar",
-      "share-button": "Dela",
       "star-add-error": "Det gick inte att lägga till i stjärnmärkta",
       "star-added": "Tillagd i stjärnmärkta",
       "star-remove-error": "Det gick inte att ta bort från stjärnmärkta",
@@ -13298,7 +13285,9 @@
       "copy-markdown": "Kopiera som Markdown",
       "download-markdown": "Ladda ner som .md",
       "error": "Det gick inte att exportera anteckningsboken",
-      "label": "Exportera"
+      "label": "Exportera",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Lägg till block",
@@ -18186,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Kolla det",
-      "description": "Vi har gjort om designen!",
-      "revert": "Tar mig tillbaka",
-      "title": "Nya stilar"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

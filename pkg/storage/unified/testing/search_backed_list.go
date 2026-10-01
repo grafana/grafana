@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -73,13 +73,18 @@ func (labelFolderBuilderSupplier) GetDocumentBuilders(_ *resource.SearchFieldsRe
 // prove it batched rather than falling back to per-resource reads.
 type countingBackend struct {
 	resource.StorageBackend
-	batchReads atomic.Int64
-	reads      atomic.Int64
+	batchReads      atomic.Int64
+	trashBatchReads atomic.Int64
+	reads           atomic.Int64
 }
 
-func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourcepb.ReadRequest) (iter.Seq[*resource.BackendReadResponse], error) {
-	c.batchReads.Add(1)
-	return c.StorageBackend.BatchReadResource(ctx, reqs)
+func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*resource.BackendReadResponse], error) {
+	if includeDeleted {
+		c.trashBatchReads.Add(1)
+	} else {
+		c.batchReads.Add(1)
+	}
+	return c.StorageBackend.BatchReadResource(ctx, reqs, includeDeleted)
 }
 
 func (c *countingBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
@@ -175,7 +180,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			Value:      value,
 			Object:     meta,
 			PreviousRV: prev,
-			GUID:       uuid.NewString(),
+			GUID:       uuid.NewV4().String(),
 		})
 		require.NoError(t, err)
 		require.Greater(t, rv, int64(0))
@@ -294,4 +299,153 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
 	})
+}
+
+// RunTestSearchBackedTrashList compares the indexed trash view with the storage
+// scan using real storage and search backends.
+func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend, opts SearchBackedListOptions) {
+	const (
+		ns           = "search-trash-ns"
+		adminFolder  = "folder-admin"
+		deniedFolder = "folder-denied"
+	)
+	user := &identity.StaticRequester{
+		Type:      claims.TypeUser,
+		UserID:    1,
+		UserUID:   "u1",
+		Namespace: ns,
+	}
+	ctx = claims.WithAuthInfo(ctx, user)
+	counting := &countingBackend{StorageBackend: backend}
+
+	writeObject := func(name, folder, deletedBy string, provisioned, deleted bool) int64 {
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": searchBackedListGroup + "/v0alpha1",
+			"kind":       "Playlist",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": ns,
+			},
+			"spec": map[string]any{"title": name},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetFolder(folder)
+		if provisioned {
+			meta.SetAnnotation(utils.AnnoKeyManagerKind, "repo")
+		}
+		value, err := obj.MarshalJSON()
+		require.NoError(t, err)
+		key := &resourcepb.ResourceKey{Group: searchBackedListGroup, Resource: searchBackedListResource, Namespace: ns, Name: name}
+		rv, err := backend.WriteEvent(ctx, resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    key,
+			Value:  value,
+			Object: meta,
+			GUID:   uuid.New().String(),
+		})
+		require.NoError(t, err)
+		if !deleted {
+			return rv
+		}
+
+		meta.SetUpdatedBy(deletedBy)
+		value, err = obj.MarshalJSON()
+		require.NoError(t, err)
+		deleteRV, err := backend.WriteEvent(ctx, resource.WriteEvent{
+			Type:       resourcepb.WatchEvent_DELETED,
+			Key:        key,
+			Value:      value,
+			Object:     meta,
+			ObjectOld:  meta,
+			PreviousRV: rv,
+			GUID:       uuid.New().String(),
+		})
+		require.NoError(t, err)
+		return deleteRV
+	}
+
+	wantRV := map[string]int64{
+		"own":   writeObject("own", deniedFolder, user.GetUID(), false, true),
+		"admin": writeObject("admin", adminFolder, "user:other", false, true),
+	}
+	writeObject("denied", deniedFolder, "user:other", false, true)
+	writeObject("provisioned", adminFolder, "user:other", true, true)
+	writeObject("live", adminFolder, "", false, false)
+
+	access := denyFolderAccess{denied: deniedFolder}
+	newServer := func(allowSearch bool) resource.ResourceServer {
+		config := resource.SearchBackedListConfig{}
+		searchOptions := resource.SearchOptions{}
+		if allowSearch {
+			config.AllowedResources = map[string]bool{searchBackedListGroup + "/" + searchBackedListResource: true}
+			searchOptions = resource.SearchOptions{
+				Backend:   searchBackend,
+				Resources: labelFolderBuilderSupplier{},
+			}
+		}
+		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+			Backend:                counting,
+			AccessClient:           access,
+			SearchBackedListConfig: config,
+			Search:                 searchOptions,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			_ = server.Stop(stopCtx)
+		})
+		return server
+	}
+
+	searchServer := newServer(true)
+	storeServer := newServer(false)
+	newReq := func(token string) *resourcepb.ListRequest {
+		return &resourcepb.ListRequest{
+			Source:        resourcepb.ListRequest_TRASH,
+			Limit:         1,
+			NextPageToken: token,
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Namespace: ns,
+				Group:     searchBackedListGroup,
+				Resource:  searchBackedListResource,
+			}},
+		}
+	}
+	collect := func(t *testing.T, server resource.ResourceServer, assertStableRV bool) map[string]int64 {
+		t.Helper()
+		got := map[string]int64{}
+		var token string
+		var listRV int64
+		for pages := 0; ; pages++ {
+			require.Less(t, pages, 10, "pagination must terminate")
+			resp, err := server.List(ctx, newReq(token))
+			require.NoError(t, err)
+			require.Nil(t, resp.Error)
+			if listRV == 0 {
+				listRV = resp.ResourceVersion
+			}
+			if assertStableRV {
+				require.Equal(t, listRV, resp.ResourceVersion)
+			}
+			for _, item := range resp.Items {
+				obj := &unstructured.Unstructured{}
+				require.NoError(t, obj.UnmarshalJSON(item.Value))
+				got[obj.GetName()] = item.ResourceVersion
+			}
+			token = resp.NextPageToken
+			if token == "" {
+				return got
+			}
+		}
+	}
+
+	searchItems := collect(t, searchServer, opts.ExpectBatchReads)
+	storeItems := collect(t, storeServer, false)
+	require.Equal(t, wantRV, searchItems)
+	require.Equal(t, storeItems, searchItems)
+	if opts.ExpectBatchReads {
+		require.Greater(t, counting.trashBatchReads.Load(), int64(0))
+	}
 }
