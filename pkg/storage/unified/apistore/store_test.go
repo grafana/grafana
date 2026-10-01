@@ -120,6 +120,55 @@ func TestCreateWithKeyExist(t *testing.T) {
 	storagetesting.RunTestCreateWithKeyExist(ctx, t, store)
 }
 
+func TestCreateOrReplaceCreatesWhenMissing(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/overwrite-missing"
+	obj := &example.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "overwrite-missing",
+			Namespace:       "test-ns",
+			ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+		},
+	}
+
+	out := &example.Pod{}
+	err = store.Create(ctx, key, obj, out, 0)
+	require.NoError(t, err)
+	require.NotEmpty(t, out.ResourceVersion, "a real resourceVersion must come back from a genuine create")
+}
+
+func TestCreateOrReplaceReplacesWhenFound(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/overwrite-existing"
+	first := &example.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "overwrite-existing", Namespace: "test-ns"},
+		Spec:       example.PodSpec{NodeName: "first-node"},
+	}
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, first, firstOut, 0))
+
+	second := &example.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "overwrite-existing",
+			Namespace:       "test-ns",
+			ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+		},
+		Spec: example.PodSpec{NodeName: "second-node"},
+	}
+	secondOut := &example.Pod{}
+	err = store.Create(ctx, key, second, secondOut, 0)
+	require.NoError(t, err, "expected the sentinel to trigger a replace, not AlreadyExists")
+	require.Equal(t, "second-node", secondOut.Spec.NodeName)
+	require.Equal(t, firstOut.UID, secondOut.UID, "replace must preserve the original object's identity, proving this went through Update, not a second Create")
+	require.NotEqual(t, firstOut.ResourceVersion, secondOut.ResourceVersion, "a real write must bump the resourceVersion")
+}
+
 func TestValidUpdate(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()

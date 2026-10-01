@@ -71,6 +71,13 @@ const (
 	DeprecatedID_Optional
 )
 
+// OverwriteOnCreateResourceVersion is a reserved sentinel value for metadata.resourceVersion
+// on a Create request. A client that sets it is asking Create to behave as an upsert: if an
+// object of the same name already exists, replace it in full (not merged) instead of failing
+// with AlreadyExists. The RBAC (VerbUpdate) and provisioning-lock checks a normal Update
+// already enforces still apply, via GuaranteedUpdate below -- there is nothing new to bypass.
+const OverwriteOnCreateResourceVersion = "-1"
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	// GVK identifies the kind this storage serves, including the version.
@@ -330,6 +337,11 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
+	if meta.GetResourceVersion() == OverwriteOnCreateResourceVersion {
+		meta.SetResourceVersion("")
+		return s.createOrReplace(ctx, key, obj, out, ttl)
+	}
+
 	// Make sure we are looking at the correct namespace
 	if meta.GetNamespace() != rkey.Namespace {
 		if meta.GetNamespace() == "" {
@@ -387,6 +399,25 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	return v.finish(ctx, nil, s.opts.SecureValues)
+}
+
+// createOrReplace implements the upsert half of OverwriteOnCreateResourceVersion: if an
+// object of this name already exists, replace it via GuaranteedUpdate (full content, no
+// resourceVersion precondition) instead of letting Create fail with AlreadyExists.
+func (s *Storage) createOrReplace(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
+	existing := s.newFunc()
+	err := s.Get(ctx, key, storage.GetOptions{}, existing)
+	if storage.IsNotFound(err) {
+		return s.Create(ctx, key, obj, out, ttl)
+	}
+	if err != nil {
+		return err
+	}
+
+	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+		return obj, nil, nil
+	}
+	return s.GuaranteedUpdate(ctx, key, out, false, nil, tryUpdate, nil)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
