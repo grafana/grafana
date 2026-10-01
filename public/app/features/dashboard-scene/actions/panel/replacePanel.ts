@@ -4,17 +4,17 @@ import { type VizPanel } from '@grafana/scenes';
 import { type DashboardLayoutItem } from '../../scene/types/DashboardLayoutItem';
 import { edit } from '../utils/edit';
 
-interface ReplacePanelWithLibraryPanelProps {
+interface ReplacePanelProps {
   source: DashboardLayoutItem;
   oldPanel: VizPanel;
   newPanel: VizPanel;
 }
 
-export function replacePanel({ source, oldPanel, newPanel }: ReplacePanelWithLibraryPanelProps) {
+export function replacePanel({ source, oldPanel, newPanel }: ReplacePanelProps) {
   newPanel.setState({ key: oldPanel.state.key });
 
   edit({
-    description: t('dashboard.edit-actions.use-library-panel', 'Use library panel'),
+    description: t('dashboard.edit-actions.replace-panel', 'Replace panel'),
     source,
     addedObject: newPanel,
     removedObject: oldPanel,
