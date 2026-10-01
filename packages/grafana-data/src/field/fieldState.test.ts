@@ -180,6 +180,18 @@ describe('getFrameDisplayName', () => {
     expect(getFrameDisplayName(frame)).toBe('Field A, Field B');
   });
 
+  it.each([
+    { refId: 'A', index: undefined, expected: 'Series (A)' },
+    { refId: undefined, index: 2, expected: 'Series (2)' },
+  ])('returns $expected for a frame containing only time fields', ({ refId, index, expected }) => {
+    const frame = toDataFrame({
+      refId,
+      fields: [{ name: TIME_SERIES_TIME_FIELD_NAME, values: [1000, 2000], type: FieldType.time }],
+    });
+
+    expect(getFrameDisplayName(frame, index)).toBe(expected);
+  });
+
   it('Should return labels if single field with labels', () => {
     const frame = toDataFrame({
       fields: [{ name: 'value', labels: { server: 'A' } }],
