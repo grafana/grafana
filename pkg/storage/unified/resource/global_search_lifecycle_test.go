@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -1234,4 +1235,214 @@ func TestImportedTypeRebuildSkipsTheUpdateWhenCaughtUp(t *testing.T) {
 
 	require.NoError(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
 	assert.Zero(t, idx.updateIndexCalls)
+}
+
+// watchStorage hands out one notification stream a test controls.
+type watchStorage struct {
+	multiTypeStorage
+
+	events chan *WrittenEvent
+	// Streams asked for, so a test can see the stream being reopened.
+	watches int
+	err     error
+}
+
+func (m *watchStorage) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
+	m.watches++
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.events, nil
+}
+
+func writtenEvent(action resourcepb.WatchEvent_Type, key NamespacedResource, name string, rv int64) *WrittenEvent {
+	return &WrittenEvent{
+		Type:            action,
+		ResourceVersion: rv,
+		Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Name:      name,
+		},
+		Value: testObjectJSON(name, name),
+	}
+}
+
+func globalWatchServer(t *testing.T, storage StorageBackend, search *mockSearchBackend) *searchServer {
+	t.Helper()
+	server := globalTestServer(t, storage, search)
+	// The index has to be open for notifications to have somewhere to go.
+	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
+	require.NoError(t, err)
+	return server
+}
+
+// A notification only says the index is behind, so the index is updated from
+// storage, once per batch however many notifications it got.
+func TestWatchUpdatesTheGlobalIndexOncePerBatch(t *testing.T) {
+	search := &mockSearchBackend{}
+	server := globalWatchServer(t, &multiTypeStorage{}, search)
+	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
+	updatesAfterBuild := idx.updateIndexCalls
+
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11),
+		writtenEvent(resourcepb.WatchEvent_DELETED, folderType("ns"), "folder-a", 12),
+	})
+
+	assert.Equal(t, updatesAfterBuild+1, idx.updateIndexCalls)
+	assert.Empty(t, idx.indexedItems(), "nothing is written from the notification itself")
+}
+
+func TestWatchIgnoresWhatTheIndexDoesNotCover(t *testing.T) {
+	search := &mockSearchBackend{}
+	server := globalWatchServer(t, &multiTypeStorage{}, search)
+	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
+	updatesAfterBuild := idx.updateIndexCalls
+
+	playlists := NamespacedResource{Namespace: "ns", Group: "playlist.grafana.app", Resource: "playlists"}
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_ADDED, playlists, "my-playlist", 11),
+		// Another namespace, which this instance holds no index for.
+		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("other"), "not-mine", 12),
+	})
+
+	assert.Equal(t, updatesAfterBuild, idx.updateIndexCalls)
+}
+
+func TestWatchConsumesUntilTheStreamEnds(t *testing.T) {
+	events := make(chan *WrittenEvent, 4)
+	storage := &watchStorage{events: events}
+	search := &mockSearchBackend{}
+	server := globalWatchServer(t, storage, search)
+	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
+	updatesAfterBuild := idx.updateIndexCalls
+
+	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11)
+	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-b", 12)
+	close(events)
+
+	server.consumeWriteEvents(t.Context(), events)
+
+	assert.Equal(t, updatesAfterBuild+1, idx.updateIndexCalls, "both arrived before the first batch was taken")
+}
+
+// Arrivals that are already queued go into one write rather than one each.
+func TestWatchBatchesWhatHasAlreadyArrived(t *testing.T) {
+	events := make(chan *WrittenEvent, 3)
+	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11)
+	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-b", 12)
+
+	batch, ok := nextWriteEventBatch(t.Context(), events)
+	require.True(t, ok)
+	assert.Len(t, batch, 2)
+
+	close(events)
+	_, ok = nextWriteEventBatch(t.Context(), events)
+	assert.False(t, ok, "a closed stream ends the loop")
+}
+
+func TestUpdateGlobalIndexes(t *testing.T) {
+	global := GlobalSearchKey("ns")
+	dashboards := NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}
+
+	globalIdx := &MockResourceIndex{}
+	dashboardsIdx := &MockResourceIndex{}
+	backend := &mockSearchBackend{
+		openIndexes: []NamespacedResource{global, dashboards},
+		cache: map[NamespacedResource]ResourceIndex{
+			global:     globalIdx,
+			dashboards: dashboardsIdx,
+		},
+	}
+	s := &searchServer{search: backend, log: log.NewNopLogger(), ownsIndexFn: func(NamespacedResource) (bool, error) { return true, nil }}
+
+	s.updateGlobalIndexes(t.Context())
+
+	assert.Equal(t, 1, globalIdx.updateIndexCalls)
+	// Every other index is brought up to date by the search that reads it.
+	assert.Equal(t, 0, dashboardsIdx.updateIndexCalls)
+}
+
+func TestSearchDoesNotWaitForGlobalIndex(t *testing.T) {
+	global := GlobalSearchKey("ns")
+	dashboards := NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}
+
+	globalIdx := &MockResourceIndex{}
+	dashboardsIdx := &MockResourceIndex{}
+	backend := &mockSearchBackend{
+		cache: map[NamespacedResource]ResourceIndex{
+			global:     globalIdx,
+			dashboards: dashboardsIdx,
+		},
+	}
+	s := &searchServer{
+		search:             backend,
+		log:                log.NewNopLogger(),
+		indexMetrics:       ProvideIndexMetrics(nil),
+		globalIndexEnabled: true,
+	}
+
+	idx, err := s.getOrCreateIndex(t.Context(), nil, global, "test")
+	require.NoError(t, err)
+	require.Equal(t, globalIdx, idx)
+	// A global index is updated in the background, so the search reads
+	// whatever it holds.
+	assert.Equal(t, 0, globalIdx.updateIndexCalls)
+
+	idx, err = s.getOrCreateIndex(t.Context(), nil, dashboards, "test")
+	require.NoError(t, err)
+	require.Equal(t, dashboardsIdx, idx)
+	assert.Equal(t, 1, dashboardsIdx.updateIndexCalls)
+}
+
+// Fetching an index counts as using it, so the background work leaves alone a
+// global index another instance now owns, and it can be closed here.
+func TestBackgroundWorkSkipsAGlobalIndexOwnedElsewhere(t *testing.T) {
+	search := &mockSearchBackend{}
+	server := globalWatchServer(t, &multiTypeStorage{}, search)
+	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
+	search.openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
+	server.ownsIndexFn = func(NamespacedResource) (bool, error) { return false, nil }
+	updatesAfterBuild := idx.updateIndexCalls
+
+	server.updateGlobalIndexes(t.Context())
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11),
+	})
+
+	assert.Equal(t, updatesAfterBuild, idx.updateIndexCalls)
+	assert.Empty(t, idx.indexedItems())
+}
+
+// A global index just opened may have been reopened from disk long after it was
+// written, so the search that opens it waits for one update.
+func TestSearchUpdatesAGlobalIndexItJustOpened(t *testing.T) {
+	search := &mockSearchBackend{}
+	server := globalTestServer(t, &multiTypeStorage{}, search)
+
+	idx, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	require.NoError(t, err)
+	assert.Equal(t, 1, idx.(*MockResourceIndex).updateIndexCalls)
+
+	_, err = server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	require.NoError(t, err)
+	assert.Equal(t, 1, idx.(*MockResourceIndex).updateIndexCalls, "not again once it is open")
+}
+
+// A stream that never sends, as some backends return, does not hold up shutdown.
+func TestWatchStopsOnAnIdleStreamWhenCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{}).consumeWriteEvents(ctx, make(chan *WrittenEvent))
+	}()
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("still waiting for a notification after cancellation")
+	}
 }

@@ -573,3 +573,139 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 	}
 	return result, flush()
 }
+
+// watchRetryDelay is how long to wait before asking storage for a new
+// notification stream after one ends unexpectedly.
+const watchRetryDelay = 5 * time.Second
+
+// maxWatchBatch is how many notifications are taken at once. Notifications
+// arrive one at a time, so a busy instance would otherwise update once per
+// changed object.
+const maxWatchBatch = 100
+
+// runGlobalIndexWatch updates a global index when a write notification for it
+// arrives. Searches on a global index do not wait for an update, so without this
+// a change would appear only at the next background update.
+//
+// A notification only says that an index is behind; the update reads the change
+// from storage, as every other update does. Writing the notification into the
+// index instead would race with those updates, and a late notification could
+// overwrite a newer document.
+//
+// Notifications are the fast path, not the reliable one: a dropped or missed
+// one is picked up by the background update, so a failure here is logged and
+// the stream is reopened rather than escalated.
+func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
+	for ctx.Err() == nil {
+		events, err := s.storage.WatchWriteEvents(ctx)
+		if err != nil {
+			s.log.Warn("failed to watch write events for global search indexes", "error", err)
+		} else {
+			s.consumeWriteEvents(ctx, events)
+		}
+
+		// The stream ended. Wait before reopening so a backend that keeps failing
+		// is not asked in a tight loop.
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(watchRetryDelay):
+		}
+	}
+}
+
+// consumeWriteEvents applies notifications until the stream ends.
+func (s *searchServer) consumeWriteEvents(ctx context.Context, events <-chan *WrittenEvent) {
+	for {
+		batch, ok := nextWriteEventBatch(ctx, events)
+		if !ok {
+			return
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		s.applyWriteEvents(ctx, batch)
+	}
+}
+
+// nextWriteEventBatch blocks for one notification, then takes whatever else has
+// already arrived. It reports false once the stream is closed.
+func nextWriteEventBatch(ctx context.Context, events <-chan *WrittenEvent) ([]*WrittenEvent, bool) {
+	// Also on the context: a stream that never sends, as some backends return,
+	// would otherwise hold up shutdown.
+	var first *WrittenEvent
+	select {
+	case <-ctx.Done():
+		return nil, false
+	case event, ok := <-events:
+		if !ok {
+			return nil, false
+		}
+		first = event
+	}
+	batch := make([]*WrittenEvent, 0, maxWatchBatch)
+	batch = append(batch, first)
+	for len(batch) < maxWatchBatch {
+		select {
+		case event, ok := <-events:
+			if !ok {
+				return batch, true
+			}
+			batch = append(batch, event)
+		default:
+			return batch, true
+		}
+	}
+	return batch, true
+}
+
+// applyWriteEvents updates each global index a batch of notifications is for,
+// once however many of them it got. Notifications for types the index does not
+// cover, and for indexes this instance does not own or has not opened, are
+// ignored: an index that is not open is brought up to date when it is opened.
+func (s *searchServer) applyWriteEvents(ctx context.Context, batch []*WrittenEvent) {
+	var keys []NamespacedResource
+	for _, event := range batch {
+		if event == nil || event.Key == nil {
+			continue
+		}
+		if !GlobalIndexCoversType(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}) {
+			continue
+		}
+		if key := GlobalSearchKey(event.Key.Namespace); !slices.Contains(keys, key) {
+			keys = append(keys, key)
+		}
+	}
+
+	for _, key := range keys {
+		if ctx.Err() != nil {
+			return
+		}
+		if !s.ownsGlobalIndex(key) {
+			continue
+		}
+		idx := s.search.GetIndex(key)
+		if idx == nil {
+			continue
+		}
+		if _, err := idx.UpdateIndex(ctx); err != nil {
+			// The background update picks up whatever this missed.
+			s.log.Warn("failed to update the global search index for write notifications", "namespace", key.Namespace, "error", err)
+		}
+	}
+}
+
+// ownsGlobalIndex reports whether this instance owns a global index. The
+// background work skips one it does not own: fetching an index counts as using
+// it, and would keep an index another instance now owns from ever being closed
+// here.
+func (s *searchServer) ownsGlobalIndex(key NamespacedResource) bool {
+	owned, err := s.ownsIndexFn(key)
+	if err != nil {
+		// Kept up to date rather than left to go stale: the check failing says
+		// nothing about who owns it.
+		s.log.Warn("failed to check global search index ownership", "namespace", key.Namespace, "error", err)
+		return true
+	}
+	return owned
+}

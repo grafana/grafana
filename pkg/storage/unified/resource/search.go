@@ -85,6 +85,11 @@ func (s *NamespacedResource) GroupResource() string {
 	return fmt.Sprintf("%s/%s", s.Group, s.Resource)
 }
 
+// globalIndexUpdateInterval is how often a global index picks up changes in the
+// background. Notifications apply most changes sooner, so this only has to catch
+// the ones they miss.
+const globalIndexUpdateInterval = time.Minute
+
 const (
 	// GlobalSearchGroup and GlobalSearchResource name the index that covers a whole
 	// namespace instead of a single resource type. They are not a stored group or
@@ -1586,6 +1591,11 @@ func (s *searchServer) init(ctx context.Context) error {
 
 	s.bgTaskWg.Go(func() { s.runPeriodicTrashCleanup(subctx) })
 
+	if s.globalIndexEnabled {
+		s.bgTaskWg.Go(func() { s.runGlobalIndexWatch(subctx) })
+		s.bgTaskWg.Go(func() { s.runPeriodicGlobalIndexUpdate(subctx) })
+	}
+
 	s.startRateBucketSweeper(subctx)
 
 	end := time.Now().Unix()
@@ -1643,6 +1653,47 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			if _, err := s.queueImportedTypeRebuilds(ctx, keys); err != nil {
 				s.log.Warn("failed to check global search indexes for imports", "error", err)
 			}
+		}
+	}
+}
+
+// runPeriodicGlobalIndexUpdate brings the global indexes up to date in the
+// background. Searches on them do not wait for an update, because a global index
+// covers several resource types, so it would wait once per type, and it answers
+// requests that would rather be fast than exactly current. Notifications apply
+// most changes sooner; this picks up any they missed.
+func (s *searchServer) runPeriodicGlobalIndexUpdate(ctx context.Context) {
+	ticker := time.NewTicker(globalIndexUpdateInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.updateGlobalIndexes(ctx)
+		}
+	}
+}
+
+// updateGlobalIndexes brings every open global index this instance owns up to
+// date. An index that is not open is left alone: it is brought up to date when it
+// is next opened.
+func (s *searchServer) updateGlobalIndexes(ctx context.Context) {
+	for _, key := range s.search.GetOpenIndexes() {
+		if !key.IsGlobal() || !s.ownsGlobalIndex(key) {
+			continue
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		idx := s.search.GetIndex(key)
+		if idx == nil {
+			continue
+		}
+		if _, err := idx.UpdateIndex(ctx); err != nil {
+			// Logged and left for the next tick: the index keeps serving what it has.
+			s.log.Warn("failed to update global search index", "namespace", key.Namespace, "error", err)
 		}
 	}
 }
@@ -2053,6 +2104,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	)
 
 	idx := s.search.GetIndex(key)
+	alreadyOpen := idx != nil
 	if idx == nil {
 		span.AddEvent("Building index")
 		buildStartTime := time.Now()
@@ -2097,6 +2149,14 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 		case <-ctx.Done():
 			return nil, tracing.Error(span, fmt.Errorf("failed to get index: %w", ctx.Err()))
 		}
+	}
+
+	// A global index is updated in the background, so a search on an open one
+	// reads whatever it holds instead of waiting for storage. One just opened is
+	// updated first: it may have been reopened from disk long after it was
+	// written, and nothing updated it while it was closed.
+	if key.IsGlobal() && alreadyOpen {
+		return idx, nil
 	}
 
 	span.AddEvent("Updating index")
