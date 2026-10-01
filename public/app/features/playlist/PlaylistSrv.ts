@@ -2,7 +2,7 @@ import { type Location } from 'history';
 import { pickBy } from 'lodash';
 
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportResourceView } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
@@ -94,6 +94,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   async start(playlist: Playlist) {
+    reportResourceView({ group: 'playlist.grafana.app', resource: 'playlists', name: playlist.metadata.name });
     this.stop();
 
     this.startUrl = window.location.href;

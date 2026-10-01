@@ -44,6 +44,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Playlists",
 					Scope:      "Namespaced",
 					Conversion: true,
+					KV:         &app.ManifestVersionKindKV{},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -59,6 +60,60 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaPlaylistv0alpha1,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "views_today",
+							Type:         "int64",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Populated by Usage Insights; absent when it isn't installed.",
+							Source: &app.ManifestVersionKindSearchFieldSource{
+								KV: &app.ManifestVersionKindSearchFieldKVSource{
+									Owner: "usageinsights.grafana.app",
+									Key:   "stats",
+									Path:  "views_today",
+								},
+							},
+						},
+						{
+							Name:         "views_last_7_days",
+							Type:         "int64",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Populated by Usage Insights; absent when it isn't installed.",
+							Source: &app.ManifestVersionKindSearchFieldSource{
+								KV: &app.ManifestVersionKindSearchFieldKVSource{
+									Owner: "usageinsights.grafana.app",
+									Key:   "stats",
+									Path:  "views_last_7_days",
+								},
+							},
+						},
+						{
+							Name:         "views_last_30_days",
+							Type:         "int64",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Populated by Usage Insights; absent when it isn't installed.",
+							Source: &app.ManifestVersionKindSearchFieldSource{
+								KV: &app.ManifestVersionKindSearchFieldKVSource{
+									Owner: "usageinsights.grafana.app",
+									Key:   "stats",
+									Path:  "views_last_30_days",
+								},
+							},
+						},
+						{
+							Name:         "views_total",
+							Type:         "int64",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Populated by Usage Insights; absent when it isn't installed.",
+							Source: &app.ManifestVersionKindSearchFieldSource{
+								KV: &app.ManifestVersionKindSearchFieldKVSource{
+									Owner: "usageinsights.grafana.app",
+									Key:   "stats",
+									Path:  "views_total",
+								},
+							},
+						},
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -77,6 +132,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Playlists",
 					Scope:      "Namespaced",
 					Conversion: true,
+					KV:         &app.ManifestVersionKindKV{},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -92,6 +148,60 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaPlaylistv1,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "views_today",
+							Type:         "int64",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Populated by Usage Insights; absent when it isn't installed.",
+							Source: &app.ManifestVersionKindSearchFieldSource{
+								KV: &app.ManifestVersionKindSearchFieldKVSource{
+									Owner: "usageinsights.grafana.app",
+									Key:   "stats",
+									Path:  "views_today",
+								},
+							},
+						},
+						{
+							Name:         "views_last_7_days",
+							Type:         "int64",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Populated by Usage Insights; absent when it isn't installed.",
+							Source: &app.ManifestVersionKindSearchFieldSource{
+								KV: &app.ManifestVersionKindSearchFieldKVSource{
+									Owner: "usageinsights.grafana.app",
+									Key:   "stats",
+									Path:  "views_last_7_days",
+								},
+							},
+						},
+						{
+							Name:         "views_last_30_days",
+							Type:         "int64",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Populated by Usage Insights; absent when it isn't installed.",
+							Source: &app.ManifestVersionKindSearchFieldSource{
+								KV: &app.ManifestVersionKindSearchFieldKVSource{
+									Owner: "usageinsights.grafana.app",
+									Key:   "stats",
+									Path:  "views_last_30_days",
+								},
+							},
+						},
+						{
+							Name:         "views_total",
+							Type:         "int64",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Populated by Usage Insights; absent when it isn't installed.",
+							Source: &app.ManifestVersionKindSearchFieldSource{
+								KV: &app.ManifestVersionKindSearchFieldKVSource{
+									Owner: "usageinsights.grafana.app",
+									Key:   "stats",
+									Path:  "views_total",
+								},
+							},
+						},
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

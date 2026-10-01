@@ -19,6 +19,14 @@ playlistv1: {
 	plural:     "playlists"
 	scope:      "Namespaced"
 	conversion: true
+	kv:         {}
+	searchFields: [for w in ["today", "last_7_days", "last_30_days", "total"] {
+		name: "views_\(w)"
+		type: "int64"
+		capabilities: ["sort", "retrieve"]
+		description: "Populated by Usage Insights; absent when it isn't installed."
+		source: kv: {owner: "usageinsights.grafana.app", key: "stats", path: "views_\(w)"}
+	}]
 	validation: {
 		operations: [
 			"CREATE",
