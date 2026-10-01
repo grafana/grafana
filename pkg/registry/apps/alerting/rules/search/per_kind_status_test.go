@@ -2,8 +2,6 @@ package search
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -13,8 +11,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -70,7 +69,7 @@ func legacyStatusHandler(t *testing.T, rule *ngmodels.AlertRule) (*Handler, *log
 	client := NewLegacyClient(*service)
 	client.logger = logger
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1, UserID: 1})
-	return NewHandler(client, client), logger, ctx
+	return NewHandler(selectorForBackend(alertrule.ResourceInfo.GroupResource(), client), selectorForBackend(recordingrule.ResourceInfo.GroupResource(), client)), logger, ctx
 }
 
 func TestPerKindSearch_legacyStatusProjection(t *testing.T) {
@@ -143,45 +142,6 @@ func TestPerKindSearch_legacyStatusProjection(t *testing.T) {
 				})
 			}
 		})
-	}
-}
-
-func TestPerKindSearch_statusFieldsRejectFilteringAndSorting(t *testing.T) {
-	for _, recording := range []bool{false, true} {
-		for _, field := range []string{"health", "lastEvaluationTime", "lastError", "evaluationDuration", "state", "stateReason"} {
-			for _, operation := range []string{"filter", "sort", "project alert-only recording field"} {
-				if operation == "project alert-only recording field" && (!recording || (field != "state" && field != "stateReason")) {
-					continue
-				}
-				t.Run(field+"/"+operation+"/"+map[bool]string{false: "alert", true: "recording"}[recording], func(t *testing.T) {
-					index := &fakeIndex{}
-					h := NewHandler(index, index)
-					route := h.SearchAlertRules
-					if recording {
-						route = h.SearchRecordingRules
-					}
-					q := query()
-					switch operation {
-					case "filter":
-						leaf := perKindFilterLeaf(field, perKindFilterOperatorIn, "value")
-						q.Where = &leaf
-					case "sort":
-						q.Sort = []searchv0.SortField{{Field: field}}
-					default:
-						q.Fields = []string{field}
-					}
-					body, err := json.Marshal(q)
-					require.NoError(t, err)
-					rec := httptest.NewRecorder()
-					require.NoError(t, WithAPIStatusErrorResponse(route)(context.Background(), rec, &app.CustomRouteRequest{
-						ResourceIdentifier: resource.FullIdentifier{Namespace: "default"}, Body: readCloser(string(body)),
-					}))
-					assert.Equal(t, http.StatusUnprocessableEntity, rec.Code, rec.Body.String())
-					assert.Contains(t, rec.Body.String(), field)
-					assert.Nil(t, index.got)
-				})
-			}
-		}
 	}
 }
 

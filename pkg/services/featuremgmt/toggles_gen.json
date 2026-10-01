@@ -406,7 +406,8 @@
       "metadata": {
         "name": "alertingImportYAMLUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-05-21T15:59:41Z"
+        "creationTimestamp": "2025-05-21T15:59:41Z",
+        "deletionTimestamp": "2026-09-23T18:37:49Z"
       },
       "spec": {
         "description": "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
@@ -1405,7 +1406,8 @@
       "metadata": {
         "name": "dashboard.apiSearchFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for requests from the /api/search endpoint",
@@ -1446,7 +1448,8 @@
       "metadata": {
         "name": "dashboard.searchFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for dashboard search requests",
@@ -5033,7 +5036,8 @@
       "metadata": {
         "name": "search.apiFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for generic resource search API requests",
@@ -5510,6 +5514,20 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageClient.onBehalfOf",
+        "resourceVersion": "1789977477190",
+        "creationTimestamp": "2026-09-21T07:57:57Z"
+      },
+      "spec": {
+        "description": "Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

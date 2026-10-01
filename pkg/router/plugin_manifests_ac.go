@@ -16,9 +16,9 @@ type pluginManifestAccessControl struct{}
 var _ accesscontrol.AccessControl = pluginManifestAccessControl{}
 
 func (pluginManifestAccessControl) Evaluate(_ context.Context, _ identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	return evaluator.EvaluateCustom(func(action string, _ ...string) (bool, error) {
-		return action == pluginaccesscontrol.ActionAppAccess, nil
-	})
+	return evaluator.Evaluate(map[string][]string{
+		pluginaccesscontrol.ActionAppAccess: {"*"},
+	}), nil
 }
 
 func (pluginManifestAccessControl) RegisterScopeAttributeResolver(string, accesscontrol.ScopeAttributeResolver) {

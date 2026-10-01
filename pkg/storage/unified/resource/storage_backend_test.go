@@ -15,16 +15,16 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -53,7 +53,7 @@ func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
 	}
 }
 
-func withLogger(l log.Logger) func(*KVBackendOptions) {
+func withLogger(l logging.Logger) func(*KVBackendOptions) {
 	return func(opts *KVBackendOptions) {
 		opts.Log = l
 	}
@@ -99,7 +99,7 @@ func TestNewLeaseHolder(t *testing.T) {
 
 func requireValidLeaseHolderUUID(t *testing.T, holder string) string {
 	t.Helper()
-	uuidLength := len(uuid.Nil.String())
+	uuidLength := len(uuid.Nil().String())
 	require.Greater(t, len(holder), uuidLength+1)
 	separatorIndex := len(holder) - uuidLength - 1
 	require.Equal(t, byte('-'), holder[separatorIndex])
@@ -923,7 +923,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 	}
 
 	t.Run("storage error is logged once and the stream continues", func(t *testing.T) {
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		kvStore := &failingBatchGetKV{KV: setupBadgerKV(t), err: errors.New("storage is down")}
 		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
 
@@ -937,7 +937,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 	})
 
 	t.Run("cancellation stops the stream without logging", func(t *testing.T) {
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		backend := setupTestStorageBackend(t, withLogger(logger))
 
 		ctx, cancel := context.WithCancel(t.Context())
@@ -953,7 +953,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 
 	t.Run("an unreadable value is reported once, not also as missing data", func(t *testing.T) {
 		const numEvents = 3
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		kvStore := &unreadableValueKV{
 			KV:        setupBadgerKV(t),
 			nameMatch: "unreadable-1",
@@ -1269,6 +1269,42 @@ func TestKvStorageBackend_ReadResource_NotFound(t *testing.T) {
 	require.Nil(t, response.Value)
 }
 
+func TestKvStorageBackend_ReadResource_InvalidName(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+
+	for _, name := range []string{"invalid/name", "has space", strings.Repeat("a", 300)} {
+		t.Run(name[:min(len(name), 20)], func(t *testing.T) {
+			response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "resources",
+					Name:      name,
+				},
+			})
+			require.NotNil(t, response.Error)
+			require.Equal(t, int32(400), response.Error.Code)
+			require.Equal(t, "BadRequest", response.Error.Reason)
+		})
+	}
+
+	t.Run("too high resource version wins", func(t *testing.T) {
+		_, rv := createAndWriteTestObject(t, backend)
+		response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "invalid/name",
+			},
+			ResourceVersion: rv + 1000000000000,
+		})
+		require.NotNil(t, response.Error)
+		require.Equal(t, int32(400), response.Error.Code)
+		require.Contains(t, response.Error.Message, "too large resource version")
+	})
+}
+
 func TestKvStorageBackend_ReadResource_MissingKey(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -1408,6 +1444,33 @@ func TestKvStorageBackend_BatchReadResource_YieldsInRequestOrder(t *testing.T) {
 		require.Nil(t, response.Error)
 		require.Equal(t, requests[i].Key.Name, response.Key.Name)
 	}
+}
+
+func TestKvStorageBackend_BatchReadResource_InvalidName(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	obj, err := createTestObjectWithName("a", appsNamespace, "value-a")
+	require.NoError(t, err)
+	rv, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+
+	invalidKey := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "invalid/name"}
+	requests := []*resourcepb.ReadRequest{
+		{Key: invalidKey},
+		{Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "a"}},
+		{Key: invalidKey, ResourceVersion: rv + 1000000000000},
+	}
+	responses, err := backend.BatchReadResource(t.Context(), requests)
+	require.NoError(t, err)
+	got := collectBatchReadResponses(t, responses)
+	require.Len(t, got, 3)
+	require.NotNil(t, got[0].Error)
+	require.Equal(t, int32(400), got[0].Error.Code)
+	require.Equal(t, "BadRequest", got[0].Error.Reason)
+	require.Nil(t, got[1].Error)
+	require.Equal(t, "a", got[1].Key.Name)
+	require.NotNil(t, got[2].Error, "too-high RV should be rejected before the name check")
+	require.Equal(t, int32(400), got[2].Error.Code)
+	require.Contains(t, got[2].Error.Message, "too large resource version")
 }
 
 func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(t *testing.T) {
@@ -4759,7 +4822,7 @@ func TestListModifiedSinceSingleConnection(t *testing.T) {
 			backend := &kvStorageBackend{
 				dataStore:  newDataStore(store, nil),
 				eventStore: newEventStore(store),
-				log:        log.NewNopLogger(),
+				log:        &logging.NoOpLogger{},
 			}
 			since := snowflakeFromTime(time.Now().Add(-age))
 			// Cross a page boundary to exercise continuation in both scan directions.

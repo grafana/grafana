@@ -5629,16 +5629,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "繼續"
-        },
-        "title": {
-          "proceed-to-external-site": "是否繼續前往外部網站？"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "「{{dashboardName}}」儀表板",
       "label-no-dashboards-found": "未找到儀表板"
@@ -5764,10 +5754,16 @@
       "paste-panel": "貼上面板",
       "remove": "移除 {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "變更列標題",
       "switch-layout": "切換版面配置",
       "switch-layout-row": "切換版面配置",
       "switch-layout-tab": "切換版面配置",
+      "tab-repeat-variable": "",
       "tab-title": "變更分頁標題",
       "variable-description": "變更變數描述",
       "variable-hide": "變更變數隱藏選項",
@@ -6695,7 +6691,6 @@
       "playlist-previous": "前往上一個儀表板",
       "playlist-stop": "停止播放清單",
       "refresh": "重新整理儀表板",
-      "save": "儲存儀表板",
       "save-as-template": {
         "label": "儲存為範本"
       },
@@ -6710,8 +6705,6 @@
       "save-dashboard-short": "儲存",
       "save-library-panel": "儲存資料庫面板",
       "save-library-panel-short": "儲存",
-      "settings": "儀表板設定",
-      "share-button": "分享",
       "star-add-error": "無法新增至星號標記",
       "star-added": "已新增至星號標記",
       "star-remove-error": "無法從星號標記中移除",
@@ -9404,6 +9397,8 @@
     "menu": "開啟選單",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "儲存",
     "title": "功能控制項"
   },
@@ -13124,6 +13119,12 @@
       "query": {
         "add": "新增查詢",
         "run": "執行查詢"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13191,7 +13192,9 @@
       "copy-markdown": "複製為 Markdown",
       "download-markdown": "下載為 .md",
       "error": "無法匯出筆記本",
-      "label": "匯出"
+      "label": "匯出",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "新增區塊",
@@ -13207,7 +13210,9 @@
       "redo-action": "重做：{{action}}",
       "remove-query": "移除查詢",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "選取查詢項目",
+      "set-cell-time-range": "",
       "split-block": "分割區塊",
       "switch-datasource": "切換資料來源",
       "undo": "還原",
@@ -15733,8 +15738,7 @@
       "deleted-by-removed": "已刪除的帳戶",
       "deleted-by-unknown-short": "<0></0> 不明",
       "deleted-by-unknown-tooltip": "無法查詢刪除此儀表板的帳戶",
-      "deleted-less-than-1-min": "< 1 分鐘",
-      "deleted-remaining-header": "剩餘時間",
+      "deleted-header": "",
       "location-header": "位置",
       "name-header": "名稱",
       "tags-header": "標籤",
@@ -18039,10 +18043,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "查看",
-      "description": "我們重新設計了介面！",
-      "revert": "帶我返回",
-      "title": "新樣式"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

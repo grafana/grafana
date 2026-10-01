@@ -806,11 +806,6 @@ export interface FeatureToggles {
   */
   alertingMigrationUI?: boolean;
   /**
-  * Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
-  * @default true
-  */
-  alertingImportYAMLUI?: boolean;
-  /**
   * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
   * @default false
   */
