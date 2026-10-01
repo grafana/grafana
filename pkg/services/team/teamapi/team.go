@@ -160,6 +160,10 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 			if errors.Is(err, folderownership.ErrTeamOwnsFolders) {
 				return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
 			}
+			var statusErr apierrors.APIStatus
+			if errors.As(err, &statusErr) {
+				return response.Error(int(statusErr.Status().Code), "Failed to check if team owns folders", err)
+			}
 			return response.Error(http.StatusInternalServerError, "Failed to check if team owns folders", err)
 		}
 	}
@@ -170,6 +174,10 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 		}
 		if apierrors.IsConflict(err) {
 			return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
+		}
+		var statusErr apierrors.APIStatus
+		if errors.As(err, &statusErr) {
+			return response.Error(int(statusErr.Status().Code), "Failed to delete Team", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete Team", err)
 	}

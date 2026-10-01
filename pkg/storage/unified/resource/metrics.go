@@ -22,7 +22,7 @@ type StorageMetrics struct {
 func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 	return &StorageMetrics{
 		WatchEventLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_watch_event_latency_seconds",
+			Name:                            "grafana_storage_server_watch_event_latency_seconds",
 			Help:                            "Time (in seconds) from resource version generation to the watch event being scheduled with the gRPC transport",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
@@ -30,7 +30,7 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource"}),
 		WatchEventReadyLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_watch_event_ready_latency_seconds",
+			Name:                            "grafana_storage_server_watch_event_ready_latency_seconds",
 			Help:                            "Time (in seconds) from resource version generation until the watch event is ready to be sent over gRPC",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -38,7 +38,7 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource"}),
 		WatchEventSendDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_watch_event_send_duration_seconds",
+			Name:                            "grafana_storage_server_watch_event_send_duration_seconds",
 			Help:                            "Time (in seconds) spent scheduling a watch event with the gRPC transport, including its flow-control wait",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -46,7 +46,7 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource"}),
 		PollerLatency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Name:                            "storage_server_poller_query_latency_seconds",
+			Name:                            "grafana_storage_server_poller_query_latency_seconds",
 			Help:                            "poller query latency",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
@@ -54,19 +54,19 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		ListWithFieldSelectors: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_field_selector_search_total",
+			Name: "grafana_storage_server_field_selector_search_total",
 			Help: "number of times List was served by field selector search",
 		}, []string{"resource", "served_by"}),
 		RequestDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_grpc_request_duration_seconds",
-			Help:                            "Time (in seconds) spent serving unified storage gRPC requests, labeled by group and resource.",
+			Name:                            "grafana_storage_server_grpc_request_duration_seconds",
+			Help:                            "Time (in seconds) spent serving unified storage gRPC requests, labeled by method, group, resource, status, and List execution path.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"method", "group", "resource", "status_code"}),
+		}, []string{"method", "group", "resource", "status_code", "list_path"}),
 		DegradedOperations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_degraded_operations_total",
+			Name: "grafana_storage_server_degraded_operations_total",
 			Help: "Operations that proceeded despite a failed external dependency " +
 				"(e.g. a guard/check that was skipped because a downstream call failed).",
 		}, []string{"operation", "reason", "group", "resource"}),

@@ -160,6 +160,31 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(saveModel).toEqual(spec);
   });
 
+  it("round-trips a panel cell's own time range via queryOptions.timeFrom/.timeTo", () => {
+    const resource = notebookResource();
+    const panelElement = resource.spec.elements['latency-panel'];
+    if (panelElement.kind === 'Panel') {
+      panelElement.spec.data.spec.queryOptions = { timeFrom: 'now-24h', timeTo: 'now' };
+    }
+
+    const scene = transformNotebookToScene(resource);
+    const cell = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel')!;
+
+    expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    expect(cell.state.$timeRange?.state.to).toBe('now');
+    // Confirms timeFrom/timeTo were stripped before buildVizPanelState ran: otherwise it would have
+    // auto-attached its own PanelTimeRange here, which would shadow this cell-level override via
+    // sceneGraph.getTimeRange's check-self-before-parent resolution order.
+    expect(cell.state.body?.state.$timeRange).toBeUndefined();
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+    const savedElement = saveModel.elements['latency-panel'];
+    expect(savedElement.kind === 'Panel' && savedElement.spec.data.spec.queryOptions).toEqual({
+      timeFrom: 'now-24h',
+      timeTo: 'now',
+    });
+  });
+
   // The save path borrows the dashboard's vizPanelToSchemaV2, which is only safe here because both
   // optional args are omitted: a dsReferencesMapping routes it through getElementIdentifierForVizPanel
   // -> getDashboardSceneFor, which throws for a NotebookScene root. Nothing in the signature says so,

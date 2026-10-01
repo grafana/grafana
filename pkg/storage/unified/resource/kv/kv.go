@@ -133,7 +133,7 @@ type KV interface {
 	Batch(ctx context.Context, section string, ops []BatchOp) error
 }
 
-var _ KV = &badgerKV{}
+var _ KV = (*badgerKV)(nil)
 
 // Reference implementation of the KV interface using BadgerDB
 // This is only used for testing purposes, and will not work HA

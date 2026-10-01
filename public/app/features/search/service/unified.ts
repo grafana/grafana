@@ -432,6 +432,10 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
   if (hits.length < 1) {
     return { fields: [], length: 0 };
   }
+  // arrayToDataFrame below derives the frame's fields from the first row's keys, so every
+  // row has to carry every key. Otherwise a first hit without, say, a deletion time would
+  // hide that column for all the hits that do have one.
+  const fieldNames = new Set(hits.flatMap((hit) => Object.keys(hit.field ?? {})));
   const dashboardHits = hits.map((hit) => {
     // Collapse root-parented dashboards ("" or "general") into the "general"
     // UID the rest of the search UI uses as the parent for root items.
@@ -439,10 +443,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     const location = isRoot ? 'general' : hit.folder;
     const folder = isRoot ? 'general' : hit.folder || 'general';
 
-    // display null field values as "-"
-    const field = Object.fromEntries(
-      Object.entries(hit.field ?? {}).map(([key, value]) => [key, value == null ? '-' : value])
-    );
+    const field = Object.fromEntries(Array.from(fieldNames, (name) => [name, hit.field?.[name] ?? null]));
 
     return {
       ...hit,

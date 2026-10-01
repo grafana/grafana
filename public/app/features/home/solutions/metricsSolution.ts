@@ -9,6 +9,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { resolveKubernetesDatasource } from './kubernetesData';
@@ -205,7 +206,7 @@ export function metricsSolution(
       if (!ds) {
         return null;
       }
-      if (await needsAttention().catch(() => false)) {
+      if (contextSrv.hasAccessToExplore() && (await needsAttention().catch(() => false))) {
         return {
           label: t('home.solutions.metrics.investigate-disk', 'Investigate disk usage in Explore'),
           href: diskPressureExploreHref(ds, scopeFor(filter, ds)),

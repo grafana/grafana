@@ -207,7 +207,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 					AccessToken:  expiredToken.AccessToken,
 					RefreshToken: "",
 					ExpiresAt:    expiredToken.Expiry,
-				}, nil).Once()
+				}, nil).Twice()
 
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
@@ -248,7 +248,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 					RefreshToken: expiredToken.RefreshToken,
 					ExpiresAt:    expiredToken.Expiry,
 					IDToken:      UNEXPIRED_ID_TOKEN,
-				}, nil).Once()
+				}, nil).Twice()
 
 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 
@@ -272,7 +272,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 					RefreshToken: unexpiredTokenWithIDToken.RefreshToken,
 					ExpiresAt:    unexpiredTokenWithIDToken.Expiry,
 					IDToken:      EXPIRED_ID_TOKEN,
-				}, nil).Once()
+				}, nil).Twice()
 
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
@@ -301,7 +301,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 					RefreshToken: expiredToken.RefreshToken,
 					ExpiresAt:    expiredToken.Expiry,
 					IDToken:      UNEXPIRED_ID_TOKEN,
-				}, nil).Once()
+				}, nil).Twice()
 
 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 
@@ -318,6 +318,14 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			identity:        &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1234,
+					AccessToken:  expiredToken.AccessToken,
+					RefreshToken: expiredToken.RefreshToken,
+					ExpiresAt:    expiredToken.Expiry,
+				}, nil).Once()
+
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
@@ -328,6 +336,31 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 				})
 			},
 			expectedErr: ErrRetriesExhausted,
+		},
+		{
+			desc:            "should return the persisted token without waiting for the lock when the token is still valid",
+			identity:        &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1234,
+					AccessToken:  unexpiredTokenWithIDToken.AccessToken,
+					RefreshToken: unexpiredTokenWithIDToken.RefreshToken,
+					ExpiresAt:    unexpiredTokenWithIDToken.Expiry,
+					IDToken:      UNEXPIRED_ID_TOKEN,
+				}, nil).Once()
+
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+
+				_ = env.store.WithDbSession(context.Background(), func(sess *db.Session) error {
+					_, err := sess.Exec(`INSERT INTO server_lock (operation_uid, last_execution, version) VALUES (?, ?, ?)`, "oauth-refresh-token-1234-1", time.Now().Add(2*time.Second).Unix(), 0)
+					return err
+				})
+			},
+			expectedToken: unexpiredTokenWithIDToken,
 		},
 	}
 	for _, tt := range tests {
@@ -514,7 +547,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 					RefreshToken: expiredToken.RefreshToken,
 					ExpiresAt:    expiredToken.Expiry,
 					IDToken:      EXPIRED_ID_TOKEN,
-				}, nil).Once()
+				}, nil).Twice()
 
 				env.sessionService.On("FindExternalSessions", mock.Anything, &auth.ListExternalSessionQuery{UserID: 1}).Return([]*auth.ExternalSession{
 					{
@@ -577,7 +610,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 					RefreshToken: expiredToken.RefreshToken,
 					ExpiresAt:    expiredToken.Expiry,
 					IDToken:      EXPIRED_ID_TOKEN,
-				}, nil).Once()
+				}, nil).Twice()
 
 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(2), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 
@@ -677,7 +710,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 					RefreshToken: expiredToken.RefreshToken,
 					ExpiresAt:    expiredToken.Expiry,
 					IDToken:      UNEXPIRED_ID_TOKEN,
-				}, nil).Twice()
+				}, nil).Times(3)
 
 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 
@@ -705,7 +738,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 					RefreshToken: unexpiredToken.RefreshToken,
 					ExpiresAt:    unexpiredToken.Expiry,
 					IDToken:      EXPIRED_ID_TOKEN,
-				}, nil).Twice()
+				}, nil).Times(3)
 
 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 

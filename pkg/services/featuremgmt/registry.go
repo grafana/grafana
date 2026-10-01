@@ -657,7 +657,7 @@ var (
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},
@@ -990,6 +990,14 @@ var (
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "true",                                                      // enabled by default
+		},
+		{
+			Name:        "grafana.savedQueriesSearch",
+			Description: "Enables unified search for saved queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true},
+			Expression:  "false",
 		},
 		{
 			Name:        "grafana.savedQueriesPage",
@@ -1641,14 +1649,6 @@ var (
 		{
 			Name:        "alertingMigrationUI",
 			Description: "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
-			Generate:    Generate{LegacyFrontend: true},
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-		},
-		{
-			Name:        "alertingImportYAMLUI",
-			Description: "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
 			Generate:    Generate{LegacyFrontend: true},
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
@@ -2949,30 +2949,6 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:        "dashboard.searchFieldValueResults",
-			Description: "Uses field-value results for dashboard search requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
-			Name:        "dashboard.apiSearchFieldValueResults",
-			Description: "Uses field-value results for requests from the /api/search endpoint",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
-			Name:        "search.apiFieldValueResults",
-			Description: "Uses field-value results for generic resource search API requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
 			Name:        "dashboard.vectorSearch",
 			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
 			Stage:       FeatureStageExperimental,
@@ -3396,6 +3372,15 @@ var (
 		{
 			Name:         "unifiedStorageClient.requireCallerIdentity",
 			Description:  "Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "unifiedStorageClient.onBehalfOf",
+			Description:  "Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"maps"
 	"net/http"
 	"slices"
 	"sync"
@@ -29,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var _ ResourceIndex = &MockResourceIndex{}
+var _ ResourceIndex = (*MockResourceIndex)(nil)
 
 // Mock implementations
 type MockResourceIndex struct {
@@ -41,8 +42,19 @@ type MockResourceIndex struct {
 	buildInfo IndexBuildInfo
 	docCount  int64
 
-	// Items passed to BulkIndex, guarded by updateIndexMu.
+	// Import times recorded through RecordImportTime, and an error to fail reading
+	// them with.
+	importTimes    map[schema.GroupResource]time.Time
+	importTimesErr error
+
+	// What the index reports holding, for reconciliation tests.
+	documentRefs    map[schema.GroupResource][]DocumentRef
+	documentRefsErr error
+
+	// Items passed to BulkIndex, and how many writes carried them, guarded by
+	// updateIndexMu.
 	bulkItems []*BulkIndexItem
+	bulkCalls int
 
 	// Optional configured results for the managed-object RPCs. When nil the
 	// methods return an error, matching the default "not expected" behaviour.
@@ -64,6 +76,7 @@ func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
 func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
+	m.bulkCalls++
 	m.bulkItems = append(m.bulkItems, req.Items...)
 	return nil
 }
@@ -88,6 +101,45 @@ func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStat
 
 func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
 	return m.docCount, nil
+}
+
+func (m *MockResourceIndex) ImportTimes() (map[schema.GroupResource]time.Time, error) {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	if m.importTimesErr != nil {
+		return nil, m.importTimesErr
+	}
+	return maps.Clone(m.importTimes), nil
+}
+
+func (m *MockResourceIndex) RecordImportTime(gr schema.GroupResource, t time.Time) error {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	if m.importTimes == nil {
+		m.importTimes = map[schema.GroupResource]time.Time{}
+	}
+	m.importTimes[gr] = t
+	return nil
+}
+
+// documentRefs is what ListDocumentRefs answers with, by resource type.
+func (m *MockResourceIndex) ListDocumentRefs(_ context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error] {
+	return func(yield func(DocumentRef, error) bool) {
+		m.updateIndexMu.Lock()
+		refs := slices.Clone(m.documentRefs[gr])
+		err := m.documentRefsErr
+		m.updateIndexMu.Unlock()
+
+		if err != nil {
+			yield(DocumentRef{}, err)
+			return
+		}
+		for _, ref := range refs {
+			if !yield(ref, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -223,6 +275,8 @@ func featuresForTestIndex(keepsDeletedDocuments bool) []IndexFeature {
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
+	// What the previous run left recorded as open, returned by LoadOpenIndexStats.
+	openIndexStats []ResourceStats
 
 	// Recorded on every index this backend builds, standing in for the decision the
 	// real backend makes from its options at creation.
@@ -249,7 +303,7 @@ type buildIndexCall struct {
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
-	return nil, nil
+	return m.openIndexStats, nil
 }
 
 // TestStartupIndexStatsCountLimit checks the cap the startup prebuild passes to
@@ -700,6 +754,14 @@ func TestStoredResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	require.Contains(t, CurrentIndexFeatures(), IndexFeatureStoredResourceVersion)
 	for _, postRankAuthz := range []bool{false, true} {
 		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureStoredResourceVersion)
+	}
+}
+
+func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
+	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
+	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
+	for _, postRankAuthz := range []bool{false, true} {
+		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureSortableTrashResourceVersion)
 	}
 }
 
@@ -1803,7 +1865,7 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, codes.Unimplemented, status.Code(err))
 
-	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "grafana_vector_storage_search_duration_seconds"))
 }
 
 // TestSearchServer_HybridSearch_ObservesDuration mirrors the VectorSearch
@@ -1828,7 +1890,7 @@ func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, codes.Unimplemented, status.Code(err))
 
-	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "vector_storage_hybrid_search_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "grafana_vector_storage_hybrid_search_duration_seconds"))
 }
 
 func TestFolderFilterSet(t *testing.T) {
@@ -2264,7 +2326,7 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 
 	// An index reporting no features: what a binary from before the mapping built.
 	older := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{}}}
-	require.False(t, server.keepsDeletedDocuments(older, log.NewNopLogger()))
+	require.False(t, server.keepsDeletedDocuments(key, older, log.NewNopLogger()))
 
 	require.NoError(t, server.indexTrash(t.Context(), key, older, log.NewNopLogger()))
 	require.Empty(t, older.indexedItems(), "trash listing should be skipped entirely")
@@ -2288,7 +2350,7 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 	// order. Treated the same as no markers at all: wait for the rebuild.
 	t.Run("an index with the markers but not the trash fields", func(t *testing.T) {
 		index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}}
-		require.False(t, server.keepsDeletedDocuments(index, log.NewNopLogger()))
+		require.False(t, server.keepsDeletedDocuments(key, index, log.NewNopLogger()))
 	})
 }
 

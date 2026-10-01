@@ -16,6 +16,8 @@ import { transformNotebookSceneToSaveModel } from '../serialization/transformNot
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
 
 import { type NotebookScene } from './NotebookScene';
+import { type NotebookCellItem } from './layout-notebook/NotebookCellItem';
+import { type CellTimeRangeSpec, withQueryOptionsTimeRange } from './layout-notebook/cellTimeRange';
 
 type PanelVizConfigState = Pick<VizPanel['state'], 'pluginId' | 'pluginVersion' | 'options' | 'fieldConfig'>;
 
@@ -46,8 +48,9 @@ export interface NotebookAutosaveState {
  * skips the write when they match.
  *
  * Changes only count while the notebook is being edited. Reading one changes it too: the time picker is
- * there for readers, and using a panel writes to its options and field config. Both belong to whoever
- * was reading rather than to the notebook, so both are held back from a save until someone editing says
+ * there for readers, and using a panel writes to its options and field config. A cell's own time-range
+ * toggle is there for readers too (see NotebookCellTimeRangeControl). All three belong to whoever was
+ * reading rather than to the notebook, so all are held back from a save until someone editing says
  * otherwise. Writers that never enter edit mode call `saveDocumentChange` instead.
  */
 export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
@@ -63,6 +66,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private savedVizPanels?: Map<string, VizPanel>;
   /** The panels whose viz config was edited this session, by element name. As `timeSettingsEdited`. */
   private vizConfigsEdited = new Set<string>();
+  /** Each cell's own time range in `baseline`, by cell identity. As `savedVizConfigs`. */
+  private savedCellTimeRanges = new Map<NotebookCellItem, CellTimeRangeSpec | undefined>();
+  /** The cells whose own time range was edited this session, by cell identity. As `vizConfigsEdited`. */
+  private cellTimeRangesEdited = new Set<NotebookCellItem>();
   /** The panels a reader changed, by element name, waiting on the prompt edit mode opens with. */
   private vizConfigsChangedWhileReading = new Set<string>();
   /** Each panel's normalized state immediately before its first reader-owned change. */
@@ -144,6 +151,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.vizConfigsEdited.add(revizzedPanel);
       }
 
+      const changedCell = changedCellTimeRange(payload, this.scene);
+      if (changedCell) {
+        this.cellTimeRangesEdited.add(changedCell);
+      }
+
       // Entering edit mode and the trailing empty block it keeps ready (see NotebookLayoutManager)
       // both publish state changes of their own, with nothing yet different to write. Answered once
       // and handed to `schedule`, because working it out serializes every panel in the notebook.
@@ -180,24 +192,15 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     for (const name of this.savedVizConfigs?.keys() ?? []) {
       this.vizConfigsEdited.add(name);
     }
+    for (const cell of this.scene.state.body.state.cells) {
+      this.cellTimeRangesEdited.add(cell);
+    }
     this.vizConfigsChangedWhileReading.clear();
     this.vizConfigsBeforeReadingChange.clear();
     this.editedByWriter = true;
     this.schedule();
-    this.flush();
 
-    // `flush` runs the save synchronously, so anything to write is already in flight by now. A save that
-    // was already running when this arrived leaves this one queued behind it, and the queued one is the
-    // one carrying the change, so waiting on a single request would return before it was written.
-    while (this.inFlightSave) {
-      await this.inFlightSave;
-    }
-
-    // Nothing is left in flight, so the status now says how it went. Still no error means the write
-    // landed, or there was nothing to write and the notebook already holds what was asked for.
-    if (this.state.status === 'error') {
-      throw new Error(this.state.errorMessage ?? 'The notebook could not be saved.');
-    }
+    await this.awaitPendingSave();
   }
 
   /**
@@ -209,6 +212,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   public notifyEditingStarted(): void {
     this.timeSettingsEdited = false;
     this.vizConfigsEdited.clear();
+    this.cellTimeRangesEdited.clear();
   }
 
   /**
@@ -319,6 +323,27 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
   }
 
+  /**
+   * Brings forward the save the debounce was already going to make, for a caller about to read the
+   * notebook back from the server. Unlike `saveDocumentChange` it claims nothing on the way.
+   *
+   * Throws when the save failed, including one that failed earlier and was never retried — either
+   * way the server's copy is behind.
+   */
+  public async awaitPendingSave(): Promise<void> {
+    this.flush();
+
+    // A save already running leaves this one queued behind it, and the queued one carries the
+    // change, so awaiting a single request would return too early.
+    while (this.inFlightSave) {
+      await this.inFlightSave;
+    }
+
+    if (this.state.status === 'error') {
+      throw new Error(this.state.errorMessage ?? 'The notebook could not be saved.');
+    }
+  }
+
   /** Tries a failed save again. A failure waits for the next change, which may never come. */
   public retry(): void {
     this.schedule();
@@ -409,12 +434,58 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    */
   private buildSpecToSave(
     timeSettingsEdited = this.timeSettingsEdited,
-    vizConfigsEdited = this.vizConfigsEdited
+    vizConfigsEdited = this.vizConfigsEdited,
+    cellTimeRangesEdited = this.cellTimeRangesEdited
   ): NotebookSpec {
     const spec = transformNotebookSceneToSaveModel(this.scene);
     const timeSettings = timeSettingsEdited || !this.savedTimeSettings ? spec.timeSettings : this.savedTimeSettings;
 
-    return { ...spec, timeSettings, elements: this.withSavedVizConfigs(spec.elements, vizConfigsEdited) };
+    return {
+      ...spec,
+      timeSettings,
+      elements: this.withSavedCellTimeRanges(
+        this.withSavedVizConfigs(spec.elements, vizConfigsEdited),
+        cellTimeRangesEdited
+      ),
+    };
+  }
+
+  private withSavedCellTimeRanges(
+    elements: NotebookSpec['elements'],
+    cellTimeRangesEdited: ReadonlySet<NotebookCellItem>
+  ): NotebookSpec['elements'] {
+    const saved = this.savedCellTimeRanges;
+    if (!saved.size) {
+      return elements;
+    }
+
+    // APPLY_NOTEBOOK_SPEC (a whole-document rewrite) replaces every cell with a new instance
+    // that commonly reuses the old elementName, so a saved entry from before that replace can
+    // no longer be trusted just because cellTimeRangesEdited doesn't (yet) know the new instance.
+    const currentCells = new Set(this.scene.state.body.state.cells);
+    const result: Record<string, NotebookElement> = { ...elements };
+    for (const [cell, savedTimeRange] of saved) {
+      if (cellTimeRangesEdited.has(cell) || !currentCells.has(cell)) {
+        continue;
+      }
+      const element = result[cell.state.elementName];
+      if (element?.kind !== 'Panel') {
+        continue;
+      }
+
+      if (savedTimeRange) {
+        // Reinstate the saved cell range, overriding whatever a reader's own toggle left live.
+        result[cell.state.elementName] = withQueryOptionsTimeRange(element, savedTimeRange);
+        continue;
+      }
+
+      const { timeFrom, timeTo } = element.spec.data.spec.queryOptions;
+      if (timeFrom && timeTo) {
+        result[cell.state.elementName] = withQueryOptionsTimeRange(element, undefined);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -449,12 +520,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private recordWritten(
     spec: NotebookSpec,
     serialized = JSON.stringify(spec),
-    panels = collectVizPanels(this.scene)
+    panels = collectVizPanels(this.scene),
+    cells = this.scene.state.body.contentCells()
   ): void {
     this.baseline = serialized;
     this.savedTimeSettings = spec.timeSettings;
     this.savedVizConfigs = collectVizConfigs(spec);
     this.savedVizPanels = panels;
+    this.savedCellTimeRanges = collectCellTimeRangesFromSpec(spec, cells);
   }
 
   /** What to report when there is nothing waiting to be written. */
@@ -477,13 +550,15 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     const timeSettingsEdited = this.timeSettingsEdited;
     const vizConfigsEdited = new Set(this.vizConfigsEdited);
+    const cellTimeRangesEdited = new Set(this.cellTimeRangesEdited);
     const editedByWriter = this.editedByWriter;
     const panels = collectVizPanels(this.scene);
+    const cells = this.scene.state.body.contentCells();
 
     let spec: NotebookSpec;
     let serialized: string;
     try {
-      spec = this.buildSpecToSave(timeSettingsEdited, vizConfigsEdited);
+      spec = this.buildSpecToSave(timeSettingsEdited, vizConfigsEdited, cellTimeRangesEdited);
       serialized = JSON.stringify(spec);
     } catch (error) {
       // `hasSomethingToWrite` leaves this for the save to report, because this is the one place with
@@ -505,6 +580,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       // later view-only mutation ride in on reactivation as though a writer had made it.
       this.timeSettingsEdited = false;
       this.vizConfigsEdited.clear();
+      this.cellTimeRangesEdited.clear();
       this.editedByWriter = false;
       this.setState({ status: this.restingStatus() });
       return;
@@ -514,6 +590,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     // request fails, its snapshot is merged back below so none of those earlier edits are lost.
     this.timeSettingsEdited = false;
     this.vizConfigsEdited.clear();
+    this.cellTimeRangesEdited.clear();
     this.editedByWriter = false;
     this.inFlight = true;
     this.setState({ status: 'saving', errorMessage: undefined });
@@ -524,7 +601,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.inFlightSave = this.write(uid, spec)
       .then(({ generation }) => {
-        this.recordWritten(spec, serialized, panels);
+        this.recordWritten(spec, serialized, panels, cells);
         this.hasSavedOnce = true;
         this.failedAttempts = 0;
         this.setState({
@@ -542,6 +619,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.timeSettingsEdited ||= timeSettingsEdited;
         for (const name of vizConfigsEdited) {
           this.vizConfigsEdited.add(name);
+        }
+        for (const cell of cellTimeRangesEdited) {
+          this.cellTimeRangesEdited.add(cell);
         }
         this.editedByWriter ||= editedByWriter;
         this.failedAttempts += 1;
@@ -647,6 +727,54 @@ function collectVizPanels(scene: NotebookScene): Map<string, VizPanel> {
   }
 
   return panels;
+}
+
+function collectCellTimeRangesFromSpec(
+  spec: NotebookSpec,
+  cells: NotebookCellItem[]
+): Map<NotebookCellItem, CellTimeRangeSpec | undefined> {
+  const ranges = new Map<NotebookCellItem, CellTimeRangeSpec | undefined>();
+
+  for (const cell of cells) {
+    const element = spec.elements[cell.state.elementName];
+    const queryOptions = element?.kind === 'Panel' ? element.spec.data.spec.queryOptions : undefined;
+    ranges.set(
+      cell,
+      queryOptions?.timeFrom && queryOptions?.timeTo
+        ? { from: queryOptions.timeFrom, to: queryOptions.timeTo }
+        : undefined
+    );
+  }
+
+  return ranges;
+}
+
+/**
+ * The cell whose own time range a state change just altered, if it was one — either toggling the
+ * override on/off or dragging the picker while one is active. Mirrors `changesTimeSettings`.
+ */
+export function changedCellTimeRange(
+  payload: SceneObjectStateChangedPayload,
+  scene: NotebookScene
+): NotebookCellItem | undefined {
+  const { changedObject, partialUpdate } = payload;
+
+  for (const cell of scene.state.body.state.cells) {
+    if (changedObject === cell && '$timeRange' in partialUpdate) {
+      return cell;
+    }
+    // A relative range ticks its own `value` on activation/refresh, on the same object — that's
+    // not an edit, so only 'from'/'to' actually changing counts as one.
+    if (
+      cell.state.$timeRange &&
+      changedObject === cell.state.$timeRange &&
+      ('from' in partialUpdate || 'to' in partialUpdate)
+    ) {
+      return cell;
+    }
+  }
+
+  return undefined;
 }
 
 /** The panel state a reader can change without editing the notebook. */
