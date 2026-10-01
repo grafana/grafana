@@ -5,6 +5,7 @@ export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
 
 export const RULE_LIST_POLL_INTERVAL_MS = 30000;
+export const STATE_HISTORY_POLL_INTERVAL_MS = 10000;
 
 export const ALERTMANAGER_NAME_QUERY_KEY = 'alertmanager';
 export const ALERTMANAGER_NAME_LOCAL_STORAGE_KEY = 'alerting-alertmanager';

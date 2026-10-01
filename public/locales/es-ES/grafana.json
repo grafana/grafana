@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Proceder"
-        },
-        "title": {
-          "proceed-to-external-site": "¿Dirigirse a un sitio externo?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "No se han encontrado dashboards"
@@ -6747,7 +6737,6 @@
       "playlist-previous": "Ir al panel de control anterior",
       "playlist-stop": "Detener la lista de reproducción",
       "refresh": "Actualizar panel de control",
-      "save": "Guardar panel de control",
       "save-as-template": {
         "label": "Guardar como plantilla"
       },
@@ -6762,8 +6751,6 @@
       "save-dashboard-short": "Guardar",
       "save-library-panel": "Guardar panel de biblioteca",
       "save-library-panel-short": "Guardar",
-      "settings": "Ajustes del panel de control",
-      "share-button": "Compartir",
       "star-add-error": "Error al añadir a destacados",
       "star-added": "Añadido a destacados",
       "star-remove-error": "Error al eliminar de destacados",
@@ -13298,7 +13285,9 @@
       "copy-markdown": "Copiar como Markdown",
       "download-markdown": "Descargar como .md",
       "error": "Error al exportar el cuaderno",
-      "label": "Exportar"
+      "label": "Exportar",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Añadir bloque",
@@ -18186,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Échale un vistazo",
-      "description": "¡Hemos hecho un rediseño!",
-      "revert": "Quiero volver",
-      "title": "Nuevos estilos"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

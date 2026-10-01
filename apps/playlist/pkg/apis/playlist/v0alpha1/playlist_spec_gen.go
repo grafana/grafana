@@ -2,6 +2,7 @@
 
 package v0alpha1
 
+// Shared item definition for all versions
 // +k8s:openapi-gen=true
 type PlaylistItem = PlaylistPlaylistItem
 

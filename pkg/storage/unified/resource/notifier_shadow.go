@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/dskit/instrument"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // natsShadowMetrics record what the NATS notifier delivers, for dashboard
@@ -52,10 +52,10 @@ type natsShadow struct {
 	notifier  *natsNotifier
 	watchOpts WatchOptions
 	metrics   *natsShadowMetrics
-	log       log.Logger
+	log       logging.Logger
 }
 
-func newNatsShadow(subscriber EventSubscriber, watchOpts WatchOptions, reg prometheus.Registerer, logger log.Logger) *natsShadow {
+func newNatsShadow(subscriber EventSubscriber, watchOpts WatchOptions, reg prometheus.Registerer, logger logging.Logger) *natsShadow {
 	metrics := newNatsShadowMetrics(reg)
 	return &natsShadow{
 		notifier:  newNatsNotifier(subscriber, nil, metrics.dropped, logger),

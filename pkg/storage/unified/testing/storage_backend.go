@@ -9,9 +9,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +63,7 @@ type TestOptions struct {
 
 // GenerateRandomNSPrefix creates a random namespace prefix for test isolation
 func GenerateRandomNSPrefix() string {
-	uid := uuid.New().String()[:10]
+	uid := uuid.NewV4().String()[:10]
 	return fmt.Sprintf("test-%s", uid)
 }
 
@@ -1513,7 +1513,7 @@ func WriteEvent(ctx context.Context, store resource.StorageBackend, name string,
 	event := resource.WriteEvent{
 		Type:  action,
 		Value: options.Value,
-		GUID:  uuid.New().String(),
+		GUID:  uuid.NewV4().String(),
 		Key: &resourcepb.ResourceKey{
 			Namespace: options.Namespace,
 			Group:     options.Group,
@@ -2132,7 +2132,7 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 	makeValue := func(name string) []byte {
 		return fmt.Appendf(nil,
 			`{"apiVersion":"%s/v0alpha1","kind":"%s","metadata":{"name":"%s","namespace":"%s","uid":"%s"}}`,
-			group, kind, name, ns, uuid.New().String(),
+			group, kind, name, ns, uuid.NewV4().String(),
 		)
 	}
 

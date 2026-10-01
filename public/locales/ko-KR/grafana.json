@@ -5629,16 +5629,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "진행"
-        },
-        "title": {
-          "proceed-to-external-site": "외부 사이트로 이동하시겠어요?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} 대시보드",
       "label-no-dashboards-found": "검색된 대시보드 없음"
@@ -6701,7 +6691,6 @@
       "playlist-previous": "이전 대시보드로 이동",
       "playlist-stop": "플레이리스트 중지",
       "refresh": "대시보드 새로 고침",
-      "save": "대시보드 저장",
       "save-as-template": {
         "label": "템플릿으로 저장"
       },
@@ -6716,8 +6705,6 @@
       "save-dashboard-short": "저장",
       "save-library-panel": "라이브러리 패널 저장",
       "save-library-panel-short": "저장",
-      "settings": "대시보드 설정",
-      "share-button": "공유",
       "star-add-error": "별표에 추가하지 못함",
       "star-added": "별표에 추가됨",
       "star-remove-error": "별표에서 제거하지 못함",
@@ -13205,7 +13192,9 @@
       "copy-markdown": "마크다운으로 복사",
       "download-markdown": ".md로 다운로드",
       "error": "노트북 내보내기 실패",
-      "label": "내보내기"
+      "label": "내보내기",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "블록 추가",
@@ -18054,10 +18043,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "확인해 보세요",
-      "description": "새롭게 단장했습니다!",
-      "revert": "뒤로 가기",
-      "title": "신규 스타일"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {
