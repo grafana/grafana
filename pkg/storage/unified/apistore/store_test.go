@@ -292,6 +292,31 @@ func TestCreateOrReplaceRejectsUpdateWithoutUpdateRights(t *testing.T) {
 	require.True(t, apierrors.IsForbidden(err))
 }
 
+func TestCreateOrReplaceDeepCopiesObjectPerRetryAttempt(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/deepcopy-check"
+	first := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "deepcopy-check", Namespace: "test-ns"}}
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, first, firstOut, 0))
+
+	second := &example.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "deepcopy-check", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+		},
+		Spec: example.PodSpec{NodeName: "replacement-node"},
+	}
+	secondOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, second, secondOut, 0))
+
+	// The object passed in to Create must not have been mutated by the write it triggered -
+	// if createOrReplace's tryUpdate ever returns the caller's own obj pointer instead of a
+	// copy, storage-layer mutations (UID backfill, generation, etc.) leak back onto it.
+	require.Empty(t, second.UID, "the caller's original object must never be mutated by the write")
+}
+
 func TestValidUpdate(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()

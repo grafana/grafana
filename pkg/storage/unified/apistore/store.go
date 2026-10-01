@@ -405,19 +405,14 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // object of this name already exists, replace it via GuaranteedUpdate (full content, no
 // resourceVersion precondition) instead of letting Create fail with AlreadyExists.
 func (s *Storage) createOrReplace(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	existing := s.newFunc()
-	err := s.Get(ctx, key, storage.GetOptions{}, existing)
-	if storage.IsNotFound(err) {
-		return s.Create(ctx, key, obj, out, ttl)
-	}
-	if err != nil {
-		return err
-	}
-
 	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
-		return obj, nil, nil
+		return obj.DeepCopyObject(), nil, nil
 	}
-	return s.GuaranteedUpdate(ctx, key, out, false, nil, tryUpdate, nil)
+	// ignoreNotFound: true means GuaranteedUpdate itself falls through to a plain Create
+	// (see store.go's upsert-on-missing branch) when the object doesn't exist, so there's
+	// no separate pre-Get here at all - removing both the extra round trip and the narrow
+	// delete-between-Get-and-Update race a separate Get would otherwise open up.
+	return s.GuaranteedUpdate(ctx, key, out, true, nil, tryUpdate, nil)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
