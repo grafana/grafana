@@ -47,6 +47,104 @@ func TestListTrashWithSearch(t *testing.T) {
 	require.Equal(t, listPathTrashSearch, metricsState.listPath)
 }
 
+func TestListTrashWithSearchNotOlderThan(t *testing.T) {
+	const requestedRV int64 = 1856241819843796993
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	searchResp := &resourcepb.ResourceSearchResponse{
+		ResourceVersion: requestedRV + 100,
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
+	backend := &trashBatchFakeBackend{}
+	s, searchClient := newSearchBackedTrashTestServer(searchResp, backend)
+	req := trashListRequest()
+	req.ResourceVersion = requestedRV
+	req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+
+	resp, err := s.List(ctx, req)
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Equal(t, requestedRV+100, resp.ResourceVersion)
+	require.Equal(t, []*resourcepb.ResourceSearchRequest_Sort{{Field: SEARCH_FIELD_DELETED_RV}}, searchClient.last.SortBy)
+	require.Equal(t, []string{sortableResourceVersion(requestedRV), ""}, searchClient.last.SearchAfter)
+	require.Zero(t, backend.listHistoryCalls)
+}
+
+func TestListTrashWithSearchNotOlderThanFallsBackWhenIndexIsBehind(t *testing.T) {
+	const requestedRV int64 = 1856241819843796993
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	searchResp := &resourcepb.ResourceSearchResponse{
+		ResourceVersion: requestedRV - 1,
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
+	backend := &trashBatchFakeBackend{listRV: 77}
+	s, searchClient := newSearchBackedTrashTestServer(searchResp, backend)
+	req := trashListRequest()
+	req.ResourceVersion = requestedRV
+	req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+
+	resp, err := s.List(ctx, req)
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Equal(t, int64(77), resp.ResourceVersion)
+	require.NotNil(t, searchClient.last)
+	require.Equal(t, 1, backend.listHistoryCalls)
+}
+
+func TestListTrashWithSearchContinuesNotOlderThanSort(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	searchResp := &resourcepb.ResourceSearchResponse{
+		ResourceVersion: 100,
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
+	backend := &trashBatchFakeBackend{}
+	s, searchClient := newSearchBackedTrashTestServer(searchResp, backend)
+	req := trashListRequest()
+	req.NextPageToken = ContinueToken{
+		ResourceVersion: 100,
+		SearchAfter:     []string{"0000000000000000042", "deleted-a"},
+		SortAscending:   true,
+	}.String()
+
+	resp, err := s.List(ctx, req)
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Equal(t, []*resourcepb.ResourceSearchRequest_Sort{{Field: SEARCH_FIELD_DELETED_RV}}, searchClient.last.SortBy)
+	require.Equal(t, []string{"0000000000000000042", "deleted-a"}, searchClient.last.SearchAfter)
+	require.Zero(t, backend.listHistoryCalls)
+}
+
+func TestListTrashWithSearchNotOlderThanTokenKeepsAscendingSort(t *testing.T) {
+	const requestedRV int64 = 1856241819843796993
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	key := &resourcepb.ResourceKey{
+		Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "deleted-a",
+	}
+	searchResp := &resourcepb.ResourceSearchResponse{
+		ResourceVersion: requestedRV + 100,
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key: key, ResourceVersion: requestedRV, SortFields: []string{sortableResourceVersion(requestedRV), key.Name},
+		}},
+	}
+	backend := &trashBatchFakeBackend{value: trashObjectJSON(t, key, "folder-a", "deleter", false)}
+	s, _ := newSearchBackedTrashTestServer(searchResp, backend)
+	req := trashListRequest()
+	req.Limit = 1
+	req.ResourceVersion = requestedRV
+	req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+
+	resp, err := s.List(ctx, req)
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	token, err := GetContinueToken(resp.NextPageToken)
+	require.NoError(t, err)
+	require.True(t, token.SortAscending)
+}
+
 func TestShouldUseSearchForTrash(t *testing.T) {
 	base := func() *resourcepb.ListRequest {
 		return &resourcepb.ListRequest{
@@ -73,7 +171,10 @@ func TestShouldUseSearchForTrash(t *testing.T) {
 		"not allowlisted":   {},
 		"resource version":  {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.ResourceVersion = 42 }},
 		"exact version":     {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Exact }},
-		"not older than":    {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan }},
+		"not older than": {allowlisted: true, want: true, mutate: func(req *resourcepb.ListRequest) {
+			req.ResourceVersion = 42
+			req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+		}},
 		"kind absent from manifests": {allowlisted: true, want: true, mutate: func(req *resourcepb.ListRequest) {
 			req.Options.Key.Group = "runtime.test"
 			req.Options.Key.Resource = "runtimekinds"

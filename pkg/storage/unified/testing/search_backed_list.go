@@ -448,4 +448,44 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 	if opts.ExpectBatchReads {
 		require.Greater(t, counting.trashBatchReads.Load(), int64(0))
 	}
+
+	t.Run("not older than starts at the requested deletion", func(t *testing.T) {
+		before := counting.trashBatchReads.Load()
+		collectNotOlderThan := func(t *testing.T, server resource.ResourceServer) ([]string, int) {
+			t.Helper()
+			names := []string{}
+			token := ""
+			for pages := 0; ; pages++ {
+				require.Less(t, pages, 10, "pagination must terminate")
+				req := newReq(token)
+				if token == "" {
+					req.ResourceVersion = wantRV["own"]
+					req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+				}
+
+				resp, err := server.List(ctx, req)
+				require.NoError(t, err)
+				require.Nil(t, resp.Error)
+				for _, item := range resp.Items {
+					obj := &unstructured.Unstructured{}
+					require.NoError(t, obj.UnmarshalJSON(item.Value))
+					names = append(names, obj.GetName())
+				}
+				token = resp.NextPageToken
+				if token == "" {
+					return names, pages + 1
+				}
+			}
+		}
+
+		storeNames, storePages := collectNotOlderThan(t, storeServer)
+		searchNames, searchPages := collectNotOlderThan(t, searchServer)
+		require.Equal(t, []string{"own", "admin"}, storeNames)
+		require.Equal(t, storeNames, searchNames)
+		require.Greater(t, storePages, 1)
+		require.Greater(t, searchPages, 1)
+		if opts.ExpectBatchReads {
+			require.Greater(t, counting.trashBatchReads.Load(), before, "NotOlderThan should use trash search")
+		}
+	})
 }
