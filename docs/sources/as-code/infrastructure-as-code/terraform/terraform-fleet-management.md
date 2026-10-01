@@ -477,7 +477,7 @@ This pipeline collects host metrics with the [`hostmetrics` receiver](https://gi
 
    processors:
      resourcedetection:
-       detectors: ["env", "system"]
+       detectors: ['env', 'system']
        override: false
      transform/add_host_metric_attributes:
        error_mode: ignore
@@ -493,7 +493,7 @@ This pipeline collects host metrics with the [`hostmetrics` receiver](https://gi
        # Replace the following placeholder with the OTLP endpoint for your stack.
        endpoint: <OTLP_ENDPOINT>
        headers:
-         Authorization: "Basic ${env:GCLOUD_BASIC_AUTH_BASE64}"
+         Authorization: 'Basic ${env:GCLOUD_BASIC_AUTH_BASE64}'
 
    service:
      pipelines:
