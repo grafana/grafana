@@ -485,6 +485,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	// SSO settings apis
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
+		// The standalone apiserver (b.sso == nil) defers per-provider settings RBAC to
+		// its access-policy authorizer, so it must not run the redacting store's
+		// per-provider List filter — otherwise List would filter while Get does not.
+		listAccessClient := b.accessClient
+		if b.sso == nil {
+			listAccessClient = nil
+		}
 		// With an MT-Settings client the SSOSetting kind rides the dual-writer (mode-gated
 		// reads/writes); without it (on-prem) the legacy store serves alone.
 		if b.ssoSettingsClient != nil && opts.DualWriteBuilder != nil {
@@ -496,7 +503,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			}
 			// The legacy adapter returns the raw secret on Create so the dual-writer
 			// forwards it to MT-Settings; redact it back out of the client response.
-			redacted, err := sso.NewRedactingStore(dw, b.accessClient)
+			redacted, err := sso.NewRedactingStore(dw, listAccessClient)
 			if err != nil {
 				return err
 			}
@@ -504,7 +511,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		} else {
 			// Legacy serves alone, but its Create still returns the raw input, so
 			// redact the response here too.
-			redacted, err := sso.NewRedactingStore(b.ssoLegacyStore, b.accessClient)
+			redacted, err := sso.NewRedactingStore(b.ssoLegacyStore, listAccessClient)
 			if err != nil {
 				return err
 			}
