@@ -1,4 +1,4 @@
-import prettier from 'prettier';
+import { format } from 'oxfmt';
 
 import type { EventData, EventPropertySchema } from './types.mts';
 
@@ -103,5 +103,10 @@ This report contains all the analytics events that are defined in the project.
 ${markdownPerFeature}
 `;
 
-  return prettier.format(markdown, { parser: 'markdown' });
+  const { code, errors } = await format('analytics-report.md', markdown);
+  if (errors.length > 0) {
+    throw new Error(`Failed to format analytics report: ${errors.map((error) => error.message).join(', ')}`);
+  }
+
+  return code;
 }
