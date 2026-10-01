@@ -117,6 +117,11 @@ export async function reloadDataSourceInstanceSettings(): Promise<void> {
  * @internal
  */
 export function syncDataSourceInstanceSettings(settings: BootDataSourceSettings): void {
+  // The MT source never reads boot data. Refreshing it after a data source change is not wired
+  // up yet; until then, keep its cache rather than overwrite it with boot data.
+  if (getDataSourceCacheSource()?.kind === 'mt') {
+    return;
+  }
   clearPluginCache();
   applySnapshot(createBootDataSnapshot(settings));
 }

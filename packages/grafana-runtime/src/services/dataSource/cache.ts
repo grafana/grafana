@@ -3,6 +3,9 @@ import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from
 import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 
 import { notifyDataSourceCacheChanged } from './cacheGeneration';
+import { MT_FILL_FAILED } from './constants';
+import { DataSourceCacheFillError } from './errors';
+import { logDataSourceInstanceError } from './logging';
 import { type DataSourceCacheSource, type DataSourceListSnapshot } from './sources/types';
 
 const FILL_CACHE_KEY = 'grafana-runtime:ds-cache-fill';
@@ -79,7 +82,8 @@ export function awaitFill(): Promise<void> {
     } catch (error) {
       // When a newer snapshot filled the cache meanwhile, this failure no longer matters.
       if (version === snapshotVersion) {
-        throw error;
+        logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'boot', source: from.kind });
+        throw new DataSourceCacheFillError(error);
       }
     } finally {
       // Settled fills are tracked by `filled`; keep the shared promise cache for in-flight work.
