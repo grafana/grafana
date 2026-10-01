@@ -52,7 +52,7 @@ Other parameters include:
 
 - {namespace} is the same namespace you already use for other Grafana App Platform APIs.
   - In Grafana Cloud: your stack slug. For example, `my-stack`
-  - In Grafana OSS/Enterprise: your organizarion's ID. For example. `org-1`
+  - In Grafana OSS/Enterprise: your organization's ID. For example. `org-1`
 
 - {user_uid}: the signed-in user's UID, not their username or numeric ID. Look this up from the UID field returned by GET /api/user. Refer to [Migration steps](#migration-steps) for more details.
 
