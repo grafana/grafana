@@ -13,6 +13,7 @@ labels:
     - cloud
 title: Data source management
 weight: 500
+review_date: 2026-09-17
 ---
 
 # Data source management
@@ -25,7 +26,7 @@ For links to data source-specific documentation, see [Data sources](../../dataso
 
 ## Data source permissions
 
-You can configure data source permissions to allow or deny certain users the ability to query, edit, or administrate a data source. Each data source’s configuration includes a Permissions tab where you can restrict data source permissions to specific users, service accounts, teams, or roles.
+You can configure data source permissions to allow or deny certain users the ability to query, edit, or administrate a data source. Each data source's configuration includes a Permissions tab where you can restrict data source permissions to specific users, service accounts, teams, or basic roles.
 
 - The `query` permission allows users to query the data source.
 - The `edit` permission allows users to query the data source, edit the data source’s configuration and delete the data source.
@@ -39,22 +40,24 @@ By default, data sources in an organization can be queried by any user in that o
 
 <div class="clearfix"></div>
 
-### Assign data source permissions to users, service accounts, teams, or roles
+### Assign data source permissions to users, service accounts, teams, or basic roles
 
-You can assign data source permissions to users, service accounts, teams, and roles which will allow access to query, edit, or administrate the data source.
+You can assign data source permissions to users, service accounts, teams, and basic roles. These permissions allow access to query, edit, or administrate the data source.
+
+The **Role** option on the Permissions tab is limited to the basic roles **Viewer**, **Editor**, and **Admin**. Custom roles and fixed RBAC roles don't appear in this list. To grant access to users who have custom or fixed roles, assign the permission to the user, service account, or team. You can also grant `datasources:query` through [role-based access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/).
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Select the data source to which you want to assign permissions.
 1. On the Permissions tab, click **Add a permission**.
 1. Select **User**, **Service Account**, **Team**, or **Role**.
-1. Select the entity for which you want to modify permissions.
+1. Select the entity for which you want to modify permissions. If you selected **Role**, choose a basic organization role: **Viewer**, **Editor**, or **Admin**.
 1. Select the **Query**, **Edit**, or **Admin** permission.
 1. Click **Save**.
 
 <div class="clearfix"></div>
 
-### Edit data source permissions for users, service accounts, teams, or roles
+### Edit data source permissions for users, service accounts, teams, or basic roles
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
@@ -64,7 +67,7 @@ You can assign data source permissions to users, service accounts, teams, and ro
 
 <div class="clearfix"></div>
 
-### Remove data source permissions for users, service accounts, teams, or roles
+### Remove data source permissions for users, service accounts, teams, or basic roles
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
