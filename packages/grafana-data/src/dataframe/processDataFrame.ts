@@ -290,8 +290,24 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
 };
 
 export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = false): DataFrame {
-  const field = data.fields[sortIndex!];
-  if (!field) {
+  return sortDataFrameByFields(data, [{ index: sortIndex!, desc: reverse }]);
+}
+
+export interface DataFrameSortField {
+  index: number;
+  desc?: boolean;
+}
+
+/**
+ * Sorts by each field in order, later fields only break ties of earlier ones.
+ * Fields that do not exist in the frame are ignored.
+ */
+export function sortDataFrameByFields(data: DataFrame, sorts: DataFrameSortField[]): DataFrame {
+  const comparers = sorts.flatMap((s) => {
+    const field = data.fields[s.index];
+    return field ? [fieldIndexComparer(field, s.desc)] : [];
+  });
+  if (!comparers.length) {
     return data;
   }
 
@@ -301,8 +317,15 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
     index.push(i);
   }
 
-  const fieldComparer = fieldIndexComparer(field, reverse);
-  index.sort(fieldComparer);
+  index.sort((a, b) => {
+    for (const compare of comparers) {
+      const result = compare(a, b);
+      if (result !== 0) {
+        return result;
+      }
+    }
+    return 0;
+  });
 
   return {
     ...data,

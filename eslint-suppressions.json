@@ -2862,11 +2862,6 @@
       "count": 1
     }
   },
-  "public/app/features/transformers/editors/SortByTransformerEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/extractFields/ExtractFieldsTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
