@@ -798,8 +798,34 @@
       ]
     },
     {
+      "files": ["public/app/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "@grafana/i18n/no-untranslated-strings": [
+          "error",
+          {
+            "calleesToIgnore": ["^css$", "use[A-Z].*"],
+            "basePaths": ["public/app/features"]
+          }
+        ],
+        "@grafana/i18n/no-translation-top-level": "error"
+      },
+      "jsPlugins": [
+        {
+          "name": "@grafana/i18n",
+          "specifier": "@grafana/i18n/eslint-plugin"
+        }
+      ],
+      "excludeFiles": [
+        "public/test/**",
+        "**/*.{test,spec,story}.{ts,tsx}",
+        "**/{tests,__mocks__,__tests__,fixtures,spec,mocks}/**",
+        "**/{test-utils,testHelpers,mocks}.{ts,tsx}",
+        "**/mock*.{ts,tsx}",
+        "public/app/plugins/**"
+      ]
+    },
+    {
       "files": [
-        "public/app/!(plugins)/**/*.{ts,tsx,js,jsx}",
         "packages/grafana-ui/**/*.{ts,tsx,js,jsx}",
         "packages/grafana-data/**/*.{ts,tsx,js,jsx}",
         "packages/grafana-sql/**/*.{ts,tsx,js,jsx}",
@@ -832,8 +858,9 @@
     },
     {
       "files": [
-        "public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)",
-        "public/app/features/alerting/**/?(*.)+(spec|test).[jt]s?(x)",
+        "public/app/features/alerting/**/__tests__/**/*.{js,jsx,ts,tsx}",
+        "public/app/features/alerting/**/*.{spec,test}.{js,jsx,ts,tsx}",
+        "public/app/features/alerting/**/{spec,test}.{js,jsx,ts,tsx}",
         "packages/{grafana-ui,grafana-alerting}/**/*.{spec,test}.{ts,tsx}"
       ],
       "rules": {

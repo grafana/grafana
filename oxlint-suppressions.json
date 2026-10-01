@@ -829,6 +829,11 @@
       "count": 2
     }
   },
+  "public/app/core/components/Layers/LayerDragDropList.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    }
+  },
   "public/app/core/components/Login/LoginCtrl.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1068,8 +1073,21 @@
       "count": 2
     }
   },
+  "public/app/features/alerting/unified/components/alert-groups/AlertStateFilter.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    }
+  },
   "public/app/features/alerting/unified/components/alert-groups/GroupBy.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    },
     "typescript/consistent-type-assertions": {
+      "count": 1
+    }
+  },
+  "public/app/features/alerting/unified/components/alert-groups/ReceiverFilter.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
       "count": 1
     }
   },
@@ -1100,6 +1118,11 @@
   },
   "public/app/features/alerting/unified/components/contact-points/NewMessageTemplate.tsx": {
     "@grafana/no-config-feature-toggles": {
+      "count": 1
+    }
+  },
+  "public/app/features/alerting/unified/components/expressions/Expression.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
       "count": 1
     }
   },
@@ -1358,6 +1381,11 @@
   },
   "public/app/features/alerting/unified/components/silences/SilencePeriod.tsx": {
     "@grafana/require-no-margin": {
+      "count": 1
+    }
+  },
+  "public/app/features/alerting/unified/components/silences/SilencedInstancesPreview.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
       "count": 1
     }
   },
@@ -1644,6 +1672,21 @@
       "count": 5
     }
   },
+  "public/app/features/commandPalette/CommandPalette.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    }
+  },
+  "public/app/features/commandPalette/ResultItem.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    }
+  },
+  "public/app/features/commandPalette/scopes/ScopesRow.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    }
+  },
   "public/app/features/commandPalette/scopes/recentScopesActions.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1762,6 +1805,11 @@
   },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/NewAlertRuleButton.tsx": {
     "@grafana/no-config-feature-toggles": {
+      "count": 1
+    }
+  },
+  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/TransformationsDrawer.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
       "count": 1
     }
   },
@@ -1906,6 +1954,11 @@
       "count": 1
     }
   },
+  "public/app/features/dashboard-scene/scene/panel-actions/PanelGroupByAction/PanelGroupByActionPopover.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    }
+  },
   "public/app/features/dashboard-scene/scene/panel-timerange/PanelTimeRange.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1994,11 +2047,17 @@
     }
   },
   "public/app/features/dashboard-scene/settings/links/DashboardLinkList.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    },
     "jsx-a11y/no-redundant-roles": {
       "count": 6
     }
   },
   "public/app/features/dashboard-scene/settings/links/ProvisionedLinksSection.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    },
     "jsx-a11y/no-redundant-roles": {
       "count": 3
     }
@@ -2058,6 +2117,11 @@
       "count": 4
     }
   },
+  "public/app/features/dashboard-scene/sharing/ExportButton/ExportButton.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    }
+  },
   "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/EmailShare/ConfigEmailSharing/ConfigEmailSharing.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2074,7 +2138,15 @@
     }
   },
   "public/app/features/dashboard-scene/sharing/ShareLinkTabRenderer.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    },
     "@grafana/no-plain-links": {
+      "count": 1
+    }
+  },
+  "public/app/features/dashboard-scene/sharing/ShareSnapshotTabRenderer.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
       "count": 1
     }
   },
@@ -2236,6 +2308,9 @@
     }
   },
   "public/app/features/dashboard/components/TransformationsEditor/TransformationsEditor.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     },
@@ -2455,6 +2530,16 @@
       "count": 1
     }
   },
+  "public/app/features/explore/PrometheusListView/RawListItem.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    }
+  },
+  "public/app/features/explore/PrometheusListView/RawListItemAttributes.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 2
+    }
+  },
   "public/app/features/explore/QueryLibrary/utils/identity.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -2603,6 +2688,11 @@
       "count": 1
     }
   },
+  "public/app/features/invites/InviteeRow.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
+    }
+  },
   "public/app/features/invites/SignupInvited.tsx": {
     "@grafana/require-no-margin": {
       "count": 4
@@ -2688,6 +2778,11 @@
   },
   "public/app/features/playlist/PlaylistForm.tsx": {
     "@grafana/require-no-margin": {
+      "count": 4
+    }
+  },
+  "public/app/features/playlist/PlaylistTableRows.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
       "count": 4
     }
   },
@@ -2800,6 +2895,11 @@
       "count": 1
     }
   },
+  "public/app/features/provisioning/Shared/TokenPermissionsInfo.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 2
+    }
+  },
   "public/app/features/query/components/QueryEditorRow.tsx": {
     "@grafana/no-gf-form": {
       "count": 1
@@ -2862,6 +2962,11 @@
   "public/app/features/scopes/dashboards/ScopesDashboardsService.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
+    }
+  },
+  "public/app/features/scopes/selector/ScopesSelector.tsx": {
+    "@grafana/i18n/no-untranslated-strings": {
+      "count": 1
     }
   },
   "public/app/features/search/page/components/ActionRow.tsx": {
