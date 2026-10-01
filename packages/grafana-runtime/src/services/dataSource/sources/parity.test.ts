@@ -98,7 +98,7 @@ const fixtures: Fixture[] = [
     url: 'http://loki:3100',
     jsonData: {},
     // Boot data exposes the basic auth header for direct access; MT never does.
-    boot: { basicAuth: 'Basic YWRtaW46c2VjcmV0' },
+    boot: { basicAuth: 'Basic ZHVtbXktdXNlcjpkdW1teS1wYXNzd29yZA==' },
   },
 ];
 
@@ -308,7 +308,7 @@ describe('boot data and MT parity', () => {
     const mtLoki = await getDataSourceInstanceSettings('uid-loki');
     const mtProm = await getDataSourceInstanceListItem('uid-prom');
 
-    expect(bootLoki?.basicAuth).toBe('Basic YWRtaW46c2VjcmV0');
+    expect(bootLoki?.basicAuth).toBe('Basic ZHVtbXktdXNlcjpkdW1teS1wYXNzd29yZA==');
     expect(mtLoki?.basicAuth).toBeUndefined();
     expect(mtProm?.apiVersion).toBe('v0alpha1');
   });
