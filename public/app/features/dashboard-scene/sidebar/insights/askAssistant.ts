@@ -17,11 +17,16 @@ function throwIfAborted(signal: AbortSignal) {
  * `systemPrompt` overrides the default rules; the Text panel's insight mode passes a variant that
  * carries the earlier answer so a follow-up does not repeat it.
  */
-export async function askInsightAssistant(
+export function askInsightAssistant(
   snapshot: InsightSnapshot,
   signal: AbortSignal,
   systemPrompt: string = INSIGHT_SYSTEM_PROMPT
 ): Promise<string> {
+  return sendInsightPrompt(snapshot, systemPrompt, signal);
+}
+
+/** Sends `input` as JSON under `systemPrompt`, with the same isolation as an insight question. */
+export async function sendInsightPrompt(input: object, systemPrompt: string, signal: AbortSignal): Promise<string> {
   await ensureInlineAssistantInitialized();
   throwIfAborted(signal);
 
@@ -34,7 +39,7 @@ export async function askInsightAssistant(
     // sendPrompt reports failures through onError and resolves either way.
     const outcome: { text?: string; error?: Error } = {};
     await assistant.sendPrompt({
-      prompt: JSON.stringify(snapshot),
+      prompt: JSON.stringify(input),
       systemPrompt,
       agentName: 'dashboard-insights',
       tools: [],

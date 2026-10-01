@@ -56,3 +56,8 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
 export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
   static type = 'repeats-updated';
 }
+
+/** Published by the sidebar when it deactivates, for example when leaving the dashboard or opening the panel editor. */
+export class CancelInsightRequestsEvent extends BusEventBase {
+  static type = 'cancel-insight-requests';
+}

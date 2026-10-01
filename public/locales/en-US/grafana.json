@@ -5978,39 +5978,66 @@
       "troubleshooting-docs": "Troubleshooting docs"
     },
     "insight-panel": {
+      "breakdown-description": "Optional. Captures the source panels that use this variable once per selected value, so the answer can compare them. Runs extra queries when asking.",
+      "breakdown-label": "Break down by",
       "cancel": "Cancel",
+      "compare-description": "Also captures the source panels over the period just before the time range, so the answer can say what changed. Runs extra queries when asking.",
+      "compare-label": "Compare with previous period",
       "create": "Create insight panel",
       "default-question": "Show insights of this panel or panels",
       "default-title": "Insights",
       "follow-up-add": "Add follow-up",
       "follow-up-placeholder": "Which service drove the change?",
       "follow-up-remove": "Remove follow-up",
-      "follow-ups-description": "Optional. Offered after the answer, each one answered inside the panel against the same data.",
+      "follow-ups-description": "Optional. Offered after the answer, each one answered against the same data.",
       "follow-ups-label": "Follow-up questions",
       "modal-title": "Configure insight",
       "question-description": "What Assistant answers using only the data the source panels show.",
       "question-label": "Question",
+      "question-placeholder": "What changed in error rates this week?",
       "sources-description": "Assistant answers using only the data these panels show. Selecting a tab or row includes every panel in it.",
-      "sources-empty": "This dashboard has no other panels with queries to use as sources.",
       "sources-label": "Source panels"
     },
     "insights": {
       "answer": {
+        "annotations_one": "Included {{count}} annotation",
+        "annotations_other": "Included {{count}} annotations",
+        "breakdown-omitted_one": "{{count}} more value was left out.",
+        "breakdown-omitted_other": "{{count}} more values were left out.",
+        "breakdown-title": "By {{variable}}",
+        "breakdown-values": "Broken down by {{variable}}: {{values}}",
         "caveat-title": "Keep in mind",
+        "evidence-explore": "Open this window in Explore",
+        "evidence-go-to": "Go to the panel this is based on",
+        "evidence-window": "{{title}} · {{from}} – {{to}}",
+        "feedback-helpful": "Helpful answer",
+        "feedback-not-helpful": "Unhelpful answer",
+        "feedback-thanks": "Thanks for the feedback",
         "follow-up": "Ask a follow-up",
         "footer_one": "{{count}} source panel · Answered {{time}}",
         "footer_other": "{{count}} source panels · Answered {{time}}",
+        "frames-omitted": "This shared answer was stored without its source data, so it cannot be followed up. Ask again to follow up.",
+        "previous-period": "Compared with (UTC): {{from}} to {{to}}",
+        "share": "Share with viewers",
+        "share-tooltip": "Show this answer to everyone who opens the dashboard, until someone shares a newer one",
+        "shared-by": "Shared by {{login}} · {{time}}",
         "time-range": "Time range (UTC): {{from}} to {{to}}",
         "unreadable": "Assistant returned an unreadable insight. Ask again to retry."
       },
       "ask": {
         "no-answer": "Assistant returned no answer. Try asking again."
       },
+      "breakdown": {
+        "aria-label": "Break down by variable",
+        "placeholder": "No breakdown"
+      },
       "edit-action": {
         "add": "Add insight question",
         "delete": "Delete insight question",
         "edit": "Edit insight question",
-        "move": "Move insight question"
+        "move": "Move insight question",
+        "move-to-pane": "Move Insight panel to saved questions",
+        "move-to-panel": "Move insight question to dashboard"
       },
       "follow-up": {
         "title": "Insight: {{question}}",
@@ -6018,43 +6045,35 @@
       },
       "form": {
         "cancel-edit": "Cancel",
-        "question-label": "Question",
-        "question-placeholder": "What would you like to understand about these panels?",
-        "save-question": "Save",
-        "sources-description": "A tab or row includes every panel in it, including panels added later.",
-        "sources-label": "Sources"
+        "save-question": "Save"
       },
       "item": {
-        "ask": "Ask Assistant",
-        "ask-again": "Ask Assistant again",
-        "ask-hint": "Get a takeaway and supporting findings from the source panels. Answers stay in this session.",
         "delete": "Delete question",
         "edit": "Edit question",
-        "error-title": "Assistant could not answer",
-        "follow-up-error-title": "Could not open Assistant",
-        "loading-sources": "Loading source panels…",
         "move-down": "Move down",
-        "move-up": "Move up",
-        "running": "Analyzing selected panels…",
-        "sources-label": "Sources",
-        "stale-title": "Out of date"
+        "move-to-panel": "Move to the dashboard as an Insight panel",
+        "move-up": "Move up"
       },
       "pane": {
         "add-question": "Add question",
+        "ask-all": "Ask all",
+        "ask-all-tooltip": "Ask Assistant every question on this dashboard",
+        "empty": "This dashboard has no insights.",
         "empty-edit": "Save questions about this dashboard. Viewers can ask Assistant to answer them from the panels you select.",
-        "empty-view": "This dashboard has no saved questions.",
         "invalid-body": "Adding or changing a question replaces the saved questions. Undo restores them.",
         "invalid-title": "Saved questions could not be read",
         "questions-title": "Saved questions",
+        "stop-asking": "Stop asking",
         "title": "Insights"
       },
       "panels": {
-        "no-question": "Insight panel without a question",
+        "go-to-panel": "Go to panel",
+        "move-to-questions": "Move to saved questions and remove the panel from the dashboard",
         "title": "Insight panels"
       },
       "picker": {
         "collapse": "Collapse {{label}}",
-        "empty": "This dashboard has no panels with queries yet.",
+        "empty": "This dashboard has no panels with queries to use as sources.",
         "expand": "Expand {{label}}",
         "included": "Included with {{label}}",
         "panel-count_one": "{{count}} panel",
@@ -6064,7 +6083,12 @@
         "unavailable": "{{label}} (unavailable)",
         "unavailable-list": "Unavailable sources"
       },
+      "share": {
+        "annotation-text": "Shared insight: {{headline}}",
+        "too-large": "This answer is too large to share."
+      },
       "snapshot": {
+        "dashboard-empty": "This dashboard has no panels with queries to use as sources.",
         "empty-question": "This question is empty. Edit it to add text.",
         "no-sources": "This question has no source panels. Edit it to select at least one.",
         "section-unavailable": "“{{title}}” is no longer on this dashboard or has no panels with queries. Edit the question to update its sources.",
@@ -6074,9 +6098,14 @@
         "source-not-ready": "“{{title}}” is not ready. Wait for its query to finish successfully, then try again.",
         "source-time-range": "“{{title}}” uses a different time range. Wait for it to refresh or select matching panels.",
         "source-unavailable": "A source panel is no longer on this dashboard. Edit the question to update its source panels.",
-        "too-large": "The selected data is too large to send, even after summarizing time series. Select fewer panels, series, or table rows."
+        "too-large": "The selected data is too large to send, even after summarizing time series. Select fewer panels, series, or table rows, or turn off the comparison or breakdown.",
+        "variant-error": "“{{title}}” has a query error for {{variant}}.",
+        "variant-not-loaded": "“{{title}}” did not load for {{variant}} in time. Try again.",
+        "variant-previous": "the previous period",
+        "variant-value-previous": "{{value}} over the previous period"
       },
       "sources": {
+        "entire-dashboard": "Entire dashboard",
         "go-to-section": "Go to this section",
         "unavailable": "{{title}} (unavailable)",
         "untitled": "Untitled",
@@ -6088,9 +6117,21 @@
         "data": "Source data changed",
         "filters": "Filters changed",
         "question": "Question changed",
+        "settings": "Comparison or breakdown changed",
         "sources": "Source selection changed",
         "time-range": "Time range changed",
         "unavailable": "Source data unavailable"
+      },
+      "suggestions": {
+        "again": "Suggest other questions",
+        "list-label": "Suggested questions",
+        "none": "Assistant did not suggest any questions these panels can answer.",
+        "suggest": "Suggest questions"
+      },
+      "variants": {
+        "dashboard-queries": "“{{title}}” reuses another panel’s query, so it cannot be compared or broken down. Remove it from the sources or turn those options off.",
+        "variable-missing": "The variable “{{name}}” this question is broken down by is no longer on the dashboard. Edit the question to pick another.",
+        "variable-unused": "None of the source panels use the variable “{{name}}”, so breaking down by it would repeat the same data."
       }
     },
     "inspect": {
@@ -6612,7 +6653,7 @@
       },
       "insights": {
         "title": "Insights",
-        "tooltip": "Ask Assistant saved questions and find Insight panels on this dashboard"
+        "tooltip": "Ask Assistant this dashboard's Insight panel and saved questions"
       },
       "links": {
         "add-link": "Add link",
@@ -16898,6 +16939,7 @@
       "language-plaintext": "Plain text",
       "mode-code": "Code",
       "mode-html": "HTML",
+      "mode-insight": "Insight",
       "mode-markdown": "Markdown",
       "mode-picker-label": "Mode",
       "tooltip-bold": "Bold",
@@ -16912,8 +16954,7 @@
       "tooltip-table": "Table",
       "view-preview": "Preview",
       "view-split": "Split",
-      "view-write": "Write",
-      "mode-insight": "Insight"
+      "view-write": "Write"
     },
     "frame-picker": {
       "label": "Query"
@@ -16921,6 +16962,10 @@
     "insight": {
       "ask": "Ask Assistant",
       "ask-again": "Ask Assistant again",
+      "breakdown-description": "Optional. Captures the source panels that use this variable once per selected value, so the answer can compare them. Runs extra queries when asking.",
+      "breakdown-label": "Break down by",
+      "compare-description": "Also captures the source panels over the period just before the time range, so the answer can say what changed. Runs extra queries when asking.",
+      "compare-label": "Compare with previous period",
       "empty-question": "Set an insight question in the panel options to ask Assistant about your data.",
       "empty-sources": "Select the source panels Assistant may use in the panel options.",
       "error-title": "Assistant could not answer",
@@ -16930,16 +16975,17 @@
       "follow-ups-description": "Offered after the answer. Each one is answered inside the panel against the same data.",
       "follow-ups-editor-label": "Follow-up questions",
       "follow-ups-label": "Follow-ups",
-      "hint": "Get a takeaway and supporting findings from the source panels. Answers stay in this session.",
-      "loading-sources": "Loading source panels…",
-      "no-sources": "This dashboard has no panels with queries to use as sources.",
+      "hint": "Get a takeaway and supporting findings from the source panels. Answers stay in this session unless an editor shares one.",
+      "loading-sources": "Loading source data…",
       "question-description": "What Assistant answers using only the data the source panels show.",
       "question-label": "Question",
       "question-placeholder": "What changed in error rates this week?",
       "running": "Analyzing selected panels…",
+      "share-error": "Could not share this answer: {{error}}",
       "sources-description": "Assistant answers using only the data these panels show. Selecting a tab or row includes every panel in it.",
       "sources-label": "Source panels",
-      "stale-title": "Out of date"
+      "stale-title": "Out of date",
+      "time-range-moved": "The time range changed while loading the previous period. Ask again."
     },
     "options": {
       "page-size": "Page size",

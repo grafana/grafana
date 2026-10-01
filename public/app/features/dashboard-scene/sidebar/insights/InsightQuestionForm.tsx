@@ -1,60 +1,43 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
-import { Button, Field, Stack, TextArea } from '@grafana/ui';
+import { Trans } from '@grafana/i18n';
+import { Button, Stack } from '@grafana/ui';
 
-import { InsightSourcePicker } from './InsightSourcePicker';
+import { cleanInsight, InsightQuestionFields, isInsightComplete } from '../../insight-panel/InsightQuestionFields';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
+
 import { type InsightQuestionDraft } from './insightsEditActions';
 import { type InsightSourcePanel } from './sources';
 
 interface Props {
+  dashboard: DashboardSceneLike;
   initial?: InsightQuestionDraft;
   sources: InsightSourcePanel[];
   onSave: (draft: InsightQuestionDraft) => void;
   onCancel: () => void;
 }
 
-export function InsightQuestionForm({ initial, sources, onSave, onCancel }: Props) {
-  const questionId = useId();
-  const [question, setQuestion] = useState(initial?.question ?? '');
-  const [sourcePanelKeys, setSourcePanelKeys] = useState<string[]>(initial?.sourcePanelKeys ?? []);
-
-  const canSave = question.trim() !== '' && sourcePanelKeys.length > 0;
+export function InsightQuestionForm({ dashboard, initial, sources, onSave, onCancel }: Props) {
+  const [draft, setDraft] = useState<InsightQuestionDraft>(() => ({
+    question: initial?.question ?? '',
+    sourcePanelKeys: initial?.sourcePanelKeys ?? [],
+    followUps: initial?.followUps ?? [],
+    compareWithPreviousPeriod: initial?.compareWithPreviousPeriod,
+    breakdownVariable: initial?.breakdownVariable,
+  }));
+  const canSave = isInsightComplete(draft);
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
         if (canSave) {
-          onSave({ question: question.trim(), sourcePanelKeys });
+          onSave(cleanInsight(draft));
         }
       }}
     >
       <Stack direction="column" gap={2}>
-        <Field label={t('dashboard.insights.form.question-label', 'Question')} htmlFor={questionId} required noMargin>
-          <TextArea
-            id={questionId}
-            autoFocus
-            rows={4}
-            value={question}
-            placeholder={t(
-              'dashboard.insights.form.question-placeholder',
-              'What would you like to understand about these panels?'
-            )}
-            onChange={(event) => setQuestion(event.currentTarget.value)}
-          />
-        </Field>
-        <Field
-          label={t('dashboard.insights.form.sources-label', 'Sources')}
-          description={t(
-            'dashboard.insights.form.sources-description',
-            'A tab or row includes every panel in it, including panels added later.'
-          )}
-          required
-          noMargin
-        >
-          <InsightSourcePicker sources={sources} value={sourcePanelKeys} onChange={setSourcePanelKeys} />
-        </Field>
+        <InsightQuestionFields dashboard={dashboard} value={draft} sources={sources} onChange={setDraft} autoFocus />
         <Stack gap={1}>
           <Button type="submit" size="sm" disabled={!canSave}>
             <Trans i18nKey="dashboard.insights.form.save-question">Save</Trans>

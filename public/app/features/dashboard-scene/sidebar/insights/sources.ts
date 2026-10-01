@@ -7,7 +7,7 @@ import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 
-import { INSIGHT_PANEL_PLUGIN_ID } from './insightPanels';
+import { isInsightPanel } from './insightPanels';
 
 export interface InsightSourceSection {
   kind: 'tab' | 'row';
@@ -26,21 +26,17 @@ export interface InsightSourcePanel {
 }
 
 /** Long enough for slow datasources; the viewer can still read the error and ask again. */
-const LOAD_TIMEOUT_MS = 30_000;
+export const LOAD_TIMEOUT_MS = 30_000;
 /** Off-screen panels were never measured, and their query resolution depends on a width. */
-const OFF_SCREEN_WIDTH = 1000;
+export const OFF_SCREEN_WIDTH = 1000;
 
 /** Repeat clones are excluded because their keys are not stable across loads. */
 export function getInsightSourcePanels(dashboard: DashboardSceneLike): InsightSourcePanel[] {
   const sources: InsightSourcePanel[] = [];
   for (const panel of dashboard.state.body.getVizPanels()) {
     const key = panel.state.key;
-    if (
-      !key ||
-      !panel.state.$data ||
-      panel.state.pluginId === INSIGHT_PANEL_PLUGIN_ID ||
-      isRepeatCloneOrChildOf(panel)
-    ) {
+    // An Insight panel has no data of its own, even when the panel editor has given it a query runner.
+    if (!key || !panel.state.$data || isInsightPanel(panel) || isRepeatCloneOrChildOf(panel)) {
       continue;
     }
     sources.push({
@@ -69,9 +65,11 @@ function getSections(panel: VizPanel): InsightSourceSection[] {
 /** The data the viewer sees: the outer provider (so transformations apply) with field overrides applied. */
 export function getInsightSourceData(panel: VizPanel): PanelData | undefined {
   const data = sceneGraph.getData(panel).state.data;
-  if (!data) {
-    return undefined;
-  }
+  return data && applyInsightFieldOverrides(panel, data);
+}
+
+/** Display names and units come from the panel's field config, as the viewer sees them. */
+export function applyInsightFieldOverrides(panel: VizPanel, data: PanelData): PanelData {
   return {
     ...data,
     series: applyFieldOverrides({

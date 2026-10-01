@@ -21,6 +21,7 @@ import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '..
 
 import { ElementEditPane } from './ElementEditPane';
 import {
+  CancelInsightRequestsEvent,
   ConditionalRenderingChangedEvent,
   type DashboardBatchEditActionEventPayload,
   DashboardBatchEditActionEndEvent,
@@ -187,7 +188,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
         this.clearSelection(true);
       }
       this.disableSelection();
-      this.state.insightsPane?.cancelPendingRequests();
+      this.publishEvent(new CancelInsightRequestsEvent(), true);
     };
   }
 

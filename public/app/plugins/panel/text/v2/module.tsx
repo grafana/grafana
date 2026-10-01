@@ -11,7 +11,12 @@ import {
 } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
-import { InsightFollowUpsEditor, InsightQuestionEditor, InsightSourcesEditor } from './insight/lazy';
+import {
+  InsightBreakdownEditor,
+  InsightFollowUpsEditor,
+  InsightQuestionEditor,
+  InsightSourcesEditor,
+} from './insight/lazy';
 import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 import { isTextNewFeaturesEnabled } from './utils';
@@ -120,6 +125,28 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
       category: insightCategory,
       defaultValue: defaultInsightOptions.followUps,
       editor: InsightFollowUpsEditor,
+      showIf: showForInsight,
+    })
+    .addBooleanSwitch({
+      path: 'insight.compareWithPreviousPeriod',
+      name: t('textng.insight.compare-label', 'Compare with previous period'),
+      description: t(
+        'textng.insight.compare-description',
+        'Also captures the source panels over the period just before the time range, so the answer can say what changed. Runs extra queries when asking.'
+      ),
+      category: insightCategory,
+      showIf: showForInsight,
+    })
+    .addCustomEditor({
+      id: 'insight.breakdownVariable',
+      path: 'insight.breakdownVariable',
+      name: t('textng.insight.breakdown-label', 'Break down by'),
+      description: t(
+        'textng.insight.breakdown-description',
+        'Optional. Captures the source panels that use this variable once per selected value, so the answer can compare them. Runs extra queries when asking.'
+      ),
+      category: insightCategory,
+      editor: InsightBreakdownEditor,
       showIf: showForInsight,
     });
 };

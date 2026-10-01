@@ -41,6 +41,14 @@ export const InsightSourcesEditor = withSuspense<StandardEditorProps<string[]>>(
   )
 );
 
+export const InsightBreakdownEditor = withSuspense<StandardEditorProps<string | undefined>>(
+  'InsightBreakdownEditor',
+  () =>
+    import(/* webpackChunkName: "text-panel-insight-editors" */ './InsightBreakdownEditor').then(
+      (m) => m.InsightBreakdownEditor
+    )
+);
+
 export const InsightFollowUpsEditor = withSuspense<StandardEditorProps<string[]>>('InsightFollowUpsEditor', () =>
   import(/* webpackChunkName: "text-panel-insight-editors" */ './InsightFollowUpsEditor').then(
     (m) => m.InsightFollowUpsEditor

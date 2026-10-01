@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 
 import { type InsightContext, type InsightSnapshot, type InsightSnapshotPanel } from './types';
+import { type InsightVariantRequest } from './variants';
 
 function compareStrings(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
@@ -18,6 +19,13 @@ function normalizePanels(value: InsightSnapshotPanel[]): string {
   return JSON.stringify([...value].sort((a, b) => compareStrings(a.key, b.key)));
 }
 
+export interface InsightStaleOptions {
+  /** The question's current comparison and breakdown settings. */
+  settings?: InsightVariantRequest;
+  /** The previous answer was shared without its captured values, so its data cannot be compared. */
+  framesOmitted?: boolean;
+}
+
 /**
  * Why a previous answer no longer matches the dashboard. `snapshot` is the current capture;
  * it is undefined when the selected sources cannot be captured right now.
@@ -26,7 +34,8 @@ export function getInsightStaleReasons(
   previous: InsightSnapshot,
   current: InsightContext,
   selected: string[],
-  snapshot?: InsightSnapshot
+  snapshot?: InsightSnapshot,
+  { settings = {}, framesOmitted = false }: InsightStaleOptions = {}
 ): string[] {
   const reasons: string[] = [];
   if (previous.question !== current.question.trim()) {
@@ -44,7 +53,20 @@ export function getInsightStaleReasons(
   if (sourcesChanged) {
     reasons.push(t('dashboard.insights.stale.sources', 'Source selection changed'));
   }
-  if (snapshot && !sourcesChanged && normalizePanels(previous.panels) !== normalizePanels(snapshot.panels)) {
+  if (
+    Boolean(previous.previousPeriod) !== Boolean(settings.compareWithPreviousPeriod) ||
+    (previous.breakdown?.variable ?? '') !== (settings.breakdownVariable?.trim() ?? '')
+  ) {
+    reasons.push(t('dashboard.insights.stale.settings', 'Comparison or breakdown changed'));
+  }
+  // Only what the dashboard shows now is compared: the previous period and breakdown load on request.
+  if (
+    snapshot &&
+    !sourcesChanged &&
+    !framesOmitted &&
+    (normalizePanels(previous.panels) !== normalizePanels(snapshot.panels) ||
+      JSON.stringify(previous.annotations ?? []) !== JSON.stringify(snapshot.annotations ?? []))
+  ) {
     reasons.push(t('dashboard.insights.stale.data', 'Source data changed'));
   }
   if (!snapshot && reasons.length === 0) {

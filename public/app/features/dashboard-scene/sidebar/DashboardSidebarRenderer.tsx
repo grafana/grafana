@@ -276,15 +276,13 @@ function InsightsButton({ dashboard, openPane }: { dashboard: DashboardScene; op
     });
   }, [sidebar]);
 
-  // Questions live in a k8s annotation, so dashboards without k8s metadata cannot persist them.
-  if (!insightsEnabled || !isAvailable || !meta.k8s) {
+  if (!insightsEnabled || !isAvailable) {
     return null;
   }
-  if (
-    !isEditing &&
-    readInsightQuestions(dashboard).questions.length === 0 &&
-    getInsightPanels(dashboard).length === 0
-  ) {
+  const hasInsights = getInsightPanels(dashboard).length > 0 || readInsightQuestions(dashboard).questions.length > 0;
+  // Saved questions live in a k8s annotation, so only dashboards with k8s metadata can store them.
+  const canAddQuestions = Boolean(isEditing && meta.k8s);
+  if (!hasInsights && !canAddQuestions) {
     return null;
   }
 
@@ -295,7 +293,7 @@ function InsightsButton({ dashboard, openPane }: { dashboard: DashboardScene; op
       title={t('dashboard.sidebar.insights.title', 'Insights')}
       tooltip={t(
         'dashboard.sidebar.insights.tooltip',
-        'Ask Assistant saved questions and find Insight panels on this dashboard'
+        "Ask Assistant this dashboard's Insight panel and saved questions"
       )}
       active={openPane?.getId() === 'insights'}
     />

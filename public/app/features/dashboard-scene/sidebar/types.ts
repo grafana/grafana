@@ -11,7 +11,7 @@ export interface DashboardSidebarState extends SceneObjectState {
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
   outlinePane?: DashboardOutline;
-  /** Created on first open and kept so answers and in-flight requests survive closing the pane */
+  /** Created on first open and reused, so the Insights module loads once */
   insightsPane?: DashboardInsightsPane;
   openPane?: DashboardSidebarPane;
   isLoading?: boolean;
