@@ -167,18 +167,31 @@ export async function updateNotebookSpec(
  */
 export async function updateNotebook(
   uid: string,
-  spec: NotebookSpec
+  spec: NotebookSpec,
+  resourceVersion?: string
 ): Promise<{ generation?: number; resourceVersion?: string }> {
+  const patch = [
+    { op: 'replace', path: '/spec', value: spec },
+    ...(resourceVersion !== undefined
+      ? [{ op: 'replace', path: '/metadata/resourceVersion', value: resourceVersion }]
+      : []),
+  ];
+
   const result = await dispatch(
     dashboardAPIv2beta1.endpoints.updateNotebook.initiate(
       // `createBaseQuery` infers the json-patch content type from the array of ops.
-      { name: uid, patch: [{ op: 'replace', path: '/spec', value: spec }] },
+      { name: uid, patch },
       // Untracked like the create: nothing renders this mutation's state, and autosave writes often.
       { track: false }
     )
   );
 
   if ('error' in result && result.error) {
+    if (isConflict(result.error)) {
+      throw new NotebookConflictError(
+        extractErrorMessage(result.error, 'The notebook changed while you were editing.')
+      );
+    }
     throw new Error(extractErrorMessage(result.error, 'Failed to save the notebook.'));
   }
 

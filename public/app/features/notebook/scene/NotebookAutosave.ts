@@ -1,17 +1,20 @@
 import { debounce, isEqual } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
+import { t } from '@grafana/i18n';
 import {
   SceneObjectStateChangedEvent,
   type SceneObjectState,
   type SceneObjectStateChangedPayload,
   type VizPanel,
 } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT } from '../analytics/types';
-import { createNotebook, updateNotebook } from '../api/notebookResource';
+import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
 
@@ -35,6 +38,7 @@ export type NotebookSaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'erro
 export interface NotebookAutosaveState {
   status: NotebookSaveStatus;
   errorMessage?: string;
+  isConflict?: boolean;
   /** The resource generation the last successful save produced, when the server reported one. */
   savedGeneration?: number;
   /** The resourceVersion the last successful save produced, when the server reported one. */
@@ -91,6 +95,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private inFlight = false;
   /** Set while `write` adopts a freshly created uid, so that is not mistaken for someone's edit. */
   private adoptingUid = false;
+  /** Set by `overwriteConflict` for exactly the one write it forces through. Consumed in `write`. */
+  private overwriteNextSave = false;
   /** The save now running, so a caller that reports an outcome can wait for the write to land. */
   private inFlightSave?: Promise<void>;
   private saveAgainWhenIdle = false;
@@ -352,6 +358,18 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.flush();
   }
 
+  /**
+   * Forces a conflicting save through, as the user chose after being told someone else saved first.
+   *
+   * Skips the resourceVersion precondition for this one write rather than resend the same stale value,
+   * which would only produce the identical conflict again. There is nothing to merge: this notebook's
+   * current content, whatever it now is, simply wins.
+   */
+  public overwriteConflict(): void {
+    this.overwriteNextSave = true;
+    this.retry();
+  }
+
   /** Writes a pending save immediately, if there is one. */
   public flush(): void {
     this.scheduleSave.flush();
@@ -370,7 +388,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   public abandon(): void {
     this.abandoned = true;
     this.scheduleSave.cancel();
-    this.setState({ status: 'idle', errorMessage: undefined });
+    this.setState({ status: 'idle', errorMessage: undefined, isConflict: false });
   }
 
   private stop(): void {
@@ -397,7 +415,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     // Guarded so a keystroke does not publish state on every character.
     if (this.state.status !== 'pending') {
-      this.setState({ status: 'pending' });
+      this.setState({ status: 'pending', isConflict: false });
     }
 
     this.scheduleSave();
@@ -571,7 +589,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         NOTEBOOK_AUTOSAVE_FAILED_REASON.BUILD_FAILED,
         this.failedAttempts
       );
-      this.setState({ status: 'error', errorMessage: error instanceof Error ? error.message : String(error) });
+      this.setState({
+        status: 'error',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        isConflict: false,
+      });
       return;
     }
 
@@ -584,7 +606,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       this.vizConfigsEdited.clear();
       this.cellTimeRangesEdited.clear();
       this.editedByWriter = false;
-      this.setState({ status: this.restingStatus() });
+      this.setState({ status: this.restingStatus(), isConflict: false });
       return;
     }
 
@@ -595,7 +617,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.cellTimeRangesEdited.clear();
     this.editedByWriter = false;
     this.inFlight = true;
-    this.setState({ status: 'saving', errorMessage: undefined });
+    this.setState({ status: 'saving', errorMessage: undefined, isConflict: false });
 
     // Read here rather than at the top: a notebook with no uid has not been created yet, and its first
     // write is what creates it. Everything either branch does afterwards is the same.
@@ -620,6 +642,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           // the key on a save whose response carried none would leave an *earlier* save's revision in
           // place, and a reader has no way to tell that leftover apart from a genuinely fresh one.
           savedResourceVersion: resourceVersion,
+          isConflict: false,
         });
       })
       .catch((error) => {
@@ -633,15 +656,37 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         }
         this.editedByWriter ||= editedByWriter;
         this.failedAttempts += 1;
+        const isConflict = error instanceof NotebookConflictError;
         NotebookAnalytics.autosaveFailed(
           this.scene.state.uid ?? '',
-          NOTEBOOK_AUTOSAVE_FAILED_REASON.WRITE_FAILED,
+          isConflict ? NOTEBOOK_AUTOSAVE_FAILED_REASON.CONFLICT : NOTEBOOK_AUTOSAVE_FAILED_REASON.WRITE_FAILED,
           this.failedAttempts
         );
         this.setState({
           status: 'error',
-          errorMessage: error instanceof Error ? error.message : String(error),
+          errorMessage: isConflict
+            ? t(
+                'notebooks.autosave.error-conflict',
+                'This notebook changed elsewhere. Reload it to see the latest version before trying again.'
+              )
+            : error instanceof Error
+              ? error.message
+              : String(error),
+          isConflict,
         });
+
+        if (isConflict) {
+          appEvents.publish(
+            new ShowConfirmModalEvent({
+              title: t('notebooks.autosave.conflict-title', 'Someone else has updated this notebook'),
+              text: t('notebooks.autosave.conflict-text', 'Would you still like to save this notebook?'),
+              yesText: t('notebooks.autosave.conflict-confirm', 'Save and overwrite'),
+              yesButtonVariant: 'destructive',
+              noText: t('notebooks.autosave.conflict-cancel', 'Cancel'),
+              onConfirm: () => this.overwriteConflict(),
+            })
+          );
+        }
       })
       .finally(() => {
         this.inFlight = false;
@@ -666,7 +711,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     spec: NotebookSpec
   ): Promise<{ generation?: number; resourceVersion?: string }> {
     if (uid) {
-      return updateNotebook(uid, spec);
+      const overwrite = this.overwriteNextSave;
+      this.overwriteNextSave = false;
+      return updateNotebook(uid, spec, overwrite ? undefined : this.state.savedResourceVersion);
     }
 
     return createNotebook(spec).then(({ uid: created, generation, resourceVersion }) => {

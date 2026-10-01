@@ -19,7 +19,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
-import { createNotebook, updateNotebook } from '../api/notebookResource';
+import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { defaultVisualizationPanelKind } from '../types';
 
@@ -33,6 +33,7 @@ import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 jest.mock('../api/notebookResource', () => ({
   createNotebook: jest.fn(),
   updateNotebook: jest.fn(),
+  NotebookConflictError: jest.requireActual('../api/notebookResource').NotebookConflictError,
 }));
 
 // The serializer runs for real by default, restored in beforeEach. One test replaces it, because no
@@ -461,6 +462,74 @@ describe('NotebookAutosave', () => {
 
     expect(scene.autosave.state.savedGeneration).toBe(3);
     expect(scene.autosave.state.savedResourceVersion).toBeUndefined();
+  });
+
+  it('sends the last savedResourceVersion as the precondition on the next write, and none on the first', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 2, resourceVersion: '1756' });
+
+    editFirstCell(scene, 'First');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    expect(jest.mocked(updateNotebook).mock.calls[0][2]).toBeUndefined();
+
+    editFirstCell(scene, 'Second');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    expect(jest.mocked(updateNotebook).mock.calls[1][2]).toBe('1756');
+  });
+
+  it('reports a conflict reason and a distinct message when the server rejects a stale save', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new NotebookConflictError('the object has been modified'));
+    const publish = jest.spyOn(appEvents, 'publish');
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(scene.autosave.state.status).toBe('error');
+    expect(scene.autosave.state.isConflict).toBe(true);
+    // The user can act on a conflict, so it gets its own message rather than the apiserver's raw text.
+    expect(scene.autosave.state.errorMessage).not.toBe('the object has been modified');
+    expect(NotebookAnalytics.autosaveFailed).toHaveBeenCalledWith('nb-1', NOTEBOOK_AUTOSAVE_FAILED_REASON.CONFLICT, 1);
+
+    // Laid out like Dashboard's own save-conflict prompt: told as soon as it happens, not only if the
+    // writer goes looking for a retry affordance that would not help anyway.
+    const event = publish.mock.calls
+      .map(([published]) => published)
+      .find((published) => published instanceof ShowConfirmModalEvent);
+    expect(event?.payload).toMatchObject({
+      title: 'Someone else has updated this notebook',
+      yesText: 'Save and overwrite',
+    });
+  });
+
+  it('does not raise the conflict prompt for a plain write failure', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+    const publish = jest.spyOn(appEvents, 'publish');
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(scene.autosave.state.isConflict).toBe(false);
+    expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+  });
+
+  it('overwrites a conflicting save without resending the stale resourceVersion, as the confirm prompt offers', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new NotebookConflictError('the object has been modified'));
+    jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3, resourceVersion: '1757' });
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    expect(scene.autosave.state.isConflict).toBe(true);
+
+    scene.autosave.overwriteConflict();
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(jest.mocked(updateNotebook).mock.calls[1][2]).toBeUndefined();
+    expect(scene.autosave.state.status).toBe('saved');
+    expect(scene.autosave.state.isConflict).toBe(false);
+    expect(scene.autosave.state.savedResourceVersion).toBe('1757');
   });
 
   it('does not save a time range change made outside edit mode', async () => {

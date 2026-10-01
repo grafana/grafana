@@ -269,11 +269,12 @@ export interface NotebookDeletedProperties extends EventProperty {
 
 /**
  * Why an autosave attempt failed. `build_failed` means autosave could not assemble the spec, so it
- * sent no request. `write_failed` means the request failed, either the create or the update. That
- * covers every write failure today, because nothing yet tells a conflict apart from the rest.
+ * sent no request. `conflict` means someone else saved the notebook first. `write_failed` covers
+ * every other failed request, either the create or the update.
  */
 export const NOTEBOOK_AUTOSAVE_FAILED_REASON = {
   BUILD_FAILED: 'build_failed',
+  CONFLICT: 'conflict',
   WRITE_FAILED: 'write_failed',
 } as const;
 

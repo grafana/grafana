@@ -9,7 +9,7 @@ import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { codeCell, markdownCell, notebookSpec } from '../mutation-api/test-utils';
 import { type Spec as NotebookSpec } from '../types';
 
-import { createNotebook, updateNotebook } from './notebookResource';
+import { createNotebook, NotebookConflictError, updateNotebook } from './notebookResource';
 
 // The write dispatches through the app store; route that dispatch to a test store carrying the dashboard
 // v2beta1 API so the real RTK mutation, and the real base query that decides the patch content type, both
@@ -111,6 +111,29 @@ describe('updateNotebook', () => {
     const sentSpec = fetch.mock.calls[0][0].data[0].value;
     expect(Object.keys(sentSpec.elements)).toEqual(['intro']);
     expect(sentSpec.layout.spec.cells).toHaveLength(1);
+  });
+
+  it('sends a resourceVersion precondition op when the caller knows the last saved one', async () => {
+    const spec = notebookSpec();
+    const fetch = fetchOf(savedNotebook(spec));
+
+    await updateNotebook('nb-1', spec, '1700');
+
+    const request = fetch.mock.calls[0][0];
+    expect(request.data).toEqual([
+      { op: 'replace', path: '/spec', value: spec },
+      { op: 'replace', path: '/metadata/resourceVersion', value: '1700' },
+    ]);
+  });
+
+  it('throws NotebookConflictError, not a generic error, when the precondition is stale', async () => {
+    setBackendSrv({
+      fetch: jest
+        .fn()
+        .mockReturnValue(throwError(() => ({ status: 409, data: { message: 'the object has been modified' } }))),
+    } as unknown as BackendSrv);
+
+    await expect(updateNotebook('nb-1', notebookSpec(), '1700')).rejects.toBeInstanceOf(NotebookConflictError);
   });
 
   it("throws the apiserver's own rejection message", async () => {
