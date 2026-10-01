@@ -13,7 +13,7 @@ func LegacyCheck(ctx context.Context, client authzextv1.LegacyAuthzServiceClient
 	if client == nil {
 		return false, errors.New("legacy check client is not configured")
 	}
-	//nolint:staticcheck we are intentionally calling a deprecated method.
+	//nolint:staticcheck // We intentionally call the deprecated compatibility API.
 	resp, err := client.LegacyCheck(ctx, req)
 	if err != nil {
 		return false, err
