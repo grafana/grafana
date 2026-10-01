@@ -12,6 +12,7 @@
         "uid": "8ZCfRmwDnu5sr0MHLPL5dKJqq7QNE1PCC7CTxaA1n6kX",
         "resourceVersion": "fa1ddb8baf6c4173",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/provenance": "converted_prometheus"
         }
       },
@@ -54,6 +55,7 @@
         "uid": "26dlIaBX1bEb9hZ4cYor5e4KVwfvGHvgVzBaQgGVWIIX",
         "resourceVersion": "b3e5c88931ea4509",
         "annotations": {
+          "grafana.app/managedBy": "classic-converted-prometheus",
           "grafana.com/provenance": "converted_prometheus"
         }
       },

@@ -156,7 +156,7 @@ func (e ImportedConfigRevision) GetInhibitRules() (map[v1.ResourceUID]v1.Inhibit
 		if !ok {
 			continue
 		}
-		m.Provenance = models.ProvenanceConvertedPrometheus
+		m.SetImported()
 		result[v1.ResourceUID(uio)] = m
 	}
 	return result, nil

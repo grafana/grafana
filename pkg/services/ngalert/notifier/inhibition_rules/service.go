@@ -88,12 +88,14 @@ func (svc *Service) GetInhibitionRule(ctx context.Context, uid v1.ResourceUID, o
 	return result, nil
 }
 
-// CreateInhibitionRule adds a new inhibition rule
+// CreateInhibitionRule adds a new inhibition rule. The rule's Manager is stored with it; when it is
+// unknown, it is derived from the rule's Provenance.
 func (svc *Service) CreateInhibitionRule(ctx context.Context, rule v1.InhibitionRule, orgID int64) (v1.InhibitionRule, error) {
 	// Validate the rule
 	if err := rule.Validate(); err != nil {
 		return v1.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
+	rule.NormalizeManager()
 
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -117,10 +119,13 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule v1.Inhibition
 	return created, nil
 }
 
+// UpdateInhibitionRule replaces an inhibition rule. The rule's Manager is stored with it; when it is
+// unknown, it is derived from the rule's Provenance.
 func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule v1.InhibitionRule, version string, orgID int64) (v1.InhibitionRule, error) {
 	if err := rule.Validate(); err != nil {
 		return v1.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
+	rule.NormalizeManager()
 
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
