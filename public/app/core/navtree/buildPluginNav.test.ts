@@ -1,4 +1,6 @@
 import { type NavModelItem } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/internal';
+import { config } from '@grafana/runtime';
 import { getAppPluginMetas, invalidateCachedPromisesCache, setAppPluginMetas } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {
@@ -168,6 +170,124 @@ describe('mergePluginNavIntoTree', () => {
     expect(app?.children?.find((child) => child.text === 'Overview dashboard')?.url).toBe('/d/dash-uid');
   });
 
+  it('creates the Alerts & IRM section and nests core alerting inside it', async () => {
+    setup({ permissions: ['alert.rules:read'] });
+
+    const merged = await mergeFromMetas([
+      appMeta('grafana-irm-app', 'Grafana IRM', [page('IRM', '/a/grafana-irm-app/home')]),
+    ]);
+
+    const section = findById(merged, NavID.alertsAndIncidents);
+    expect(ids(section?.children ?? [])).toEqual([NavID.alerting, 'plugin-page-grafana-irm-app']);
+    expect(findById(section?.children ?? [], NavID.alerting)?.sortWeight).toBe(2);
+    expect(merged.find((node) => node.id === NavID.alerting)).toBeUndefined();
+    // IRM keeps its section-map text override
+    expect(findById(merged, 'plugin-page-grafana-irm-app')?.text).toBe('IRM');
+  });
+
+  it('places section-mapped apps and sorts them by their configured weight', async () => {
+    const merged = await mergeFromMetas([
+      appMeta('grafana-k8s-app', 'Kubernetes App', [page('Clusters', '/a/grafana-k8s-app/clusters')]),
+      appMeta('grafana-sigil-app', 'Sigil', [page('AI', '/a/grafana-sigil-app/home')]),
+    ]);
+
+    const observability = findById(merged, NavID.observability);
+    expect(ids(observability?.children ?? [])).toEqual([
+      'plugin-page-grafana-sigil-app',
+      'plugin-page-grafana-k8s-app',
+    ]);
+    expect(findById(merged, 'plugin-page-grafana-k8s-app')?.text).toBe('Kubernetes');
+  });
+
+  it('takes the Adaptive Telemetry section image from the first member app to attach', async () => {
+    const merged = await mergeFromMetas([
+      appMeta('grafana-adaptive-metrics-app', 'Adaptive Metrics', [
+        page('Recommendations', '/a/grafana-adaptive-metrics-app/recommendations'),
+      ]),
+    ]);
+
+    const section = findById(merged, NavID.adaptiveTelemetry);
+    expect(section?.img).toBe('/plugins/grafana-adaptive-metrics-app/large.svg');
+  });
+
+  it('places an app whose only page is its default nav into its configured section', async () => {
+    const merged = await mergeFromMetas([
+      appMeta('grafana-auth-app', 'Cloud access policies', [page('Access policies', '/a/grafana-auth-app')]),
+    ]);
+
+    const access = findById(merged, NavID.cfgAccess);
+    expect(ids(access?.children ?? [])).toEqual(['plugin-page-grafana-auth-app']);
+
+    const authApp = findById(merged, 'plugin-page-grafana-auth-app');
+    expect(authApp?.text).toBe('Access policies');
+    expect(authApp?.children ?? []).toHaveLength(0);
+  });
+
+  it('drops that app when its page fails the include access check', async () => {
+    setup({ orgRole: 'Viewer' });
+    const merged = await mergeFromMetas([
+      appMeta('grafana-auth-app', 'Cloud access policies', [
+        page('Access policies', '/a/grafana-auth-app', { role: 'Admin' }),
+      ]),
+    ]);
+
+    expect(findById(merged, 'plugin-page-grafana-auth-app')).toBeUndefined();
+  });
+
+  it('places the advisor app under Administration', async () => {
+    const merged = await mergeFromMetas([
+      appMeta('grafana-advisor-app', 'Advisor', [page('Advisor', '/a/grafana-advisor-app/home')]),
+    ]);
+
+    const cfg = findById(merged, NavID.cfg);
+    expect(findById(cfg?.children ?? [], 'plugin-page-grafana-advisor-app')?.text).toBe('Advisor');
+  });
+
+  describe('assistant deployment-mode filtering', () => {
+    let buildInfo: typeof config.buildInfo;
+    let namespace: typeof config.namespace;
+
+    beforeEach(() => {
+      buildInfo = config.buildInfo;
+      namespace = config.namespace;
+    });
+
+    afterEach(() => {
+      config.buildInfo = buildInfo;
+      config.namespace = namespace;
+    });
+
+    it('limits assistant pages to the core set on OSS deployments', async () => {
+      config.buildInfo = { ...config.buildInfo, edition: GrafanaEdition.OpenSource };
+      config.namespace = 'default';
+      const merged = await mergeFromMetas([
+        appMeta('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Workspace', '/a/grafana-assistant-app/workspace'),
+          page('Settings', '/a/grafana-assistant-app/settings'),
+          page('Investigations', '/a/grafana-assistant-app/investigations'),
+        ]),
+      ]);
+
+      const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect((assistant?.children ?? []).map((child) => child.text)).toEqual(['Workspace', 'Settings']);
+    });
+
+    it('shows every assistant page on cloud stacks', async () => {
+      config.buildInfo = { ...config.buildInfo, edition: GrafanaEdition.OpenSource };
+      config.namespace = 'stacks-123';
+      const merged = await mergeFromMetas([
+        appMeta('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Investigations', '/a/grafana-assistant-app/investigations'),
+        ]),
+      ]);
+
+      const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect((assistant?.children ?? []).map((child) => child.text)).toEqual(['Investigations']);
+    });
+  });
+
   it('prunes empty attachment shells after the merge', async () => {
     // A viewer's fresh static tree has only the empty connections/cfg shells
     setupNavTestState({ permissions: ['plugins.app:access'] });
@@ -176,6 +296,15 @@ describe('mergePluginNavIntoTree', () => {
     expect(findById(merged, NavID.connections)).toBeUndefined();
     expect(findById(merged, NavID.cfgAccess)).toBeUndefined();
     expect(findById(merged, NavID.cfg)).toBeUndefined();
+  });
+
+  it('keeps the drilldown shell once a drilldown app attaches to it', async () => {
+    setup({ permissions: ['datasources:explore'] });
+    const merged = await mergeFromMetas([
+      appMeta('grafana-metricsdrilldown-app', 'Metrics', [page('Metrics', '/a/grafana-metricsdrilldown-app/metrics')]),
+    ]);
+
+    expect(findById(merged, NavID.drilldown)?.children?.length).toBe(1);
   });
 
   it('skips non-app plugins and malformed metas without failing the build', async () => {
