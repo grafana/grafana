@@ -11,4 +11,4 @@ include docs.mk
 sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md: ## Generate the Transform Data page source.
 	cd $(CURDIR)/.. && \
 	npx tsx ./scripts/docs/generate-transformations.ts && \
-	npx prettier -w $(CURDIR)/$@
+	npx oxfmt $(CURDIR)/$@
