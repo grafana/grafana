@@ -46,7 +46,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
         if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true)) {
           replacePanel({ source: layoutItem, oldPanel: panelToReplace, newPanel });
         } else {
-          // Needed only for old architecture which reuses the same component
+          // This else block is needed only for old architecture which reuses the same component
           // but has no way to trigger dashboard actions. It can be removed when
           // the dashboardNewLayouts toggle is removed
           newPanel.setState({ key: panelToReplace.state.key });
