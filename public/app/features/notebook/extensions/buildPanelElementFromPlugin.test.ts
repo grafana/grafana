@@ -39,6 +39,29 @@ describe('buildPanelElementFromPlugin', () => {
     expect(element.kind === 'Panel' && element.spec.vizConfig.group).toBe('stat');
   });
 
+  it('stores maxDataPoints, interval, cacheTimeout, and queryCachingTTL on the panel element', () => {
+    const element = buildPanelElementFromPlugin({
+      title: 'Checkout latency',
+      type: 'timeseries',
+      targets: [{ refId: 'A' }],
+      maxDataPoints: 100,
+      interval: '10s',
+      cacheTimeout: '1m',
+      queryCachingTTL: 60,
+    });
+
+    expect(element.kind).toBe('Panel');
+    if (element.kind !== 'Panel') {
+      throw new Error('expected a Panel element');
+    }
+    expect(element.spec.data.spec.queryOptions).toEqual({
+      maxDataPoints: 100,
+      interval: '10s',
+      cacheTimeout: '1m',
+      queryCachingTTL: 60,
+    });
+  });
+
   it('names an untitled panel "New panel" and defaults the visualization to timeseries', () => {
     const element = buildPanelElementFromPlugin({
       targets: [{ refId: 'A' }],
