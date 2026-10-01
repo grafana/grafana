@@ -31,7 +31,7 @@ export enum Annotation {
   panelID = '__panelId__',
 }
 
-export const annotationLabels: Record<Annotation, string> = {
+export const annotationLabels: Record<Annotation, string> & Partial<Record<string, string>> = {
   [Annotation.description]: 'Description',
   [Annotation.summary]: 'Summary',
   [Annotation.runbookURL]: 'Runbook URL',

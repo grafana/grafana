@@ -1,8 +1,9 @@
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { type EditorProps } from '../QueryEditor';
+import { type TestDataDataQuery } from '../dataquery';
 
-const ERROR_OPTIONS = [
+const ERROR_OPTIONS: Array<{ label: string; value: NonNullable<TestDataDataQuery['errorType']> }> = [
   {
     label: 'Server panic',
     value: 'server_panic',

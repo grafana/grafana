@@ -237,7 +237,7 @@ function calculateSpace(
   scaleMin: number,
   scaleMax: number,
   plotDim: number,
-  formatValue?: (value: unknown) => string
+  formatValue?: (value: number) => string
 ): number {
   const axis = self.axes[axisIdx];
   const scale = self.scales[axis.scale!];

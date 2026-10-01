@@ -30,7 +30,7 @@ import { type VizTypeChangeDetails } from './types';
 export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   data?: PanelData;
-  panel?: PanelModel;
+  panel?: Pick<PanelModel, 'type'>;
   searchQuery?: string;
   isNewPanel?: boolean;
 }
@@ -226,7 +226,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
 
 interface NoDataPanelListProps {
   searchQuery?: string;
-  panel?: PanelModel;
+  panel?: Pick<PanelModel, 'type'>;
   onChange: (options: VizTypeChangeDetails) => void;
 }
 
