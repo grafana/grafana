@@ -13272,6 +13272,11 @@
       "target-new": "New notebook",
       "title": "Add panel to notebook"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": "New panel"
+      }
+    },
     "delete": {
       "body": "Are you sure you want to delete \"{{title}}\"?",
       "confirm": "Delete",
