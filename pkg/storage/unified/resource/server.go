@@ -385,11 +385,9 @@ type SearchOptions struct {
 	// for queries, so a catalog row alone cannot enroll an internal collection.
 	EmbeddingBuilders embed.BuilderProvider
 
-	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
+	// Index snapshot settings — enable downloading pre-built search indexes from the storage KV on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
 	IndexSnapshotEnabled bool
-	// IndexSnapshotBucketURL is the Go CDK bucket URL (s3://, gs://, azblob://, mem://, file:///).
-	IndexSnapshotBucketURL string
 	// IndexSnapshotThreshold is the minimum document count to use remote snapshots (must be >= IndexFileThreshold).
 	IndexSnapshotThreshold int
 	// IndexSnapshotMaxAge is the maximum age of a snapshot before it is deleted during cleanup.
