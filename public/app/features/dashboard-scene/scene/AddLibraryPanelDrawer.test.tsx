@@ -1,9 +1,6 @@
-import { act, render, screen, waitFor } from 'test/test-utils';
-
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import * as libraryPanelApi from 'app/features/library-panels/state/api';
 
 import { replacePanel } from '../actions/panel/replacePanel';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -30,36 +27,15 @@ jest.mock('@grafana/runtime/unstable', () => ({
 
 jest.mock('../actions/panel/replacePanel');
 
-jest.spyOn(libraryPanelApi, 'getConnectedDashboards').mockResolvedValue([]);
-
-async function selectLibraryPanel(drawer: AddLibraryPanelDrawer, panel: LibraryPanel) {
-  jest
-    .spyOn(libraryPanelApi, 'getLibraryPanels')
-    .mockResolvedValue({ elements: [panel], page: 1, perPage: 40, totalCount: 1 });
-  const dashboard = drawer.parent as DashboardScene;
-  const { user, unmount } = render(<drawer.Component model={drawer} />);
-  await user.click(await screen.findByText(panel.name, {}, { timeout: 3000 }));
-  await waitFor(() => expect(dashboard.state.overlay).toBeUndefined());
-  unmount();
-}
-
 describe('AddLibraryPanelWidget', () => {
   let dashboard: DashboardScene;
   let addLibPanelDrawer: AddLibraryPanelDrawer;
-  let deactivations: Array<() => void>;
 
-  afterEach(async () => {
-    await act(async () => {
-      deactivations.forEach((deactivate) => deactivate());
-      setTestFlags({});
-    });
-  });
+  afterEach(() => setTestFlags({}));
 
   beforeEach(async () => {
     setTestFlags({ dashboardNewLayouts: false });
-    deactivations = [];
     const result = await buildTestScene();
-    deactivations.push(result.deactivate);
     dashboard = result.dashboard;
     addLibPanelDrawer = result.drawer;
   });
@@ -76,7 +52,7 @@ describe('AddLibraryPanelWidget', () => {
       type: 'timeseries',
     };
 
-    await selectLibraryPanel(addLibPanelDrawer, panelInfo);
+    await addLibPanelDrawer.onAddLibraryPanel(panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     const panel = panels[0];
@@ -101,7 +77,7 @@ describe('AddLibraryPanelWidget', () => {
       overlay: drawer,
     });
 
-    deactivations.push(activateFullSceneTree(dashboard));
+    activateFullSceneTree(dashboard);
 
     await new Promise((r) => setTimeout(r, 1));
 
@@ -120,7 +96,7 @@ describe('AddLibraryPanelWidget', () => {
     // the CTA should enter edit mode
     expect(dashboard.state.isEditing).toBe(undefined);
 
-    await selectLibraryPanel(drawer, panelInfo);
+    await drawer.onAddLibraryPanel(panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     const panel = panels[0];
@@ -164,7 +140,7 @@ describe('AddLibraryPanelWidget', () => {
       type: 'timeseries',
     };
 
-    await selectLibraryPanel(addLibPanelDrawer, panelInfo);
+    await addLibPanelDrawer.onAddLibraryPanel(panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     expect(panels.length).toBe(1);
@@ -197,7 +173,7 @@ describe('AddLibraryPanelWidget', () => {
         model: { title: 'Library title', type: 'timeseries' },
       };
 
-      await selectLibraryPanel(drawer, panelInfo);
+      await drawer.onAddLibraryPanel(panelInfo);
 
       expect(replacePanel).toHaveBeenCalledTimes(1);
       expect(replacePanel).toHaveBeenCalledWith({ source, oldPanel, newPanel: expect.any(VizPanel) });
@@ -221,7 +197,7 @@ describe('AddLibraryPanelWidget', () => {
       type: 'timeseries',
     };
 
-    await selectLibraryPanel(addLibPanelDrawer, panelInfo);
+    await addLibPanelDrawer.onAddLibraryPanel(panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     const panel = panels[0];
@@ -243,11 +219,11 @@ async function buildTestScene() {
     overlay: drawer,
   });
 
-  const deactivate = activateFullSceneTree(dashboard);
+  activateFullSceneTree(dashboard);
 
   await new Promise((r) => setTimeout(r, 1));
 
   dashboard.onEnterEditMode();
 
-  return { dashboard, drawer, deactivate };
+  return { dashboard, drawer };
 }
