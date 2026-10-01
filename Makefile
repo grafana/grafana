@@ -247,6 +247,55 @@ do-gen-apps: ## Generate code for Grafana App SDK apps
 		./hack/update-codegen.sh; \
 	fi
 
+# gen-apps-kv regenerates a single app with the go.work-resolved (forked)
+# grafana-app-sdk generator, instead of the pinned upstream version that
+# apps/sdk.mk installs. Unlike `make gen-apps`, this never runs `go get` or
+# `go mod tidy` against the app's go.mod, so a local go.work replace (such as
+# the KV-prototype's app-sdk fork) is picked up instead of being overwritten.
+#
+# The generator binary is built FROM the fork's own module directory, not
+# from this OSS root, even though this target starts here. This workspace's
+# go.work aggregates a `replace cuelang.org/go => github.com/grafana/cue@...`
+# from one of its many `use` members (pkg/codegen/go.mod), needed for
+# Grafana's own CUE tooling. Building github.com/grafana/grafana-app-sdk's
+# CLI from within this workspace picks up that replacement instead of the
+# fork's own pinned `cuelang.org/go`, and its codegen/jennies/gotypes.go
+# segfaults on a nil cue.Value at generate time (a real, reproducible bug
+# with zero relation to search fields, KV, or anything else in this feature:
+# it segfaults for every app, unmodified, even with every kv-generic SDK
+# change removed). `go build`ing the exact same source
+# from inside the fork's own directory sidesteps the workspace's dependency
+# graph entirely and resolves cuelang.org/go from the fork's own go.mod, the
+# version its codegen was actually written against.
+#
+# GOWORK=off is also set explicitly, in case a caller's shell already
+# exports GOWORK pointed at this repo's go.work file (which would otherwise
+# override the directory-based auto-detection this relies on).
+#
+# Usage: make gen-apps-kv app=<name>
+APP_SDK_WORKSPACE_BIN=bin/app-sdk-workspace/grafana-app-sdk
+.PHONY: gen-apps-kv
+gen-apps-kv: ## Generate code for a single App SDK app with the go.work-resolved generator. Usage: make gen-apps-kv app=<name>
+	@if [ -z "$(app)" ]; then \
+		echo "Error: gen-apps-kv requires app=<name>, e.g. make gen-apps-kv app=playlist"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(app)/kinds" ]; then \
+		echo "Error: apps/$(app)/kinds does not exist"; \
+		exit 1; \
+	fi
+	@sdk_dir="$$($(GO) list -m -f '{{.Replace.Dir}}' github.com/grafana/grafana-app-sdk)"; \
+	if [ -z "$$sdk_dir" ] || [ ! -d "$$sdk_dir" ]; then \
+		echo "Error: could not resolve the github.com/grafana/grafana-app-sdk replace directory from go.work (got '$$sdk_dir'). Check go.work's replace for github.com/grafana/grafana-app-sdk."; \
+		exit 1; \
+	fi; \
+	mkdir -p $(dir $(APP_SDK_WORKSPACE_BIN)); \
+	echo "Building the app-sdk generator from its own module ($$sdk_dir), not this workspace, to avoid this workspace's cuelang.org/go replace"; \
+	(cd "$$sdk_dir" && GOWORK=off $(GO) build -o "$(CURDIR)/$(APP_SDK_WORKSPACE_BIN)" ./cmd/grafana-app-sdk)
+	@echo "Generating code for app: $(app) (go.work-resolved generator)"
+	cd apps/$(app) && $(CURDIR)/$(APP_SDK_WORKSPACE_BIN) generate --source=./kinds/
+	gofmt -s -w apps/$(app)
+
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
