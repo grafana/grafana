@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react';
 import { NoData } from './NoData';
 
 describe('NoData', () => {
-  it('renders without error', () => {
+  it('renders the no data message', () => {
     render(<NoData />);
-    expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
+    expect(screen.getByText('No data')).toBeInTheDocument();
   });
 });
