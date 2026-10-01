@@ -25,10 +25,10 @@ function runOrWarn(label: string, command: string, cwd: string) {
   }
 }
 
-/** Run ESLint + Prettier on the given files (paths relative to basePath). */
+/** Run oxlint + Prettier on the given files (paths relative to basePath). */
 export function formatFiles(basePath: string, files: string[]) {
   const absolute = files.map((f) => `"${path.join(basePath, f)}"`).join(' ');
-  runOrWarn('ESLint', `yarn eslint --fix ${absolute}`, basePath);
+  runOrWarn('oxlint', `yarn oxlint --fix ${absolute}`, basePath);
   // --ignore-path so gitignored files (local/) can still be formatted
   runOrWarn('Prettier', `yarn prettier --write ${absolute} --ignore-path=./.prettierignore`, basePath);
 }
