@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -136,7 +136,7 @@ func TestKvStorageBackend_ReadResourceVersionsUseEventHead(t *testing.T) {
 	response := backend.ReadResource(t.Context(), req)
 	require.NotNil(t, response.Error)
 	require.EqualValues(t, 400, response.Error.Code)
-	responses, err := backend.BatchReadResource(t.Context(), []*resourcepb.ReadRequest{req})
+	responses, err := backend.BatchReadResource(t.Context(), []*resourcepb.ReadRequest{req}, false)
 	require.NoError(t, err)
 	for response := range responses {
 		require.NotNil(t, response.Error)
@@ -144,7 +144,7 @@ func TestKvStorageBackend_ReadResourceVersionsUseEventHead(t *testing.T) {
 	}
 	req.ResourceVersion = head
 	require.Nil(t, backend.ReadResource(t.Context(), req).Error)
-	responses, err = backend.BatchReadResource(t.Context(), []*resourcepb.ReadRequest{req})
+	responses, err = backend.BatchReadResource(t.Context(), []*resourcepb.ReadRequest{req}, false)
 	require.NoError(t, err)
 	for response := range responses {
 		require.Nil(t, response.Error)
@@ -173,7 +173,7 @@ func TestKvStorageBackend_EmptyStoreResourceVersion(t *testing.T) {
 	require.Error(t, err)
 	req := &resourcepb.ReadRequest{Key: appsKey("resource"), ResourceVersion: listRV}
 	require.NotNil(t, backend.ReadResource(t.Context(), req).Error)
-	_, err = backend.BatchReadResource(t.Context(), []*resourcepb.ReadRequest{req})
+	_, err = backend.BatchReadResource(t.Context(), []*resourcepb.ReadRequest{req}, false)
 	require.Error(t, err)
 	_, err = backend.eventStore.LastEventKey(t.Context())
 	require.ErrorIs(t, err, ErrNotFound)
@@ -184,7 +184,7 @@ func TestResourceVersionGenerationMetrics(t *testing.T) {
 	backend := &kvStorageBackend{
 		resourceVersions: newResourceVersionGenerator(1, func() time.Time { return now }),
 		metrics:          newKVBackendMetrics(prometheus.NewRegistry()),
-		log:              log.NewNopLogger(),
+		log:              &logging.NoOpLogger{},
 	}
 	_, err := backend.generateResourceVersion()
 	require.NoError(t, err)
