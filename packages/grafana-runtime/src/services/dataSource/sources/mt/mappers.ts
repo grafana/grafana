@@ -24,7 +24,7 @@ function isDefaultConnection(connection: DataSourceConnection): boolean {
 }
 
 /** The plugin type stored on a connection. `plugin` is omitted when empty, so derive it from the group. */
-export function getConnectionPluginType(connection: DataSourceConnection): string {
+function getConnectionPluginType(connection: DataSourceConnection): string {
   return connection.plugin || connection.group.replace(/\.datasource\.grafana\.app$/, '');
 }
 

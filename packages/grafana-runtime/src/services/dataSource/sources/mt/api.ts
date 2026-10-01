@@ -14,11 +14,11 @@ export class MTRequestError extends Error {
   }
 }
 
-export function getConnectionsUrl(): string {
+function getConnectionsUrl(): string {
   return `apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/connections`;
 }
 
-export function getDataSourceResourceUrl(connection: DataSourceConnection): string {
+function getDataSourceResourceUrl(connection: DataSourceConnection): string {
   return `apis/${connection.group}/${connection.version}/namespaces/${config.namespace}/datasources/${encodeURIComponent(connection.name)}`;
 }
 
