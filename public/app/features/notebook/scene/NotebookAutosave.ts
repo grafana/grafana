@@ -37,6 +37,8 @@ export interface NotebookAutosaveState {
   errorMessage?: string;
   /** The resource generation the last successful save produced, when the server reported one. */
   savedGeneration?: number;
+  /** The resourceVersion the last successful save produced, when the server reported one. */
+  savedResourceVersion?: string;
 }
 
 /**
@@ -600,7 +602,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     const { uid } = this.scene.state;
 
     this.inFlightSave = this.write(uid, spec)
-      .then(({ generation }) => {
+      .then(({ generation, resourceVersion }) => {
         this.recordWritten(spec, serialized, panels, cells);
         this.hasSavedOnce = true;
         this.failedAttempts = 0;
@@ -612,6 +614,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           // Only recorded when the server sent one. `NotebookPageStateManager` decides whether to reuse
           // its cached scene by comparing this, so a number we guessed could make it keep a stale one.
           ...(generation !== undefined ? { savedGeneration: generation } : {}),
+          // Lets a caller that just wrote through this save (e.g. the mutation-api commands) report the
+          // new revision directly, without a second, separately-racing read of its own.
+          ...(resourceVersion !== undefined ? { savedResourceVersion: resourceVersion } : {}),
         });
       })
       .catch((error) => {
@@ -653,12 +658,15 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * notebook that was just created rather than creating a second. Only reached with something to write,
    * which is what stops a blank notebook nobody typed in from being created at all.
    */
-  private write(uid: string | undefined, spec: NotebookSpec): Promise<{ generation?: number }> {
+  private write(
+    uid: string | undefined,
+    spec: NotebookSpec
+  ): Promise<{ generation?: number; resourceVersion?: string }> {
     if (uid) {
       return updateNotebook(uid, spec);
     }
 
-    return createNotebook(spec).then(({ uid: created, generation }) => {
+    return createNotebook(spec).then(({ uid: created, generation, resourceVersion }) => {
       this.adoptingUid = true;
       try {
         this.scene.setState({ uid: created });
@@ -668,7 +676,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       // Only a blank notebook reaches this create, and the list is the only link to the blank route
       // today. A second way in has to hand its own source to the autosave.
       NotebookAnalytics.created(created, NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST, spec.layout.spec.cells.length);
-      return { generation };
+      return { generation, resourceVersion };
     });
   }
 }
