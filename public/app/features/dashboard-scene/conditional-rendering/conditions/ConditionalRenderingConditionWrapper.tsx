@@ -32,7 +32,7 @@ export function ConditionalRenderingConditionWrapper({
     const index = getConditionIndex(model);
     DashboardInteractions.clickRemoveConditionalRuleButton({ ruleId });
     edit({
-      tracking: { actionId: 'conditions.removeCondition' },
+      meta: { actionId: 'conditional-rendering.deleteCondition' },
       description: t('dashboard.conditional-rendering.conditions.wrapper.delete-condition', 'Delete Condition'),
       source: model,
       perform: () => removeCondition(model),

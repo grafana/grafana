@@ -159,7 +159,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     const editAction = new DashboardEditActionEvent({
-      tracking: { actionId: 'panel-edit.commitChanges' },
+      meta: { actionId: 'panel.changePanel' },
       description: t('dashboard.edit-actions.panel-edit', 'Panel changes'),
       source: this._layoutItem,
       perform: () => {

@@ -1,11 +1,11 @@
 import { type SceneObject } from '@grafana/scenes';
 
-import { type DashboardActionTracking } from '../../sidebar/events';
+import { type DashboardActionMeta } from '../../sidebar/events';
 
 import { edit } from './edit';
 
 interface MakeEditActionProps<Source extends SceneObject, T extends keyof Source['state']> {
-  actionId: NonNullable<DashboardActionTracking['actionId']>;
+  actionId: DashboardActionMeta['actionId'];
   description: string;
   prop: T;
 }
@@ -23,7 +23,7 @@ export function makeEditAction<Source extends SceneObject, T extends keyof Sourc
 }: MakeEditActionProps<Source, T>) {
   return ({ source, oldValue, newValue }: EditActionProps<Source, T>) => {
     edit({
-      tracking: { actionId },
+      meta: { actionId },
       description,
       source,
       perform: () => {

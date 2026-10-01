@@ -24,7 +24,7 @@ export function createPresetApplyHandler(panel: VizPanel) {
   return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
     const prevOptions = panel.state.options;
     edit({
-      tracking: { actionId: 'panel-edit.applyPreset' },
+      meta: { actionId: 'panel.applyPreset' },
       description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
       source: panel,
       perform: () => {
@@ -201,7 +201,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
 
   const onCommitDescriptionChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     edit({
-      tracking: { actionId: 'panel-edit.changeDescription' },
+      meta: { actionId: 'panel.changeDescription' },
       description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
       perform: () => panel.setState({ [propName]: value }),
@@ -211,7 +211,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
 
   const onToggleSubtitle = (evt: React.ChangeEvent<HTMLInputElement>) => {
     edit({
-      tracking: { actionId: 'panel-edit.toggleSubtitle' },
+      meta: { actionId: 'panel.toggleSubtitle' },
       description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
       perform: () => {
@@ -283,7 +283,7 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
     const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
 
     edit({
-      tracking: { actionId: 'panel-edit.changeBackground' },
+      meta: { actionId: 'panel.changeBackground' },
       description: t('dashboard.edit-actions.panel-background', 'panel background change'),
       source: panel,
       perform: () => panel.setState({ displayMode: newDisplayMode }),
@@ -304,7 +304,7 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
   }
 
   edit({
-    tracking: { actionId: 'panel-edit.editPanelTitleAction' },
+    meta: { actionId: 'panel.changeTitle' },
     description: t('dashboard.edit-actions.panel-title', 'panel title change'),
     source: panel,
     perform: () => updatePanelTitleState(panel, title),

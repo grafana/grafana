@@ -1,12 +1,9 @@
 import { type DashboardScene } from '../../scene/DashboardScene';
-import {
-  type DashboardActionTracking,
-  DashboardBatchEditActionEndEvent,
-  DashboardBatchEditActionStartEvent,
-} from '../../sidebar/events';
+import { DashboardBatchEditActionEndEvent, DashboardBatchEditActionStartEvent } from '../../sidebar/events';
 
-export function startBatch(dashboard: DashboardScene, description: string, tracking: DashboardActionTracking = {}) {
-  dashboard.publishEvent(new DashboardBatchEditActionStartEvent({ source: dashboard, description, tracking }), true);
+export function startBatch(dashboard: DashboardScene, description: string, batchActionId: string) {
+  const meta = { actionId: `batch.${batchActionId}` } as const;
+  dashboard.publishEvent(new DashboardBatchEditActionStartEvent({ source: dashboard, description, meta }), true);
 }
 
 export function endBatch(dashboard: DashboardScene) {

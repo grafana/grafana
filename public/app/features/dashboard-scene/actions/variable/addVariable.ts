@@ -14,7 +14,7 @@ export function addVariable({ source, addedObject }: AddVariableActionHelperProp
   const name = addedObject.state.name;
 
   addElement({
-    tracking: { actionId: 'variable.addVariable' },
+    meta: { actionId: 'variable.addVariable' },
     source,
     addedObject,
     perform() {

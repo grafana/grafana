@@ -1,12 +1,12 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
-import { type DashboardActionTracking } from '../../sidebar/events';
+import { type DashboardActionMeta } from '../../sidebar/events';
 import { edit } from '../utils/edit';
 import { getElementTypeName } from '../utils/getElementTypeName';
 
 interface MoveElementActionHelperProps {
-  tracking?: DashboardActionTracking;
+  meta: DashboardActionMeta;
   movedObject: SceneObject;
   source: SceneObject;
   perform: () => void;
@@ -23,7 +23,7 @@ export function moveElement(props: MoveElementActionHelperProps) {
   }
 
   edit({
-    tracking: { actionId: props.tracking?.actionId ?? 'element.moveElement' },
+    meta: props.meta,
     description: t('dashboard.edit-actions.move', 'Move {{typeName}}', { typeName }),
     movedObject,
     selectOnMove,

@@ -13,7 +13,7 @@ export function removeVariable({ source, removedObject }: RemoveVariableActionHe
   const varsBeforeRemoval = [...source.state.variables];
 
   removeElement({
-    tracking: { actionId: 'variable.removeVariable' },
+    meta: { actionId: 'variable.removeVariable' },
     source,
     removedObject,
     perform() {

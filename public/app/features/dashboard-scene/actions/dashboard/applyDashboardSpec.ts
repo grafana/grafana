@@ -41,7 +41,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
   const urlSync = scene.urlSync as DashboardUrlSync | undefined;
 
   edit({
-    tracking: { actionId: 'dashboard.applyDashboardSpec' },
+    meta: { actionId: 'dashboard.applyDashboardSpec' },
     source: scene,
     description,
     perform: () => {

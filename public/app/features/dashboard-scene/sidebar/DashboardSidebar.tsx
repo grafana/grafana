@@ -26,7 +26,7 @@ import {
   DashboardBatchEditActionEndEvent,
   DashboardBatchEditActionStartEvent,
   DashboardEditActionEvent,
-  type DashboardActionTracking,
+  type DashboardActionMeta,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
@@ -95,7 +95,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
   private _activeBatch?: {
-    tracking?: DashboardActionTracking;
+    meta: DashboardActionMeta;
     source: SceneObject;
     description?: string;
     actions: DashboardEditActionEventPayload[];
@@ -203,12 +203,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     action.payload.source.publishEvent(action, true);
   }
 
-  private startBatchAction({ source, description, tracking }: DashboardBatchEditActionEventPayload) {
+  private startBatchAction({ source, description, meta }: DashboardBatchEditActionEventPayload) {
     if (this.state.redoStack.length > 0) {
       this.setState({ redoStack: [] });
     }
 
-    this._activeBatch = { source, description, tracking, actions: [] };
+    this._activeBatch = { source, description, meta, actions: [] };
   }
 
   private endBatchAction() {
@@ -221,7 +221,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     const action: DashboardEditActionEventPayload = {
       source: batch.source,
-      tracking: { actionId: batch.tracking?.actionId ?? 'utils.batch' },
+      meta: batch.meta,
       description: batch.description,
       perform: () => {
         batch.actions.forEach((childAction) => this.performAction(childAction));
@@ -270,7 +270,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.handleEditAction(
       {
         source: payload.source,
-        tracking: { actionId: 'scene.stateCommitted' },
+        meta: { actionId: 'sidebar.DashboardSidebar' },
         description: payload.description,
         perform: payload.replay,
         undo: payload.revert,
@@ -284,6 +284,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
+    // How far back the user has already stepped through history before this undo
     const redoDepth = this.state.redoStack.length;
     const undoStack = this.state.undoStack.slice();
     const action = undoStack.pop();
@@ -295,7 +296,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
     reportInteraction('grafana_dashboard_undo', {
-      actionId: action.tracking?.actionId ?? 'unknown',
+      actionId: action.meta.actionId,
       redoDepth,
     });
   }
@@ -356,7 +357,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
     reportInteraction('grafana_dashboard_redo', {
-      actionId: action.tracking?.actionId ?? 'unknown',
+      actionId: action.meta.actionId,
       redoDepth,
     });
   }

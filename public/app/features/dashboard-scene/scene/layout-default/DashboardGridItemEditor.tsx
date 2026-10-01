@@ -100,7 +100,7 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
       value={repeatDirection ?? 'h'}
       onChange={(value) => {
         edit({
-          tracking: { actionId: 'layout-default.changeRepeatDirection' },
+          meta: { actionId: 'layout.changeRepeatDirection' },
           description: t('dashboard.edit-actions.panel-repeat-direction', 'Repeat direction'),
           source: gridItem,
           perform: () => gridItem.setRepeatDirection(value),
@@ -125,7 +125,7 @@ function MaxPerRowOption({ gridItem, id }: OptionComponentProps & { id?: string 
       value={maxPerRow ?? 4}
       onChange={(value) => {
         edit({
-          tracking: { actionId: 'layout-default.changeMaxPerRow' },
+          meta: { actionId: 'layout.changeMaxPerRow' },
           description: t('dashboard.edit-actions.panel-max-repeats-per-row', 'Max repeats per row'),
           source: gridItem,
           perform: () => gridItem.setMaxPerRow(value.value),
@@ -156,7 +156,7 @@ function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }
     (value?: string) => {
       if (value !== variableName) {
         edit({
-          tracking: { actionId: 'layout-default.changeRepeat' },
+          meta: { actionId: 'layout.changeRepeat' },
           description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
           source: gridItem,
           perform: () => handleStateChange(value),

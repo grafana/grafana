@@ -2,12 +2,20 @@
 import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { type SceneObject } from '@grafana/scenes';
 
-export interface DashboardActionTracking {
-  actionId?: `${string}.${string}`;
+export interface DashboardActionMeta {
+  /**
+   * Reported with undo/redo interactions. Format: `<folder>.<FileName>` of the file triggering the action,
+   * with an extra `.<detail>` suffix when the file triggers more than one action.
+   */
+  actionId: `${string}.${string}`;
+  /**
+   * Optional scope for generic actions that may be applied to different elements (e.g. switch layout)
+   */
+  scope?: string;
 }
 
 export interface DashboardEditActionEventPayload {
-  tracking?: DashboardActionTracking;
+  meta: DashboardActionMeta;
   removedObject?: SceneObject;
   addedObject?: SceneObject;
   movedObject?: SceneObject;
@@ -23,7 +31,7 @@ export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditA
 }
 
 export interface DashboardBatchEditActionEventPayload {
-  tracking?: DashboardActionTracking;
+  meta: DashboardActionMeta;
   source: SceneObject;
   description?: string;
 }

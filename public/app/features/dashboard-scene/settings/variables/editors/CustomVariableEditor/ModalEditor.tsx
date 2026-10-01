@@ -131,7 +131,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
     },
     onSaveOptions() {
       edit({
-        tracking: { actionId: 'variable.changeCustomOptions' },
+        meta: { actionId: 'variable.changeQuery' },
         source: variable,
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {

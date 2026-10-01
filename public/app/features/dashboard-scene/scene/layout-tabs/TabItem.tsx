@@ -152,7 +152,7 @@ export class TabItem
     }
 
     edit({
-      tracking: { actionId: 'layout-tabs.switchLayout' },
+      meta: { actionId: 'tab.switchLayout', scope: 'tab' },
       description: t('dashboard.edit-actions.switch-layout-tab', 'Switch layout'),
       source: this,
       perform,

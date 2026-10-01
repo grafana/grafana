@@ -22,8 +22,8 @@ export function groupSelectionInto({ source, items, target }: GroupSelectionInto
   }
 
   edit({
-    tracking: { actionId: 'layout.groupSelectionInto' },
     ...groupEdit,
+    meta: { actionId: 'layout.groupSelectionInto' },
     source,
   });
 }

@@ -52,7 +52,7 @@ export function moveRowToTab({
   const previousSlug = tabs.state.currentTabSlug;
 
   moveElement({
-    tracking: { actionId: 'layout.moveRowToTab' },
+    meta: { actionId: 'layout.moveRowToTab' },
     source: dashboard,
     movedObject: row,
     selectOnMove: false,

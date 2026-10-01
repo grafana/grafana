@@ -35,7 +35,7 @@ export class TabItems implements EditableDashboardElement {
         num: this._tabs.length,
         typeName: this.getEditableElementInfo().typeName.toLowerCase(),
       }),
-      { actionId: 'layout-tabs.removeTabs' }
+      'deleteTabs'
     );
 
     this._tabs.forEach((tab) => tab.onDelete());
