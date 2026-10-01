@@ -112,11 +112,31 @@ type SearchFieldDefinition struct {
 	// indexed document. Set this when sort or range queries depend on every
 	// document having the field present.
 	EmitZeroIfAbsent bool
+
+	// KVSource, when non-nil, marks the field as filled from a resource's kv
+	// subresource document rather than from Path. At most one of Path or
+	// KVSource is set. A KV-sourced field is scalar only: it must not have
+	// Array set.
+	KVSource *KVFieldSource
+}
+
+// KVFieldSource identifies the kv document a KV-sourced search field reads
+// its value from, and the dotted path within that document's JSON value.
+type KVFieldSource struct {
+	Owner string
+	Key   string
+	Path  string
 }
 
 // HasCapability reports whether the field declares the given capability.
 func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
 	return slices.Contains(f.Capabilities, c)
+}
+
+// IsKVSourced reports whether the field is filled from a kv document rather
+// than from Path.
+func (f SearchFieldDefinition) IsKVSourced() bool {
+	return f.KVSource != nil
 }
 
 // SearchFieldDefinitionsToTableColumns builds legacy
@@ -426,6 +446,17 @@ func validateSearchFieldDefinitions(sfds []SearchFieldDefinition) error {
 		if err := searchfields.Validate(string(sfd.Type), caps); err != nil {
 			violations = append(violations, "field "+sfd.Name+": "+err.Error())
 		}
+		if sfd.KVSource != nil {
+			if sfd.Path != "" {
+				violations = append(violations, "field "+sfd.Name+": path and source are mutually exclusive")
+			}
+			if sfd.Array {
+				violations = append(violations, "field "+sfd.Name+": kv source fields must not be arrays")
+			}
+			if sfd.KVSource.Owner == "" || sfd.KVSource.Key == "" || sfd.KVSource.Path == "" {
+				violations = append(violations, "field "+sfd.Name+": source.kv owner, key and path must not be empty")
+			}
+		}
 	}
 	if len(violations) == 0 {
 		return nil
@@ -490,6 +521,10 @@ type hashableField struct {
 	Array            bool               `json:"a,omitempty"`
 	Capabilities     []SearchCapability `json:"c,omitempty"`
 	EmitZeroIfAbsent bool               `json:"z,omitempty"`
+	// KV is "owner/key/path" when the field is KV-sourced, else empty.
+	// Declaring or changing a KV source moves the hash, just like a change
+	// to Path would for a path-sourced field.
+	KV string `json:"kv,omitempty"`
 }
 
 type hashableVersion struct {
@@ -517,6 +552,10 @@ func canonicalHashableFields(sfds []SearchFieldDefinition) []hashableField {
 	for _, sfd := range sfds {
 		caps := slices.Clone(sfd.Capabilities)
 		slices.Sort(caps)
+		var kv string
+		if sfd.KVSource != nil {
+			kv = sfd.KVSource.Owner + "/" + sfd.KVSource.Key + "/" + sfd.KVSource.Path
+		}
 		fields = append(fields, hashableField{
 			Name:             sfd.Name,
 			Path:             sfd.Path,
@@ -524,6 +563,7 @@ func canonicalHashableFields(sfds []SearchFieldDefinition) []hashableField {
 			Array:            sfd.Array,
 			Capabilities:     caps,
 			EmitZeroIfAbsent: sfd.EmitZeroIfAbsent,
+			KV:               kv,
 		})
 	}
 	slices.SortFunc(fields, func(a, b hashableField) int {
@@ -606,6 +646,33 @@ func (r *SearchFieldsRegistry) For(key LowerGroupResource) (selectableFields []s
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.selectableFields[key], r.searchFieldsHashes[key], r.searchFieldsProvider[key]
+}
+
+// KVSourcedKinds lists, sorted by group then resource, every kind whose
+// provider declares at least one KV-sourced field.
+func (r *SearchFieldsRegistry) KVSourcedKinds() []LowerGroupResource {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var out []LowerGroupResource
+	for key, provider := range r.searchFieldsProvider {
+		if provider == nil {
+			continue
+		}
+		fields := provider.Fields(schema.GroupVersionResource{Group: key.Group, Resource: key.Resource})
+		for _, f := range fields {
+			if f.IsKVSourced() {
+				out = append(out, key)
+				break
+			}
+		}
+	}
+	slices.SortFunc(out, func(a, b LowerGroupResource) int {
+		if c := strings.Compare(a.Group, b.Group); c != 0 {
+			return c
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	})
+	return out
 }
 
 // ForKey is For for a whole index key. A namespace-wide index declares its own

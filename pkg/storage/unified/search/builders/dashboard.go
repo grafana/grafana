@@ -78,6 +78,13 @@ type DashboardDocumentBuilder struct {
 	// maps dashboard UID to stats
 	Stats map[string]map[string]int64
 
+	// KVBacked reports whether Stats actually comes from the KV store
+	// (set once per All() call from sprinkles' optional RefreshesFromKV
+	// capability). KVFieldSnapshot uses it to decide whether search.go's
+	// kind-neutral refresh should ever scan dashboards: false for
+	// Enterprise's legacy (non-KV) sprinkles, matching today's behaviour.
+	KVBacked bool
+
 	// data source lookup
 	DatasourceLookup dashboard.DatasourceLookup
 
@@ -89,6 +96,45 @@ type DashboardStats interface {
 	GetStats(ctx context.Context, namespace string) (map[string]map[string]int64, error)
 	GetDashboardStats(ctx context.Context, namespace, dashboardUid string) (map[string]int64, error)
 }
+
+// StatsSnapshot returns the stats snapshot this builder was constructed
+// with, keyed by dashboard name. Kept for the vector backfiller and
+// existing tests that read Stats directly; search.go's refresh no longer
+// calls this (see KVFieldSnapshot).
+func (b *DashboardDocumentBuilder) StatsSnapshot() map[string]map[string]int64 {
+	return b.Stats
+}
+
+// KVFieldSnapshot implements resource.KVFieldSnapshotter, the kind-neutral
+// capability search.go's updaterFn periodically diffs a pinned-baseline
+// snapshot against a freshly resolved one, at most once per
+// KVStatsRefreshInterval, and queues a full namespace rebuild — never a
+// per-dashboard reindex — when they differ. A dashboard's own
+// resourceVersion never changes when only its KV stats do, so
+// ListModifiedSince alone would never surface the drift.
+//
+// ok is KVBacked: false with Enterprise's legacy (non-KV) sprinkles, so no
+// refresh scans run for dashboards there, matching today; true whenever
+// Stats is actually KV-backed, in OSS or in Enterprise's KV mode.
+func (b *DashboardDocumentBuilder) KVFieldSnapshot() (resource.KVFieldSnapshot, bool) {
+	if !b.KVBacked {
+		return nil, false
+	}
+	if b.Stats == nil {
+		return resource.KVFieldSnapshot{}, true
+	}
+	snap := make(resource.KVFieldSnapshot, len(b.Stats))
+	for name, fields := range b.Stats {
+		converted := make(map[string]any, len(fields))
+		for field, v := range fields {
+			converted[field] = v
+		}
+		snap[name] = converted
+	}
+	return snap, true
+}
+
+var _ resource.KVFieldSnapshotter = (*DashboardDocumentBuilder)(nil)
 
 type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64
 

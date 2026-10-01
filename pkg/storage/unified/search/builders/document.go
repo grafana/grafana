@@ -19,6 +19,17 @@ import (
 // All returns all document builders from this package.
 // These builders have dependencies on Grafana apps (dashboard and user).
 func All(registry *resource.SearchFieldsRegistry, sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, error) {
+	// kvBacked is resolved once: whether sprinkles is actually backed by the
+	// KV store, via the optional (structurally-typed) RefreshesFromKV
+	// capability. OssDashboardStats reports true only when its KV delegate
+	// is non-nil; Enterprise's legacy (non-KV) sprinkles implementations
+	// don't implement it at all, or report false. Either way,
+	// DashboardDocumentBuilder.KVFieldSnapshot() uses this to decide whether
+	// search.go's kind-neutral refresh should ever scan dashboards.
+	kvBacked := false
+	if refresher, ok := sprinkles.(interface{ RefreshesFromKV() bool }); ok {
+		kvBacked = refresher.RefreshesFromKV()
+	}
 	dashboards, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		logger := log.New("dashboard_builder", "namespace", namespace)
 		dsinfo := []*dashboard.DatasourceQueryResult{{}}
@@ -55,6 +66,7 @@ func All(registry *resource.SearchFieldsRegistry, sql db.DB, sprinkles Dashboard
 			Namespace:        namespace,
 			Blob:             blob,
 			Stats:            stats,
+			KVBacked:         kvBacked,
 			DatasourceLookup: dashboard.CreateDatasourceLookup(dsinfo),
 		}, nil
 	})

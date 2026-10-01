@@ -460,11 +460,18 @@ type searchServer struct {
 	// since usage insights is not in unified storage, we need to periodically rebuild the index
 	// to make sure these data points are up to date.
 	dashboardIndexMaxAge time.Duration
-	maxIndexAge          time.Duration
-	minBuildVersion      *semver.Version
-	buildVersion         *semver.Version
-	searchFields         *SearchFieldsRegistry
-	requiredFeatures     []IndexFeature
+
+	// kvStatsRefreshInterval bounds how often updaterFn re-scans a
+	// namespace's KV stats and compares them against the stats the current
+	// index was built with; a difference queues a full namespace rebuild.
+	// Zero means the storage.resourceKV toggle is off; updaterFn then uses the
+	// memoised builder from build(), as without the toggle.
+	kvStatsRefreshInterval time.Duration
+	maxIndexAge            time.Duration
+	minBuildVersion        *semver.Version
+	buildVersion           *semver.Version
+	searchFields           *SearchFieldsRegistry
+	requiredFeatures       []IndexFeature
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -566,6 +573,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		ownsIndexFn:    ownsIndexFn,
 
 		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
+		kvStatsRefreshInterval:    opts.KVStatsRefreshInterval,
 		maxIndexAge:               opts.MaxIndexAge,
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
@@ -2232,7 +2240,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// For dashboards this reads the namespace's usage insights data, and an index
 	// served from a snapshot never calls the callbacks that need it. Kept once
 	// resolved: the cache entry expires while updaterFn keeps running, so asking
-	// again would re-read the insights data.
+	// again would re-read the insights data. It also pins what this index
+	// generation was built with, which the freshness check below diffs against.
+	// A rebuild starts a new closure and so a new pinned set.
 	var builderMu sync.Mutex
 	builders := map[NamespacedResource]DocumentBuilder{}
 	getBuilder := func(ctx context.Context, src NamespacedResource) (DocumentBuilder, error) {
@@ -2247,6 +2257,89 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		}
 		builders[src] = b
 		return b, nil
+	}
+
+	// checkKVStatsFreshness compares the KV stats the current index was
+	// built with (baseline — the pinned builder from getBuilder, never
+	// swapped out within this closure) against a freshly resolved builder's
+	// stats, and queues a full namespace rebuild if they differ. It is
+	// a no-op unless s.builders.kvStatsCheckDue(nsr, ...) says a check is
+	// due — at most once per s.kvStatsRefreshInterval — which is tracked
+	// independently of the LRU's own (shorter) TTL, so an eviction there for
+	// an unrelated reason never causes an extra scan.
+	//
+	// The baseline is intentionally not updated here: it only moves when a
+	// rebuild actually succeeds and swaps in a new index (and a new build()
+	// closure with its own freshly-pinned baseline). So if the rebuild this
+	// queues fails, or is still pending, the next due check compares the
+	// same baseline against a fresh scan and finds the same drift, and
+	// re-queues — the change is never lost to one failed or delayed attempt.
+	checkKVStatsFreshness := func(ctx context.Context, baseline DocumentBuilder) {
+		if !s.builders.kvStatsCheckDue(nsr, s.kvStatsRefreshInterval) {
+			return
+		}
+
+		baselineSnap, ok := baseline.(KVFieldSnapshotter)
+		if !ok {
+			return
+		}
+		baselineFields, baselineOK := baselineSnap.KVFieldSnapshot()
+		if !baselineOK {
+			return
+		}
+
+		start := time.Now()
+		result := "unchanged"
+		var changed []string
+		defer func() {
+			s.indexMetrics.KVFieldsRefreshTotal.WithLabelValues(nsr.Group, nsr.Resource, result).Inc()
+			s.indexMetrics.KVFieldsRefreshDurationSeconds.WithLabelValues(nsr.Group, nsr.Resource).Observe(time.Since(start).Seconds())
+			trace.SpanFromContext(ctx).AddEvent("kv fields refresh", trace.WithAttributes(attribute.Int("changed_names", len(changed))))
+		}()
+
+		// The only KV scan on this path: resolving a fresh builder re-reads
+		// KV stats for the namespace. Bounded to once per interval by the
+		// due check above, so it does not scan again between intervals even
+		// though the LRU's own (shorter) TTL may have evicted this entry for
+		// unrelated reasons in the meantime.
+		s.builders.clearNamespacedCache(nsr)
+		fresh, err := s.builders.get(ctx, nsr)
+		if err != nil {
+			result = "error"
+			logger.Warn("failed to resolve fresh kv stats builder", "err", err)
+			return
+		}
+		if reporter, ok := fresh.(KVFieldSnapshotErrorReporter); ok {
+			if scanErr := reporter.KVFieldSnapshotErr(); scanErr != nil {
+				// A transient scan error, not a real "every value is gone":
+				// diffing against it would read as every name having
+				// changed and queue a rebuild that would just hit the same
+				// scan error again. Report it and leave the baseline (and
+				// the index) alone; the next due check tries a fresh scan.
+				result = "error"
+				logger.Warn("kv fields scan failed on the freshness check", "err", scanErr)
+				return
+			}
+		}
+		freshSnap, ok := fresh.(KVFieldSnapshotter)
+		if !ok {
+			// The baseline builder supported snapshotting (checked above,
+			// before result even had a value to mislabel) but the freshly
+			// resolved one doesn't -- an inconsistent builder swap, not a
+			// verified "unchanged". Label it distinctly so the metric
+			// doesn't silently count this as a real freshness check.
+			result = "not_supported"
+			return
+		}
+		freshFields, freshOK := freshSnap.KVFieldSnapshot()
+		if !freshOK {
+			return
+		}
+
+		if changed = diffKVFieldSnapshots(baselineFields, freshFields); len(changed) > 0 {
+			result = "changed"
+			s.queueKVStatsRebuild(nsr)
+		}
 	}
 
 	// A namespace-wide index draws from several resource types; every other index
@@ -2412,6 +2505,20 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", sinceRV)))
 
+		// A namespace-wide index never carries KV-sourced fields, so there is
+		// nothing to go stale there. For a single-kind index the check runs on its
+		// own bounded timer and never changes which builder builds documents: it
+		// only queues a full namespace rebuild when it finds drift, so a rebuild
+		// is the one path through which KV changes reach search. An interval of 0
+		// (the default when KV-backed fields are off) skips it.
+		if !nsr.IsGlobal() && s.kvStatsRefreshInterval > 0 && s.builders != nil {
+			baseline, err := getBuilder(ctx, nsr)
+			if err != nil {
+				return 0, 0, err
+			}
+			checkKVStatsFreshness(ctx, baseline)
+		}
+
 		// If we're calling with the same sinceRV as last time, pass the timestamp
 		// of our last call so the backend can skip the lookback window when safe.
 		var calledAt *time.Time
@@ -2567,6 +2674,82 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// from the open indexes, so it also follows incremental updates and it is not
 	// added up over repeated rebuilds.
 	return index, nil
+}
+
+// diffKVFieldSnapshots returns the resource names whose KV-sourced field
+// values differ between old and new, including names present in only one of
+// the two snapshots. Returns nil when both are empty. updaterFn only needs
+// to know whether this is non-empty (some KV-sourced field changed) to
+// decide whether to queue a rebuild; the actual names are only used for the
+// "kv fields refresh" span event's changed_names count.
+//
+// Kind-neutral: this used to be dashboard-specific (diffChangedStatsNames
+// over map[string]map[string]int64); it now diffs KVFieldSnapshot, whose
+// values are the same already-coerced scalars (int64, float64, string,
+// bool) every KV-sourced builder produces, dashboards included, so a plain
+// == still applies per field.
+func diffKVFieldSnapshots(oldSnap, newSnap KVFieldSnapshot) []string {
+	if len(oldSnap) == 0 && len(newSnap) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(oldSnap)+len(newSnap))
+	for name := range oldSnap {
+		seen[name] = struct{}{}
+	}
+	for name := range newSnap {
+		seen[name] = struct{}{}
+	}
+	var changed []string
+	for name := range seen {
+		if !kvFieldsEqual(oldSnap[name], newSnap[name]) {
+			changed = append(changed, name)
+		}
+	}
+	return changed
+}
+
+// kvFieldsEqual reports whether two per-resource KV field maps hold the same
+// values. Values are always already-coerced scalars, so == is correct.
+func kvFieldsEqual(a, b map[string]any) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for k, v := range a {
+		if bv, ok := b[k]; !ok || bv != v {
+			return false
+		}
+	}
+	return true
+}
+
+// queueKVStatsRebuild marks nsr's index as needing a full rebuild after
+// updaterFn's KV-stats refresh check finds that a resource's KV-sourced
+// fields changed since the index was built. It reuses the existing periodic-rebuild
+// mechanism (rebuildQueue + runIndexRebuilder, the same path
+// findIndexesToRebuild uses for staleness-based rebuilds) rather than
+// reindexing individual documents here: a KV write must never trigger
+// indexing directly, and routing every stats-driven refresh through one
+// rebuild path — instead of a second, parallel per-document indexing path —
+// keeps the index and the builder's KV-stats snapshot from drifting apart in
+// two different ways.
+//
+// minBuildTime is set to now: the caller already confirmed stats changed, so
+// the next time the rebuild worker evaluates this request it should rebuild
+// unconditionally, without re-deriving that decision from build version or
+// search-field hashes the way the periodic scanner does.
+//
+// Known gap: the baseline is resolved lazily on the first getBuilder call. When
+// an index comes from a remote snapshot or a reused file-based index, builderFn
+// never runs, so that first call reads the current KV stats while the documents
+// may still carry older ones. That drift isn't detected until the stats change
+// again or the regular index rebuild runs.
+func (s *searchServer) queueKVStatsRebuild(nsr NamespacedResource) {
+	s.log.Info("kv fields changed, queueing namespace rebuild",
+		"namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource,
+		"reason", "kv fields changed")
+	req := newRebuildRequest(nsr, time.Now(), time.Time{}, nil, nil, "", nil)
+	s.rebuildQueue.Add(req)
+	s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 }
 
 // updateItem turns one change storage reported into the item that brings an
@@ -2827,15 +3010,28 @@ type builderCache struct {
 	// This is only modified at startup, so we do not need mutex for access
 	lookup map[string]map[string]DocumentBuilderInfo
 
-	// For namespaced based resources that require a cache
+	// For namespaced based resources that require a cache. expirable.LRU is
+	// internally thread-safe (its own mutex), so mu below is not needed to
+	// guard reads/writes of ns itself.
 	ns *expirable.LRU[NamespacedResource, DocumentBuilder]
-	mu sync.Mutex // only locked for a cache miss
+	mu sync.Mutex // only locked for a cache miss, to avoid duplicate construction
+
+	// kvLastChecked tracks, per namespace, the last time updaterFn's KV-stats
+	// freshness check (search.go's checkKVStatsFreshness) ran, so the check
+	// stays bounded to at most once per kvStatsRefreshInterval. It is
+	// deliberately not part of ns: that LRU's TTL (2m) is shorter than the
+	// default refresh interval (5m) and is evicted for unrelated reasons
+	// (clearNamespacedCache on other paths, a failed rebuild), none of which
+	// should reset how often this check itself runs.
+	kvCheckMu     sync.Mutex
+	kvLastChecked map[NamespacedResource]time.Time
 }
 
 func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
 	cache := &builderCache{
-		lookup: make(map[string]map[string]DocumentBuilderInfo),
-		ns:     expirable.NewLRU[NamespacedResource, DocumentBuilder](nsCacheSize, nil, ttl),
+		lookup:        make(map[string]map[string]DocumentBuilderInfo),
+		ns:            expirable.NewLRU[NamespacedResource, DocumentBuilder](nsCacheSize, nil, ttl),
+		kvLastChecked: make(map[NamespacedResource]time.Time),
 	}
 	if len(cfg) == 0 {
 		return cache, fmt.Errorf("no builders configured")
@@ -2871,9 +3067,9 @@ func (s *builderCache) get(ctx context.Context, key NamespacedResource) (Documen
 			}
 
 			// The builder needs context
-			builder, ok := s.ns.Get(key)
+			b, ok := s.ns.Get(key)
 			if ok {
-				return builder, nil
+				return b, nil
 			}
 			{
 				s.mu.Lock()
@@ -2888,6 +3084,22 @@ func (s *builderCache) get(ctx context.Context, key NamespacedResource) (Documen
 		}
 	}
 	return s.defaultBuilder, nil
+}
+
+// kvStatsCheckDue reports whether at least interval has passed since the
+// last KV-stats freshness check for key (or none has happened yet), and if
+// so records this call as that check, so a concurrent caller sees it as not
+// due. This bounds checkKVStatsFreshness to at most once per interval,
+// independent of the ns LRU's own (shorter) TTL and of how many times a
+// namespace's index has been rebuilt in between.
+func (s *builderCache) kvStatsCheckDue(key NamespacedResource, interval time.Duration) bool {
+	s.kvCheckMu.Lock()
+	defer s.kvCheckMu.Unlock()
+	if last, ok := s.kvLastChecked[key]; ok && time.Since(last) < interval {
+		return false
+	}
+	s.kvLastChecked[key] = time.Now()
+	return true
 }
 
 // AsResourceKey converts the given namespace and type to a search key

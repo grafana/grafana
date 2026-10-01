@@ -1816,3 +1816,7 @@ func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
 	return nil, nil
 }
+
+func (m *MockClient) KV() resourcepb.ResourceKVClient {
+	return nil
+}

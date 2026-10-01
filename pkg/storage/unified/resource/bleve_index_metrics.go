@@ -39,6 +39,9 @@ type BleveIndexMetrics struct {
 	BuildDocuments    *prometheus.CounterVec
 	BuildSourceBytes  *prometheus.CounterVec
 	BuildIndexedBytes *prometheus.CounterVec
+
+	KVFieldsRefreshTotal           *prometheus.CounterVec
+	KVFieldsRefreshDurationSeconds *prometheus.HistogramVec
 }
 
 // Phases of getting a document into an index.
@@ -207,6 +210,17 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_search_result_format_total",
 			Help: "Number of search responses by result format.",
 		}, []string{"format"}),
+		KVFieldsRefreshTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_kv_fields_refresh_total",
+			Help: "Number of KV-sourced search field refresh checks, by kind and result.",
+		}, []string{"group", "resource", "result"}), // result: unchanged, changed, error
+		KVFieldsRefreshDurationSeconds: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "index_server_kv_fields_refresh_duration_seconds",
+			Help:                            "Duration of a KV-sourced search field refresh check: the fresh-builder resolve plus the diff.",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"group", "resource"}),
 	}
 
 	// Always-on label series. Snapshot-specific series are initialised separately

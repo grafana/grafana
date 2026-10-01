@@ -465,6 +465,39 @@ func zeroValueForFieldDefinition(def SearchFieldDefinition) any {
 	return nil
 }
 
+// KVFieldSnapshot maps a resource's name to its KV-sourced field values for
+// one (owner, key) document, keyed by the declared search field name. Values
+// are already coerced scalars (int64, float64, string, bool).
+type KVFieldSnapshot map[string]map[string]any
+
+// KVFieldSnapshotter is implemented by a DocumentBuilder that fills
+// KV-sourced fields, so the search server's refresh mechanism can read the
+// snapshot it was built with, diff it against a freshly read one, and decide
+// whether to rebuild the index. ok is false when the builder does not fill
+// any KV-sourced field (for example the KV store is disabled).
+type KVFieldSnapshotter interface {
+	KVFieldSnapshot() (snapshot KVFieldSnapshot, ok bool)
+}
+
+// KVFieldSnapshotErrorReporter is an optional capability of a
+// KVFieldSnapshotter: it reports whether the KV scan behind its current
+// snapshot failed. A failed scan still builds documents (without the
+// KV-sourced fields, same as an absent value), so the search server's
+// periodic freshness check needs its own signal to tell "scanned clean, no
+// KV-sourced values found" apart from "the scan itself errored" -- the
+// latter should surface as a transient error, not queue a rebuild that
+// would just repeat the same failure.
+type KVFieldSnapshotErrorReporter interface {
+	KVFieldSnapshotErr() error
+}
+
+// CoerceSearchFieldValue applies the same type coercion path-sourced fields
+// use (coerceToFieldShape) to a raw KV-document value, so a KV-sourced field
+// follows exactly the type rules that a path-sourced field follows.
+func CoerceSearchFieldValue(raw any, def SearchFieldDefinition) (any, bool) {
+	return coerceToFieldShape(raw, def.Type, def.Array)
+}
+
 // gvrForLookup resolves the GroupVersionResource the provider should be
 // queried with. The lookup is strict on a declared apiVersion: if the
 // document carries one and the manifest does not cover that exact version,

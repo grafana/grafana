@@ -2464,3 +2464,375 @@ func TestBuildResolvesDocumentBuilderOnFirstUse(t *testing.T) {
 		require.Equal(t, int32(1), supplier.resolved.Load(), "the builder resolved for the build should be reused by every update")
 	})
 }
+
+// kvCountingBuilderSupplier provides a Namespaced builder for the dashboard
+// resource (the only resource subject to the kvStatsRefreshInterval
+// freshness check) and the required default builder. It counts how many
+// times the per-namespace builder is resolved so tests can detect an
+// unwanted extra KV scan.
+type kvCountingBuilderSupplier struct {
+	resolved atomic.Int32
+}
+
+func (s *kvCountingBuilderSupplier) GetDocumentBuilders(_ *SearchFieldsRegistry) ([]DocumentBuilderInfo, error) {
+	return []DocumentBuilderInfo{
+		// Default builder (required by newBuilderCache).
+		{GroupResource: schema.GroupResource{}, Builder: &testDocumentBuilder{}},
+		// Namespaced dashboard builder: each resolution increments resolved.
+		{
+			GroupResource: schema.GroupResource{
+				Group:    dashboardv1.GROUP,
+				Resource: dashboardv1.DASHBOARD_RESOURCE,
+			},
+			Namespaced: func(_ context.Context, _ string, _ BlobSupport) (DocumentBuilder, error) {
+				s.resolved.Add(1)
+				return &testDocumentBuilder{}, nil
+			},
+		},
+	}, nil
+}
+
+// TestUpdaterFnKVStatsRefresh_DocumentBuilderPinned verifies that updaterFn
+// always builds documents with the builder pinned by build()'s getBuilder —
+// the same one builderFn used for this index generation — regardless of the
+// storage.resourceKV toggle. The KV-stats freshness check (verified by the
+// tests below) is a side effect that never swaps this builder out.
+func TestUpdaterFnKVStatsRefresh_DocumentBuilderPinned(t *testing.T) {
+	t.Parallel()
+
+	dashKey := NamespacedResource{
+		Namespace: "default",
+		Group:     dashboardv1.GROUP,
+		Resource:  dashboardv1.DASHBOARD_RESOURCE,
+	}
+
+	t.Run("toggle on: document building never re-resolves the pinned builder", func(t *testing.T) {
+		t.Parallel()
+
+		// A long interval keeps the freshness check itself from firing (it
+		// would resolve the builder cache directly, which this test isn't
+		// exercising); document building is what's under test here.
+		const interval = time.Hour
+		supplier := &kvCountingBuilderSupplier{}
+		search := &mockSearchBackend{}
+		// trashStorageBackend.ListModifiedSince returns an empty sequence (no
+		// modified resources), which is all the updater needs to run to completion.
+		storage := &trashStorageBackend{}
+		server, err := newSearchServer(SearchOptions{
+			Backend:                search,
+			Resources:              supplier,
+			KVStatsRefreshInterval: interval,
+		}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		_, err = server.build(t.Context(), dashKey, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+		require.Equal(t, int32(1), supplier.resolved.Load(), "build() resolves the builder once")
+
+		search.mu.Lock()
+		updater := search.lastUpdater
+		search.mu.Unlock()
+		require.NotNil(t, updater)
+
+		for i := range 3 {
+			idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+			_, _, err = updater(t.Context(), idx, int64(2+i))
+			require.NoError(t, err)
+		}
+		require.Equal(t, int32(1), supplier.resolved.Load(),
+			"the pinned builder must be reused for every update, toggle on or off")
+	})
+
+	t.Run("toggle off: memoised builder from build is always reused by updater", func(t *testing.T) {
+		t.Parallel()
+
+		supplier := &kvCountingBuilderSupplier{}
+		search := &mockSearchBackend{}
+		storage := &trashStorageBackend{}
+		server, err := newSearchServer(SearchOptions{
+			Backend:   search,
+			Resources: supplier,
+			// KVStatsRefreshInterval intentionally left at zero: toggle-off behaviour.
+		}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		_, err = server.build(t.Context(), dashKey, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+
+		search.mu.Lock()
+		updater := search.lastUpdater
+		search.mu.Unlock()
+		require.NotNil(t, updater)
+
+		// Run the updater several times; the memoised builder from build() must
+		// be reused on every call — resolved stays at 1.
+		for i := range 3 {
+			idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+			_, _, err = updater(t.Context(), idx, int64(2+i))
+			require.NoError(t, err)
+		}
+		require.Equal(t, int32(1), supplier.resolved.Load(),
+			"interval == 0: memoised builder must be reused on every update")
+	})
+}
+
+// statsSnapshotBuilder implements DocumentBuilder and KVFieldSnapshotter,
+// returning whatever stats snapshot it was constructed with, converted to
+// KVFieldSnapshot. Used to control what checkKVStatsFreshness sees as the
+// "fresh" snapshot when it resolves the per-namespace builder directly from
+// the cache. The fixture type stays map[string]map[string]int64, matching
+// every existing test case in this file; only the interface conversion is
+// kind-neutral now.
+type statsSnapshotBuilder struct {
+	testDocumentBuilder
+	stats map[string]map[string]int64
+}
+
+func (b *statsSnapshotBuilder) KVFieldSnapshot() (KVFieldSnapshot, bool) {
+	snap := make(KVFieldSnapshot, len(b.stats))
+	for name, fields := range b.stats {
+		converted := make(map[string]any, len(fields))
+		for field, v := range fields {
+			converted[field] = v
+		}
+		snap[name] = converted
+	}
+	return snap, true
+}
+
+var _ KVFieldSnapshotter = (*statsSnapshotBuilder)(nil)
+
+// statsSnapshotBuilderSupplier resolves a fresh *statsSnapshotBuilder,
+// carrying whatever stats the test last set via setStats, every time the
+// namespaced dashboard builder is resolved, and counts how many times that
+// happens so tests can assert the freshness check scans at most once per
+// interval.
+type statsSnapshotBuilderSupplier struct {
+	mu       sync.Mutex
+	stats    map[string]map[string]int64
+	resolved atomic.Int32
+}
+
+func (s *statsSnapshotBuilderSupplier) setStats(stats map[string]map[string]int64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.stats = stats
+}
+
+func (s *statsSnapshotBuilderSupplier) GetDocumentBuilders(_ *SearchFieldsRegistry) ([]DocumentBuilderInfo, error) {
+	return []DocumentBuilderInfo{
+		// Default builder (required by newBuilderCache).
+		{GroupResource: schema.GroupResource{}, Builder: &testDocumentBuilder{}},
+		// Namespaced dashboard builder: resolves to whatever stats are
+		// currently set, so a test can change them between resolutions.
+		{
+			GroupResource: schema.GroupResource{
+				Group:    dashboardv1.GROUP,
+				Resource: dashboardv1.DASHBOARD_RESOURCE,
+			},
+			Namespaced: func(_ context.Context, _ string, _ BlobSupport) (DocumentBuilder, error) {
+				s.resolved.Add(1)
+				s.mu.Lock()
+				defer s.mu.Unlock()
+				return &statsSnapshotBuilder{stats: s.stats}, nil
+			},
+		},
+	}, nil
+}
+
+// TestUpdaterFnKVStatsRefresh_RebuildQueue verifies that updaterFn's KV-stats
+// freshness check queues a full namespace rebuild through the existing
+// rebuild mechanism (rebuildQueue) only when a freshly resolved builder's
+// stats differ from the pinned baseline (the builder build() used for this
+// index) — never on every check, and never by reindexing documents directly.
+func TestUpdaterFnKVStatsRefresh_RebuildQueue(t *testing.T) {
+	t.Parallel()
+
+	dashKey := NamespacedResource{
+		Namespace: "default",
+		Group:     dashboardv1.GROUP,
+		Resource:  dashboardv1.DASHBOARD_RESOURCE,
+	}
+
+	setup := func(t *testing.T, interval time.Duration, initialStats map[string]map[string]int64) (*searchServer, *statsSnapshotBuilderSupplier, UpdateFn) {
+		t.Helper()
+		supplier := &statsSnapshotBuilderSupplier{}
+		supplier.setStats(initialStats)
+
+		search := &mockSearchBackend{}
+		storage := &trashStorageBackend{}
+		server, err := newSearchServer(SearchOptions{
+			Backend:                search,
+			Resources:              supplier,
+			KVStatsRefreshInterval: interval,
+		}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		_, err = server.build(t.Context(), dashKey, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+		require.Equal(t, int32(1), supplier.resolved.Load(), "build() pins the builder used to build the index")
+
+		search.mu.Lock()
+		updater := search.lastUpdater
+		search.mu.Unlock()
+		require.NotNil(t, updater)
+
+		return server, supplier, updater
+	}
+
+	// forceCheckDue backdates the freshness check's own per-namespace timer
+	// (search.go's kvStatsCheckDue, tracked on the builder cache independently
+	// of the ns LRU's TTL) so the next updater call treats a check as due,
+	// without sleeping past the interval (N1: a short real interval could
+	// flake between statements on a loaded CI runner).
+	forceCheckDue := func(t *testing.T, server *searchServer, interval time.Duration) {
+		t.Helper()
+		server.builders.kvCheckMu.Lock()
+		server.builders.kvLastChecked[dashKey] = time.Now().Add(-2 * interval)
+		server.builders.kvCheckMu.Unlock()
+	}
+
+	t.Run("unchanged stats: no rebuild queued", func(t *testing.T) {
+		t.Parallel()
+		const interval = time.Hour
+		stats := map[string]map[string]int64{"dash-a": {"views_total": 10}}
+		server, supplier, updater := setup(t, interval, stats)
+
+		forceCheckDue(t, server, interval)
+		// Same contents, different map value: statsFieldsEqual compares values,
+		// not map identity.
+		supplier.setStats(map[string]map[string]int64{"dash-a": {"views_total": 10}})
+
+		idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+		_, _, err := updater(t.Context(), idx, 2)
+		require.NoError(t, err)
+
+		require.Equal(t, 0, server.rebuildQueue.Len(), "unchanged stats must not queue a rebuild")
+	})
+
+	t.Run("changed stats: exactly one rebuild queued for the namespace", func(t *testing.T) {
+		t.Parallel()
+		const interval = time.Hour
+		stats := map[string]map[string]int64{"dash-a": {"views_total": 10}}
+		server, supplier, updater := setup(t, interval, stats)
+
+		forceCheckDue(t, server, interval)
+		supplier.setStats(map[string]map[string]int64{"dash-a": {"views_total": 999}})
+
+		idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+		_, _, err := updater(t.Context(), idx, 2)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, server.rebuildQueue.Len(), "changed stats must queue exactly one rebuild")
+		elems := server.rebuildQueue.Elements()
+		require.Len(t, elems, 1)
+		require.Equal(t, dashKey, elems[0].NamespacedResource)
+	})
+
+	t.Run("stats unchanged across repeated due checks: still no rebuild", func(t *testing.T) {
+		t.Parallel()
+		const interval = time.Hour
+		stats := map[string]map[string]int64{"dash-a": {"views_total": 10}}
+		server, supplier, updater := setup(t, interval, stats)
+
+		for i := 0; i < 3; i++ {
+			forceCheckDue(t, server, interval)
+			supplier.setStats(map[string]map[string]int64{"dash-a": {"views_total": 10}})
+			idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+			_, _, err := updater(t.Context(), idx, int64(2+i))
+			require.NoError(t, err)
+		}
+
+		require.Equal(t, 0, server.rebuildQueue.Len(), "repeated unchanged-stats checks must never queue a rebuild")
+	})
+
+	t.Run("check runs at most once per interval, not once per updater call", func(t *testing.T) {
+		t.Parallel()
+		const interval = time.Hour
+		stats := map[string]map[string]int64{"dash-a": {"views_total": 10}}
+		server, supplier, updater := setup(t, interval, stats)
+
+		forceCheckDue(t, server, interval)
+		idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+		_, _, err := updater(t.Context(), idx, 2)
+		require.NoError(t, err)
+		require.Equal(t, int32(2), supplier.resolved.Load(), "the due check resolves the builder once, in addition to build()'s pin")
+
+		// Not due again: further updater calls must not scan KV stats again,
+		// even though stats change under it — the scan is bounded to
+		// once per interval, not once per updater call.
+		supplier.setStats(map[string]map[string]int64{"dash-a": {"views_total": 999}})
+		for i := 0; i < 3; i++ {
+			idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+			_, _, err := updater(t.Context(), idx, int64(3+i))
+			require.NoError(t, err)
+		}
+		require.Equal(t, int32(2), supplier.resolved.Load(), "no further KV scan until the next interval is due")
+		require.Equal(t, 0, server.rebuildQueue.Len(), "the missed change was never scanned for, so nothing is queued yet")
+
+		// Once due again, the change (still sitting in the supplier since the
+		// loop above) is finally detected.
+		forceCheckDue(t, server, interval)
+		idx = &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+		_, _, err = updater(t.Context(), idx, 6)
+		require.NoError(t, err)
+		require.Equal(t, 1, server.rebuildQueue.Len(), "the next due check must still find and queue the drift")
+	})
+
+	t.Run("cache eviction between checks does not lose the pinned baseline (blocker)", func(t *testing.T) {
+		t.Parallel()
+		// Simulates the ns LRU's TTL (2m) expiring before kvStatsRefreshInterval
+		// (default 5m) elapses: the cached entry is gone by the time the next
+		// due check runs, but the baseline must still be the builder build()
+		// pinned for this index, not whatever (if anything) the cache holds.
+		const interval = time.Hour
+		stats := map[string]map[string]int64{"dash-a": {"views_total": 10}}
+		server, supplier, updater := setup(t, interval, stats)
+
+		server.builders.clearNamespacedCache(dashKey)
+		_, ok := server.builders.ns.Peek(dashKey)
+		require.False(t, ok, "the cache entry must actually be gone, simulating TTL expiry")
+
+		forceCheckDue(t, server, interval)
+		supplier.setStats(map[string]map[string]int64{"dash-a": {"views_total": 999}})
+
+		idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+		_, _, err := updater(t.Context(), idx, 2)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, server.rebuildQueue.Len(),
+			"the drift must still be detected against the pinned baseline even though the cache entry was gone")
+	})
+
+	t.Run("a rebuild that never lands does not lose the change", func(t *testing.T) {
+		t.Parallel()
+		// The baseline this closure pins never advances on its own — only a
+		// successful rebuild (a brand new build() call) moves it. So a rebuild
+		// that fails, or simply hasn't run yet, must not stop the next due
+		// check from finding the same drift and queueing again.
+		const interval = time.Hour
+		stats := map[string]map[string]int64{"dash-a": {"views_total": 10}}
+		server, supplier, updater := setup(t, interval, stats)
+
+		forceCheckDue(t, server, interval)
+		supplier.setStats(map[string]map[string]int64{"dash-a": {"views_total": 999}})
+		idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+		_, _, err := updater(t.Context(), idx, 2)
+		require.NoError(t, err)
+		require.Equal(t, 1, server.rebuildQueue.Len(), "first due check queues the rebuild")
+
+		// Take the request off the queue without processing it, modelling a
+		// rebuild that failed. The index and this updaterFn closure stay in place.
+		_, err = server.rebuildQueue.Next(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, 0, server.rebuildQueue.Len())
+
+		forceCheckDue(t, server, interval)
+		idx = &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
+		_, _, err = updater(t.Context(), idx, 3)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, server.rebuildQueue.Len(),
+			"the next due check must detect the same drift and queue the rebuild again")
+	})
+}

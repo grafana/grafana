@@ -8,6 +8,11 @@ import (
 	v2 "github.com/grafana/grafana/sdkkinds/dashboard/v2"
 )
 
+// _dashboardKV is shared by every served Dashboard version so that adding or
+// removing the kv subresource requires a single edit. The empty block enables
+// the subresource with platform-default limits.
+_dashboardKV: {}
+
 // _dashboardSearchFields is shared by every served Dashboard version so their
 // declarations stay identical: a future per-version search API must not accept a
 // request for one version and reject it for another. The dashboard builder is
@@ -173,6 +178,7 @@ manifest: {
 						status: DashboardStatus
 					}
 					searchFields: _dashboardSearchFields
+					kv:           _dashboardKV
 				},
 			]
 		}
@@ -190,6 +196,7 @@ manifest: {
 						status: DashboardStatus
 					}
 					searchFields: _dashboardSearchFields
+					kv:           _dashboardKV
 				},
 				snapshotV0alpha1, // Only exists in v0alpha (for now)
 			]
@@ -208,6 +215,7 @@ manifest: {
 						status: DashboardStatus
 					}
 					searchFields: _dashboardSearchFields
+					kv:           _dashboardKV
 				},
 			]
 		}
@@ -230,6 +238,7 @@ manifest: {
 						status: DashboardStatus
 					}
 					searchFields: _dashboardSearchFields
+					kv:           _dashboardKV
 				},
 			]
 		}
@@ -252,6 +261,7 @@ manifest: {
 						status: DashboardStatus
 					}
 					searchFields: _dashboardSearchFields
+					kv:           _dashboardKV
 				},
 				globalVariableV2beta1,
 				notebookV2beta1,
@@ -276,6 +286,7 @@ manifest: {
 						status: DashboardStatus
 					}
 					searchFields: _dashboardSearchFields
+					kv:           _dashboardKV
 				},
 			]
 		}

@@ -69,6 +69,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
+					KV:         &app.ManifestVersionKindKV{},
 					Schema:     &versionSchemaDashboardv0alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
@@ -228,6 +229,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
+					KV:         &app.ManifestVersionKindKV{},
 					Schema:     &versionSchemaDashboardv1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
@@ -379,6 +381,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
+					KV:         &app.ManifestVersionKindKV{},
 					Schema:     &versionSchemaDashboardv1beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
@@ -530,6 +533,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
+					KV:         &app.ManifestVersionKindKV{},
 					Schema:     &versionSchemaDashboardv2,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
@@ -681,6 +685,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
+					KV:         &app.ManifestVersionKindKV{},
 					Schema:     &versionSchemaDashboardv2alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
@@ -832,6 +837,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
+					KV:         &app.ManifestVersionKindKV{},
 					Schema:     &versionSchemaDashboardv2beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{

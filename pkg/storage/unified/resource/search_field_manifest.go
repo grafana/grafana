@@ -105,9 +105,19 @@ func manifestSearchFieldsToDefinitions(in []app.ManifestVersionKindSearchField) 
 			Capabilities:     caps,
 			EmitZeroIfAbsent: f.EmitZeroIfAbsent,
 			Description:      f.Description,
+			KVSource:         manifestKVSourceToKVFieldSource(f.KVSource()),
 		}
 	}
 	return out
+}
+
+// manifestKVSourceToKVFieldSource copies a manifest search field's KV source
+// across verbatim. Returns nil when src is nil.
+func manifestKVSourceToKVFieldSource(src *app.ManifestVersionKindSearchFieldKVSource) *KVFieldSource {
+	if src == nil {
+		return nil
+	}
+	return &KVFieldSource{Owner: src.Owner, Key: src.Key, Path: src.Path}
 }
 
 // manifestDeclaredKindKeys returns the (group, resource) key of every kind that

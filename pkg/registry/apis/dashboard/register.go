@@ -25,6 +25,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
+	app "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	manifestdata "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
@@ -85,6 +86,7 @@ var (
 	_ builder.APIGroupMutation         = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupValidation       = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupAuditor          = (*DashboardsAPIBuilder)(nil)
+	_ builder.ManifestDataProvider     = (*DashboardsAPIBuilder)(nil)
 )
 
 const (
@@ -1573,6 +1575,13 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	}
 
 	return nil
+}
+
+// GetManifestData implements builder.ManifestDataProvider, exposing the
+// dashboard app manifest so the generic KV mount can inspect per-kind
+// declarations without any dashboard-specific wiring.
+func (b *DashboardsAPIBuilder) GetManifestData() *app.ManifestData {
+	return manifestdata.LocalManifest().ManifestData
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
