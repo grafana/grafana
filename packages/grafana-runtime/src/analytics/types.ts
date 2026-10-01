@@ -1,6 +1,6 @@
 import { type CoreApp } from '@grafana/data';
 
-import { type EchoEvent, type EchoEventType } from '../services/EchoSrv';
+import { EchoEventType, type EchoEvent } from '../services/EchoSrv';
 
 /**
  * Describes the basic dashboard information that can be passed as the meta
@@ -137,6 +137,35 @@ export interface ExperimentViewEchoEventPayload {
  * @public
  */
 export type ExperimentViewEchoEvent = EchoEvent<EchoEventType.ExperimentView, ExperimentViewEchoEventPayload>;
+
+/**
+ * Describes the payload of a resource-view event: a generic "this resource
+ * was viewed/started" signal usable by any opted-in kind's own frontend code,
+ * via {@link reportResourceView}.
+ *
+ * @public
+ */
+export interface ResourceViewEchoEventPayload {
+  group: string;
+  resource: string;
+  name: string;
+}
+
+/**
+ * Describes a resource-view event with predefined {@link EchoEventType.ResourceView} type.
+ *
+ * @public
+ */
+export type ResourceViewEchoEvent = EchoEvent<EchoEventType.ResourceView, ResourceViewEchoEventPayload>;
+
+/**
+ * Resource-view event typeguard.
+ *
+ * @public
+ */
+export const isResourceViewEvent = (event: EchoEvent): event is ResourceViewEchoEvent => {
+  return event.type === EchoEventType.ResourceView;
+};
 
 /**
  * Pageview event typeguard.

@@ -14,6 +14,7 @@ export {
   reportInteraction,
   reportPageview,
   reportExperimentView,
+  reportResourceView,
   onInteraction,
 } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';

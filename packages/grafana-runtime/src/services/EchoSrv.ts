@@ -91,6 +91,14 @@ export enum EchoEventType {
   Interaction = 'interaction',
   ExperimentView = 'experimentview',
   GrafanaJavascriptAgent = 'grafana-javascript-agent',
+  /**
+   * Generic "a resource was viewed/started" event, usable by any opted-in
+   * resource kind's own frontend code via `reportResourceView`. It is its
+   * own event type, never carried over the MetaAnalytics channel, so it can
+   * never change what existing MetaAnalytics listeners (e.g. PostHog)
+   * receive.
+   */
+  ResourceView = 'resource-view',
 }
 
 /**

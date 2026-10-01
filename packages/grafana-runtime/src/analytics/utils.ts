@@ -8,6 +8,8 @@ import {
   type MetaAnalyticsEvent,
   type MetaAnalyticsEventPayload,
   type PageviewEchoEvent,
+  type ResourceViewEchoEvent,
+  type ResourceViewEchoEventPayload,
 } from './types';
 
 /**
@@ -86,6 +88,35 @@ export const reportExperimentView = (id: string, group: string, variant: string)
       experimentGroup: group,
       experimentVariant: variant,
     },
+  });
+};
+
+function isNonEmptyString(v: unknown): v is string {
+  return typeof v === 'string' && v.length > 0;
+}
+
+/**
+ * Helper function to report that a resource of an opted-in kind was
+ * viewed/started, to the {@link EchoSrv}, via the generic
+ * {@link EchoEventType.ResourceView} event. Any kind's own frontend code can
+ * call this; it never throws, and does nothing if any field is missing, not
+ * a string, or empty. {@link getEchoSrv} itself never throws when no Echo
+ * service has been set (it buffers into a FakeEchoSrv), so this needs no
+ * extra guard for that case.
+ *
+ * @public
+ */
+export const reportResourceView = (payload: ResourceViewEchoEventPayload) => {
+  if (payload === null || payload === undefined || typeof payload !== 'object') {
+    return;
+  }
+  const { group, resource, name } = payload;
+  if (!isNonEmptyString(group) || !isNonEmptyString(resource) || !isNonEmptyString(name)) {
+    return;
+  }
+  getEchoSrv().addEvent<ResourceViewEchoEvent>({
+    type: EchoEventType.ResourceView,
+    payload: { group, resource, name },
   });
 };
 
