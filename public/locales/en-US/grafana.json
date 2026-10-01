@@ -6017,6 +6017,9 @@
         "footer_one": "{{count}} source panel · Answered {{time}}",
         "footer_other": "{{count}} source panels · Answered {{time}}",
         "frames-omitted": "This shared answer was stored without its source data, so it cannot be followed up. Ask again to follow up.",
+        "investigate": "Investigate",
+        "investigate-again": "Investigate again",
+        "investigate-tooltip": "Start an Assistant investigation that checks these findings against your data sources and looks for the cause",
         "previous-period": "Compared with (UTC): {{from}} to {{to}}",
         "share": "Share with viewers",
         "share-tooltip": "Show this answer to everyone who opens the dashboard, until someone shares a newer one",
@@ -6026,6 +6029,9 @@
       },
       "ask": {
         "no-answer": "Assistant returned no answer. Try asking again."
+      },
+      "assistant-context": {
+        "title": "Dashboard insights"
       },
       "breakdown": {
         "aria-label": "Break down by variable",
@@ -6046,6 +6052,19 @@
       "form": {
         "cancel-edit": "Cancel",
         "save-question": "Save"
+      },
+      "investigation": {
+        "failed": "The investigation failed. Open it to see how far it got.",
+        "next-steps": "Next steps",
+        "open": "Open investigation",
+        "root-cause": "Likely cause",
+        "running": "Investigating. It keeps running if you leave the dashboard.",
+        "start-error": "Could not start an investigation: {{error}}",
+        "starting": "Starting the investigation…",
+        "stopped": "The investigation was stopped.",
+        "summarizing": "Summarizing the investigation…",
+        "summary-error": "Could not summarize the investigation: {{error}}",
+        "title": "Investigation"
       },
       "item": {
         "delete": "Delete question",
@@ -6098,6 +6117,7 @@
         "source-not-ready": "“{{title}}” is not ready. Wait for its query to finish successfully, then try again.",
         "source-time-range": "“{{title}}” uses a different time range. Wait for it to refresh or select matching panels.",
         "source-unavailable": "A source panel is no longer on this dashboard. Edit the question to update its source panels.",
+        "sources-empty": "None of the source panels has data for this selection. Adjust the filters or time range.",
         "too-large": "The selected data is too large to send, even after summarizing time series. Select fewer panels, series, or table rows, or turn off the comparison or breakdown.",
         "variant-error": "“{{title}}” has a query error for {{variant}}.",
         "variant-not-loaded": "“{{title}}” did not load for {{variant}} in time. Try again.",

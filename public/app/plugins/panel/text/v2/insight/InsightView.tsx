@@ -134,6 +134,11 @@ export function InsightView({ dashboard, sessionId, options, fitContent, modePic
               error: insight.shareError,
               onShare: insight.share,
             }}
+            investigate={{
+              investigation: insight.investigation,
+              unavailable: insight.investigationsUnavailable,
+              onInvestigate: insight.investigate,
+            }}
           />
           <InsightFollowUps
             threads={insight.followUps}

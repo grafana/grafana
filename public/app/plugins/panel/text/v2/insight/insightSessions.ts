@@ -1,15 +1,26 @@
+import { getInvestigation, InvestigationRequestError, startInvestigation } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { type DashboardSceneLike } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { CancelInsightRequestsEvent } from 'app/features/dashboard-scene/sidebar/events';
 import { parseInsightAnswer } from 'app/features/dashboard-scene/sidebar/insights/answer';
-import { askInsightAssistant } from 'app/features/dashboard-scene/sidebar/insights/askAssistant';
+import { askInsightAssistant, INSIGHTS_ORIGIN } from 'app/features/dashboard-scene/sidebar/insights/askAssistant';
+import {
+  buildInsightInvestigation,
+  canStartInvestigation,
+  getRunningInvestigationId,
+} from 'app/features/dashboard-scene/sidebar/insights/investigation';
 import {
   loadSharedInsightAnswers,
   shareInsightAnswer,
 } from 'app/features/dashboard-scene/sidebar/insights/sharedAnswers';
 import { captureInsightSnapshot } from 'app/features/dashboard-scene/sidebar/insights/snapshot';
 import { getInsightSourcePanels, loadInsightSources } from 'app/features/dashboard-scene/sidebar/insights/sources';
-import { type InsightQuestion, type InsightResult } from 'app/features/dashboard-scene/sidebar/insights/types';
+import {
+  type InsightInvestigation,
+  type InsightQuestion,
+  type InsightResult,
+} from 'app/features/dashboard-scene/sidebar/insights/types';
 import { loadInsightVariants } from 'app/features/dashboard-scene/sidebar/insights/variants';
 
 import { buildFollowUpSystemPrompt } from './followUpPrompt';
@@ -41,6 +52,8 @@ export interface InsightSession {
   followUps: Record<string, InsightFollowUpThread>;
   sharing?: boolean;
   shareError?: string;
+  /** Kept across new answers: it explains the question, and the Assistant keeps working on it. */
+  investigation?: InsightInvestigation;
 }
 
 export const EMPTY_INSIGHT_SESSION: InsightSession = { running: false, loadingSources: false, followUps: {} };
@@ -59,10 +72,12 @@ export class InsightSessions {
   private sessions = new Map<string, InsightSession>();
   private requests = new Map<string, AbortController>();
   private followUpRequests = new Map<string, Map<string, AbortController>>();
+  private investigationReads = new Set<string>();
   private listeners = new Set<() => void>();
   private sharedLoad?: Promise<void>;
   private askAllRun = 0;
   private askingAll = false;
+  private investigationsUnavailable = false;
 
   public constructor(private dashboard: DashboardSceneLike) {
     dashboard.subscribeToEvent(CancelInsightRequestsEvent, () => this.cancelAll());
@@ -73,6 +88,9 @@ export class InsightSessions {
   }
 
   public isAskingAll = () => this.askingAll;
+
+  /** The Assistant said it cannot start investigations here, for example in OSS mode, so retrying would fail too. */
+  public areInvestigationsUnavailable = () => this.investigationsUnavailable;
 
   public subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -243,6 +261,49 @@ export class InsightSessions {
     }
   }
 
+  /** Starts an Assistant investigation from the current answer, unless one is already running for this insight. */
+  public async investigate(id: string): Promise<void> {
+    const { result, investigation } = this.get(id);
+    if (!result || !canStartInvestigation(investigation)) {
+      return;
+    }
+    this.patch(id, { investigation: { phase: 'starting' } });
+    try {
+      const { title, instruction } = buildInsightInvestigation(this.dashboard.state.title, result);
+      const status = await startInvestigation({ origin: INSIGHTS_ORIGIN, title, instruction });
+      this.patch(id, { investigation: { phase: 'started', ...status } });
+      reportInteraction('dashboards_insights_investigation_started', {
+        sourcePanels: result.snapshot.panels.length,
+        shared: Boolean(result.share),
+      });
+    } catch (error) {
+      if (error instanceof InvestigationRequestError && error.code === 'unavailable') {
+        this.investigationsUnavailable = true;
+      }
+      this.patch(id, { investigation: { phase: 'failed', error: errorMessage(error) } });
+    }
+  }
+
+  /** Re-reads a running investigation's state. Every view of the insight polls, so only one read runs at a time. */
+  public async refreshInvestigation(id: string): Promise<void> {
+    const investigationId = getRunningInvestigationId(this.get(id).investigation);
+    if (!investigationId || this.investigationReads.has(id)) {
+      return;
+    }
+    this.investigationReads.add(id);
+    try {
+      const status = await getInvestigation(investigationId);
+      const current = this.get(id).investigation;
+      if (current?.phase === 'started' && current.investigationId === investigationId) {
+        this.patch(id, { investigation: { phase: 'started', ...status } });
+      }
+    } catch {
+      // A failed read is retried on the next poll; the investigation itself is unaffected.
+    } finally {
+      this.investigationReads.delete(id);
+    }
+  }
+
   /**
    * Loads the dashboard's shared answers once. An insight the viewer has already asked keeps its own answer.
    * Failing to load is not an error: the viewer can still ask.
@@ -266,7 +327,7 @@ export class InsightSessions {
 
   /** Carries an answer over when a question moves between the sidebar and an Insight panel. */
   public copy(from: string, to: string): void {
-    const { result, followUps } = this.get(from);
+    const { result, followUps, investigation } = this.get(from);
     if (!result) {
       return;
     }
@@ -275,7 +336,11 @@ export class InsightSessions {
         .filter(([, thread]) => thread.result)
         .map(([question, thread]) => [question, { ...thread, running: false, error: undefined }])
     );
-    this.patch(to, { result, followUps: answered });
+    this.patch(to, {
+      result,
+      followUps: answered,
+      investigation: investigation?.phase === 'started' ? investigation : undefined,
+    });
   }
 
   public cancelAll() {

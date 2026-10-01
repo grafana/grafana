@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect } from 'react';
+import { lazy, Suspense, useCallback, useEffect } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -252,6 +252,12 @@ function FiltersOverviewButton({
   );
 }
 
+const InsightsAssistantContext = lazy(() =>
+  import(/* webpackChunkName: "dashboard-insights-context" */ './insights/InsightsAssistantContext').then((m) => ({
+    default: m.InsightsAssistantContext,
+  }))
+);
+
 function InsightsButton({ dashboard, openPane }: { dashboard: DashboardScene; openPane?: DashboardSidebarPane }) {
   const insightsEnabled = useFlagGrafanaDashboardInsights();
   const { isAvailable } = useAssistant();
@@ -287,16 +293,23 @@ function InsightsButton({ dashboard, openPane }: { dashboard: DashboardScene; op
   }
 
   return (
-    <Sidebar.Button
-      icon="ai-sparkle"
-      onClick={onClick}
-      title={t('dashboard.sidebar.insights.title', 'Insights')}
-      tooltip={t(
-        'dashboard.sidebar.insights.tooltip',
-        "Ask Assistant this dashboard's Insight panel and saved questions"
+    <>
+      {hasInsights && (
+        <Suspense fallback={null}>
+          <InsightsAssistantContext dashboard={dashboard} />
+        </Suspense>
       )}
-      active={openPane?.getId() === 'insights'}
-    />
+      <Sidebar.Button
+        icon="ai-sparkle"
+        onClick={onClick}
+        title={t('dashboard.sidebar.insights.title', 'Insights')}
+        tooltip={t(
+          'dashboard.sidebar.insights.tooltip',
+          "Ask Assistant this dashboard's Insight panel and saved questions"
+        )}
+        active={openPane?.getId() === 'insights'}
+      />
+    </>
   );
 }
 
