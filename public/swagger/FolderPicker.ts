@@ -56,6 +56,8 @@ export class FolderPicker extends WidgetType {
     if (folderRequests.has(dom) || !this.namespace) {
       return;
     }
+    // Retry starts from the selected option, discarding any partial or failed list.
+    dom.options.length = 1;
     const controller = new AbortController();
     folderRequests.set(dom, controller);
     const loading = new Option('Loading folders…');
@@ -94,13 +96,6 @@ export class FolderPicker extends WidgetType {
       if (!controller.signal.aborted) {
         loading.textContent = 'Could not load folders. Focus again to retry.';
         folderRequests.delete(dom);
-        dom.onblur = () => {
-          loading.remove();
-          while (dom.options.length > 1) {
-            dom.remove(1);
-          }
-          dom.onblur = null;
-        };
       }
     }
   }

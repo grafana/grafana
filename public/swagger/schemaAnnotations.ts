@@ -4,7 +4,7 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 
 import { FolderPicker, folderAnnotationTheme } from './FolderPicker';
 import { IdentityLabel, identityAnnotationTheme } from './IdentityLabel';
-import { type AnnotationName, annotationNames, annotationValues } from './annotationValue';
+import { type AnnotationName, annotationValues } from './annotationValue';
 
 interface Resolution {
   status: 'unknown' | 'resolved' | 'missing';
@@ -12,12 +12,15 @@ interface Resolution {
 }
 
 interface Lookup {
-  value?: string;
   resolution: Resolution;
   controller?: AbortController;
 }
 
-const lookupFinished = StateEffect.define<{ annotation: AnnotationName; resolution: Resolution }>();
+const lookupFinished = StateEffect.define<{ key: string; resolution: Resolution }>();
+
+function lookupKey(annotation: AnnotationName, value?: string) {
+  return `${annotation === 'grafana.app/folder' ? 'folder' : 'identity'}:${value ?? ''}`;
+}
 
 export function schemaAnnotations(namespace?: string, onSelect?: (text: string) => void) {
   return [
@@ -25,7 +28,7 @@ export function schemaAnnotations(namespace?: string, onSelect?: (text: string) 
       class {
         decorations = Decoration.none;
         private values: ReturnType<typeof annotationValues>;
-        private lookups = new Map<AnnotationName, Lookup>();
+        private lookups = new Map<string, Lookup>();
         private getFolderValue = () => this.values.get('grafana.app/folder');
 
         constructor(view: EditorView) {
@@ -44,7 +47,7 @@ export function schemaAnnotations(namespace?: string, onSelect?: (text: string) 
           for (const transaction of update.transactions) {
             for (const effect of transaction.effects) {
               if (effect.is(lookupFinished)) {
-                const lookup = this.lookups.get(effect.value.annotation);
+                const lookup = this.lookups.get(effect.value.key);
                 if (lookup) {
                   lookup.resolution = effect.value.resolution;
                   changed = true;
@@ -58,31 +61,40 @@ export function schemaAnnotations(namespace?: string, onSelect?: (text: string) 
         }
 
         refreshLookups(view: EditorView) {
-          for (const annotation of annotationNames) {
-            const value = this.values.get(annotation)?.value;
-            const previous = this.lookups.get(annotation);
-            if (previous && previous.value === value) {
+          const next = new Map<string, Lookup>();
+          for (const [annotation, { value }] of this.values) {
+            const key = lookupKey(annotation, value);
+            if (next.has(key)) {
               continue;
             }
-            previous?.controller?.abort();
+            const previous = this.lookups.get(key);
+            if (previous) {
+              next.set(key, previous);
+              continue;
+            }
             const isFolder = annotation === 'grafana.app/folder';
             const lookup: Lookup = {
-              value,
               resolution: { status: 'unknown', title: isFolder ? 'Folder status unknown' : 'Identity unknown' },
             };
-            this.lookups.set(annotation, lookup);
+            next.set(key, lookup);
             if (value && (!isFolder || namespace)) {
               lookup.resolution.title = isFolder ? 'Loading folder…' : 'Loading identity…';
               lookup.controller = new AbortController();
               void this.lookup(view, annotation, value, lookup.controller.signal);
             }
           }
+          for (const [key, lookup] of this.lookups) {
+            if (!next.has(key)) {
+              lookup.controller?.abort();
+            }
+          }
+          this.lookups = next;
         }
 
         decorate(view: EditorView) {
           const ranges: Array<Range<Decoration>> = [];
           for (const [annotation, value] of this.values) {
-            const resolution = this.lookups.get(annotation)!.resolution;
+            const resolution = this.lookups.get(lookupKey(annotation, value.value))!.resolution;
             const kind = annotation === 'grafana.app/folder' ? 'folder' : 'identity';
             ranges.push(
               Decoration.mark({ class: `cm-${kind}-annotation cm-annotation-${resolution.status}` }).range(
@@ -144,7 +156,7 @@ export function schemaAnnotations(namespace?: string, onSelect?: (text: string) 
             // Preserve the saved value when the lookup fails.
           }
           if (!signal.aborted) {
-            view.dispatch({ effects: lookupFinished.of({ annotation, resolution }) });
+            view.dispatch({ effects: lookupFinished.of({ key: lookupKey(annotation, value), resolution }) });
           }
         }
 

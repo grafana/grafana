@@ -96,14 +96,14 @@ it('looks up the encoded namespace and UID, removing the underline once the fold
 it.each([404, 403, 500])('marks an unresolved folder red when the endpoint returns %s', async (status) => {
   jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status }));
   setup(example, 'default');
-  expect(await screen.findByText('Folder could not be resolved')).toBeInTheDocument();
+  expect(await screen.findByText('Select folder')).toBeInTheDocument();
   expect(annotation()).toHaveStyle({ textDecorationColor: 'red' });
 });
 
 it('marks a failed network lookup red', async () => {
   jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Network unavailable'));
   setup(example, 'default');
-  expect(await screen.findByText('Folder could not be resolved')).toBeInTheDocument();
+  expect(await screen.findByText('Select folder')).toBeInTheDocument();
   expect(annotation()).toHaveStyle({ textDecorationColor: 'red' });
 });
 
@@ -248,4 +248,33 @@ it('shows folder listing errors and retries on the next focus', async () => {
   fireEvent.blur(picker);
   fireEvent.focus(picker);
   expect(await screen.findByRole('option', { name: 'Retry folder (retry)' })).toHaveValue('retry');
+});
+
+it('retries a folder-list failure that arrives after the picker has already blurred', async () => {
+  let fail!: (response: Response) => void;
+  jest
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(folder('Original'))
+    .mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        fail = resolve;
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ items: [{ metadata: { name: 'retry' }, spec: { title: 'Retry folder' } }] }))
+    );
+  setup(example, 'default');
+  await screen.findByText('Original');
+  const picker = screen.getByRole('combobox', { name: 'Folder' });
+  fireEvent.focus(picker);
+  fireEvent.blur(picker);
+  fail(new Response(null, { status: 500 }));
+  await screen.findByRole('option', { name: 'Could not load folders. Focus again to retry.' });
+  fireEvent.focus(picker);
+  expect(await screen.findByRole('option', { name: 'Retry folder (retry)' })).toHaveValue('retry');
+  fireEvent.blur(picker);
+  expect(screen.getByRole('option', { name: 'Retry folder (retry)' })).toHaveValue('retry');
+  expect(
+    screen.queryByRole('option', { name: 'Could not load folders. Focus again to retry.' })
+  ).not.toBeInTheDocument();
 });

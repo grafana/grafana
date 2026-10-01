@@ -110,3 +110,26 @@ it('does not look up empty or non-string identities and aborts on destroy', () =
   view.destroy();
   expect(fetch.mock.calls.every((call) => call[1]?.signal?.aborted)).toBe(true);
 });
+
+it('shares a lookup for identical creator and updater identities until the last reference is removed', async () => {
+  let resolve!: (response: Response) => void;
+  const fetch = jest.spyOn(globalThis, 'fetch').mockReturnValue(
+    new Promise<Response>((done) => {
+      resolve = done;
+    })
+  );
+  const both = '{"metadata":{"annotations":{"grafana.app/createdBy":"user:one","grafana.app/updatedBy":"user:one"}}}';
+  setup(both);
+  expect(screen.getAllByText('Loading identity…')).toHaveLength(2);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  const signal = fetch.mock.calls[0][1]?.signal;
+  view.dispatch({
+    changes: { from: 0, to: both.length, insert: '{"metadata":{"annotations":{"grafana.app/updatedBy":"user:one"}}}' },
+  });
+  expect(signal?.aborted).toBe(false);
+  resolve(display('Alice'));
+  expect(await screen.findByText('Alice')).toBeInTheDocument();
+  expect(fetch).toHaveBeenCalledTimes(1);
+  view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: '{}' } });
+  expect(signal?.aborted).toBe(true);
+});
