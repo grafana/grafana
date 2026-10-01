@@ -33,7 +33,6 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -176,7 +175,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'file-copy-alt',
         onClick: () => {
           DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(panel), 'panel');
-          duplicatePanel(panel);
+          dashboard.duplicatePanel(panel);
         },
         shortcut: 'p d',
       });

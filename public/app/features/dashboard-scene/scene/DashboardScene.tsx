@@ -66,6 +66,7 @@ import {
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -909,6 +910,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     throw new Error("Trying to replace a panel that doesn't have a parent layout item");
+  }
+
+  public duplicatePanel(vizPanel: VizPanel) {
+    duplicatePanel(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
