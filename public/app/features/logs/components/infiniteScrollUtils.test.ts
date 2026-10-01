@@ -1,12 +1,7 @@
 import { dateTime, rangeUtil, type DataQuery } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
-import {
-  canScrollBottom,
-  canScrollTop,
-  getVisibleRange,
-  withLokiInfiniteScrollBound,
-} from './infiniteScrollUtils';
+import { canScrollBottom, canScrollTop, getVisibleRange, withLokiInfiniteScrollBound } from './infiniteScrollUtils';
 import { createLogRow } from './mocks/logRow';
 
 const timeZone = 'utc';
@@ -81,13 +76,7 @@ describe('withLokiInfiniteScrollBound', () => {
   });
 
   it('copies startNs onto a Loki query and omits endNs', () => {
-    expect(
-      withLokiInfiniteScrollBound(
-        { refId: 'A' },
-        { from: 1, to: 2, startNs: '40000000000' },
-        'loki'
-      )
-    ).toEqual({
+    expect(withLokiInfiniteScrollBound({ refId: 'A' }, { from: 1, to: 2, startNs: '40000000000' }, 'loki')).toEqual({
       refId: 'A',
       startNs: '40000000000',
     });
