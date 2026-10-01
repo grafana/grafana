@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -279,6 +280,50 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 }
 
 // Test helpers
+
+func TestService_InhibitionRuleManager(t *testing.T) {
+	ctx := context.Background()
+	orgID := int64(1)
+	terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
+
+	sut, store := createInhibitionRuleSvcSut(true)
+	revision := createTestConfig(t, nil, nil)
+	store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+		return revision, nil
+	}
+
+	rule := v1.NewInhibitionRule(
+		"managed",
+		testGrafanaRule.SourceMatchers,
+		testGrafanaRule.TargetMatchers,
+		nil,
+		models.ProvenanceNone,
+	)
+	rule.Manager = terraform
+
+	created, err := sut.CreateInhibitionRule(ctx, rule, orgID)
+	require.NoError(t, err)
+	require.Equal(t, terraform, created.Manager)
+	require.Equal(t, models.ProvenanceAPI, created.Provenance)
+
+	got, err := sut.GetInhibitionRule(ctx, created.UID, orgID)
+	require.NoError(t, err)
+	require.Equal(t, terraform, got.Manager)
+
+	// The manager is kept in the stored rule definition.
+	stored, err := v1.InhibitionRuleToDB(revision.Config.InhibitionRules[created.UID])
+	require.NoError(t, err)
+	require.Equal(t, string(utils.ManagerKindTerraform), stored.ManagerKind)
+	require.Equal(t, "tf-id", stored.ManagerIdentity)
+
+	// An update without a manager falls back to the rule's provenance.
+	update := created
+	update.Manager = utils.ManagerProperties{}
+	updated, err := sut.UpdateInhibitionRule(ctx, update, created.Version, orgID)
+	require.NoError(t, err)
+	require.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceAPI), updated.Manager)
+	require.Equal(t, models.ProvenanceAPI, updated.Provenance)
+}
 
 func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storage.AlertmanagerConfigStoreFake) {
 	store := &legacy_storage.AlertmanagerConfigStoreFake{}

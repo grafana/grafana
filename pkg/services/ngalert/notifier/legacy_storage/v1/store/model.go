@@ -237,6 +237,11 @@ type InhibitionRuleDB struct {
 	TargetMatchers common.Matchers `yaml:"target_matchers,omitempty" json:"target_matchers,omitempty"`
 	Equal          []string        `yaml:"equal,omitempty" json:"equal,omitempty"`
 	Provenance     string          `json:"provenance,omitempty"`
+	// ManagerKind and ManagerIdentity identify the tool that manages the rule, when it is more
+	// specific than what Provenance can express. When they are missing, the manager is derived from
+	// Provenance.
+	ManagerKind     string `json:"managerKind,omitempty"`
+	ManagerIdentity string `json:"managerIdentity,omitempty"`
 }
 
 // AlertingConfigDB is the persisted "alertmanager_config" object. Route/InhibitRules reuse the

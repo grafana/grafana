@@ -5,6 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/provenance"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -40,7 +41,7 @@ func ConvertToK8sResource(orgID int64, rule v1.InhibitionRule, namespacer reques
 	}
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
 
-	i.SetProvenanceStatus(string(rule.Provenance))
+	provenance.SetAnnotations(&i, rule.Provenance, rule.Manager)
 
 	return &i
 }
@@ -70,7 +71,7 @@ func convertLabelsMatchersToK8s(matchers []v1.Matcher) []model.InhibitionRuleMat
 }
 
 func convertToDomainModel(rule *model.InhibitionRule) (v1.InhibitionRule, error) {
-	prov, err := ngmodels.ProvenanceFromString(rule.GetProvenanceStatus())
+	prov, manager, err := provenance.FromAnnotations(rule)
 	if err != nil {
 		return v1.InhibitionRule{}, ngmodels.MakeErrInhibitionRuleInvalid(err)
 	}
@@ -78,6 +79,7 @@ func convertToDomainModel(rule *model.InhibitionRule) (v1.InhibitionRule, error)
 		ResourceMetadata: v1.ResourceMetadata{
 			UID:        v1.ResourceUID(rule.Name),
 			Provenance: prov,
+			Manager:    manager,
 		},
 		SourceMatchers: convertK8sMatchersToLabels(rule.Spec.SourceMatchers),
 		TargetMatchers: convertK8sMatchersToLabels(rule.Spec.TargetMatchers),
