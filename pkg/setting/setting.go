@@ -1011,6 +1011,7 @@ func RedactedValue(key, value string) string {
 		"WEBHOOK_TOKEN$",
 		"INSTALL_TOKEN$",
 		"PROXY_TOKEN$",
+		"EXCHANGE_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
