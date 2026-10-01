@@ -550,6 +550,32 @@ describe('NotebookAutosave', () => {
     expect(scene.autosave.state.status).toBe('error');
   });
 
+  it('does not auto-retry a conflict for an edit queued behind it, which would only conflict again and raise a second prompt', async () => {
+    let finishFirstSave = () => {};
+    jest.mocked(updateNotebook).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          finishFirstSave = () => reject(new NotebookConflictError('the object has been modified'));
+        })
+    );
+    const publish = jest.spyOn(appEvents, 'publish');
+
+    const scene = activateEditing();
+    editFirstCell(scene, 'First');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    // Arrives while the first save is still in flight, queuing a save for when it settles — exactly
+    // the case the auto-retry would otherwise pick up and resend with the same stale resourceVersion.
+    editFirstCell(scene, 'Second');
+    const saved = scene.autosave.saveDocumentChange();
+    finishFirstSave();
+    await expect(saved).rejects.toThrow();
+
+    expect(scene.autosave.state.isConflict).toBe(true);
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
+    expect(publish.mock.calls.filter(([published]) => published instanceof ShowConfirmModalEvent)).toHaveLength(1);
+  });
+
   it('does not raise the conflict prompt for a plain write failure', async () => {
     const scene = activateEditing();
     jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));

@@ -630,6 +630,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     // write is what creates it. Everything either branch does afterwards is the same.
     const { uid } = this.scene.state;
 
+    // Read in `finally` below, to stop it auto-retrying a conflict: that retry would still carry the
+    // same stale savedResourceVersion this attempt just failed with, guaranteed to conflict again and
+    // raise a second overwrite prompt on top of the one this attempt already raised.
+    let hitConflict = false;
+
     this.inFlightSave = this.write(uid, spec)
       .then(({ generation, resourceVersion }) => {
         this.recordWritten(spec, serialized, panels, cells);
@@ -664,6 +669,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.editedByWriter ||= editedByWriter;
         this.failedAttempts += 1;
         const isConflict = error instanceof NotebookConflictError;
+        hitConflict = isConflict;
         NotebookAnalytics.autosaveFailed(
           this.scene.state.uid ?? '',
           isConflict ? NOTEBOOK_AUTOSAVE_FAILED_REASON.CONFLICT : NOTEBOOK_AUTOSAVE_FAILED_REASON.WRITE_FAILED,
@@ -672,10 +678,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.setState({
           status: 'error',
           errorMessage: isConflict
-            ? t(
-                'notebooks.autosave.error-conflict',
-                'This notebook changed elsewhere. Reload it to see the latest version before trying again.'
-              )
+            ? // Doesn't tell the writer to reload: the prompt below offers "Save and overwrite" without
+              // one, and reloading would actually lose these edits, since a failed write never advances
+              // savedGeneration — the two would tell the writer to do opposite things.
+              t('notebooks.autosave.error-conflict', 'Someone else saved this notebook first.')
             : error instanceof Error
               ? error.message
               : String(error),
@@ -711,7 +717,13 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.inFlightSave = undefined;
         if (this.saveAgainWhenIdle) {
           this.saveAgainWhenIdle = false;
-          this.saveNow();
+          // Not after a conflict: that retry would still carry this attempt's same stale
+          // savedResourceVersion, so it can only conflict again and raise a second overwrite prompt.
+          // The edits that set this flag are not lost — they're already merged into the pending
+          // change above, and the next real edit (or the prompt's own "Save and overwrite") saves them.
+          if (!hitConflict) {
+            this.saveNow();
+          }
         }
       });
   }
