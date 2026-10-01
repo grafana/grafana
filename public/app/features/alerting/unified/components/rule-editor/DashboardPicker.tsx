@@ -358,7 +358,7 @@ export function getVisualPanels(dashboardDTO: DashboardResponse | undefined) {
 }
 
 export function getDashboardTitle(dashboardDTO: DashboardResponse | undefined) {
-  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
+  if (!dashboardDTO) {
     return '';
   }
 
@@ -366,11 +366,15 @@ export function getDashboardTitle(dashboardDTO: DashboardResponse | undefined) {
     return dashboardDTO.spec.title;
   }
 
-  return dashboardDTO.dashboard.title;
+  if ('dashboard' in dashboardDTO) {
+    return dashboardDTO.dashboard.title;
+  }
+
+  return '';
 }
 
 export function getDashboardUid(dashboardDTO: DashboardResponse | undefined) {
-  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
+  if (!dashboardDTO) {
     return '';
   }
 
@@ -378,11 +382,17 @@ export function getDashboardUid(dashboardDTO: DashboardResponse | undefined) {
     return dashboardDTO.metadata.name;
   }
 
-  return dashboardDTO.dashboard.uid;
+  if ('dashboard' in dashboardDTO) {
+    return dashboardDTO.dashboard.uid;
+  }
+
+  return '';
 }
 
-function getDashboardFolderTitle(dashboardDTO: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | undefined) {
-  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
+export function getDashboardFolderTitle(
+  dashboardDTO: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | undefined
+) {
+  if (!dashboardDTO) {
     return undefined;
   }
 
@@ -390,9 +400,11 @@ function getDashboardFolderTitle(dashboardDTO: DashboardDTO | DashboardWithAcces
     return dashboardDTO.metadata.annotations?.[AnnoKeyFolderTitle];
   }
 
-  const { meta } = dashboardDTO;
+  if ('dashboard' in dashboardDTO) {
+    return dashboardDTO.meta.folderTitle;
+  }
 
-  return meta.folderTitle;
+  return undefined;
 }
 
 const isValidPanel = (panel: PanelDTO): boolean => {
