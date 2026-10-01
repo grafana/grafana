@@ -19,7 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
-	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -1265,5 +1265,5 @@ func (d *dataStore) lookupCanonicalName(
 }
 
 func IsSnowflake(rv int64) bool {
-	return resourceclient.IsSnowflake(rv)
+	return resourceutil.IsSnowflake(rv)
 }

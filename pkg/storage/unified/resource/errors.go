@@ -15,7 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -64,31 +64,31 @@ func NewNotFoundError(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	}
 }
 
-// The client-side helpers live in pkg/storage/unified/resourceclient. These forwarders keep
+// The helpers live in pkg/storage/unified/resourceclient/resourceutil. These forwarders keep
 // existing callers compiling.
 
 func NewResourceVersionExpiredError(rv int64) error {
-	return resourceclient.NewResourceVersionExpiredError(rv)
+	return resourceutil.NewResourceVersionExpiredError(rv)
 }
 
 func IsResourceVersionExpired(err error) bool {
-	return resourceclient.IsResourceVersionExpired(err)
+	return resourceutil.IsResourceVersionExpired(err)
 }
 
 func IsConflict(err error) bool {
-	return resourceclient.IsConflict(err)
+	return resourceutil.IsConflict(err)
 }
 
 func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
-	return resourceclient.ErrorFromResponse(respErr, err)
+	return resourceutil.ErrorFromResponse(respErr, err)
 }
 
 func AsErrorResult(err error) *resourcepb.ErrorResult {
-	return resourceclient.AsErrorResult(err)
+	return resourceutil.AsErrorResult(err)
 }
 
 func GetError(res *resourcepb.ErrorResult) error {
-	return resourceclient.GetError(res)
+	return resourceutil.GetError(res)
 }
 
 // StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a
@@ -114,7 +114,7 @@ func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 		return err
 	}
 	result := AsErrorResult(err)
-	if isGRPC && result.Code >= http.StatusInternalServerError && resourceclient.ErrorResultFromGRPCDetails(err) == nil {
+	if isGRPC && result.Code >= http.StatusInternalServerError && resourceutil.ErrorResultFromGRPCDetails(err) == nil {
 		if !localContextErr {
 			if grpcStatus.Code() == grpccodes.DeadlineExceeded {
 				errorMappingLog.Warn("Unstructured gRPC deadline exceeded", "error", err)

@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -435,7 +435,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 // takes a unix microsecond RV and transforms into a snowflake format. The timestamp is converted from microsecond to
 // millisecond (the integer division) and the remainder is saved in the stepbits section. machine id is always 0
 func SnowflakeFromRV(rv int64) int64 {
-	return resourceclient.SnowflakeFromRV(rv)
+	return resourceutil.SnowflakeFromRV(rv)
 }
 
 // It is generally not possible to convert from a snowflakeID to a microsecond RV due to the loss in precision
