@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -103,6 +104,8 @@ func isBackendFailure(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
 
+type clientBreakerKey struct{}
+
 // groupBreaker is two-step, so an outcome can be reported when the response
 // status is known rather than when the handler returns.
 type groupBreaker = gobreaker.TwoStepCircuitBreaker[struct{}]
@@ -172,6 +175,11 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 	rec, req, endSpan := traceRouterRequest(w, req, "router.backend", group)
 	defer endSpan()
 	w = rec.writer()
+	// Client-scoped breakers leave requests that do not call the client available.
+	if _, clientScoped := h.(interface{ breaksOnClientCalls() }); clientScoped {
+		h.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), clientBreakerKey{}, cb)))
+		return
+	}
 	done, err := cb.Allow()
 	if err != nil {
 		setFailure(req, failureBreakerOpen)

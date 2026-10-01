@@ -15,6 +15,8 @@ type tracedPluginHandler struct {
 	group    string
 }
 
+func (*tracedPluginHandler) breaksOnClientCalls() {}
+
 func (h *tracedPluginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	span := trace.SpanFromContext(req.Context())
 	if parent, ok := req.Context().Value(routerSpanKey{}).(trace.SpanContext); ok && parent.Equal(span.SpanContext()) {
