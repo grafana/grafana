@@ -14,7 +14,10 @@ jest.mock('./duplicateDefaultGridPanel');
 jest.mock('./duplicateAutoGridPanel');
 
 describe('duplicatePanel', () => {
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+  });
 
   it('routes Default grid panels to the extracted action', () => {
     const panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
@@ -38,5 +41,6 @@ describe('duplicatePanel', () => {
 
     expect(duplicateAutoGridPanel).toHaveBeenCalledWith(layout, panel);
     expect(duplicateAutoGridPanel).toHaveBeenCalledTimes(1);
+    expect(duplicateDefaultGridPanel).not.toHaveBeenCalled();
   });
 });

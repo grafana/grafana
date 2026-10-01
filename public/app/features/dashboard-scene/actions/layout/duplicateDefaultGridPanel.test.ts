@@ -83,77 +83,75 @@ describe('duplicateDefaultGridPanel', () => {
   });
 });
 
-describe('legacy duplication', () => {
+describe('duplicateDefaultGridPanel (legacy mode)', () => {
   testWithFeatureToggles({ disable: ['dashboardNewLayouts'] });
-  describe('duplicatePanel', () => {
-    it('Should duplicate a panel', () => {
-      const { manager, grid } = setupLegacy();
-      const vizPanel = findVizPanelByKey(manager, 'panel-1')!;
+  it('Should duplicate a panel', () => {
+    const { manager, grid } = setupLegacy();
+    const vizPanel = findVizPanelByKey(manager, 'panel-1')!;
 
-      expect(grid.state.children.length).toBe(3);
+    expect(grid.state.children.length).toBe(3);
 
-      duplicateDefaultGridPanel(manager, vizPanel);
+    duplicateDefaultGridPanel(manager, vizPanel);
 
-      const newGridItem = grid.state.children[3];
+    const newGridItem = grid.state.children[3];
 
-      expect(grid.state.children.length).toBe(4);
-      expect(newGridItem.state.key).toBe('grid-item-4');
-    });
+    expect(grid.state.children.length).toBe(4);
+    expect(newGridItem.state.key).toBe('grid-item-4');
+  });
 
-    it('Should maintain size of duplicated panel', () => {
-      const { manager, grid } = setupLegacy();
+  it('Should maintain size of duplicated panel', () => {
+    const { manager, grid } = setupLegacy();
 
-      const gItem = grid.state.children[0] as DashboardGridItem;
-      gItem.setState({ height: 1 });
+    const gItem = grid.state.children[0] as DashboardGridItem;
+    gItem.setState({ height: 1 });
 
-      const vizPanel = gItem.state.body;
-      duplicateDefaultGridPanel(manager, vizPanel);
+    const vizPanel = gItem.state.body;
+    duplicateDefaultGridPanel(manager, vizPanel);
 
-      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
+    const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
 
-      expect(newGridItem.state.height).toBe(1);
-      expect(newGridItem.state.itemHeight).toBe(1);
-    });
+    expect(newGridItem.state.height).toBe(1);
+    expect(newGridItem.state.itemHeight).toBe(1);
+  });
 
-    it('Should duplicate a repeated panel', () => {
-      const { manager, grid } = setupLegacy();
-      const gItem = grid.state.children[0] as DashboardGridItem;
-      gItem.setState({ variableName: 'server', repeatDirection: 'v', maxPerRow: 100 });
-      const vizPanel = gItem.state.body;
-      duplicateDefaultGridPanel(manager, vizPanel as VizPanel);
+  it('Should duplicate a repeated panel', () => {
+    const { manager, grid } = setupLegacy();
+    const gItem = grid.state.children[0] as DashboardGridItem;
+    gItem.setState({ variableName: 'server', repeatDirection: 'v', maxPerRow: 100 });
+    const vizPanel = gItem.state.body;
+    duplicateDefaultGridPanel(manager, vizPanel as VizPanel);
 
-      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
+    const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
 
-      expect(newGridItem.state.variableName).toBe('server');
-      expect(newGridItem.state.repeatDirection).toBe('v');
-      expect(newGridItem.state.maxPerRow).toBe(100);
-    });
+    expect(newGridItem.state.variableName).toBe('server');
+    expect(newGridItem.state.repeatDirection).toBe('v');
+    expect(newGridItem.state.maxPerRow).toBe(100);
+  });
 
-    it('Should duplicate a panel in a row', () => {
-      const { manager } = setupLegacy();
-      const vizPanel = findVizPanelByKey(manager, 'panel-within-row1')!;
-      const gridRow = vizPanel.parent?.parent as SceneGridRow;
+  it('Should duplicate a panel in a row', () => {
+    const { manager } = setupLegacy();
+    const vizPanel = findVizPanelByKey(manager, 'panel-within-row1')!;
+    const gridRow = vizPanel.parent?.parent as SceneGridRow;
 
-      expect(gridRow.state.children.length).toBe(2);
+    expect(gridRow.state.children.length).toBe(2);
 
-      duplicateDefaultGridPanel(manager, vizPanel);
+    duplicateDefaultGridPanel(manager, vizPanel);
 
-      expect(gridRow.state.children.length).toBe(3);
-    });
+    expect(gridRow.state.children.length).toBe(3);
+  });
 
-    it('Should carry over the plugin transformations opt-in', () => {
-      // The duplicate is built from live panel state rather than from a save model, which is why
-      // this is the one panel-building path that does not read the rollout flag itself.
-      const { manager, grid } = setupLegacy();
-      const gItem = grid.state.children[0] as DashboardGridItem;
-      gItem.state.body.setState({ applyPluginTransformations: true });
+  it('Should carry over the plugin transformations opt-in', () => {
+    // The duplicate is built from live panel state rather than from a save model, which is why
+    // this is the one panel-building path that does not read the rollout flag itself.
+    const { manager, grid } = setupLegacy();
+    const gItem = grid.state.children[0] as DashboardGridItem;
+    gItem.state.body.setState({ applyPluginTransformations: true });
 
-      duplicateDefaultGridPanel(manager, gItem.state.body);
+    duplicateDefaultGridPanel(manager, gItem.state.body);
 
-      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
+    const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
 
-      expect(newGridItem.state.body.state.applyPluginTransformations).toBe(true);
-    });
+    expect(newGridItem.state.body.state.applyPluginTransformations).toBe(true);
   });
 });
 
