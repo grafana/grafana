@@ -425,7 +425,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const prevDestinationSlug = destination.state.currentTabSlug;
 
     moveElement({
-      meta: { actionId: 'scene.DashboardLayoutOrchestrator' },
+      meta: { actionId: 'tab.move' },
       source,
       movedObject: tab,
       perform: () => {

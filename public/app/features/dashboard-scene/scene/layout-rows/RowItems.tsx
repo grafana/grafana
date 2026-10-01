@@ -35,7 +35,7 @@ export class RowItems implements EditableDashboardElement {
         num: this._rows.length,
         typeName: this.getEditableElementInfo().typeName.toLowerCase(),
       }),
-      'deleteRows'
+      { actionId: 'row.remove', scope: 'multiple' }
     );
 
     this._rows.forEach((row) => row.onDelete());

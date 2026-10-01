@@ -17,7 +17,7 @@ export function reorderRows(layout: RowsLayoutManager, fromIndex: number, toInde
   };
 
   moveElement({
-    meta: { actionId: 'layout.reorderRows' },
+    meta: { actionId: 'row.reorder' },
     source: layout,
     movedObject: row,
     selectOnMove: false,

@@ -75,7 +75,7 @@ function FitContentOption({ item }: { item: AutoGridItem }) {
         const prev = item.state.fitContent;
         const nextValue = next === 'default' ? undefined : next === 'on';
         edit({
-          meta: { actionId: 'layout.changeFitContent' },
+          meta: { actionId: 'panel.changeFitContent' },
           description: t('dashboard.edit-actions.panel-fit-content', 'Panel auto fit content'),
           source: item,
           perform: () => item.setFitContent(nextValue),
@@ -96,7 +96,7 @@ function RepeatByOption({ item, id }: { item: AutoGridItem; id?: string }) {
       repeat={variableName}
       onChange={(value?: string) => {
         edit({
-          meta: { actionId: 'layout.changeRepeat' },
+          meta: { actionId: 'panel.changeRepeat', scope: 'auto-grid' },
           description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
           source: item,
           perform: () => item.setRepeatByVariable(value),

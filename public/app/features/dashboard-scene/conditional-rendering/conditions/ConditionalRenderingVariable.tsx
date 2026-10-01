@@ -305,7 +305,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
                 if (newVariable !== variable) {
                   edit({
-                    meta: { actionId: 'conditional-rendering.changeVariable' },
+                    meta: { actionId: 'conditional-rendering.changeRule', scope: 'variable-name' },
                     description: undoText,
                     source: model,
                     perform: () => model.changeVariable(newVariable),
@@ -327,7 +327,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
               if (newOperator !== operator) {
                 edit({
-                  meta: { actionId: 'conditional-rendering.changeOperator' },
+                  meta: { actionId: 'conditional-rendering.changeRule', scope: 'variable-operator' },
                   description: undoText,
                   source: model,
                   perform: () => model.changeOperator(newOperator),
@@ -351,7 +351,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
             onBlur={() => {
               if (newValue !== value) {
                 edit({
-                  meta: { actionId: 'conditional-rendering.changeValue' },
+                  meta: { actionId: 'conditional-rendering.changeRule', scope: 'variable-value' },
                   description: undoText,
                   source: model,
                   perform: () => model.changeValue(newValue),

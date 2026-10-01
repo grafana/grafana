@@ -16,7 +16,7 @@ export const annotationEditActions = {
     const layersBeforeAddition = [...source.state.annotationLayers];
 
     addElement({
-      meta: { actionId: 'annotations.actions.addAnnotation' },
+      meta: { actionId: 'annotation.add' },
       source,
       addedObject,
       perform() {
@@ -36,7 +36,7 @@ export const annotationEditActions = {
     const layersBefore = [...dataLayerSet.state.annotationLayers];
 
     duplicateElement({
-      meta: { actionId: 'annotations.actions.duplicateAnnotation' },
+      meta: { actionId: 'annotation.duplicate' },
       duplicatedObject: layer,
       source: dataLayerSet,
       cloneState: { name: `${layer.state.name} - Copy` },
@@ -48,7 +48,7 @@ export const annotationEditActions = {
     const layersBeforeRemoval = [...source.state.annotationLayers];
 
     removeElement({
-      meta: { actionId: 'annotations.actions.removeAnnotation' },
+      meta: { actionId: 'annotation.remove' },
       source,
       removedObject,
       perform() {
@@ -65,7 +65,7 @@ export const annotationEditActions = {
     }
 
     edit({
-      meta: { actionId: 'annotations.actions.changeAnnotationName' },
+      meta: { actionId: 'annotation.changeName' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-name',
         'Change annotation name'
@@ -93,7 +93,7 @@ export const annotationEditActions = {
   },
   changeAnnotationEnabled({ source, oldValue, newValue }: { source: DataLayer; oldValue: boolean; newValue: boolean }) {
     edit({
-      meta: { actionId: 'annotations.actions.changeAnnotationEnabled' },
+      meta: { actionId: 'annotation.changeEnabled' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-enabled-state',
         'Change annotation enabled state'
@@ -121,7 +121,7 @@ export const annotationEditActions = {
   },
   changeAnnotationColor({ source, oldValue, newValue }: { source: DataLayer; oldValue: string; newValue: string }) {
     edit({
-      meta: { actionId: 'annotations.actions.changeAnnotationColor' },
+      meta: { actionId: 'annotation.changeColor' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-color',
         'Change annotation color'
@@ -166,7 +166,7 @@ export const annotationEditActions = {
     };
 
     edit({
-      meta: { actionId: 'annotations.actions.changeAnnotationDisplay' },
+      meta: { actionId: 'annotation.changeDisplay' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-controls-display',
         'Change annotation controls display'
@@ -208,7 +208,7 @@ export const annotationEditActions = {
     newValue?: AnnotationPanelFilter;
   }) {
     edit({
-      meta: { actionId: 'annotations.actions.changeAnnotationFilter' },
+      meta: { actionId: 'annotation.changePanelFilter' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-panel-filter',
         'Change annotation panel filter'

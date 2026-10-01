@@ -194,7 +194,7 @@ export function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
           }
 
           edit({
-            meta: { actionId: 'layout.changeRepeat', scope: 'tab' },
+            meta: { actionId: 'tab.changeRepeat' },
             description: t('dashboard.edit-actions.tab-repeat-variable', 'Tab repeat by'),
             source: tab,
             perform: () => tab.onChangeRepeat(nextRepeat),

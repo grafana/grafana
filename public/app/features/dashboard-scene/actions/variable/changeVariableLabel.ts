@@ -5,7 +5,7 @@ import { type SceneVariable } from '@grafana/scenes';
 import { makeEditAction } from '../utils/makeEditAction';
 
 export const changeVariableLabel = makeEditAction<SceneVariable, 'label'>({
-  actionId: 'variable.changeVariableLabel',
+  actionId: 'variable.changeLabel',
   description: t('dashboard.edit-actions.variable-label', 'Change variable label'),
   prop: 'label',
 });

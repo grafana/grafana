@@ -32,7 +32,7 @@ export function moveGridItem({
   }
 
   moveElement({
-    meta: { actionId: 'layout.moveGridItem' },
+    meta: { actionId: 'panel.move' },
     source,
     movedObject: panel,
     // Dragging panels around shouldn't auto-select them: a user moving several panels in a row

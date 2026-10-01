@@ -4,12 +4,13 @@ import { type SceneObject } from '@grafana/scenes';
 
 export interface DashboardActionMeta {
   /**
-   * Reported with undo/redo interactions. Format: `<folder>.<FileName>` of the file triggering the action,
-   * with an extra `.<detail>` suffix when the file triggers more than one action.
+   * Reported with undo/redo interactions. Format: `<element>.<action>`, describing the action as the user
+   * perceives it: the main UI element involved and what is done to it (e.g. `panel.remove`, `row.changeTitle`).
    */
   actionId: `${string}.${string}`;
   /**
-   * Optional scope for generic actions that may be applied to different elements (e.g. switch layout)
+   * Free-text narrowing of the actionId, set only when several places report the same actionId
+   * (e.g. `panel.remove` from `auto-grid` vs `custom-grid`).
    */
   scope?: string;
 }

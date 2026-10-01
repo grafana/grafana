@@ -61,7 +61,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
         num: panels.length,
         typeName: this.getEditableElementInfo().typeName.toLowerCase(),
       }),
-      'deletePanels'
+      { actionId: 'panel.remove', scope: 'multiple' }
     );
 
     this._panels.forEach((panel) => {

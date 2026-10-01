@@ -165,7 +165,7 @@ export class DefaultGridLayoutManager
       });
 
       addElement({
-        meta: { actionId: 'layout.addDefaultPanel' },
+        meta: { actionId: 'panel.add', scope: 'custom-grid' },
         addedObject: vizPanel,
         source: this,
         perform: () => {
@@ -207,7 +207,7 @@ export class DefaultGridLayoutManager
 
     if (config.featureToggles.dashboardNewLayouts) {
       edit({
-        meta: { actionId: 'layout.pasteDefaultPanel' },
+        meta: { actionId: 'panel.paste', scope: 'custom-grid' },
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: newGridItem.state.body,
         source: this,
@@ -257,7 +257,7 @@ export class DefaultGridLayoutManager
     }
 
     removeElement({
-      meta: { actionId: 'layout.removeDefaultPanel' },
+      meta: { actionId: 'panel.remove', scope: 'custom-grid' },
       removedObject: gridItem.state.body,
       source: this,
       perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
@@ -326,7 +326,7 @@ export class DefaultGridLayoutManager
 
     const parent = gridItem.parent instanceof SceneGridRow ? gridItem.parent : grid;
     edit({
-      meta: { actionId: 'layout.duplicateDefaultPanel' },
+      meta: { actionId: 'panel.duplicate' },
       description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
       addedObject: newGridItem.state.body,
       source: this,

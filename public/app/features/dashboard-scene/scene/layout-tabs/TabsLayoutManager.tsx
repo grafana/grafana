@@ -243,7 +243,7 @@ export class TabsLayoutManager
     }
 
     addElement({
-      meta: { actionId: 'tab.addTab' },
+      meta: { actionId: 'tab.add' },
       addedObject: newTab,
       source: this,
       perform: () => {
@@ -396,7 +396,7 @@ export class TabsLayoutManager
     let nextVariables: SceneVariable[] | undefined;
 
     edit({
-      meta: { actionId: 'tab.ungroupTabs' },
+      meta: { actionId: 'tab.ungroup' },
       description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
       source: scene,
       perform: () => {
@@ -581,7 +581,7 @@ export class TabsLayoutManager
       perform();
     } else {
       removeElement({
-        meta: { actionId: 'tab.removeTab' },
+        meta: { actionId: 'tab.remove' },
         removedObject: tab,
         source: this,
         perform,
@@ -617,7 +617,7 @@ export class TabsLayoutManager
     const originalToIndex = this.state.tabs.findIndex((tab) => tab === destinationTab);
 
     moveElement({
-      meta: { actionId: 'tab.moveTab' },
+      meta: { actionId: 'tab.reorder' },
       source: this,
       movedObject: objectToMove,
       perform: () => {

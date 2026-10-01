@@ -18,7 +18,7 @@ export const linkEditActions = {
     const linksBefore = [...(dashboard.state.links ?? [])];
 
     edit({
-      meta: { actionId: 'links.actions.addLink' },
+      meta: { actionId: 'link.add' },
       description: t('dashboard-scene.link-edit-actions.add-link', 'Add link'),
       source: dashboard,
       addedObject,
@@ -35,7 +35,7 @@ export const linkEditActions = {
     const linksBefore = [...(dashboard.state.links ?? [])];
 
     edit({
-      meta: { actionId: 'links.actions.removeLink' },
+      meta: { actionId: 'link.remove' },
       description: t('dashboard-scene.link-edit-actions.remove-link', 'Remove link'),
       source: dashboard,
       perform() {
@@ -61,7 +61,7 @@ export const linkEditActions = {
     description?: string;
   }) {
     edit({
-      meta: { actionId: 'links.actions.updateLink' },
+      meta: { actionId: 'link.change' },
       description: description ?? t('dashboard-scene.link-edit-actions.update-link', 'Update link'),
       source: dashboard,
       perform() {

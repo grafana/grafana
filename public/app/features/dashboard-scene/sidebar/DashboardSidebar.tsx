@@ -270,7 +270,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.handleEditAction(
       {
         source: payload.source,
-        meta: { actionId: 'sidebar.DashboardSidebar' },
+        meta: { actionId: 'panel.moveOrResize' },
         description: payload.description,
         perform: payload.replay,
         undo: payload.revert,

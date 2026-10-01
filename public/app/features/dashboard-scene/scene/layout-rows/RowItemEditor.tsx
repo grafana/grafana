@@ -255,7 +255,7 @@ export function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
           }
 
           edit({
-            meta: { actionId: 'layout.changeRepeat', scope: 'row' },
+            meta: { actionId: 'row.changeRepeat' },
             description: t('dashboard.edit-actions.row-repeat-variable', 'Row repeat by'),
             source: row,
             perform: () => row.onChangeRepeat(nextRepeat),

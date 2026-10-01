@@ -413,7 +413,7 @@ describe('DashboardSidebar', () => {
       const scene = buildTestScene();
 
       edit({ source: scene, meta: { actionId: 'dashboard.changeTitle' }, perform: jest.fn(), undo: jest.fn() });
-      startBatch(scene, 'Change properties', 'test');
+      startBatch(scene, 'Change properties', { actionId: 'test.batch' });
       edit({ source: scene, meta: { actionId: 'test.edit' }, perform: jest.fn(), undo: jest.fn() });
       endBatch(scene);
       scene.publishEvent(
@@ -470,7 +470,7 @@ describe('DashboardSidebar', () => {
       const scene = buildTestScene();
       edit({
         source: scene,
-        meta: { actionId: 'layout.changeRepeat', scope: 'row' },
+        meta: { actionId: 'panel.changeRepeat', scope: 'auto-grid' },
         perform: jest.fn(),
         undo: jest.fn(),
       });
@@ -479,13 +479,13 @@ describe('DashboardSidebar', () => {
       scene.state.sidebar.redoAction();
 
       expect(reportInteraction).toHaveBeenNthCalledWith(1, 'grafana_dashboard_undo', {
-        actionId: 'layout.changeRepeat',
-        scope: 'row',
+        actionId: 'panel.changeRepeat',
+        scope: 'auto-grid',
         redoDepth: 0,
       });
       expect(reportInteraction).toHaveBeenNthCalledWith(2, 'grafana_dashboard_redo', {
-        actionId: 'layout.changeRepeat',
-        scope: 'row',
+        actionId: 'panel.changeRepeat',
+        scope: 'auto-grid',
         redoDepth: 1,
       });
     });
@@ -500,7 +500,7 @@ describe('DashboardSidebar', () => {
       scene.state.sidebar.undoAction();
 
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
-        actionId: 'sidebar.DashboardSidebar',
+        actionId: 'panel.moveOrResize',
         redoDepth: 0,
       });
     });
@@ -515,7 +515,7 @@ describe('DashboardSidebar', () => {
 
     it('reports an undone batch once, under the batch action id', () => {
       const scene = buildTestScene();
-      startBatch(scene, 'Remove selection', 'test');
+      startBatch(scene, 'Remove selection', { actionId: 'test.batch' });
       edit({ source: scene, meta: { actionId: 'test.edit' }, perform: jest.fn(), undo: jest.fn() });
       edit({ source: scene, meta: { actionId: 'test.edit' }, perform: jest.fn(), undo: jest.fn() });
       endBatch(scene);
@@ -524,7 +524,7 @@ describe('DashboardSidebar', () => {
 
       expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_undo', {
-        actionId: 'batch.test',
+        actionId: 'test.batch',
         redoDepth: 0,
       });
     });
@@ -568,7 +568,7 @@ describe('DashboardSidebar', () => {
       const action1 = fakeAction(calls, '1');
       const action2 = fakeAction(calls, '2');
 
-      startBatch(scene, 'Remove things (2)', 'test');
+      startBatch(scene, 'Remove things (2)', { actionId: 'test.batch' });
       edit({ source: scene, meta: { actionId: 'test.edit' }, perform: action1.perform, undo: action1.undo });
       edit({ source: scene, meta: { actionId: 'test.edit' }, perform: action2.perform, undo: action2.undo });
       endBatch(scene);
@@ -605,7 +605,7 @@ describe('DashboardSidebar', () => {
       sidebar.undoAction();
       expect(sidebar.state.redoStack).toHaveLength(1);
 
-      startBatch(scene, 'A batch', 'test');
+      startBatch(scene, 'A batch', { actionId: 'test.batch' });
       expect(sidebar.state.redoStack).toHaveLength(0);
 
       endBatch(scene);
@@ -615,7 +615,7 @@ describe('DashboardSidebar', () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      startBatch(scene, 'Empty batch', 'test');
+      startBatch(scene, 'Empty batch', { actionId: 'test.batch' });
       endBatch(scene);
 
       expect(sidebar.state.undoStack).toHaveLength(0);
@@ -629,7 +629,7 @@ describe('DashboardSidebar', () => {
       // Two row deletions, aggregated into one undo entry, not two.
       expect(sidebar.state.undoStack).toHaveLength(1);
       expect(sidebar.state.undoStack[0].description).toBe('Remove rows (2)');
-      expect(sidebar.state.undoStack[0].meta.actionId).toBe('batch.deleteRows');
+      expect(sidebar.state.undoStack[0].meta.actionId).toBe('row.remove');
     });
 
     it('routes a multi-tab delete through TabItems and batches it into a single undo entry', () => {

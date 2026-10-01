@@ -171,7 +171,7 @@ export class AutoGridLayoutManager
     const newGridItem = new AutoGridItem({ body: vizPanel });
 
     addElement({
-      meta: { actionId: 'layout.addAutoPanel' },
+      meta: { actionId: 'panel.add', scope: 'auto-grid' },
       addedObject: vizPanel,
       source: this,
       perform: () => {
@@ -200,7 +200,7 @@ export class AutoGridLayoutManager
 
     if (config.featureToggles.dashboardNewLayouts) {
       edit({
-        meta: { actionId: 'layout.pasteAutoPanel' },
+        meta: { actionId: 'panel.paste', scope: 'auto-grid' },
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: panel.state.body,
         source: this,
@@ -230,7 +230,7 @@ export class AutoGridLayoutManager
     const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
 
     removeElement({
-      meta: { actionId: 'layout.removeAutoPanel' },
+      meta: { actionId: 'panel.remove', scope: 'auto-grid' },
       removedObject: panel,
       source: this,
       perform: () => {

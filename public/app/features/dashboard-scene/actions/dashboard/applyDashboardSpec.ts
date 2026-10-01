@@ -17,9 +17,11 @@ export interface ApplyDashboardSpecProps {
   scene: DashboardScene;
   spec: DashboardV2Spec;
   description: string;
+  /** Where the spec edit came from, reported with undo/redo interactions. */
+  scope: string;
 }
 
-export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardSpecProps): void {
+export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDashboardSpecProps): void {
   const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
 
@@ -41,7 +43,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
   const urlSync = scene.urlSync as DashboardUrlSync | undefined;
 
   edit({
-    meta: { actionId: 'dashboard.applyDashboardSpec' },
+    meta: { actionId: 'dashboard.editSchema', scope },
     source: scene,
     description,
     perform: () => {

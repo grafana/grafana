@@ -47,7 +47,7 @@ export class MultiSelectedObjectsEditableElement implements EditableDashboardEle
         num: this._elements.length,
         typeName: this.getEditableElementInfo().typeName.toLowerCase(),
       }),
-      'deleteElements'
+      { actionId: 'selection.remove' }
     );
 
     this._elements.forEach((item) => item.onDelete());

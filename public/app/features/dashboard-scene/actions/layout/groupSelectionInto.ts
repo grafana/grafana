@@ -23,7 +23,7 @@ export function groupSelectionInto({ source, items, target }: GroupSelectionInto
 
   edit({
     ...groupEdit,
-    meta: { actionId: 'layout.groupSelectionInto' },
+    meta: { actionId: 'selection.group', scope: target },
     source,
   });
 }

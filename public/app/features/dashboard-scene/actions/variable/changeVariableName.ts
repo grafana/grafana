@@ -20,7 +20,7 @@ export function changeVariableName({ source, oldValue, newValue }: ChangeVariabl
   const snapshots = snapshotVariableSetsAlongPath(source);
 
   edit({
-    meta: { actionId: 'variable.changeVariableName' },
+    meta: { actionId: 'variable.changeName' },
     description: t('dashboard.edit-actions.variable-name', 'Change variable name'),
     source,
     perform: () => {

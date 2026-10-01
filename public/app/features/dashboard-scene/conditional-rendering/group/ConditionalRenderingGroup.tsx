@@ -234,7 +234,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
           value={condition}
           onChange={(value) => {
             edit({
-              meta: { actionId: 'conditional-rendering.changeCondition' },
+              meta: { actionId: 'conditional-rendering.changeMatch' },
               description: t('dashboard.conditional-rendering.conditions.group.condition.label', 'Match rules'),
               source: model,
               perform: () => model.changeCondition(value),
@@ -251,7 +251,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
           const condition = model.createCondition(value!);
 
           edit({
-            meta: { actionId: 'conditional-rendering.addCondition' },
+            meta: { actionId: 'conditional-rendering.addRule' },
             description: t('dashboard.edit-actions.add-conditional-rule', 'Add {{ruleDescription}} rule', {
               ruleDescription: lowerCase(label),
             }),

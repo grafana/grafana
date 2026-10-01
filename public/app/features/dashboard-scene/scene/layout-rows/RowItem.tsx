@@ -162,7 +162,7 @@ export class RowItem
     }
 
     edit({
-      meta: { actionId: 'layout.switchLayout', scope: 'row' },
+      meta: { actionId: 'layout.switch', scope: 'row' },
       description: t('dashboard.edit-actions.switch-layout-row', 'Switch layout'),
       source: this,
       perform,

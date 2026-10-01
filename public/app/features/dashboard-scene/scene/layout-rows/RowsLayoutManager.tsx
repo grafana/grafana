@@ -177,7 +177,7 @@ export class RowsLayoutManager
     }
 
     addElement({
-      meta: { actionId: 'row.addRow' },
+      meta: { actionId: 'row.add' },
       addedObject: newRow,
       source: this,
       perform: () => {
@@ -335,7 +335,7 @@ export class RowsLayoutManager
     let nextVariables: SceneVariable[] | undefined;
 
     edit({
-      meta: { actionId: 'row.ungroupRows' },
+      meta: { actionId: 'row.ungroup' },
       description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
       source: scene,
       perform: () => {
@@ -507,7 +507,7 @@ export class RowsLayoutManager
       perform();
     } else {
       removeElement({
-        meta: { actionId: 'row.removeRow' },
+        meta: { actionId: 'row.remove' },
         removedObject: row,
         source: this,
         perform,
@@ -662,7 +662,7 @@ export class RowsLayoutManager
     }
 
     edit({
-      meta: { actionId: 'row.setAllRowsCollapsed' },
+      meta: { actionId: collapse ? 'row.collapseAll' : 'row.expandAll' },
       source: this,
       description,
       perform: () => rowsToToggle.forEach((row) => row.setCollapsedState(collapse)),

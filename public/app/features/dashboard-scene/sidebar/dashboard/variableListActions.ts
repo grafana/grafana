@@ -87,7 +87,7 @@ export function createDragEndHandler(
     const draggableSet = new Set(reordered);
 
     edit({
-      meta: { actionId: 'dashboard.variableListActions' },
+      meta: { actionId: 'variable.reorder' },
       source: variableSet,
       description,
       perform: () => {
