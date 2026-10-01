@@ -17,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+// Check the group's breaker only when calling the plugin, so requests served
+// entirely from storage remain available.
+func (*tracedPluginHandler) breaksOnClientCalls() {}
+
 // Only failures to reach the client count against it. Errors in plugin responses
 // (including admission rejection and HTTP 5xx) say nothing about reachability.
 func pluginClientOutcome(ctx context.Context, err error) error {
@@ -26,7 +30,11 @@ func pluginClientOutcome(ctx context.Context, err error) error {
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, plugins.ErrPluginNotRegistered) || errors.Is(err, plugins.ErrPluginUnavailable) || errors.Is(err, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx)) || apierrors.IsServiceUnavailable(err) {
+	switch {
+	case errors.Is(err, plugins.ErrPluginNotRegistered),
+		errors.Is(err, plugins.ErrPluginUnavailable),
+		errors.Is(err, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx)),
+		apierrors.IsServiceUnavailable(err):
 		return err
 	}
 	switch status.Code(err) {
@@ -45,8 +53,11 @@ func allowPluginCall(ctx context.Context) (func(error), error) {
 	if err != nil {
 		return nil, apierrors.NewServiceUnavailable("plugin backend unavailable")
 	}
+	// Streaming calls report on their first response and again when they end.
 	var once sync.Once
-	return func(err error) { once.Do(func() { done(pluginClientOutcome(ctx, err)) }) }, nil
+	return func(err error) {
+		once.Do(func() { done(pluginClientOutcome(ctx, err)) })
+	}, nil
 }
 
 type breakerPluginClientV3 struct{ appclientv3.Client }
@@ -114,17 +125,10 @@ func (c *breakerPluginClient) CallResource(ctx context.Context, req *backend.Cal
 	if err != nil {
 		return err
 	}
-	err = c.Client.CallResource(ctx, req, &breakerPluginResponseSender{CallResourceResponseSender: sender, done: done})
+	err = c.Client.CallResource(ctx, req, backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		done(nil)
+		return sender.Send(res)
+	}))
 	done(err)
 	return err
-}
-
-type breakerPluginResponseSender struct {
-	backend.CallResourceResponseSender
-	done func(error)
-}
-
-func (s *breakerPluginResponseSender) Send(res *backend.CallResourceResponse) error {
-	s.done(nil)
-	return s.CallResourceResponseSender.Send(res)
 }
