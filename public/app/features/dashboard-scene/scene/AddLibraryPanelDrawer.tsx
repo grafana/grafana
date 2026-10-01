@@ -11,7 +11,7 @@ import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import { LibraryPanelsSearch } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
-import { replacePanelWithLibraryPanel } from '../actions/panel/replacePanelWithLibraryPanel';
+import { replacePanel } from '../actions/panel/replacePanel';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -44,7 +44,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
 
       if (layoutItem && isDashboardLayoutItem(layoutItem)) {
         if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true)) {
-          replacePanelWithLibraryPanel({ source: layoutItem, oldPanel: panelToReplace, newPanel });
+          replacePanel({ source: layoutItem, oldPanel: panelToReplace, newPanel });
         } else {
           // Needed only for old architecture which reuses the same component
           // but has no way to trigger dashboard actions. It can be removed when

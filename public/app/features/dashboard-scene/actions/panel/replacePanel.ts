@@ -10,7 +10,7 @@ interface ReplacePanelWithLibraryPanelProps {
   newPanel: VizPanel;
 }
 
-export function replacePanelWithLibraryPanel({ source, oldPanel, newPanel }: ReplacePanelWithLibraryPanelProps) {
+export function replacePanel({ source, oldPanel, newPanel }: ReplacePanelWithLibraryPanelProps) {
   newPanel.setState({ key: oldPanel.state.key });
 
   edit({

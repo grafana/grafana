@@ -5,7 +5,7 @@ import { type LibraryPanel } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import * as libraryPanelApi from 'app/features/library-panels/state/api';
 
-import { replacePanelWithLibraryPanel } from '../actions/panel/replacePanelWithLibraryPanel';
+import { replacePanel } from '../actions/panel/replacePanel';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -28,7 +28,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
 
-jest.mock('../actions/panel/replacePanelWithLibraryPanel');
+jest.mock('../actions/panel/replacePanel');
 
 jest.spyOn(libraryPanelApi, 'getConnectedDashboards').mockResolvedValue([]);
 
@@ -199,9 +199,9 @@ describe('AddLibraryPanelWidget', () => {
 
       await selectLibraryPanel(drawer, panelInfo);
 
-      expect(replacePanelWithLibraryPanel).toHaveBeenCalledTimes(1);
-      expect(replacePanelWithLibraryPanel).toHaveBeenCalledWith({ source, oldPanel, newPanel: expect.any(VizPanel) });
-      const { newPanel } = jest.mocked(replacePanelWithLibraryPanel).mock.calls[0][0];
+      expect(replacePanel).toHaveBeenCalledTimes(1);
+      expect(replacePanel).toHaveBeenCalledWith({ source, oldPanel, newPanel: expect.any(VizPanel) });
+      const { newPanel } = jest.mocked(replacePanel).mock.calls[0][0];
       expect(newPanel.state).toMatchObject({ title: 'Library title', hoverHeader: false });
       const behavior = newPanel.state.$behaviors?.[0] as LibraryPanelBehavior;
       expect(behavior.state).toMatchObject({ uid: 'library-1', name: 'Library panel' });

@@ -10,14 +10,14 @@ import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { replacePanelWithLibraryPanel } from './replacePanelWithLibraryPanel';
+import { replacePanel } from './replacePanel';
 
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: () => undefined,
 });
 
-describe('replacePanelWithLibraryPanel', () => {
+describe('replacePanel', () => {
   testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
   let deactivate: () => void;
 
@@ -40,11 +40,11 @@ describe('replacePanelWithLibraryPanel', () => {
     return { source, oldPanel, newPanel, sidebar: dashboard.state.sidebar };
   }
 
-  it('performs library panel replacement', () => {
+  it('performs panel replacement', () => {
     const { source, oldPanel, newPanel, sidebar } = setup();
     const originalState = source.state;
 
-    replacePanelWithLibraryPanel({ source, oldPanel, newPanel });
+    replacePanel({ source, oldPanel, newPanel });
 
     expect(newPanel.state.key).toBe('panel-1');
     expect(source.state.body).toBe(newPanel);
@@ -55,10 +55,10 @@ describe('replacePanelWithLibraryPanel', () => {
     expect(sidebar.state.redoStack).toHaveLength(0);
   });
 
-  it('undoes library panel replacement', () => {
+  it('undoes panel replacement', () => {
     const { source, oldPanel, newPanel, sidebar } = setup();
     const originalState = source.state;
-    replacePanelWithLibraryPanel({ source, oldPanel, newPanel });
+    replacePanel({ source, oldPanel, newPanel });
 
     sidebar.undoAction();
 
@@ -70,10 +70,10 @@ describe('replacePanelWithLibraryPanel', () => {
     expect(sidebar.state.redoStack).toHaveLength(1);
   });
 
-  it('redoes library panel replacement', () => {
+  it('redoes panel replacement', () => {
     const { source, oldPanel, newPanel, sidebar } = setup();
     const originalState = source.state;
-    replacePanelWithLibraryPanel({ source, oldPanel, newPanel });
+    replacePanel({ source, oldPanel, newPanel });
     sidebar.undoAction();
 
     sidebar.redoAction();
