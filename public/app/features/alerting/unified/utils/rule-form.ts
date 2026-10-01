@@ -6,6 +6,7 @@ import {
   type RelativeTimeRange,
   type ScopedVars,
   type TimeRange,
+  getDataSourceRef,
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
@@ -215,7 +216,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
       grafana_alert: {
         title: name,
         condition,
-        data: queries.map(fixBothInstantAndRangeQuery),
+        data: queries.map((query) => syncAlertQueryDatasource(fixBothInstantAndRangeQuery(query))),
         is_paused: Boolean(isPaused),
 
         // Alerting rule specific
@@ -240,7 +241,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
       grafana_alert: {
         title: name,
         condition,
-        data: queries.map(fixBothInstantAndRangeQuery),
+        data: queries.map((query) => syncAlertQueryDatasource(fixBothInstantAndRangeQuery(query))),
         is_paused: Boolean(isPaused),
 
         // Recording rule specific
@@ -965,6 +966,45 @@ function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number):
   }
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}
+
+// QueryWrapper treats datasourceUid as the source of truth and only patches a display copy
+// when model.datasource diverges (e.g. after duplicate + datasource change, a plugin onChange
+// can restore the previous model.datasource). Persist that same assumption on save/export so
+// the ruler payload cannot keep a stale UID.
+export function syncAlertQueryDatasource(query: AlertQuery): AlertQuery {
+  const uid = query.datasourceUid;
+  if (!uid || uid === ExpressionDatasourceUID) {
+    return query;
+  }
+
+  const modelDatasource = query.model?.datasource;
+  const modelUid =
+    typeof modelDatasource === 'string'
+      ? modelDatasource
+      : modelDatasource && typeof modelDatasource === 'object'
+        ? modelDatasource.uid
+        : undefined;
+
+  if (modelUid === uid) {
+    return query;
+  }
+
+  const settings = getDataSourceSrv().getInstanceSettings(uid);
+  const datasource = settings
+    ? getDataSourceRef(settings)
+    : {
+        uid,
+        type: typeof modelDatasource === 'object' ? modelDatasource?.type : undefined,
+      };
+
+  return {
+    ...query,
+    model: {
+      ...query.model,
+      datasource,
+    },
+  };
 }
 
 export function fixBothInstantAndRangeQuery(query: AlertQuery) {

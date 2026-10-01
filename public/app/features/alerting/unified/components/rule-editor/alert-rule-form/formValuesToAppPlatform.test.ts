@@ -1,6 +1,14 @@
-import { mockDataQuery, mockReduceExpression, mockResampleExpression, mockThresholdExpression } from '../../../mocks';
+import {
+  mockDataQuery,
+  mockDataSource,
+  mockReduceExpression,
+  mockResampleExpression,
+  mockThresholdExpression,
+} from '../../../mocks';
 import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
+import { setupDataSources } from '../../../testSetup/datasources';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
+import { DataSourceType } from '../../../utils/datasource';
 import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
 import { buildAlertRuleResource, getNotificationSettings, toExpression } from './formValuesToAppPlatform';
@@ -156,6 +164,36 @@ describe('toExpression', () => {
     const result = toExpression(mockThresholdExpression(), 'C');
 
     expect(result.source).toBe(true);
+  });
+
+  it('syncs model.datasource with datasourceUid when they diverge after a datasource change', () => {
+    setupDataSources(
+      mockDataSource({
+        uid: 'testdata',
+        name: 'testdata',
+        type: 'grafana-testdata-datasource',
+      }),
+      mockDataSource({
+        uid: 'prometheus',
+        name: 'prometheus',
+        type: DataSourceType.Prometheus,
+      })
+    );
+
+    const query = {
+      ...mockDataQuery(),
+      datasourceUid: 'testdata',
+      model: {
+        refId: 'A',
+        expr: 'up',
+        datasource: { type: DataSourceType.Prometheus, uid: 'prometheus' },
+      },
+    };
+
+    const result = toExpression(query, 'A');
+
+    expect(result.datasourceUID).toBe('testdata');
+    expect(result.model.datasource).toEqual({ type: 'grafana-testdata-datasource', uid: 'testdata' });
   });
 });
 
