@@ -8,6 +8,7 @@ import LiveReloadPlugin from 'webpack-livereload-plugin';
 import { merge } from 'webpack-merge';
 import WebpackBar from 'webpackbar';
 
+import { OxlintDiagnosticsPlugin } from './plugins/OxlintDiagnosticsPlugin.ts';
 import common, { type Env } from './webpack.common.ts';
 
 // webpack does not correctly export named ESM bindings — destructure from the default import
@@ -128,6 +129,10 @@ export default (env: Env = {}) => {
         },
       })
     );
+  }
+
+  if (!Number(env.noLint)) {
+    devConfig.plugins?.push(new OxlintDiagnosticsPlugin());
   }
 
   return merge(common(env), devConfig);

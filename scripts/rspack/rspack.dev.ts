@@ -11,6 +11,7 @@ import WebpackBar from 'webpackbar';
 
 import { getEnvConfig } from '../cli/env-util.ts';
 
+import { OxlintDiagnosticsPlugin } from './plugins/OxlintDiagnosticsPlugin.ts';
 import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
 import common, { PUBLIC_PATH, type Env } from './rspack.common.ts';
 
@@ -221,6 +222,10 @@ export default (env: Env = {}) => {
         },
       })
     );
+  }
+
+  if (!Number(env.noLint)) {
+    devConfig.plugins?.push(new OxlintDiagnosticsPlugin());
   }
 
   return merge(common(env, { hmr }), devConfig);

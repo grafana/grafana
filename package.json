@@ -187,6 +187,7 @@
     "crashme": "0.0.15",
     "css-loader": "7.1.2",
     "css-minimizer-webpack-plugin": "^8.0.0",
+    "diagnostics-webpack-plugin": "1.0.1",
     "enquirer": "^2.4.1",
     "esbuild": "0.28.1",
     "esbuild-loader": "4.3.0",
