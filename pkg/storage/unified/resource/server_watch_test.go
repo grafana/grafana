@@ -221,7 +221,7 @@ func TestKVWatchFreshListIdleStore(t *testing.T) {
 			done := make(chan error, 1)
 			go func() { done <- srv.Watch(req, stream) }()
 			requireMetricEventually(t, srv.storageMetrics.Broadcaster.Subscribers.WithLabelValues(watchTestResource), 1)
-			event := durableWatchEvent(backend.snowflake.Generate().Int64())
+			event := durableWatchEvent(requireGeneratedResourceVersion(t, backend.resourceVersions))
 			saveWatchEvent(t, backend, event)
 			backend.notifier.Publish(event)
 			select {

@@ -13,7 +13,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -59,7 +58,7 @@ func TestKVWatchSeedFallback(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/channel=%t", tc.name, channel), func(t *testing.T) {
 				base := setupBadgerKV(t)
 				store := &recoverableSeedKV{KV: base, failing: tc.wrap(base)}
-				logger := &logtest.Fake{}
+				logger := newFakeLogger()
 				backend := setupTestStorageBackend(t, withKV(store), withLogger(logger), func(opts *KVBackendOptions) {
 					opts.UseChannelNotifier = channel
 					opts.WatchOptions.MinBackoff = time.Millisecond
@@ -89,7 +88,7 @@ func TestKVWatchSeedFallback(t *testing.T) {
 				require.Zero(t, b.cache.events.len, "a failed read must not install a partial seed")
 				require.Equal(t, 1, logger.WarnLogs.Calls)
 				require.Contains(t, logger.WarnLogs.Message, "empty watch cache")
-				require.Contains(t, logger.WarnLogs.Ctx, floor)
+				require.Contains(t, logger.WarnLogs.Args, floor)
 
 				req := bookmarkWatchRequest()
 				req.Options.Key.Name = ""
@@ -122,7 +121,7 @@ func TestKVWatchSeedFallback(t *testing.T) {
 				done := make(chan error, 1)
 				go func() { done <- srv.Watch(req, stream) }()
 				requireMetricEventually(t, srv.storageMetrics.Broadcaster.Subscribers.WithLabelValues(watchTestResource), 1)
-				live := durableWatchEvent(backend.snowflake.Generate().Int64())
+				live := durableWatchEvent(requireGeneratedResourceVersion(t, backend.resourceVersions))
 				saveWatchEvent(t, backend, live)
 				backend.notifier.Publish(live)
 				select {
