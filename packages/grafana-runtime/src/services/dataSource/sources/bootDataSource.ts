@@ -48,7 +48,8 @@ export function createBootDataSource(boot: BootDataSourceSettings): DataSourceCa
       return createBootDataSnapshot(settings);
     },
     refreshMetas: async () => undefined,
-    // Every settings object is preloaded by the snapshot, so a miss means the uid is unknown.
+    // Unreachable in practice: the snapshot preloads settings for every list item, and the cache
+    // only asks the source on a miss. If it is reached, the uid is not in boot data.
     loadSettings: async () => undefined,
   };
 }
