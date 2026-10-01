@@ -1,0 +1,7 @@
+{
+  "$schema": "../../node_modules/oxlint/configuration_schema.json",
+  "categories": { "correctness": "off" },
+  "plugins": [],
+  "jsPlugins": [{ "name": "@grafana", "specifier": "@grafana/eslint-plugin" }],
+  "rules": { "@grafana/theme-token-usage": "error" }
+}
