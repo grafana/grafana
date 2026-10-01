@@ -409,7 +409,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				deletion, ok := op["value"].(*provisioning.DeletionStatus)
-				return ok && deletion.Cause == reconcileCauseSystem
+				return ok && deletion.Cause == provisioning.DeletionCauseSystem
 			})).
 		Once().
 		Return(nil)
@@ -488,14 +488,14 @@ func TestRepositoryController_handleDelete_ObservesPendingCauseBeforeFinalizers(
 			name: "user cause takes precedence over legacy error",
 			status: provisioning.RepositoryStatus{
 				DeleteError: "connection refused",
-				Deletion:    &provisioning.DeletionStatus{Cause: reconcileCauseUser, Message: "provider rejected deletion"},
+				Deletion:    &provisioning.DeletionStatus{Cause: provisioning.DeletionCauseUser, Message: "provider rejected deletion"},
 			},
 			cause: reconcileCauseUser,
 		},
 		{
 			name: "message does not override system cause",
 			status: provisioning.RepositoryStatus{
-				Deletion: &provisioning.DeletionStatus{Cause: reconcileCauseSystem, Message: "permission denied"},
+				Deletion: &provisioning.DeletionStatus{Cause: provisioning.DeletionCauseSystem, Message: "permission denied"},
 			},
 			cause: reconcileCauseSystem,
 		},
@@ -560,15 +560,22 @@ func TestRepositoryController_handleDelete_RecordsCauseForNextReconcile(t *testi
 	tests := []struct {
 		name  string
 		err   error
-		cause string
+		cause provisioning.DeletionCause
 	}{
-		{name: "repository unauthorized", err: repository.ErrUnauthorized, cause: reconcileCauseUser},
-		{name: "repository permission denied", err: repository.ErrPermissionDenied, cause: reconcileCauseUser},
-		{name: "connection authentication", err: connection.ErrAuthentication, cause: reconcileCauseUser},
-		{name: "connection not found", err: connection.ErrNotFound, cause: reconcileCauseUser},
-		{name: "connection repository access", err: connection.ErrRepositoryAccess, cause: reconcileCauseUser},
-		{name: "infrastructure failure", err: errors.New("connection reset by peer"), cause: reconcileCauseSystem},
-		{name: "misleading message", err: errors.New("permission denied"), cause: reconcileCauseSystem},
+		{name: "repository unauthorized", err: repository.ErrUnauthorized, cause: provisioning.DeletionCauseUser},
+		{name: "repository permission denied", err: repository.ErrPermissionDenied, cause: provisioning.DeletionCauseUser},
+		{name: "connection authentication", err: connection.ErrAuthentication, cause: provisioning.DeletionCauseUser},
+		{name: "connection not found", err: connection.ErrNotFound, cause: provisioning.DeletionCauseUser},
+		{name: "connection repository access", err: connection.ErrRepositoryAccess, cause: provisioning.DeletionCauseUser},
+		{name: "infrastructure failure", err: errors.New("connection reset by peer"), cause: provisioning.DeletionCauseSystem},
+		{name: "misleading message", err: errors.New("permission denied"), cause: provisioning.DeletionCauseSystem},
+		{
+			name: "non-empty folder",
+			err: &nonEmptyFolderError{
+				folder: &provisioning.ResourceListItem{Name: "folder-1", Title: "Folder one"},
+			},
+			cause: provisioning.DeletionCauseUser,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -605,7 +612,7 @@ func TestRepositoryController_handleDelete_RecordsCauseForNextReconcile(t *testi
 			require.NoError(t, json.Unmarshal(data, &repo.Status.Deletion))
 			repo.Status.DeleteError = recorded.Message
 			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
-			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", tc.cause))
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", string(tc.cause)))
 			assert.Len(t, patcher.ops, 2, "unchanged status must not trigger another patch")
 		})
 	}
@@ -650,7 +657,7 @@ func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T
 			Deletion: &provisioning.DeletionStatus{
 				State:   provisioning.DeletionStateBlocked,
 				Message: "boom",
-				Cause:   reconcileCauseSystem,
+				Cause:   provisioning.DeletionCauseSystem,
 			},
 		},
 	}
@@ -659,8 +666,8 @@ func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T
 }
 
 func TestRepositoryController_updateDeleteStatus_BackfillsCause(t *testing.T) {
-	for _, previousCause := range []string{"", reconcileCauseSystem} {
-		t.Run("previous cause="+previousCause, func(t *testing.T) {
+	for _, previousCause := range []provisioning.DeletionCause{"", provisioning.DeletionCauseSystem} {
+		t.Run("previous cause="+string(previousCause), func(t *testing.T) {
 			patcher := &capturePatcher{}
 			c := &RepositoryController{statusPatcher: patcher}
 			err := fmt.Errorf("remove finalizers: %w", repository.ErrPermissionDenied)
@@ -677,7 +684,7 @@ func TestRepositoryController_updateDeleteStatus_BackfillsCause(t *testing.T) {
 			require.NoError(t, c.updateDeleteStatus(context.Background(), repo, err))
 			require.Len(t, patcher.ops, 2)
 			deletion := patcher.ops[1]["value"].(*provisioning.DeletionStatus)
-			assert.Equal(t, reconcileCauseUser, deletion.Cause)
+			assert.Equal(t, provisioning.DeletionCauseUser, deletion.Cause)
 		})
 	}
 }
@@ -782,7 +789,8 @@ func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFolderError(t *test
 			}),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				ds, ok := op["value"].(*provisioning.DeletionStatus)
-				return ok && ds.Finalizer == repository.RemoveOrphanResourcesFinalizer && ds.Message == folderErr.Error()
+				return ok && ds.Finalizer == repository.RemoveOrphanResourcesFinalizer &&
+					ds.Message == folderErr.Error() && ds.Cause == provisioning.DeletionCauseUser
 			}),
 		).
 		Once().

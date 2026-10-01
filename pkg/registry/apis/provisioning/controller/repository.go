@@ -552,7 +552,7 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	deletion := &provisioning.DeletionStatus{
 		State:   provisioning.DeletionStateBlocked,
 		Message: err.Error(),
-		Cause:   classifyTokenErrorCause(err),
+		Cause:   provisioning.DeletionCause(classifyTokenErrorCause(err)),
 	}
 	var fe *finalizerError
 	if errors.As(err, &fe) {
@@ -562,6 +562,7 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	if errors.As(err, &folderErr) {
 		// nonEmptyFolderError is ready for users; omit internal operation prefixes.
 		deletion.Message = folderErr.Error()
+		deletion.Cause = provisioning.DeletionCauseUser
 	}
 	return deletion
 }
@@ -572,8 +573,8 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 func deletionErrorCause(obj *provisioning.Repository) string {
 	if deletion := obj.Status.Deletion; deletion != nil {
 		switch deletion.Cause {
-		case reconcileCauseUser, reconcileCauseSystem:
-			return deletion.Cause
+		case provisioning.DeletionCauseUser, provisioning.DeletionCauseSystem:
+			return string(deletion.Cause)
 		default:
 			// Older statuses have no cause. Unknown values must also stay in
 			// the alert population without introducing unbounded metric labels.

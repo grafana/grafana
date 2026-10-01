@@ -83,7 +83,7 @@ func registerRepositoryDeletionMetrics(registry prometheus.Registerer) *reposito
 // observePending records how long a repository has been in Terminating. Called
 // once per delete reconcile, so a stuck repository re-observes its growing age at
 // resync cadence and its observations climb through the buckets. cause is the
-// persisted classifyTokenErrorCause result for the previous blocking error
+// persisted classification of the previous blocking error
 // ("user" or "system"), or "" when no failure was recorded. Older failures
 // without a cause default to "system".
 func (m *repositoryDeletionMetrics) observePending(age time.Duration, cause string) {
