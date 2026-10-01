@@ -193,7 +193,7 @@ func TestReconciler_ObservesProcessDuration(t *testing.T) {
 
 	// One successful observation under the (group, resource, status) labels
 	// the production code uses.
-	require.Equal(t, 1, testutil.CollectAndCount(m.ReconcilerProcessDuration, "vector_storage_reconciler_process_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.ReconcilerProcessDuration, "grafana_vector_storage_reconciler_process_duration_seconds"))
 }
 
 func TestReconciler_RecordEmbeddingCounts(t *testing.T) {
@@ -221,7 +221,7 @@ func TestReconciler_RecordEmbeddingCounts(t *testing.T) {
 	// its last value.
 	vec.counts = []vector.EmbeddingCount{{Resource: "dashboards", Model: testModel, Count: 9}}
 	s.recordEmbeddingCounts(context.Background())
-	assert.Equal(t, 1, testutil.CollectAndCount(m.EmbeddingsStored, "vector_storage_embeddings_stored"))
+	assert.Equal(t, 1, testutil.CollectAndCount(m.EmbeddingsStored, "grafana_vector_storage_embeddings_stored"))
 	assert.Equal(t, 9.0, testutil.ToFloat64(m.EmbeddingsStored.WithLabelValues("dashboards", testModel)))
 
 	// A backend error leaves the last good sample in place.

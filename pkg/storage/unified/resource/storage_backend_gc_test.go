@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -115,7 +115,7 @@ func writeEvent(t *testing.T, ctx context.Context, storageBackend *kvStorageBack
 	event := WriteEvent{
 		Type:  action,
 		Value: value,
-		GUID:  uuid.New().String(),
+		GUID:  uuid.NewV4().String(),
 		Key: &resourcepb.ResourceKey{
 			Namespace: options.Namespace,
 			Group:     options.Group,

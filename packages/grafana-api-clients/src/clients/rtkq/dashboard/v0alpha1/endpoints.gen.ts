@@ -198,7 +198,6 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             ownerReference: queryArg.ownerReference,
             createdBy: queryArg.createdBy,
-            explain: queryArg.explain,
             panelTitleSearch: queryArg.panelTitleSearch,
           },
         }),
@@ -501,8 +500,6 @@ export type SearchDashboardsAndFoldersApiArg = {
   ownerReference?: string[];
   /** filter by the user who created the resource (format: user:<uid>) */
   createdBy?: string;
-  /** add debugging info that may help explain why the result matched */
-  explain?: boolean;
   /** [experimental] optionally include matches from panel titles */
   panelTitleSearch?: boolean;
 };
@@ -1022,8 +1019,6 @@ export type ManagedBy = {
 export type DashboardHit = {
   /** Dashboard description */
   description?: string;
-  /** Explain the score (if possible) */
-  explain?: any;
   /** Stick untyped extra fields in this object (including the sort value) */
   field?: any;
   /** The k8s name (eg, grafana UID) for the parent folder */

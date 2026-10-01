@@ -15,10 +15,10 @@ import (
 	"k8s.io/kube-openapi/pkg/handler3"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
@@ -143,7 +143,7 @@ func TestPluginBackendLoad(t *testing.T) {
 	}
 	t.Run("loads an API handler using the plugin's clients", func(t *testing.T) {
 		calls := 0
-		backend, err := NewPluginBackend(plugin, func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
+		backend, err := NewPluginBackend(plugin, func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
 			calls++
 			require.Equal(t, plugin.JSONData.ID, id)
 			return nil, nil, nil
@@ -182,7 +182,7 @@ func TestPluginBackendLoad(t *testing.T) {
 	})
 	t.Run("propagates client errors", func(t *testing.T) {
 		failure := errors.New("plugin unavailable")
-		backend, err := NewPluginBackend(plugin, func(context.Context, string) (plugins.Client, v3.ClientV3, error) {
+		backend, err := NewPluginBackend(plugin, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 			return nil, nil, failure
 		}, PluginDependencies{})
 		require.NoError(t, err)
@@ -196,7 +196,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 	access := &actest.FakeAccessControl{ExpectedEvaluate: true}
 	backend, err := NewPluginBackend(definition.PluginDefinition{
 		JSONData: plugins.JSONData{ID: "test-app", Type: plugins.TypeApp},
-	}, func(context.Context, string) (plugins.Client, v3.ClientV3, error) {
+	}, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 		return nil, nil, nil
 	}, PluginDependencies{Unified: &resource.MockResourceClient{}, AccessControl: access})
 	require.NoError(t, err)

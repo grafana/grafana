@@ -1075,11 +1075,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/import-to-gma/ImportToGMARules.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/import-to-gma/NamespaceAndGroupFilter.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -1760,11 +1755,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/scene/PanelSearchLayout.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/VariableControls.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1962,9 +1952,6 @@
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -3128,11 +3115,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 7
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/featureFlags.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -3650,11 +3632,6 @@
   },
   "public/app/types/unified-alerting-dto.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/swagger/SwaggerPage.tsx": {
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },

@@ -3,6 +3,7 @@ import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/r
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
 import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
@@ -99,7 +100,7 @@ function PanelCell({
   const styles = useStyles2(getStyles);
   // NotebookCellItem has no static Component and is never otherwise activated, so a $timeRange
   // assigned to it would never get its own activate() call without this.
-  const { $timeRange } = useSceneObjectState(cell, { shouldActivateOrKeepAlive: true });
+  const { elementName, $timeRange } = useSceneObjectState(cell, { shouldActivateOrKeepAlive: true });
 
   // PanelQueryEditor already mounts its own copy of this control inline, so this one only needs to fill in for the
   // two cases isEditableQueryPanel excludes (a library panel, or one with transformations),
@@ -114,7 +115,7 @@ function PanelCell({
           <NotebookCellTimeRangeControl cell={cell} />
         </Box>
       )}
-      <div className={styles.panel}>
+      <div className={styles.panel} data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}>
         <panel.Component model={panel} />
       </div>
     </Stack>
@@ -331,6 +332,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   panel: css({
     height: PANEL_HEIGHT,
     position: 'relative',
+    // Inert on screen: only a print/PDF layout reads it, where a split panel is a chart cut in half.
+    breakInside: 'avoid',
+    pageBreakInside: 'avoid',
   }),
   content: css({
     padding: theme.spacing(1, 0),

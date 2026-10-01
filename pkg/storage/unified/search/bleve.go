@@ -53,13 +53,14 @@ const (
 const (
 	internalRVKey                    = "rv"                      // Encoded as big-endian int64
 	internalBuildInfoKey             = "build_info"              // Encoded as JSON of buildInfo struct
+	internalImportTimesKey           = "import_times"            // Encoded as JSON of "group/resource" to unix nanoseconds
 	internalSnapshotMutationCountKey = "snapshot_mutation_count" // Encoded as big-endian int64
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search")
 
-var _ resource.SearchBackend = &bleveBackend{}
-var _ resource.ResourceIndex = &bleveIndex{}
+var _ resource.SearchBackend = (*bleveBackend)(nil)
+var _ resource.ResourceIndex = (*bleveIndex)(nil)
 
 type BleveOptions struct {
 	// The root folder where file objects are saved
@@ -1308,7 +1309,7 @@ type adaptiveBuildIndex struct {
 	cleanupDir    string
 }
 
-var _ resource.ResourceIndex = &adaptiveBuildIndex{}
+var _ resource.ResourceIndex = (*adaptiveBuildIndex)(nil)
 
 func newAdaptiveBuildIndex(delegate *bleveIndex, threshold int64, promote promoteBuildIndexFunc) *adaptiveBuildIndex {
 	return &adaptiveBuildIndex{
@@ -1770,6 +1771,9 @@ type bleveIndex struct {
 	labelsAreKeyword bool
 	// False on an index built before deleted documents were kept, until it rebuilds.
 	keepsDeletedDocuments bool
+
+	// Guards the read and rewrite of the recorded import times.
+	importTimesMu sync.Mutex
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
@@ -2572,6 +2576,55 @@ func (b *bleveIndex) ListDocumentRefs(ctx context.Context, gr schema.GroupResour
 			searchAfter = rsp.Hits[len(rsp.Hits)-1].Sort
 		}
 	}
+}
+
+// ImportTimes implements resource.ResourceIndex.
+func (b *bleveIndex) ImportTimes() (map[schema.GroupResource]time.Time, error) {
+	raw, err := b.index.GetInternal([]byte(internalImportTimesKey))
+	if err != nil {
+		return nil, err
+	}
+	times := map[schema.GroupResource]time.Time{}
+	if len(raw) == 0 {
+		return times, nil
+	}
+	// Our own encoding, so the stored format does not depend on how
+	// schema.GroupResource happens to marshal.
+	stored := map[string]int64{}
+	if err := json.Unmarshal(raw, &stored); err != nil {
+		return nil, fmt.Errorf("reading import times: %w", err)
+	}
+	for key, nanos := range stored {
+		group, res, ok := strings.Cut(key, "/")
+		if !ok {
+			return nil, fmt.Errorf("reading import times: unexpected key %q", key)
+		}
+		times[schema.GroupResource{Group: group, Resource: res}] = time.Unix(0, nanos).UTC()
+	}
+	return times, nil
+}
+
+// RecordImportTime implements resource.ResourceIndex.
+func (b *bleveIndex) RecordImportTime(gr schema.GroupResource, t time.Time) error {
+	// Held across the read and the write, so two callers cannot each write back a
+	// record missing the other's type.
+	b.importTimesMu.Lock()
+	defer b.importTimesMu.Unlock()
+
+	times, err := b.ImportTimes()
+	if err != nil {
+		return err
+	}
+	times[gr] = t
+	stored := make(map[string]int64, len(times))
+	for key, value := range times {
+		stored[key.Group+"/"+key.Resource] = value.UnixNano()
+	}
+	raw, err := json.Marshal(stored)
+	if err != nil {
+		return err
+	}
+	return b.index.SetInternal([]byte(internalImportTimesKey), raw)
 }
 
 // documentsOfQuery matches the documents of one resource type. A global index

@@ -202,3 +202,40 @@ func TestConverter(t *testing.T) {
 		}
 	})
 }
+
+func TestConverter_DefaultLabel(t *testing.T) {
+	converter := NewConverter(types.OrgNamespaceFormatter, "testdata.grafana.datasource.app", "grafana-testdata-datasource", nil)
+	for _, tt := range []struct {
+		name      string
+		spec      map[string]any
+		labels    map[string]string
+		isDefault bool
+	}{
+		{name: "no default", spec: map[string]any{}},
+		{name: "label only", spec: map[string]any{}, labels: map[string]string{"default": "true"}, isDefault: true},
+		{name: "label overrides false spec", spec: map[string]any{"isDefault": false}, labels: map[string]string{"default": "true"}, isDefault: true},
+		{name: "legacy spec only", spec: map[string]any{"isDefault": true}, isDefault: true},
+		{name: "false label preserves true spec", spec: map[string]any{"isDefault": true}, labels: map[string]string{"default": "false"}, isDefault: true},
+		{name: "false label", spec: map[string]any{}, labels: map[string]string{"default": "false"}},
+		{name: "unrelated label", spec: map[string]any{}, labels: map[string]string{"environment": "test"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := &datasourceV0.DataSource{Spec: datasourceV0.UnstructuredSpec{Object: tt.spec}}
+			ds.Name = "test"
+			ds.Namespace = "default"
+			ds.Labels = tt.labels
+
+			add, err := converter.ToAddCommand(ds)
+			require.NoError(t, err)
+			assert.Equal(t, tt.isDefault, add.IsDefault, "create")
+
+			update, err := converter.ToUpdateCommand(ds)
+			require.NoError(t, err)
+			assert.Equal(t, tt.isDefault, update.IsDefault, "update")
+
+			legacy, err := converter.AsLegacyDatasource(ds)
+			require.NoError(t, err)
+			assert.Equal(t, tt.isDefault, legacy.IsDefault, "legacy conversion")
+		})
+	}
+}

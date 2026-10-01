@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Välj anpassat namnutrymme",
+      "aria-label-select-dimension-name": "",
+      "aria-label-select-metric-name": "",
       "aria-label-select-namespace": "Välj namnutrymme",
       "aria-label-select-query-type": "Välj typ av fråga",
       "aria-label-select-region": "Välj region",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "Välj resursgrupp",
       "aria-label-select-subscription": "Välj prenumeration",
       "label-custom-namespace": "Anpassat namnområde",
+      "label-dimension-name": "",
+      "label-metric-name": "",
       "label-namespace": "Namnområde",
       "label-query-type": "Typ av fråga",
       "label-region": "Region",

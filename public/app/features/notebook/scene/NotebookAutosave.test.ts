@@ -1465,6 +1465,66 @@ describe('NotebookAutosave', () => {
     expect(savedTexts()).toEqual(['typed just before hiding']);
   });
 
+  describe('awaitPendingSave', () => {
+    it('writes an edit still sitting on the debounce, without waiting it out', async () => {
+      const scene = activateEditing();
+      editFirstCell(scene, 'Typed a moment ago');
+
+      await scene.autosave.awaitPendingSave();
+
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      const [, spec] = jest.mocked(updateNotebook).mock.calls[0];
+      expect(JSON.stringify(spec)).toContain('Typed a moment ago');
+    });
+
+    it('throws when that save failed, rather than reporting a notebook that was never written', async () => {
+      jest.mocked(updateNotebook).mockRejectedValue(new Error('The notebook was changed by someone else.'));
+      const scene = activateEditing();
+      editFirstCell(scene, 'Typed a moment ago');
+
+      await expect(scene.autosave.awaitPendingSave()).rejects.toThrow('The notebook was changed by someone else.');
+    });
+
+    it('writes nothing when there was nothing pending', async () => {
+      const scene = activateEditing();
+
+      await scene.autosave.awaitPendingSave();
+
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    it('waits for the queued save when one was already in flight', async () => {
+      let finishFirstSave = () => {};
+      jest
+        .mocked(updateNotebook)
+        .mockImplementationOnce(() => new Promise((resolve) => (finishFirstSave = () => resolve({ generation: 2 }))))
+        .mockResolvedValue({ generation: 3 });
+      const scene = activateEditing();
+
+      editFirstCell(scene, 'First');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+      editFirstCell(scene, 'Second');
+
+      const settled = scene.autosave.awaitPendingSave();
+      finishFirstSave();
+      await settled;
+
+      expect(updateNotebook).toHaveBeenCalledTimes(2);
+      const [, spec] = jest.mocked(updateNotebook).mock.calls[1];
+      expect(JSON.stringify(spec)).toContain('Second');
+    });
+
+    it('does not adopt what a reader changed on the way', async () => {
+      const scene = buildScene();
+      deactivate = scene.activate();
+
+      scene.state.$timeRange?.setState({ from: 'now-15m', to: 'now' });
+      await scene.autosave.awaitPendingSave();
+
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+  });
+
   describe('abandon', () => {
     // The whole reason abandon exists: delete navigates away, the scene tears down, and teardown
     // flushes. Without the latch that flush writes the spec back to a notebook the server has just

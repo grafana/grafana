@@ -435,6 +435,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
 /e2e-playwright/diagnostics-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
+/e2e-playwright/notebooks-suite/ @grafana/sharing-squad
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
 /e2e-playwright/journey-tracking/ @grafana/dashboards-squad
 /e2e-playwright/dashboard-cujs/scope-*.spec.ts @grafana/dashboards-squad @grafana/grafana-operator-experience-squad
@@ -504,6 +505,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/start-server @grafana/grafana-frontend-platform
 /e2e-playwright/storybook/ @grafana/grafana-frontend-platform
 /e2e-playwright/test-plugins/ @grafana/grafana-frontend-platform
+/e2e-playwright/unauthenticated/login-perf.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/unauthenticated/login.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/utils/ @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/advisor.spec.ts @grafana/grafana-catalog
