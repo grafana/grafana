@@ -18,6 +18,19 @@ type gatedSeedFailureKV struct {
 	release chan struct{}
 }
 
+type bufferedWatchNotifier struct {
+	events chan Event
+}
+
+func (n *bufferedWatchNotifier) Watch(_ context.Context, opts WatchOptions) <-chan Event {
+	opts.captured(nil)
+	return n.events
+}
+
+func (n *bufferedWatchNotifier) Publish(event Event) {
+	n.events <- event
+}
+
 func (k *gatedSeedFailureKV) Keys(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
 	if section != eventsSection || opts.Limit != defaultCacheSize || opts.Sort != SortOrderDesc {
 		return k.KV.Keys(ctx, section, opts)
@@ -29,6 +42,65 @@ func (k *gatedSeedFailureKV) Keys(ctx context.Context, section string, opts List
 			yield("", ctx.Err())
 		case <-k.release:
 			yield("", errors.New("seed scan failed"))
+		}
+	}
+}
+
+func TestKVWatchSeedPendingThresholdSkipsSeedLoad(t *testing.T) {
+	backend, store := setupWatchEventWorker(t)
+	probe := &gatedSeedFailureKV{KV: store, reading: make(chan struct{}), release: make(chan struct{})}
+	backend.eventStore = newEventStore(probe)
+	backend.watchOpts = (WatchOptions{SettleDelay: time.Millisecond, BufferSize: 3}).normalize()
+	notifier := &bufferedWatchNotifier{events: make(chan Event, backend.watchOpts.BufferSize)}
+	backend.notifier = notifier
+
+	old := durableWatchEvent(snowflakeFromTime(time.Now().Add(-time.Hour)))
+	saveWatchEvent(t, backend, old)
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(func() {
+		cancel()
+		close(notifier.events)
+	})
+	type result struct {
+		seed   watchSeed
+		stream <-chan *WrittenEvent
+		err    error
+	}
+	started := make(chan result, 1)
+	go func() {
+		seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
+		started <- result{seed: seed, stream: stream, err: err}
+	}()
+
+	select {
+	case <-probe.reading:
+	case <-time.After(time.Second):
+		t.Fatal("seed load did not start")
+	}
+	eventCount := int64(backend.watchOpts.BufferSize + 2)
+	for i := int64(1); i <= eventCount; i++ {
+		event := durableWatchEvent(old.ResourceVersion + i)
+		saveWatchEvent(t, backend, event)
+		notifier.Publish(event)
+	}
+
+	var res result
+	select {
+	case res = <-started:
+	case <-time.After(time.Second):
+		t.Fatal("pending threshold did not bypass the seed load")
+	}
+	require.NoError(t, res.err)
+	require.Empty(t, res.seed.events)
+	require.Equal(t, old.ResourceVersion, res.seed.initialCacheFloor)
+	require.Equal(t, old.ResourceVersion, res.seed.highestRV)
+	for i := int64(1); i <= eventCount; i++ {
+		select {
+		case event := <-res.stream:
+			require.NotNil(t, event)
+			require.Equal(t, old.ResourceVersion+i, event.ResourceVersion)
+		case <-time.After(time.Second):
+			t.Fatal("buffered event was not handed off")
 		}
 	}
 }

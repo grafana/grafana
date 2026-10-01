@@ -16,6 +16,11 @@ type watchSeed struct {
 	highestRV         int64 // fixed before settling; retained events may end below this boundary
 }
 
+type watchSeedResult struct {
+	seed watchSeed
+	err  error
+}
+
 func writtenEventIdentity(event *WrittenEvent) (GroupResource, int64) {
 	return GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, event.ResourceVersion
 }
@@ -100,7 +105,9 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 	ready := make(chan error, 1)
 	opts.captureReady = ready
 	notifications := k.notifier.Watch(ctx, opts)
-	handoff := make(chan int64)
+	boundary := make(chan int64)
+	startDelivery := make(chan struct{})
+	overflow := make(chan struct{}, 1)
 	out := make(chan *WrittenEvent, defaultBufferSize)
 	go func() {
 		defer close(out)
@@ -111,7 +118,7 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 			for range notifications {
 			}
 		}()
-		k.runSeededWatchEvents(ctx, notifications, handoff, out)
+		k.runSeededWatchEvents(ctx, notifications, boundary, startDelivery, opts.BufferSize, overflow, out)
 	}()
 	defer func() {
 		if !started {
@@ -143,25 +150,63 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 	} else {
 		return watchSeed{}, nil, fmt.Errorf("read watch handoff boundary: %w", err)
 	}
+	select {
+	case <-ctx.Done():
+		return watchSeed{}, nil, ctx.Err()
+	case boundary <- handoffRV:
+	}
+
+	degraded := false
 	timer := time.NewTimer(opts.SettleDelay)
 	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return watchSeed{}, nil, ctx.Err()
-	case <-timer.C:
-	}
-	seed, err := k.loadWatchSeed(ctx, handoffRV)
-	if err != nil {
-		if ctx.Err() != nil {
+settling:
+	for {
+		select {
+		case <-ctx.Done():
 			return watchSeed{}, nil, ctx.Err()
+		case <-overflow:
+			degraded = true
+		case <-timer.C:
+			break settling
 		}
-		k.log.Warn("failed to load watch seed, starting with an empty watch cache", "error", err, "handoff_rv", handoffRV)
-		seed = watchSeed{initialCacheFloor: handoffRV, highestRV: handoffRV}
+	}
+
+	seed := watchSeed{initialCacheFloor: handoffRV, highestRV: handoffRV}
+	if !degraded {
+		seedCtx, cancelSeed := context.WithCancel(ctx)
+		seedResult := make(chan watchSeedResult, 1)
+		go func() {
+			loaded, err := k.loadWatchSeed(seedCtx, handoffRV)
+			seedResult <- watchSeedResult{seed: loaded, err: err}
+		}()
+		select {
+		case <-ctx.Done():
+			cancelSeed()
+			<-seedResult
+			return watchSeed{}, nil, ctx.Err()
+		case <-overflow:
+			degraded = true
+			cancelSeed()
+			<-seedResult
+		case result := <-seedResult:
+			cancelSeed()
+			if result.err != nil {
+				if ctx.Err() != nil {
+					return watchSeed{}, nil, ctx.Err()
+				}
+				k.log.Warn("failed to load watch seed, starting with an empty watch cache", "error", result.err, "handoff_rv", handoffRV)
+			} else {
+				seed = result.seed
+			}
+		}
+	}
+	if degraded {
+		k.log.Warn("watch capture reached its pending threshold before seed handoff, starting with an empty watch cache", "handoff_rv", handoffRV, "pending_threshold", opts.BufferSize)
 	}
 	select {
 	case <-ctx.Done():
 		return watchSeed{}, nil, ctx.Err()
-	case handoff <- seed.highestRV:
+	case startDelivery <- struct{}{}:
 	}
 
 	started = true
@@ -169,11 +214,32 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 }
 
 // Drain capture throughout snapshot reads so startup cannot backpressure an
-// at-most-once notifier into dropping writes. After handoff, the same worker
+// at-most-once notifier into dropping writes. Crossing the pending threshold
+// tells the caller to abandon the historical seed and hand off promptly, while
+// this worker keeps draining notifications. After handoff, the same worker
 // hydrates the backlog and then batches directly from the notifier.
-func (k *kvStorageBackend) runSeededWatchEvents(ctx context.Context, input <-chan Event, handoff <-chan int64, out chan<- *WrittenEvent) {
+func (k *kvStorageBackend) runSeededWatchEvents(
+	ctx context.Context,
+	input <-chan Event,
+	boundary <-chan int64,
+	startDelivery <-chan struct{},
+	pendingThreshold int,
+	overflow chan<- struct{},
+	out chan<- *WrittenEvent,
+) {
 	var pending []Event
 	var highestRV int64
+	boundarySet := false
+	applyBoundary := func(rv int64) {
+		highestRV = rv
+		boundarySet = true
+		pending = slices.DeleteFunc(pending, func(event Event) bool {
+			return event.ResourceVersion <= highestRV || event.PreviousRV < 0
+		})
+		if len(pending) >= pendingThreshold {
+			overflow <- struct{}{}
+		}
+	}
 waiting:
 	for {
 		select {
@@ -184,8 +250,16 @@ waiting:
 				input = nil
 				continue
 			}
+			if boundarySet && (event.ResourceVersion <= highestRV || event.PreviousRV < 0) {
+				continue
+			}
 			pending = append(pending, event)
-		case highestRV = <-handoff:
+			if boundarySet && len(pending) == pendingThreshold {
+				overflow <- struct{}{}
+			}
+		case rv := <-boundary:
+			applyBoundary(rv)
+		case <-startDelivery:
 			break waiting
 		}
 	}

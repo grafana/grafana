@@ -529,6 +529,7 @@ func setupWatchEventWorker(t *testing.T) (*kvStorageBackend, *countingKV) {
 	store := &countingKV{KV: setupBadgerKV(t)}
 	return &kvStorageBackend{
 		dataStore: &dataStore{kv: store}, eventStore: newEventStore(store), log: log.NewNopLogger(),
+		watchOpts: (WatchOptions{}).normalize(),
 	}, store
 }
 
@@ -539,12 +540,13 @@ func TestKVWatchEventWorkerBuffersUntilSeed(t *testing.T) {
 				backend, store := setupWatchEventWorker(t)
 				ctx, cancel := context.WithCancel(t.Context())
 				input := make(chan Event)
-				handoff := make(chan int64)
+				boundary := make(chan int64)
+				startDelivery := make(chan struct{})
 				out := make(chan *WrittenEvent)
 				inputClosed := false
 				go func() {
 					defer close(out)
-					backend.runSeededWatchEvents(ctx, input, handoff, out)
+					backend.runSeededWatchEvents(ctx, input, boundary, startDelivery, defaultBufferSize, make(chan struct{}, 1), out)
 				}()
 				defer func() {
 					cancel()
@@ -579,7 +581,8 @@ func TestKVWatchEventWorkerBuffersUntilSeed(t *testing.T) {
 				require.Zero(t, trips, "buffering must not hydrate before the seed handoff")
 				require.Zero(t, keys)
 
-				handoff <- highestRV
+				boundary <- highestRV
+				startDelivery <- struct{}{}
 				for _, rv := range expected {
 					event := <-out
 					require.NotNil(t, event)
@@ -621,15 +624,17 @@ func TestKVWatchEventWorkerBatchesLiveEvents(t *testing.T) {
 			saveWatchEvent(t, backend, durableWatchEvent(rv))
 		}
 		input := make(chan Event, count)
-		handoff := make(chan int64)
+		boundary := make(chan int64)
+		startDelivery := make(chan struct{})
 		out := make(chan *WrittenEvent)
 		go func() {
 			defer close(out)
-			backend.runSeededWatchEvents(ctx, input, handoff, out)
+			backend.runSeededWatchEvents(ctx, input, boundary, startDelivery, defaultBufferSize, make(chan struct{}, 1), out)
 		}()
 		input <- durableWatchEvent(1)
 		synctest.Wait()
-		handoff <- 0
+		boundary <- 0
+		startDelivery <- struct{}{}
 		synctest.Wait()
 		// Block the first delivery so the live backlog is fully queued before hydration resumes.
 		for rv := int64(2); rv <= count+1; rv++ {
@@ -659,18 +664,20 @@ func TestKVWatchEventWorkerCancellation(t *testing.T) {
 				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
 				input := make(chan Event, 1)
-				handoff := make(chan int64)
+				boundary := make(chan int64)
+				startDelivery := make(chan struct{})
 				out := make(chan *WrittenEvent)
 				go func() {
 					defer close(out)
-					backend.runSeededWatchEvents(ctx, input, handoff, out)
+					backend.runSeededWatchEvents(ctx, input, boundary, startDelivery, defaultBufferSize, make(chan struct{}, 1), out)
 				}()
 				if phase == "buffering" || phase == "pending delivery" {
 					input <- event
 					synctest.Wait()
 				}
 				if phase != "buffering" {
-					handoff <- 0
+					boundary <- 0
+					startDelivery <- struct{}{}
 				}
 				if phase == "live delivery" {
 					input <- event
