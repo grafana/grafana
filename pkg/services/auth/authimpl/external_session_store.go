@@ -58,7 +58,7 @@ func (s *store) Get(ctx context.Context, ID int64) (*auth.ExternalSession, error
 		return nil, err
 	}
 
-	err = s.decryptSecrets(externalSession)
+	err = s.decryptSecrets(ctx, externalSession)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) 
 	}
 
 	for _, extSession := range queryResult {
-		err := s.decryptSecrets(extSession)
+		err := s.decryptSecrets(ctx, extSession)
 		if err != nil {
 			return nil, err
 		}
@@ -123,17 +123,17 @@ func (s *store) Create(ctx context.Context, extSession *auth.ExternalSession) er
 	var err error
 	clone := extSession.Clone()
 
-	clone.AccessToken, err = s.encryptAndEncode(extSession.AccessToken)
+	clone.AccessToken, err = s.encryptAndEncode(ctx, extSession.AccessToken)
 	if err != nil {
 		return err
 	}
 
-	clone.RefreshToken, err = s.encryptAndEncode(extSession.RefreshToken)
+	clone.RefreshToken, err = s.encryptAndEncode(ctx, extSession.RefreshToken)
 	if err != nil {
 		return err
 	}
 
-	clone.IDToken, err = s.encryptAndEncode(extSession.IDToken)
+	clone.IDToken, err = s.encryptAndEncode(ctx, extSession.IDToken)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (s *store) Create(ctx context.Context, extSession *auth.ExternalSession) er
 		clone.NameIDHash = base64.RawStdEncoding.EncodeToString(hash.Sum(nil))
 	}
 
-	clone.NameID, err = s.encryptAndEncode(extSession.NameID)
+	clone.NameID, err = s.encryptAndEncode(ctx, extSession.NameID)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func (s *store) Create(ctx context.Context, extSession *auth.ExternalSession) er
 		clone.SessionIDHash = base64.RawStdEncoding.EncodeToString(hash.Sum(nil))
 	}
 
-	clone.SessionID, err = s.encryptAndEncode(extSession.SessionID)
+	clone.SessionID, err = s.encryptAndEncode(ctx, extSession.SessionID)
 	if err != nil {
 		return err
 	}
@@ -183,19 +183,19 @@ func (s *store) Update(ctx context.Context, ID int64, cmd *auth.UpdateExternalSe
 	var err error
 	externalSession := &auth.ExternalSession{}
 
-	externalSession.AccessToken, err = s.encryptAndEncode(cmd.Token.AccessToken)
+	externalSession.AccessToken, err = s.encryptAndEncode(ctx, cmd.Token.AccessToken)
 	if err != nil {
 		return err
 	}
 
-	externalSession.RefreshToken, err = s.encryptAndEncode(cmd.Token.RefreshToken)
+	externalSession.RefreshToken, err = s.encryptAndEncode(ctx, cmd.Token.RefreshToken)
 	if err != nil {
 		return err
 	}
 
 	var secretIdToken string
 	if idToken, ok := cmd.Token.Extra("id_token").(string); ok && idToken != "" {
-		secretIdToken, err = s.encryptAndEncode(idToken)
+		secretIdToken, err = s.encryptAndEncode(ctx, idToken)
 		if err != nil {
 			return err
 		}
@@ -271,48 +271,48 @@ func (s *store) BatchDeleteExternalSessionsByUserIDs(ctx context.Context, userID
 	return err
 }
 
-func (s *store) decryptSecrets(extSession *auth.ExternalSession) error {
+func (s *store) decryptSecrets(ctx context.Context, extSession *auth.ExternalSession) error {
 	var err error
-	extSession.AccessToken, err = s.decodeAndDecrypt(extSession.AccessToken)
+	extSession.AccessToken, err = s.decodeAndDecrypt(ctx, extSession.AccessToken)
 	if err != nil {
 		return err
 	}
 
-	extSession.RefreshToken, err = s.decodeAndDecrypt(extSession.RefreshToken)
+	extSession.RefreshToken, err = s.decodeAndDecrypt(ctx, extSession.RefreshToken)
 	if err != nil {
 		return err
 	}
 
-	extSession.IDToken, err = s.decodeAndDecrypt(extSession.IDToken)
+	extSession.IDToken, err = s.decodeAndDecrypt(ctx, extSession.IDToken)
 	if err != nil {
 		return err
 	}
 
-	extSession.NameID, err = s.decodeAndDecrypt(extSession.NameID)
+	extSession.NameID, err = s.decodeAndDecrypt(ctx, extSession.NameID)
 	if err != nil {
 		return err
 	}
 
-	extSession.SessionID, err = s.decodeAndDecrypt(extSession.SessionID)
+	extSession.SessionID, err = s.decodeAndDecrypt(ctx, extSession.SessionID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *store) encryptAndEncode(str string) (string, error) {
+func (s *store) encryptAndEncode(ctx context.Context, str string) (string, error) {
 	if str == "" {
 		return "", nil
 	}
 
-	encrypted, err := s.secretsService.Encrypt(context.Background(), []byte(str), secrets.WithoutScope())
+	encrypted, err := s.secretsService.Encrypt(ctx, []byte(str), secrets.WithoutScope())
 	if err != nil {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(encrypted), nil
 }
 
-func (s *store) decodeAndDecrypt(str string) (string, error) {
+func (s *store) decodeAndDecrypt(ctx context.Context, str string) (string, error) {
 	// Bail out if empty string since it'll cause a segfault in Decrypt
 	if str == "" {
 		return "", nil
@@ -321,7 +321,7 @@ func (s *store) decodeAndDecrypt(str string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := s.secretsService.Decrypt(context.Background(), decoded)
+	decrypted, err := s.secretsService.Decrypt(ctx, decoded)
 	if err != nil {
 		return "", err
 	}
