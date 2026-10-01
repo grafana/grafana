@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -230,4 +232,165 @@ func TestPluginStreamClosesHalfOpenBreakerOnFirstResponse(t *testing.T) {
 	_, err = response.Recv()
 	require.NoError(t, err)
 	require.Equal(t, gobreaker.StateClosed, cb.State(), "the stream need not end to release the trial slot")
+}
+
+// These clients allow the test to hold failed calls in flight without racing
+// on the counters used by the sequential stubs above.
+type unavailablePluginClientV3 struct {
+	appclientv3.Client
+	fail func(context.Context) error
+}
+
+func (c *unavailablePluginClientV3) AdmissionReview(ctx context.Context, _ *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
+	return nil, c.fail(ctx)
+}
+
+type unavailableLegacyPluginClient struct {
+	plugins.Client
+	fail func(context.Context) error
+}
+
+func (c *unavailableLegacyPluginClient) CallResource(ctx context.Context, _ *backend.CallResourceRequest, _ backend.CallResourceResponseSender) error {
+	return c.fail(ctx)
+}
+
+func TestPluginBreakerGETDuringUnavailableClientFlood(t *testing.T) {
+	tests := []struct {
+		name        string
+		clientError error
+		newCall     func(func(context.Context) error) func(context.Context) error
+	}{
+		{
+			name:        "v3 admission",
+			clientError: status.Error(codes.Unavailable, "plugin is not running"),
+			newCall: func(fail func(context.Context) error) func(context.Context) error {
+				client := &breakerPluginClientV3{Client: &unavailablePluginClientV3{fail: fail}}
+				return func(ctx context.Context) error {
+					_, err := client.AdmissionReview(ctx, &pluginv3.AdmissionReviewRequest{})
+					return err
+				}
+			},
+		},
+		{
+			name:        "legacy resource",
+			clientError: plugins.ErrPluginUnavailable,
+			newCall: func(fail func(context.Context) error) func(context.Context) error {
+				client := &breakerPluginClient{Client: &unavailableLegacyPluginClient{fail: fail}}
+				return func(ctx context.Context) error {
+					return client.CallResource(ctx, &backend.CallResourceRequest{}, backend.CallResourceResponseSenderFunc(func(*backend.CallResourceResponse) error { return nil }))
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			const (
+				group             = "test.ext.grafana.app"
+				path              = "/apis/" + group + "/v1/namespaces/default/resources/saved"
+				savedResource     = `{"metadata":{"name":"saved"},"spec":{"value":"stored"}}`
+				writers           = 16
+				readers           = 8
+				requestsPerWorker = 64
+			)
+			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+			defer cancel()
+			started := make(chan struct{}, writers)
+			release := make(chan struct{})
+			releaseCalls := sync.OnceFunc(func() { close(release) })
+			defer releaseCalls()
+			var clientCalls, storageReads atomic.Int32
+			callPlugin := tt.newCall(func(ctx context.Context) error {
+				clientCalls.Add(1)
+				select {
+				case started <- struct{}{}:
+				default:
+				}
+				select {
+				case <-release:
+					return tt.clientError
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			})
+			cb := newGroupBreaker(group)
+			handler := &tracedPluginHandler{Handler: &pluginroute.Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodGet {
+					storageReads.Add(1)
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = io.WriteString(w, savedResource)
+					return
+				}
+				if err := callPlugin(r.Context()); err != nil {
+					http.Error(w, err.Error(), http.StatusServiceUnavailable)
+					return
+				}
+				w.WriteHeader(http.StatusCreated)
+			})}}
+			router := withGroupHandlerAndBreaker(group, handler, cb)
+			request := func(method string) *httptest.ResponseRecorder {
+				req := httptest.NewRequest(method, path, nil).WithContext(authenticatedTestContext(ctx))
+				response := httptest.NewRecorder()
+				router.HandleFunc(response, req, http.NotFoundHandler())
+				return response
+			}
+			failures := make(chan *httptest.ResponseRecorder, writers)
+			for i := 0; i < writers; i++ {
+				go func() { failures <- request(http.MethodPost) }()
+			}
+			// Ensure the first GETs overlap actual client calls, rather than relying on
+			// the scheduler to interleave two fast request loops.
+			for i := 0; i < writers; i++ {
+				select {
+				case <-started:
+				case <-ctx.Done():
+					t.Fatal("plugin calls did not start before the deadline")
+				}
+			}
+			for i := 0; i < requestsPerWorker; i++ {
+				response := request(http.MethodGet)
+				require.Equal(t, http.StatusOK, response.Code)
+				require.Equal(t, savedResource, response.Body.String())
+			}
+			require.Equal(t, gobreaker.StateClosed, cb.State())
+			releaseCalls()
+			for i := 0; i < writers; i++ {
+				select {
+				case response := <-failures:
+					require.Equal(t, http.StatusServiceUnavailable, response.Code)
+				case <-ctx.Done():
+					t.Fatal("plugin calls did not finish before the deadline")
+				}
+			}
+			require.Equal(t, gobreaker.StateOpen, cb.State())
+			callsBeforeFlood := clientCalls.Load()
+
+			startFlood := make(chan struct{})
+			var workers sync.WaitGroup
+			for i := 0; i < writers+readers; i++ {
+				method, wantStatus := http.MethodPost, http.StatusServiceUnavailable
+				if i >= writers {
+					method, wantStatus = http.MethodGet, http.StatusOK
+				}
+				workers.Add(1)
+				go func() {
+					defer workers.Done()
+					<-startFlood
+					for j := 0; j < requestsPerWorker; j++ {
+						response := request(method)
+						if response.Code != wantStatus {
+							t.Errorf("%s returned %d, want %d: %s", method, response.Code, wantStatus, response.Body.String())
+						}
+						if method == http.MethodGet && response.Body.String() != savedResource {
+							t.Errorf("GET returned unexpected resource: %s", response.Body.String())
+						}
+					}
+				}()
+			}
+			close(startFlood)
+			workers.Wait()
+			require.Equal(t, int32((readers+1)*requestsPerWorker), storageReads.Load())
+			require.Equal(t, callsBeforeFlood, clientCalls.Load(), "the open breaker must stop the flood from reaching the client")
+			require.Equal(t, gobreaker.StateOpen, cb.State(), "storage reads must not reset the plugin breaker")
+		})
+	}
 }
