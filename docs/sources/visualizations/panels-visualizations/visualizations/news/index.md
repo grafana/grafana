@@ -33,13 +33,26 @@ You can use the news visualization to provide regular news and updates to your u
 
 {{< docs/play title="News Panel" url="https://play.grafana.org/d/cdodkwspaaa68b/" >}}
 
+## Refresh the news feed
+
+The news visualization doesn't have its own refresh interval.
+It requests the feed when the first dashboard loads or when it refreshes.
+
+To update the articles, do one of the following options:
+
+- **Refresh the dashboard manually:** Click the **Refresh dashboard** icon to request the feed again.
+- **Set an auto-refresh interval:** Click the down arrow next to the **Refresh dashboard** icon and select an interval. The visualization requests the feed on each interval. For more information, refer to [Refresh dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/use-dashboards/#refresh-dashboard).
+
+The refresh interval applies to the whole dashboard, so pick one that suits your other visualizations as well as your feed.
+News feeds change less often than time series data, so a longer interval such as `15m` or `1h` is usually enough.
+
 ## Configure a news visualization
 
-After you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), enter the URL of an RSS in the **URL** field in the **News** section. This visualization type doesn't accept any other queries, and you shouldn't expect to be able to filter or query the RSS feed data in any way using this visualization.
+After you've created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/), enter the URL of an RSS in the **URL** field in the **News** section. This visualization type doesn't accept any other queries, and you shouldn't expect to be able to filter or query the RSS feed data in any way using this visualization.
 
-If you're having trouble loading an RSS feed, you can try rehosting the feed on a different server or using a CORS proxy. A CORS proxy is a tool that allows you to bypass CORS restrictions by making requests to the RSS feed on your behalf. You can find more information about using CORS proxies online.
+If you're having trouble loading an RSS feed, you can try re-hosting the feed on a different server or using a CORS proxy. A CORS proxy is a tool that allows you to bypass CORS restrictions by making requests to the RSS feed on your behalf. You can find more information about using CORS proxies online.
 
-If you're unable to display an RSS feed using the news visualization, you can try using the community RSS/Atom data source plugin [RSS/Atom data source](https://grafana.com/grafana/plugins/volkovlabs-rss-datasource/) in combination with the Dynamic text community panel [Dynamic text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/). This will allow you to display the RSS feed in a different way.
+If you're unable to display an RSS feed using the news visualization, you can try using the community RSS/Atom data source plugin [RSS/Atom data source](https://grafana.com/grafana/plugins/volkovlabs-rss-datasource/) in combination with the Dynamic text community panel [Dynamic text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/). This allows you to display the RSS feed in a different way.
 
 ## Supported data formats
 
@@ -58,4 +71,4 @@ The news visualization supports RSS and Atom feeds.
 Use the following options to refine your news visualization:
 
 - **URL** - The URL of the RSS or Atom feed. If you leave the field empty, the Grafana Labs blog is used.
-- **Show image** - Controls if the news social image is displayed beside the text content.
+- **Show image** - Controls if the news social image displays beside the text content.
