@@ -8,9 +8,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
@@ -67,10 +71,13 @@ type fakeStorage struct {
 	// listCalls records each ListIterator invocation's NextPageToken so
 	// tests can assert the backfiller actually paginated rather than
 	// pulling everything in a single call.
-	listCalls []string
+	listCalls  []string
+	listLimits []int64
+	listKeys   []resource.NamespacedResource
 }
 
 type listItem struct {
+	Group, Resource         string
 	Namespace, Name, Folder string
 	Value                   []byte
 	RV                      int64
@@ -79,6 +86,20 @@ type listItem struct {
 type storedResource struct {
 	Value []byte
 	RV    int64
+}
+
+func newFolderBuilder() *generic.Builder {
+	return generic.New(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"},
+		app.ManifestResourceEmbed{ReembedVersion: 2},
+		map[string][]app.ManifestVersionKindEmbedField{"v1": {{Name: "title", Path: "spec.title"}}}, nil)
+}
+
+func makeFolderListItem(ns, name string, rv int64) listItem {
+	value, _ := json.Marshal(map[string]any{
+		"apiVersion": "folder.grafana.app/v1",
+		"spec":       map[string]any{"title": name + "-title"},
+	})
+	return listItem{Group: "folder.grafana.app", Resource: "folders", Namespace: ns, Name: name, RV: rv, Value: value}
 }
 
 func newFakeStorage() *fakeStorage {
@@ -121,7 +142,11 @@ func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadReques
 	// One storage: reads agree with the list feed unless a test overrides
 	// via resources (different RV) or notFound (deleted).
 	for _, it := range f.listItems {
-		if it.Namespace == req.Key.Namespace && it.Name == req.Key.Name && req.Key.Resource == "dashboards" {
+		group, res := it.Group, it.Resource
+		if group == "" && res == "" {
+			group, res = "dashboard.grafana.app", "dashboards"
+		}
+		if it.Namespace == req.Key.Namespace && it.Name == req.Key.Name && group == req.Key.Group && res == req.Key.Resource {
 			return &resource.BackendReadResponse{Key: req.Key, Value: it.Value, ResourceVersion: it.RV}
 		}
 	}
@@ -141,6 +166,12 @@ func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, e
 func (f *fakeStorage) ListIterator(_ context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	f.mu.Lock()
 	f.listCalls = append(f.listCalls, req.NextPageToken)
+	f.listLimits = append(f.listLimits, req.Limit)
+	f.listKeys = append(f.listKeys, resource.NamespacedResource{
+		Namespace: req.Options.Key.Namespace,
+		Group:     req.Options.Key.Group,
+		Resource:  req.Options.Key.Resource,
+	})
 	f.mu.Unlock()
 	if f.listErr != nil {
 		return 0, f.listErr
@@ -190,9 +221,12 @@ type fakeVector struct {
 	subresourceDeletes []deleteSubsCall
 	rows               map[string]map[string]vector.Vector // ns|model|resource|uid -> subresource -> row
 	upsertErr          error
+	collections        map[string]vector.Collection
+	resolveErr         error
 
 	// Backfill bookkeeping:
 	jobs              []vector.BackfillJob
+	onListJobs        func()
 	jobContentVersion map[int64]int // job ID -> content_version; absent = DB DEFAULT 1
 	reopenCalls       []reopenCall
 	checkpoints       []checkpointCall
@@ -200,6 +234,7 @@ type fakeVector struct {
 	completedJobIDs   []int64
 	updateCalls       []updateCall
 	updateErr         error
+	updateFolderErr   error
 	latestRV          int64
 	getContentErr     error
 	markErrErr        error
@@ -296,6 +331,13 @@ func (f *fakeVector) seedStoredContent(ns, model, res, uid, subresource, content
 }
 
 func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	if f.resolveErr != nil {
+		return vector.Collection{}, false, f.resolveErr
+	}
+	if f.collections != nil {
+		collection, found := f.collections[group+"/"+resource]
+		return collection, found, nil
+	}
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
@@ -431,6 +473,19 @@ func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	defer f.mu.Unlock()
 	return f.latestRV, nil
 }
+
+func (f *fakeVector) UpdateFolder(_ context.Context, ns, model, res, uid, folder string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.updateFolderErr != nil {
+		return f.updateFolderErr
+	}
+	for sub, v := range f.rows[rowsKey(ns, model, res, uid)] {
+		v.Folder = folder
+		f.rows[rowsKey(ns, model, res, uid)][sub] = v
+	}
+	return nil
+}
 func (f *fakeVector) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
 	return nil, nil
 }
@@ -458,7 +513,10 @@ func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res strin
 		if j.Model != model || (j.Resource != res && j.Resource != "") {
 			continue
 		}
-		cv := 1
+		cv := j.ContentVersion
+		if cv == 0 {
+			cv = 1
+		}
 		if v, ok := f.jobContentVersion[j.ID]; ok {
 			cv = v
 		}
@@ -473,6 +531,7 @@ func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res strin
 			f.jobContentVersion = map[int64]int{}
 		}
 		f.jobContentVersion[j.ID] = version
+		j.ContentVersion = version
 		reopened = true
 	}
 	return reopened, nil
@@ -481,11 +540,17 @@ func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res strin
 // ListIncompleteBackfillJobs mirrors the real SQL's `is_complete = FALSE`
 // filter so tests can prove a completed job is invisible until reopened.
 func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
+	if f.onListJobs != nil {
+		f.onListJobs()
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	out := make([]vector.BackfillJob, 0, len(f.jobs))
 	for _, j := range f.jobs {
 		if j.Model == model && !j.IsComplete {
+			if version, ok := f.jobContentVersion[j.ID]; ok {
+				j.ContentVersion = version
+			}
 			out = append(out, j)
 		}
 	}
@@ -516,6 +581,11 @@ func (f *fakeVector) CompleteBackfillJob(_ context.Context, id int64) error {
 		return f.completeErr
 	}
 	f.completedJobIDs = append(f.completedJobIDs, id)
+	for i := range f.jobs {
+		if f.jobs[i].ID == id {
+			f.jobs[i].IsComplete = true
+		}
+	}
 	return nil
 }
 func (f *fakeVector) TryAcquireBackfillLock(context.Context) (func(), bool, error) {

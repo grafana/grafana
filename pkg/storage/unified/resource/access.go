@@ -379,4 +379,4 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 	return claims.BatchCheckResponse{Results: results}, nil
 }
 
-var _ claims.AccessClient = &authzLimitedClient{}
+var _ claims.AccessClient = (*authzLimitedClient)(nil)

@@ -58,16 +58,18 @@ linters:
         apps-playlist:
           list-mode: lax
           files:
-            - ./apps/playlist/*
-            - ./apps/playlist/**/*
+            - '**/apps/playlist/*'
+            - '**/apps/playlist/**/*'
+            - '!**/pkg/registry/apps/playlist/*'
+            - '!**/pkg/registry/apps/playlist/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/playlist is not allowed to import grafana core
         apps-dashboard:
           list-mode: lax
           files:
-            - ./apps/dashboard/*
-            - ./apps/dashboard/**/*
+            - '**/apps/dashboard/*'
+            - '**/apps/dashboard/**/*'
           allow:
             - github.com/grafana/grafana/pkg/apimachinery
           deny:
@@ -76,8 +78,10 @@ linters:
         apps-secret:
           list-mode: lax
           files:
-            - ./apps/secret/*
-            - ./apps/secret/**/*
+            - '**/apps/secret/*'
+            - '**/apps/secret/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/secret is not allowed to import grafana core
@@ -161,7 +165,9 @@ linters:
             - pkg: github.com/xorcare/pointer
               desc: Use pkg/util.Pointer instead, which is a generic one-liner alternative
             - pkg: github.com/gofrs/uuid
-              desc: Use github.com/google/uuid instead, which we already depend on.
+              desc: Use the standard library uuid package instead.
+            - pkg: github.com/google/uuid
+              desc: Use the standard library uuid package instead.
             - pkg: github.com/bmizerany/assert
               desc: Use github.com/stretchr/testify/assert instead, which we already depend on.
         storage-unified-apistore:
@@ -214,13 +220,13 @@ linters:
         text: ST1001
       - linters:
           - staticcheck
-        text: 'SA1019: http.CloseNotifier'
+        text: 'SA1019: (net/)?http\.CloseNotifier'
       - linters:
           - staticcheck
         text: 'SA1019: strings.Title'
       - linters:
           - staticcheck
-        text: 'SA1019: "go.opentelemetry.io/otel/exporters/jaeger"'
+        text: 'SA1019: "?go\.opentelemetry\.io/otel/exporters/jaeger"? is deprecated:'
       - linters:
           - staticcheck
         text: use fake service and real access control evaluator instead

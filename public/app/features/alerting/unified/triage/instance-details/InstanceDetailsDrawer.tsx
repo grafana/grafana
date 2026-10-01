@@ -112,8 +112,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   } = useGetRuleHistoryQuery({
     ruleUid: ruleUID,
     matchers: labelsToMatchersParam(instanceLabels),
-    from: timeRange.from.unix(),
-    to: timeRange.to.unix(),
+    timeRange: { from: timeRange.from, to: timeRange.to },
   });
 
   // Convert state history to LogRecords and filter by instance labels

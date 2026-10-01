@@ -177,6 +177,7 @@ export interface ColumnBuildConfig {
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
   typographyCtx: TypographyCtx;
@@ -268,6 +269,7 @@ function buildColumnsFromFields(
     disableSanitizeHtml,
     showTypeIcons,
     tableRefreshEnabled,
+    jsonSyntaxHighlightingEnabled,
     timeRange,
     firstColumnExtraPadding = 0,
     lastColumnExtraPadding = 0,
@@ -353,7 +355,7 @@ function buildColumnsFromFields(
 
     // helps us avoid string cx and emotion per-cell
     const cellActionClassName = showActions
-      ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
+      ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign, tableRefreshEnabled))
       : undefined;
 
     const shouldOverflow =
@@ -468,10 +470,12 @@ function buildColumnsFromFields(
             showFilters={showFilters}
             getActions={getCellActions}
             disableSanitizeHtml={disableSanitizeHtml}
+            jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
             getTextColorForBackground={getTextColorForBackground}
           />
           {showActions && (
             <TableCellActions
+              tableRefreshEnabled={tableRefreshEnabled}
               field={field}
               value={value}
               displayName={displayName}
@@ -543,6 +547,7 @@ function buildColumnsFromFields(
           ),
           data: frame,
           disableSanitizeHtml,
+          jsonSyntaxHighlightingEnabled,
           field: tooltipField,
           getActions: getCellActions,
           getTextColorForBackground,

@@ -103,7 +103,6 @@ describe('RowItemRenderer', () => {
       planning: {
         planId: 'plan-1',
         planTitle: 'Dashboard plan',
-        panelCount: 0,
         onBuild: () => {},
         onDismiss: () => {},
       },

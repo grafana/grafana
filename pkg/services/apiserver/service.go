@@ -431,11 +431,8 @@ func (s *service) start(ctx context.Context) error {
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
 	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
-	searchAndStorageRoutes := searchroutes.BuildWithOptions(
+	searchAndStorageRoutes := searchroutes.Build(
 		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
-		searchroutes.BuildOptions{FieldValueResultsEnabled: func(ctx context.Context) bool {
-			return s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagSearchApiFieldValueResults) // nolint:staticcheck
-		}},
 	)
 
 	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
@@ -487,6 +484,7 @@ func (s *service) start(ctx context.Context) error {
 			Scheme:                s.scheme,
 			RESTOptionsGetter:     serverConfig.RESTOptionsGetter,
 			StorageClient:         s.unified,
+			SearchAPIEnabled:      searchAPIEnabled,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
 			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),

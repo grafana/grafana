@@ -155,7 +155,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
-    return new MultiSelectedVizPanelsEditableElement(items);
+    return new MultiSelectedVizPanelsEditableElement(items, getDashboardSceneFor(this.panel));
   }
 
   public scrollIntoView() {

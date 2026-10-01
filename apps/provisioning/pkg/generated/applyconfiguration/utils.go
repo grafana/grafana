@@ -42,6 +42,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ConnectionWebhookConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("DeleteJobOptions"):
 		return &provisioningv0alpha1.DeleteJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("DeletionStatus"):
+		return &provisioningv0alpha1.DeletionStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ErrorDetails"):
 		return &provisioningv0alpha1.ErrorDetailsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ExportJobOptions"):

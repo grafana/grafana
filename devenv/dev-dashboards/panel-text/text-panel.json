@@ -708,6 +708,43 @@
             }
           }
         }
+      },
+      "panel-10": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "Mermaid diagram (wide)",
+          "description": "Wide flowchart that fills the panel, for screenshots and demos.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "```mermaid\n---\nconfig:\n  flowchart:\n    nodeSpacing: 22\n    rankSpacing: 70\n    padding: 10\n---\nflowchart LR\n  subgraph sources[\"Telemetry sources\"]\n    APPS[\"Applications\"]\n    K8S[\"Kubernetes\"]\n    INFRA[\"Hosts and cloud\"]\n  end\n\n  subgraph collect[\"Collect\"]\n    ALLOY[\"Grafana Alloy\"]\n    OTEL[\"OpenTelemetry SDKs\"]\n  end\n\n  subgraph store[\"Grafana databases\"]\n    MIMIR[\"Mimir<br/>metrics\"]\n    LOKI[\"Loki<br/>logs\"]\n    TEMPO[\"Tempo<br/>traces\"]\n    PYRO[\"Pyroscope<br/>profiles\"]\n  end\n\n  subgraph explore[\"Visualize and explore\"]\n    DASH[\"Dashboards\"]\n    DRILL[\"Drilldown\"]\n    ASSIST[\"Assistant\"]\n  end\n\n  subgraph act[\"Detect and respond\"]\n    ALERTS[\"Alerting\"]\n    SLO[\"SLOs\"]\n    IRM[\"IRM and on-call\"]\n  end\n\n  APPS --> ALLOY\n  APPS --> OTEL\n  K8S --> ALLOY\n  INFRA --> ALLOY\n\n  ALLOY --> MIMIR\n  ALLOY --> LOKI\n  OTEL --> TEMPO\n  OTEL --> PYRO\n\n  MIMIR --> DASH\n  LOKI --> DRILL\n  TEMPO --> DRILL\n  PYRO --> ASSIST\n\n  DASH --> ALERTS\n  DASH --> SLO\n  DRILL --> IRM\n  ASSIST --> IRM\n\n  classDef brand fill:#f46800,stroke:#c25400,color:#ffffff\n  class MIMIR,LOKI,TEMPO,PYRO brand\n```\n",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -828,6 +865,19 @@
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-9"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 42,
+              "width": 24,
+              "height": 13,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-10"
               }
             }
           }

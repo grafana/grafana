@@ -198,7 +198,7 @@ jobs:
 
       # Start Grafana from the standalone directory
       # The server is immediately backgrounded so it can initialise in parallel while the Playwright browsers are installing 🤓
-      # to turn on scrict CSP, add `cfg:security.content_security_policy_template="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';" \`
+      # to turn on scrict CSP, add `cfg:security.content_security_policy_template="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data: blob:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';" \`
 
       - name: Start Grafana server
         run: |
@@ -383,7 +383,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64-large
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
@@ -405,6 +405,10 @@ jobs:
         with:
           name: grafana-frontend
           path: public
+      - name: Generate RSDoctor metrics
+        env:
+          NO_SOURCEMAP: '1'
+        run: yarn build:stats:rspack
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node .github/workflows/scripts/publish-frontend-metrics.mts
         env:

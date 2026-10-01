@@ -10,9 +10,10 @@ import config from 'app/core/config';
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 import { FOOTER_TEST_ID } from '../TextNGFooter';
 
-import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange, type ViewMode } from './TextNGEditor';
+import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
 import { FEEDBACK_BUTTON_TEST_ID } from './TextNGFeedbackButton';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
+import { type ViewMode } from './viewMode';
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -172,6 +173,21 @@ describe('TextNGEditor', () => {
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
       expect(screen.getByTestId(PREVIEW_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('keeps Escape in the editor from reaching the global handler that exits panel edit', async () => {
+      setup('# Hello', TextMode.Markdown);
+      await enterWriteMode();
+      const documentKeyDown = jest.fn();
+      document.addEventListener('keydown', documentKeyDown);
+
+      try {
+        await userEvent.type(screen.getByRole('textbox'), '{Escape}a');
+
+        expect(documentKeyDown.mock.calls.map(([event]) => event.key)).toEqual(['a']);
+      } finally {
+        document.removeEventListener('keydown', documentKeyDown);
+      }
     });
 
     it('sanitizes script tags in the HTML mode preview', () => {

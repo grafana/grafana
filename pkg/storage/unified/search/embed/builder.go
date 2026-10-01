@@ -46,8 +46,13 @@ func (s BuilderSnapshot) Builders() []Builder {
 }
 
 func (s BuilderSnapshot) Has(group, resource string) bool {
-	_, ok := s.byResource[schema.GroupResource{Group: group, Resource: resource}]
+	_, ok := s.Get(group, resource)
 	return ok
+}
+
+func (s BuilderSnapshot) Get(group, resource string) (Builder, bool) {
+	builder, ok := s.byResource[schema.GroupResource{Group: group, Resource: resource}]
+	return builder, ok
 }
 
 // Item is one chunk of a resource ready to be embedded.

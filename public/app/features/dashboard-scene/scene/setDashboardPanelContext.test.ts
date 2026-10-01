@@ -27,8 +27,8 @@ import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvail
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
@@ -74,7 +74,7 @@ const PANEL_CONTEXT_ITEM = Symbol('panel context item');
 
 const mockGetAssistantChatIdToContinue = jest.fn();
 
-jest.mock('app/core/components/AssistantTooltip/assistantSidebarState', () => ({
+jest.mock('app/core/assistant/assistantSidebarState', () => ({
   getAssistantChatIdToContinue: () => mockGetAssistantChatIdToContinue(),
 }));
 
@@ -286,7 +286,6 @@ describe('setDashboardPanelContext', () => {
       await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
 
       expect(putFn).toHaveBeenCalledWith('/api/annotations/event-id-123', {
-        id: 'event-id-123',
         dashboardUID: 'dash-1',
         isRegion: true,
         panelId: 4,
@@ -346,7 +345,7 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationDelete', () => {
-    it('should update annotation', async () => {
+    it('should delete annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       await context.onAnnotationDelete!('I-do-not-want-you');
@@ -385,7 +384,7 @@ describe('setDashboardPanelContext', () => {
         canDelete: true,
       });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
@@ -408,7 +407,7 @@ describe('setDashboardPanelContext', () => {
       );
       const { scene, context } = buildTestScene({ dashboardCanEdit: true });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       expect(context.onOpenInspector).toBeDefined();

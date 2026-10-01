@@ -8,22 +8,23 @@ import (
 	"io"
 	"iter"
 	"math/rand/v2"
+	"net/http"
 	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -52,7 +53,7 @@ func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
 	}
 }
 
-func withLogger(l log.Logger) func(*KVBackendOptions) {
+func withLogger(l logging.Logger) func(*KVBackendOptions) {
 	return func(opts *KVBackendOptions) {
 		opts.Log = l
 	}
@@ -98,7 +99,7 @@ func TestNewLeaseHolder(t *testing.T) {
 
 func requireValidLeaseHolderUUID(t *testing.T, holder string) string {
 	t.Helper()
-	uuidLength := len(uuid.Nil.String())
+	uuidLength := len(uuid.Nil().String())
 	require.Greater(t, len(holder), uuidLength+1)
 	separatorIndex := len(holder) - uuidLength - 1
 	require.Equal(t, byte('-'), holder[separatorIndex])
@@ -847,6 +848,25 @@ func (k *failingBatchGetKV) BatchGet(ctx context.Context, section string, keys [
 	}
 }
 
+type failSecondBatchGetKV struct {
+	KV
+	err       error
+	dataCalls int
+}
+
+func (k *failSecondBatchGetKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	if section != kv.DataSection {
+		return k.KV.BatchGet(ctx, section, keys)
+	}
+	k.dataCalls++
+	if k.dataCalls != 2 {
+		return k.KV.BatchGet(ctx, section, keys)
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		yield(kv.KeyValue{}, k.err)
+	}
+}
+
 // unreadableValueKV wraps a KV and hands back a value whose Read fails for every
 // data key holding nameMatch, standing in for a truncated or corrupt blob.
 type unreadableValueKV struct {
@@ -903,7 +923,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 	}
 
 	t.Run("storage error is logged once and the stream continues", func(t *testing.T) {
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		kvStore := &failingBatchGetKV{KV: setupBadgerKV(t), err: errors.New("storage is down")}
 		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
 
@@ -917,7 +937,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 	})
 
 	t.Run("cancellation stops the stream without logging", func(t *testing.T) {
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		backend := setupTestStorageBackend(t, withLogger(logger))
 
 		ctx, cancel := context.WithCancel(t.Context())
@@ -933,7 +953,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 
 	t.Run("an unreadable value is reported once, not also as missing data", func(t *testing.T) {
 		const numEvents = 3
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		kvStore := &unreadableValueKV{
 			KV:        setupBadgerKV(t),
 			nameMatch: "unreadable-1",
@@ -1249,6 +1269,42 @@ func TestKvStorageBackend_ReadResource_NotFound(t *testing.T) {
 	require.Nil(t, response.Value)
 }
 
+func TestKvStorageBackend_ReadResource_InvalidName(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+
+	for _, name := range []string{"invalid/name", "has space", strings.Repeat("a", 300)} {
+		t.Run(name[:min(len(name), 20)], func(t *testing.T) {
+			response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "resources",
+					Name:      name,
+				},
+			})
+			require.NotNil(t, response.Error)
+			require.Equal(t, int32(400), response.Error.Code)
+			require.Equal(t, "BadRequest", response.Error.Reason)
+		})
+	}
+
+	t.Run("too high resource version wins", func(t *testing.T) {
+		_, rv := createAndWriteTestObject(t, backend)
+		response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "invalid/name",
+			},
+			ResourceVersion: rv + 1000000000000,
+		})
+		require.NotNil(t, response.Error)
+		require.Equal(t, int32(400), response.Error.Code)
+		require.Contains(t, response.Error.Message, "too large resource version")
+	})
+}
+
 func TestKvStorageBackend_ReadResource_MissingKey(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -1302,6 +1358,71 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
 }
 
+func TestKvStorageBackend_BatchReadResource_ReturnsDeletionMarkerWhenIncluded(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	testObj, rv1 := createAndWriteTestObject(t, backend)
+	meta, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+	meta.SetFolder("folder-1")
+	rv2, err := writeObject(t, backend, testObj, resourcepb.WatchEvent_DELETED, rv1)
+	require.NoError(t, err)
+
+	key := storageTestKey("test-resource")
+	requests := []*resourcepb.ReadRequest{{Key: key, ResourceVersion: rv2}}
+	regularValues := batchReadResources(t, ctx, backend, requests, false)
+	require.Len(t, regularValues, 1)
+	require.Equal(t, int32(404), regularValues[0].Error.GetCode())
+
+	trashValues := batchReadResources(t, ctx, backend, requests, true)
+	require.Len(t, trashValues, 1)
+	require.Nil(t, trashValues[0].Error)
+	require.Equal(t, rv2, trashValues[0].ResourceVersion)
+	require.Equal(t, "folder-1", trashValues[0].Folder)
+	require.Equal(t, objectToJSONBytes(t, testObj), trashValues[0].Value)
+}
+
+func TestKvStorageBackend_BatchReadResource_MixesLiveAndDeletedResourcesWhenIncluded(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	live, liveRV := createAndWriteTestObject(t, backend)
+	deleted := live.DeepCopy()
+	deleted.SetName("deleted-resource")
+	deletedRV, err := writeObject(t, backend, deleted, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+	markerRV, err := writeObject(t, backend, deleted, resourcepb.WatchEvent_DELETED, deletedRV)
+	require.NoError(t, err)
+
+	values := batchReadResources(t, ctx, backend, []*resourcepb.ReadRequest{
+		{Key: storageTestKey("test-resource"), ResourceVersion: liveRV},
+		{Key: storageTestKey("deleted-resource"), ResourceVersion: markerRV},
+	}, true)
+	require.Len(t, values, 2)
+	require.Nil(t, values[0].Error)
+	require.Equal(t, liveRV, values[0].ResourceVersion)
+	require.Equal(t, objectToJSONBytes(t, live), values[0].Value)
+	require.Nil(t, values[1].Error)
+	require.Equal(t, markerRV, values[1].ResourceVersion)
+	require.Equal(t, objectToJSONBytes(t, deleted), values[1].Value)
+}
+
+func TestKvStorageBackend_BatchReadResource_RejectsTooHighResourceVersionWhenDeletedIncluded(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+	_, rv := createAndWriteTestObject(t, backend)
+
+	values := batchReadResources(t, ctx, backend, []*resourcepb.ReadRequest{{
+		Key:             storageTestKey("test-resource"),
+		ResourceVersion: rv + 1000000000000,
+	}}, true)
+	require.Len(t, values, 1)
+	require.NotNil(t, values[0].Error)
+	require.Equal(t, int32(400), values[0].Error.Code)
+	require.Contains(t, values[0].Error.Message, "too large resource version")
+}
+
 func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -1339,14 +1460,323 @@ func TestKvStorageBackend_BatchReadResource_TooHighResourceVersion(t *testing.T)
 	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{
 		{Key: key},
 		{Key: key, ResourceVersion: rv + 1000000000000},
-	})
+	}, false)
 	require.NoError(t, err)
-	require.Len(t, responses, 2)
+	got := collectBatchReadResponses(t, responses)
+	require.Len(t, got, 2)
 
-	require.Nil(t, responses[0].Error, "valid read should succeed")
-	require.NotNil(t, responses[1].Error, "too-high RV should be rejected")
-	require.Equal(t, int32(400), responses[1].Error.Code)
-	require.Contains(t, responses[1].Error.Message, "too large resource version")
+	require.Nil(t, got[0].Error, "valid read should succeed")
+	require.NotNil(t, got[1].Error, "too-high RV should be rejected")
+	require.Equal(t, int32(400), got[1].Error.Code)
+	require.Contains(t, got[1].Error.Message, "too large resource version")
+}
+
+func TestKvStorageBackend_BatchReadResource_LatestResourceVersionFailureIsUpfront(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	rv := seedResource(t, backend, t.Context(), "test-resource", "")
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{{
+		Key:             appsKey("test-resource"),
+		ResourceVersion: rv,
+	}}, false)
+
+	require.ErrorIs(t, err, context.Canceled)
+	require.Nil(t, responses)
+}
+
+func TestKvStorageBackend_BatchReadResource_YieldsInRequestOrder(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	requests := make([]*resourcepb.ReadRequest, 0, 3)
+	for _, name := range []string{"a", "b", "c"} {
+		obj, err := createTestObjectWithName(name, appsNamespace, "value-"+name)
+		require.NoError(t, err)
+		rv, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+		require.NoError(t, err)
+		requests = append(requests, &resourcepb.ReadRequest{
+			Key:             &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name},
+			ResourceVersion: rv,
+		})
+	}
+	requests[0], requests[2] = requests[2], requests[0]
+
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	require.NoError(t, err)
+	got := collectBatchReadResponses(t, responses)
+	require.Len(t, got, len(requests))
+	for i, response := range got {
+		require.Nil(t, response.Error)
+		require.Equal(t, requests[i].Key.Name, response.Key.Name)
+	}
+}
+
+func TestKvStorageBackend_BatchReadResource_InvalidName(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	obj, err := createTestObjectWithName("a", appsNamespace, "value-a")
+	require.NoError(t, err)
+	rv, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+
+	invalidKey := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "invalid/name"}
+	requests := []*resourcepb.ReadRequest{
+		{Key: invalidKey},
+		{Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "a"}},
+		{Key: invalidKey, ResourceVersion: rv + 1000000000000},
+	}
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	require.NoError(t, err)
+	got := collectBatchReadResponses(t, responses)
+	require.Len(t, got, 3)
+	require.NotNil(t, got[0].Error)
+	require.Equal(t, int32(400), got[0].Error.Code)
+	require.Equal(t, "BadRequest", got[0].Error.Reason)
+	require.Nil(t, got[1].Error)
+	require.Equal(t, "a", got[1].Key.Name)
+	require.NotNil(t, got[2].Error, "too-high RV should be rejected before the name check")
+	require.Equal(t, int32(400), got[2].Error.Code)
+	require.Contains(t, got[2].Error.Message, "too large resource version")
+}
+
+func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(t *testing.T) {
+	kvWrapper := &bodyReadCountingKV{}
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		kvWrapper.KV = opts.KvStore
+		opts.KvStore = kvWrapper
+	})
+	requests := make([]*resourcepb.ReadRequest, 0, 11)
+	for i := range cap(requests) {
+		name := fmt.Sprintf("lazy-%02d", i)
+		obj, err := createTestObjectWithName(name, appsNamespace, "value")
+		require.NoError(t, err)
+		rv, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+		require.NoError(t, err)
+		requests = append(requests, &resourcepb.ReadRequest{
+			Key:             &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name},
+			ResourceVersion: rv,
+		})
+	}
+
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	require.NoError(t, err)
+	const wanted = 3
+	read := 0
+	for response := range responses {
+		require.NotNil(t, response)
+		read++
+		if read == wanted {
+			break
+		}
+	}
+	require.Equal(t, wanted, read)
+	require.Equal(t, int64(wanted), kvWrapper.bodyReads.Load())
+}
+
+func TestKvStorageBackend_BatchReadResource_MissingBodyKeepsPosition(t *testing.T) {
+	kvWrapper := &batchBodyMissingKV{nameMatch: "missing"}
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		kvWrapper.KV = opts.KvStore
+		opts.KvStore = kvWrapper
+	})
+	requests := make([]*resourcepb.ReadRequest, 0, 3)
+	for _, name := range []string{"before", "missing", "after"} {
+		obj, err := createTestObjectWithName(name, appsNamespace, "value")
+		require.NoError(t, err)
+		rv, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+		require.NoError(t, err)
+		requests = append(requests, &resourcepb.ReadRequest{
+			Key:             &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name},
+			ResourceVersion: rv,
+		})
+	}
+
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	require.NoError(t, err)
+	got := collectBatchReadResponses(t, responses)
+	require.Len(t, got, 3)
+	require.Equal(t, "before", got[0].Key.Name)
+	require.Nil(t, got[0].Error)
+	require.Equal(t, "missing", got[1].Key.Name)
+	require.Equal(t, int32(http.StatusNotFound), got[1].Error.Code)
+	require.Equal(t, "after", got[2].Key.Name)
+	require.Nil(t, got[2].Error)
+}
+
+func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStopsAfterNotFound(t *testing.T) {
+	kvWrapper := &batchBodyMissingKV{nameMatch: "missing"}
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		kvWrapper.KV = opts.KvStore
+		opts.KvStore = kvWrapper
+	})
+	requests := []*resourcepb.ReadRequest{
+		{Key: appsKey("missing"), ResourceVersion: seedResource(t, backend, t.Context(), "missing", "")},
+		{Key: appsKey("after"), ResourceVersion: seedResource(t, backend, t.Context(), "after", "")},
+	}
+
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	require.NoError(t, err)
+	for response := range responses {
+		require.Equal(t, int32(http.StatusNotFound), response.Error.Code)
+		break
+	}
+	require.Equal(t, int64(1), kvWrapper.bodyCloses.Load())
+}
+
+func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) {
+	tests := []struct {
+		name       string
+		firstError int
+		message    string
+		wrap       func(KV) KV
+	}{
+		{
+			name:       "batch get",
+			firstError: 0,
+			message:    "storage is down",
+			wrap: func(store KV) KV {
+				return &failingBatchGetKV{KV: store, err: errors.New("storage is down")}
+			},
+		},
+		{
+			name:       "body read",
+			firstError: 1,
+			message:    "value is corrupt",
+			wrap: func(store KV) KV {
+				return &unreadableValueKV{KV: store, nameMatch: "failure-1", err: errors.New("value is corrupt")}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				opts.KvStore = tc.wrap(opts.KvStore)
+			})
+			requests := make([]*resourcepb.ReadRequest, 0, 3)
+			folders := make([]string, 0, 3)
+			for i := range 3 {
+				name := fmt.Sprintf("failure-%d", i)
+				folder := fmt.Sprintf("folder-%d", i)
+				rv := seedResource(t, backend, t.Context(), name, folder)
+				requests = append(requests, &resourcepb.ReadRequest{Key: appsKey(name), ResourceVersion: rv})
+				folders = append(folders, folder)
+			}
+
+			responses, err := backend.BatchReadResource(t.Context(), requests, false)
+			require.NoError(t, err)
+			got := collectBatchReadResponses(t, responses)
+			require.Len(t, got, tc.firstError+1)
+			for i, response := range got {
+				require.Equal(t, requests[i].Key, response.Key)
+				require.Equal(t, requests[i].ResourceVersion, response.ResourceVersion)
+				require.Equal(t, folders[i], response.Folder)
+				if i < tc.firstError {
+					require.Nil(t, response.Error)
+					continue
+				}
+				require.Equal(t, int32(http.StatusInternalServerError), response.Error.Code)
+				require.Equal(t, tc.message, response.Error.Message)
+			}
+		})
+	}
+}
+
+func TestUnimplementedStorageBackend_BatchReadResourceReturnsUnsupportedUpFront(t *testing.T) {
+	responses, err := (UnimplementedStorageBackend{}).BatchReadResource(t.Context(), nil, false)
+	require.ErrorIs(t, err, ErrBatchReadUnsupported)
+	require.Nil(t, responses)
+}
+
+func collectBatchReadResponses(t *testing.T, responses iter.Seq[*BackendReadResponse]) []*BackendReadResponse {
+	t.Helper()
+	var got []*BackendReadResponse
+	for response := range responses {
+		got = append(got, response)
+	}
+	return got
+}
+
+func batchReadResources(t *testing.T, ctx context.Context, backend StorageBackend, requests []*resourcepb.ReadRequest, includeDeleted bool) []*BackendReadResponse {
+	t.Helper()
+	responses, err := backend.BatchReadResource(ctx, requests, includeDeleted)
+	require.NoError(t, err)
+	return collectBatchReadResponses(t, responses)
+}
+
+func storageTestKey(name string) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name}
+}
+
+type bodyReadCountingKV struct {
+	KV
+	bodyReads atomic.Int64
+}
+
+func (k *bodyReadCountingKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	values := k.KV.BatchGet(ctx, section, keys)
+	if section != kv.DataSection {
+		return values
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		for value, err := range values {
+			if err == nil {
+				value.Value = &countingReadCloser{ReadCloser: value.Value, count: &k.bodyReads}
+			}
+			if !yield(value, err) {
+				return
+			}
+		}
+	}
+}
+
+type countingReadCloser struct {
+	io.ReadCloser
+	count *atomic.Int64
+	read  atomic.Bool
+}
+
+func (r *countingReadCloser) Read(p []byte) (int, error) {
+	if r.read.CompareAndSwap(false, true) {
+		r.count.Add(1)
+	}
+	return r.ReadCloser.Read(p)
+}
+
+type batchBodyMissingKV struct {
+	KV
+	nameMatch  string
+	bodyCloses atomic.Int64
+}
+
+func (k *batchBodyMissingKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	values := k.KV.BatchGet(ctx, section, keys)
+	if section != kv.DataSection {
+		return values
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		for value, err := range values {
+			if err == nil && strings.Contains(value.Key, k.nameMatch) {
+				_ = value.Value.Close()
+				continue
+			}
+			if err == nil {
+				value.Value = &closeCountingReadCloser{ReadCloser: value.Value, count: &k.bodyCloses}
+			}
+			if !yield(value, err) {
+				return
+			}
+		}
+	}
+}
+
+type closeCountingReadCloser struct {
+	io.ReadCloser
+	count *atomic.Int64
+}
+
+func (r *closeCountingReadCloser) Close() error {
+	r.count.Add(1)
+	return r.ReadCloser.Close()
 }
 
 func TestKvStorageBackend_ReadResource_ResolvedButBodyMissing(t *testing.T) {
@@ -1770,6 +2200,77 @@ func collectListItems(t *testing.T, backend *kvStorageBackend, ctx context.Conte
 	})
 	require.NoError(t, err)
 	return items, rv
+}
+
+func TestKvStorageBackend_ListKeysAndFetchValues(t *testing.T) {
+	kvStore := &countingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(kvStore))
+	ctx := t.Context()
+
+	for _, res := range []struct{ name, folder string }{
+		{"resource-1", "folder-a"},
+		{"resource-2", ""},
+		{"resource-3", "folder-b"},
+	} {
+		seedResource(t, backend, ctx, res.name, res.folder)
+	}
+
+	tripsBefore, readsBefore := kvStore.stats()
+	var listed []BackendListKey
+	rv, err := backend.ListKeys(ctx, appsCollectionRequest(false), func(iter ListKeyIterator) error {
+		for iter.Next() {
+			listed = append(listed, iter.Item())
+		}
+		return iter.Error()
+	})
+	require.NoError(t, err)
+	require.Greater(t, rv, int64(0))
+	require.Len(t, listed, 3)
+	tripsAfter, readsAfter := kvStore.stats()
+	require.Equal(t, 0, tripsAfter-tripsBefore)
+	require.Equal(t, 0, readsAfter-readsBefore)
+	require.Equal(t, []string{"resource-1", "resource-2", "resource-3"}, []string{
+		listed[0].Key.Name, listed[1].Key.Name, listed[2].Key.Name,
+	})
+	require.Equal(t, []string{"folder-a", "", "folder-b"}, []string{
+		listed[0].Folder, listed[1].Folder, listed[2].Folder,
+	})
+
+	updated, err := createTestObjectWithName("resource-1", appsNamespace, "updated-data")
+	require.NoError(t, err)
+	updatedMeta, err := utils.MetaAccessor(updated)
+	require.NoError(t, err)
+	updatedMeta.SetFolder("folder-new")
+	_, err = backend.WriteEvent(ctx, WriteEvent{
+		Type:       resourcepb.WatchEvent_MODIFIED,
+		Key:        appsKey("resource-1"),
+		Value:      objectToJSONBytes(t, updated),
+		Object:     updatedMeta,
+		PreviousRV: listed[0].ResourceVersion,
+	})
+	require.NoError(t, err)
+	require.NoError(t, backend.dataStore.BatchDelete(ctx, []DataKey{listed[1].dataKey}))
+
+	fetchTripsBefore, fetchReadsBefore := kvStore.stats()
+	values, err := backend.FetchValues(ctx, listed)
+	require.NoError(t, err)
+	var fetched []*BackendReadResponse
+	for value, valueErr := range values {
+		require.NoError(t, valueErr)
+		fetched = append(fetched, value)
+	}
+	require.Len(t, fetched, 2, "a value removed after listing is skipped")
+	for i, listedIndex := range []int{0, 2} {
+		require.Equal(t, listed[listedIndex].Key, fetched[i].Key)
+		require.Equal(t, listed[listedIndex].ResourceVersion, fetched[i].ResourceVersion)
+		require.NotEmpty(t, fetched[i].Value)
+	}
+	require.Contains(t, string(fetched[0].Value), "data-resource-1", "fetch must use the exact listed revision")
+	require.NotContains(t, string(fetched[0].Value), "updated-data")
+	require.Equal(t, "folder-a", fetched[0].Folder)
+	fetchTrips, fetchReads := kvStore.stats()
+	require.Equal(t, 1, fetchTrips-fetchTripsBefore)
+	require.Equal(t, len(listed), fetchReads-fetchReadsBefore)
 }
 
 // A keys-only list must report the same identities as a normal list, and read no
@@ -4386,4 +4887,67 @@ func TestKVStorageBackendDisableStorageServices(t *testing.T) {
 		})
 		require.IsType(t, &NoopPruner{}, backend.historyPruner)
 	})
+}
+
+// Concurrent ListModifiedSince requests must release their key cursors before
+// fetching values, even when the SQL pool has only one connection available.
+func TestListModifiedSinceSingleConnection(t *testing.T) {
+	for _, age := range []time.Duration{time.Minute, 2 * time.Hour} {
+		t.Run(age.String(), func(t *testing.T) {
+			store, pool := setupSqlKVWithDB(t)
+			backend := &kvStorageBackend{
+				dataStore:  newDataStore(store, nil),
+				eventStore: newEventStore(store),
+				log:        &logging.NoOpLogger{},
+			}
+			since := snowflakeFromTime(time.Now().Add(-age))
+			// Cross a page boundary to exercise continuation in both scan directions.
+			const count = keyPageSize + 1
+			expected := make(map[string]string, count)
+			for i := range count {
+				key := DataKey{Namespace: "default", Group: "apps", Resource: "resource", Name: fmt.Sprintf("item-%03d", i), ResourceVersion: since + int64(i) + 1, Action: DataActionCreated}
+				expected[key.Name] = key.Name
+				require.NoError(t, backend.dataStore.Save(t.Context(), key, strings.NewReader(key.Name)))
+				require.NoError(t, backend.eventStore.Save(t.Context(), Event{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: key.Name, ResourceVersion: key.ResourceVersion, Action: key.Action}))
+			}
+			maxOpenConns := pool.Stats().MaxOpenConnections
+			t.Cleanup(func() { pool.SetMaxOpenConns(maxOpenConns) })
+			pool.SetMaxOpenConns(1)
+
+			ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+			defer cancel()
+			var requests [2]struct {
+				rv        int64
+				resources []*ModifiedResource
+				err       error
+			}
+			var wg sync.WaitGroup
+			for i := range requests {
+				wg.Go(func() {
+					rv, results := backend.ListModifiedSince(ctx, appsNamespace, since, nil)
+					requests[i].rv = rv
+					for result, err := range results {
+						if err != nil {
+							requests[i].err = err
+							return
+						}
+						requests[i].resources = append(requests[i].resources, result)
+					}
+				})
+			}
+			wg.Wait()
+			for i, request := range requests {
+				require.NoError(t, request.err, "age %s, request %d", age, i)
+				require.Equal(t, since+count, request.rv)
+				actual := make(map[string]string, count)
+				for _, result := range request.resources {
+					require.NotContains(t, actual, result.Key.Name)
+					actual[result.Key.Name] = string(result.Value)
+				}
+				require.Equal(t, expected, actual)
+			}
+			require.Zero(t, pool.Stats().InUse)
+			require.NoError(t, pool.PingContext(ctx))
+		})
+	}
 }

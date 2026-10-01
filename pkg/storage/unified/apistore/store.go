@@ -207,24 +207,28 @@ func NewStorage(
 	}
 
 	if opts.EnableFolderSupport && configProvider != nil {
-		var (
-			initOnce sync.Once
-			client   dynamic.Interface
-			initErr  error
-		)
+		var mu sync.Mutex
+		var client dynamic.Interface
 		s.getDynClient = func(ctx context.Context) (dynamic.Interface, error) {
-			initOnce.Do(func() {
-				cfg, err := configProvider.GetRestConfig(ctx)
-				if err != nil {
-					initErr = fmt.Errorf("failed to get REST config: %w", err)
-					return
-				}
-				client, initErr = dynamic.NewForConfig(cfg)
-				if initErr != nil {
-					initErr = fmt.Errorf("failed to create dynamic client: %w", initErr)
-				}
-			})
-			return client, initErr
+			mu.Lock()
+			defer mu.Unlock()
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
+			if client != nil {
+				return client, nil
+			}
+			cfg, err := configProvider.GetRestConfig(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get REST config: %w", err)
+			}
+			initialized, err := dynamic.NewForConfig(cfg)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+			}
+			// Cache only successful initialization so a canceled request cannot poison the store.
+			client = initialized
+			return client, nil
 		}
 	} else if opts.EnableFolderSupport {
 		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",

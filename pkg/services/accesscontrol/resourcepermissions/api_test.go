@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -639,10 +640,9 @@ func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureFlags(t, map[string]bool{
 				featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
-				featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
 			})
 
-			service, usrSvc, _, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
+			service, usrSvc, _, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures(), true)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -693,10 +693,9 @@ func TestIntegrationApi_getPermissions_dualWriterModeFallback(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureFlags(t, map[string]bool{
 				featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
-				featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
 			})
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures(), true)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -796,6 +795,36 @@ func TestIntegrationApi_bulkPermissionsLegacyAndK8sRedirectMatch(t *testing.T) {
 				{UserID: parityFirstUserID, Permission: "Edit"},
 			},
 		},
+		{
+			name: "basic role subjects match",
+			initial: []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: "Viewer", Permission: "View"},
+				{UserID: parityFirstUserID, Permission: "View"},
+			},
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: "Viewer", Permission: "Edit"},
+			},
+		},
+		{
+			name: "team subjects match",
+			initial: []accesscontrol.SetResourcePermissionCommand{
+				{TeamID: parityTeamID, Permission: "View"},
+				{UserID: parityFirstUserID, Permission: "View"},
+			},
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{TeamID: parityTeamID, Permission: "Edit"},
+			},
+		},
+		{
+			name: "service account subjects match",
+			initial: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: parityServiceAccountID, Permission: "View"},
+				{UserID: parityFirstUserID, Permission: "View"},
+			},
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: parityServiceAccountID, Permission: "Edit"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -838,7 +867,7 @@ func TestIntegrationApi_setUserPermissionForTeams_dualWriterModeFallback(t *test
 			// The teams redirect is gated on the kubernetesTeamsRedirect toggle.
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures(), false)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -929,7 +958,7 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 				opts.RestConfigProvider = &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
 			}
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures(), false)
 			dbHelper, err := legacysql.NewDatabaseProvider(service.sqlStore)(context.Background())
 			require.NoError(t, err)
 			// Mode1 is non-authoritative, so the request dual-writes and falls through to legacy.
@@ -1079,16 +1108,21 @@ func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permissi
 }
 
 type observedResourcePermission struct {
-	UserID      int64
-	Permission  string
-	IsManaged   bool
-	IsInherited bool
+	UserID           int64
+	TeamID           int64
+	BuiltInRole      string
+	Permission       string
+	IsManaged        bool
+	IsInherited      bool
+	IsServiceAccount bool
 }
 
 const (
-	parityFirstUserID  int64 = -1
-	paritySecondUserID int64 = -2
-	parityThirdUserID  int64 = -3
+	parityFirstUserID      int64 = -1
+	paritySecondUserID     int64 = -2
+	parityThirdUserID      int64 = -3
+	parityServiceAccountID int64 = -4
+	parityTeamID           int64 = -1
 )
 
 func runBulkPermissionHTTPScenario(t *testing.T, redirect bool, initial, commands []accesscontrol.SetResourcePermissionCommand) []observedResourcePermission {
@@ -1098,13 +1132,12 @@ func runBulkPermissionHTTPScenario(t *testing.T, redirect bool, initial, command
 	if redirect {
 		setOpenFeatureFlags(t, map[string]bool{
 			featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
-			featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
 		})
 		k8sServer := newResourcePermissionAPIServer(t)
 		options.RestConfigProvider = &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: k8sServer.URL}}
 	}
 
-	service, userSvc, _, cfg := setupTestEnvironmentWithCfg(t, options, featuremgmt.WithFeatures())
+	service, userSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, options, featuremgmt.WithFeatures(), redirect)
 	if redirect {
 		cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 			iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},
@@ -1116,13 +1149,19 @@ func runBulkPermissionHTTPScenario(t *testing.T, redirect bool, initial, command
 		require.NoError(t, err)
 		userIDs[i] = createdUser.ID
 	}
-	initial = materializeParityUsers(initial, userIDs)
-	commands = materializeParityUsers(commands, userIDs)
+	createdServiceAccount, err := userSvc.CreateServiceAccount(context.Background(), &user.CreateUserCommand{Login: "parity-service-account", OrgID: 1})
+	require.NoError(t, err)
+	createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "parity-team", Email: "parity-team@example.com", OrgID: 1})
+	require.NoError(t, err)
+	initial = materializeParitySubjects(initial, userIDs, createdServiceAccount.ID, createdTeam.ID)
+	commands = materializeParitySubjects(commands, userIDs, createdServiceAccount.ID, createdTeam.ID)
 
 	authorized := []accesscontrol.Permission{
 		{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 		{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 		{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+		{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+		{Action: serviceaccounts.ActionRead, Scope: fmt.Sprintf("serviceaccounts:id:%d", createdServiceAccount.ID)},
 	}
 	server := setupTestServer(t, &user.SignedInUser{
 		OrgID:       1,
@@ -1138,16 +1177,19 @@ func runBulkPermissionHTTPScenario(t *testing.T, redirect bool, initial, command
 	observed := make([]observedResourcePermission, 0, len(permissions))
 	for _, permission := range permissions {
 		observed = append(observed, observedResourcePermission{
-			UserID:      permission.UserID,
-			Permission:  permission.Permission,
-			IsManaged:   permission.IsManaged,
-			IsInherited: permission.IsInherited,
+			UserID:           permission.UserID,
+			TeamID:           permission.TeamID,
+			BuiltInRole:      permission.BuiltInRole,
+			Permission:       permission.Permission,
+			IsManaged:        permission.IsManaged,
+			IsInherited:      permission.IsInherited,
+			IsServiceAccount: permission.IsServiceAccount,
 		})
 	}
 	return observed
 }
 
-func materializeParityUsers(commands []accesscontrol.SetResourcePermissionCommand, userIDs []int64) []accesscontrol.SetResourcePermissionCommand {
+func materializeParitySubjects(commands []accesscontrol.SetResourcePermissionCommand, userIDs []int64, serviceAccountID, teamID int64) []accesscontrol.SetResourcePermissionCommand {
 	materialized := make([]accesscontrol.SetResourcePermissionCommand, len(commands))
 	copy(materialized, commands)
 	for i := range materialized {
@@ -1158,6 +1200,11 @@ func materializeParityUsers(commands []accesscontrol.SetResourcePermissionComman
 			materialized[i].UserID = userIDs[1]
 		case parityThirdUserID:
 			materialized[i].UserID = userIDs[2]
+		case parityServiceAccountID:
+			materialized[i].UserID = serviceAccountID
+		}
+		if materialized[i].TeamID == parityTeamID {
+			materialized[i].TeamID = teamID
 		}
 	}
 	return materialized
