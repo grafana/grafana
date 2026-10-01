@@ -189,7 +189,7 @@ describe('InfiniteScroll', () => {
           {
             from: logs[logs.length - 1].timeEpochMs,
             to: absoluteRange.to,
-            startNs: '1702578898000000000',
+            startNs: '1702578898000000001',
           },
           order === LogsSortOrder.Descending ? -1 : 1
         );

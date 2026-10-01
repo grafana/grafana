@@ -1,7 +1,14 @@
 import { dateTime, rangeUtil, type DataQuery } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
-import { canScrollBottom, canScrollTop, getVisibleRange, withLokiInfiniteScrollBound } from './infiniteScrollUtils';
+import {
+  canScrollBottom,
+  canScrollTop,
+  getVisibleRange,
+  loadMoreRangeFromVisible,
+  ScrollDirection,
+  withLokiInfiniteScrollBound,
+} from './infiniteScrollUtils';
 import { createLogRow } from './mocks/logRow';
 
 const timeZone = 'utc';
@@ -37,21 +44,21 @@ describe('canScrollBottom', () => {
     });
   });
 
-  it('sets startNs to the newest line when loading newer logs', () => {
+  it('sets startNs one nanosecond after the newest line when loading newer logs', () => {
     expect(canScrollBottom(getVisibleRange(rows), currentRange, timeZone, LogsSortOrder.Ascending)).toEqual({
       from: 40_000,
       to: 100_000,
-      startNs: '40000000000',
+      startNs: '40000000001',
     });
   });
 });
 
 describe('canScrollTop', () => {
-  it('sets startNs when descending logs scroll toward newer lines', () => {
+  it('sets startNs one nanosecond after the newest line when descending logs scroll toward newer lines', () => {
     expect(canScrollTop(getVisibleRange(rows), currentRange, timeZone, LogsSortOrder.Descending)).toEqual({
       from: 40_000,
       to: 100_000,
-      startNs: '40000000000',
+      startNs: '40000000001',
     });
   });
 
@@ -59,6 +66,31 @@ describe('canScrollTop', () => {
     expect(canScrollTop(getVisibleRange(rows), currentRange, timeZone, LogsSortOrder.Ascending)).toEqual({
       from: 1_000,
       to: 20_000,
+      endNs: '20000000010',
+    });
+  });
+});
+
+describe('loadMoreRangeFromVisible', () => {
+  const visibleRange = getVisibleRange(rows);
+
+  it('sets startNs one nanosecond after the newest line when loading newer logs', () => {
+    expect(loadMoreRangeFromVisible(visibleRange, ScrollDirection.Top, LogsSortOrder.Descending)).toEqual({
+      from: 20_000,
+      to: 40_000,
+      startNs: '40000000001',
+    });
+    expect(loadMoreRangeFromVisible(visibleRange, ScrollDirection.Bottom, LogsSortOrder.Ascending)).toEqual({
+      from: 20_000,
+      to: 40_000,
+      startNs: '40000000001',
+    });
+  });
+
+  it('sets an exclusive endNs when loading older logs', () => {
+    expect(loadMoreRangeFromVisible(visibleRange, ScrollDirection.Bottom, LogsSortOrder.Descending)).toEqual({
+      from: 20_000,
+      to: 40_000,
       endNs: '20000000010',
     });
   });
