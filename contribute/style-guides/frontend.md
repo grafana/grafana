@@ -338,7 +338,7 @@ For code that needs to be used by an external plugin:
 
 ## Linting
 
-Linting is performed using [@grafana/eslint-config](https://github.com/grafana/eslint-config-grafana).
+Linting is performed using [oxlint](https://oxc.rs/docs/guide/usage/linter). The rules are configured in `.oxlintrc.json`.
 
 ## Functional components
 

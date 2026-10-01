@@ -67,8 +67,8 @@ yarn e2e:playwright path/to/test.spec.ts           # Specific test
 
 ```bash
 make lint-go                      # Go linter
-yarn lint                         # ESLint
-yarn lint:fix                     # ESLint auto-fix
+yarn lint                         # oxlint
+yarn lint:fix                     # oxlint auto-fix
 yarn prettier:write               # Prettier auto-format
 yarn typecheck                    # TypeScript check
 ```

@@ -130,7 +130,7 @@ export const SharedPreferences = memo((props: SharedPreferencesProps) => {
         preferenceType,
       });
     } else {
-      // eslint-disable-next-line no-restricted-syntax
+      // eslint-disable-next-line eslint-js/no-restricted-syntax
       reportInteraction('grafana_preferences_theme_changed', {
         toTheme: value.value,
         preferenceType,

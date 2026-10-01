@@ -822,7 +822,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /tsconfig.json @grafana/grafana-frontend-platform
 /scripts/tsconfig.base.json @grafana/grafana-frontend-platform
 /.editorconfig @grafana/grafana-frontend-platform
-/eslint.config.js @grafana/grafana-frontend-platform
+/.oxlintrc.json @grafana/grafana-frontend-platform
 /.gitattributes @grafana/grafana-frontend-platform
 /.gitignore @grafana/grafana-frontend-platform
 /.ignore @grafana/grafana-frontend-platform
@@ -1194,8 +1194,9 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/grafana-frontend-platform
 /scripts/rspack/ @grafana/grafana-frontend-platform
+/scripts/oxlint/ @grafana/grafana-frontend-platform
 /scripts/test-aliases.py @grafana/docs-tooling @jtvdez
-eslint-suppressions.json @grafanabot
+oxlint-suppressions.json @grafanabot
 
 # Design system
 /public/img/icons/unicons/ @grafana/ui-engineering

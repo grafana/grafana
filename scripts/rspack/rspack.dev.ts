@@ -1,7 +1,6 @@
 import { getPackagesSync } from '@manypkg/get-packages';
 import rspack, { type Configuration } from '@rspack/core';
 import type { Configuration as DevServerConfiguration } from '@rspack/dev-server';
-import ESLintPlugin from 'eslint-rspack-plugin';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -12,6 +11,7 @@ import WebpackBar from 'webpackbar';
 
 import { getEnvConfig } from '../cli/env-util.ts';
 
+import { OxlintDiagnosticsPlugin } from './plugins/OxlintDiagnosticsPlugin.ts';
 import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
 import common, { PUBLIC_PATH, type Env } from './rspack.common.ts';
 
@@ -225,17 +225,7 @@ export default (env: Env = {}) => {
   }
 
   if (!Number(env.noLint)) {
-    devConfig.plugins?.push(
-      new ESLintPlugin({
-        cache: true,
-        lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
-        extensions: ['.ts', '.tsx'],
-        configType: 'flat',
-        // Replaces `failOnError: false`, dropped in eslint-rspack-plugin 5.x: lint problems
-        // are printed and the build still succeeds.
-        severity: { error: 'warning' },
-      })
-    );
+    devConfig.plugins?.push(new OxlintDiagnosticsPlugin());
   }
 
   return merge(common(env, { hmr }), devConfig);

@@ -60,17 +60,17 @@ Pull requests that create new UI components or modify existing ones must adhere 
 
 Before submitting pull requests that introduce accessibility (a11y) errors, refer to the [accessibility guidelines](/contribute/style-guides/accessibility.md).
 
-### ESLint & suppressions
+### oxlint & suppressions
 
-We use [ESLint](https://eslint.org/) to enforce code style and best practices, along with [bulk suppressions](https://eslint.org/docs/latest/use/suppressions#suppressions-file) in order to incrementally improve our code quality and fix rule violations.
+We use [oxlint](https://oxc.rs/docs/guide/usage/linter) to enforce code style and best practices. Existing rule violations are recorded in a bulk suppressions file, `oxlint-suppressions.json`, so that we can fix them over time.
 
-- **ESLint runs as a precommit hook**:
-  - You may see changes to the `eslint-suppressions.json` file automatically added to your commits.
+- **oxlint runs as a precommit hook**:
+  - You may see changes to the `oxlint-suppressions.json` file automatically added to your commits.
   - You may get an error when trying to commit something that decreases the overall code quality. You can either fix these errors or temporarily override the checks (for example, to commit something that's a work in progress). To do so, use `git commit --no-verify`. All errors will eventually have to be fixed before your code can be merged because...
-- **ESLint also runs as part of our CI**:
-  - If you have fixed suppressed issues but not updated the suppressions file, you may see the following error message in the CI: `There are suppressions left that do not occur anymore.`.
+- **oxlint also runs as part of our CI**:
+  - If you have fixed suppressed issues but not updated the suppressions file, you may see the following error message in the CI: `There are suppressions that do not occur anymore.`.
     To resolve the error, run the following command: `yarn lint:prune` and commit the changes.
-  - You may see merge conflicts for the `eslint-suppressions.json` file. To resolve, merge with the target branch (usually `main`) and resolve conflicts however you like, and then run `yarn lint:prune` to ensure the file is up to date and commit.
+  - You may see merge conflicts for the `oxlint-suppressions.json` file. To resolve, merge with the target branch (usually `main`) and resolve conflicts however you like, and then run `yarn lint:prune` to ensure the file is up to date and commit.
 
 ## Guidelines for backend development
 

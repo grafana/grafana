@@ -34,7 +34,7 @@ echo -e "Total SCSS files: $SCSS_FILES"
 echo -e "Total circular dependencies: $TOTAL_CIRCULAR_DEPENDENCIES"
 
 ESLINT_STATS=""
-yarn lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
+node ./scripts/cli/oxlint-stats-reporter.mjs > eslint-stats.txt
 while read -r name value
 do
   ESLINT_STATS+=$'\n  '
@@ -68,7 +68,7 @@ while read -r name value
 do
   THEME_TOKEN_USAGE+=$'\n  '
   THEME_TOKEN_USAGE+="\"grafana.ci-code.themeUsage.${name}\": \"${value}\","
-done <<< "$(yarn themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $3}' | awk '{!seen[$0]++}END{for (i in seen) print i, seen[i]}')"
+done <<< "$(node ./scripts/cli/theme-token-usage.mjs)"
 
 echo "Metrics: {
   $THEME_TOKEN_USAGE
