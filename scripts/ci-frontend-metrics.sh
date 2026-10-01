@@ -34,7 +34,7 @@ echo -e "Total SCSS files: $SCSS_FILES"
 echo -e "Total circular dependencies: $TOTAL_CIRCULAR_DEPENDENCIES"
 
 ESLINT_STATS=""
-yarn lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
+node ./scripts/cli/oxlint-stats-reporter.mjs > eslint-stats.txt
 while read -r name value
 do
   ESLINT_STATS+=$'\n  '

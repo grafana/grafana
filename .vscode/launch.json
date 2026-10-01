@@ -131,11 +131,10 @@
       "internalConsoleOptions": "neverOpen"
     },
     {
-      "name": "Debug ESLint with stats reporter",
+      "name": "Debug oxlint stats reporter",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "yarn",
-      "runtimeArgs": ["run", "eslint", "${file}", "--format", "./scripts/cli/eslint-stats-reporter.mjs"],
+      "program": "${workspaceFolder}/scripts/cli/oxlint-stats-reporter.mjs",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     },
