@@ -2610,7 +2610,7 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 		}
 
 		select {
-		case out <- writtenEvent(event, data):
+		case out <- eventToWrittenEvent(event, data):
 		case <-ctx.Done():
 			return false
 		}

@@ -10,10 +10,10 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -464,7 +464,7 @@ func TestKVWatchSeedCleanupHandoff(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 1, deleted)
 				// This write is not in the enumerated keys and must survive the empty-seed handoff.
-				captured = durableWatchEvent(backend.snowflake.Generate().Int64())
+				captured = durableWatchEvent(requireGeneratedResourceVersion(t, backend.resourceVersions))
 				saveWatchEvent(t, backend, captured)
 				backend.notifier.Publish(captured)
 			}
@@ -481,7 +481,7 @@ func TestKVWatchSeedCleanupHandoff(t *testing.T) {
 			require.Equal(t, old.ResourceVersion, seed.initialCacheFloor)
 			require.Equal(t, seed.initialCacheFloor, seed.highestRV)
 			require.Greater(t, captured.ResourceVersion, seed.highestRV)
-			live := durableWatchEvent(backend.snowflake.Generate().Int64())
+			live := durableWatchEvent(requireGeneratedResourceVersion(t, backend.resourceVersions))
 			saveWatchEvent(t, backend, live)
 			backend.notifier.Publish(live)
 			for _, want := range []Event{captured, live} {
@@ -505,7 +505,7 @@ func TestKVWatchCancelDuringSeedRead(t *testing.T) {
 		close(reading)
 		<-ctx.Done()
 	}}
-	logger := &logtest.Fake{}
+	logger := newFakeLogger()
 	backend := setupTestStorageBackend(t, withKV(store), withLogger(logger))
 	done := make(chan error, 1)
 	go func() {
@@ -528,8 +528,12 @@ func setupWatchEventWorker(t *testing.T) (*kvStorageBackend, *countingKV) {
 	t.Helper()
 	store := &countingKV{KV: setupBadgerKV(t)}
 	return &kvStorageBackend{
-		dataStore: &dataStore{kv: store}, eventStore: newEventStore(store), log: log.NewNopLogger(),
-		watchOpts: (WatchOptions{}).normalize(),
+		resourceVersions: newResourceVersionGenerator(0, time.Now),
+		dataStore:        &dataStore{kv: store},
+		eventStore:       newEventStore(store),
+		log:              &logging.NoOpLogger{},
+		watchOpts:        (WatchOptions{}).normalize(),
+		metrics:          newKVBackendMetrics(prometheus.NewRegistry()),
 	}, store
 }
 

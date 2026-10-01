@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -32,7 +31,7 @@ func eventDataKey(event Event) DataKey {
 	}
 }
 
-func writtenEvent(event Event, data []byte) *WrittenEvent {
+func eventToWrittenEvent(event Event, data []byte) *WrittenEvent {
 	var kind resourcepb.WatchEvent_Type
 	switch event.Action {
 	case DataActionCreated:
@@ -90,7 +89,7 @@ func (k *kvStorageBackend) loadWatchSeed(ctx context.Context, handoffRV int64) (
 			k.log.Warn("no data for watch seed event, skipping", "key", key.String())
 			continue
 		}
-		seed.events = append(seed.events, writtenEvent(event, data))
+		seed.events = append(seed.events, eventToWrittenEvent(event, data))
 	}
 	if len(seed.events) > 0 {
 		seed.initialCacheFloor = seed.events[0].ResourceVersion
@@ -139,15 +138,8 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 	// Fix the snapshot ceiling before settling. An unrestricted snapshot taken
 	// afterwards could include newer writes ahead of still-persisting lower RVs,
 	// causing the overlap filter to discard events that were never seeded.
-	last, err := k.eventStore.LastEventKey(ctx)
-	var handoffRV int64
-	if err == nil {
-		handoffRV = last.ResourceVersion
-	} else if errors.Is(err, ErrNotFound) {
-		// Only an empty durable tail uses a time boundary: idle LISTs otherwise
-		// return the last durable RV, which must not fall below the resume floor.
-		handoffRV = snowflakeFromTime(time.Now())
-	} else {
+	handoffRV, err := k.latestResourceVersion(ctx)
+	if err != nil {
 		return watchSeed{}, nil, fmt.Errorf("read watch handoff boundary: %w", err)
 	}
 	select {
