@@ -91,20 +91,12 @@ Refer to [Star a resource](#star-a-resource) for more details.
 
 To migrate from `/api/user/stars/*` to `/apis/collections.grafana.app/*` follow these steps:
 
-1. Identify every direct caller of `POST`/`PUT` or `DELETE` `/api/user/stars/dashboard/uid/{uid}` in your integration.
-
-- Skip the Grafana UI itself, which already calls the new API.
-
+1. Identify every direct caller of `POST`/`PUT` or `DELETE` `/api/user/stars/dashboard/uid/{uid}` in your integration. Skip the Grafana UI itself, which already calls the new API.
 1. Use `GET /api/user` to resolve the signed-in user's UID and cache it for the session.
 1. Determine the namespace your Grafana instance or stack uses for App Platform API calls.
 1. Replace the call with `PUT` (star) or `DELETE` (unstar) against `
-/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{uid}/update/dashboard.grafana.app/Dashboard/{dashboard_uid}`,
-   **with no request body**.
-1. Update response handling:
-
-- Treat `200` as success for both star and unstar.
-- Treat `204` as a no-op success when unstarring something that wasn't starred.
-
+/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{uid}/update/dashboard.grafana.app/Dashboard/{dashboard_uid}`, **with no request body**.
+1. Update response handling. Treat `200` as success for both star and unstar, and `204` as a no-op success when unstarring something that wasn't starred.
 1. Leave any code that reads `GET /api/user/stars` as-is; it's unaffected by this change.
 
 ### Migration example
@@ -128,4 +120,4 @@ Becomes:
     "https://<your-grafana>/apis/collections.grafana.app/v1alpha1/namespaces/default/stars/user-${USER_UID}/update/dashboard.grafana.app/Dashboard/abc123"
 ```
 
-Unstarring is identical, with `DELETE` instead of `PUT`/`POST`.
+Unstarring has an identical behavior, with `DELETE` instead of `PUT`/`POST`.
