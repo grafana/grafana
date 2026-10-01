@@ -1,12 +1,14 @@
 import { isEqual, uniqBy } from 'lodash';
 
 import { type DataFrameJSON } from '@grafana/data';
+import type { EvalMatch } from 'app/types/unified-alerting';
 import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
 interface Line {
   previous: GrafanaAlertStateWithReason;
   current: GrafanaAlertStateWithReason;
   values?: Record<string, number>;
+  evalMatches?: EvalMatch[];
   labels?: Record<string, string>;
   fingerprint?: string;
   ruleUID?: string;

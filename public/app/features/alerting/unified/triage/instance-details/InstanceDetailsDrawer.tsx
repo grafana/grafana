@@ -27,6 +27,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
+import { EvaluationMatches } from '../../components/rules/state-history/EvaluationMatches';
 import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -413,7 +414,7 @@ function extractQueryDetails(rule: GrafanaRuleDefinition) {
 
 const MAX_STATE_TRANSITIONS = 10;
 
-function InstanceStateTransitions({
+export function InstanceStateTransitions({
   records,
   maxItems = MAX_STATE_TRANSITIONS,
 }: {
@@ -433,6 +434,11 @@ function InstanceStateTransitions({
           <EventState state={record.line.previous} showLabel addFilter={noop} type="from" />
           <Icon name="arrow-right" size="sm" />
           <EventState state={record.line.current} showLabel addFilter={noop} type="to" />
+          {record.line.evalMatches && (
+            <div className={styles.evaluationMatches} data-testid="state-transition-evaluation-matches">
+              <EvaluationMatches matches={record.line.evalMatches} />
+            </div>
+          )}
         </Fragment>
       ))}
     </div>
@@ -446,6 +452,9 @@ const stateTransitionStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1, 2),
     alignItems: 'center',
     padding: theme.spacing(1, 0),
+  }),
+  evaluationMatches: css({
+    gridColumn: '1 / -1',
   }),
 });
 
