@@ -59,6 +59,10 @@ setPluginImportUtils({
 });
 
 describe('DashboardSidebar', () => {
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   describe('Pending pane requests', () => {
     let dashboard: DashboardScene;
     let sidebar: DashboardSidebarLike;

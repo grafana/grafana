@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
 import { useParams } from 'react-router-dom-v5-compat';
@@ -186,6 +186,13 @@ describe('DashboardScenePage', () => {
     getObservablePluginLinks.mockRestore();
     getObservablePluginLinks.mockReturnValue(of([]));
     store.delete(DASHBOARD_FROM_LS_KEY);
+  });
+
+  afterEach(() => {
+    // Testing Library unmounts after this hook, so DashboardScenePage is still mounted.
+    // setTestFlags({}) would turn dashboardNewLayouts back on and re-render it. cleanup() unmounts that page first.
+    cleanup();
+    setTestFlags({});
   });
 
   it('Can render dashboard', async () => {

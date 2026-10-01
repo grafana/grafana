@@ -167,6 +167,7 @@ describe('ShareExportTab', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    setTestFlags({});
   });
 
   describe('V2Resource export mode', () => {

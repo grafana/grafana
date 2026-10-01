@@ -21,6 +21,12 @@ jest.mock('@grafana/scenes', () => ({
 }));
 
 describe('DashboardEditableElement', () => {
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
   describe('DashboardTitleInput', () => {
     it('Supports undo/redo', async () => {
       const { renderTitleInput, dashboard } = setup();

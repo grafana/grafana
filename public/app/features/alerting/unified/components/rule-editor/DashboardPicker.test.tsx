@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import { noop } from 'lodash';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
@@ -59,6 +60,12 @@ describe('DashboardPicker', () => {
         ],
       })
     );
+  });
+
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
   });
 
   it('Renders panels without ids', async () => {

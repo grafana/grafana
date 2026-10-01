@@ -108,6 +108,10 @@ describe('RowsLayoutManager', () => {
       lastUndo = undefined;
     });
 
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     it('should add a new row with default title when no title is provided', () => {
       const rowsLayoutManager = buildRowsLayoutManager();
       const newRow = rowsLayoutManager.addNewRow();

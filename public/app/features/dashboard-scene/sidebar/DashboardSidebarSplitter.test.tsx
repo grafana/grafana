@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -33,6 +33,12 @@ const autoLayoutInputs = [
 describe('DashboardSidebarSplitter', () => {
   beforeEach(() => {
     setTestFlags({ dashboardNewLayouts: true });
+  });
+
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
   });
 
   it('should switch between custom and auto layout', async () => {

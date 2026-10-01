@@ -160,6 +160,10 @@ describe('TabsLayoutManager', () => {
       lastUndo = undefined;
     });
 
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     it('should add a new tab with default title when no title is provided', () => {
       const tabsLayoutManager = buildTabsLayoutManager([]);
       const newTab = tabsLayoutManager.addNewTab();

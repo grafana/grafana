@@ -281,6 +281,10 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     setTestFlags({ dashboardNewLayouts: false });
   });
 
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   // Regression: the rebuild swaps in a freshly-deserialized layout manager whose grid is not
   // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
   // (via entering edit mode), so panels stayed frozen in the new tree until the command also

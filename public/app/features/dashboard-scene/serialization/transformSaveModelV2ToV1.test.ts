@@ -75,8 +75,6 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-setTestFlags({ dashboardNewLayouts: true });
-
 /*
  * V2 to V1 Dashboard Transformation Comparison Test
  *
@@ -118,9 +116,14 @@ const TARGET_VERSIONS = ['v0alpha1', 'v1beta1'] as const;
 
 describe('V2 to V1 Dashboard Transformation Comparison', () => {
   beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   const inputDir = path.join(

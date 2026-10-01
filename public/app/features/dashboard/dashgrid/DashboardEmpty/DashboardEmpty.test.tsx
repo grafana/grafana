@@ -91,6 +91,10 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  setTestFlags({});
+});
+
 it('renders page with correct title for an empty dashboard', () => {
   setup();
 

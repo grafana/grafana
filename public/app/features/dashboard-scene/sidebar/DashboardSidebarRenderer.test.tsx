@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -88,6 +88,8 @@ describe('DashboardSidebarRenderer', () => {
   afterEach(() => {
     jest.clearAllMocks();
     window.localStorage.clear();
+    cleanup();
+    setTestFlags({});
   });
 
   it('Should render sidebar', async () => {
