@@ -11,10 +11,9 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"uuid"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/bwmarrin/snowflake"
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -87,28 +86,6 @@ func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration 
 		MaxRetries: 1,
 	})
 	return bo.NextDelay()
-}
-
-type watchExpiry struct {
-	mu         sync.Mutex
-	generation chan struct{}
-}
-
-func newWatchExpiry() *watchExpiry {
-	return &watchExpiry{generation: make(chan struct{})}
-}
-
-func (e *watchExpiry) current() <-chan struct{} {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return e.generation
-}
-
-func (e *watchExpiry) expire() {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	close(e.generation)
-	e.generation = make(chan struct{})
 }
 
 // filteredBookmarkDelay leaves a recovery window for late writes without
@@ -233,7 +210,6 @@ type ResourceLastImportTime struct {
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
 type StorageBackend interface {
-	WatchInvalidator
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
@@ -245,8 +221,9 @@ type StorageBackend interface {
 	// BatchReadResource lazily reads several resources, yielding one response per
 	// request in order. Body reads stop when the consumer stops. The up-front error
 	// reports failures that happen before iteration; per-request failures are set
-	// on BackendReadResponse.Error.
-	BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error)
+	// on BackendReadResponse.Error. When includeDeleted is true, deletion markers
+	// can be resolved at their explicit resource versions.
+	BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*BackendReadResponse], error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -407,11 +384,9 @@ type SearchOptions struct {
 	// for queries, so a catalog row alone cannot enroll an internal collection.
 	EmbeddingBuilders embed.BuilderProvider
 
-	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
+	// Index snapshot settings — enable downloading pre-built search indexes from the storage KV on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
 	IndexSnapshotEnabled bool
-	// IndexSnapshotBucketURL is the Go CDK bucket URL (s3://, gs://, azblob://, mem://, file:///).
-	IndexSnapshotBucketURL string
 	// IndexSnapshotThreshold is the minimum document count to use remote snapshots (must be >= IndexFileThreshold).
 	IndexSnapshotThreshold int
 	// IndexSnapshotMaxAge is the maximum age of a snapshot before it is deleted during cleanup.
@@ -517,6 +492,9 @@ type ResourceServerOptions struct {
 	// NatsWatchMaxAge forces NATS-backed watch clients to re-list periodically.
 	// Zero disables expiry.
 	NatsWatchMaxAge time.Duration
+
+	// WatchExpiry is shared with notification producers. Nil creates a local expiry.
+	WatchExpiry WatchExpiry
 
 	// VectorBackend is the optional pgvector-backed store for semantic search.
 	// nil when the [unified_storage] vector_backend flag is off. When present,
@@ -671,7 +649,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 	}
 
 	logger := log.New("resource-server")
-
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
@@ -703,11 +680,12 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		natsWatchMaxAge:                opts.NatsWatchMaxAge,
+		watchExpiry:                    opts.WatchExpiry,
 		vectorWriteReconciler:          opts.VectorReconciler,
 		embeddingBuilders:              opts.Search.EmbeddingBuilders,
 	}
-	if s.natsWatchMaxAge > 0 {
-		s.natsWatchExpiry = newWatchExpiry()
+	if s.watchExpiry == nil {
+		s.watchExpiry = NewWatchExpiry()
 	}
 
 	if opts.Search.Resources != nil {
@@ -782,7 +760,7 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 	return blobstore, nil
 }
 
-var _ ResourceServer = &server{}
+var _ ResourceServer = (*server)(nil)
 
 type server struct {
 	log                       log.Logger
@@ -840,7 +818,7 @@ type server struct {
 	bookmarkFrequency time.Duration
 
 	natsWatchMaxAge time.Duration
-	natsWatchExpiry *watchExpiry
+	watchExpiry     WatchExpiry
 
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
@@ -887,7 +865,7 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
-		if s.initErr == nil && s.natsWatchExpiry != nil {
+		if s.initErr == nil && s.natsWatchMaxAge > 0 {
 			go s.runNatsWatchExpiry()
 		}
 
@@ -906,7 +884,7 @@ func (s *server) runNatsWatchExpiry() {
 			timer.Stop()
 			return
 		case <-timer.C:
-			s.natsWatchExpiry.expire()
+			s.watchExpiry.Invalidate()
 		}
 	}
 }
@@ -1055,7 +1033,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		Value:  value,
 		Key:    key,
 		Object: obj,
-		GUID:   uuid.New().String(),
+		GUID:   uuid.NewV4().String(),
 	}
 
 	if oldValue == nil {
@@ -1509,7 +1487,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
 		PreviousRV: req.ResourceVersion,
-		GUID:       uuid.New().String(),
+		GUID:       uuid.NewV4().String(),
 	}
 	marker := &unstructured.Unstructured{}
 	err = json.Unmarshal(latest.Value, marker)
@@ -1561,9 +1539,8 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	// Don't validate the name format here: a lookup with an odd or
-	// invalid-looking name should fall through to the backend and surface as
-	// NotFound, matching K8s Get semantics. Strict name validation belongs on
+	// Don't validate the name format here: the backend reports invalid names as
+	// BadRequest, after the access check. Strict name validation belongs on
 	// writes (Create/Update/Delete).
 	if r := verifyRequestKeyCollection(req.Key); r != nil {
 		return nil, status.Error(codes.InvalidArgument, r.Message)
@@ -1810,14 +1787,23 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 		rsp, err = s.listWithSelectors(ctx, req)
 		if !errors.Is(err, errSearchCannotAnswerList) {
 			path = listPathSearch
-			gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 			return rsp, err
 		}
 		// The store scan reads the objects themselves, so it answers what the index
 		// cannot. Slower, but right.
 		searchFallback = true
 		s.log.Warn("Search cannot answer List with selectors, falling back to the store", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
+	}
+	if s.shouldUseSearchForTrash(req) {
+		path = listPathTrashSearch
+		rsp, err = s.listTrashFromSearch(ctx, req)
+		if !errors.Is(err, errSearchCannotAnswerTrash) {
+			return rsp, err
+		}
+
+		path = listPathTrashSearchFallback
+		s.log.Warn("Search cannot answer trash List, falling back to the store", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
+		return s.listFromTrash(ctx, req)
 	}
 
 	if req.NextPageToken != "" {
@@ -2214,8 +2200,6 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 			}}, nil
 	}
 
-	key := req.Options.Key
-
 	rsp := &resourcepb.ListResponse{}
 	var (
 		pageBytes int
@@ -2226,13 +2210,7 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 	// One authorizer per request: it caches folder-admin results, which must not
 	// outlive the request. The search path builds the same thing, so the two trash
 	// views cannot drift on who may see what.
-	authorizer := NewTrashAuthorizer(s.access, user, key, func(err error) {
-		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-		}, err)
-	})
+	authorizer := s.newTrashAuthorizer(ctx, user, req.Options.Key)
 
 	rv, err := s.backend.ListHistory(ctx, req, func(iter ListIterator) error {
 		for iter.Next() {
@@ -2297,8 +2275,6 @@ func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListR
 
 	rsp.ResourceVersion = rv
 	rsp.NextPageToken = nextToken
-	gr := key.Group + "/" + key.Resource
-	s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	return rsp, nil
 }
 
@@ -2353,15 +2329,22 @@ func (s *server) initWatcher() error {
 //nolint:gocyclo
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
+	if s.ctx.Err() != nil {
+		return nil
+	}
 
-	// Capture before setup: reconnects during subscription or snapshot reads must
+	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
-	reconnectC := s.backend.WatchInvalidation()
+	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
 	// as clean shutdowns. Errors from setup, storage, authorization, or another
 	// context are still propagated.
 	defer func() {
+		// A canceled request can no longer receive the expiry response.
+		if IsResourceVersionExpired(retErr) && ctx.Err() != nil {
+			retErr = nil
+		}
 		if errors.Is(retErr, errWatchSendUnavailable) {
 			retErr = nil
 		}
@@ -2522,36 +2505,27 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		bookmarkC = ticker.C
 	}
 
-	// The server-level generation survives transport reconnects, so GOAWAY does
-	// not restart the expiry interval.
-	var watchExpiryC <-chan struct{}
-	if s.natsWatchExpiry != nil {
-		watchExpiryC = s.natsWatchExpiry.current()
+	expired := func() error {
+		if ctx.Err() != nil {
+			return nil
+		}
+		s.log.Debug("watch: expiring stream to bound stale-state duration",
+			"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
+		return NewResourceVersionExpiredError(since)
 	}
 
 	for {
 		// Prioritize known delivery gaps over buffered live events.
 		select {
-		case <-reconnectC:
-			if ctx.Err() != nil {
-				return nil
-			}
-			return NewResourceVersionExpiredError(since)
+		case <-watchExpiryC:
+			return expired()
 		default:
 		}
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-reconnectC:
-			if ctx.Err() != nil {
-				return nil
-			}
-			return NewResourceVersionExpiredError(since)
 		case <-watchExpiryC:
-			// Unlike EOF, Expired forces clients to re-list.
-			s.log.Debug("watch: expiring stream to bound stale-state duration",
-				"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
-			return NewResourceVersionExpiredError(since)
+			return expired()
 
 		case <-bookmarkC:
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
@@ -2660,9 +2634,9 @@ func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchR
 // search backend and the vector backend live.
 func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
 	// Unimplemented (not a bare error) so API-layer callers can map a
-	// search-disabled server to 501, same as an unconfigured vector store.
+	// search-disabled server to 501.
 	if s.search == nil {
-		return nil, status.Error(codes.Unimplemented, "hybrid search is not configured")
+		return nil, status.Error(codes.Unimplemented, "search index not configured")
 	}
 	return s.search.HybridSearch(ctx, req)
 }
@@ -3086,8 +3060,7 @@ func classifyAuthError(err error) string {
 // Unix timestamps (SQL backend).
 func ResourceVersionTime(rv int64) time.Time {
 	if IsSnowflake(rv) {
-		msec := (rv >> (snowflake.NodeBits + snowflake.StepBits)) + snowflake.Epoch
-		return time.UnixMilli(msec)
+		return time.UnixMilli(snowflakeTimestampMillis(rv))
 	}
 	return time.UnixMicro(rv)
 }

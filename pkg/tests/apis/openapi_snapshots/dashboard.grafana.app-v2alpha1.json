@@ -2689,6 +2689,7 @@
         }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelKindOrLibraryPanelKind": {
+        "description": "Supported dashboard elements |* more element types in the future",
         "type": "object",
         "properties": {
           "LibraryPanelKind": {

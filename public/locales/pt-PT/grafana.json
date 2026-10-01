@@ -5674,16 +5674,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Continuar"
-        },
-        "title": {
-          "proceed-to-external-site": "Continuar para o site externo?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Painel de controlo {{dashboardName}}",
       "label-no-dashboards-found": "Nenhum painel de controlo encontrado"
@@ -5809,10 +5799,16 @@
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Alterar título da linha",
       "switch-layout": "Mudar o layout",
       "switch-layout-row": "Mudar o layout",
       "switch-layout-tab": "Mudar o layout",
+      "tab-repeat-variable": "",
       "tab-title": "Alterar título do separador",
       "variable-description": "Alterar a descrição da variável",
       "variable-hide": "Alterar opção de ocultar variável",
@@ -6741,7 +6737,6 @@
       "playlist-previous": "Ir para o painel de controlo anterior",
       "playlist-stop": "Parar a lista de reprodução",
       "refresh": "Atualizar o painel de controlo",
-      "save": "Guardar o painel de controlo",
       "save-as-template": {
         "label": "Guardar como modelo"
       },
@@ -6756,8 +6751,6 @@
       "save-dashboard-short": "Guardar",
       "save-library-panel": "Guardar painel de biblioteca",
       "save-library-panel-short": "Guardar",
-      "settings": "Definições do painel de controlo",
-      "share-button": "Partilhar",
       "star-add-error": "Falha ao adicionar aos favoritos",
       "star-added": "Adicionado aos favoritos",
       "star-remove-error": "Falha ao remover dos favoritos",
@@ -9460,6 +9453,8 @@
     "menu": "Abrir menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Guardar",
     "title": "Controlo de funcionalidade"
   },
@@ -13217,6 +13212,12 @@
       "query": {
         "add": "Adicionar consulta",
         "run": "Executar consulta"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13284,7 +13285,9 @@
       "copy-markdown": "Copiar como Markdown",
       "download-markdown": "Transferir como .md",
       "error": "Falha ao exportar o bloco de notas",
-      "label": "Exportar"
+      "label": "Exportar",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Adicionar bloco",
@@ -13300,7 +13303,9 @@
       "redo-action": "Refazer: {{action}}",
       "remove-query": "Remover consulta",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Selecionar consulta",
+      "set-cell-time-range": "",
       "split-block": "Dividir bloco",
       "switch-datasource": "Mudar de origem de dados",
       "undo": "Anular",
@@ -15856,8 +15861,7 @@
       "deleted-by-removed": "Conta eliminada",
       "deleted-by-unknown-short": "<0></0> Desconhecido",
       "deleted-by-unknown-tooltip": "Não foi possível procurar a conta que eliminou este painel de controlo",
-      "deleted-less-than-1-min": "<1 min",
-      "deleted-remaining-header": "Tempo restante",
+      "deleted-header": "",
       "location-header": "Localização",
       "name-header": "Nome",
       "tags-header": "Etiquetas",
@@ -18171,10 +18175,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Dê uma vista de olhos",
-      "description": "Fizemos uma reformulação!",
-      "revert": "Voltar",
-      "title": "Novos estilos"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

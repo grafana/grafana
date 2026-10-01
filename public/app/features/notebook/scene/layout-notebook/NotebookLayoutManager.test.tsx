@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
@@ -159,6 +159,26 @@ function panelCell(elementName: string, queries?: DataQuery[]) {
     setQueryRunnerQueries(runner, queries);
   }
   return { cell: new NotebookCellItem({ elementName, source: 'user', body: panel }), runner };
+}
+
+function panelCellWithOwnTimeOverride(elementName: string, timeFrom: string) {
+  const panelKind = defaultVisualizationPanelKind();
+  const panel = new VizPanel(
+    buildVizPanelState(
+      {
+        ...panelKind,
+        spec: {
+          ...panelKind.spec,
+          data: {
+            ...panelKind.spec.data,
+            spec: { ...panelKind.spec.data.spec, queryOptions: { ...panelKind.spec.data.spec.queryOptions, timeFrom } },
+          },
+        },
+      },
+      1
+    )
+  );
+  return { cell: new NotebookCellItem({ elementName, source: 'user', body: panel }), panel };
 }
 
 function withExpr(query: DataQuery, expr: string): DataQuery {
@@ -457,6 +477,47 @@ describe('NotebookLayoutManager', () => {
       expect(cellNames(manager)).toEqual(['a', 'c', 'paragraph-1']);
     });
 
+    // Each content kind through the same wiring; which shapes count as discardable is pinned in
+    // cellEmptiness.test.ts rather than re-asserted through a render here.
+    it.each([
+      ['an untouched paragraph', { kind: 'Markdown' as const, spec: { text: '' } }],
+      ['a code block with no code', { kind: 'Code' as const, spec: { language: 'sql', code: '' } }],
+    ])('deletes %s outright, without asking', async (_label, content) => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { manager } = renderManager(
+        buildManager(
+          [
+            ...buildNarrativeCells(['a']),
+            new NotebookCellItem({ elementName: 'blank', source: 'user', content }),
+            ...buildNarrativeCells(['b']),
+          ],
+          true
+        )
+      );
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+
+      expect(publish).not.toHaveBeenCalled();
+      // Plus the trailing-invariant cell appended after 'b'.
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
+    });
+
+    // A panel carries no `content`, so it is never discardable — emptiness cannot be read off its
+    // queries when every viz type but the notebook's own holds content elsewhere.
+    it('asks before deleting a panel', async () => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { cell } = panelCell('latency');
+      // Collapsed so the cell renders as just its name: loading a live panel's plugin has its own
+      // coverage, and what the frame renders is beside the point here.
+      cell.setState({ collapsed: true });
+      const { manager } = renderManager(buildManager([cell], true));
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[0]);
+
+      expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
+      expect(cellNames(manager)).toEqual(['latency', 'paragraph-1']);
+    });
+
     it('duplicates the cell directly below itself', async () => {
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
@@ -517,6 +578,21 @@ describe('NotebookLayoutManager', () => {
       manager.duplicateCell(buildNarrativeCells(['stranger'])[0]);
 
       expect(cellNames(manager)).toEqual(['a']);
+    });
+
+    it("clones a cell's own time range independently", () => {
+      const { cell } = panelCell('latency');
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
+      const manager = buildManager([cell]);
+
+      manager.duplicateCell(manager.state.cells[0]);
+
+      const [original, copy] = manager.state.cells;
+      expect(copy.state.$timeRange?.state.from).toBe('now-24h');
+      expect(copy.state.$timeRange).not.toBe(original.state.$timeRange);
+
+      copy.state.$timeRange?.setState({ from: 'now-1h' });
+      expect(original.state.$timeRange?.state.from).toBe('now-24h');
     });
   });
 
@@ -1253,6 +1329,91 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  describe('setCellTimeRange', () => {
+    it('applies directly, with no undo entry, while only viewing', () => {
+      const { cell, runner } = panelCell('latency');
+      const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      const history = attachHistory(manager);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(history.state.canUndo).toBe(false);
+      expect(runQueries).toHaveBeenCalledTimes(1);
+    });
+
+    it('records a discrete, correctly labeled undo step while editing', () => {
+      const { cell, runner } = panelCell('latency');
+      const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(history.state.undoLabel).toBe('Set panel time range');
+      expect(runQueries).toHaveBeenCalledTimes(1);
+
+      act(() => history.undo());
+      expect(cell.state.$timeRange).toBeUndefined();
+      expect(runQueries).toHaveBeenCalledTimes(2);
+
+      act(() => history.redo());
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(runQueries).toHaveBeenCalledTimes(3);
+    });
+
+    it('clears the override, labeled as reverting to the notebook time, while editing', () => {
+      const { cell } = panelCell('latency');
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+
+      manager.setCellTimeRange(cell, undefined);
+
+      expect(cell.state.$timeRange).toBeUndefined();
+      expect(history.state.undoLabel).toBe('Use notebook time range');
+
+      act(() => history.undo());
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    });
+
+    it("clears a panel's own carried-over override so the new cell range is not shadowed", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      attachHistory(manager);
+      expect(sceneGraph.getTimeRange(panel)).toBe(panel.state.$timeRange);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(panel.state.$timeRange).toBeUndefined();
+      expect(sceneGraph.getTimeRange(panel).state.from).toBe('now-24h');
+    });
+
+    it("restores a panel's own carried-over override on undo", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+      const originalPanelTimeRange = panel.state.$timeRange;
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      act(() => history.undo());
+
+      expect(panel.state.$timeRange).toBe(originalPanelTimeRange);
+    });
+
+    it("also clears a panel's own carried-over override when resetting to the notebook time", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      attachHistory(manager);
+
+      manager.setCellTimeRange(cell, undefined);
+
+      expect(panel.state.$timeRange).toBeUndefined();
+    });
+  });
+
   // The session counts by the kind each action carries, so these tests pin that mapping.
   // End to end on purpose: a real layout action, through the real history, into the real tracker.
   describe('what an edit session counts', () => {
@@ -1579,6 +1740,16 @@ describe('NotebookLayoutManager', () => {
       expect(clone.state.cells[0].state.body).toBeUndefined();
       expect(clone.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
       expect(clone.state.cells[0].state.content).not.toBe(original.state.content);
+    });
+
+    it("clones each cell's own time range independently", () => {
+      const manager = buildManager();
+      manager.state.cells[1].setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
+
+      const clone = manager.duplicate();
+
+      expect(clone.state.cells[1].state.$timeRange?.state.from).toBe('now-24h');
+      expect(clone.state.cells[1].state.$timeRange).not.toBe(manager.state.cells[1].state.$timeRange);
     });
   });
 

@@ -37,6 +37,7 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
+	WatchExpiry      resource.WatchExpiry
 	Backend          resource.StorageBackend
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
@@ -226,6 +227,7 @@ func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceSer
 }
 
 func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.WatchExpiry = opts.WatchExpiry
 	if opts.Backend == nil {
 		return fmt.Errorf("missing storage backend")
 	}

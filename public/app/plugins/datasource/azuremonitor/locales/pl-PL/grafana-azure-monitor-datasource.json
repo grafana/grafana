@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Wybierz niestandardową przestrzeń nazw",
+      "aria-label-select-dimension-name": "",
+      "aria-label-select-metric-name": "",
       "aria-label-select-namespace": "Wybierz przestrzeń nazw",
       "aria-label-select-query-type": "Wybierz typ zapytania",
       "aria-label-select-region": "Wybierz region",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "Wybierz grupę zasobów",
       "aria-label-select-subscription": "Wybierz subskrypcję",
       "label-custom-namespace": "Niestandardowa przestrzeń nazw",
+      "label-dimension-name": "",
+      "label-metric-name": "",
       "label-namespace": "Przestrzeń nazw",
       "label-query-type": "Typ zapytania",
       "label-region": "Region",
