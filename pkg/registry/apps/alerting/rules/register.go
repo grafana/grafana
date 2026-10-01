@@ -137,6 +137,12 @@ func (a *AppInstaller) InstallAPIs(server appsdkapiserver.GenericAPIServer, opts
 				Doc("Experimental hybrid search for alert rules").
 				Produces("application/json").
 				Param(ws.PathParameter("namespace", "namespace")).
+				Param(ws.QueryParameter("query", "Search text for lexical and semantic retrieval").DataType("string").Required(true)).
+				Param(ws.QueryParameter("semanticQuery", "Optional text to embed for semantic retrieval instead of query").DataType("string")).
+				Param(ws.QueryParameter("folder", "Filter by the stored folder UID").DataType("string")).
+				Param(ws.QueryParameter("limit", "Maximum number of results (default 50)").DataType("integer")).
+				Param(ws.QueryParameter("minRelevance", "Minimum reranker relevance: lowest, low, medium, high, or highest. Cannot be combined with skipRerank").DataType("string")).
+				Param(ws.QueryParameter("skipRerank", "Skip reranking and return the fused lexical and semantic ordering").DataType("boolean")).
 				To(func(req *restful.Request, res *restful.Response) {
 					ctx := apirequest.WithNamespace(req.Request.Context(), req.PathParameter("namespace"))
 					a.hybridSearch(res, req.Request.WithContext(ctx))

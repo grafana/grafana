@@ -144,8 +144,8 @@ func TestHybridSearchQueryOptions(t *testing.T) {
 		{name: "invalid limit", query: "query=cpu&limit=bad", limit: 50},
 		{name: "zero limit", query: "query=cpu&limit=0", limit: 50},
 		{name: "negative limit", query: "query=cpu&limit=-1", limit: 50},
-		{name: "root folder without reranking", query: "query=cpu&folder=general&skipRerank=true", limit: 50, skipRerank: true,
-			filters: []*resourcepb.Requirement{{Key: "folder", Operator: string(selection.In), Values: []string{""}}}},
+		{name: "folder UID preserved without reranking", query: "query=cpu&folder=general&skipRerank=true", limit: 50, skipRerank: true,
+			filters: []*resourcepb.Requirement{{Key: "folder", Operator: string(selection.In), Values: []string{"general"}}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &hybridIndex{response: &resourcepb.HybridSearchResponse{}}

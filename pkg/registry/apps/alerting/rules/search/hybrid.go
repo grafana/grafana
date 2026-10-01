@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -89,7 +88,7 @@ func (h *HybridHandler) search(ctx context.Context, req *http.Request) (*resourc
 	}
 	if f := query.Get("folder"); f != "" {
 		searchReq.Filters = []*resourcepb.Requirement{{
-			Key: "folder", Operator: string(selection.In), Values: []string{folder.ToLegacyFolderUID(f)},
+			Key: "folder", Operator: string(selection.In), Values: []string{f},
 		}}
 	}
 	resp, err := h.client.HybridSearch(ctx, searchReq)
