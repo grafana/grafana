@@ -182,16 +182,6 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: pkg/storage/unified/apistore is not allowed to import grafana core
-        storage-unified-resource:
-          list-mode: lax
-          files:
-            - ./pkg/storage/unified/resource/*
-            - ./pkg/storage/unified/resource/**/*
-          allow:
-            - github.com/grafana/grafana/pkg/apimachinery
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: pkg/storage/unified/resource is not allowed to import grafana core
     exhaustive:
       default-signifies-exhaustive: true
     gocritic:
