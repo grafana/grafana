@@ -47,8 +47,12 @@ func TestKvStorageBackend_PruneEventsPerIncarnation(t *testing.T) {
 						switch kind {
 						case resourcepb.WatchEvent_ADDED:
 							action = DataActionCreated
+						case resourcepb.WatchEvent_MODIFIED:
+							action = DataActionUpdated
 						case resourcepb.WatchEvent_DELETED:
 							action = DataActionDeleted
+						default:
+							require.FailNow(t, "unexpected write event type", "kind: %s", kind)
 						}
 						return DataKey{
 							Namespace: namespace, Group: key.Group, Resource: key.Resource, Name: key.Name,
