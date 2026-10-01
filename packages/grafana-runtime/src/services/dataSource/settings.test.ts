@@ -1197,7 +1197,7 @@ describe('numeric id refs', () => {
     return logWarning.mock.calls.filter(([message]) => message === NUMERIC_ID_REF_WARNING);
   }
 
-  it('logs the id, the API, the source and a stack when a ref resolves through a numeric id', async () => {
+  it('logs the id, the source and a stack naming the API when a ref resolves through a numeric id', async () => {
     initDataSourceInstanceSettings(fixtures, 'Bravo');
 
     const result = await getDataSourceInstanceSettings('3');
@@ -1206,7 +1206,7 @@ describe('numeric id refs', () => {
     expect(numericIdWarnings()).toEqual([
       [
         NUMERIC_ID_REF_WARNING,
-        { id: '3', api: 'getDataSourceInstanceSettings', path: 'bootData', stack: expect.stringContaining('Error') },
+        { id: '3', path: 'bootData', stack: expect.stringMatching(/at (async )?getDataSourceInstanceSettings \(/) },
       ],
     ]);
   });
@@ -1217,7 +1217,7 @@ describe('numeric id refs', () => {
     await getDataSourceInstanceSettings('${dsById}');
 
     expect(numericIdWarnings()).toHaveLength(1);
-    expect(numericIdWarnings()[0][1]).toMatchObject({ id: '3', api: 'getDataSourceInstanceSettings' });
+    expect(numericIdWarnings()[0][1]).toMatchObject({ id: '3' });
   });
 
   it('logs a repeated lookup from the same call path once', async () => {

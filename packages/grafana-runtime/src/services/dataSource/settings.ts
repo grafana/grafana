@@ -24,7 +24,7 @@ import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } 
 import { applyFilters, type GetDataSourceInstanceListFilters } from './listFilters';
 import { describeRef, logDataSourceWarning } from './logging';
 import { clearPluginCache } from './pluginCache';
-import { type DataSourceLookupApi, resolveRef, _resetForTests as resetResolveRef } from './resolveRef';
+import { resolveRef, _resetForTests as resetResolveRef } from './resolveRef';
 import { createBootDataSnapshot, createBootDataSource } from './sources/bootDataSource';
 import { createDataSourceCacheSource } from './sources/selectSource';
 import { type BootDataSourceSettings } from './sources/types';
@@ -134,25 +134,13 @@ export async function getDataSourceInstanceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
-  return resolveDataSourceInstanceSettings(ref, scopedVars, 'getDataSourceInstanceSettings');
-}
-
-/**
- * {@link getDataSourceInstanceSettings} with the public entry point named, so logs point at the
- * API the caller used.
- */
-export async function resolveDataSourceInstanceSettings(
-  ref: DataSourceRef | string | null | undefined,
-  scopedVars: ScopedVars | undefined,
-  api: DataSourceLookupApi
-): Promise<DataSourceInstanceSettings | undefined> {
   await awaitFill();
 
   if (isExpressionReference(ref)) {
     return getExpressionDataSourceSettings() ?? getInstanceSettingsFallback(ref, scopedVars);
   }
 
-  const resolved = resolveRef(ref, scopedVars, api);
+  const resolved = resolveRef(ref, scopedVars);
   if (!resolved) {
     return getInstanceSettingsFallback(ref, scopedVars);
   }
