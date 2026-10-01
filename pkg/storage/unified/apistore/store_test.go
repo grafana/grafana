@@ -375,6 +375,9 @@ type resourceClientMock struct {
 	resourcepb.QuotasClient
 }
 
+// KV satisfies the ResourceClient interface; returns nil (KV not needed in this mock).
+func (r resourceClientMock) KV() resourcepb.ResourceKVClient { return nil }
+
 // always return GRPC Unauthenticated code
 func (r resourceClientMock) List(ctx context.Context, in *resourcepb.ListRequest, opts ...grpc.CallOption) (*resourcepb.ListResponse, error) {
 	return &resourcepb.ListResponse{}, status.Error(codes.Unauthenticated, "missing token")

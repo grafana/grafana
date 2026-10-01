@@ -30,10 +30,13 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/kvsubresource"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type BuildHandlerChainFuncFromBuilders = func([]APIGroupBuilder, prometheus.Registerer) BuildHandlerChainFunc
@@ -360,6 +363,8 @@ func InstallAPIs(
 	features featuremgmt.FeatureToggles,
 	builderMetrics *BuilderMetrics,
 	apiResourceConfig *serverstorage.ResourceConfig,
+	kvClient resourcepb.ResourceKVClient,
+	access accesscontrol.AccessControl,
 ) error {
 	dualWrite := NewDualWriteBuilder(scheme, storageOpts, dualWriteService, builderMetrics)
 
@@ -380,7 +385,7 @@ func InstallAPIs(
 	for group, buildersForGroup := range buildersGroupMap {
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
-			if err := installAPIGroupsForBuilder(&g, group, b, apiResourceConfig, scheme, optsGetter, dualWrite, reg, optsregister, storageOpts, features); err != nil {
+			if err := installAPIGroupsForBuilder(&g, group, b, apiResourceConfig, scheme, optsGetter, dualWrite, reg, optsregister, storageOpts, features, kvClient, access); err != nil {
 				return err
 			}
 		}
@@ -402,7 +407,8 @@ func InstallAPIs(
 
 func installAPIGroupsForBuilder(g *genericapiserver.APIGroupInfo, group string, b APIGroupBuilder, apiResourceConfig *serverstorage.ResourceConfig, scheme *runtime.Scheme,
 	optsGetter generic.RESTOptionsGetter, dualWrite grafanarest.DualWriteBuilder, reg prometheus.Registerer, optsregister apistore.StorageOptionsRegister,
-	storageOpts *options.StorageOptions, features featuremgmt.FeatureToggles) error {
+	storageOpts *options.StorageOptions, features featuremgmt.FeatureToggles,
+	kvClient resourcepb.ResourceKVClient, access accesscontrol.AccessControl) error {
 	if err := b.UpdateAPIGroupInfo(g, APIGroupOptions{
 		Scheme:              scheme,
 		OptsGetter:          optsGetter,
@@ -441,6 +447,16 @@ func installAPIGroupsForBuilder(g *genericapiserver.APIGroupInfo, group string, 
 			if len(resources) == 0 {
 				delete(g.VersionedResourcesStorageMap, "v0alpha1")
 			}
+		}
+	}
+
+	// Inject kv subresource for any kind whose manifest declares kv.
+	// The injection runs after both pruning passes so only served versions
+	// and resources receive the new storage entries.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagStorageResourceKV) {
+		if mp, ok := b.(ManifestDataProvider); ok {
+			kvsubresource.InjectForManifest(g, mp.GetManifestData(), kvClient, access)
 		}
 	}
 

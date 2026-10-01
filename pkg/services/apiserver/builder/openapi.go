@@ -20,6 +20,7 @@ import (
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/kvsubresource"
 )
 
 var (
@@ -45,7 +46,8 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder, additionalGetters ...open
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
 		defs := common.GetOpenAPIDefinitions(ref) // common grafana apis
 		maps.Copy(defs, data.GetOpenAPIDefinitions(ref))
-		maps.Copy(defs, secret.GetOpenAPIDefinitions(ref)) // Expose secret reference to all resources
+		maps.Copy(defs, secret.GetOpenAPIDefinitions(ref))        // Expose secret reference to all resources
+		maps.Copy(defs, kvsubresource.GetOpenAPIDefinitions(ref)) // KV subresource types
 
 		for _, getter := range additionalGetters {
 			if getter != nil {

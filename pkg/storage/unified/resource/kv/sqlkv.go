@@ -33,6 +33,7 @@ const (
 	StatsAggregatesSection        = "stats/aggregates"
 	NATSPeersSection              = "nats/peers"
 	VersionPolicySection          = "apiserver/versionpolicy"
+	ResourceKVSection             = "resource/kv"
 )
 
 // validSaveSections is the set of sections accepted by SqlKV.Save.
@@ -48,6 +49,7 @@ var validSaveSections = map[string]bool{
 	StatsAggregatesSection:        true,
 	NATSPeersSection:              true,
 	VersionPolicySection:          true,
+	ResourceKVSection:             true,
 }
 
 var _ KV = (*SqlKV)(nil)
@@ -137,6 +139,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "nats_discovery_peers"
 	case VersionPolicySection:
 		tableName = "resource_version_policy"
+	case ResourceKVSection:
+		tableName = "resource_kv"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}

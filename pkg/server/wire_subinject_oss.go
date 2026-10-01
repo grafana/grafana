@@ -59,6 +59,7 @@ var moduleServerSet = wire.NewSet(
 )
 
 var dashboardStatsSet = wire.NewSet(
+	sql.ProvideResourceKVStoreForSearch,
 	builders.ProvideDashboardStats,
 	wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)),
 )
@@ -79,6 +80,10 @@ var zanzanaReconcilerStateSet = wire.NewSet(
 
 var searchSupportSet = wire.NewSet(
 	dashboardStatsSet,
+	// ProvideModuleServerKV provides nil kv.KV for the module-server context;
+	// ProvideResourceKVStoreForSearch (inside dashboardStatsSet) converts that
+	// nil into a nil *kv.ResourceKVStore, keeping stats as the OSS no-op.
+	sql.ProvideModuleServerKV,
 	migrations.ProvideOSSMigrations,
 	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
 	bus.ProvideBus,
@@ -117,7 +122,9 @@ func InitializeSearchSupport(cfg *setting.Cfg, features featuremgmt.FeatureToggl
 // the vector backfiller views filter, for the storage-server target running
 // without enable_search. It receives the dependencies the module server has
 // already constructed so they aren't recreated.
+// ProvideModuleServerKV supplies nil kv.KV, keeping stats as the OSS no-op
+// for this deployment target.
 func InitializeDashboardStats(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg promclient.Registerer) (builders.DashboardStats, error) {
-	wire.Build(dashboardStatsSet)
+	wire.Build(dashboardStatsSet, sql.ProvideModuleServerKV)
 	return nil, nil
 }

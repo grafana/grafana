@@ -20,11 +20,15 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/kvsubresource"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type LegacyStorageProvider interface {
@@ -159,6 +163,7 @@ func BuildOpenAPIDefGetter(
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := make(map[string]common.OpenAPIDefinition)
 		maps.Copy(defs, appsdkapiserver.GetCommonOpenAPIDefinitions(ref))
+		maps.Copy(defs, kvsubresource.GetOpenAPIDefinitions(ref)) // KV subresource types
 		for _, installer := range appInstallers {
 			maps.Copy(defs, installer.GetOpenAPIDefinitions(ref))
 		}
@@ -175,6 +180,9 @@ func InstallAPIs(
 	dualWriteService dualwrite.Service,
 	builderMetrics *builder.BuilderMetrics,
 	apiResourceConfig *serverstore.ResourceConfig,
+	kvClient resourcepb.ResourceKVClient,
+	access accesscontrol.AccessControl,
+	features featuremgmt.FeatureToggles,
 ) error {
 	logger := logging.FromContext(ctx)
 	effectiveOptsGetter := restOpsGetter
@@ -203,6 +211,9 @@ func InstallAPIs(
 			dualWriteService:  dualWriteService,
 			builderMetrics:    builderMetrics,
 			apiResourceConfig: apiResourceConfig,
+			kvClient:          kvClient,
+			access:            access,
+			features:          features,
 		}
 		if err := installer.InstallAPIs(wrapper, effectiveOptsGetter); err != nil {
 			return fmt.Errorf("failed to install APIs for app %s: %w", installer.ManifestData().AppName, err)

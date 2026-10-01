@@ -433,6 +433,9 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		}
 	}
 
+	// The standalone storage server doesn't wire the resource KV store yet, so
+	// neither the ResourceKV service nor its create/delete lifecycle hooks run
+	// here; storage.resourceKV only works with in-process storage for now.
 	serverOptions := ServerOptions{
 		WatchExpiry:    s.watchExpiry,
 		Backend:        s.backend,

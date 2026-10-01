@@ -181,11 +181,12 @@ func newClient(opts options.StorageOptions,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
 			},
+			KVStore: makeResourceKVStore(ctx, features, kvStore),
 		})
 		if err != nil {
 			return nil, err
 		}
-		return resource.NewLocalResourceClient(server), nil
+		return resource.NewLocalResourceClient(server, makeResourceKVServer(ctx, features, kvStore)...), nil
 
 	case options.StorageTypeUnifiedGrpc:
 		if opts.Address == "" {
@@ -268,6 +269,9 @@ func newClient(opts options.StorageOptions,
 			Features:       features,
 			SecureValues:   secure,
 			DashboardStats: dashboardStats,
+			// KVStore wires the resource lifecycle hooks (clear-on-create and
+			// async cleanup on delete) when the storage.resourceKV toggle is on.
+			KVStore: makeResourceKVStore(ctx, features, kvStore),
 		}
 
 		if cfg.QOSEnabled {
@@ -312,8 +316,29 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		return resource.NewLocalResourceClient(server), nil
+		return resource.NewLocalResourceClient(server, makeResourceKVServer(ctx, features, kvStore)...), nil
 	}
+}
+
+// makeResourceKVStore returns a ResourceKVStore when the storage.resourceKV
+// toggle is on and a KV store is available. Returns nil otherwise (hooks off).
+func makeResourceKVStore(ctx context.Context, features featuremgmt.FeatureToggles, kvStore kv.KV) *kv.ResourceKVStore {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabled(ctx, featuremgmt.FlagStorageResourceKV) || kvStore == nil {
+		return nil
+	}
+	return kv.NewResourceKVStore(kvStore)
+}
+
+// makeResourceKVServer constructs a ResourceKVServer when the storage.resourceKV
+// toggle is on and a KV store is available. Returns nil (empty slice) otherwise,
+// so existing callers that pass no kvSrv continue to work.
+func makeResourceKVServer(ctx context.Context, features featuremgmt.FeatureToggles, kvStore kv.KV) []resourcepb.ResourceKVServer {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabled(ctx, featuremgmt.FlagStorageResourceKV) || kvStore == nil {
+		return nil
+	}
+	return []resourcepb.ResourceKVServer{resource.NewResourceKVServer(kv.NewResourceKVStore(kvStore))}
 }
 
 func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {

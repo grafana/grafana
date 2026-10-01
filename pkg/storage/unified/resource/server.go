@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
@@ -339,6 +340,18 @@ type SearchOptions struct {
 	// How often to rebuild dashboard index. 0 disables periodic rebuilds.
 	DashboardIndexMaxAge time.Duration
 
+	// KVStatsRefreshInterval bounds how often updaterFn re-scans a
+	// namespace's KV stats and compares them against the stats the current
+	// index was built with, when storage.resourceKV is on. A difference
+	// queues a full namespace rebuild through the existing rebuild queue —
+	// it never evicts or swaps the builder used to build documents.
+	//
+	// Zero means "not configured"; withSearch applies a 5m default when
+	// KVStore is active. With the toggle off (KVStore == nil), this field is
+	// always ignored: updaterFn uses the memoised builder from build(), matching
+	// the default behaviour exactly.
+	KVStatsRefreshInterval time.Duration
+
 	// Maximum age of file-based index that can be reused. Ignored if zero.
 	MaxIndexAge time.Duration
 
@@ -524,6 +537,16 @@ type ResourceServerOptions struct {
 	// GetResourceDailyStats). It requires a KV-backed StorageBackend so the
 	// ingester can share its KV store and lease manager.
 	UsageStatsEnabled bool
+
+	// KVStore, when non-nil, wires the resource lifecycle hooks behind the
+	// storage.resourceKV toggle:
+	//   - clear-on-create: after a successful create, synchronously wipes the
+	//     name prefix, so a recreated or restored object always starts with
+	//     empty KV even if the delete-time cleanup has not yet run.
+	//   - async cleanup on delete: any delete (soft or hard) enqueues a
+	//     best-effort prefix delete.
+	// Nil disables both hooks (toggle-off path).
+	KVStore *kv.ResourceKVStore
 }
 
 // Runnable is anything the server can launch in a goroutine and that
@@ -723,6 +746,11 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		}
 	}
 
+	// Wire the resource KV lifecycle hooks when the caller supplies a store.
+	// The caller is responsible for checking the feature toggle before setting
+	// this field; nil here means the hooks are disabled (toggle-off path).
+	s.kvStore = opts.KVStore
+
 	return s, nil
 }
 
@@ -832,6 +860,10 @@ type server struct {
 	// statsIngester buffers and flushes usage stats events. nil when the
 	// usage stats feature is off or the backend is not KV-backed.
 	statsIngester *usagestats.Ingester
+
+	// kvStore is used for lifecycle hooks: synchronous clear-on-create and
+	// asynchronous cleanup on delete. Nil when storage.resourceKV is off.
+	kvStore *kv.ResourceKVStore
 }
 
 // Init implements ResourceServer.
@@ -1267,6 +1299,21 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 		}
 		rsp.Error = AsErrorResult(err)
 	}
+
+	// Clear any KV rows left behind by a previous object with this name, so a
+	// recreated or restored object starts empty even when the delete-time cleanup
+	// is pending or has failed. It only runs once the create has succeeded, so a
+	// rejected create (e.g. the name already exists) never touches the existing
+	// object's KV. Best-effort: a KV failure is logged and doesn't fail the create.
+	if s.kvStore != nil && rsp.Error == nil {
+		k := req.Key
+		if err := s.kvStore.DeleteAllForName(ctx, k.Group, k.Resource, k.Namespace, k.Name); err != nil {
+			s.log.FromContext(ctx).Warn("kv clear-on-create failed",
+				"group", k.Group, "resource", k.Resource,
+				"namespace", k.Namespace, "name", k.Name,
+				"error", err)
+		}
+	}
 	return rsp, nil
 }
 
@@ -1526,6 +1573,27 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
+
+	// Async KV cleanup: enqueue a best-effort prefix delete after a successful
+	// delete (soft to trash or hard purge). Runs in a goroutine so it never
+	// blocks or extends the delete response. Uses the server context so cleanup
+	// is bounded by the server's lifetime and stops on shutdown.
+	// Failures are logged; they never fail the delete.
+	if s.kvStore != nil && err == nil && rsp.Error == nil {
+		group := req.Key.GetGroup()
+		resource := req.Key.GetResource()
+		namespace := req.Key.GetNamespace()
+		name := req.Key.GetName()
+		go func() {
+			if cleanErr := s.kvStore.DeleteAllForName(s.ctx, group, resource, namespace, name); cleanErr != nil {
+				s.log.Warn("kv async delete cleanup failed",
+					"group", group, "resource", resource,
+					"namespace", namespace, "name", name,
+					"error", cleanErr)
+			}
+		}()
+	}
+
 	return rsp, nil
 }
 

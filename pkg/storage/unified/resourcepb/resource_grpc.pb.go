@@ -1017,3 +1017,356 @@ var Quotas_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "resource.proto",
 }
+
+const (
+	ResourceKV_Get_FullMethodName              = "/resource.ResourceKV/Get"
+	ResourceKV_Save_FullMethodName             = "/resource.ResourceKV/Save"
+	ResourceKV_Delete_FullMethodName           = "/resource.ResourceKV/Delete"
+	ResourceKV_Keys_FullMethodName             = "/resource.ResourceKV/Keys"
+	ResourceKV_Batch_FullMethodName            = "/resource.ResourceKV/Batch"
+	ResourceKV_ScanNamespace_FullMethodName    = "/resource.ResourceKV/ScanNamespace"
+	ResourceKV_DeleteAllForName_FullMethodName = "/resource.ResourceKV/DeleteAllForName"
+)
+
+// ResourceKVClient is the client API for ResourceKV service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ResourceKV provides scoped accessory-data storage per resource object.
+// Fine-grained authz is enforced in the API layer; this service
+// requires only an authenticated identity on every call.
+type ResourceKVClient interface {
+	Get(ctx context.Context, in *ResourceKVGetRequest, opts ...grpc.CallOption) (*ResourceKVGetResponse, error)
+	Save(ctx context.Context, in *ResourceKVSaveRequest, opts ...grpc.CallOption) (*ResourceKVSaveResponse, error)
+	Delete(ctx context.Context, in *ResourceKVDeleteRequest, opts ...grpc.CallOption) (*ResourceKVDeleteResponse, error)
+	Keys(ctx context.Context, in *ResourceKVKeysRequest, opts ...grpc.CallOption) (*ResourceKVKeysResponse, error)
+	Batch(ctx context.Context, in *ResourceKVBatchRequest, opts ...grpc.CallOption) (*ResourceKVBatchResponse, error)
+	ScanNamespace(ctx context.Context, in *ResourceKVScanRequest, opts ...grpc.CallOption) (ResourceKV_ScanNamespaceClient, error)
+	DeleteAllForName(ctx context.Context, in *ResourceKVDeleteAllForNameRequest, opts ...grpc.CallOption) (*ResourceKVDeleteAllForNameResponse, error)
+}
+
+type resourceKVClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewResourceKVClient(cc grpc.ClientConnInterface) ResourceKVClient {
+	return &resourceKVClient{cc}
+}
+
+func (c *resourceKVClient) Get(ctx context.Context, in *ResourceKVGetRequest, opts ...grpc.CallOption) (*ResourceKVGetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResourceKVGetResponse)
+	err := c.cc.Invoke(ctx, ResourceKV_Get_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceKVClient) Save(ctx context.Context, in *ResourceKVSaveRequest, opts ...grpc.CallOption) (*ResourceKVSaveResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResourceKVSaveResponse)
+	err := c.cc.Invoke(ctx, ResourceKV_Save_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceKVClient) Delete(ctx context.Context, in *ResourceKVDeleteRequest, opts ...grpc.CallOption) (*ResourceKVDeleteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResourceKVDeleteResponse)
+	err := c.cc.Invoke(ctx, ResourceKV_Delete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceKVClient) Keys(ctx context.Context, in *ResourceKVKeysRequest, opts ...grpc.CallOption) (*ResourceKVKeysResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResourceKVKeysResponse)
+	err := c.cc.Invoke(ctx, ResourceKV_Keys_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceKVClient) Batch(ctx context.Context, in *ResourceKVBatchRequest, opts ...grpc.CallOption) (*ResourceKVBatchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResourceKVBatchResponse)
+	err := c.cc.Invoke(ctx, ResourceKV_Batch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceKVClient) ScanNamespace(ctx context.Context, in *ResourceKVScanRequest, opts ...grpc.CallOption) (ResourceKV_ScanNamespaceClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ResourceKV_ServiceDesc.Streams[0], ResourceKV_ScanNamespace_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &resourceKVScanNamespaceClient{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ResourceKV_ScanNamespaceClient interface {
+	Recv() (*ResourceKVScanResponse, error)
+	grpc.ClientStream
+}
+
+type resourceKVScanNamespaceClient struct {
+	grpc.ClientStream
+}
+
+func (x *resourceKVScanNamespaceClient) Recv() (*ResourceKVScanResponse, error) {
+	m := new(ResourceKVScanResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *resourceKVClient) DeleteAllForName(ctx context.Context, in *ResourceKVDeleteAllForNameRequest, opts ...grpc.CallOption) (*ResourceKVDeleteAllForNameResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResourceKVDeleteAllForNameResponse)
+	err := c.cc.Invoke(ctx, ResourceKV_DeleteAllForName_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ResourceKVServer is the server API for ResourceKV service.
+// All implementations should embed UnimplementedResourceKVServer
+// for forward compatibility
+//
+// ResourceKV provides scoped accessory-data storage per resource object.
+// Fine-grained authz is enforced in the API layer; this service
+// requires only an authenticated identity on every call.
+type ResourceKVServer interface {
+	Get(context.Context, *ResourceKVGetRequest) (*ResourceKVGetResponse, error)
+	Save(context.Context, *ResourceKVSaveRequest) (*ResourceKVSaveResponse, error)
+	Delete(context.Context, *ResourceKVDeleteRequest) (*ResourceKVDeleteResponse, error)
+	Keys(context.Context, *ResourceKVKeysRequest) (*ResourceKVKeysResponse, error)
+	Batch(context.Context, *ResourceKVBatchRequest) (*ResourceKVBatchResponse, error)
+	ScanNamespace(*ResourceKVScanRequest, ResourceKV_ScanNamespaceServer) error
+	DeleteAllForName(context.Context, *ResourceKVDeleteAllForNameRequest) (*ResourceKVDeleteAllForNameResponse, error)
+}
+
+// UnimplementedResourceKVServer should be embedded to have forward compatible implementations.
+type UnimplementedResourceKVServer struct {
+}
+
+func (UnimplementedResourceKVServer) Get(context.Context, *ResourceKVGetRequest) (*ResourceKVGetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedResourceKVServer) Save(context.Context, *ResourceKVSaveRequest) (*ResourceKVSaveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Save not implemented")
+}
+func (UnimplementedResourceKVServer) Delete(context.Context, *ResourceKVDeleteRequest) (*ResourceKVDeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedResourceKVServer) Keys(context.Context, *ResourceKVKeysRequest) (*ResourceKVKeysResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Keys not implemented")
+}
+func (UnimplementedResourceKVServer) Batch(context.Context, *ResourceKVBatchRequest) (*ResourceKVBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Batch not implemented")
+}
+func (UnimplementedResourceKVServer) ScanNamespace(*ResourceKVScanRequest, ResourceKV_ScanNamespaceServer) error {
+	return status.Errorf(codes.Unimplemented, "method ScanNamespace not implemented")
+}
+func (UnimplementedResourceKVServer) DeleteAllForName(context.Context, *ResourceKVDeleteAllForNameRequest) (*ResourceKVDeleteAllForNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAllForName not implemented")
+}
+
+// UnsafeResourceKVServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ResourceKVServer will
+// result in compilation errors.
+type UnsafeResourceKVServer interface {
+	mustEmbedUnimplementedResourceKVServer()
+}
+
+func RegisterResourceKVServer(s grpc.ServiceRegistrar, srv ResourceKVServer) {
+	s.RegisterService(&ResourceKV_ServiceDesc, srv)
+}
+
+func _ResourceKV_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceKVGetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceKVServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceKV_Get_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceKVServer).Get(ctx, req.(*ResourceKVGetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceKV_Save_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceKVSaveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceKVServer).Save(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceKV_Save_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceKVServer).Save(ctx, req.(*ResourceKVSaveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceKV_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceKVDeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceKVServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceKV_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceKVServer).Delete(ctx, req.(*ResourceKVDeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceKV_Keys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceKVKeysRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceKVServer).Keys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceKV_Keys_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceKVServer).Keys(ctx, req.(*ResourceKVKeysRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceKV_Batch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceKVBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceKVServer).Batch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceKV_Batch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceKVServer).Batch(ctx, req.(*ResourceKVBatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceKV_ScanNamespace_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ResourceKVScanRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ResourceKVServer).ScanNamespace(m, &resourceKVScanNamespaceServer{ServerStream: stream})
+}
+
+type ResourceKV_ScanNamespaceServer interface {
+	Send(*ResourceKVScanResponse) error
+	grpc.ServerStream
+}
+
+type resourceKVScanNamespaceServer struct {
+	grpc.ServerStream
+}
+
+func (x *resourceKVScanNamespaceServer) Send(m *ResourceKVScanResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _ResourceKV_DeleteAllForName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceKVDeleteAllForNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceKVServer).DeleteAllForName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceKV_DeleteAllForName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceKVServer).DeleteAllForName(ctx, req.(*ResourceKVDeleteAllForNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ResourceKV_ServiceDesc is the grpc.ServiceDesc for ResourceKV service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ResourceKV_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.ResourceKV",
+	HandlerType: (*ResourceKVServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Get",
+			Handler:    _ResourceKV_Get_Handler,
+		},
+		{
+			MethodName: "Save",
+			Handler:    _ResourceKV_Save_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _ResourceKV_Delete_Handler,
+		},
+		{
+			MethodName: "Keys",
+			Handler:    _ResourceKV_Keys_Handler,
+		},
+		{
+			MethodName: "Batch",
+			Handler:    _ResourceKV_Batch_Handler,
+		},
+		{
+			MethodName: "DeleteAllForName",
+			Handler:    _ResourceKV_DeleteAllForName_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ScanNamespace",
+			Handler:       _ResourceKV_ScanNamespace_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "resource.proto",
+}

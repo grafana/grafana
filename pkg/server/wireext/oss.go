@@ -145,6 +145,7 @@ var BasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
+	sql.ProvideResourceKVStoreForSearch,
 	builders.ProvideDashboardStats,
 	wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)),
 	search2.ProvideDocumentBuilders,

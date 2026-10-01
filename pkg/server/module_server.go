@@ -446,7 +446,7 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) fun
 			}
 			kvStore := s.kvStore
 			if kvStore == nil {
-				kvStore, err = sql.ProvideKV(s.cfg, eDB)
+				kvStore, err = sql.ProvideKV(s.cfg, s.features, eDB)
 				if err != nil {
 					return nil, err
 				}

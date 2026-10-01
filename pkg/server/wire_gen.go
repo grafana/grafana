@@ -106,8 +106,13 @@ func InitializeSearchSupport(cfg *setting.Cfg, features featuremgmt.FeatureToggl
 	if err != nil {
 		return SearchSupport{}, err
 	}
-	ossDashboardStats := builders.ProvideDashboardStats()
-	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
+	kv, err := sql.ProvideModuleServerKV(cfg)
+	if err != nil {
+		return SearchSupport{}, err
+	}
+	resourceKVStore := sql.ProvideResourceKVStoreForSearch(features, kv)
+	ossDashboardStats := builders.ProvideDashboardStats(resourceKVStore)
+	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats, resourceKVStore)
 	searchSupport := SearchSupport{
 		DocBuilders:    documentBuilderSupplier,
 		DashboardStats: ossDashboardStats,
@@ -119,8 +124,15 @@ func InitializeSearchSupport(cfg *setting.Cfg, features featuremgmt.FeatureToggl
 // the vector backfiller views filter, for the storage-server target running
 // without enable_search. It receives the dependencies the module server has
 // already constructed so they aren't recreated.
+// ProvideModuleServerKV supplies nil kv.KV, keeping stats as the OSS no-op
+// for this deployment target.
 func InitializeDashboardStats(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus.Registerer) (builders.DashboardStats, error) {
-	ossDashboardStats := builders.ProvideDashboardStats()
+	kv, err := sql.ProvideModuleServerKV(cfg)
+	if err != nil {
+		return nil, err
+	}
+	resourceKVStore := sql.ProvideResourceKVStoreForSearch(features, kv)
+	ossDashboardStats := builders.ProvideDashboardStats(resourceKVStore)
 	return ossDashboardStats, nil
 }
 
@@ -135,7 +147,7 @@ var moduleServerSet = wire.NewSet(
 	ossBaseCLISet, tracing.ProvideTracingConfig, tracing.ProvideService, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, resource.ProvideVectorMetrics, ProvideNoopModuleRegisterer, sql.ProvideModuleServerKV, sql.ProvideExperimentalKV, store.ProvideDefaultStoreProvider, authz.ProvideReconcileCRDs, authz.ProvideDeferredZanzanaReconcilerState,
 )
 
-var dashboardStatsSet = wire.NewSet(builders.ProvideDashboardStats, wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)))
+var dashboardStatsSet = wire.NewSet(sql.ProvideResourceKVStoreForSearch, builders.ProvideDashboardStats, wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)))
 
 // zanzanaReconcilerStateSet builds the reconciler's state store from its own
 // SQL store, so the zanzana-server target gets one without the base module
@@ -143,5 +155,5 @@ var dashboardStatsSet = wire.NewSet(builders.ProvideDashboardStats, wire.Bind(ne
 var zanzanaReconcilerStateSet = wire.NewSet(migrations.ProvideOSSMigrations, wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)), bus.ProvideBus, wire.Bind(new(bus.Bus), new(*bus.InProcBus)), sqlstore.ProvideService, wire.Bind(new(db.DB), new(*sqlstore.SQLStore)), kvstore.ProvideService, authz.ProvideZanzanaReconcilerState)
 
 var searchSupportSet = wire.NewSet(
-	dashboardStatsSet, migrations.ProvideOSSMigrations, wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)), bus.ProvideBus, wire.Bind(new(bus.Bus), new(*bus.InProcBus)), sqlstore.ProvideService, wire.Bind(new(db.DB), new(*sqlstore.SQLStore)), search.ProvideDocumentBuilders,
+	dashboardStatsSet, sql.ProvideModuleServerKV, migrations.ProvideOSSMigrations, wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)), bus.ProvideBus, wire.Bind(new(bus.Bus), new(*bus.InProcBus)), sqlstore.ProvideService, wire.Bind(new(db.DB), new(*sqlstore.SQLStore)), search.ProvideDocumentBuilders,
 )

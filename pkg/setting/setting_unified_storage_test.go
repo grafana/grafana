@@ -607,3 +607,30 @@ func TestStorageServicesEnabled(t *testing.T) {
 		})
 	}
 }
+
+func TestKVStatsRefreshInterval(t *testing.T) {
+	t.Run("defaults to 0", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, time.Duration(0), cfg.KVStatsRefreshInterval,
+			"kv_stats_refresh_interval must default to 0 (prototype default applied by withSearch)")
+	})
+
+	t.Run("reads configured value", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		section := cfg.Raw.Section("unified_storage")
+		_, err = section.NewKey("kv_stats_refresh_interval", "50ms")
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, 50*time.Millisecond, cfg.KVStatsRefreshInterval,
+			"kv_stats_refresh_interval must be parsed from ini")
+	})
+}

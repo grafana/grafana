@@ -752,3 +752,133 @@ service Quotas {
   // Get current quota usage and limits
   rpc GetQuotaUsage(QuotaUsageRequest) returns (QuotaUsageResponse);
 }
+
+// ResourceKVGetRequest retrieves a single KV entry for a parent resource.
+message ResourceKVGetRequest {
+  ResourceKey parent = 1;
+  reserved 2;
+  reserved "uid";
+  string owner = 3;
+  string key = 4;
+}
+
+message ResourceKVGetResponse {
+  ErrorResult error = 1;
+  bytes value = 2;
+  int64 updated_at = 3;
+  string updated_by = 4;
+}
+
+// ResourceKVSaveRequest upserts a KV entry for a parent resource.
+message ResourceKVSaveRequest {
+  ResourceKey parent = 1;
+  reserved 2;
+  reserved "uid";
+  string owner = 3;
+  string key = 4;
+  bytes value = 5;
+  string by = 6;
+}
+
+message ResourceKVSaveResponse {
+  ErrorResult error = 1;
+}
+
+// ResourceKVDeleteRequest removes a KV entry.
+message ResourceKVDeleteRequest {
+  ResourceKey parent = 1;
+  reserved 2;
+  reserved "uid";
+  string owner = 3;
+  string key = 4;
+}
+
+message ResourceKVDeleteResponse {
+  ErrorResult error = 1;
+}
+
+// ResourceKVKeysRequest lists keys for a parent resource.
+// If owner is non-empty the scan is narrowed to that owner's prefix.
+message ResourceKVKeysRequest {
+  ResourceKey parent = 1;
+  reserved 2;
+  reserved "uid";
+  string owner = 3;
+  string start_key = 4;
+  int64 limit = 5;
+}
+
+message ResourceKVKeysResponse {
+  ErrorResult error = 1;
+  repeated string keys = 2;
+}
+
+// ResourceKVBatchOp is a single operation in a batch.
+message ResourceKVBatchOp {
+  enum Mode {
+    MODE_UNSPECIFIED = 0;
+    PUT = 1;
+    CREATE = 2;
+    UPDATE = 3;
+    DELETE = 4;
+  }
+  Mode mode = 1;
+  string owner = 2;
+  string key = 3;
+  bytes value = 4;
+  string by = 5;
+}
+
+// ResourceKVBatchRequest executes multiple operations atomically.
+message ResourceKVBatchRequest {
+  ResourceKey parent = 1;
+  reserved 2;
+  reserved "uid";
+  repeated ResourceKVBatchOp ops = 3;
+}
+
+message ResourceKVBatchResponse {
+  ErrorResult error = 1;
+}
+
+// ResourceKVScanRequest scans all KV entries for a namespace.
+message ResourceKVScanRequest {
+  string group = 1;
+  string resource = 2;
+  string namespace = 3;
+}
+
+message ResourceKVScanResponse {
+  string name = 1;
+  reserved 2;
+  reserved "uid";
+  string owner = 3;
+  string key = 4;
+  bytes value = 5;
+}
+
+// ResourceKVDeleteAllForNameRequest deletes all KV entries for a resource name.
+// Used for async cleanup after a delete and for the clear after a successful create.
+message ResourceKVDeleteAllForNameRequest {
+  string group = 1;
+  string resource = 2;
+  string namespace = 3;
+  string name = 4;
+}
+
+message ResourceKVDeleteAllForNameResponse {
+  ErrorResult error = 1;
+}
+
+// ResourceKV provides scoped accessory-data storage per resource object.
+// Fine-grained authz is enforced in the API layer; this service
+// requires only an authenticated identity on every call.
+service ResourceKV {
+  rpc Get(ResourceKVGetRequest) returns (ResourceKVGetResponse);
+  rpc Save(ResourceKVSaveRequest) returns (ResourceKVSaveResponse);
+  rpc Delete(ResourceKVDeleteRequest) returns (ResourceKVDeleteResponse);
+  rpc Keys(ResourceKVKeysRequest) returns (ResourceKVKeysResponse);
+  rpc Batch(ResourceKVBatchRequest) returns (ResourceKVBatchResponse);
+  rpc ScanNamespace(ResourceKVScanRequest) returns (stream ResourceKVScanResponse);
+  rpc DeleteAllForName(ResourceKVDeleteAllForNameRequest) returns (ResourceKVDeleteAllForNameResponse);
+}

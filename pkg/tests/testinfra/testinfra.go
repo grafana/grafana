@@ -826,6 +826,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
+	if opts.KVStatsRefreshInterval > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("kv_stats_refresh_interval", opts.KVStatsRefreshInterval.String())
+		require.NoError(t, err)
+	}
 	if opts.NATSEnabled {
 		listenAddress := opts.NATSListenAddress
 		if listenAddress == "" {
@@ -1201,6 +1207,13 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64
 	EnableSQLKVBackend          bool
+	// KVStatsRefreshInterval, when > 0, sets [unified_storage]
+	// kv_stats_refresh_interval in the test server's ini. Tests can set a short
+	// value (e.g. 50ms) so the per-namespace dashboard builder is considered
+	// stale after that interval and rebuilt on the next incremental update,
+	// allowing require.Eventually to observe fresh KV stats in the search index.
+	KVStatsRefreshInterval time.Duration
+
 	// ProvisioningKeysOnlyReList sets [provisioning] keys_only_relist, making the
 	// connection informer's periodic re-list ask storage for keys instead of whole
 	// objects. Off by default, matching the shipped default.

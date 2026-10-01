@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/stretchr/testify/require"
 )
 
@@ -219,6 +222,123 @@ func TestWithNatsWatchMaxAge(t *testing.T) {
 			resourceOpts := &resource.ResourceServerOptions{}
 			require.NoError(t, withNatsWatchMaxAge(&ServerOptions{Cfg: cfg}, resourceOpts))
 			require.Equal(t, tt.want, resourceOpts.NatsWatchMaxAge)
+		})
+	}
+}
+
+// fakeKVBackedDashboardStats simulates OssDashboardStats with a non-nil KV
+// delegate: it implements the optional RefreshesFromKV capability and always
+// reports true.
+type fakeKVBackedDashboardStats struct{}
+
+func (fakeKVBackedDashboardStats) GetStats(context.Context, string) (map[string]map[string]int64, error) {
+	return nil, nil
+}
+
+func (fakeKVBackedDashboardStats) GetDashboardStats(context.Context, string, string) (map[string]int64, error) {
+	return nil, nil
+}
+
+func (fakeKVBackedDashboardStats) RefreshesFromKV() bool { return true }
+
+// fakeExplicitNonKVDashboardStats implements RefreshesFromKV but reports
+// false, e.g. an OssDashboardStats whose KV delegate is nil.
+type fakeExplicitNonKVDashboardStats struct{}
+
+func (fakeExplicitNonKVDashboardStats) GetStats(context.Context, string) (map[string]map[string]int64, error) {
+	return nil, nil
+}
+
+func (fakeExplicitNonKVDashboardStats) GetDashboardStats(context.Context, string, string) (map[string]int64, error) {
+	return nil, nil
+}
+
+func (fakeExplicitNonKVDashboardStats) RefreshesFromKV() bool { return false }
+
+// fakeHTTPDashboardStats simulates Enterprise's usageinsights HTTP-backed
+// DashboardStats: it implements only builders.DashboardStats, with no notion
+// of a KV refresh loop, so it does not implement RefreshesFromKV at all.
+type fakeHTTPDashboardStats struct{}
+
+func (fakeHTTPDashboardStats) GetStats(context.Context, string) (map[string]map[string]int64, error) {
+	return nil, nil
+}
+
+func (fakeHTTPDashboardStats) GetDashboardStats(context.Context, string, string) (map[string]int64, error) {
+	return nil, nil
+}
+
+// TestWithSearchKVStatsRefreshInterval verifies the generic (any-kind) KV
+// stats builder refresh loop: enabled whenever a KVStore is present,
+// independent of DashboardStats or its optional RefreshesFromKV capability
+// (opts.KVStore != nil). Deciding whether dashboards specifically benefit
+// from a scan is now search.go's job, per pinned builder
+// (resource.KVFieldSnapshotter): DashboardDocumentBuilder.KVFieldSnapshot()
+// still returns ok=false for Enterprise's legacy (non-KV) DashboardStats,
+// so dashboards see no change in behaviour there -- but the interval this
+// function computes is no longer gated on DashboardStats at all, since a
+// KV-sourced kind's builder (e.g. playlists) is never a DashboardStats and
+// must still get the refresh loop it needs.
+func TestWithSearchKVStatsRefreshInterval(t *testing.T) {
+	tests := []struct {
+		name           string
+		kvStore        *kv.ResourceKVStore
+		dashboardStats builders.DashboardStats
+		cfgInterval    time.Duration
+		want           time.Duration
+	}{
+		{
+			name:           "no KV store: interval stays 0 even if DashboardStats would refresh",
+			kvStore:        nil,
+			dashboardStats: fakeKVBackedDashboardStats{},
+			want:           0,
+		},
+		{
+			name:           "KV store present but DashboardStats is nil: default interval applied (gate is KVStore alone)",
+			kvStore:        &kv.ResourceKVStore{},
+			dashboardStats: nil,
+			want:           5 * time.Minute,
+		},
+		{
+			name:           "KV store present, non-KV DashboardStats (Enterprise-style, no capability): default interval applied",
+			kvStore:        &kv.ResourceKVStore{},
+			dashboardStats: fakeHTTPDashboardStats{},
+			want:           5 * time.Minute,
+		},
+		{
+			name:           "KV store present, DashboardStats explicitly reports RefreshesFromKV=false: default interval applied",
+			kvStore:        &kv.ResourceKVStore{},
+			dashboardStats: fakeExplicitNonKVDashboardStats{},
+			want:           5 * time.Minute,
+		},
+		{
+			name:           "KV store present, DashboardStats reports RefreshesFromKV=true: default interval applied",
+			kvStore:        &kv.ResourceKVStore{},
+			dashboardStats: fakeKVBackedDashboardStats{},
+			want:           5 * time.Minute,
+		},
+		{
+			name:           "KV store present, RefreshesFromKV=true, configured interval overrides the default",
+			kvStore:        &kv.ResourceKVStore{},
+			dashboardStats: fakeKVBackedDashboardStats{},
+			cfgInterval:    5 * time.Second,
+			want:           5 * time.Second,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.KVStatsRefreshInterval = tt.cfgInterval
+
+			resourceOpts := &resource.ResourceServerOptions{}
+			opts := &ServerOptions{
+				Cfg:            cfg,
+				KVStore:        tt.kvStore,
+				DashboardStats: tt.dashboardStats,
+			}
+			require.NoError(t, withSearch(opts, resourceOpts))
+			require.Equal(t, tt.want, resourceOpts.Search.KVStatsRefreshInterval)
 		})
 	}
 }

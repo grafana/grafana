@@ -4937,6 +4937,21 @@
     },
     {
       "metadata": {
+        "name": "resourceKV",
+        "resourceVersion": "1790251457812",
+        "creationTimestamp": "2026-09-24T12:04:17Z",
+        "deletionTimestamp": "2026-09-24T12:04:54Z"
+      },
+      "spec": {
+        "description": "Enables the resource/kv storage section and kv subresource for declaring kinds",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "restrictedPluginApis",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-07-31T22:56:50Z",
@@ -5221,6 +5236,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "storage.resourceKV",
+        "resourceVersion": "1790251494062",
+        "creationTimestamp": "2026-09-24T12:04:54Z"
+      },
+      "spec": {
+        "description": "Enables the resource/kv storage section and kv subresource for declaring kinds",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

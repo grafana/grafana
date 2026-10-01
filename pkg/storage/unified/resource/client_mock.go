@@ -1576,6 +1576,53 @@ func (_c *MockResourceClient_Watch_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// KV provides a mock function with given fields:
+func (_m *MockResourceClient) KV() resourcepb.ResourceKVClient {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for KV")
+	}
+
+	var r0 resourcepb.ResourceKVClient
+	if rf, ok := ret.Get(0).(func() resourcepb.ResourceKVClient); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(resourcepb.ResourceKVClient)
+		}
+	}
+
+	return r0
+}
+
+// MockResourceClient_KV_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'KV'
+type MockResourceClient_KV_Call struct {
+	*mock.Call
+}
+
+// KV is a helper method to define mock.On call
+func (_e *MockResourceClient_Expecter) KV() *MockResourceClient_KV_Call {
+	return &MockResourceClient_KV_Call{Call: _e.mock.On("KV")}
+}
+
+func (_c *MockResourceClient_KV_Call) Run(run func()) *MockResourceClient_KV_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockResourceClient_KV_Call) Return(_a0 resourcepb.ResourceKVClient) *MockResourceClient_KV_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockResourceClient_KV_Call) RunAndReturn(run func() resourcepb.ResourceKVClient) *MockResourceClient_KV_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockResourceClient creates a new instance of MockResourceClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockResourceClient(t interface {

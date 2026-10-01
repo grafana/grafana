@@ -230,6 +230,15 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexMinCount = section.Key("index_min_count").MustInt(1)
 	// default to 24 hours because usage insights summarizes the data every 24 hours
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
+	// kv_stats_refresh_interval: how often a namespace's KV stats are
+	// re-scanned and compared against the stats the current search index
+	// was built with, when storage.resourceKV is on. A difference queues a
+	// full namespace rebuild through the existing rebuild queue. 0 means
+	// "use the prototype default (5m)". This is only applied when the
+	// KVStore is active; with the toggle off it has no effect. Tests can
+	// set a short value (e.g. 50ms) so the check runs on the first
+	// incremental update instead of waiting out the real default.
+	cfg.KVStatsRefreshInterval = section.Key("kv_stats_refresh_interval").MustDuration(0)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)

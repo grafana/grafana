@@ -48,6 +48,10 @@ type ResourceClient interface {
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.QuotasClient
+	// KV returns the ResourceKV gRPC client. It is exposed via an accessor
+	// rather than direct embedding because ResourceKVClient.Delete would
+	// conflict with ResourceStoreClient.Delete at the interface level.
+	KV() resourcepb.ResourceKVClient
 }
 
 type SearchClient interface {
@@ -66,6 +70,11 @@ type resourceClient struct {
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
 	resourcepb.QuotasClient
+	kvClient resourcepb.ResourceKVClient
+}
+
+func (c *resourceClient) KV() resourcepb.ResourceKVClient {
+	return c.kvClient
 }
 
 func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
@@ -96,6 +105,7 @@ func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientCo
 		BlobStoreClient:          resourcepb.NewBlobStoreClient(storageCc),
 		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(storageCc),
 		QuotasClient:             resourcepb.NewQuotasClient(storageCc),
+		kvClient:                 resourcepb.NewResourceKVClient(storageCc),
 	}
 }
 
@@ -109,7 +119,10 @@ func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc
 	return newResourceClient(cc, cci)
 }
 
-func NewLocalResourceClient(srv ResourceServer) ResourceClient {
+// NewLocalResourceClient builds an in-process ResourceClient backed by srv.
+// An optional ResourceKVServer may be passed to register the ResourceKV service
+// on the same channel; all existing callers that pass no kvSrv continue to work.
+func NewLocalResourceClient(srv ResourceServer, kvSrv ...resourcepb.ResourceKVServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
@@ -121,6 +134,26 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 	if s, ok := srv.(*server); ok {
 		metricsInt = UnaryRequestDurationInterceptor(s.storageMetrics)
 		convertErrors = s.grpcErrorResultToStatus
+	}
+
+	registerIntercepted := func(desc *grpc.ServiceDesc, impl interface{}) {
+		// Recovery is listed first so it is outermost and catches panics in auth and the handler.
+		// The shared grpcserver wires this same interceptor for the remote path; the in-proc
+		// channel here is its own server, so it needs its own wrap.
+		channel.RegisterService(
+			grpchan.InterceptServer(
+				desc,
+				grpc_middleware.ChainUnaryServer(
+					interceptors.UnaryPanicRecoveryInterceptor(),
+					grpcAuth.UnaryServerInterceptor(grpcAuthInt),
+				),
+				grpc_middleware.ChainStreamServer(
+					interceptors.StreamPanicRecoveryInterceptor(),
+					grpcAuth.StreamServerInterceptor(grpcAuthInt),
+				),
+			),
+			impl,
+		)
 	}
 
 	for _, desc := range []*grpc.ServiceDesc{
@@ -140,24 +173,12 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 		if metricsInt != nil && isResourceStore {
 			desc = grpchan.InterceptServer(desc, metricsInt, nil)
 		}
+		registerIntercepted(desc, srv)
+	}
 
-		// Recovery is listed first so it is outermost and catches panics in auth and the handler.
-		// The shared grpcserver wires this same interceptor for the remote path; the in-proc
-		// channel here is its own server, so it needs its own wrap.
-		channel.RegisterService(
-			grpchan.InterceptServer(
-				desc,
-				grpc_middleware.ChainUnaryServer(
-					interceptors.UnaryPanicRecoveryInterceptor(),
-					grpcAuth.UnaryServerInterceptor(grpcAuthInt),
-				),
-				grpc_middleware.ChainStreamServer(
-					interceptors.StreamPanicRecoveryInterceptor(),
-					grpcAuth.StreamServerInterceptor(grpcAuthInt),
-				),
-			),
-			srv,
-		)
+	// Register the ResourceKV service if a server implementation was provided.
+	if len(kvSrv) > 0 && kvSrv[0] != nil {
+		registerIntercepted(&resourcepb.ResourceKV_ServiceDesc, kvSrv[0])
 	}
 
 	clientInt := authnlib.NewGrpcClientInterceptor(

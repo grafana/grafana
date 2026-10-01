@@ -214,6 +214,14 @@ func ServedGroupVersions(
 	return served
 }
 
+// ManifestDataProvider lets a builder expose its full ManifestData so that
+// generic features (e.g. kv subresource auto-mount) can inspect per-kind
+// declarations without per-kind wiring. Builders that have a manifest should
+// implement this interface; those that do not are skipped gracefully.
+type ManifestDataProvider interface {
+	GetManifestData() *app.ManifestData
+}
+
 // ManifestsFromBuilders synthesizes manifests for resources that builders
 // advertise directly, so manifest-driven per-kind routes can discover them.
 // Builders can implement APIGroupManifestProvider to supply their full manifest

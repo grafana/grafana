@@ -308,6 +308,17 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("create table "+resource_version_policy_table.Name, migrator.NewAddTableMigration(resource_version_policy_table))
 	mg.AddMigration("Change key_path collation of resource_version_policy in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_version_policy ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
+	// Table backing the resource/kv section: name-keyed accessory data attached to resource objects.
+	resource_kv_table := migrator.Table{
+		Name: "resource_kv",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_MediumText, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+resource_kv_table.Name, migrator.NewAddTableMigration(resource_kv_table))
+	mg.AddMigration("Change key_path collation of resource_kv in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_kv ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
 	return marker
 }
 

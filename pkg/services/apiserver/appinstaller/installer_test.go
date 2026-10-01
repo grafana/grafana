@@ -528,6 +528,9 @@ func TestInstallAPIsInstallsWithTheRegisteredGetter(t *testing.T) {
 		nil, // dual write service
 		nil, // builder metrics
 		nil, // api resource config
+		nil, // kvClient
+		nil, // access
+		nil, // features
 	))
 
 	require.Same(t, reg, installer.installedWith,
@@ -566,6 +569,9 @@ func TestInstallAPIsWithoutARESTOptionsGetter(t *testing.T) {
 		nil, // dual write service
 		nil, // builder metrics
 		nil, // api resource config
+		nil, // kvClient
+		nil, // access
+		nil, // features
 	))
 
 	require.NotNil(t, installer.installedWith, "the app-sdk is never installed with a nil getter")

@@ -40,6 +40,7 @@ import (
 	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
@@ -108,6 +109,7 @@ type service struct {
 	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
 	accessClient       types.AccessClient
+	access             accesscontrol.AccessControl
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
@@ -140,6 +142,7 @@ func ProvideService(
 	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
 	accessClient types.AccessClient,
+	access accesscontrol.AccessControl,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	eventualResourceClient *resource.EventualClient,
@@ -171,6 +174,7 @@ func ProvideService(
 		secrets:                           secrets,
 		restConfigProvider:                restConfigProvider,
 		accessClient:                      accessClient,
+		access:                            access,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
 		apiExtensionsRunner:               apiExtensionsRunner,
@@ -523,6 +527,8 @@ func (s *service) start(ctx context.Context) error {
 		s.features,
 		s.builderMetrics,
 		apiResourceConfig,
+		s.unified.KV(),
+		s.access,
 	)
 	if err != nil {
 		return err
@@ -537,6 +543,9 @@ func (s *service) start(ctx context.Context) error {
 		s.dualWriter,
 		s.builderMetrics,
 		serverConfig.MergedResourceConfig,
+		s.unified.KV(),
+		s.access,
+		s.features,
 	); err != nil {
 		return err
 	}

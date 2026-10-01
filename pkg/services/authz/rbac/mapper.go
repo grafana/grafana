@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/kvregistry"
 )
 
 // Mapping maps a verb to a RBAC action and a resource name to a RBAC scope.
@@ -492,6 +493,60 @@ func withFolderActionSets(t translation) translation {
 	return t
 }
 
+// newKVTranslation returns the RBAC mapping for {resource}/kv or
+// {resource}/kv:batch. All HTTP verbs map to the parent resource's :read
+// action at the RBAC gate so that any caller who can read the parent can
+// issue read-only kv operations (GET, LIST). Write authz (PUT, DELETE, POST
+// batch) is enforced inside the KVConnector via kv:write on kv:owner:{owner},
+// not by verb-differentiated RBAC actions here.
+//
+// For folder-scoped resources (folderSupport=true), the view/edit/admin
+// action sets of the parent resource are mirrored so that users granted via
+// managed folder roles (e.g. folders:view) are authorized.
+//
+// Callers do not register explicit per-kind entries. Instead, Get derives the
+// translation generically from the parent resource entry whenever the static
+// table misses and kvregistry.HasKV confirms kv is mounted for that group/resource.
+//
+// The single-tenant apiserver rewrites kv requests to a get on the parent before
+// authorization, so this mapping is only reached by authorization chains that
+// check the original subresource, such as the multi-tenant apiserver.
+func newKVTranslation(resource string, folderSupport bool) translation {
+	readAction := resource + ":read"
+	verbMapping := map[string]string{
+		utils.VerbGet:              readAction,
+		utils.VerbList:             readAction,
+		utils.VerbWatch:            readAction,
+		utils.VerbCreate:           readAction,
+		utils.VerbUpdate:           readAction,
+		utils.VerbPatch:            readAction,
+		utils.VerbDelete:           readAction,
+		utils.VerbDeleteCollection: readAction,
+	}
+	t := translation{
+		resource:      resource,
+		attribute:     "uid",
+		verbMapping:   verbMapping,
+		folderSupport: folderSupport,
+	}
+	if folderSupport {
+		// Mirror the view-tier action sets so folder-granted users can reach kv.
+		// Any role that grants the parent's :read action (via :view or above)
+		// also grants kv access.
+		viewSets := []string{
+			resource + ":view", "folders:view",
+			resource + ":edit", "folders:edit",
+			resource + ":admin", "folders:admin",
+		}
+		as := make(map[string][]string, len(verbMapping))
+		for verb := range verbMapping {
+			as[verb] = viewSets
+		}
+		t.actionSetMapping = as
+	}
+	return t
+}
+
 // newSettingsTranslation maps setting.grafana.app/settings to the legacy
 // settings:read / settings:write actions. The K8s object name is the section,
 // so it lands in the conventional "uid" (object-name) attribute and the scope
@@ -853,6 +908,18 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 	resources := m[groupKey]
 	t, ok := resources[lookupResource]
 	if !ok {
+		// Generic kv fallback: when the static table has no entry for
+		// {resource}/kv or {resource}/kv:batch, derive the translation from
+		// the parent resource's entry if the kv subresource is actually mounted
+		// for that group/resource. This keeps per-kind kv authz entries out of
+		// the static map — any declaring kind gets the correct mapping for free.
+		if (subresource == "kv" || subresource == "kv:batch") && kvregistry.HasKV(group, resource) {
+			parent, parentOK := resources[resource]
+			if parentOK {
+				derived := newKVTranslation(parent.Resource(), parent.HasFolderSupport())
+				return &derived, true
+			}
+		}
 		return nil, false
 	}
 

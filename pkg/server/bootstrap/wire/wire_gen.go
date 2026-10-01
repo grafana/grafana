@@ -394,7 +394,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	kv, err := sql.ProvideKV(cfg, dbProvider)
+	kv, err := sql.ProvideKV(cfg, featureToggles, dbProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -468,8 +468,9 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	accessClient := authz.ProvideAuthZAccessClient(authZClients)
-	ossDashboardStats := builders.ProvideDashboardStats()
-	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
+	resourceKVStore := sql.ProvideResourceKVStoreForSearch(featureToggles, kv)
+	ossDashboardStats := builders.ProvideDashboardStats(resourceKVStore)
+	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats, resourceKVStore)
 	clockClock := clock.ProvideClock()
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
@@ -903,7 +904,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, accessClient, v8, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, apiExtensionsRunner, v9, builderMetrics, backend, policyRuleProvider, routerService)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, accessClient, accessControl, v8, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, apiExtensionsRunner, v9, builderMetrics, backend, policyRuleProvider, routerService)
 	if err != nil {
 		return nil, err
 	}
@@ -1242,8 +1243,17 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	accessClient := authz.ProvideAuthZAccessClient(authZClients)
-	ossDashboardStats := builders.ProvideDashboardStats()
-	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
+	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
+	if err != nil {
+		return nil, err
+	}
+	kv, err := sql.ProvideKV(cfg, featureToggles, dbProvider)
+	if err != nil {
+		return nil, err
+	}
+	resourceKVStore := sql.ProvideResourceKVStoreForSearch(featureToggles, kv)
+	ossDashboardStats := builders.ProvideDashboardStats(resourceKVStore)
+	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats, resourceKVStore)
 	clockClock := clock.ProvideClock()
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
@@ -1309,14 +1319,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	reranker, err := provider3.ProvideReranker(cfg, vectorMetrics)
-	if err != nil {
-		return nil, err
-	}
-	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
-	if err != nil {
-		return nil, err
-	}
-	kv, err := sql.ProvideKV(cfg, dbProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1687,7 +1689,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, accessClient, v8, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, apiExtensionsRunner, v9, builderMetrics, backend, policyRuleProvider, routerService)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, accessClient, accessControl, v8, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, apiExtensionsRunner, v9, builderMetrics, backend, policyRuleProvider, routerService)
 	if err != nil {
 		return nil, err
 	}

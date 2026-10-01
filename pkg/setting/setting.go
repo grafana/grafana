@@ -730,12 +730,20 @@ type Cfg struct {
 	AuthorizeBeforeFetchEnabled bool
 	// IndexPath the directory where index files are stored.
 	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
-	IndexPath                                  string
-	IndexWorkers                               int
-	IndexRebuildWorkers                        int
-	IndexFileThreshold                         int
-	IndexMinCount                              int
-	IndexRebuildInterval                       time.Duration
+	IndexPath            string
+	IndexWorkers         int
+	IndexRebuildWorkers  int
+	IndexFileThreshold   int
+	IndexMinCount        int
+	IndexRebuildInterval time.Duration
+	// KVStatsRefreshInterval bounds how often a namespace's KV stats are
+	// re-scanned and compared against the stats the current search index
+	// was built with, when the storage.resourceKV toggle is on. A
+	// difference queues a full namespace rebuild through the existing
+	// rebuild queue. 0 means use the prototype default (5m). Only applied
+	// when KVStore is active; with the toggle off this field is ignored and
+	// the memoised builder from the full build is always used.
+	KVStatsRefreshInterval                     time.Duration
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.

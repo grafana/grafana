@@ -3413,6 +3413,15 @@ var (
 			Expression:   "{}",
 			Generate:     Generate{React: true},
 		},
+		{
+			Name:         "storage.resourceKV",
+			Description:  "Enables the resource/kv storage section and kv subresource for declaring kinds",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

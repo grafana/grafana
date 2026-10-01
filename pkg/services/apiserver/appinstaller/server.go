@@ -17,10 +17,14 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/kvsubresource"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ appsdkapiserver.GenericAPIServer = (*serverWrapper)(nil)
@@ -34,12 +38,24 @@ type serverWrapper struct {
 	dualWriteService  dualwrite.Service
 	builderMetrics    *builder.BuilderMetrics
 	apiResourceConfig *serverstorage.ResourceConfig
+	kvClient          resourcepb.ResourceKVClient
+	access            accesscontrol.AccessControl
+	features          featuremgmt.FeatureToggles
 }
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
-	group := s.installer.ManifestData().Group
+	manifest := s.installer.ManifestData()
+	group := manifest.Group
 	// Prune first so servedForResource and the installed storage see the same set.
 	s.pruneDisabledResources(apiGroupInfo, group)
+
+	// Inject kv subresource for any kind whose manifest declares kv, after
+	// pruning so only served resources receive new storage entries.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagStorageResourceKV) {
+		kvsubresource.InjectForManifest(apiGroupInfo, manifest, s.kvClient, s.access)
+	}
+
 	servedForResource := servedVersionsForResource(apiGroupInfo, group)
 
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {

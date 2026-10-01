@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -60,6 +62,12 @@ type ServerOptions struct {
 	// DashboardStats is optional; nil disables the backfill views filter.
 	DashboardStats builders.DashboardStats
 
+	// KVStore, when non-nil, enables the resource lifecycle hooks (clear-on-
+	// create and async delete cleanup). Callers set this only when the
+	// storage.resourceKV toggle is on and a KV store is available; the field
+	// is wired through to resource.ResourceServerOptions.KVStore.
+	KVStore *kv.ResourceKVStore
+
 	// DisableStorageServices is used for standalone search server
 	DisableStorageServices bool
 }
@@ -91,6 +99,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withStorageMetrics,
 		withUsageStats,
 		withNatsWatchMaxAge,
+		withKVStore,
 	)
 	if err != nil {
 		return nil, err
@@ -314,6 +323,30 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
+	// KV stats builder refresh: enabled whenever KVStore is present. Which
+	// kind actually takes part is decided per builder (search.go's
+	// checkKVStatsFreshness type-asserts each pinned builder to
+	// resource.KVFieldSnapshotter and only scans when it returns ok==true) —
+	// not globally here. Dashboards keep today's semantics either way:
+	// DashboardDocumentBuilder.KVFieldSnapshot() returns ok=false with
+	// Enterprise's legacy (non-KV) sprinkles, exactly like the old
+	// kvRefresher gate this replaced, and ok=true when it's KV-backed. Every
+	// generic KV-sourced builder (playlists, and any future kind) is
+	// KV-backed by construction and always reports ok=true.
+	//
+	// With the toggle off, opts.KVStore is nil and this block is never entered,
+	// so search.go's updaterFn sees kvStatsRefreshInterval==0 and keeps the
+	// the default behaviour (memoised builder per build() call, no extra stats scan).
+	if opts.KVStore != nil {
+		const defaultKVStatsRefreshInterval = 5 * time.Minute
+		interval := opts.Cfg.KVStatsRefreshInterval
+		if interval == 0 {
+			// Not overridden via ini; use the prototype default.
+			interval = defaultKVStatsRefreshInterval
+		}
+		resourceOpts.Search.KVStatsRefreshInterval = interval
+	}
+
 	if opts.VectorBackend != nil {
 		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
 		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
@@ -390,6 +423,13 @@ func withVectorMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServe
 	if resourceOpts.VectorMetrics == nil {
 		resourceOpts.VectorMetrics = resource.ProvideVectorMetrics(nil)
 	}
+	return nil
+}
+
+// withKVStore wires the resource KV lifecycle store into the resource server
+// options. A nil KVStore is a valid no-op: the hooks are disabled.
+func withKVStore(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.KVStore = opts.KVStore
 	return nil
 }
 

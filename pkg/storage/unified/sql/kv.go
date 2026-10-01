@@ -9,6 +9,7 @@ import (
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -45,20 +46,41 @@ func ProvideModuleServerKV(cfg *setting.Cfg) (kv.KV, error) {
 	return nil, nil
 }
 
-func ProvideKV(cfg *setting.Cfg, eDB db.DBProvider) (kv.KV, error) {
+// ProvideKV provides the KV store for the resource API.
+// For the SQL storage type, the SQL KV store is always initialised when the
+// storage.resourceKV feature toggle is on, even if EnableSQLKVBackend is false.
+// This ensures the ResourceKV gRPC service and the kv subresource work out of
+// the box for feature-flag adopters who do not set the legacy ini option.
+func ProvideKV(cfg *setting.Cfg, features featuremgmt.FeatureToggles, eDB db.DBProvider) (kv.KV, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
 	switch storageType {
 	case options.StorageTypeFile:
 		return openBadgerKV(cfg)
 	case options.StorageTypeUnified:
-		if !cfg.EnableSQLKVBackend {
+		if !cfg.EnableSQLKVBackend && !features.IsEnabledGlobally(featuremgmt.FlagStorageResourceKV) { //nolint:staticcheck
 			return nil, nil
 		}
 		return openSQLKV(eDB)
 	default:
 		return nil, nil
 	}
+}
+
+// ProvideResourceKVStoreForSearch returns a *kv.ResourceKVStore for the search
+// dashboard-stats path when the storage.resourceKV toggle is on and a backing
+// KV store is available. Returns nil otherwise so callers get no-op stats.
+//
+// Uses the same toggle-check style as the existing resource lifecycle store
+// (unified/client.go makeResourceKVStore: features.IsEnabled with a
+// background context) rather than IsEnabledGlobally, so the two KV-gating
+// call sites read consistently.
+func ProvideResourceKVStoreForSearch(features featuremgmt.FeatureToggles, kvStore kv.KV) *kv.ResourceKVStore {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if kvStore == nil || !features.IsEnabled(context.Background(), featuremgmt.FlagStorageResourceKV) {
+		return nil
+	}
+	return kv.NewResourceKVStore(kvStore)
 }
 
 func openBadgerKV(cfg *setting.Cfg) (kv.KV, error) {

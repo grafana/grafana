@@ -106,6 +106,13 @@ func (a *GrafanaAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 	// allows a viewer to list but not to create.
 	if IsSearchRequest(attr) || IsListKeysRequest(attr) {
 		attr = AsReadAttributes(attr)
+	} else if IsKVRequest(attr) {
+		// Rewrite kv/kv:batch as a get on the parent resource so that the normal
+		// group authorizer and RBAC chain verify parent-read for every kind
+		// Without this, a blanket allow would bypass per-kind
+		// checks (e.g. playlists:read) for resources whose storage layer does
+		// not independently enforce access.
+		attr = AsParentGetAttributes(attr)
 	}
 	return a.auth.Authorize(ctx, attr)
 }
