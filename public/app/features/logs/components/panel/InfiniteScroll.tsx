@@ -11,7 +11,7 @@ import {
   canScrollBottom,
   canScrollTop,
   getVisibleRange,
-  type LoadMoreLogsRange,
+  type InfiniteScrollTimeRange,
   loadMoreRangeFromVisible,
   ScrollDirection,
   shouldLoadMore,
@@ -51,8 +51,8 @@ export interface Props {
 type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll-top' | 'pre-scroll-bottom' | 'loading';
 export type InfiniteScrollMode = 'interval' | 'unlimited';
 export type LoadMoreLogsType =
-  | ((range: LoadMoreLogsRange) => void)
-  | ((range: LoadMoreLogsRange, scrollDirection: ScrollDirection) => void);
+  | ((range: InfiniteScrollTimeRange) => void)
+  | ((range: InfiniteScrollTimeRange, scrollDirection: ScrollDirection) => void);
 
 export const InfiniteScroll = ({
   children,
