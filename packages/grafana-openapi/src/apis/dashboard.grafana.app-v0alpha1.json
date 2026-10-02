@@ -2388,11 +2388,19 @@
       "DashboardSnapshotWithDeleteKey": {
         "description": "This is returned from the POST command",
         "type": "object",
-        "required": ["metadata", "spec"],
+        "required": ["metadata", "spec", "blobs"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "blobs": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotBlobs"
+              }
+            ]
           },
           "deleteKey": {
             "description": "The delete key is only returned when the item is created.  It is not returned from a get request",
@@ -2704,11 +2712,19 @@
       },
       "Snapshot": {
         "type": "object",
-        "required": ["metadata", "spec"],
+        "required": ["metadata", "spec", "blobs"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "blobs": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotBlobs"
+              }
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -2739,6 +2755,34 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "SnapshotBlobReference": {
+        "type": "object",
+        "required": ["uid"],
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uid": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "SnapshotBlobs": {
+        "type": "object",
+        "properties": {
+          "dashboard": {
+            "$ref": "#/components/schemas/SnapshotBlobReference"
+          }
+        }
       },
       "SnapshotList": {
         "type": "object",
