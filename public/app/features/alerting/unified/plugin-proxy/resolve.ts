@@ -29,7 +29,11 @@ export function buildProxyContext(routePath: string, pathname: string, search: s
  * Runs a proxy end to end against a location. The route wrapper does these two steps separately so
  * it can skip the plugin check when the matcher says no, but for tests one call is easier to read.
  */
-async function resolveProxyTarget(proxy: RouteProxy, pathname: string, search: string): Promise<string | undefined> {
+export async function resolveProxyTarget(
+  proxy: RouteProxy,
+  pathname: string,
+  search: string
+): Promise<string | undefined> {
   const context = buildProxyContext(proxy.path, pathname, search);
   return proxy.matches(context) ? proxy.handler(context) : undefined;
 }

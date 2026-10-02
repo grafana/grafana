@@ -7,7 +7,7 @@ import { type MapLayerRegistryItem } from '@grafana/data';
 const LAYER_TYPE_BACKGROUND = 'background';
 const PAINT_BACKGROUND_OPACITY = 'background-opacity';
 
-interface MaplibreConfig {
+export interface MaplibreConfig {
   url: string;
   accessToken?: string;
 }

@@ -37,7 +37,7 @@ interface OwnProps {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-function UnconnectedNodeGraphContainer(props: Props) {
+export function UnconnectedNodeGraphContainer(props: Props) {
   const { dataFrames, range, splitOpenFn, withTraceView, datasourceType } = props;
   const getLinks = useLinks(range, splitOpenFn);
   const theme = useTheme2();

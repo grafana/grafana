@@ -47,7 +47,7 @@ interface Props {
   weekStart?: WeekStart;
 }
 
-interface PropsWithScreenSize extends Props {
+export interface PropsWithScreenSize extends Props {
   isFullscreen: boolean;
 }
 
@@ -55,7 +55,7 @@ interface FormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
-const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
+export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const {
     quickOptions = [],
     isReversed,

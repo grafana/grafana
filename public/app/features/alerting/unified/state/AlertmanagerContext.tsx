@@ -27,7 +27,7 @@ interface Context {
 
 const AlertmanagerContext = React.createContext<Context | undefined>(undefined);
 
-function getOrgAlertmanagerLocalStorageKey(orgId: number): string {
+export function getOrgAlertmanagerLocalStorageKey(orgId: number): string {
   return `${ALERTMANAGER_NAME_LOCAL_STORAGE_KEY}-org-${orgId}`;
 }
 

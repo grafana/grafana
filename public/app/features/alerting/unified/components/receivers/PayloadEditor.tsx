@@ -15,7 +15,7 @@ import { AlertTemplatePreviewData } from './TemplateData';
 import { TemplateDataTable } from './TemplateDataDocs';
 import { GenerateAlertDataModal } from './form/GenerateAlertDataModal';
 
-const RESET_TO_DEFAULT = 'Reset to defaults';
+export const RESET_TO_DEFAULT = 'Reset to defaults';
 
 export function PayloadEditor({
   payload,

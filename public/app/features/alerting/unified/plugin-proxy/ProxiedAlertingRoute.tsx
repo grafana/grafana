@@ -87,7 +87,7 @@ function useProxyContext(routePath: string): ProxyContext {
  *
  * Access control is left to the plugin — we only decide where the URL should be served from.
  */
-function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteComponent): GrafanaRouteComponent {
+export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteComponent): GrafanaRouteComponent {
   return function ProxiedAlertingRoute(props: GrafanaRouteComponentProps) {
     const context = useProxyContext(proxy.path);
     const belongsToPlugin = proxy.matches(context);

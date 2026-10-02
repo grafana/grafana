@@ -305,7 +305,7 @@ export interface OutlineSettingsTarget {
  * maps an outline item (variables/annotations/links/filters) to the sidebar settings it references
  * Hooks up to redirect to sidebar and scroll to the correct section
  */
-function getOutlineSettingsTarget(sceneObject: SceneObject): OutlineSettingsTarget | undefined {
+export function getOutlineSettingsTarget(sceneObject: SceneObject): OutlineSettingsTarget | undefined {
   if (sceneObject instanceof DashboardFiltersSet) {
     return { parent: sceneObject.state.dashboardRef.resolve(), categoryId: SidebarCategoryType.DashboardFilters };
   }

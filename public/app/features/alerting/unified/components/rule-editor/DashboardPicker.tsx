@@ -393,7 +393,9 @@ export function getDashboardUid(dashboardDTO: DashboardResponse | undefined) {
   return '';
 }
 
-function getDashboardFolderTitle(dashboardDTO: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | undefined) {
+export function getDashboardFolderTitle(
+  dashboardDTO: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | undefined
+) {
   if (!dashboardDTO) {
     return undefined;
   }

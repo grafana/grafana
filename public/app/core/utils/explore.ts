@@ -29,7 +29,7 @@ import { RefreshPicker } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type QueryOptions, type QueryTransaction } from 'app/types/explore';
 
-const DEFAULT_UI_STATE = {
+export const DEFAULT_UI_STATE = {
   dedupStrategy: LogsDedupStrategy.none,
 };
 
@@ -165,7 +165,7 @@ export const safeStringifyValue = (value: unknown, space?: number) => {
   return '';
 };
 
-function generateKey(index = 0): string {
+export function generateKey(index = 0): string {
   return `Q-${generateUUID()}-${index}`;
 }
 
@@ -302,7 +302,7 @@ export const stopQueryState = (querySubscription: Unsubscribable | undefined) =>
   }
 };
 
-function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
+export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }

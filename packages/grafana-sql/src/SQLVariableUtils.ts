@@ -32,7 +32,7 @@ export const updateFrame = (frame: DataFrame, meta?: SQLQueryMeta): DataFrame =>
   return { ...frame, length, fields };
 };
 
-const convertFieldsToVariableFields = (original_fields: Field[], meta?: SQLQueryMeta): Field[] => {
+export const convertFieldsToVariableFields = (original_fields: Field[], meta?: SQLQueryMeta): Field[] => {
   // scenario 1 : If no fields found, throw error
   if (original_fields.length < 1) {
     throw new Error('at least one field expected for variable');

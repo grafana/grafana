@@ -37,7 +37,7 @@ interface Props {
   items: SceneObject[];
 }
 
-function GroupSelectedActions({ items }: Props) {
+export function GroupSelectedActions({ items }: Props) {
   const manager = resolveGroupableManager(items);
   const rowGrouping = manager?.canGroupSelectionInto(items, 'row') ?? DISABLED;
   const tabGrouping = manager?.canGroupSelectionInto(items, 'tab') ?? DISABLED;

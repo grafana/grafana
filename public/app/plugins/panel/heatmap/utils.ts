@@ -26,7 +26,7 @@ import { type HeatmapData } from './fields';
 import { type FieldConfig, HeatmapSelectionMode, type YAxisConfig } from './panelcfg.gen';
 
 /** Validates and returns a safe log base (2 or 10), defaults to 2 if invalid */
-function toLogBase(value: number | undefined): 2 | 10 {
+export function toLogBase(value: number | undefined): 2 | 10 {
   return value === 10 ? 10 : 2;
 }
 
@@ -589,7 +589,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
 const CRISP_EDGES_GAP_MIN = 4;
 
-function heatmapPathsDense(opts: PathbuilderOpts) {
+export function heatmapPathsDense(opts: PathbuilderOpts) {
   const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity, xAlign = 1, yAlign = 1, ySizeDivisor = 1 } = opts;
 
   const pxRatio = devicePixelRatio;
@@ -708,7 +708,7 @@ function heatmapPathsDense(opts: PathbuilderOpts) {
   };
 }
 
-function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: string, yLayout?: HeatmapCellLayout) {
+export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: string, yLayout?: HeatmapCellLayout) {
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
       u,
@@ -777,7 +777,7 @@ function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: string, yLay
 }
 // accepts xMax, yMin, yMax, count
 // xbinsize? x tile sizes are uniform?
-function heatmapPathsSparse(opts: PathbuilderOpts) {
+export function heatmapPathsSparse(opts: PathbuilderOpts) {
   const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity } = opts;
 
   const pxRatio = devicePixelRatio;
@@ -904,7 +904,7 @@ function heatmapPathsSparse(opts: PathbuilderOpts) {
  * @param yMaxValues - Array of yMax bucket boundary values
  * @returns A valid expansion factor, or 1 as fallback
  */
-function calculateBucketExpansionFactor(yMinValues: unknown[], yMaxValues: unknown[]): number {
+export function calculateBucketExpansionFactor(yMinValues: unknown[], yMaxValues: unknown[]): number {
   // Guard against invalid bucket factors (e.g., division by zero when first bucket starts at 0)
   for (let i = 0; i < yMinValues.length; i++) {
     const yMin = yMinValues[i];
@@ -989,7 +989,7 @@ export function calculateYSizeDivisor(
  * Applies explicit min/max values to scale range for linear scales.
  * Returns the original values if explicitMin/explicitMax are undefined.
  */
-function applyExplicitMinMax(
+export function applyExplicitMinMax(
   scaleMin: number | null,
   scaleMax: number | null,
   explicitMin: number | undefined,

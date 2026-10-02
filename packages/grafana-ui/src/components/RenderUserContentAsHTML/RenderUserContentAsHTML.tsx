@@ -2,7 +2,8 @@ import { createElement, type HTMLAttributes, type PropsWithChildren, type HTMLEl
 
 import { textUtil } from '@grafana/data';
 
-interface RenderUserContentAsHTMLProps<T = HTMLSpanElement> extends Omit<HTMLAttributes<T>, 'dangerouslySetInnerHTML'> {
+export interface RenderUserContentAsHTMLProps<T = HTMLSpanElement>
+  extends Omit<HTMLAttributes<T>, 'dangerouslySetInnerHTML'> {
   component?: HTMLElementType;
   content: string;
 }

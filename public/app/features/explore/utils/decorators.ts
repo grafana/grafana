@@ -30,7 +30,7 @@ import { sortLogsResult } from '../../logs/utils';
  * dataFrames with different type of data. This is later used for type specific processing. As we use this in
  * Observable pipeline, it decorates the existing panelData to pass the results to later processing stages.
  */
-const decorateWithFrameTypeMetadata = async (data: PanelData): Promise<ExplorePanelData> => {
+export const decorateWithFrameTypeMetadata = async (data: PanelData): Promise<ExplorePanelData> => {
   const graphFrames: DataFrame[] = [];
   const tableFrames: DataFrame[] = [];
   const rawPrometheusFrames: DataFrame[] = [];
@@ -100,7 +100,7 @@ const decorateWithFrameTypeMetadata = async (data: PanelData): Promise<ExplorePa
   };
 };
 
-const decorateWithCorrelations = ({
+export const decorateWithCorrelations = ({
   showCorrelationEditorLinks,
   queries,
   correlations,
@@ -147,7 +147,7 @@ const decorateWithCorrelations = ({
   };
 };
 
-const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
+export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
   if (!data.graphFrames.length) {
     return { ...data, graphResult: null };
   }
@@ -160,7 +160,7 @@ const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
  * In this case the transformer should return single result, but it is possible that in the future it could return
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
-const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
+export const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
   if (data.tableFrames.length === 0) {
     return of({ ...data, tableResult: null });
   }

@@ -22,7 +22,7 @@ function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
 }
 
-function buildShortUrl(k8sShortUrl: ShortURL) {
+export function buildShortUrl(k8sShortUrl: ShortURL) {
   const key = k8sShortUrl.metadata.name;
   const hostUrl = buildHostUrl();
   // The resource namespace is not the org ID — it is `default`, `org-<id>` or

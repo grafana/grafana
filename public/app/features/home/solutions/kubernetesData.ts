@@ -182,7 +182,7 @@ async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem
 const kubernetesPrometheusResolution = createTtlCachedPromise(resolveKubernetesPrometheus, PROBE_TTL_MS);
 
 // Reset the cached datasource resolution (test seam).
-function resetKubernetesPrometheusResolution(): void {
+export function resetKubernetesPrometheusResolution(): void {
   kubernetesPrometheusResolution.reset();
 }
 

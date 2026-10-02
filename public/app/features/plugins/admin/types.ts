@@ -93,9 +93,9 @@ export interface CatalogPluginDetails {
   screenshots?: Screenshots[] | null;
 }
 
-type InsightLevel = 'ok' | 'warning' | 'danger' | 'good' | 'info';
+export type InsightLevel = 'ok' | 'warning' | 'danger' | 'good' | 'info';
 
-const SCORE_LEVELS = {
+export const SCORE_LEVELS = {
   EXCELLENT: 'Excellent',
   GOOD: 'Good',
   FAIR: 'Fair',

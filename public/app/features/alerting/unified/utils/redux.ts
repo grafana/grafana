@@ -147,7 +147,7 @@ export function withAppEvents<T>(
     });
 }
 
-const UNKNOW_ERROR = 'Unknown Error';
+export const UNKNOW_ERROR = 'Unknown Error';
 export function messageFromError(e: Error | FetchError | SerializedError): string {
   const logger = getLogger('features.alerting');
 

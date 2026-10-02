@@ -41,7 +41,7 @@ const SearchField = {
  * size side cheap either way, at roughly 280 bytes a row. Asking for more is pointless: the server
  * clamps to this.
  */
-const NOTEBOOKS_PAGE_LIMIT = 500;
+export const NOTEBOOKS_PAGE_LIMIT = 500;
 
 /** Projection: everything the table renders, and nothing else. */
 const SEARCH_FIELDS = [
@@ -447,7 +447,7 @@ function anonymousAuthor(): string {
 }
 
 /** Test seam: the latches are module state, so they have to be resettable between cases. */
-function __resetSearchAvailabilityForTests() {
+export function __resetSearchAvailabilityForTests() {
   searchUnavailable = false;
   searchConfirmedAvailable = false;
 }

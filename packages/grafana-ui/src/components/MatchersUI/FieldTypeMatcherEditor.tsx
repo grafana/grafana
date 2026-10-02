@@ -11,7 +11,7 @@ import { Stack } from '../Layout/Stack/Stack';
 
 import { type FieldMatcherUIRegistryItem, type MatcherUIProps } from './types';
 
-const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
+export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps, id, scope = 'series' } = props;
   const counts = useFieldCounts(data);
   const selectOptions = useCountSelectOptions(counts, scope, options);

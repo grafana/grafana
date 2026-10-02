@@ -11,7 +11,7 @@ const ARROW_DIRECTION: Partial<Record<string, 1 | -1>> = {
   ArrowUp: -1,
 };
 
-interface SegmentedToggleOption<T> {
+export interface SegmentedToggleOption<T> {
   value: T;
   label: string;
   icon?: IconName;

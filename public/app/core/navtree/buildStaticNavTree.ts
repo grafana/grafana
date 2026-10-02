@@ -95,7 +95,7 @@ const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
  * the end of their pipeline. Nav items registered via addNavEntries (e.g. by
  * the enterprise bundle) are appended into their target sections.
  */
-function buildStaticNavTree(): NavModelItem[] {
+export function buildStaticNavTree(): NavModelItem[] {
   const tree = [getHomeNode(), ...buildEntries(STATIC_NAV_ENTRIES)];
   return sortNavTree(applyRegisteredNavEntries(tree));
 }

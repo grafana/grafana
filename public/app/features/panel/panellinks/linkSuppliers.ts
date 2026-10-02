@@ -51,7 +51,7 @@ interface DataLinkScopedVars extends ScopedVars {
 /**
  * Link suppliers creates link models based on a link origin
  */
-const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisplay> | undefined => {
+export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisplay> | undefined => {
   const links = value.field.links;
   if (!links || links.length === 0) {
     return undefined;

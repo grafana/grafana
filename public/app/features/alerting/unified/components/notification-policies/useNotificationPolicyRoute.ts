@@ -44,7 +44,7 @@ import {
   omitRouteFromRouteTree,
 } from '../../utils/routeTree';
 
-function isRouteProvisioned(route: Route): boolean {
+export function isRouteProvisioned(route: Route): boolean {
   return isProvisionedResource(extractNotificationPolicyProvenance(route));
 }
 
@@ -155,7 +155,7 @@ export const useListNotificationPolicyRoutes = ({ skip }: Skippable = {}) => {
 };
 
 const amConfigRouteCache = new WeakMap<Route, Route>();
-function parseAmConfigRoute(route: Route): Route {
+export function parseAmConfigRoute(route: Route): Route {
   const cached = amConfigRouteCache.get(route);
   if (cached) {
     return cached;
@@ -383,7 +383,7 @@ export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
  * Convert Route to K8s compatible format. Make sure we aren't sending any additional properties the API doesn't recognize
  * because it will reply with excess properties in the HTTP headers
  */
-function createKubernetesRoutingTreeSpec(rootRoute: Route): RoutingTree {
+export function createKubernetesRoutingTreeSpec(rootRoute: Route): RoutingTree {
   const inheritableDefaultProperties: InheritableProperties = pick(routeAdapter.toPackage(rootRoute), INHERITABLE_KEYS);
 
   const name = rootRoute.name ?? ROOT_ROUTE_NAME;
@@ -447,7 +447,7 @@ export function stripNamedRouteLabel(labels: Labels): Labels {
   return rest;
 }
 
-function k8sRouteToRoute(route: RoutingTree): Route {
+export function k8sRouteToRoute(route: RoutingTree): Route {
   // The frontend always addresses the default (root) routing tree as ROOT_ROUTE_NAME on the wire, even when
   // the backend names it with the "default" alias. Canonicalize the name on read so downstream mutations
   // (delete/add/update) send "user-defined" instead of echoing the backend's alias back to the API.
@@ -486,7 +486,7 @@ function isValidMatcherOperator(type: string): type is MatcherOperator {
   return Object.values<string>(MatcherOperator).includes(type);
 }
 
-function k8sSubRouteToRoute(route: RoutingTreeRoute, rootName?: string): Route {
+export function k8sSubRouteToRoute(route: RoutingTreeRoute, rootName?: string): Route {
   return {
     ...route,
     name: rootName,
@@ -501,7 +501,7 @@ function k8sSubRouteToRoute(route: RoutingTreeRoute, rootName?: string): Route {
   };
 }
 
-function routeToK8sSubRoute(route: Route): RoutingTreeRoute {
+export function routeToK8sSubRoute(route: Route): RoutingTreeRoute {
   const { object_matchers, ...rest } = route;
   return {
     ...rest,

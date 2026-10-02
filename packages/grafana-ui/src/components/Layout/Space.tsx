@@ -3,7 +3,7 @@ import { type ThemeSpacingTokens } from '@grafana/data';
 import { Box } from './Box/Box';
 import { type ResponsiveProp } from './utils/responsiveness';
 
-interface SpaceProps {
+export interface SpaceProps {
   /**
    * The amount of vertical space to use.
    */

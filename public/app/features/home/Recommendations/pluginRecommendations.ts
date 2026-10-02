@@ -215,6 +215,6 @@ export function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
   return installedPlugins.get();
 }
 
-function resetInstalledPlugins(): void {
+export function resetInstalledPlugins(): void {
   installedPlugins.reset();
 }

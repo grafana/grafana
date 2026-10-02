@@ -17,7 +17,7 @@ const DIAGRAM_BODY = 'graph TD\n  A[Start] --> B[End]\n';
 const MARKDOWN_DIAGRAM_SNIPPET = `\n\`\`\`mermaid\n${DIAGRAM_BODY}\`\`\`\n`;
 const HTML_DIAGRAM_SNIPPET = `\n<pre class="mermaid">\n${DIAGRAM_BODY}</pre>\n`;
 
-const FORMAT_TOOLBAR_TEST_ID = 'TextNGEditor-format-toolbar';
+export const FORMAT_TOOLBAR_TEST_ID = 'TextNGEditor-format-toolbar';
 
 interface FormatAction {
   key: string;

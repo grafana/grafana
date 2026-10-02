@@ -35,7 +35,7 @@ import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
-interface Props {
+export interface Props {
   /** Input date for the component */
   date?: DateTime;
   /** Callback for returning the selected date */

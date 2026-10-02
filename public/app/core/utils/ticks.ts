@@ -1,7 +1,7 @@
 /**
  * Get decimal precision of number stored as a string ("3.14" => 2)
  */
-function getStringPrecision(num: string): number {
+export function getStringPrecision(num: string): number {
   if (isNaN(num as unknown as number)) {
     return 0;
   }
@@ -13,5 +13,3 @@ function getStringPrecision(num: string): number {
     return num.length - dotIndex - 1;
   }
 }
-
-export {};

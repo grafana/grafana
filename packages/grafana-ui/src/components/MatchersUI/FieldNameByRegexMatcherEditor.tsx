@@ -8,7 +8,7 @@ import { Stack } from '../Layout/Stack/Stack';
 
 import { type MatcherUIProps, type FieldMatcherUIRegistryItem } from './types';
 
-const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
+export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { id, options, onChange, scope = 'series' } = props;
   const [regexp, setRegexp] = useState(options);
 

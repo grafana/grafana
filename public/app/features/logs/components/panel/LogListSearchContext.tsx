@@ -12,7 +12,7 @@ export interface LogListSearchContextData {
   toggleFilterLogs: () => void;
 }
 
-const LogListSearchContext = createContext<LogListSearchContextData>({
+export const LogListSearchContext = createContext<LogListSearchContextData>({
   hideSearch: () => {},
   filterLogs: false,
   matchingUids: null,

@@ -121,13 +121,16 @@ export const changeCorrelationEditorDetails = createAction<CorrelationEditorDeta
   'explore/changeCorrelationEditorDetails'
 );
 
-interface NavigateToExploreDependencies {
+export interface NavigateToExploreDependencies {
   timeRange: TimeRange;
   getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
   openInNewWindow?: (url: string) => void;
 }
 
-const navigateToExplore = (panel: PanelModel, dependencies: NavigateToExploreDependencies): ThunkResult<void> => {
+export const navigateToExplore = (
+  panel: PanelModel,
+  dependencies: NavigateToExploreDependencies
+): ThunkResult<void> => {
   return async () => {
     const { timeRange, getExploreUrl, openInNewWindow } = dependencies;
 
@@ -152,7 +155,7 @@ const navigateToExplore = (panel: PanelModel, dependencies: NavigateToExploreDep
  * Global Explore state that handles multiple Explore areas and the split state
  */
 const initialExploreItemState = () => makeExplorePaneState();
-const initialExploreState: ExploreState = {
+export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
   correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
@@ -168,7 +171,7 @@ const initialExploreState: ExploreState = {
  * Global Explore reducer that handles multiple Explore areas (left and right).
  * Actions that have an `exploreId` get routed to the ExploreItemReducer.
  */
-const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
+export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
   if (splitClose.match(action)) {
     const { [action.payload]: _, ...panes } = { ...state.panes };
 

@@ -8,7 +8,7 @@ import { getFolderMetadataPath } from '../utils/folderMetadata';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 
-type FolderMetadataStatus = 'loading' | 'missing' | 'error' | 'ok';
+export type FolderMetadataStatus = 'loading' | 'missing' | 'error' | 'ok';
 
 export interface FolderMetadataResult {
   status: FolderMetadataStatus;

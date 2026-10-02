@@ -21,11 +21,11 @@ import { getSpanId } from './span';
 
 const getTraceSpans = (trace: TraceResponse) => trace.spans;
 
-const getTraceSpansAsMap = createSelector(getTraceSpans, (spans) =>
+export const getTraceSpansAsMap = createSelector(getTraceSpans, (spans) =>
   spans.reduce((map, span: TraceSpanData) => map.set(getSpanId(span), span), new Map())
 );
 
-const TREE_ROOT_ID = '__root__';
+export const TREE_ROOT_ID = '__root__';
 
 /**
  * Build a tree of { value: spanID, children } items derived from the

@@ -169,7 +169,7 @@ function stripLeadingSlashes(s: string): string {
  * Makefile) aren't tagged and never trigger a lookup. Links that fail this
  * (images, arbitrary files) are left as plain host links.
  */
-function isResourceLinkCandidate(path: string): boolean {
+export function isResourceLinkCandidate(path: string): boolean {
   if (path.endsWith('/')) {
     return true;
   }

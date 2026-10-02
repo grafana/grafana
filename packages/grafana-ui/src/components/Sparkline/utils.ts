@@ -71,7 +71,7 @@ export function preparePlotFrame(sparkline: FieldSparkline, config?: FieldConfig
 /**
  * apply configuration defaults and ensure that the range is never two equal values.
  */
-function getYRange(alignedFrame: DataFrame): Range.MinMax {
+export function getYRange(alignedFrame: DataFrame): Range.MinMax {
   const field = alignedFrame.fields[1];
   let { min, max } = field.state?.range!;
 

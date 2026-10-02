@@ -64,14 +64,19 @@ export function DataSourceDashboards({ uid }: Props) {
   );
 }
 
-type ViewProps = {
+export type ViewProps = {
   isLoading: boolean;
   dashboards: PluginDashboard[];
   onImportDashboard: (dashboard: PluginDashboard, overwrite: boolean) => void;
   onRemoveDashboard: (dashboard: PluginDashboard) => void;
 };
 
-const DataSourceDashboardsView = ({ isLoading, dashboards, onImportDashboard, onRemoveDashboard }: ViewProps) => {
+export const DataSourceDashboardsView = ({
+  isLoading,
+  dashboards,
+  onImportDashboard,
+  onRemoveDashboard,
+}: ViewProps) => {
   if (isLoading) {
     return <PageLoader />;
   }

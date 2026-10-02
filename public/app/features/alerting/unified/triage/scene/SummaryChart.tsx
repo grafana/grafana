@@ -48,7 +48,7 @@ const summaryChartVizConfig = VizConfigBuilders.timeseries()
  * multiple frames per alertstate. This transformation re-aggregates them back to one frame
  * per alertstate by summing the values.
  */
-const collapseByAlertstateTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) =>
+export const collapseByAlertstateTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) =>
   source.pipe(
     map((frames: DataFrame[]) =>
       lmap(

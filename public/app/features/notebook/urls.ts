@@ -43,7 +43,7 @@ export function notebookViewUrl(uid: string): string {
  * view route a reader would otherwise see first. `notebookEditHref` below is the equivalent for
  * consumers that render a plain `<a>` instead of navigating through the router.
  */
-function notebookEditUrl(uid: string): string {
+export function notebookEditUrl(uid: string): string {
   return `${notebookViewUrl(uid)}?${NOTEBOOK_EDIT_PARAM}=${NOTEBOOK_EDIT_PARAM_ON}`;
 }
 

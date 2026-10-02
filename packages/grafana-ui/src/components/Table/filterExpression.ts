@@ -3,7 +3,7 @@ const AND_SPLIT_REGEX = /\s*&&\s*/;
 const OR_SPLIT_REGEX = /\s*\|\|\s*/;
 const CLAUSE_REGEX = /^\$\s*(>=|<=|!==|!=|===|==|>|<|=)\s*(.+)$/;
 
-enum ExpressionOperator {
+export enum ExpressionOperator {
   EQ = '=',
   DOUBLE_EQ = '==',
   STRICT_EQ = '===',
@@ -58,7 +58,7 @@ export const comparableValue = (value: string): ComparableValue => {
   return result;
 };
 
-const makeComparator = (op: string, rhs: ComparableValue): Predicate => {
+export const makeComparator = (op: string, rhs: ComparableValue): Predicate => {
   switch (op) {
     case ExpressionOperator.EQ:
     case ExpressionOperator.DOUBLE_EQ:

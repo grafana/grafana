@@ -105,7 +105,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-type AccordionReferencesProps = {
+export type AccordionReferencesProps = {
   data: TraceSpanReference[];
   highContrast?: boolean;
   interactive?: boolean;

@@ -78,7 +78,7 @@ export class DashboardSrv {
 
 let singletonInstance: DashboardSrv;
 
-function setDashboardSrv(instance: DashboardSrv) {
+export function setDashboardSrv(instance: DashboardSrv) {
   singletonInstance = instance;
 }
 

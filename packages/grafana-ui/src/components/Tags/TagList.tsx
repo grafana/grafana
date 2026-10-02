@@ -10,7 +10,7 @@ import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 
 import { type OnTagClick, Tag } from './Tag';
 
-interface Props {
+export interface Props {
   /** Maximum number of the tags to display */
   displayMax?: number;
   /** Names of the tags to display */

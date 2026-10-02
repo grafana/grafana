@@ -82,7 +82,7 @@ export function EditDataSource({ uid, pageId }: Props) {
   );
 }
 
-type ViewProps = {
+export type ViewProps = {
   pageId?: string | null;
   dataSource: DataSourceSettingsType;
   dataSourceMeta: DataSourcePluginMeta;
@@ -95,7 +95,7 @@ type ViewProps = {
   onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettingsType>;
 };
 
-function EditDataSourceView({
+export function EditDataSourceView({
   pageId,
   dataSource,
   dataSourceMeta,

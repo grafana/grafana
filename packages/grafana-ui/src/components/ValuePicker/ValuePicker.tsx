@@ -9,7 +9,7 @@ import { type ComponentSize } from '../../types/size';
 import { Button, type ButtonFill, type ButtonVariant } from '../Button/Button';
 import { Select } from '../Select/Select';
 
-interface ValuePickerProps<T> {
+export interface ValuePickerProps<T> {
   /** Aria label applied to the input field */
   ['aria-label']?: string;
   /** Label to display on the picker button */

@@ -8,7 +8,7 @@ export interface AnnotationValue {
   value?: string;
 }
 
-const annotationNames = ['grafana.app/folder', 'grafana.app/createdBy', 'grafana.app/updatedBy'] as const;
+export const annotationNames = ['grafana.app/folder', 'grafana.app/createdBy', 'grafana.app/updatedBy'] as const;
 export type AnnotationName = (typeof annotationNames)[number];
 
 export function annotationValues(state: EditorState): Map<AnnotationName, AnnotationValue> {

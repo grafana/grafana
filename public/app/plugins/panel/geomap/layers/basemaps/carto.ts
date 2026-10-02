@@ -11,7 +11,7 @@ import { type MapLayerRegistryItem } from '@grafana/data';
 
 const ATTRIBUTION = `<a href="https://carto.com/attribution/">©CARTO</a> <a href="https://www.openstreetmap.org/copyright">©OpenStreetMap</a> contributors`;
 
-enum LayerTheme {
+export enum LayerTheme {
   Auto = 'auto',
   Light = 'light',
   Dark = 'dark',

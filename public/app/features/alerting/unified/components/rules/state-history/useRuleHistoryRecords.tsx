@@ -59,7 +59,7 @@ export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: str
 
 // Each alert instance is represented by a data frame
 // Each frame consists of two fields: timestamp and state change
-function logRecordsToDataFrame(
+export function logRecordsToDataFrame(
   instanceLabels: string,
   records: LogRecord[],
   commonLabels: Array<[string, string]>,

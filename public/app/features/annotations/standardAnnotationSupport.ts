@@ -175,7 +175,10 @@ const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
   { key: 'dashboardUID' },
 ];
 
-function getAnnotationsFromData(data: DataFrame[], options?: AnnotationEventMappings): Observable<AnnotationEvent[]> {
+export function getAnnotationsFromData(
+  data: DataFrame[],
+  options?: AnnotationEventMappings
+): Observable<AnnotationEvent[]> {
   return of(data).pipe(
     singleFrameFromPanelData(),
     map((frame) => {

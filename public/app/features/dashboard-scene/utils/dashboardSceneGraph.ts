@@ -36,7 +36,7 @@ function getVizPanels(scene: DashboardSceneLike): VizPanel[] {
  * Will look for all panels in the entire scene starting from root
  * and find the next free panel id
  */
-function getNextPanelId(scene: SceneObject): number {
+export function getNextPanelId(scene: SceneObject): number {
   let max = 0;
 
   sceneGraph

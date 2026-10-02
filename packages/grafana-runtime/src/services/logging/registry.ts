@@ -12,7 +12,7 @@ export function initializeLoggersRegistry() {
   }
 }
 
-function addLogger(source: LoggerSource, defaults?: LoggerDefaults): void {
+export function addLogger(source: LoggerSource, defaults?: LoggerDefaults): void {
   if (loggersRegistry[source]) {
     console.warn(`LoggerRegistry: a logger with the source:${source} already exists, keeping existing entry.`);
     return;

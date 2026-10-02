@@ -245,7 +245,7 @@ const SKELETON_ROWS = 5;
  *
  * The other page-level tables in Grafana sit between 10 and 30, so this is in step with them.
  */
-const ROWS_PER_PAGE = 20;
+export const ROWS_PER_PAGE = 20;
 
 /**
  * timestamp is unix millis; zero means the index has no value for it.

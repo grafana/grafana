@@ -9,7 +9,7 @@ import { type GenericDataSourcePlugin } from '../types';
 
 import { type DataSourceTypesLoadedPayload } from './actions';
 
-const initialState: DataSourcesState = {
+export const initialState: DataSourcesState = {
   dataSources: [],
   plugins: [],
   categories: [],
@@ -33,7 +33,7 @@ export const dataSourcePluginsLoaded = createAction<DataSourceTypesLoadedPayload
   'dataSources/dataSourcePluginsLoaded'
 );
 export const setDataSourcesSearchQuery = createAction<string>('dataSources/setDataSourcesSearchQuery');
-const setDataSourcesLayoutMode = createAction<LayoutMode>('dataSources/setDataSourcesLayoutMode');
+export const setDataSourcesLayoutMode = createAction<LayoutMode>('dataSources/setDataSourcesLayoutMode');
 export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/setDataSourceTypeSearchQuery');
 export const setNameAndVersion = createAction<{ name: string; version?: number }>('dataSources/setNameAndVersion');
 export const setDefaultAndVersion = createAction<{ isDefault: boolean; version?: number }>(
@@ -46,7 +46,7 @@ export const setIsSortAscending = createAction<boolean>('dataSources/setIsSortAs
 // because the state would become frozen and during run time we would get errors because Angular would try to mutate
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
-const dataSourcesReducer = (state: DataSourcesState = initialState, action: AnyAction): DataSourcesState => {
+export const dataSourcesReducer = (state: DataSourcesState = initialState, action: AnyAction): DataSourcesState => {
   if (dataSourcesLoad.match(action)) {
     return { ...state, isLoadingDataSources: true };
   }
@@ -140,7 +140,7 @@ export const testDataSourceSucceeded = createAction<TestingStatus>('dataSourceSe
 
 export const testDataSourceFailed = createAction<TestingStatus>('dataSourceSettings/testDataSourceFailed');
 
-const dataSourceSettingsReducer = (
+export const dataSourceSettingsReducer = (
   state: DataSourceSettingsState = initialDataSourceSettingsState,
   action: AnyAction
 ): DataSourceSettingsState => {

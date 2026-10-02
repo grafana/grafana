@@ -234,7 +234,7 @@ function onAttributeLinkClick(
   }
 }
 
-const LinkValue = ({
+export const LinkValue = ({
   link,
   datasourceType,
   openLinksInSameTab = false,

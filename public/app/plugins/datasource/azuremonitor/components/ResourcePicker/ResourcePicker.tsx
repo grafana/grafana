@@ -55,7 +55,7 @@ interface ResourcePickerProps<T> {
   selectionNotice?: (selectedRows: ResourceRowGroup) => string;
 }
 
-const RECENT_RESOURCES_KEY = (queryType: ResourcePickerQueryType) =>
+export const RECENT_RESOURCES_KEY = (queryType: ResourcePickerQueryType) =>
   `grafana.datasources.azuremonitor.recent-resources.${queryType}`;
 
 const ResourcePicker = ({

@@ -13,7 +13,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { type DashboardModel } from '../state/DashboardModel';
 
-function trackDashboardLoaded(dashboard: DashboardModel, duration?: number, versionBeforeMigration?: number) {
+export function trackDashboardLoaded(dashboard: DashboardModel, duration?: number, versionBeforeMigration?: number) {
   // Count the different types of variables
   const variables = getV1SchemaVariables(dashboard.templating.list);
   // Count the different types of panels

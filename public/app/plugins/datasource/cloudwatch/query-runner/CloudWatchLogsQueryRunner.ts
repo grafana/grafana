@@ -62,8 +62,8 @@ import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../utils
 
 import { CloudWatchRequest } from './CloudWatchRequest';
 
-const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
-const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
+export const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
+export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
 // This class handles execution of CloudWatch logs query data queries
 export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
@@ -620,7 +620,7 @@ const LOG_TREND_FIELD_NAME = 'logTrend';
  * Takes DataQueryResponse and converts any "log trend" fields (that are in JSON.rawMessage form)
  * into data frame fields that the table vis will be able to display
  */
-function convertTrendHistogramToSparkline(dataQueryResponse: DataQueryResponse): void {
+export function convertTrendHistogramToSparkline(dataQueryResponse: DataQueryResponse): void {
   dataQueryResponse.data.forEach((frame) => {
     let fieldIndexToReplace = null;
     // log trend histogram field from CW API is of shape Record<timestamp as string, value>

@@ -392,7 +392,7 @@ export function statToString(config: FieldConfig, value: number | string): strin
  * Utilities mainly for testing
  */
 
-function makeNodesDataFrame(
+export function makeNodesDataFrame(
   count: number,
   partialNodes: Array<Partial<Record<NodeGraphDataFrameFieldNames, unknown>>> = []
 ) {
@@ -481,7 +481,7 @@ function nodesFrame() {
   });
 }
 
-function makeEdgesDataFrame(
+export function makeEdgesDataFrame(
   edges: Array<Partial<{ source: string; target: string; mainstat: number; secondarystat: number }>>
 ) {
   const frame = edgesFrame();

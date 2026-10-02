@@ -367,7 +367,7 @@ export interface RoutesMatchingFilters {
   matchedRoutesWithPath: FilterResult;
 }
 
-const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: RouteFilters): RoutesMatchingFilters => {
+export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: RouteFilters): RoutesMatchingFilters => {
   const { contactPointFilter, labelMatchersFilter = [] } = filters;
   const hasFilter = contactPointFilter || labelMatchersFilter.length > 0;
   const havebothFilters = Boolean(contactPointFilter) && labelMatchersFilter.length > 0;

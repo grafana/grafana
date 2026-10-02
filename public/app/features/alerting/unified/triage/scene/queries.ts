@@ -207,7 +207,7 @@ function getAlertsSummariesQuery(countBy: string, filter: string): string {
 }
 
 /** Instant table query returning one row per unique alert instance (for label breakdown). */
-function uniqueAlertInstancesQuery(filter: string): SceneDataQuery {
+export function uniqueAlertInstancesQuery(filter: string): SceneDataQuery {
   return getDataQuery(uniqueAlertInstancesExpr(filter), {
     instant: true,
     range: false,

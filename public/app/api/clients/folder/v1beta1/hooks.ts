@@ -73,7 +73,7 @@ import {
   type OwnerReference,
 } from './index';
 
-function getFolderUrl(uid: string, title: string): string {
+export function getFolderUrl(uid: string, title: string): string {
   // slugifyForUrl strips non-ASCII characters, so for titles composed entirely of non-Latin
   // characters (CJK, Cyrillic, Arabic, etc.) the slug is empty. Fall back to uid to avoid
   // double-slash URLs that break route matching.

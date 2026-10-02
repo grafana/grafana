@@ -7,7 +7,7 @@ import { RadioButtonGroup, type RadioButtonGroupProps } from '../Forms/RadioButt
 
 import { getGroupDescriptionForScope, getGroupLabelForScope } from './utils';
 
-interface MatcherScopeSelectorProps extends Omit<RadioButtonGroupProps<MatcherScope>, 'options'> {
+export interface MatcherScopeSelectorProps extends Omit<RadioButtonGroupProps<MatcherScope>, 'options'> {
   scopes: Set<MatcherScope>;
   allowedScopes?: MatcherScope[];
 }

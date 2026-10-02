@@ -20,7 +20,7 @@ import { CloudWatchPromQLLanguageProvider } from './CloudWatchPromQLLanguageProv
  * builder. CloudWatch doesn't extend PrometheusDatasource; this shim lets us
  * reuse the upstream UI without a hard dependency.
  */
-function makeCloudWatchPrometheusDatasourceShim(datasource: CloudWatchDatasource): PrometheusDatasource {
+export function makeCloudWatchPrometheusDatasourceShim(datasource: CloudWatchDatasource): PrometheusDatasource {
   const shim: Partial<PrometheusDatasource> = {
     interpolateString: (value: string, scopedVars?: ScopedVars) => datasource.templateSrv.replace(value, scopedVars),
     getVariables: () => datasource.getVariables(),

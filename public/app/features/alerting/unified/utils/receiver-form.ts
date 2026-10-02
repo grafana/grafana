@@ -119,7 +119,7 @@ export function formValuesToCloudReceiver(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertJiraFieldToJson(object: Record<string, any>) {
+export function convertJiraFieldToJson(object: Record<string, any>) {
   // Only for cloud alert manager. Jira fields option can be a nested object. We need to convert it to JSON.
 
   const objectCopy = structuredClone(object);
@@ -141,7 +141,7 @@ function convertJiraFieldToJson(object: Record<string, any>) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertJsonToJiraField(object: Record<string, any>) {
+export function convertJsonToJiraField(object: Record<string, any>) {
   // Only for cloud alert manager. Convert JSON back to nested Jira fields option.
 
   const objectCopy = structuredClone(object);
@@ -254,11 +254,11 @@ export function omitEmptyValues<T>(obj: T): T {
 
 // Will remove empty ('', null, undefined) object properties unless they were previously defined.
 // existing is a map of property names that were previously defined.
-function omitEmptyUnlessExisting(settings = {}, existing = {}): Record<string, unknown> {
+export function omitEmptyUnlessExisting(settings = {}, existing = {}): Record<string, unknown> {
   return omitBy(settings, (value, key) => isUnacceptableValue(value) && !has(existing, key));
 }
 
-function omitTemporaryIdentifiers<T>(object: Readonly<T>): T {
+export function omitTemporaryIdentifiers<T>(object: Readonly<T>): T {
   function omitIdentifiers<T>(obj: T) {
     if (isArray(obj)) {
       obj.forEach(omitIdentifiers);

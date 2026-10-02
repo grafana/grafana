@@ -22,7 +22,7 @@ export function toMetricFindValuesOperator(): OperatorFunction<PanelData, Metric
   return (source) => source.pipe(map(toMetricFindValues));
 }
 
-function toMetricFindValues(panelData: PanelData): MetricFindValue[] {
+export function toMetricFindValues(panelData: PanelData): MetricFindValue[] {
   const frames = panelData.series;
   if (!frames || !frames.length) {
     return [];
@@ -143,7 +143,7 @@ export function validateVariableSelection(args: {
     );
 }
 
-function areMetricFindValues(data: unknown[]): data is MetricFindValue[] {
+export function areMetricFindValues(data: unknown[]): data is MetricFindValue[] {
   if (!data) {
     return false;
   }

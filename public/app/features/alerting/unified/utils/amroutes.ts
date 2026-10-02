@@ -59,7 +59,7 @@ export const commonGroupByOptions = [
   { label: 'Disable (...)', value: '...' },
 ];
 
-const emptyRoute: FormAmRoute = {
+export const emptyRoute: FormAmRoute = {
   id: '',
   name: '',
   overrideGrouping: false,

@@ -3,7 +3,7 @@ import { type SuggestedNavigationsFoldersMap } from './types';
 // Helper function to get the base path for a dashboard URL for comparison purposes.
 // e.g., /d/dashboardId/slug -> /d/dashboardId
 //       /d/dashboardId      -> /d/dashboardId
-function getDashboardPathForComparison(pathname: string): string {
+export function getDashboardPathForComparison(pathname: string): string {
   return pathname.split('/').slice(0, 3).join('/');
 }
 

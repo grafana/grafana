@@ -17,7 +17,7 @@ type RichHistoryContextType = {
   setDrawerOpened: (value: boolean) => void;
 };
 
-const QueriesDrawerContext = createContext<RichHistoryContextType>({
+export const QueriesDrawerContext = createContext<RichHistoryContextType>({
   selectedTab: Tabs.RichHistory,
   setSelectedTab: () => {},
   drawerOpened: false,

@@ -45,7 +45,7 @@ export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCale
 
 Body.displayName = 'Body';
 
-function inputToValue(
+export function inputToValue(
   from: DateTime,
   to: DateTime,
   invalidDateDefault: Date = new Date(),

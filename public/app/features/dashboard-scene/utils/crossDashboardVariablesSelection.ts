@@ -135,7 +135,7 @@ export function writeUseCrossDashboardVariables(
   }
 }
 
-function isScopeNameSelected(scope: ScopeSelection, name: string): boolean {
+export function isScopeNameSelected(scope: ScopeSelection, name: string): boolean {
   if (scope === 'all') {
     return true;
   }
@@ -149,7 +149,7 @@ function isScopeNameSelected(scope: ScopeSelection, name: string): boolean {
  * Toggle one name in a scope. Checking stays a name array — `"all"` is only written by
  * the All checkbox (`setScopeAll`). Unchecking from `"all"` writes the remaining names.
  */
-function toggleScopeName(
+export function toggleScopeName(
   scope: ScopeSelection,
   name: string,
   checked: boolean,
@@ -229,7 +229,7 @@ export function isPredefinedNameSelected(
   return Array.isArray(other) && other.includes(name);
 }
 
-function applyUseCrossDashboardVariables(
+export function applyUseCrossDashboardVariables(
   variables: VariableKind[],
   selection: UseCrossDashboardVariables
 ): VariableKind[] {

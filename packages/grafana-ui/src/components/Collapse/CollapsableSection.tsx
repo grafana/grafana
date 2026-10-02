@@ -9,7 +9,7 @@ import { getFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 
-interface Props {
+export interface Props {
   label: ReactNode;
   isOpen: boolean;
   /** Callback for the toggle functionality */

@@ -131,7 +131,7 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
   );
 }
 
-function getItemSpacing(displayMode: Options['displayMode']): number {
+export function getItemSpacing(displayMode: Options['displayMode']): number {
   if (displayMode === 'lcd') {
     return 2;
   }
@@ -139,7 +139,7 @@ function getItemSpacing(displayMode: Options['displayMode']): number {
   return 10;
 }
 
-function getOrientation(orientation: VizOrientation, width: number, height: number): VizOrientation {
+export function getOrientation(orientation: VizOrientation, width: number, height: number): VizOrientation {
   if (orientation === VizOrientation.Auto) {
     if (width > height) {
       return VizOrientation.Vertical;
@@ -151,7 +151,7 @@ function getOrientation(orientation: VizOrientation, width: number, height: numb
   return orientation;
 }
 
-function calcBarSize(options: Options, orientation: VizOrientation) {
+export function calcBarSize(options: Options, orientation: VizOrientation) {
   const isManualSizing = options.sizing === BarGaugeSizing.Manual;
   const isVertical = orientation === VizOrientation.Vertical;
   const isHorizontal = orientation === VizOrientation.Horizontal;
@@ -162,7 +162,7 @@ function calcBarSize(options: Options, orientation: VizOrientation) {
   return { minVizWidth, minVizHeight, maxVizHeight };
 }
 
-function getLegend(options: Options, data: BarGaugePanelProps['data']) {
+export function getLegend(options: Options, data: BarGaugePanelProps['data']) {
   const { legend } = options;
 
   if (legend.showLegend && data && data.series.length > 0) {
@@ -175,7 +175,7 @@ function getLegend(options: Options, data: BarGaugePanelProps['data']) {
 // BarGauge sizes the shared name column/row from alignmentFactors.title, so it must reflect the
 // same per-bar suppression as renderComponent's name-clearing, or hidden names still reserve
 // layout space even though nothing is drawn there.
-function getBarGaugeAlignmentFactors(values: FieldDisplay[], options: Options): DisplayValueAlignmentFactors {
+export function getBarGaugeAlignmentFactors(values: FieldDisplay[], options: Options): DisplayValueAlignmentFactors {
   const count = values.length;
   return getDisplayValueAlignmentFactors(
     values.map((value) => ({

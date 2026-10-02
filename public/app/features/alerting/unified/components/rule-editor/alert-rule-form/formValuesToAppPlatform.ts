@@ -148,7 +148,7 @@ function toRecordingExpressionMap(values: RuleFormValues): Record<string, Record
   }, {});
 }
 
-function toExpression(
+export function toExpression(
   query: RuleFormValues['queries'][number],
   condition: RuleFormValues['condition']
 ): AlertRuleExpression {
@@ -197,7 +197,7 @@ function toRecord(items: Array<{ key: string; value: string }>): Record<string, 
   }, {});
 }
 
-function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['notificationSettings'] {
+export function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['notificationSettings'] {
   if (values.selectedPolicy && !values.manualRouting) {
     return {
       type: 'NamedRoutingTree',

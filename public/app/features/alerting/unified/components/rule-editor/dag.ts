@@ -78,7 +78,7 @@ export interface LinkError {
 }
 
 /** DAGError subclass, this is just a regular error but with LinkError[] as the cause */
-class DAGError extends Error {
+export class DAGError extends Error {
   constructor(message: string, options: { cause: LinkError[] }) {
     super(message, options);
     this.cause = options?.cause ?? [];
@@ -87,7 +87,7 @@ class DAGError extends Error {
   cause: LinkError[];
 }
 
-function getTargets(model: ExpressionQuery) {
+export function getTargets(model: ExpressionQuery) {
   const isMathExpression = model.type === ExpressionQueryType.math;
   const isClassicCondition = model.type === ExpressionQueryType.classic;
   const isSqlExpression = model.type === ExpressionQueryType.sql;
@@ -107,7 +107,7 @@ function getTargets(model: ExpressionQuery) {
 /**
  * parse an expression like "$A > $B" or "${FOO BAR} > 0" to an array of refIds
  */
-function parseRefsFromMathExpression(input: string): string[] {
+export function parseRefsFromMathExpression(input: string): string[] {
   // we'll use two regular expressions, one for "${var}" and one for "$var"
   const r1 = new RegExp(/\$\{(?<var>[a-zA-Z0-9_ ]+?)\}/gm);
   const r2 = new RegExp(/\$(?<var>[a-zA-Z0-9_]+)/gm);
@@ -118,7 +118,7 @@ function parseRefsFromMathExpression(input: string): string[] {
   return compact(uniq([...m1, ...m2]));
 }
 
-function parseRefsFromSqlExpression(input: string): string[] {
+export function parseRefsFromSqlExpression(input: string): string[] {
   if (!input) {
     return [];
   }
@@ -215,7 +215,7 @@ function cleanTableName(tableName: string): string {
 export const getOriginOfRefId = memoize(_getOriginsOfRefId, (refId, graph) => refId + fingerprintGraph(graph));
 export const getDescendants = memoize(_getDescendants, (refId, graph) => refId + fingerprintGraph(graph));
 
-function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
+export function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
   const node = graph.getNode(refId);
   if (!node) {
     return [];
@@ -244,7 +244,7 @@ function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
 }
 
 // get all children (and children's children etc) from a given node
-function _getDescendants(refId: string, graph: Graph): string[] {
+export function _getDescendants(refId: string, graph: Graph): string[] {
   const node = graph.getNode(refId);
   if (!node) {
     return [];
@@ -270,7 +270,7 @@ function _getDescendants(refId: string, graph: Graph): string[] {
 }
 
 // create a unique fingerprint of the DAG
-function fingerprintGraph(graph: Graph) {
+export function fingerprintGraph(graph: Graph) {
   return Object.keys(graph.nodes)
     .map((name) => {
       const n = graph.nodes[name];

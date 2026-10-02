@@ -15,7 +15,7 @@ export function getAppPluginConfigsSync(pluginIds: string[] = [], apps: AppPlugi
  * @param exposedComponentId - The id of the exposed component.
  * @returns The app plugin id.
  */
-function getAppPluginIdFromExposedComponentId(exposedComponentId: string) {
+export function getAppPluginIdFromExposedComponentId(exposedComponentId: string) {
   return exposedComponentId.split('/')[0];
 }
 
@@ -109,7 +109,11 @@ export function getExposedComponentPluginDependenciesSync(
  * @param apps - The app plugin configs.
  * @returns A list of app plugin ids that are necessary to be loaded, based on the `dependencies.extensions`
  */
-function getAppPluginDependenciesSync(pluginId: string, apps: AppPluginConfig[], visited: string[] = []): string[] {
+export function getAppPluginDependenciesSync(
+  pluginId: string,
+  apps: AppPluginConfig[],
+  visited: string[] = []
+): string[] {
   const app = apps.find((a) => a.id === pluginId);
   if (!app) {
     return [];

@@ -56,7 +56,7 @@ export function createViewedBoundsFunc(viewRange: { min: number; max: number; vi
  * @param  {{tag}} span         An object with a `tag` property of { key, value } items.
  * @returns {boolean}           True if a match was found.
  */
-function spanHasTag(key: string, value: unknown, span: TraceSpan) {
+export function spanHasTag(key: string, value: unknown, span: TraceSpan) {
   if (!Array.isArray(span.tags) || !span.tags.length) {
     return false;
   }
@@ -65,10 +65,10 @@ function spanHasTag(key: string, value: unknown, span: TraceSpan) {
 
 const isClientOtel = (span: TraceSpan) => span.kind === 'client';
 const isClient = spanHasTag.bind(null, 'span.kind', 'client');
-const isClientSpan = (span: TraceSpan) => isClientOtel(span) || isClient(span);
+export const isClientSpan = (span: TraceSpan) => isClientOtel(span) || isClient(span);
 const isServerOtel = (span: TraceSpan) => span.kind === 'server';
 const isServer = spanHasTag.bind(null, 'span.kind', 'server');
-const isServerSpan = (span: TraceSpan) => isServerOtel(span) || isServer(span);
+export const isServerSpan = (span: TraceSpan) => isServerOtel(span) || isServer(span);
 
 const isErrorOtel = (span: TraceSpan) => span.statusCode === 2;
 const isErrorBool = spanHasTag.bind(null, 'error', true);

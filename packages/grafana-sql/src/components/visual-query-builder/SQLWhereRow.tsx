@@ -54,7 +54,7 @@ function mapFieldsToTypes(columns: SQLSelectableValue[]) {
   return fields;
 }
 
-function removeQuotesForMultiVariables(val: SQLExpression, templateVars: TypedVariableModel[]) {
+export function removeQuotesForMultiVariables(val: SQLExpression, templateVars: TypedVariableModel[]) {
   const multiVariableInWhereString = (tv: TypedVariableModel) =>
     'multi' in tv &&
     tv.multi &&

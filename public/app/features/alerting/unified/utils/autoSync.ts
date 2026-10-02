@@ -34,15 +34,15 @@ const MIMIR_CORTEX_IMPLEMENTATIONS: AlertManagerImplementation[] = [
   AlertManagerImplementation.cortex,
 ];
 
-const SYNCED_CONDITION_TYPE = 'ExternalAlertmanagerSynced';
-const SYNC_REASON_NOT_CONFIGURED = 'NotConfigured';
+export const SYNCED_CONDITION_TYPE = 'ExternalAlertmanagerSynced';
+export const SYNC_REASON_NOT_CONFIGURED = 'NotConfigured';
 
 /**
  * Terminal reason on the Synced condition: the external configuration was imported as a managed
  * route and the worker has stopped syncing. The worker writes it with status=True to preserve the
  * synced-at timestamp, so the reason is the only thing separating a stopped sync from a running one.
  */
-const MERGE_COMMITTED_REASON = 'MergeCommitted';
+export const MERGE_COMMITTED_REASON = 'MergeCommitted';
 
 /**
  * Health of the running sync, from the ExternalAlertmanagerSynced condition. Deliberately separate

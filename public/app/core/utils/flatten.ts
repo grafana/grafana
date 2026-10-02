@@ -1,7 +1,7 @@
 // Copyright (c) 2014, Hugh Kennedy
 // Based on code from https://github.com/hughsk/flat/blob/master/index.js
 //
-function flatten(
+export default function flatten(
   target: object,
   opts?: { delimiter?: string; maxDepth?: number; safe?: boolean }
 ): Record<string, unknown> {
@@ -37,5 +37,3 @@ function flatten(
 
   return output;
 }
-
-export {};

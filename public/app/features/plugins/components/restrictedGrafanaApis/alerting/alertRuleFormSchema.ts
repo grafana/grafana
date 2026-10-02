@@ -4,7 +4,7 @@ import { RuleFormType } from 'app/features/alerting/unified/types/rule-form';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 // Combined schema that supports both regular and expression queries
-const alertingModelSchema = z.looseObject({
+export const alertingModelSchema = z.looseObject({
   refId: z.string(),
   maxDataPoints: z.number().optional().describe('Maximum number of data points to return'),
   intervalMs: z.number().optional().describe('Interval in milliseconds'),

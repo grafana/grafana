@@ -83,7 +83,7 @@ interface SparklineHighlightLine {
   y: number;
 }
 
-function getSparklineHighlight(
+export function getSparklineHighlight(
   sparkline: FieldSparkline,
   calc: ReducerID
 ): SparklineHighlightPoint | SparklineHighlightLine | void {

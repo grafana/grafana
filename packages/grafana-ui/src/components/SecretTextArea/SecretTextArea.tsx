@@ -11,7 +11,7 @@ import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { TextArea } from '../TextArea/TextArea';
 
-type Props = React.ComponentProps<typeof TextArea> & {
+export type Props = React.ComponentProps<typeof TextArea> & {
   /** TRUE if the secret was already configured. (It is needed as often the backend doesn't send back the actual secret, only the information that it was configured) */
   isConfigured: boolean;
   /** Called when the user clicks on the "Reset" button in order to clear the secret */
@@ -20,8 +20,8 @@ type Props = React.ComponentProps<typeof TextArea> & {
   grow?: boolean;
 };
 
-const CONFIGURED_TEXT = 'configured';
-const RESET_BUTTON_TEXT = 'Reset';
+export const CONFIGURED_TEXT = 'configured';
+export const RESET_BUTTON_TEXT = 'Reset';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

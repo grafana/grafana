@@ -132,11 +132,11 @@ interface ResolvedLinkDTO {
   title: string;
 }
 
-async function searchForTags(tags: string[]) {
+export async function searchForTags(tags: string[]) {
   return getGrafanaSearcher().search({ limit: 100, tags, kind: ['dashboard'] });
 }
 
-function resolveLinks(
+export function resolveLinks(
   link: DashboardLink,
   searchHits: DashboardQueryResult[],
   dashboardUID?: string,

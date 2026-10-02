@@ -183,7 +183,7 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
  * @param query - The saved search query string
  * @returns Array of filter objects compatible with AdHocFiltersVariable.updateFilters()
  */
-function extractFilterObjects(query: string): AdHocVariableFilter[] {
+export function extractFilterObjects(query: string): AdHocVariableFilter[] {
   const params = new URLSearchParams(query);
 
   const filterEntries: AdHocVariableFilter[] = params

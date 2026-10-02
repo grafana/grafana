@@ -19,7 +19,7 @@ export function transformDataFrames(frame?: DataFrame): Trace | null {
   return transformTraceData(data);
 }
 
-function transformTraceDataFrame(frame: DataFrame): TraceResponse | null {
+export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null {
   const view = new DataFrameView<TraceSpanRow>(frame);
   const processes: Record<string, TraceProcess> = {};
   for (let i = 0; i < view.length; i++) {

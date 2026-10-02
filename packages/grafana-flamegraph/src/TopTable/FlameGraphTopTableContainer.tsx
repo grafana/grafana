@@ -472,4 +472,6 @@ const getStylesActionCell = () => {
   };
 };
 
+export { buildFilteredTable };
+
 export default FlameGraphTopTableContainer;

@@ -31,7 +31,7 @@ const LANGUAGE_ALIASES: Record<string, CodeMirrorEditorLanguage> = {
 
 // Plain text is the absence of a language, and '' is what the schema defaults `language` to. It is
 // also what the markdown export wants: an empty info string produces a correct bare fence.
-const PLAIN_TEXT_LANGUAGE = '';
+export const PLAIN_TEXT_LANGUAGE = '';
 
 /**
  * Stored languages are compared case-insensitively and untrimmed values tolerated, because the picker

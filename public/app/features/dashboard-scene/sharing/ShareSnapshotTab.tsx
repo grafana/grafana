@@ -51,7 +51,7 @@ const MAX_SNAPSHOT_PAYLOAD_BYTES = 16 * 1024 * 1024;
 
 // JSON.stringify().length counts UTF-16 code units, which undercounts every non-ASCII series
 // name or label value in the embedded data, so measure the encoded length actually sent.
-function getSnapshotPayloadSizeBytes(payload: object): number {
+export function getSnapshotPayloadSizeBytes(payload: object): number {
   return new Blob([JSON.stringify(payload)]).size;
 }
 
@@ -64,7 +64,7 @@ function formatBytes(bytes: number): string {
 
 // Rounds up to the precision we render, so a payload only slightly over the limit is never
 // reported as equal to it ("16.0 MiB, over the 16.0 MiB limit").
-function formatSnapshotSize(bytes: number): string {
+export function formatSnapshotSize(bytes: number): string {
   const unit = 1024 ** Math.floor(Math.log2(Math.max(bytes, 1)) / 10);
   const step = unit / 10 ** SIZE_DECIMALS;
   return formatBytes(Math.ceil(bytes / step) * step);

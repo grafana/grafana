@@ -378,11 +378,11 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
   };
 }
 
-interface FieldOverrideEnv extends FieldOverrideContext {
+export interface FieldOverrideEnv extends FieldOverrideContext {
   fieldConfigRegistry: FieldConfigOptionsRegistry;
 }
 
-function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
   const reg = context.fieldConfigRegistry;
   const item = reg.getIfExists(value.id);
 
@@ -424,7 +424,7 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
 
 // config -> from DS
 // defaults -> from Panel config
-function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
+export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
   // For cases where we have links on the datasource config and the panel config, we need to merge them
   if (config.links && defaults.links) {
     // Combine the data source links and the panel default config links. mutate rather than allocate new for perf reasons.

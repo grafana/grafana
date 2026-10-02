@@ -34,7 +34,7 @@ export interface Props
   noMargin?: boolean;
 }
 
-interface CardInterface extends FC<Props> {
+export interface CardInterface extends FC<Props> {
   Heading: typeof Heading;
   Tags: typeof Tags;
   Figure: typeof Figure;

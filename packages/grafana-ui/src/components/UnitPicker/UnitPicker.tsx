@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 
 import { Cascader, type CascaderOption } from '../Cascader/Cascader';
 
-interface UnitPickerProps {
+export interface UnitPickerProps {
   onChange: (item?: string) => void;
   value?: string;
   width?: number;

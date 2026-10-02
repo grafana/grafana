@@ -37,7 +37,7 @@ export interface StreamingFrameOptions {
  * rows were added to the end of the frame.  The number of discarded rows can be
  * calculated from previous state
  */
-interface StreamPacketInfo {
+export interface StreamPacketInfo {
   number: number;
   action: StreamingFrameAction;
   length: number;
@@ -52,7 +52,7 @@ enum PushMode {
   // long
 }
 
-type SerializedStreamingDataFrame = {
+export type SerializedStreamingDataFrame = {
   name?: string;
   fields: FieldDTO[];
   refId?: string;

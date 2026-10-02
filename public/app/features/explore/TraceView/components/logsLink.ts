@@ -100,7 +100,7 @@ function getTraceServiceNames(trace: Trace): string[] {
   return [...new Set(names)];
 }
 
-function getTraceToLogsQuery(
+export function getTraceToLogsQuery(
   allTags: TraceToLogsTag[],
   logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
   traceToLogsOptions: TraceToLogsOptionsV2,

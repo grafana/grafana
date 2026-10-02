@@ -78,6 +78,6 @@ export interface PanelElementEntry {
   dataSchema?: FrameSchema[];
 }
 
-interface PanelElementsData {
+export interface PanelElementsData {
   elements: PanelElementEntry[];
 }

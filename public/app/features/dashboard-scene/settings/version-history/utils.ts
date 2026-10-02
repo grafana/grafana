@@ -97,7 +97,7 @@ export const getDiffText = (diff: Diff, showProp = true) => {
 
 const isNumeric = (value: string) => !isNaN(toNumber(value));
 
-const getDiffOperationText = (operation: string): string => {
+export const getDiffOperationText = (operation: string): string => {
   if (operation === 'add') {
     return 'added';
   }

@@ -35,7 +35,7 @@ function groupLabelsByCategory(log: LogListModel, ds: DataSourceApi): Record<str
  * When every label falls into the unnamed bucket (no datasource or no typed categories),
  * export a single flat map. Otherwise export one nested object per category.
  */
-function formatGroupedLabelsForJson(groupedLabels: Record<string, LabelEntry[]>) {
+export function formatGroupedLabelsForJson(groupedLabels: Record<string, LabelEntry[]>) {
   const entries = Object.entries(groupedLabels).filter(([, items]) => items.length > 0);
   const typedCategoryKeys = entries.map(([key]) => key).filter((key) => key !== '');
   if (typedCategoryKeys.length === 0) {
@@ -78,7 +78,7 @@ function prettifyIfJson(raw: string): unknown {
   }
 }
 
-function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi): Record<string, unknown> {
+export function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi): Record<string, unknown> {
   void log.body;
 
   const payload: Record<string, unknown> = {

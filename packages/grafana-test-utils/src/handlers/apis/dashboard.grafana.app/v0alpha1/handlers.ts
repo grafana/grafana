@@ -85,7 +85,7 @@ export const vectorSearchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespace
  * one matched panel; the handler maps it to the SearchResults response shape the
  * real `/search/vector` endpoint returns (one hit per panel, best match first).
  */
-interface VectorSearchHitInput {
+export interface VectorSearchHitInput {
   /** Dashboard UID. */
   name: string;
   /** Dashboard title. */
@@ -135,7 +135,7 @@ export const hybridSearchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespace
  * dashboard; the handler maps it to the SearchResults response shape the real
  * `/search/hybrid` endpoint returns (one hit per dashboard, best match first).
  */
-interface HybridSearchHitInput {
+export interface HybridSearchHitInput {
   /** Dashboard UID. */
   name: string;
   /** Dashboard title. */

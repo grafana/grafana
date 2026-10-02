@@ -14,7 +14,7 @@ export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string
  * Stores children at a particular location in the tree, and information
  * required for pagination.
  */
-type DashboardViewItemCollection = {
+export type DashboardViewItemCollection = {
   items: DashboardViewItem[];
   lastFetchedKind: 'folder' | 'dashboard';
   lastFetchedPage: number;

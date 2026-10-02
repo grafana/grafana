@@ -16,7 +16,7 @@ import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
 import { isValidTimeRange } from './utils';
 
-interface TimeRangeInputProps {
+export interface TimeRangeInputProps {
   value: TimeRange;
   timeZone?: TimeZone;
   onChange: (timeRange: TimeRange) => void;

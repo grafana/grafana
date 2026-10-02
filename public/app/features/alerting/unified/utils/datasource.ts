@@ -88,11 +88,11 @@ export function getRulesDataSources() {
     .sort((a, b) => collator.compare(a.name, b.name));
 }
 
-function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
+export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
   return isGrafanaRulesSource(rulesSource) ? 'grafana' : rulesSource.uid;
 }
 
-function getRulesDataSource(rulesSourceName: string) {
+export function getRulesDataSource(rulesSourceName: string) {
   return getRulesDataSources().find((x) => x.name === rulesSourceName);
 }
 
@@ -106,7 +106,7 @@ export function getAlertManagerDataSources() {
     .sort((a, b) => collator.compare(a.name, b.name));
 }
 
-function isAlertmanagerDataSourceInstance(
+export function isAlertmanagerDataSourceInstance(
   dataSource: DataSourceInstanceSettings
 ): dataSource is DataSourceInstanceSettings<AlertManagerDataSourceJsonData> {
   return dataSource.type === DataSourceType.Alertmanager;
@@ -118,7 +118,7 @@ export function isAlertmanagerDataSource(
   return dataSource.type === DataSourceType.Alertmanager;
 }
 
-function getExternalDsAlertManagers() {
+export function getExternalDsAlertManagers() {
   return getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
 }
 
@@ -135,7 +135,7 @@ const grafanaAlertManagerDataSource: AlertManagerDataSource = {
 };
 
 // Used only as a fallback for Alert Group plugin
-function getAllAlertManagerDataSources(): AlertManagerDataSource[] {
+export function getAllAlertManagerDataSources(): AlertManagerDataSource[] {
   return [
     grafanaAlertManagerDataSource,
     ...getAlertManagerDataSources().map<AlertManagerDataSource>((ds) => ({
@@ -371,10 +371,10 @@ export const SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES = [
 /**
  * Check if the given type is a supported rules source type. Includes "grafana" for Grafana Managed Rules.
  */
-function isSupportedRulesSourceType(type: string): type is SupportedRulesSourceType {
+export function isSupportedRulesSourceType(type: string): type is SupportedRulesSourceType {
   return type === GRAFANA_RULES_SOURCE_NAME || isSupportedExternalRulesSourceType(type);
 }
-type SupportedRulesSourceType = 'grafana' | SupportedExternalRulesSourceType;
+export type SupportedRulesSourceType = 'grafana' | SupportedExternalRulesSourceType;
 export const SUPPORTED_RULE_SOURCE_TYPES = [
   GRAFANA_RULES_SOURCE_NAME,
   ...SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,

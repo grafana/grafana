@@ -11,7 +11,7 @@ const STORAGE_NAMESPACE = 'alerting';
 const KEY_NAME_OVERRIDES = 'triagePredefinedNameOverrides';
 const KEY_DISMISSED = 'triagePredefinedDismissed';
 /** Storage key for default search ID (used by loadDefaultTriageSavedSearch to resolve predefined or user default). */
-const TRIAGE_DEFAULT_SEARCH_ID_STORAGE_KEY = 'triageDefaultSearchId';
+export const TRIAGE_DEFAULT_SEARCH_ID_STORAGE_KEY = 'triageDefaultSearchId';
 
 export interface UseTriagePredefinedOverridesResult {
   /** Custom names for predefined search IDs */

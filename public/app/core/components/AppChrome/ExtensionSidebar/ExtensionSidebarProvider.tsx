@@ -22,7 +22,7 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-grotfood-app',
 ];
 
-type ExtensionSidebarContextType = {
+export type ExtensionSidebarContextType = {
   /**
    * Whether the extension sidebar is open.
    */

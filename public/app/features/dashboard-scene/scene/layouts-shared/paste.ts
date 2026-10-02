@@ -39,7 +39,7 @@ interface TabStore {
   tab: TabsLayoutTabKind;
 }
 
-interface PanelStore {
+export interface PanelStore {
   elements: DashboardV2Spec['elements'];
   gridItem: GridLayoutItemKind | AutoGridLayoutItemKind;
 }

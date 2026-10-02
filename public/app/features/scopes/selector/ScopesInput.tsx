@@ -150,7 +150,7 @@ const getScopesPath = (
   return nicePath;
 };
 
-interface ScopesTooltipProps {
+export interface ScopesTooltipProps {
   nodes: NodesMap;
   scopes: ScopesMap;
   appliedScopes: SelectedScope[];
@@ -158,7 +158,7 @@ interface ScopesTooltipProps {
   onRemoveAllClick?: () => void;
 }
 
-function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disabled }: ScopesTooltipProps) {
+export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disabled }: ScopesTooltipProps) {
   if (appliedScopes.length === 0) {
     return t('scopes.selector.input.tooltip', 'Select scope');
   }

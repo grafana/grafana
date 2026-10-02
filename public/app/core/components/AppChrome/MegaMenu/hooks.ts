@@ -45,8 +45,8 @@ export const usePinnedItems = () => {
   return { pinnedItems, isLoading };
 };
 
-const HIDDEN_ITEMS_STORAGE_KEY = 'grafana.navigation.megamenu.hidden-items';
-const SECTION_ORDER_STORAGE_KEY = 'grafana.navigation.megamenu.section-order';
+export const HIDDEN_ITEMS_STORAGE_KEY = 'grafana.navigation.megamenu.hidden-items';
+export const SECTION_ORDER_STORAGE_KEY = 'grafana.navigation.megamenu.section-order';
 
 /**
  * Storage seam for the hidden top-level section ids. Backed by localStorage today (per-browser), but

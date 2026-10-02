@@ -48,7 +48,7 @@ export function getLayersExtent(
     .reduce(extend, createEmpty());
 }
 
-function getLayerGroupExtent(lg: LayerGroup, lastOnly: boolean) {
+export function getLayerGroupExtent(lg: LayerGroup, lastOnly: boolean) {
   return lg
     .getLayers()
     .getArray()

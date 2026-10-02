@@ -204,7 +204,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
-function getDefaultPluginId(): string {
+export function getDefaultPluginId(): string {
   return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
@@ -298,7 +298,7 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
  *
  * Activating the whole tree because dashboard does not react to variable updates such as panel repeats
  */
-function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHandler | undefined {
+export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHandler | undefined {
   let cancel: CancelActivationHandler | undefined;
   let parentCancel: CancelActivationHandler | undefined;
 
@@ -325,7 +325,7 @@ function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHand
  * Activates any inactive ancestors of the scene object.
  * Useful when rendering a scene object out of context of it's parent
  */
-const activateInActiveParents = activateSceneObjectAndParentTree;
+export const activateInActiveParents = activateSceneObjectAndParentTree;
 
 export function useDashboard(scene: SceneObject): DashboardScene {
   return getDashboardSceneFor(scene);
@@ -430,7 +430,7 @@ export const getLayoutForObject = (
 // a valid library panel reference is a panel with this
 // property: `libraryPanel: {name: string, uid: string}`
 
-function isValidLibraryPanelRef(panel: Panel): boolean {
+export function isValidLibraryPanelRef(panel: Panel): boolean {
   return (
     (V1_PANEL_PROPERTIES.LIBRARY_PANEL in panel &&
       panel.libraryPanel &&

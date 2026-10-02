@@ -28,7 +28,7 @@ const ACTIVE_INVESTIGATION_STATES = new Set(['pending', 'in_progress', 'paused']
 const TERMINAL_INVESTIGATION_STATES = new Set(['completed', 'failed', 'cancelled']);
 
 /** True while the Assistant is still producing the report (or paused mid-run). */
-function isAssistantInvestigationActive(state: string | undefined): boolean {
+export function isAssistantInvestigationActive(state: string | undefined): boolean {
   return !!state && ACTIVE_INVESTIGATION_STATES.has(state);
 }
 

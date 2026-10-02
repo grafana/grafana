@@ -20,7 +20,7 @@ import {
   initialAdHocVariableModelState,
 } from './reducer';
 
-interface AdHocTableOptions {
+export interface AdHocTableOptions {
   datasource: DataSourceRef;
   key: string;
   value: string;
@@ -29,7 +29,7 @@ interface AdHocTableOptions {
 
 const filterTableName = 'Filters';
 
-const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<void> => {
+export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<void> => {
   return async (dispatch, getState) => {
     let variable = getVariableByOptions(options, getState());
 

@@ -77,7 +77,7 @@ type RulerRuleWithRulePosition = RulerCloudRuleDTO & {
   rulePositionHash: RulePositionHash;
 };
 
-function getMatchingPromRule(
+export function getMatchingPromRule(
   promRuleGroup: PromRuleGroupDTO<PromRuleDTO>,
   rulerRuleWithPosition: RulerRuleWithRulePosition
 ) {

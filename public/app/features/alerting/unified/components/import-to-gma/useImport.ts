@@ -82,7 +82,7 @@ interface NotificationsSourceParams {
  * resulting template groups). Throws if two files share the same name, since the key would be
  * ambiguous.
  */
-async function readTemplateFiles(files: File[] = []): Promise<Record<string, string>> {
+export async function readTemplateFiles(files: File[] = []): Promise<Record<string, string>> {
   const duplicate = findDuplicateTemplateFileName(files);
   if (duplicate) {
     throw new Error(
@@ -99,7 +99,7 @@ async function readTemplateFiles(files: File[] = []): Promise<Record<string, str
  * Merge separately-uploaded template files on top of any template_files already embedded in the
  * config. A name that exists in both is ambiguous, so reject it rather than silently overwriting.
  */
-function mergeTemplateFiles(
+export function mergeTemplateFiles(
   embedded: Record<string, string>,
   uploaded: Record<string, string>
 ): Record<string, string> {
@@ -297,7 +297,7 @@ function isRuleManagedByExternalSystem(rule: { labels?: Record<string, string> }
  * Summarize the per-type merge stats from a promote (dry-run or real) into counts
  * for display on the review screen.
  */
-function summarizeMergeStats(stats: MergeStats | undefined): PromoteStatsSummary {
+export function summarizeMergeStats(stats: MergeStats | undefined): PromoteStatsSummary {
   return {
     route: Boolean(stats?.added_route),
     receivers: stats?.added_receivers?.length ?? 0,
@@ -333,7 +333,7 @@ export function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryR
  * successful response is still cached, so the error must take precedence over the
  * stale data — otherwise the review step would report the config as ready to import.
  */
-function deriveDryRunResult(
+export function deriveDryRunResult(
   dryRunData: DryRunValidationResult | undefined,
   dryRunError: string | undefined
 ): DryRunValidationResult | undefined {

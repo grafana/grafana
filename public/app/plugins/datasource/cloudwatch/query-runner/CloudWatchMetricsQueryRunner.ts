@@ -29,7 +29,7 @@ import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
 
-function applyPromQLTransform(
+export function applyPromQLTransform(
   response: DataQueryResponse,
   request: DataQueryRequest<CloudWatchQuery>
 ): DataQueryResponse {

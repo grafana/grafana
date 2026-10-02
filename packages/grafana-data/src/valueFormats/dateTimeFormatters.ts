@@ -11,7 +11,7 @@ interface IntervalsInSeconds {
   [interval: string]: number;
 }
 
-enum Interval {
+export enum Interval {
   Year = 'year',
   Month = 'month',
   Week = 'week',
@@ -194,7 +194,7 @@ export function toDays(size: number, decimals?: DecimalCount): FormattedValue {
   }
 }
 
-function toDuration(size: number, decimals: DecimalCount, timeScale: Interval): FormattedValue {
+export function toDuration(size: number, decimals: DecimalCount, timeScale: Interval): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
@@ -242,7 +242,7 @@ function toDuration(size: number, decimals: DecimalCount, timeScale: Interval): 
   return { text: strings.join(', ') };
 }
 
-function toClock(size: number, decimals?: DecimalCount): FormattedValue {
+export function toClock(size: number, decimals?: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }

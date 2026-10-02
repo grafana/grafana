@@ -23,10 +23,10 @@ import {
 import { DATA_LOOKBACK_HOURS } from './solutionDataProbes';
 
 /** Stats window for the logs card (design-fixed), distinct from the 24h sparkline lookback. */
-const LOGS_STATS_LOOKBACK_DAYS = 7;
+export const LOGS_STATS_LOOKBACK_DAYS = 7;
 
 /** Stats window for the metric-name fallback count (design-fixed), distinct from the 24h lookback. */
-const METRICS_STATS_LOOKBACK_DAYS = 7;
+export const METRICS_STATS_LOOKBACK_DAYS = 7;
 
 const NS_IN_MS = 1e6;
 const NS_IN_S = 1e9;
@@ -269,7 +269,7 @@ function filesystemSelector(scope: MetricsDiskScope | null, fixed: string[] = []
 }
 
 /** Per-filesystem fill ratio (0..1) that the disk alert is built on. */
-function diskRatioExpr(scope: MetricsDiskScope | null): string {
+export function diskRatioExpr(scope: MetricsDiskScope | null): string {
   const selector = filesystemSelector(scope);
   return `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`;
 }

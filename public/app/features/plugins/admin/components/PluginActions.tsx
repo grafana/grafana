@@ -107,3 +107,5 @@ function getInstallControlsDisabled(plugin: CatalogPlugin, latestCompatibleVersi
 
   return plugin.isCore || plugin.isDisabled || plugin.isProvisioned || !isInstallControlsEnabled();
 }
+
+export { getPluginStatus, getInstallControlsDisabled };

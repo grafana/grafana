@@ -75,7 +75,7 @@ export function queriesWithUpdatedReferences(
   });
 }
 
-function updateMathExpressionRefs(expression: string, previousRefId: string, newRefId: string): string {
+export function updateMathExpressionRefs(expression: string, previousRefId: string, newRefId: string): string {
   const oldExpression = new RegExp('(\\$' + previousRefId + '\\b)|(\\${' + previousRefId + '})', 'gm');
   const newExpression = '${' + newRefId + '}';
 

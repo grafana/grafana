@@ -17,7 +17,7 @@ export const getDataSources = async (): Promise<DataSourceSettings[]> => {
 // From pkg/storage/unified/apistore/secure.go
 const LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX = 'lds-sv-';
 
-interface K8sMetadata {
+export interface K8sMetadata {
   namespace: string;
   name: string; // Equivalent to legacy UID
   generateName?: string; // only valid for create
@@ -29,7 +29,7 @@ interface K8sMetadata {
   annotations: { [key: string]: string };
 }
 
-interface DatasourceInstanceK8sSpec {
+export interface DatasourceInstanceK8sSpec {
   access: string;
   // Omitted by the apiserver when empty (`json:"jsonData,omitzero"`), so it is not
   // guaranteed to be present on responses.
@@ -96,7 +96,7 @@ const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
   return dsK8sSettings;
 };
 
-const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
+export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
   dsSettings: DataSourceSettings,
   namespace: string,
   version: string
@@ -141,7 +141,7 @@ function isRecordOfString(value: unknown): value is Record<string, string> {
   return true;
 }
 
-const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
+export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
   dsK8sSettings: DataSourceSettingsK8s
 ): DataSourceSettings => {
   // TODO: remove this once we figure out what code is using the deprecated

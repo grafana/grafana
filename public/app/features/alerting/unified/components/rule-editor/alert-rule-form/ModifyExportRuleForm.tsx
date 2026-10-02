@@ -135,7 +135,7 @@ interface GrafanaRuleDesignExportPreviewProps {
   exportValues: RuleFormValues;
   uid?: string;
 }
-const getPayloadToExport = (
+export const getPayloadToExport = (
   formValues: RuleFormValues,
   existingGroup: RulerRuleGroupDTO<RulerRuleDTO> | null | undefined,
   ruleUid?: string

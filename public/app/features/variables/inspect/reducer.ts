@@ -26,4 +26,4 @@ const variableInspectReducerSlice = createSlice({
 
 export const variableInspectReducer = variableInspectReducerSlice.reducer;
 
-export const {} = variableInspectReducerSlice.actions;
+export const { initInspect } = variableInspectReducerSlice.actions;

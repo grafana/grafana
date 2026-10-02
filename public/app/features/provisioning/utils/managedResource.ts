@@ -88,7 +88,7 @@ export function isManagedByRepository(resource: ManagedResource): boolean {
  * repository provisioning flow (which has its own edit workflow) and that manager does not allow
  * edits via the `grafana.app/managerAllowsEdits` annotation.
  */
-function isManagedResourceReadOnly(resource: ManagedResource): boolean {
+export function isManagedResourceReadOnly(resource: ManagedResource): boolean {
   return (
     isManaged(resource) &&
     !isManagedByRepository(resource) &&

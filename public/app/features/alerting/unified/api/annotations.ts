@@ -9,7 +9,7 @@ export function fetchAnnotations(alertUID: string): Promise<StateHistoryItem[]> 
     });
 }
 
-function sortStateHistory(a: StateHistoryItem, b: StateHistoryItem): number {
+export function sortStateHistory(a: StateHistoryItem, b: StateHistoryItem): number {
   const compareDesc = (a: number, b: number): number => {
     // Larger numbers first.
     if (a > b) {

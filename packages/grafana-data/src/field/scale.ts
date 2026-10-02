@@ -8,7 +8,7 @@ import { type Threshold } from '../types/thresholds';
 import { getFieldColorModeForField } from './fieldColor';
 import { fallBackThreshold, getActiveThresholdForValue } from './thresholds';
 
-interface ColorScaleValue {
+export interface ColorScaleValue {
   percent: number; // 0-1
   threshold: Threshold | undefined;
   color: string;

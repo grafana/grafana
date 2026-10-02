@@ -104,7 +104,7 @@ export interface DashboardScenePageState {
   loadError?: LoadError;
 }
 
-const DASHBOARD_CACHE_TTL = 500;
+export const DASHBOARD_CACHE_TTL = 500;
 
 const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 
@@ -163,7 +163,7 @@ interface DashboardScenePageStateManagerLike<T> {
  * Creates scene creation options with appropriate layout creator
  * based on feature flags and dashboard type.
  */
-function getSceneCreationOptions(
+export function getSceneCreationOptions(
   loadOptions?: LoadDashboardOptions,
   meta?: { isSnapshot?: boolean }
 ): SceneCreationOptions | undefined {

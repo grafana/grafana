@@ -1044,7 +1044,10 @@ function contentForBlockType(type: NotebookBlockType): CellContentKind | undefin
  * text: once the caret sat at the very end of it, gluing the marker onto the whole remainder instead
  * would prefix an extra, empty item ahead of the next one rather than cleanly handing it over.
  */
-function splitSeed(remainder: string, marker: string | undefined): { text: string | undefined; caretOffset: number } {
+export function splitSeed(
+  remainder: string,
+  marker: string | undefined
+): { text: string | undefined; caretOffset: number } {
   if (marker === undefined) {
     return { text: remainder || undefined, caretOffset: 0 };
   }

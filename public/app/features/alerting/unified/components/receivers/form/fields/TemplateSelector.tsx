@@ -43,7 +43,7 @@ interface TemplatesPickerProps {
   option: NotificationChannelOption;
   valueInForm: string;
 }
-function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
+export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
   const [showTemplates, setShowTemplates] = useState(false);
 
   const onClick = () => {
@@ -89,7 +89,7 @@ function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps
 
 type TemplateFieldOption = 'Existing' | 'Custom';
 
-function getTemplateOptions(templateFiles: NotificationTemplate[], defaultTemplates: Template[] = []) {
+export function getTemplateOptions(templateFiles: NotificationTemplate[], defaultTemplates: Template[] = []) {
   // Add default templates
   const templateMap = new Map<string, SelectableValue<Template>>();
   templateFiles.forEach(({ content }) => {
@@ -130,7 +130,7 @@ interface TemplateSelectorProps {
   filterKind?: TemplateGroupTemplateKind;
 }
 
-function TemplateSelector({ onSelect, onClose, option, valueInForm, filterKind }: TemplateSelectorProps) {
+export function TemplateSelector({ onSelect, onClose, option, valueInForm, filterKind }: TemplateSelectorProps) {
   const styles = useStyles2(getStyles);
   const valueInFormIsCustom = Boolean(valueInForm) && !matchesOnlyOneTemplate(valueInForm);
   const [template, setTemplate] = useState<SelectableValue<Template> | undefined>(undefined);

@@ -20,7 +20,7 @@ export type RecommendedCardId =
 // Complete total orders (every RecommendedCardId appears once) so the sort is deterministic;
 // gating means several entries are unreachable for a given solution, which is harmless.
 // Exported for the completeness invariant test only — consumers go through orderCardsForSolution.
-const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCardId[]> = {
+export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCardId[]> = {
   // Infra affinity: K8s Monitoring turns the metrics already flowing into curated views.
   metrics: [
     'enable-logs',

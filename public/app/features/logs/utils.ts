@@ -142,7 +142,7 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
-const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+export const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   // compare milliseconds
   if (a.timeEpochMs > b.timeEpochMs) {
     return -1;
@@ -189,7 +189,7 @@ export const checkLogsSampled = (logRow: LogRowModel): string | undefined => {
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
 
-function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] = []) {
+export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] = []) {
   return logs.map((log) => {
     const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
       const key = field.keys[0];

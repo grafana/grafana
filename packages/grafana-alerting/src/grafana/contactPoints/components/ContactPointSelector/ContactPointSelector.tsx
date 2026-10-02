@@ -9,7 +9,7 @@ import { getContactPointDescription, isUsableContactPoint } from '../../utils';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
-type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint> & {
+export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint> & {
   /**
    * Whether to include contact points that are not usable (e.g., imported from external sources).
    * Unusable contact points have the `grafana.com/canUse` annotation set to `false`.

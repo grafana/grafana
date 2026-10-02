@@ -57,7 +57,7 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
   return Array.from(merged.values());
 }
 
-function getItemType(path: string, resource?: ResourceListItem): ItemType {
+export function getItemType(path: string, resource?: ResourceListItem): ItemType {
   const kindInfo = getKindInfoByResource(resource?.resource);
   if (kindInfo) {
     return kindInfo.itemType;
@@ -81,7 +81,7 @@ export function getIconName(type: ItemType): IconName {
   return getKindInfoByItemType(type)?.icon ?? 'file-alt';
 }
 
-function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
+export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
   if (fileHash !== undefined && resourceHash !== undefined) {
     // Empty file hash means inferred folder (synced if resource exists)
     return fileHash === '' || fileHash === resourceHash ? 'synced' : 'pending';

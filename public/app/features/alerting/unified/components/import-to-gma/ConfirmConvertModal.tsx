@@ -19,7 +19,7 @@ import { type ImportFormValues } from './ImportToGMARules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
 import { parseYamlFileToRulerRulesConfigDTO } from './yamlToRulerConverter';
 
-const SYNTHETICS_RULE_NAMES = [
+export const SYNTHETICS_RULE_NAMES = [
   'SyntheticMonitoringCheckFailureAtHighSensitivity',
   'SyntheticMonitoringCheckFailureAtMediumSensitivity',
   'SyntheticMonitoringCheckFailureAtLowSensitivity',
@@ -259,7 +259,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
  * @param groupName - The group name to filter the rules by
  * @returns The filtered ruler rules config and if some rules are skipped
  */
-function filterRulerRulesConfig(
+export function filterRulerRulesConfig(
   rulerRulesConfig: RulerRulesConfigDTO,
   namespace?: string,
   groupName?: string

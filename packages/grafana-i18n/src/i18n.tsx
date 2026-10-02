@@ -56,7 +56,7 @@ export async function loadNamespacedResources(namespace: string, language: strin
 }
 
 // exported for testing
-function initDefaultI18nInstance() {
+export function initDefaultI18nInstance() {
   // If the resources are not an object, we need to initialize the plugin translations
   if (getI18nInstance().options?.resources && typeof getI18nInstance().options.resources === 'object') {
     return;
@@ -72,7 +72,7 @@ function initDefaultI18nInstance() {
 }
 
 // exported for testing
-function initDefaultReactI18nInstance() {
+export function initDefaultReactI18nInstance() {
   // If the initReactI18next is not set, we need to set them
   if (getI18n()?.options?.react) {
     return;

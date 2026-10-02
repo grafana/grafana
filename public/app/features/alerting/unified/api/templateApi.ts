@@ -5,7 +5,7 @@ import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-
 
 import { parseTemplates } from '../components/receivers/form/fields/utils';
 
-const previewTemplateUrl = `/api/alertmanager/grafana/config/api/v1/templates/test`;
+export const previewTemplateUrl = `/api/alertmanager/grafana/config/api/v1/templates/test`;
 
 export interface TemplatePreviewResult {
   name: string;

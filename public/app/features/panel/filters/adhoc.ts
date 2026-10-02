@@ -3,7 +3,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type AdHocFilterItem, type FilterByGroupedLabelsModel } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 
-function getGroupedFilters(
+export function getGroupedFilters(
   frame: DataFrame,
   seriesIdx: number,
   getFiltersBasedOnGrouping: (filters: AdHocFilterItem[]) => AdHocFilterItem[]

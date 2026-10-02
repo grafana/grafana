@@ -105,7 +105,7 @@ const stringifyValue = (value: unknown): string => {
   }
 };
 
-const getTooltipDisplayValue = (
+export const getTooltipDisplayValue = (
   value: unknown,
   field: Field
 ): {

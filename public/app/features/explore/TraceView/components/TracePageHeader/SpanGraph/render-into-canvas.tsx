@@ -13,12 +13,12 @@
 // limitations under the License.
 
 // exported for tests
-const ITEM_ALPHA = 0.8;
-const MIN_ITEM_HEIGHT = 2;
-const MAX_TOTAL_HEIGHT = 200;
-const MIN_ITEM_WIDTH = 10;
-const MIN_TOTAL_HEIGHT = 60;
-const MAX_ITEM_HEIGHT = 6;
+export const ITEM_ALPHA = 0.8;
+export const MIN_ITEM_HEIGHT = 2;
+export const MAX_TOTAL_HEIGHT = 200;
+export const MIN_ITEM_WIDTH = 10;
+export const MIN_TOTAL_HEIGHT = 60;
+export const MAX_ITEM_HEIGHT = 6;
 
 export type SpanGraphItem = {
   valueWidth: number;

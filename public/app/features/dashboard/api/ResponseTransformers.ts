@@ -237,7 +237,7 @@ export function ensureV2Response(
   };
 }
 
-function ensureV1Response(
+export function ensureV1Response(
   dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO>
 ): DashboardDTO {
   // if dashboard is not on v1 schema or v2 schema, return as is
@@ -514,7 +514,7 @@ export function getDefaultDatasource(): DataSourceRef {
   };
 }
 
-function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
+export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
     // Check if target datasource is empty object {} (no keys), treat it as missing
@@ -1275,7 +1275,7 @@ function transformV2PanelToV1Panel(
   }
 }
 
-function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
+export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
   const getThresholdsMode = (mode: ThresholdsMode): ThresholdsModeV1 => {
     switch (mode) {
       case 'absolute':

@@ -47,7 +47,7 @@ interface UseBulkActionJobResult {
   isLoading: boolean;
 }
 
-type ResponseType = { success: boolean; jobId?: string; job?: Job; error?: string };
+export type ResponseType = { success: boolean; jobId?: string; job?: Job; error?: string };
 
 // This hook is used to create bulk action (delete, move) jobs for provisioning resources
 export function useBulkActionJob(): UseBulkActionJobResult {

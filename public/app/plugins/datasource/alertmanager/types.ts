@@ -49,7 +49,7 @@ type HTTPConfigBearerTokenFile = {
 
 type HTTPConfig = HTTPConfigCommon & (HTTPConfigBasicAuth | HTTPConfigBearerToken | HTTPConfigBearerTokenFile);
 
-type EmailConfig = {
+export type EmailConfig = {
   to: string;
 
   send_resolved?: string;

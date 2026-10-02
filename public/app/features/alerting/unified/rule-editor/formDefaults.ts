@@ -112,7 +112,7 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
   });
 };
 
-const getDefautManualRouting = () => {
+export const getDefautManualRouting = () => {
   // check in local storage
   // if it's not set, we'll default to true
   const manualRouting = store.get(MANUAL_ROUTING_KEY);

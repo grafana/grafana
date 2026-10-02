@@ -25,14 +25,14 @@ interface ExploreRunQueryButtonProps {
   onClick?: () => void;
 }
 
-type Props = ConnectedProps<typeof connector> & ExploreRunQueryButtonProps;
+export type Props = ConnectedProps<typeof connector> & ExploreRunQueryButtonProps;
 
 /*
 This component does not validate datasources before running them. Root datasource validation should happen outside this component and can pass in an undefined if invalid
 If query level validation is done and a query datasource is invalid, pass in disabled = true
 */
 
-function ExploreRunQueryButton({
+export function ExploreRunQueryButton({
   rootDatasourceUid,
   queries,
   disabled = false,

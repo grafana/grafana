@@ -14,7 +14,7 @@ import { initialState, SearchStateManager } from '../../search/state/SearchState
 // Subclass SearchStateManager to customize the setStateAndDoSearch behavior.
 // We want to clear the search results when the user clears any search input
 // to trigger the skeleton state.
-class TrashStateManager extends SearchStateManager {
+export class TrashStateManager extends SearchStateManager {
   protected sortStorageKey = SEARCH_SELECTED_SORT_DELETED;
   protected layoutStorageKey = SEARCH_SELECTED_LAYOUT_DELETED;
 

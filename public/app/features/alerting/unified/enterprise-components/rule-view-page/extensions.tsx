@@ -30,7 +30,7 @@ function registerRuleViewTab(builder: RuleViewTabBuilder) {
   });
 }
 
-function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs, isGrafanaAlertRule: boolean): NavModelItem[] {
+export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs, isGrafanaAlertRule: boolean): NavModelItem[] {
   return ruleViewTabBuilders
     .filter((config) => {
       // Check if rule type matches requirement
@@ -70,7 +70,7 @@ export function addEnrichmentSection() {
 }
 
 // ONLY FOR TESTS: resets the registered tabs between tests
-function __clearRuleViewTabsForTests() {
+export function __clearRuleViewTabsForTests() {
   ruleViewTabBuilders.splice(0, ruleViewTabBuilders.length);
 }
 

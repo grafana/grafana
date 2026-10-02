@@ -327,7 +327,7 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   };
 }
 
-function getTitleStyles(props: Props): { wrapper: CSSProperties; title: CSSProperties } {
+export function getTitleStyles(props: Props): { wrapper: CSSProperties; title: CSSProperties } {
   const wrapperStyles: CSSProperties = {
     display: 'flex',
     overflow: 'hidden',
@@ -459,7 +459,11 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
   };
 }
 
-function getCellColor(positionValue: TimeSeriesValue, value: Props['value'], display: Props['display']): CellColors {
+export function getCellColor(
+  positionValue: TimeSeriesValue,
+  value: Props['value'],
+  display: Props['display']
+): CellColors {
   if (positionValue === null) {
     return {
       background: FALLBACK_COLOR,
@@ -493,7 +497,7 @@ function getCellColor(positionValue: TimeSeriesValue, value: Props['value'], dis
   };
 }
 
-function getValuePercent(value: number, minValue: number, maxValue: number): number {
+export function getValuePercent(value: number, minValue: number, maxValue: number): number {
   // Need special logic for when minValue === maxValue === value to prevent returning NaN
   const valueRatio = Math.min((value - minValue) / (maxValue - minValue), 1);
   return isNaN(valueRatio) ? 0 : valueRatio;
@@ -502,7 +506,7 @@ function getValuePercent(value: number, minValue: number, maxValue: number): num
 /**
  * Only exported to for unit test
  */
-function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
+export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
   const { displayMode, field, value, alignmentFactors, orientation, theme, text, isOverflow = false } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
@@ -606,7 +610,7 @@ function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
 /**
  * Only exported to for unit test
  */
-function getBarGradient(props: Props, maxSize: number): string {
+export function getBarGradient(props: Props, maxSize: number): string {
   const { field, value, orientation, theme } = props;
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
   const minValue = field.min!;
@@ -668,7 +672,7 @@ function getBarGradient(props: Props, maxSize: number): string {
 /**
  * Only exported to for unit test
  */
-function getTextValueColor(props: Props): string {
+export function getTextValueColor(props: Props): string {
   if (props.valueDisplayMode === 'text') {
     return props.theme.colors.text.primary;
   }

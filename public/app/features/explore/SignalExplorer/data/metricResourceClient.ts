@@ -22,7 +22,7 @@ type PromLanguageProvider = Pick<
  * also does not guarantee a network call — the Prometheus language provider holds its own cache
  * underneath, keyed on a range snapped to the datasource's cache level.
  */
-const CACHE_TTL_MS = 5 * 60 * 1000;
+export const CACHE_TTL_MS = 5 * 60 * 1000;
 
 interface CacheEntry<T> {
   value: Promise<T>;
@@ -52,7 +52,7 @@ function once<T>(cache: Map<string, CacheEntry<T>>, key: string, fn: () => Promi
 }
 
 /** Test helper — resets the module-level caches. Should only be called from tests. */
-function __clearCacheForTests() {
+export function __clearCacheForTests() {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('__clearCacheForTests must only be called from tests');
   }
@@ -92,7 +92,7 @@ export function subscribeToMetricCache(listener: () => void): () => void {
  * argument, everything goes: every mounted hook re-requests, and any datasource that is genuinely
  * unchanged just pays for one round trip.
  */
-function invalidateMetricCache(dsRef?: DataSourceRef): void {
+export function invalidateMetricCache(dsRef?: DataSourceRef): void {
   if (dsRef) {
     const key = dsKey(dsRef);
     for (const cache of allCaches) {

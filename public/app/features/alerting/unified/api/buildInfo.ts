@@ -58,7 +58,7 @@ export async function discoverFeaturesByUid(dataSourceUid: string): Promise<Prom
  * Prometheus and Mimir expose a `buildinfo` endpoint, Cortex does not.
  * Mimir reports which "features" are enabled or available via the buildinfo endpoint, Prometheus does not.
  */
-async function discoverDataSourceFeatures(dsSettings: {
+export async function discoverDataSourceFeatures(dsSettings: {
   url: string;
   name: string;
   type: SupportedExternalRulesSourceType;
@@ -155,7 +155,7 @@ function getDataSourceConfig(amSourceName: string) {
   return dsConfig;
 }
 
-async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResponse | undefined> {
+export async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResponse | undefined> {
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromBuildInfoResponse>({
       url: `${url}/api/v1/status/buildinfo`,

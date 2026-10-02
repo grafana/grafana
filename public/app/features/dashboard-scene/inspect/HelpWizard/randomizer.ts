@@ -1,6 +1,6 @@
 import { type DataFrameJSON, type Labels, FieldType } from '@grafana/data';
 
-function newLetterRandomizer(): (v: string) => string {
+export function newLetterRandomizer(): (v: string) => string {
   const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const lower = 'abcdefghijklmnopqrstuvwxyz';
   const charactersLength = upper.length;

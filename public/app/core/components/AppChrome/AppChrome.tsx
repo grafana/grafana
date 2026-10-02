@@ -31,7 +31,7 @@ import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
 
-const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
+export const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
 
 const CommandPalette = lazy(() =>
   import('app/features/commandPalette/CommandPalette').then((module) => ({ default: module.CommandPalette }))

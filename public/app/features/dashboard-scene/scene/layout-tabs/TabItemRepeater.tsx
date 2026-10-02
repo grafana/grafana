@@ -71,7 +71,7 @@ export function TabItemRepeater({ tab, variable }: Props) {
   );
 }
 
-function performTabRepeats(variable: MultiValueVariable, tab: TabItem, contentChanged: boolean) {
+export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, contentChanged: boolean) {
   if (tab.state.repeatByVariable !== variable.state.name) {
     return;
   }

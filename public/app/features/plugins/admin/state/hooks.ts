@@ -65,7 +65,7 @@ export const useGetPluginInsights = (id: string, version: string | undefined): C
   return useSelector((state) => selectById(state, id));
 };
 
-const useGetSingleLocalWithoutDetails = (id: string): CatalogPlugin | undefined => {
+export const useGetSingleLocalWithoutDetails = (id: string): CatalogPlugin | undefined => {
   useFetchAllLocal();
   return useSelector((state) => selectById(state, id));
 };
@@ -98,7 +98,7 @@ export const useIsRemotePluginsAvailable = () => {
   return error === null;
 };
 
-const useLocalFetchStatus = () => {
+export const useLocalFetchStatus = () => {
   const isLoading = useSelector(selectIsRequestPending('plugins/fetchLocal'));
   const error = useSelector(selectRequestError('plugins/fetchLocal'));
 
@@ -137,7 +137,7 @@ export const useUninstallStatus = () => {
 };
 
 // Only fetches in case they were not fetched yet
-const useFetchAll = () => {
+export const useFetchAll = () => {
   const dispatch = useDispatch();
   const isNotFetched = useSelector(selectIsRequestNotFetched(fetchAll.typePrefix));
 
@@ -147,7 +147,7 @@ const useFetchAll = () => {
 };
 
 // Only fetches in case they were not fetched yet
-const useFetchAllLocal = () => {
+export const useFetchAllLocal = () => {
   const dispatch = useDispatch();
   const isNotFetched = useSelector(selectIsRequestNotFetched(fetchAllLocal.typePrefix));
 
@@ -156,7 +156,7 @@ const useFetchAllLocal = () => {
   }, []); // eslint-disable-line
 };
 
-const useFetchDetails = (id: string) => {
+export const useFetchDetails = (id: string) => {
   const dispatch = useDispatch();
   const plugin = useSelector((state) => selectById(state, id));
   const isNotFetching = !useSelector(selectIsRequestPending(fetchDetails.typePrefix));
@@ -167,7 +167,7 @@ const useFetchDetails = (id: string) => {
   }, [plugin]); // eslint-disable-line
 };
 
-const useFetchPluginInsights = (id: string, version: string | undefined) => {
+export const useFetchPluginInsights = (id: string, version: string | undefined) => {
   const dispatch = useDispatch();
   const plugin = useSelector((state) => selectById(state, id));
   const isNotFetching = !useSelector(selectIsRequestPending(fetchPluginInsights.typePrefix));

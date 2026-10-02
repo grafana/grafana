@@ -16,7 +16,7 @@ type AsyncOptions<T extends string | number> =
 
 const asyncNoop = () => Promise.resolve([]);
 
-const DEBOUNCE_TIME_MS = 200;
+export const DEBOUNCE_TIME_MS = 200;
 
 /**
  * Abstracts away sync/async options for combobox components.
@@ -145,7 +145,7 @@ export function useOptions<T extends string | number>(
 /**
  * Sorts options by group and returns the sorted options and the starting index of each group
  */
-function sortByGroup<T extends string | number>(options: Array<ComboboxOption<T>>) {
+export function sortByGroup<T extends string | number>(options: Array<ComboboxOption<T>>) {
   // Group options by their group
   const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
   const groupStartIndices = new Map<string | undefined, number>();

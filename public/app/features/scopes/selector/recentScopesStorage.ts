@@ -3,7 +3,7 @@ import { config } from '@grafana/runtime';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 export const RECENT_SCOPES_CHANGED_EVENT = 'grafana.scopes.recent-changed';
-const RECENT_SCOPES_MAX = 4;
+export const RECENT_SCOPES_MAX = 4;
 
 export interface StoredRecentScopeSet {
   scopeIds: string[];

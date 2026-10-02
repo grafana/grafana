@@ -35,7 +35,7 @@ export function datasourceFact<T>(
 }
 
 /** Cap the probe fan-out: only the first N candidates (in priority order) are probed per page load. */
-const MAX_PROBED_DATASOURCES = 10;
+export const MAX_PROBED_DATASOURCES = 10;
 
 // Probes gate homepage cards: 10s outlasts a slow-but-alive datasource without stalling the region.
 export const PROBE_TIMEOUT_MS = 10_000;
@@ -44,7 +44,7 @@ export const PROBE_TIMEOUT_MS = 10_000;
 export const PROBE_TTL_MS = 60_000;
 
 // ponytail: 3s /health cutoff (drilldown's) — suspected too tight for OPS-scale instances; revisit as follow-up.
-const HEALTH_CHECK_TIMEOUT_MS = 3000;
+export const HEALTH_CHECK_TIMEOUT_MS = 3000;
 
 // Batches bound the probes each scan has in flight. BackendSrv dispatches at most five data
 // requests at once (http2Enabled is false behind a load balancer) and every in-flight request
@@ -220,7 +220,7 @@ const healthCache = new Map<string, TtlCachedPromise<boolean>>();
  * TTL window. Rejections and the 3s cutoff read as unhealthy and are cached like any answer; each
  * health check owns its cutoff, which cancels the request.
  */
-function isDatasourceHealthy(uid: string): Promise<boolean> {
+export function isDatasourceHealthy(uid: string): Promise<boolean> {
   let cache = healthCache.get(uid);
   if (!cache) {
     cache = createTtlCachedPromise(
@@ -242,7 +242,7 @@ function isDatasourceHealthy(uid: string): Promise<boolean> {
   return cache.get();
 }
 
-function resetProbeHealth(): void {
+export function resetProbeHealth(): void {
   healthCache.clear();
 }
 

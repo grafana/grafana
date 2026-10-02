@@ -119,7 +119,7 @@ export function getEditableVariableMetadata(type: string): EditableVariableMetad
   return entry;
 }
 
-const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
+export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'query',
   'custom',
   'textbox',
@@ -325,7 +325,7 @@ export interface VariableNameValidationResult {
   warningMessage?: string;
 }
 
-const getPredefinedVariableShadowWarning = () =>
+export const getPredefinedVariableShadowWarning = () =>
   t(
     'dashboard-scene.validate-variable-name.warning-predefined-shadow',
     'A global or folder variable with this name exists and will be overwritten by this dashboard variable.'
@@ -433,7 +433,7 @@ export function snapshotVariableSetsAlongPath(variable: SceneVariable): Variable
  * Snapshots variable sets that currently hold a predefined variable named `name`
  * (this variable's set and ancestors). Used so a later drop can be undone.
  */
-function snapshotSetsWithPredefinedNamed(variable: SceneVariable, name: string): VariableSetSnapshot[] {
+export function snapshotSetsWithPredefinedNamed(variable: SceneVariable, name: string): VariableSetSnapshot[] {
   const snapshots: VariableSetSnapshot[] = [];
   forEachVariableSetAlongPath(variable, (candidate) => {
     if (candidate.state.variables.some((v) => v.state.name === name && isPredefinedOrigin(v.state.origin))) {

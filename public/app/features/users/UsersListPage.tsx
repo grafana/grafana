@@ -46,7 +46,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = ConnectedProps<typeof connector>;
 
-const UsersListPageUnconnected = ({
+export const UsersListPageUnconnected = ({
   users,
   page,
   totalPages,

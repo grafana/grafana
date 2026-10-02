@@ -21,7 +21,7 @@ import {
 } from './useSidebar';
 import { useCustomClickAway } from './useSidebarClickAway';
 
-interface Props {
+export interface Props {
   children?: ReactNode;
   contextValue: SidebarContextValue;
 }

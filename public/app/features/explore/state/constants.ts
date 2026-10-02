@@ -8,7 +8,7 @@ export const DEFAULT_RANGE = {
 
 export const randomId = () => generateUUID().slice(0, 12);
 
-const DEFAULT_TAG_FILTERS = {
+export const DEFAULT_TAG_FILTERS = {
   id: randomId(),
   operator: '=',
 };

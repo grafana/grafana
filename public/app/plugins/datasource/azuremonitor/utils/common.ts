@@ -6,7 +6,7 @@ import { getAppEvents, logWarning, type TemplateSrv, type VariableInterpolation 
 
 import { type AzureAPIResponse, type AzureMonitorOption, type VariableOptionGroup } from '../types/types';
 
-const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
+export const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
   options.some((v) => (v.options ? hasOption(v.options, value) : v.value === value));
 
 export const findOptions = (options: AzureMonitorOption[], values: string[] = []) => {
@@ -46,9 +46,9 @@ export const routeNames = {
   resourceGraph: 'resourcegraph',
 };
 
-const MAX_ARM_PAGES = 50;
+export const MAX_ARM_PAGES = 50;
 
-function nextLinkToPath(prefix: string, nextLink: string): string {
+export function nextLinkToPath(prefix: string, nextLink: string): string {
   const { pathname, search } = new URL(nextLink);
   return `${prefix}${pathname}${search}`;
 }

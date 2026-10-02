@@ -26,7 +26,7 @@ import { splitPath } from '../utils/path';
 
 import { FolderReadmeEvents } from './analytics/main';
 
-const FOLDER_README_ANCHOR_ID = 'folder-readme';
+export const FOLDER_README_ANCHOR_ID = 'folder-readme';
 
 interface Props {
   folderUID: string;

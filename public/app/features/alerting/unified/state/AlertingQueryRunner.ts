@@ -32,7 +32,7 @@ interface AlertingQueryResult {
   frames: DataFrameJSON[];
 }
 
-interface AlertingQueryResponse {
+export interface AlertingQueryResponse {
   results: Record<string, AlertingQueryResult>;
 }
 export class AlertingQueryRunner {

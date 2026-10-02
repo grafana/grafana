@@ -3,7 +3,7 @@ import { ValueMatcherID } from '@grafana/data';
 import { type ValueMatcherUIRegistryItem } from './types';
 
 interface Props {}
-const NoopMatcherEditor = (props: Props) => {
+export const NoopMatcherEditor = (props: Props) => {
   return null;
 };
 

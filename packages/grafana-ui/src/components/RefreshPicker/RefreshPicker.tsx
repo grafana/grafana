@@ -170,7 +170,7 @@ export const RefreshPicker = Object.assign(RefreshPickerComponent, {
   autoOption,
 });
 
-const translateOption = (option: string): SelectableValue<string> => {
+export const translateOption = (option: string): SelectableValue<string> => {
   switch (option) {
     case liveOption.value:
       return {
@@ -194,7 +194,7 @@ const translateOption = (option: string): SelectableValue<string> => {
   };
 };
 
-const intervalsToOptions = ({
+export const intervalsToOptions = ({
   intervals = defaultIntervals,
   showAutoInterval = false,
 }: { intervals?: string[]; showAutoInterval?: boolean } = {}): Array<SelectableValue<string>> => {

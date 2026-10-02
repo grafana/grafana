@@ -72,14 +72,14 @@ export function PromoteConfirmModal({ stagedConfig, isSyncManaged, onDismiss }: 
   );
 }
 
-interface PromotePreviewBodyProps {
+export interface PromotePreviewBodyProps {
   isLoading: boolean;
   error?: string;
   isPreviewUnavailable: boolean;
   result?: DryRunValidationResult;
 }
 
-type PreviewState =
+export type PreviewState =
   | { kind: 'loading' }
   | { kind: 'unavailable' }
   | { kind: 'error'; message: string }
@@ -87,7 +87,12 @@ type PreviewState =
   | { kind: 'valid'; result: DryRunValidationResult }
   | { kind: 'idle' };
 
-function getPreviewState({ isLoading, error, isPreviewUnavailable, result }: PromotePreviewBodyProps): PreviewState {
+export function getPreviewState({
+  isLoading,
+  error,
+  isPreviewUnavailable,
+  result,
+}: PromotePreviewBodyProps): PreviewState {
   if (isLoading) {
     return { kind: 'loading' };
   }

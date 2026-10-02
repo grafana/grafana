@@ -74,7 +74,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   };
 }
 
-function coreSpecMapper(spec: v0alpha1Spec): PanelPluginMeta {
+export function coreSpecMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const mapped = specMapper(spec);
   return prependPublicPathToCorePlugins(mapped, spec);
 }

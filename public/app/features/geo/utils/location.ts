@@ -113,7 +113,7 @@ export async function getLocationMatchers(src?: FrameGeometrySource): Promise<Lo
   }
   return info;
 }
-interface LocationFields {
+export interface LocationFields {
   mode: FrameGeometrySourceMode;
 
   // Field mappings
@@ -126,7 +126,7 @@ interface LocationFields {
   geo?: Field<Geometry | undefined>;
 }
 
-function getLocationFields(frame: DataFrame, location: LocationFieldMatchers): LocationFields {
+export function getLocationFields(frame: DataFrame, location: LocationFieldMatchers): LocationFields {
   const fields: LocationFields = {
     mode: location.mode ?? FrameGeometrySourceMode.Auto,
   };

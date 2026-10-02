@@ -127,7 +127,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   }, [deferredNamespaces, deferredFilterState]);
 };
 
-const filterRules = (
+export const filterRules = (
   namespaces: CombinedRuleNamespace[],
   filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] }
 ): CombinedRuleNamespace[] => {

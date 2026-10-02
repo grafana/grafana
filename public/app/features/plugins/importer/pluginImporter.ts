@@ -185,7 +185,7 @@ export const pluginImporter: PluginImporter = {
   getPanel: (id: string) => getPluginFromCache<PanelPlugin>(id), // we need this sync because how the panel plugins are loaded in PanelRenderer
 };
 
-const clearCaches = () => {
+export const clearCaches = () => {
   promisesCache.clear();
   pluginsCache.clear();
 };

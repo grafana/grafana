@@ -379,7 +379,7 @@ const LINK_GAP = 2; // separator border between inline data links
 const ACTION_SPACING = 20; // horizontal padding of a small action Button
 const ACTION_GAP = 6; // theme.spacing(0.75) gap between action buttons
 
-function getPillCellHeightMeasurer(
+export function getPillCellHeightMeasurer(
   measureWidth: (value: string) => number,
   spacing: number,
   gap: number
@@ -539,7 +539,7 @@ export function buildCellHeightMeasurers(
 // in some cases, the estimator might return a value that is less than 1, but when calculated by the measurer, it actually
 // realizes that it's a multi-line cell. to avoid this, we want to give a little buffer away from 1 before we fully trust
 // the estimator to have told us that a cell is single-line.
-const SINGLE_LINE_ESTIMATE_THRESHOLD = 18.5;
+export const SINGLE_LINE_ESTIMATE_THRESHOLD = 18.5;
 
 /**
  * @internal
@@ -1124,7 +1124,7 @@ const TABLE_CELL_COLOR_BACKGROUND_DISPLAY_MODES_TO_DISPLAY_MODES: Record<
  * @returns TableCellOptions object in the correct format
  * relative to the old display mode.
  */
-function migrateTableDisplayModeToCellOptions(displayMode: TableCellDisplayMode): TableCellOptions {
+export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDisplayMode): TableCellOptions {
   switch (displayMode) {
     // In the case of the gauge we move to a different option
     case TableCellDisplayMode.BasicGauge:

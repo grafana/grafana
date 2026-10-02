@@ -38,7 +38,7 @@ export const ExportLabel = 'grafana.app/export-label';
 // The importer surfaces it in the datasource picker so users can tell which original datasource each input refers to.
 export const ExportDatasourceName = 'grafana.app/export-datasource-name';
 
-interface InputUsage {
+export interface InputUsage {
   libraryPanels?: LibraryPanelRef[];
 }
 

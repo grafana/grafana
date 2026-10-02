@@ -38,7 +38,7 @@ export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
   return pluginImporter.getPanel(id);
 }
 
-function clearPanelPluginCache(): void {
+export function clearPanelPluginCache(): void {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('clearPanelPluginCache() function can only be called from tests.');
   }

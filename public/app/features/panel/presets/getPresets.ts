@@ -18,7 +18,7 @@ export function getPluginPresets(plugin: PanelPlugin, data?: DataFrame[]): Panel
  * Returns presets for a panel
  * @TODO: error handling?
  */
-async function getPresets(pluginId: string, data?: DataFrame[]): Promise<PanelPluginVisualizationSuggestion[]> {
+export async function getPresets(pluginId: string, data?: DataFrame[]): Promise<PanelPluginVisualizationSuggestion[]> {
   const plugin = await importPanelPlugin(pluginId);
   return getPluginPresets(plugin, data);
 }

@@ -35,7 +35,7 @@ export const initPreferences = async (): Promise<Preferences | undefined> => {
   return preferences;
 };
 
-async function fetchMergedPreferences(): Promise<Preferences | undefined> {
+export async function fetchMergedPreferences(): Promise<Preferences | undefined> {
   const namespace = window.grafanaBootData?.settings?.namespace;
   const isSignedIn = window.grafanaBootData?.user?.isSignedIn;
 

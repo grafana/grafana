@@ -12,7 +12,7 @@ type InheritableKeys = typeof INHERITABLE_KEYS;
 export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
 // Represents matching information for a single route in the traversal path
-type RouteMatchInfo<T extends Route> = {
+export type RouteMatchInfo<T extends Route> = {
   route: T;
   matchDetails: LabelMatchDetails[];
   matched: boolean;
@@ -154,7 +154,7 @@ export function getInheritedProperties<T extends Route>(
   return inherited;
 }
 
-function addUniqueIdentifier(route: Route): RouteWithID {
+export function addUniqueIdentifier(route: Route): RouteWithID {
   return {
     id: uniqueId('route-'),
     ...route,

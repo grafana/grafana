@@ -31,7 +31,7 @@ export type PredefinedControlSourceRef = GlobalControlSourceRef | FolderControlS
  * source types. Widening the published union is a follow-up; until then this is
  * the single sanctioned cast between the two shapes.
  */
-function toControlSourceRef(ref: PredefinedControlSourceRef): ControlSourceRef {
+export function toControlSourceRef(ref: PredefinedControlSourceRef): ControlSourceRef {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return ref as unknown as ControlSourceRef;
 }

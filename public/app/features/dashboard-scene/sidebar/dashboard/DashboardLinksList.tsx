@@ -146,7 +146,7 @@ export function AddLinkButton({ dashboard }: { dashboard: DashboardScene }) {
 // we make links Scene-like for DraggableList
 type PseudoSceneLink = DashboardLink & { state: { key: string; name: string } };
 
-function partitionLinksByPlacement(links: DashboardLink[]) {
+export function partitionLinksByPlacement(links: DashboardLink[]) {
   const visible: PseudoSceneLink[] = [];
   const controlsMenu: PseudoSceneLink[] = [];
 

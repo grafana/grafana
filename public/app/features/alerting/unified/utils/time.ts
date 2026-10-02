@@ -17,7 +17,7 @@ export function parseInterval(value: string): [number, string] {
   throw new Error(`Invalid interval description: ${value}`);
 }
 
-function intervalToSeconds(interval: string): number {
+export function intervalToSeconds(interval: string): number {
   const { sec, count } = rangeUtil.describeInterval(interval);
   return sec * count;
 }

@@ -29,9 +29,9 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, Cloud
 
 type LogGroupFieldState = Pick<FieldProps, 'invalid'> & { error?: string | null };
 
-const ARN_DEPRECATION_WARNING_MESSAGE =
+export const ARN_DEPRECATION_WARNING_MESSAGE =
   'Since grafana 7.3 authentication type "arn" is deprecated, falling back to default SDK provider';
-const CREDENTIALS_AUTHENTICATION_WARNING_MESSAGE =
+export const CREDENTIALS_AUTHENTICATION_WARNING_MESSAGE =
   'As of grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
 If you don\'t have a credentials file, switch to the default SDK provider for extracting credentials \
 from environment variables or IAM roles';

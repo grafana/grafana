@@ -16,7 +16,7 @@ export interface SoloPanelContextValue {
   renderRow?: (row: SceneGridRow, header: React.ReactNode) => React.ReactNode;
 }
 
-class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
+export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
   public matchFound = false;
   public matchedPanels: VizPanel[] = [];
   public showControlsPane = true;

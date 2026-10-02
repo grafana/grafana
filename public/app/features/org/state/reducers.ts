@@ -3,7 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type OrganizationState, type Organization } from 'app/types/organization';
 import { type UserOrg } from 'app/types/user';
 
-const initialState: OrganizationState = {
+export const initialState: OrganizationState = {
   organization: {} as Organization,
   userOrgs: [],
 };
@@ -26,7 +26,7 @@ const organizationSlice = createSlice({
 
 export const { setOrganizationName, organizationLoaded, userOrganizationsLoaded } = organizationSlice.actions;
 
-const organizationReducer = organizationSlice.reducer;
+export const organizationReducer = organizationSlice.reducer;
 
 export default {
   organization: organizationReducer,

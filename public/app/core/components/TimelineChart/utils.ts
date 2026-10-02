@@ -76,7 +76,7 @@ const defaultConfig: PanelFieldConfig = {
 };
 
 /** Checks if a mapped value of the specified type exists for the given field */
-const hasSpecialMappedValue = (field: Field, match: SpecialValueMatch): boolean =>
+export const hasSpecialMappedValue = (field: Field, match: SpecialValueMatch): boolean =>
   field.config.mappings?.some(
     (mapping: ValueMapping): boolean => mapping.type === MappingType.SpecialValue && mapping.options.match === match
   ) || false;

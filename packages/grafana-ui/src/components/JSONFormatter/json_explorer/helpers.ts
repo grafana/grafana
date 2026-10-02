@@ -4,7 +4,7 @@
 /*
  * Escapes `"` characters from string
  */
-function formatString(str: string): string {
+export function formatString(str: string): string {
   return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 

@@ -42,7 +42,7 @@ export type RestrictedGrafanaApisAllowList = Partial<
 
 export const RestrictedGrafanaApisContext = createContext<RestrictedGrafanaApisContextType>({});
 
-type Props = {
+export type Props = {
   pluginId: string;
   apis: RestrictedGrafanaApisContextType;
   // Use it to share APIs with plugins (TAKES PRECEDENCE over `apiBlockList`)

@@ -272,7 +272,7 @@ const getStyles = () => ({
   }),
 });
 
-const convertPixelCoordinatesToBarCoordinates = (
+export const convertPixelCoordinatesToBarCoordinates = (
   // position relative to the start of the graph
   pos: { x: number; y: number },
   root: LevelItem,

@@ -89,7 +89,7 @@ export function SilencesFilter({ silences }: SilencesFilterProps) {
   );
 }
 
-class SilenceFiltersController implements AdHocFiltersController {
+export class SilenceFiltersController implements AdHocFiltersController {
   private silencesRef: React.RefObject<Silence[]>;
   private filters: AdHocFilterWithLabels[];
   private setFilters: (filters: AdHocFilterWithLabels[]) => void;

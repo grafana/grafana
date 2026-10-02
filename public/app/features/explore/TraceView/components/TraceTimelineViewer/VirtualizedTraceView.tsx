@@ -118,7 +118,7 @@ type TVirtualizedTraceViewOwnProps = {
   app: CoreApp | string;
 };
 
-type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
+export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
 
 // export for tests
 const DEFAULT_HEIGHTS = {

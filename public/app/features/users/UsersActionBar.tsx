@@ -34,7 +34,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
-const UsersActionBarUnconnected = ({
+export const UsersActionBarUnconnected = ({
   searchQuery,
   pendingInvitesCount,
   changeSearchQuery,

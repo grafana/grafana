@@ -113,7 +113,7 @@ function validatePrometheusYamlFile(obj: unknown): ValidationResult {
 }
 
 // only use this function directly for testing purposes, use parseYamlFileToRulerRulesConfigDTO instead
-function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultNamespace: string): RulerRulesConfigDTO {
+export function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultNamespace: string): RulerRulesConfigDTO {
   const obj = load(yamlAsString);
   const validation = validatePrometheusYamlFile(obj);
 

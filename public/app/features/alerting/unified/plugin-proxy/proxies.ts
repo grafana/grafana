@@ -203,7 +203,7 @@ const matchesGroupPage: ProxyMatcher = ({ params }: ProxyContext) =>
  *
  * Routes opt in via `proxied()` in `routes.tsx`, and `routes.test.tsx` checks the two agree.
  */
-const routeProxies: RouteProxy[] = [
+export const routeProxies: RouteProxy[] = [
   {
     // Both halves of the URL have to agree that the rule is data source managed. Every link Grafana
     // builds for this route puts the full identifier in the path, so a bare UID here means the URL

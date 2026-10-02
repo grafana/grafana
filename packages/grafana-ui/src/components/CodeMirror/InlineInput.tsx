@@ -48,14 +48,14 @@ export interface CodeMirrorInlineInputProps {
  * Keeps the editor to a single line: any transaction that would produce more
  * than one line (a typed Enter, a programmatic newline) is dropped.
  */
-const singleLineFilter: Extension = EditorState.transactionFilter.of((tr) => (tr.newDoc.lines > 1 ? [] : tr));
+export const singleLineFilter: Extension = EditorState.transactionFilter.of((tr) => (tr.newDoc.lines > 1 ? [] : tr));
 
 /**
  * Strips newlines from pasted text so multi-line clipboard content (e.g. a URL
  * copied with a trailing newline) collapses into the single line rather than
  * being rejected wholesale by `singleLineFilter`.
  */
-const stripNewlinesOnPaste: Extension = EditorView.domEventHandlers({
+export const stripNewlinesOnPaste: Extension = EditorView.domEventHandlers({
   paste(event, view) {
     const text = event.clipboardData?.getData('text');
     if (!text || !/[\r\n]/.test(text)) {

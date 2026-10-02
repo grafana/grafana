@@ -15,7 +15,7 @@ import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
-const TOOLTIP_OFFSET = 10;
+export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?
 export const enum TooltipHoverMode {

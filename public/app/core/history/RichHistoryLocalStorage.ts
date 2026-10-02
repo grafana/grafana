@@ -246,7 +246,7 @@ function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalSto
  * Ensures the entry can be added.
  * Returns queries that should be saved back giving space for one extra query.
  */
-function cleanUpUnstarredQuery(
+export function cleanUpUnstarredQuery(
   queriesToKeep: RichHistoryLocalStorageDTO[],
   max: number
 ): {

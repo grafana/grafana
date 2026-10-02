@@ -420,7 +420,10 @@ const IAM_DISPLAY_BATCH_SIZE = 200;
  * This means transient IAM failures are self-healing without needing a full
  * cache clear.
  */
-async function resolveDeletedByDisplayMap(uids: Set<string>, cache: Map<string, string>): Promise<Map<string, string>> {
+export async function resolveDeletedByDisplayMap(
+  uids: Set<string>,
+  cache: Map<string, string>
+): Promise<Map<string, string>> {
   const result = new Map<string, string>();
   const toFetch = new Set<string>();
   for (const uid of uids) {

@@ -9,7 +9,7 @@ import { type ResourceStatus, useQuotaLimits } from '../hooks/useQuotaLimits';
 
 const QUOTA_EXTENSION_URL = 'https://grafana.com/help';
 
-const DISMISS_STORAGE_KEY = 'grafana.quota-limit-banner.dismissed';
+export const DISMISS_STORAGE_KEY = 'grafana.quota-limit-banner.dismissed';
 
 type DismissedMap = Record<string, boolean>;
 

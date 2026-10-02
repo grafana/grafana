@@ -65,7 +65,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
 /**
  * This part is split into a separate component to help test this
  */
-function ToolbarActions({ dashboard }: Props) {
+export function ToolbarActions({ dashboard }: Props) {
   const {
     isEditing,
     viewPanel,

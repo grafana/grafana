@@ -13,7 +13,7 @@ import { trimFileName } from '../../utils/file';
 import { getButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
-interface Props {
+export interface Props {
   /** Callback function to handle uploaded file  */
   onFileUpload: (event: FormEvent<HTMLInputElement>) => void;
   /** Accepted file extensions */

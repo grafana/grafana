@@ -34,7 +34,7 @@ import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
 import { DEFAULT_RANGE } from './constants';
 
-const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
+export const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
 
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {

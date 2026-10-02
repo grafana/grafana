@@ -1,11 +1,11 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-function isGrafanaAdmin(): boolean {
+export function isGrafanaAdmin(): boolean {
   return contextSrv.user.isGrafanaAdmin;
 }
 
-function isOrgAdmin() {
+export function isOrgAdmin() {
   return contextSrv.hasRole('Admin');
 }
 

@@ -17,7 +17,7 @@ export const fromDTO = async (dto: RichHistoryRemoteStorageDTO): Promise<RichHis
   };
 };
 
-const toDTO = (richHistory: RichHistoryQuery): RichHistoryRemoteStorageDTO => {
+export const toDTO = (richHistory: RichHistoryQuery): RichHistoryRemoteStorageDTO => {
   return {
     uid: richHistory.id,
     createdAt: Math.floor(richHistory.createdAt / 1000),

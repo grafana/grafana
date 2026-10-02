@@ -48,7 +48,7 @@ const topics = [
   { label: 'Annotations', value: true, description: 'Include annotations as regular data' },
 ];
 
-const INVALID_PANEL_DESCRIPTION = 'Contains a shared dashboard query';
+export const INVALID_PANEL_DESCRIPTION = 'Contains a shared dashboard query';
 
 export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Props) {
   const { value: panelPluginMetas, error: panelPluginMetasError } = usePanelPluginMetasMap();

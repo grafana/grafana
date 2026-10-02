@@ -59,7 +59,7 @@ export interface RegistrySelectInfo {
   current: Array<SelectableValue<string>>;
 }
 
-function getElementTypesOptions(items: CanvasElementItem[], current: string | undefined): RegistrySelectInfo {
+export function getElementTypesOptions(items: CanvasElementItem[], current: string | undefined): RegistrySelectInfo {
   const selectables: RegistrySelectInfo = { options: [], current: [] };
   const alpha: Array<SelectableValue<string>> = [];
 
@@ -311,7 +311,7 @@ export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number
   return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
 };
 
-const calculateAbsoluteCoords = (
+export const calculateAbsoluteCoords = (
   x1: number,
   y1: number,
   x2: number,

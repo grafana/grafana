@@ -15,7 +15,7 @@ const defaultURL = 'console.aws.amazon.com';
 const usGovURL = 'console.amazonaws-us-gov.com';
 const chinaURL = 'console.amazonaws.cn';
 
-function getLogsEndpoint(region: string): string {
+export function getLogsEndpoint(region: string): string {
   let url = defaultURL;
   if (region.startsWith('us-gov-')) {
     url = usGovURL;

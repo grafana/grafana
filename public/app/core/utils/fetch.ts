@@ -69,7 +69,7 @@ function sanitizeHeader(v: string) {
   return unsafeCharacters.test(v) ? encodeURI(v) : v;
 }
 
-const parseHeaders = (options: BackendSrvRequest) => {
+export const parseHeaders = (options: BackendSrvRequest) => {
   const safeHeaders: Record<string, string> = {};
   for (let [key, value] of Object.entries(options.headers ?? {})) {
     safeHeaders[sanitizeHeader(key)] = sanitizeHeader(value);
@@ -104,7 +104,7 @@ export const isContentTypeJson = (headers: Headers) => {
   return false;
 };
 
-const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
+export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
   if (!options) {
     return options;
   }
@@ -191,7 +191,7 @@ export const parseUrlFromOptions = (options: BackendSrvRequest): Observable<stri
   }
 };
 
-const parseCredentials = (options: BackendSrvRequest): RequestCredentials => {
+export const parseCredentials = (options: BackendSrvRequest): RequestCredentials => {
   if (!options) {
     return options;
   }

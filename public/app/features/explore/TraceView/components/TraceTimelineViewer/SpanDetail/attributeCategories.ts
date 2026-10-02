@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 
 export type AttributeSectionType = 'resource' | 'span';
 
-const SERVICE_CATEGORY_ID = 'service' as const;
+export const SERVICE_CATEGORY_ID = 'service' as const;
 
 export const SERVICE_HEXAGON_CATEGORY_ICON = 'service-hexagon' as const;
 

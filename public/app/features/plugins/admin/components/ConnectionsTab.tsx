@@ -43,7 +43,7 @@ type ListProps = Omit<ViewProps, 'hasCreateRights'> & {
   plugin: CatalogPlugin;
 };
 
-function ConnectionsList({
+export function ConnectionsList({
   dataSources,
   dataSourcesCount,
   isLoading,

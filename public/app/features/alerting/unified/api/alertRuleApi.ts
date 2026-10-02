@@ -33,11 +33,11 @@ export type PreviewResponse = Array<
   Pick<AlertmanagerAlert, 'annotations' | 'endsAt' | 'startsAt' | 'generatorURL' | 'labels'>
 >;
 
-const PREVIEW_URL = '/api/v1/rule/test/grafana';
-const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
+export const PREVIEW_URL = '/api/v1/rule/test/grafana';
+export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
 // for some reason vanilla Prometheus uses param notation with [] appended
-enum PrometheusAPIFilters {
+export enum PrometheusAPIFilters {
   RuleName = 'rule_name',
   RuleNameVanilla = 'rule_name[]',
   RuleGroup = 'rule_group',

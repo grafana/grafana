@@ -29,7 +29,7 @@ export interface UpdateDatasourceInstancePayload {
   datasourceInstance: DataSourceApi;
   history: HistoryItem[];
 }
-const updateDatasourceInstanceAction = createAction<UpdateDatasourceInstancePayload>(
+export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInstancePayload>(
   'explore/updateDatasourceInstance'
 );
 

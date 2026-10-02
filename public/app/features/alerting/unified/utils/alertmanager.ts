@@ -102,7 +102,7 @@ export function matcherFieldToMatcher(field: MatcherFieldValue): Matcher {
   };
 }
 
-function matchersToString(matchers: Matcher[]) {
+export function matchersToString(matchers: Matcher[]) {
   const matcherFields = matchers.map(matcherToMatcherField);
 
   const combinedMatchers = matcherFields.reduce((acc, current) => {

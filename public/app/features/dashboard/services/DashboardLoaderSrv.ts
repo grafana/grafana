@@ -146,7 +146,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
   }
 }
 
-class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
+export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,

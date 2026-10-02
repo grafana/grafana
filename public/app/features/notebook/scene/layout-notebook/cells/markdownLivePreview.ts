@@ -27,7 +27,7 @@ export const INLINE_CODE_NODE = 'InlineCode';
 export const LINK_NODE = 'Link';
 export const STRIKETHROUGH_NODE = 'Strikethrough';
 
-const markdownLanguageSupport = markdown({ base: markdownLanguage, extensions: [Strikethrough] });
+export const markdownLanguageSupport = markdown({ base: markdownLanguage, extensions: [Strikethrough] });
 
 /**
  * Walks from `pos` up through its ancestor nodes, returning the first one whose type is in
@@ -142,7 +142,7 @@ export function newlineInsertionPoint(tree: Tree, pos: number): number {
  * the range, not merely adjacent to it: a caret right after `**bold**` with no gap should not re-reveal
  * markers the reader has already typed past. Exported for direct unit testing of the boundary cases.
  */
-function overlapsSelection(selection: SelectionRange, from: number, to: number): boolean {
+export function overlapsSelection(selection: SelectionRange, from: number, to: number): boolean {
   return selection.from < to && from < selection.to;
 }
 
@@ -297,7 +297,7 @@ function listItemDecorations(
 
 const HEADING_NODE_PATTERN = /^ATXHeading([1-6])$/;
 
-interface BuiltDecorations {
+export interface BuiltDecorations {
   /** Everything rendered: marks, hidden markers, and line decorations. */
   decorations: DecorationSet;
   /**
@@ -309,7 +309,7 @@ interface BuiltDecorations {
 }
 
 /** Exported so tests can inspect the resulting DecorationSet directly against a real parsed doc. */
-function buildDecorations(state: EditorState, styles: MarkdownEditorStyles): BuiltDecorations {
+export function buildDecorations(state: EditorState, styles: MarkdownEditorStyles): BuiltDecorations {
   const tree = syntaxTree(state);
   const { main } = state.selection;
   const ranges: Array<Range<Decoration>> = [];
@@ -378,7 +378,7 @@ function buildDecorations(state: EditorState, styles: MarkdownEditorStyles): Bui
   return { decorations: Decoration.set(ranges, true), hidden: Decoration.set(hiddenRanges, true) };
 }
 
-interface MarkdownEditorStyles {
+export interface MarkdownEditorStyles {
   heading: string;
   heading1: string;
   heading2: string;

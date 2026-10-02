@@ -213,7 +213,7 @@ export function attachRulerRuleToCombinedRule(rule: CombinedRule, rulerGroup: Ru
 // Marker name for the virtual group built by mergeUngroupedGrafanaRules. Leading/trailing
 // double-underscores keep it from colliding with realistic user-supplied group names; the
 // value is purely UI-internal and never round-trips through any API.
-const MERGED_UNGROUPED_GROUP_NAME = '__ungrouped__';
+export const MERGED_UNGROUPED_GROUP_NAME = '__ungrouped__';
 
 export function isMergedUngroupedGroup(group: Pick<CombinedRuleGroup, 'name'>): boolean {
   return group.name === MERGED_UNGROUPED_GROUP_NAME;
@@ -270,7 +270,7 @@ export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) 
   });
 }
 
-function sortRulesByName(rules: CombinedRule[]) {
+export function sortRulesByName(rules: CombinedRule[]) {
   return rules.sort((a, b) => collator.compare(a.name, b.name));
 }
 

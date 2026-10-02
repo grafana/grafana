@@ -427,7 +427,7 @@ function getSortFieldDisplayName(name: string) {
   return name;
 }
 
-function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFrame {
+export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFrame {
   const hits = rsp.hits;
   if (hits.length < 1) {
     return { fields: [], length: 0 };

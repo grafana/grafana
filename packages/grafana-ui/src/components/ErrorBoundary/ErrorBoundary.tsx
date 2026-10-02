@@ -7,6 +7,8 @@ import { Alert } from '../Alert/Alert';
 
 import { ErrorWithStack } from './ErrorWithStack';
 
+export type { ErrorInfo };
+
 export interface ErrorBoundaryApi {
   error: Error | null;
   errorInfo: ErrorInfo | null;

@@ -3,7 +3,7 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { withDeadline } from './probeUtils';
 
 /** Hard ceiling on one signal's detection; past it the signal settles unknown. */
-const SIGNAL_BUDGET_MS = 30_000;
+export const SIGNAL_BUDGET_MS = 30_000;
 
 export type SignalStatus = 'active' | 'inactive' | 'unknown';
 

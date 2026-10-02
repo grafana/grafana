@@ -51,7 +51,12 @@ function getDurationSecs(
   return durSecs;
 }
 
-function convertToCron(fromDay?: number | null, from?: string | null, toDay?: number | null, to?: string | null) {
+export function convertToCron(
+  fromDay?: number | null,
+  from?: string | null,
+  toDay?: number | null,
+  to?: string | null
+) {
   // valid defs must have a "from"
   if (fromDay == null && from == null) {
     return undefined;

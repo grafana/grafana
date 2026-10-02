@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Combobox } from '../Combobox/Combobox';
 import { type ComboboxOption } from '../Combobox/types';
 
-interface Props {
+export interface Props {
   onChange: (weekStart?: WeekStart) => void;
   value?: WeekStart;
   width?: number;

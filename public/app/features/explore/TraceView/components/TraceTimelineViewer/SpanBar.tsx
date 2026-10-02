@@ -119,7 +119,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type Props = {
+export type Props = {
   color: string;
   onClick?: (evt: React.MouseEvent<HTMLDivElement>) => void;
   viewEnd: number;

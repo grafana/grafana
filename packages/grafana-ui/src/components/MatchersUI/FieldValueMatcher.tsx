@@ -43,7 +43,7 @@ function isBooleanReducer(r: ReducerID) {
   return r === ReducerID.allIsNull || r === ReducerID.allIsZero;
 }
 
-const FieldValueMatcherEditor = ({ id, options, onChange }: Props) => {
+export const FieldValueMatcherEditor = ({ id, options, onChange }: Props) => {
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
 
   const onSetReducer = useCallback(

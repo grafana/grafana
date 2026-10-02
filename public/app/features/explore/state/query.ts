@@ -84,12 +84,12 @@ export const selectIsWaitingForData = (exploreId: string) => {
 /**
  * Adds a query row after the row with the given index.
  */
-interface AddQueryRowPayload {
+export interface AddQueryRowPayload {
   exploreId: string;
   index: number;
   query: DataQuery;
 }
-const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
+export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
 
 /**
  * Query change handler for the query row with the given index.
@@ -102,15 +102,15 @@ export interface ChangeQueriesPayload {
     skipAutoImport?: boolean;
   };
 }
-const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
+export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
 /**
  * Cancel running queries.
  */
-interface CancelQueriesPayload {
+export interface CancelQueriesPayload {
   exploreId: string;
 }
-const cancelQueriesAction = createAction<CancelQueriesPayload>('explore/cancelQueries');
+export const cancelQueriesAction = createAction<CancelQueriesPayload>('explore/cancelQueries');
 
 interface QueriesImportedPayload {
   exploreId: string;
@@ -149,11 +149,11 @@ const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementar
   'explore/storeSupplementaryQueryDataProviderAction'
 );
 
-const cleanSupplementaryQueryDataProviderAction = createAction<CleanSupplementaryQueryDataProvider>(
+export const cleanSupplementaryQueryDataProviderAction = createAction<CleanSupplementaryQueryDataProvider>(
   'explore/cleanSupplementaryQueryDataProviderAction'
 );
 
-const cleanSupplementaryQueryAction = createAction<{ exploreId: string; type: SupplementaryQueryType }>(
+export const cleanSupplementaryQueryAction = createAction<{ exploreId: string; type: SupplementaryQueryType }>(
   'explore/cleanSupplementaryQueryAction'
 );
 
@@ -183,7 +183,7 @@ export interface QueryEndedPayload {
   exploreId: string;
   response: ExplorePanelData;
 }
-const queryStreamUpdatedAction = createAction<QueryEndedPayload>('explore/queryStreamUpdated');
+export const queryStreamUpdatedAction = createAction<QueryEndedPayload>('explore/queryStreamUpdated');
 
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
@@ -215,10 +215,10 @@ export const clearLogs = createAction<ClearLogsPayload>('explore/clearLogs');
  * @param exploreId Explore area
  * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
  */
-interface ScanStartPayload {
+export interface ScanStartPayload {
   exploreId: string;
 }
-const scanStartAction = createAction<ScanStartPayload>('explore/scanStart');
+export const scanStartAction = createAction<ScanStartPayload>('explore/scanStart');
 
 /**
  * Stop any scanning for more results.
@@ -970,7 +970,7 @@ export function scanStart(exploreId: string): ThunkResult<void> {
   };
 }
 
-function addResultsToCache(exploreId: string): ThunkResult<void> {
+export function addResultsToCache(exploreId: string): ThunkResult<void> {
   return (dispatch, getState) => {
     const queryResponse = getState().explore.panes[exploreId]!.queryResponse;
     const absoluteRange = getState().explore.panes[exploreId]!.absoluteRange;
@@ -983,7 +983,7 @@ function addResultsToCache(exploreId: string): ThunkResult<void> {
   };
 }
 
-function clearCache(exploreId: string): ThunkResult<void> {
+export function clearCache(exploreId: string): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(clearCacheAction({ exploreId }));
   };

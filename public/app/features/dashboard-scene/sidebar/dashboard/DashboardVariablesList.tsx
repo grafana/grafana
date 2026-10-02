@@ -123,7 +123,7 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
   );
 }
 
-function partitionVariablesByEditability(variables: SceneVariable[]) {
+export function partitionVariablesByEditability(variables: SceneVariable[]) {
   const { editable = [], nonEditable = [] } = partitionSceneObjects(variables, (v) =>
     isVariableEditable(v) ? 'editable' : 'nonEditable'
   );

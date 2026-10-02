@@ -2,7 +2,7 @@ import { type ManagerKind } from '../apiserver/types';
 
 import { type QueryResponse } from './service/types';
 
-enum DashboardSearchItemType {
+export enum DashboardSearchItemType {
   DashDB = 'dash-db',
   DashHome = 'dash-home',
   DashFolder = 'dash-folder',

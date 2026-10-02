@@ -156,7 +156,7 @@ export interface PanelEditorProps<T = any> {
  * TOptions must be any to follow the same pattern as PanelModel<TOptions>
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface PanelMigrationModel<TOptions = any> {
+export interface PanelMigrationModel<TOptions = any> {
   id: number;
   type: string;
   title?: string;

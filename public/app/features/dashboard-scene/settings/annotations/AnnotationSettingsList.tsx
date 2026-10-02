@@ -17,7 +17,7 @@ type Props = {
   onDelete: (idx: number) => void;
 };
 
-const BUTTON_TITLE = 'Add annotation query';
+export const BUTTON_TITLE = 'Add annotation query';
 
 export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onDelete }: Props) => {
   const styles = useStyles2(getStyles);

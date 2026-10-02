@@ -19,7 +19,7 @@ import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
-const interceptorTestId = 'auto-grid-resize-intercept';
+export const interceptorTestId = 'auto-grid-resize-intercept';
 
 export interface AutoGridResizeInterceptProps {
   item: AutoGridItem;

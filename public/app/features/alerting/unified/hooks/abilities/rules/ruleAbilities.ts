@@ -83,7 +83,7 @@ export function getGlobalRuleAbility(action: RuleAction): Ability {
 }
 
 /** React hook. Returns all global Grafana-managed rule abilities, memoized. */
-function useGlobalRuleAbilities(): Abilities<RuleAction> {
+export function useGlobalRuleAbilities(): Abilities<RuleAction> {
   return useMemo(getGlobalRuleAbilities, []);
 }
 
@@ -128,12 +128,12 @@ export function getExternalGlobalRuleAbility(action: ExternalRuleAction): Abilit
 }
 
 /** React hook. Returns all global external datasource rule abilities, memoized. */
-function useExternalGlobalRuleAbilities(): Abilities<ExternalRuleAction> {
+export function useExternalGlobalRuleAbilities(): Abilities<ExternalRuleAction> {
   return useMemo(getExternalGlobalRuleAbilities, []);
 }
 
 /** React hook. Returns the `Ability` for a single global external datasource rule action. */
-function useExternalGlobalRuleAbility(action: ExternalRuleAction): Ability {
+export function useExternalGlobalRuleAbility(action: ExternalRuleAction): Ability {
   return useMemo(() => getExternalGlobalRuleAbility(action), [action]);
 }
 
@@ -143,6 +143,6 @@ function useExternalGlobalRuleAbility(action: ExternalRuleAction): Ability {
  * Returns the explore `Ability`. Pure synchronous global RBAC check — no
  * folder-scoped or async dependency.
  */
-function useRuleExploreAbility(): Ability {
+export function useRuleExploreAbility(): Ability {
   return useMemo(() => makeAbility(true, [AccessControlAction.DataSourcesExplore]), []);
 }

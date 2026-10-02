@@ -44,7 +44,7 @@ export interface SessionUser {
 /**
  * Get unique datasource names from all panels that are not currently supported by public dashboards.
  */
-const getUnsupportedDashboardDatasources = async (panels: PanelModel[]): Promise<string[]> => {
+export const getUnsupportedDashboardDatasources = async (panels: PanelModel[]): Promise<string[]> => {
   let unsupportedDS = new Set<string>();
 
   for (const panel of panels) {

@@ -2,7 +2,7 @@
 export type SelectionChecker = (kind: string, uid: string) => boolean;
 export type SelectionToggle = (kind: string, uid: string) => void;
 
-interface SearchSelection {
+export interface SearchSelection {
   // Check if an item is selected
   isSelected: SelectionChecker;
 
@@ -10,7 +10,7 @@ interface SearchSelection {
   items: Map<string, Set<string>>;
 }
 
-function newSearchSelection(): SearchSelection {
+export function newSearchSelection(): SearchSelection {
   // the check is called often, on potentially large (all) results so using Map/Set is better than simple array
   const items = new Map<string, Set<string>>();
 
@@ -24,7 +24,12 @@ function newSearchSelection(): SearchSelection {
   };
 }
 
-function updateSearchSelection(old: SearchSelection, selected: boolean, kind: string, uids: string[]): SearchSelection {
+export function updateSearchSelection(
+  old: SearchSelection,
+  selected: boolean,
+  kind: string,
+  uids: string[]
+): SearchSelection {
   const items = old.items; // mutate! :/
 
   if (uids.length) {

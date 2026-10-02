@@ -77,7 +77,7 @@ export interface LogListContextData
   syntaxHighlightingUnavailable: boolean;
 }
 
-const LogListContext = createContext<LogListContextData>({
+export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   allowDownload: true,
   controlsExpanded: false,
@@ -117,7 +117,7 @@ const LogListContext = createContext<LogListContextData>({
   unwrappedColumns: false,
 });
 
-const useLogListContextData = (key: keyof LogListContextData) => {
+export const useLogListContextData = (key: keyof LogListContextData) => {
   const data: LogListContextData = useContext(LogListContext);
   return data[key];
 };

@@ -193,7 +193,7 @@ interface GrafanaRuleGroupListItemProps {
   namespaceName: string;
 }
 
-function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
+export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
   const groupIdentifier: GrafanaRuleGroupIdentifier = useMemo(
     () => ({
       groupName: group.name,

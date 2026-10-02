@@ -3,10 +3,10 @@ import { FROM, SCHEMA, SELECT } from '../language';
 
 import { SQLTokenTypes } from './types';
 
-const getSelectToken = (currentToken: LinkedToken | null) =>
+export const getSelectToken = (currentToken: LinkedToken | null) =>
   currentToken?.getPreviousOfType(SQLTokenTypes.Keyword, SELECT) ?? null;
 
-const getSelectStatisticToken = (currentToken: LinkedToken | null) => {
+export const getSelectStatisticToken = (currentToken: LinkedToken | null) => {
   const assumedStatisticToken = getSelectToken(currentToken)?.getNextNonWhiteSpaceToken();
   return assumedStatisticToken?.isVariable() || assumedStatisticToken?.isFunction() ? assumedStatisticToken : null;
 };

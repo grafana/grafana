@@ -90,7 +90,7 @@ function areRowsMatching(columns: Column[], row: unknown[], otherRow: unknown[])
   return foundFieldToMatch;
 }
 
-function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]): TableModel {
+export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]): TableModel {
   const model = dst || new TableModel();
 
   if (arguments.length === 1) {

@@ -24,7 +24,7 @@ import { autoColor } from '../Theme';
 import { type TraceSpan } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   SpanTreeOffset: css({
     label: 'SpanTreeOffset',
     color: autoColor(theme, '#000'),
@@ -77,7 +77,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   }),
 }));
 
-type TProps = {
+export type TProps = {
   childrenVisible?: boolean;
   onClick?: () => void;
   span: TraceSpan;

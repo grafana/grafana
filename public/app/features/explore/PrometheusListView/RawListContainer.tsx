@@ -21,7 +21,7 @@ export type instantQueryRawVirtualizedListData = {
   [index: string]: string | undefined;
 };
 
-interface RawListContainerProps {
+export interface RawListContainerProps {
   tableResult: DataFrame;
 }
 

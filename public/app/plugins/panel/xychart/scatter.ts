@@ -517,7 +517,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
   return { builder, prepData, warn: null };
 };
 
-type PrepData = (xySeries: XYSeries[]) => FacetedData;
+export type PrepData = (xySeries: XYSeries[]) => FacetedData;
 
 const getGlobalRanges = (xySeries: XYSeries[]) => {
   const ranges = {
@@ -577,7 +577,7 @@ type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 /** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
 // exported for golden tests that freeze its palette+index output ahead of the
 // field.display.colors() migration
-function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
+export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
   let index: string[] = [];
   let getAll: GetAllValues = () => [];
   let getOne: GetOneValue = () => -1;

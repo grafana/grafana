@@ -9,7 +9,7 @@ import { type ComponentSize } from '../../types/size';
 import { clamp } from '../../utils/clamp';
 import { type DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
-interface UseSplitterOptions {
+export interface UseSplitterOptions {
   /**
    * The initial size of the primary pane between 0-1, defaults to 0.5
    * If `usePixels` is true, this is the initial size in pixels of the second pane.

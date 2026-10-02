@@ -12,7 +12,7 @@ import {
 import { useGetActiveUserDashboardsQuery } from '../../dashboard/api/publicDashboardApi';
 
 const selectors = e2eSelectors.pages.UserListPage.UsersListPublicDashboardsPage.DashboardsListModal;
-const DashboardsListModal = ({ email, onDismiss }: { email: string; onDismiss: () => void }) => {
+export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDismiss: () => void }) => {
   const styles = useStyles2(getStyles);
 
   const { data: dashboards, isLoading } = useGetActiveUserDashboardsQuery(email);

@@ -63,7 +63,7 @@ function useUnconfiguredPanelDashboard(): { dashboard: DashboardScene | null; is
   return { dashboard, isEditing };
 }
 
-function UnconfiguredPanelComp(props: PanelProps) {
+export function UnconfiguredPanelComp(props: PanelProps) {
   const panelContext = usePanelContext();
   const styles = useStyles2(getStyles);
   const { openDrawer, queryLibraryEnabled = false } = useQueryLibraryContext();

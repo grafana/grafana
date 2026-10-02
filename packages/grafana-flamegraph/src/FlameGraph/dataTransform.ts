@@ -38,7 +38,7 @@ export type CollapseConfig = {
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
  * rendering code.
  */
-function nestedSetToLevels(
+export function nestedSetToLevels(
   container: FlameGraphDataContainer,
   options?: Options
 ): [LevelItem[][], Record<string, LevelItem[]>, CollapsedMap] {
@@ -158,7 +158,7 @@ export class CollapsedMap {
  * Similar to CollapsedMap but this one is mutable and used during transformation of the dataFrame data into structure
  * we use for rendering. This should not be passed to the React components.
  */
-class CollapsedMapBuilder {
+export class CollapsedMapBuilder {
   private map = new Map();
   private threshold = 0.99;
 

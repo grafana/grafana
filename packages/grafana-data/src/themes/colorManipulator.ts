@@ -90,7 +90,7 @@ export function asHexString(color: string): string {
 /**
  * Converts a color to rgb string
  */
-function asRgbString(color: string) {
+export function asRgbString(color: string) {
   if (color.startsWith('rgb')) {
     return color;
   }

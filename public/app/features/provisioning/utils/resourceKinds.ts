@@ -266,7 +266,7 @@ export function getKindInfoByItemType(itemType: string): ResourceKindInfo | unde
  * Prefer `getKindInfoByStat` when a `resource` is available: several kinds can
  * share an API group, so the group alone does not always identify the kind.
  */
-function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
+export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
   return allKindInfos.find((info) => info.group === group || info.resource === group);
 }
 
@@ -306,7 +306,7 @@ export function getKindInfoByStat(stat: { group?: string; resource?: string }): 
  * backend currently ships disabled (e.g. playlists), so callers that must respect
  * the disabled state should wait for `availableResources` to be populated.
  */
-function getAvailableResourceKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
+export function getAvailableResourceKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
   if (!availableResources) {
     return allKindInfos;
   }
@@ -365,7 +365,7 @@ const MAX_PAGES = 200;
  * undefined: calling .trim() on a missing location would throw and reject the
  * whole enumeration.
  */
-function readImmediateParent(location: string | undefined): string | undefined {
+export function readImmediateParent(location: string | undefined): string | undefined {
   const trimmed = location?.trim();
   if (!trimmed || trimmed === GENERAL_FOLDER_UID) {
     return undefined;

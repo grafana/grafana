@@ -10,7 +10,7 @@ import pluginJson from './plugin.json';
 export const OPEN_FEATURE_DOMAIN = pluginJson.id;
 
 // Registered in pkg/services/featuremgmt/registry.go.
-const BATCH_API_FLAG = 'datasources.azureMonitorBatchAPI';
+export const BATCH_API_FLAG = 'datasources.azureMonitorBatchAPI';
 
 /**
  * Registers read-only proxies of Grafana's own providers under the plugin's

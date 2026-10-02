@@ -80,7 +80,7 @@ export function DataSourceRuleListItem({
   }
 }
 
-function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
+export function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
   const paramId = encodeURIComponent(stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(identifier.ruleSourceName);
 

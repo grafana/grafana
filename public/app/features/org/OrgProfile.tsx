@@ -4,7 +4,7 @@ import { Form } from 'app/core/components/Form/Form';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-interface Props {
+export interface Props {
   orgName: string;
   onSubmit: (orgName: string) => void;
 }

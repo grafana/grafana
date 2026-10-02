@@ -20,7 +20,7 @@ import { useAlertmanagerNotificationRoutingPreview } from '../rule-editor/notifi
 import { ContactPointLink } from '../rule-viewer/ContactPointLink';
 
 /** True when both names refer to the same routing tree, treating every default-tree alias as equal. */
-function routingTreeNamesMatch(a: string | undefined, b: string | undefined): boolean {
+export function routingTreeNamesMatch(a: string | undefined, b: string | undefined): boolean {
   return a === b || (isDefaultRoutingTreeName(a) && isDefaultRoutingTreeName(b));
 }
 

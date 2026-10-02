@@ -118,7 +118,7 @@ export const addRouteToReferenceRoute = (
 
 type RouteMatch = Route | undefined;
 
-function findRouteInTree(
+export function findRouteInTree(
   routeTree: RouteWithID,
   referenceRouteIdentifier: string
 ): [matchingRoute: RouteMatch, parentRoute: RouteMatch, positionInParent: number | undefined] {
@@ -196,7 +196,7 @@ export function hashRoute(route: Route): string {
 /**
  * This function will sort the route's values and set the keys in a deterministic order
  */
-function stabilizeRoute(route: Route): Required<Route> {
+export function stabilizeRoute(route: Route): Required<Route> {
   const result: Required<Route> = {
     name: route.name ?? '',
     receiver: route.receiver ?? '',

@@ -2,7 +2,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
-const readOnlyMessage =
+export const readOnlyMessage =
   'This data source was added by config and cannot be modified using the UI. Please contact your server admin to update this data source.';
 
 export function DataSourceReadOnlyMessage() {

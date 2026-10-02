@@ -80,7 +80,7 @@ export function mergeLocalsAndRemotes({
   return catalogPlugins;
 }
 
-function mergeLocalAndRemote(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
+export function mergeLocalAndRemote(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
   if (!local && remote) {
     return mapRemoteToCatalog(remote, error);
   }
@@ -92,7 +92,7 @@ function mergeLocalAndRemote(local?: LocalPlugin, remote?: RemotePlugin, error?:
   return mapToCatalogPlugin(local, remote, error);
 }
 
-function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): CatalogPlugin {
+export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): CatalogPlugin {
   const {
     name,
     slug: id,
@@ -216,7 +216,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
 }
 
 // TODO: change the signature by removing the optionals for local and remote.
-function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
+export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
   const installedVersion = local?.info.version;
   const id = remote?.slug || local?.id || '';
   const type = local?.type || remote?.typeCode;
@@ -403,7 +403,7 @@ export function isPreinstalledPlugin(id: string): { found: boolean; withVersion:
   return { found: !!plugin?.id, withVersion: !!plugin?.version };
 }
 
-function isLocalCorePlugin(local?: LocalPlugin): boolean {
+export function isLocalCorePlugin(local?: LocalPlugin): boolean {
   return Boolean(local?.signature === 'internal');
 }
 
@@ -534,7 +534,7 @@ function formatVersion(major: number, minor: number, patch: number): string {
   return `${major}.${minor}.${patch}`;
 }
 
-function mergeCloudState(
+export function mergeCloudState(
   catalogPlugin: CatalogPlugin,
   instanceMap: Map<string, InstancePlugin>,
   isProvisioned: boolean,

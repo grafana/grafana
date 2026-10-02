@@ -3,8 +3,8 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 
 // The props below are transcribed from grafana/irm: there is no package to import them from, and
 // usePluginComponent's generic is asserted by the caller.
-const ATTACH_TO_INCIDENT_COMPONENT_ID = 'grafana-irm-app/attach-to-incident-modal/v1';
-const DECLARE_INCIDENT_COMPONENT_ID = 'grafana-irm-app/declare-incident-modal/v1';
+export const ATTACH_TO_INCIDENT_COMPONENT_ID = 'grafana-irm-app/attach-to-incident-modal/v1';
+export const DECLARE_INCIDENT_COMPONENT_ID = 'grafana-irm-app/declare-incident-modal/v1';
 
 /** Narrowed to the part we read. */
 export interface AttachToIncidentFormData {

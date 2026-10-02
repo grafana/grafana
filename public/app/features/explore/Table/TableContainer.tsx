@@ -43,7 +43,7 @@ interface TableContainerProps {
   ariaLabel?: string;
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
+export function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
   const { tableResult, range } = item;
@@ -63,7 +63,7 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
 const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
-const TableContainer = memo(function TableContainer({
+export const TableContainer = memo(function TableContainer({
   panelLoadingState,
   onCellFilterAdded,
   tableResult,

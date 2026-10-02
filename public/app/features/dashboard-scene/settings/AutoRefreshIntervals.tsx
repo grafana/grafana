@@ -78,7 +78,7 @@ export const AutoRefreshIntervals = ({
   );
 };
 
-const validateIntervals = (
+export const validateIntervals = (
   intervals: string[],
   dependencies: { getTimeSrv: typeof getTimeSrv } = { getTimeSrv }
 ): string | null => {
@@ -90,7 +90,10 @@ const validateIntervals = (
   }
 };
 
-const getValidIntervals = (intervals: string[], dependencies: { getTimeSrv: typeof getTimeSrv } = { getTimeSrv }) => {
+export const getValidIntervals = (
+  intervals: string[],
+  dependencies: { getTimeSrv: typeof getTimeSrv } = { getTimeSrv }
+) => {
   const cleanIntervals = intervals.filter((i) => i.trim() !== '').map((interval) => interval.replace(/\s+/g, ''));
   return [...new Set(dependencies.getTimeSrv().getValidIntervals(cleanIntervals))];
 };

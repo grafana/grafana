@@ -110,7 +110,7 @@ export function appendDimensionFilter(
   ]);
 }
 
-function setDimensionFilterValue<Key extends keyof AzureMetricDimension>(
+export function setDimensionFilterValue<Key extends keyof AzureMetricDimension>(
   query: AzureMonitorQuery,
   index: number,
   fieldName: Key,

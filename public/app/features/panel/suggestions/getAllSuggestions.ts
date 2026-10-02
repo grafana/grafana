@@ -35,7 +35,7 @@ async function isBuiltInPlugin(id?: string): Promise<boolean> {
 /**
  * gather and cache the plugins which provide visualization suggestions so they can be invoked to build suggestions
  */
-async function loadPlugins(pluginIds: string[]): Promise<PluginLoadResult> {
+export async function loadPlugins(pluginIds: string[]): Promise<PluginLoadResult> {
   // import the plugins in parallel using Promise.allSettled
   const plugins: PanelPlugin[] = [];
   let hasErrors = false;
@@ -91,7 +91,7 @@ const mapPreferredVisualisationTypeToPlugin = (type: string): PreferredVisualisa
 /**
  * given a list of suggestions, sort them in place based on score and preferred visualisation type
  */
-async function sortSuggestions(
+export async function sortSuggestions(
   suggestions: PanelPluginVisualizationSuggestion[],
   dataSummary: PanelDataSummary
 ): Promise<void> {

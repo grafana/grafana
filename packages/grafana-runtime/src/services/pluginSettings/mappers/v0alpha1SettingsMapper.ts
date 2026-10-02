@@ -85,7 +85,7 @@ export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1Inl
   return result;
 }
 
-function secureJsonFieldsMapper(settings: v0alpha1Settings): KeyValue<boolean> {
+export function secureJsonFieldsMapper(settings: v0alpha1Settings): KeyValue<boolean> {
   const secure = settings.secure ?? {};
   const secureJsonFields: KeyValue<boolean> = Object.keys(secure).reduce((acc: KeyValue<boolean>, curr) => {
     const secureValue = secure[curr];
@@ -100,7 +100,7 @@ function secureJsonFieldsMapper(settings: v0alpha1Settings): KeyValue<boolean> {
   return secureJsonFields;
 }
 
-function includeTypeMapper(include: v0alpha1Include, spec: v0alpha1Spec): PluginIncludeType {
+export function includeTypeMapper(include: v0alpha1Include, spec: v0alpha1Spec): PluginIncludeType {
   if (!include.type) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return '' as PluginIncludeType;
@@ -126,7 +126,7 @@ function includeTypeMapper(include: v0alpha1Include, spec: v0alpha1Spec): Plugin
   }
 }
 
-function slugMapper(include: v0alpha1Include): string {
+export function slugMapper(include: v0alpha1Include): string {
   const name = include.name ?? '';
   return name
     .toLowerCase()
@@ -134,7 +134,7 @@ function slugMapper(include: v0alpha1Include): string {
     .replace(/ +/g, '-');
 }
 
-function includesMapper(spec: v0alpha1Spec): PluginInclude[] {
+export function includesMapper(spec: v0alpha1Spec): PluginInclude[] {
   const includes = spec.pluginJson.includes ?? [];
   return includes.map((i) => ({
     ...i,
@@ -151,7 +151,7 @@ function includesMapper(spec: v0alpha1Spec): PluginInclude[] {
   }));
 }
 
-function signatureTypeMapper(spec: v0alpha1Spec): PluginSignatureType {
+export function signatureTypeMapper(spec: v0alpha1Spec): PluginSignatureType {
   if (!spec.signature.type) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return (spec.signature.type ?? '') as PluginSignatureType;

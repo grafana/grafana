@@ -38,7 +38,7 @@ type Props = {
   onSelectedAccountIdsChange?: (accountIds: string[]) => void;
 };
 
-const LogGroupsField = ({
+export const LogGroupsField = ({
   datasource,
   onChange,
   legacyLogGroupNames,

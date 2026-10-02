@@ -730,7 +730,7 @@ function buildUrlKeyForTabs(manager: TabsLayoutManager, getSegment: (node: TabIt
 }
 
 /** push current key to match with first, then legacy keys to account for old url encoding way */
-function getTabsLayoutUrlKeysToTry(manager: TabsLayoutManager): string[] {
+export function getTabsLayoutUrlKeysToTry(manager: TabsLayoutManager): string[] {
   const currentKey = manager.getUrlKey();
   const slugifyKey = buildUrlKeyForTabs(manager, (node) => getLegacySlugForRowOrTab(node));
   // deduplicate keys in case current and legacy keys are the same

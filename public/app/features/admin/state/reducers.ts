@@ -70,7 +70,7 @@ export const {
   userMappingInfoLoadedAction,
 } = ldapSlice.actions;
 
-const ldapReducer = ldapSlice.reducer;
+export const ldapReducer = ldapSlice.reducer;
 
 // UserAdminPage
 
@@ -118,7 +118,7 @@ export const {
   userAdminPageFailedAction,
 } = userAdminSlice.actions;
 
-const userAdminReducer = userAdminSlice.reducer;
+export const userAdminReducer = userAdminSlice.reducer;
 
 // UserListAdminPage
 
@@ -198,7 +198,7 @@ const userListAdminSlice = createSlice({
 
 export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged, sortChanged } =
   userListAdminSlice.actions;
-const userListAdminReducer = userListAdminSlice.reducer;
+export const userListAdminReducer = userListAdminSlice.reducer;
 
 // UserListAnonymousPage
 

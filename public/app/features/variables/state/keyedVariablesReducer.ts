@@ -37,7 +37,7 @@ const isKeyedAction = (action: AnyAction): action is PayloadAction<KeyedAction> 
   );
 };
 
-function keyedVariablesReducer(state = initialKeyedVariablesState, outerAction: AnyAction): KeyedVariablesState {
+export function keyedVariablesReducer(state = initialKeyedVariablesState, outerAction: AnyAction): KeyedVariablesState {
   if (isKeyedAction(outerAction)) {
     const { key, action } = outerAction.payload;
     const stringKey = toStateKey(key);

@@ -177,7 +177,7 @@ function toLuxonLiteral(literal: string): string {
     .join("''");
 }
 
-function convertMomentToLuxonWithOrdinal(format: string, locale?: string): string {
+export function convertMomentToLuxonWithOrdinal(format: string, locale?: string): string {
   return convertFormat(format, false, false, locale).luxonFormat;
 }
 

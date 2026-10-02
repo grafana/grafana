@@ -23,8 +23,8 @@ export interface RulerRequestUrl {
 
 const QUERY_NAMESPACE_TAG = 'QUERY_NAMESPACE';
 const QUERY_GROUP_TAG = 'QUERY_GROUP';
-const RULER_CONFIG_API_PROBE_NAMESPACE = '__grafana_alerting_ruler_probe__';
-const RULER_CONFIG_API_PROBE_GROUP = '__grafana_alerting_ruler_probe__';
+export const RULER_CONFIG_API_PROBE_NAMESPACE = '__grafana_alerting_ruler_probe__';
+export const RULER_CONFIG_API_PROBE_GROUP = '__grafana_alerting_ruler_probe__';
 
 export type RulerApiSubtype = 'cortex' | 'mimir';
 

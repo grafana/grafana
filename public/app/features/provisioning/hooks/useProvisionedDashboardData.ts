@@ -37,7 +37,7 @@ interface GetDefaultValuesParams {
   recoverToNewBranch?: RecoverToNewBranch;
 }
 
-function getDefaultValues({
+export function getDefaultValues({
   meta,
   defaultTitle,
   defaultDescription,

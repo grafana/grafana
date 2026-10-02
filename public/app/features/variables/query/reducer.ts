@@ -38,7 +38,7 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   definition: '',
 };
 
-const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
+export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   if (sortOrder === VariableSort.disabled) {
     return options;
   }
@@ -102,7 +102,7 @@ const getAllMatches = (str: string, regex: RegExp): RegExpExecArray[] => {
   return results;
 };
 
-const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, metricNames: any[]) => {
+export const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, metricNames: any[]) => {
   let regex;
   let options: VariableOption[] = [];
 

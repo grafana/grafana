@@ -24,7 +24,7 @@ interface RenderBindingMessage<T extends MessageEventType> {
  * This observer is only registered for report routes to avoid any overhead on
  * normal dashboard usage.
  */
-class ReportRenderReadinessObserver implements performanceUtils.ScenePerformanceObserver {
+export class ReportRenderReadinessObserver implements performanceUtils.ScenePerformanceObserver {
   onDashboardInteractionComplete = (data: performanceUtils.DashboardInteractionCompleteData): void => {
     if (data.interactionType === 'dashboard_view') {
       sendMessageEvent('REPORT_RENDER_COMPLETE', { success: true });

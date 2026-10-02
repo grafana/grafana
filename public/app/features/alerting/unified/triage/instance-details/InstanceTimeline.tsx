@@ -41,7 +41,7 @@ interface TimelineGroup {
  * Note: state changes and notifications come from different sources, so minor clock skew
  * may cause a notification to be grouped with a slightly earlier or later state change.
  */
-function buildTimelineGroups(records: LogRecord[], notifications: NotificationEntry[]): TimelineGroup[] {
+export function buildTimelineGroups(records: LogRecord[], notifications: NotificationEntry[]): TimelineGroup[] {
   const chronological = [...records].sort((a, b) => a.timestamp - b.timestamp);
 
   const stateGroups: TimelineGroup[] = chronological.map((record) => ({
@@ -97,7 +97,7 @@ interface TimelineEntry {
   notifications?: NotificationEntry[];
 }
 
-function buildTimelineEntries(groups: TimelineGroup[]): TimelineEntry[] {
+export function buildTimelineEntries(groups: TimelineGroup[]): TimelineEntry[] {
   const entries: TimelineEntry[] = [];
 
   for (const group of groups) {
@@ -129,7 +129,7 @@ function buildTimelineEntries(groups: TimelineGroup[]): TimelineEntry[] {
  * An integration is identified by `integration:integrationIndex`. If any attempt
  * (including retries) for an integration succeeded, it counts as delivered.
  */
-function computeIntegrationOutcomes(notifications: NotificationEntry[]): {
+export function computeIntegrationOutcomes(notifications: NotificationEntry[]): {
   delivered: number;
   failed: number;
 } {

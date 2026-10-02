@@ -12,7 +12,7 @@ import { type Props as InputProps } from '../Input/Input';
 import ColorInput from './ColorInput';
 import { getStyles as getPaletteStyles } from './SpectrumPalette';
 
-interface ColorPickerInputProps extends Omit<InputProps, 'value' | 'onChange'> {
+export interface ColorPickerInputProps extends Omit<InputProps, 'value' | 'onChange'> {
   value?: string;
   onChange: (color: string) => void;
   /** Format for returning the color in onChange callback, defaults to 'rgb' */

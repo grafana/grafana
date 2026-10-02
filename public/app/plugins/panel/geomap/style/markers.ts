@@ -32,7 +32,7 @@ const MarkerShapePath = {
   x: 'img/icons/marker/x-mark.svg',
 };
 
-function getFillColor(cfg: StyleConfigValues) {
+export function getFillColor(cfg: StyleConfigValues) {
   const opacity = cfg.opacity == null ? 0.8 : cfg.opacity;
   if (opacity === 1) {
     return new Fill({ color: cfg.color });
@@ -44,7 +44,7 @@ function getFillColor(cfg: StyleConfigValues) {
   return undefined;
 }
 
-function getStrokeStyle(cfg: StyleConfigValues) {
+export function getStrokeStyle(cfg: StyleConfigValues) {
   const opacity = cfg.opacity == null ? 0.8 : cfg.opacity;
   if (opacity === 1) {
     return new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 });
@@ -80,7 +80,7 @@ export const textMarker = (cfg: StyleConfigValues) => {
   });
 };
 
-const circleMarker = (cfg: StyleConfigValues) => {
+export const circleMarker = (cfg: StyleConfigValues) => {
   const stroke = new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 });
   const radius = cfg.size ?? DEFAULT_SIZE;
   return new Style({
@@ -315,13 +315,13 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 
 // Common expressions used across different style types
 const colorExpression = ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue'], ['get', 'opacity']];
-const sizeExpression = ['get', 'size'];
-const opacityExpression = ['get', 'opacity'];
-const rotationExpression = ['get', 'rotation'];
-const offsetExpression = ['array', ['get', 'offsetX'], ['get', 'offsetY']];
+export const sizeExpression = ['get', 'size'];
+export const opacityExpression = ['get', 'opacity'];
+export const rotationExpression = ['get', 'rotation'];
+export const offsetExpression = ['array', ['get', 'offsetX'], ['get', 'offsetY']];
 
 // Base style for regular shapes
-const baseShapeStyle = {
+export const baseShapeStyle = {
   'shape-radius': ['/', sizeExpression, 2],
   'shape-fill-color': colorExpression,
   'shape-stroke-color': colorExpression,
@@ -332,7 +332,7 @@ const baseShapeStyle = {
 };
 
 // Base style for circles
-const baseCircleStyle = {
+export const baseCircleStyle = {
   'circle-radius': ['/', sizeExpression, 2],
   'circle-fill-color': colorExpression,
   'circle-stroke-color': colorExpression,

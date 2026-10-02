@@ -5,7 +5,7 @@ import { Button } from '../Button/Button';
 
 import { ConfirmButton } from './ConfirmButton';
 
-interface Props {
+export interface Props {
   /** Confirm action callback */
   onConfirm(): void;
   /** Button size */

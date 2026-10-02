@@ -95,7 +95,7 @@ const STATE_LABELS = new Set(['alertstate', 'grafana_alertstate']);
 // Intl.Collator is kept because Prometheus label names can be UTF-8.
 const collator = new Intl.Collator();
 
-function deduplicateSeries(series: Array<Record<string, string>>): Array<Record<string, string>> {
+export function deduplicateSeries(series: Array<Record<string, string>>): Array<Record<string, string>> {
   if (series.length === 0) {
     return [];
   }
@@ -147,7 +147,7 @@ function deduplicateSeries(series: Array<Record<string, string>>): Array<Record<
  * Given an array of series (label maps), compute label keys sorted by frequency,
  * along with value distributions for each key.
  */
-function computeLabelStats(series: Array<Record<string, string>>): LabelStats[] {
+export function computeLabelStats(series: Array<Record<string, string>>): LabelStats[] {
   const keyStats = new Map<string, LabelKeyStats>();
 
   for (const s of series) {

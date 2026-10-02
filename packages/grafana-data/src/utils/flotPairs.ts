@@ -3,7 +3,7 @@ import { type Field } from '../types/dataFrame';
 import { type GraphSeriesValue } from '../types/graph';
 import { type TimeRange } from '../types/time';
 
-interface FlotPairsOptions {
+export interface FlotPairsOptions {
   xField: Field;
   yField: Field;
   nullValueMode?: NullValueMode;

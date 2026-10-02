@@ -5,7 +5,7 @@ import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisi
 import { type DashboardScene } from '../../scene/DashboardScene';
 
 // Structural subset of the enterprise DashboardTemplateSpec.
-interface DashboardTemplateResourceSpec {
+export interface DashboardTemplateResourceSpec {
   title: string;
   description: string;
   tags: string[];
