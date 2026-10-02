@@ -160,7 +160,8 @@ const config: KnipConfig = {
     // TODO `grafana-alerting` should probably have its own storybook (like `grafana-flamegraph`)
     'packages/grafana-alerting': {
       entry: defaultEntries,
-      project: defaultProject,
+      // `@grafana/alerting/testing` publishes this package's mocks and scenarios, so they're production code here
+      project: defaultProject.map((pattern) => pattern.replace('mocks,', '').replace('scenario,', '')),
       ignoreDependencies: packageIgnoreDeps,
       storybook: true,
     },

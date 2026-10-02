@@ -63,7 +63,6 @@
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "devDependencies": {
-    "@faker-js/faker": "^10.6.0",
     "@grafana/test-utils": "workspace:*",
     "@storybook/addon-docs": "10.3.6",
     "@storybook/react": "10.3.6",
@@ -75,7 +74,6 @@
     "@types/react-dom": "19.2.4",
     "@types/tinycolor2": "^1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "fishery": "^2.3.1",
     "i18next-cli": "^1.48.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -97,9 +95,11 @@
   },
   "dependencies": {
     "@emotion/css": "^11.13.5",
+    "@faker-js/faker": "^10.6.0",
     "@grafana/api-clients": "13.3.0-pre",
     "@grafana/i18n": "13.3.0-pre",
     "@reduxjs/toolkit": "^2.10.1",
+    "fishery": "^2.3.1",
     "lodash": "^4.17.21",
     "micro-memoize": "^4.1.2",
     "tinycolor2": "^1.6.0"
