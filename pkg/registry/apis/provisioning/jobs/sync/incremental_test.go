@@ -268,7 +268,7 @@ func TestIncrementalSync(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/new.json").Return(false)
 
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref", mock.Anything).
-					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, false, nil)
+					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"renamed-dashboard",
@@ -667,16 +667,16 @@ func TestIncrementalSync_RenameQuotaGate(t *testing.T) {
 				// The decision of whether this rename actually needs quota lives
 				// inside RenameResourceFile (real code, tested in the resources
 				// package); here just consume the one free slot via the passed
-				// check, as that code would, to prove incremental sync wired the
+				// hook, as that code would, to prove incremental sync wired the
 				// real tracker through and not a stub -- the later plain create
 				// then has nothing left and gets blocked.
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old&path.json", "old-ref", "dashboards/recovered.json", "new-ref", mock.Anything).
 					Run(func(args mock.Arguments) {
-						if quota, ok := args.Get(5).(resources.QuotaGate); ok {
-							quota.TryAcquire()
+						if beforeCreate, ok := args.Get(5).(resources.BeforeCreate); ok {
+							_, _ = beforeCreate(context.Background(), "dashboards/recovered.json")
 						}
 					}).
-					Return("recovered-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, true, nil)
+					Return("recovered-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionRenamed && result.Path() == "dashboards/recovered.json" && result.Error() == nil
