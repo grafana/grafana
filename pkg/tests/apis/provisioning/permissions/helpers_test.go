@@ -101,9 +101,11 @@ func repository(t *testing.T, h *common.ProvisioningTestHelper, name, path strin
 }
 
 func connection(name string) map[string]any {
-	conn := common.NewGithubOAuthConnection(name, "test-client")
-	conn.SetAPIVersion(apiVersion)
-	return conn.Object
+	return map[string]any{
+		"apiVersion": apiVersion, "kind": "Connection", "metadata": map[string]any{"name": name},
+		"spec":   map[string]any{"title": name, "type": "githubOAuth", "oauth": map[string]any{"clientID": "test-client"}},
+		"secure": map[string]any{"clientSecret": map[string]any{"create": "test-client-secret"}},
+	}
 }
 
 func dashboard(name string) map[string]any {

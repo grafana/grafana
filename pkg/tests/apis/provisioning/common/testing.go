@@ -2325,29 +2325,6 @@ func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repositories should be cleaned up between subtests")
 }
 
-func NewGithubOAuthConnection(name, clientID string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Connection",
-		"metadata": map[string]any{
-			"name":      name,
-			"namespace": "default",
-		},
-		"spec": map[string]any{
-			"title": "Test GitHub OAuth Connection",
-			"type":  string(provisioning.GithubOAuthConnectionType),
-			"oauth": map[string]any{
-				"clientID": clientID,
-			},
-		},
-		"secure": map[string]any{
-			"clientSecret": map[string]any{
-				"create": "test-client-secret",
-			},
-		},
-	}}
-}
-
 func (h *ProvisioningTestHelper) CreateGithubConnection(
 	t *testing.T,
 

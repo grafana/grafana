@@ -69,6 +69,29 @@ func oauthHelper(t *testing.T) *common.ProvisioningTestHelper {
 	return helper
 }
 
+func newGithubOAuthConnection(name, clientID string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      name,
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"title": "Test GitHub OAuth Connection",
+			"type":  string(provisioning.GithubOAuthConnectionType),
+			"oauth": map[string]any{
+				"clientID": clientID,
+			},
+		},
+		"secure": map[string]any{
+			"clientSecret": map[string]any{
+				"create": "test-client-secret",
+			},
+		},
+	}}
+}
+
 func authorizeConnection(t *testing.T, helper *common.ProvisioningTestHelper, name string) {
 	t.Helper()
 	body, err := json.Marshal(&provisioning.ConnectionAuthorizeRequest{
@@ -102,7 +125,7 @@ func TestIntegrationProvisioning_OAuthConnectionCRUDL(t *testing.T) {
 	helper := oauthHelper(t)
 
 	t.Run("should perform CRUDL requests on githubOAuth connection", func(t *testing.T) {
-		connection := common.NewGithubOAuthConnection("oauth-crudl", "test-client-id")
+		connection := newGithubOAuthConnection("oauth-crudl", "test-client-id")
 
 		// CREATE without a token: the connection is not authorized yet
 		c, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{FieldValidation: "Strict"})
@@ -150,7 +173,7 @@ func TestIntegrationProvisioning_OAuthConnectionMutation(t *testing.T) {
 	helper := oauthHelper(t)
 
 	t.Run("should prefix generated githubOAuth connection names with type", func(t *testing.T) {
-		connection := common.NewGithubOAuthConnection("", "test-client-id")
+		connection := newGithubOAuthConnection("", "test-client-id")
 
 		c, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
@@ -162,7 +185,7 @@ func TestIntegrationProvisioning_OAuthConnectionValidation(t *testing.T) {
 	helper := oauthHelper(t)
 
 	t.Run("should fail when 'oauth' field is missing", func(t *testing.T) {
-		connection := common.NewGithubOAuthConnection("oauth-validation-no-oauth", "test-client-id")
+		connection := newGithubOAuthConnection("oauth-validation-no-oauth", "test-client-id")
 		delete(connection.Object["spec"].(map[string]any), "oauth")
 
 		_, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{FieldValidation: "Strict"})
@@ -171,7 +194,7 @@ func TestIntegrationProvisioning_OAuthConnectionValidation(t *testing.T) {
 	})
 
 	t.Run("should fail when client secret is missing", func(t *testing.T) {
-		connection := common.NewGithubOAuthConnection("oauth-validation-no-secret", "test-client-id")
+		connection := newGithubOAuthConnection("oauth-validation-no-secret", "test-client-id")
 		delete(connection.Object, "secure")
 
 		_, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{FieldValidation: "Strict"})
@@ -180,7 +203,7 @@ func TestIntegrationProvisioning_OAuthConnectionValidation(t *testing.T) {
 	})
 
 	t.Run("should fail when a private key is specified", func(t *testing.T) {
-		connection := common.NewGithubOAuthConnection("oauth-validation-private-key", "test-client-id")
+		connection := newGithubOAuthConnection("oauth-validation-private-key", "test-client-id")
 		connection.Object["secure"].(map[string]any)["privateKey"] = map[string]any{
 			"create": "some-private-key",
 		}
@@ -195,7 +218,7 @@ func TestIntegrationProvisioning_OAuthConnectionAuthorize(t *testing.T) {
 	helper := oauthHelper(t)
 
 	t.Run("authorize exchanges the code and stores the token", func(t *testing.T) {
-		connection := common.NewGithubOAuthConnection("oauth-authorize", "test-client-id")
+		connection := newGithubOAuthConnection("oauth-authorize", "test-client-id")
 		_, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
 
@@ -288,7 +311,7 @@ func TestIntegrationProvisioning_OAuthConnectionTokenDropOnCredentialChange(t *t
 
 	setup := func(t *testing.T, name string) *unstructured.Unstructured {
 		t.Helper()
-		connection := common.NewGithubOAuthConnection(name, "test-client-id")
+		connection := newGithubOAuthConnection(name, "test-client-id")
 		_, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
 		authorizeConnection(t, helper, name)
@@ -366,7 +389,7 @@ func TestIntegrationProvisioning_OAuthConnectionTokenDropOnCredentialChange(t *t
 func TestIntegrationProvisioning_OAuthConnectionRepositories(t *testing.T) {
 	helper := oauthHelper(t)
 
-	connection := common.NewGithubOAuthConnection("oauth-repositories", "test-client-id")
+	connection := newGithubOAuthConnection("oauth-repositories", "test-client-id")
 	_, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{FieldValidation: "Strict"})
 	require.NoError(t, err)
 	authorizeConnection(t, helper, "oauth-repositories")
@@ -397,7 +420,7 @@ func TestIntegrationConnectionController_OAuthNoTokenGeneration(t *testing.T) {
 	helper := oauthHelper(t)
 
 	t.Run("controller does not mint tokens for unauthorized oauth connections", func(t *testing.T) {
-		connection := common.NewGithubOAuthConnection("oauth-no-mint", "test-client-id")
+		connection := newGithubOAuthConnection("oauth-no-mint", "test-client-id")
 		_, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err)
 
