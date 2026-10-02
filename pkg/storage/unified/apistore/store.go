@@ -19,8 +19,6 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,12 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
-
-var createRetryConfig = backoff.Config{
-	MinBackoff: 10 * time.Millisecond,
-	MaxBackoff: 100 * time.Millisecond,
-	MaxRetries: 3,
-}
 
 var updateRetryConfig = backoff.Config{
 	MinBackoff: 10 * time.Millisecond,
@@ -394,17 +386,13 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // createWithRetry distinguishes an existing object from a temporarily busy write lease.
 // A create can hit a lease conflict when another write to the same object is still in
 // progress. That write might fail, so the conflict does not prove the object exists.
-// The server can report failures as:
-//   - An explicit AlreadyExists reason: the object exists; return KeyExistsError.
-//   - A gRPC AlreadyExists status without ErrorResult details: trust the status as a duplicate.
-//   - An AlreadyExists status with reason-less HTTP 409 details: conversion chose the status
-//     code, but the details do not confirm existence; treat it like the original HTTP 409.
-//   - A Conflict reason, reason-less HTTP 409, or bare Aborted status: retry briefly.
-//
+// An AlreadyExists reason confirms a duplicate; HTTP 409 or a Conflict reason instead
+// gets a bounded retry using the same backoff as updates and deletes. AsErrorResult
+// handles both response errors and gRPC errors, including bare Aborted as HTTP 409.
 // If contention persists, return Conflict, not KeyExistsError: exhausting retries still
 // does not prove the object exists. Unlike updates, a create has no stale RV to refresh.
 func (s *Storage) createWithRetry(ctx context.Context, key string, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
-	bo := backoff.New(ctx, createRetryConfig)
+	bo := backoff.New(ctx, updateRetryConfig)
 	var lastErr error
 	for bo.Ongoing() {
 		rsp, err := s.store.Create(ctx, req)
@@ -413,21 +401,10 @@ func (s *Storage) createWithRetry(ctx context.Context, key string, req *resource
 			return rsp, nil
 		}
 		resErr := resource.AsErrorResult(err)
-		bareAlreadyExists := resErr.Reason == "" && status.Code(err) == codes.AlreadyExists
-		// Error conversion also maps reason-less 409s to AlreadyExists. Only use
-		// the status-code fallback when no ErrorResult details describe the failure.
-		if bareAlreadyExists {
-			for _, detail := range status.Convert(err).Details() {
-				if _, ok := detail.(*resourcepb.ErrorResult); ok {
-					bareAlreadyExists = false
-					break
-				}
-			}
-		}
-		if resErr.Reason == string(metaV1.StatusReasonAlreadyExists) || bareAlreadyExists {
+		if resErr.Reason == string(metaV1.StatusReasonAlreadyExists) {
 			return nil, storage.NewKeyExistsError(key, 0)
 		}
-		if resErr.Code == http.StatusConflict || resErr.Reason == string(metaV1.StatusReasonConflict) || status.Code(err) == codes.Aborted {
+		if resErr.Code == http.StatusConflict || resErr.Reason == string(metaV1.StatusReasonConflict) {
 			lastErr = apierrors.NewConflict(schema.GroupResource{Group: req.Key.Group, Resource: req.Key.Resource}, req.Key.Name, err)
 			bo.Wait()
 			continue

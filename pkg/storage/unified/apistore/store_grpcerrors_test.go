@@ -92,6 +92,12 @@ func TestCreateRetriesWriteConflicts(t *testing.T) {
 		"response conflict": func() (*resourcepb.CreateResponse, error) {
 			return &resourcepb.CreateResponse{Error: conflict}, nil
 		},
+		"response reason-only conflict": func() (*resourcepb.CreateResponse, error) {
+			return &resourcepb.CreateResponse{Error: &resourcepb.ErrorResult{Reason: string(metav1.StatusReasonConflict), Message: "lease held"}}, nil
+		},
+		"grpc reason-only conflict": func() (*resourcepb.CreateResponse, error) {
+			return nil, grpcErrorWithResult(grpccodes.Aborted, &resourcepb.ErrorResult{Reason: string(metav1.StatusReasonConflict), Message: "lease held"})
+		},
 		"response reason-less 409": func() (*resourcepb.CreateResponse, error) {
 			return &resourcepb.CreateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "lease held"}}, nil
 		},
@@ -100,6 +106,9 @@ func TestCreateRetriesWriteConflicts(t *testing.T) {
 		},
 		"grpc conflict with details": func() (*resourcepb.CreateResponse, error) {
 			return nil, grpcErrorWithResult(grpccodes.Aborted, conflict)
+		},
+		"bare already exists without confirmed reason": func() (*resourcepb.CreateResponse, error) {
+			return nil, grpcstatus.Error(grpccodes.AlreadyExists, "exists")
 		},
 		"bare aborted": func() (*resourcepb.CreateResponse, error) {
 			return nil, grpcstatus.Error(grpccodes.Aborted, "lease held")
@@ -126,7 +135,7 @@ func TestCreateRetriesWriteConflicts(t *testing.T) {
 			require.True(t, apierrors.IsConflict(err), "expected Conflict, got %v", err)
 			require.False(t, storage.IsExist(err))
 			requireKubernetesError(t, err)
-			require.Equal(t, createRetryConfig.MaxRetries, client.attempts)
+			require.Equal(t, updateRetryConfig.MaxRetries, client.attempts)
 		})
 		t.Run(name+"/competing create succeeds", func(t *testing.T) {
 			client := &createRetryClient{result: func(attempt int) (*resourcepb.CreateResponse, error) {
@@ -150,9 +159,6 @@ func TestCreateConfirmedDuplicatesAreNotRetried(t *testing.T) {
 		},
 		"grpc with details": func(int) (*resourcepb.CreateResponse, error) {
 			return nil, grpcErrorWithResult(grpccodes.AlreadyExists, duplicate)
-		},
-		"bare already exists": func(int) (*resourcepb.CreateResponse, error) {
-			return nil, grpcstatus.Error(grpccodes.AlreadyExists, "exists")
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
