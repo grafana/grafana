@@ -4,6 +4,8 @@ interface Module {
   id: number;
   kind: 0 | 1;
   modules?: number[];
+  path?: string;
+  size?: { parsedSize: number };
 }
 
 interface Dependency {
@@ -21,11 +23,27 @@ export function getModuleMetrics(chunkGraph: ChunkGraph, moduleGraph: ModuleGrap
   const visited = new Set<number>();
   let initialModules = 0;
   let totalModules = 0;
+  const featureMetrics: Record<string, number> = {};
+
+  const collectFeature = (module: Module) => {
+    const feature = module.path?.replaceAll('\\', '/').match(/(?:^|\/)public\/app\/features\/([^/]+)\/[^/]+/)?.[1];
+    if (feature === undefined) {
+      return;
+    }
+    const parsedSize = module.size?.parsedSize;
+    if (typeof parsedSize !== 'number' || !Number.isFinite(parsedSize) || parsedSize < 0) {
+      throw new Error(`Invalid Rsdoctor feature module parsed size: ${module.id}`);
+    }
+    const folderPath = `public/app/features/${feature}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const prefix = `initialCode.byFolder.${folderPath}`;
+    featureMetrics[`${prefix}.modules`] = (featureMetrics[`${prefix}.modules`] ?? 0) + 1;
+    featureMetrics[`${prefix}.parsedBytes`] = (featureMetrics[`${prefix}.parsedBytes`] ?? 0) + parsedSize;
+  };
 
   // Visit initial chunks first so shared leaves do not count as async-only modules.
   for (const chunk of chunks) {
     if (chunk.initial) {
-      const counts = collectModules(chunk.modules, modules, visited);
+      const counts = collectModules(chunk.modules, modules, visited, collectFeature);
       initialModules += counts;
       totalModules += counts;
     }
@@ -41,6 +59,7 @@ export function getModuleMetrics(chunkGraph: ChunkGraph, moduleGraph: ModuleGrap
     initialModules,
     totalModules,
     asyncOnlyModules: totalModules - initialModules,
+    ...featureMetrics,
   };
 }
 
@@ -135,7 +154,12 @@ function readDependencies(graph: ModuleGraph): Dependency[] {
   return graph.dependencies;
 }
 
-function collectModules(moduleIds: number[], modules: Map<number, Module>, visited: Set<number>): number {
+function collectModules(
+  moduleIds: number[],
+  modules: Map<number, Module>,
+  visited: Set<number>,
+  collectLeaf?: (module: Module) => void
+): number {
   let count = 0;
 
   for (const moduleId of moduleIds) {
@@ -150,13 +174,14 @@ function collectModules(moduleIds: number[], modules: Map<number, Module>, visit
     }
     if (module.kind === 0) {
       count++;
+      collectLeaf?.(module);
       continue;
     }
     if (module.modules === undefined) {
       throw new Error(`Missing Rsdoctor concatenated module children: ${module.id}`);
     }
 
-    count += collectModules(module.modules, modules, visited);
+    count += collectModules(module.modules, modules, visited, collectLeaf);
   }
 
   return count;
