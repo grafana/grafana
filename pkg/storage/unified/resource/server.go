@@ -201,6 +201,15 @@ type BackendReadResponse struct {
 // On the base interface, not a type assertion, so a wrapped backend keeps advertising it.
 var ErrBatchReadUnsupported = errors.New("batch read not supported by this backend")
 
+type deletedBatchReadSupport interface {
+	SupportsDeletedBatchReads() bool
+}
+
+func supportsDeletedBatchReads(backend StorageBackend) bool {
+	support, ok := backend.(deletedBatchReadSupport)
+	return ok && support.SupportsDeletedBatchReads()
+}
+
 type ResourceLastImportTime struct {
 	NamespacedResource
 	LastImportTime time.Time

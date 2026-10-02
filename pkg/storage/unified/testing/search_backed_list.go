@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
 
 // The test selects on labels only, which any group may do, so the group here is
@@ -85,6 +86,11 @@ func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourc
 		c.batchReads.Add(1)
 	}
 	return c.StorageBackend.BatchReadResource(ctx, reqs, includeDeleted)
+}
+
+func (c *countingBackend) SupportsDeletedBatchReads() bool {
+	support, ok := c.StorageBackend.(interface{ SupportsDeletedBatchReads() bool })
+	return ok && support.SupportsDeletedBatchReads()
 }
 
 func (c *countingBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
@@ -366,8 +372,9 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 	}
 
 	wantRV := map[string]int64{
-		"own":   writeObject("own", deniedFolder, user.GetUID(), false, true),
-		"admin": writeObject("admin", adminFolder, "user:other", false, true),
+		"before": writeObject("before", adminFolder, "user:other", false, true),
+		"own":    writeObject("own", deniedFolder, user.GetUID(), false, true),
+		"admin":  writeObject("admin", adminFolder, "user:other", false, true),
 	}
 	writeObject("denied", deniedFolder, "user:other", false, true)
 	writeObject("provisioned", adminFolder, "user:other", true, true)
@@ -448,4 +455,46 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 	if opts.ExpectBatchReads {
 		require.Greater(t, counting.trashBatchReads.Load(), int64(0))
 	}
+	if !opts.ExpectBatchReads {
+		return
+	}
+
+	t.Run("not older than converts a legacy SQL checkpoint", func(t *testing.T) {
+		before := counting.trashBatchReads.Load()
+		checkpointRV := rvmanager.RVFromSnowflake(wantRV["own"])
+		collectNotOlderThan := func(t *testing.T, server resource.ResourceServer) ([]string, int) {
+			t.Helper()
+			names := []string{}
+			token := ""
+			for pages := 0; ; pages++ {
+				require.Less(t, pages, 10, "pagination must terminate")
+				req := newReq(token)
+				if token == "" {
+					req.ResourceVersion = checkpointRV
+					req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+				}
+
+				resp, err := server.List(ctx, req)
+				require.NoError(t, err)
+				require.Nil(t, resp.Error)
+				for _, item := range resp.Items {
+					obj := &unstructured.Unstructured{}
+					require.NoError(t, obj.UnmarshalJSON(item.Value))
+					names = append(names, obj.GetName())
+				}
+				token = resp.NextPageToken
+				if token == "" {
+					return names, pages + 1
+				}
+			}
+		}
+
+		storeNames, storePages := collectNotOlderThan(t, storeServer)
+		searchNames, searchPages := collectNotOlderThan(t, searchServer)
+		require.Equal(t, []string{"own", "admin"}, storeNames)
+		require.Equal(t, storeNames, searchNames)
+		require.Greater(t, storePages, 1)
+		require.Greater(t, searchPages, 1)
+		require.Greater(t, counting.trashBatchReads.Load(), before, "NotOlderThan should use trash search")
+	})
 }
