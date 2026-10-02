@@ -353,6 +353,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,table.refreshNewFeatures,experimental,@grafana/dataviz-squad,false,false,true
 2026-09-16,table.inspectDataTableNG,experimental,@grafana/dataviz-squad,false,false,true
 2026-09-16,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
+2026-10-02,dataviz.tabularNums,preview,@grafana/dataviz-squad,false,false,true
 2026-09-16,datetime.useLuxon,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-09-16,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-09-16,cujTracking,experimental,@grafana/dashboards-squad,false,false,true

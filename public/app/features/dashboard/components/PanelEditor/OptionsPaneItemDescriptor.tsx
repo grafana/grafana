@@ -14,7 +14,7 @@ import { type OptionPaneItemOverrideInfo } from './types';
 
 export interface OptionsPaneItemInfo {
   title?: string;
-  value?: any;
+  value?: unknown;
   description?: string;
   popularRank?: number;
   render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;

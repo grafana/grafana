@@ -3052,6 +3052,14 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:        "dataviz.tabularNums",
+			Description: "Enables tabular numerals for visualization legend values",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "datetime.useLuxon",
 			Description:  "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
 			Stage:        FeatureStageExperimental,
