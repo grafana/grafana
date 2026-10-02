@@ -19,6 +19,8 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,6 +48,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
+
+var createRetryConfig = backoff.Config{
+	MinBackoff: 10 * time.Millisecond,
+	MaxBackoff: 100 * time.Millisecond,
+	MaxRetries: 3,
+}
 
 var updateRetryConfig = backoff.Config{
 	MinBackoff: 10 * time.Millisecond,
@@ -356,14 +364,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
-	rsp, err := s.store.Create(ctx, req)
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
-		resErr := resource.AsErrorResult(err)
-		if resErr.Code == http.StatusConflict {
-			err = storage.NewKeyExistsError(key, 0)
-		} else {
-			err = resource.GetError(resErr)
-		}
+	rsp, err := s.createWithRetry(ctx, key, req)
+	if err != nil {
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
@@ -387,6 +389,33 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	return v.finish(ctx, nil, s.opts.SecureValues)
+}
+
+func (s *Storage) createWithRetry(ctx context.Context, key string, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
+	bo := backoff.New(ctx, createRetryConfig)
+	var lastErr error
+	for bo.Ongoing() {
+		rsp, err := s.store.Create(ctx, req)
+		err = resource.ErrorFromResponse(rsp.GetError(), err)
+		if err == nil {
+			return rsp, nil
+		}
+		resErr := resource.AsErrorResult(err)
+		if resErr.Reason == string(metaV1.StatusReasonAlreadyExists) ||
+			(resErr.Reason == "" && status.Code(err) == codes.AlreadyExists) {
+			return nil, storage.NewKeyExistsError(key, 0)
+		}
+		// A create can conflict while another writer holds the lease, even if that
+		// writer eventually fails. Unlike updates, retrying requires no fresh RV.
+		// A bare Aborted or reason-less 409 is not proof that the object exists.
+		if resErr.Code == http.StatusConflict || resErr.Reason == string(metaV1.StatusReasonConflict) || status.Code(err) == codes.Aborted {
+			lastErr = apierrors.NewConflict(schema.GroupResource{Group: req.Key.Group, Resource: req.Key.Resource}, req.Key.Name, err)
+			bo.Wait()
+			continue
+		}
+		return nil, resource.GetError(resErr)
+	}
+	return nil, retriesExhausted(ctx, bo, lastErr)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.

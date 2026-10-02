@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -197,6 +198,69 @@ func TestIntegrationSQLKVConcurrentCreateClientConflicts(t *testing.T) {
 	})
 }
 
+// Control the lease explicitly so the conflict cannot turn into a duplicate
+// merely because the competing writer finished before the RPC reached storage.
+func TestIntegrationSQLKVCreateGRPCConflictAndAlreadyExists(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, rvManager := range []bool{false, true} {
+		for _, convertErrors := range []bool{false, true} {
+			t.Run(fmt.Sprintf("rvManager=%t/convertErrors=%t", rvManager, convertErrors), func(t *testing.T) {
+				backend, _ := NewTestSqlKvBackend(t, t.Context(), rvManager)
+				client := newRemoteClientWithErrorConversion(t, backend, convertErrors)
+				ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+				key := &resourcepb.ResourceKey{Group: "example.grafana.app", Resource: "examples", Namespace: "default", Name: "create-grpc-errors"}
+				req := &resourcepb.CreateRequest{Key: key, Value: []byte(`{"apiVersion":"example.grafana.app/v1","kind":"Example","metadata":{"namespace":"default","name":"create-grpc-errors"}}`)}
+
+				// A lease can be held before anything has been persisted. This must
+				// produce a conflict, not a claim that the object already exists.
+				leaseName := key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
+				manager := backend.LeaseManager()
+				held, err := manager.Acquire(ctx, leaseName)
+				require.NoError(t, err)
+				released := false
+				defer func() {
+					if !released {
+						require.NoError(t, manager.Release(ctx, held))
+					}
+				}()
+				rsp, err := client.Create(ctx, req)
+				require.Equal(t, codes.Aborted, status.Code(err))
+				require.Nil(t, rsp)
+				require.Empty(t, status.Convert(err).Details(), "lease conflicts currently use a bare Aborted status")
+				require.NotEqual(t, string(metav1.StatusReasonAlreadyExists), resource.AsErrorResult(err).Reason)
+
+				// Model the lease holder failing without creating anything: release
+				// its lease and verify that the very same create can now succeed.
+				require.NoError(t, manager.Release(ctx, held))
+				released = true
+				rsp, err = client.Create(ctx, req)
+				require.NoError(t, resource.ErrorFromResponse(rsp.GetError(), err))
+				require.Positive(t, rsp.GetResourceVersion())
+
+				// Only once creation has succeeded is a subsequent create a confirmed
+				// duplicate. Check the actual wire shape in both rollout modes.
+				rsp, err = client.Create(ctx, req)
+				var result *resourcepb.ErrorResult
+				if convertErrors {
+					require.Equal(t, codes.AlreadyExists, status.Code(err))
+					require.Nil(t, rsp)
+					details := status.Convert(err).Details()
+					require.Len(t, details, 1)
+					var ok bool
+					result, ok = details[0].(*resourcepb.ErrorResult)
+					require.True(t, ok, "expected ErrorResult status detail")
+				} else {
+					require.NoError(t, err)
+					result = rsp.GetError()
+				}
+				require.NotNil(t, result)
+				require.Equal(t, int32(http.StatusConflict), result.Code)
+				require.Equal(t, string(metav1.StatusReasonAlreadyExists), result.Reason)
+			})
+		}
+	}
+}
+
 func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: backend})
 	require.NoError(t, err)
@@ -206,7 +270,12 @@ func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceC
 }
 
 func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
+	return newRemoteClientWithErrorConversion(t, backend, false)
+}
+
+func newRemoteClientWithErrorConversion(t *testing.T, backend resource.KVBackend, convertErrors bool) resource.ResourceClient {
 	cfg := setting.NewCfg()
+	cfg.UnifiedStorageGRPCErrorResultToStatus = convertErrors
 	cfg.GRPCServer.Address = "localhost:0"
 	cfg.GRPCServer.Network = "tcp"
 	features := featuremgmt.WithFeatures()
