@@ -74,6 +74,8 @@ func TestNewIDTokenExtractor(t *testing.T) {
 	requireIdentity := func(context.Context) bool { return true }
 	oboOn := func(context.Context) bool { return true }
 	oboOff := func(context.Context) bool { return false }
+	cancelledCtx, cancel := context.WithCancel(withInfo(&identity.StaticRequester{Type: types.TypeUser}))
+	cancel()
 
 	for _, tc := range []struct {
 		name      string
@@ -122,6 +124,13 @@ func TestNewIDTokenExtractor(t *testing.T) {
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
 			wantMode: identityModeDenied,
 			wantCode: codes.PermissionDenied,
+		},
+		{
+			name:     "cancelled user request without an id token is neither a fallback nor a denial",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: requireIdentity},
+			ctx:      cancelledCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.Canceled,
 		},
 		{
 			name:     "user carried inside the access token goes obo",
