@@ -283,6 +283,58 @@ describe('prepConfig', () => {
     ]);
   });
 
+  it('keeps exemplar geometry and hover aligned across pixel ratio changes without rebuilding the config', () => {
+    const originalRatio = uPlot.pxRatio;
+    const config = prepConfig({
+      dataRef: { current: createMinimalHeatmapData() },
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'magenta',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    }).getConfig();
+    const drawClear = config.hooks?.drawClear?.[0];
+    const paths = config.series?.[2]?.paths;
+    const cursor = config.cursor;
+    if (!drawClear || !paths || !cursor?.dataIdx || !cursor.points?.bbox) {
+      throw new Error('Expected exemplar paths and cursor callbacks');
+    }
+    const points: PointsData = [[20], [30]];
+    const rect = jest.fn();
+    const mockU = createMockU(points);
+    Object.assign(mockU, { series: [{}, {}, {}], cursor: { left: 20, top: 30 } });
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+      createOrientMock(points, {
+        rect,
+        valToPosX: (v) => v * uPlot.pxRatio,
+        valToPosY: (v) => v * uPlot.pxRatio,
+      })
+    );
+    try {
+      for (const [ratio, left, top, size] of [
+        [1, 18, 28, 4],
+        [1.5, 27, 42, 6],
+        [2, 36, 56, 8],
+        [1, 18, 28, 4],
+      ]) {
+        uPlot.pxRatio = ratio;
+        drawClear(mockU);
+        paths(mockU, 2, 0, 0);
+        expect(rect).toHaveBeenLastCalledWith(expect.anything(), left, top, size, size);
+        mockU.cursor.left = 21.5;
+        cursor.dataIdx(mockU, 1, 0, 20);
+        expect(cursor.dataIdx(mockU, 2, 0, 20)).toBe(0);
+        expect(cursor.points.bbox(mockU, 2)).toEqual({ left: 18, top: 28, width: 4, height: 4 });
+        mockU.cursor.left = 22.5;
+        cursor.dataIdx(mockU, 1, 0, 20);
+        expect(cursor.dataIdx(mockU, 2, 0, 20)).toBeNull();
+      }
+    } finally {
+      uPlot.pxRatio = originalRatio;
+      orientSpy.mockRestore();
+    }
+  });
+
   it.each([
     { ordinal: false, layout: HeatmapCellLayout.ge, value: 0.032, expectedY: 32 },
     { ordinal: false, layout: HeatmapCellLayout.le, value: 0.032, expectedY: 32 },
@@ -317,7 +369,7 @@ describe('prepConfig', () => {
     try {
       drawClear(mockU);
       exemplarPaths(mockU, 2, 0, 0);
-      expect(rect).toHaveBeenCalledWith(expect.anything(), 96, expectedY - 4, 8, 8);
+      expect(rect).toHaveBeenCalledWith(expect.anything(), 98, expectedY - 2, 4, 4);
     } finally {
       orientSpy.mockRestore();
     }
@@ -360,7 +412,7 @@ describe('prepConfig', () => {
       drawClear(mockU);
       exemplarPaths(mockU, 2, 0, 0);
       expect(valToPosY).toHaveBeenCalledWith(2, expect.objectContaining({ distr: 3, log }), 100, 0);
-      expect(rect).toHaveBeenCalledWith(expect.anything(), 11, 71, 8, 8);
+      expect(rect).toHaveBeenCalledWith(expect.anything(), 13, 73, 4, 4);
     } finally {
       orientSpy.mockRestore();
     }
@@ -1594,22 +1646,22 @@ describe('heatmapPathsPoints', () => {
       const { rect, each } = invokePointsPathBuilder(minimalPointsOpts, 'rgba(255,0,255,0.7)');
 
       // rect
-      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 96, -3, 8, 8);
-      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 196, -2, 8, 8);
-      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 296, -1, 8, 8);
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 98, -1, 4, 4);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 198, 0, 4, 4);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 298, 1, 4, 4);
 
       //each
-      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 96, -3, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 196, -2, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 296, -1, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 98, -1, 4, 4);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 198, 0, 4, 4);
+      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 298, 1, 4, 4);
     });
 
     it('calls each with correct (u, seriesIdx, dataIdx, lft, top, wid, hgt)', () => {
       const { each } = invokePointsPathBuilder(minimalPointsOpts, 'magenta');
 
-      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 96, -3, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 196, -2, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 296, -1, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 98, -1, 4, 4);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 198, 0, 4, 4);
+      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 298, 1, 4, 4);
     });
 
     it('applies yShift -0.5 when yLayout is le (ordinal)', () => {
