@@ -95,6 +95,9 @@ func TestCreateRetriesWriteConflicts(t *testing.T) {
 		"response reason-less 409": func() (*resourcepb.CreateResponse, error) {
 			return &resourcepb.CreateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "lease held"}}, nil
 		},
+		"grpc already exists with reason-less 409 details": func() (*resourcepb.CreateResponse, error) {
+			return nil, grpcErrorWithResult(grpccodes.AlreadyExists, &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "lease held"})
+		},
 		"grpc conflict with details": func() (*resourcepb.CreateResponse, error) {
 			return nil, grpcErrorWithResult(grpccodes.Aborted, conflict)
 		},

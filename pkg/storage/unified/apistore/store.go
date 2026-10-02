@@ -391,6 +391,18 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	return v.finish(ctx, nil, s.opts.SecureValues)
 }
 
+// createWithRetry distinguishes an existing object from a temporarily busy write lease.
+// A create can hit a lease conflict when another write to the same object is still in
+// progress. That write might fail, so the conflict does not prove the object exists.
+// The server can report failures as:
+//   - An explicit AlreadyExists reason: the object exists; return KeyExistsError.
+//   - A gRPC AlreadyExists status without ErrorResult details: trust the status as a duplicate.
+//   - An AlreadyExists status with reason-less HTTP 409 details: conversion chose the status
+//     code, but the details do not confirm existence; treat it like the original HTTP 409.
+//   - A Conflict reason, reason-less HTTP 409, or bare Aborted status: retry briefly.
+//
+// If contention persists, return Conflict, not KeyExistsError: exhausting retries still
+// does not prove the object exists. Unlike updates, a create has no stale RV to refresh.
 func (s *Storage) createWithRetry(ctx context.Context, key string, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	bo := backoff.New(ctx, createRetryConfig)
 	var lastErr error
@@ -401,13 +413,20 @@ func (s *Storage) createWithRetry(ctx context.Context, key string, req *resource
 			return rsp, nil
 		}
 		resErr := resource.AsErrorResult(err)
-		if resErr.Reason == string(metaV1.StatusReasonAlreadyExists) ||
-			(resErr.Reason == "" && status.Code(err) == codes.AlreadyExists) {
+		bareAlreadyExists := resErr.Reason == "" && status.Code(err) == codes.AlreadyExists
+		// Error conversion also maps reason-less 409s to AlreadyExists. Only use
+		// the status-code fallback when no ErrorResult details describe the failure.
+		if bareAlreadyExists {
+			for _, detail := range status.Convert(err).Details() {
+				if _, ok := detail.(*resourcepb.ErrorResult); ok {
+					bareAlreadyExists = false
+					break
+				}
+			}
+		}
+		if resErr.Reason == string(metaV1.StatusReasonAlreadyExists) || bareAlreadyExists {
 			return nil, storage.NewKeyExistsError(key, 0)
 		}
-		// A create can conflict while another writer holds the lease, even if that
-		// writer eventually fails. Unlike updates, retrying requires no fresh RV.
-		// A bare Aborted or reason-less 409 is not proof that the object exists.
 		if resErr.Code == http.StatusConflict || resErr.Reason == string(metaV1.StatusReasonConflict) || status.Code(err) == codes.Aborted {
 			lastErr = apierrors.NewConflict(schema.GroupResource{Group: req.Key.Group, Resource: req.Key.Resource}, req.Key.Name, err)
 			bo.Wait()
