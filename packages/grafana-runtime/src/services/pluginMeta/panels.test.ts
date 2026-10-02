@@ -31,7 +31,7 @@ const initPluginMetasMock = jest.mocked(initPluginMetas);
 const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 
 describe('when plugins.useMTPlugins flag is enabled', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
     (window as unknown as Record<string, unknown>).__grafana_public_path__ = '';
     setLogger('grafana/runtime.plugins.settings', {
@@ -404,7 +404,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 });
 
 describe('when plugins.useMTPlugins flag is disabled', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 

@@ -43,7 +43,7 @@ afterEach(() => {
 });
 
 describe('when plugins.useMTPlugins flag is enabled', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
   });
 
@@ -382,7 +382,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 });
 
 describe('when plugins.useMTPlugins flag is disabled', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 

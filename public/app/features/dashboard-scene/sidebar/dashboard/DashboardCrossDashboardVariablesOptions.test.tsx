@@ -190,7 +190,7 @@ describe('updateDashboardScopeVariable', () => {
 });
 
 describe('DashboardCrossDashboardVariablesOptions', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
   });
 

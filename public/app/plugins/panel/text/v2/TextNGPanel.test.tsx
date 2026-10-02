@@ -20,7 +20,7 @@ import { createData, createProps, renderPanel } from './test-utils';
 mockComboboxRect();
 jest.mock('./SandboxFrame');
 
-beforeAll(() => {
+beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
 });
 

@@ -9,6 +9,7 @@ import path from 'node:path';
 import { initReactI18next } from 'react-i18next';
 
 import { matchers } from '@grafana/test-utils';
+import { resetTestFlags } from '@grafana/test-utils/feature-flags';
 
 import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
 import { getEnvConfig } from '../../scripts/cli/env-util';
@@ -26,6 +27,14 @@ if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
 }
 
 expect.extend(matchers);
+
+// Feature flags set with setTestFlags are global state, so reset them between tests. This runs
+// before each test rather than after it, when nothing is mounted, so the reset can never trigger a
+// React update that would need wrapping in act() - RTL registers its cleanup afterEach when a test
+// file imports it, which is after the hooks registered here, so those run first.
+beforeEach(() => {
+  resetTestFlags();
+});
 
 i18next.use(initReactI18next).init({
   resources: {},

@@ -44,7 +44,7 @@ describe('api', () => {
   });
 
   describe('when plugins.useMTPlugins flag is enabled', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
     });
 
@@ -148,7 +148,7 @@ describe('api', () => {
   });
 
   describe('when plugins.useMTPlugins flag is disabled', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
     });
 

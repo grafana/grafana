@@ -70,7 +70,7 @@ const runRequestMock = jest.fn().mockReturnValue(
 setRunRequest(runRequestMock);
 
 describe('VariablesEditView', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
   });
   afterAll(() => {

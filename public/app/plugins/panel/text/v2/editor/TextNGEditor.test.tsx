@@ -17,7 +17,7 @@ import { type ViewMode } from './viewMode';
 
 jest.mock('../SandboxFrame');
 
-beforeAll(() => {
+beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
 });
 
