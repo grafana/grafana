@@ -1406,7 +1406,8 @@
       "metadata": {
         "name": "dashboard.apiSearchFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for requests from the /api/search endpoint",
@@ -1447,7 +1448,8 @@
       "metadata": {
         "name": "dashboard.searchFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for dashboard search requests",
@@ -1727,6 +1729,20 @@
       },
       "spec": {
         "description": "Data source query gateway",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.queryGatewaySlimAudit",
+        "resourceVersion": "1790805819665",
+        "creationTimestamp": "2026-09-30T22:03:39Z"
+      },
+      "spec": {
+        "description": "Only attach query payloads to query gateway audit events when a guardrail fires",
         "stage": "experimental",
         "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
@@ -5034,7 +5050,8 @@
       "metadata": {
         "name": "search.apiFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for generic resource search API requests",

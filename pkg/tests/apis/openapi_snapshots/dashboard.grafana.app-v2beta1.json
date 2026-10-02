@@ -4347,6 +4347,7 @@
         }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPanelKindOrLibraryPanelKind": {
+        "description": "Supported dashboard elements |* more element types in the future",
         "type": "object",
         "properties": {
           "LibraryPanelKind": {
@@ -5894,6 +5895,7 @@
         }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKindOrV2PanelKindOrLibraryPanelKind": {
+        "description": "A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec. CellKind is listed first so it is the generated default (a notebook is narrative-first).",
         "type": "object",
         "properties": {
           "CellKind": {
@@ -6431,6 +6433,7 @@
         }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookMarkdownCellContentKindOrCodeCellContentKind": {
+        "description": "Pluggable cell content discriminated by `kind`. New content types are added by extending this union with another \u003cName\u003eCellContentKind member.",
         "type": "object",
         "properties": {
           "CodeCellContentKind": {

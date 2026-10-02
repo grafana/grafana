@@ -12,9 +12,7 @@ import { getCategoriesLabels } from 'app/features/transformers/utils';
 import { SqlExpressionsBanner } from './SqlExpressions/SqlExpressionsBanner';
 import { TransformationCard } from './TransformationCard';
 import { TransformationSearchStatus } from './TransformationSearchStatus';
-import { type FilterCategory } from './TransformationsEditor';
-
-const VIEW_ALL_VALUE = 'viewAll';
+import { type FilterCategory, VIEW_ALL_VALUE } from './types';
 
 interface TransformationPickerNgProps {
   onTransformationAdd: (selectedItem: SelectableValue<string>) => void;

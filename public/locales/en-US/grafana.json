@@ -2980,6 +2980,8 @@
       "title-inspect-alert-rule": "Inspect Alert rule"
     },
     "rule-list": {
+      "checking-data-sources_one": "Checking {{count}} more data source",
+      "checking-data-sources_other": "Checking {{count}} more data sources",
       "configure-datasource": "Configure",
       "datasource-managed-notice": {
         "action": "View rules in Prometheus Alerting",
@@ -3013,6 +3015,9 @@
         "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules",
         "search-in-plugin": "Search data source managed rules in Prometheus Alerting"
       },
+      "hidden-empty-data-sources_one": "{{count}} data source with no rules is hidden",
+      "hidden-empty-data-sources_other": "{{count}} data sources with no rules are hidden",
+      "hidden-empty-data-sources-show-all": "Show all",
       "import-disabled-tooltip": {
         "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
       },
@@ -3193,7 +3198,10 @@
       "view-as": "View as"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Clear filters"
+      "clear-filters": "Clear filters",
+      "empty-data-sources": "Empty data sources",
+      "empty-data-sources-tooltip": "Shows or hides data sources that have no alert rules configured.",
+      "empty-data-sources-tooltip-title": "Empty data sources filter help"
     },
     "rules-group": {
       "deleting": "Deleting",
@@ -6153,9 +6161,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Go back to Queries"
-    },
     "plan-placeholder-badge": {
       "text": "Sample data",
       "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
@@ -6812,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Add SQL expression",
       "sql-cta-description": "Prefer SQL? Add a SQL expression to your queries instead."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Add another transformation"
-      },
-      "confirmText-delete-all": "Delete all",
-      "delete-all-transformations": "Delete all transformations",
-      "title-delete-all-transformations": "Delete all transformations?",
-      "tooltip-clear-search": "Clear search",
-      "tooltip-close-picker": "Close picker"
     },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
@@ -11511,6 +11503,15 @@
         "open-explore": "Open in Explore",
         "set-up": "Set up"
       },
+      "filter": {
+        "badge-ignored": "Filters not applied",
+        "cancel": "Cancel",
+        "clear": "Clear filters",
+        "edit": "Edit filters ({{summary}})",
+        "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+        "save": "Save",
+        "save-failed": "Could not save to browser storage. Try again."
+      },
       "kubernetes": {
         "alerts-firing_one": "{{value}} alert firing",
         "alerts-firing_other": "{{value}} alerts firing",
@@ -11522,19 +11523,12 @@
           "all-clusters": "All clusters",
           "all-namespaces": "All namespaces",
           "all-nodes": "All nodes",
-          "badge-ignored": "Filters not applied",
-          "cancel": "Cancel",
-          "clear": "Clear filters",
           "cluster": "Cluster",
-          "edit": "Edit filters ({{summary}})",
-          "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
           "namespaces": "Namespaces",
           "no-match": "No matching data",
           "no-match-hint": "Adjust the filters",
           "nodes": "Nodes",
           "open": "Filter by cluster, namespace, or node",
-          "save": "Save",
-          "save-failed": "Could not save to browser storage. Try again.",
           "summary-cluster": "Cluster: {{cluster}}",
           "summary-namespaces": "Namespaces: {{namespaces}}",
           "summary-nodes": "Nodes: {{nodes}}",
@@ -11567,6 +11561,22 @@
         "disk-hosts_one": "{{count}} host above 90% disk",
         "disk-hosts_other": "{{count}} hosts above 90% disk",
         "disk-worst": "{{host}} at {{percent}}%",
+        "filter": {
+          "exclude-add": "Add exclusion",
+          "exclude-label": "Label",
+          "exclude-pattern": "Pattern",
+          "exclude-pattern-placeholder": "cache-.*",
+          "exclude-remove": "Remove exclusion",
+          "excludes": "Exclude",
+          "excludes-description": "Matching filesystems are left out of the alert and the host count",
+          "invalid-label": "Label names may only contain letters, digits and underscores",
+          "invalid-pattern": "Pattern is not a valid regular expression",
+          "label-required": "Choose a label",
+          "open": "Exclude hosts or filesystems from the disk alert",
+          "pattern-required": "Enter a pattern",
+          "summary-excludes": "Excluding {{matchers}}",
+          "title": "Customize the disk alert"
+        },
         "investigate-disk": "Investigate disk usage in Explore",
         "names_one": "{{value}} metric",
         "names_other": "{{value}} metrics",
@@ -13285,7 +13295,9 @@
       "copy-markdown": "Copy as Markdown",
       "download-markdown": "Download as .md",
       "error": "Failed to export notebook",
-      "label": "Export"
+      "label": "Export",
+      "pdf": "Export as PDF",
+      "pdf-popup-blocked": "Your browser blocked the PDF export tab"
     },
     "history": {
       "add-block": "Add block",

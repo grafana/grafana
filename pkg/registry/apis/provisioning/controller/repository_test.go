@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -406,7 +407,10 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	statusPatcher.
 		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
 			mock.AnythingOfType("map[string]interface {}"),
-			mock.AnythingOfType("map[string]interface {}")).
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				deletion, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && deletion.Cause == provisioning.DeletionCauseSystem
+			})).
 		Once().
 		Return(nil)
 
@@ -473,6 +477,147 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 	assert.Equal(t, 1.0, counterValue(t, reg, repositoryDeletionsMetric))
 }
 
+func TestRepositoryController_handleDelete_ObservesPendingCauseBeforeFinalizers(t *testing.T) {
+	tests := []struct {
+		name   string
+		status provisioning.RepositoryStatus
+		cause  string
+	}{
+		{name: "no recorded failure", cause: ""},
+		{
+			name: "user cause takes precedence over legacy error",
+			status: provisioning.RepositoryStatus{
+				DeleteError: "connection refused",
+				Deletion:    &provisioning.DeletionStatus{Cause: provisioning.DeletionCauseUser, Message: "provider rejected deletion"},
+			},
+			cause: reconcileCauseUser,
+		},
+		{
+			name: "message does not override system cause",
+			status: provisioning.RepositoryStatus{
+				Deletion: &provisioning.DeletionStatus{Cause: provisioning.DeletionCauseSystem, Message: "permission denied"},
+			},
+			cause: reconcileCauseSystem,
+		},
+		{
+			name: "structured failure without cause",
+			status: provisioning.RepositoryStatus{
+				Deletion: &provisioning.DeletionStatus{State: provisioning.DeletionStateBlocked, Message: "permission denied"},
+			},
+			cause: reconcileCauseSystem,
+		},
+		{
+			name: "unknown cause stays bounded",
+			status: provisioning.RepositoryStatus{
+				Deletion: &provisioning.DeletionStatus{Cause: "unexpected-cause"},
+			},
+			cause: reconcileCauseSystem,
+		},
+		{
+			name:   "legacy failure without structured status",
+			status: provisioning.RepositoryStatus{DeleteError: "permission denied"},
+			cause:  reconcileCauseSystem,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			finalizer := NewMockFinalizerProcessor(t)
+			finalizer.On("process", mock.Anything, mock.Anything).Once().Run(func(mock.Arguments) {
+				assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", tc.cause))
+			}).Return(nil)
+			repoClient := &mockRepoInterface{
+				patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
+					return &provisioning.Repository{}, nil
+				},
+			}
+			c := &RepositoryController{
+				finalizer:       finalizer,
+				tracer:          tracing.InitializeTracerForTest(),
+				deletionMetrics: registerRepositoryDeletionMetrics(reg),
+				client: &mockProvisioningV0alpha1Interface{
+					repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
+				},
+			}
+			deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					DeletionTimestamp: &deletion,
+					Finalizers:        []string{repository.CleanFinalizer},
+				},
+				Status: tc.status,
+			}
+			require.NoError(t, c.handleDelete(context.Background(), repo))
+			family := gatherMetrics(t, reg)[repositoryDeletionPendingMetric]
+			require.NotNil(t, family)
+			require.Len(t, family.GetMetric(), 1)
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", tc.cause))
+		})
+	}
+}
+
+func TestRepositoryController_handleDelete_RecordsCauseForNextReconcile(t *testing.T) {
+	tests := []struct {
+		name  string
+		err   error
+		cause provisioning.DeletionCause
+	}{
+		{name: "repository unauthorized", err: repository.ErrUnauthorized, cause: provisioning.DeletionCauseUser},
+		{name: "repository permission denied", err: repository.ErrPermissionDenied, cause: provisioning.DeletionCauseUser},
+		{name: "connection authentication", err: connection.ErrAuthentication, cause: provisioning.DeletionCauseUser},
+		{name: "connection not found", err: connection.ErrNotFound, cause: provisioning.DeletionCauseUser},
+		{name: "connection repository access", err: connection.ErrRepositoryAccess, cause: provisioning.DeletionCauseUser},
+		{name: "infrastructure failure", err: errors.New("connection reset by peer"), cause: provisioning.DeletionCauseSystem},
+		{name: "misleading message", err: errors.New("permission denied"), cause: provisioning.DeletionCauseSystem},
+		{
+			name: "non-empty folder",
+			err: &nonEmptyFolderError{
+				folder: &provisioning.ResourceListItem{Name: "folder-1", Title: "Folder one"},
+			},
+			cause: provisioning.DeletionCauseUser,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			finalizer := NewMockFinalizerProcessor(t)
+			finalizer.On("process", mock.Anything, mock.Anything).Twice().Return(&finalizerError{
+				finalizer: repository.CleanFinalizer,
+				err:       fmt.Errorf("delete webhook: %w", tc.err),
+			})
+			patcher := &capturePatcher{}
+			reg := prometheus.NewPedanticRegistry()
+			c := &RepositoryController{
+				finalizer:       finalizer,
+				statusPatcher:   patcher,
+				tracer:          tracing.InitializeTracerForTest(),
+				deletionMetrics: registerRepositoryDeletionMetrics(reg),
+			}
+			deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					DeletionTimestamp: &deletion,
+					Finalizers:        []string{repository.CleanFinalizer},
+				},
+			}
+
+			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
+			require.Len(t, patcher.ops, 2)
+			recorded := patcher.ops[1]["value"].(*provisioning.DeletionStatus)
+			assert.Equal(t, tc.cause, recorded.Cause)
+			assert.Equal(t, repository.CleanFinalizer, recorded.Finalizer)
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", ""))
+
+			data, err := json.Marshal(recorded)
+			require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(data, &repo.Status.Deletion))
+			repo.Status.DeleteError = recorded.Message
+			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", string(tc.cause)))
+			assert.Len(t, patcher.ops, 2, "unchanged status must not trigger another patch")
+		})
+	}
+}
+
 // TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount verifies that
 // re-observing a terminating repository whose finalizers are already gone (an
 // informer re-enqueue before GC, or a resync while it lingers) does not
@@ -512,11 +657,36 @@ func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T
 			Deletion: &provisioning.DeletionStatus{
 				State:   provisioning.DeletionStateBlocked,
 				Message: "boom",
+				Cause:   provisioning.DeletionCauseSystem,
 			},
 		},
 	}
 	err := c.updateDeleteStatus(context.Background(), repo, errors.New("boom"))
 	require.NoError(t, err)
+}
+
+func TestRepositoryController_updateDeleteStatus_BackfillsCause(t *testing.T) {
+	for _, previousCause := range []provisioning.DeletionCause{"", provisioning.DeletionCauseSystem} {
+		t.Run("previous cause="+string(previousCause), func(t *testing.T) {
+			patcher := &capturePatcher{}
+			c := &RepositoryController{statusPatcher: patcher}
+			err := fmt.Errorf("remove finalizers: %w", repository.ErrPermissionDenied)
+			repo := &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					DeleteError: err.Error(),
+					Deletion: &provisioning.DeletionStatus{
+						State:   provisioning.DeletionStateBlocked,
+						Message: err.Error(),
+						Cause:   previousCause,
+					},
+				},
+			}
+			require.NoError(t, c.updateDeleteStatus(context.Background(), repo, err))
+			require.Len(t, patcher.ops, 2)
+			deletion := patcher.ops[1]["value"].(*provisioning.DeletionStatus)
+			assert.Equal(t, provisioning.DeletionCauseUser, deletion.Cause)
+		})
+	}
 }
 
 // TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatus
@@ -619,7 +789,8 @@ func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFolderError(t *test
 			}),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				ds, ok := op["value"].(*provisioning.DeletionStatus)
-				return ok && ds.Finalizer == repository.RemoveOrphanResourcesFinalizer && ds.Message == folderErr.Error()
+				return ok && ds.Finalizer == repository.RemoveOrphanResourcesFinalizer &&
+					ds.Message == folderErr.Error() && ds.Cause == provisioning.DeletionCauseUser
 			}),
 		).
 		Once().

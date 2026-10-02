@@ -94,14 +94,6 @@ describe('NotebookView', () => {
     expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
   });
 
-  // The sticky controls row offsets itself by the app header's height, which is not this host's
-  // coordinate space -- left alone the row floats over the first cells as they scroll past it.
-  /**
-   * It renders without an app header above it, but it must not say so ON THE SCENE: the same scene
-   * object is shared with the /notebooks route, which does have one, so a flag there would answer
-   * for both and leave the route's sticky controls row under its header. The answer travels with the
-   * tree instead — see NotebookEmbeddedContext.
-   */
   it('does not mark the shared scene as embedded', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const { instances } = captureStateManager();

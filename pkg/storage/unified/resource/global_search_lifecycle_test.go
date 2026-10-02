@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"net/http"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -486,7 +488,7 @@ func (m *reconcileStorage) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return rv, err
 }
 
-func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
+func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
 	if m.readErr != nil {
 		return nil, m.readErr
 	}
@@ -763,6 +765,7 @@ func TestReconcileKeepsStandardFieldsOnly(t *testing.T) {
 
 var (
 	dashboardsGroupResource = schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	foldersGroupResource    = schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 )
 
 // A document created and indexed after the listing is live and must be kept.
@@ -923,13 +926,19 @@ func importedAt(dashboards, folders time.Time) []ResourceLastImportTime {
 	return out
 }
 
+// heldAt is what an index holding both covered types records, with the import
+// time it caught up with for each, zero for none.
+func heldAt(dashboards, folders time.Time) map[schema.GroupResource]time.Time {
+	return map[schema.GroupResource]time.Time{dashboardsGroupResource: dashboards, foldersGroupResource: folders}
+}
+
 var (
 	importMonday  = time.Date(2026, 9, 28, 10, 0, 0, 0, time.UTC)
 	importTuesday = importMonday.Add(24 * time.Hour)
 )
 
-// A build records the import each type has, so a restart does not rebuild types
-// the index already caught up with.
+// A build records every type it indexed, with the import each has, so a restart
+// neither rebuilds types the index caught up with nor takes them for new ones.
 func TestGlobalIndexBuildRecordsImportTimes(t *testing.T) {
 	storage := &multiTypeStorage{
 		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
@@ -942,8 +951,7 @@ func TestGlobalIndexBuildRecordsImportTimes(t *testing.T) {
 
 	times, err := idx.ImportTimes()
 	require.NoError(t, err)
-	assert.Equal(t, map[schema.GroupResource]time.Time{dashboardsGroupResource: importMonday}, times,
-		"only a type that was ever imported is recorded")
+	assert.Equal(t, heldAt(importMonday, time.Time{}), times, "a type never imported is recorded too")
 }
 
 // An import into one type rebuilds that type, not the whole index, and records it.
@@ -954,12 +962,9 @@ func TestImportRebuildsOnlyTheImportedType(t *testing.T) {
 	}}
 	storage.lastImportTimes = importedAt(importTuesday, importMonday)
 	server, idx := repairServer(t, storage, nil)
-	idx.importTimes = map[schema.GroupResource]time.Time{
-		dashboardsGroupResource:                            importMonday,
-		{Group: "folder.grafana.app", Resource: "folders"}: importMonday,
-	}
+	idx.importTimes = heldAt(importMonday, importMonday)
 
-	require.NoError(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
 
 	assert.Equal(t, map[NamespacedResource][]string{
 		dashboardType("ns"): {"dash-a"},
@@ -975,9 +980,9 @@ func TestImportCheckLeavesCaughtUpTypesAlone(t *testing.T) {
 	}}
 	storage.lastImportTimes = importedAt(importMonday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
-	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: importMonday}
+	idx.importTimes = heldAt(importMonday, time.Time{})
 
-	require.NoError(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
 	assert.Empty(t, idx.indexedItems())
 	assert.Empty(t, storage.listed)
 }
@@ -992,9 +997,9 @@ func TestImportCheckRecordsDespiteObjectsThatCannotBeBuilt(t *testing.T) {
 	storage.broken = map[string]bool{"dash-b": true}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
-	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: importMonday}
+	idx.importTimes = heldAt(importMonday, time.Time{})
 
-	require.NoError(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
 	assert.Equal(t, importTuesday, idx.importTimes[dashboardsGroupResource])
 }
 
@@ -1007,14 +1012,14 @@ func TestImportCheckRetriesAfterAReadFailure(t *testing.T) {
 	}}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
-	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: importMonday}
+	idx.importTimes = heldAt(importMonday, time.Time{})
 	idx.documentRefsErr = errors.New("index unavailable")
 
-	require.Error(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	require.Error(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
 	assert.Equal(t, importMonday, idx.importTimes[dashboardsGroupResource], "not recorded")
 
 	idx.documentRefsErr = nil
-	require.NoError(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
 	assert.Equal(t, importTuesday, idx.importTimes[dashboardsGroupResource])
 }
 
@@ -1068,18 +1073,15 @@ func TestImportQueuesARebuildOfOnlyTheImportedType(t *testing.T) {
 	storage := &reconcileStorage{}
 	storage.lastImportTimes = importedAt(importTuesday, importMonday)
 	server, idx := repairServer(t, storage, nil)
-	idx.importTimes = map[schema.GroupResource]time.Time{
-		dashboardsGroupResource:                            importMonday,
-		{Group: "folder.grafana.app", Resource: "folders"}: importMonday,
-	}
+	idx.importTimes = heldAt(importMonday, importMonday)
 
-	completeChs, err := server.queueImportedTypeRebuilds(t.Context(), []NamespacedResource{GlobalSearchKey("ns"), dashboardType("ns")})
+	completeChs, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns"), dashboardType("ns")})
 	require.NoError(t, err)
 
 	queued := server.rebuildQueue.Elements()
 	require.Len(t, queued, 1)
 	assert.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
-	assert.Equal(t, []schema.GroupResource{dashboardsGroupResource}, queued[0].importedTypes)
+	assert.Equal(t, []schema.GroupResource{dashboardsGroupResource}, queued[0].staleTypes)
 	assert.Len(t, completeChs, 1, "so an explicit rebuild can wait for it")
 }
 
@@ -1087,9 +1089,9 @@ func TestImportQueuesNothingWhenCaughtUp(t *testing.T) {
 	storage := &reconcileStorage{}
 	storage.lastImportTimes = importedAt(importMonday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
-	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: importMonday}
+	idx.importTimes = heldAt(importMonday, time.Time{})
 
-	_, err := server.queueImportedTypeRebuilds(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
+	_, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
 	require.NoError(t, err)
 	assert.Zero(t, server.rebuildQueue.Len())
 }
@@ -1097,13 +1099,13 @@ func TestImportQueuesNothingWhenCaughtUp(t *testing.T) {
 // Two requests for the same index before its turn are one rebuild covering both
 // types.
 func TestRebuildRequestsCombineImportedTypes(t *testing.T) {
-	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
-	a := rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), importedTypes: []schema.GroupResource{dashboardsGroupResource}}
-	b := rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), importedTypes: []schema.GroupResource{folders, dashboardsGroupResource}}
+	folders := foldersGroupResource
+	a := rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), staleTypes: []schema.GroupResource{dashboardsGroupResource}}
+	b := rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), staleTypes: []schema.GroupResource{folders, dashboardsGroupResource}}
 
 	c, ok := combineRebuildRequests(a, b)
 	require.True(t, ok)
-	assert.Equal(t, []schema.GroupResource{dashboardsGroupResource, folders}, c.importedTypes)
+	assert.Equal(t, []schema.GroupResource{dashboardsGroupResource, folders}, c.staleTypes)
 }
 
 // A worker given imported types rebuilds just those when no full rebuild is due.
@@ -1119,7 +1121,7 @@ func TestRebuildWorkerRebuildsOnlyImportedTypes(t *testing.T) {
 
 	server.rebuildIndex(t.Context(), rebuildRequest{
 		NamespacedResource: GlobalSearchKey("ns"),
-		importedTypes:      []schema.GroupResource{dashboardsGroupResource},
+		staleTypes:         []schema.GroupResource{dashboardsGroupResource},
 	})
 
 	assert.Equal(t, map[NamespacedResource][]string{
@@ -1143,7 +1145,7 @@ func TestRebuildWorkerPrefersAFullRebuildWhenDue(t *testing.T) {
 	server.rebuildIndex(t.Context(), rebuildRequest{
 		NamespacedResource: GlobalSearchKey("ns"),
 		minBuildTime:       importTuesday, // built before this, so a full rebuild is due
-		importedTypes:      []schema.GroupResource{dashboardsGroupResource},
+		staleTypes:         []schema.GroupResource{dashboardsGroupResource},
 	})
 
 	require.Len(t, search.buildIndexCalls, 1)
@@ -1196,9 +1198,9 @@ func TestImportCheckIgnoresAnOlderImportTime(t *testing.T) {
 	storage := &reconcileStorage{}
 	storage.lastImportTimes = importedAt(importMonday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
-	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: importTuesday}
+	idx.importTimes = heldAt(importTuesday, time.Time{})
 
-	completeChs, err := server.queueImportedTypeRebuilds(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
+	completeChs, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
 	require.NoError(t, err)
 	assert.Empty(t, completeChs)
 	assert.Zero(t, server.rebuildQueue.Len())
@@ -1215,12 +1217,12 @@ func TestImportedTypeRebuildUpdatesTheIndexFirst(t *testing.T) {
 	server, idx := repairServer(t, storage, nil)
 	idx.updateIndexError = errors.New("update failed")
 
-	require.ErrorContains(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil), "update failed")
+	require.ErrorContains(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil), "update failed")
 	assert.Empty(t, idx.indexedItems(), "nothing rebuilt")
 	assert.Empty(t, idx.importTimes, "nothing recorded, so it is retried")
 
 	idx.updateIndexError = nil
-	require.NoError(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
 	assert.Equal(t, 2, idx.updateIndexCalls)
 	assert.Equal(t, importTuesday, idx.importTimes[dashboardsGroupResource])
 }
@@ -1230,8 +1232,484 @@ func TestImportedTypeRebuildSkipsTheUpdateWhenCaughtUp(t *testing.T) {
 	storage := &reconcileStorage{}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
-	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: importTuesday}
+	idx.importTimes = heldAt(importTuesday, time.Time{})
 
-	require.NoError(t, server.rebuildImportedTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
 	assert.Zero(t, idx.updateIndexCalls)
+}
+
+// watchStorage hands out one notification stream a test controls.
+type watchStorage struct {
+	multiTypeStorage
+
+	events chan *WrittenEvent
+	// Streams asked for, so a test can see the stream being reopened.
+	watches int
+	err     error
+}
+
+func (m *watchStorage) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
+	m.watches++
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.events, nil
+}
+
+func writtenEvent(action resourcepb.WatchEvent_Type, key NamespacedResource, name string, rv int64) *WrittenEvent {
+	return &WrittenEvent{
+		Type:            action,
+		ResourceVersion: rv,
+		Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Name:      name,
+		},
+		Value: testObjectJSON(name, name),
+	}
+}
+
+func globalWatchServer(t *testing.T, storage StorageBackend, search *mockSearchBackend) *searchServer {
+	t.Helper()
+	server := globalTestServer(t, storage, search)
+	// The index has to be open for notifications to have somewhere to go.
+	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
+	require.NoError(t, err)
+	return server
+}
+
+// A notification only says the index is behind, so the index is updated from
+// storage, once per batch however many notifications it got.
+func TestWatchUpdatesTheGlobalIndexOncePerBatch(t *testing.T) {
+	search := &mockSearchBackend{}
+	server := globalWatchServer(t, &multiTypeStorage{}, search)
+	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
+	updatesAfterBuild := idx.updateIndexCalls
+
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11),
+		writtenEvent(resourcepb.WatchEvent_DELETED, folderType("ns"), "folder-a", 12),
+	})
+
+	assert.Equal(t, updatesAfterBuild+1, idx.updateIndexCalls)
+	assert.Empty(t, idx.indexedItems(), "nothing is written from the notification itself")
+}
+
+func TestWatchIgnoresWhatTheIndexDoesNotCover(t *testing.T) {
+	search := &mockSearchBackend{}
+	server := globalWatchServer(t, &multiTypeStorage{}, search)
+	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
+	updatesAfterBuild := idx.updateIndexCalls
+
+	playlists := NamespacedResource{Namespace: "ns", Group: "playlist.grafana.app", Resource: "playlists"}
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_ADDED, playlists, "my-playlist", 11),
+		// Another namespace, which this instance holds no index for.
+		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("other"), "not-mine", 12),
+	})
+
+	assert.Equal(t, updatesAfterBuild, idx.updateIndexCalls)
+}
+
+func TestWatchConsumesUntilTheStreamEnds(t *testing.T) {
+	events := make(chan *WrittenEvent, 4)
+	storage := &watchStorage{events: events}
+	search := &mockSearchBackend{}
+	server := globalWatchServer(t, storage, search)
+	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
+	updatesAfterBuild := idx.updateIndexCalls
+
+	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11)
+	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-b", 12)
+	close(events)
+
+	server.consumeWriteEvents(t.Context(), events)
+
+	assert.Equal(t, updatesAfterBuild+1, idx.updateIndexCalls, "both arrived before the first batch was taken")
+}
+
+// Arrivals that are already queued go into one write rather than one each.
+func TestWatchBatchesWhatHasAlreadyArrived(t *testing.T) {
+	events := make(chan *WrittenEvent, 3)
+	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11)
+	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-b", 12)
+
+	batch, ok := nextWriteEventBatch(t.Context(), events)
+	require.True(t, ok)
+	assert.Len(t, batch, 2)
+
+	close(events)
+	_, ok = nextWriteEventBatch(t.Context(), events)
+	assert.False(t, ok, "a closed stream ends the loop")
+}
+
+func TestUpdateGlobalIndexes(t *testing.T) {
+	global := GlobalSearchKey("ns")
+	dashboards := NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}
+
+	globalIdx := &MockResourceIndex{}
+	dashboardsIdx := &MockResourceIndex{}
+	backend := &mockSearchBackend{
+		openIndexes: []NamespacedResource{global, dashboards},
+		cache: map[NamespacedResource]ResourceIndex{
+			global:     globalIdx,
+			dashboards: dashboardsIdx,
+		},
+	}
+	s := &searchServer{search: backend, log: log.NewNopLogger(), indexMetrics: ProvideIndexMetrics(nil), ownsIndexFn: func(NamespacedResource) (bool, error) { return true, nil }}
+
+	s.updateGlobalIndexes(t.Context())
+
+	assert.Equal(t, 1, globalIdx.updateIndexCalls)
+	// Every other index is brought up to date by the search that reads it.
+	assert.Equal(t, 0, dashboardsIdx.updateIndexCalls)
+}
+
+func TestSearchDoesNotWaitForGlobalIndex(t *testing.T) {
+	global := GlobalSearchKey("ns")
+	dashboards := NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}
+
+	globalIdx := &MockResourceIndex{}
+	dashboardsIdx := &MockResourceIndex{}
+	backend := &mockSearchBackend{
+		cache: map[NamespacedResource]ResourceIndex{
+			global:     globalIdx,
+			dashboards: dashboardsIdx,
+		},
+	}
+	s := &searchServer{
+		search:             backend,
+		log:                log.NewNopLogger(),
+		indexMetrics:       ProvideIndexMetrics(nil),
+		globalIndexEnabled: true,
+	}
+
+	idx, err := s.getOrCreateIndex(t.Context(), nil, global, "test")
+	require.NoError(t, err)
+	require.Equal(t, globalIdx, idx)
+	// A global index is updated in the background, so the search reads
+	// whatever it holds.
+	assert.Equal(t, 0, globalIdx.updateIndexCalls)
+
+	idx, err = s.getOrCreateIndex(t.Context(), nil, dashboards, "test")
+	require.NoError(t, err)
+	require.Equal(t, dashboardsIdx, idx)
+	assert.Equal(t, 1, dashboardsIdx.updateIndexCalls)
+}
+
+// Fetching an index counts as using it, so the background work leaves alone a
+// global index another instance now owns, and it can be closed here.
+func TestBackgroundWorkSkipsAGlobalIndexOwnedElsewhere(t *testing.T) {
+	search := &mockSearchBackend{}
+	server := globalWatchServer(t, &multiTypeStorage{}, search)
+	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
+	search.openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
+	server.ownsIndexFn = func(NamespacedResource) (bool, error) { return false, nil }
+	updatesAfterBuild := idx.updateIndexCalls
+
+	server.updateGlobalIndexes(t.Context())
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11),
+	})
+
+	assert.Equal(t, updatesAfterBuild, idx.updateIndexCalls)
+	assert.Empty(t, idx.indexedItems())
+}
+
+// A global index just opened may have been reopened from disk long after it was
+// written, so the search that opens it waits for one update.
+func TestSearchUpdatesAGlobalIndexItJustOpened(t *testing.T) {
+	search := &mockSearchBackend{}
+	server := globalTestServer(t, &multiTypeStorage{}, search)
+
+	idx, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	require.NoError(t, err)
+	assert.Equal(t, 1, idx.(*MockResourceIndex).updateIndexCalls)
+
+	_, err = server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	require.NoError(t, err)
+	assert.Equal(t, 1, idx.(*MockResourceIndex).updateIndexCalls, "not again once it is open")
+}
+
+// A stream that never sends, as some backends return, does not hold up shutdown.
+func TestWatchStopsOnAnIdleStreamWhenCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{}).consumeWriteEvents(ctx, make(chan *WrittenEvent))
+	}()
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("still waiting for a notification after cancellation")
+	}
+}
+
+var playlistsGroupResource = schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+
+// A type added to what the index covers is indexed on its own and recorded,
+// without rebuilding the types the index already holds.
+func TestSyncIndexesANewlyCoveredType(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50},
+	}}
+	server, idx := repairServer(t, storage, nil)
+	// Built when only dashboards were covered.
+	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: {}}
+
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
+
+	assert.Equal(t, map[NamespacedResource][]string{folderType("ns"): {"folder-a"}}, indexedNames(t, idx))
+	assert.Equal(t, heldAt(time.Time{}, time.Time{}), idx.importTimes)
+}
+
+// A type dropped from what the index covers has its documents removed, and is
+// forgotten, so it is not removed again.
+func TestSyncRemovesATypeNoLongerCovered(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, map[schema.GroupResource][]DocumentRef{
+		playlistsGroupResource: {{Name: "playlist-b", RV: 40}, {Name: "playlist-a", RV: 40}},
+	})
+	idx.importTimes = heldAt(time.Time{}, time.Time{})
+	idx.importTimes[playlistsGroupResource] = importMonday
+
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
+
+	items := idx.indexedItems()
+	removed := make([]string, 0, len(items))
+	for _, item := range items {
+		require.Equal(t, ActionDelete, item.Action)
+		assert.Equal(t, playlistsGroupResource, schema.GroupResource{Group: item.Key.Group, Resource: item.Key.Resource})
+		removed = append(removed, item.Key.Name)
+	}
+	assert.Equal(t, []string{"playlist-a", "playlist-b"}, removed)
+	assert.Equal(t, heldAt(time.Time{}, time.Time{}), idx.importTimes)
+	types, err := idx.DocumentTypes()
+	require.NoError(t, err)
+	assert.NotContains(t, types, playlistsGroupResource, "forgotten from both records")
+}
+
+// A removal that fails part way keeps the type recorded, so the next sync
+// removes the rest.
+func TestSyncRetriesARemovalThatFailedPartWay(t *testing.T) {
+	refs := make([]DocumentRef, 0, maxBatchSize+1)
+	for i := range maxBatchSize + 1 {
+		refs = append(refs, DocumentRef{Name: fmt.Sprintf("playlist-%04d", i), RV: 40})
+	}
+	server, idx := repairServer(t, &reconcileStorage{}, map[schema.GroupResource][]DocumentRef{playlistsGroupResource: refs})
+	idx.importTimes = heldAt(time.Time{}, time.Time{})
+	idx.importTimes[playlistsGroupResource] = time.Time{}
+	// The first batch of deletes goes through, the second fails.
+	idx.failBulkFromCall = 2
+
+	require.Error(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	assert.Contains(t, idx.importTimes, playlistsGroupResource, "still recorded")
+
+	idx.failBulkFromCall = 0
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
+	assert.NotContains(t, idx.importTimes, playlistsGroupResource)
+}
+
+// An index reused at startup is synced at once, not at the first tick of the
+// rebuild scan.
+func TestStartupSyncsTheTypesOfAReusedGlobalIndex(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{folderType("ns"): {"folder-a"}},
+		listRVs: map[NamespacedResource]int64{folderType("ns"): 50},
+	}}
+	server, idx := repairServer(t, storage, nil)
+	server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
+	// Written when only dashboards were covered.
+	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: {}}
+	idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
+
+	require.NoError(t, server.init(t.Context()))
+	t.Cleanup(server.stop)
+
+	require.Eventually(t, func() bool {
+		times, err := idx.ImportTimes()
+		require.NoError(t, err)
+		_, ok := times[foldersGroupResource]
+		return ok
+	}, 5*time.Second, 10*time.Millisecond, "folders were synced without waiting for the scan")
+}
+
+// The rebuild scan notices a coverage change the same way it notices an import.
+func TestScanQueuesCoverageChanges(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
+	// Holds dashboards, and a type no longer covered, but not folders.
+	idx.importTimes = map[schema.GroupResource]time.Time{dashboardsGroupResource: {}, playlistsGroupResource: {}}
+
+	_, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
+	require.NoError(t, err)
+
+	queued := server.rebuildQueue.Elements()
+	require.Len(t, queued, 1)
+	assert.ElementsMatch(t, []schema.GroupResource{foldersGroupResource, playlistsGroupResource}, queued[0].staleTypes)
+}
+
+// A type written only in part, as when a release that added it is rolled back
+// mid-sync, is never recorded, but its documents are still found and removed.
+func TestSyncRemovesAPartlyWrittenTypeNoLongerCovered(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, map[schema.GroupResource][]DocumentRef{
+		playlistsGroupResource: {{Name: "playlist-a", RV: 40}},
+	})
+	idx.importTimes = heldAt(time.Time{}, time.Time{})
+
+	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
+
+	items := idx.indexedItems()
+	require.Len(t, items, 1)
+	assert.Equal(t, ActionDelete, items[0].Action)
+	assert.Equal(t, "playlist-a", items[0].Key.Name)
+}
+
+// The API that serves this search is enabled separately, so a search before the
+// index is enabled is answered as unavailable rather than as a server error.
+func TestGlobalSearchIsUnavailableWhileTheIndexIsDisabled(t *testing.T) {
+	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{})
+	server.globalIndexEnabled = false
+
+	rsp, err := server.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
+		Limit:   10,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, rsp.Error)
+	assert.Equal(t, int32(http.StatusServiceUnavailable), rsp.Error.Code)
+}
+
+func TestRebuildRequestsCombineReconcile(t *testing.T) {
+	a := rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), staleTypes: []schema.GroupResource{dashboardsGroupResource}}
+	b := rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true}
+
+	c, ok := combineRebuildRequests(a, b)
+	require.True(t, ok)
+	assert.True(t, c.reconcile)
+	assert.Equal(t, []schema.GroupResource{dashboardsGroupResource}, c.staleTypes)
+}
+
+// A reconcile runs in the rebuild workers, so it never overlaps a rebuild of
+// the same index, and repairs every covered type.
+func TestRebuildWorkerReconcilesTheGlobalIndex(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50},
+	}}
+	// Missing folder-a, and still holding a dashboard deleted since.
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 50}, {Name: "dash-gone", RV: 40}},
+	})
+	idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
+
+	server.rebuildIndex(t.Context(), rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true})
+
+	var indexed, removed []string
+	for _, item := range idx.indexedItems() {
+		if item.Action == ActionDelete {
+			removed = append(removed, item.Key.Name)
+		} else {
+			indexed = append(indexed, item.Doc.Key.Name)
+		}
+	}
+	assert.Equal(t, []string{"folder-a"}, indexed)
+	assert.Equal(t, []string{"dash-gone"}, removed)
+	assert.NotZero(t, idx.reconciledAt, "recorded, so it is not compared again for an interval")
+}
+
+// Only the global indexes this instance owns are reconciled here, and only
+// once they are due.
+func TestReconcileQueuesOnlyOwnedGlobalIndexes(t *testing.T) {
+	server, _ := repairServer(t, &reconcileStorage{}, nil)
+	search := server.search.(*mockSearchBackend)
+	search.cache[GlobalSearchKey("elsewhere")] = &MockResourceIndex{}
+	search.cache[dashboardType("ns")] = &MockResourceIndex{}
+	server.ownsIndexFn = func(key NamespacedResource) (bool, error) { return key.Namespace == "ns", nil }
+
+	server.queueDueReconciles([]NamespacedResource{GlobalSearchKey("ns"), GlobalSearchKey("elsewhere"), dashboardType("ns")}, time.Now())
+
+	queued := server.rebuildQueue.Elements()
+	require.Len(t, queued, 1)
+	assert.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
+	assert.True(t, queued[0].reconcile)
+}
+
+// Each index is compared once per interval, at its own slot.
+func TestReconcileComesDueAtTheIndexSlot(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
+	slot := lastReconcileSlot(GlobalSearchKey("ns"), time.Now())
+
+	idx.reconciledAt = slot.Add(time.Second)
+	server.queueDueReconciles([]NamespacedResource{GlobalSearchKey("ns")}, slot.Add(globalIndexReconcileInterval-time.Second))
+	assert.Zero(t, server.rebuildQueue.Len(), "compared since its slot, and the next is not here yet")
+
+	server.queueDueReconciles([]NamespacedResource{GlobalSearchKey("ns")}, slot.Add(globalIndexReconcileInterval+time.Second))
+	assert.Equal(t, 1, server.rebuildQueue.Len(), "its next slot has passed")
+}
+
+// Slots repeat every interval, at an offset taken from the key.
+func TestReconcileSlotsRepeatEveryInterval(t *testing.T) {
+	now := time.Now()
+	slot := lastReconcileSlot(GlobalSearchKey("ns"), now)
+	assert.False(t, slot.After(now))
+	assert.Less(t, now.Sub(slot), globalIndexReconcileInterval)
+	assert.Equal(t, slot.Add(globalIndexReconcileInterval), lastReconcileSlot(GlobalSearchKey("ns"), now.Add(globalIndexReconcileInterval)))
+}
+
+// A build lists everything, so it counts as a comparison with storage.
+func TestGlobalIndexBuildRecordsReconciledAt(t *testing.T) {
+	storage := &multiTypeStorage{live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}}
+	server := globalTestServer(t, storage, &mockSearchBackend{})
+	before := time.Now()
+
+	idx, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
+	require.NoError(t, err)
+
+	reconciledAt, err := idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.False(t, reconciledAt.Before(before))
+}
+
+// A reconcile that failed for a type is not recorded, so the next scan tries
+// again rather than waiting another interval.
+func TestFailedReconcileIsNotRecorded(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
+	idx.documentRefsErr = errors.New("index unavailable")
+
+	require.Error(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
+	assert.Zero(t, idx.reconciledAt)
+}
+
+// A round reports how many indexes it covered, so a pod falling behind shows
+// up as rounds that take as long as the interval.
+func TestUpdateRoundReportsItsIndexes(t *testing.T) {
+	backend := &mockSearchBackend{
+		openIndexes: []NamespacedResource{GlobalSearchKey("a"), GlobalSearchKey("b"), dashboardType("a")},
+		cache: map[NamespacedResource]ResourceIndex{
+			GlobalSearchKey("a"): &MockResourceIndex{},
+			GlobalSearchKey("b"): &MockResourceIndex{},
+			dashboardType("a"):   &MockResourceIndex{},
+		},
+	}
+	metrics := ProvideIndexMetrics(nil)
+	s := &searchServer{search: backend, log: log.NewNopLogger(), indexMetrics: metrics, ownsIndexFn: func(NamespacedResource) (bool, error) { return true, nil }}
+
+	s.updateGlobalIndexes(t.Context())
+
+	assert.Equal(t, 2.0, testutil.ToFloat64(metrics.GlobalUpdateRoundIndexes))
+	assert.Equal(t, 1, testutil.CollectAndCount(metrics.GlobalUpdateRoundDuration))
+}
+
+// Every reconcile is timed, by whether it compared every type.
+func TestReconcileIsTimedByResult(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
+
+	require.NoError(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
+	idx.documentRefsErr = errors.New("index unavailable")
+	require.Error(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
+
+	assert.Equal(t, 2, testutil.CollectAndCount(server.indexMetrics.GlobalReconcileDuration), "one series for success, one for failure")
 }

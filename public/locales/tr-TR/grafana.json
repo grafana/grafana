@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Arama iptal edildi - {{numberOfRules}} kural bulundu",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanager otomatik eşitlemesi etkinken içe aktarma kullanılamaz."
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Yeni deneyimi kullan",
         "view-previous-experience": "Önceki deneyime geri dön"
       },
-      "unknown-rule-type": "Bilinmeyen kural türü"
+      "unknown-rule-type": "Bilinmeyen kural türü",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Kurallar yüklenirken hata oluştu",
@@ -3193,7 +3198,10 @@
       "view-as": "Farklı görüntüleme"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Filtreleri temizle"
+      "clear-filters": "Filtreleri temizle",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Siliniyor",
@@ -5674,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "İlerleyin"
-        },
-        "title": {
-          "proceed-to-external-site": "Haricî siteye geçilsin mi?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} panosu",
       "label-no-dashboards-found": "Hiç pano bulunamadı"
@@ -6747,7 +6745,6 @@
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
       "refresh": "Panoyu yenile",
-      "save": "Panoyu kaydet",
       "save-as-template": {
         "label": "Şablon olarak kaydet"
       },
@@ -6762,8 +6759,6 @@
       "save-dashboard-short": "Kaydet",
       "save-library-panel": "Kütüphane panelini kaydet",
       "save-library-panel-short": "Kaydet",
-      "settings": "Pano ayarları",
-      "share-button": "Paylaş",
       "star-add-error": "Favorilere eklenemedi",
       "star-added": "Favorilere eklendi",
       "star-remove-error": "Favorilerden kaldırılamadı",
@@ -11524,6 +11519,15 @@
         "open-explore": "Explore'da aç",
         "set-up": "Kur"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "Küme CPU'su · son 24 saat",
         "description": "Küme sağlığını, maliyetini ve doğru boyutlandırma tasarruflarını tek bir görünümde inceleyin.",
@@ -11531,19 +11535,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11576,6 +11573,22 @@
         "data-points-per-minute": "{{value}} veri noktası/dk.",
         "description": "Altyapı sağlığını ve trendlerini incelemek için Prometheus uyumlu metrikleri bağlayın.",
         "disk-worst": "{{host}}: %{{percent}}",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Explore'da disk kullanımını incele",
         "series-trend": "Etkin seri · son 24 saat",
         "setup-hint": "bir metrik kaynağı bağlayın",
@@ -13298,7 +13311,9 @@
       "copy-markdown": "Markdown olarak kopyala",
       "download-markdown": ".md olarak indir",
       "error": "Not defteri dışa aktarılamadı",
-      "label": "Dışa aktar"
+      "label": "Dışa aktar",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Blok ekle",
@@ -18186,10 +18201,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "İnceleyin",
-      "description": "Yenilendik!",
-      "revert": "Beni geri götür",
-      "title": "Yeni stiller"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

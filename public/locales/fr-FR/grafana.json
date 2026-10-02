@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Recherche annulée : {{numberOfRules}} règles trouvées",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Les importations ne sont pas disponibles tant que la synchronisation automatique de Mimir Alertmanager est active"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Utiliser la nouvelle expérience",
         "view-previous-experience": "Revenir à l’expérience précédente"
       },
-      "unknown-rule-type": "Type de règle inconnu"
+      "unknown-rule-type": "Type de règle inconnu",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Erreurs lors du chargement des règles",
@@ -3193,7 +3198,10 @@
       "view-as": "Afficher en tant que"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Supprimer les filtres"
+      "clear-filters": "Supprimer les filtres",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Suppression",
@@ -5674,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Continuer"
-        },
-        "title": {
-          "proceed-to-external-site": "Accéder au site externe ?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Tableau de bord {{dashboardName}}",
       "label-no-dashboards-found": "Aucun tableau de bord trouvé"
@@ -6747,7 +6745,6 @@
       "playlist-previous": "Accéder au tableau de bord précédent",
       "playlist-stop": "Arrêter la liste de lecture",
       "refresh": "Actualiser le tableau de bord",
-      "save": "Enregistrer le tableau de bord",
       "save-as-template": {
         "label": "Enregistrer comme modèle"
       },
@@ -6762,8 +6759,6 @@
       "save-dashboard-short": "Enregistrer",
       "save-library-panel": "Enregistrer le panneau de la bibliothèque",
       "save-library-panel-short": "Enregistrer",
-      "settings": "Paramètres du tableau de bord",
-      "share-button": "Partager",
       "star-add-error": "Échec de l’ajout aux favoris",
       "star-added": "Ajouté aux favoris",
       "star-remove-error": "Échec de la suppression des favoris",
@@ -11524,6 +11519,15 @@
         "open-explore": "Ouvrir dans Explore",
         "set-up": "Configurer"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "Processeur du cluster · dernières 24 heures",
         "description": "Suivez la santé de vos clusters, leurs coûts et les économies de redimensionnement possibles au sein d’une même vue.",
@@ -11531,19 +11535,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11576,6 +11573,22 @@
         "data-points-per-minute": "{{value}} points de données/min",
         "description": "Connectez des métriques compatibles avec Prometheus pour analyser la santé et les tendances de votre infrastructure.",
         "disk-worst": "{{host}} à {{percent}} %",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Analyser l’utilisation du disque dans Explore",
         "series-trend": "Séries actives · dernières 24 heures",
         "setup-hint": "connecter une source de métriques",
@@ -13298,7 +13311,9 @@
       "copy-markdown": "Copier en tant que Markdown",
       "download-markdown": "Télécharger au format .md",
       "error": "Échec de l’exportation du notebook",
-      "label": "Exporter"
+      "label": "Exporter",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Ajouter un bloc",
@@ -18186,10 +18201,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Découvrez-le",
-      "description": "Nous avons repensé l’interface !",
-      "revert": "Retour",
-      "title": "Nouveaux styles"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

@@ -1755,11 +1755,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/scene/PanelSearchLayout.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/VariableControls.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1958,9 +1953,6 @@
   "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {
@@ -2147,14 +2139,6 @@
   },
   "public/app/features/dashboard/components/TransformationsEditor/TransformationPickerNg.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/TransformationsEditor/TransformationsEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2996,7 +2980,7 @@
   },
   "public/app/features/variables/query/actions.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/variables/query/operators.ts": {
@@ -3120,11 +3104,6 @@
   },
   "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/Filters.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/featureFlags.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -3449,11 +3428,6 @@
   "public/app/plugins/panel/debug/EventBusLogger.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/plugins/panel/debug/RenderInfoViewer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/plugins/panel/debug/StateView.tsx": {

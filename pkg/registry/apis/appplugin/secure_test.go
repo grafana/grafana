@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -60,7 +59,7 @@ func TestSecureValueLookupCacheExpiry(t *testing.T) {
 				return secureLookupResults(fmt.Sprintf("value-%d", calls)), nil
 			}))
 			const ttl = 50 * time.Millisecond
-			lookup.cache = expirable.NewLRU[secureValueCacheKey, map[string]string](100, nil, ttl)
+			lookup.ttl = ttl
 			obj := secureLookupObject(t, "uid", "1")
 			got, err := lookup.get(t.Context(), obj)
 			require.NoError(t, err)

@@ -101,6 +101,17 @@ For more information, refer to [Configure Trace to profiles](https://grafana.com
 
 {{< youtube id="AG8VzfFMLxo" >}}
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to run a profiling query against your Pyroscope data source, use `gcx datasources pyroscope query`:
+
+```sh
+gcx datasources pyroscope query -d <DATASOURCE_UID> '{service_name="frontend"}' \
+  --profile-type process_cpu:cpu:nanoseconds:cpu:nanoseconds --since 1h
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Pyroscope data source. The query takes a label selector (`{service_name="frontend"}`), a profile type (`--profile-type`), and a time range (`--since`).
+
 ## Related Pyroscope documentation
 
 For more information about Pyroscope beyond the data source, refer to the following Pyroscope product documentation:

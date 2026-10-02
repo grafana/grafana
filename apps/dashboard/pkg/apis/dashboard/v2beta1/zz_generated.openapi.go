@@ -3306,7 +3306,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKind(ref 
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Supported dashboard elements |* more element types in the future",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"PanelKind": {
 						SchemaProps: spec.SchemaProps{
@@ -5645,7 +5646,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrV2PanelKindOrLibraryPan
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec. CellKind is listed first so it is the generated default (a notebook is narrative-first).",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"CellKind": {
 						SchemaProps: spec.SchemaProps{
@@ -6532,7 +6534,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookMarkdownCellContentKindOrCodeCell
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Pluggable cell content discriminated by `kind`. New content types are added by extending this union with another <Name>CellContentKind member.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"MarkdownCellContentKind": {
 						SchemaProps: spec.SchemaProps{

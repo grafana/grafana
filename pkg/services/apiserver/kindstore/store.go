@@ -24,7 +24,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
-	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -63,7 +63,7 @@ type Store struct {
 	clusterScoped bool
 
 	// used for admission hooks
-	admission pluginv3.AdmissionServiceClient
+	admission appclientv3.AdmissionClient
 
 	// mutation and validation are the operations the manifest declared each
 	// admission capability for. Nil when the kind declares none.
@@ -96,7 +96,7 @@ var (
 func New(
 	gvk schema.GroupVersionKind,
 	kind app.ManifestVersionKind,
-	admission pluginv3.AdmissionServiceClient,
+	admission appclientv3.AdmissionClient,
 	opts Options,
 	defs map[string]common.OpenAPIDefinition,
 ) (*Store, error) {

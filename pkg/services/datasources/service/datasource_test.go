@@ -10,8 +10,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -379,7 +379,7 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		dsService := initDSService(t)
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			UID:   uuid.New().String(),
+			UID:   uuid.NewV4().String(),
 			ID:    1,
 			OrgID: 1,
 		}
@@ -840,7 +840,7 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		cmd := &datasources.DeleteDataSourceCommand{
-			UID:   uuid.New().String(),
+			UID:   uuid.NewV4().String(),
 			ID:    1,
 			OrgID: 1,
 		}

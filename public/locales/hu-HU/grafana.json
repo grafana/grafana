@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Keresés megszakítva – {{numberOfRules}} szabályt sikerült találni",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Az importálás nem érhető el, amíg a Mimir-riasztáskezelő automatikus szinkronizálása aktív"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Új felhasználói környezet használata",
         "view-previous-experience": "Vissza az előző felhasználói környezethez"
       },
-      "unknown-rule-type": "Ismeretlen szabálytípus"
+      "unknown-rule-type": "Ismeretlen szabálytípus",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Hiba történt a szabályok betöltésekor",
@@ -3193,7 +3198,10 @@
       "view-as": "Nézet mint"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Szűrők törlése"
+      "clear-filters": "Szűrők törlése",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Törlés",
@@ -5674,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Folytatás"
-        },
-        "title": {
-          "proceed-to-external-site": "Tovább a külső webhelyre?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} irányítópult",
       "label-no-dashboards-found": "Nem található irányítópult"
@@ -6747,7 +6745,6 @@
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
       "refresh": "Irányítópult frissítése",
-      "save": "Irányítópult mentése",
       "save-as-template": {
         "label": "Mentés sablonként"
       },
@@ -6762,8 +6759,6 @@
       "save-dashboard-short": "Mentés",
       "save-library-panel": "Könyvtárpanel mentése",
       "save-library-panel-short": "Mentés",
-      "settings": "Irányítópult beállításai",
-      "share-button": "Megosztás",
       "star-add-error": "Nem sikerült hozzáadni a kedvencekhez",
       "star-added": "Hozzáadva a kedvencekhez",
       "star-remove-error": "Nem sikerült eltávolítani a kedvencek közül",
@@ -11524,6 +11519,15 @@
         "open-explore": "Megnyitás az Explore-ban",
         "set-up": "Beállítás"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "Fürt-CPU · a legutóbbi 24 óra",
         "description": "Tekintse meg a fürt állapotát, a költségeket és a megfelelő méretezésből származó megtakarításokat egyetlen nézetben.",
@@ -11531,19 +11535,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11576,6 +11573,22 @@
         "data-points-per-minute": "{{value}} adatpont/perc",
         "description": "Csatlakoztasson Prometheus-kompatibilis metrikákat az infrastruktúra állapotának és trendjeinek áttekintéséhez.",
         "disk-worst": "{{host}} {{percent}}-on",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Lemezhasználat vizsgálata az Explore-ban",
         "series-trend": "Aktív sorozat · a legutóbbi 24 óra",
         "setup-hint": "metrikaforrás csatlakoztatása",
@@ -13298,7 +13311,9 @@
       "copy-markdown": "Másolás Markdownként",
       "download-markdown": "Letöltés .md formátumban",
       "error": "A jegyzetfüzet exportálása nem sikerült",
-      "label": "Exportálás"
+      "label": "Exportálás",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Blokk hozzáadása",
@@ -18186,10 +18201,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Tekintse meg",
-      "description": "Újraterveztük a felületet!",
-      "revert": "Visszalépés",
-      "title": "Új stílusok"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {
