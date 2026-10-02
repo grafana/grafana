@@ -223,7 +223,7 @@ function OTelCategory<T>({
           {!filteredItems.length && (
             <div className={styles.componentWrapper}>
               <Box marginTop={1} paddingLeft={0.5}>
-                <Trans i18nKey="logs.log-line-details.search.no-results">No matching results.</Trans>
+                <Trans i18nKey="logs.log-line-details.search.no-matching-results">No matching results.</Trans>
               </Box>
             </div>
           )}

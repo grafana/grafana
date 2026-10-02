@@ -29,7 +29,7 @@ export const LogLineDetailsLinks = memo(({ fields, log, search }: LogLineDetails
   if (!fields.length) {
     return null;
   } else if (filteredFields.length === 0) {
-    return t('logs.log-line-details.search.no-results', 'No results to display.');
+    return t('logs.log-line-details.search.no-results', 'No matching results.');
   }
 
   return (

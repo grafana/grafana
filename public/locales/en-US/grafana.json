@@ -9130,6 +9130,7 @@
     },
     "span-detail": {
       "attribute-category": {
+        "error": "Error details",
         "other": "Other"
       },
       "exception-message": "Message:",
@@ -12130,7 +12131,8 @@
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
       "search": {
-        "no-results": "No results to display."
+        "no-matching-results": "No matching results.",
+        "no-results": "No matching results."
       },
       "search-placeholder": "Search field names and values",
       "show-context": "Show context",
