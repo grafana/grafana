@@ -620,12 +620,12 @@ export function calculateZoomToFitScale(elements: Element[], container: HTMLDivE
   };
 }
 
-export function extractTranslateFromTransform(transform: string) {
+function extractTranslateFromTransform(transform: string) {
   const matrix = new DOMMatrix(transform);
   return { x: matrix.m41, y: matrix.m42 }; // m41 = translateX, m42 = translateY
 }
 
-export function calculateGroupBoundingBox(elements: Element[]) {
+function calculateGroupBoundingBox(elements: Element[]) {
   let minX = Infinity,
     minY = Infinity;
   let maxX = -Infinity,

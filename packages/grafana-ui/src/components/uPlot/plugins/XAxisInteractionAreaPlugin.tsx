@@ -136,7 +136,7 @@ export const setupXAxisPan = (
   };
 };
 
-export interface XAxisInteractionAreaPluginProps {
+interface XAxisInteractionAreaPluginProps {
   config: UPlotConfigBuilder;
   queryZoom?: (range: { from: number; to: number }) => void;
 }

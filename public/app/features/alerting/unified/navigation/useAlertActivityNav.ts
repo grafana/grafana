@@ -17,7 +17,7 @@ import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
  * Returns the correct navId for alert activity pages based on the alertingNavigationV2 feature toggle.
  * Use this for pages that need to reference the Alert activity navigation.
  */
-export function getAlertActivityNavId(): string {
+function getAlertActivityNavId(): string {
   return config.featureToggles.alertingNavigationV2 ? NAV_IDS.ALERT_ACTIVITY : 'alert-alerts';
 }
 
@@ -40,7 +40,7 @@ function canViewAlerts(): boolean {
  *
  * When V2 navigation is disabled, each page is standalone with its own nav item.
  */
-export function useAlertActivityNav() {
+function useAlertActivityNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
 

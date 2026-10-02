@@ -10,7 +10,7 @@ interface ReorderAutoGridItemsProps {
   toIndex: number;
 }
 
-export function moveToIndex(children: AutoGridItem[], panelKey: string, index: number): AutoGridItem[] {
+function moveToIndex(children: AutoGridItem[], panelKey: string, index: number): AutoGridItem[] {
   const current = children.find((child) => child.state.body.state.key === panelKey);
   if (!current) {
     return children;

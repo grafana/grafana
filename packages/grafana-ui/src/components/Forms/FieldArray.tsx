@@ -3,7 +3,7 @@ import { useFieldArray, type UseFieldArrayProps } from 'react-hook-form';
 
 import { type FieldArrayApi } from '../../types/forms';
 
-export interface FieldArrayProps extends UseFieldArrayProps {
+interface FieldArrayProps extends UseFieldArrayProps {
   children: (api: FieldArrayApi) => JSX.Element;
 }
 

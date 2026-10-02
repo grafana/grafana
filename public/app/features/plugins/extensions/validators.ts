@@ -16,7 +16,7 @@ import { isPluginExtensionLink } from '@grafana/runtime';
 import * as errors from './errors';
 import { type ExtensionsLog } from './logs/log';
 
-export function assertPluginExtensionLink(
+function assertPluginExtensionLink(
   extension: PluginExtension | undefined,
   errorMessage = 'extension is not a link extension'
 ): asserts extension is PluginExtensionLink {
@@ -25,13 +25,13 @@ export function assertPluginExtensionLink(
   }
 }
 
-export function assertIsReactComponent(component: React.ComponentType) {
+function assertIsReactComponent(component: React.ComponentType) {
   if (!isReactComponent(component)) {
     throw new Error(`Invalid component extension, the "component" property needs to be a valid React component.`);
   }
 }
 
-export function assertConfigureIsValid(config: PluginExtensionAddedLinkConfig) {
+function assertConfigureIsValid(config: PluginExtensionAddedLinkConfig) {
   if (!isConfigureFnValid(config.configure)) {
     throw new Error(
       `Invalid extension "${config.title}". The "configure" property must be a function. Skipping the extension.`
@@ -95,11 +95,11 @@ export function isExtensionPointIdValid({
   return true;
 }
 
-export function extensionPointEndsWithVersion(extensionPointId: string) {
+function extensionPointEndsWithVersion(extensionPointId: string) {
   return extensionPointId.match(/.*\/v\d+$/);
 }
 
-export function isGrafanaCoreExtensionPoint(extensionPointId: string) {
+function isGrafanaCoreExtensionPoint(extensionPointId: string) {
   return Object.values(PluginExtensionPoints)
     .map((v) => v.toString())
     .includes(extensionPointId);
@@ -109,7 +109,7 @@ export function isConfigureFnValid(configure?: PluginAddedLinksConfigureFunc<obj
   return configure ? typeof configure === 'function' : true;
 }
 
-export function isStringPropValid(prop: unknown) {
+function isStringPropValid(prop: unknown) {
   return typeof prop === 'string' && prop.length > 0;
 }
 
@@ -119,7 +119,7 @@ export function isPromise(value: unknown): value is Promise<unknown> {
   );
 }
 
-export function isReactComponent(component: unknown): component is React.ComponentType {
+function isReactComponent(component: unknown): component is React.ComponentType {
   const hasReactTypeProp = (obj: unknown): obj is { $$typeof: Symbol } =>
     typeof obj === 'object' && obj !== null && '$$typeof' in obj;
 

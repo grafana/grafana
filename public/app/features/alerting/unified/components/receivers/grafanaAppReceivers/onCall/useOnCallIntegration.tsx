@@ -25,7 +25,7 @@ export enum OnCallIntegrationType {
   ExistingIntegration = 'existing_oncall_integration',
 }
 
-export enum OnCallIntegrationSetting {
+enum OnCallIntegrationSetting {
   IntegrationType = 'integration_type',
   IntegrationName = 'integration_name',
 }

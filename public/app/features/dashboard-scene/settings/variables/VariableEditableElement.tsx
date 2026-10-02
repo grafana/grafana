@@ -389,7 +389,7 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
   );
 }
 
-export function shouldHideControlsMenuOption(variable: SceneVariable): boolean {
+function shouldHideControlsMenuOption(variable: SceneVariable): boolean {
   const set = variable.parent;
   const dashboardVariable = set instanceof SceneVariableSet && set.parent instanceof DashboardScene;
   return !dashboardVariable;

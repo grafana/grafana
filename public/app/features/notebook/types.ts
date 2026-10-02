@@ -30,9 +30,9 @@ import {
 } from '@grafana/schema/apis/notebook/v2beta1';
 
 // Forked by the notebook spec so it can carry the dashboard v2 shape.
-export const defaultPanelKind = defaultV2PanelKind;
+const defaultPanelKind = defaultV2PanelKind;
 export type PanelKind = GeneratedPanelKind;
-export type LibraryPanelKind = GeneratedLibraryPanelKind;
+type LibraryPanelKind = GeneratedLibraryPanelKind;
 
 /**
  * The two NotebookElement kinds that carry a panel. vizPanelToSchemaV2 returns exactly this union,
@@ -52,7 +52,7 @@ export type PanelQueryKind = GeneratedPanelQueryKind;
 export type Spec = GeneratedSpec;
 
 export const defaultCodeCellContentKind = generatedDefaultCodeCellContentKind;
-export const defaultLibraryPanelKind = generatedDefaultLibraryPanelKind;
+const defaultLibraryPanelKind = generatedDefaultLibraryPanelKind;
 export const defaultMarkdownCellContentKind = generatedDefaultMarkdownCellContentKind;
 export const defaultSpec = generatedDefaultSpec;
 

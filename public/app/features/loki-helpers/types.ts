@@ -93,4 +93,4 @@ export interface LokiOptions extends DataSourceJsonData {
   keepCookies?: string[];
 }
 
-export type LokiDatasource = DataSourceApi<LokiQuery, LokiOptions> & DataSourceWithLogsLabelTypesSupport;
+type LokiDatasource = DataSourceApi<LokiQuery, LokiOptions> & DataSourceWithLogsLabelTypesSupport;

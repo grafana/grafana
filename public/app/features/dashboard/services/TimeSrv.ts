@@ -424,7 +424,7 @@ export class TimeSrv {
 
 let singleton: TimeSrv | undefined;
 
-export function setTimeSrv(srv: TimeSrv) {
+function setTimeSrv(srv: TimeSrv) {
   singleton = srv;
 }
 

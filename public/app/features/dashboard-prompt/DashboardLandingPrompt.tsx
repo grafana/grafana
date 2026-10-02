@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { usePluginComponent } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
 
-export const STANDALONE_PROMPT_COMPONENT_ID = 'grafana-assistant-app/standalone-prompt/v1';
+const STANDALONE_PROMPT_COMPONENT_ID = 'grafana-assistant-app/standalone-prompt/v1';
 
 /**
  * keep in sync with grafana-assistant-app `StandaloneAssistantPromptProps`

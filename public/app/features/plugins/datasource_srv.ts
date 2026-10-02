@@ -410,7 +410,7 @@ export class DatasourceSrv implements DataSourceService {
   }
 }
 
-export function getNameOrUid(ref?: string | DataSourceRef | null): string | undefined {
+function getNameOrUid(ref?: string | DataSourceRef | null): string | undefined {
   if (isExpressionReference(ref)) {
     return ExpressionDatasourceRef.uid;
   }

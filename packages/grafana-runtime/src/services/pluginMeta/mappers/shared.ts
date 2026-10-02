@@ -215,7 +215,7 @@ export function isCorePlugin(spec: v0alpha1Spec): boolean {
   return spec.class === 'core';
 }
 
-export function isDecoupledCorePlugin(spec: v0alpha1Spec): boolean {
+function isDecoupledCorePlugin(spec: v0alpha1Spec): boolean {
   return isCorePlugin(spec) && !spec.module?.path?.startsWith('core:');
 }
 

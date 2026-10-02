@@ -46,7 +46,7 @@ const PRUNABLE_ADMIN_SECTIONS: NavId[] = [NavID.cfgGeneral, NavID.cfgPlugins, Na
 const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown];
 
 /** Depth-first search of a nav tree by item id */
-export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | undefined {
+function findNavById(nodes: NavModelItem[], id: string): NavModelItem | undefined {
   for (const node of nodes) {
     if (node.id === id) {
       return node;

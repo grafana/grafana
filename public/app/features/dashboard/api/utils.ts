@@ -64,7 +64,7 @@ export function isV1DashboardCommand(
   return !isDashboardV2Spec(cmd.dashboard);
 }
 
-export function isV1ClassicDashboard(obj: Dashboard | DashboardV2Spec): obj is Dashboard {
+function isV1ClassicDashboard(obj: Dashboard | DashboardV2Spec): obj is Dashboard {
   return !isDashboardV2Spec(obj);
 }
 
@@ -97,9 +97,7 @@ export function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreat
  * @param item - Dashboard resource item
  * @returns The stored version string if conversion failed, undefined otherwise
  */
-export function getFailedVersion(
-  item: Resource<Dashboard | DashboardV2Spec | DashboardDataDTO, Status>
-): string | undefined {
+function getFailedVersion(item: Resource<Dashboard | DashboardV2Spec | DashboardDataDTO, Status>): string | undefined {
   return item.status?.conversion?.failed ? item.status.conversion.storedVersion : undefined;
 }
 

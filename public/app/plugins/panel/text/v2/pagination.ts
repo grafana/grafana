@@ -11,19 +11,19 @@ const PAGINATION_HEIGHT = 38;
 const SMALL_PAGINATION_WIDTH = 750;
 const ESTIMATED_ROW_HEIGHT = 24;
 // clientHeight counts the preview pane's padding as room for blocks.
-export const CONTENT_PADDING = 16;
+const CONTENT_PADDING = 16;
 // Marks the element the row blocks render into, since wrappers sit between it and the box.
 export const BLOCKS_ATTR = 'data-text-blocks';
 
-export function countRows(series: DataFrame[]): number {
+function countRows(series: DataFrame[]): number {
   return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
 }
 
-export function clampPageSize(pageSize: number): number {
+function clampPageSize(pageSize: number): number {
   return Math.max(1, Math.min(Math.floor(pageSize), MAX_RENDERED_ROWS));
 }
 
-export function fitPageSize(available: number, rowHeight: number): number {
+function fitPageSize(available: number, rowHeight: number): number {
   return clampPageSize(Math.floor(available / rowHeight));
 }
 

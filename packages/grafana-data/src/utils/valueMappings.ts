@@ -117,7 +117,7 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
 }
 
 // Ref https://stackoverflow.com/a/58550111
-export function isNumeric(num: unknown) {
+function isNumeric(num: unknown) {
   return (typeof num === 'number' || (typeof num === 'string' && num.trim() !== '')) && !isNaN(num as number);
 }
 

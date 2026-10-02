@@ -5,7 +5,7 @@ import { type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getResponsiveStyle, type ResponsiveProp } from '../Layout/utils/responsiveness';
 
-export interface AvatarProps {
+interface AvatarProps {
   src: string;
   alt: string;
   width?: ResponsiveProp<ThemeSpacingTokens>;

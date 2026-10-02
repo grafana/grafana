@@ -23,7 +23,7 @@ import type TNil from '../../types/TNil';
 import DraggableManager from '../../utils/DraggableManager/DraggableManager';
 import { type DraggableBounds, type DraggingUpdate } from '../../utils/DraggableManager/types';
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   TimelineColumnResizer: css({
     left: 0,
     position: 'absolute',

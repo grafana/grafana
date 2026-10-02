@@ -13,11 +13,11 @@ import { hasDirectTabsChild } from './hasDirectTabsChild';
 import { layoutRegistry } from './layoutRegistry';
 import { changeLayoutTo } from './utils';
 
-export interface Props {
+interface Props {
   layoutManager: DashboardLayoutManager;
 }
 
-export function DashboardLayoutSelector({ layoutManager }: Props) {
+function DashboardLayoutSelector({ layoutManager }: Props) {
   const isGridLayout = layoutManager.descriptor.isGridLayout;
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
   const [newLayout, setNewLayout] = useState<LayoutRegistryItem | undefined>();

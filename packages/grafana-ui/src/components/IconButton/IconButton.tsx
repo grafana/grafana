@@ -27,7 +27,7 @@ interface BaseProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 
   variant?: IconButtonVariant;
 }
 
-export interface BasePropsWithTooltip extends BaseProps {
+interface BasePropsWithTooltip extends BaseProps {
   /** Tooltip content to display on hover and as the aria-label */
   tooltip: PopoverContent;
   /** Position of the tooltip */

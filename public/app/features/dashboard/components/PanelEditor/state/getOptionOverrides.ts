@@ -4,9 +4,9 @@ import { type DataFrame, type FieldConfigPropertyItem, type FieldConfigSource } 
 
 import { type OptionPaneItemOverrideInfo } from '../types';
 
-export const dataOverrideTooltipDescription =
+const dataOverrideTooltipDescription =
   'Some data fields have this option pre-configured. Add a field override rule to override the pre-configured value.';
-export const overrideRuleTooltipDescription = 'An override rule exists for this property';
+const overrideRuleTooltipDescription = 'An override rule exists for this property';
 
 export function getOptionOverrides(
   fieldOption: FieldConfigPropertyItem,

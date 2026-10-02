@@ -7,7 +7,7 @@ import { useStyles2 } from '../../../themes/ThemeContext';
 
 import { RadioButtonDot } from './RadioButtonDot';
 
-export interface RadioButtonListProps<T> {
+interface RadioButtonListProps<T> {
   /** A name of a radio group. Used to group multiple radio inputs into a single group */
   name: string;
   id?: string;

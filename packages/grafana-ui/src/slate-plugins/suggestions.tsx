@@ -343,7 +343,7 @@ const handleTypeahead = async (
   editor.blur().focus();
 };
 
-export function getNumCharsToDelete(
+function getNumCharsToDelete(
   suggestionText: string,
   typeaheadPrefix: string,
   typeaheadText: string,

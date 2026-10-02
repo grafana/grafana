@@ -196,7 +196,7 @@ export async function getConnectedDashboards(uid: string): Promise<DashboardQuer
   return result.view.toArray();
 }
 
-export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
+function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
   const libraryPanelBehavior = getLibraryPanelBehavior(vizPanel);
 
   const { uid, name, _loadedPanel } = libraryPanelBehavior!.state;

@@ -15,7 +15,7 @@ import { alertStateFrameOrder } from './dataFrameUtils';
 import { alertRuleInstancesQuery } from './queries';
 import { useQueryFilter } from './utils';
 
-export function extractInstancesFromData(series: DataFrame[] | undefined) {
+function extractInstancesFromData(series: DataFrame[] | undefined) {
   if (!series) {
     return [];
   }

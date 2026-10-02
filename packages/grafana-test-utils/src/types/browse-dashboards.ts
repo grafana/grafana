@@ -3,7 +3,7 @@
 // @grafana/schema?
 // New package @grafana/core? @grafana/types?
 
-export enum ManagerKind {
+enum ManagerKind {
   Repo = 'repo',
   Terraform = 'terraform',
   Kubectl = 'kubectl',
@@ -14,14 +14,14 @@ type DashboardViewItemKind = 'folder' | 'dashboard' | 'panel';
 
 type DashboardViewItemWithUIItems = DashboardViewItem | UIDashboardViewItem;
 
-export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = DashboardViewItemWithUIItems> {
+interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = DashboardViewItemWithUIItems> {
   item: T;
   level: number;
   isOpen: boolean;
   parentUID?: string;
 }
 
-export interface UIDashboardViewItem {
+interface UIDashboardViewItem {
   kind: 'ui';
   uiKind: 'empty-folder' | 'pagination-placeholder' | 'divider';
   uid: string;
@@ -32,7 +32,7 @@ export interface UIDashboardViewItem {
 /**
  * Type used in the folder view components
  */
-export interface DashboardViewItem {
+interface DashboardViewItem {
   kind: DashboardViewItemKind;
   uid: string;
   title: string;
@@ -59,3 +59,5 @@ export interface DashboardViewItem {
   // Owner references in the search API format: {Group}/{Kind}/{Name}
   ownerReferences?: string[];
 }
+
+export {};

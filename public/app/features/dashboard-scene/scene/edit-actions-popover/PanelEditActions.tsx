@@ -22,7 +22,7 @@ import {
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
 
-export function PanelEditActions({
+function PanelEditActions({
   onClickEdit,
   onClickEditVisualization,
   onClickCopy,

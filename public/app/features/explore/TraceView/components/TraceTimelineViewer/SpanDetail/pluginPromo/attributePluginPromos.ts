@@ -25,7 +25,7 @@ export type AttributePluginPromo = {
 };
 
 /** Cap how many attribute rows can show a promo tip in one span detail view. */
-export const MAX_ATTRIBUTE_PLUGIN_PROMOS = 3;
+const MAX_ATTRIBUTE_PLUGIN_PROMOS = 3;
 
 /**
  * Promos shown on attribute values when the related app plugin is not installed,
@@ -33,7 +33,7 @@ export const MAX_ATTRIBUTE_PLUGIN_PROMOS = 3;
  * Add new entries here as other apps (Knowledge Graph, App O11y, Cloud Provider, etc.) adopt this pattern.
  * Cloud-only: never shown on on-prem OSS or Enterprise (`isOnPrem()`).
  */
-export function getAttributePluginPromos(): AttributePluginPromo[] {
+function getAttributePluginPromos(): AttributePluginPromo[] {
   if (isOnPrem()) {
     return [];
   }
@@ -109,7 +109,7 @@ export function getAttributePluginPromos(): AttributePluginPromo[] {
  * Returns the promo that claimed each key so overlapping matchers (e.g. service.*)
  * keep their assignment instead of collapsing to the first matching promo.
  */
-export function selectAttributeKeysForPromos(
+function selectAttributeKeysForPromos(
   attributeKeys: readonly string[],
   inactivePluginIds: ReadonlySet<string>,
   promos: readonly AttributePluginPromo[],

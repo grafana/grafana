@@ -191,7 +191,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[], gradientFills?: 
   );
 }
 
-export function comparePieChartItemsByValue(sort: SortOrder): (a: FieldDisplay, b: FieldDisplay) => number {
+function comparePieChartItemsByValue(sort: SortOrder): (a: FieldDisplay, b: FieldDisplay) => number {
   return function (a: FieldDisplay, b: FieldDisplay) {
     if (isNaN(a.display.numeric)) {
       return 1;

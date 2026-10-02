@@ -6,7 +6,7 @@ import { pluginImporter } from './importer/pluginImporter';
 
 const preloadPromises = new Map<string, Promise<void>>();
 
-export const clearPreloadedPluginsCache = () => {
+const clearPreloadedPluginsCache = () => {
   preloadPromises.clear();
 };
 

@@ -91,7 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export interface Props {
+interface Props {
   /** Expand or collapse te content */
   isOpen?: boolean;
   /** Element or text for the Collapse header */

@@ -14,7 +14,7 @@ type Spacing = 'none' | 'xs' | 'sm' | 'md' | 'lg';
 type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
 type Align = 'normal' | 'flex-start' | 'flex-end' | 'center';
 
-export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | 'children' | 'wrap'> {
+interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | 'children' | 'wrap'> {
   children: React.ReactNode[] | React.ReactNode;
   orientation?: Orientation;
   spacing?: Spacing;
@@ -36,7 +36,7 @@ interface ContainerProps {
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-deprecated-groups--docs
  */
-export const Layout = ({
+const Layout = ({
   children,
   orientation = Orientation.Horizontal,
   spacing = 'sm',

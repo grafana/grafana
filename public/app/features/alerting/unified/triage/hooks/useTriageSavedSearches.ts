@@ -10,7 +10,7 @@ import { TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID, getTriagePredefinedSearches } from
 
 import { createPredefinedOverridesLoader } from './useTriagePredefinedOverrides';
 
-export const TRIAGE_SAVED_SEARCHES_STORAGE_KEY = 'triageSavedSearches';
+const TRIAGE_SAVED_SEARCHES_STORAGE_KEY = 'triageSavedSearches';
 
 const TRIAGE_CONFIG = {
   storageKey: TRIAGE_SAVED_SEARCHES_STORAGE_KEY,

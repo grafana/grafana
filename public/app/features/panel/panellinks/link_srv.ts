@@ -163,7 +163,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
   ];
 };
 
-export const getDataFrameVars = (dataFrames: DataFrame[]) => {
+const getDataFrameVars = (dataFrames: DataFrame[]) => {
   let numeric: Field | undefined = undefined;
   let title: Field | undefined = undefined;
   const suggestions: VariableSuggestion[] = [];
@@ -281,7 +281,7 @@ export interface LinkService {
   getLinkUrl: (link: DashboardLink) => string;
 }
 
-export class LinkSrv implements LinkService {
+class LinkSrv implements LinkService {
   getLinkUrl(link: DashboardLink) {
     let url = link.url ?? '';
 
@@ -368,7 +368,7 @@ export class LinkSrv implements LinkService {
 
 let singleton: LinkService | undefined;
 
-export function setLinkSrv(srv: LinkService) {
+function setLinkSrv(srv: LinkService) {
   singleton = srv;
 }
 

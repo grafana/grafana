@@ -26,7 +26,7 @@ import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
 // this one will be used as the refID when we create a new reducer for the threshold expression
-export const NEW_REDUCER_REF = 'reducer';
+const NEW_REDUCER_REF = 'reducer';
 
 export interface QueriesAndExpressionsState {
   queries: AlertQuery[];

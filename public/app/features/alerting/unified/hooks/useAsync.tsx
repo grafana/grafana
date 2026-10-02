@@ -17,7 +17,7 @@ export type AsyncStateWithError<Result> = {
   result: Result;
 };
 
-export type AsyncStateFulfilled<Result> = {
+type AsyncStateFulfilled<Result> = {
   status: 'success';
   error: undefined;
   result: Result;
@@ -191,7 +191,7 @@ export function anyOfRequestState(...states: Array<AsyncState<unknown>>) {
 /**
  * This is only used for testing and serializing the async state
  */
-export function SerializeState<T>({ state }: { state: AsyncState<T> }) {
+function SerializeState<T>({ state }: { state: AsyncState<T> }) {
   return (
     <>
       {isUninitialized(state) && 'uninitialized'}

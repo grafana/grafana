@@ -35,7 +35,7 @@ export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filters: His
   return useMemo(() => ruleHistoryToRecords(stateHistory, filters), [filters, stateHistory]);
 }
 
-export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters: HistoryRecordFilters = emptyFilters) {
+function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters: HistoryRecordFilters = emptyFilters) {
   const { labels, stateFrom = StateFilterValues.all, stateTo = StateFilterValues.all } = filters;
 
   const allLogRecords = historyDataFrameToLogRecords(stateHistory);

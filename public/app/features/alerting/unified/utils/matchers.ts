@@ -75,7 +75,7 @@ export function parseMatcherToArray(matcher: string): Matcher[] {
 /**
  * This function turns a PromQL-style matchers like { foo="bar", bar!=baz } in to an array of Matchers
  */
-export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
+function parsePromQLStyleMatcher(matcher: string): Matcher[] {
   if (!isPromQLStyleMatcher(matcher)) {
     throw new Error('not a PromQL style matcher');
   }
@@ -189,7 +189,7 @@ const RESERVED_CHARACTERS = /[\{\}\!\=\~\,\\\"\'\`\s]+/;
 /**
  * Quotes string only when reserved characters are used
  */
-export function quoteWithEscapeIfRequired(input: string) {
+function quoteWithEscapeIfRequired(input: string) {
   const shouldQuote = RESERVED_CHARACTERS.test(input);
   return shouldQuote ? quoteWithEscape(input) : input;
 }

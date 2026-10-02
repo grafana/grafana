@@ -132,7 +132,7 @@ function getHasTimeChanged(newRange: DefaultPersistedTimeValue = {}, previousRan
   return newRange.from !== previousRange.from || newRange.to !== previousRange.to;
 }
 
-export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], filtersB?: AdHocFilterWithLabels[]) {
+function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], filtersB?: AdHocFilterWithLabels[]) {
   const a = filtersA ?? [];
   const b = filtersB ?? [];
 

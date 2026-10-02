@@ -47,7 +47,7 @@ export function stripExportMetadata(dashboard: Dashboard): Dashboard {
 }
 
 /** Maps datasource type (e.g. "prometheus", "loki") to user-selected datasource from the import form */
-export type DatasourceMappings = Record<string, { uid: string; type: string; name?: string }>;
+type DatasourceMappings = Record<string, { uid: string; type: string; name?: string }>;
 
 /**
  * Detect the dashboard format from input.
@@ -569,7 +569,7 @@ export function applyV2Inputs(dashboard: DashboardV2Spec, form: ImportFormDataV2
   return replaceDatasourcesInDashboard({ ...dashboard, variables, layout }, mappings);
 }
 
-export function isVariableRef(dsName: string | undefined): boolean {
+function isVariableRef(dsName: string | undefined): boolean {
   return dsName?.startsWith('$') ?? false;
 }
 
@@ -673,10 +673,7 @@ function resolveDatasourceVariableMapping(
   return undefined;
 }
 
-export function replaceDatasourcesInDashboard(
-  dashboard: DashboardV2Spec,
-  mappings: DatasourceMappings
-): DashboardV2Spec {
+function replaceDatasourcesInDashboard(dashboard: DashboardV2Spec, mappings: DatasourceMappings): DashboardV2Spec {
   const dsVarExportLabels = collectDatasourceVariableExportLabels(dashboard);
 
   return {

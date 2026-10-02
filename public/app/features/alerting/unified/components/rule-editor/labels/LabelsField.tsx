@@ -212,11 +212,11 @@ function useCombinedLabels(
   We only will suggest labels from ops if the grafana-labels-app plugin is installed
   This component is only used by the alert rule form.
   */
-export interface LabelsWithSuggestionsProps {
+interface LabelsWithSuggestionsProps {
   dataSourceName: string;
 }
 
-export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsProps) {
+function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsProps) {
   const styles = useStyles2(getStyles);
   const {
     control,

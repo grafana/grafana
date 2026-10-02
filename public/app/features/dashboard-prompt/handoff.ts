@@ -54,7 +54,7 @@ export function startPlanningInAssistant(args: StartPlanningArgs): void {
  * plan-first flow. It carries the user's request and datasource scope
  * from the landing prompt.
  */
-export function buildPlanningInstructions(args: StartPlanningArgs): string {
+function buildPlanningInstructions(args: StartPlanningArgs): string {
   // Only a complete list can back a "no others exist" claim. Once truncated,
   // that claim would hide real, queryable datasources from the assistant
   // instead of just trimming the prompt, so point it at list_datasources for

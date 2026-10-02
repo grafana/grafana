@@ -689,7 +689,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   );
 }
 
-export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
+const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
   const dateStr = dateTimeFormat(startTime / 1000, { timeZone, defaultWithMS: true });
   const match = dateStr.split(' ');
   const absoluteTime = match[1] ? match[1] : dateStr;

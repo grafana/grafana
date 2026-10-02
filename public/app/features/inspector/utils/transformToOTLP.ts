@@ -92,7 +92,7 @@ type OTLPSpanKind = collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind;
  * mirrors the real thing. `transformToOTLP.test.ts` asserts it against the enum instead —
  * the test may import the value because tests are not part of the app bundle.
  */
-export const SpanKind = {
+const SpanKind = {
   SPAN_KIND_UNSPECIFIED: 0,
   SPAN_KIND_INTERNAL: 1,
   SPAN_KIND_SERVER: 2,

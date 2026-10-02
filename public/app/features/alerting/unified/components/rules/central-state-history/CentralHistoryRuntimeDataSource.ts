@@ -95,7 +95,7 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
  * @param matchers optional PromQL selector string for backend filtering, e.g. `{severity=~"crit.*",env!="dev"}`
  * @returns the history events filtered by time and labels
  */
-export const getHistory = (timeRange: RawTimeRange, matchers?: string, current?: string, previous?: string) => {
+const getHistory = (timeRange: RawTimeRange, matchers?: string, current?: string, previous?: string) => {
   return dispatch(
     stateHistoryApi.endpoints.getRuleHistory.initiate(
       {

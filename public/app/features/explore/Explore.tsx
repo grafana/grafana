@@ -117,7 +117,7 @@ interface ExploreState {
   contentOutlineVisible: boolean;
 }
 
-export type Props = ExploreProps & ConnectedProps<typeof connector>;
+type Props = ExploreProps & ConnectedProps<typeof connector>;
 
 /**
  * Explore provides an area for quick query iteration for a given datasource.
@@ -144,7 +144,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 
-export class Explore extends PureComponent<Props, ExploreState> {
+class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;

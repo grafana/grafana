@@ -40,7 +40,7 @@ const getTransformation = (info: TransformerRegistryItem): Promise<DataTransform
  * Test-only: clears the in-flight/resolved transformation promise cache so
  * tests can start from a known state. Not exported from the package index.
  */
-export const __resetTransformationCacheForTests = () => {
+const __resetTransformationCacheForTests = () => {
   transformationPromises.clear();
 };
 

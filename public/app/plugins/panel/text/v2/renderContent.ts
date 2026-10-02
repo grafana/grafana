@@ -20,7 +20,7 @@ import { isTextNewFeaturesEnabled, transformContent } from './utils';
 export const MAX_RENDERED_ROWS = 1000;
 
 /** Render cost follows output size, not row count, and markdown-it degrades superlinearly. */
-export const MAX_RENDERED_CHARS = 100_000;
+const MAX_RENDERED_CHARS = 100_000;
 
 /** How far back from the cap a line break is still worth cutting on. */
 const CUT_BACKTRACK_CHARS = 1000;

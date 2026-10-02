@@ -33,7 +33,7 @@ export type CrossDashboardVariablesDashboard = DashboardSceneLike &
     managedResourceCannotBeEdited: () => boolean;
   };
 
-export function updateDashboardScopeVariable(
+function updateDashboardScopeVariable(
   dashboard: CrossDashboardVariablesDashboard,
   scope: PredefinedVariableScope,
   name: string,
@@ -51,7 +51,7 @@ export function updateDashboardScopeVariable(
   DashboardInteractions.predefinedVariableToggled({ scope, checked });
 }
 
-export function updateDashboardScopeAll(
+function updateDashboardScopeAll(
   dashboard: CrossDashboardVariablesDashboard,
   scope: PredefinedVariableScope,
   checked: boolean

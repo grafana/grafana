@@ -46,7 +46,7 @@ export function getCenterPoint(geo: Geometry): number[] {
   return getCenter(geo.getExtent());
 }
 
-export function getCenterPointWGS84(geo?: Geometry): number[] | undefined {
+function getCenterPointWGS84(geo?: Geometry): number[] | undefined {
   if (!geo) {
     return undefined;
   }

@@ -76,7 +76,7 @@ export function initSystemJSHooks() {
 // Compiled System.register setters expose named imports as namespace property reads.
 // Wraps the setters for monitored dependencies in a Proxy to report when a plugin
 // accesses a shared dependency import.
-export async function decorateSystemJSInstantiate(
+async function decorateSystemJSInstantiate(
   this: SystemJSWithLoaderHooks,
   originalInstantiate: SystemJSWithLoaderHooks['instantiate'],
   url: string,
@@ -150,7 +150,7 @@ function reportSharedDependencyImport(pluginId: string, dependencyName: string, 
   });
 }
 
-export async function decorateSystemJSFetch(
+async function decorateSystemJSFetch(
   systemJSFetch: SystemJSWithLoaderHooks['fetch'],
   url: string,
   options?: Record<string, unknown>
@@ -173,7 +173,7 @@ export async function decorateSystemJSFetch(
   return res;
 }
 
-export function decorateSystemJSResolve(
+function decorateSystemJSResolve(
   this: SystemJSWithLoaderHooks,
   originalResolve: SystemJSWithLoaderHooks['resolve'],
   id: string,
@@ -230,7 +230,7 @@ function getBackWardsCompatibleUrl(url: string) {
 // This function takes the path used in loadPluginCss and attempts to resolve it
 // by checking the SystemJS entries for a matching pluginId then using that entry to find the baseUrl.
 // If no match is found then it returns a fallback attempt at a relative path.
-export function getLoadPluginCssUrl(id: string) {
+function getLoadPluginCssUrl(id: string) {
   const pluginId = id.split('/')[1];
   let url = '';
   for (const [moduleId] of SystemJS.entries()) {

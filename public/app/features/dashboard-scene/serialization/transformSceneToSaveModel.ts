@@ -357,7 +357,7 @@ function vizPanelDataToPanel(
   return panel;
 }
 
-export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = false): Panel[] {
+function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = false): Panel[] {
   if (!isSnapshot) {
     return [gridItemToPanel(repeater)];
   } else {
@@ -410,7 +410,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
   }
 }
 
-export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Panel | RowPanel>, isSnapshot = false) {
+function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Panel | RowPanel>, isSnapshot = false) {
   const collapsed = Boolean(gridRow.state.isCollapsed);
   const rowPanel: RowPanel = {
     type: 'row',
@@ -494,7 +494,7 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
  * @param currentY - The current absolute Y position in the dashboard
  * @returns The next Y position after this row's content
  */
-export function rowItemToSaveModel(
+function rowItemToSaveModel(
   row: RowItem,
   panelsArray: Array<Panel | RowPanel>,
   isSnapshot = false,

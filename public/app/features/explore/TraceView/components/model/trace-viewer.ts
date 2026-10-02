@@ -50,7 +50,7 @@ export function getRootSpan(spans: TraceSpan[]): TraceSpan | undefined {
   return candidateSpan;
 }
 
-export function _getTraceNameImpl(spans: TraceSpan[]) {
+function _getTraceNameImpl(spans: TraceSpan[]) {
   const candidateSpan = getRootSpan(spans);
   return candidateSpan ? `${getServiceDisplayName(candidateSpan.process)}: ${candidateSpan.operationName}` : '';
 }
@@ -69,7 +69,7 @@ export const getTraceName = memoize(_getTraceNameImpl, (spans: TraceSpan[]) => {
 // Note that we are ignoring these cases:
 // - conventions are mixed, e.g., a span with method in `http.method` but status code in `http.response.status_code`
 // - tags are not in the same span, e.g., method in spans[0] but status in spans[1]
-export function findHeaderTags(spans: TraceSpan[]) {
+function findHeaderTags(spans: TraceSpan[]) {
   // OTEL semantic convention
   for (let i = 0; i < spans.length; i++) {
     const method = spans[i].tags.filter((tag) => {

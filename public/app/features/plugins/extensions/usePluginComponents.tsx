@@ -61,7 +61,7 @@ export function usePluginComponents<Props extends object = {}>({
   }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, isLoadingAppPlugins]);
 }
 
-export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
+function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
   registryItem: AddedComponentRegistryItem<Props>,
   extensionPointId: string
 ): ComponentTypeWithExtensionMeta<Props> {

@@ -231,7 +231,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
  * @param idField - Field name to use for matching feature IDs
  * @param idToIdx - Map to store ID to row index mappings
  */
-export function updateFeaturePropertiesForTooltip(
+function updateFeaturePropertiesForTooltip(
   source: VectorSource,
   frame: DataFrame | undefined,
   idField: string | undefined,

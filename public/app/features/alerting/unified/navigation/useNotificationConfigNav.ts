@@ -23,7 +23,7 @@ import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
  * Returns the correct navId for notification configuration pages based on the alertingNavigationV2 feature toggle.
  * Use this for pages that need to reference the Notification configuration navigation.
  */
-export function getNotificationConfigNavId(): string {
+function getNotificationConfigNavId(): string {
   return config.featureToggles.alertingNavigationV2 ? NAV_IDS.NOTIFICATION_CONFIG : NAV_IDS.RECEIVERS;
 }
 
@@ -38,7 +38,7 @@ function isSubPathOf(child: string, parent: string): boolean {
  * is under /alerting/routes). A naive startsWith would activate both tabs.
  * This function ensures only the most specific matching tab is active.
  */
-export function isTabActive(currentLocation: string, tabPath: string): boolean {
+function isTabActive(currentLocation: string, tabPath: string): boolean {
   if (currentLocation !== tabPath && !currentLocation.startsWith(tabPath + '/')) {
     return false;
   }
@@ -56,7 +56,7 @@ export function isTabActive(currentLocation: string, tabPath: string): boolean {
  *
  * When V2 navigation is disabled, each page is standalone with its own nav item.
  */
-export function useNotificationConfigNav() {
+function useNotificationConfigNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
 

@@ -62,10 +62,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
   return recentDashboardActions;
 }
 
-export async function getSearchResultActions(
-  searchQuery: string,
-  useHybridSearch = false
-): Promise<CommandPaletteAction[]> {
+async function getSearchResultActions(searchQuery: string, useHybridSearch = false): Promise<CommandPaletteAction[]> {
   // Empty strings should not come through to here
   if (searchQuery.length === 0 || (!contextSrv.user.isSignedIn && !config.anonymousEnabled)) {
     return [];

@@ -35,7 +35,7 @@ export const initialOptionPickerState: OptionsPickerState = {
   multi: false,
 };
 
-export const OPTIONS_LIMIT = 1000;
+const OPTIONS_LIMIT = 1000;
 
 const ufuzzy = new uFuzzy({
   intraMode: 1,

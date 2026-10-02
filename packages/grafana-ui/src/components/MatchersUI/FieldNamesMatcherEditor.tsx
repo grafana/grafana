@@ -9,7 +9,7 @@ import { MultiSelect } from '../Select/Select';
 import { type MatcherUIProps, type FieldMatcherUIRegistryItem } from './types';
 import { useFieldDisplayNames, useMatcherSelectOptions, frameHasName } from './utils';
 
-export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
+const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
   const { id, data, options, onChange: onChangeFromProps, scope } = props;
   const { readOnly, prefix } = options;
   const names = useFieldDisplayNames(data, undefined, scope);

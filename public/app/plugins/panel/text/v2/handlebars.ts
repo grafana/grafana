@@ -24,7 +24,7 @@ export interface AllRowsContext {
   frames: TemplateFrame[];
 }
 
-export type TemplateContext = TemplateRow | AllRowsContext;
+type TemplateContext = TemplateRow | AllRowsContext;
 
 /** Throws when the template fails to render; callers surface the error. */
 export type CompiledTemplate = (context: TemplateContext) => string;

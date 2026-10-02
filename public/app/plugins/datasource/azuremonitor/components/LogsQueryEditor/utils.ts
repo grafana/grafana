@@ -25,7 +25,7 @@ export function getSelectedLogTier(query: AzureMonitorQuery): SelectedLogTier {
   return query.azureLogAnalytics.logTier ?? 'Basic';
 }
 
-export function calculateTimeRange(from: number, to: number): number {
+function calculateTimeRange(from: number, to: number): number {
   const second = 1000;
   const minute = second * 60;
   const hour = minute * 60;

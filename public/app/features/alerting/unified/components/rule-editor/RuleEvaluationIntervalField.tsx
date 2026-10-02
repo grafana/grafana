@@ -9,7 +9,7 @@ import { type RuleFormValues } from '../../types/rule-form';
 
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 
-export const EVALUATION_INTERVAL_FIELD_TEST_ID = 'evaluation-interval';
+const EVALUATION_INTERVAL_FIELD_TEST_ID = 'evaluation-interval';
 
 interface RuleEvaluationIntervalFieldProps {
   // Override the input's DOM id when an e2e selector or external label targets it

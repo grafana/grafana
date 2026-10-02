@@ -17,7 +17,7 @@ import { config, locationService, reportInteraction, usePluginLinks } from '@gra
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
-export const RelatedProfilesTitle = 'Related profiles';
+const RelatedProfilesTitle = 'Related profiles';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { type SpanLinkDef, type SpanLinkFunc, type SpanLinkModel, SpanLinkType } from '../../types/links';
@@ -26,7 +26,7 @@ import { type TraceSpan } from '../../types/trace';
 import { getLogsButtonCTA, LogsLinkButton, LogsLinkMenuItem } from './LogsLink';
 import { ShareSpanButton } from './ShareSpanButton';
 
-export type ProfilesButtonContext = {
+type ProfilesButtonContext = {
   serviceName: string;
   profileTypeId: string;
   spanSelector: string[];
@@ -256,7 +256,7 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
   );
 };
 
-export const getProfileLinkButtonsContext = (
+const getProfileLinkButtonsContext = (
   span: TraceSpan,
   traceToProfilesOptions: TraceToProfilesOptions | undefined,
   timeRange: TimeRange

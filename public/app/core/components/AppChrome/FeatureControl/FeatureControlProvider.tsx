@@ -26,7 +26,7 @@ export type FeatureControlContextType = {
   overrides: Flag[];
 };
 
-export const FeatureControlContext = createContext<FeatureControlContextType>({
+const FeatureControlContext = createContext<FeatureControlContextType>({
   isAccessible: false,
   setIsAccessible: () => {},
   isOpen: false,

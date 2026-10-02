@@ -71,7 +71,7 @@ export type ViewProps = {
   favoriteDataSources?: FavoriteDatasources;
 };
 
-export function DataSourcesListView({
+function DataSourcesListView({
   dataSources: allDataSources,
   dataSourcesCount,
   isLoading,

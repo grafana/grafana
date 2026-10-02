@@ -24,7 +24,7 @@ export function SettingsActionButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export const SHOW_COPIED_DURATION_MS = 2000;
+const SHOW_COPIED_DURATION_MS = 2000;
 
 export function CopyActionButton({ onClick, isRepeated }: { onClick: () => void; isRepeated?: boolean }) {
   const styles = useStyles2(getActionStyles);

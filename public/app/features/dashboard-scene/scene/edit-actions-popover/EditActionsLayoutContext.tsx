@@ -14,7 +14,7 @@ const EditActionsLayoutContext = createContext<EditActionsLayout>(defaultLayout)
 
 export const useEditActionsLayout = () => useContext(EditActionsLayoutContext);
 
-export function measureSidebarShiftPadding(
+function measureSidebarShiftPadding(
   container: HTMLElement | null | undefined,
   sidebar: HTMLElement | null | undefined
 ) {

@@ -8,7 +8,7 @@ import { FeatureBadge } from '../FeatureBadge/FeatureBadge';
 
 import { InfoBox, type InfoBoxProps } from './InfoBox';
 
-export interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'title' | 'urlTitle'> {
+interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'title' | 'urlTitle'> {
   title: string;
   featureState?: FeatureState;
 }

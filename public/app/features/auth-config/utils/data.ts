@@ -5,7 +5,7 @@ import { type FieldData, type SSOProvider, type SSOProviderDTO } from '../types'
 
 import { isSelectableValueArray } from './guards';
 
-export const emptySettings: SSOProviderDTO = {
+const emptySettings: SSOProviderDTO = {
   allowAssignGrafanaAdmin: false,
   allowSignUp: false,
   allowedDomains: [],

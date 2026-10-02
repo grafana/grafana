@@ -53,7 +53,7 @@ export const canTestEntity = (k8sEntity: EntityToCheck) =>
  * Escape \ and = characters for field selectors.
  * The Kubernetes API Machinery will decode those automatically.
  */
-export const encodeFieldSelector = (value: string): string => {
+const encodeFieldSelector = (value: string): string => {
   return value.replaceAll(/\\/g, '\\\\').replaceAll(/\=/g, '\\=').replaceAll(/,/g, '\\,');
 };
 

@@ -20,11 +20,11 @@ const queryParamsToPreserve: { [key: string]: boolean } = {
   '_dash.hidePlaylistNav': true,
 };
 
-export interface PlaylistSrvState {
+interface PlaylistSrvState {
   isPlaying: boolean;
 }
 
-export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
+class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private nextTimeoutId: ReturnType<typeof setTimeout> | undefined;
   private urls: string[] = []; // the URLs we need to load
   private index = 0;

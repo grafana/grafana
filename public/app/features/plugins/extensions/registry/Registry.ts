@@ -14,7 +14,7 @@ import { type AppPluginConfig, type PluginMeta } from '@grafana/data';
 import { deepFreeze } from '../deepFreeze';
 import { type ExtensionsLog, log } from '../logs/log';
 
-export const MSG_CANNOT_REGISTER_READ_ONLY = 'Cannot register to a read-only registry';
+const MSG_CANNOT_REGISTER_READ_ONLY = 'Cannot register to a read-only registry';
 
 export type PluginExtensionConfigs<T> = {
   pluginId: string;

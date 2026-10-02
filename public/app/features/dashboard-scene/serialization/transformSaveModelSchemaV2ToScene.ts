@@ -684,11 +684,11 @@ function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
   return snapshotVariable;
 }
 
-export function getPanelElement(dashboard: DashboardV2Spec, elementName: string): PanelKind | undefined {
+function getPanelElement(dashboard: DashboardV2Spec, elementName: string): PanelKind | undefined {
   return dashboard.elements[elementName].kind === 'Panel' ? dashboard.elements[elementName] : undefined;
 }
 
-export function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
+function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
   return dashboard.elements[elementName].kind === 'LibraryPanel' ? dashboard.elements[elementName] : undefined;
 }
 

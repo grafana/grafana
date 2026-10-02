@@ -12,7 +12,7 @@ import { type ValueMatcherEditorConfig, type ValueMatcherUIProps, type ValueMatc
 
 type PropNames = 'from' | 'to';
 
-export function rangeMatcherEditor<T = string | number>(
+function rangeMatcherEditor<T = string | number>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<RangeValueMatcherOptions<T>>> {
   return function RangeMatcherEditor({ options, onChange }) {

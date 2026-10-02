@@ -3,7 +3,7 @@ import OSM from 'ol/source/OSM';
 
 import { type MapLayerRegistryItem } from '@grafana/data';
 
-export const standard: MapLayerRegistryItem = {
+const standard: MapLayerRegistryItem = {
   id: 'osm-standard',
   name: 'OpenStreetMap',
   description: 'Add map from a collaborative free geographic world database',

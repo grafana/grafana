@@ -42,7 +42,7 @@ export function normalizeTransformation(t: WireTransformation): TransformationKi
  * When the backend serves v2beta1, we convert back to { kind: <id>, spec: { id: <id>, ... } }.
  * When the backend serves v2, we pass through as-is.
  */
-export function toWireTransformation(
+function toWireTransformation(
   t: TransformationKind,
   version?: DashboardV2Version
 ): TransformationKind | V2Beta1TransformationKind {

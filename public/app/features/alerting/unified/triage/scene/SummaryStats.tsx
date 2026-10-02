@@ -7,7 +7,7 @@ import { normalizeFrame } from './dataTransform';
 
 type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
 
-export function countRules(ruleFrame: DataFrame) {
+function countRules(ruleFrame: DataFrame) {
   const ruleUIDField = ruleFrame.fields.find((f) => f.name === FIELD_NAMES.grafanaRuleUID);
   const alertstateField = ruleFrame.fields.find((f) => f.name === FIELD_NAMES.alertstate);
 

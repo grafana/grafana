@@ -1,8 +1,8 @@
 import { roundDecimals } from '@grafana/data';
 
 export const SPACE_BETWEEN = 1;
-export const SPACE_AROUND = 2;
-export const SPACE_EVENLY = 3;
+const SPACE_AROUND = 2;
+const SPACE_EVENLY = 3;
 
 const coord = (i: number, offs: number, iwid: number, gap: number) => roundDecimals(offs + i * (iwid + gap), 6);
 

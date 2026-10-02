@@ -10,7 +10,7 @@ import { Subscription } from 'rxjs';
 
 import { type MapLayerRegistryItem, type PanelData } from '@grafana/data';
 
-export enum ShowTime {
+enum ShowTime {
   From = 'from',
   To = 'to',
 }

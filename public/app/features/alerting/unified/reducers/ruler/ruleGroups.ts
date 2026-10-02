@@ -121,7 +121,7 @@ export type SwapOperation = [number, number];
  * ⚠️ This function mutates the input array
  * reorder several items in a list, given a set of swap
  */
-export function reorder<T>(items: T[], swaps: Array<[number, number]>) {
+function reorder<T>(items: T[], swaps: Array<[number, number]>) {
   for (const swap of swaps) {
     swapItems(items, swap);
   }

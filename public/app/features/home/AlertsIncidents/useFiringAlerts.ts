@@ -78,7 +78,7 @@ function resolveTeamMatchers(selectedTeam: TeamSelection, userTeamNames: string[
 }
 
 // Exported so the homepage skeleton reserves the card slot using the same gate.
-export const canViewFiringAlerts = () => contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
+const canViewFiringAlerts = () => contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
 
 export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 

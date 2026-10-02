@@ -16,7 +16,7 @@ type MultiSelectProps = Omit<ComponentProps<typeof MultiCombobox<string>>, 'opti
   onChange: (trees: RoutingTree[]) => void;
 };
 
-export type RoutingTreeSelectorProps = SingleSelectProps | MultiSelectProps;
+type RoutingTreeSelectorProps = SingleSelectProps | MultiSelectProps;
 
 /**
  * Routing Tree Combobox which lists all available notification policy trees.

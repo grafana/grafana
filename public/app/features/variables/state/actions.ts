@@ -80,7 +80,7 @@ import {
 import { type KeyedVariableIdentifier } from './types';
 import { cleanVariables } from './variablesReducer';
 
-export const initDashboardTemplating = (key: string, dashboard: DashboardModel): ThunkResult<void> => {
+const initDashboardTemplating = (key: string, dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
     let orderIndex = 0;
     const list = dashboard.templating.list;
@@ -105,7 +105,7 @@ export const initDashboardTemplating = (key: string, dashboard: DashboardModel):
   };
 };
 
-export function fixSelectedInconsistency(model: TypedVariableModel): TypedVariableModel | VariableWithOptions {
+function fixSelectedInconsistency(model: TypedVariableModel): TypedVariableModel | VariableWithOptions {
   if (!hasOptions(model)) {
     return model;
   }
@@ -216,7 +216,7 @@ const addSystemTemplateVariables = (key: string, dashboard: DashboardModel): Thu
   };
 };
 
-export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, multi: boolean): ThunkResult<void> => {
+const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, multi: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { rootStateKey: key } = identifier;
     const variable = getVariable(identifier, getState());
@@ -315,10 +315,7 @@ const isWaitingForDependencies = (key: string, dependencies: TypedVariableModel[
   return notCompletedDependencies.length > 0;
 };
 
-export const processVariable = (
-  identifier: KeyedVariableIdentifier,
-  queryParams: UrlQueryMap
-): ThunkResult<Promise<void>> => {
+const processVariable = (identifier: KeyedVariableIdentifier, queryParams: UrlQueryMap): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
     await processVariableDependencies(variable, getState());
@@ -351,7 +348,7 @@ export const processVariable = (
   };
 };
 
-export const processVariables = (key: string): ThunkResult<Promise<void>> => {
+const processVariables = (key: string): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const queryParams = locationService.getSearchObject();
     const promises = getVariablesByKey(key, getState()).map(
@@ -534,7 +531,7 @@ export const setOptionAsCurrent = (
   };
 };
 
-export const createGraph = (variables: TypedVariableModel[]) => {
+const createGraph = (variables: TypedVariableModel[]) => {
   const g = new Graph();
 
   variables.forEach((v) => {
@@ -691,7 +688,7 @@ const timeRangeUpdated =
     }
   };
 
-export const templateVarsChangedInUrl =
+const templateVarsChangedInUrl =
   (key: string, vars: ExtendedUrlQueryMap, events: typeof appEvents = appEvents): ThunkResult<void> =>
   async (dispatch, getState) => {
     const update: Array<Promise<void>> = [];
@@ -754,7 +751,7 @@ export const templateVarsChangedInUrl =
     }
   };
 
-export function isVariableUrlValueDifferentFromCurrent(variable: TypedVariableModel, urlValue: unknown): boolean {
+function isVariableUrlValueDifferentFromCurrent(variable: TypedVariableModel, urlValue: unknown): boolean {
   const variableValue = variableAdapters.get(variable.type).getValueForUrl(variable);
   let stringUrlValue = ensureStringValues(urlValue);
   if (Array.isArray(variableValue) && !Array.isArray(stringUrlValue)) {
@@ -819,10 +816,7 @@ export const initVariablesTransaction =
     }
   };
 
-export function migrateVariablesDatasourceNameToRef(
-  key: string,
-  getDatasourceSrvFunc = getDatasourceSrv
-): ThunkResult<void> {
+function migrateVariablesDatasourceNameToRef(key: string, getDatasourceSrvFunc = getDatasourceSrv): ThunkResult<void> {
   return (dispatch, getState) => {
     const variables = getVariablesByKey(key, getState());
     for (const variable of variables) {
@@ -859,14 +853,14 @@ export const cleanUpVariables =
   };
 
 type CancelVariablesDependencies = { getBackendSrv: typeof getBackendSrv };
-export const cancelVariables =
+const cancelVariables =
   (key: string, dependencies: CancelVariablesDependencies = { getBackendSrv: getBackendSrv }): ThunkResult<void> =>
   (dispatch) => {
     dependencies.getBackendSrv().cancelAllInFlightRequests();
     dispatch(cleanUpVariables(key));
   };
 
-export const updateOptions =
+const updateOptions =
   (identifier: KeyedVariableIdentifier, rethrow = false): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     const { rootStateKey } = identifier;
@@ -921,7 +915,7 @@ const completeVariableLoading =
     }
   };
 
-export function upgradeLegacyQueries(
+function upgradeLegacyQueries(
   identifier: KeyedVariableIdentifier,
   getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
 ): ThunkResult<void> {

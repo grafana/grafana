@@ -8,7 +8,7 @@ interface IntegrationNameObject {
   type: string;
   index?: string;
 }
-export const parseIntegrationName = (integrationName: string): IntegrationNameObject => {
+const parseIntegrationName = (integrationName: string): IntegrationNameObject => {
   const matches = integrationName.match(/^(\w+)(\[\d+\])?$/);
   if (!matches) {
     return { type: integrationName, index: undefined };
@@ -54,5 +54,4 @@ export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDT
   return { ...contactPointsState, errorCount: errorsCount };
 };
 
-export const getIntegrationType = (integrationName: string): string | undefined =>
-  parseIntegrationName(integrationName)?.type;
+const getIntegrationType = (integrationName: string): string | undefined => parseIntegrationName(integrationName)?.type;

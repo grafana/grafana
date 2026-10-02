@@ -115,7 +115,7 @@ function groupDataByMode(panel: VizPanel, data: PanelData, mode: string, theme: 
   return groupDataFramesByLabel(data, label);
 }
 
-export function groupDataFramesByLabel(data: PanelData, label: string): SplitGroup[] {
+function groupDataFramesByLabel(data: PanelData, label: string): SplitGroup[] {
   const groups: Record<string, DataFrame[]> = {};
 
   for (const frame of data.series) {

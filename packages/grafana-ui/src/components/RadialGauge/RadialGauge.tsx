@@ -25,7 +25,7 @@ import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { type RadialShape, type RadialTextMode } from './types';
 import { calculateDimensions, getValueAngleForValue, getFormattedThresholds } from './utils';
 
-export interface RadialGaugeProps {
+interface RadialGaugeProps {
   values: FieldDisplay[];
   width: number;
   height: number;

@@ -519,7 +519,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
  * @param folders - The folder structure to traverse
  * @returns Filtered items without subScopes that would create infinite loops
  */
-export function filterItemsWithSubScopesInPath(
+function filterItemsWithSubScopesInPath(
   items: Array<ScopeDashboardBinding | ScopeNavigation>,
   path: string[],
   currentSubScope: string,

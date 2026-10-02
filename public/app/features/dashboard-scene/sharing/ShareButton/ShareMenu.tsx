@@ -36,7 +36,7 @@ export function addDashboardShareDrawerItem(item: ShareDrawerMenuItem) {
   customShareDrawerItems.push(item);
 }
 
-export function resetDashboardShareDrawerItems() {
+function resetDashboardShareDrawerItems() {
   customShareDrawerItems = [];
 }
 

@@ -17,7 +17,7 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
-export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
+const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
 
 /**
  * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.

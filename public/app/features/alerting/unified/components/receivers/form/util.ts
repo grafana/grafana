@@ -2,12 +2,12 @@ import { omit } from 'lodash';
 
 import { type ChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
 
-export interface DeprecatedAuthHTTPConfig {
+interface DeprecatedAuthHTTPConfig {
   bearer_token?: string;
   bearer_token_file?: string;
 }
 
-export interface HTTPAuthConfig {
+interface HTTPAuthConfig {
   authorization?: {
     type: string;
     credentials?: string;

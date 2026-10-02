@@ -19,7 +19,7 @@ const useMigratedQuery = (query: CloudWatchQuery, onChangeQuery: (newQuery: Clou
 };
 
 // The frontend doesn't run legacy queries if we don't set the queryMode and region
-export function migrateQuery(query: CloudWatchQuery): CloudWatchQuery {
+function migrateQuery(query: CloudWatchQuery): CloudWatchQuery {
   const newQuery = { ...query };
   if (!newQuery.queryMode) {
     newQuery.queryMode = 'Metrics';

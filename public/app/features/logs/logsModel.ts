@@ -49,9 +49,9 @@ import { LokiQueryDirection } from 'app/features/loki-helpers/types';
 import { type LogsFrame, parseLogsFrame } from './logsFrame';
 import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
-export const LIMIT_LABEL = 'Line limit';
-export const COMMON_LABELS = 'Common labels';
-export const TOTAL_LABEL = 'Total lines';
+const LIMIT_LABEL = 'Line limit';
+const COMMON_LABELS = 'Common labels';
+const TOTAL_LABEL = 'Total lines';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -253,7 +253,7 @@ export function dataFrameToLogsModel(
  * @param pxPerBar Default: 20, buckets will be rendered as bars, assuming 10px per histogram bar plus some free space around it
  * @param minimumBucketSize
  */
-export function getSeriesProperties(
+function getSeriesProperties(
   sortedRows: LogRowModel[],
   intervalMs: number,
   absoluteRange?: AbsoluteTimeRange,
@@ -348,7 +348,7 @@ function parseTime(
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(
+function logSeriesToLogsModel(
   logSeries: DataFrame[],
   queries: DataQuery[] = [],
   filterDuplicateRows = false

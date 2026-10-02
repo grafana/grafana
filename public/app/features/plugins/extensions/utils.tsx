@@ -45,7 +45,7 @@ import { type ExtensionsLog, log as baseLog } from './logs/log';
 import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
 
-export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
+function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
     try {
       return fn(...args);
@@ -57,7 +57,7 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   };
 }
 
-export function createOpenModalFunction(config: AddedLinkRegistryItem): PluginExtensionEventHelpers['openModal'] {
+function createOpenModalFunction(config: AddedLinkRegistryItem): PluginExtensionEventHelpers['openModal'] {
   return async (options) => {
     const { title, body, width, height } = options;
 
@@ -260,7 +260,7 @@ function shouldPassReactElementByReference(value: unknown): boolean {
  * @param options.pluginVersion The version of the plugin that is mutating the object
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
-export function getMutationObserverProxy<T extends object>(obj: T, options?: ProxyOptions): T {
+function getMutationObserverProxy<T extends object>(obj: T, options?: ProxyOptions): T {
   if (!obj || typeof obj !== 'object' || isMutationObserverProxy(obj) || shouldPassReactElementByReference(obj)) {
     return obj;
   }
@@ -370,11 +370,11 @@ export function writableProxy<T>(value: T, options?: ProxyOptions): T {
   );
 }
 
-export function isReadOnlyProxy(value: unknown): boolean {
+function isReadOnlyProxy(value: unknown): boolean {
   return isRecord(value) && value[_isReadOnlyProxy] === true;
 }
 
-export function isMutationObserverProxy(value: unknown): boolean {
+function isMutationObserverProxy(value: unknown): boolean {
   return isRecord(value) && value[_isMutationObserverProxy] === true;
 }
 

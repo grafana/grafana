@@ -25,11 +25,7 @@ function isCrossOriginIframe() {
   }
 }
 
-export const TRACKING_URLS = [
-  /\.(google-analytics|googletagmanager)\.com/,
-  /frontend-metrics/,
-  /\/collect(?:\/[\w]*)?$/,
-];
+const TRACKING_URLS = [/\.(google-analytics|googletagmanager)\.com/, /frontend-metrics/, /\/collect(?:\/[\w]*)?$/];
 
 export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>

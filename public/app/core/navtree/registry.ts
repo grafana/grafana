@@ -25,7 +25,7 @@ export function getRegisteredNavEntries(): readonly NavEntryExtension[] {
   return registeredNavEntries;
 }
 
-export function clearRegisteredNavEntries(): void {
+function clearRegisteredNavEntries(): void {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('clearRegisteredNavEntries() can only be called from tests.');
   }

@@ -9,7 +9,7 @@ import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from './LayerName';
 import { type LayerElement } from './types';
 
-export const DATA_TEST_ID = 'layer-drag-drop-list';
+const DATA_TEST_ID = 'layer-drag-drop-list';
 
 export type LayerDragDropListProps<T extends LayerElement> = {
   layers: T[];

@@ -350,7 +350,7 @@ class WideNoChartLayout extends BigValueLayout {
   }
 }
 
-export class WideWithChartLayout extends BigValueLayout {
+class WideWithChartLayout extends BigValueLayout {
   constructor(props: Props) {
     super(props);
 
@@ -406,7 +406,7 @@ export class WideWithChartLayout extends BigValueLayout {
   }
 }
 
-export class StackedWithChartLayout extends BigValueLayout {
+class StackedWithChartLayout extends BigValueLayout {
   constructor(props: Props) {
     super(props);
 
@@ -464,7 +464,7 @@ export class StackedWithChartLayout extends BigValueLayout {
   }
 }
 
-export class StackedWithNoChartLayout extends BigValueLayout {
+class StackedWithNoChartLayout extends BigValueLayout {
   constructor(props: Props) {
     super(props);
 
@@ -615,7 +615,7 @@ export interface PercentChangeStyles {
   iconSize: number;
 }
 
-export function getPercentChangeColor(
+function getPercentChangeColor(
   percentChange: number,
   percentChangeColorMode: PercentChangeColorMode | undefined,
   valueStyles: CSSProperties,

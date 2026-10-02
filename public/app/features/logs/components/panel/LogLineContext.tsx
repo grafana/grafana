@@ -68,11 +68,11 @@ interface LogLineContextProps {
   onClickHideField?: (key: string) => void;
 }
 
-export const PAGE_SIZE = 100;
-export const DEFAULT_TIME_WINDOW = 7200000;
+const PAGE_SIZE = 100;
+const DEFAULT_TIME_WINDOW = 7200000;
 
 // Merge the above/below context request states into one for InfiniteScroll, preserving Streaming/Error.
-export function combineLoadingStates(...states: LoadingState[]): LoadingState {
+function combineLoadingStates(...states: LoadingState[]): LoadingState {
   if (states.includes(LoadingState.Streaming)) {
     return LoadingState.Streaming;
   }

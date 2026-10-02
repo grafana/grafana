@@ -9,7 +9,7 @@ export enum ScrollDirection {
   NoScroll = 0,
 }
 
-export const SCROLLING_THRESHOLD = 1e3;
+const SCROLLING_THRESHOLD = 1e3;
 
 export function shouldLoadMore(
   event: Event | WheelEvent,

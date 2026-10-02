@@ -31,7 +31,7 @@ const getOriginalActionType = (type: string) => {
   return type.substring(0, separator);
 };
 
-export const initialState: ReducerState = {
+const initialState: ReducerState = {
   items: pluginsAdapter.getInitialState(),
   requests: {},
 

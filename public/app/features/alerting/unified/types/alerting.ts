@@ -190,7 +190,7 @@ export interface NotifierStatus {
   sendResolved?: boolean;
 }
 
-export interface NotifiersState {
+interface NotifiersState {
   [key: string]: NotifierStatus[]; // key is the notifier type
 }
 

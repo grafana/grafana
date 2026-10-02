@@ -346,7 +346,7 @@ const getVariableUsages = (variableId: string, usages: VariableUsageTree[]): num
   return countLeaves(usage.tree);
 };
 
-export function flattenPanels(panels: PanelModel[]): PanelModel[] {
+function flattenPanels(panels: PanelModel[]): PanelModel[] {
   const result: PanelModel[] = [];
 
   for (const panel of panels) {

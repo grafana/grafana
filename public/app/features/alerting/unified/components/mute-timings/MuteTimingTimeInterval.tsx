@@ -209,7 +209,7 @@ const parseDays = (input: string): string[] => {
   return uniq(parsedDays);
 };
 
-export function validateDaysOfMonth(value: string | undefined) {
+function validateDaysOfMonth(value: string | undefined) {
   return validateArrayField(
     value,
     (day) => {

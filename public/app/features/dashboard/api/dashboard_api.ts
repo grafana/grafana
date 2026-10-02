@@ -17,7 +17,7 @@ type DashboardAPIClients = {
 
 let clients: Partial<DashboardAPIClients> | undefined;
 
-export function setDashboardAPI(override: Partial<DashboardAPIClients> | undefined) {
+function setDashboardAPI(override: Partial<DashboardAPIClients> | undefined) {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('dashboardAPI can be only overridden in test environment');
   }

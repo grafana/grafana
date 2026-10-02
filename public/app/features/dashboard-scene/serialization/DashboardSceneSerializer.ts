@@ -112,7 +112,7 @@ export interface DSReferencesMapping {
   annotations: Map<string, string | undefined>;
 }
 
-export class V1DashboardSerializer
+class V1DashboardSerializer
   implements DashboardSceneSerializerLike<Dashboard, DashboardMeta, Dashboard, DashboardJson>
 {
   initialSaveModel?: Dashboard;

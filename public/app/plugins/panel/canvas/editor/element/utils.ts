@@ -39,7 +39,7 @@ export const interpolateVariables = (text: string) => {
   return getTemplateSrv().replace(text, panel?.scopedVars);
 };
 
-export const getRequest = (api: APIEditorConfig) => {
+const getRequest = (api: APIEditorConfig) => {
   const endpoint = getEndpoint(interpolateVariables(api.endpoint));
   const url = new URL(endpoint);
 

@@ -13,7 +13,7 @@ import { IconButton } from '../IconButton/IconButton';
 import { Link } from '../Link/Link';
 import { ToolbarButtonRow } from '../ToolbarButton/ToolbarButtonRow';
 
-export interface Props {
+interface Props {
   pageIcon?: IconName;
   title?: string;
   section?: string;

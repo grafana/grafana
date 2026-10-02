@@ -216,7 +216,7 @@ function createSnapshotVariable(variable: TypedVariableModel): SceneVariable {
   return snapshotVariable;
 }
 
-export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
+function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
   const commonProperties = {
     name: variable.name,
     label: variable.label,

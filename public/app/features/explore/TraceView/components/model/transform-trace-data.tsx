@@ -98,7 +98,7 @@ function extractSpanAggregation(tags: TraceKeyValuePair[]): SpanAggregation | un
 }
 
 // exported for tests
-export function deduplicateTags(tags: TraceKeyValuePair[]) {
+function deduplicateTags(tags: TraceKeyValuePair[]) {
   const list = asTagArray(tags);
   const warningsHash: Map<string, string> = new Map<string, string>();
   const dedupedTags: TraceKeyValuePair[] = list.reduce<TraceKeyValuePair[]>((uniqueTags, tag) => {
@@ -114,7 +114,7 @@ export function deduplicateTags(tags: TraceKeyValuePair[]) {
 }
 
 // exported for tests
-export function orderTags(tags: TraceKeyValuePair[], topPrefixes?: string[]) {
+function orderTags(tags: TraceKeyValuePair[], topPrefixes?: string[]) {
   const orderedTags: TraceKeyValuePair[] = asTagArray(tags).slice();
   const tp = (topPrefixes || []).map((p: string) => p.toLowerCase());
 

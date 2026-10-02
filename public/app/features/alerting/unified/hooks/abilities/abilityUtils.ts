@@ -87,7 +87,7 @@ export function isProvisioned(ability: AsyncAbility): boolean {
 }
 
 /** True when the resource is owned by an installed plugin and cannot be mutated via the UI. */
-export function isPluginManaged(ability: AsyncAbility): boolean {
+function isPluginManaged(ability: AsyncAbility): boolean {
   return !ability.granted && ability.cause === 'IS_PLUGIN_MANAGED';
 }
 

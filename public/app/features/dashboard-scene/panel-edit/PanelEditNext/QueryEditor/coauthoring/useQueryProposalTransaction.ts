@@ -23,7 +23,7 @@ interface QueryProposalTransactionOptions {
   startQueryPreview: (originalRefId: string, proposedQuery: DataQuery) => QueryPreview | undefined;
 }
 
-export function synchronizeCoauthoringBaselineQuery(
+function synchronizeCoauthoringBaselineQuery(
   currentQuery: DataQuery | null | undefined,
   baseline: DataQuery,
   updateQuery: (updatedQuery: DataQuery, originalRefId: string) => void

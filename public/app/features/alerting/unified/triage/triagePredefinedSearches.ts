@@ -15,7 +15,7 @@ import { buildTriageQueryStringFromParts } from './scene/triageSavedSearchUtils'
 import { defaultTimeRange } from './scene/utils';
 
 /** Prefix for predefined search IDs; used to identify predefined items for overrides and dismissed handling. */
-export const TRIAGE_PREDEFINED_SEARCH_ID_PREFIX = 'triage-predefined-';
+const TRIAGE_PREDEFINED_SEARCH_ID_PREFIX = 'triage-predefined-';
 
 const PREDEFINED_IDS = [
   `${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}folder-firing`,

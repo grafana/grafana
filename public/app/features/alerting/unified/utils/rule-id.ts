@@ -236,7 +236,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
  * grafana-prometheusalerting-app plugin puts the data source's UID in that same slot, so handing a
  * rule over to it means re-serialising with the UID instead.
  */
-export function stringifyDataSourceIdentifier(
+function stringifyDataSourceIdentifier(
   identifier: CloudRuleIdentifier | PrometheusRuleIdentifier,
   rulesSourceId: string
 ): string {
@@ -389,7 +389,7 @@ export function getPromRuleFingerprint(rule: Rule, includeQuery: boolean) {
  * Prometheus state, so the ruler expression and the Prometheus query must be
  * processed identically before comparison.
  */
-export function stripPromQLComments(query: string): string {
+function stripPromQLComments(query: string): string {
   return query
     .replace(/#[^\n]*/g, '') // strip from # to end of line (inline and full-line comments)
     .split('\n')
@@ -436,7 +436,7 @@ const QUOTE_CHARACTERS = ['"', "'", '`'];
  * so rewriting them would make two genuinely different rules look like one – as happens in the
  * multi-window burn rate pattern, where each rule carries its own window as a label.
  */
-export function normalizePromQLDurations(query: string): string {
+function normalizePromQLDurations(query: string): string {
   return query.replace(PROMQL_STRING_OR_DURATION, (match) => {
     if (QUOTE_CHARACTERS.includes(match[0])) {
       return match;

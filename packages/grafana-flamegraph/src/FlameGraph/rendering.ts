@@ -277,7 +277,7 @@ function renderGroupingStrip(
  * Walks the tree and computes coordinates, dimensions and other data needed for rendering. For each item in the tree
  * it defers the rendering to the renderFunc.
  */
-export function walkTree(
+function walkTree(
   root: LevelItem,
   // In sandwich view we use parents direction to show all callers.
   direction: 'children' | 'parents',

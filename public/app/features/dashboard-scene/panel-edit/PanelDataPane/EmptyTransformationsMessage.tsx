@@ -39,7 +39,7 @@ const TRANSFORMATION_IDS = [
   DataTransformerID.filterByValue,
 ];
 
-export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPicker: () => void }) {
+function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPicker: () => void }) {
   return (
     <Box alignItems="center" padding={4}>
       <Stack direction="column" alignItems="center" gap={2}>

@@ -95,7 +95,7 @@ export function buildGradientColors(
  * @param percent - percentage 0..1
  * @returns {[GradientStop, GradientStop]} - the two gradient stops surrounding the given percentage
  */
-export function getGradientStopsForPercent(
+function getGradientStopsForPercent(
   sortedGradientStops: GradientStop[],
   percent: number
 ): [GradientStop, GradientStop] {

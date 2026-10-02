@@ -13,7 +13,7 @@ import { isRecord } from 'app/core/utils/isRecord';
 import type { GraphEdge, GraphNode } from 'app/features/variables/inspect/types';
 import { getPropsWithVariable } from 'app/features/variables/inspect/utils';
 
-export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
+const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 export function createDependencyNodes(variables: Array<SceneVariable<SceneVariableState>>): GraphNode[] {
   return variables.map((variable) => ({ id: variable.state.name, label: `${variable.state.name}` }));
@@ -97,7 +97,7 @@ export function transformUsagesToNetwork(
   return results;
 }
 
-export const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value: unknown }): UsagesToNetwork => {
+const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value: unknown }): UsagesToNetwork => {
   const { id, value } = parent;
   const { nodes, edges } = usage;
 
@@ -191,7 +191,7 @@ function createUnknownsNetwork(
   return unknown;
 }
 
-export const getUnknownVariableStrings = (variables: Array<SceneVariable<SceneVariableState>>, model: Dashboard) => {
+const getUnknownVariableStrings = (variables: Array<SceneVariable<SceneVariableState>>, model: Dashboard) => {
   variableRegex.lastIndex = 0;
   const unknownVariableNames: string[] = [];
   const modelAsString = safeStringifyValue(model, 2);
@@ -240,7 +240,7 @@ export const getUnknownVariableStrings = (variables: Array<SceneVariable<SceneVa
   return unknownVariableNames;
 };
 
-export function getVariableName(expression: string) {
+function getVariableName(expression: string) {
   const match = variableRegexExec(expression);
   if (!match) {
     return undefined;
@@ -256,7 +256,7 @@ export function getVariableName(expression: string) {
 }
 
 // Helper function since lastIndex is not reset
-export const variableRegexExec = (variableString: string) => {
+const variableRegexExec = (variableString: string) => {
   variableRegex.lastIndex = 0;
   return variableRegex.exec(variableString);
 };

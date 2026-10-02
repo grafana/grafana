@@ -6,7 +6,7 @@ import { type SupportedPlugin } from '../types/pluginBridges';
 
 export type PluginID = SupportedPlugin | string;
 
-export interface PluginBridgeProps {
+interface PluginBridgeProps {
   plugin: PluginID;
   // shows an optional component when the plugin is not installed
   notInstalledFallback?: ReactElement;
@@ -14,7 +14,7 @@ export interface PluginBridgeProps {
   loadingComponent?: ReactElement;
 }
 
-export const PluginBridge = ({
+const PluginBridge = ({
   children,
   plugin,
   loadingComponent,

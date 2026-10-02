@@ -144,21 +144,21 @@ export function getDashboardQueryRunner(): DashboardQueryRunner {
   return dashboardQueryRunner;
 }
 
-export interface DashboardQueryRunnerFactoryArgs {
+interface DashboardQueryRunnerFactoryArgs {
   dashboard: DashboardModel;
   timeSrv?: TimeSrv;
   workers?: DashboardQueryRunnerWorker[];
 }
 
-export type DashboardQueryRunnerFactory = (args: DashboardQueryRunnerFactoryArgs) => DashboardQueryRunner;
+type DashboardQueryRunnerFactory = (args: DashboardQueryRunnerFactoryArgs) => DashboardQueryRunner;
 
 let factory: DashboardQueryRunnerFactory | undefined;
 
-export function setDashboardQueryRunnerFactory(instance: DashboardQueryRunnerFactory) {
+function setDashboardQueryRunnerFactory(instance: DashboardQueryRunnerFactory) {
   factory = instance;
 }
 
-export function createDashboardQueryRunner(args: DashboardQueryRunnerFactoryArgs): DashboardQueryRunner {
+function createDashboardQueryRunner(args: DashboardQueryRunnerFactoryArgs): DashboardQueryRunner {
   if (!factory) {
     factory = ({ dashboard, timeSrv, workers }: DashboardQueryRunnerFactoryArgs) =>
       new DashboardQueryRunnerImpl(dashboard, timeSrv, workers);

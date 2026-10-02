@@ -2,7 +2,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Icon } from '@grafana/ui';
 import { type PluginDashboard } from 'app/types/plugins';
 
-export interface Props {
+interface Props {
   // List of plugin dashboards to show in the table
   dashboards: PluginDashboard[];
   // Callback used when the user clicks on importing a dashboard

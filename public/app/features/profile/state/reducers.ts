@@ -23,7 +23,7 @@ export interface UserState {
   isUpdating: boolean;
 }
 
-export const initialUserState: UserState = {
+const initialUserState: UserState = {
   orgId: contextSrv.user.orgId,
   timeZone: contextSrv.user.timezone,
   weekStart: contextSrv.user.weekStart,
@@ -143,9 +143,7 @@ export {
   userSessionRevoked,
   initLoadSessions,
   sessionsLoaded,
-  updateTimeZone,
-  updateWeekStart,
 };
 
-export const userReducer = slice.reducer;
+const userReducer = slice.reducer;
 export default { user: slice.reducer };

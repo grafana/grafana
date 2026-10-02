@@ -21,7 +21,7 @@ import {
 } from '../guard';
 import { getLegacyQueryOptions } from '../utils';
 
-export interface RunnerArgs {
+interface RunnerArgs {
   variable: QueryVariableModel;
   datasource: DataSourceApi;
   timeSrv: TimeSrv;
@@ -155,7 +155,7 @@ class CustomQueryRunner implements QueryRunner {
   }
 }
 
-export const variableDummyRefId = 'variable-query';
+const variableDummyRefId = 'variable-query';
 
 class DatasourceQueryRunner implements QueryRunner {
   type = VariableSupportType.Datasource;

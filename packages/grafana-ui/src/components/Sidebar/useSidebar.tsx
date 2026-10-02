@@ -38,7 +38,7 @@ export const SidebarContext: React.Context<SidebarContextValue | undefined> = Re
 
 export const useSidebarContext = () => useContext(SidebarContext);
 
-export interface UseSideBarOptions {
+interface UseSideBarOptions {
   hasOpenPane?: boolean;
   position?: SidebarPosition;
   tabsMode?: boolean;
@@ -203,7 +203,7 @@ function readFromStore<T>(persistenceKey: string | undefined, subKey: string, de
   return defaultValue;
 }
 
-export function useSidebarSavedState<T = number | boolean>(
+function useSidebarSavedState<T = number | boolean>(
   persistenceKey: string | undefined,
   subKey: string,
   defaultValue: T

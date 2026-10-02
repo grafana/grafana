@@ -17,7 +17,7 @@ export interface VariableNameCollisionCheck {
 }
 
 /** Pure decision helper — kept separate so unit tests do not need the RTK hook. */
-export function evaluateVariableNameCollision(args: {
+function evaluateVariableNameCollision(args: {
   shouldQuery: boolean;
   isFetching: boolean;
   isDebouncing: boolean;

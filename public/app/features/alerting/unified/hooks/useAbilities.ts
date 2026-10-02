@@ -166,7 +166,7 @@ export function useRulerRuleAbility(
   }, [abilities, action]);
 }
 
-export function useRulerRuleAbilities(
+function useRulerRuleAbilities(
   rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifierV2,
   actions: AlertRuleAction[]
@@ -398,10 +398,7 @@ export function useGrafanaPromRuleAbility(rule: GrafanaPromRuleDTO | SkipToken, 
 /**
  * Hook for checking multiple abilities on a GrafanaPromRuleDTO
  */
-export function useGrafanaPromRuleAbilities(
-  rule: GrafanaPromRuleDTO | SkipToken,
-  actions: AlertRuleAction[]
-): Ability[] {
+function useGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | SkipToken, actions: AlertRuleAction[]): Ability[] {
   const abilities = useAllGrafanaPromRuleAbilities(rule === skipToken ? undefined : rule);
 
   return useMemo(() => {

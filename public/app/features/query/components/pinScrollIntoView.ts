@@ -2,7 +2,7 @@
  * How long the layout must stay quiet (no resizes) before the pinned element is considered
  * settled. Exported for tests.
  */
-export const SCROLL_PIN_SETTLE_MS = 1500;
+const SCROLL_PIN_SETTLE_MS = 1500;
 
 /**
  * Scrolls an element into view and keeps it pinned there while surrounding content finishes

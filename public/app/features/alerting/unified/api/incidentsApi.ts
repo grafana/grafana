@@ -8,7 +8,7 @@ interface IncidentsPluginConfigDto {
 }
 
 // Subset of the Grafana Incident API's IncidentPreview — only the fields the home-page card consumes.
-export interface IncidentPreview {
+interface IncidentPreview {
   incidentID: string;
   title: string;
   // Org-configurable label (e.g. "critical" | "major" | "minor" | "pending"), so it stays a free string.
@@ -96,7 +96,7 @@ function getFieldFilterOptions(field: IncidentFieldDto, archivedPairs: Set<strin
 }
 
 /** Exported for unit tests; consumers go through the `getIncidentFilterOptions` query. */
-export function toIncidentFilterOptions(response: GetFieldsResponse): IncidentFilterOption[] {
+function toIncidentFilterOptions(response: GetFieldsResponse): IncidentFilterOption[] {
   const archivedPairs = new Set((response.archived ?? []).map(({ key, value }) => labelPairKey(key, value)));
   const labelFields = (response.fields ?? []).filter(isLabelField);
   return labelFields.flatMap((field) => getFieldFilterOptions(field, archivedPairs));

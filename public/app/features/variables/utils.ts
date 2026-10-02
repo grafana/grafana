@@ -189,7 +189,7 @@ interface UrlQueryType {
 
 export interface ExtendedUrlQueryMap extends Record<string, UrlQueryType> {}
 
-export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): ExtendedUrlQueryMap | undefined {
+function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): ExtendedUrlQueryMap | undefined {
   let count = 0;
   const changes: ExtendedUrlQueryMap = {};
 

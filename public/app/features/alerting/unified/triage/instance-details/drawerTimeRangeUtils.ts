@@ -9,7 +9,7 @@ import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
  * Returns the maximum evaluation window (seconds) required by the rule's data queries.
  * Only considers queries that have relativeTimeRange; returns 0 if none.
  */
-export function getMaxQueryEvaluationWindowSeconds(rule: GrafanaRuleDefinition): number {
+function getMaxQueryEvaluationWindowSeconds(rule: GrafanaRuleDefinition): number {
   if (!rule?.data?.length) {
     return 0;
   }

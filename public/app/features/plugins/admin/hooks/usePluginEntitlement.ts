@@ -11,7 +11,7 @@ export type EntitlementState = {
 
 const entitlementCache = new Map<string, boolean>();
 
-export function clearEntitlementCache(): void {
+function clearEntitlementCache(): void {
   entitlementCache.clear();
 }
 

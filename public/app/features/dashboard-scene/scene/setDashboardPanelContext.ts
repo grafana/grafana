@@ -405,7 +405,7 @@ function getAdHocGroupByVariableFor(sceneObject: SceneObject, ds: DataSourceRef 
   return null;
 }
 
-export async function getAdHocFilterVariableFor(sceneObject: SceneObject, ds: DataSourceRef | null | undefined) {
+async function getAdHocFilterVariableFor(sceneObject: SceneObject, ds: DataSourceRef | null | undefined) {
   // Resolve plugin meta before scanning so no await sits between the read and the
   // setState write. Overlapping "Filter for value" actions would otherwise both
   // miss the existing-variable scan and append a second Filters variable.

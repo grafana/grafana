@@ -39,7 +39,7 @@ interface GetStandardEditorContextProps {
   instanceState: OptionPaneRenderProps['instanceState'];
 }
 
-export function getStandardEditorContext({
+function getStandardEditorContext({
   data,
   replaceVariables,
   options,

@@ -137,7 +137,7 @@ interface GrafanaPromRuleDTOBase extends PromRuleDTOBase {
   provenance?: string;
 }
 
-export interface PromAlertingRuleDTO extends PromRuleDTOBase {
+interface PromAlertingRuleDTO extends PromRuleDTOBase {
   alerts?: Array<{
     labels: Labels;
     annotations: Annotations;
@@ -196,7 +196,7 @@ interface PromResponse<T> {
 
 export interface PromRulesResponse extends PromResponse<{ groups: PromRuleGroupDTO[]; groupNextToken?: string }> {}
 
-export interface GrafanaPromRulesResponse
+interface GrafanaPromRulesResponse
   extends PromResponse<{
     groups: GrafanaPromRuleGroupDTO[];
     groupNextToken?: string;
@@ -336,7 +336,7 @@ export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
 
 export type PostableRulerRuleGroupDTO = RulerRuleGroupDTO<PostableRuleDTO>;
 
-export type RulerGrafanaRuleGroupDTO = RulerRuleGroupDTO<RulerGrafanaRuleDTO>;
+type RulerGrafanaRuleGroupDTO = RulerRuleGroupDTO<RulerGrafanaRuleDTO>;
 
 export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };
 

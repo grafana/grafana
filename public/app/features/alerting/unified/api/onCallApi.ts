@@ -37,7 +37,7 @@ export interface OnCallConfigChecks {
   is_integration_chatops_connected: boolean;
 }
 
-export function getProxyApiUrl(path: string, pluginId: string) {
+function getProxyApiUrl(path: string, pluginId: string) {
   return `/api/plugins/${pluginId}/resources${path}`;
 }
 

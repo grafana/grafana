@@ -32,7 +32,7 @@ interface DeleteInlineSecureValue {
  * The shape is also what the server returns on GET; see per-field docs for
  * how each field's meaning differs between read and write.
  */
-export type InlineSecureValue = UpdateInlineSecureValue | CreateInlineSecureValue | DeleteInlineSecureValue;
+type InlineSecureValue = UpdateInlineSecureValue | CreateInlineSecureValue | DeleteInlineSecureValue;
 
 /** Map of secure-value keys to their inline values. */
 export type InlineSecureValues = Record<string, InlineSecureValue>;

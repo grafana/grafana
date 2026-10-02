@@ -167,7 +167,7 @@ const getStyles = () => ({
 /**
  * For some dashboards and users changes should be ignored *
  */
-export function ignoreChanges(scene: DashboardScene | null) {
+function ignoreChanges(scene: DashboardScene | null) {
   const original = scene?.getInitialSaveModel();
 
   if (!original) {
@@ -202,10 +202,7 @@ export function ignoreChanges(scene: DashboardScene | null) {
   return !canSave || fromScript || fromFile || (scene.state.isEditing && !hasActualSaveChanges(scene));
 }
 
-export function isEmptyDashboard(
-  dashboard: Dashboard | DashboardV2Spec,
-  metadata?: DashboardMeta | ObjectMeta
-): boolean {
+function isEmptyDashboard(dashboard: Dashboard | DashboardV2Spec, metadata?: DashboardMeta | ObjectMeta): boolean {
   if (isDashboardV2Spec(dashboard)) {
     const hasNoPanels = Object.keys(dashboard.elements).length === 0;
     const hasNoLinks = !dashboard.links.length;

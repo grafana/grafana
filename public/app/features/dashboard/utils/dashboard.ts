@@ -101,7 +101,7 @@ type LastUsedDatasource =
     }
   | undefined;
 
-export const PANEL_EDIT_LAST_USED_DATASOURCE = 'grafana.dashboards.panelEdit.lastUsedDatasource';
+const PANEL_EDIT_LAST_USED_DATASOURCE = 'grafana.dashboards.panelEdit.lastUsedDatasource';
 
 // Function that returns last used datasource from local storage
 export function getLastUsedDatasourceFromStorage(dashboardUid: string): LastUsedDatasource {

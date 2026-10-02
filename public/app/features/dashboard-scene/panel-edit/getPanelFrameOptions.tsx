@@ -20,7 +20,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelStylesSection } from './PanelStylesSection';
 
-export function createPresetApplyHandler(panel: VizPanel) {
+function createPresetApplyHandler(panel: VizPanel) {
   return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
     const prevOptions = panel.state.options;
     edit({

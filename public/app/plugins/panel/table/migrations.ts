@@ -305,7 +305,7 @@ export const hasDeprecatedParentRowIndex = (frames: DataFrame[] | null) => {
   return frames?.some((df) => df.meta?.custom?.parentRowIndex !== undefined);
 };
 
-export const migrateTextWrapToFieldLevel = (panel: PanelModel<Partial<Options>>) => {
+const migrateTextWrapToFieldLevel = (panel: PanelModel<Partial<Options>>) => {
   if (panel.fieldConfig?.defaults.custom?.wrapText !== undefined) {
     // already migrated
     return;
@@ -335,7 +335,7 @@ export const migrateTextWrapToFieldLevel = (panel: PanelModel<Partial<Options>>)
   return panel;
 };
 
-export const migrateHiddenFields = (panel: PanelModel<Partial<Options>>) => {
+const migrateHiddenFields = (panel: PanelModel<Partial<Options>>) => {
   panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
     if (override.properties) {
       override.properties = override.properties.map((property) => {
@@ -359,7 +359,7 @@ interface LegacyTableFooterOptions {
   enablePagination?: boolean;
 }
 
-export const migrateFooterV2 = (panel: PanelModel<Options>) => {
+const migrateFooterV2 = (panel: PanelModel<Options>) => {
   if (panel.options && 'footer' in panel.options) {
     // we need to cast the footer to the old type to work with it here.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

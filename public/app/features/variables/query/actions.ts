@@ -51,7 +51,7 @@ export const updateQueryVariableOptions = (
 /*
  * Function that takes any object and flattens all props into one level deep object
  * */
-export function flattenQuery(query: any) {
+function flattenQuery(query: any) {
   if (typeof query !== 'object' || query === null) {
     return { query };
   }

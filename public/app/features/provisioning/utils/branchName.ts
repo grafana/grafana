@@ -32,7 +32,7 @@ const MAX_BRANCH_NAME_LENGTH = 100;
  * max 100 chars. Returns '' when nothing valid remains. The output always satisfies
  * utils/git.ts `validateBranchName`.
  */
-export function sanitizeBranchName(name: string): string {
+function sanitizeBranchName(name: string): string {
   return (
     name
       .trim()

@@ -60,7 +60,7 @@ function formatDate(dateString?: string): string {
 /**
  * Build Grafana.com URL for a dashboard
  */
-export function buildGrafanaComUrl(dashboard: GnetDashboard): string {
+function buildGrafanaComUrl(dashboard: GnetDashboard): string {
   return `https://grafana.com/grafana/dashboards/${dashboard.id}-${dashboard.slug}/`;
 }
 
@@ -90,7 +90,7 @@ export function buildDashboardDetails(dashboard: GnetDashboard): DashboardDetail
 /**
  * Navigate to dashboard template route with mappings
  */
-export function navigateToTemplate(
+function navigateToTemplate(
   dashboardTitle: string,
   gnetId: number,
   datasourceUid: string,

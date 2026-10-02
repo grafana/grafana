@@ -20,7 +20,7 @@ interface ResourceStatusCardProps {
  * nothing managed yet → warning, partially managed → info, fully managed →
  * success.
  */
-export function resourceTone(managed: number, total: number): ResourceTone {
+function resourceTone(managed: number, total: number): ResourceTone {
   if (managed >= total) {
     return 'success';
   }

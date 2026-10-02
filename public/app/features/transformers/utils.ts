@@ -49,7 +49,7 @@ export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFiel
   return names;
 };
 
-export const detectPartialQueryFailures = (frames: DataFrame[]) => {
+const detectPartialQueryFailures = (frames: DataFrame[]) => {
   const hasSuccessful = frames.some(({ fields }) => fields.length > 0);
   const hasEmpty = frames.some(({ fields }) => !fields.length);
   return hasSuccessful && hasEmpty;
@@ -73,7 +73,7 @@ const TransformerMissingFieldsMessage = () => {
 type ExpandedTransformerUIProps<T> = TransformerUIProps<T> & { fieldNames: string[] };
 type DataFieldsErrorWrapperOptions = { withBaseFieldNames?: boolean };
 
-export const TIMEOUT = 300;
+const TIMEOUT = 300;
 
 export function DataFieldsErrorWrapper<T>(
   Component: React.ComponentType<ExpandedTransformerUIProps<T>>,

@@ -53,7 +53,7 @@ export interface PanelState {
   transformations: Transformation[];
 }
 
-export interface QueryOptionsState {
+interface QueryOptionsState {
   options: QueryGroupOptions;
   isQueryOptionsOpen: boolean;
   openSidebar: (focusField?: QueryOptionField) => void;

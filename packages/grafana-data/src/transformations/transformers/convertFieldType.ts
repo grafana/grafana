@@ -67,7 +67,7 @@ export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<Convert
  * @param frames - dataframe(s) with field types to convert
  * @returns dataframe(s) with converted field types
  */
-export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
+function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
   if (!options.conversions.length) {
     return frames;
   }

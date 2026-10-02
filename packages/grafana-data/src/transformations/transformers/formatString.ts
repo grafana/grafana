@@ -39,7 +39,7 @@ const splitToCapitalWords = (input: string) => {
   return arr;
 };
 
-export const getFormatStringFunction = (options: FormatStringTransformerOptions) => {
+const getFormatStringFunction = (options: FormatStringTransformerOptions) => {
   return (field: Field) =>
     field.values.map((value: string) => {
       // String fields can hold null/undefined; calling string methods on them throws and blanks the whole panel.

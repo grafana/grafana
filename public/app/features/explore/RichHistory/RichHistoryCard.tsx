@@ -39,7 +39,7 @@ interface OwnProps<T extends DataQuery = DataQuery> {
   queryHistoryItem: RichHistoryQuery<T>;
 }
 
-export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
+type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
 
 const getStyles = (theme: GrafanaTheme2) => {
   /* Hard-coded value so all buttons and icons on right side of card are aligned */
@@ -135,7 +135,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export function RichHistoryCard(props: Props) {
+function RichHistoryCard(props: Props) {
   const { queryHistoryItem, commentHistoryItem, starHistoryItem, deleteHistoryItem, datasourceInstances } = props;
 
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);

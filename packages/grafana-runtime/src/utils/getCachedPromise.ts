@@ -74,7 +74,7 @@ function invalidateCacheIfNotReplaced<T>(key: string, cached: Promise<T>): void 
  * @param error - The rejection value to check
  * @returns Whether `error.isHandled` is `true`
  */
-export function isHandledError(error: unknown): boolean {
+function isHandledError(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'isHandled' in error && error.isHandled === true;
 }
 
@@ -83,7 +83,7 @@ export function isHandledError(error: unknown): boolean {
  * @param cause - The rejection value to read `data.message` from
  * @returns The `data.message` string, or `undefined`
  */
-export function getDataMessage(cause: unknown): string | undefined {
+function getDataMessage(cause: unknown): string | undefined {
   if (typeof cause !== 'object' || cause === null) {
     return undefined;
   }
@@ -106,7 +106,7 @@ export function getDataMessage(cause: unknown): string | undefined {
  * @param cause - The rejection value to extract a message from
  * @returns A string message, or `''` if none is available
  */
-export function getOriginMessage(cause: unknown): string {
+function getOriginMessage(cause: unknown): string {
   if (typeof cause === 'string') {
     return cause;
   }
@@ -127,7 +127,7 @@ export function getOriginMessage(cause: unknown): string {
  * @param cause - The rejection value to extract fields from
  * @returns A `LogContext` containing whichever of `status`/`statusText`/`traceId` are present
  */
-export function getFetchErrorContext(cause: unknown): LogContext {
+function getFetchErrorContext(cause: unknown): LogContext {
   const context: LogContext = {};
 
   if (typeof cause !== 'object' || cause === null) {
@@ -149,7 +149,7 @@ export function getFetchErrorContext(cause: unknown): LogContext {
   return context;
 }
 
-export function hashFunctionSource(source: string): number {
+function hashFunctionSource(source: string): number {
   let hash = 0x811c9dc5;
   for (let index = 0; index < source.length; index++) {
     hash ^= source.charCodeAt(index);
@@ -309,7 +309,7 @@ export function invalidateCachedPromisesCache() {
  * For arguments that are not plain POJOs (e.g. `Map`, `Set`, `Date`, `RegExp`, class instances),
  * use the `cacheKeyFn` parameter on {@link getCachedPromiseWithArgs} instead.
  */
-export function serializeArg(value: unknown, baseKey: string): string {
+function serializeArg(value: unknown, baseKey: string): string {
   const type = typeof value;
 
   try {

@@ -453,7 +453,7 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
 /*
  * Extracts a rule group identifier from a CombinedRule
  */
-export function getRuleGroupLocationFromCombinedRule(rule: CombinedRule): RuleGroupIdentifier {
+function getRuleGroupLocationFromCombinedRule(rule: CombinedRule): RuleGroupIdentifier {
   const ruleSourceName = isGrafanaRulesSource(rule.namespace.rulesSource)
     ? rule.namespace.rulesSource
     : rule.namespace.rulesSource.name;
@@ -548,7 +548,7 @@ export function getRuleUID(rule?: RulerRuleDTO | Rule) {
   return ruleUid;
 }
 
-export const NO_GROUP_PREFIX = 'no_group_for_rule_';
+const NO_GROUP_PREFIX = 'no_group_for_rule_';
 export const isUngroupedRuleGroup = (group: string): boolean => group.startsWith(NO_GROUP_PREFIX);
 
 /**
@@ -565,7 +565,7 @@ export const isUngroupedRuleGroup = (group: string): boolean => group.startsWith
  * Note: labels derived from metric query results (e.g. `instance`, `job`) are
  * unknowable at rule-definition time and cannot be included.
  */
-export function getEffectiveRuleLabels(rule: CombinedRule): Labels {
+function getEffectiveRuleLabels(rule: CombinedRule): Labels {
   if (!isGrafanaRulesSource(rule.namespace.rulesSource)) {
     return rule.labels;
   }

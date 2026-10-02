@@ -26,7 +26,7 @@ export interface LogDetailsContextData {
   toggleDetails: (log: LogListModel, withModifierKey?: boolean) => void;
 }
 
-export const emptyContextData: LogDetailsContextData = {
+const emptyContextData: LogDetailsContextData = {
   currentLog: undefined,
   closeDetails: () => {},
   detailsDisplayed: () => false,
@@ -42,9 +42,9 @@ export const emptyContextData: LogDetailsContextData = {
   showDetails: [],
   toggleDetails: () => {},
 };
-export const LogDetailsContext = createContext<LogDetailsContextData>(emptyContextData);
+const LogDetailsContext = createContext<LogDetailsContextData>(emptyContextData);
 
-export const useLogDetailsContextData = (key: keyof LogDetailsContextData) => {
+const useLogDetailsContextData = (key: keyof LogDetailsContextData) => {
   const data: LogDetailsContextData = useContext(LogDetailsContext);
   return data[key];
 };

@@ -21,7 +21,7 @@ type RuleWithAlerts = {
   alerts: Alert[];
 };
 
-export const UNGROUPED_KEY = '__ungrouped__';
+const UNGROUPED_KEY = '__ungrouped__';
 
 const GroupedModeView = ({ rules, options }: Props) => {
   const styles = useStyles2(getStyles);

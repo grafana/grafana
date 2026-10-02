@@ -31,7 +31,7 @@ interface ScopesContextProviderProps {
   };
 }
 
-export function defaultScopesServices() {
+function defaultScopesServices() {
   const client = new ScopesApiClient();
   const dashboardService = new ScopesDashboardsService(client);
   const selectorService = new ScopesSelectorService(client, dashboardService);

@@ -12,7 +12,7 @@ import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings
 import { getCascaderStyles } from '../Cascader/styles';
 import { Icon } from '../Icon/Icon';
 
-export interface ButtonCascaderProps {
+interface ButtonCascaderProps {
   options: CascaderOption[];
   children: string;
   icon?: IconName;

@@ -37,7 +37,7 @@ import { GroupActionComponents } from './QueryActionComponent';
 import { QueryEditorRows } from './QueryEditorRows';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 
-export interface Props {
+interface Props {
   queryRunner: PanelQueryRunner;
   options: QueryGroupOptions;
   onOpenQueryInspector?: () => void;
@@ -59,7 +59,7 @@ interface State {
   scrollElement?: HTMLDivElement;
 }
 
-export class QueryGroup extends PureComponent<Props, State> {
+class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   querySubscription: Unsubscribable | null = null;
 

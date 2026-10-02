@@ -235,7 +235,7 @@ export const mapNumbertoTimeInSlider = (num: number) => {
   return str;
 };
 
-export function createDateStringFromTs(ts: number) {
+function createDateStringFromTs(ts: number) {
   return dateTimeFormat(ts, {
     format: 'MMMM D, YYYY',
   });
@@ -250,7 +250,7 @@ function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(strippedQuery);
 }
 
-export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder) {
+function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder) {
   let heading = '';
   if (sortOrder === SortOrder.DatasourceAZ || sortOrder === SortOrder.DatasourceZA) {
     heading = query.datasourceName;

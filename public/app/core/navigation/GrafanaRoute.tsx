@@ -16,7 +16,7 @@ import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 
 export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> {}
 
-export function GrafanaRoute(props: Props) {
+function GrafanaRoute(props: Props) {
   const { chrome, keybindings } = useGrafana();
   const displayFallback = useMTFallback(props.location);
 

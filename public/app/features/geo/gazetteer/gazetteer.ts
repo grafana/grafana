@@ -57,7 +57,7 @@ function loadGazetteer(path: string, data: any): Gazetteer {
   return frameAsGazetter(frame, { path });
 }
 
-export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: string[] }): Gazetteer {
+function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: string[] }): Gazetteer {
   const keys: Field[] = [];
   let geo: Field<Geometry | undefined> | undefined = undefined;
   let lat: Field | undefined = undefined;

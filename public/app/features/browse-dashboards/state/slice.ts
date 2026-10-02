@@ -30,7 +30,7 @@ const browseDashboardsSlice = createSlice({
   },
 });
 
-export const browseDashboardsReducer = browseDashboardsSlice.reducer;
+const browseDashboardsReducer = browseDashboardsSlice.reducer;
 
 export const { setFolderOpenState, setItemSelectionState, setAllSelection, clearFolders } =
   browseDashboardsSlice.actions;

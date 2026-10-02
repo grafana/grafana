@@ -2,7 +2,7 @@ import { isNumber } from 'lodash';
 
 const versionPattern = /^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z\.]+))?/;
 
-export class SemVersion {
+class SemVersion {
   major: number;
   minor: number;
   patch: number;

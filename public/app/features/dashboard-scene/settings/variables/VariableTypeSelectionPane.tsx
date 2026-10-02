@@ -38,11 +38,11 @@ export function openAddSectionVariablePane(dashboard: DashboardSceneLike, sectio
   dashboard.state.sidebar.openPane(new VariableAddPane({ sectionOwner: sectionOwner.getRef() }));
 }
 
-export interface VariableAddPaneState extends SceneObjectState {
+interface VariableAddPaneState extends SceneObjectState {
   sectionOwner: SceneObjectRef<SceneObject>;
 }
 
-export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> implements DashboardSidebarPane {
+class VariableAddPane extends SceneObjectBase<VariableAddPaneState> implements DashboardSidebarPane {
   public static Component = VariableAddPaneRenderer;
   public excludeFromHistory = true;
 
@@ -90,14 +90,11 @@ function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>
   );
 }
 
-export interface VariableTypeChangePaneState extends SceneObjectState {
+interface VariableTypeChangePaneState extends SceneObjectState {
   variableRef: SceneObjectRef<SceneVariable>;
 }
 
-export class VariableTypeChangePane
-  extends SceneObjectBase<VariableTypeChangePaneState>
-  implements DashboardSidebarPane
-{
+class VariableTypeChangePane extends SceneObjectBase<VariableTypeChangePaneState> implements DashboardSidebarPane {
   public static Component = VariableTypeChangePaneRenderer;
   public excludeFromHistory = true;
 

@@ -11,7 +11,7 @@ import { getSegmentStyles } from './styles';
 import { type SegmentProps } from './types';
 import { useExpandableLabel } from './useExpandableLabel';
 
-export interface SegmentInputProps
+interface SegmentInputProps
   extends Omit<SegmentProps, 'allowCustomValue' | 'allowEmptyValue'>,
     Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;

@@ -6,9 +6,9 @@ import { type FetchError, isFetchError } from '@grafana/runtime';
 import { getErrorCode } from '../misc';
 
 export const ERROR_NEWER_CONFIGURATION = 'alerting.notifications.conflict' as const;
-export const ERROR_ROUTES_MATCHER_CONFLICT = 'alerting.notifications.routes.conflictingMatchers' as const;
-export const ERROR_TIME_INTERVAL_IN_USE = 'alerting.notifications.time-intervals.used' as const;
-export const ERROR_TIME_INTERVAL_NAME_EXISTS = 'alerting.notifications.time-intervals.nameExists' as const;
+const ERROR_ROUTES_MATCHER_CONFLICT = 'alerting.notifications.routes.conflictingMatchers' as const;
+const ERROR_TIME_INTERVAL_IN_USE = 'alerting.notifications.time-intervals.used' as const;
+const ERROR_TIME_INTERVAL_NAME_EXISTS = 'alerting.notifications.time-intervals.nameExists' as const;
 
 export type ApiMachineryErrorResponse = FetchError<ApiMachineryError>;
 
@@ -83,7 +83,7 @@ export function getErrorMessageFromCode(code: string): string | undefined {
   return errorMessageMap[code];
 }
 
-export type ApiMachineryError = {
+type ApiMachineryError = {
   kind: 'Status';
   apiVersion: string;
   code: number;

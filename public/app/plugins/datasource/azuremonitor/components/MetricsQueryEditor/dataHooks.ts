@@ -21,11 +21,7 @@ export type DataHook = (
   setError: SetErrorFn
 ) => AzureMonitorOption[];
 
-export type MetricsMetadataHook = (
-  query: AzureMonitorQuery,
-  datasource: Datasource,
-  onChange: OnChangeFn
-) => MetricMetadata;
+type MetricsMetadataHook = (query: AzureMonitorQuery, datasource: Datasource, onChange: OnChangeFn) => MetricMetadata;
 
 export interface MetricMetadata {
   aggOptions: AzureMonitorOption[];

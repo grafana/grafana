@@ -41,7 +41,7 @@ function getFillGradient(amount: number) {
  * @param panel
  * @param height
  */
-export function updateLegendValues(data: TimeSeries[], panel: any, height: number) {
+function updateLegendValues(data: TimeSeries[], panel: any, height: number) {
   for (let i = 0; i < data.length; i++) {
     const series = data[i];
     const yaxes = panel.yaxes;

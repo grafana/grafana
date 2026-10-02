@@ -64,7 +64,7 @@ export interface TemplateFormValues {
   content: string;
 }
 
-export const defaults: TemplateFormValues = Object.freeze({
+const defaults: TemplateFormValues = Object.freeze({
   title: '',
   content: '',
 });

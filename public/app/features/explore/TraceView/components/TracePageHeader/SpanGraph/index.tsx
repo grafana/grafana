@@ -38,9 +38,9 @@ const getStyles = () => {
 };
 
 const DEFAULT_HEIGHT = 60;
-export const TIMELINE_TICK_INTERVAL = 4;
+const TIMELINE_TICK_INTERVAL = 4;
 
-export type SpanGraphProps = {
+type SpanGraphProps = {
   height?: number;
   trace: Trace;
   viewRange: ViewRange;
@@ -49,7 +49,7 @@ export type SpanGraphProps = {
 };
 
 // exported for tests
-export function getItem(span: TraceSpan): SpanGraphItem {
+function getItem(span: TraceSpan): SpanGraphItem {
   return {
     valueOffset: span.relativeStartTime,
     valueWidth: span.duration,

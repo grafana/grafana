@@ -20,7 +20,7 @@ import {
   STRIKETHROUGH_NODE,
 } from './markdownLivePreview';
 
-export const MARKDOWN_FORMAT_TOOLBAR_TEST_ID = 'notebook-markdown-format-toolbar';
+const MARKDOWN_FORMAT_TOOLBAR_TEST_ID = 'notebook-markdown-format-toolbar';
 
 interface Props {
   editorContainerRef: RefObject<HTMLDivElement | null>;

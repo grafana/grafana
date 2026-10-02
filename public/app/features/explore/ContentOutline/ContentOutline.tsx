@@ -41,7 +41,7 @@ type SectionsExpanded = Record<string, boolean>;
  * children but doesn't show them — collapsed, or merged into a single child — stands in for them,
  * so it takes the highlight on their behalf.
  */
-export function shouldBeActive(
+function shouldBeActive(
   item: ContentOutlineItemContextProps,
   activeSectionId: string,
   activeSectionChildId: string | undefined,

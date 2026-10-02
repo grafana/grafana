@@ -233,7 +233,7 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
   );
 });
 
-export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
+const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
   return {
     container: css({
       display: 'flex',

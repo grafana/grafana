@@ -126,7 +126,7 @@ function PanelCell({
 // transformation turns them into. Also excludes library panels: vizPanelToSchemaV2 serializes them
 // only as a reference to the shared library panel, so any query edit made here would be silently
 // discarded on the next save/reload.
-export function isEditableQueryPanel(panel: VizPanel): boolean {
+function isEditableQueryPanel(panel: VizPanel): boolean {
   const queryRunner = getQueryRunnerFor(panel);
   if (!queryRunner || isLibraryPanel(panel)) {
     return false;

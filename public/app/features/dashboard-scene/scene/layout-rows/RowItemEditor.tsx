@@ -184,7 +184,7 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
   );
 }
 
-export function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
+function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
   const { hideHeader: isHeaderHidden = false } = row.useState();
 
   return (
@@ -205,7 +205,7 @@ export function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
   );
 }
 
-export function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
+function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
   const { fillScreen = false } = row.useState();
 
   return (
@@ -226,7 +226,7 @@ export function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
   );
 }
 
-export function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
+function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
   const { layout, repeatByVariable } = row.useState();
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {

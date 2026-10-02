@@ -91,7 +91,7 @@ function restoreSQLDisplayNames(response: DataQueryResponse, queries: Expression
 /**
  * This is a singleton instance that just pretends to be a DataSource
  */
-export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQuery> {
+class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQuery> {
   constructor(public instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }

@@ -10,7 +10,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 
 import { interpolateSourceQueries } from '../../../utils/interpolateSourceQueries';
 
-export function isDashboardDatasource(query: DataQuery): boolean {
+function isDashboardDatasource(query: DataQuery): boolean {
   return query.datasource?.uid === SHARED_DASHBOARD_QUERY;
 }
 

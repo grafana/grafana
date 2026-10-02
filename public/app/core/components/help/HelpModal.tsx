@@ -66,7 +66,7 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   );
 };
 
-export const useShortcuts = () => {
+const useShortcuts = () => {
   const { isAvailable: assistantAvailable } = useAssistant();
   const modKey = useMemo(() => getModKey(), []);
 

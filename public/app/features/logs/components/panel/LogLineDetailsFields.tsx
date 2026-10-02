@@ -453,7 +453,7 @@ const LogLineDetailsField = ({
   );
 };
 
-export function resolveAppFromLink(href: string): string | undefined {
+function resolveAppFromLink(href: string): string | undefined {
   return href.match(/\/a\/([^/?#]+)/)?.[1];
 }
 

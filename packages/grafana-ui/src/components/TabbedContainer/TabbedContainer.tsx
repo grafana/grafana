@@ -21,7 +21,7 @@ export interface TabConfig {
   icon: IconName;
 }
 
-export interface TabbedContainerProps {
+interface TabbedContainerProps {
   tabs: TabConfig[];
   defaultTab?: string;
   closeIconTooltip?: string;

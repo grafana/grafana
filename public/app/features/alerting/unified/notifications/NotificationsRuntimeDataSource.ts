@@ -241,7 +241,7 @@ const getNotificationsRangeCounts = async (
  * Convert notification range counts to a DataFrame for graph visualization.
  * Each range count series becomes a separate data frame series with timestamps in milliseconds.
  */
-export function rangeCountsToDataFrame(rangeCounts: NotificationRangeCount[]): DataFrame {
+function rangeCountsToDataFrame(rangeCounts: NotificationRangeCount[]): DataFrame {
   if (rangeCounts.length === 0) {
     return {
       fields: [

@@ -41,10 +41,7 @@ type CanvasSpanGraphProps = {
   valueWidth: number;
 };
 
-export const CanvasSpanGraph = memo(function CanvasSpanGraph({
-  items,
-  valueWidth: totalValueWidth,
-}: CanvasSpanGraphProps) {
+const CanvasSpanGraph = memo(function CanvasSpanGraph({ items, valueWidth: totalValueWidth }: CanvasSpanGraphProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

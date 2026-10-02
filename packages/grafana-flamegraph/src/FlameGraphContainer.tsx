@@ -362,7 +362,7 @@ function useLabelSearch(
   }, [search, data]);
 }
 
-export function labelSearch(search: string, data: FlameGraphDataContainer): Set<string> {
+function labelSearch(search: string, data: FlameGraphDataContainer): Set<string> {
   const foundLabels = new Set<string>();
   const terms = search.split(',');
 

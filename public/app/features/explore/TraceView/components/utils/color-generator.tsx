@@ -121,7 +121,7 @@ const getGenerator = memoizeOne((colors: string[], theme: GrafanaTheme2) => {
   return new ColorGenerator(colors, theme);
 });
 
-export function clear(theme: GrafanaTheme2) {
+function clear(theme: GrafanaTheme2) {
   getGenerator([], theme);
 }
 
@@ -133,7 +133,7 @@ export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, nu
   return getGenerator(colors, theme).getRgbColorByKey(key);
 }
 
-export function getFilteredColors(colorsHex: string[], theme: GrafanaTheme2) {
+function getFilteredColors(colorsHex: string[], theme: GrafanaTheme2) {
   const filtered = [...colorsHex];
   // Remove red as a span color because it looks like an error
   const redIndex = filtered.indexOf('#E24D42');

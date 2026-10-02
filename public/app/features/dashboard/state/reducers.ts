@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { DashboardInitPhase, type DashboardState } from 'app/types/dashboard';
 
-export const initialState: DashboardState = {
+const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
   getModel: () => null,
   initError: null,
@@ -21,7 +21,7 @@ const dashboardSlice = createSlice({
 
 export const { setInitialDatasource } = dashboardSlice.actions;
 
-export const dashboardReducer = dashboardSlice.reducer;
+const dashboardReducer = dashboardSlice.reducer;
 
 export default {
   dashboard: dashboardReducer,

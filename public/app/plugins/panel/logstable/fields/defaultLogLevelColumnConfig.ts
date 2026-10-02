@@ -6,7 +6,7 @@ import { LogLevelColor } from 'app/features/logs/logsModel';
 import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';
 
 /** Colors match LogLevelColor in logsModel.ts. */
-export function buildDefaultLogLevelValueMap(): ValueMap {
+function buildDefaultLogLevelValueMap(): ValueMap {
   const options: Record<string, ValueMappingResult> = {};
   for (const level in LogLevel) {
     const canonicLevel: LogLevel | undefined = levelIsLogLevel(level) ? LogLevel[level] : undefined;

@@ -11,11 +11,11 @@ import { type ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness
 import { getSizeStyles, type SizeProps } from '../utils/styles';
 
 type Display = 'flex' | 'block' | 'inline' | 'inline-block' | 'none';
-export type BackgroundColor = keyof GrafanaTheme2['colors']['background'] | 'error' | 'success' | 'warning' | 'info';
-export type BorderStyle = 'solid' | 'dashed';
-export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 'success' | 'warning' | 'info';
-export type BorderRadius = keyof ThemeShape['radius'];
-export type BoxShadow = keyof ThemeShadows;
+type BackgroundColor = keyof GrafanaTheme2['colors']['background'] | 'error' | 'success' | 'warning' | 'info';
+type BorderStyle = 'solid' | 'dashed';
+type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 'success' | 'warning' | 'info';
+type BorderRadius = keyof ThemeShape['radius'];
+type BoxShadow = keyof ThemeShadows;
 
 export interface BoxProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   // Margin props

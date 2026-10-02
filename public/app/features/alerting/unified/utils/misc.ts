@@ -52,7 +52,7 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   return rulesNav.detailsPageLink(sourceName, identifier, returnTo ? { returnTo } : undefined);
 }
 
-export function createViewLinkV2(
+function createViewLinkV2(
   groupIdentifier: DataSourceRuleGroupIdentifier,
   rule: PromRuleDTO,
   returnTo?: string
@@ -63,7 +63,7 @@ export function createViewLinkV2(
   return rulesNav.detailsPageLink(ruleSourceName, identifier, returnTo ? { returnTo } : undefined);
 }
 
-export function createViewLinkFromRuleWithLocation(ruleWithLocation: RuleWithLocation) {
+function createViewLinkFromRuleWithLocation(ruleWithLocation: RuleWithLocation) {
   const ruleSourceName = ruleWithLocation.ruleSourceName;
   const identifier = ruleId.fromRuleWithLocation(ruleWithLocation);
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
@@ -138,7 +138,7 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   return { queryString, alertState, dataSource, groupBy, ruleType, receivers };
 };
 
-export const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => {
+const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => {
   return {
     queryString: searchParams.get('queryString') ?? undefined,
     contactPoint: searchParams.get('contactPoint') ?? undefined,
@@ -189,7 +189,7 @@ export function makeFolderAlertsLink(folderUID: string, title: string): string {
   return createRelativeUrl(`/dashboards/f/${folderUID}/${slug}/alerting`);
 }
 
-export function makeFolderSettingsLink(uid: string): string {
+function makeFolderSettingsLink(uid: string): string {
   return createRelativeUrl(`/dashboards/f/${uid}/settings`);
 }
 
@@ -283,7 +283,7 @@ export function isLocalDevEnv() {
   return environment.isLocalDevEnv();
 }
 
-export function isErrorLike(error: unknown): error is Error {
+function isErrorLike(error: unknown): error is Error {
   return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
@@ -320,7 +320,7 @@ export function getErrorCode(error: unknown): string | undefined {
 }
 
 /* this function will check if the error passed as the first argument contains an error code */
-export function isErrorMatchingCode(error: Error | undefined, code: KnownErrorCodes): boolean {
+function isErrorMatchingCode(error: Error | undefined, code: KnownErrorCodes): boolean {
   if (!error) {
     return false;
   }

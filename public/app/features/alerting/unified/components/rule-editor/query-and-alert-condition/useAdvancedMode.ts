@@ -27,7 +27,7 @@ function initializeSimpleCondition(
     };
   }
 }
-export function determineAdvancedMode(simplifiedQueryEditor: boolean | undefined, isGrafanaAlertingType: boolean) {
+function determineAdvancedMode(simplifiedQueryEditor: boolean | undefined, isGrafanaAlertingType: boolean) {
   return simplifiedQueryEditor === false || !isGrafanaAlertingType;
 }
 

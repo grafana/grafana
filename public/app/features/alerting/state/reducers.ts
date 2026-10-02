@@ -14,13 +14,13 @@ import unifiedAlertingReducer from '../unified/state/reducers';
 
 import alertDef from './alertDef';
 
-export const initialState: AlertRulesState = {
+const initialState: AlertRulesState = {
   items: [],
   searchQuery: '',
   isLoading: false,
 };
 
-export const initialChannelState: NotificationChannelState = {
+const initialChannelState: NotificationChannelState = {
   notificationChannelTypes: [],
   notificationChannel: {},
   notifiers: [],
@@ -112,12 +112,12 @@ const notificationChannelSlice = createSlice({
   },
 });
 
-export const { loadAlertRules, loadedAlertRules, setSearchQuery } = alertRulesSlice.actions;
+export const {} = alertRulesSlice.actions;
 
-export const { notificationChannelLoaded } = notificationChannelSlice.actions;
+export const {} = notificationChannelSlice.actions;
 
-export const alertRulesReducer = alertRulesSlice.reducer;
-export const notificationChannelReducer = notificationChannelSlice.reducer;
+const alertRulesReducer = alertRulesSlice.reducer;
+const notificationChannelReducer = notificationChannelSlice.reducer;
 
 export default {
   alertRules: alertRulesReducer,

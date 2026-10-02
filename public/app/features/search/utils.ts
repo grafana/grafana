@@ -7,7 +7,7 @@ import { type SearchState } from './types';
  * Check if search query has filters enabled. Excludes folderId
  * @param query
  */
-export const hasFilters = (query: SearchState) => {
+const hasFilters = (query: SearchState) => {
   if (!query) {
     return false;
   }
@@ -30,7 +30,7 @@ export const cleanupOldExpandedFolders = () => {
  * Get a storage key for a dashboard folder by its title
  * @param title
  */
-export const getSectionStorageKey = (title = 'General') => {
+const getSectionStorageKey = (title = 'General') => {
   return `${SECTION_STORAGE_KEY}.${title.toLowerCase()}`;
 };
 

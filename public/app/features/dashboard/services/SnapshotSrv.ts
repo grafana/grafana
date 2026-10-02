@@ -36,7 +36,7 @@ interface SnapshotCreateCommand {
   external?: boolean;
 }
 
-export interface SnapshotCreateResponse {
+interface SnapshotCreateResponse {
   key: string;
   url: string;
   deleteUrl: string;

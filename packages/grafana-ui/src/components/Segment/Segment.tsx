@@ -13,7 +13,7 @@ import { getSegmentStyles } from './styles';
 import { type SegmentProps } from './types';
 import { useExpandableLabel } from './useExpandableLabel';
 
-export interface SegmentSyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
+interface SegmentSyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;

@@ -13,7 +13,7 @@ interface SoloPanelPageLogoProps {
   hideLogo?: UrlQueryValue;
 }
 
-export function shouldHideSoloPanelLogo(hideLogo?: UrlQueryValue): boolean {
+function shouldHideSoloPanelLogo(hideLogo?: UrlQueryValue): boolean {
   if (hideLogo === undefined || hideLogo === null) {
     return false;
   }

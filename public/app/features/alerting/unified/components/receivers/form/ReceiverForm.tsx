@@ -270,7 +270,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export function getErrorMessage(error: unknown) {
+function getErrorMessage(error: unknown) {
   if (isOnCallFetchError(error)) {
     return error.data.detail;
   }

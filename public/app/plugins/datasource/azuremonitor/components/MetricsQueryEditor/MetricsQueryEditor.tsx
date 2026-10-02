@@ -39,7 +39,7 @@ const supportsMultipleResources = (namespace?: string): boolean =>
 // ("windows azure"/"wad") namespaces are not resource types and are only available via the
 // legacy ARM metrics endpoint, so they cannot be batched. This mirrors isBatchableModel in
 // the backend batch executor (pkg/tsdb/azuremonitor/metrics/batch-executor.go).
-export const isBatchableNamespace = (namespace?: string): boolean => {
+const isBatchableNamespace = (namespace?: string): boolean => {
   const ns = namespace?.toLocaleLowerCase().trim() ?? '';
   return !(ns.startsWith('azure.vm.') || ns.startsWith('windows azure') || ns.startsWith('wad'));
 };
@@ -48,7 +48,7 @@ export const isBatchableNamespace = (namespace?: string): boolean => {
 // selection. With the batch API enabled, resources only need to share a metric namespace
 // (they can span subscriptions and regions); otherwise they must also share the same
 // subscription and region and use a multi-resource-compatible namespace.
-export const isResourceRowDisabled = (
+const isResourceRowDisabled = (
   row: ResourceRow,
   selectedRows: ResourceRowGroup,
   batchAPIEnabled?: boolean
@@ -83,7 +83,7 @@ export const isResourceRowDisabled = (
 
 // getSelectionNotice returns the helper text shown under the resource picker for the
 // current selection. The text differs when the batch API is enabled.
-export const getSelectionNotice = (selectedRows: ResourceRowGroup, batchAPIEnabled?: boolean): string => {
+const getSelectionNotice = (selectedRows: ResourceRowGroup, batchAPIEnabled?: boolean): string => {
   if (selectedRows.length === 0) {
     return '';
   }

@@ -177,7 +177,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export function getDataTestId(option: SelectableValue): string | undefined {
+function getDataTestId(option: SelectableValue): string | undefined {
   if (option.dataTestId) {
     return option.dataTestId;
   }

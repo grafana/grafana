@@ -73,7 +73,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export type TProps = {
+type TProps = {
   findMatchesIDs: Set<string> | TNil;
   traceTimeline: TTraceTimeline;
   trace: Trace;

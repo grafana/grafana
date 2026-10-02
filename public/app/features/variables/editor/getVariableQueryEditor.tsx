@@ -54,7 +54,7 @@ export async function getVariableQueryEditor<
   return null;
 }
 
-export function StandardVariableQueryEditor<
+function StandardVariableQueryEditor<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
 >({

@@ -11,7 +11,7 @@ import { ItemValues } from './ItemValues';
 import { type instantQueryRawVirtualizedListData } from './RawListContainer';
 import RawListItemAttributes from './RawListItemAttributes';
 
-export interface RawListProps {
+interface RawListProps {
   listItemData: instantQueryRawVirtualizedListData;
   listKey: string;
   totalNumberOfValues: number;

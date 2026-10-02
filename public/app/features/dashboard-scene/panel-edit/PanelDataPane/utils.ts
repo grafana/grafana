@@ -17,7 +17,7 @@ async function isBackendDatasource(uid: string): Promise<boolean> {
  * Checks if there's at least one backend datasource available in the panel
  * Backend datasources have meta.backend === true
  */
-export async function hasBackendDatasource({
+async function hasBackendDatasource({
   datasourceUid,
   queries,
 }: {

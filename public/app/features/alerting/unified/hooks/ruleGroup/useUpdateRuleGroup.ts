@@ -146,7 +146,7 @@ export function useUpdateRuleGroup() {
  * Update an existing rule group, currently only supports updating the interval.
  * Use "useRenameRuleGroup" or "useMoveRuleGroup" for updating the namespace or group name.
  */
-export function useUpdateRuleGroupConfiguration() {
+function useUpdateRuleGroupConfiguration() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
@@ -170,7 +170,7 @@ export function useUpdateRuleGroupConfiguration() {
  * targets an existing rule group.
  * Optionally, update the rule group evaluation interval.
  */
-export function useMoveRuleGroup() {
+function useMoveRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
@@ -240,7 +240,7 @@ export function useMoveRuleGroup() {
  * Rename a rule group but keep it within the same namespace, throws if the action targets an existing rule group.
  * Optionally, update the rule group evaluation interval.
  */
-export function useRenameRuleGroup() {
+function useRenameRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
@@ -296,7 +296,7 @@ export function useRenameRuleGroup() {
  * Reorder rules within an existing rule group. Pass in an array of swap operations Array<[oldIndex, newIndex]>.
  * This prevents rules from accidentally being updated and only allows indices to be moved around.
  */
-export function useReorderRuleForRuleGroup() {
+function useReorderRuleForRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 

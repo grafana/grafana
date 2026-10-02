@@ -52,9 +52,9 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 interface OwnProps {
   onClose: () => void;
 }
-export type Props = ConnectedProps<typeof connector> & OwnProps;
+type Props = ConnectedProps<typeof connector> & OwnProps;
 
-export function RichHistoryContainer(props: Props) {
+function RichHistoryContainer(props: Props) {
   const theme = useTheme2();
 
   const {

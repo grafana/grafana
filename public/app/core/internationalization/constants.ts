@@ -43,6 +43,6 @@ if (process.env.NODE_ENV !== 'test') {
   }
 }
 
-export const VALID_LANGUAGES = LANGUAGES.map((v) => v.code);
+const VALID_LANGUAGES = LANGUAGES.map((v) => v.code);
 
 export const NAMESPACES = uniq(LANGUAGES.flatMap((v) => Object.keys(v.loader)));

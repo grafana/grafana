@@ -148,7 +148,7 @@ export const openOptions =
     dispatch(toKeyedAction(uid, showOptions(variable)));
   };
 
-export const toggleOptionByHighlight = (key: string, clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
+const toggleOptionByHighlight = (key: string, clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { highlightIndex, options } = getVariablesState(key, getState()).optionsPicker;
     const option = options[highlightIndex];

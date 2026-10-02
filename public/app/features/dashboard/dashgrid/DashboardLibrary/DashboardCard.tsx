@@ -44,7 +44,7 @@ interface Details {
 }
 
 /** Lightweight dashboard shape used by custom-template cards. */
-export interface CustomTemplateDashboard {
+interface CustomTemplateDashboard {
   id: string;
   name: string;
   description: string;

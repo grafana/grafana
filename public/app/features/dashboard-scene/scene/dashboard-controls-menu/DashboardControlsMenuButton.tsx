@@ -13,8 +13,8 @@ import { type DashboardScene } from '../DashboardScene';
 import { DashboardControlsMenu } from './DashboardControlsMenu';
 import { useDashboardControls } from './utils';
 
-export const DASHBOARD_CONTROLS_MENU_ARIA_LABEL = 'Dashboard controls menu';
-export const DASHBOARD_CONTROLS_MENU_TITLE = 'Dashboard controls';
+const DASHBOARD_CONTROLS_MENU_ARIA_LABEL = 'Dashboard controls menu';
+const DASHBOARD_CONTROLS_MENU_TITLE = 'Dashboard controls';
 
 export function DashboardControlsButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);

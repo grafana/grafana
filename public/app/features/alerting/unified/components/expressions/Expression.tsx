@@ -329,7 +329,7 @@ const PreviewSummary: FC<{ firing: number; normal: number; isCondition: boolean;
   return <span className={mutedText}>{`${seriesCount} series`}</span>;
 };
 
-export function getGroupedByStateAndSeriesCount(series: DataFrame[]) {
+function getGroupedByStateAndSeriesCount(series: DataFrame[]) {
   const noDataSeries = series.filter((serie) => getSeriesValue(serie) === undefined).length;
   const groupedByState = {
     // we need to filter out series with no data (undefined) or zero value

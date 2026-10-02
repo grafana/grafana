@@ -25,7 +25,7 @@ import { updateAnnotationFromSavedQuery } from '../utils/savedQueryUtils';
 import { AnnotationQueryEditorActionsWrapper } from './AnnotationQueryEditorActionsWrapper';
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
-export interface Props {
+interface Props {
   datasource: DataSourceApi;
   datasourceInstanceSettings: DataSourceInstanceSettings;
   annotation: AnnotationQuery<DataQuery>;

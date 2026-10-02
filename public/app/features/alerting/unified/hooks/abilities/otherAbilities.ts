@@ -40,7 +40,7 @@ export function useFolderAbility(action: FolderAction): Ability {
 
 // ── Folder bulk action abilities ──────────────────────────────────────────────
 
-export function useFolderBulkActionAbilities(): Abilities<FolderBulkAction> {
+function useFolderBulkActionAbilities(): Abilities<FolderBulkAction> {
   const admin = isAdmin();
   return useMemo(
     () => ({
@@ -61,7 +61,7 @@ export function useFolderBulkActionAbility(action: FolderBulkAction): Ability {
 
 // ── Enrichment abilities ──────────────────────────────────────────────────────
 
-export function useEnrichmentAbilities(): Abilities<EnrichmentAction> {
+function useEnrichmentAbilities(): Abilities<EnrichmentAction> {
   const userIsAdmin = isAdmin();
   const hasReadPermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsRead);
   const hasWritePermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsWrite);

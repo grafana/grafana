@@ -179,4 +179,4 @@ export function useProvisionedRequestHandler<T>(options: ProvisionedHandlerOptio
   return { handleSuccess };
 }
 
-export type { ProvisionedOperationInfo, RequestHandlers };
+export type { ProvisionedOperationInfo };

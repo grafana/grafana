@@ -19,7 +19,7 @@ async function probeApp(appId: string): Promise<PluginMeta<{}> | null> {
   }
 }
 
-export async function isDrilldownAvailable(appId: string, appPath: string): Promise<boolean> {
+async function isDrilldownAvailable(appId: string, appPath: string): Promise<boolean> {
   const settings = await probeApp(appId);
   if (!settings) {
     return false;

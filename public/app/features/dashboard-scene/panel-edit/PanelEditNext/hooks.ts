@@ -36,7 +36,7 @@ type UseRatioResizeOptions = {
   className?: string;
 };
 
-export function useRatioResize({
+function useRatioResize({
   direction,
   initialRatio,
   containerRef,
@@ -172,7 +172,7 @@ export function usePanelEditorShell(model: PanelEditor) {
  *   >= 1800px  → medium-large (e.g. 24" FHD full-screen)   → 0.20
  *   below      → 16" laptop or smaller / partial window     → 0.25
  */
-export function getDefaultSidebarRatio(containerWidth: number): number {
+function getDefaultSidebarRatio(containerWidth: number): number {
   if (containerWidth >= 2200) {
     return 0.15;
   }
@@ -258,7 +258,7 @@ type VizAndDataPaneGridInput = {
   sidebarRatio: number;
 };
 
-export function buildVizAndDataPaneGrid({
+function buildVizAndDataPaneGrid({
   hasDataPane,
   isSidebarFullWidth,
   showBanner,

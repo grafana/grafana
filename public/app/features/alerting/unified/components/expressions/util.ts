@@ -107,7 +107,6 @@ const isEmptySeries = (series: DataFrame[]): boolean => {
 
 export {
   decodeGrafanaNamespace,
-  encodeGrafanaNamespace,
   formatLabels,
   getSeriesLabels,
   getSeriesName,

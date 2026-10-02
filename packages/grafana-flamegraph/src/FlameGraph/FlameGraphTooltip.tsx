@@ -83,7 +83,7 @@ type TooltipData = {
   samples: string;
 };
 
-export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, totalTicks: number): TooltipData => {
+const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, totalTicks: number): TooltipData => {
   const displayValue = data.valueDisplayProcessor(item.value);
   const displaySelf = data.getSelfDisplay(item.itemIndexes);
 
@@ -127,11 +127,7 @@ const formatWithSuffix = (value: number, formatter: ValueFormatter): string => {
   return displayValue.text + displayValue.suffix;
 };
 
-export const getDiffTooltipData = (
-  data: FlameGraphDataContainer,
-  item: LevelItem,
-  totalTicks: number
-): DiffTableData[] => {
+const getDiffTooltipData = (data: FlameGraphDataContainer, item: LevelItem, totalTicks: number): DiffTableData[] => {
   const levels = data.getLevels();
   const totalTicksRight = levels[0][0].valueRight!;
   const totalTicksLeft = totalTicks - totalTicksRight;

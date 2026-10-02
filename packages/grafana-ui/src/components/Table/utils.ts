@@ -188,7 +188,7 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field): Cell
   return DefaultCell;
 }
 
-export function filterByValue(field?: Field) {
+function filterByValue(field?: Field) {
   return function (rows: Row[], id: string, filterValues?: SelectableValue[]) {
     if (rows.length === 0) {
       return rows;
@@ -227,7 +227,7 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
   return set;
 }
 
-export function rowToFieldValue(row: any, field?: Field): string {
+function rowToFieldValue(row: any, field?: Field): string {
   if (!field || !row) {
     return '';
   }
@@ -245,7 +245,7 @@ export function valuesToOptions(unique: Record<string, unknown>): SelectableValu
     .sort(sortOptions);
 }
 
-export function sortOptions(a: SelectableValue, b: SelectableValue): number {
+function sortOptions(a: SelectableValue, b: SelectableValue): number {
   if (a.label === undefined && b.label === undefined) {
     return 0;
   }

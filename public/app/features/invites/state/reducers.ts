@@ -4,11 +4,11 @@ import { type Invitee } from 'app/types/user';
 
 import { fetchInvitees, revokeInvite } from './actions';
 
-export type Status = 'idle' | 'loading' | 'succeeded' | 'failed';
+type Status = 'idle' | 'loading' | 'succeeded' | 'failed';
 
 const invitesAdapter = createEntityAdapter({ selectId: (invite: Invitee) => invite.code });
 export const selectors = invitesAdapter.getSelectors();
-export const initialState = invitesAdapter.getInitialState<{ status: Status }>({ status: 'idle' });
+const initialState = invitesAdapter.getInitialState<{ status: Status }>({ status: 'idle' });
 
 const invitesSlice = createSlice({
   name: 'invites',
@@ -33,7 +33,7 @@ const invitesSlice = createSlice({
   },
 });
 
-export const invitesReducer = invitesSlice.reducer;
+const invitesReducer = invitesSlice.reducer;
 
 export default {
   invites: invitesReducer,

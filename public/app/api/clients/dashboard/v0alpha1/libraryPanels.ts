@@ -117,7 +117,7 @@ const specModelKeys = new Set([
  * In the legacy model blob "title" is the panel display title (spec.panelTitle),
  * while the library panel name maps to spec.title.
  */
-export function legacyModelToSpecAndStatus(
+function legacyModelToSpecAndStatus(
   name: string,
   legacyModel: object
 ): { spec: LibraryPanelSpec; status: LibraryPanelStatus } {
@@ -169,7 +169,7 @@ export function legacyModelToSpecAndStatus(
  * Rebuild the legacy panel model from the k8s spec and status. The model
  * intentionally omits gridPos/id/libraryPanel, which LibraryPanel.model excludes.
  */
-export function k8sResourceToLegacyModel(item: LibraryPanelResource): LibraryPanel['model'] {
+function k8sResourceToLegacyModel(item: LibraryPanelResource): LibraryPanel['model'] {
   const spec = item.spec;
   const model: Record<string, unknown> = { ...(item.status?.missing ?? {}) };
   model.type = spec.type;
@@ -203,7 +203,7 @@ export function k8sResourceToLegacyModel(item: LibraryPanelResource): LibraryPan
 
 const emptyUser: LibraryElementDTOMetaUser = { avatarUrl: '', id: 0, name: '' };
 
-export function k8sResourceToLegacyDTO(
+function k8sResourceToLegacyDTO(
   item: LibraryPanelResource,
   enrichment?: {
     folderName?: string;

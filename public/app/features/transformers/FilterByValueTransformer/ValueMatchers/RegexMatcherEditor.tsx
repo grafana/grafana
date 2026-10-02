@@ -9,7 +9,7 @@ import { getVariableSuggestions } from '../../utils';
 
 import { type ValueMatcherEditorConfig, type ValueMatcherUIProps, type ValueMatcherUIRegistryItem } from './types';
 
-export function regexMatcherEditor(
+function regexMatcherEditor(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<string>>> {
   return function Render({ options, onChange }) {

@@ -36,7 +36,7 @@ const recoverRefIdMissing = (
   return;
 };
 
-export interface Props {
+interface Props {
   value?: string; // refID
   data: DataFrame[];
   onChange: (value: string) => void;
@@ -111,7 +111,7 @@ const recoverMultiRefIdMissing = (
   return;
 };
 
-export interface MultiProps {
+interface MultiProps {
   value?: string; // 1 or more refID in reqExp format /A|B|C/
   data: DataFrame[];
   onChange: (value: string[]) => void;

@@ -119,7 +119,7 @@ function isAlertmanagerMatchByURL(dataSourceUrl: string, alertmanagerUrl: string
 }
 
 // Grafana prepends the http protocol if there isn't one, but it doesn't store that in the datasource settings
-export function normalizeDataSourceURL(url: string) {
+function normalizeDataSourceURL(url: string) {
   const hasProtocol = new RegExp('^[^:]*://').test(url);
   const urlWithProtocol = hasProtocol ? url : `http://${url}`;
 

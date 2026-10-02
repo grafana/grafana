@@ -100,7 +100,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export type ViewingLayerProps = {
+type ViewingLayerProps = {
   height: number;
   numTicks: number;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;

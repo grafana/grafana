@@ -14,7 +14,7 @@ interface OwnProps {
   onClose: () => void;
 }
 
-export type Props = OwnProps & ConnectedProps<typeof connector>;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 const mapStateToProps = (state: StoreState) => {
   const allowInsecureEmail =
@@ -31,12 +31,7 @@ const mapActionsToProps = {
 
 const connector = connect(mapStateToProps, mapActionsToProps);
 
-export const AuthDrawerUnconnected = ({
-  allowInsecureEmail,
-  loadSettings,
-  onClose,
-  saveSettings,
-}: Props): JSX.Element => {
+const AuthDrawerUnconnected = ({ allowInsecureEmail, loadSettings, onClose, saveSettings }: Props): JSX.Element => {
   const notifyApp = useAppNotification();
 
   const oauthAllowInsecureEmailLookupOnChange = async () => {

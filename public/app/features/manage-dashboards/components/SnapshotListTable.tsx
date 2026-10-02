@@ -13,7 +13,7 @@ import {
 
 import { SnapshotListTableRow } from './SnapshotListTableRow';
 
-export async function getSnapshots(opts?: SnapshotListOptions): Promise<SnapshotListPage> {
+async function getSnapshots(opts?: SnapshotListOptions): Promise<SnapshotListPage> {
   const page = await getDashboardSnapshotSrv().getSnapshots(opts);
   return {
     items: page.items.map((snapshot) => ({

@@ -11,7 +11,7 @@ import { IconButton } from '../IconButton/IconButton';
 
 import { type DropzoneFile } from './FileDropzone';
 
-export const REMOVE_FILE = 'Remove file';
+const REMOVE_FILE = 'Remove file';
 export interface FileListItemProps {
   file: DropzoneFile;
   removeFile?: (file: DropzoneFile) => void;

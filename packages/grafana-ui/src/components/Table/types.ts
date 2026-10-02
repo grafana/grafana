@@ -150,7 +150,7 @@ export interface TableCustomCellOptions {
  * @alpha
  * Props that will be passed to the TableCustomCellOptions.cellComponent when rendered.
  */
-export interface CustomHeaderRendererProps {
+interface CustomHeaderRendererProps {
   field: Field;
   defaultContent: React.ReactNode;
 }

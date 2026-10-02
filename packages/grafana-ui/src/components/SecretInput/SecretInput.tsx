@@ -29,8 +29,8 @@ type NonRevealableProps = {
 
 export type Props = BaseProps & (RevealableProps | NonRevealableProps);
 
-export const CONFIGURED_TEXT = 'configured';
-export const RESET_BUTTON_TEXT = 'Reset';
+const CONFIGURED_TEXT = 'configured';
+const RESET_BUTTON_TEXT = 'Reset';
 
 /**
  * Used for secret/password input.

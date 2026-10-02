@@ -13,7 +13,7 @@ import { EllipsisAnimated } from './EllipsisAnimated';
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
-export interface Props<T = string> extends Omit<FieldProps, 'children'> {
+interface Props<T = string> extends Omit<FieldProps, 'children'> {
   /** Saving request that will be triggered 600ms after changing the value */
   onFinishChange: (inputValue: T) => Promise<void>;
   /** Custom error message to display on saving */

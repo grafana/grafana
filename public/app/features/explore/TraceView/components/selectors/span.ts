@@ -17,13 +17,13 @@ import { createSelector } from 'reselect';
 import { type TraceSpanData, type TraceSpanReference } from '../types/trace';
 
 export const getSpanId = (span: TraceSpanData) => span.spanID;
-export const getSpanReferences = (span: TraceSpanData) => span.references || [];
-export const getSpanReferenceByType = createSelector(
+const getSpanReferences = (span: TraceSpanData) => span.references || [];
+const getSpanReferenceByType = createSelector(
   createSelector(({ span }: { span: TraceSpanData }) => span, getSpanReferences),
   ({ type }: { type: string }) => type,
   (references, type) => references.find((ref: TraceSpanReference) => ref.refType === type)
 );
-export const getSpanParentId = createSelector(
+const getSpanParentId = createSelector(
   (span: TraceSpanData) => getSpanReferenceByType({ span, type: 'CHILD_OF' }),
   (childOfRef) => (childOfRef ? childOfRef.spanID : null)
 );

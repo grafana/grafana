@@ -68,7 +68,7 @@ export function RowItemRepeater({ row, variable }: Props) {
   );
 }
 
-export function performRowRepeats(variable: MultiValueVariable, row: RowItem, contentChanged: boolean) {
+function performRowRepeats(variable: MultiValueVariable, row: RowItem, contentChanged: boolean) {
   if (row.state.repeatByVariable !== variable.state.name) {
     return;
   }

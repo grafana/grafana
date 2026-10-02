@@ -25,7 +25,7 @@ type ScaleKey = string;
  * Labels come first (precise per-series identity); config.displayName is not preferred over
  * them because it's often a shared, un-interpolated template that collapses all series.
  */
-export function getCompareSeriesIdentityKey(field: Field, frame?: DataFrame): string {
+function getCompareSeriesIdentityKey(field: Field, frame?: DataFrame): string {
   // The compare request runs under a distinct `<refId>-compare` refId (see PanelTimeRange.getExtraQueries)
   // so query caches/panels don't collide. Datasources that embed the refId in the series name (e.g. TestData)
   // then emit compare names like `A-compare-series1` while the current period is `A-series1`. Strip that

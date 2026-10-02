@@ -118,7 +118,7 @@ function relativeToBestCutoff(scores: number[]): number {
  * relative-to-best over all matched panels (best + margin). Dashboard disappears
  * if its best panel is more than a margin past the overall best.
  */
-export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSearchDashboardResult[] {
+function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSearchDashboardResult[] {
   const matched = results.filter((result) => result.dashboardUid);
   const globalCutoff = relativeToBestCutoff(matched.map((result) => result.score));
 
@@ -195,10 +195,7 @@ async function resolveFolderTitles(results: DeepSearchPanelResult[]): Promise<De
   );
 }
 
-export async function getDeepSearchResults(
-  query: string,
-  abortSignal?: AbortSignal
-): Promise<DeepSearchDashboardResult[]> {
+async function getDeepSearchResults(query: string, abortSignal?: AbortSignal): Promise<DeepSearchDashboardResult[]> {
   if (query.trim().length === 0) {
     return [];
   }

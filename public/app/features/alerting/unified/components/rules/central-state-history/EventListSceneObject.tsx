@@ -59,7 +59,7 @@ interface HistoryEventsListProps {
   addFilter: (key: string, value: string, type: FilterType) => void;
   hideAlertRuleColumn?: boolean;
 }
-export const HistoryEventsList = ({
+const HistoryEventsList = ({
   timeRange,
   valueInLabelFilter,
   valueInStateToFilter,

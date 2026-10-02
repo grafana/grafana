@@ -447,7 +447,7 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-export function getVizPanelQueries(
+function getVizPanelQueries(
   vizPanel: VizPanel,
   dsReferencesMapping?: DSReferencesMapping,
   isSnapshot = false
@@ -862,7 +862,7 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
-export function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
+function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (typeof dash !== 'object' || dash === null || Array.isArray(dash)) {
     throw new Error('Dashboard is not an object or is null');
   }
@@ -1018,7 +1018,7 @@ function validateRowsLayout(layout: unknown) {
   }
 }
 
-export function getAutoAssignedDSRef(
+function getAutoAssignedDSRef(
   element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer,
   type: 'panels' | 'variables' | 'annotations',
   elementMapReferences?: DSReferencesMapping
@@ -1043,7 +1043,7 @@ export function getAutoAssignedDSRef(
   throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
 }
 
-export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
+function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
   if (!ds) {
     return undefined;
   }
@@ -1066,7 +1066,7 @@ export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undef
  * - { type: string } if the datasource was autossigned defined by the initial group value
  * - { uid: string, type: string } if the datasource was defined in the initial save model
  */
-export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | AnnotationQuery>(
+function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | AnnotationQuery>(
   element: T,
   autoAssignedDsRef: Map<string, string | undefined>,
 

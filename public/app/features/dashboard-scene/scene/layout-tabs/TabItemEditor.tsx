@@ -167,7 +167,7 @@ function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: 
   );
 }
 
-export function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
+function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
   const { layout, repeatByVariable } = tab.useState();
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {

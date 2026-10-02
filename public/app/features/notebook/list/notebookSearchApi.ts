@@ -92,7 +92,7 @@ interface FacetTerm {
   count: number;
 }
 
-export interface SearchResults {
+interface SearchResults {
   metadata: ResultsMetadata;
   items: ResultItem[];
   facets?: Record<string, FacetTerm[]>;

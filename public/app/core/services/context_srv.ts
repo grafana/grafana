@@ -284,7 +284,7 @@ export class ContextSrv {
 let contextSrv = new ContextSrv();
 export { contextSrv };
 
-export const setContextSrv = (override: ContextSrv) => {
+const setContextSrv = (override: ContextSrv) => {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('contextSrv can be only overridden in test environment');
   }

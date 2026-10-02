@@ -59,7 +59,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
   );
 };
 
-export const generateLabel = (feature: FeatureLike, idx: number): string | React.ReactNode => {
+const generateLabel = (feature: FeatureLike, idx: number): string | React.ReactNode => {
   const names = ['Name', 'name', 'Title', 'ID', 'id'];
   let props = feature.getProperties();
   let first = '';

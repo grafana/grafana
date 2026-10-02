@@ -62,7 +62,7 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataAlertingTabSt
   }
 }
 
-export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<PanelDataAlertingTab>) {
+function PanelDataAlertingTabRendered({ model }: SceneComponentProps<PanelDataAlertingTab>) {
   const styles = useStyles2(getStyles);
 
   const { errors, loading, rules } = usePanelCombinedRules({

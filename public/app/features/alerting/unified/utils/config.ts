@@ -39,7 +39,7 @@ export enum StateHistoryImplementation {
 // Takes the settings rather than reading them, so it stays usable once Grafana's frontend
 // settings are fetched instead of being available at import time. Components should use
 // useStateHistoryImplementation instead of calling this directly.
-export function getStateHistoryImplementation(unifiedAlerting: UnifiedAlertingConfig): StateHistoryImplementation {
+function getStateHistoryImplementation(unifiedAlerting: UnifiedAlertingConfig): StateHistoryImplementation {
   const { stateHistory, alertStateHistoryBackend, alertStateHistoryPrimary } = unifiedAlerting;
 
   // Grafana only started sending the nested stateHistory object in 12.4, so read the older flat
@@ -66,7 +66,7 @@ export function getStateHistoryImplementation(unifiedAlerting: UnifiedAlertingCo
 
 // Whether history can be shown at all. Use this when a yes or no is all you need, and
 // getStateHistoryImplementation when you need to know which view to render.
-export function isStateHistoryAvailable(unifiedAlerting: UnifiedAlertingConfig): boolean {
+function isStateHistoryAvailable(unifiedAlerting: UnifiedAlertingConfig): boolean {
   return getStateHistoryImplementation(unifiedAlerting) !== StateHistoryImplementation.Unavailable;
 }
 

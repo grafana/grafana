@@ -12,7 +12,7 @@ export type CloudWatchQuery =
   | CloudWatchDefaultQuery;
 
 // We want to allow setting defaults for both Logs and Metrics queries
-export type CloudWatchDefaultQuery = Omit<raw.CloudWatchLogsQuery, 'queryMode'> & raw.CloudWatchMetricsQuery;
+type CloudWatchDefaultQuery = Omit<raw.CloudWatchLogsQuery, 'queryMode'> & raw.CloudWatchMetricsQuery;
 
 export interface MultiFilters {
   [key: string]: string[];

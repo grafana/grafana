@@ -55,7 +55,7 @@ export interface QueryFieldProps extends Themeable2 {
   theme: GrafanaTheme2;
 }
 
-export interface QueryFieldState {
+interface QueryFieldState {
   suggestions: CompletionItemGroup[];
   typeaheadContext: string | null;
   typeaheadPrefix: string;
@@ -63,7 +63,7 @@ export interface QueryFieldState {
   value: Value;
 }
 
-export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFieldState> {
+class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFieldState> {
   plugins: Array<Plugin<Editor>>;
   runOnChangeDebounced: Function;
   lastExecutedValue: Value | null = null;

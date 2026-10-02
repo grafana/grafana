@@ -51,9 +51,9 @@ const LOGS_DRILLDOWN_APP_ID = 'grafana-lokiexplore-app';
 const LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiQueryMatch';
 
 /** Persists which Loki datasource last returned related logs for a given trace datasource. */
-export const LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiDatasourceMatch';
+const LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiDatasourceMatch';
 
-export function lokiQueryMatchStorageKey(traceDatasourceUid: string, logsDatasourceUid: string): string {
+function lokiQueryMatchStorageKey(traceDatasourceUid: string, logsDatasourceUid: string): string {
   return `${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${traceDatasourceUid}.${logsDatasourceUid}`;
 }
 
@@ -476,7 +476,7 @@ function rebuildExploreHref(linkModel: LinkModel, queries: DataQuery[], datasour
  * - line-contains: two line filters, `|= "<traceId>" |= "<spanId>"` — the span_id one is always last.
  * - structured (default/job): a single field filter, `| <field>="<spanId>"`.
  */
-export function addNoSpanIdFallback(query: DataQuery) {
+function addNoSpanIdFallback(query: DataQuery) {
   if ('expr' in query === false || typeof query.expr !== 'string') {
     return [query];
   }
@@ -537,7 +537,7 @@ export function getLogsButtonCTA(
   return defaultCTA;
 }
 
-export function getLogsButtonTooltip(
+function getLogsButtonTooltip(
   settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
   presence: LogsPresence,
   type: 'span' | 'trace' = 'span'

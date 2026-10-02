@@ -23,7 +23,7 @@ import {
  * @returns An Observable that emits the plugin extensions for the given extension point any time the registries change
  */
 
-export const getObservablePluginExtensions = (
+const getObservablePluginExtensions = (
   options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
   const { extensionPointId } = options;
@@ -63,7 +63,7 @@ export const getObservablePluginComponents: GetObservablePluginComponents = (opt
 };
 
 // Returns with a list of plugin extensions for the given extension point
-export const getPluginExtensions: GetExtensions = ({
+const getPluginExtensions: GetExtensions = ({
   context,
   extensionPointId,
   limitPerPlugin,

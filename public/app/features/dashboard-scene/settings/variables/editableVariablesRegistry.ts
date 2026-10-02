@@ -27,7 +27,7 @@ interface EditableVariableConfig {
  * import, so the editors stay out of the initial dashboard bundle. View-mode code
  * that only needs type names/descriptions should use `utils.ts`.
  */
-export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => {
+const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => {
   const metadata = getEditableVariablesMetadata();
 
   return {

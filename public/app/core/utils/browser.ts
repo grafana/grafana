@@ -2,7 +2,7 @@
  * Check to see if browser is not supported by Grafana
  * This function is copied to index.html but is here so we can write tests
  *  */
-export function checkBrowserCompatibility() {
+function checkBrowserCompatibility() {
   const isIE = navigator.userAgent.indexOf('MSIE') > -1;
   const isEdge = navigator.userAgent.indexOf('Edge/') > -1 || navigator.userAgent.indexOf('Edg/') > -1;
   const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;

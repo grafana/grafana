@@ -303,7 +303,7 @@ function createPanelDataProvider(
  * This ensures v2→Scene→v1 conversion produces the same output as the Go backend,
  * which does NOT add panel-level datasource for non-mixed panels.
  */
-export function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
+function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   const queries = panel.spec.data?.spec.queries;
   if (!queries?.length) {
     return undefined;
@@ -453,7 +453,7 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
   };
 }
 
-export function ensureUniqueRefIds(queries: PanelQueryKind[]): PanelQueryKind[] {
+function ensureUniqueRefIds(queries: PanelQueryKind[]): PanelQueryKind[] {
   // Adapter to make PanelQueryKind[] work with getNextRefId (which expects { refId }[])
   const refIdAdapter = queries.map((q) => ({ refId: q.spec.refId }));
 

@@ -291,7 +291,7 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
   return rowItem;
 }
 
-export function createDashboardSceneFromDashboardModel(
+function createDashboardSceneFromDashboardModel(
   oldModel: DashboardModel,
   dto: DashboardDataDTO,
   options?: LoadDashboardOptions,
@@ -606,7 +606,7 @@ const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
 };
 
 // override panel datasource and targets with snapshot data using the Grafana datasource
-export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
+const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
   // only old snapshots created with old dashboards contains snapshotData
   if (panel.snapshotData) {
     panel.datasource = GRAFANA_DATASOURCE_REF;

@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { type UsersState, type OrgUser } from 'app/types/user';
 
-export const initialState: UsersState = {
+const initialState: UsersState = {
   users: [],
   searchQuery: '',
   page: 0,
@@ -12,7 +12,7 @@ export const initialState: UsersState = {
   rolesLoading: false,
 };
 
-export interface UsersFetchResult {
+interface UsersFetchResult {
   orgUsers: OrgUser[];
   perPage: number;
   page: number;
@@ -78,7 +78,7 @@ export const {
   rolesFetchEnd,
 } = usersSlice.actions;
 
-export const usersReducer = usersSlice.reducer;
+const usersReducer = usersSlice.reducer;
 
 export default {
   users: usersReducer,

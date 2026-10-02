@@ -101,7 +101,7 @@ function isRepositoryRootFolder(targetFolder?: Folder, repoName?: string) {
 /**
  * Gets the path for a nested folder from its annotations
  */
-export function getNestedFolderPath(targetFolder?: Folder): string | undefined {
+function getNestedFolderPath(targetFolder?: Folder): string | undefined {
   if (!targetFolder) {
     return undefined;
   }
@@ -111,7 +111,7 @@ export function getNestedFolderPath(targetFolder?: Folder): string | undefined {
   return sourcePath ? joinPath(sourcePath, '') : '/';
 }
 
-export function getResourceTargetPath(currentPath: string, targetFolderPath: string): string {
+function getResourceTargetPath(currentPath: string, targetFolderPath: string): string {
   // Handle folder paths that end with '/'
   const cleanCurrentPath = currentPath.replace(/\/$/, ''); // Remove trailing slash
   const filename = cleanCurrentPath.split('/').pop();

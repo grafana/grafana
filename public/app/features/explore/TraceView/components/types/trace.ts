@@ -108,7 +108,7 @@ export type TraceSpan = TraceSpanData & {
   aggregation?: SpanAggregation;
 };
 
-export type TraceData = {
+type TraceData = {
   processes: Record<string, TraceProcess>;
   traceID: string;
   warnings?: string[] | null;

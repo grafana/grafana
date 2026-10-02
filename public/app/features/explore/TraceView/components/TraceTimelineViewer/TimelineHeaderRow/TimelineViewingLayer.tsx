@@ -81,7 +81,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export type TimelineViewingLayerProps = {
+type TimelineViewingLayerProps = {
   /**
    * `boundsInvalidator` is an arbitrary prop that lets the component know the
    * bounds for dragging need to be recalculated. In practice, the name column

@@ -8,10 +8,10 @@ import { InlineField } from '../Forms/InlineField';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 
-export interface Props<T extends DataSourceJsonData>
+interface Props<T extends DataSourceJsonData>
   extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}
 
-export interface AlertingConfig extends DataSourceJsonData {
+interface AlertingConfig extends DataSourceJsonData {
   manageAlerts?: boolean;
 }
 

@@ -134,7 +134,7 @@ function resolveSelectedPolicyAndLabels(
   return { selectedPolicy, labels: migratedFromLabel ? stripNamedRouteLabel(labels) : labels };
 }
 
-export function getNotificationSettingsForDTO(
+function getNotificationSettingsForDTO(
   manualRouting: boolean,
   contactPoints?: AlertManagerManualRouting,
   selectedPolicy?: string
@@ -269,7 +269,7 @@ const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
   value: value.trim(),
 });
 
-export function getContactPointsFromDTO(ruleDefinition: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
+function getContactPointsFromDTO(ruleDefinition: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
   const notificationSettings = ruleDefinition.notification_settings;
 
   // if the rule is configured to send to a policy, return early
@@ -492,7 +492,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
  * This function isn't supposed to be needed, but we've noticed some customers are creating rules via Provisioning or
  * other interfaces where they aren't including the RefId in the "model" of the expression so copy the refId from the query definition.
  */
-export function fixMissingRefIdsInExpressionModel<T extends RulerRuleDTO>(rule: T): T {
+function fixMissingRefIdsInExpressionModel<T extends RulerRuleDTO>(rule: T): T {
   // non-Grafana managed rules don't use expression nodes so we return the rule as-is
   if (!rulerRuleType.grafana.rule(rule)) {
     return rule;
@@ -812,7 +812,7 @@ export const dataQueriesToGrafanaQueries = async (
 /**
  * Folder that contains the dashboard, used to pre-fill the alert rule folder.
  */
-export function folderFromDashboardMeta(meta: { folderUid?: string; folderTitle?: string }): Folder | undefined {
+function folderFromDashboardMeta(meta: { folderUid?: string; folderTitle?: string }): Folder | undefined {
   const uid = meta.folderUid ?? '';
   const title = meta.folderTitle ?? '';
   if (!uid && !title) {

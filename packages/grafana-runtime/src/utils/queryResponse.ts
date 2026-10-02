@@ -20,7 +20,7 @@ import { type FetchError, type FetchResponse } from '../services';
 import { type HealthCheckResultDetails } from './DataSourceWithBackend';
 import { toDataQueryError } from './toDataQueryError';
 
-export const cachedResponseNotice: QueryResultMetaNotice = { severity: 'info', text: 'Cached response' };
+const cachedResponseNotice: QueryResultMetaNotice = { severity: 'info', text: 'Cached response' };
 
 /**
  * Single response object from a backend data source. Properties are optional but response should contain at least
@@ -197,7 +197,7 @@ export interface TestingStatus {
  *
  * @returns {TestingStatus}
  */
-export function toTestingStatus(err: FetchError): TestingStatus {
+function toTestingStatus(err: FetchError): TestingStatus {
   const queryResponse = toDataQueryResponse(err);
   // POST api/ds/query errors returned as { message: string, error: string } objects
   if (queryResponse.error?.data?.message) {

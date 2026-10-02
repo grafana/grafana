@@ -15,7 +15,7 @@ function escapePrometheusLabelValue(value: string): string {
  * Builds a PromQL selector for GRAFANA_ALERTS that matches this instance
  * (grafana_rule_uid + instance labels). Used to query the current alert state.
  */
-export function buildInstanceStateQueryExpr(ruleUID: string, instanceLabels: Labels): string {
+function buildInstanceStateQueryExpr(ruleUID: string, instanceLabels: Labels): string {
   const parts: string[] = [`grafana_rule_uid="${escapePrometheusLabelValue(ruleUID)}"`];
   for (const [k, v] of Object.entries(instanceLabels)) {
     if (k && v != null && v !== '' && !k.startsWith('__')) {
@@ -41,7 +41,7 @@ const ALERTSTATE_LABEL_TO_GRAFANA_STATE: Record<string, GrafanaAlertState> = {
  * Reads grafana_alertstate from the first series in the query result and maps it to GrafanaAlertState.
  * The backend writes it lowercase (alerting, pending, normal, recovering, nodata, error).
  */
-export function getInstanceStateFromMetricSeries(series: DataFrame[] | undefined): GrafanaAlertState | null {
+function getInstanceStateFromMetricSeries(series: DataFrame[] | undefined): GrafanaAlertState | null {
   if (!series?.length) {
     return null;
   }

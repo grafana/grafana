@@ -14,11 +14,11 @@
 
 import { round as _round, dropWhile as _dropWhile } from 'lodash';
 
-export const ONE_MILLISECOND = 1000;
-export const ONE_SECOND = 1000 * ONE_MILLISECOND;
-export const ONE_MINUTE = 60 * ONE_SECOND;
-export const ONE_HOUR = 60 * ONE_MINUTE;
-export const ONE_DAY = 24 * ONE_HOUR;
+const ONE_MILLISECOND = 1000;
+const ONE_SECOND = 1000 * ONE_MILLISECOND;
+const ONE_MINUTE = 60 * ONE_SECOND;
+const ONE_HOUR = 60 * ONE_MINUTE;
+const ONE_DAY = 24 * ONE_HOUR;
 
 const UNIT_STEPS: Array<{ unit: string; microseconds: number; ofPrevious: number }> = [
   { unit: 'd', microseconds: ONE_DAY, ofPrevious: 24 },

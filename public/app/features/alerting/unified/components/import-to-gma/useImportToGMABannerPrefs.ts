@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 const IMPORT_TO_GMA_BANNER_DISMISSED_KEY = 'grafana.alerting.import_to_gma_banner.dismissed';
 
 // Scope dismissal per org so hiding the banner in one org does not hide it in another
-export function getImportToGMABannerDismissedKey(orgId: number): string {
+function getImportToGMABannerDismissedKey(orgId: number): string {
   return `${IMPORT_TO_GMA_BANNER_DISMISSED_KEY}-org-${orgId}`;
 }
 
