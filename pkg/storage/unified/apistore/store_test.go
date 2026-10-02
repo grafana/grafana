@@ -197,9 +197,9 @@ func TestCreateOrReplaceGetErrorPropagatesUnchanged(t *testing.T) {
 	defer destroyFunc()
 	require.NoError(t, err)
 
-	// An empty name produces a key the backend itself rejects when read, independent of
-	// whether anything exists there - exercising the "Get fails for a reason other than
-	// NotFound" branch without needing a second, more invasive test harness.
+	// An empty name produces a key the backend itself rejects when read - exercising
+	// GuaranteedUpdate's own internal read-error propagation (inside its retry loop),
+	// which createOrReplace now relies on directly having dropped its separate pre-Get.
 	obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{
 		Name: "", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
 	}}
@@ -259,29 +259,29 @@ func TestCreateOrReplaceRejectsWhenCallerLacksUpdateRights(t *testing.T) {
 	require.Error(t, err, "deny-everything AccessClient should block even the first Create attempt, confirming the harness genuinely enforces access control end to end")
 }
 
-type createOnlyAccessClient struct{}
+type denyUpdateAccessClient struct{}
 
-func (createOnlyAccessClient) Check(_ context.Context, _ claims.AuthInfo, req claims.CheckRequest, _ string) (claims.CheckResponse, error) {
-	return claims.CheckResponse{Allowed: req.Verb == utils.VerbCreate}, nil
+func (denyUpdateAccessClient) Check(_ context.Context, _ claims.AuthInfo, req claims.CheckRequest, _ string) (claims.CheckResponse, error) {
+	return claims.CheckResponse{Allowed: req.Verb != utils.VerbUpdate}, nil
 }
 
-func (createOnlyAccessClient) Compile(_ context.Context, _ claims.AuthInfo, _ claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+func (denyUpdateAccessClient) Compile(_ context.Context, _ claims.AuthInfo, _ claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
 	return func(_, _ string) bool { return true }, &claims.NoopZookie{}, nil
 }
 
-func (createOnlyAccessClient) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+func (denyUpdateAccessClient) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
 	return claims.BatchCheckResponse{}, nil
 }
 
 func TestCreateOrReplaceRejectsUpdateWithoutUpdateRights(t *testing.T) {
-	ctx, store, destroyFunc, err := testSetup(t, withAccessClient(createOnlyAccessClient{}))
+	ctx, store, destroyFunc, err := testSetup(t, withAccessClient(denyUpdateAccessClient{}))
 	defer destroyFunc()
 	require.NoError(t, err)
 
 	key := "pods/test-ns/create-only"
 	first := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "create-only", Namespace: "test-ns"}}
 	firstOut := &example.Pod{}
-	require.NoError(t, store.Create(ctx, key, first, firstOut, 0), "create-only access should still allow a genuine first create")
+	require.NoError(t, store.Create(ctx, key, first, firstOut, 0), "every verb except update is allowed, so a genuine first create must still succeed")
 
 	second := &example.Pod{ObjectMeta: metav1.ObjectMeta{
 		Name: "create-only", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
