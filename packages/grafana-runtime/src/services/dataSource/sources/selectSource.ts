@@ -5,7 +5,7 @@ import { MT_FILL_PREREQUISITES_MISSING_WARNING } from '../constants';
 import { logDataSourceDebug, logDataSourceWarning } from '../logging';
 
 import { BootDataSource } from './bootDataSource';
-import { createMTDataSource } from './mt/mtSource';
+import { MTDataSource } from './mt/mtSource';
 import { type BootDataSourceSettings, type DataSourceCacheSource } from './types';
 
 interface MTFillGate {
@@ -65,7 +65,7 @@ export function createDataSourceCacheSource(boot: BootDataSourceSettings): DataS
 
   if (gate.requested && gate.missing.length === 0) {
     logDataSourceDebug('DataSource: filling the data source cache from the MT APIs', {});
-    return createMTDataSource();
+    return new MTDataSource();
   }
 
   if (gate.requested) {
