@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -27,10 +27,7 @@ export const LogLineOTelDetailsError = ({ fields, labels }: LogLineOTelDetailsEr
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
 
-  const classifiedFields = useMemo(
-    () => classifyErrorAttributes(fields, (field) => field.keys[0] ?? ''),
-    [fields]
-  );
+  const classifiedFields = useMemo(() => classifyErrorAttributes(fields, (field) => field.keys[0] ?? ''), [fields]);
   const classifiedLabels = useMemo(() => classifyErrorAttributes(labels, (label) => label.key), [labels]);
 
   const messages = useMemo(
@@ -54,7 +51,7 @@ export const LogLineOTelDetailsError = ({ fields, labels }: LogLineOTelDetailsEr
     <div className={styles.container}>
       <div className={styles.header}>
         <Icon name="exclamation-circle" className={styles.icon} />
-        <span>{t('explore.span-detail.attribute-category.error', 'Error')}</span>
+        <span>{t('explore.span-detail.attribute-category.error', 'Error details')}</span>
       </div>
       <div className={styles.content}>
         {messages.map((item) => (
@@ -68,7 +65,7 @@ export const LogLineOTelDetailsError = ({ fields, labels }: LogLineOTelDetailsEr
           </div>
         )}
         {stacktraces.map((item) => (
-          <ErrorValue key={`stacktrace-${item.key}`} item={item} variant="stacktrace" />
+          <StacktraceValue key={`stacktrace-${item.key}`} item={item} />
         ))}
       </div>
     </div>
@@ -89,7 +86,44 @@ function toLabelItems(labels: LabelWithLinks[]): ErrorDisplayItem[] {
   }));
 }
 
-function ErrorValue({ item, variant }: { item: ErrorDisplayItem; variant: ErrorAttributeVariant }) {
+function StacktraceValue({ item }: { item: ErrorDisplayItem }) {
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getValueStyles, fontSize, 'stacktrace');
+  const [isOpen, setIsOpen] = useState(false);
+  const label = getNormalizedFieldName(item.key);
+
+  return (
+    <div className={styles.row}>
+      <button type="button" className={styles.toggle} aria-expanded={isOpen} onClick={() => setIsOpen((open) => !open)}>
+        <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
+        <span>{label}</span>
+      </button>
+      {isOpen && (
+        <div className={styles.value}>
+          <div className={styles.valueContent}>{item.value}</div>
+          <div className={styles.actions}>
+            <ClipboardButton
+              getText={() => item.value}
+              aria-label={t('logs.log-line-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
+              fill="text"
+              variant="secondary"
+              icon="copy"
+              size="sm"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ErrorValue({
+  item,
+  variant,
+}: {
+  item: ErrorDisplayItem;
+  variant: Exclude<ErrorAttributeVariant, 'stacktrace'>;
+}) {
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getValueStyles, fontSize, variant);
 
@@ -177,6 +211,20 @@ const getValueStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize, variant
     label: css({
       color: theme.colors.text.secondary,
       paddingRight: theme.spacing(1),
+      overflowWrap: 'break-word',
+      wordBreak: 'break-word',
+    }),
+    toggle: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: 0,
+      border: 'none',
+      background: 'none',
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
+      font: 'inherit',
+      textAlign: 'left',
       overflowWrap: 'break-word',
       wordBreak: 'break-word',
     }),
