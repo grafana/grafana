@@ -28,7 +28,7 @@ import { useDispatch } from 'app/types/store';
 import { changePanelPlugin } from '../state/actions';
 import { hasData } from '../suggestions/utils';
 
-function hasNoQueryConfigured(data: Pick<PanelData, 'request'>): boolean {
+function hasNoQueryConfigured(data: PanelData): boolean {
   return !data.request?.targets || data.request.targets.length === 0;
 }
 

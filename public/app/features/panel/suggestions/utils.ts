@@ -59,7 +59,7 @@ export function defaultNumericVizOptions<S extends VisualizationSuggestion<{ red
  * @param data - PanelData
  * @returns true if data exists and has at least one non-empty series
  */
-export function hasData(data?: Pick<PanelData, 'series'>): boolean {
+export function hasData(data?: PanelData): boolean {
   return Boolean(data && data.series && data.series.length > 0 && data.series.some((frame) => frame.length > 0));
 }
 
