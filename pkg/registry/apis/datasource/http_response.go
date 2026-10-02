@@ -9,12 +9,14 @@ import (
 	"strings"
 
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type httpResponder interface {
-	Object(int, any)
+	Object(int, runtime.Object)
 	Error(error)
 }
 
@@ -24,7 +26,7 @@ type jsonResponder struct {
 	group string
 }
 
-func (s jsonResponder) Object(code int, obj any) {
+func (s jsonResponder) Object(code int, obj runtime.Object) {
 	meta := func(kind string) metav1.TypeMeta {
 		return metav1.TypeMeta{Kind: kind, APIVersion: s.group + "/v0alpha1"}
 	}
@@ -56,11 +58,25 @@ func (s jsonResponder) Object(code int, obj any) {
 
 func (s jsonResponder) Error(err error) { WriteHTTPError(s.w, s.r, err) }
 
+// RequestError classifies request parsing and validation failures without losing
+// body-limit, timeout or existing API status codes.
+func RequestError(err error) error {
+	var tooLarge *http.MaxBytesError
+	var status apierrors.APIStatus
+	switch {
+	case errors.As(err, &tooLarge):
+		return apierrors.NewRequestEntityTooLargeError("request exceeds body limit")
+	case errors.Is(err, context.DeadlineExceeded):
+		return apierrors.NewTimeoutError("datasource request timed out", 0)
+	case errors.As(err, &status):
+		return &apierrors.StatusError{ErrStatus: status.Status()}
+	default:
+		return apierrors.NewBadRequest(err.Error())
+	}
+}
+
 // WriteHTTPError preserves the JSON Status envelope consumed by existing datasource clients.
 func WriteHTTPError(w http.ResponseWriter, r *http.Request, err error) {
-	if written, ok := w.(interface{ Written() bool }); ok && written.Written() {
-		panic(http.ErrAbortHandler)
-	}
 	var tooLarge *http.MaxBytesError
 	switch {
 	case errors.As(err, &tooLarge):
@@ -93,11 +109,12 @@ func WriteHTTPError(w http.ResponseWriter, r *http.Request, err error) {
 	WriteHTTPJSON(w, int(status.Code), &status)
 }
 
+// WriteHTTPJSON writes a datasource response using the existing JSON envelope.
 func WriteHTTPJSON(w http.ResponseWriter, code int, value any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	// Encode directly to avoid an extra full-response copy from json.Marshal.
 	if err := json.NewEncoder(w).Encode(value); err != nil {
-		panic(http.ErrAbortHandler)
+		log.New("datasource.http").Error("Failed to write datasource response", "error", err)
 	}
 }

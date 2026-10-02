@@ -165,10 +165,10 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		}
 		mockContext := &resourceMockContextProvider{}
 
-		builder := &DataSourceAPIBuilder{
+		builder := testHTTPBuilder(&DataSourceAPIBuilder{
 			datasources:     mockProvider,
 			contextProvider: mockContext,
-		}
+		})
 		r := &subResourceREST{builder: builder}
 
 		responder := &resourceMockResponder{}
@@ -190,10 +190,10 @@ func TestSubResourceREST_Connect(t *testing.T) {
 			pluginCtxErr: errors.New("failed to create plugin context"),
 		}
 
-		builder := &DataSourceAPIBuilder{
+		builder := testHTTPBuilder(&DataSourceAPIBuilder{
 			datasources:     mockProvider,
 			contextProvider: mockContext,
-		}
+		})
 		r := &subResourceREST{builder: builder}
 
 		responder := &resourceMockResponder{}
@@ -232,11 +232,11 @@ func TestSubResourceREST_Connect(t *testing.T) {
 			},
 		}
 
-		builder := &DataSourceAPIBuilder{
+		builder := testHTTPBuilder(&DataSourceAPIBuilder{
 			client:          mockClient,
 			datasources:     mockProvider,
 			contextProvider: mockContext,
-		}
+		})
 		r := &subResourceREST{builder: builder}
 
 		responder := &resourceMockResponder{}
@@ -296,11 +296,11 @@ func TestSubResourceREST_Connect(t *testing.T) {
 					pluginCtx: backend.PluginContext{},
 				}
 
-				builder := &DataSourceAPIBuilder{
+				builder := testHTTPBuilder(&DataSourceAPIBuilder{
 					client:          mockClient,
 					datasources:     mockProvider,
 					contextProvider: mockContext,
-				}
+				})
 				r := &subResourceREST{builder: builder}
 
 				handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
@@ -328,11 +328,11 @@ func TestSubResourceREST_Connect(t *testing.T) {
 			pluginCtx: backend.PluginContext{},
 		}
 
-		builder := &DataSourceAPIBuilder{
+		builder := testHTTPBuilder(&DataSourceAPIBuilder{
 			client:          mockClient,
 			datasources:     mockProvider,
 			contextProvider: mockContext,
-		}
+		})
 		r := &subResourceREST{builder: builder}
 
 		responder := &resourceMockResponder{}
@@ -366,11 +366,11 @@ func TestSubResourceREST_Connect(t *testing.T) {
 			pluginCtx: backend.PluginContext{},
 		}
 
-		builder := &DataSourceAPIBuilder{
+		builder := testHTTPBuilder(&DataSourceAPIBuilder{
 			client:          mockClient,
 			datasources:     mockProvider,
 			contextProvider: mockContext,
-		}
+		})
 		r := &subResourceREST{builder: builder}
 
 		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
@@ -403,11 +403,11 @@ func TestSubResourceREST_Connect(t *testing.T) {
 			pluginCtx: backend.PluginContext{},
 		}
 
-		builder := &DataSourceAPIBuilder{
+		builder := testHTTPBuilder(&DataSourceAPIBuilder{
 			client:          mockClient,
 			datasources:     mockProvider,
 			contextProvider: mockContext,
-		}
+		})
 		r := &subResourceREST{builder: builder}
 
 		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
@@ -440,11 +440,11 @@ func TestSubResourceREST_Connect(t *testing.T) {
 			pluginCtx: backend.PluginContext{},
 		}
 
-		builder := &DataSourceAPIBuilder{
+		builder := testHTTPBuilder(&DataSourceAPIBuilder{
 			client:          mockClient,
 			datasources:     mockProvider,
 			contextProvider: mockContext,
-		}
+		})
 		r := &subResourceREST{builder: builder}
 
 		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})

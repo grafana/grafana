@@ -22,20 +22,20 @@ func (h *HTTPHandlers) health(ctx context.Context, name string, responder httpRe
 	namespace := request.NamespaceValue(ctx)
 	ctx, connectSpan := tracing.Start(ctx, "datasource.health.connect",
 		attribute.String("namespace", namespace),
-		attribute.String("plugin_id", h.PluginID),
+		attribute.String("plugin_id", h.options.PluginID),
 		attribute.String("datasource_uid", name),
 	)
 	defer connectSpan.End()
 
-	m := newConnectMetric("health", h.PluginID)
+	m := newConnectMetric("health", h.options.PluginID)
 
-	pluginCtx, err := h.PluginContext(ctx, name)
+	pluginCtx, err := h.options.PluginContext(ctx, name)
 	if err != nil {
 		err = tracing.Error(connectSpan, err)
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			m.SetNotFound()
 			m.Record()
-			return nil, apierrors.NewNotFound(schema.GroupResource{Group: h.Group, Resource: "datasources"}, name)
+			return nil, apierrors.NewNotFound(schema.GroupResource{Group: h.options.Group, Resource: "datasources"}, name)
 		}
 		m.SetError()
 		m.Record()
@@ -44,13 +44,13 @@ func (h *HTTPHandlers) health(ctx context.Context, name string, responder httpRe
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
-		if h.HandlerOrigin != "" {
-			w.Header().Set("X-Grafana-DS-Apiserver", h.HandlerOrigin)
+		if h.options.HandlerOrigin != "" {
+			w.Header().Set("X-Grafana-DS-Apiserver", h.options.HandlerOrigin)
 		}
 
 		_, reqSpan := tracing.Start(ctx, "datasource.health.request",
 			attribute.String("namespace", namespace),
-			attribute.String("plugin_id", h.PluginID),
+			attribute.String("plugin_id", h.options.PluginID),
 			attribute.String("datasource_uid", name),
 		)
 		defer reqSpan.End()
@@ -65,10 +65,10 @@ func (h *HTTPHandlers) health(ctx context.Context, name string, responder httpRe
 				_ = json.Unmarshal(settings.JSONData, &jsonData)
 			}
 		}
-		if err := h.validateRequest(dsURL, jsonData, req); err != nil {
+		if err := validateDataSourceRequest(h.options.RequestValidator, dsURL, jsonData, req); err != nil {
 			_ = tracing.Error(reqSpan, err)
 			m.SetError()
-			responder.Error(apierrors.NewForbidden(schema.GroupResource{Group: h.Group, Resource: "datasources"}, name, err))
+			responder.Error(apierrors.NewForbidden(schema.GroupResource{Group: h.options.Group, Resource: "datasources"}, name, err))
 			return
 		}
 
@@ -76,7 +76,7 @@ func (h *HTTPHandlers) health(ctx context.Context, name string, responder httpRe
 		healthCtx = contextualMiddlewares(healthCtx)
 
 		checkHealthCtx, checkHealthSpan := tracing.Start(healthCtx, "datasource.health.pluginClient.CheckHealth")
-		healthResponse, err := h.Client.CheckHealth(checkHealthCtx, &backend.CheckHealthRequest{
+		healthResponse, err := h.options.Client.CheckHealth(checkHealthCtx, &backend.CheckHealthRequest{
 			PluginContext: pluginCtx,
 		})
 		checkHealthSpan.End()

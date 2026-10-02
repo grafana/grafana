@@ -3,7 +3,6 @@ package datasource
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -26,20 +25,20 @@ func (h *HTTPHandlers) query(ctx context.Context, name string, responder httpRes
 	namespace := request.NamespaceValue(ctx)
 	ctx, connectSpan := tracing.Start(ctx, "datasource.query.connect",
 		attribute.String("namespace", namespace),
-		attribute.String("plugin_id", h.PluginID),
+		attribute.String("plugin_id", h.options.PluginID),
 		attribute.String("datasource_uid", name),
 	)
 	defer connectSpan.End()
 
-	m := newConnectMetric("query", h.PluginID)
+	m := newConnectMetric("query", h.options.PluginID)
 
-	pluginCtx, err := h.PluginContext(ctx, name)
+	pluginCtx, err := h.options.PluginContext(ctx, name)
 	if err != nil {
 		err = tracing.Error(connectSpan, err)
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			m.SetNotFound()
 			m.Record()
-			return nil, apierrors.NewNotFound(schema.GroupResource{Group: h.Group, Resource: "datasources"}, name)
+			return nil, apierrors.NewNotFound(schema.GroupResource{Group: h.options.Group, Resource: "datasources"}, name)
 		}
 		m.SetError()
 		m.Record()
@@ -48,13 +47,13 @@ func (h *HTTPHandlers) query(ctx context.Context, name string, responder httpRes
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
-		if h.HandlerOrigin != "" {
-			w.Header().Set("X-Grafana-DS-Apiserver", h.HandlerOrigin)
+		if h.options.HandlerOrigin != "" {
+			w.Header().Set("X-Grafana-DS-Apiserver", h.options.HandlerOrigin)
 		}
 
 		reqCtx, reqSpan := tracing.Start(ctx, "datasource.query.request",
 			attribute.String("namespace", namespace),
-			attribute.String("plugin_id", h.PluginID),
+			attribute.String("plugin_id", h.options.PluginID),
 			attribute.String("datasource_uid", name),
 		)
 		defer reqSpan.End()
@@ -66,7 +65,7 @@ func (h *HTTPHandlers) query(ctx context.Context, name string, responder httpRes
 		if err != nil {
 			_ = tracing.Error(reqSpan, err)
 			m.SetError()
-			responder.Error(err)
+			responder.Error(RequestError(err))
 			return
 		}
 
@@ -76,11 +75,11 @@ func (h *HTTPHandlers) query(ctx context.Context, name string, responder httpRes
 		if err != nil {
 			_ = tracing.Error(reqSpan, err)
 			m.SetError()
-			responder.Error(err)
+			responder.Error(RequestError(err))
 			return
 		}
 		if dsRef != nil && dsRef.UID != name {
-			err := fmt.Errorf("expected query body datasource and request to match")
+			err := apierrors.NewBadRequest("expected query body datasource and request to match")
 			_ = tracing.Error(reqSpan, err)
 			m.SetError()
 			responder.Error(err)
@@ -91,18 +90,18 @@ func (h *HTTPHandlers) query(ctx context.Context, name string, responder httpRes
 		callCtx = contextualMiddlewares(callCtx)
 
 		if chunked.IsRequestingChunkedResponse(req.Header.Get("accept")) {
-			if !h.EnableChunkedQueries {
-				responder.Error(fmt.Errorf("chunked query streaming is not enabled"))
+			if !h.options.EnableChunkedQueries {
+				responder.Error(apierrors.NewGenericServerResponse(http.StatusNotAcceptable, "", schema.GroupResource{}, "", "chunked query streaming is not enabled", 0, false))
 				return
 			}
 
-			if err = h.Client.QueryChunkedData(callCtx, &backend.QueryChunkedDataRequest{
+			if err = h.options.Client.QueryChunkedData(callCtx, &backend.QueryChunkedDataRequest{
 				Queries:       queries,
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 				Format:        backend.DataFrameFormat_JSON, // encode directly in the plugin
 			}, chunked.NewChunkedHTTPWriter(w)); err != nil {
-				responder.Error(fmt.Errorf("error running chunked query %w", err))
+				responder.Error(err)
 			}
 			return
 		}
@@ -111,7 +110,7 @@ func (h *HTTPHandlers) query(ctx context.Context, name string, responder httpRes
 			attribute.Int("queries_count", len(queries)),
 		)
 
-		rsp, err := h.Client.QueryData(queryCtx, &backend.QueryDataRequest{
+		rsp, err := h.options.Client.QueryData(queryCtx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginCtx,
 			Headers:       map[string]string{},

@@ -3,7 +3,6 @@ package datasource
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -25,21 +24,21 @@ func (h *HTTPHandlers) resource(ctx context.Context, name string, responder http
 	namespace := request.NamespaceValue(ctx)
 	ctx, connectSpan := tracing.Start(ctx, "datasource.resource.connect",
 		attribute.String("namespace", namespace),
-		attribute.String("plugin_id", h.PluginID),
+		attribute.String("plugin_id", h.options.PluginID),
 		attribute.String("datasource_uid", name),
 	)
 	defer connectSpan.End()
 
-	m := newConnectMetric("resource", h.PluginID)
+	m := newConnectMetric("resource", h.options.PluginID)
 
-	pluginCtx, err := h.PluginContext(ctx, name)
+	pluginCtx, err := h.options.PluginContext(ctx, name)
 	if err != nil {
 		err = tracing.Error(connectSpan, err)
 		backend.Logger.Error("failed to get plugin context for datasource in resource handler", "name", name, "error", err)
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			m.SetNotFound()
 			m.Record()
-			return nil, apierrors.NewNotFound(schema.GroupResource{Group: h.Group, Resource: "datasources"}, name)
+			return nil, apierrors.NewNotFound(schema.GroupResource{Group: h.options.Group, Resource: "datasources"}, name)
 		}
 		m.SetError()
 		m.Record()
@@ -48,13 +47,13 @@ func (h *HTTPHandlers) resource(ctx context.Context, name string, responder http
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
-		if h.HandlerOrigin != "" {
-			w.Header().Set("X-Grafana-DS-Apiserver", h.HandlerOrigin)
+		if h.options.HandlerOrigin != "" {
+			w.Header().Set("X-Grafana-DS-Apiserver", h.options.HandlerOrigin)
 		}
 
 		reqCtx, reqSpan := tracing.Start(ctx, "datasource.resource.request",
 			attribute.String("namespace", namespace),
-			attribute.String("plugin_id", h.PluginID),
+			attribute.String("plugin_id", h.options.PluginID),
 			attribute.String("datasource_uid", name),
 			attribute.String("http_method", req.Method),
 		)
@@ -81,14 +80,14 @@ func (h *HTTPHandlers) resource(ctx context.Context, name string, responder http
 			_ = tracing.Error(reqSpan, err)
 			backend.Logger.Error("failed to read request body", "error", err)
 			m.SetError()
-			responder.Error(err)
+			responder.Error(RequestError(err))
 			return
 		}
 
 		resourceCtx, resourceSpan := tracing.Start(callCtx, "datasource.resource.pluginClient.CallResource",
 			attribute.String("plugin_resource_path", clonedReq.URL.Path),
 		)
-		err = h.Client.CallResource(resourceCtx, &backend.CallResourceRequest{
+		err = h.options.Client.CallResource(resourceCtx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,
 			Path:          clonedReq.URL.Path,
 			Method:        req.Method,
@@ -115,7 +114,7 @@ func resourceRequest(req *http.Request, name string) (*http.Request, error) {
 	// subpath, so the first occurrence is the correct one.
 	_, after, found := strings.Cut(req.URL.Path, "/"+name+"/resources")
 	if !found {
-		return nil, fmt.Errorf("expected resource path") // 400?
+		return nil, apierrors.NewBadRequest("expected resource path")
 	}
 
 	clonedReq := req.Clone(req.Context())

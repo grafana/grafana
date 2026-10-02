@@ -43,5 +43,5 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return r.builder.httpHandlers().health(ctx, name, restHTTPResponder{responder})
+	return r.builder.handlers.health(ctx, name, responder)
 }

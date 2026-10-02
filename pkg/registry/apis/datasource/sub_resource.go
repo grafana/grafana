@@ -40,5 +40,5 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return r.builder.httpHandlers().resource(ctx, name, restHTTPResponder{responder})
+	return r.builder.handlers.resource(ctx, name, responder)
 }

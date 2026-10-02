@@ -120,7 +120,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 		jsonData, _ := ds.Spec.JSONData().(map[string]any)
-		if err := r.builder.validateDataSourceRequest(ds.Spec.URL(), jsonData, req); err != nil {
+		if err := validateDataSourceRequest(r.builder.dataSourceRequestValidator, ds.Spec.URL(), jsonData, req); err != nil {
 			m.SetError()
 			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
 			return

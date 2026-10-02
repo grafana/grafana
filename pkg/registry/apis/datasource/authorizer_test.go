@@ -80,6 +80,7 @@ func TestGetAuthorizer_CRUDVerbsPassThrough(t *testing.T) {
 			require.Equal(t, verb, client.lastReq.Verb, "the raw verb should be forwarded for CRUD requests")
 			require.Equal(t, "datasources", client.lastReq.Resource)
 			require.Equal(t, "test.datasource.grafana.app", client.lastReq.Group)
+			require.Equal(t, "default", client.lastReq.Namespace)
 			require.Equal(t, "some-uid", client.lastReq.Name)
 			require.Empty(t, client.lastReq.Subresource)
 		})
@@ -153,6 +154,9 @@ func TestGetAuthorizer_SubresourceForcesQueryCheck(t *testing.T) {
 			require.Equal(t, utils.VerbCreate, client.lastReq.Verb)
 			require.Equal(t, "query", client.lastReq.Subresource)
 			require.Equal(t, "datasources", client.lastReq.Resource)
+			require.Equal(t, "test.datasource.grafana.app", client.lastReq.Group)
+			require.Equal(t, "default", client.lastReq.Namespace)
+			require.Equal(t, "some-uid", client.lastReq.Name)
 		})
 	}
 }

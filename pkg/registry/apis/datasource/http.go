@@ -2,14 +2,16 @@ package datasource
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/web"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
@@ -19,20 +21,24 @@ import (
 // HTTPHandlerOptions contains execution dependencies, not API-server or storage registrations.
 // Authentication, authorization and tenant context must be established before calling a handler.
 type HTTPHandlerOptions struct {
-	Group, PluginID, HandlerOrigin string
-	Client                         PluginClient
-	PluginContext                  func(context.Context, string) (backend.PluginContext, error)
-	ContextProvider                PluginContextWrapper
-	Datasources                    PluginDatasourceProvider
-	RequestValidator               validations.DataSourceRequestValidator
-	EnableChunkedQueries           bool
+	Group                string
+	PluginID             string
+	HandlerOrigin        string
+	Client               PluginClient
+	PluginContext        func(context.Context, string) (backend.PluginContext, error)
+	ContextProvider      PluginContextWrapper
+	Datasources          PluginDatasourceProvider
+	RequestValidator     validations.DataSourceRequestValidator
+	EnableChunkedQueries bool
 }
 
-type HTTPHandlers struct{ HTTPHandlerOptions }
+type HTTPHandlers struct {
+	options HTTPHandlerOptions
+}
 
 func NewHTTPHandlers(o HTTPHandlerOptions) *HTTPHandlers {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
-	return &HTTPHandlers{HTTPHandlerOptions: o}
+	return &HTTPHandlers{options: o}
 }
 
 // Query, Resource and Health expect the datasource UID in the request's "uid" path value.
@@ -49,8 +55,8 @@ func (h *HTTPHandlers) Health(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandlers) Convert(w http.ResponseWriter, r *http.Request) {
-	reply := jsonResponder{w: w, r: r, group: h.Group}
-	result, err := convertQueryDataRequest(r.Context(), r, h.Client, h.ContextProvider)
+	reply := jsonResponder{w: w, r: r, group: h.options.Group}
+	result, err := convertQueryDataRequest(r.Context(), r, h.options.Client, h.options.ContextProvider)
 	if err != nil {
 		reply.Error(err)
 		return
@@ -59,9 +65,12 @@ func (h *HTTPHandlers) Convert(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandlers) Get(w http.ResponseWriter, r *http.Request) {
-	reply := jsonResponder{w: w, r: r, group: h.Group}
-	result, err := h.Datasources.GetDataSource(r.Context(), r.PathValue("uid"))
+	reply := jsonResponder{w: w, r: r, group: h.options.Group}
+	result, err := h.options.Datasources.GetDataSource(r.Context(), r.PathValue("uid"))
 	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			err = apierrors.NewNotFound(schema.GroupResource{Group: h.options.Group, Resource: "datasources"}, r.PathValue("uid"))
+		}
 		reply.Error(err)
 		return
 	}
@@ -69,7 +78,7 @@ func (h *HTTPHandlers) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandlers) List(w http.ResponseWriter, r *http.Request) {
-	reply := jsonResponder{w: w, r: r, group: h.Group}
+	reply := jsonResponder{w: w, r: r, group: h.options.Group}
 	if raw := r.URL.Query().Get("watch"); raw != "" {
 		watch, err := strconv.ParseBool(raw)
 		if err != nil || watch {
@@ -77,7 +86,7 @@ func (h *HTTPHandlers) List(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	result, err := h.Datasources.ListDataSources(r.Context())
+	result, err := h.options.Datasources.ListDataSources(r.Context())
 	if err != nil {
 		reply.Error(err)
 		return
@@ -86,8 +95,7 @@ func (h *HTTPHandlers) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandlers) serve(w http.ResponseWriter, r *http.Request, prepare func(context.Context, string, httpResponder) (http.Handler, error)) {
-	w = web.Rw(w, r)
-	reply := jsonResponder{w: w, r: r, group: h.Group}
+	reply := jsonResponder{w: w, r: r, group: h.options.Group}
 	handler, err := prepare(r.Context(), r.PathValue("uid"), reply)
 	if err != nil {
 		reply.Error(err)
@@ -96,15 +104,19 @@ func (h *HTTPHandlers) serve(w http.ResponseWriter, r *http.Request, prepare fun
 	handler.ServeHTTP(w, r)
 }
 
-func (h *HTTPHandlers) validateRequest(dsURL string, jsonData map[string]any, req *http.Request) error {
-	if h.RequestValidator == nil {
+// validateDataSourceRequest applies the legacy HTTP API's outbound request policy
+// to both the proxy and health endpoints.
+func validateDataSourceRequest(validator validations.DataSourceRequestValidator, dsURL string, jsonData map[string]any, req *http.Request) error {
+	if validator == nil {
 		return nil
 	}
-	return h.RequestValidator.Validate(dsURL, jsonData, req)
+	return validator.Validate(dsURL, jsonData, req)
 }
 
+type InstanceSettingsLoader func(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error)
+
 // ResolvePluginContext keeps settings lookup and context construction identical for both HTTP servers.
-func ResolvePluginContext(ctx context.Context, pluginID, uid string, load func(context.Context, string) (*backend.DataSourceInstanceSettings, error), provider PluginContextWrapper) (backend.PluginContext, error) {
+func ResolvePluginContext(ctx context.Context, pluginID, uid string, load InstanceSettingsLoader, provider PluginContextWrapper) (backend.PluginContext, error) {
 	ctx, span := tracing.Start(ctx, "datasource.getPluginContext",
 		attribute.String("namespace", request.NamespaceValue(ctx)),
 		attribute.String("plugin_id", pluginID),

@@ -32,6 +32,12 @@ func (f httpConversionFunc) ConvertObjects(ctx context.Context, req *backend.Con
 	return f(ctx, req)
 }
 
+// Tests that construct builders directly still need their startup-initialized handlers.
+func testHTTPBuilder(b *DataSourceAPIBuilder) *DataSourceAPIBuilder {
+	b.initHTTPHandlers()
+	return b
+}
+
 const httpQueryBody = `{"from":"1700000000000","to":"1700000060000","queries":[{"refId":"A","datasource":{"uid":"ds","type":"prometheus"},"expr":"up"}]}`
 
 // Use the real apiserver serializer to check the direct HTTP wire format, not a shared fake responder.
@@ -53,18 +59,31 @@ func TestHTTPHandlersMatchREST(t *testing.T) {
 	for _, tc := range []struct {
 		name, endpoint, body string
 		fail, missing        bool
+		status               int
+		accept, contentType  string
+		limit                bool
 	}{
 		{name: "query", endpoint: "query", body: httpQueryBody},
-		{name: "query error", endpoint: "query", body: httpQueryBody, fail: true},
-		{name: "query missing datasource", endpoint: "query", body: httpQueryBody, missing: true},
-		{name: "malformed query", endpoint: "query", body: `{`},
-		{name: "UID mismatch", endpoint: "query", body: strings.ReplaceAll(httpQueryBody, `"uid":"ds"`, `"uid":"other"`)},
+		{name: "query error", endpoint: "query", body: httpQueryBody, fail: true, status: 500},
+		{name: "query missing datasource", endpoint: "query", body: httpQueryBody, missing: true, status: 404},
+		{name: "malformed query", endpoint: "query", body: `{`, status: 400},
+		{name: "mixed datasource references", endpoint: "query", body: strings.TrimSuffix(httpQueryBody, `]}`) + `,{"refId":"B","datasource":{"uid":"other","type":"prometheus"}}]}`, status: 400},
+		{name: "invalid content type", endpoint: "query", body: httpQueryBody, contentType: "text/plain", status: 400},
+		{name: "query body limit", endpoint: "query", body: httpQueryBody, limit: true, status: 413},
+		{name: "chunked disabled", endpoint: "query", body: httpQueryBody, accept: "application/json, text/jsonl", status: 406},
+		{name: "UID mismatch", endpoint: "query", body: strings.ReplaceAll(httpQueryBody, `"uid":"ds"`, `"uid":"other"`), status: 400},
 		{name: "health", endpoint: "health"},
-		{name: "unhealthy", endpoint: "health", fail: true},
-		{name: "resource", endpoint: "resources", body: "payload"},
-		{name: "resource error", endpoint: "resources", body: "payload", fail: true},
+		{name: "unhealthy", endpoint: "health", fail: true, status: 400},
+		{name: "resource", endpoint: "resources", body: "payload", status: 201},
+		{name: "resource error", endpoint: "resources", body: "payload", fail: true, status: 500},
+		{name: "resource body limit", endpoint: "resources", body: "payload exceeding limit", limit: true, status: 413},
 		{name: "conversion", endpoint: "queryconvert", body: httpQueryBody},
-		{name: "empty conversion", endpoint: "queryconvert", body: `{}`},
+		{name: "empty conversion", endpoint: "queryconvert", body: `{}`, status: 400},
+		{name: "malformed conversion", endpoint: "queryconvert", body: `{`, status: 400},
+		{name: "conversion mixed types", endpoint: "queryconvert", body: strings.TrimSuffix(httpQueryBody, `]}`) + `,{"refId":"B","datasource":{"uid":"ds","type":"loki"}}]}`, status: 400},
+		{name: "conversion mixed UIDs", endpoint: "queryconvert", body: strings.TrimSuffix(httpQueryBody, `]}`) + `,{"refId":"B","datasource":{"uid":"other","type":"prometheus"}}]}`, status: 400},
+		{name: "conversion missing reference", endpoint: "queryconvert", body: strings.TrimSuffix(httpQueryBody, `]}`) + `,{"refId":"B"}]}`, status: 400},
+		{name: "conversion body limit", endpoint: "queryconvert", body: httpQueryBody, limit: true, status: 413},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			frame := data.NewFrame("test", data.NewField("value", nil, []float64{1}))
@@ -103,7 +122,12 @@ func TestHTTPHandlersMatchREST(t *testing.T) {
 			pc := &resourceMockContextProvider{pluginCtx: backend.PluginContext{PluginID: "prometheus", DataSourceInstanceSettings: provider.instanceSettings}}
 			b, err := NewDataSourceAPIBuilder("prometheus.datasource.grafana.app", plugins.JSONData{ID: "prometheus"}, client, provider, pc, nil, nil, DataSourceAPIBuilderConfig{HandlerOrigin: "remote"}, nil, nil)
 			require.NoError(t, err)
-			h := NewHTTPHandlers(HTTPHandlerOptions{Group: b.GetGroupVersion().Group, PluginID: "prometheus", HandlerOrigin: "remote", Client: client, ContextProvider: pc,
+			h := NewHTTPHandlers(HTTPHandlerOptions{
+				Group:           b.GetGroupVersion().Group,
+				PluginID:        "prometheus",
+				HandlerOrigin:   "remote",
+				Client:          client,
+				ContextProvider: pc,
 				PluginContext: func(ctx context.Context, uid string) (backend.PluginContext, error) {
 					return ResolvePluginContext(ctx, "prometheus", uid, provider.GetInstanceSettings, pc)
 				},
@@ -136,6 +160,15 @@ func TestHTTPHandlersMatchREST(t *testing.T) {
 				}
 				r.Header.Set("Content-Type", "application/json")
 				r.Header.Set("Accept", "application/json")
+				if tc.accept != "" {
+					r.Header.Set("Accept", tc.accept)
+				}
+				if tc.contentType != "" {
+					r.Header.Set("Content-Type", tc.contentType)
+				}
+				if tc.limit {
+					r.Body = http.MaxBytesReader(nil, r.Body, 10)
+				}
 				r.SetPathValue("uid", "ds")
 				r = r.WithContext(request.WithNamespace(r.Context(), "stacks-11"))
 				w := httptest.NewRecorder()
@@ -157,6 +190,11 @@ func TestHTTPHandlersMatchREST(t *testing.T) {
 				}
 			}
 			a, bresp := responses[0], responses[1]
+			status := tc.status
+			if status == 0 {
+				status = http.StatusOK
+			}
+			require.Equal(t, status, a.Code, a.Body.String())
 			require.Equal(t, bresp.Code, a.Code, a.Body.String())
 			require.Equal(t, bresp.Header(), a.Header())
 			require.Equal(t, bresp.Flushed, a.Flushed)
@@ -198,7 +236,8 @@ func TestHTTPJSONDoesNotMutateEnvelope(t *testing.T) {
 	}}
 	for _, group := range []string{"prometheus.datasource.grafana.app", "alias.datasource.grafana.app"} {
 		w := httptest.NewRecorder()
-		jsonResponder{w: w, r: httptest.NewRequest("POST", "/", nil), group: group}.Object(200, obj)
+		r := httptest.NewRequest("POST", "/", nil)
+		jsonResponder{w: w, r: r, group: group}.Object(200, obj)
 		require.True(t, json.Valid(w.Body.Bytes()))
 		require.Equal(t, metav1.TypeMeta{Kind: "Original"}, obj.TypeMeta)
 		require.Same(t, frame, obj.Responses["A"].Frames[0])

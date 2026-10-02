@@ -17,13 +17,13 @@ import (
 
 func TestSubQueryConnectWhenDatasourceNotFound(t *testing.T) {
 	sqr := subQueryREST{
-		builder: &DataSourceAPIBuilder{
+		builder: testHTTPBuilder(&DataSourceAPIBuilder{
 			client: mockClient{
 				lastCalledWithHeaders: &map[string]string{},
 			},
 			datasources:     mockDatasources{},
 			contextProvider: mockContextProvider{},
-		},
+		}),
 	}
 
 	mr := mockResponder{}

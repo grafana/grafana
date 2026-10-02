@@ -49,5 +49,5 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return r.builder.httpHandlers().query(ctx, name, restHTTPResponder{responder})
+	return r.builder.handlers.query(ctx, name, responder)
 }

@@ -16,8 +16,13 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		if !attr.IsResourceRequest() {
 			return authorizer.DecisionNoOpinion, "", nil
 		}
-		allowed, reason, err := AuthorizeDatasourceRequest(ctx, b.accessClient, b.GetGroupVersion().Group,
-			attr.GetNamespace(), attr.GetName(), attr.GetVerb(), attr.GetSubresource())
+		allowed, reason, err := AuthorizeDatasourceRequest(ctx, b.accessClient, DatasourceAuthorizationRequest{
+			Group:       b.GetGroupVersion().Group,
+			Namespace:   attr.GetNamespace(),
+			UID:         attr.GetName(),
+			Verb:        attr.GetVerb(),
+			Subresource: attr.GetSubresource(),
+		})
 		if allowed {
 			return authorizer.DecisionAllow, reason, err
 		}
@@ -25,9 +30,17 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	})
 }
 
+type DatasourceAuthorizationRequest struct {
+	Group       string
+	Namespace   string
+	UID         string
+	Verb        string
+	Subresource string
+}
+
 // AuthorizeDatasourceRequest shares datasource permission semantics across HTTP servers.
 // Subresources all require create on datasources/query; read-only get/list retain their own verb.
-func AuthorizeDatasourceRequest(ctx context.Context, access authlib.AccessClient, group, namespace, uid, verb, sub string) (bool, string, error) {
+func AuthorizeDatasourceRequest(ctx context.Context, access authlib.AccessClient, request DatasourceAuthorizationRequest) (bool, string, error) {
 	var svcIdentity []string
 	if authInfo, ok := authlib.AuthInfoFrom(ctx); ok {
 		svcIdentity = authInfo.GetExtra()[authn.ServiceIdentityKey]
@@ -41,37 +54,37 @@ func AuthorizeDatasourceRequest(ctx context.Context, access authlib.AccessClient
 
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		recordAuthzDecision(group, sub, verb, caller, "deny", "no_user")
+		recordAuthzDecision(request.Group, request.Subresource, request.Verb, caller, "deny", "no_user")
 		return false, "valid user is required", err
 	}
 
 	req := authlib.CheckRequest{
-		Group:     group,
+		Group:     request.Group,
 		Resource:  "datasources",
-		Namespace: namespace,
-		Name:      uid,
-		Verb:      verb,
+		Namespace: request.Namespace,
+		Name:      request.UID,
+		Verb:      request.Verb,
 	}
 
-	if sub != "" {
+	if request.Subresource != "" {
 		req.Verb = utils.VerbCreate
 		req.Subresource = "query"
 	}
 
 	rsp, err := access.Check(ctx, user, req, "")
 	if err != nil {
-		recordAuthzDecision(group, sub, verb, caller, "deny", "error")
+		recordAuthzDecision(request.Group, request.Subresource, request.Verb, caller, "deny", "error")
 		return false, "failed to check permissions", err
 	}
 	if rsp.Allowed {
-		recordAuthzDecision(group, sub, verb, caller, "allow", "")
+		recordAuthzDecision(request.Group, request.Subresource, request.Verb, caller, "allow", "")
 		return true, "", nil
 	}
 	if req.Subresource != "" {
-		recordAuthzDecision(group, sub, verb, caller, "deny", "missing_permissions")
+		recordAuthzDecision(request.Group, request.Subresource, request.Verb, caller, "deny", "missing_permissions")
 		return false, "missing `query` subresource permission", nil
 	}
 
-	recordAuthzDecision(group, sub, verb, caller, "deny", "access_denied")
+	recordAuthzDecision(request.Group, request.Subresource, request.Verb, caller, "deny", "access_denied")
 	return false, "access denied", nil
 }
