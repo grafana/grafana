@@ -13,7 +13,8 @@ import (
 type AccessChecker interface {
 	// Check performs an access check and returns nil if allowed, or an appropriate
 	// API error if denied. If req.Namespace is empty, it will be filled from the
-	// identity's namespace.
+	// identity's namespace. Use IsPermissionDenied to distinguish a denial from
+	// an access check failure.
 	Check(ctx context.Context, req authlib.CheckRequest, folder string) error
 
 	// WithFallbackRole returns an AccessChecker configured with the specified fallback role.
