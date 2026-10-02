@@ -713,3 +713,147 @@ func TestRequestConfigProvider_PluginRequestConfig_openFeature(t *testing.T) {
 		require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_CONTEXT")
 	})
 }
+
+func TestRequestConfigProvider_PluginRequestConfig_openFeatureResolution(t *testing.T) {
+	parse := func(t *testing.T, raw string) *url.URL {
+		t.Helper()
+		u, err := url.Parse(raw)
+		require.NoError(t, err)
+		return u
+	}
+	pluginURL := parse(t, "http://flags.example.com:1031")
+	providerURL := parse(t, "http://features.example.com:1031")
+
+	tests := []struct {
+		name        string
+		appURL      string
+		of          setting.OpenFeatureSettings
+		wantURL     string
+		wantType    string
+		wantContext string
+	}{
+		{
+			name:     "plugin URL overrides the static provider",
+			appURL:   "https://myorg.com/",
+			of:       setting.OpenFeatureSettings{ProviderType: setting.StaticProviderType, PluginURL: pluginURL},
+			wantURL:  "http://flags.example.com:1031",
+			wantType: "ofrep",
+		},
+		{
+			name:     "plugin URL overrides the ofrep provider",
+			appURL:   "https://myorg.com/",
+			of:       setting.OpenFeatureSettings{ProviderType: setting.OFREPProviderType, URL: providerURL, PluginURL: pluginURL},
+			wantURL:  "http://flags.example.com:1031",
+			wantType: "ofrep",
+		},
+		{
+			name:   "plugin URL overrides the features-service provider",
+			appURL: "https://myorg.com/",
+			of: setting.OpenFeatureSettings{
+				ProviderType: setting.FeaturesServiceProviderType,
+				URL:          providerURL,
+				PluginURL:    pluginURL,
+				ContextAttrs: map[string]string{"namespace": "stacks-1", "slug": "myorg"},
+			},
+			wantURL:     "http://flags.example.com:1031",
+			wantType:    "ofrep",
+			wantContext: `{"namespace":"stacks-1","slug":"myorg"}`,
+		},
+		{
+			name:     "plugin URL is advertised when features-service has no URL",
+			appURL:   "https://myorg.com/",
+			of:       setting.OpenFeatureSettings{ProviderType: setting.FeaturesServiceProviderType, PluginURL: pluginURL},
+			wantURL:  "http://flags.example.com:1031",
+			wantType: "ofrep",
+		},
+		{
+			name:     "plugin URL is advertised for an unknown provider type",
+			appURL:   "https://myorg.com/",
+			of:       setting.OpenFeatureSettings{ProviderType: "some-future-provider", PluginURL: pluginURL},
+			wantURL:  "http://flags.example.com:1031",
+			wantType: "ofrep",
+		},
+		{
+			name:     "plugin URL is advertised without a provider type",
+			of:       setting.OpenFeatureSettings{PluginURL: pluginURL},
+			wantURL:  "http://flags.example.com:1031",
+			wantType: "ofrep",
+		},
+		{
+			name:     "plugin URL path is kept",
+			of:       setting.OpenFeatureSettings{ProviderType: setting.FeaturesServiceProviderType, PluginURL: parse(t, "https://flags.example.com/prefix/")},
+			wantURL:  "https://flags.example.com/prefix/",
+			wantType: "ofrep",
+		},
+		{
+			name:     "static provider advertises the app URL",
+			appURL:   "https://myorg.com/",
+			of:       setting.OpenFeatureSettings{ProviderType: setting.StaticProviderType},
+			wantURL:  "https://myorg.com/",
+			wantType: "static",
+		},
+		{
+			name: "static provider without an app URL advertises nothing",
+			of:   setting.OpenFeatureSettings{ProviderType: setting.StaticProviderType},
+		},
+		{
+			name:     "ofrep provider advertises its URL",
+			appURL:   "https://myorg.com/",
+			of:       setting.OpenFeatureSettings{ProviderType: setting.OFREPProviderType, URL: providerURL},
+			wantURL:  "http://features.example.com:1031",
+			wantType: "ofrep",
+		},
+		{
+			name:   "ofrep provider without a URL advertises nothing",
+			appURL: "https://myorg.com/",
+			of:     setting.OpenFeatureSettings{ProviderType: setting.OFREPProviderType},
+		},
+		{
+			name:     "features-service provider advertises its URL",
+			appURL:   "https://myorg.com/",
+			of:       setting.OpenFeatureSettings{ProviderType: setting.FeaturesServiceProviderType, URL: providerURL},
+			wantURL:  "http://features.example.com:1031",
+			wantType: "features-service",
+		},
+		{
+			name:   "features-service provider without a URL advertises nothing",
+			appURL: "https://myorg.com/",
+			of:     setting.OpenFeatureSettings{ProviderType: setting.FeaturesServiceProviderType},
+		},
+		{
+			name:   "unknown provider type advertises nothing",
+			appURL: "https://myorg.com/",
+			of:     setting.OpenFeatureSettings{ProviderType: "some-future-provider", URL: providerURL},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppURL = tc.appURL
+			tc.of.CacheTTL = time.Minute
+			cfg.OpenFeature = tc.of
+
+			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
+			m := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{}).PluginRequestConfig(context.Background(), "", nil)
+
+			if tc.wantURL == "" {
+				require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_PROVIDER_URL")
+				require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE")
+				require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_CACHE_TTL")
+				require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_CONTEXT")
+				return
+			}
+			require.Subset(t, m, map[string]string{
+				"GF_INSTANCE_OPENFEATURE_PROVIDER_URL":  tc.wantURL,
+				"GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE": tc.wantType,
+				"GF_INSTANCE_OPENFEATURE_CACHE_TTL":     "60",
+			})
+			if tc.wantContext != "" {
+				require.Equal(t, tc.wantContext, m["GF_INSTANCE_OPENFEATURE_CONTEXT"])
+			}
+		})
+	}
+}
