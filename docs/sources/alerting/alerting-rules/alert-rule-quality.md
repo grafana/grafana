@@ -44,13 +44,6 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/
 ---
 
-<!--
-Draft pending release confirmation. Target: Grafana Enterprise 13.3.x and Grafana Cloud.
-Before publishing: confirm Grafana Cloud rollout and the release stage.
-Set labels.stage, remove draft: true, and link this page from Configure alert rules.
-Keep feature-toggle and rollout procedures in the internal runbook.
--->
-
 # Improve alert rule quality with Alert Advisor
 
 Alerts are easier to act on when they carry the right context.
