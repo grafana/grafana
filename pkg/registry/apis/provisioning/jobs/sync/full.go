@@ -85,25 +85,14 @@ func FullSync(
 	var changes []ResourceFileChange
 	var missingFolderMetadata []string
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
-	var unsupportedPaths []resources.UnsupportedPath
 	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
-		changes, missingFolderMetadata, invalidFolderMetadata, unsupportedPaths, err = compare(compareCtx, repo, repositoryResources, currentRef, folderMetadataEnabled)
+		changes, missingFolderMetadata, invalidFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef, folderMetadataEnabled)
 		return
 	}, metrics)
 	compareSpan.End()
 
 	if err != nil {
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
-	}
-
-	if len(unsupportedPaths) > 0 {
-		logging.FromContext(ctx).Info("unsupported paths detected", "count", len(unsupportedPaths))
-		for _, up := range unsupportedPaths {
-			progress.Record(ctx, jobs.NewPathOnlyResult(up.Path).
-				WithAction(repository.FileActionIgnored).
-				WithError(&resources.UnsupportedPathError{Paths: []resources.UnsupportedPath{up}}).
-				Build())
-		}
 	}
 
 	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
@@ -220,6 +209,25 @@ func applyChange(
 		return false
 	}
 
+	if change.Unsupported != nil {
+		if change.Existing == nil {
+			progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
+				WithAction(repository.FileActionIgnored).
+				WithError(change.Unsupported).
+				Build())
+			return false
+		}
+
+		// Renamed onto a path that cannot sync: the file is gone from its old path,
+		// so the resource goes too, with a warning about the new path.
+		change = ResourceFileChange{
+			Action:      repository.FileActionDeleted,
+			Path:        change.Existing.Path,
+			Existing:    change.Existing,
+			Unsupported: change.Unsupported,
+		}
+	}
+
 	if change.Action == repository.FileActionDeleted {
 		deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete")
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
@@ -256,6 +264,9 @@ func applyChange(
 			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
 		} else {
 			quotaTracker.Release()
+			if change.Unsupported != nil {
+				resultBuilder.WithWarning(change.Unsupported)
+			}
 			// Keep this tree mutation scoped to folder metadata for now.
 			// It clears the deleted folder's stale in-memory entry so the same
 			// full sync can recreate that folder at a new path when _folder.json
@@ -804,11 +815,20 @@ func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, chang
 	var netChange int64
 	allDeletions := true
 	for _, change := range changes {
-		if change.Action != repository.FileActionDeleted {
+		action := change.Action
+		if change.Unsupported != nil {
+			// applyChange removes the old resource, if any, and writes nothing.
+			action = repository.FileActionIgnored
+			if change.Existing != nil {
+				action = repository.FileActionDeleted
+			}
+		}
+
+		if action != repository.FileActionDeleted {
 			allDeletions = false
 		}
 
-		switch change.Action {
+		switch action {
 		case repository.FileActionCreated:
 			netChange++
 		case repository.FileActionDeleted:

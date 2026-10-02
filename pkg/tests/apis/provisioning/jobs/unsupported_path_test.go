@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -55,7 +56,7 @@ func TestIntegrationProvisioning_PullJobUnsupportedPath(t *testing.T) {
 
 	found := false
 	for _, w := range jobObj.Status.Warnings {
-		if strings.Contains(w, unsafeName) && strings.Contains(w, "cannot be synced") {
+		if strings.Contains(w, unsafeName) && strings.Contains(w, "is not supported") {
 			found = true
 			break
 		}
@@ -64,5 +65,47 @@ func TestIntegrationProvisioning_PullJobUnsupportedPath(t *testing.T) {
 
 	// The valid sibling dashboard must still sync despite the unsupported
 	// path elsewhere in the same pass.
+	helper.RequireRepoDashboardCount(t, repo, 1)
+}
+
+func TestIntegrationProvisioning_PullJobRenameOntoUnsupportedPath(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "unsupported-path-full-sync-rename-repo"
+	const unsafeName = "folder/Backend & UI.json"
+
+	repoPath := filepath.Join(helper.ProvisioningPath, repo)
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json":   "folder/dashboard1.json",
+			"../testdata/text-options.json": "folder/dashboard2.json",
+		},
+	})
+	helper.RequireRepoDashboardCount(t, repo, 2)
+
+	require.NoError(t, os.Rename(filepath.Join(repoPath, "folder", "dashboard2.json"), filepath.Join(repoPath, unsafeName)))
+
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	jobObj := &provisioning.Job{}
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+	t.Logf("job state: %s warnings: %v errors: %v", jobObj.Status.State, jobObj.Status.Warnings, jobObj.Status.Errors)
+
+	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
+	require.Empty(t, jobObj.Status.Errors)
+	found := false
+	for _, w := range jobObj.Status.Warnings {
+		if strings.Contains(w, unsafeName) && strings.Contains(w, "is not supported") {
+			found = true
+		}
+	}
+	require.True(t, found, "expected a warning naming the new path, got: %v", jobObj.Status.Warnings)
+
+	// The renamed dashboard is gone with its old file, the other one is untouched.
 	helper.RequireRepoDashboardCount(t, repo, 1)
 }

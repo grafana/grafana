@@ -15,36 +15,18 @@ var (
 	ErrNotRelative              = errors.New("path must be relative to the root")
 )
 
-// UnsupportedPath pairs a repository path with the reason it failed path
-// validation. Never produced for a plain extension mismatch (e.g. README.md).
-type UnsupportedPath struct {
+// UnsupportedPathError reports a repository path that fails path validation.
+type UnsupportedPathError struct {
 	Path string
 	Err  error
 }
 
-// UnsupportedPathError aggregates every UnsupportedPath found in one sync pass.
-type UnsupportedPathError struct {
-	Paths []UnsupportedPath
-}
-
 func (e *UnsupportedPathError) Error() string {
-	if len(e.Paths) == 1 {
-		return fmt.Sprintf("path %q cannot be synced: %v", e.Paths[0].Path, e.Paths[0].Err)
-	}
-	var b strings.Builder
-	fmt.Fprintf(&b, "%d paths cannot be synced:", len(e.Paths))
-	for _, p := range e.Paths {
-		fmt.Fprintf(&b, "\n  %q: %v", p.Path, p.Err)
-	}
-	return b.String()
+	return fmt.Sprintf("path %q is not supported: %v", e.Path, e.Err)
 }
 
-func (e *UnsupportedPathError) Unwrap() []error {
-	errs := make([]error, len(e.Paths))
-	for i, p := range e.Paths {
-		errs[i] = p.Err
-	}
-	return errs
+func (e *UnsupportedPathError) Unwrap() error {
+	return e.Err
 }
 
 const maxPathDepth = 8
@@ -96,15 +78,10 @@ func IsReadablePath(filePath string) error {
 	return nil
 }
 
-// HasResourceExtension reports whether filePath's extension is one of the
-// resource types (yml, yaml, json) that can be parsed into a k8s resource --
-// independent of whether the rest of the path is safe. Callers that need to
-// tell "this was never a resource" apart from "this unsafe path would have
-// been a resource" (e.g. deciding whether an unsafe path is a hard sync
-// failure) should check this before inspecting the error IsPathSupported
-// returns: validatePathBasics runs before the extension check, so an unsafe
-// non-resource file (e.g. a stray image with a `#` in its name) fails with a
-// path-basics error, not ErrUnsupportedFileExtension.
+// HasResourceExtension reports whether filePath has a resource extension (yml,
+// yaml, json), whatever the rest of the path looks like. IsPathSupported checks
+// the path basics first, so its error alone does not tell a rejected resource
+// file from a rejected non-resource file.
 func HasResourceExtension(filePath string) bool {
 	if safepath.IsDir(filePath) {
 		return false

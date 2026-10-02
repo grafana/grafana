@@ -196,21 +196,35 @@ func applyIncrementalChanges(
 		}
 
 		if err := resources.IsPathSupported(change.Path); err != nil {
-			// A non-resource file was never going to be synced regardless of
-			// which error IsPathSupported returns first (see HasResourceExtension).
-			// README.md/.keep/.gitignore fall out here; a delete of an unsafe
-			// path was never a synced resource either. Hidden files are checked
-			// the same independent way, since IsPathSupported can mask
-			// ErrHiddenPath behind an earlier error.
+			// Files that are not resources (README.md, .keep, hidden files) and deletes
+			// of unsupported paths are not reported.
 			if change.Action != repository.FileActionDeleted &&
 				!safepath.IsHidden(change.Path) && resources.HasResourceExtension(change.Path) {
-				// change.Action, not FileActionIgnored, so this still blocks
-				// parent-folder cleanup like any other failed update/rename.
-				progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
+				result := jobs.NewPathOnlyResult(change.Path).
 					WithAction(change.Action).
-					WithPreviousPath(change.PreviousPath).
-					WithError(&resources.UnsupportedPathError{Paths: []resources.UnsupportedPath{{Path: change.Path, Err: err}}}).
-					Build())
+					WithPreviousPath(change.PreviousPath)
+				unsupported := &resources.UnsupportedPathError{Path: change.Path, Err: err}
+
+				// Renamed onto a path that cannot sync: the file is gone from its old
+				// path, so the resource goes too, with a warning about the new path.
+				if change.Action == repository.FileActionRenamed && change.PreviousPath != "" &&
+					!safepath.IsDir(change.PreviousPath) && resources.IsPathSupported(change.PreviousPath) == nil {
+					name, folderName, gvk, size, rmErr := repositoryResources.RemoveResourceFromFile(ctx, change.PreviousPath, change.PreviousRef)
+					result.WithName(name).WithGVK(gvk).WithBytes(size)
+					if rmErr != nil {
+						result.WithError(fmt.Errorf("removing resource from file %s: %w", change.PreviousPath, rmErr))
+					} else {
+						quotaTracker.Release()
+						result.WithWarning(unsupported)
+						if folderName != "" {
+							affectedFolders[safepath.Dir(change.PreviousPath)] = folderName
+						}
+					}
+				} else {
+					result.WithError(unsupported)
+				}
+
+				progress.Record(ctx, result.Build())
 				continue
 			}
 

@@ -590,7 +590,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 			currentRef:  "new-ref",
 		},
 		{
-			name:         "unsafe path on rename is reported with the previous path preserved",
+			name:         "renamed onto an unsafe path removes the resource and warns about the new path",
 			quotaTracker: permissiveQt,
 			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
@@ -609,13 +609,85 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", "folder/Backend & UI.json").Return(false)
 
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "folder/backend-ui.json", "old-ref").
+					Return("removed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
+
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					var unsupportedErr *resources.UnsupportedPathError
 					return result.Action() == repository.FileActionRenamed &&
 						result.Path() == "folder/Backend & UI.json" &&
 						result.PreviousPath() == "folder/backend-ui.json" &&
+						result.Name() == "removed-dashboard" &&
+						result.Error() == nil &&
 						errors.As(result.Warning(), &unsupportedErr)
-				})).Return()
+				})).Return().Once()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "a failed removal on rename onto an unsafe path is an error",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "folder/Backend & UI.json",
+						PreviousPath: "folder/backend-ui.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/Backend & UI.json").Return(false)
+
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "folder/backend-ui.json", "old-ref").
+					Return("", "", schema.GroupVersionKind{}, 0, errors.New("boom"))
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionRenamed &&
+						result.Error() != nil &&
+						result.Warning() == nil
+				})).Return().Once()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "renamed from an unsafe path to another unsafe path only warns",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "folder/Backend & UI.json",
+						PreviousPath: "folder/old & path.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/Backend & UI.json").Return(false)
+
+				// no RemoveResourceFromFile expectation: the old path never synced either
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupportedErr *resources.UnsupportedPathError
+					return result.Action() == repository.FileActionRenamed &&
+						result.PreviousPath() == "folder/old & path.json" &&
+						errors.As(result.Warning(), &unsupportedErr)
+				})).Return().Once()
 
 				progress.On("TooManyErrors").Return(nil)
 			},

@@ -69,7 +69,7 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 		},
 	})
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil, nil, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil, nil, nil)
 	progress.On("SetTotal", mock.Anything, 1).Return()
 
 	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
@@ -89,7 +89,7 @@ func TestFullSync_Error(t *testing.T) {
 		},
 	})
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil, nil, nil, fmt.Errorf("some error"))
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil, nil, fmt.Errorf("some error"))
 
 	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.EqualError(t, err, "compare changes: some error")
@@ -108,7 +108,7 @@ func TestFullSync_NoChanges(t *testing.T) {
 		},
 	})
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil, nil)
 	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 
 	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
@@ -134,7 +134,7 @@ func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
 		},
 	})
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil, nil)
 	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 	repoResources.On("EnsureFolderExists", mock.Anything, resources.Folder{
 		ID:    "test-repo",
@@ -247,7 +247,7 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 	// No folder creation should be attempted with instance target
 	// But we should still test the error path for completeness
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(nil, nil, nil, nil, fmt.Errorf("compare error"))
+		Return(nil, nil, nil, fmt.Errorf("compare error"))
 
 	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.Error(t, err)
@@ -513,6 +513,95 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				).WithPath("dashboards/test.json").
 					WithAction(repository.FileActionDeleted).
 					Build())).Return()
+			},
+		},
+		{
+			name:        "unsupported path with nothing to remove is reported as a warning",
+			description: "Should record a warning for a file that cannot be synced and write nothing",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "dashboards/Bad & Name.json",
+					Unsupported: &resources.UnsupportedPathError{
+						Path: "dashboards/Bad & Name.json", Err: errors.New("path contains invalid characters"),
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/Bad & Name.json").Return(false)
+
+				// no WriteResourceFromFile expectation: writing it would fail the test
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupported *resources.UnsupportedPathError
+					return result.Path() == "dashboards/Bad & Name.json" &&
+						result.Action() == repository.FileActionIgnored &&
+						result.Error() == nil &&
+						errors.As(result.Warning(), &unsupported) &&
+						unsupported.Path == "dashboards/Bad & Name.json"
+				})).Return()
+			},
+		},
+		{
+			name:        "renamed onto an unsupported path removes the resource with a warning",
+			description: "Should delete the resource whose file moved to a path that cannot sync, in one result",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionRenamed,
+					Path:   "dashboards/Bad & Name.json",
+					Existing: &provisioning.ResourceListItem{
+						Name:     "test-dashboard",
+						Resource: "dashboards",
+						Group:    "dashboards",
+						Path:     "dashboards/test.json",
+					},
+					Unsupported: &resources.UnsupportedPathError{
+						Path: "dashboards/Bad & Name.json", Err: errors.New("path contains invalid characters"),
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/Bad & Name.json").Return(false)
+
+				scheme := runtime.NewScheme()
+				require.NoError(t, metav1.AddMetaToScheme(scheme))
+				listGVK := schema.GroupVersionKind{
+					Group:   resources.DashboardResource.Group,
+					Version: resources.DashboardResource.Version,
+					Kind:    "DashboardList",
+				}
+				scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+				scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+					Group:   resources.DashboardResource.Group,
+					Version: resources.DashboardResource.Version,
+					Kind:    resources.DashboardResource.Resource,
+				}, &metav1.PartialObjectMetadata{})
+				fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+					resources.DashboardResource: listGVK.Kind,
+				})
+				fakeDynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, nil
+				})
+				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+					Group:    "dashboards",
+					Resource: "dashboards",
+				}).Return(fakeDynamicClient.Resource(resources.DashboardResource), schema.GroupVersionKind{
+					Kind:    "Dashboard",
+					Group:   "dashboards",
+					Version: "v1",
+				}, nil)
+
+				// exactly one result: the removal of the old path, carrying the warning
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupported *resources.UnsupportedPathError
+					return result.Path() == "dashboards/test.json" &&
+						result.Name() == "test-dashboard" &&
+						result.Action() == repository.FileActionDeleted &&
+						result.Error() == nil &&
+						errors.As(result.Warning(), &unsupported) &&
+						unsupported.Path == "dashboards/Bad & Name.json"
+				})).Return().Once()
 			},
 		},
 		{
@@ -881,7 +970,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			compareFn := NewMockCompareFn(t)
 
 			tt.setupMocks(repo, repoResources, clients, progress, compareFn)
-			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil, nil)
+			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
 			repo.On("Config").Return(&provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
@@ -902,6 +991,27 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				tt.verifyMocks(t, repoResources)
 			}
 		})
+	}
+}
+
+func unsupportedCreated(n int) []ResourceFileChange {
+	changes := createdChanges(n)
+	for i := range changes {
+		changes[i].Unsupported = &resources.UnsupportedPathError{Path: changes[i].Path, Err: resources.ErrUnsupportedFileExtension}
+	}
+	return changes
+}
+
+// atQuota is a repository whose quota is exceeded with room for 1 more resource.
+func atQuota() *provisioning.Repository {
+	return &provisioning.Repository{
+		Status: provisioning.RepositoryStatus{
+			Conditions: []metav1.Condition{
+				{Type: provisioning.ConditionTypeResourceQuota, Status: metav1.ConditionFalse, Reason: provisioning.ReasonQuotaExceeded},
+			},
+			Quota: provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 99}},
+		},
 	}
 }
 
@@ -1138,6 +1248,17 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			expectErr: true,
 		},
 		{
+			name:    "created files that cannot be synced are not counted against the quota",
+			changes: unsupportedCreated(5),
+			config:  atQuota(),
+		},
+		{
+			name:      "the same files, if they could be synced, would exceed it",
+			changes:   createdChanges(5),
+			config:    atQuota(),
+			expectErr: true,
+		},
+		{
 			name:    "condition reason is not QuotaExceeded - proceeds",
 			changes: createdChanges(1000),
 			config: &provisioning.Repository{
@@ -1188,7 +1309,7 @@ func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
 		{Action: repository.FileActionCreated, Path: "dashboards/c.json"},
 	}
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil, nil, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil, nil, nil)
 	progress.On("SetTotal", mock.Anything, 3).Return()
 	progress.On("TooManyErrors").Return(nil)
 
@@ -1234,7 +1355,7 @@ func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
 		{Action: repository.FileActionUpdated, Path: "dashboards/existing.json"},
 	}
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil, nil, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil, nil, nil)
 	progress.On("SetTotal", mock.Anything, 1).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", "dashboards/existing.json").Return(false)
@@ -1272,7 +1393,7 @@ func TestFullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
 	}
 	// Compare returns the missing folder metadata list directly
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(changes, []string{"myfolder/"}, nil, nil, nil)
+		Return(changes, []string{"myfolder/"}, nil, nil)
 
 	// Expect a warning record for the missing folder metadata with action derived from changes
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -1317,7 +1438,7 @@ func TestFullSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
 	}
 	// Compare always returns missing list, even when flag is disabled
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(changes, []string{"myfolder/"}, nil, nil, nil)
+		Return(changes, []string{"myfolder/"}, nil, nil)
 
 	progress.On("SetTotal", mock.Anything, 1).Return()
 	progress.On("TooManyErrors").Return(nil)
@@ -1347,7 +1468,7 @@ func TestFullSync_InvalidFolderMetadataWarning(t *testing.T) {
 
 	invalidWarning := resources.NewInvalidFolderMetadata("myfolder/", errors.New("missing metadata.name"))
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return([]ResourceFileChange{}, nil, []*resources.InvalidFolderMetadata{invalidWarning}, nil, nil)
+		Return([]ResourceFileChange{}, nil, []*resources.InvalidFolderMetadata{invalidWarning}, nil)
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "myfolder/" &&
@@ -1393,7 +1514,7 @@ func TestFullSync_InvalidFolderMetadataWarning_ActionAware(t *testing.T) {
 
 			invalidWarning := resources.NewInvalidFolderMetadata("myfolder/", errors.New("missing metadata.name")).WithAction(tt.action)
 			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-				Return([]ResourceFileChange{}, nil, []*resources.InvalidFolderMetadata{invalidWarning}, nil, nil)
+				Return([]ResourceFileChange{}, nil, []*resources.InvalidFolderMetadata{invalidWarning}, nil)
 
 			progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 				return r.Path() == "myfolder/" &&
@@ -2262,7 +2383,7 @@ func TestFullSync_QuotaBlockedCreatesDoNotAccessResources(t *testing.T) {
 	}
 	repoResources := resources.NewMockRepositoryResources(t)
 	compare := NewMockCompareFn(t)
-	compare.On("Execute", mock.Anything, repo, repoResources, "ref", false).Return(changes, nil, nil, nil, nil)
+	compare.On("Execute", mock.Anything, repo, repoResources, "ref", false).Return(changes, nil, nil, nil)
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetTotal", mock.Anything, files).Return()
 	progress.On("TooManyErrors").Return(nil)

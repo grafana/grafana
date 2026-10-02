@@ -37,6 +37,10 @@ type ResourceFileChange struct {
 	// (e.g. ReasonFolderMetadataUpdated, ReasonFolderMetadataDeleted).
 	Reason string
 
+	// Unsupported is set when the file at Path cannot be synced because its path
+	// fails validation; applyChange reports it as a warning instead of writing it.
+	Unsupported *resources.UnsupportedPathError
+
 	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
 	// DetectRenames must skip these so orphan removal is not consumed as a rename.
 	// Folder orphans are deleted late, after any children have been re-parented.
@@ -69,32 +73,32 @@ func Compare(
 	repositoryResources resources.RepositoryResources,
 	ref string,
 	folderMetadataEnabled bool,
-) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, []resources.UnsupportedPath, error) {
+) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error) {
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error listing current: %w", err)
+		return nil, nil, nil, fmt.Errorf("error listing current: %w", err)
 	}
 
 	source, err := repo.ReadTree(ctx, ref)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error reading tree: %w", err)
+		return nil, nil, nil, fmt.Errorf("error reading tree: %w", err)
 	}
 
-	changes, unsupported, err := Changes(ctx, source, target, folderMetadataEnabled)
+	changes, err := Changes(ctx, source, target, folderMetadataEnabled)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
+		return nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
 
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
 		changes, invalidFolderMetadata, err = augmentChangesForFolderMetadata(ctx, repo, ref, source, target, changes)
 		if err != nil {
-			return nil, nil, nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
+			return nil, nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
 		}
 
 		changes, err = augmentChangesForFolderMoves(ctx, repo, ref, changes)
 		if err != nil {
-			return nil, nil, nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
+			return nil, nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
 		}
 	}
 
@@ -106,7 +110,7 @@ func Compare(
 
 	missingMetadata := resources.FindFoldersMissingMetadata(source)
 
-	return changes, missingMetadata, invalidFolderMetadata, unsupported, nil
+	return changes, missingMetadata, invalidFolderMetadata, nil
 }
 
 // Changes computes the diff between a repository source tree and the current Grafana state (target).
@@ -117,14 +121,14 @@ func Changes(
 	source []repository.FileTreeEntry,
 	target *provisioning.ResourceList,
 	folderMetadataEnabled bool,
-) ([]ResourceFileChange, []resources.UnsupportedPath, error) {
+) ([]ResourceFileChange, error) {
 	logger := logging.FromContext(ctx)
 	lookup := make(map[string][]*provisioning.ResourceListItem, len(target.Items))
 	for i := range target.Items {
 		item := &target.Items[i]
 		if item.Path == "" {
 			if item.Group != resources.FolderResource.Group {
-				return nil, nil, fmt.Errorf("empty path on a non folder")
+				return nil, fmt.Errorf("empty path on a non folder")
 			}
 			continue
 		}
@@ -139,12 +143,6 @@ func Changes(
 
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
-	var unsupported []resources.UnsupportedPath
-	// Content hashes of the files that were rejected as unsupported. A resource
-	// still in lookup with one of these hashes is most likely the same file
-	// renamed to the rejected path, so it is kept rather than deleted (the
-	// incremental sync keeps it too: it never applies the rejected rename).
-	unsupportedHashes := make(map[string]struct{})
 
 	for _, file := range source {
 		// TODO: why do we have to do this here?
@@ -194,7 +192,7 @@ func Changes(
 			}
 
 			if err := keep.Add(file.Path); err != nil {
-				return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
 			if primary.Resource != resources.FolderResource.Resource {
@@ -204,34 +202,8 @@ func Changes(
 			continue
 		}
 
-		// A non-resource file (wrong extension) was never going to be synced,
-		// regardless of which error IsPathSupported returns first -- checking
-		// the extension directly avoids depending on validatePathBasics running
-		// after the extension check. README.md, .keep and .gitignore fall out
-		// here; a hidden resource file (e.g. .dashboard.yaml) is still normal,
-		// not unsupported -- checked the same independent way as the extension,
-		// since IsPathSupported can mask ErrHiddenPath behind an earlier error.
-		if pathErr := resources.IsPathSupported(file.Path); pathErr != nil &&
-			!safepath.IsHidden(file.Path) && resources.HasResourceExtension(file.Path) {
-			unsupported = append(unsupported, resources.UnsupportedPath{Path: file.Path, Err: pathErr})
-			if file.Hash != "" {
-				unsupportedHashes[file.Hash] = struct{}{}
-			}
-
-			// Preserve the containing folder: an unsyncable file must not make an
-			// already-synced parent folder look orphaned and get deleted.
-			if safeSegment := safepath.SafeSegment(file.Path); safeSegment != "" {
-				if !safepath.IsDir(safeSegment) {
-					safeSegment = safepath.Dir(safeSegment)
-				}
-				if err := keep.Add(safeSegment); err != nil {
-					return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
-				}
-			}
-			continue
-		}
-
-		if resources.IsPathSupported(file.Path) == nil {
+		pathErr := resources.IsPathSupported(file.Path)
+		if pathErr == nil {
 			// The folder metadata file is not a resource itself.
 			// For new folders the parent directory creation handles it;
 			// for existing folders we compare hashes to detect metadata changes.
@@ -239,14 +211,14 @@ func Changes(
 				if !folderMetadataEnabled {
 					logger.Debug("skipping folder metadata file as feature flag is off", "path", file.Path)
 					if err := keep.Add(file.Path); err != nil {
-						return nil, nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
+						return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 					}
 					continue
 				}
 
 				logger.Debug("processing folder metadata file", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
-					return nil, nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
+					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 				}
 				// If the parent directory already exists in Grafana and the hash changed,
 				// record an update to reconcile metadata (e.g. folder title).
@@ -300,7 +272,7 @@ func Changes(
 			})
 
 			if err := keep.Add(file.Path); err != nil {
-				return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
 			continue
@@ -312,9 +284,21 @@ func Changes(
 			safeSegment = safepath.Dir(safeSegment)
 		}
 
+		// A resource file whose path cannot be synced is kept as a change, so that
+		// applyChange decides what to do with it and the total stays accurate.
+		// Other files (README.md, .keep, hidden files) are not resources.
+		if !safepath.IsHidden(file.Path) && resources.HasResourceExtension(file.Path) {
+			changes = append(changes, ResourceFileChange{
+				Action:      repository.FileActionCreated,
+				Path:        file.Path,
+				Hash:        file.Hash,
+				Unsupported: &resources.UnsupportedPathError{Path: file.Path, Err: pathErr},
+			})
+		}
+
 		if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
 			if err := keep.Add(safeSegment); err != nil {
-				return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
 			if _, ok := lookup[safeSegment]; ok {
@@ -334,30 +318,10 @@ func Changes(
 		}
 	}
 
-	// A resource kept because its file was renamed to an unsupported path still
-	// lives at its old path, so that path (and the folders above it) must be kept
-	// before any folder deletion is decided below.
-	keptByRename := make(map[*provisioning.ResourceListItem]struct{})
-	for _, items := range lookup {
-		for _, v := range items {
-			if _, renamedToUnsupported := unsupportedHashes[v.Hash]; renamedToUnsupported && v.Hash != "" &&
-				v.Resource != resources.FolderResource.Resource {
-				keptByRename[v] = struct{}{}
-				if err := keep.Add(v.Path); err != nil {
-					return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
-				}
-			}
-		}
-	}
-
 	// Paths found in grafana, without a matching path in the repository
 	for _, items := range lookup {
 		for _, v := range items {
 			if v.Resource == resources.FolderResource.Resource && keep.Exists(v.Path) {
-				continue
-			}
-
-			if _, kept := keptByRename[v]; kept {
 				continue
 			}
 
@@ -372,7 +336,7 @@ func Changes(
 	// Deepest first (stable sort order)
 	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
 
-	return changes, unsupported, nil
+	return changes, nil
 }
 
 // augmentChangesForFolderMetadata detects two categories of folder metadata changes:
@@ -699,10 +663,11 @@ func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
 		}
 
 		changes[i] = ResourceFileChange{
-			Action:   repository.FileActionRenamed,
-			Path:     change.Path,
-			Hash:     change.Hash,
-			Existing: changes[deletionIdx].Existing,
+			Action:      repository.FileActionRenamed,
+			Path:        change.Path,
+			Hash:        change.Hash,
+			Existing:    changes[deletionIdx].Existing,
+			Unsupported: change.Unsupported,
 		}
 		removedDeletions[deletionIdx] = true
 		delete(deletionsByHash, change.Hash)
