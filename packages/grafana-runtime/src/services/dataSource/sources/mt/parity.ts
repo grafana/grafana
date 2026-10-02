@@ -1,10 +1,14 @@
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { config } from '../../../../config';
+import { MT_PARITY_MISMATCH_WARNING, MT_SETTINGS_PARITY_MISMATCH_WARNING } from '../../constants';
+import { logDataSourceMeasurement, logDataSourceWarning } from '../../logging';
+import { DataSourceCacheSourceDecorator } from '../decorator';
 import { type BootDataSourceSettings, type DataSourceListSnapshot } from '../types';
 
 // Compares what the MT APIs return with boot data from the same page load, while boot data is
-// still sent. Delete this module together with the boot-data source.
+// still sent. Delete this module, and its decorator in selectSource.ts, together with the boot-data
+// source.
 
 const MAX_LISTED = 20;
 
@@ -18,7 +22,7 @@ export interface ListParity {
 }
 
 /** The boot data the page loaded with. */
-export function getBootDataBaseline(): BootDataSourceSettings {
+function getBootDataBaseline(): BootDataSourceSettings {
   return {
     // eslint-disable-next-line @grafana/no-config-datasources -- boot data is the parity baseline for the MT fill
     datasources: config.datasources,
@@ -74,7 +78,7 @@ export function compareListWithBootData(
   };
 }
 
-export function hasListMismatch(parity: ListParity): boolean {
+function hasListMismatch(parity: ListParity): boolean {
   return (
     parity.missingInMt.length > 0 ||
     parity.extraInMt.length > 0 ||
@@ -125,6 +129,94 @@ function jsonDataKeys(settings: DataSourceInstanceSettings): string {
 }
 
 /** The boot-data entry for a uid, or `undefined` when boot data does not have it. */
-export function findInBootData(baseline: BootDataSourceSettings, uid: string): DataSourceInstanceSettings | undefined {
+function findInBootData(baseline: BootDataSourceSettings, uid: string): DataSourceInstanceSettings | undefined {
   return Object.values(baseline.datasources).find((settings) => bootKey(settings) === uid);
+}
+
+/**
+ * Compares what the wrapped source returns with boot data, and reports the difference to Faro:
+ * a measurement for each list fill and refetch, and warnings that name the differing uids and
+ * fields. It never changes what the source returns.
+ */
+export class BootDataParitySource extends DataSourceCacheSourceDecorator {
+  private loggedSettingsMismatch = new Set<string>();
+
+  async loadList(): Promise<DataSourceListSnapshot> {
+    const start = performance.now();
+    const snapshot = await super.loadList();
+    this.compareList(snapshot, getBootDataBaseline(), 'boot', performance.now() - start);
+    return snapshot;
+  }
+
+  async refreshList(payload?: BootDataSourceSettings): Promise<DataSourceListSnapshot> {
+    const start = performance.now();
+    const snapshot = await super.refreshList(payload);
+    // The payload DataSourceSrv.reload() fetched is the boot data to compare with. Without it,
+    // `config.datasources` would be the outdated boot data from page load.
+    if (payload) {
+      this.compareList(snapshot, payload, 'reload', performance.now() - start);
+    }
+    return snapshot;
+  }
+
+  async loadSettings(uid: string): Promise<DataSourceInstanceSettings | undefined> {
+    const settings = await super.loadSettings(uid);
+    if (settings) {
+      this.compareSettings(settings);
+    }
+    return settings;
+  }
+
+  private compareList(
+    snapshot: DataSourceListSnapshot,
+    baseline: BootDataSourceSettings,
+    reason: 'boot' | 'reload',
+    durationMs: number
+  ): void {
+    const parity = compareListWithBootData(snapshot, baseline);
+    logDataSourceMeasurement(
+      'datasource_cache_fill',
+      {
+        durationMs,
+        connections: snapshot.stats?.connections ?? 0,
+        items: snapshot.items.length,
+        builtIns: snapshot.items.filter((item) => item.meta.builtIn).length,
+        droppedMissingPlugin: snapshot.stats?.droppedMissingPlugin ?? 0,
+        bootItems: parity.bootItems,
+        missingInMt: parity.missingInMt.length,
+        extraInMt: parity.extraInMt.length,
+        fieldMismatches: parity.fieldMismatches.length,
+        defaultMismatch: parity.defaultMismatch ? 1 : 0,
+      },
+      { reason }
+    );
+    if (hasListMismatch(parity)) {
+      logDataSourceWarning(MT_PARITY_MISMATCH_WARNING, {
+        reason,
+        missingInMt: listForLog(parity.missingInMt),
+        extraInMt: listForLog(parity.extraInMt),
+        fieldMismatches: listForLog(parity.fieldMismatches),
+      });
+    }
+  }
+
+  private compareSettings(settings: DataSourceInstanceSettings): void {
+    if (this.loggedSettingsMismatch.has(settings.uid)) {
+      return;
+    }
+    // A uid that boot data does not have is already reported by the list comparison.
+    const boot = findInBootData(getBootDataBaseline(), settings.uid);
+    if (!boot) {
+      return;
+    }
+    const fields = compareSettingsWithBootData(settings, boot);
+    if (fields.length > 0) {
+      this.loggedSettingsMismatch.add(settings.uid);
+      logDataSourceWarning(MT_SETTINGS_PARITY_MISMATCH_WARNING, {
+        uid: settings.uid,
+        type: settings.type,
+        fields: fields.join(','),
+      });
+    }
+  }
 }

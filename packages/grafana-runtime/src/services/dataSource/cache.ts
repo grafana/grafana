@@ -6,7 +6,6 @@ import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { MT_FILL_FAILED } from './constants';
 import { DataSourceCacheFillError } from './errors';
 import { logDataSourceInstanceError } from './logging';
-import { notifyDataSourceLoadFailed, resetDataSourceLoadFailureNotice } from './notifications';
 import { type DataSourceCacheSource, type DataSourceListSnapshot } from './sources/types';
 
 const FILL_CACHE_KEY = 'grafana-runtime:ds-cache-fill';
@@ -84,7 +83,6 @@ export function awaitFill(): Promise<void> {
       // When a newer snapshot filled the cache meanwhile, this failure no longer matters.
       if (version === snapshotVersion) {
         logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'boot', source: from.kind });
-        notifyDataSourceLoadFailed();
         throw new DataSourceCacheFillError(error);
       }
     } finally {
@@ -126,7 +124,6 @@ export function applySnapshot(snapshot: DataSourceListSnapshot): void {
 
   snapshotVersion++;
   filled = true;
-  resetDataSourceLoadFailureNotice();
   notifyDataSourceCacheChanged();
 }
 
