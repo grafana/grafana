@@ -4,6 +4,7 @@
 process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylight savings
 
 const esModules = [
+  '@faker-js/faker',
   '@wojtekmaj/date-utils',
   'ol',
   'd3',
@@ -28,6 +29,8 @@ const esModules = [
   '@bsull/augurs',
   '@grafana/react-data-grid',
   '@grafana/llm',
+  '@grafana/prometheus',
+  '@grafana/plugin-ui',
   'pkce-challenge',
   'quickselect',
   'rbush',
@@ -37,6 +40,7 @@ const esModules = [
   'uuid',
   '@react-hookz/web',
   '@ver0/deep-equal',
+  '@marcbachmann/cel-js',
 ].join('|');
 
 module.exports = {
@@ -53,10 +57,19 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
-    `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
+    // Transform listed ESM packages at the top level or nested under another package
+    // (e.g. @grafana/plugin-ui → uuid). Top-level still uses prefix matching so
+    // entries like `d3` continue to cover related packages (d3-force, etc.).
+    `/node_modules/(?!(?:${esModules})|(?:.*/(?:${esModules})/))`,
   ],
   moduleDirectories: ['public', 'node_modules'],
-  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
+  roots: [
+    '<rootDir>/public/app',
+    '<rootDir>/public/swagger',
+    '<rootDir>/public/test',
+    '<rootDir>/packages',
+    '<rootDir>/scripts/tests',
+  ],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'cjs'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
@@ -90,12 +103,8 @@ module.exports = {
     '/node_modules/',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
-    '<rootDir>/public/app/plugins/datasource/grafana-postgresql-datasource',
+    '<rootDir>/public/app/plugins/datasource/cloudwatch',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
-    '<rootDir>/public/app/plugins/datasource/influxdb',
     '<rootDir>/public/app/plugins/datasource/graphite',
-    '<rootDir>/public/app/plugins/datasource/jaeger',
-    '<rootDir>/public/app/plugins/datasource/loki',
-    '<rootDir>/public/app/plugins/datasource/mysql',
   ],
 };

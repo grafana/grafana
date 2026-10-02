@@ -18,7 +18,7 @@ func newDiscoveryTestSearchServer(t *testing.T, storage StorageBackend, search S
 		Resources:    &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
 		InitMinCount: 1,
 	}
-	server, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	server, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, server)
 	return server

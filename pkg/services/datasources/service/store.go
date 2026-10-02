@@ -190,7 +190,7 @@ func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*d
 // and is added to the bus. It also removes permissions related to the datasource.
 func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		dsQuery := &datasources.GetDataSourceQuery{ID: cmd.ID, UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID}
+		dsQuery := &datasources.GetDataSourceQuery{ID: cmd.ID, UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID} //nolint:staticcheck // Preserve legacy field compatibility.
 		ds, errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
 
 		if errGettingDS != nil && !errors.Is(errGettingDS, datasources.ErrDataSourceNotFound) {
@@ -300,6 +300,10 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 		}
 
+		if cmd.BeforeSave != nil {
+			cmd.BeforeSave(ctx, cmd.UID, cmd.JsonData)
+		}
+
 		ds = &datasources.DataSource{
 			OrgID:           cmd.OrgID,
 			Name:            cmd.Name,
@@ -370,6 +374,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
 				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 			}
+		}
+
+		if cmd.BeforeSave != nil {
+			cmd.BeforeSave(ctx, cmd.UID, cmd.JsonData)
 		}
 
 		ds = &datasources.DataSource{
@@ -445,7 +453,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 }
 
 func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		uid := generateNewUid()
 
 		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&datasources.DataSource{})

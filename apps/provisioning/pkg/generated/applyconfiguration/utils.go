@@ -30,6 +30,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ConnectionApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionInfo"):
 		return &provisioningv0alpha1.ConnectionInfoApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionOAuthConfig"):
+		return &provisioningv0alpha1.ConnectionOAuthConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSecure"):
 		return &provisioningv0alpha1.ConnectionSecureApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSpec"):
@@ -40,6 +42,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ConnectionWebhookConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("DeleteJobOptions"):
 		return &provisioningv0alpha1.DeleteJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("DeletionStatus"):
+		return &provisioningv0alpha1.DeletionStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ErrorDetails"):
 		return &provisioningv0alpha1.ErrorDetailsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ExportJobOptions"):
@@ -50,12 +54,12 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.GitHubConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubEnterpriseConnectionConfig"):
 		return &provisioningv0alpha1.GitHubEnterpriseConnectionConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitHubEnterpriseOAuthConnectionConfig"):
+		return &provisioningv0alpha1.GitHubEnterpriseOAuthConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubEnterpriseRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubEnterpriseRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("GitlabConnectionConfig"):
-		return &provisioningv0alpha1.GitlabConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitLabRepositoryConfig"):
 		return &provisioningv0alpha1.GitLabRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitRepositoryConfig"):

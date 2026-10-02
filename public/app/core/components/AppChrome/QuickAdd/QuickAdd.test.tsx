@@ -128,6 +128,11 @@ describe('QuickAdd', () => {
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
   });
 
+  it('renders nothing when the navtree has no create actions', () => {
+    setup([{ text: 'Dashboards', id: 'dashboards/browse', url: '/dashboards' }]);
+    expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
+  });
+
   it('shows isCreateAction options when clicked', async () => {
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));

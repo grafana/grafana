@@ -25,7 +25,7 @@ export interface ResourceRepositorySelection {
  * settings response doesn't fall back to "all kinds available").
  */
 export function useResourceRepositorySelection(info: ResourceKindInfo): ResourceRepositorySelection {
-  const provisioningEnabled = Boolean(config.featureToggles.provisioning);
+  const provisioningEnabled = Boolean(config.provisioningEnabled);
   const { data } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
 
   const repositories = data?.items ?? [];

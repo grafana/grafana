@@ -25,6 +25,12 @@ var (
 	ErrTokenNotFound = errors.New("token secure value not found")
 )
 
+// decryptTimeout bounds a single decrypt call so a hung or unreachable secrets
+// service can't block a reconcile indefinitely. It covers the gRPC client's
+// internal retries, which share this context. Reconcile retries on failure, so
+// this is a fail-fast bound, not a hard SLA.
+const decryptTimeout = 30 * time.Second
+
 type secretTypeLabel string
 
 const (
@@ -35,6 +41,7 @@ const (
 
 type Decrypter = func(c *provisioning.Connection) SecureValues
 
+//go:generate mockery --name SecureValues --structname MockSecureValues --inpackage --filename secure_mock.go --with-expecter
 type SecureValues interface {
 	PrivateKey(ctx context.Context) (common.RawSecureValue, error)
 	ClientSecret(ctx context.Context) (common.RawSecureValue, error)
@@ -65,6 +72,9 @@ func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st 
 			s.metrics.recordSuccess(st, elapsed)
 		}
 	}()
+
+	ctx, cancel := context.WithTimeout(ctx, decryptTimeout)
+	defer cancel()
 
 	results, err := s.svc.Decrypt(ctx, provisioning.GROUP, s.namespace, sv.Name)
 	if err != nil {

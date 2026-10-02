@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { configureStore } from 'app/store/configureStore';
@@ -412,7 +413,7 @@ describe('AlertRuleDrawerForm', () => {
       it('hides the evaluation group picker and shows a per-rule evaluation interval input', () => {
         renderDrawer({ prefill: submittablePrefill });
 
-        expect(screen.queryByTestId('group-picker')).not.toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.components.AlertRules.groupPicker)).not.toBeInTheDocument();
         expect(screen.queryByTestId('new-evaluation-group-button')).not.toBeInTheDocument();
         expect(screen.getByTestId(EVALUATION_INTERVAL_FIELD_TEST_ID)).toBeInTheDocument();
       });

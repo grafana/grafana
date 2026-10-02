@@ -5,10 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
+
+// DailyBucket is a single calendar day's metrics for an object.
+type DailyBucket struct {
+	Day     string
+	Metrics map[string]uint64
+}
+
+// dailyReadBatchSize bounds how many daily keys are fetched per BatchGet round trip
+const dailyReadBatchSize = 50
 
 type Store struct {
 	kv kv.KV
@@ -26,6 +36,11 @@ func getUint64(ctx context.Context, store kv.KV, section, key string) (uint64, e
 		}
 		return 0, err
 	}
+	return readUint64(r)
+}
+
+// readUint64 consumes and closes r, decoding the stored counter value.
+func readUint64(r io.ReadCloser) (uint64, error) {
 	defer func() { _ = r.Close() }()
 	b, err := io.ReadAll(r)
 	if err != nil {
@@ -89,29 +104,81 @@ func (s *Store) ReadDailyForObject(ctx context.Context, o objectRef) (map[string
 	return out, nil
 }
 
-// ReadDailyRange returns day -> metric -> value for an object, restricted to
-// the inclusive [fromDay, toDay] calendar-day window. Empty bounds mean
-// unbounded on that side. The overflow bucket is always excluded since it does
-// not correspond to a single calendar day.
-func (s *Store) ReadDailyRange(ctx context.Context, o objectRef, fromDay, toDay string) (map[string]map[string]uint64, error) {
-	all, err := s.ReadDailyForObject(ctx, o)
-	if err != nil {
-		return nil, err
+// ReadDailyRange streams an object's per-day buckets in ascending
+// chronological order, restricted to the inclusive [fromDay, toDay] window.
+// Empty bounds mean unbounded on that side. The overflow bucket is always
+// excluded since it does not correspond to a single calendar day.
+func (s *Store) ReadDailyRange(ctx context.Context, o objectRef, fromDay, toDay string) iter.Seq2[DailyBucket, error] {
+	return func(yield func(DailyBucket, error) bool) {
+		// buffer all the keys upfront to keep the code simple. We have a bounded number of metrics (20) and days (30)
+		// so this will never be too big
+		var keys []string
+		for key, err := range s.kv.Keys(ctx, dailySection, kv.ListOptions{StartKey: o.prefix(), EndKey: kv.PrefixRangeEnd(o.prefix())}) {
+			if err != nil {
+				yield(DailyBucket{}, err)
+				return
+			}
+			pk, err := parseDailyKey(key)
+			if err != nil {
+				yield(DailyBucket{}, err)
+				return
+			}
+			// The overflow bucket is not a calendar day; it sorts after the
+			// dated keys, so skipping it never leaves a day half-accumulated.
+			if pk.Day == overflowBucket {
+				continue
+			}
+			if fromDay != "" && pk.Day < fromDay {
+				continue
+			}
+			if toDay != "" && pk.Day > toDay {
+				// Keys are ascending, so every remaining dated key is also
+				// out of range.
+				break
+			}
+			keys = append(keys, key)
+		}
+
+		var (
+			curDay     string
+			curMetrics map[string]uint64
+			haveDay    bool
+		)
+		for start := 0; start < len(keys); start += dailyReadBatchSize {
+			end := min(start+dailyReadBatchSize, len(keys))
+			for item, err := range s.kv.BatchGet(ctx, dailySection, keys[start:end]) {
+				if err != nil {
+					yield(DailyBucket{}, err)
+					return
+				}
+				pk, err := parseDailyKey(item.Key)
+				if err != nil {
+					yield(DailyBucket{}, err)
+					return
+				}
+				v, err := readUint64(item.Value)
+				if err != nil {
+					yield(DailyBucket{}, err)
+					return
+				}
+				if haveDay && pk.Day != curDay {
+					if !yield(DailyBucket{Day: curDay, Metrics: curMetrics}, nil) {
+						return
+					}
+					haveDay = false
+				}
+				if !haveDay {
+					curDay = pk.Day
+					curMetrics = map[string]uint64{}
+					haveDay = true
+				}
+				curMetrics[pk.Metric] = v
+			}
+		}
+		if haveDay {
+			yield(DailyBucket{Day: curDay, Metrics: curMetrics}, nil)
+		}
 	}
-	out := make(map[string]map[string]uint64, len(all))
-	for day, metrics := range all {
-		if day == overflowBucket {
-			continue
-		}
-		if fromDay != "" && day < fromDay {
-			continue
-		}
-		if toDay != "" && day > toDay {
-			continue
-		}
-		out[day] = metrics
-	}
-	return out, nil
 }
 
 func (s *Store) FoldIntoOverflow(ctx context.Context, o objectRef, expired map[string]map[string]uint64) error {

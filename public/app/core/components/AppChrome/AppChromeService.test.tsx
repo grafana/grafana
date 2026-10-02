@@ -1,4 +1,4 @@
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 
 import { AppChromeService } from './AppChromeService';
 
@@ -49,24 +49,105 @@ describe('AppChromeService', () => {
   });
 
   describe('fullscreen workspace', () => {
+    // `locationService` is a module singleton, and entering leaves the collapse mode and a
+    // history listener on it, so every test tears down through the service's own exit path.
+    const history = locationService.getHistory();
+    let chromeService: AppChromeService;
+
     beforeEach(() => {
       jest.clearAllMocks();
+      chromeService = new AppChromeService();
+      history.push('/before-workspace');
+    });
+
+    afterEach(() => {
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: false });
+    });
+
+    it('entering pushes the entry back pops, and collapses navigation made inside', () => {
+      const lengthBefore = history.length;
+
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: true });
+      expect(history.length).toBe(lengthBefore + 1);
+
+      // Platform-tab navigation replaces the workspace's entry instead of stacking.
+      history.push('/inside-workspace');
+      expect(history.length).toBe(lengthBefore + 1);
+
+      history.goBack();
+      expect(locationService.getLocation().pathname).toBe('/before-workspace');
+    });
+
+    it('closes the workspace when the user goes back', () => {
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: true });
+      history.push('/inside-workspace');
+
+      history.goBack();
+
+      expect(chromeService.state.getValue().fullscreenWorkspace).toBe(false);
+      expect(reportInteractionMock).toHaveBeenLastCalledWith('grafana_fullscreen_workspace', { action: 'exit' });
+    });
+
+    it('exiting keeps the current url and stops collapsing', () => {
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: true });
+      history.push('/inside-workspace');
+
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: false });
+
+      // The page the Platform tab was showing stays on screen after exit.
+      expect(locationService.getLocation().pathname).toBe('/inside-workspace');
+      const lengthAfterExit = history.length;
+      history.push('/after-workspace');
+      expect(history.length).toBe(lengthAfterExit + 1);
+    });
+
+    it('stops closing the workspace on back once it has been exited', () => {
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: true });
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: false });
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: true });
+
+      // The listener from the first entry must not still be attached, or this back would
+      // fire it twice — harmless today, but it would leak a listener per entry.
+      history.goBack();
+
+      expect(chromeService.state.getValue().fullscreenWorkspace).toBe(false);
+    });
+
+    it('does not push when the caller arrived by navigating, so back reaches the page before it', () => {
+      // Stands in for the `?fullscreenWorkspace=1` redirect: a navigation created this entry.
+      history.push('/workspace-entry');
+      const lengthOnEntry = history.length;
+
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: true, pushHistoryEntry: false });
+      history.push('/inside-workspace');
+
+      expect(history.length).toBe(lengthOnEntry);
+      history.goBack();
+      expect(locationService.getLocation().pathname).toBe('/before-workspace');
+    });
+
+    it('is a no-op when already in the requested state, so back still takes one press', () => {
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: true });
+      const lengthAfterEnter = history.length;
+      reportInteractionMock.mockClear();
+
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: true });
+
+      expect(history.length).toBe(lengthAfterEnter);
+      expect(reportInteractionMock).not.toHaveBeenCalled();
     });
 
     it('setFullscreenWorkspace updates state and reports enter/exit', () => {
-      const chromeService = new AppChromeService();
-
-      chromeService.setFullscreenWorkspace(true);
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: true });
       expect(chromeService.state.getValue().fullscreenWorkspace).toBe(true);
       expect(reportInteractionMock).toHaveBeenCalledWith('grafana_fullscreen_workspace', { action: 'enter' });
 
-      chromeService.setFullscreenWorkspace(false);
+      chromeService.setFullscreenWorkspace({ fullscreenWorkspace: false });
       expect(chromeService.state.getValue().fullscreenWorkspace).toBe(false);
       expect(reportInteractionMock).toHaveBeenCalledWith('grafana_fullscreen_workspace', { action: 'exit' });
     });
 
     it('toggleFullscreenWorkspace flips the current state', () => {
-      const chromeService = new AppChromeService();
       const initial = chromeService.state.getValue().fullscreenWorkspace ?? false;
 
       chromeService.toggleFullscreenWorkspace();

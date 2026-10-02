@@ -115,12 +115,13 @@ export const DashboardBrandingFooter = function ({
 };
 
 const getStyles = (theme: GrafanaTheme2, opts: { paddingX?: number; useMinHeight?: boolean }) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     footer: css({
       display: 'flex',
       justifyContent: 'end',
       height: '30px',
-      backgroundColor: theme.colors.background.canvas,
+      backgroundColor: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
       position: 'sticky',
       bottom: 0,
       zIndex: theme.zIndex.navbarFixed,

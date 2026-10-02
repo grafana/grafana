@@ -245,7 +245,7 @@ type httpResp struct {
 func createService(t *testing.T, sqlStore db.DB, withDB bool) *UsageStats {
 	t.Helper()
 	if withDB {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	}
 
 	cfg := setting.NewCfg()

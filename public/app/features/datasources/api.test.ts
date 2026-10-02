@@ -1,11 +1,13 @@
 import { of } from 'rxjs';
 
-import { type DataSourceSettings } from '@grafana/data';
-import { type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
+import { config, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, setDataSourceInstanceSettings } from '@grafana/runtime/internal';
+import { type BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 
 import {
   getDataSourceByUid,
+  createDataSourceWithK8sAPI,
   deleteDataSource,
   convertK8sDatasourceSettingsToLegacyDatasourceSettings,
   convertLegacyDatasourceSettingsToK8sDatasourceSettings,
@@ -19,6 +21,45 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(),
 }));
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
+
+const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
+const getBooleanValueFn = jest.fn();
+
+// stubCRUDApisEnabled toggles only the new-CRUD-APIs flag; any other flag key
+// falls through to the default the caller supplied.
+function stubCRUDApisEnabled(enabled: boolean) {
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+    key === FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs ? enabled : defaultValue
+  );
+}
+
+const marvinSettings = {
+  id: 42,
+  uid: 'abc123',
+  name: 'Marvin',
+  type: 'marvin',
+  access: 'proxy',
+  jsonData: {},
+  readOnly: false,
+  meta: { id: 'marvin' },
+} as DataSourceInstanceSettings;
+
+// getDataSourceInstanceList appends -- Grafana -- to most results, so the group
+// lookup has to keep excluding built-ins itself.
+const grafanaSettings = {
+  id: 1,
+  uid: '-- Grafana --',
+  name: '-- Grafana --',
+  type: 'grafana',
+  access: 'proxy',
+  jsonData: {},
+  readOnly: true,
+  meta: { id: 'grafana' },
+} as DataSourceInstanceSettings;
 
 const mockResponse = (response: Partial<FetchResponse>) => {
   (getBackendSrv as jest.Mock).mockReturnValueOnce({
@@ -28,7 +69,31 @@ const mockResponse = (response: Partial<FetchResponse>) => {
   });
 };
 
+// The k8s read path issues two requests (the resource and its /access subresource),
+// so responses are picked by URL rather than by call order.
+const mockResponsesByUrl = (responses: Record<string, Partial<FetchResponse>>) => {
+  const fetch = jest.fn((options: BackendSrvRequest) => of(responses[options.url] as FetchResponse));
+  (getBackendSrv as jest.Mock).mockReturnValue({ fetch });
+  return fetch;
+};
+
+const originalNamespace = config.namespace;
+
 describe('Datasources / API', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetFeatureFlagClient.mockReturnValue({ getBooleanValue: getBooleanValueFn } as unknown as ReturnType<
+      typeof getFeatureFlagClient
+    >);
+    stubCRUDApisEnabled(false);
+    setDataSourceInstanceSettings({ Marvin: marvinSettings, '-- Grafana --': grafanaSettings }, 'Marvin');
+    config.namespace = 'default';
+  });
+
+  afterAll(() => {
+    config.namespace = originalNamespace;
+  });
+
   describe('getDataSourceByUid()', () => {
     it('should resolve to the datasource object in case it is fetched using a UID', async () => {
       const response = {
@@ -41,6 +106,37 @@ describe('Datasources / API', () => {
       mockResponse(response);
 
       expect(await getDataSourceByUid(response.data.uid)).toBe(response.data);
+    });
+
+    it('should derive the k8s group from the instance settings when the new CRUD APIs are enabled', async () => {
+      stubCRUDApisEnabled(true);
+      const base = '/apis/marvin.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc123';
+      const fetch = mockResponsesByUrl({
+        [base]: {
+          ok: true,
+          data: {
+            kind: 'DataSource',
+            apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+            metadata: { name: 'abc123', resourceVersion: '2' },
+            spec: { title: 'Marvin' },
+          },
+        },
+        [`${base}/access`]: { ok: true, data: { Permissions: { 'datasources:read': true } } },
+      });
+
+      const result = await getDataSourceByUid('abc123');
+
+      expect(fetch).toHaveBeenCalledWith(expect.objectContaining({ url: base }));
+      expect(fetch).toHaveBeenCalledWith(expect.objectContaining({ url: `${base}/access` }));
+      expect(result.uid).toBe('abc123');
+      expect(result.type).toBe('marvin');
+      expect(result.accessControl).toEqual({ 'datasources:read': true });
+    });
+
+    it('should reject when the uid is unknown and the new CRUD APIs are enabled', async () => {
+      stubCRUDApisEnabled(true);
+
+      await expect(getDataSourceByUid('nope')).rejects.toThrow('Could not find data source group with uid: "nope"');
     });
   });
   describe('convertK8sDatasourceSettingsToLegacyDatasourceSettings()', () => {
@@ -100,6 +196,85 @@ describe('Datasources / API', () => {
       };
       expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings)).toEqual(dsLegacySettings);
     });
+
+    it.each([
+      { name: 'legacy spec', isDefault: true, labels: undefined, expected: true },
+      { name: 'default label', isDefault: undefined, labels: { default: 'true' }, expected: true },
+      { name: 'label with a false spec', isDefault: false, labels: { default: 'true' }, expected: true },
+      { name: 'spec with a false label', isDefault: true, labels: { default: 'false' }, expected: true },
+      { name: 'false label', isDefault: undefined, labels: { default: 'false' }, expected: false },
+      { name: 'missing default', isDefault: undefined, labels: undefined, expected: false },
+    ])('reads default status from $name', ({ isDefault, labels, expected }) => {
+      const result = convertK8sDatasourceSettingsToLegacyDatasourceSettings({
+        kind: 'DataSource',
+        apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+        metadata: { name: 'abc123', labels },
+        spec: {
+          title: 'Marvin',
+          access: 'proxy',
+          url: '',
+          user: '',
+          database: '',
+          basicAuth: false,
+          basicAuthUser: '',
+          isDefault,
+        },
+      });
+
+      expect(result.isDefault).toBe(expected);
+    });
+
+    it('should default jsonData to an empty object when the apiserver omits it', () => {
+      const dsK8sSettings: DataSourceSettingsK8s = {
+        kind: 'DataSource',
+        metadata: {
+          name: 'fortytwo',
+          namespace: 'default',
+          resourceVersion: '2',
+          labels: { 'grafana.app/deprecatedInternalID': '42' },
+        },
+        spec: {
+          access: 'all areas',
+          title: 'slartybartfast',
+          url: 'example.com',
+          basicAuth: false,
+          basicAuthUser: '',
+          user: '',
+          database: '',
+        },
+        apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+      };
+
+      expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings).jsonData).toEqual({});
+    });
+  });
+
+  describe('createDataSourceWithK8sAPI()', () => {
+    it.each([
+      { isDefault: true, metadata: { generateName: 'g', labels: { default: 'true' } } },
+      { isDefault: false, metadata: { generateName: 'g' } },
+      { isDefault: undefined, metadata: { generateName: 'g' } },
+    ])('writes default status $isDefault to labels only', async ({ isDefault, metadata }) => {
+      const post = jest.fn().mockResolvedValue({});
+      jest.mocked(getBackendSrv).mockReturnValueOnce({ post } as unknown as BackendSrv);
+
+      await createDataSourceWithK8sAPI({ type: 'marvin', name: 'Marvin', isDefault });
+
+      expect(post).toHaveBeenCalledWith('/apis/marvin.datasource.grafana.app/v0alpha1/namespaces/default/datasources', {
+        apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+        metadata,
+        spec: {
+          title: 'Marvin',
+          access: '',
+          jsonData: {},
+          url: '',
+          basicAuth: false,
+          basicAuthUser: '',
+          user: '',
+          database: '',
+        },
+      });
+    });
   });
 
   describe('deleteDataSource()', () => {
@@ -112,6 +287,42 @@ describe('Datasources / API', () => {
 
       expect(deleteFn).toHaveBeenCalledWith('/api/datasources/uid/abc123');
       expect(result).toEqual(deleteResult);
+    });
+
+    it('should delete through the k8s API when the new CRUD APIs are enabled', async () => {
+      stubCRUDApisEnabled(true);
+      const deleteFn = jest.fn().mockResolvedValue({});
+      (getBackendSrv as jest.Mock).mockReturnValueOnce({ delete: deleteFn });
+
+      await deleteDataSource('abc123');
+
+      expect(deleteFn).toHaveBeenCalledWith(
+        '/apis/marvin.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc123'
+      );
+    });
+
+    it('should reject rather than issue a request with an empty group when the uid is unknown', async () => {
+      stubCRUDApisEnabled(true);
+      const deleteFn = jest.fn();
+      (getBackendSrv as jest.Mock).mockReturnValueOnce({ delete: deleteFn });
+
+      await expect(deleteDataSource('nope')).rejects.toThrow('Could not find data source group with uid: "nope"');
+      expect(deleteFn).not.toHaveBeenCalled();
+    });
+
+    // A non-uid match would build a k8s URL for the wrong data source.
+    it.each([
+      ['a name rather than a uid', 'Marvin'],
+      ['an id rather than a uid', '42'],
+      ['the literal "default"', 'default'],
+      ['a built-in data source', '-- Grafana --'],
+    ])('should reject when given %s', async (_, uid) => {
+      stubCRUDApisEnabled(true);
+      const deleteFn = jest.fn();
+      (getBackendSrv as jest.Mock).mockReturnValueOnce({ delete: deleteFn });
+
+      await expect(deleteDataSource(uid)).rejects.toThrow(`Could not find data source group with uid: "${uid}"`);
+      expect(deleteFn).not.toHaveBeenCalled();
     });
   });
 
@@ -142,7 +353,7 @@ describe('Datasources / API', () => {
         name: 'fortytwo',
         namespace: 'default',
         resourceVersion: '2',
-        labels: { 'grafana.app/deprecatedInternalID': '42' },
+        labels: { 'grafana.app/deprecatedInternalID': '42', default: 'true' },
         annotations: {},
       };
       let k8sSpec: DatasourceInstanceK8sSpec = {
@@ -152,7 +363,6 @@ describe('Datasources / API', () => {
         url: 'example.com',
         basicAuth: true,
         basicAuthUser: 'zaphod',
-        isDefault: true,
         user: 'zaphod',
         database: 'universe',
         readOnly: true,
@@ -168,6 +378,14 @@ describe('Datasources / API', () => {
       expect(
         convertLegacyDatasourceSettingsToK8sDatasourceSettings(dsLegacySettings, k8sNamespace, k8sVersion)
       ).toEqual(dsK8sSettings);
+
+      const nonDefault = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
+        { ...dsLegacySettings, isDefault: false },
+        k8sNamespace,
+        k8sVersion
+      );
+      expect(nonDefault.metadata.labels).toEqual({ 'grafana.app/deprecatedInternalID': '42' });
+      expect(nonDefault.spec).not.toHaveProperty('isDefault');
     });
   });
 });

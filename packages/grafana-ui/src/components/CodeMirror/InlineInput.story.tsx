@@ -2,30 +2,24 @@ import type { Meta, StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
 import { action } from 'storybook/actions';
 
+import { VariableOrigin, type VariableSuggestion } from '@grafana/data';
+
 import { Field } from '../Forms/Field';
 
 import { CodeMirrorInlineInput } from './InlineInput';
 import mdx from './InlineInput.mdx';
-import type { CodeMirrorCompletionSource } from './types';
+import { createVariableCompletionSource } from './variableCompletion';
 
-// A trivial completion source that suggests a couple of `${...}` variables when
-// the user types `$`.
-const variableCompletionSource: CodeMirrorCompletionSource = (context) => {
-  const word = context.matchBefore(/\$\{?[\w.]*$/);
-  if (!word && !context.explicit) {
-    return null;
-  }
+const suggestions: VariableSuggestion[] = [
+  { value: '__series.name', label: '__series.name', origin: VariableOrigin.Series },
+  { value: '__field.name', label: '__field.name', origin: VariableOrigin.Field },
+  { value: '__value.raw', label: '__value.raw', origin: VariableOrigin.Value },
+];
 
-  return {
-    from: word ? word.from : context.pos,
-    filter: false,
-    options: [
-      { label: '__series.name', apply: '${__series.name}', type: 'variable' },
-      { label: '__field.name', apply: '${__field.name}', type: 'variable' },
-      { label: '__value.raw', apply: '${__value.raw}', type: 'variable' },
-    ],
-  };
-};
+// Suggests `${...}` variables when the user types `$`. The factory owns the
+// trigger, the filtering and the replaced range, so accepting an option can't
+// leave a stray brace behind.
+const variableCompletionSource = createVariableCompletionSource(suggestions);
 
 const meta: Meta<typeof CodeMirrorInlineInput> = {
   title: 'Inputs/CodeMirrorInlineInput',
@@ -83,7 +77,9 @@ LongValue.args = {
 
 export const WithVariableCompletions = Controlled.bind({});
 WithVariableCompletions.args = {
-  value: 'https://example.com/d/abc?var=',
+  // Carries a complete reference, so the mid-reference case is reachable: put
+  // the caret inside `${__value.raw}` and accept an option.
+  value: 'https://example.com/d/abc?var=${__value.raw}',
   placeholder: 'http://your-grafana.com/d/000000010/annotations',
   completionSources: [variableCompletionSource],
 };

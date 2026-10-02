@@ -4,10 +4,10 @@ import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
-import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
-import { initPluginMetas } from './plugins';
+import { getPluginMetasUrl, initPluginMetas } from './plugins';
 import type { AppPluginMetas, PluginMetasResponse } from './types';
 
 let apps: AppPluginMetas = {};
@@ -20,18 +20,19 @@ function setApps(input: AppPluginMetas) {
   apps = input;
 }
 
-function setMetas(metas: PluginMetasResponse) {
-  if (!metas.items.length) {
-    // something failed while trying to fetch plugin meta
-    // fallback to config.panels from bootdata
+function setMetas(metas: PluginMetasResponse | null) {
+  if (!metas?.items.length) {
+    // null means plugin meta failed to load, empty items means the API had nothing
+    const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
-    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.app });
+    logPluginMetaWarning(message, { pluginType: PluginType.app, requestUrl: getPluginMetasUrl() });
     return;
   }
 
   const mapper = getAppPluginMapper();
   setApps(mapper(metas));
+  logPluginMetaDebug('PluginMeta: initializing app plugins cache with meta values', {});
 }
 
 async function initAppPluginMetas(): Promise<void> {
@@ -44,7 +45,6 @@ async function initAppPluginMetas(): Promise<void> {
 
   const metas = await initPluginMetas();
   setMetas(metas);
-  logPluginMetaDebug('PluginMeta: initializing app plugins cache with meta values', {});
 }
 
 export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {

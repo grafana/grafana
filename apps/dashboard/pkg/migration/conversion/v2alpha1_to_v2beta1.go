@@ -284,6 +284,7 @@ func convertPanelQuery_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardPanelQueryK
 func convertTransformation_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardTransformationKind, out *dashv2beta1.DashboardTransformationKind) {
 	out.Kind = in.Kind
 	out.Spec.Id = in.Spec.Id
+	out.Spec.RefId = in.Spec.RefId
 	out.Spec.Disabled = in.Spec.Disabled
 	out.Spec.Filter = convertMatcherConfigPtr_V2alpha1_to_V2beta1(in.Spec.Filter)
 	out.Spec.Topic = (*dashv2beta1.DashboardDataTopic)(in.Spec.Topic)
@@ -355,8 +356,9 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 		for i, step := range in.Thresholds.Steps {
 			// Convert threshold values: preserve null values from v2alpha1
 			out.Thresholds.Steps[i] = dashv2beta1.DashboardThreshold{
-				Value: step.Value,
-				Color: step.Color,
+				Value:     step.Value,
+				ValueExpr: step.ValueExpr,
+				Color:     step.Color,
 			}
 		}
 	}

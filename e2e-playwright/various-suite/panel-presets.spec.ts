@@ -38,22 +38,15 @@ test.describe(
     tag: ['@various', '@presets'],
   },
   () => {
-    test('Panel styles section should appear with a New badge', async ({ gotoPanelEditPage, page }) => {
+    test('Panel styles section should be expanded by default', async ({ gotoPanelEditPage, page }) => {
       await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
       await waitForPanelToLoad(page);
 
       const panelStylesSection = getPanelStylesSection(page);
       await expect(panelStylesSection, 'panel styles section is visible').toBeVisible({ timeout: 10000 });
-      await expect(panelStylesSection, 'panel styles section contains "New" badge').toContainText('New');
-    });
+      await expect(panelStylesSection, 'panel styles section shows its title').toContainText('Panel styles');
 
-    test('Panel styles section should be expanded by default', async ({ gotoPanelEditPage, page }) => {
-      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await waitForPanelToLoad(page);
-
-      await expect(getPanelStylesSection(page), 'panel styles section is visible').toBeVisible({ timeout: 10000 });
-
-      const collapseButton = getPanelStylesSection(page).getByRole('button', { name: /Collapse/i });
+      const collapseButton = panelStylesSection.getByRole('button', { name: /Collapse/i });
       await expect(collapseButton, 'collapse button is visible').toBeVisible();
       await expect(collapseButton, 'panel styles section is expanded').toHaveAttribute('aria-expanded', 'true');
     });
@@ -214,6 +207,43 @@ test.describe(
       });
 
       await expect(getPanelStylesSection(page), 'panel styles section should be hidden for table').toBeHidden();
+    });
+  }
+);
+
+test.describe(
+  'Panel presets - Preview interaction',
+  {
+    tag: ['@various', '@presets'],
+  },
+  () => {
+    test('hovering a preset card should not show the previewed panel tooltip', async ({
+      gotoPanelEditPage,
+      selectors,
+      page,
+    }) => {
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
+
+      const preset = getPresetCard(page, 'Lines with points');
+      await expect(preset, 'preset card is visible').toBeVisible({ timeout: 10000 });
+
+      const box = (await preset.boundingBox())!;
+      const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+
+      // checking hit-testing instead of the tooltip, which uPlot opens and dismisses on its
+      // own timing. no pointer events also rules out the crosshair and one-click data links
+      const pointerReachesPreview = await page.evaluate(
+        ({ x, y }) => document.elementFromPoint(x, y)?.closest('.uplot') != null,
+        center
+      );
+      expect(pointerReachesPreview, 'previewed panel should not receive pointer events').toBe(false);
+
+      await page.mouse.move(center.x, center.y);
+      await expect(
+        page.getByTestId(selectors.components.Tooltip.container),
+        'card tooltip shows the preset name'
+      ).toContainText('Lines with points');
     });
   }
 );

@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
+import { Select, Alert, Label, stylesFactory, Combobox, useStyles2 } from '@grafana/ui';
 import {
   discoveryResources,
   getAPIGroupDiscoveryList,
@@ -32,6 +32,7 @@ const scopes: Array<SelectableValue<LiveChannelScope>> = [
 ];
 
 export function LiveChannelEditor(props: Props) {
+  const style = useStyles2(getStyles);
   const [channels, setChannels] = useState<Array<SelectableValue<string>>>([]);
   const [streams, paths] = useMemo(() => {
     const streams: Array<SelectableValue<string>> = [];
@@ -111,7 +112,6 @@ export function LiveChannelEditor(props: Props) {
   };
 
   const { scope, stream, path } = props.value;
-  const style = getStyles(config.theme2);
 
   return (
     <>

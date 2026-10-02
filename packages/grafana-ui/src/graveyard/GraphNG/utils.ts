@@ -9,7 +9,7 @@ import {
 
 import { FIXED_UNIT } from '../../components/uPlot/types';
 
-import { applyNullInsertThreshold } from './nullInsertThreshold';
+import { applyNullInsertThreshold, getRefField } from './nullInsertThreshold';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { XYFieldMatchers } from './types';
 
@@ -17,13 +17,6 @@ function isVisibleBarField(f: Field) {
   return (
     f.type === FieldType.number && f.config.custom?.drawStyle === GraphDrawStyle.Bars && !f.config.custom?.hideFrom?.viz
   );
-}
-
-export function getRefField(frame: DataFrame, refFieldName?: string | null) {
-  return frame.fields.find((field) => {
-    // note: getFieldDisplayName() would require full DF[]
-    return refFieldName != null ? field.name === refFieldName : field.type === FieldType.time;
-  });
 }
 
 // will mutate the DataFrame's fields' values

@@ -172,7 +172,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
     }),
     undockedPaneOpen: css({
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     }),
     toolbar: css({
       display: 'flex',
@@ -209,7 +209,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
     }),
     showButton: css({
-      position: 'fixed',
+      // Keep the restore button inside the content area when a sidecar reduces its width.
+      position: 'absolute',
       bottom: theme.spacing(2),
       zIndex: theme.zIndex.navbarFixed,
       padding: theme.spacing(1),

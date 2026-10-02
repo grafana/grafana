@@ -1,5 +1,6 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   InputType,
   type DataSourceInput,
@@ -42,17 +43,23 @@ jest.mock('../interactions', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
   locationService: {
     push: jest.fn(),
   },
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn(),
 }));
 
 // Mock function references
 const mockFetchCommunityDashboard = fetchCommunityDashboard as jest.MockedFunction<typeof fetchCommunityDashboard>;
 const mockTryAutoMapDatasources = tryAutoMapDatasources as jest.MockedFunction<typeof tryAutoMapDatasources>;
 const mockParseConstantInputs = parseConstantInputs as jest.MockedFunction<typeof parseConstantInputs>;
-const mockGetDataSourceSrv = getDataSourceSrv as jest.MockedFunction<typeof getDataSourceSrv>;
+const mockGetDataSourceInstanceSettings = getDataSourceInstanceSettings as jest.MockedFunction<
+  typeof getDataSourceInstanceSettings
+>;
 
 const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
   id: 123,
@@ -634,14 +641,9 @@ describe('communityDashboardHelpers', () => {
     } as DataSourceInstanceSettings;
 
     beforeEach(() => {
-      mockGetDataSourceSrv.mockReturnValue({
-        getInstanceSettings: jest.fn((uid: string) => {
-          if (uid === 'prom-uid') {
-            return mockPromSettings;
-          }
-          return undefined;
-        }),
-      } as unknown as ReturnType<typeof getDataSourceSrv>);
+      mockGetDataSourceInstanceSettings.mockImplementation(async (uid) =>
+        uid === 'prom-uid' ? mockPromSettings : undefined
+      );
     });
 
     afterEach(() => {

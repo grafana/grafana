@@ -221,7 +221,7 @@ describe('HeatmapPanel (canvas)', () => {
   const assertUPlotReady = async () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
 
-    await waitFor(() => uPlotInstance?.status === 1);
+    await waitFor(() => expect(uPlotInstance?.status).toBe(1));
     await waitFor(() => {
       return expect(
         screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')

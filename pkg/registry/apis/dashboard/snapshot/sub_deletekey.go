@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 // deleteKeyREST exposes the plaintext deleteKey via a dedicated subresource
@@ -62,6 +64,19 @@ func (r *deleteKeyREST) Connect(ctx context.Context, name string, opts runtime.O
 	snap, ok := obj.(*dashv0.Snapshot)
 	if !ok {
 		return nil, fmt.Errorf("expected Snapshot, got %T", obj)
+	}
+
+	// Snapshots are org-scoped, but lookups by key are global. The store stamps the
+	// snapshot's namespace from its owning org, so reject requests that resolve a
+	// snapshot owned by a different org than the caller's namespace — otherwise the
+	// caller could read another org's secret deleteKey using only the public key.
+	// Return NotFound so the endpoint does not leak cross-org existence.
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	if snap.Namespace != ns.Value {
+		return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
 	}
 
 	deleteKey := ""

@@ -25,7 +25,7 @@ type subResourceREST struct {
 	contextProvider func(ctx context.Context) (context.Context, backend.PluginContext, error)
 }
 
-var _ = rest.Connecter(&subResourceREST{})
+var _ rest.Connecter = (*subResourceREST)(nil)
 
 func (r *subResourceREST) New() runtime.Object {
 	return &metav1.Status{}
@@ -84,6 +84,8 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 			responder.Error(err)
 			return
 		}
+
+		backend.Logger.Debug("[mt-debug] subResourceREST.Connect", "userIsNil", pluginCtx.User == nil, "path", clonedReq.URL.Path)
 
 		err = r.client.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,

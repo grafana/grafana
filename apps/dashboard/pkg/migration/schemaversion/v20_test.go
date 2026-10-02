@@ -278,6 +278,63 @@ func TestV20(t *testing.T) {
 			},
 		},
 		{
+			name: "migrates data link variable syntax for panels nested in collapsed rows",
+			input: map[string]interface{}{
+				"title":         "V20 Nested Collapsed Row Migration Test Dashboard",
+				"schemaVersion": 19,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type":  "timeseries",
+								"title": "Panel with data links",
+								"id":    1,
+								"options": map[string]interface{}{
+									"dataLinks": []interface{}{
+										map[string]interface{}{
+											"url": "http://mylink.com?series=$__series_name&time=__value_time&field=__field_name",
+										},
+										map[string]interface{}{
+											"url": "http://another.com?series=${__series_name}&field=${__field_name}",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V20 Nested Collapsed Row Migration Test Dashboard",
+				"schemaVersion": 20,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type":  "timeseries",
+								"title": "Panel with data links",
+								"id":    1,
+								"options": map[string]interface{}{
+									"dataLinks": []interface{}{
+										map[string]interface{}{
+											"url": "http://mylink.com?series=${__series.name}&time=__value.time&field=__field.name",
+										},
+										map[string]interface{}{
+											"url": "http://another.com?series=${__series.name}&field=${__field.name}",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "panel with legacy variables that don't need migration",
 			input: map[string]interface{}{
 				"title":         "V20 No Legacy Variables Migration Test Dashboard",

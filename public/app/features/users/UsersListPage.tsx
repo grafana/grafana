@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useUserListTabExtensions } from 'app/features/admin/useUserListTabExtensions';
 import { type StoreState } from 'app/types/store';
 import { type OrgUser } from 'app/types/user';
 
@@ -60,7 +61,9 @@ export const UsersListPageUnconnected = ({
   changeSort,
 }: Props) => {
   const [showInvites, setShowInvites] = useState(false);
-  const externalUserMngInfoHtml = config.externalUserMngInfo ? renderMarkdown(config.externalUserMngInfo) : '';
+  const hasUserListExtension = useUserListTabExtensions().length > 0;
+  const externalUserMngInfoHtml =
+    config.externalUserMngInfo && !hasUserListExtension ? renderMarkdown(config.externalUserMngInfo) : '';
 
   useEffect(() => {
     loadUsers();

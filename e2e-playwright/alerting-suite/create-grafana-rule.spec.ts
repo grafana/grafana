@@ -26,7 +26,7 @@ test.describe('Grafana-managed alert rule creation', () => {
     await editor.addLabel('team', 'e2e');
     await editor.setAnnotations({ summary: `${ruleName} summary` });
     await editor.setManualRouting(contactPoint);
-    await editor.save();
+    await editor.saveAndWaitForSuccess('created');
 
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
     alertRules.trackRule(ruleUidFromUrl(page.url()));
@@ -54,7 +54,7 @@ test.describe('Grafana-managed alert rule creation', () => {
     await editor.addLabel('team', 'e2e');
     await editor.setAnnotations({ summary: `${ruleName} summary` });
     await editor.setManualRouting(contactPoint);
-    await editor.save();
+    await editor.saveAndWaitForSuccess('created');
 
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
     alertRules.trackRule(ruleUidFromUrl(page.url()));
@@ -90,7 +90,7 @@ test.describe('Grafana-managed alert rule creation', () => {
       await editor.addLabel('team', 'e2e');
       await editor.setAnnotations({ summary: `${ruleName} summary` });
       await editor.setManualRouting(contactPoint);
-      await editor.save();
+      await editor.saveAndWaitForSuccess('created');
 
       await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
       alertRules.trackRule(ruleUidFromUrl(page.url()));
@@ -122,7 +122,7 @@ test.describe('Grafana-managed alert rule creation', () => {
       await editor.gotoEdit(seededRuleUid);
 
       await editor.setName(updatedName);
-      await editor.save();
+      await editor.saveAndWaitForSuccess('updated');
 
       await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
       const viewer = new AlertRuleViewPage(page);
@@ -171,7 +171,7 @@ test.describe('Grafana-managed alert rule creation', () => {
       await expect(editor.selectedGroupText(seededGroup)).toBeVisible();
 
       await editor.setManualRouting(contactPoint);
-      await editor.save();
+      await editor.saveAndWaitForSuccess('created');
 
       // The restored selection actually persists — viewer shows the group breadcrumb.
       await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
@@ -232,7 +232,7 @@ test.describe('Grafana-managed alert rule creation', () => {
     await editor.createNewEvaluationGroup(newGroup, '5m');
 
     await editor.setManualRouting(contactPoint);
-    await editor.save();
+    await editor.saveAndWaitForSuccess('created');
 
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
     alertRules.trackRule(ruleUidFromUrl(page.url()));

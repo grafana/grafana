@@ -71,13 +71,12 @@ export function withPerformanceLogging<TArgs extends unknown[], TReturn>(
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RuleNamespace[]>>(
+export function withPromRulesMetadataLogging<TArgs extends unknown[]>(
   type: string,
-  func: TFunc,
+  func: (...args: TArgs) => Promise<RuleNamespace[]>,
   context: Record<string, string>
 ) {
-  return async (...args: Parameters<TFunc>) => {
+  return async (...args: TArgs) => {
     const startLoadingTs = performance.now();
     const response = await func(...args);
 
@@ -123,13 +122,12 @@ function getPromRulesMetadata(promRules: RuleNamespace[]) {
   return metadata;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RulerRulesConfigDTO>>(
+export function withRulerRulesMetadataLogging<TArgs extends unknown[]>(
   type: string,
-  func: TFunc,
+  func: (...args: TArgs) => Promise<RulerRulesConfigDTO>,
   context: Record<string, string>
 ) {
-  return async (...args: Parameters<TFunc>) => {
+  return async (...args: TArgs) => {
     const startLoadingTs = performance.now();
     const response = await func(...args);
 
@@ -375,11 +373,7 @@ export function trackRulesSearchInputCleared(prev: string, next: string) {
   }
 }
 
-function filterMeaningfulValues(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  obj: Record<string, any>,
-  opts?: { pluginsFilterEnabled?: boolean }
-) {
+function filterMeaningfulValues(obj: RulesFilter, opts?: { pluginsFilterEnabled?: boolean }) {
   const { pluginsFilterEnabled = true } = opts ?? {};
   return pickBy(obj, (value, key) => {
     if (value === null || value === undefined || value === '') {
@@ -406,35 +400,6 @@ export type AlertRuleTrackingProps = {
   grafana_version?: string;
   org_id?: number;
 };
-
-// ============================================================================
-// Alerts Activity Banner & View Experience Telemetry
-// ============================================================================
-
-/**
- * Track banner impression - fired once per session when banner is first shown.
- * Note: user_id, org_id, grafana_version, and other common properties are automatically
- * tracked by the analytics infrastructure.
- */
-export function trackAlertsActivityBannerImpression() {
-  reportInteraction('grafana_alerting_alerts_activity_banner_impression');
-}
-
-/**
- * Track when user clicks "Open Alerts Activity" CTA
- */
-export function trackAlertsActivityBannerClickTry() {
-  reportInteraction('grafana_alerting_alerts_activity_banner_click');
-}
-
-/**
- * Track when user dismisses the banner
- */
-export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
-  reportInteraction('grafana_alerting_alerts_activity_banner_dismiss', {
-    dismissed_until: dismissedUntil,
-  });
-}
 
 // ============================================================================
 // View Experience Toggle Telemetry (persistent control near page title)

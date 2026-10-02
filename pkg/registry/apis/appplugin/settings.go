@@ -77,9 +77,9 @@ type settingsStorage struct {
 	resourceInfo   *utils.ResourceInfo
 }
 
-func NewLegacySettingsStore(pluginID string, pluginSettings pluginsettings.Service) grafanarest.Storage {
+func NewLegacySettingsStore(group string, pluginID string, pluginSettings pluginsettings.Service) grafanarest.Storage {
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
-		pluginID, pluginID,
+		group, pluginID,
 	)
 	return &settingsStorage{
 		pluginID:       pluginID,

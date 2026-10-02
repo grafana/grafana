@@ -8,9 +8,10 @@ import (
 	"github.com/grafana/dskit/kv/memberlist"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
@@ -23,7 +24,9 @@ func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
 			ms.registerer,
 		),
 	)
-	dnsProvider := dns.NewProvider(logger, dnsProviderReg, dns.GolangResolverType)
+
+	// zero is used because maxIdleConnections is ignored for GolangResolverType
+	dnsProvider := dns.NewProvider(dns.GolangResolverType, 0, logger, dnsProviderReg)
 
 	KVStore := kv.Config{Store: "memberlist"}
 

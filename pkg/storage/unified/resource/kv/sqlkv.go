@@ -10,9 +10,9 @@ import (
 	"iter"
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 
@@ -32,6 +32,7 @@ const (
 	StatsDailySection             = "stats/daily"
 	StatsAggregatesSection        = "stats/aggregates"
 	NATSPeersSection              = "nats/peers"
+	VersionPolicySection          = "apiserver/versionpolicy"
 )
 
 // validSaveSections is the set of sections accepted by SqlKV.Save.
@@ -46,9 +47,10 @@ var validSaveSections = map[string]bool{
 	StatsDailySection:             true,
 	StatsAggregatesSection:        true,
 	NATSPeersSection:              true,
+	VersionPolicySection:          true,
 }
 
-var _ KV = &SqlKV{}
+var _ KV = (*SqlKV)(nil)
 
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {
@@ -133,6 +135,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "resource_stats_aggregates"
 	case NATSPeersSection:
 		tableName = "nats_discovery_peers"
+	case VersionPolicySection:
+		tableName = "resource_version_policy"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
@@ -229,10 +233,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 	statementCount := dataImportBatchStatementCount(len(rows), maxRows)
 	payloadBytes := dataImportBatchPayloadBytes(rows)
 	for start := 0; start < len(rows); start += maxRows {
-		end := start + maxRows
-		if end > len(rows) {
-			end = len(rows)
-		}
+		end := min(start+maxRows, len(rows))
 
 		query, args, err := qb.buildInsertDatastoreBatchQuery(rows[start:end])
 		if err != nil {
@@ -483,7 +484,7 @@ func (w *sqlWriteCloser) Close() error {
 		// This can be simplified once resource_history columns are dropped
 		_, err := w.kv.Get(w.ctx, w.section, w.key)
 		if errors.Is(err, ErrNotFound) {
-			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
+			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.NewV4().String())
 			_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 			if err != nil {
 				return fmt.Errorf("failed to insert to datastore: %w", err)
@@ -554,9 +555,15 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	return nil
 }
 
+// maxBatchDeleteKeys bounds a DELETE's IN list.
+const maxBatchDeleteKeys = 200
+
 func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
+	}
+	if len(keys) >= maxBatchDeleteKeys {
+		return fmt.Errorf("batch delete of %d keys exceeds max %d; caller must chunk", len(keys), maxBatchDeleteKeys-1)
 	}
 
 	qb, err := k.getQueryBuilder(section)
@@ -672,18 +679,15 @@ func isDuplicateKeyError(err error) bool {
 		return true
 	}
 
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return pgErr.Code == "23505"
 	}
 
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
+	if pqErr, ok := errors.AsType[*pq.Error](err); ok {
 		return pqErr.Code == "23505"
 	}
 
-	var mysqlErr *mysql.MySQLError
-	if errors.As(err, &mysqlErr) {
+	if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		return mysqlErr.Number == 1062
 	}
 

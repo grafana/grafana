@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"slices"
@@ -53,14 +54,14 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	require.NoError(t, err)
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
 
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrg.ID)
+	rule := tests.CreateTestAlertRule(t, ctx, ruleStore, 600, mainOrg.ID)
 
 	expectedEntries := []*state.State{
 		{
@@ -262,9 +263,8 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		EvaluationDuration: 6 * time.Second,
 	})
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
@@ -277,7 +277,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		Log:           log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(cfg, state.NewNoopPersister())
-	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+	st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
@@ -308,7 +308,7 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
@@ -330,15 +330,15 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 
 	const mainOrgID int64 = 1
 
-	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, dbstore, 600, mainOrgID, map[string]string{
+	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, ruleStore, 600, mainOrgID, map[string]string{
 		"test1": "testValue1",
 		"test2": "{{ $labels.instance_label }}",
 	})
 
-	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+	st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 	bValue := float64(42)
 	cValue := float64(1)
-	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
+	_, _ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "testValue2"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
@@ -361,7 +361,7 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 		if len(expected) != len(actual) {
 			return false
 		}
-		for i := 0; i < len(expected); i++ {
+		for i := range expected {
 			if expected[i] != actual[i] {
 				return false
 			}
@@ -377,7 +377,7 @@ func TestIntegrationProcessEvalResultsTemplatedLabelKeysAreNotExpanded(t *testin
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
@@ -396,13 +396,13 @@ func TestIntegrationProcessEvalResultsTemplatedLabelKeysAreNotExpanded(t *testin
 	templatedKeyOne := `{{ with (index $labels "missing_key") }}{{.}}{{ end }}`
 	templatedKeyTwo := `{{ $labels. }}`
 
-	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, dbstore, 600, mainOrgID, map[string]string{
+	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, ruleStore, 600, mainOrgID, map[string]string{
 		templatedKeyOne: "empty-key-value",
 		templatedKeyTwo: "error-key-value",
 	})
 
-	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
-	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
+	st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
+	_, _ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "test-value"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
@@ -1784,11 +1784,11 @@ func TestProcessEvalResults(t *testing.T) {
 			results := 0
 			for _, evalTime := range evals {
 				res := tc.evalResults[evalTime]
-				for i := 0; i < len(res); i++ {
+				for i := range res {
 					res[i].EvaluatedAt = evalTime
 				}
 				clk.Set(evalTime)
-				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
+				_, _ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
 				results += len(res)
 			}
 
@@ -1888,7 +1888,7 @@ func TestProcessEvalResults(t *testing.T) {
 			}),
 		)}
 
-		_ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels, state.NoopSender)
+		_, _ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels, state.NoopSender)
 
 		states := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 		require.Len(t, states, 1)
@@ -1918,7 +1918,7 @@ func TestProcessEvalResults(t *testing.T) {
 		now := clk.Now()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(now)))
 
-		states := st.ProcessEvalResults(context.Background(), now, rule, results, make(data.Labels), nil)
+		states, _ := st.ProcessEvalResults(context.Background(), now, rule, results, make(data.Labels), nil)
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[data.Fingerprint]models.AlertInstance)
@@ -1964,14 +1964,14 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 	interval := time.Minute
 
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
 
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
+	rule := tests.CreateTestAlertRule(t, ctx, ruleStore, int64(interval.Seconds()), mainOrg.ID)
 	lastEval := evaluationTime.Add(-2 * interval)
 
 	labels1 := models.InstanceLabels{
@@ -2023,9 +2023,8 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc               string
@@ -2086,7 +2085,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 			Log:           log.New("ngalert.state.manager"),
 		}
 		st := state.NewManager(cfg, state.NewNoopPersister())
-		st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+		st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 		existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
@@ -2098,7 +2097,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 					evalTime = re.EvaluatedAt
 				}
 			}
-			st.ProcessEvalResults(context.Background(), evalTime, rule, res, data.Labels{
+			_, _ = st.ProcessEvalResults(context.Background(), evalTime, rule, res, data.Labels{
 				"alertname":                    rule.Title,
 				"__alert_rule_namespace_uid__": rule.NamespaceUID,
 				"__alert_rule_uid__":           rule.UID,
@@ -2120,12 +2119,8 @@ func TestStaleResults(t *testing.T) {
 	getCacheID := func(t *testing.T, rule *models.AlertRule, result eval.Result) data.Fingerprint {
 		t.Helper()
 		labels := data.Labels{}
-		for key, value := range rule.Labels {
-			labels[key] = value
-		}
-		for key, value := range result.Instance {
-			labels[key] = value
-		}
+		maps.Copy(labels, rule.Labels)
+		maps.Copy(labels, result.Instance)
 		lbls := models.InstanceLabels(labels)
 		return lbls.Fingerprint()
 	}
@@ -2188,7 +2183,7 @@ func TestStaleResults(t *testing.T) {
 
 	// Init
 	var statesToSend state.StateTransitions
-	processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil, func(_ context.Context, states state.StateTransitions) {
+	processed, _ := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil, func(_ context.Context, states state.StateTransitions) {
 		statesToSend = states
 	})
 	checkExpectedStateTransitions(t, processed, initStates)
@@ -2210,7 +2205,7 @@ func TestStaleResults(t *testing.T) {
 
 	var expectedStaleKeys []models.AlertInstanceKey
 	t.Run("should mark missing states as stale", func(t *testing.T) {
-		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil, nil)
+		processed, _ = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil, nil)
 		checkExpectedStateTransitions(t, processed, initStates)
 		for _, s := range processed {
 			if s.CacheID == state1 {
@@ -2253,14 +2248,14 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 
 	interval := time.Minute
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
 
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
+	rule := tests.CreateTestAlertRule(t, ctx, ruleStore, int64(interval.Seconds()), mainOrg.ID)
 
 	labels1 := models.InstanceLabels{"test1": "testValue1"}
 	_, hash1, _ := labels1.StringAndHash()
@@ -2287,9 +2282,8 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc          string
@@ -2352,7 +2346,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+			st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
@@ -2401,14 +2395,14 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 
 	interval := time.Minute
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
 
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
+	rule := tests.CreateTestAlertRule(t, ctx, ruleStore, int64(interval.Seconds()), mainOrg.ID)
 
 	labels1 := models.InstanceLabels{"test1": "testValue1"}
 	_, hash1, _ := labels1.StringAndHash()
@@ -2435,9 +2429,8 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc          string
@@ -2499,7 +2492,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+			st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
@@ -2598,12 +2591,8 @@ func stateSliceToMap(states []*state.State) map[data.Fingerprint]*state.State {
 
 func mergeLabels(a, b data.Labels) data.Labels {
 	result := make(data.Labels, len(a)+len(b))
-	for k, v := range a {
-		result[k] = v
-	}
-	for k, v := range b {
-		result[k] = v
-	}
+	maps.Copy(result, a)
+	maps.Copy(result, b)
 	return result
 }
 
@@ -2795,7 +2784,7 @@ func TestStateManager_HistorianIntegration(t *testing.T) {
 				// Clear historian state transitions before the evaluation
 				historian.StateTransitions = nil
 
-				mgr.ProcessEvalResults(
+				_, _ = mgr.ProcessEvalResults(
 					context.Background(),
 					evalTime,
 					scenario.rule,

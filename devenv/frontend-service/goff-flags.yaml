@@ -56,7 +56,7 @@ frontendService.reducedBootDataAPI:
 grafana.frontendLegacyAPIHandling:
   variations:
     off: 'off'
-    alert: 'alert'
+    log: 'log'
     block: 'block'
   defaultRule:
     variation: off

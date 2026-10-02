@@ -1,21 +1,21 @@
-import { screen, render, renderHook } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { ElementSelectionContext, type ElementSelectionContextItem } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
-import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
-import { CanvasGridAddActions, useNestingRestrictions } from './CanvasGridAddActions';
+import { CanvasGridAddActions } from './CanvasGridAddActions';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
@@ -52,6 +52,14 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
+
+function renderWithSelection(ui: React.ReactElement, selected: ElementSelectionContextItem[]) {
+  return render(
+    <ElementSelectionContext.Provider value={{ enabled: true, selected, onSelect: jest.fn(), onClear: jest.fn() }}>
+      {ui}
+    </ElementSelectionContext.Provider>
+  );
+}
 
 function buildTestScene(body?: DashboardScene['state']['body']) {
   const scene = new DashboardScene({
@@ -135,105 +143,27 @@ describe('CanvasGridAddActions', () => {
     });
   });
 
-  describe('useNestingRestrictions', () => {
-    it('should allow both grouping and tabs at the top level', () => {
-      const { body: layoutManager } = buildTestScene(AutoGridLayoutManager.createEmpty()).state;
+  describe('multi-selection', () => {
+    function getControlsContainer() {
+      return screen
+        .getByTestId(selectors.components.CanvasGridAddActions.addPanel)
+        .closest('.dashboard-canvas-controls');
+    }
 
-      const { result } = renderHook(() => useNestingRestrictions(layoutManager));
+    it('stays revealable when a single element is selected', () => {
+      const scene = buildTestScene();
 
-      expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
+      renderWithSelection(<CanvasGridAddActions layoutManager={scene.state.body} />, [{ id: 'a' }]);
+
+      expect(getControlsContainer()).not.toHaveStyle({ visibility: 'hidden' });
     });
 
-    it('should allow both grouping and tabs when nested one level inside rows', () => {
-      const innerLayout = AutoGridLayoutManager.createEmpty();
-      buildTestScene(new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }));
+    it('is hidden with css (keeping its layout space) when multiple elements are selected', () => {
+      const scene = buildTestScene();
 
-      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
+      renderWithSelection(<CanvasGridAddActions layoutManager={scene.state.body} />, [{ id: 'a' }, { id: 'b' }]);
 
-      expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
-    });
-
-    it('should disable tabs but allow grouping when nested one level inside tabs', () => {
-      const innerLayout = AutoGridLayoutManager.createEmpty();
-      buildTestScene(new TabsLayoutManager({ tabs: [new TabItem({ layout: innerLayout })] }));
-
-      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
-
-      expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
-    });
-
-    it('should allow both grouping and tabs when nested two levels deep (rows > rows)', () => {
-      const innerLayout = AutoGridLayoutManager.createEmpty();
-      buildTestScene(
-        new RowsLayoutManager({
-          rows: [
-            new RowItem({
-              layout: new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }),
-            }),
-          ],
-        })
-      );
-
-      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
-
-      expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
-    });
-
-    it('should allow grouping but disable tabs when nested two levels deep (tabs > rows)', () => {
-      const innerLayout = AutoGridLayoutManager.createEmpty();
-      buildTestScene(
-        new TabsLayoutManager({
-          tabs: [
-            new TabItem({
-              layout: new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }),
-            }),
-          ],
-        })
-      );
-
-      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
-
-      expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
-    });
-
-    it('should allow grouping but disable tabs when nested two levels deep (rows > tabs)', () => {
-      const innerLayout = AutoGridLayoutManager.createEmpty();
-      buildTestScene(
-        new RowsLayoutManager({
-          rows: [
-            new RowItem({
-              layout: new TabsLayoutManager({ tabs: [new TabItem({ layout: innerLayout })] }),
-            }),
-          ],
-        })
-      );
-
-      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
-
-      expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
-    });
-
-    it('should disable both grouping and tabs when nested three levels deep', () => {
-      const innerLayout = AutoGridLayoutManager.createEmpty();
-      buildTestScene(
-        new RowsLayoutManager({
-          rows: [
-            new RowItem({
-              layout: new RowsLayoutManager({
-                rows: [
-                  new RowItem({
-                    layout: new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }),
-                  }),
-                ],
-              }),
-            }),
-          ],
-        })
-      );
-
-      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
-
-      expect(result.current).toEqual({ disableGrouping: true, disableTabs: true });
+      expect(getControlsContainer()).toHaveStyle({ visibility: 'hidden' });
     });
   });
 });

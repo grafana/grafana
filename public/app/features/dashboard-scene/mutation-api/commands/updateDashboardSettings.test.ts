@@ -94,10 +94,11 @@ function buildTestScene(
   const scene = {
     state,
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);

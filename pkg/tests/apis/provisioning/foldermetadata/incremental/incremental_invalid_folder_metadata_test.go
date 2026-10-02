@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -25,7 +26,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const repoName = "incr-invalid-meta-existing"
 		t.Cleanup(func() {
 			cleanupCtx := context.WithoutCancel(t.Context())
-			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
+			err := helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				require.NoError(t, err)
+			}
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -66,7 +70,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const repoName = "incr-invalid-meta-new"
 		t.Cleanup(func() {
 			cleanupCtx := context.WithoutCancel(t.Context())
-			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
+			err := helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				require.NoError(t, err)
+			}
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -108,7 +115,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const stableUID = "team-stable-uid"
 		t.Cleanup(func() {
 			cleanupCtx := context.WithoutCancel(t.Context())
-			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
+			err := helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				require.NoError(t, err)
+			}
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -150,7 +160,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const stableUID = "team-stable-uid"
 		t.Cleanup(func() {
 			cleanupCtx := context.WithoutCancel(t.Context())
-			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
+			err := helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				require.NoError(t, err)
+			}
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -209,7 +222,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const childUID = "child-stable-uid"
 		t.Cleanup(func() {
 			cleanupCtx := context.WithoutCancel(t.Context())
-			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
+			err := helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				require.NoError(t, err)
+			}
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -260,7 +276,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const repoName = "incr-invalid-meta-move-into-existing"
 		t.Cleanup(func() {
 			cleanupCtx := context.WithoutCancel(t.Context())
-			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
+			err := helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				require.NoError(t, err)
+			}
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -300,7 +319,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const repoName = "incr-invalid-meta-move-into-new"
 		t.Cleanup(func() {
 			cleanupCtx := context.WithoutCancel(t.Context())
-			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
+			err := helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				require.NoError(t, err)
+			}
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -342,7 +364,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const stableUID = "team-stable-uid"
 		t.Cleanup(func() {
 			cleanupCtx := context.WithoutCancel(t.Context())
-			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
+			err := helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				require.NoError(t, err)
+			}
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -390,7 +415,10 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const childUID = "child-stable-uid"
 		t.Cleanup(func() {
 			cleanupCtx := context.WithoutCancel(t.Context())
-			require.NoError(t, helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{}))
+			err := helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				require.NoError(t, err)
+			}
 		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{

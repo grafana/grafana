@@ -4,6 +4,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { grafanaAlertNotifiers } from 'app/features/alerting/unified/mockGrafanaNotifiers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { type NotifierDTO } from 'app/features/alerting/unified/types/alerting';
@@ -26,24 +27,24 @@ type TestReceiverFormValues = {
 };
 
 const ui = {
-  typeSelector: byTestId('items.0.type'),
+  typeSelector: byTestId(selectors.pages.Alerting.ContactPointForm.integrationTypeField('items.0.')),
   settings: {
     webhook: {
       url: byRole('textbox', { name: /^URL/ }),
       optionalSettings: byRole('button', { name: /optional webhook settings/i }),
       title: {
-        container: byTestId('items.0.settings.title'),
+        container: byTestId(selectors.pages.Alerting.ContactPointForm.settingsField('items.0.settings.title')),
         input: byRole('textbox', { name: /^Title/ }),
       },
       message: {
-        container: byTestId('items.0.settings.message'),
+        container: byTestId(selectors.pages.Alerting.ContactPointForm.settingsField('items.0.settings.message')),
         input: byRole('textbox', { name: /^Message/ }),
       },
     },
     slack: {
-      recipient: byTestId('items.0.settings.recipient'),
-      token: byTestId('items.0.settings.token'),
-      username: byTestId('items.0.settings.username'),
+      recipient: byTestId(selectors.pages.Alerting.ContactPointForm.settingsField('items.0.settings.recipient')),
+      token: byTestId(selectors.pages.Alerting.ContactPointForm.settingsField('items.0.settings.token')),
+      username: byTestId(selectors.pages.Alerting.ContactPointForm.settingsField('items.0.settings.username')),
       webhookUrl: byRole('textbox', { name: /^Webhook URL/ }),
     },
     googlechat: {
@@ -51,11 +52,11 @@ const ui = {
       url: byRole('textbox', { name: /^URL/ }),
       title: {
         input: byRole('textbox', { name: /^Title/ }),
-        container: byTestId('items.0.settings.title'),
+        container: byTestId(selectors.pages.Alerting.ContactPointForm.settingsField('items.0.settings.title')),
       },
       message: {
         input: byRole('textbox', { name: /^Message/ }),
-        container: byTestId('items.0.settings.message'),
+        container: byTestId(selectors.pages.Alerting.ContactPointForm.settingsField('items.0.settings.message')),
       },
     },
   },

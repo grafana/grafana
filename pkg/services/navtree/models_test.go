@@ -44,4 +44,36 @@ func TestNavTreeRoot(t *testing.T) {
 		require.Equal(t, "2", treeRoot.FindByURL("/org").Id)
 		require.Equal(t, "3", treeRoot.FindByURL("/org/users").Id)
 	})
+
+	t.Run("RemoveEmptyAdminSections removes empty admin subsections", func(t *testing.T) {
+		treeRoot := NavTreeRoot{
+			Children: []*NavLink{
+				{Id: NavIDCfg, Children: []*NavLink{
+					{Id: NavIDCfgGeneral},
+					{Id: NavIDCfgPlugins},
+					{Id: NavIDCfgAccess},
+				}},
+			},
+		}
+		treeRoot.RemoveEmptyAdminSections()
+		require.Nil(t, treeRoot.FindById(NavIDCfgGeneral))
+		require.Nil(t, treeRoot.FindById(NavIDCfgPlugins))
+		require.Nil(t, treeRoot.FindById(NavIDCfgAccess))
+		require.Nil(t, treeRoot.FindById(NavIDCfg))
+	})
+
+	t.Run("RemoveEmptyAdminSections keeps subsections populated by hooks", func(t *testing.T) {
+		treeRoot := NavTreeRoot{
+			Children: []*NavLink{
+				{Id: NavIDCfg, Children: []*NavLink{
+					{Id: NavIDCfgGeneral, Children: []*NavLink{{Id: "banner-settings"}}},
+					{Id: NavIDCfgPlugins},
+				}},
+			},
+		}
+		treeRoot.RemoveEmptyAdminSections()
+		require.NotNil(t, treeRoot.FindById(NavIDCfgGeneral))
+		require.Nil(t, treeRoot.FindById(NavIDCfgPlugins))
+		require.NotNil(t, treeRoot.FindById(NavIDCfg))
+	})
 }

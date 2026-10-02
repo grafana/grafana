@@ -43,10 +43,11 @@ function buildMockScene(
   const scene = {
     state,
     canEditDashboard: jest.fn(() => editable),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     publishEvent: undefined,
     setState: jest.fn((partial: Record<string, unknown>) => {

@@ -105,7 +105,6 @@ func (s *Seeder) SeedRoles(ctx context.Context, registrationList []accesscontrol
 	// Diff existing roles with the ones we want to seed.
 	// If a role is missing, we add it to the missingRoles list
 	for _, registration := range registrationList {
-		registration := registration
 		role, ok := roleMap[registration.Role.Name]
 		switch {
 		case registration.Role.IsFixed():

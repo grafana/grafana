@@ -29,8 +29,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   contentWrap: css({
-    height: 'calc(100vh - 350px)',
+    flex: 1,
+    minHeight: 0,
     overflowY: 'auto',
+    // page-inner bottom padding is removed by the hosting page so the list
+    // clips at the page edge; keep breathing room at the end of the scroll
+    paddingBottom: theme.spacing(2),
+    [theme.breakpoints.up('md')]: {
+      paddingBottom: theme.spacing(4),
+    },
   }),
   spacer: css({
     height: theme.spacing(2),

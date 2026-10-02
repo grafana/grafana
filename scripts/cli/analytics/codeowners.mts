@@ -1,5 +1,5 @@
-import path from 'path';
 import { OwnershipEngine } from 'github-codeowners/dist/lib/ownership/index.js';
+import path from 'path';
 
 const CODEOWNERS_PATH = path.resolve('.github/CODEOWNERS');
 

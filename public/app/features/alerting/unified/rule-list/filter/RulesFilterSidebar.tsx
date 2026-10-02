@@ -6,30 +6,46 @@ import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/uns
 import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { locationService, useReturnToPrevious } from '@grafana/runtime';
 import { Button, Combobox, Icon, Input, Label, MultiCombobox, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { trackAlertRuleFilterEvent } from '../../Analytics';
+import { createBridgeURL } from '../../components/PluginBridge';
+import { type SupportedView } from '../../components/rules/Filter/RulesViewModeSelector';
 import {
   useAlertingDataSourceOptions,
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useGlobalContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { ContactPointAction } from '../../hooks/abilities/types';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { useRouteProxyActive } from '../../plugin-proxy/withRouteProxy';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
+import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { type AdvancedFilters } from './types';
 import { advancedFiltersToRulesFilter, searchQueryToDefaultValues, usePluginsFilterStatus } from './utils';
 
 const SIDEBAR_WIDTH = 250;
 
+interface RulesFilterSidebarProps {
+  viewMode?: SupportedView;
+  hideEmptyDataSources?: boolean;
+  onHideEmptyDataSourcesChange?: (hideEmptyDataSources: boolean) => void;
+}
+
 /**
  * Persistent filter sidebar for the alert rule list v2.
  * All filters apply immediately on change; rule name applies on blur or Enter.
  */
-export function RulesFilterSidebar() {
+export function RulesFilterSidebar({
+  viewMode,
+  hideEmptyDataSources,
+  onHideEmptyDataSourcesChange,
+}: RulesFilterSidebarProps) {
   const styles = useStyles2(getStyles);
   const { hasActiveFilters, clearAll, searchQuery, filterState } = useRulesFilter();
 
@@ -43,7 +59,13 @@ export function RulesFilterSidebar() {
         </Stack>
         {/* key remounts the form when the URL changes externally (top bar, clearAll, navigation)
             so defaultValues always reflect the current URL state — no sync effects needed */}
-        <FilterSidebarForm key={searchQuery} filterState={filterState} />
+        <FilterSidebarForm
+          key={searchQuery}
+          filterState={filterState}
+          viewMode={viewMode}
+          hideEmptyDataSources={hideEmptyDataSources}
+          onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange}
+        />
       </Stack>
     </div>
   );
@@ -51,14 +73,24 @@ export function RulesFilterSidebar() {
 
 interface FilterSidebarFormProps {
   filterState: RulesFilter;
+  viewMode?: SupportedView;
+  hideEmptyDataSources?: boolean;
+  onHideEmptyDataSourcesChange?: (hideEmptyDataSources: boolean) => void;
 }
 
-function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
+function FilterSidebarForm({
+  filterState,
+  viewMode,
+  hideEmptyDataSources,
+  onHideEmptyDataSourcesChange,
+}: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
 
-  const { updateFilters } = useRulesFilter();
+  const { updateFilters, searchQuery } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
-  const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+  const routeProxyActive = useRouteProxyActive();
+  const returnToPrevious = useReturnToPrevious();
+  const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   const defaults = searchQueryToDefaultValues(filterState);
 
@@ -248,13 +280,24 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
               render={({ field }) => (
                 <ToggleButtonGroup<AdvancedFilters['ruleSource']>
                   aria-labelledby="filter-label-rule-source"
-                  value={field.value}
+                  value={routeProxyActive ? (field.value ?? RuleSource.Grafana) : field.value}
                   onChange={(value) => {
+                    if (routeProxyActive && value === RuleSource.DataSource) {
+                      returnToPrevious(t('alerting.rule-list.return-button.title', 'Alert rules'));
+                      locationService.push(
+                        createBridgeURL(
+                          SupportedPlugin.PrometheusAlerting,
+                          '/rules',
+                          searchQuery ? { search: searchQuery } : {}
+                        )
+                      );
+                      return;
+                    }
                     field.onChange(value);
                     applyFormValues({ ruleSource: value });
                   }}
                   options={[
-                    { label: t('common.all', 'All'), value: null },
+                    ...(!routeProxyActive ? [{ label: t('common.all', 'All'), value: null }] : []),
                     {
                       label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
                       value: RuleSource.Grafana,
@@ -262,6 +305,8 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     {
                       label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
                       value: RuleSource.DataSource,
+                      // Picking this opens the Prometheus Alerting plugin instead of filtering in place
+                      suffixIcon: routeProxyActive ? 'external-link-alt' : undefined,
                     },
                   ]}
                 />
@@ -271,38 +316,29 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 
           <SidebarField
             label={
-              <Stack gap={0.5} alignItems="center">
-                <span>
-                  <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
-                </span>
-                <Tooltip
-                  content={
-                    <div>
-                      <p>
-                        <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
-                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
-                          rules are stored and evaluated in the data source itself.
-                        </Trans>
-                      </p>
-                      <p>
-                        <Trans i18nKey="alerting.rules-filter.manage-alerts">
-                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
-                          alert rules in the Grafana UI as well as in the data source where they were configured.
-                        </Trans>
-                      </p>
-                    </div>
-                  }
-                >
-                  <Icon
-                    name="info-circle"
-                    size="sm"
-                    title={t(
-                      'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
-                      'Search by data sources help'
-                    )}
-                  />
-                </Tooltip>
-              </Stack>
+              <FieldLabelWithTooltip
+                label={<Trans i18nKey="alerting.search.property.data-source">Data source</Trans>}
+                tooltip={
+                  <div>
+                    <p>
+                      <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
+                        Data sources containing configured alert rules are Mimir or Loki data sources where alert rules
+                        are stored and evaluated in the data source itself.
+                      </Trans>
+                    </p>
+                    <p>
+                      <Trans i18nKey="alerting.rules-filter.manage-alerts">
+                        In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                        alert rules in the Grafana UI as well as in the data source where they were configured.
+                      </Trans>
+                    </p>
+                  </div>
+                }
+                tooltipTitle={t(
+                  'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
+                  'Search by data sources help'
+                )}
+              />
             }
           >
             <Controller
@@ -330,25 +366,16 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
           {canRenderContactPointSelector && (
             <SidebarField
               label={
-                <Stack gap={0.5} alignItems="center">
-                  <span>
-                    <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
-                  </span>
-                  <Tooltip
-                    content={
-                      <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
-                        Filters alert rules which route directly to the selected contact point. Alert rules routed to
-                        notification policies will not be displayed.
-                      </Trans>
-                    }
-                  >
-                    <Icon
-                      name="info-circle"
-                      size="sm"
-                      title={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
-                    />
-                  </Tooltip>
-                </Stack>
+                <FieldLabelWithTooltip
+                  label={<Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>}
+                  tooltip={
+                    <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
+                      Filters alert rules which route directly to the selected contact point. Alert rules routed to
+                      notification policies will not be displayed.
+                    </Trans>
+                  }
+                  tooltipTitle={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
+                />
               }
             >
               <Controller
@@ -386,25 +413,16 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
           )}
           <SidebarField
             label={
-              <Stack gap={0.5} alignItems="center">
-                <span>
-                  <Trans i18nKey="alerting.policyFilter.label">Notification policy</Trans>
-                </span>
-                <Tooltip
-                  content={
-                    <Trans i18nKey="alerting.rules-filter.policy-tooltip">
-                      Filters alert rules which route to the selected notification policy tree. Alert rules using direct
-                      contact point routing will not be displayed.
-                    </Trans>
-                  }
-                >
-                  <Icon
-                    name="info-circle"
-                    size="sm"
-                    title={t('alerting.rules-filter.policy-tooltip-title', 'Notification policy filter help')}
-                  />
-                </Tooltip>
-              </Stack>
+              <FieldLabelWithTooltip
+                label={<Trans i18nKey="alerting.policyFilter.label">Notification policy</Trans>}
+                tooltip={
+                  <Trans i18nKey="alerting.rules-filter.policy-tooltip">
+                    Filters alert rules which route to the selected notification policy tree. Alert rules using direct
+                    contact point routing will not be displayed.
+                  </Trans>
+                }
+                tooltipTitle={t('alerting.rules-filter.policy-tooltip-title', 'Notification policy filter help')}
+              />
             }
           >
             <Controller
@@ -525,6 +543,42 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
             </SidebarSection>
           </>
         )}
+
+        {/* Display preferences stay outside the URL-backed filter state. */}
+        {viewMode === 'grouped' && !routeProxyActive && (
+          <>
+            <div className={styles.divider} />
+            <SidebarSection>
+              <SidebarField
+                label={
+                  <FieldLabelWithTooltip
+                    label={<Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources">Empty data sources</Trans>}
+                    tooltip={
+                      <Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources-tooltip">
+                        Shows or hides data sources that have no alert rules configured.
+                      </Trans>
+                    }
+                    tooltipTitle={t(
+                      'alerting.rules-filter-sidebar.empty-data-sources-tooltip-title',
+                      'Empty data sources filter help'
+                    )}
+                  />
+                }
+                labelId="filter-label-empty-data-sources"
+              >
+                <ToggleButtonGroup<boolean>
+                  aria-labelledby="filter-label-empty-data-sources"
+                  value={Boolean(hideEmptyDataSources)}
+                  onChange={(value) => onHideEmptyDataSourcesChange?.(value)}
+                  options={[
+                    { label: t('alerting.rules-filter.label.show', 'Show'), value: false },
+                    { label: t('alerting.rules-filter.label.hide', 'Hide'), value: true },
+                  ]}
+                />
+              </SidebarField>
+            </SidebarSection>
+          </>
+        )}
       </Stack>
     </form>
   );
@@ -565,11 +619,31 @@ function SidebarField({
   );
 }
 
+function FieldLabelWithTooltip({
+  label,
+  tooltip,
+  tooltipTitle,
+}: {
+  label: React.ReactNode;
+  tooltip: PropsOf<typeof Tooltip>['content'];
+  tooltipTitle: string;
+}) {
+  return (
+    <Stack gap={0.5} alignItems="center">
+      <span>{label}</span>
+      <Tooltip content={tooltip}>
+        <Icon name="info-circle" size="sm" title={tooltipTitle} />
+      </Tooltip>
+    </Stack>
+  );
+}
+
 interface ToggleOption<T> {
   label: string;
   value: T;
   icon?: PropsOf<typeof Icon>['name'];
   color?: PropsOf<typeof Text>['color'];
+  suffixIcon?: PropsOf<typeof Icon>['name'];
 }
 
 interface ToggleButtonGroupProps<T> {
@@ -601,6 +675,9 @@ function ToggleButtonGroup<T>({ options, value, onChange, 'aria-labelledby': lab
                 </Text>
               )}
               <span className={styles.toggleButtonLabel}>{opt.label}</span>
+              {opt.suffixIcon && (
+                <Icon name={opt.suffixIcon} size="sm" className={styles.toggleButtonIcon} aria-hidden="true" />
+              )}
             </button>
           );
         })}

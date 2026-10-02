@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -35,7 +36,9 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 		_, managed := meta.GetManagerProperties()
 		// Skip if already managed by any manager (repository, file provisioning, etc.).
 		// Classic shim kinds are managed without an identity, so rely on the managed flag.
-		if managed {
+		// Hack: App-generated folders that do not set the managedBy property (e.g. the SLO app) are excluded the same way. Should set these properties in the
+		// apps themselves
+		if managed || isAppGeneratedResource(item.GetName()) {
 			return nil
 		}
 
@@ -65,8 +68,8 @@ func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions,
 		Ref:                  options.Branch,
 		Path:                 options.Path,
 		GenerateNewFolderIDs: options.GenerateNewFolderIDs,
-		OnFolder: func(folder resources.Folder, created bool, err error) error {
-			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)
+		OnFolder: func(folder resources.Folder, created bool, startedAt time.Time, err error) error {
+			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated).WithStartTime(startedAt)
 
 			// A folder that failed to write must keep a non-ignored action: the
 			// recorder discards errors on FileActionIgnored results, so labelling
@@ -164,7 +167,7 @@ func collectFolderAncestry(ctx context.Context, folderUID string, folderClient d
 		}
 		seen[current] = struct{}{}
 
-		if _, managed := meta.GetManagerProperties(); managed {
+		if _, managed := meta.GetManagerProperties(); managed || isAppGeneratedResource(current) {
 			return nil
 		}
 

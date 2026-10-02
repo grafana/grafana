@@ -1,0 +1,18 @@
+{
+  "runtime.js": {
+    "src": "public/build-swagger/runtime.js",
+    "integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o="
+  },
+  "swagger.js": {
+    "src": "public/build-swagger/swagger.js",
+    "integrity": "sha256-IOZKp3piC3vddDXP5jy5rIw0vb0KKEOg/k9EGrIxskk="
+  },
+  "entrypoints": {
+    "app": {
+      "assets": {
+        "js": ["public/build-swagger/runtime.js", "public/build-swagger/swagger.js"],
+        "css": ["public/build-swagger/grafana.swagger.css"]
+      }
+    }
+  }
+}

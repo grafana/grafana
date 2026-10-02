@@ -348,13 +348,15 @@ func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardEleme
 //   - Nested layouts: Parent row is preserved; nested content is flattened after it
 //
 // nextRowID is a pointer to the next available ID for row panels, incremented after each use.
+//
+//nolint:gocyclo
 func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dashv2alpha1.DashboardRowsLayoutRowKind, startY int64, nextRowID *int64) ([]interface{}, int64, error) {
 	panels := make([]interface{}, 0)
 	currentY := startY
 
 	isHiddenHeader := row.Spec.HideHeader != nil && *row.Spec.HideHeader
 
-	// Handle nested RowsLayout - keep parent row, then flatten nested rows
+	// Handle nested RowsLayout, keeping descendant panels in the parent when it repeats.
 	if row.Spec.Layout.RowsLayoutKind != nil {
 		// Create parent row panel first (if not hidden header)
 		if !isHiddenHeader {
@@ -372,6 +374,9 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 			if row.Spec.Title != nil {
 				rowPanel["title"] = *row.Spec.Title
 			}
+			if row.Spec.Repeat != nil && row.Spec.Repeat.Value != "" {
+				rowPanel["repeat"] = row.Spec.Repeat.Value
+			}
 			rowPanel["collapsed"] = false
 			rowPanel["panels"] = []interface{}{}
 			panels = append(panels, rowPanel)
@@ -383,7 +388,20 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 		if err != nil {
 			return nil, 0, err
 		}
-		panels = append(panels, nestedPanels...)
+		if row.Spec.Repeat != nil && row.Spec.Repeat.Value != "" && !isHiddenHeader {
+			// V1 repeats only a row's direct panels, so place nested panels under the repeated row.
+			for _, nestedPanel := range nestedPanels {
+				if panel, ok := nestedPanel.(map[string]any); ok && panel["type"] == "row" {
+					if collapsedPanels, ok := panel["panels"].([]any); ok {
+						panels = append(panels, collapsedPanels...)
+					}
+					continue
+				}
+				panels = append(panels, nestedPanel)
+			}
+		} else {
+			panels = append(panels, nestedPanels...)
+		}
 		currentY = getMaxYFromPanels(nestedPanels, currentY)
 		return panels, currentY, nil
 	}
@@ -1089,8 +1107,8 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	panel["title"] = spec.Title
 	panel["pluginVersion"] = spec.VizConfig.Spec.PluginVersion
 
-	if spec.Description != "" {
-		panel["description"] = spec.Description
+	if spec.Description != nil && *spec.Description != "" {
+		panel["description"] = *spec.Description
 	}
 
 	// Convert vizConfig - use the plugin ID from VizConfig.Kind, not PanelKind.Kind
@@ -1147,6 +1165,10 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 			transformation := map[string]interface{}{
 				"id":      t.Spec.Id,
 				"options": t.Spec.Options,
+			}
+			// Add the static refId if set
+			if t.Spec.RefId != nil {
+				transformation["refId"] = *t.Spec.RefId
 			}
 			// Add disabled if set
 			if t.Spec.Disabled != nil {
@@ -2301,6 +2323,9 @@ func convertThresholdsToV1(thresholds *dashv2alpha1.DashboardThresholdsConfig) m
 			stepMap["value"] = *step.Value
 		} else {
 			stepMap["value"] = nil
+		}
+		if step.ValueExpr != nil {
+			stepMap["valueExpr"] = *step.ValueExpr
 		}
 		thresholdsMap["steps"] = append(thresholdsMap["steps"].([]map[string]interface{}), stepMap)
 	}

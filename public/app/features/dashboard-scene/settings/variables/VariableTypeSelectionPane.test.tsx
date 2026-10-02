@@ -4,14 +4,15 @@ import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneGridLayout, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
-import { DashboardEditPaneRenderer } from '../../edit-pane/DashboardEditPaneRenderer';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { DashboardSidebarRenderer } from '../../sidebar/DashboardSidebarRenderer';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
@@ -25,6 +26,8 @@ const defaultDsSettings = {
 };
 
 const Wrapper = getWrapper({ renderWithRouter: true });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -67,11 +70,11 @@ describe('VariableAddPane', () => {
     jest.restoreAllMocks();
   });
 
-  it('calls DashboardInteractions.variableTypeSelected when a variable type is clicked', () => {
+  it('calls DashboardInteractions.variableTypeSelected when a variable type is clicked', async () => {
     const variableTypeSelectedSpy = jest.spyOn(DashboardInteractions, 'variableTypeSelected');
     const dashboard = buildTestScene();
     const pane = new VariableAddPane({ sectionOwner: dashboard.getRef() });
-    dashboard.state.editPane.openPane(pane);
+    dashboard.state.sidebar.openPane(pane);
 
     const { getByRole } = render(
       <WrapSidebar>
@@ -81,13 +84,13 @@ describe('VariableAddPane', () => {
 
     getByRole('button', { name: /query/i }).click();
 
-    expect(variableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' });
+    await waitFor(() => expect(variableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' }));
   });
 
-  it('generates a non-conflicting name when an existing variable already exists', () => {
+  it('generates a non-conflicting name when an existing variable already exists', async () => {
     const dashboard = buildTestSceneWithExistingVar('custom0');
     const pane = new VariableAddPane({ sectionOwner: dashboard.getRef() });
-    dashboard.state.editPane.openPane(pane);
+    dashboard.state.sidebar.openPane(pane);
 
     const { getByRole } = render(
       <WrapSidebar>
@@ -97,11 +100,13 @@ describe('VariableAddPane', () => {
 
     getByRole('button', { name: /custom/i }).click();
 
-    const dashboardVars = dashboard.state.$variables;
-    expect(dashboardVars).toBeInstanceOf(SceneVariableSet);
-    const vars = (dashboardVars as SceneVariableSet).state.variables;
-    expect(vars).toHaveLength(2);
-    expect(vars[1].state.name).toBe('custom1');
+    await waitFor(() => {
+      const dashboardVars = dashboard.state.$variables;
+      expect(dashboardVars).toBeInstanceOf(SceneVariableSet);
+      const vars = (dashboardVars as SceneVariableSet).state.variables;
+      expect(vars).toHaveLength(2);
+      expect(vars[1].state.name).toBe('custom1');
+    });
   });
 });
 
@@ -111,9 +116,9 @@ describe('VariableTypeChangePane', () => {
     const variable = variableSet.state.variables[0];
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
-    await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
+    await user.click(await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('constant'))).getByRole(
@@ -128,7 +133,7 @@ describe('VariableTypeChangePane', () => {
     expect(updatedVariable.state.type).toBe('constant');
     expect(updatedVariable.state.name).toBe('service');
     expect(updatedVariable.state.label).toBe('Service');
-    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
+    expect(dashboard.state.sidebar.getSelectedObject()).toBe(updatedVariable);
     expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableNameInput)).toHaveValue(
       'service'
     );
@@ -142,10 +147,10 @@ describe('VariableTypeChangePane', () => {
     const sectionVariable = sectionVariableSet.state.variables[0];
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
-    await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
+    await user.click(await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
+    expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('textbox'))).getByRole(
@@ -161,7 +166,7 @@ describe('VariableTypeChangePane', () => {
     expect(updatedVariable.state.name).toBe('shared');
     expect(updatedVariable.state.label).toBe('Section variable');
     expect(dashboardVariable.state.name).toBe('shared');
-    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
+    expect(dashboard.state.sidebar.getSelectedObject()).toBe(updatedVariable);
   });
 });
 
@@ -175,10 +180,10 @@ function WrapSidebar({ children }: { children: ReactNode }) {
   );
 }
 
-function renderVariableEditPane(dashboard: DashboardScene) {
+function renderVariableSidebar(dashboard: DashboardScene) {
   render(
     <WrapSidebar>
-      <DashboardEditPaneRenderer dashboard={dashboard} />
+      <DashboardSidebarRenderer dashboard={dashboard} />
     </WrapSidebar>
   );
 }
@@ -204,7 +209,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, { force: true });
+  dashboard.state.sidebar.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }
@@ -234,7 +239,7 @@ function buildSectionVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(sectionVariable, { force: true });
+  dashboard.state.sidebar.selectObject(sectionVariable, { force: true });
 
   return { dashboard, dashboardVariable, sectionVariableSet };
 }

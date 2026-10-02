@@ -36,43 +36,6 @@ describe('SqlQueryActions', () => {
     expect(executeQuery).toHaveBeenCalled();
   });
 
-  it('renders OpenAssistantButton for explain', () => {
-    render(<SqlQueryActions {...defaultProps} />);
-    expect(OpenAssistantButton).toHaveBeenCalledWith(
-      expect.objectContaining({
-        origin: 'grafana/expressions/sql/explain',
-        title: 'Explain query',
-      }),
-      expect.anything()
-    );
-  });
-
-  it('renders OpenAssistantButton for suggestions with "Generate suggestion" when query matches initial', () => {
-    render(<SqlQueryActions {...defaultProps} />);
-    expect(OpenAssistantButton).toHaveBeenCalledWith(
-      expect.objectContaining({
-        origin: 'grafana/expressions/sql/improve',
-        title: 'Generate suggestion',
-      }),
-      expect.anything()
-    );
-  });
-
-  it('renders OpenAssistantButton for suggestions with "Improve query" when query differs from initial', () => {
-    const customProps = {
-      ...defaultProps,
-      currentQuery: 'SELECT * FROM A WHERE value > 10',
-    };
-    render(<SqlQueryActions {...customProps} />);
-    expect(OpenAssistantButton).toHaveBeenCalledWith(
-      expect.objectContaining({
-        origin: 'grafana/expressions/sql/improve',
-        title: 'Improve query',
-      }),
-      expect.anything()
-    );
-  });
-
   it('does not render suggestions button when there are no refIds and no query', () => {
     const customProps = {
       ...defaultProps,
@@ -84,21 +47,5 @@ describe('SqlQueryActions', () => {
       (call) => call[0]?.origin === 'grafana/expressions/sql/improve'
     );
     expect(suggestionsCall).toBeUndefined();
-  });
-
-  it('renders suggestions button when there are refIds but no query', () => {
-    const customProps = {
-      ...defaultProps,
-      currentQuery: '',
-      refIds: ['A', 'B'],
-    };
-    render(<SqlQueryActions {...customProps} />);
-    expect(OpenAssistantButton).toHaveBeenCalledWith(
-      expect.objectContaining({
-        origin: 'grafana/expressions/sql/improve',
-        title: 'Generate suggestion',
-      }),
-      expect.anything()
-    );
   });
 });

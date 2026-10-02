@@ -1,3 +1,4 @@
+import { type ActionImpl } from 'kbar';
 import { type ReactNode } from 'react';
 import { getWrapper, renderHook } from 'test/test-utils';
 
@@ -35,6 +36,12 @@ jest.mock('@grafana/runtime/unstable', () => ({
 }));
 
 const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
+
+let mockQueryLibraryContext = { queryLibraryEnabled: false, openDrawer: jest.fn() };
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  ...jest.requireActual('app/features/explore/QueryLibrary/QueryLibraryContext'),
+  useQueryLibraryContext: () => mockQueryLibraryContext,
+}));
 
 function renderStaticActions() {
   const store = configureStore({ navBarTree: [] });
@@ -107,5 +114,73 @@ describe('useStaticActions - dashboard from template action', () => {
 
     const { result } = renderStaticActions();
     expect(hasTemplateAction(result.current)).toBe(false);
+  });
+});
+
+const hasSavedQueriesAction = (actions: CommandPaletteAction[]) =>
+  actions.some((action) => action.id === 'open-saved-queries');
+
+const getSavedQueriesAction = (actions: CommandPaletteAction[]) =>
+  actions.find((action) => action.id === 'open-saved-queries');
+
+describe('useStaticActions - open saved queries action', () => {
+  let originalPermissions: UserPermission | undefined;
+  let originalIsSignedIn: boolean;
+  let originalSavedQueriesRBAC: boolean | undefined;
+
+  beforeEach(() => {
+    mockQueryLibraryContext = { queryLibraryEnabled: true, openDrawer: jest.fn() };
+    originalPermissions = contextSrv.user.permissions;
+    originalIsSignedIn = contextSrv.isSignedIn;
+    originalSavedQueriesRBAC = config.featureToggles.savedQueriesRBAC;
+    // Default: RBAC off, so read access falls back to being signed in.
+    config.featureToggles.savedQueriesRBAC = false;
+    contextSrv.isSignedIn = true;
+    contextSrv.user.permissions = {};
+  });
+
+  afterEach(() => {
+    contextSrv.user.permissions = originalPermissions;
+    contextSrv.isSignedIn = originalIsSignedIn;
+    config.featureToggles.savedQueriesRBAC = originalSavedQueriesRBAC;
+  });
+
+  it('includes the action when the query library is enabled and the user is signed in', () => {
+    const { result } = renderStaticActions();
+    expect(hasSavedQueriesAction(result.current)).toBe(true);
+  });
+
+  it('does not include the action when the query library is disabled', () => {
+    mockQueryLibraryContext.queryLibraryEnabled = false;
+    const { result } = renderStaticActions();
+    expect(hasSavedQueriesAction(result.current)).toBe(false);
+  });
+
+  it('does not include the action when the user is not signed in and RBAC is off', () => {
+    contextSrv.isSignedIn = false;
+    const { result } = renderStaticActions();
+    expect(hasSavedQueriesAction(result.current)).toBe(false);
+  });
+
+  it('includes the action when RBAC is on and the user has queries:read', () => {
+    config.featureToggles.savedQueriesRBAC = true;
+    contextSrv.user.permissions = { [AccessControlAction.QueriesRead]: true };
+    const { result } = renderStaticActions();
+    expect(hasSavedQueriesAction(result.current)).toBe(true);
+  });
+
+  it('does not include the action when RBAC is on and the user lacks queries:read', () => {
+    config.featureToggles.savedQueriesRBAC = true;
+    contextSrv.user.permissions = {};
+    const { result } = renderStaticActions();
+    expect(hasSavedQueriesAction(result.current)).toBe(false);
+  });
+
+  it('opens the drawer with the command-palette context when performed', () => {
+    const { result } = renderStaticActions();
+    const action = getSavedQueriesAction(result.current);
+    // perform ignores its ActionImpl argument, so a placeholder is enough to invoke it.
+    action?.perform?.({} as ActionImpl);
+    expect(mockQueryLibraryContext.openDrawer).toHaveBeenCalledWith({ options: { context: 'command-palette' } });
   });
 });

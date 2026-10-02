@@ -25,6 +25,7 @@ import type TNil from '../../types/TNil';
 import * as markers from './AccordionKeyValues.markers';
 import { KeyValuesSummary } from './KeyValuesSummary';
 import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
+import { type AttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
 
 import { alignIcon } from '.';
 
@@ -74,8 +75,11 @@ export type AccordionKeyValuesProps = {
   showCountBadge?: boolean;
   isOpen: boolean;
   label: string | React.ReactNode;
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
+  linksGetter?: (pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[];
   onToggle?: null | (() => void);
+  promoGetter?: AttributePluginPromoGetter;
+  datasourceType?: string;
+  openLinksInSameTab?: boolean;
 };
 
 export default function AccordionKeyValues({
@@ -91,6 +95,9 @@ export default function AccordionKeyValues({
   showSummary = true,
   showCountBadge = false,
   onToggle = null,
+  promoGetter,
+  datasourceType,
+  openLinksInSameTab,
 }: AccordionKeyValuesProps) {
   const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
   const styles = useStyles2(getStyles);
@@ -134,7 +141,16 @@ export default function AccordionKeyValues({
           </span>
         )}
       </div>
-      {isOpen && <KeyValuesTable data={tableFields} linksGetter={linksGetter} onlyValues={onlyValues} />}
+      {isOpen && (
+        <KeyValuesTable
+          data={tableFields}
+          linksGetter={linksGetter}
+          onlyValues={onlyValues}
+          promoGetter={promoGetter}
+          datasourceType={datasourceType}
+          openLinksInSameTab={openLinksInSameTab}
+        />
+      )}
     </div>
   );
 }
