@@ -13,6 +13,7 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-developer-enablement-squad
+/AI_POLICY.md @grafana/grafana-community-support
 /CHANGELOG.md @grafana/grafana-developer-enablement-squad
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
