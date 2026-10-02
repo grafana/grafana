@@ -68,7 +68,6 @@ export class AppChromeService {
 
   public update(update: Partial<AppChromeState>) {
     // Match the legacy redirection flag used by handleRedirectTo and LoginCtrl.
-    // eslint-disable-next-line @grafana/no-config-feature-toggles
     if (config.featureToggles.useSessionStorageForRedirection && update.sectionNav && contextSrv.user.isSignedIn) {
       const pathname = locationService.getLocation().pathname;
       if (pathname !== '/login') {
