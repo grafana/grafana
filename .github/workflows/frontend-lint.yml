@@ -372,6 +372,8 @@ jobs:
       uses: ./.github/actions/yarn-install
     - name: Run knip
       run: yarn run knip
+    - name: Run knip (production)
+      run: yarn run knip --production
 
   yarn-install-validation:
     needs:
